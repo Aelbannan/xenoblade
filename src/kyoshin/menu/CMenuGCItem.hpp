@@ -112,6 +112,6 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
 
 // DrawInfo helper - retail emits the mangled nw4r form
-// (func_80137250__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
+// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);

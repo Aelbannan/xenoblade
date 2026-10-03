@@ -61,7 +61,7 @@ extern "C" {
 void* bindIndexedEffect(u32 cls, int param);
 void setTargetObj_(void* obj, void* target);
 void setChildB59__(void* obj, s8 val);
-void func_800B3A88(void* self, void* target);
+void removeManagedObject(void* self, void* target);
 struct CChainManager* getReslistBE8(void);
 void* CollObjHasFlag64Bit5(void* param);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);

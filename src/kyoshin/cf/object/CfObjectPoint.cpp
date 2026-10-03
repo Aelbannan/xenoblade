@@ -8,6 +8,10 @@
 #include <decomp.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// C-ABI import from the UI window manager (retail .text:0x8013F594, unmangled;
+// cf/object/CfObjectPc.hpp declares the same prototype).
+extern "C" int UIWin_HasPendingUpdate(int flag);
+
 
 
 namespace cf {
@@ -245,7 +249,7 @@ CfObjectPoint::~CfObjectPoint() {
     u32 flags = mFlags68;
     *reinterpret_cast<u32**>(this) = lbl_eu_8052A3B0;
     if (flags & 0x40000000) {
-        ((void* (*)(void*, void*))func_80186474)(ArtsSelect_GetContainer(), this);
+        ((void* (*)(void*, void*))ArtsSelect_Remove)(ArtsSelect_GetContainer(), this);
     }
     releasePointLink();
     // D2 phase (base class): the base dtor is inline-empty so MWCC emits no
@@ -308,7 +312,7 @@ main_body:
         if (dist > lbl_eu_80666B48) {
             if (checkStateFlags8(1) != 0) {
                 if (checkStateFlags(1) == 0) {
-                    if (func_8013EB90(1) == 0) {
+                    if (UIWin_HasPendingUpdate(1) == 0) {
                         clearStateFlags8(1);
                     }
                 }

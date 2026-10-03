@@ -11,7 +11,7 @@
 // If no voice is active, reset the base state triple in the object header
 // (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
 void CVSBattleEndSPResetState(CVS_THREAD_BATTLE_END_SP* self) {
-    if (func_802A3E88(self) == 0) {
+    if (IsThreadVoiceActive(self) == 0) {
         // Pointer increment reproduces the lwzu/spread load-with-update.
         // v0 is declared first so MWCC colours it (the lwzu destination) into
         // the lower register r3, and p into r4 -- matching retail ordering.
@@ -35,7 +35,7 @@ void CVSBattleEndSPResetState(CVS_THREAD_BATTLE_END_SP* self) {
 // register-color swap (decomp i=r4/handle=r6 vs retail i=r6/handle=r4) that
 // resisted every declaration-order permutation tried.
 void CVSBattleEndSPRemoveVoice(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle;
     CCharVoice* vp;
@@ -90,7 +90,7 @@ void CVSBattleEndSPResetAndSweep(CVS_THREAD_BATTLE_END_SP* self) {
             cur = self;
             for (i = 0; i < self->count; i++) {
                 CVoiceHandle* h = cur->slots[0];
-                if (h != NULL && func_802A77E8(h) == cmd0) {
+                if (h != NULL && HpVoice_MapSubState(h) == cmd0) {
                     found = self->slots[i];
                     goto matched;
                 }
@@ -100,7 +100,7 @@ void CVSBattleEndSPResetAndSweep(CVS_THREAD_BATTLE_END_SP* self) {
         }
 matched:
         if (found == NULL) {
-            self->func_802A3B50();
+            self->PlayThreadVoice();
             return;
         }
 
@@ -112,9 +112,9 @@ matched:
             if (found != NULL) {
                 vp = &found->voice;
             }
-            if (func_802A3C44(self, vp,
+            if (TryRequestVoice(self, vp,
                               voiceId + CVS_THREAD_BATTLE_END_SP::VOICE_ID_BIAS) == 0) {
-                self->func_802A3B50();
+                self->PlayThreadVoice();
                 return;
             }
         }
@@ -197,7 +197,7 @@ CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
             int found = 0;
             int j = 0;
             while (j < count) {
-                if ((s8)ids[idx] == func_802A77E8(active[j])) {
+                if ((s8)ids[idx] == HpVoice_MapSubState(active[j])) {
                     found = 1;
                     break;
                 }
@@ -232,12 +232,12 @@ CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
         return NULL;
     }
     // The shutdown sentinel forces a NULL result when the factory gate is up.
-    if (func_802A8140() != 0 && cmdString == (const u32*)&lbl_eu_80668DB0) {
+    if (HpVoice_SeqBelow94() != 0 && cmdString == (const u32*)&lbl_eu_80668DB0) {
         return NULL;
     }
 
     // Allocate a handle buffer (discarded) and the object itself.
-    if (func_802A330C(0x46, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x46, 1) == NULL) {
         return NULL;
     }
     CVS_THREAD_BATTLE_END_SP* self = (CVS_THREAD_BATTLE_END_SP*)CCharVoiceMan_AllocVoiceArena(0x34);

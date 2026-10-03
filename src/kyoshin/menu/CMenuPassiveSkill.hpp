@@ -112,7 +112,7 @@ extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* render,
                                                       u32 prio, u32 arg);
-extern "C" void func_8026D5A8(u8* self);
+extern "C" void CPassiveSkill_loadSkillData(u8* self);
 
 #pragma pack(push, 1)
 
@@ -322,8 +322,8 @@ extern "C" void getInstance__9CTaskGameFv();
 extern "C" int isFlag01Set__9CTaskGameFv();
 
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
-// func_80137250__FPQ34nw4r3lyt8DrawInfo.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Singleton state: created-screen pointer (cleared by Term) and the shared
 // mode bitfield (bit 21 / IBM bit 10 gates cbRenderBefore draws).

@@ -131,7 +131,7 @@ extern "C" void* EvtSeqFindEventByNameData(void* ptr);
 extern "C" int EvtSeqGetCounter100();
 extern "C" bool EvtSeqIsSlotIndexFour();
 extern "C" bool REvtCam_GetFieldA5Flag();
-extern "C" void func_8016AF4C(void* obj, const char* name, s32* out);
+extern "C" void EvtSeqResolveAnmChr(void* obj, const char* name, s32* out);
 
 // Effect system
 extern "C" void EffSched_LookupA(void* mgr, void* data);

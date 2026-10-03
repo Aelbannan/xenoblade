@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/action/CActParamData
 // Replace stubs with high-level C/C++ during decomp.
 
-// func_800D9354 has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
@@ -31,7 +31,7 @@ CActParamData::CActParamData() {
     *(u32*)((u32)self + 0x2E0) = 0;
     *(u32*)((u32)self + 0x2E4) = 0;
     *(u8*)((u32)self + 0x215) = 0;
-    func_80053B24(this, 0, 0, 0, 0);
+    initActParamData(this, 0, 0, 0, 0);
 }
 
 // ============================================================
@@ -115,51 +115,51 @@ struct CActParamAnimView {
     virtual void getAttachedAnimScale(); // 0x10
     virtual void getAttachedAnimRate(); // 0x14
     virtual void clearAnimState(); // 0x18
-    virtual void func_8004D194(); // 0x1C
-    virtual void func_8004DDD0(); // 0x20
-    virtual void func_8004DF9C(); // 0x24
-    virtual void func_8004E168(); // 0x28
-    virtual void func_8004E334(); // 0x2C
-    virtual void func_8004E500(); // 0x30
-    virtual void func_8004E828(); // 0x34
-    virtual void func_8004D2F8(); // 0x38
-    virtual void func_8004D4AC(); // 0x3C
-    virtual void func_8004E694(); // 0x40
-    virtual void func_8004D650(); // 0x44
+    virtual void dispatchAnimSlot(); // 0x1C
+    virtual void startFlag2000Anim(); // 0x20
+    virtual void startFlag0800Anim(); // 0x24
+    virtual void startFlag0400Anim(); // 0x28
+    virtual void startFlag1000Anim(); // 0x2C
+    virtual void fireSpeedGate(); // 0x30
+    virtual void fireBlendGate(); // 0x34
+    virtual void startUnfinishedAnim(); // 0x38
+    virtual void startFinishedAnim(); // 0x3C
+    virtual void fireSpeedOkGt(); // 0x40
+    virtual void fireAnimParam(); // 0x44
     virtual void __vt_48(); // 0x48 gap
-    virtual void func_8004D7EC(); // 0x4C
-    virtual void func_8004D950(); // 0x50
+    virtual void startOwnerFlag8Anim(); // 0x4C
+    virtual void startOwnerFlag2Anim(); // 0x50
     virtual void func_8004E9EC(); // 0x54
     virtual void func_8004ECF4(); // 0x58
-    virtual void func_8004F1E4(); // 0x5C
-    virtual void func_8004F334(); // 0x60
+    virtual void fireCountGate(); // 0x5C
+    virtual void fireWord378Gt(); // 0x60
     virtual void func_8004F884(); // 0x64
-    virtual void func_8004FAB4(); // 0x68
-    virtual void func_8004FCE0(); // 0x6C
-    virtual void func_8004FE58(); // 0x70
-    virtual void func_80050744(); // 0x74
+    virtual void fireBlendDflt(); // 0x68
+    virtual void fireParamGate(); // 0x6C
+    virtual void fireBlendCust(); // 0x70
+    virtual void startIfActive(); // 0x74
     virtual void __vt_78(); // 0x78 gap
-    virtual int func_80050890(u32 a, u32 b); // 0x7C
+    virtual int fireTimerGate(u32 a, u32 b); // 0x7C
     virtual int calcAnimBlendWeight(u32 a); // 0x80 variant, but real is calcAnimBlendWeight(u32)
-    virtual int func_80050C50(u32 a, u32 b); // 0x84
-    virtual void func_80050DB0(); // 0x88
-    virtual void func_80050F5C(); // 0x8C
-    virtual void func_800510FC(); // 0x90
-    virtual void func_800512A8(); // 0x94
-    virtual void func_80051448(); // 0x98
-    virtual void func_8004F484(); // 0x9C
-    virtual int func_8004F5FC(u32 a, u32 b); // 0xA0
+    virtual int startRandAnim(u32 a, u32 b); // 0x84
+    virtual void fireAngleGate(); // 0x88
+    virtual void fireAngleLoGt(); // 0x8C
+    virtual void fireAngleBand(); // 0x90
+    virtual void fireAngleHiGt(); // 0x94
+    virtual void fireOpenGate1(); // 0x98
+    virtual void fireTwinCount(); // 0x9C
+    virtual int fireOwnerIdGt(u32 a, u32 b); // 0xA0
     virtual bool isAnimFrameActive(); // 0xA4
     virtual bool isAnimTransActive(); // 0xA8
     virtual bool isAnimUpdateActive(u32 a, u32 b); // 0xAC
     virtual bool isAnimScaleActive(u32 a, u32 b); // 0xB0
     virtual bool isAnimRotateActive(u32 a, u32 b); // 0xB4
     virtual bool isAnimEffectActive(); // 0xB8
-    virtual void func_800516C0(); // 0xBC
-    virtual void func_80051584(); // 0xC0
+    virtual void fireOpenGate3(); // 0xBC
+    virtual void fireOpenGate2(); // 0xC0
     virtual void func_8004DAE0(); // 0xC4
-    virtual void func_800517FC(); // 0xC8
-    virtual void func_8005194C(); // 0xCC
+    virtual void fireFlag4D4Gt(); // 0xC8
+    virtual void fire4D4ZeroGt(); // 0xCC
     virtual bool isAnimChainActive(); // 0xD0
     virtual bool isAnimLoopActive(); // 0xD4
     virtual bool isAnimMotionActive(); // 0xD8
@@ -167,59 +167,59 @@ struct CActParamAnimView {
 };
 // alias removed - CActParamAnimView is the view type
 
-extern "C" void actAnimVt40(void* self) { ((CActParamAnimView*)self)->func_8004E694(); }
-extern "C" void actAnimVt38(void* self) { ((CActParamAnimView*)self)->func_8004D2F8(); }
-extern "C" void actAnimVt3C(void* self) { ((CActParamAnimView*)self)->func_8004D4AC(); }
-extern "C" void actAnimVt44(void* self) { ((CActParamAnimView*)self)->func_8004D650(); }
+extern "C" void actAnimVt40(void* self) { ((CActParamAnimView*)self)->fireSpeedOkGt(); }
+extern "C" void actAnimVt38(void* self) { ((CActParamAnimView*)self)->startUnfinishedAnim(); }
+extern "C" void actAnimVt3C(void* self) { ((CActParamAnimView*)self)->startFinishedAnim(); }
+extern "C" void actAnimVt44(void* self) { ((CActParamAnimView*)self)->fireAnimParam(); }
 extern "C" void actAnimVt48(void* self) { ((CActParamAnimView*)self)->__vt_48(); }
-extern "C" void actAnimVt4C(void* self) { ((CActParamAnimView*)self)->func_8004D7EC(); }
-extern "C" void actAnimVt50(void* self) { ((CActParamAnimView*)self)->func_8004D950(); }
+extern "C" void actAnimVt4C(void* self) { ((CActParamAnimView*)self)->startOwnerFlag8Anim(); }
+extern "C" void actAnimVt50(void* self) { ((CActParamAnimView*)self)->startOwnerFlag2Anim(); }
 extern "C" void actAnimVt58(void* self) { ((CActParamAnimView*)self)->func_8004ECF4(); }
-extern "C" void actAnimVt20(void* self) { ((CActParamAnimView*)self)->func_8004DDD0(); }
-extern "C" void actAnimVt24(void* self) { ((CActParamAnimView*)self)->func_8004DF9C(); }
-extern "C" void actAnimVt28(void* self) { ((CActParamAnimView*)self)->func_8004E168(); }
-extern "C" void actAnimVt2C(void* self) { ((CActParamAnimView*)self)->func_8004E334(); }
-extern "C" void actAnimVt5C(void* self) { ((CActParamAnimView*)self)->func_8004F1E4(); }
-extern "C" void actAnimVt60(void* self) { ((CActParamAnimView*)self)->func_8004F334(); }
+extern "C" void actAnimVt20(void* self) { ((CActParamAnimView*)self)->startFlag2000Anim(); }
+extern "C" void actAnimVt24(void* self) { ((CActParamAnimView*)self)->startFlag0800Anim(); }
+extern "C" void actAnimVt28(void* self) { ((CActParamAnimView*)self)->startFlag0400Anim(); }
+extern "C" void actAnimVt2C(void* self) { ((CActParamAnimView*)self)->startFlag1000Anim(); }
+extern "C" void actAnimVt5C(void* self) { ((CActParamAnimView*)self)->fireCountGate(); }
+extern "C" void actAnimVt60(void* self) { ((CActParamAnimView*)self)->fireWord378Gt(); }
 extern "C" void actAnimVt64(void* self) { ((CActParamAnimView*)self)->func_8004F884(); }
-extern "C" void actAnimVt68(void* self) { ((CActParamAnimView*)self)->func_8004FAB4(); }
-extern "C" void actAnimVt6C(void* self) { ((CActParamAnimView*)self)->func_8004FCE0(); }
-extern "C" void actAnimVt70(void* self) { ((CActParamAnimView*)self)->func_8004FE58(); }
-extern "C" void actAnimVt74(void* self) { ((CActParamAnimView*)self)->func_80050744(); }
+extern "C" void actAnimVt68(void* self) { ((CActParamAnimView*)self)->fireBlendDflt(); }
+extern "C" void actAnimVt6C(void* self) { ((CActParamAnimView*)self)->fireParamGate(); }
+extern "C" void actAnimVt70(void* self) { ((CActParamAnimView*)self)->fireBlendCust(); }
+extern "C" void actAnimVt74(void* self) { ((CActParamAnimView*)self)->startIfActive(); }
 extern "C" void actAnimVt78(void* self) { ((CActParamAnimView*)self)->__vt_78(); }
-extern "C" void actAnimVt9C(void* self) { ((CActParamAnimView*)self)->func_8004F484(); }
+extern "C" void actAnimVt9C(void* self) { ((CActParamAnimView*)self)->fireTwinCount(); }
 extern "C" void callAnimFrame(void* self) { (void)((CActParamAnimView*)self)->isAnimFrameActive(); }
 extern "C" void callAnimTrans(void* self) { (void)((CActParamAnimView*)self)->isAnimTransActive(); }
 extern "C" void callAnimEffect(void* self) { (void)((CActParamAnimView*)self)->isAnimEffectActive(); }
-extern "C" void actAnimVtC8(void* self) { ((CActParamAnimView*)self)->func_800517FC(); }
-extern "C" void actAnimVtCC(void* self) { ((CActParamAnimView*)self)->func_8005194C(); }
+extern "C" void actAnimVtC8(void* self) { ((CActParamAnimView*)self)->fireFlag4D4Gt(); }
+extern "C" void actAnimVtCC(void* self) { ((CActParamAnimView*)self)->fire4D4ZeroGt(); }
 extern "C" void callAnimChain(void* self) { (void)((CActParamAnimView*)self)->isAnimChainActive(); }
 extern "C" void callAnimLoop(void* self) { (void)((CActParamAnimView*)self)->isAnimLoopActive(); }
 extern "C" void callAnimMotion(void* self) { (void)((CActParamAnimView*)self)->isAnimMotionActive(); }
 extern "C" void callAnimBlend(void* self) { (void)((CActParamAnimView*)self)->isAnimBlendActive(); }
 
-extern "C" void callAnimBlendW(void* self, u32 a, u32 b) { ((CActParamAnimView*)self)->func_80050C50(a, (u32)(u16)b); }
-extern "C" void actAnimSlot01(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 1); }
-extern "C" void actAnimSlot02(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 2); }
-extern "C" void actAnimSlot32(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x20); }
-extern "C" void actAnimSlot33(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x21); }
-extern "C" void actAnimSlot34(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x22); }
-extern "C" void actAnimSlot35(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x23); }
-extern "C" void actAnimSlot36(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x24); }
-extern "C" void actAnimSlot37(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x25); }
-extern "C" void actAnimSlot38(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x26); }
-extern "C" void actAnimSlot39(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x27); }
-extern "C" void actAnimSlot40(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x28); }
-extern "C" void actAnimSlot41(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x29); }
-extern "C" void actAnimSlot42(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2a); }
-extern "C" void actAnimSlot43(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2b); }
-extern "C" void actAnimSlot44(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2c); }
-extern "C" void actAnimSlot45(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2d); }
-extern "C" void actAnimSlot46(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2e); }
-extern "C" void actAnimSlot47(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x2f); }
-extern "C" void callAnimMode0(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 0); }
-extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 1); }
-extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnimView*)self)->func_8004F5FC(a, 2); }
+extern "C" void callAnimBlendW(void* self, u32 a, u32 b) { ((CActParamAnimView*)self)->startRandAnim(a, (u32)(u16)b); }
+extern "C" void actAnimSlot01(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 1); }
+extern "C" void actAnimSlot02(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 2); }
+extern "C" void actAnimSlot32(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x20); }
+extern "C" void actAnimSlot33(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x21); }
+extern "C" void actAnimSlot34(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x22); }
+extern "C" void actAnimSlot35(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x23); }
+extern "C" void actAnimSlot36(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x24); }
+extern "C" void actAnimSlot37(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x25); }
+extern "C" void actAnimSlot38(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x26); }
+extern "C" void actAnimSlot39(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x27); }
+extern "C" void actAnimSlot40(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x28); }
+extern "C" void actAnimSlot41(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x29); }
+extern "C" void actAnimSlot42(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2a); }
+extern "C" void actAnimSlot43(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2b); }
+extern "C" void actAnimSlot44(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2c); }
+extern "C" void actAnimSlot45(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2d); }
+extern "C" void actAnimSlot46(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2e); }
+extern "C" void actAnimSlot47(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2f); }
+extern "C" void callAnimMode0(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 0); }
+extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 1); }
+extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 2); }
 // Boolean getters; retail still materializes a selector in r5 before the
 // virtual call (vt+0xB0 scale / 0xB4 rotate / 0xAC update).
 extern "C" void callAnimScale0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
@@ -231,42 +231,42 @@ extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnimView*)self)->is
 extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
 extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 1); }
 
-extern "C" void actAnimVt90(void* self) { ((CActParamAnimView*)self)->func_800510FC(); }
-extern "C" void actAnimVt94(void* self) { ((CActParamAnimView*)self)->func_800512A8(); }
-extern "C" void actAnimVt30(void* self) { ((CActParamAnimView*)self)->func_8004E500(); }
-extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 3); }
-extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 4); }
-extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 5); }
-extern "C" int actAnimSlot06(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 6); }
-extern "C" int actAnimSlot07(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 7); }
-extern "C" int actAnimSlot08(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 8); }
-extern "C" int actAnimSlot09(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 9); }
-extern "C" int actAnimSlot10(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 10); }
-extern "C" int actAnimSlot11(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 11); }
-extern "C" int actAnimSlot12(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 12); }
-extern "C" int actAnimSlot13(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 13); }
-extern "C" int actAnimSlot14(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 14); }
-extern "C" int actAnimSlot15(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 15); }
-extern "C" int actAnimSlot16(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 16); }
-extern "C" int actAnimSlot17(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 17); }
-extern "C" int actAnimSlot19(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 19); }
-extern "C" int actAnimSlot20(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 20); }
-extern "C" int actAnimSlot21(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 21); }
-extern "C" int actAnimSlot22(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 22); }
-extern "C" int actAnimSlot23(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 23); }
-extern "C" int actAnimSlot24(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 24); }
-extern "C" int actAnimSlot25(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 25); }
-extern "C" int actAnimSlot26(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 26); }
-extern "C" int actAnimSlot27(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 27); }
-extern "C" int actAnimSlot28(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 28); }
-extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 29); }
-extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnimView*)self)->func_80050890((u32)a, 30); }
-extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnimView*)self)->func_80050890(a, 31); }
+extern "C" void actAnimVt90(void* self) { ((CActParamAnimView*)self)->fireAngleBand(); }
+extern "C" void actAnimVt94(void* self) { ((CActParamAnimView*)self)->fireAngleHiGt(); }
+extern "C" void actAnimVt30(void* self) { ((CActParamAnimView*)self)->fireSpeedGate(); }
+extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 3); }
+extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 4); }
+extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 5); }
+extern "C" int actAnimSlot06(void* self, int a) { return ((CActParamAnimView*)self)->fireTimerGate((u32)a, 6); }
+extern "C" int actAnimSlot07(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 7); }
+extern "C" int actAnimSlot08(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 8); }
+extern "C" int actAnimSlot09(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 9); }
+extern "C" int actAnimSlot10(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 10); }
+extern "C" int actAnimSlot11(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 11); }
+extern "C" int actAnimSlot12(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 12); }
+extern "C" int actAnimSlot13(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 13); }
+extern "C" int actAnimSlot14(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 14); }
+extern "C" int actAnimSlot15(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 15); }
+extern "C" int actAnimSlot16(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 16); }
+extern "C" int actAnimSlot17(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 17); }
+extern "C" int actAnimSlot19(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 19); }
+extern "C" int actAnimSlot20(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 20); }
+extern "C" int actAnimSlot21(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 21); }
+extern "C" int actAnimSlot22(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 22); }
+extern "C" int actAnimSlot23(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 23); }
+extern "C" int actAnimSlot24(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 24); }
+extern "C" int actAnimSlot25(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 25); }
+extern "C" int actAnimSlot26(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 26); }
+extern "C" int actAnimSlot27(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 27); }
+extern "C" int actAnimSlot28(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 28); }
+extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 29); }
+extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnimView*)self)->fireTimerGate((u32)a, 30); }
+extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 31); }
 
-extern "C" void actAnimVt34(void* self) { ((CActParamAnimView*)self)->func_8004E828(); }
-extern "C" void actAnimVt98(void* self) { ((CActParamAnimView*)self)->func_80051448(); }
-extern "C" void actAnimVt88(void* self) { ((CActParamAnimView*)self)->func_80050DB0(); }
-extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->func_80050F5C(); }
+extern "C" void actAnimVt34(void* self) { ((CActParamAnimView*)self)->fireBlendGate(); }
+extern "C" void actAnimVt98(void* self) { ((CActParamAnimView*)self)->fireOpenGate1(); }
+extern "C" void actAnimVt88(void* self) { ((CActParamAnimView*)self)->fireAngleGate(); }
+extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->fireAngleLoGt(); }
 
 
 int getParamRefS16A(CActParamData* self) {
@@ -654,7 +654,7 @@ bool hasParamByteVal(CActParamByteList* list, u8 value) {
     } while (0)
 
 void updateParamFloats(CActParamData* self, float arg1, float arg2);
-extern "C" int func_80054614(CActParamData* data, u32* out,
+extern "C" int evalParamChain(CActParamData* data, u32* out,
                                ActParamT1Src* rec, u8 initFlag, u32 gate);
 u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
                   u32 gate) {
@@ -688,7 +688,7 @@ u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
         }
         // Retail re-reads the entry for the walk call (the byte store
         // above blocks CSE of the load, but the slot address stays live).
-        if (func_80054438(data, reinterpret_cast<ActParamT1Src*>(*entry),
+        if (evalParamRecord(data, reinterpret_cast<ActParamT1Src*>(*entry),
                           1, 0) != 0) {
             data->mFloat330 = lbl_eu_80665F80;
             data->mFloat334 = lbl_eu_80665F80;
@@ -715,7 +715,7 @@ u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
         res = 0;
     foundB:
         data->mField314 = res;
-        func_80054614(data, out, rec, data->mByte216, gate);
+        evalParamChain(data, out, rec, data->mByte216, gate);
         data->mFloat330 = lbl_eu_80665F80;
         data->mFloat334 = lbl_eu_80665F80;
         data->mField338 = 0;
@@ -726,7 +726,7 @@ u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
         data->mA268 = data->mA26C;
         data->mA26C = (u32)rec->mPtr08;
     }
-    if (func_80054438(data, reinterpret_cast<ActParamT1Src*>(*entry), 0,
+    if (evalParamRecord(data, reinterpret_cast<ActParamT1Src*>(*entry), 0,
                       0) != 0) {
         data->mA2B0 = lbl_eu_80665F80;
         data->mFloat2B4 = lbl_eu_80665F80;
@@ -750,17 +750,17 @@ u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
     res = 0;
 foundA:
     data->mA294 = res;
-    func_80054614(data, out, rec, data->mByte216, gate);
+    evalParamChain(data, out, rec, data->mByte216, gate);
     data->mA2B0 = lbl_eu_80665F80;
     data->mFloat2B4 = lbl_eu_80665F80;
     data->mA2B8 = 0;
     return 0;
 }
 
-// Retail-shaped stamp variant used by func_80054438: loads the target's
+// Retail-shaped stamp variant used by evalParamRecord: loads the target's
 // halfword before the scan, walks the node array through a running cursor,
 // and derives the 0x8000 flag from a neg/or/srawi boolean of the scan index.
-// Open-item packet (func_80054438 @ best 63 mismatches = 50 structural + 13
+// Open-item packet (evalParamRecord @ best 63 mismatches = 50 structural + 13
 // reg_swap, size-exact 476B, 5 reloc-drift sites in the lis/stw/addi window):
 // - Tried & ruled out this session: off-load hoisted above the global store
 //   (scheduler still swaps stw/addi-r29); goto check/body/advance shared-tail
@@ -815,7 +815,7 @@ foundA:
             (selfP)->mField258 = 0;                                            \
     } while (0)
 
-int func_80054438(CActParamData* self, void* data, int sel, u32 gate) {
+int evalParamRecord(CActParamData* self, void* data, int sel, u32 gate) {
     // sel picks which sub-object receives the record walk.
     u8* sub;
     if (sel != 0) {
@@ -842,8 +842,8 @@ int func_80054438(CActParamData* self, void* data, int sel, u32 gate) {
     }
     return 0;
 }
-extern "C" void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
-// Open-item packet (func_80054614 @ ~92%, size-exact 0x1c0, no reloc drift):
+extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member);
+// Open-item packet (evalParamChain @ ~92%, size-exact 0x1c0, no reloc drift):
 // - Fixed this session: proper types (CActParamData* / ActParamT1Src* params,
 //   struct field access instead of raw u8* offsets) cut structural 112 -> 2.
 // - Residual (35 = 33 reg_swap + 2 structural):
@@ -863,7 +863,7 @@ extern "C" void func_80054D3C(CActParamData* self, ActParamD3CMember* member);
 // - Confirmed semantics: active==0 (NOT !=0) gates the bit10 sub-select;
 //   retail fail blocks are DUPLICATED per guard (two separate early-return
 //   guards, not one shared tail); sub uses li0/tests/li1 form, not ternary.
-extern "C" int func_80054614(CActParamData* data, u32* out,
+extern "C" int evalParamChain(CActParamData* data, u32* out,
                                ActParamT1Src* rec, u8 initFlag, u32 gate) {
     if (data->mByte216 == 0) {
         data->mByte216 = initFlag;
@@ -889,7 +889,7 @@ extern "C" int func_80054614(CActParamData* data, u32* out,
         sub = 1;
     }
     int result;
-    if (func_80054438(data, rec, sub, 1) != 0) {
+    if (evalParamRecord(data, rec, sub, 1) != 0) {
         if (sub != 0) {
             data->mFloat330 = lbl_eu_80665F80;
             data->mFloat334 = lbl_eu_80665F80;
@@ -903,9 +903,9 @@ extern "C" int func_80054614(CActParamData* data, u32* out,
         result = 0;
     } else if (sub != 0) {
         // Sub-object B pass: a successful walk arms the byte214 flag.
-        func_80054D3C(data, reinterpret_cast<ActParamD3CMember*>(
+        walkParamRecords(data, reinterpret_cast<ActParamD3CMember*>(
                                 data->getResetBlock2E0()));
-        int ret = (int)(intptr_t)func_800547D4(
+        int ret = (int)(intptr_t)initParamBlock(
             reinterpret_cast<ActParamT1Host*>(data),
             reinterpret_cast<ActParamT1Dst*>(data->getResetBlock2E0()), rec);
         *out = (u32)ret;
@@ -915,12 +915,12 @@ extern "C" int func_80054614(CActParamData* data, u32* out,
         result = 1;
     } else {
         // Sub-object A pass; on miss also reset B unless flag bit11 suppresses it.
-        func_80054D3C(data, reinterpret_cast<ActParamD3CMember*>(&data->mA260));
+        walkParamRecords(data, reinterpret_cast<ActParamD3CMember*>(&data->mA260));
         if ((rec->mField0C & 0x800) == 0) {
-            func_80054D3C(data, reinterpret_cast<ActParamD3CMember*>(
+            walkParamRecords(data, reinterpret_cast<ActParamD3CMember*>(
                                     data->getResetBlock2E0()));
         }
-        int ret2 = (int)(intptr_t)func_800547D4(
+        int ret2 = (int)(intptr_t)initParamBlock(
             reinterpret_cast<ActParamT1Host*>(data),
             reinterpret_cast<ActParamT1Dst*>(&data->mA260), rec);
         *out = (u32)ret2;
@@ -1005,7 +1005,7 @@ void updateParamFloats(CActParamData* self, float arg1, float arg2) {
 // Full initializer for the parameter data object: resets every sub-object
 // field to its default constant, clears the short table to -1, zeroes the
 // inline record area, then optionally registers the first key/node pair.
-void func_80053B24(CActParamData* self, void* entry, void* obj, void* nodeA,
+void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA,
                    void* nodeB) {
     self->mEntry04 = entry;
     unlinkParamRecs(self, nodeA, nodeB);
@@ -1115,7 +1115,7 @@ void func_80053B24(CActParamData* self, void* entry, void* obj, void* nodeA,
     if (nodeA != 0 && nodeB != 0) {
         self->mNode0C = nodeB;
         self->mNode08 = reinterpret_cast<u8*>(nodeB) + 0x20;
-        func_800555EC(reinterpret_cast<CActParamLinkTable*>(self),
+        registerParamSlots(reinterpret_cast<CActParamLinkTable*>(self),
                       reinterpret_cast<CScnItemAnim*>(nodeA),
                       static_cast<ActParamStackNode*>(nodeB));
         u32 cnt = self->mCount210;
@@ -1154,7 +1154,7 @@ check:
         goto next;
     }
 }
-// Stamp variant for func_80054A94: preloads the target's own halfword,
+// Stamp variant for walkParamContext: preloads the target's own halfword,
 // scans the node array with a countdown counter plus a separate index
 // (mtctr/bdnz + addi shape), and sets the 0x8000 flag iff the scan index
 // is nonzero (-idx|idx)>>31 booleanize).
@@ -1190,7 +1190,7 @@ check:
 // Walk the record chain with handler id 9, then run the ctx gate callbacks.
 // Retail shares one type-check block between loop entry and back-edge (goto
 // form) and keeps the type halfword live across the check into the dispatch.
-int func_80054A94(CActParamData* self, void* ctx) {
+int walkParamContext(CActParamData* self, void* ctx) {
     ActParamCtx94* rec = static_cast<ActParamCtx94*>(ctx);
     void* rec14 = rec->mRec14;
     if (rec14 == 0 || self->mObj10 == 0) {
@@ -1198,7 +1198,7 @@ int func_80054A94(CActParamData* self, void* ctx) {
     }
     // sel arg recomputed inline at each use (retail emits subf/cntlzw/srwi
     // at every site).
-    if (func_80054438(self, rec14, ACTPARAM_CTX_SEL(self, ctx), 0) != 0) {
+    if (evalParamRecord(self, rec14, ACTPARAM_CTX_SEL(self, ctx), 0) != 0) {
         return 1;
     }
 
@@ -1244,34 +1244,34 @@ check:
     return 0;
 }
 extern "C" int checkParamBlks(void* self) {
-    int a = func_80054A94(static_cast<CActParamData*>(self),
+    int a = walkParamContext(static_cast<CActParamData*>(self),
                           reinterpret_cast<u8*>(self) + 0x2E0);
-    int b = func_80054A94(static_cast<CActParamData*>(self),
+    int b = walkParamContext(static_cast<CActParamData*>(self),
                           reinterpret_cast<u8*>(self) + 0x260);
     return (b | a) != 0;
 }
 // Walk the record chain hanging off member+0x6C. Dispatch by record type:
 // 9 = threshold-crossing event (gated on bit 9 of the stream mode word) that
 // fires vt+0x0C on the +0x24 callback object, 0xF = range-gated event firing
-// vt+0x18, 0x14 = forwarded to func_800550E8. Retail shares one type-check
+// vt+0x18, 0x14 = forwarded to evalParamTiming. Retail shares one type-check
 // block between loop entry and back-edge (goto form).
 //
-// Open-item packet (func_80054D3C @ best 200 mismatch / 155 structural /
+// Open-item packet (walkParamRecords @ best 200 mismatch / 155 structural /
 // 45 reg_swap, 864B vs 924B):
 // - Semantics fully reconstructed and verified against ASM (see handlers).
 // - Fixed this session: union-based 0x4330 u16->double idiom with named
 //   lbl_eu_80665F90 subtraction (plain (double)(u32) casts pool a TU-local
 //   cookie and add f27/f28 saves); notify14 RETURNS the replacement time
 //   (kept in f1 across the call) - fixing that dropped one callee-save fpr
-//   and aligned the frame at 96B; func_800550E8 stub must be extern "C" +
+//   and aligned the frame at 96B; evalParamTiming stub must be extern "C" +
 //   noinline or MWCC inlines it away and the bl reloc vanishes.
 // - Residual walls:
 //   (a) Callee-save color rotation, BOTH banks by exactly one position:
 //       gprs retail self=r28,member=r29,cursor=r31,const=r27 vs ours
 //       self=r27,member=r28,cursor=r29,const=r31; floats retail
 //       F80=f29,F78=f30,magic=f31 vs ours F80=f31,F78=f29,magic=f30.
-//       Same func_80056A98-family allocator wall as func_80057490/
-//       func_80054614 ("Param-save birth order"). Ruled out: explicit
+//       Same evalParamBase-family allocator wall as evalParamCb28/
+//       evalParamChain ("Param-save birth order"). Ruled out: explicit
 //       long-lived convHi variable (identical output - MWCC rematerializes
 //       lis), hoisting base out of the loop (needed, but does not fix
 //       rotation), disjunction forms (a<b||a==b) for cror sites (+40B
@@ -1286,11 +1286,11 @@ extern "C" int checkParamBlks(void* self) {
 //   (b) Conversion scratch lands at sp+16 vs retail sp+8 - an extra 8-byte
 //       spill slot sits below it in ours; source lever unknown.
 //   (c) ~92B size gap: retail is LARGER; likely per-site code retail
-//      duplicates that MWCC CSEs in ours. Call to func_800550E8 lands at
+//      duplicates that MWCC CSEs in ours. Call to evalParamTiming lands at
 //      +0x2dc vs retail +0x338 for the same reason (layout shift).
 // - Next experiments: none known at this opt level; revisit with the
 //   family-level allocator insight or finer-grained diff tooling.
-extern "C" __declspec(noinline) void func_80054D3C(CActParamData* self,
+extern "C" __declspec(noinline) void walkParamRecords(CActParamData* self,
                                         ActParamD3CMember* member) {
     // Magic high word for every u16->double conversion below; declared first
     // so its live range ranks ahead of the parameter spills.
@@ -1439,7 +1439,7 @@ bodyF:
     }
     goto advance;
 body14:
-    func_800550E8(self, member, reinterpret_cast<ActParamD3CTimeRec*>(rec), 1);
+    evalParamTiming(self, member, reinterpret_cast<ActParamD3CTimeRec*>(rec), 1);
     goto advance;
 advance:
     rec = reinterpret_cast<ActParamD3CRec*>(reinterpret_cast<u8*>(rec) +
@@ -1456,9 +1456,9 @@ check:
         goto body14;
     goto advance;
 }
-// walkParamBlkB: r4 = this+0x2E0, tail-branch to func_80054D3C (retail addi r4,r3,0x2e0; b)
+// walkParamBlkB: r4 = this+0x2E0, tail-branch to walkParamRecords (retail addi r4,r3,0x2e0; b)
 void walkParamBlkB(void* self) {
-    func_80054D3C(
+    walkParamRecords(
         static_cast<CActParamData*>(self),
         reinterpret_cast<ActParamD3CMember*>(reinterpret_cast<u8*>(self) +
                                              0x2E0));
@@ -1468,14 +1468,14 @@ void walkParamBlkB(void* self) {
 // Former former pad pads removed - actAnimVt34/B4/C4/D4 now forward to CActParamAnim virtuals (see below).
 // Retail calls this out-of-line under an unmangled symbol; keep the stub
 // opaque so callers emit the bl.
-// func_800550E8: threshold-crossing dispatcher for the type-0x14 records.
+// evalParamTiming: threshold-crossing dispatcher for the type-0x14 records.
 // Phase A (gate == 0) converts the record's first time word and runs the
 // range/edge tests; phase B always runs with the second time word and can
 // additionally fire while the time is still past the +0x54 bound.
 // Firing invokes the callback object at self+0x24 (vt+0x24) with the entry
 // object and a phase selector; the function returns whether it fired.
 //
-// Open-item packet (func_800550E8 @ best 175 mismatch = 133 structural + 42
+// Open-item packet (evalParamTiming @ best 175 mismatch = 133 structural + 42
 // reg_swap, frame-aligned 32B, no extra callee saves):
 // - Fixed this session: proper typed signature (CActParamData* /
 //   ActParamD3CMember* / ActParamD3CTimeRec*), notify14 result ASSIGNED to
@@ -1497,7 +1497,7 @@ void walkParamBlkB(void* self) {
 //       ours CSEs the constant into a register across opaque calls.
 //   (c) ~100B size gap, retail larger; shared-tail shapes partially closed
 //       by goto noFire but branch-target offsets still shift downstream.
-__declspec(noinline) int func_800550E8(CActParamData* self,
+__declspec(noinline) int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate) {
     if (self->mField24 == 0) {
@@ -1505,7 +1505,7 @@ __declspec(noinline) int func_800550E8(CActParamData* self,
     }
     if (rec->mTime08 == 0 && rec->mTime0A == 0) {
         // No time data: choose between the two anim-side state queries.
-        if (func_8004B8F8(self->mEntry04, 0)) {
+        if (checkAnimDist((CActParamAnim*)self->mEntry04, 0)) {
             reinterpret_cast<ActParamCbViewSel24*>(self->mField24)->invoke24(
                 self->mEntry04, 0);
             return 1;
@@ -1628,13 +1628,13 @@ __declspec(noinline) int func_800550E8(CActParamData* self,
 noFire:
     return 0;
 }
-// us-80057a94: if (flags & 8) call func_800550E8(a, b, c, 0); always return 0.
+// us-80057a94: if (flags & 8) call evalParamTiming(a, b, c, 0); always return 0.
 // Goto-gate keeps the call block out-of-line with li r3, 0 on both paths.
 extern "C" int fireParamPhaseA(u32 flags, void* a, void* b, void* c) {
     if (flags & 8) goto call;
     return 0;
 call:
-    func_800550E8(static_cast<CActParamData*>(a),
+    evalParamTiming(static_cast<CActParamData*>(a),
                   reinterpret_cast<ActParamD3CMember*>(b),
                   reinterpret_cast<ActParamD3CTimeRec*>(c), 0);
     return 0;
@@ -1664,7 +1664,7 @@ unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream)
         rec = (CActParamRec*)((u8*)rec + rec->mOffset0);
     }
     // Tail call with both args pointing at the inline first record.
-    func_80055960(table, reinterpret_cast<ActParamStrRec*>(recBase),
+    linkParamNameRec(table, reinterpret_cast<ActParamStrRec*>(recBase),
                   reinterpret_cast<ActParamStrRec*>(recBase));
 }
 // Register a stream node's record chain into the table slots. Each type-0
@@ -1672,7 +1672,7 @@ unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream)
 // slot unless a type-2 record follows it. After the type-1 terminator, a
 // first-time registration re-runs the payload swap over the fresh chain.
 extern "C" __declspec(noinline) int
-func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node) {
+registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node) {
     if (node->mMode10 != 3) {
         return 0;
     }
@@ -1704,7 +1704,7 @@ func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* 
     if (node->mWord14 == 1) {
         node->mPtr08 = 0;
         node->mPtr0C = 0;
-        func_800557E8(reinterpret_cast<ActParamStack*>(table),
+        copyParamNameRec(reinterpret_cast<ActParamStack*>(table),
                       reinterpret_cast<ActParamStrRec*>(recBase),
                       reinterpret_cast<ActParamStrRec*>(recBase));
     }
@@ -1717,7 +1717,7 @@ func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* 
 // Push a node pair onto the stack slots, then splice b into the list after
 // the last node whose payload differs from b's.
 void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b) {
-    func_800555EC(reinterpret_cast<CActParamLinkTable*>(self), reinterpret_cast<CScnItemAnim*>(a), b);
+    registerParamSlots(reinterpret_cast<CActParamLinkTable*>(self), reinterpret_cast<CScnItemAnim*>(a), b);
     self->mSlots1D0[self->mCount210] = a;
     // Post-increment inside the subscript: one load feeds both the address
     // and the deferred count store-back.
@@ -1728,9 +1728,9 @@ void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode*
         ActParamStackNode* node = self->mNode0C;
         for (;;) {
             if (node != b) {
-                func_800557E8(self, reinterpret_cast<ActParamStrRec*>(&node->mBytes20),
+                copyParamNameRec(self, reinterpret_cast<ActParamStrRec*>(&node->mBytes20),
                               reinterpret_cast<ActParamStrRec*>(&b->mBytes20));
-                func_800557E8(self, reinterpret_cast<ActParamStrRec*>(&b->mBytes20),
+                copyParamNameRec(self, reinterpret_cast<ActParamStrRec*>(&b->mBytes20),
                               reinterpret_cast<ActParamStrRec*>(&node->mBytes20));
             }
             if (node->mPtr0C == 0) {
@@ -1744,7 +1744,7 @@ void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode*
 }
 // Unlink the node for `key` from the chain, splice the list back together,
 // then re-register every remaining stream. Returns 1 when the tag matches.
-// Open-item packet (func_80055B88 @ 122 mismatches = 96 structural + 26
+// Open-item packet (lookupParamByKey @ 122 mismatches = 96 structural + 26
 // reg_swap, size 568 vs 560, +8B):
 // - Fixed this session: retail only consumes the `key` arg (3rd param dead);
 //   s32-countdown for-loops reproduce the retail mtctr/bdnz+guard shape for
@@ -1773,7 +1773,7 @@ void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode*
 //   count (r0 assignment correlates with never-dereferenced values); or
 //   locate the +8B pair (all front-section instruction counts verified
 //   equal; bloat sits between the walk loop and the splice call block).
-int func_80055B88(CActParamData* self, void* key, u32 /*tag*/) {
+int lookupParamByKey(CActParamData* self, void* key, u32 /*tag*/) {
     // NOTE: retail only ever consumes the `key` argument (it doubles as the
     // stream tag); the third parameter is dead.
     ActParamNode94* head = static_cast<ActParamNode94*>(self->mNode0C);
@@ -1841,10 +1841,10 @@ splice:
     ActParamNode94* it = static_cast<ActParamNode94*>(self->mNode0C);
     while (it != 0) {
         if (it != node) {
-            func_80055960(reinterpret_cast<CActParamLinkTable*>(self),
+            linkParamNameRec(reinterpret_cast<CActParamLinkTable*>(self),
                           reinterpret_cast<ActParamStrRec*>(&it->mBytes20),
                           reinterpret_cast<ActParamStrRec*>(&node->mBytes20));
-            func_80055960(reinterpret_cast<CActParamLinkTable*>(self),
+            linkParamNameRec(reinterpret_cast<CActParamLinkTable*>(self),
                           reinterpret_cast<ActParamStrRec*>(&node->mBytes20),
                           reinterpret_cast<ActParamStrRec*>(&it->mBytes20));
         }
@@ -1945,7 +1945,7 @@ extern "C" void clearParamShadow(void* data) {
     self->mField34C = 0;
     self->mFloat350 = defaultValue;
 }
-extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnimView*)self)->func_80050890(a, 0x12); }
+extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x12); }
 // Save the SubObjA flag/float and SubObjB tag/float into their shadow slots.
 void saveParamShadow(CActParamData* self) {
     self->mField2CC = self->mField274;
@@ -2072,12 +2072,12 @@ int copyS16To7C(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDat
     return 0;
 }
 // ============================================================
-// us-80057530: func_80056EC8
-// Bit-3-gated threshold check (func_80056A98 variant): the range test here
+// us-80057530: evalParamCb18
+// Bit-3-gated threshold check (evalParamBase variant): the range test here
 // CLEARS the fire flag; a fired callback invokes the cb object's vt+0x18
 // with the data object and the source record.
 // ============================================================
-int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamCb18(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -2146,12 +2146,12 @@ invoke:
 }
 
 // ============================================================
-// us-800576ec: func_80057084
-// Bit-3-gated threshold check (func_80056A98 variant): on fire it does not
+// us-800576ec: applyParamMask
+// Bit-3-gated threshold check (evalParamBase variant): on fire it does not
 // invoke a callback object; instead the mask word at src+0x0C is OR-ed into
 // (byte src+0x0A nonzero) or ANDC-ed out of the flag word at vals+0x00.
 // ============================================================
-int func_80057084(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int applyParamMask(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -2293,8 +2293,8 @@ int copyFltByte28(u32 flags, void* unused, CActParamCopyDst2830* dst, const CAct
     dst->mByte30 = src->mByte0C;
     return 0;
 }
-// us-80057af8: func_80057490
-// Bit-3-gated threshold check (func_80056A98 variant): the vt+0x14 time
+// us-80057af8: evalParamCb28
+// Bit-3-gated threshold check (evalParamBase variant): the vt+0x14 time
 // callback fires when t==0 and RETURNS the replacement time value (kept in
 // f1 across the call); on fire the cb object's vt+0x28 receives obj04, the
 // src mask word, two vals words, and getAnimTick(obj04) evaluated as the
@@ -2302,15 +2302,15 @@ int copyFltByte28(u32 flags, void* unused, CActParamCopyDst2830* dst, const CAct
 //
 // Plateau packet (best 22 mismatch / 6 structural / 16 reg-swap, size PASS
 // 452B=452B, relocs clean 7=7): semantics fully reconstructed; the residual
-// is the func_80056A98-family conversion-block wall shared with
-// func_800568E8 (21 mism there) - MWCC assigns the 0x4330-magic f1/f2 pair
+// is the evalParamBase-family conversion-block wall shared with
+// evalParamByte (21 mism there) - MWCC assigns the 0x4330-magic f1/f2 pair
 // and the fire/pass/edge int temps (r4/r5/r6/r0) one position rotated vs
 // retail. Tried & ruled out this session: && bools (bool-normalize or-copies),
 // nested ifs, per-block inner bool copied into pass, float t (adds frsp),
 // interleaved named-const load (fixed lfd order; fsub-vs-fsubs remains),
 // discarded-result notify14 (forces f31 spill). Next experiments: none known
 // at this opt level; revisit only with a family-level allocator insight.
-int func_80057490(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     int fire;
     if ((flags & 8) == 0) {
         return 0;
@@ -2397,14 +2397,14 @@ invoke:
 ret:
     return 0;
 }
-// us-80057f04: func_8005789C
-// Bit-3-gated threshold check (func_80056EC8 variant) additionally gated on
+// us-80057f04: evalParamTimed
+// Bit-3-gated threshold check (evalParamCb18 variant) additionally gated on
 // vals+0x14: on fire it calls the callback object held at obj04+0x3a0 with a
 // pointer to the src mask word (src+0x0C) and the normalized src byte flag.
 //
 // Open-item packet (best 68 mismatch / 57 structural / 440B vs 456B,
 // reloc drift 5): semantics fully reconstructed. Residual shares the
-// func_80056A98-family conversion-block wall (see func_80057490 packet):
+// evalParamBase-family conversion-block wall (see evalParamCb28 packet):
 // MWCC assigns the 0x4330-magic f1/f2 pair and the fire/pass/edge int temps
 // one position rotated vs retail.
 // Session findings: two separate early-return ifs made MWCC DROP the
@@ -2415,7 +2415,7 @@ ret:
 // the named-const subtraction forces lbl_eu_80665F90 but adds frsp+fsub.
 // Ruled out: && bool forms (+16B), union composite shared with callback arg
 // (arg is &src+0x0C), cvt.w[1]-sourced cast (duplicate buffer).
-int func_8005789C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamTimed(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         // Flags-gate failure keeps its own inline zero-return.
         return 0;
@@ -2488,17 +2488,17 @@ retzero:
     return 0;
 }
 
-// us-80058344: func_80057CDC
+// us-80058344: initParamStatics
 // One-time initialization of the two global handler dispatch tables used by
 // the record-chain walkers. Unimplemented slot ranges default to the generic
 // handlers actParamZero3 (table1) / actParamZero0 (table2).
 // Defined further down in this TU.
-int func_80056A98(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
-int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
-int func_80057280(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
-int func_800568E8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+int evalParamBase(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
+int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src);
 
-void CActParamData::func_80057CDC() {
+void CActParamData::initParamStatics() {
     ActParamTbl1Fn* t1 = (ActParamTbl1Fn*)lbl_eu_80570788;
     t1[0] = actParamZero1;
     t1[1] = actParamZero2;
@@ -2509,17 +2509,17 @@ void CActParamData::func_80057CDC() {
     t1[6] = (ActParamTbl1Fn)copyWord20Src;
     t1[7] = (ActParamTbl1Fn)copyParamFlt24;
     t1[8] = (ActParamTbl1Fn)copyWord1CSrc;
-    t1[9] = (ActParamTbl1Fn)func_800568E8;
-    t1[10] = (ActParamTbl1Fn)func_80056A98;
+    t1[9] = (ActParamTbl1Fn)evalParamByte;
+    t1[10] = (ActParamTbl1Fn)evalParamBase;
     t1[11] = (ActParamTbl1Fn)copyByteTo4C;
     t1[12] = (ActParamTbl1Fn)copyFltByte28;
-    t1[13] = (ActParamTbl1Fn)func_80056D00;
+    t1[13] = (ActParamTbl1Fn)evalParamCb0C;
     t1[14] = (ActParamTbl1Fn)setParamWord18;
-    t1[15] = (ActParamTbl1Fn)func_80056EC8;
-    t1[16] = (ActParamTbl1Fn)func_80057084;
+    t1[15] = (ActParamTbl1Fn)evalParamCb18;
+    t1[16] = (ActParamTbl1Fn)applyParamMask;
     t1[17] = (ActParamTbl1Fn)copyWord08To20;
     t1[18] = (ActParamTbl1Fn)setParamWord74;
-    t1[19] = (ActParamTbl1Fn)func_80057280;
+    t1[19] = (ActParamTbl1Fn)evalParamCb14;
     t1[20] = (ActParamTbl1Fn)fireParamPhaseA;
 
     ActParamTbl19Fn* t2 = (ActParamTbl19Fn*)lbl_eu_805705F0;
@@ -2639,13 +2639,13 @@ convert:
 }
 
 // ============================================================
-// us-80058208: func_80057BA0
+// us-80058208: dispatchParamTable
 // Range test against the packed halfword pair at c+0x28/0x2A, then
 // dispatch through lbl_eu_805705F0[(u16)lo - 0x2A] with
 // (a->mField10, c->mField24, hi). Semantics verified against retail asm;
 // byte-match of the conversion blocks still open (see attempts.jsonl).
 // ============================================================
-int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c) {
+int dispatchParamTable(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c) {
     if ((flags & 2) == 0) {
         return 0;
     }
@@ -2687,8 +2687,8 @@ dispatch:
                                                packed >> 16)
                ? 1
                : 0;
-}// us-80057d24: func_80057A64
-// Window variant of func_80057BA0: bounds are the halfword pair at c+0x10 /
+}// us-80057d24: evalParamTableOp
+// Window variant of dispatchParamTable: bounds are the halfword pair at c+0x10 /
 // c+0x12, flag bit 0 gates, and the dispatch passes (vals->mField10,
 // c->mField0C, hi) into lbl_eu_805705F0[(u16)lo - 0x2A].
 struct ActParamT19ArgD {
@@ -2698,7 +2698,7 @@ struct ActParamT19ArgD {
     u16 mShort10;
     u16 mShort12;
 };
-int func_80057A64(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b,
+int evalParamTableOp(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b,
                   ActParamT19ArgD* c) {
     if ((flags & 1) == 0) {
         return 0;
@@ -2744,11 +2744,11 @@ dispatch:
                : 0;
 }
 // ============================================================
-// us-80054440: func_80053DE8
+// us-80054440: getParamFloatByName
 // Pick sub-object A (sel==0) or B; default to its +0x10 float, fall back
 // to the +0x18 float unless a name lookup at the linked ref matches.
 // ============================================================
-float func_80053DE8(CActParamData* self, int sel) {
+float getParamFloatByName(CActParamData* self, int sel) {
     // Per-field selection: retail evaluates the ternary at every access.
     float res = sel != 0 ? self->mFloat304 : self->mFloat284;
     s32 byte = sel != 0 ? self->mByte311 : self->mByte291;
@@ -2776,7 +2776,7 @@ float func_80053DE8(CActParamData* self, int sel) {
 }
 
 // ============================================================
-// us-80055fc8: func_80055960 / us-80055e50: func_800557E8
+// us-80055fc8: linkParamNameRec / us-80055e50: copyParamNameRec
 // Walk a record chain; for type-0x29 and type-6 records search `list`
 // (when the owner's gate word is set) for its end-of-chain sentinel and
 // stamp the index into the record; type-1 stops and reports the misses.
@@ -2785,7 +2785,7 @@ static inline ActParamStrRec* nextStrRec(ActParamStrRec* rec) {
     return reinterpret_cast<ActParamStrRec*>(reinterpret_cast<u8*>(rec) + rec->mOffset0);
 }
 
-int func_80055960(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRec* rec) {
+int linkParamNameRec(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRec* rec) {
     int count = 0;
     u32 idx = 0;
     for (;;) {
@@ -2846,7 +2846,7 @@ int func_80055960(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRe
     }
 }
 
-int func_800557E8(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src) {
+int copyParamNameRec(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src) {
     int count = 0;
     for (;;) {
         u16 type = src->mType2;
@@ -2911,11 +2911,11 @@ int func_800557E8(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src)
 }
 
 // ============================================================
-// us-80057100: func_80056A98
+// us-80057100: evalParamBase
 // Bit-3-gated threshold check: notify the data object once, then decide
 // via range/edge tests whether to fire the host's callback.
 // ============================================================
-int func_80056A98(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamBase(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -2953,8 +2953,8 @@ invoke:
 }
 
 // ============================================================
-// func_80056D00 / func_80057280 / func_800568E8 / func_80057670
-// Same body as func_80056A98; only the final callback differs:
+// evalParamCb0C / evalParamCb14 / evalParamByte / evalParamFloat
+// Same body as evalParamBase; only the final callback differs:
 // vt+0x14 (with src), vt+0x1C (with src), vt+0x0C (two bytes from src),
 // and vt+0x20 (with src, gated on vals+0x14 being set).
 // ============================================================
@@ -2962,7 +2962,7 @@ invoke:
 // CSE'd value in a volatile FP register like retail.
 #define actSrc5Time(s) ((float)(s)->mShort08)
 
-int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -3022,7 +3022,7 @@ int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     return 0;
 }
 
-int func_80057280(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -3075,7 +3075,7 @@ int func_80057280(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     return 0;
 }
 
-int func_800568E8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -3158,7 +3158,7 @@ invoke:
     return 0;
 }
 
-int func_80057670(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+int evalParamFloat(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
     if ((flags & 8) == 0) {
         return 0;
     }
@@ -3241,7 +3241,7 @@ zeroret:
 }
 
 // ============================================================
-// us-80054e3c: func_800547D4
+// us-80054e3c: initParamBlock
 // Initialize the destination block from defaults and the previous entry,
 // walk the record chain dispatching through lbl_eu_80570788, then locate
 // which host slot's node extent contains src.
@@ -3264,7 +3264,7 @@ extern "C" __declspec(noinline) u32 getAnimTick(ActParamData388* obj) {
     return *(const u32*)(p + 0x4B4);
 }
 
-extern "C" void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src) {
+extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src) {
     if (src->mPtr08 != 0) {
         dst->mField0C = reinterpret_cast<u32>(src->mPtr08);
     }

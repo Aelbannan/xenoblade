@@ -116,7 +116,7 @@ struct CSimpleEveTalkWin {
 // offsets and fields below are accessed from this one.
 
 // CTagProcessorSE view: vtable+0x14 is the message-setup call (retail word:
-// func_80125B58, same (src, a, b, c) arity as its free-function signature).
+// TagProcPreprocessMessage, same (src, a, b, c) arity as its free-function signature).
 // The retail ctor is C-ABI (__ct__CTagProcessorSE, no class-length mangling)
 // and the object is a raw 0x840-byte heap block, so this is a plain cast
 // view, never constructed here. Deriving from the real nw4r base puts Proc
@@ -168,7 +168,7 @@ struct CSimpleTalkFields {        // findObjectById(id) result data
 };
 
 // getFontInfo(1, layout) result view: vtable+0x24 returns the font handle
-// handed to func_8013676C (CDeviceFont/root-pane font binding).
+// handed to ApplyFontToTxtPanes (CDeviceFont/root-pane font binding).
 class CSimpleFontObj {
 public:
     virtual ~CSimpleFontObj();    // 0x00 (dtor at 0x08)
@@ -205,7 +205,7 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void func_80136400(const char* src, u16* dst, u32 destLen);
+void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 // arg1 is the singleton pointer left in r3 by the caller's flag test (retail
 // does not set r3 for the call).
 void eveTalkWinSetReuseText(CSimpleEveTalkWin* owner, u32 textId, u8* msgBuf);
@@ -223,10 +223,10 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32, nw4r::lyt::Layout*);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-int func_801286E0(void* tagProc, nw4r::lyt::Pane* pane);
-int func_80127FB4(void* tagProc, nw4r::lyt::Pane* pane);
+int TagProcPumpSEMessage(void* tagProc, nw4r::lyt::Pane* pane);
+int TagProcStepSEMessage(void* tagProc, nw4r::lyt::Pane* pane);
 int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);
-void func_801287BC(void* tagProc, nw4r::lyt::Pane* pane, int flag);
+void TagProcBuildOpenText(void* tagProc, nw4r::lyt::Pane* pane, int flag);
 }
 
 // C++-linkage import: retail symbol is the mangled findObjectById__Fi.

@@ -11,7 +11,7 @@ extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);
 extern "C" u32 CfRes_getAllocHandle();
-extern "C" int func_8013EB90(int v);
+extern "C" int UIWin_HasPendingUpdate(int v);
 
 // Retail data labels referenced by this unit. lbl_eu_80663E24 and
 // lbl_eu_80663E14 come from CfObjectMove.hpp.

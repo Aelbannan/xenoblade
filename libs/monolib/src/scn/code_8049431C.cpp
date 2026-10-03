@@ -11,7 +11,7 @@ extern "C" {
     extern void setZWriteMode__8CGXCacheFii(void* self, int, int);
     extern void setZCompareMD__8CGXCacheFii(void* self, int, int);
     extern void setAlphaBlend__8CGXCacheFv(void* self);
-    extern void func_8044A7F8__8CGXCacheFv(void* self, int, int, int, int, int);
+    extern void updateCmd1Words__8CGXCacheFv(void* self, int, int, int, int, int);
     extern void* cacheInstance__9CDeviceGX;
 }
 
@@ -63,7 +63,7 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
         setZWriteMode__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
         setZCompareMD__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
         setAlphaBlend__8CGXCacheFv(cacheInstance__9CDeviceGX);
-        func_8044A7F8__8CGXCacheFv(cacheInstance__9CDeviceGX, 1, 4, 5, 0, 0);
+        updateCmd1Words__8CGXCacheFv(cacheInstance__9CDeviceGX, 1, 4, 5, 0, 0);
         GXSetTexCopySrc((u16)x, (u16)y, (u16)rw, (u16)rh);
         GXSetTexCopyDst(w, h, GXGetTexObjFmt((GXTexObj*)self), p3);
         GXCopyTex((void*)self->mField20, p4);

@@ -5,11 +5,11 @@
 // C-linkage imports from sibling voice TUs (retail symbol names - keep
 // linkage/signatures verbatim).
 extern "C" {
-    int  func_802A3E88(CVS_THREAD* self);
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int  func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int  IsThreadVoiceActive(CVS_THREAD* self);
+    void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int  TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int  RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
 
     // Ring-buffer allocator from CCharVoiceMan.
     u8* CCharVoiceMan_AllocVoiceArena(int size);
@@ -94,7 +94,7 @@ extern f32 lbl_eu_80668CA4;
 // Randomly pick one idle voice handle from the voice-manager circular list,
 // excluding `exclude` (NULL when none available). Retail symbol is the plain
 // unmangled name, so keep C linkage.
-extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+extern "C" CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
 
 
 

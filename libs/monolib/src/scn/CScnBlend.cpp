@@ -33,7 +33,7 @@ extern "C" void func_80494F10(ml::CRect* rect, RectRegion* region,
                               ml::CCol4* col);
 extern "C" void func_80494D84(ml::CRect* rect, RectRegion* region);
 extern "C" void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
-extern "C" void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
+extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
                                            u32 c, u32 d, u32 e);
 extern "C" void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
 extern const f32 lbl_eu_8066AAEC;
@@ -183,7 +183,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
         if (!(ths->mFlags & 1)) {
             // Direct path: no texture, no texture matrix.
             setupLightVtxFormat(0, 0);
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(),
                                        ths->field_0x5C,
                                        ths->field_0x60, ths->field_0x64,
                                        ths->field_0x68, 0);
@@ -221,7 +221,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
             }
             TexObj_BlitViewRect(tex, (ths->mFlags >> 1) & 1, 0);
             setupLightVtxFormat(0, 1);
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(),
                                        ths->field_0x5C,
                                        ths->field_0x60,
                                        ths->field_0x64,

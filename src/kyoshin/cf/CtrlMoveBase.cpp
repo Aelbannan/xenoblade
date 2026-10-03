@@ -7,7 +7,7 @@
 // per-object runtime instance at +0x30 is lazily created through the game
 // manager's sub-object at +0x2F2C.
 
-// func_800D9354 has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
@@ -45,7 +45,7 @@ static inline void normalizeOrZero(ml::CVec3* v) {
 }
 
 // Move the horizontal velocity toward a target direction with the +0x3C
-// lerp factor, then export it back to the direction vector (func_800898D4
+// lerp factor, then export it back to the direction vector (moveBaseLerp
 // shape: y is left untouched).
 static inline void lerpVel(CCtrlMoveBase* self, ml::CVec3* dir) {
     self->mVelocity.x = self->mFloatParam2 * (dir->x - self->mVelocity.x) + self->mVelocity.x;
@@ -80,9 +80,9 @@ CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
 }
 
 // ============================================================================
-// func_80088974 - main per-frame move update (0x734 bytes)
+// moveBaseUpdate - main per-frame move update (0x734 bytes)
 // ============================================================================
-int func_80088974(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
+int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                   int flagA, int flagB) {
     // Declared up front so MWCC assigns the lazy-init locals the low
     // callee-saved slots (retail reuses them for src/flagB after init).
@@ -230,9 +230,9 @@ int func_80088974(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
 }
 
 // ============================================================================
-// func_800890A8 - move-toward-target with instance setup + fallback (0x2F0)
+// moveBaseSeekTo - move-toward-target with instance setup + fallback (0x2F0)
 // ============================================================================
-int func_800890A8(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
+int moveBaseSeekTo(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag) {
     // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
     // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
@@ -321,13 +321,13 @@ ret1:
     return 1;
 fail:
     *outFlag = 0;
-    return func_80088974(self, out, src, flag, 0);
+    return moveBaseUpdate(self, out, src, flag, 0);
 }
 
 // ============================================================================
-// func_80089398 - horizontal direction toward a source point (0x210)
+// aimMoveTarget - horizontal direction toward a source point (0x210)
 // ============================================================================
-void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
+void aimMoveTarget(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
                    int flag) {
     ml::CVec3* pos = ((cf::CCtrlMoveData*)self->mpDataPtr)->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *src - *pos;
@@ -371,7 +371,7 @@ static inline ml::CVec3* getSyncDst(CCtrlMoveBase* self) {
 // Lazily sync velocity from the entity position (once, guarded by flag bit 0),
 // then notify through the +0x48 interface.
 // (volatile member keeps the dispatch load below the copy stores)
-void func_800895A8(CCtrlMoveBase* self) {
+void moveBaseSyncVel(CCtrlMoveBase* self) {
     u16 flags = self->mFlagsU16_1;
     if ((flags & 1) == 0) {
         self->mFlagsU16_1 = flags | 1;
@@ -380,7 +380,7 @@ void func_800895A8(CCtrlMoveBase* self) {
     }
 }
 
-// (lazy-init logic is duplicated inline in func_80089F68 / func_8008A01C)
+// (lazy-init logic is duplicated inline in moveBaseScnCmd / moveBaseQuery)
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::emptyMoveBaseHook)
 extern "C" void emptyMoveBaseHook() {}
@@ -393,7 +393,7 @@ void CCtrlMoveBase::unk08() {}
 // then clear it.
 extern "C" void* getGameSubManager__Q22cf13CfGameManagerFv(void);
 extern "C" void releaseNode__17UnkClass_8047CD0CFv(void*, void*);
-extern "C" void func_8008962C(void* self) {
+extern "C" void moveBaseUnlink(void* self) {
     if (*(u32*)((u8*)self + 0x30) != 0) {
         void* gm = getGameSubManager__Q22cf13CfGameManagerFv();
         if (gm && (u8*)gm + 0x2F2C) {
@@ -410,7 +410,7 @@ void maskMoveBaseFlags(void* self) {
 // Cache facing angle (atan2 of x/z scaled) and the passed-in scalar into the
 // move data block. mpDataPtr is re-read per store, matching the two retail
 // loads at +0x34.
-void func_80089694(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
+void setMoveFacing(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
     ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x0C =
         nw4r::math::Atan2FIdx(vec->x, vec->z) * lbl_eu_806665AC;
     ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x14 = speed;
@@ -418,10 +418,10 @@ void func_80089694(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
 
 // Move toward src: direction = normalized(src - entityPos), then lerp the
 // horizontal velocity toward it and re-export/re-normalize.
-// Uses the same idiom that leaves func_800898D4 reg-swap-only: 0.0f literals
+// Uses the same idiom that leaves moveBaseLerp reg-swap-only: 0.0f literals
 // for the component guards (MWCC lowers them to the sda21 A0 load) and a
 // volatile read of lbl_eu_806665A0 for the length test.
-void func_800896F4(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
+void moveBaseChase(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
     ml::CVec3* pos = getPos(self);
     *dst = *src - *pos;
     if (dst->x != 0.0f || dst->y != 0.0f || dst->z != 0.0f) {
@@ -448,7 +448,7 @@ void func_800896F4(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
 // Zero-constant checks reference lbl_eu_806665A0 directly (retail reloads it
 // through sda21 at each site rather than caching it in a register).
 // Tail shape: zero-length guard + normalize-or-snap.
-void func_800898D4(CCtrlMoveBase* self, ml::CVec3* dir) {
+void moveBaseLerp(CCtrlMoveBase* self, ml::CVec3* dir) {
     self->mVelocity.x += self->mFloatParam2 * (dir->x - self->mVelocity.x);
     self->mVelocity.z += self->mFloatParam2 * (dir->z - self->mVelocity.z);
     *dir = self->mVelocity;
@@ -484,7 +484,7 @@ void writeMoveSlotFloat(void* obj, float val) {
 // Move request with a short cache: for up to 30 frames after a successful
 // pathing update, replay the cached direction from field_0x24 instead of
 // querying the path instance again.
-int func_800899C0(CCtrlMoveBase* self, ml::CVec3* out, void* arg, f32 val) {
+int cachedMoveReq(CCtrlMoveBase* self, ml::CVec3* out, void* arg, f32 val) {
     // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
     // one shared "ok = 1" site and two separate "ok = 0" sites (retail
     // layout); both hard failures and the failed pathing call share the
@@ -547,9 +547,9 @@ ret0:
 }
 
 // ============================================================================
-// func_80089B24 - wobbly move update: timer re-roll + angle jitter (0x364)
+// moveBaseSway - wobbly move update: timer re-roll + angle jitter (0x364)
 // ============================================================================
-int func_80089B24(CCtrlMoveBase* self, ml::CVec3* out) {
+int moveBaseSway(CCtrlMoveBase* self, ml::CVec3* out) {
     // Declared up front so MWCC assigns it the low stack slot (retail
     // layout: up@0x14, goal@0x20, tmp@0x2c).
     ml::CVec3 up;
@@ -660,7 +660,7 @@ haveOk:
 
 // Path-follow request through the lazily created instance; passes both extra
 // arguments straight through to the pathing helper.
-int func_80089E88(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
+int moveBaseRoute(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
     // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
     // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
     // layout). Only the two hard failures clear ok.
@@ -707,7 +707,7 @@ ret0:
     return 0;
 }
 
-int func_80089F68(CCtrlMoveBase* self) {
+int moveBaseScnCmd(CCtrlMoveBase* self) {
     // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
     // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
     // layout). Only the two hard failures clear ok.
@@ -746,7 +746,7 @@ haveOk:
     return 0;
 }
 
-int func_8008A01C(CCtrlMoveBase* self, ml::CVec3* out) {
+int moveBaseQuery(CCtrlMoveBase* self, ml::CVec3* out) {
     // Lazy-init +0x30, written as an explicit branch lattice so MWCC keeps
     // one shared "ok = 1" site and two separate "ok = 0" blocks (retail
     // layout). Only the two hard failures clear ok.

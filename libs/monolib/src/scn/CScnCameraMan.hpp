@@ -92,9 +92,9 @@ struct CScnItemCameraCamTail {
 };
 
 // Camera-item helpers defined in CScnItemCamera.cpp.
-void func_8049EB60(CScnItemCamera* self);
-void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v);
-void func_8049F824(CScnItemCamera* self, f32 dist);
+void ScnCamDepthUp(CScnItemCamera* self);
+void ScnCamPlaceAt(CScnItemCamera* self, const ml::CVec3* v);
+void ScnCamSetDist(CScnItemCamera* self, f32 dist);
 
 // Work event payload for WorkEvent3 (event id 0x15 = camera select).
 struct CScnCameraEvent {
@@ -185,7 +185,7 @@ class CScnItemCamera;
 struct CScnCameraItemHost;
 // Camera-manager factory: creates camera `idx` in the pool (defined in
 // CScnItemCamera.cpp).
-CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int idx);
+CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int idx);
 
 // Retail CScriptCode line parser. The retail symbol is the Fv (no-arg) mangled
 // name but the function takes (self, pData, dataSize) - CScriptCode.cpp defines

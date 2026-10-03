@@ -39,8 +39,8 @@ void setupLightTevColor(int a, int b, int c);
 void setupLightTevAlpha(int a, int b, int c);
 void setupLightVtxFormat(int a, int b);
 void func_80494F10(ml::CRect* rect, ml::CCol4* p2, ml::CCol4* p3);
-void func_8044A578__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
-void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 a, u32 b, u32 c, u32 d, u32 e);
+void updateCmd2Color__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
+void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b, u32 c, u32 d, u32 e);
 void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
 void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
 }
@@ -231,7 +231,7 @@ extern "C" void func_8049A128(CScnBloom* self) {
     if (self->mTexture != 0) {
         ml::CCol4* cacheColor = CDeviceGX::getCacheInstance()->getClearColor();
         self->mClearColor = *cacheColor;
-        func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &ml::CCol4::black, 0);
+        updateCmd2Color__8CGXCacheFv(CDeviceGX::getCacheInstance(), &ml::CCol4::black, 0);
         TexObj_BlitRect(self->mTexture, &rect, 0, 1);
     }
 }
@@ -244,7 +244,7 @@ extern "C" void func_8049A128(CScnBloom* self) {
 // ============================================================================
 extern "C" void func_8049A850(CScnBloom* self, GXTexObj* tex, ml::CRect* rect) {
     CGXCache* cache = CDeviceGX::getCacheInstance();
-    func_8044A7F8__8CGXCacheFv(cache, self->mViewportX, self->mViewportY, self->mViewportW, self->mViewportH, 0);
+    updateCmd1Words__8CGXCacheFv(cache, self->mViewportX, self->mViewportY, self->mViewportW, self->mViewportH, 0);
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     if (self->mUnk34 != 3) {
@@ -457,7 +457,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     cache->setZCompareMD(0, 0);
     cache->setZWriteMode(0, 0);
     setAlphaBlend__8CGXCacheFv(cache, 0, 0);
-    func_8044A7F8__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
+    updateCmd1Words__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
     GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
     GXSetCurrentMtx(0);
     GXLoadTexObj(tex, GX_TEXMAP0);
@@ -482,11 +482,11 @@ extern "C" void func_8049A318(CScnBloom* self) {
     GXSetNumTevStages(1);
     setupLightTevColor(0, 2, 0);
     setupLightTevAlpha(0, 0, 0);
-    func_8044A7F8__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
+    updateCmd1Words__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
     GXInitTexObjFilter(self->mTexture, (GXTexFilter)1, (GXTexFilter)1);
     GXLoadTexObj(self->mTexture, GX_TEXMAP0);
     func_80494F10(&rect, &col2, &col3);
-    func_8044A7F8__8CGXCacheFv(cache, self->mUnk34, self->mUnk38, self->mUnk3C,
+    updateCmd1Words__8CGXCacheFv(cache, self->mUnk34, self->mUnk38, self->mUnk3C,
                                self->mUnk40, 0);
 
     ml::CCol4 col;
@@ -509,7 +509,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     TexMan_ReleaseArg_02D8(texWork, self->mTexture);
     TexMan_SnapCursor_0314(texWork);
     self->mTexture = NULL;
-    func_8044A578__8CGXCacheFv(cache, &self->mClearColor, 0);
+    updateCmd2Color__8CGXCacheFv(cache, &self->mClearColor, 0);
 }
 
 // ============================================================================
@@ -568,7 +568,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                         (GXTevColorArg)0xc, (GXTevColorArg)0xf);
     }
 
-    func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 0, 2, 0, 0);
+    updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 0, 2, 0, 0);
     GXInitTexObjFilter(tex, (GXTexFilter)1, (GXTexFilter)1);
     GXLoadTexObj(tex, GX_TEXMAP0);
 
@@ -603,7 +603,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
 
         if (count == 0) {
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
                                        0, 0);
             GXInitTexObjFilter(*pBuf, (GXTexFilter)self->mUnk2C,
                                (GXTexFilter)self->mUnk30);
@@ -612,7 +612,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                           &ml::CCol4(one, one, one, scale));
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
         } else {
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 4, 5,
                                        0, 0);
             // Draw the previous capture back over the tile before sampling.
             GXInitTexObjFilter(pBuf[-1], (GXTexFilter)self->mUnk2C,
@@ -622,7 +622,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                           &ml::CCol4(one, one, one, scale));
         }
 
-        func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1, 0, 0);
+        updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1, 0, 0);
         GXInitTexObjFilter(*pBuf, (GXTexFilter)self->mUnk2C,
                            (GXTexFilter)self->mUnk30);
         GXLoadTexObj(*pBuf, GX_TEXMAP0);
@@ -636,17 +636,17 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
             func_80494F10(&rc, &ml::CCol4(-sx, -sy, one - sx, one - sy), &cb2);
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c1(sx, -sy, one + sx, one - sy);
             func_80494F10(&rc, &c1, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c2(-sx, sy, one - sx, one + sy);
             func_80494F10(&rc, &c2, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
-            func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
+            updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c3(sx, sy, one + sx, one + sy);
             func_80494F10(&rc, &c3, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
@@ -737,10 +737,10 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
             rc.mSize.y = tileH;
             u32 count = func_80499810(self, texWork, bufs, 10, &rc, 1);
 
-            func_8044A7F8__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
+            updateCmd1Words__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
             GXLoadTexObj(tex, GX_TEXMAP0);
             func_80494F10(&rect, &col2, &col3);
-            func_8044A7F8__8CGXCacheFv(cache, self->mUnk34, self->mUnk38,
+            updateCmd1Words__8CGXCacheFv(cache, self->mUnk34, self->mUnk38,
                                        self->mUnk3C, self->mUnk40, 0);
 
             // Blur step size: color alpha divided by the extracted-texture

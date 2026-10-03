@@ -632,7 +632,7 @@ void func_80093F28(cf::CtrlNpc* self) {
         }
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 0) != 0)
-            func_8013D1E8(NpcCharView(self->field_28)->field_74);
+            UIWin_ShowTalkWindow(NpcCharView(self->field_28)->field_74);
     }
 }
 
@@ -1077,7 +1077,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         const ml::CVec3* tb =
             reinterpret_cast<const ml::CVec3*>(&self->field_E0[i + 1]);
         ml::CVec3 d = *tb - *ta;
-        lens[i] = func_800A3DF8(d);
+        lens[i] = VecMath_LengthXZ(d);
         total += lens[i];
     }
 
@@ -1186,7 +1186,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             } else if (evt == 0xa && NpcCharView(ch)->field_8C == 0x2fa) {
                 pt.y = pt.y + lbl_eu_806666E0;
                 ml::CVec3 out = pt;
-                func_800A72E0(&pt, &out, 0x4004A09, lbl_eu_806666E4,
+                VecMath_GroundProbeDual(&pt, &out, 0x4004A09, lbl_eu_806666E4,
                               lbl_eu_80666698);
                 reinterpret_cast<cf::CfObject*>(ch)->CfObject_syncMoveTarget(&out);
             } else {
@@ -1432,7 +1432,7 @@ int func_800964EC(cf::CtrlNpc* self) {
         f32 idx = nw4r::math::Atan2FIdx(v.x, vz);
         self->field_14 = target;
         self->field_0C = lbl_eu_806666AC * idx;
-        if (func_800A5038(posf, tgt,
+        if (VecMath_CircleOverlapXZ(posf, tgt,
                           self->field_D8, lbl_eu_8066670C) == 0)
             return 1;
     }

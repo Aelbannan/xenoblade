@@ -27,50 +27,50 @@ extern "C" u32 lbl_eu_8066AE30;   // .sdata2 float-const pool (CGXCache-owned)
 extern "C" u32 lbl_eu_80524408;   // .rodata RTTI name string (code_804B2FF0)
 extern "C" u32 lbl_eu_80524418;   // .rodata RTTI name string (code_804B2FF0)
 extern "C" u32 lbl_eu_80661C28;   // .data view-base object (CView-owned)
-extern "C" void func_804B2FF0();  // next-TU catalog stub
+extern "C" void ColiMoverUpdate();  // next-TU catalog stub
 
 // Forward declarations for the in-TU catalog functions referenced by the
 // dispatch tables below (definitions appear later in the file; all are
 // extern "C" so the emitted reloc names are the retail symbol names).
-extern "C" void func_804A6DC0(f32* out, const VEC3* pos, const struct CColiXformExtra804A70F8* off);
-extern "C" void func_804A6E20(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
-extern "C" void func_804A70F8(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
+extern "C" void ColiBuildXformTranslate(f32* out, const VEC3* pos, const struct CColiXformExtra804A70F8* off);
+extern "C" void ColiBuildXformRotateOff(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
+extern "C" void ColiBuildXformRotScaleOff(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
 extern "C" void ColiBuildAxisFrameMixed(CColiObject* self, CColiObject* src, CColiObject* other);
-extern "C" void func_804A73A0(f32* out, const struct CColiXformSrc* src);
-extern "C" void func_804A763C(f32* out, const struct CColiXformSrc* src);
+extern "C" void ColiBuildXformRotate(f32* out, const struct CColiXformSrc* src);
+extern "C" void ColiBuildXformRotScale(f32* out, const struct CColiXformSrc* src);
 extern "C" void func_804A7834(CColiObject* self, const CColiObject* other);
 extern "C" void ColiNoop(void);
-extern "C" int func_804A8850(CColiObject* self);
+extern "C" int ColiSweepSegmentSphere(CColiObject* self);
 extern "C" int ColiClassifyXfrmRadius(CColiObject* self);
-extern "C" int func_804A8CB0(CColiObject* self);
-extern "C" int func_804A98C4(CColiObject* self);
-extern "C" bool func_804AA870(CColiObject* self);
-extern "C" int func_804AAD90(CColiObject* self);
+extern "C" int ColiResolveContacts(CColiObject* self);
+extern "C" int ColiSweepSphereCylinder(CColiObject* self);
+extern "C" bool ColiTestSegmentCapsule(CColiObject* self);
+extern "C" int ColiSweepCapsulePair(CColiObject* self);
 extern "C" bool ColiTestSphereContains(CColiObject* self);
 extern "C" bool ColiTestCylinderContains(CColiObject* self);
-extern "C" bool func_804ABAF0(CColiObject* self);
+extern "C" bool ColiTestCapsule(CColiObject* self);
 extern "C" bool ColiTestPointInXfrmBox(CColiObject* self);
-extern "C" bool func_804ABCA4(CColiObject* self);
-extern "C" bool func_804ABD0C(CColiObject* self);
-extern "C" bool func_804ABDD4(CColiObject* self);
-extern "C" bool func_804ABE84(CColiObject* self);
-extern "C" bool func_804ABF08(CColiObject* self);
-extern "C" bool func_804AC020(CColiObject* self);
-extern "C" bool func_804AC198(CColiObject* self);
-extern "C" bool func_804AC3B0(CColiObject* self);
+extern "C" bool ColiTestSphereOverlap(CColiObject* self);
+extern "C" bool ColiTestCappedSphere(CColiObject* self);
+extern "C" bool ColiTestSpherePointPair(CColiObject* self);
+extern "C" bool ColiTestPartnerRows(CColiObject* self);
+extern "C" bool ColiTestSphereCone(CColiObject* self);
+extern "C" bool ColiTestCappedCone(CColiObject* self);
+extern "C" bool ColiTestDualPointCone(CColiObject* self);
+extern "C" bool ColiTestPartnerCone(CColiObject* self);
 extern "C" void ColiClipClampedSegment(CColiObject* self);
 extern "C" int ColiClipDualSegment(CColiObject* self);
 extern "C" void ColiClipSampledRows(struct CColiContactObj* self);
-extern "C" int func_804AF808(struct CColiContactObj* self, const VEC3* v, f32 f);
+extern "C" int ColiClipContactPoint(struct CColiContactObj* self, const VEC3* v, f32 f);
 extern "C" int ColiReturnZeroStub(CColiObject* self);
-extern "C" void func_804B24A4(CColiObject* self);
-extern "C" int func_804A7F50(CColiObject* self);
-extern "C" int func_804A8230(CColiObject* self);
+extern "C" void ColiAccumScaledVec(CColiObject* self);
+extern "C" int ColiSweepSphere(CColiObject* self);
+extern "C" int ColiSweepSphereSegment(CColiObject* self);
 extern "C" int ColiSweepPointPair(CColiObject* self);
-extern "C" int func_804AA504(CColiObject* self);
-extern "C" int func_804AAA98(CColiObject* self);
+extern "C" int ColiSweepClipSegment(CColiObject* self);
+extern "C" int ColiSweepCylinderClip(CColiObject* self);
 extern "C" int ColiClipPartnerBox(CColiObject* self);
-extern "C" int func_804AB538(CColiObject* self);
+extern "C" int ColiProcessBoxTree(CColiObject* self);
 extern "C" int ColiClipCentreRadius(CColiObject* self);
 
 // .sdata 0x80663A90-0x80663AA8: RTTI locators {name, base-list} + the
@@ -81,12 +81,12 @@ extern "C" u32 lbl_eu_80663A98[2];
 extern "C" u32 lbl_eu_80663AA0[2];
 extern "C" u32 lbl_eu_8056F38C[3];
 extern "C" u32 lbl_eu_8056F3B4[3];
-extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&func_804A6DC0, (u32)&func_804A6E20, (u32)&func_804A70F8, (u32)&ColiBuildAxisFrameMixed, (u32)&func_804A73A0, (u32)&func_804A763C, (u32)&func_804A7834, 0x00000000 };
-extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&func_804A7F50, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8230, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8850, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8CB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804A98C4, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&func_804AA504, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8CB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804AA870, 0x00000000, 0xFFFFFFFF, (u32)&func_804AAA98, 0x00000000, 0xFFFFFFFF, (u32)&func_804AAD90, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&func_804AB538, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABAF0, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABCA4, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABD0C, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABDD4, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABE84, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABF08, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC020, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC198, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC3B0, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
-extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&lbl_eu_80663A98, 0x00000000, (u32)&func_804B24A4 };
+extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
+extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
+extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&lbl_eu_80663A98, 0x00000000, (u32)&ColiAccumScaledVec };
 extern "C" u32 lbl_eu_8056F38C[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056F398[0x4] = { (u32)&lbl_eu_80661C28, 0x00000000, (u32)&ColiNoop, 0x00000000 };
-extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&lbl_eu_80663AA0, 0x00000000, (u32)&func_804B2FF0 };
+extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&lbl_eu_80663AA0, 0x00000000, (u32)&ColiMoverUpdate };
 extern "C" u32 lbl_eu_8056F3B4[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
 extern "C" u32 lbl_eu_8056F3C0[0x5] = { 0x00040010, 0x000C0018, 0x00300008, 0x003C0014, 0x00180000 };
 extern "C" u32 lbl_eu_8056F3D4[0x5] = { 0x00140014, 0x001C001C, 0x00340034, 0x00740068, 0x00000000 };
@@ -106,17 +106,17 @@ extern "C" void __ct__CColiProc(CColiProcLocal* self);
 
 // SDA2 zero constant used to fill the axis-helper vectors (retail @sda21 reloc).
 extern const float lbl_eu_8066AE24;
-// SDA2 1.0f used for the rotation-matrix diagonal (func_804A763C / func_804A70F8).
+// SDA2 1.0f used for the rotation-matrix diagonal (ColiBuildXformRotScale / ColiBuildXformRotScaleOff).
 extern const float lbl_eu_8066AE20;
-// radians -> FIdx scale (128/pi) fed to SinFIdx/CosFIdx (func_804A763C / func_804A70F8).
+// radians -> FIdx scale (128/pi) fed to SinFIdx/CosFIdx (ColiBuildXformRotScale / ColiBuildXformRotScaleOff).
 extern const float lbl_eu_8066AE28;
-// ml::epsilon - plane-distance guard (func_804AD1E0 loop).
+// ml::epsilon - plane-distance guard (ColiVisitGroupMember loop).
 // nw4r FSqrt assert strings (retail .data, shared with other TUs).
 extern char lbl_eu_80526324[];
 extern char lbl_eu_80526300[];
 // SDA2 threshold/override constants (retail @sda21 relocs): 8066AE80 gates
 // the per-axis AABB move in ColiMoveAabbThreshold, 8066AE88 overwrites v.y in
-// func_804B24A4 when the flag byte is set. 8066AE40 scales the +0x60
+// ColiAccumScaledVec when the flag byte is set. 8066AE40 scales the +0x60
 // scalar in ColiInitScaledSpec; 8066AE8C/8066AE90 fill the axis block in
 // ColiSetAxisBlockInverse.
 extern const float lbl_eu_8066AE80;
@@ -125,17 +125,17 @@ extern const float lbl_eu_8066AE40;
 extern const float lbl_eu_8066AE8C;
 extern const float lbl_eu_8066AE90;
 extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
-extern const float lbl_eu_8066AE38;  // radius/angle gate scale (func_804A79B4)
-extern const float lbl_eu_8066AE60;  // FIdx->angle scale (func_804ABF08)
-extern const float lbl_eu_8066A1F8;  // pi in FIdx units (func_804ABF08 wrap bound)
-extern const float lbl_eu_8066A1FC;  // 2*pi in FIdx units (func_804ABF08 wrap step)
+extern const float lbl_eu_8066AE38;  // radius/angle gate scale (ColiInitAngleSpec)
+extern const float lbl_eu_8066AE60;  // FIdx->angle scale (ColiTestSphereCone)
+extern const float lbl_eu_8066A1F8;  // pi in FIdx units (ColiTestSphereCone wrap bound)
+extern const float lbl_eu_8066A1FC;  // 2*pi in FIdx units (ColiTestSphereCone wrap step)
 extern const float lbl_eu_8066AE78;  // large radius bound (sweep tests)
-extern const float lbl_eu_8066AE98;  // move-scale factor (func_804B1164)
-extern const float lbl_eu_8066AE9C;  // same-priority push weight (func_804B1164)
+extern const float lbl_eu_8066AE98;  // move-scale factor (ColiResolveNodeMove)
+extern const float lbl_eu_8066AE9C;  // same-priority push weight (ColiResolveNodeMove)
 extern const float lbl_eu_8066AEA0;  // reset value for the current-segment global
-extern const float lbl_eu_8066AE58;  // sphere test gate scale (func_804AA504)
-extern const float lbl_eu_8066AE54;  // normal scale constant (func_804AD8FC)
-extern const float lbl_eu_8066AE6C;  // |component| < thresh -> treat as 0 (func_804ADD3C)
+extern const float lbl_eu_8066AE58;  // sphere test gate scale (ColiSweepClipSegment)
+extern const float lbl_eu_8066AE54;  // normal scale constant (ColiCastSegmentSphere)
+extern const float lbl_eu_8066AE6C;  // |component| < thresh -> treat as 0 (ColiCastRayAabb)
 extern const double lbl_eu_8066AE48; // 0x4330000080000000 (s32->f32 magic)
 
 // s32 -> f32 through the shared signed magic double (lbl_eu_8066AE48,
@@ -174,17 +174,17 @@ static f32 f32FromS32_ae48_bl(s32 v) {
     return (f32)(c.d - lbl_eu_8066AE48);
 }
 #pragma pop
-extern const float lbl_eu_8066AE70;  // upper t bound init (func_804ADD3C)
-extern const float lbl_eu_8066AE74;  // lower t bound init (func_804ADD3C)
-extern const float lbl_eu_8066AE64;  // triangle half-space gate (func_804ACD9C)
-extern const float lbl_eu_8066AE5C;  // near-parallel determinant gate (func_804B028C)
-extern const float lbl_eu_8066AE68;  // exit-face reach init (func_804AD410)
+extern const float lbl_eu_8066AE70;  // upper t bound init (ColiCastRayAabb)
+extern const float lbl_eu_8066AE74;  // lower t bound init (ColiCastRayAabb)
+extern const float lbl_eu_8066AE64;  // triangle half-space gate (ColiSweepTriangle)
+extern const float lbl_eu_8066AE5C;  // near-parallel determinant gate (ColiClipStripRadius)
+extern const float lbl_eu_8066AE68;  // exit-face reach init (ColiSweepPointBox)
 
 // Data word written into the proc object's +0x08 slot at the start of the
-// sweep/contact helpers (func_804AF09C / func_804AE11C).
+// sweep/contact helpers (ColiSweepBoxContact / ColiSweepSphereBound).
 extern u32 lbl_eu_80663A90[2];
 
-// Current-segment global used by func_804B1DEC: the active segment point
+// Current-segment global used by ColiDispatchMoveSegment: the active segment point
 // (+0x38) and scalar (+0x3c), plus a flag byte (+0x40). The +0x3c slot is
 // also pointed at by the caller's object as its partner.
 struct CColiGlobal805D0A0 {
@@ -197,7 +197,7 @@ struct CColiGlobal805D0A0 {
 extern CColiGlobal805D0A0 lbl_eu_8065D0A0;
 
 // Registered-collision globals (sbss 0x65910..0x65938) written by
-// func_804A7E18 / ColiSetDispatchIndex: the current collision object plus its
+// ColiRegisterSubObjects / ColiSetDispatchIndex: the current collision object plus its
 // sub-objects. Plain global-scope externs so MWCC emits the exact @sda21
 // symbol names (namespace-scope declarations would be mangled).
 extern ml::coli::CColiObject* lbl_eu_80665910;
@@ -221,7 +221,7 @@ static inline VEC3* VEC3SubSched(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
     return pOut;
 }
 
-// Sweep-control record for func_804AB538: the +0x00 record count re-bases
+// Sweep-control record for ColiProcessBoxTree: the +0x00 record count re-bases
 // the 0x14-stride array (lbl_eu_80665924), +0x04 is the top record index
 // and +0x08 the member count sizing the visited-bitset memset.
 struct CColiSweepCtrl {
@@ -232,15 +232,15 @@ struct CColiSweepCtrl {
 extern CColiSweepCtrl* lbl_eu_80665934;
 
 // Visited-id bitset shared by the sweep/recursion helpers: each id marks
-// the sub-object as already processed (func_804AC9F4 / func_804AC624).
+// the sub-object as already processed (ColiTraverseRecordTree / ColiTraverseRecordRadius).
 extern u32 lbl_eu_8065CFA0[];
 
 /**
  * Collision object - layout recovered incrementally from retail access
  * patterns in this TU; unknown regions are kept as padding. field_0x00 is
  * the AABB corner pair + axis helpers; it is also read as u32 byte offsets
- * (func_804A7E18) and as a partner-object pointer (func_804ABCA4).
- * 0x04/0x08 are a kind/valid word pair (ColiSetAxisBlockInverse, func_804B1BDC);
+ * (ColiRegisterSubObjects) and as a partner-object pointer (ColiTestSphereOverlap).
+ * 0x04/0x08 are a kind/valid word pair (ColiSetAxisBlockInverse, ColiCheckStateGate);
  * 0x60/0x64 are scalars (ColiInitScaledSpec); 0x310/0x314 tail fields.
  */
 struct CColiObject {
@@ -253,7 +253,7 @@ struct CColiObject {
             u8 _0c[4];                   // 0x0c
             union {
                 u32 field_0x10;          // 0x10 sub-object byte offset
-                f32 field_0x10_f;        // 0x10 radius view (func_804ABCA4)
+                f32 field_0x10_f;        // 0x10 radius view (ColiTestSphereOverlap)
             };
             u8 _14[4];                   // 0x14
             u32 field_0x18;              // 0x18
@@ -293,10 +293,10 @@ struct CColiObject {
             f32 field_0x60;            // 0x60 (ColiInitScaledSpec: sdata2 const * f2)
             f32 field_0x64;            // 0x64 (ColiInitScaledSpec: f3)
             VEC3 field_0x68;           // 0x68..0x73 segment diff (y forced to 0)
-            VEC3 field_0x74;           // 0x74..0x7f (func_804AF09C / func_804AE11C gate point)
-            u32 field_0x80;            // 0x80 (func_804ACD9C hit counter)
-            u32 field_0x84;            // 0x84 saved point-list count (func_804A8CB0)
-            u32 field_0x88;            // 0x88 saved sweep-point count (func_804A8CB0)
+            VEC3 field_0x74;           // 0x74..0x7f (ColiSweepBoxContact / ColiSweepSphereBound gate point)
+            u32 field_0x80;            // 0x80 (ColiSweepTriangle hit counter)
+            u32 field_0x84;            // 0x84 saved point-list count (ColiResolveContacts)
+            u32 field_0x88;            // 0x88 saved sweep-point count (ColiResolveContacts)
             u32 field_0x8c;            // 0x8c
             union {
                 _VEC3 field_0x90[16];   // 0x90..0x14f transformed point list
@@ -314,12 +314,12 @@ struct CColiObject {
     u32 field_0x210;          // 0x210
     VEC3 field_0x214[16];     // 0x214..0x2d3 transformed point list
     u32 field_0x2d4;          // 0x2d4
-    f32 field_0x2d8[3];       // 0x2d8 per-kind radius bounds (func_804AC624)
-    f32 field_0x2e4[3];       // 0x2e4 (func_804AB538 transformed partner point)
-    f32 field_0x2f0[3];       // 0x2f0 per-kind lower distance bounds (func_804AC9F4)
-    f32 field_0x2fc[3];       // 0x2fc per-kind upper distance bounds (func_804AC9F4)
+    f32 field_0x2d8[3];       // 0x2d8 per-kind radius bounds (ColiTraverseRecordRadius)
+    f32 field_0x2e4[3];       // 0x2e4 (ColiProcessBoxTree transformed partner point)
+    f32 field_0x2f0[3];       // 0x2f0 per-kind lower distance bounds (ColiTraverseRecordTree)
+    f32 field_0x2fc[3];       // 0x2fc per-kind upper distance bounds (ColiTraverseRecordTree)
     f32 field_0x308;          // 0x308 horizontal squared distance
-    f32 field_0x30c;          // 0x30c (func_804ACD9C sweep distance gate)
+    f32 field_0x30c;          // 0x30c (ColiSweepTriangle sweep distance gate)
     f32 field_0x310;          // 0x310
     u32 field_0x314;          // 0x314
 };
@@ -409,12 +409,12 @@ extern "C" s32 ColiLodLookupRecordBin(void* self) {
     return rec->func_80463590();
 }
 
-// (func_804A6DC0 defined below, after CColiXformExtra804A70F8)
+// (ColiBuildXformTranslate defined below, after CColiXformExtra804A70F8)
 
-// --- func_804A6E20 defined below (after the CColiXformSrc structs) ---
+// --- ColiBuildXformRotateOff defined below (after the CColiXformSrc structs) ---
 
-// Euler transform source for the axis-matrix builders (func_804A763C /
-// func_804A70F8): translation at +0x00, Euler rotation angles (radians,
+// Euler transform source for the axis-matrix builders (ColiBuildXformRotScale /
+// ColiBuildXformRotScaleOff): translation at +0x00, Euler rotation angles (radians,
 // x/y/z) at +0x0c and scale at +0x18. The final matrix is composed as
 // rotX * rotY * rotZ * scale via PSMTXConcat premultiplication.
 struct CColiXformSrc {
@@ -423,7 +423,7 @@ struct CColiXformSrc {
     VEC3 field_0x18;   // +0x18 scale
 };
 
-// Extra object for func_804A70F8: the +0x08 vector is added to the source
+// Extra object for ColiBuildXformRotScaleOff: the +0x08 vector is added to the source
 // translation to form the final matrix translation column.
 struct CColiXformExtra804A70F8 {
     u8 _00[0x08];        // +0x00 .. +0x07
@@ -433,7 +433,7 @@ struct CColiXformExtra804A70F8 {
 // Identity-rotation matrix with translation pos + off: the three diagonal
 // entries are the SDA2 1.0f constant, every off-diagonal entry the SDA2
 // 0.0f constant, and the translation column the componentwise sum.
-extern "C" void func_804A6DC0(f32* out, const VEC3* pos,
+extern "C" void ColiBuildXformTranslate(f32* out, const VEC3* pos,
                               const CColiXformExtra804A70F8* off) {
     f32 tz = pos->z + off->field_0x08.z;
     f32 ty = pos->y + off->field_0x08.y;
@@ -455,7 +455,7 @@ extern "C" void func_804A6DC0(f32* out, const VEC3* pos,
 // Build the rotation-scale matrix for src into out: a diagonal scale matrix
 // from src->field_0x18, then premultiply by the Z / Y / X rotation matrices
 // whenever the corresponding Euler angle is non-zero.
-extern "C" void func_804A763C(f32* out, const CColiXformSrc* src) {
+extern "C" void ColiBuildXformRotScale(f32* out, const CColiXformSrc* src) {
     f32 k = lbl_eu_8066AE24;
     f32 x = src->field_0x18.x;
     f32 y = src->field_0x18.y;
@@ -497,9 +497,9 @@ extern "C" void func_804A763C(f32* out, const CColiXformSrc* src) {
     }
 }
 
-// Same rotation-scale matrix build as func_804A763C, followed by the
+// Same rotation-scale matrix build as ColiBuildXformRotScale, followed by the
 // translation column: out[3/7/11] = src->field_0x00 + extra->field_0x08.
-extern "C" void func_804A70F8(f32* out, const CColiXformSrc* src,
+extern "C" void ColiBuildXformRotScaleOff(f32* out, const CColiXformSrc* src,
                    const CColiXformExtra804A70F8* extra) {
     f32 k = lbl_eu_8066AE24;
     f32 x = src->field_0x18.x;
@@ -551,7 +551,7 @@ extern "C" void func_804A70F8(f32* out, const CColiXformSrc* src,
 // which is written directly into out. When every angle is zero the rotation
 // part is the identity. The final translation column is the sum of the source
 // translation and the extra object's +0x08 vector.
-extern "C" void func_804A6E20(f32* out, const CColiXformSrc* src,
+extern "C" void ColiBuildXformRotateOff(f32* out, const CColiXformSrc* src,
                    const CColiXformExtra804A70F8* extra) {
     int count = 0;
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
@@ -681,7 +681,7 @@ extern "C" void ColiBuildAxisFrameMixed(CColiObject* self, CColiObject* src, CCo
 // (PSMTXConcat), except the first non-zero angle which is written directly
 // into out (retail's direct-write vs concat split). When every angle is zero
 // the result is the identity matrix.
-extern "C" void func_804A73A0(f32* out, const CColiXformSrc* src) {
+extern "C" void ColiBuildXformRotate(f32* out, const CColiXformSrc* src) {
     int count = 0;
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
@@ -789,7 +789,7 @@ extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
 // +0x60 bound exceeds const * +0x5c, set flag bit 3 and compute the +0x310
 // gap from the +0x54 scalar. The +0x3c partner slot points at the caller's
 // index or the embedded proc itself. Returns self.
-extern "C" CColiObject* func_804A79B4(CColiObject* self, const CColiSubSpec804A7878* spec,
+extern "C" CColiObject* ColiInitAngleSpec(CColiObject* self, const CColiSubSpec804A7878* spec,
                            double f1, double f2, u32 idx) {
     __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
     const u32* s = (const u32*)spec;
@@ -831,7 +831,7 @@ extern "C" CColiObject* func_804A79B4(CColiObject* self, const CColiSubSpec804A7
 // +0x68 and normalise it to unit length, storing the original length at
 // +0x308. The +0x40 sub-object offset is 10; the +0x3c partner slot points
 // at the caller's index or the embedded proc itself. Returns self.
-CColiObject* func_804A7ACC(CColiObject* self, const CColiSubSpec804A7878* spec,
+CColiObject* ColiInitSegment(CColiObject* self, const CColiSubSpec804A7878* spec,
                            const VEC3* v, u32 idx) {
     __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
     const u32* sa = (const u32*)spec;
@@ -892,13 +892,13 @@ extern "C" int func_804B25BC(CColiProcLocal* work, u16* outIndex,
                              void** outBuf, void* arg4);
 extern "C" bool ColiProc_IsTargetFlagged(CColiProcLocal* self);
 extern "C" bool ColiProc_TestBit18State(CColiProcLocal* self);
-// Local-object ctor: the trailing params default so func_804B1BDC's retail
+// Local-object ctor: the trailing params default so ColiCheckStateGate's retail
 // no-setup call (`&local` only) still compiles.
-extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a = 0,
+extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a = 0,
                                       const VEC3* b = 0, f32 f = 0.0f);
-extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
+extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
                              const Mtx m, f32 f);
-extern "C" void func_804B0EA0(CColiObject* self);
+extern "C" void ColiGrowMoveAabb(CColiObject* self);
 // Sibling CColiProc TU helpers used by ColiNodeRefreshAxes / ColiQuerySpecDispatch: the
 // segment classifier (func_804B27EC), the local-object classifier
 // (func_804B2E3C) and the node query helper (ColiQueryNodePoint).
@@ -1006,7 +1006,7 @@ CColiObject* ColiInitPointSpec(CColiObject* self, const CColiSubSpec804A7878* sp
 // copy the 3-word vector into the +0x44 point, then seed the +0x5c scalar,
 // the +0x40 sub-object offset (= 0x14) and the cleared state fields.
 // C-linkage so callers emit the unmangled retail symbol (bl ColiInitPointScalar14).
-// auto_inline off: retail callers (func_804B1AD8) call via `bl`.
+// auto_inline off: retail callers (ColiCheckMoveGate) call via `bl`.
 #pragma push
 #pragma auto_inline off
 extern "C" CColiObject* ColiInitPointScalar14(CColiObject* self, const VEC3* v, f32 f);
@@ -1056,10 +1056,10 @@ extern "C" CColiObject* ColiInitScaledSpec(CColiObject* self, const CColiSubSpec
 // copy the two 3-word points into the +0x44/+0x50 slots, then write the
 // horizontal segment diff (b - a with y forced to zero) at +0x68 and its
 // squared horizontal length at +0x308 (inverted to 1/length^2 when non-zero).
-// auto_inline off: retail calls this via `bl` from func_804B1BDC.
+// auto_inline off: retail calls this via `bl` from ColiCheckStateGate.
 #pragma push
 #pragma auto_inline off
-extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
+extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a,
                                        const VEC3* b, f32 f) {
     __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
     // Raw word copies so MWCC emits lwz/stw for the point slots (retail).
@@ -1095,7 +1095,7 @@ extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
 // as absolute pointers, and the object itself is always registered last.
 // The seven pointers are computed into locals first so MWCC hoists all the
 // loads/adds ahead of the stores (retail's schedule).
-void func_804A7E18(u32 unused, CColiObject* self) {
+void ColiRegisterSubObjects(u32 unused, CColiObject* self) {
     if (self->field_0x10 != 0) {
         CColiObject* p0 = (CColiObject*)((u8*)self + self->field_0x10);
         CColiObject* p1 = (CColiObject*)((u8*)self + self->field_0x38);
@@ -1166,7 +1166,7 @@ void ColiDispatchByIndex(CColiDispatchObj* self, u32 val) {
 }
 
 // Sphere test with contact write-back (defined at the end of the file).
-extern "C" int func_804A7F50(CColiObject* self);
+extern "C" int ColiSweepSphere(CColiObject* self);
 
 // No-op handler. Used as a default stub in collision dispatch tables for
 // method slots that require no action (e.g. optional callbacks).
@@ -1202,10 +1202,10 @@ struct CColiCylinder804ABA68 {
     f32 field_0x14;    // +0x14 y upper bound / offset
     f32 field_0x18;    // +0x18 y lower bound / offset
     u8 _1c[0x28 - 0x1c];   // +0x1c .. +0x27
-    f32 field_0x28;    // +0x28 scalar (func_804ABDD4 radius term)
+    f32 field_0x28;    // +0x28 scalar (ColiTestSpherePointPair radius term)
 };
 
-// Sphere-vs-vertical-segment sweep (retail func_804A8230): test the sphere
+// Sphere-vs-vertical-segment sweep (retail ColiSweepSphereSegment): test the sphere
 // at self->field_0x44 (radius field_0x5c) against the partner's vertical
 // segment (base partner->field_0x04, radius field_0x10, y-band
 // [field_0x18, field_0x14]). Same contact/normal/epilogue pattern as
@@ -1213,7 +1213,7 @@ struct CColiCylinder804ABA68 {
 // point is the partner base + radial normal * radius (y at the near
 // endcap), the sphere must contain it, and the contact normal is the 3D
 // offset from the contact point to the sphere centre.
-extern "C" int func_804A8230(CColiObject* self) {
+extern "C" int ColiSweepSphereSegment(CColiObject* self) {
     CColiCylinder804ABA68* partner =
         (CColiCylinder804ABA68*)self->field_0x00_obj;
     // Prologue bounds cached in volatile FPRs (retail f5/f4); every site
@@ -1361,7 +1361,7 @@ extern "C" int func_804A8230(CColiObject* self) {
 }
 
 // Segment-sphere test with contact write-back (defined at the end of the file).
-extern "C" int func_804A8850(CColiObject* self);
+extern "C" int ColiSweepSegmentSphere(CColiObject* self);
 
 // Partner transform view used by ColiClassifyXfrmRadius / ColiTestPointInXfrmBox: the +0x34
 // matrix maps self's point into the local frame, +0x64/+0x68/+0x6c are the
@@ -1377,7 +1377,7 @@ struct CColiXfrm804ABBF4 {
 };
 
 // Transform the (radius, 0, 0) normal of self (+0x5c) into the partner's
-// frame (+0x34) and ask func_804AD410 to classify the point against the
+// frame (+0x34) and ask ColiSweepPointBox to classify the point against the
 // partner's half-extents (+0x64/+0x04/+0x34). On a miss, re-run the same
 // check with self's +0x48 scalar temporarily swapped to +0x310 when flag
 // bit 4 is set; the +0x48 scalar is restored before returning.
@@ -1396,7 +1396,7 @@ extern "C" int ColiClassifyXfrmRadius(CColiObject* self) {
         &v);
     f32 len = PSVECMag((const Vec*)&v);
     CColiXfrm804ABBF4* xf = (CColiXfrm804ABBF4*)self->field_0x00_obj;
-    int result = func_804AD410(self, &xf->field_0x64, &xf->field_0x04,
+    int result = ColiSweepPointBox(self, &xf->field_0x64, &xf->field_0x04,
                                xf->field_0x34, len);
     if (result != 0) {
         return result;
@@ -1407,7 +1407,7 @@ extern "C" int ColiClassifyXfrmRadius(CColiObject* self) {
         self->field_0x44.y = self->field_0x310;
         len = PSVECMag((const Vec*)&v);
         xf = (CColiXfrm804ABBF4*)self->field_0x00_obj;
-        result = func_804AD410(self, &xf->field_0x64, &xf->field_0x04,
+        result = ColiSweepPointBox(self, &xf->field_0x64, &xf->field_0x04,
                                xf->field_0x34, len);
         self->field_0x44.y = save;
     } else {
@@ -1419,9 +1419,9 @@ extern "C" int ColiClassifyXfrmRadius(CColiObject* self) {
 // 16-byte collision registration record (definition just below).
 struct CColiRec16;
 
-// Sibling sweep helpers invoked from func_804A8CB0 (definitions below).
-extern "C" void func_804ACD9C(CColiObject* self, u16 id);
-extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj);
+// Sibling sweep helpers invoked from ColiResolveContacts (definitions below).
+extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
+extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj);
 
 // 16-byte collision registration record: two sub-object ids, a point and a
 // radius, plus the kind (+0x0c; 3 = group of sub-objects) and the group
@@ -1442,13 +1442,13 @@ struct CColiRec16 {
     u16 field_0x0e;           // +0x0e group member count
 };
 
-// Big contact-resolution pass (retail func_804A8CB0): transform self's
+// Big contact-resolution pass (retail ColiResolveContacts): transform self's
 // radius vector and point into the partner frame, run the registered-record
 // traversal (top record + A/B children), then fold every newly collected
 // contact point/normal pair into the proc object: average point, average
 // normal (random unit direction when degenerate) and push-outs along each
 // contact normal; fires the proc vtable slot-2 callback at the end.
-extern "C" int func_804A8CB0(CColiObject* self) {
+extern "C" int ColiResolveContacts(CColiObject* self) {
     ConvF64_AE48 convZ, convX;
     convZ.w[0] = 0x43300000u;
     convX.w[0] = 0x43300000u;
@@ -1490,7 +1490,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
             u32* word = &visited[id >> 5];
             if ((*word & bit) == 0) {
                 *word |= bit;
-                func_804ACD9C(self, *arr);
+                ColiSweepTriangle(self, *arr);
             }
             i++;
             arr++;
@@ -1513,7 +1513,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                     u32* word = &visited[id >> 5];
                     if ((*word & bit) == 0) {
                         *word |= bit;
-                        func_804ACD9C(self, *arr);
+                        ColiSweepTriangle(self, *arr);
                     }
                     i++;
                     arr++;
@@ -1525,7 +1525,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                         sub->field_0x04 + sub->field_0x08 +
                             self->field_0x5c &&
                     sub->field_0x00 != 0) {
-                    func_804AC624(self, &recs[sub->field_0x00]);
+                    ColiTraverseRecordRadius(self, &recs[sub->field_0x00]);
                 }
                 if (self->field_0x2d8[sub->field_0x0c] <=
                         sub->field_0x04 + self->field_0x5c &&
@@ -1533,7 +1533,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                         sub->field_0x04 - sub->field_0x08 -
                             self->field_0x5c &&
                     sub->field_0x02 != 0) {
-                    func_804AC624(self, &recs[sub->field_0x02]);
+                    ColiTraverseRecordRadius(self, &recs[sub->field_0x02]);
                 }
             }
         }
@@ -1554,7 +1554,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                     u32* word = &visited[id >> 5];
                     if ((*word & bit) == 0) {
                         *word |= bit;
-                        func_804ACD9C(self, *arr);
+                        ColiSweepTriangle(self, *arr);
                     }
                     i++;
                     arr++;
@@ -1566,7 +1566,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                         sub->field_0x04 + sub->field_0x08 +
                             self->field_0x5c &&
                     sub->field_0x00 != 0) {
-                    func_804AC624(self, &recs[sub->field_0x00]);
+                    ColiTraverseRecordRadius(self, &recs[sub->field_0x00]);
                 }
                 if (self->field_0x2d8[sub->field_0x0c] <=
                         sub->field_0x04 + self->field_0x5c &&
@@ -1574,7 +1574,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
                         sub->field_0x04 - sub->field_0x08 -
                             self->field_0x5c &&
                     sub->field_0x02 != 0) {
-                    func_804AC624(self, &recs[sub->field_0x02]);
+                    ColiTraverseRecordRadius(self, &recs[sub->field_0x02]);
                 }
             }
         }
@@ -1788,7 +1788,7 @@ extern "C" int func_804A8CB0(CColiObject* self) {
 // On success the contact point/normal are written into the +0x3c proc object
 // (point +0x0c, normal +0x18, scaled normal +0x24) and its vtable slot-2
 // callback fires with the +0x314 argument; returns 1.
-extern "C" int func_804A98C4(CColiObject* self) {
+extern "C" int ColiSweepSphereCylinder(CColiObject* self) {
     CColiCylinder804ABA68* partner =
         (CColiCylinder804ABA68*)self->field_0x00_obj;
     // NOTE (matching): retail lays diff @ sp+0x08 with the conversion
@@ -2080,17 +2080,17 @@ FAIL:
 // Delegates to the segment-sphere contact test, describing the partner
 // object's sphere from its centre (+4) and band/radius (+16) fields.
 // Segment-sphere contact test (defined at the end of the file).
-extern "C" int func_804AD8FC(CColiObject* self, const _VEC3* a, const _VEC3* b);
+extern "C" int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b);
 extern "C" int ColiSweepPointPair(CColiObject* self) {
-    return func_804AD8FC(self, (const _VEC3*)((u8*)self->field_0x00_obj + 4),
+    return ColiCastSegmentSphere(self, (const _VEC3*)((u8*)self->field_0x00_obj + 4),
                          (const _VEC3*)((u8*)self->field_0x00_obj + 16));
 }
 
 // Two-point clip sweep with contact write-back (defined at the end of the file).
-extern "C" int func_804AA504(CColiObject* self);
+extern "C" int ColiSweepClipSegment(CColiObject* self);
 
 
-// Partner geometry for func_804AA870: centre at +0x04 and radius at +0x10
+// Partner geometry for ColiTestSegmentCapsule: centre at +0x04 and radius at +0x10
 // (subset of the CColiCylinder804ABA68 fields used here).
 struct CColiCyl804AA870 {
     u8 _00[0x04];
@@ -2105,7 +2105,7 @@ struct CColiCyl804AA870 {
 // normalised or zeroed) into the +0x3c proc object and fire its contact
 // callback (vtable slot 2). The t parameter is the root of
 // |point + dir*t - centre|^2 == r^2 along the segment.
-extern "C" bool func_804AA870(CColiObject* self) {
+extern "C" bool ColiTestSegmentCapsule(CColiObject* self) {
     CColiCyl804AA870* partner = (CColiCyl804AA870*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &partner->field_0x04);
@@ -2153,10 +2153,10 @@ extern "C" bool func_804AA870(CColiObject* self) {
 }
 
 // Cylinder clip with contact write-back (defined at the end of the file).
-extern "C" int func_804AAA98(CColiObject* self);
+extern "C" int ColiSweepCylinderClip(CColiObject* self);
 
 // Partner capped segment reached through CColiObject::field_0x00 for the
-// capsule-vs-capsule resolver func_804AAD90: base point +0x04, end point
+// capsule-vs-capsule resolver ColiSweepCapsulePair: base point +0x04, end point
 // +0x10, sweep direction +0x1c, radius +0x28, squared direction length +0x2c.
 struct CColiSegObj804AAD90 {
     u8 _00[0x04];
@@ -2173,7 +2173,7 @@ struct CColiSegObj804AAD90 {
 // and its slot-2 callback fires. Endcap hits slide the contact along self's
 // own normal basis; interior hits measure penetration along the partner
 // sweep direction instead.
-extern "C" int func_804AAD90(CColiObject* self) {
+extern "C" int ColiSweepCapsulePair(CColiObject* self) {
     CColiSegObj804AAD90* o = (CColiSegObj804AAD90*)self->field_0x00_obj;
     // Diff axes relative to Q, kept as one contiguous array so MWCC spills
     // them to a single stack block addressed via hoisted base pointers
@@ -2337,29 +2337,29 @@ extern "C" int func_804AAD90(CColiObject* self) {
 
 // Segment-vs-segment clip (defined at the end of the file): passes the
 // partner's +0x64 scalar list, +4 AABB matrix and +0x34 transform matrix.
-extern "C" int func_804ADD3C(CColiObject* self, const f32* a, const Mtx b,
+extern "C" int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b,
                              const Mtx c);
 extern "C" int ColiClipPartnerBox(CColiObject* self) {
     CColiObject* partner = self->field_0x00_obj;
-    return func_804ADD3C(self, (const f32*)((u8*)partner + 0x64),
+    return ColiCastRayAabb(self, (const f32*)((u8*)partner + 0x64),
                          (const f32(*)[4])((u8*)partner + 0x04),
                          (const f32(*)[4])((u8*)partner + 0x34));
 }
 
 // 16-byte collision registration record (full definition above
-// func_804A8CB0).
+// ColiResolveContacts).
 
 // Sibling record handlers used by the sweep pass below.
-extern "C" void func_804AD1E0(CColiObject* self, u16 id);
-extern "C" void func_804AC9F4(CColiObject* self, CColiRec16* obj);
+extern "C" void ColiVisitGroupMember(CColiObject* self, u16 id);
+extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj);
 
-// Sweep pass (retail func_804AB538): transform both self points into the
+// Sweep pass (retail ColiProcessBoxTree): transform both self points into the
 // partner frame, fold them into per-kind min/max bounds, clear the visited
 // bitset, re-base the 0x14-stride record array and run the top record's
 // A/B child recursion (group records enumerate their members via
-// func_804AD1E0, other records recurse via func_804AC9F4). Returns 2 when
+// ColiVisitGroupMember, other records recurse via ColiTraverseRecordTree). Returns 2 when
 // the sweep registered a hit (+0x80 counter), else 0.
-extern "C" int func_804AB538(CColiObject* self) {
+extern "C" int ColiProcessBoxTree(CColiObject* self) {
     PSMTXMultVec((const f32(*)[4])((u8*)self->field_0x00_obj + 0x34),
                  (const Vec*)&self->field_0x44, (Vec*)&self->field_0x2d8);
     PSMTXMultVec((const f32(*)[4])((u8*)self->field_0x00_obj + 0x34),
@@ -2411,7 +2411,7 @@ extern "C" int func_804AB538(CColiObject* self) {
             u32* word = &visited[id >> 5];
             if ((*word & bit) == 0) {
                 *word |= bit;
-                func_804AD1E0(self, *arr);
+                ColiVisitGroupMember(self, *arr);
             }
             i++;
             arr++;
@@ -2433,7 +2433,7 @@ extern "C" int func_804AB538(CColiObject* self) {
                     u32* word = &visited[id >> 5];
                     if ((*word & bit) == 0) {
                         *word |= bit;
-                        func_804AD1E0(self, *arr);
+                        ColiVisitGroupMember(self, *arr);
                     }
                     i++;
                     arr++;
@@ -2443,14 +2443,14 @@ extern "C" int func_804AB538(CColiObject* self) {
                         sub->field_0x04 + sub->field_0x08 &&
                     self->field_0x2f0[sub->field_0x0c] >= sub->field_0x04 &&
                     sub->field_0x00 != 0) {
-                    func_804AC9F4(
+                    ColiTraverseRecordTree(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
                 }
                 if (self->field_0x2fc[sub->field_0x0c] <= sub->field_0x04 &&
                     self->field_0x2f0[sub->field_0x0c] >=
                         sub->field_0x04 - sub->field_0x08 &&
                     sub->field_0x02 != 0) {
-                    func_804AC9F4(
+                    ColiTraverseRecordTree(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
                 }
             }
@@ -2471,7 +2471,7 @@ extern "C" int func_804AB538(CColiObject* self) {
                     u32* word = &visited[id >> 5];
                     if ((*word & bit) == 0) {
                         *word |= bit;
-                        func_804AD1E0(self, *arr);
+                        ColiVisitGroupMember(self, *arr);
                     }
                     i++;
                     arr++;
@@ -2481,14 +2481,14 @@ extern "C" int func_804AB538(CColiObject* self) {
                         sub2->field_0x04 + sub2->field_0x08 &&
                     self->field_0x2f0[sub2->field_0x0c] >= sub2->field_0x04 &&
                     sub2->field_0x00 != 0) {
-                    func_804AC9F4(
+                    ColiTraverseRecordTree(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
                 }
                 if (self->field_0x2fc[sub2->field_0x0c] <= sub2->field_0x04 &&
                     self->field_0x2f0[sub2->field_0x0c] >=
                         sub2->field_0x04 - sub2->field_0x08 &&
                     sub2->field_0x02 != 0) {
-                    func_804AC9F4(
+                    ColiTraverseRecordTree(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
                 }
             }
@@ -2519,7 +2519,7 @@ extern "C" bool ColiTestCylinderContains(CColiObject* self) {
     }
     return false;
 }
-// Segment/capsule partner geometry for func_804ABAF0: base point at +0x04,
+// Segment/capsule partner geometry for ColiTestCapsule: base point at +0x04,
 // direction vector at +0x1c, radius at +0x28 and the direction length^2 at
 // +0x2c (used to normalise the projection parameter).
 struct CColiSegment804ABAF0 {
@@ -2536,7 +2536,7 @@ struct CColiSegment804ABAF0 {
 // then compare the squared distance to the closest point against the squared
 // radius (+0x28). VEC3Sub/VEC3Dot/VEC3Scale/VEC3Add/VEC3LenSq lower to the
 // retail paired-single sequences.
-extern "C" bool func_804ABAF0(CColiObject* self) {
+extern "C" bool ColiTestCapsule(CColiObject* self) {
     CColiSegment804ABAF0* o = (CColiSegment804ABAF0*)self->field_0x00_obj;
     VEC3 d;
     VEC3 v;
@@ -2575,7 +2575,7 @@ struct CColiSphere804ABCA4 {
 // (+0x44) and the partner's point (+0x04) is within the squared sum of the
 // two radii (+0x10, +0x5c). VEC3Sub/VEC3LenSq lower to the retail
 // paired-single sequence (psq_l/ps_sub/psq_st, ps_mul/ps_madd/ps_sum0).
-extern "C" bool func_804ABCA4(CColiObject* self) {
+extern "C" bool ColiTestSphereOverlap(CColiObject* self) {
     CColiSphere804ABCA4* o = (CColiSphere804ABCA4*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &o->field_0x04);
@@ -2586,7 +2586,7 @@ extern "C" bool func_804ABCA4(CColiObject* self) {
 // Inner-sphere test: true when the squared distance between self's point
 // (+0x44) and the partner's point (+0x04) is within the partner's own
 // squared radius (+0x10) - no self-radius term. Same VEC3Sub/VEC3LenSq
-// paired-single lowering as func_804ABCA4.
+// paired-single lowering as ColiTestSphereOverlap.
 extern "C" bool ColiTestSphereContains(CColiObject* self) {
     CColiSphere804ABCA4* o = (CColiSphere804ABCA4*)self->field_0x00_obj;
     VEC3 diff;
@@ -2597,9 +2597,9 @@ extern "C" bool ColiTestSphereContains(CColiObject* self) {
 // Cylinder-capped sphere test: clamp self's point (+0x44) y-coordinate into
 // the partner's [centre.y + lower, centre.y + upper] band, then test the
 // squared distance against the squared sum of the partner radius (+0x10) and
-// self's scalar (+0x5c). Mirrors func_804ABCA4 with the clamped point;
+// self's scalar (+0x5c). Mirrors ColiTestSphereOverlap with the clamped point;
 // VEC3Sub/VEC3LenSq lower to the retail paired-single sequence.
-extern "C" bool func_804ABD0C(CColiObject* self) {
+extern "C" bool ColiTestCappedSphere(CColiObject* self) {
     CColiObject* other = self->field_0x00_obj;
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)other;
     VEC3 v;
@@ -2629,8 +2629,8 @@ extern "C" bool func_804ABD0C(CColiObject* self) {
 // Sphere test against the partner's point pair: squared distance from
 // self's point (+0x44) to the partner's +0x04 point, then to its +0x10
 // point, each within the squared sum of the partner +0x28 scalar and
-// self's +0x5c radius. Mirrors func_804ABCA4 with the second point.
-extern "C" bool func_804ABDD4(CColiObject* self) {
+// self's +0x5c radius. Mirrors ColiTestSphereOverlap with the second point.
+extern "C" bool ColiTestSpherePointPair(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 diff1;
     VEC3 diff2;
@@ -2653,7 +2653,7 @@ extern "C" bool func_804ABDD4(CColiObject* self) {
 // of the partner radius and self's scalar (+0x5c) AND the azimuth of the
 // offset vector (Atan2FIdx of x/z) scaled by the FIdx constant, offset by
 // +0x64 and wrapped into [-pi, pi], lies within the +0x60 bound.
-extern "C" bool func_804ABF08(CColiObject* self) {
+extern "C" bool ColiTestSphereCone(CColiObject* self) {
     CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 diff = other->field_0x04 - self->field_0x44;
     f32 r = other->field_0x10;
@@ -2681,8 +2681,8 @@ extern "C" bool func_804ABF08(CColiObject* self) {
 // the partner's squared radius, or within the squared sum of the partner
 // radius and self's scalar (+0x5c) AND the azimuth (Atan2FIdx of x/z scaled
 // by the FIdx constant, offset by +0x64, wrapped into [-pi, pi]) lies within
-// the +0x60 bound. Mirrors func_804ABF08 with the clamped point.
-extern "C" bool func_804AC020(CColiObject* self) {
+// the +0x60 bound. Mirrors ColiTestSphereCone with the clamped point.
+extern "C" bool ColiTestCappedCone(CColiObject* self) {
     CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 v;
     v.x = other->field_0x04.x;
@@ -2733,7 +2733,7 @@ static inline bool angleOK804AC198(CColiObject* self, const VEC3* d) {
 // the partner radius and self's radius (+0x5c) AND the angle gate passes.
 // The partner pointer is re-read from self->field_0x00 for each point so it
 // never survives the Atan2FIdx call (retail reloads it in block 2).
-extern "C" bool func_804AC198(CColiObject* self) {
+extern "C" bool ColiTestDualPointCone(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
 
     VEC3 diff;
@@ -2761,7 +2761,7 @@ extern "C" bool func_804AC198(CColiObject* self) {
     return false;
 }
 
-// Contact-partner geometry view used by func_804AC3B0: point rows at
+// Contact-partner geometry view used by ColiTestPartnerCone: point rows at
 // +0x10/+0x20/+0x30 and the scalar at +0x70 (same fields CColiContactObj
 // declares for the clip helper).
 struct CColiContact804AC3B0 {
@@ -2782,7 +2782,7 @@ struct CColiContact804AC3B0 {
 // AND the azimuth of the offset vector (Atan2FIdx of x/z) scaled by the
 // FIdx constant, offset by +0x64 and wrapped into [-pi, pi], lies within
 // the +0x60 bound.
-extern "C" bool func_804AC3B0(CColiObject* self) {
+extern "C" bool ColiTestPartnerCone(CColiObject* self) {
     CColiContact804AC3B0* obj = (CColiContact804AC3B0*)self->field_0x00_obj;
     VEC3 v(obj->field_0x10, obj->field_0x20, obj->field_0x30);
     // r hoisted to right after the fill so its load lands where retail's
@@ -2810,23 +2810,23 @@ extern "C" bool func_804AC3B0(CColiObject* self) {
     return false;
 }
 
-// Point-pair clip gate: run the contact clip helper (func_804AF808) against
+// Point-pair clip gate: run the contact clip helper (ColiClipContactPoint) against
 // the partner's +0x04 point; when it clips (non-zero), retry with the
 // partner's +0x10 point and forward its status. The scalar +0x28 feeds the
 // helper's radius argument both times, re-read through a fresh cast so the
 // partner pointer is reloaded per call (retail's two lwz r4, 0(r31)).
 extern "C" int ColiClipDualSegment(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
-    if (func_804AF808((CColiContactObj*)self, &obj->field_0x04,
+    if (ColiClipContactPoint((CColiContactObj*)self, &obj->field_0x04,
                       obj->field_0x28) != 0) {
         return 1;
     }
     obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
-    return func_804AF808((CColiContactObj*)self, (const VEC3*)&obj->field_0x10,
+    return ColiClipContactPoint((CColiContactObj*)self, (const VEC3*)&obj->field_0x10,
                          obj->field_0x28);
 }
 
-// Contact object sampled by ColiClipSampledRows / func_804AF808: field_0x00 links
+// Contact object sampled by ColiClipSampledRows / ColiClipContactPoint: field_0x00 links
 // the paired collision object; the VEC3s at +0x10/+0x20/+0x30 and the scalar
 // at +0x70 describe the segment passed to the clip helper.
 struct CColiContactObj {
@@ -2841,7 +2841,7 @@ struct CColiContactObj {
     f32 field_0x70;              // +0x70
 };
 
-extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
+extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f);
 
 // Delegates to the contact clip helper, describing the partner object's
 // segment from its centre (+4) and radius (+0x10) fields.
@@ -2849,7 +2849,7 @@ extern "C" int ColiClipCentreRadius(CColiObject* self) {
     CColiObject* partner = self->field_0x00_obj;
     f32 radius = partner->field_0x10_f;
     const VEC3* seg = (const VEC3*)((u8*)partner + 4);
-    return func_804AF808((CColiContactObj*)self, seg, radius);
+    return ColiClipContactPoint((CColiContactObj*)self, seg, radius);
 }
 
 // Sample the partner's point (+0x04) into v, clamp v.y so the caller's
@@ -2873,15 +2873,15 @@ extern "C" void ColiClipClampedSegment(CColiObject* self) {
             v.y = self->field_0x44.y;
         }
     }
-    func_804AF808((CColiContactObj*)self, &v,
+    ColiClipContactPoint((CColiContactObj*)self, &v,
                   ((CColiCylinder804ABA68*)self->field_0x00_obj)->field_0x10);
 }
 
 // Sphere-overlap test against the contact partner: squared distance from
 // self's point (+0x44) to the partner's point rows (+0x10/+0x20/+0x30) is
 // within the squared sum of the partner scalar (+0x70) and self's radius
-// (+0x5c). Mirrors func_804ABCA4 with the v built from the partner rows.
-extern "C" bool func_804ABE84(CColiObject* self) {
+// (+0x5c). Mirrors ColiTestSphereOverlap with the v built from the partner rows.
+extern "C" bool ColiTestPartnerRows(CColiObject* self) {
     CColiContactObj* obj = (CColiContactObj*)self->field_0x00_obj;
     // Scalars named up-front so their loads schedule early (retail keeps
     // +0x70 in f4 across the sub/len-sequence).
@@ -2893,9 +2893,9 @@ extern "C" bool func_804ABE84(CColiObject* self) {
     return r * r >= VEC3LenSq(&diff);
 }
 
-extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
+extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f);
 
-extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
+extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f);
 
 extern "C" void ColiClipSampledRows(CColiContactObj* self) {
     // Sample the partner's point rows (+0x10/+0x20/+0x30) plus the scalar at
@@ -2903,7 +2903,7 @@ extern "C" void ColiClipSampledRows(CColiContactObj* self) {
     // 3-float ctor inlines to loads z,y,x into f2,f1,f0 then ascending stores.
     CColiContactObj* obj = self->field_0x00;
     VEC3 v(obj->field_0x10, obj->field_0x20, obj->field_0x30);
-    func_804AF808(self, &v, obj->field_0x70);
+    ColiClipContactPoint(self, &v, obj->field_0x70);
 }
 
 // Default false-return handler. Used as a placeholder in collision method
@@ -2915,8 +2915,8 @@ extern "C" int ColiReturnZeroStub(CColiObject* /*self*/) { return 0; }
 // visited bitset is marked and handed to the per-id processor. (Inlined at
 // each group site; retail keeps three separate copies.)
 
-extern "C" void func_804AD1E0(CColiObject* self, u16 id);
-extern "C" void func_804ACD9C(CColiObject* self, u16 id);
+extern "C" void ColiVisitGroupMember(CColiObject* self, u16 id);
+extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 
 // Recurse the record tree: for each non-group record, the record's sphere
 // (field_0x04 + field_0x08) must sit within self's per-kind box bounds
@@ -2935,12 +2935,12 @@ static inline void GroupEnumAC9F4(CColiObject* self, const CColiRec16* rec) {
         u32 bit = 1u << (arr[i] & 31);
         if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
             lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
-            func_804AD1E0(self, arr[i]);
+            ColiVisitGroupMember(self, arr[i]);
         }
     }
 }
 
-extern "C" void func_804AC9F4(CColiObject* self, CColiRec16* obj) {
+extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj) {
     u16 kind = obj->field_0x0c;
     if (kind == 3) {
         // Group: mark each member id as visited and process it.
@@ -2961,14 +2961,14 @@ extern "C" void func_804AC9F4(CColiObject* self, CColiRec16* obj) {
                     sub->field_0x04 + sub->field_0x08 &&
                 self->field_0x2f0[sub->field_0x0c] >= sub->field_0x04 &&
                 sub->field_0x00 != 0) {
-                func_804AC9F4(
+                ColiTraverseRecordTree(
                     self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
             }
             if (self->field_0x2fc[sub->field_0x0c] <= sub->field_0x04 &&
                 self->field_0x2f0[sub->field_0x0c] >=
                     sub->field_0x04 - sub->field_0x08 &&
                 sub->field_0x02 != 0) {
-                func_804AC9F4(
+                ColiTraverseRecordTree(
                     self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
             }
         }
@@ -2987,33 +2987,33 @@ extern "C" void func_804AC9F4(CColiObject* self, CColiRec16* obj) {
                     sub2->field_0x04 + sub2->field_0x08 &&
                 self->field_0x2f0[sub2->field_0x0c] >= sub2->field_0x04 &&
                 sub2->field_0x00 != 0) {
-                func_804AC9F4(
+                ColiTraverseRecordTree(
                     self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
             }
             if (self->field_0x2fc[sub2->field_0x0c] <= sub2->field_0x04 &&
                 self->field_0x2f0[sub2->field_0x0c] >=
                     sub2->field_0x04 - sub2->field_0x08 &&
                 sub2->field_0x02 != 0) {
-                func_804AC9F4(
+                ColiTraverseRecordTree(
                     self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
             }
         }
     }
 }
 
-// Sibling of func_804AC9F4 using the per-kind radius bounds at +0x2d8 with
+// Sibling of ColiTraverseRecordTree using the per-kind radius bounds at +0x2d8 with
 // self's +0x5c scalar as the margin: the record's sphere must sit within
 // [field_0x2d8[kind] - self->field_0x5c, field_0x2d8[kind] + radius +
 // self->field_0x5c] for the id-A child, and the record's point within
 // [field_0x2d8[kind] - radius - self->field_0x5c, field_0x2d8[kind] +
 // self->field_0x5c] for the id-B child. Group records enumerate members
-// (func_804ACD9C) instead of recursing.
+// (ColiSweepTriangle) instead of recursing.
 // Retail re-reads obj->field_0x0c / sub->field_0x0c / arr[i] from memory
 // at every use instead of caching them in locals (keeps the callee-saved
 // set at r25-r31).
-extern "C" void func_804ACD9C(CColiObject* self, u16 id);
+extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 
-extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
+extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
     if (obj->field_0x0c == 3) {
         // Group: mark each member id as visited and process it.
         u16* arr = (u16*)((u8*)lbl_eu_80665930 + obj->field_0x00_off);
@@ -3023,7 +3023,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
             u32 bit = 1u << (arr[i] & 31);
             if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
                 lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
-                func_804ACD9C(self, arr[i]);
+                ColiSweepTriangle(self, arr[i]);
             }
         }
         return;
@@ -3044,7 +3044,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 u32 bit = 1u << (arr[i] & 31);
                 if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
                     lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
-                    func_804ACD9C(self, arr[i]);
+                    ColiSweepTriangle(self, arr[i]);
                 }
             }
         } else {
@@ -3053,7 +3053,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2d8[sub->field_0x0c] <=
                     sub->field_0x04 + sub->field_0x08 + self->field_0x5c &&
                 sub->field_0x00 != 0) {
-                func_804AC624(self,
+                ColiTraverseRecordRadius(self,
                              &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
             }
             if (self->field_0x2d8[sub->field_0x0c] <=
@@ -3061,7 +3061,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2d8[sub->field_0x0c] >=
                     sub->field_0x04 - sub->field_0x08 - self->field_0x5c &&
                 sub->field_0x02 != 0) {
-                func_804AC624(self,
+                ColiTraverseRecordRadius(self,
                              &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
             }
         }
@@ -3082,7 +3082,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 u32 bit = 1u << (arr[i] & 31);
                 if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
                     lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
-                    func_804ACD9C(self, arr[i]);
+                    ColiSweepTriangle(self, arr[i]);
                 }
             }
         } else {
@@ -3091,7 +3091,7 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2d8[sub2->field_0x0c] <=
                     sub2->field_0x04 + sub2->field_0x08 + self->field_0x5c &&
                 sub2->field_0x00 != 0) {
-                func_804AC624(self,
+                ColiTraverseRecordRadius(self,
                              &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
             }
             if (self->field_0x2d8[sub2->field_0x0c] <=
@@ -3099,17 +3099,17 @@ extern "C" void func_804AC624(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2d8[sub2->field_0x0c] >=
                     sub2->field_0x04 - sub2->field_0x08 - self->field_0x5c &&
                 sub2->field_0x02 != 0) {
-                func_804AC624(self,
+                ColiTraverseRecordRadius(self,
                              &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
             }
         }
     }
 }
 
-extern "C" void func_804ACD9C(CColiObject* self, u16 id);
+extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 
 // Triangle record (0x14-byte entries behind lbl_eu_80665924) used by
-// func_804ACD9C: the plane offset scalar at +0x00, three vertex ids
+// ColiSweepTriangle: the plane offset scalar at +0x00, three vertex ids
 // (+0x04/+0x06/+0x08) into the point array (lbl_eu_80665910), a quad id
 // (+0x0a) into the 0x24-byte record array (lbl_eu_8066591C) and a direction
 // id (+0x10) into the 0xc-byte direction array (lbl_eu_80665918).
@@ -3131,13 +3131,13 @@ struct CColiQuad {
     VEC3 field_0x00[3];
 };
 
-// Sweep/segment vs triangle test (retail func_804ACD9C): cull the segment
+// Sweep/segment vs triangle test (retail ColiSweepTriangle): cull the segment
 // against the triangle's plane (record offset, direction), then either store
 // the projected point when it lies inside the triangle (all three half-space
 // dot gates pass) or sweep the segment origin along the triangle edges,
 // appending the transformed contact point/normal into the self lists.
 // Axis reads go through self directly; no axis pointer local.
-extern "C" void func_804ACD9C(CColiObject* self, u16 id) {
+extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
     CColiRec14* rec = &((CColiRec14*)lbl_eu_80665924)[id];
     // Plane cull: |dot(dir, self axis) - plane offset| >= reach. The axis
     // vector is addressed through self directly (retail keeps no pointer
@@ -3228,18 +3228,18 @@ extern "C" void func_804ACD9C(CColiObject* self, u16 id) {
     }
 }
 
-extern "C" void func_804AD1E0(CColiObject* self, u16 id) {}
+extern "C" void ColiVisitGroupMember(CColiObject* self, u16 id) {}
 
 #pragma push
 #pragma auto_inline off
 // Classify the partner point against self's half-extent block (retail
-// func_804AD410): transform self's point (+0x44) by the matrix m, clamp it
+// ColiSweepPointBox): transform self's point (+0x44) by the matrix m, clamp it
 // into the [-a, a] box and either (all three axes already inside) pick the
 // closest exit face, or (edge case) clip the offset to the box and derive
 // the contact along the sphere of reach f. The contact point and the
 // axis-aligned/radial normal (scaled by self's +0x5c radius) are written
 // into the proc object (+0x0c/+0x18) and its contact callback fires.
-extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
+extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
                              const Mtx m, f32 f) {
     VEC3 out;            // sp+0x08 contact offset
     f32 clamped[3];      // sp+0x14 point clamped into the box
@@ -3379,7 +3379,7 @@ extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
 // +0x8c bit-1 flag is set, else radial/random) and written into the proc
 // object along with the contact point and the normal scaled by the
 // penetration. Returns 1 on a hit, else 0.
-int func_804AD8FC(CColiObject* self, const _VEC3* a, const _VEC3* b) {
+int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
     f32 f8 = self->field_0x50.y;
     f32 f7 = a->y + b->y;
     // Nested positive-form NaN-preserving compares: retail shares one
@@ -3494,7 +3494,7 @@ int func_804AD8FC(CColiObject* self, const _VEC3* a, const _VEC3* b) {
 // v1 + diff * tmax is transformed by b into the proc object's +0x0c slot
 // and the axis-aligned normal (a +/-1 unit on the hit axis, transformed by
 // b) goes to +0x18. Returns 1 on a hit, else 0.
-int func_804ADD3C(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
+int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
     VEC3 v1;
     VEC3 v2;
     PSMTXMultVec(c, (const Vec*)&self->field_0x44, (Vec*)&v1);
@@ -3620,12 +3620,12 @@ extern "C" int ColiSweepVecToPoint(CColiObject* self, const VEC3* v, f32 f1,
     vec.x = f1;
     vec.y = f2;
     vec.z = lbl_eu_8066AE44;
-    return func_804AD8FC(self, v, &vec);
+    return ColiCastSegmentSphere(self, v, &vec);
 }
 
-// Sweep/contact helpers (targets): func_804AE11C is a sphere-sweep contact test.
-// func_804AF09C / ColiBoxSweepClassify are the box-sweep variants (defined below).
-extern "C" int func_804AE11C(CColiObject* self, const VEC3* arg4, f32 f1,
+// Sweep/contact helpers (targets): ColiSweepSphereBound is a sphere-sweep contact test.
+// ColiSweepBoxContact / ColiBoxSweepClassify are the box-sweep variants (defined below).
+extern "C" int ColiSweepSphereBound(CColiObject* self, const VEC3* arg4, f32 f1,
                              f32 f2) {
     // f6 is the sweep bound: the large constant when the +0x74 gate point is
     // inside the +0x74 radius, else zero.
@@ -3679,7 +3679,7 @@ extern "C" int func_804AE11C(CColiObject* self, const VEC3* arg4, f32 f1,
     p3->vtbl->field_0x08(p3, self->field_0x314);
     return 1;
 }
-// Local-proc seed + classify used by func_804B1DEC (sibling CColiProc TU).
+// Local-proc seed + classify used by ColiDispatchMoveSegment (sibling CColiProc TU).
 extern "C" int ColiProc_RunCollideScan(CColiProcLocal* proc, const VEC3* v,
                              CColiObject* obj, u32 bit9);
 
@@ -3833,39 +3833,39 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
     pc->vtbl->field_0x08(pc, self->field_0x314);
     return 1;
 }
-extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
-extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
+extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
+extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
 // Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bit,
 // then pass the axis-frame description through to the point/box classifier
-// (func_804AD410) with self's +0x5c radius (retail tail-calls).
+// (ColiSweepPointBox) with self's +0x5c radius (retail tail-calls).
 extern "C" int ColiFrameSweepClassify(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
-    return func_804AD410(self, (const f32*)a, (const VEC3*)b,
+    return ColiSweepPointBox(self, (const f32*)a, (const VEC3*)b,
                          (const f32(*)[4])c, self->field_0x5c);
 }
 // Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bits,
 // then pass the segment description through to the segment-vs-segment clip
-// (func_804ADD3C). The args travel unchanged, so retail tail-calls.
+// (ColiCastRayAabb). The args travel unchanged, so retail tail-calls.
 extern "C" int ColiFrameSweepClip(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
-    return func_804ADD3C(self, (const f32*)a, (const f32(*)[4])b,
+    return ColiCastRayAabb(self, (const f32*)a, (const f32(*)[4])b,
                          (const f32(*)[4])c);
 }
 
-// Segment-vs-AABB clip with contact write-back (retail func_804AF32C):
+// Segment-vs-AABB clip with contact write-back (retail ColiSweepSegmentAabb):
 // transform both segment points (+0x50, +0x44) by the partner matrix c,
 // check each axis of a against the local AABB, and when exactly one point
 // is inside, find the entry t along the segment (per-axis inverse bounds
 // with the zero-axis fallback), write the entry point into the proc's
 // +0x0c contact slot and the axis-aligned normal (transformed by c) into
 // +0x18, then fire the proc's contact callback. Returns 1 on a hit.
-extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
+extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
                              const Mtx b, const Mtx c) {
     // Both flags seeded ahead of the first transform call (retail li
     // r27/li r26 sit ahead of the bl).
@@ -4022,7 +4022,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
 // +0x68.z) over +0x308), extend the point along it and test the enlarged
 // squared distance against (f + +0x5c)^2. auto_inline off: retail callers
 // (ColiClipClampedSegment / ColiClipSampledRows) call via `bl`.
-extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f) {
+extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f) {
     CColiObject* o = (CColiObject*)self;
     VEC3 diff;
     VEC3 w;
@@ -4086,7 +4086,7 @@ extern "C" int ColiTestPointInBoxHalf(CColiObject* self, const VEC3* half, const
 }
 #pragma pop
 
-// Componentwise vector helpers for func_804AFB28: retail expands every
+// Componentwise vector helpers for ColiClipSegmentStrip: retail expands every
 // operation inline (paired singles). Inputs stay non-const on purpose -
 // possible aliasing between destination and sources forces MWCC to keep
 // the vectors in stack slots (retail shape) instead of promoting them
@@ -4117,7 +4117,7 @@ static inline void v3_scale(VEC3* o, VEC3* i, f32 s) {
 // Clip the segment (pA, pB) against the frame spanned by (pC, pD): writes the
 // entry/exit points of the portion of the segment that lies within the strip
 // between the two parallel lines through pC and pD into pOutA/pOutB.
-extern "C" void func_804AFB28(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
+extern "C" void ColiClipSegmentStrip(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
                               VEC3* pB, VEC3* pC, VEC3* pD) {
     VEC3 v2;
     VEC3 scratch;
@@ -4193,13 +4193,13 @@ extern "C" void func_804AFB28(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
 }
 
 // Clip the segment (a, b) against the strip spanned by the segment (c, d)
-// with radius f (retail func_804B028C). The frame direction v0 = d - c, the
+// with radius f (retail ColiClipStripRadius). The frame direction v0 = d - c, the
 // offsets v1 = a - c and the segment direction v2 = b - a define three dots
 // used for the endpoint gates; when the lines are near-parallel the
 // intersection parameter comes from a projection, otherwise a quadratic
 // determines the closest approach. On a hit the contact point a + v2*t is
 // written into e and 1 is returned.
-extern "C" int func_804B028C(VEC3* a, VEC3* b, const VEC3* c, const VEC3* d,
+extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* d,
                              VEC3* e, f32 f) {
     VEC3 v0;  // b - a
     VEC3 v1;  // a - c
@@ -4302,10 +4302,10 @@ extern "C" int func_804B028C(VEC3* a, VEC3* b, const VEC3* c, const VEC3* d,
 // Two-point clip against the vertical cylinder around the partner point:
 // test self's +0x44 and +0x50 points against the (x-radius, y-height)
 // cylinder; when exactly one is inside, clip the segment between them
-// against the band [vec.y, vec.y + y] via func_804B028C and derive the
+// against the band [vec.y, vec.y + y] via ColiClipStripRadius and derive the
 // contact normal (down/up for exact y matches, radial otherwise, or
 // randomized when degenerate). Returns 1 on a hit, else 0.
-extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x,
+extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
                              f32 y) {
     VEC3 diff;
     bool flagA = false;
@@ -4342,7 +4342,7 @@ extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x,
         pb = &self->field_0x50;
     }
     cpB.y += y;
-    if (func_804B028C(pa, pb, &cpA, &cpB,
+    if (ColiClipStripRadius(pa, pb, &cpA, &cpB,
                       (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)
                            ->field_0x0c,
                       x) == 0) {
@@ -4432,7 +4432,7 @@ void ColiMakeAabbAsym(CColiObject* self, const VEC3* in, f32 a, f32 b, f32 c) {
 // maximum of the two points, field_0x00[1] the minimum. Written as a
 // 3-component walk; MWCC unrolls it and rebases the output pointer after
 // the second component (retail addi r4, r3, 8).
-void func_804B077C(CColiObject* out, const CColiObject* a, const CColiObject* b) {
+void ColiMakeAabbMinMax(CColiObject* out, const CColiObject* a, const CColiObject* b) {
     f32* d = &out->field_0x00[0].x;
     const f32* pa = &a->field_0x00[0].x;
     const f32* pb = &b->field_0x00[0].x;
@@ -4635,7 +4635,7 @@ void ColiSetMoveVecFlagged(CColiObject* self, const _VEC3* v, int flag) {
 // set flag bit 2. When bit 5 is set, copy the vector into the +0x3c matrix's
 // translation column and invert it into +0x6c; when the object is a fresh
 // one (kind 0) with bits 4..7 set, fill the +0x0c..+0x20 axis block with the
-// two sdata2 constants. Hand the object to func_804B0EA0 last. The vector is
+// two sdata2 constants. Hand the object to ColiGrowMoveAabb last. The vector is
 // copied as words (lwz/stw) so the +0x24 slot keeps the raw bit pattern.
 void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
     const u32* src = (const u32*)v;
@@ -4667,7 +4667,7 @@ void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
         self->field_0x00[2].y = c2;
         self->field_0x00[2].z = c2;
     }
-    func_804B0EA0(self);
+    ColiGrowMoveAabb(self);
 }
 
 // Position/rotation update: raw-copy the 3-word vector into the +0x24 slot and
@@ -4675,7 +4675,7 @@ void ColiSetAxisBlockInverse(CColiObject* self, const _VEC3* v) {
 // vector scaled by the RAD_TO_FIDX constant, copy the +0x24 vector into its
 // translation column and invert it into +0x6c; when the object is a fresh one
 // (kind 0) with bits 4..7 set, fill the +0x0c..+0x20 axis block with the two
-// sdata2 constants. Hand the object to func_804B0EA0 last.
+// sdata2 constants. Hand the object to ColiGrowMoveAabb last.
 void ColiSetAxisBlockRotInverse(CColiObject* self, const _VEC3* v, const _VEC3* rot) {
     const u32* src = (const u32*)v;
     u32* dst = (u32*)&self->field_0x00[3];
@@ -4715,7 +4715,7 @@ void ColiSetAxisBlockRotInverse(CColiObject* self, const _VEC3* v, const _VEC3* 
         self->field_0x00[2].y = c2;
         self->field_0x00[2].z = c2;
     }
-    func_804B0EA0(self);
+    ColiGrowMoveAabb(self);
 }
 
 // Kind/behaviour record pointed at by CColiNode804B09C8::field_0x08: the
@@ -4731,7 +4731,7 @@ struct CColiKind804B0CE8 {
 // kind record's +0x7a4 flags are in the active combination (bit 1 set, bits
 // 16/26 clear) or behaviour bit 11 is set - refills the +0x0c axis block
 // with the two sdata2 constants, re-seeds the local proc and classifies the
-// segment via func_804B27EC, then runs func_804B0EA0 when behaviour bits
+// segment via func_804B27EC, then runs ColiGrowMoveAabb when behaviour bits
 // 7-8 are set. Always ends by setting bit 1.
 void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
     u32 flags = self->field_0xa8;
@@ -4764,7 +4764,7 @@ void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
             func_804B27EC(&proc, self->field_0x0c, self->field_0x24,
                           &self->field_0x24[3], self->field_0xb0);
             if (self->field_0xa8 & 0xC0) {
-                func_804B0EA0((CColiObject*)self);
+                ColiGrowMoveAabb((CColiObject*)self);
             }
             self->field_0xa8 |= 0xc;
         }
@@ -4776,7 +4776,7 @@ void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
 // the head and relink self after the last node whose key is still greater.
 // The tail updates the +0xa4 scalar from +0x0c, clamped up to the next
 // node's value. Skipped entirely when the +0xa8 bit-1 flag is set.
-void func_804B0DF4(CColiNode804B09C8* self) {
+void ColiNodeResortKeyed(CColiNode804B09C8* self) {
     if (!(self->field_0xa8 & 0x2)) return;
     CColiNode804B09C8* oldNext = self->field_0xa0;
     CColiNode804B09C8* prev;
@@ -4819,7 +4819,7 @@ void func_804B0DF4(CColiNode804B09C8* self) {
 // bit 5 is set, transform the +0x30 vector by the +0x3c matrix and grow the
 // box by its magnitude the same way. auto_inline off: retail callers
 // (ColiSetAxisBlockInverse / ColiSetAxisBlockRotInverse / ColiNodeRefreshAxes) call via `bl`.
-extern "C" void func_804B0EA0(CColiObject* self) {
+extern "C" void ColiGrowMoveAabb(CColiObject* self) {
     if (self->field_0xa8 & 0xd0) {
         if (self->field_0x00[3].x + self->field_0x30.x > self->field_0x00[1].x) {
             self->field_0x00[1].x = self->field_0x00[3].x + self->field_0x30.x;
@@ -4912,15 +4912,15 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
 #pragma pop
 
 // retail: build a {f,f,f} local vec from the SDA2 float and forward the
-// caller's r3-r5 to func_804B1164 with the vec in r6 (passthrough wrapper).
-extern "C" bool __declspec(noinline) func_804B1164(CColiNode804B09C8* a, VEC3* b, const VEC3* c, const VEC3* v);  // defined below
+// caller's r3-r5 to ColiResolveNodeMove with the vec in r6 (passthrough wrapper).
+extern "C" bool __declspec(noinline) ColiResolveNodeMove(CColiNode804B09C8* a, VEC3* b, const VEC3* c, const VEC3* v);  // defined below
 void ColiResolveMoveDefault(void* a, void* b, u32 c) {
     f32 v[3] = { lbl_eu_8066AE88, lbl_eu_8066AE88, lbl_eu_8066AE88 };
-    func_804B1164((CColiNode804B09C8*)a, (VEC3*)b, (const VEC3*)c, (const VEC3*)v);
+    ColiResolveNodeMove((CColiNode804B09C8*)a, (VEC3*)b, (const VEC3*)c, (const VEC3*)v);
 }
 
 // Contact resolver (defined below in this TU).
-extern "C" int func_804B1DEC(CColiObject* self, VEC3* outVec, CColiObject* obj, f32 f);
+extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObject* obj, f32 f);
 
 // Bare AABB corner pair used as the query box (retail keeps only the two
 // rows on the stack; the containment helpers read it through CColiObject*).
@@ -4929,7 +4929,7 @@ struct CColiQueryBox1164 {
     VEC3 minCorner;
 };
 
-// Float view of a node's +0x18 sort-key word (func_804B1164 prev-chain gate);
+// Float view of a node's +0x18 sort-key word (ColiResolveNodeMove prev-chain gate);
 // the shared node struct keeps its integer declaration.
 struct CColiNodeKey1164 {
     u8 _00[0x18];
@@ -4940,14 +4940,14 @@ struct CColiNodeKey1164 {
 // per-axis move vector, refresh its inverse matrix and AABB, then walk the
 // keyed neighbour chains (prev chain below the min-x key, next chain above
 // the max-x key), collecting up to six overlapping nodes whose box lies in
-// the query box. Push vectors from those contacts (func_804B1DEC) are summed;
+// the query box. Push vectors from those contacts (ColiDispatchMoveSegment) are summed;
 // if the accumulated push on `out` is non-parallel to the contact normal it
 // is projected back onto the unit sphere, otherwise it is added directly.
 // auto_inline off: retail callers (ColiResolveMoveDefault and external TUs) call via
 // `bl`.
 #pragma push
 #pragma auto_inline off
-extern "C" bool func_804B1164(CColiNode804B09C8* self, VEC3* out, const VEC3* pos,
+extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VEC3* pos,
                               const VEC3* move) {
     out->x = lbl_eu_8066AE88;
     out->y = lbl_eu_8066AE88;
@@ -5009,12 +5009,12 @@ extern "C" bool func_804B1164(CColiNode804B09C8* self, VEC3* out, const VEC3* po
         self->field_0x0c[4] = c2;
         self->field_0x0c[5] = c2;
     }
-    func_804B0EA0((CColiObject*)self);
+    ColiGrowMoveAabb((CColiObject*)self);
 
     bool result = false;
     flags = self->field_0xa8;
     if (flags & 0xd0) {
-        func_804A79B4(&objB, (const CColiSubSpec804A7878*)&self->field_0x24,
+        ColiInitAngleSpec(&objB, (const CColiSubSpec804A7878*)&self->field_0x24,
                       self->field_0x24[3], self->field_0x24[4], 0);
         if (flags & 0x80) {
             objB.field_0x8c |= 0x4;
@@ -5080,7 +5080,7 @@ extern "C" bool func_804B1164(CColiNode804B09C8* self, VEC3* out, const VEC3* po
                 f32 k = (self->field_0xb2 == other_->field_0xb2)              \
                             ? lbl_eu_8066AE9C                                 \
                             : lbl_eu_8066AEA0;                                \
-                if (func_804B1DEC((CColiObject*)other_, &push, &objB, k)) {   \
+                if (ColiDispatchMoveSegment((CColiObject*)other_, &push, &objB, k)) {   \
                     out->x += push.x;                                         \
                     out->y += push.y;                                         \
                     out->z += push.z;                                         \
@@ -5126,7 +5126,7 @@ extern "C" bool func_804B1164(CColiNode804B09C8* self, VEC3* out, const VEC3* po
         pushSum.x = lbl_eu_8066AE88;
         pushSum.y = lbl_eu_8066AE88;
         pushSum.z = lbl_eu_8066AE88;
-        func_804A79B4(&objA, (const CColiSubSpec804A7878*)&basePos,
+        ColiInitAngleSpec(&objA, (const CColiSubSpec804A7878*)&basePos,
                       self->field_0x24[3], self->field_0x24[4], 0);
         objA.field_0x8c |= 0x10;
         objA.field_0x74.x = pos->x;
@@ -5137,7 +5137,7 @@ extern "C" bool func_804B1164(CColiNode804B09C8* self, VEC3* out, const VEC3* po
             CColiNode804B09C8* other = hits[i];
             f32 k = (self->field_0xb2 == other->field_0xb2) ? lbl_eu_8066AE9C
                                                             : lbl_eu_8066AEA0;
-            if (func_804B1DEC((CColiObject*)other, &push, &objA, k)) {
+            if (ColiDispatchMoveSegment((CColiObject*)other, &push, &objA, k)) {
                 pushSum.x += push.x;
                 pushSum.y += push.y;
                 pushSum.z += push.z;
@@ -5210,7 +5210,7 @@ int ColiCheckMoveRadius(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5
     return 0;
 }
 
-// Move-check gate (sibling of func_804B1AD8 with a proc-seeded variant):
+// Move-check gate (sibling of ColiCheckMoveGate with a proc-seeded variant):
 // when the last argument is non-zero, require behaviour bit 14, apply the
 // shared kind/flag gate, then - when the node is valid and behaviour bit 3
 // is set - seed the local proc and classify the local object via
@@ -5260,7 +5260,7 @@ tail:
 // and bit 3 set. On success, build the segment AABB around (v, f), verify it
 // is contained in self's box, construct a local object via ColiInitPointScalar14,
 // link it to self and forward both to func_804B2CBC, returning its status.
-bool func_804B1AD8(CColiObject* self, const VEC3* v, f32 f) {
+bool ColiCheckMoveGate(CColiObject* self, const VEC3* v, f32 f) {
     CColiProcLocal proc;
     CColiSeg804B192C seg;
     CColiObject local;
@@ -5296,11 +5296,11 @@ fail:
 // State-machine check before segment processing: the object must have a
 // non-zero kind, and the +0xa8 flag combination must be (bit 8 set) or
 // (bit 1 clear) or (bit 2 clear), with bit 4 set. On success, construct a
-// local object via func_804A7D1C, link it to self, seed a local proc and
+// local object via ColiInitFlatSegment, link it to self, seed a local proc and
 // forward both to func_804B2CBC, returning its status.
 typedef CColiObject* (*LocalObjCtor1)(CColiObject*);
 
-bool func_804B1BDC(CColiObject* self) {
+bool ColiCheckStateGate(CColiObject* self) {
     CColiProcLocal proc;   // +0x8
     CColiObject local;     // +0x18 (0x318 bytes)
     if (self->field_0x04 == 0) goto fail;
@@ -5323,7 +5323,7 @@ bool func_804B1BDC(CColiObject* self) {
     // Retail call site passes only the object pointer (its TU saw a
     // one-parameter declaration); route through the 1-arg view so MWCC emits
     // no default-argument setup.
-    ((LocalObjCtor1)&func_804A7D1C)(&local);
+    ((LocalObjCtor1)&ColiInitFlatSegment)(&local);
     local.field_0x314 = (u32)self;
     CColiObject* tgt = self->field_0x00_obj;
     ColiProc_InitQuad(&proc, tgt, self->field_0x08,
@@ -5334,7 +5334,7 @@ fail:
     return false;
 }
 
-// Segment move-check gate (sibling of func_804B1AD8): require a non-zero
+// Segment move-check gate (sibling of ColiCheckMoveGate): require a non-zero
 // kind and the shared +0xa8 flag combination, then build the segment AABB
 // around (v, f1), verify it is contained in self's box, construct a local
 // object from the same sub-spec via ColiInitScaledSpec, link it to self and
@@ -5380,8 +5380,8 @@ void ColiSetMoveEnableFlag(u8* self, int arg) {
     }
 }
 
-// Box-sweep contact helpers (target func_804AF09C; sibling ColiBoxSweepClassify).
-extern "C" int func_804AF09C(CColiObject* self, const VEC3* extents,
+// Box-sweep contact helpers (target ColiSweepBoxContact; sibling ColiBoxSweepClassify).
+extern "C" int ColiSweepBoxContact(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2);
 extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2);
@@ -5390,10 +5390,10 @@ extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
 // vector, link the object to self and - when the node is valid and behaviour
 // bit 3 is set - seed the local proc and classify the segment
 // (ColiProc_RunCollideScan). Then dispatch to the sphere-sweep contact
-// (func_804AE11C / ColiSweepVecToPoint) or the box-sweep contact
-// (func_804AF09C / ColiBoxSweepClassify) depending on the +0xa8 bit combination,
+// (ColiSweepSphereBound / ColiSweepVecToPoint) or the box-sweep contact
+// (ColiSweepBoxContact / ColiBoxSweepClassify) depending on the +0xa8 bit combination,
 // sharing the current-segment global (lbl_eu_8065D0A0) with the callees.
-extern "C" int func_804B1DEC(CColiObject* self, VEC3* outVec, CColiObject* obj, f32 f) {
+extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObject* obj, f32 f) {
     int result = 0;
     int w = 1;
     int t = 1;
@@ -5441,7 +5441,7 @@ extern "C" int func_804B1DEC(CColiObject* self, VEC3* outVec, CColiObject* obj, 
     g->field_0x3c = f;
     g->field_0x38 = outVec;
     if (self->field_0xa8 & 0x400) {
-        result = (result | func_804AE11C(obj, (const VEC3*)&self->field_0x00[3],
+        result = (result | ColiSweepSphereBound(obj, (const VEC3*)&self->field_0x00[3],
                                          self->field_0x30.x,
                                          self->field_0x30.y)) != 0;
     } else {
@@ -5463,7 +5463,7 @@ block60F4:
         g2->field_0x3c = lbl_eu_8066AEA0;
         g2->field_0x38 = outVec;
         if (self->field_0xa8 & 0x400) {
-            result = (result | func_804AF09C(
+            result = (result | ColiSweepBoxContact(
                           obj, (const VEC3*)&self->field_0x30,
                           (const f32 (*)[4])&self->field_0x3c,
                           (const f32 (*)[4])&self->field_0x68.y)) != 0;
@@ -5487,7 +5487,7 @@ exit:
 // three within the grown box pass). On success the result vector is
 // transformed by m1, the contact offset (result - point) is written into the
 // proc object and its vtable slot 2 fires with the +0x314 argument.
-extern "C" int func_804AF09C(CColiObject* self, const VEC3* extents,
+extern "C" int ColiSweepBoxContact(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
     f32 bound = lbl_eu_8066AE44;
     ((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x08 = lbl_eu_80663A90[0];
@@ -5550,14 +5550,14 @@ contact:
 
 // Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bit,
 // then pass the box description through to the point/box classifier
-// (func_804AD410) with self's +0x5c radius. The args travel unchanged, so
+// (ColiSweepPointBox) with self's +0x5c radius. The args travel unchanged, so
 // retail tail-calls.
 extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
-    return func_804AD410(self, (const f32*)extents, (const VEC3*)m1, m2,
+    return ColiSweepPointBox(self, (const f32*)extents, (const VEC3*)m1, m2,
                          self->field_0x5c);
 }
 
@@ -5617,7 +5617,7 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
 
 // Segment-processing helper (sibling of ColiProcessSegmentPair): same gate and
 // proc-seed block; behaviour bit 10 selects the capsule clip pair
-// (func_804AEC8C / func_804AF32C) vs the sphere clip pair (func_804AE9A4 /
+// (ColiSweepCylinderPair / ColiSweepSegmentAabb) vs the sphere clip pair (ColiSweepSphereClip /
 // ColiFrameSweepClip), each with the 0x50/0x20 dispatch inside.
 int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
     CColiProcLocal proc;
@@ -5651,18 +5651,18 @@ int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
         u32 fl = self->field_0xa8;
         if (fl & 0x400) {
             if (fl & 0x50) {
-                result = (result | func_804AEC8C(v, &self->field_0x00[3],
+                result = (result | ColiSweepCylinderPair(v, &self->field_0x00[3],
                                                  self->field_0x30.x,
                                                  self->field_0x30.y)) != 0;
             }
             if (self->field_0xa8 & 0x20) {
-                result = (result | func_804AF32C(v, &self->field_0x30,
+                result = (result | ColiSweepSegmentAabb(v, &self->field_0x30,
                                                  (const f32 (*)[4])&self->field_0x3c,
                                                  (const f32 (*)[4])&self->field_0x68.y)) != 0;
             }
         } else {
             if (fl & 0x50) {
-                result = (result | func_804AE9A4(v, &self->field_0x00[3],
+                result = (result | ColiSweepSphereClip(v, &self->field_0x00[3],
                                                  self->field_0x30.x,
                                                  self->field_0x30.y)) != 0;
             }
@@ -5724,7 +5724,7 @@ extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
 // Scale the +0x24 vector by the +0x3c scalar, optionally overwrite v.y with
 // the sdata2 constant when the +0x40 flag byte is set, then add the result
 // into the VEC3 pointed at by +0x38.
-extern "C" void func_804B24A4(CColiObject* self) {
+extern "C" void ColiAccumScaledVec(CColiObject* self) {
     VEC3 v;
     v.x = self->field_0x00[3].x;
     v.y = self->field_0x00[3].y;
@@ -5737,7 +5737,7 @@ extern "C" void func_804B24A4(CColiObject* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Sphere test with contact write-back (target func_804A7F50): when the
+// Sphere test with contact write-back (target ColiSweepSphere): when the
 // squared distance from self's point (+0x44) to the partner's centre (+0x04)
 // is within the squared sum of the two radii (+0x5c, +0x10), the proc object
 // (+0x3c) gets the contact point (normal * radius + centre) at +0x0c, the
@@ -5747,7 +5747,7 @@ extern "C" void func_804B24A4(CColiObject* self) {
 // proc pointers are re-read per region so they die before the rand/sqrt
 // calls (retail re-loads them instead of keeping callee-saved copies).
 // ---------------------------------------------------------------------------
-extern "C" int func_804A7F50(CColiObject* self) {
+extern "C" int ColiSweepSphere(CColiObject* self) {
     CColiCyl804AA870* partner = (CColiCyl804AA870*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &partner->field_0x04);
@@ -5811,7 +5811,7 @@ extern "C" int func_804A7F50(CColiObject* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Segment-sphere test with contact write-back (target func_804A8850): the
+// Segment-sphere test with contact write-back (target ColiSweepSegmentSphere): the
 // partner's segment (base +0x04, direction +0x1c, radius +0x28, length^2
 // +0x2c) is projected from self's point (+0x44); the clamped projection
 // parameter scales the direction to give the closest point. When the squared
@@ -5821,7 +5821,7 @@ extern "C" int func_804A7F50(CColiObject* self) {
 // penetration at +0x24; flag bit 15 is set from bit 1 and the vtable slot-2
 // callback fires. The partner pointer is re-read where retail re-loads it.
 // ---------------------------------------------------------------------------
-extern "C" int func_804A8850(CColiObject* self) {
+extern "C" int ColiSweepSegmentSphere(CColiObject* self) {
     CColiSegment804ABAF0* partner = (CColiSegment804ABAF0*)self->field_0x00_obj;
     VEC3 diff;
     VEC3 v;
@@ -5892,7 +5892,7 @@ extern "C" int func_804A8850(CColiObject* self) {
     return 1;
 }
 
-// Partner geometry for func_804AA504: two points at +0x04/+0x10 and the
+// Partner geometry for ColiSweepClipSegment: two points at +0x04/+0x10 and the
 // radius scalar at +0x28 (the segment the sweep is tested against).
 struct CColiSeg2Pt804AA504 {
     u8 _00[0x04];
@@ -5903,20 +5903,20 @@ struct CColiSeg2Pt804AA504 {
 };
 
 // ---------------------------------------------------------------------------
-// Clip-sweep test with contact write-back (target func_804AA504): when the
+// Clip-sweep test with contact write-back (target ColiSweepClipSegment): when the
 // sdata2 gate scale * +0x5c is at least +0x60 the sphere test
-// (func_804A8850) handles it; otherwise the partner's segment (+0x04/+0x10)
+// (ColiSweepSegmentSphere) handles it; otherwise the partner's segment (+0x04/+0x10)
 // is clipped against the vertical band [y + 0x5c, y + 0x60 - 0x5c] of
-// self's +0x50 point (func_804AFB28) and the squared distance between the
+// self's +0x50 point (ColiClipSegmentStrip) and the squared distance between the
 // clip endpoints is tested against the squared sum of the radii (+0x28,
 // +0x5c). On a hit the proc object gets the normal at +0x18, the normal
 // scaled by the penetration at +0x24 and the contact point (normal * radius
 // + clip start) at +0x0c; flag bit 15 is set from bit 1 and the vtable
 // slot-2 callback fires.
 // ---------------------------------------------------------------------------
-extern "C" int func_804AA504(CColiObject* self) {
+extern "C" int ColiSweepClipSegment(CColiObject* self) {
     if (lbl_eu_8066AE58 * self->field_0x5c >= self->field_0x60) {
-        return func_804A8850(self);
+        return ColiSweepSegmentSphere(self);
     }
     CColiSeg2Pt804AA504* partner = (CColiSeg2Pt804AA504*)self->field_0x00_obj;
     // Both clip endpoints start as copies of the +0x50 point; their y
@@ -5928,7 +5928,7 @@ extern "C" int func_804AA504(CColiObject* self) {
     b.y = b.y + dy;
     VEC3 outA;
     VEC3 outB;
-    func_804AFB28(&outA, &outB, &partner->field_0x10, &partner->field_0x04,
+    ColiClipSegmentStrip(&outA, &outB, &partner->field_0x10, &partner->field_0x04,
                   &a, &b);
     VEC3 diff;
     VEC3Sub(&diff, &outB, &outA);
@@ -5995,15 +5995,15 @@ extern "C" int func_804AA504(CColiObject* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Cylinder clip with contact write-back (target func_804AAA98): the
+// Cylinder clip with contact write-back (target ColiSweepCylinderClip): the
 // partner's centre (+0x04) and its y-band offsets (+0x14 upper, +0x18
-// lower) form the two clip segment points passed to func_804B028C along
+// lower) form the two clip segment points passed to ColiClipStripRadius along
 // with self's +0x44/+0x50 points and the partner radius (+0x10). When the
 // clip reports a hit the contact normal is derived from the clip point and
 // the segment points (up/down for exact y matches, radial otherwise, or
 // randomized when degenerate) and the vtable slot-2 callback fires.
 // ---------------------------------------------------------------------------
-extern "C" int func_804AAA98(CColiObject* self) {
+extern "C" int ColiSweepCylinderClip(CColiObject* self) {
     CColiCylinder804ABA68* c = (CColiCylinder804ABA68*)self->field_0x00_obj;
     // Two clip points: the cylinder centre raised by the upper/lower y
     // bounds. Component-wise assignment in x/y/z order keeps each value in
@@ -6018,7 +6018,7 @@ extern "C" int func_804AAA98(CColiObject* self) {
     clipB.z = clipA.z;
     clipA.y += c->field_0x14;
     clipB.y += c->field_0x18;
-    if (func_804B028C(&self->field_0x44, &self->field_0x50, &clipA, &clipB,
+    if (ColiClipStripRadius(&self->field_0x44, &self->field_0x50, &clipA, &clipB,
                       (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)
                            ->field_0x0c,
                       c->field_0x10) == 0) {
@@ -6078,21 +6078,21 @@ extern "C" int func_804AAA98(CColiObject* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Sphere clip with contact write-back (target func_804AE9A4): the partner
+// Sphere clip with contact write-back (target ColiSweepSphereClip): the partner
 // segment point (vec) and its +y top point form the two clip segment points
-// passed to func_804B028C along with self's +0x44/+0x50 points and the
+// passed to ColiClipStripRadius along with self's +0x44/+0x50 points and the
 // caller's x scalar. When the clip reports a hit the contact normal is
 // derived from the clip point and the segment points (up/down for exact y
 // matches, radial otherwise, or randomized when degenerate) and the vtable
 // slot-2 callback fires.
 // ---------------------------------------------------------------------------
-extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x,
+extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
                              f32 y) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->field_0x08 = lbl_eu_80663A90[0];
     VEC3 base(vec->x, vec->y, vec->z);
     VEC3 top(vec->x, vec->y + y, vec->z);
-    if (func_804B028C(&self->field_0x44, &self->field_0x50, &base, &top,
+    if (ColiClipStripRadius(&self->field_0x44, &self->field_0x50, &base, &top,
                       (VEC3*)&proc->field_0x0c, x) == 0) {
         return 0;
     }

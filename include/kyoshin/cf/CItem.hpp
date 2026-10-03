@@ -39,7 +39,7 @@ extern void* lbl_eu_8066416C;
 // BDAT handle used by func_8015A930's item-roll loop.
 extern void* lbl_eu_8066414C;
 
-// BDAT handles selected by func_80155A00's category dispatch (cat==2 picks
+// BDAT handles selected by CItem_reCount's category dispatch (cat==2 picks
 // lbl_eu_806640F4, cat in [4,8] picks lbl_eu_806640F8).
 extern void* lbl_eu_806640F4;
 extern void* lbl_eu_806640F8;
@@ -50,7 +50,7 @@ extern void* lbl_eu_80664108;
 extern void* lbl_eu_8066410C;
 extern void* lbl_eu_80664110;
 
-// BDAT handle used by func_80156934's slot refresh lookups.
+// BDAT handle used by CItem_refRow2's slot refresh lookups.
 extern void* lbl_eu_80664100;
 
 // BDAT handle used by func_8015AAB4's weighted random-roll lookups.
@@ -72,7 +72,7 @@ extern const char* lbl_eu_8052F660[8];
 extern const char* lbl_eu_80662288;
 extern const char* lbl_eu_8066228C;
 
-// u8 min/max pair table indexed by func_80156934's slot-size roll. Fixed
+// u8 min/max pair table indexed by CItem_refRow2's slot-size roll. Fixed
 // size keeps it sdata-eligible (an incomplete array type is not, so MWCC
 // would emit lis/addi instead of the retail li sym@sda21).
 extern u8 lbl_eu_80662290[8];
@@ -306,11 +306,11 @@ struct CItemVtblSize {
     virtual u32 vf14() = 0;
 };
 
-// u16 flag table compared against the item kind by func_8015720C.
+// u16 flag table compared against the item kind by CItem_famFlag.
 extern u16 lbl_eu_8052F6B8[];
 
 // Lazy-init guard flag and shared sort scratch buffer used by
-// func_80155F34 / func_80159D74 (u8 at 0x00, u32 at 0x40).
+// CItem_sortBuf / func_80159D74 (u8 at 0x00, u32 at 0x40).
 extern s8 lbl_eu_806641FC;
 struct CItemSortBuf {
     /* 0x00 */ u8 field_00;
@@ -418,7 +418,7 @@ extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 // of CItem_initItemImplInstances.
 extern CItemImpl* lbl_eu_8052F67C[16];
 
-// Sort scratch filler shared with func_80155F34 (writes the u8 at 0x00 and
+// Sort scratch filler shared with CItem_sortBuf (writes the u8 at 0x00 and
 // the u32 at 0x40 of buf).
 extern "C" void func_80159D74(CItemSortBuf* buf, u32 a, u32 b, u32 c, u32 d,
                               u32 e, u32 f);
@@ -473,7 +473,7 @@ extern "C" int func_80158894(u16 arg, u16* out, s32 capacity);
 // (per-slot u16 high-byte table) or the CItemBlock_testKindFlag family flags.
 // C linkage: retail symbol is unmangled, so the call-site relocs must
 // reference the plain name.
-extern "C" s32 func_801576C8(u32 arg);
+extern "C" s32 CItem_slotCnt(u32 arg);
 
 // Item-roll helpers called by func_8015AAB4's weighted dispatch (retail
 // symbols unmangled - C linkage so call-site relocs use the plain names).
@@ -482,11 +482,11 @@ extern "C" s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d,
 
 // Find a free record in the item-block list for arg (writes the record
 // index to *pOut; retail symbol unmangled - C linkage).
-extern "C" CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family);
+extern "C" CItemExt* CItem_freeRec(u32 arg, s16* pOut, u32 family);
 
 // Item record lookup by kind + entry id (defined in CItem.cpp; noinline in
 // retail - call sites bl the out-of-line symbol).
-extern "C" __declspec(noinline) CItemExt* func_80157C4C(u32 kind, s16 idx);
+extern "C" __declspec(noinline) CItemExt* CItem_kindPtr(u32 kind, s16 idx);
 
 // Three-element sort helper used by func_80158AF4's median-of-3 pivot
 // selection (retail symbol unmangled - C linkage).

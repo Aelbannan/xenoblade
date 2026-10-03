@@ -130,7 +130,7 @@ void CMenuBattleEnd::Init() {
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     u32 fontResult = getPackedFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     mLayout->UnbindAllAnimation();
 
@@ -208,7 +208,7 @@ void CMenuBattleEnd::cbRenderBefore() {
     // CSystemWindow::cbRenderBefore).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }

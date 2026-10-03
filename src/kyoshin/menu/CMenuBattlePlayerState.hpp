@@ -159,7 +159,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
+extern "C" unsigned long long PaneMatGetS16QuadByName(nw4r::lyt::Layout*, const char*, int);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
 
@@ -186,9 +186,9 @@ struct CMenuBattleDamageQueue;
 void BtlDmg_QueueDraw(CMenuBattleDamageQueue* queue);
 
 // Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
-// func_80136D74 / BdatTouchStringCell / MakeTplNameSysFile come from code_80135FDC.hpp.
+// SetLayoutSelfText / BdatTouchStringCell / MakeTplNameSysFile come from code_80135FDC.hpp.
 extern "C" u16 BdatGetU16Direct(const void* table, const void* key, int id);
 extern "C" void LayoutSetTextBoxInt(void* pane, u32 value);
-extern "C" void func_8013996C(void* pane, const void* colors, int arg);
+extern "C" void PaneMatSetS16Quad(void* pane, const void* colors, int arg);
 // Unmangled retail symbol (the CUICfManager static emits the mangled name).
 extern "C" void* CUICfManager_getArcResourceAccessor();

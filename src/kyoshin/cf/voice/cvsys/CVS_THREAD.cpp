@@ -57,7 +57,7 @@ struct CVoiceVTV {
     virtual int idle();               // slot 173 -> vtable offset 0x2BC
 };
 
-// ── Local phantom views for func_802A3D54 ─────────────────────────────────
+// ── Local phantom views for RequestVoicePlayback ─────────────────────────────────
 
 // Voice object flag word at +0x64 (bit 2 selects the alternate sdata2
 // constant for the sound request).

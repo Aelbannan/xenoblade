@@ -151,7 +151,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     } else {
         s->mGroup[0].mHandle = mtl::MemManager::getHandleMEM2();
     }
-    s->mGroup[0].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mGroup[0].mFuncs.allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mGroup[0].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[0].funcs = &s->mGroup[0].mFuncs;
     s->mAlloc[0].heap = NULL;
@@ -166,7 +166,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     } else {
         s->mGroup[1].mHandle = mtl::MemManager::getHandleMEM2();
     }
-    s->mGroup[1].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mGroup[1].mFuncs.allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mGroup[1].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[1].funcs = &s->mGroup[1].mFuncs;
     s->mAlloc[1].heap = NULL;
@@ -181,7 +181,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     } else {
         s->mGroup[2].mHandle = mtl::MemManager::getHandleMEM2();
     }
-    s->mGroup[2].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mGroup[2].mFuncs.allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mGroup[2].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[2].funcs = &s->mGroup[2].mFuncs;
     s->mAlloc[2].heap = NULL;
@@ -196,7 +196,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     } else {
         s->mGroup[3].mHandle = mtl::MemManager::getHandleMEM2();
     }
-    s->mGroup[3].mFuncs.allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mGroup[3].mFuncs.allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mGroup[3].mFuncs.freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[3].funcs = &s->mGroup[3].mFuncs;
     s->mAlloc[3].heap = NULL;
@@ -204,14 +204,14 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     s->mAlloc[3].heapParam2 = s->mGroup[3].mHandle;
 
     // MEM1 / MEM2 allocators (no per-slot handle).
-    s->mFuncs[0].allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mFuncs[0].allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mFuncs[0].freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[4].funcs = &s->mFuncs[0];
     s->mAlloc[4].heap = NULL;
     s->mAlloc[4].heapParam1 = (u32)(uintptr_t)obj;
     s->mAlloc[4].heapParam2 = mtl::MemManager::getHandleMEM1();
 
-    s->mFuncs[1].allocFunc = (MEMAllocatorAllocFunc)func_8048FE34;
+    s->mFuncs[1].allocFunc = (MEMAllocatorAllocFunc)RootNw4r_AllocBuf;
     s->mFuncs[1].freeFunc = (MEMAllocatorFreeFunc)RootNw4r_FreeBuf;
     s->mAlloc[5].funcs = &s->mFuncs[1];
     s->mAlloc[5].heap = NULL;

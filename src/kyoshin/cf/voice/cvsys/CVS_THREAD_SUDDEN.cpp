@@ -6,7 +6,7 @@
 // us-802ab400 (SuddenVxClearIdleSlot)
 // If no active voice, clear the handle slot.
 void SuddenVxClearIdleSlot(CVS_THREAD_SUDDEN* self) {
-    if (func_802A3E88(self) == 0) {
+    if (IsThreadVoiceActive(self) == 0) {
         self->voiceHandle = NULL;
     }
 }
@@ -16,7 +16,7 @@ void SuddenVxClearIdleSlot(CVS_THREAD_SUDDEN* self) {
 // slot (voiceHandle). A CVoiceHandle stores the CCharVoice at offset 0x3E9C,
 // so a non-null handle is biased by 0x3E9C before comparing.
 void SuddenVxRemoveVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->voiceHandle;
     CCharVoice* embedded = (CCharVoice*)handle;
@@ -33,8 +33,8 @@ void SuddenVxRemoveVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
 // helper if busy), stores the inverse-bias of voicePtr (back to the owning
 // CVoiceHandle) into the slot, re-biases to the CCharVoice, then plays.
 void SuddenVxPlayVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceId) {
-    if (func_802A3E88(self) != 0) {
-        func_802A3E28(self);
+    if (IsThreadVoiceActive(self) != 0) {
+        StopThreadVoice(self);
     }
 
     // Convert CCharVoice* to the containing CVoiceHandle*.
@@ -49,7 +49,7 @@ void SuddenVxPlayVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceI
     if (handle != NULL) {
         vp = &handle->voice;
     }
-    func_802A3C44(self, vp, voiceId);
+    TryRequestVoice(self, vp, voiceId);
 }
 
 // us-802ab338 (__ct__802A8C04)
@@ -60,7 +60,7 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() {
     // Allocate the (effectively discarded) handle buffer, then the 0x24-byte
     // thread object. Allocation failures return NULL directly (bypassing the
     // construction try/catch cleanup, matching retail's return-NULL jumps).
-    CVoiceHandle* handleBuf = func_802A330C(1, 0);
+    CVoiceHandle* handleBuf = CCharVoiceMan_DispatchById(1, 0);
     if (handleBuf == NULL) {
         return NULL;
     }

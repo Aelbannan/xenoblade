@@ -62,14 +62,14 @@ ItemListManager* getListB28();
 // (not in the .cpp) because they are genuine retail C/ABI symbols imported
 // from sibling voice modules.
 extern "C" {
-    int           func_802A3E88(CVS_THREAD* self);
-    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int           IsThreadVoiceActive(CVS_THREAD* self);
+    void          DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
-    int           func_802A77E8(CVoiceHandle* handle);
-    int           func_802A7870(void* arr, int capacity, int unused);
+    int           HpVoice_MapSubState(CVoiceHandle* handle);
+    int           HpVoice_CollectIdle(void* arr, int capacity, int unused);
 
     // Runtime rethrow (NMWException runtime, C ABI): declared noreturn so MWCC
     // elides the __end__catch epilogue of a catch-all handler that ends with

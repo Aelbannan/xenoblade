@@ -34,10 +34,10 @@ struct CBattleManagerSlot28 {
     virtual s32 v008(u32 mask) = 0;   // slot 0x28
 };
 
-// Per-frame battle-manager update (retail-unmangled func_800D9354, defined
+// Per-frame battle-manager update (retail-unmangled updateBattleManager, defined
 // in kyoshin/cf/CBattleManager.cpp). One shared import; the singleton getter
 // above already returns void*, so callers bind without casts.
-extern "C" void func_800D9354(cf::CBattleManager* self);
+extern "C" void updateBattleManager(cf::CBattleManager* self);
 
 // Battle event dispatch (retail-unmangled func_800F3970, defined in
 // kyoshin/cf/CBattleManager.cpp). One shared import; params are opaque

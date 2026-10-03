@@ -79,65 +79,65 @@ extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state statu
 #include <new>
 #include <cstring>
 
-// Stub declared below (func_800A145C) — called by CtrlObjectParam_SetEquipSlot4.
-extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self);
+// Stub declared below (CtrlObjectParam_LearnArtsSlots) — called by CtrlObjectParam_SetEquipSlot4.
+extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* self);
 
-// func_800A0E64 (arts-stat ramp) — defined later in this TU, called by
-// func_800A0860 below.
-extern "C" void func_800A0E64(u8* selfV, u16 value);
+// CtrlObjectParam_RampArtsStatStep (arts-stat ramp) — defined later in this TU, called by
+// CtrlObjectParam_RampEntryArtsLevel below.
+extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 value);
 
 // Arts-set init / re-apply and the arts-slot re-arm ctor — defined later in
-// this TU, called by the func_8009EF9C shared tail below.
-    extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self);
+// this TU, called by the CtrlObjectParam_RefreshCharEntry shared tail below.
+    extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView* self);
 extern "C" void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotOwner* self);
 
 // Entry init helper (defined below) — called by __ct__8009ED08.
-extern "C" void func_800A0860(void* self, u16 val);
+extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* self, u16 val);
 
-// Arts-list walker defined later in this TU; func_800A3594 aborts its row
+// Arts-list walker defined later in this TU; CtrlObjectParam_AllocArtsListNode aborts its row
 // scan through it when it hits an unknown tag (noinline: retail calls it;
 // extern "C": retail name is unmangled).
-extern "C" __declspec(noinline) void func_800A3A6C(cf::CtrlObjectParamArtsList* list);
+extern "C" __declspec(noinline) void CtrlObjectParam_ScanArtsListRows(cf::CtrlObjectParamArtsList* list);
 
 // Forward decls for the swap/type helpers defined later in this TU (callers
 // in CtrlObjectParam_SwapSlotValues).
-extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
+extern "C" int CtrlObjectParam_SwapSlotEntries(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
                              int secondType, int secondIndex);
-extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2,
+extern "C" int CtrlObjectParam_FindSlotTypeIndex(const int* param_1, int param_2,
                              int* param_3, int* param_4);
 
-// func_800A1B08 (level/rank accumulator) — defined later in this TU, called
-// by func_800A1E3C below.
-extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
+// CtrlObjectParam_AccumCharLevelRank (level/rank accumulator) — defined later in this TU, called
+// by CtrlObjectParam_AdjustPartyArtsLevel below.
+extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int* outB,
                               int unkArg4, int unkArg5, int flag);
 
-// func_800A1CA0 (party-average level/rank) — defined later in this TU, called
-// by func_800A1E3C below.
-extern "C" void func_800A1CA0(u8* self, int* outLevel, int* outRank,
+// CtrlObjectParam_AvgPartyArtsLevel (party-average level/rank) — defined later in this TU, called
+// by CtrlObjectParam_AdjustPartyArtsLevel below.
+extern "C" void CtrlObjectParam_AvgPartyArtsLevel(u8* self, int* outLevel, int* outRank,
                               int targetLevel, int flag);
 
-// func_800A2AF0 (arts-set re-apply) — defined later in this TU, called by
-// func_800A21F8 below.
-extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* self);
+// CtrlObjectParam_ReapplyArtsSet (arts-set re-apply) — defined later in this TU, called by
+// CtrlObjectParam_ApplyArtsRankUp below.
+extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* self);
 
 // isPartySlotMatch (work-buffer slot-table probe) — defined later in this TU,
-// called by func_800A21F8 below.
+// called by CtrlObjectParam_ApplyArtsRankUp below.
 static inline int isPartySlotMatch(int type);
 
-// func_800A30E4 (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
-extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner* self);
+// CtrlObjectParam_RecollectArtsRows (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
+extern "C" __declspec(noinline) void CtrlObjectParam_RecollectArtsRows(cf::CtrlObjectParamActorOwner* self);
 
-// func_800A30E4 (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
-extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner* self);
+// CtrlObjectParam_RecollectArtsRows (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
+extern "C" __declspec(noinline) void CtrlObjectParam_RecollectArtsRows(cf::CtrlObjectParamActorOwner* self);
 
-// func_8009E974 (work-buffer reset) — defined later in this TU.
-extern "C" void func_8009E974(cf::CtrlObjectParamWork* work);
+// CtrlObjectParam_ResetWorkBuffer (work-buffer reset) — defined later in this TU.
+extern "C" void CtrlObjectParam_ResetWorkBuffer(cf::CtrlObjectParamWork* work);
 
 void __ct__8009D604() {
     // Work-buffer (re)initialization: allocate the 0x3A38C-byte buffer once,
     // zero the per-slot arrays, then run the per-entry init (14 entries of
     // 0x3DD4 at +0x41F0). The global is stored even on alloc failure; the
-    // buffer is always reset through func_8009E974 afterwards.
+    // buffer is always reset through CtrlObjectParam_ResetWorkBuffer afterwards.
     if (lbl_eu_80663E88 == 0) {
         cf::CtrlObjectParamWork* work = static_cast<cf::CtrlObjectParamWork*>(
             mtl::MemManager::allocate(0x3A38C, mtl::MemManager::getHandleMEM1()));
@@ -179,12 +179,12 @@ void __ct__8009D604() {
                 ++e;
             } while (e < eEnd);
             // Reset the freshly built buffer before publishing it (retail
-            // calls func_8009E974 both here and again on the shared tail).
-            func_8009E974(work);
+            // calls CtrlObjectParam_ResetWorkBuffer both here and again on the shared tail).
+            CtrlObjectParam_ResetWorkBuffer(work);
         }
         lbl_eu_80663E88 = reinterpret_cast<u32>(work);
     }
-    func_8009E974(reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88));
+    CtrlObjectParam_ResetWorkBuffer(reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88));
 }
 
 extern "C" void __dt__8009D72C() {
@@ -224,7 +224,7 @@ extern "C" u8* CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx) {
     u8* result = 0;
     if (*q > -1) {
         result = reinterpret_cast<u8*>(
-            func_80157C4C(idx > 4 ? 2 : idx + 4, *q));
+            CItem_kindPtr(idx > 4 ? 2 : idx + 4, *q));
     }
     return result;
 }
@@ -233,20 +233,20 @@ cf::CtrlObjectParamSubEntry* cf::CtrlObjectParamData::getSubStruct(unsigned long
     return &entries[index];
 }
 
-// ── func_8009D7F4 (us-8009e1cc) ───────────────────────────────────────────
+// ── CtrlObjectParam_RefreshEquipSlotBlock (us-8009e1cc) ───────────────────────────────────────────
 // Equip-slot arts/status refresh: resolve the item instance for the slot
 // (category = index+4, or 2 for index 5) and derive the arts id from the
 // item's first word; without an item, fall back to the self u16 table. Then
 // fill the 0x20-byte block at arr + index*0x20 + 0xC from the item bdat
 // columns (+0x00..+0x61 for index 5, +0x48..+0x6F otherwise), or zero it.
-extern "C" __declspec(noinline) void func_8009D7F4(s16* arr, u32 index, void* selfV) {
+extern "C" __declspec(noinline) void CtrlObjectParam_RefreshEquipSlotBlock(s16* arr, u32 index, void* selfV) {
     cf::CtrlObjectParamArtsBlock* blk = reinterpret_cast<cf::CtrlObjectParamArtsBlock*>(
         reinterpret_cast<u8*>(arr) + (index << 5) + 0xC);
     u16* self = reinterpret_cast<u16*>(selfV);
     void* item = NULL;
     if (arr[index] > -1) {
         u32 cat = index > 4 ? 2 : index + 4;
-        item = func_80157C4C(cat, arr[index]);
+        item = CItem_kindPtr(cat, arr[index]);
     }
     u32 artsId = 0;
     if (item != NULL) {
@@ -333,24 +333,24 @@ void* cf::CActorParam::CActorParam_getArtsDataBlock() {
 extern "C" u32 CItemData_lookupBdatCol(void* a, void* b);
 extern "C" u32 CtrlObjectParam_LookupItemBdatCol(void* ignored, void* a, void* b) { return CItemData_lookupBdatCol(a, b); }
 
-extern "C" void func_8009DB28(void* selfV, u32 index) {
+extern "C" void CtrlObjectParam_RemoveEquipSlotEntry(void* selfV, u32 index) {
     cf::CtrlObjectParamEquipRow* self = (cf::CtrlObjectParamEquipRow*)selfV;
     // Remove the equip-slot entry: resolve the item instance, run the impl's
     // 0x10 hook, then clear the two s16 fields and resync the owner state.
     void* inst = 0;
     if (self->shortArr[index] > -1) {
-        inst = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[index]);
+        inst = CItem_kindPtr(index > 4 ? 2 : index + 4, self->shortArr[index]);
     }
     if (inst != 0) {
         CItem_initItemImplInstances(reinterpret_cast<CItemData*>(inst))->vf10(reinterpret_cast<CItemData*>(inst));
     }
     self->shortArr[index] = -1;
     self->field_0E[index] = 0;
-    func_8009D7F4(&self->shortArr[0], index, self);
-    func_800A30E4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
+    CtrlObjectParam_RefreshEquipSlotBlock(&self->shortArr[0], index, self);
+    CtrlObjectParam_RecollectArtsRows(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
 }
 
-extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
+extern "C" void CtrlObjectParam_WriteEquipSlotValue(void* selfV, unsigned long index, void* valueV) {
     // Equip-slot write: store the item id at shortArr[index], then resolve
     // the item instance for the slot and derive the arts id from its first
     // word (extrwi 11,16 / srwi 20). The index-5 (arts) row additionally
@@ -366,7 +366,7 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
     } else {
         void* item = NULL;
         if (SELF->shortArr[index] > -1) {
-            item = func_80157C4C(index > 4 ? 2 : index + 4, SELF->shortArr[index]);
+            item = CItem_kindPtr(index > 4 ? 2 : index + 4, SELF->shortArr[index]);
         }
         if (item != NULL) {
             // Three separate derefs (retail reloads word0 for each extract).
@@ -409,12 +409,12 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
             }
         }
     }
-    func_8009D7F4(&SELF->shortArr[0], index, SELF);
+    CtrlObjectParam_RefreshEquipSlotBlock(&SELF->shortArr[0], index, SELF);
     if (index == 5 && (s32)valueV != -1) {
         // Arts-row refresh: re-resolve the item for the fixed slot 5.
         void* item2 = NULL;
         if (SELF->shortArr[5] > -1) {
-            item2 = func_80157C4C(index > 4 ? 2 : index + 4, SELF->shortArr[5]);
+            item2 = CItem_kindPtr(index > 4 ? 2 : index + 4, SELF->shortArr[5]);
         }
         if (item2 != NULL) {
             // Slot 0x20C returns the level multiplier directly (its u16 form).
@@ -436,7 +436,7 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
             }
         }
     }
-    func_800A30E4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
+    CtrlObjectParam_RecollectArtsRows(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
     reinterpret_cast<cf::CActorParam*>(&SELF->mParam)->CActorParam_resetArtsStatus(
         reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
     if (lbl_eu_80663E24 & (1 << 20)) {
@@ -457,42 +457,42 @@ void cf::CActorParam::CActorParam_setHp(float val) {
 }
 
 void CtrlObjectParam_ActivateActorOwner(cf::CtrlObjectParamActorOwner* self) {
-    // Activate the owner: init via func_800A30E4, then dispatch virtual
+    // Activate the owner: init via CtrlObjectParam_RecollectArtsRows, then dispatch virtual
     // slots 0xA4 / 0xA8 through the CActorParam embedded at +0x17C.
-    func_800A30E4(self);
+    CtrlObjectParam_RecollectArtsRows(self);
     self->mParam.CActorParam_resetArtsStatus(self);
     self->mParam.CActorParam_commitArtsStatus(1);
 }
 
 extern "C" void CtrlObjectParam_SetEquipSlot0(void* a, void* c) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 0, c);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 0, c);
 }
 
 extern "C" void CtrlObjectParam_SetEquipSlot1(void* a, void* c) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 1, c);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 1, c);
 }
 
 void cf::CtrlObjectParamData::setArgType2(void* arg) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 2, arg);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 2, arg);
 }
 
 void cf::CtrlObjectParamData::setArgType3(void* arg) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 3, arg);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 3, arg);
 }
 
 extern "C" void CtrlObjectParam_SetEquipSlot4(cf::CtrlObjectParamData* self, u8* arg) {
     // Forward the arg as type 4, then run the type-8 init path when the
     // object's type tag is 8 and no actor exists for it.
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self), 4, arg);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self), 4, arg);
     if (self->field_00 == 8) {
         if (findObjB28ById(self->field_00) == 0) {
-            func_800A145C(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
+            CtrlObjectParam_LearnArtsSlots(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
         }
     }
 }
 
 void cf::CtrlObjectParamData::setArgType5(void* arg) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 5, arg);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 5, arg);
 }
 
 long cf::CtrlObjectParamData::getShortAt1C(unsigned long index) {
@@ -512,32 +512,32 @@ extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
     // Arts/row lookup: read the u16 table at +0x02 at index (u16)value; a
     // 0xFFFF table entry means "empty" and is folded to 0 before dispatch.
     // NOTE (us-8009eaf8): retail emits clrlwi r4,r5,16 before the
-    // func_80142074 tail-call even though the phi {lhz, li 0} is provably
+    // bdatResolveItem tail-call even though the phi {lhz, li 0} is provably
     // 16-bit; MWCC elides every high-level narrowing we tried (u32 temp,
     // casts, ternary shapes). §17.6 DECOMP_PPC_RLWINM escape used here.
     u16 v = p->field_02[(u16)value];
     if (v == 0xFFFF) v = 0;
     if (v != 0)
-        return func_80142074(p->field_00, DECOMP_PPC_RLWINM(v, 0, 16, 31), 0);
-    return func_80141E90(p->field_00, (s16)v, (u16)(value + 1), 0);
+        return bdatResolveItem(p->field_00, DECOMP_PPC_RLWINM(v, 0, 16, 31), 0);
+    return bdatPcPartsRes(p->field_00, (s16)v, (u16)(value + 1), 0);
 }
 
 // Locate the (type, index) pair for value a and for value b in the swap
-// object; when both are present, swap them via func_8009E20C.
+// object; when both are present, swap them via CtrlObjectParam_SwapSlotEntries.
 int CtrlObjectParam_SwapSlotValues(cf::CtrlObjectParamSwap* self, unsigned int a, unsigned int b) {
     int t1 = 0;
     int i1 = 0;
     int t2 = 0;
     int i2 = 0;
-    int r1 = func_8009E344(reinterpret_cast<const unsigned int*>(self), a, &t1, &i1);
-    int r2 = func_8009E344(reinterpret_cast<const unsigned int*>(self), b, &t2, &i2);
+    int r1 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), a, &t1, &i1);
+    int r2 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), b, &t2, &i2);
     if (r1 != 0 && r2 != 0) {
-        return func_8009E20C(self, t1, i1, t2, i2);
+        return CtrlObjectParam_SwapSlotEntries(self, t1, i1, t2, i2);
     }
     return 0;
 }
 
-extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
+extern "C" int CtrlObjectParam_SwapSlotEntries(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
                              int secondType, int secondIndex) {
     int* first = 0;
     int* second = 0;
@@ -558,7 +558,7 @@ extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int f
 // Membership test: 1 if value matches any of the 9 slot words (arr1[3] +
 // arr2[6]) starting at +4, 0 otherwise. The tail reads go through a +8 base
 // like the retail (p = &arr[2]; p[4..7]).
-extern "C" int func_8009E284(const int* arr, int value) {
+extern "C" int CtrlObjectParam_HasSlotValue(const int* arr, int value) {
     const int* p = arr + 2;
     for (int i = 1; i <= 5; ++i)
         if (arr[i] == value) return 1;
@@ -567,7 +567,7 @@ extern "C" int func_8009E284(const int* arr, int value) {
     return 0;
 }
 
-extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2,
+extern "C" int CtrlObjectParam_FindSlotTypeIndex(const int* param_1, int param_2,
                               int* param_3, int* param_4) {
     for (int i = 0; i < 3; ++i) {
         if (param_1[i + 1] == param_2) {
@@ -589,7 +589,7 @@ extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2,
 // Slot-validity check: all 9 slot words (arr1 + arr2) must be in [0, 0xD].
 // Retail keeps a 3-trip mtctr/bdnz loop with the three checks unrolled inside
 // each trip (plus a dead +2 counter, part of the original loop update).
-int func_8009E3C0(const int* arr) {
+int CtrlObjectParam_ValidateSlotRange(const int* arr) {
     int ok = 1;
     int j = 0;
     int flag;
@@ -640,18 +640,18 @@ extern "C" int CtrlObjectParam_MoveValueToHead(cf::CtrlObjectParamSwap* self, un
     // store value at the head slot. The first probe's result is discarded.
     int t1 = 0, i1 = 0;
     u32 other = self->intArr1[0];
-    func_8009E344(reinterpret_cast<const unsigned int*>(self), value, &t1, &i1);
+    CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), value, &t1, &i1);
     if (other != 0) {
         int i3, t3, i2, t2;
         t2 = 0;
         i2 = 0;
         t3 = 0;
         i3 = 0;
-        int f2 = func_8009E344(reinterpret_cast<const unsigned int*>(self), value, &t2, &i2);
-        int f3 = func_8009E344(reinterpret_cast<const unsigned int*>(self), other, &t3, &i3);
+        int f2 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), value, &t2, &i2);
+        int f3 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), other, &t3, &i3);
         int result;
         if (f2 != 0 && f3 != 0) {
-            result = func_8009E20C(self, t2, i2, t3, i3);
+            result = CtrlObjectParam_SwapSlotEntries(self, t2, i2, t3, i3);
         } else {
             result = 0;
         }
@@ -665,7 +665,7 @@ extern "C" int CtrlObjectParam_MoveValueToHead(cf::CtrlObjectParamSwap* self, un
     return 1;
 }
 
-extern "C" int func_8009E574(cf::CtrlObjectParamSlots* self, int value, int type, int index) {
+extern "C" int CtrlObjectParam_InsertSlotEntry(cf::CtrlObjectParamSlots* self, int value, int type, int index) {
     // Slot insertion: refuse when value already sits in one of the 9 slot
     // words (arr1[3] + arr2[6]), then store it at the requested (type,
     // index) slot, or the first free slot when index is -1. The tail reads
@@ -713,7 +713,7 @@ extern "C" int func_8009E574(cf::CtrlObjectParamSlots* self, int value, int type
     return 0;
 }
 
-extern "C" int CtrlObjectParam_InsertSlotValue(cf::CtrlObjectParamSlots* a, int b, int c) { return func_8009E574(a, b, c, -1); }
+extern "C" int CtrlObjectParam_InsertSlotValue(cf::CtrlObjectParamSlots* a, int b, int c) { return CtrlObjectParam_InsertSlotEntry(a, b, c, -1); }
 
 extern "C" int CtrlObjectParam_ClearSlotValue(cf::CtrlObjectParamSlots* self, int value) {
     // Clear the first occurrence of value in arr1 (3 entries), else in
@@ -773,7 +773,7 @@ extern "C" int CtrlObjectParam_InitItemSlotArea(u8* self) {
     return 1;
 }
 
-extern "C" void func_8009E838(u8* self) {
+extern "C" void CtrlObjectParam_CompactSlotArrays(u8* self) {
     for (int a = 0; a < 3; a++) {
         void* cur = (u8*)self + a * 4;
         if (*(u32*)((u8*)cur + 4) == 0) {
@@ -808,7 +808,7 @@ extern "C" void func_8009E838(u8* self) {
     }
 }
 
-extern "C" void func_8009E974(cf::CtrlObjectParamWork* work) {
+extern "C" void CtrlObjectParam_ResetWorkBuffer(cf::CtrlObjectParamWork* work) {
     // Reset the work buffer: zero the header/copy area, the two bitmaps and
     // the per-entry s16 fields, then re-run the per-slot and entry init and
     // refresh the event data table.
@@ -905,7 +905,7 @@ extern "C" int CtrlObjectParam_GetStateBitFlag(unsigned int idx) {
 
 // Matches the declaration in kyoshin/code_800B06A4.hpp (u32 vs u16 would be
 // an illegal overload there).
-extern "C" void* func_8009EC9C(unsigned long idx) {
+extern "C" void* CtrlObjectParam_GetCharEntry(unsigned long idx) {
     int i = (int)idx;
     extern u32 lbl_eu_80663E88;
     return reinterpret_cast<void*>(lbl_eu_80663E88 + i * 15828 + 16880);
@@ -916,7 +916,7 @@ extern "C" void* CtrlObjectParam_GetSlotTableBase() {
     return reinterpret_cast<void*>(lbl_eu_80663E88 + 0x1f98);
 }
 
-extern "C" void* func_8009ECBC(int idx) {
+extern "C" void* CtrlObjectParam_GetItemSlotEntry(int idx) {
     extern u32 lbl_eu_80663E88;
     return reinterpret_cast<void*>(lbl_eu_80663E88 + (idx * 8) + 88);
 }
@@ -944,7 +944,7 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
 
 // ── __ct__8009ED08 (us-8009f6e0) ─────────────────────────────────────────
 // Character-row copy: resolve the row entries for the two u16 row indices
-// (work + idx*0x3DD4), init entryA via func_800A0860, snapshot entryB's
+// (work + idx*0x3DD4), init entryA via CtrlObjectParam_RampEntryArtsLevel, snapshot entryB's
 // param sub-region (blocks at +0x188/+0x16AC/+0x1730) to stack locals, copy
 // entryB's CActorParam into entryA's via func_80175A50, then restore the
 // snapshots. The dead lbl_eu_8052E9B0 address store is kept by retail.
@@ -954,7 +954,7 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
     u32 v = getBdatStringColumnValue(fp, &strBase[0x83], rowB);
     cf::CtrlObjectParamEntry* entryA = reinterpret_cast<cf::CtrlObjectParamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_80663E88) + ((u16)rowA * 0x3DD4) + 0x41F0);
-    func_800A0860(reinterpret_cast<cf::CtrlObjectParamSlotView*>(entryA), v);
+    CtrlObjectParam_RampEntryArtsLevel(reinterpret_cast<cf::CtrlObjectParamSlotView*>(entryA), v);
     cf::CtrlObjectParamEntry* entryB = reinterpret_cast<cf::CtrlObjectParamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_80663E88) + ((u16)rowB * 0x3DD4) + 0x41F0);
     volatile u32 lblAddr = (u32)lbl_eu_8052E9B0;  // dead store kept by retail
@@ -976,17 +976,17 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
         reinterpret_cast<u8*>(entryB) + 0x1730) = t3;
 }
 
-// ── func_8009EF9C (us-8009f974) ───────────────────────────────────────────
+// ── CtrlObjectParam_RefreshCharEntry (us-8009f974) ───────────────────────────────────────────
 // Character-entry refresh: when arg2 is 0, snapshot the type id and run the
 // init flow — the arts-stat gate (slot 0x108) splits into the >0 branch
 // (slot 0xD4 level write + 0x170/0x188/0x198/0x1A4/0x1BC arts-set refresh,
 // slot 0xCC byte write, then the equip-slot/column block) and the <=0 branch
 // (same refresh plus the slot 0x264 float write, then the arts-stat record
-// init from the slot 0x20C result and func_800A0860). Both branches finish
+// init from the slot 0x20C result and CtrlObjectParam_RampEntryArtsLevel). Both branches finish
 // with the 0x17A5..0x17A8 byte columns, the 0x34D4 row-sync helpers and the
 // 0x176C flag. The shared tail re-arms the arts list (__ct__8009F8B8,
-// func_800A03F4, func_800A2AF0) and refreshes the actor param.
-void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
+// CtrlObjectParam_InitArtsSlotSet, CtrlObjectParam_ReapplyArtsSet) and refreshes the actor param.
+void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
     void* actor = findObjB28ById(self->field_00);
     reinterpret_cast<cf::CtrlObjectParamEF9CTail*>(&self->mParam)->field_3DA0 = self->field_00;
     if (arg2 == 0) {
@@ -1031,10 +1031,10 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
             volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
             MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
-            func_80174AE8(&view->field_3358);
+            initItemNotch(&view->field_3358);
             volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
-            func_80174B4C(&self->mParam, 3);
+            dispatchItemLoad(&self->mParam, 3);
         } else {
             const char* strBase = lbl_eu_804FBCB0;
             u32 v86 = getBdatStringColumnValue(bdat, &strBase[0x86], self->field_00);
@@ -1057,7 +1057,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             cf::CtrlObjectParamStats* record =
                 reinterpret_cast<cf::CtrlObjectParamStats*>(
                     self->mParam.CActorParam_getArtsDataBlock());
-            // Arts-stat record init (column offsets mirror func_800A0860).
+            // Arts-stat record init (column offsets mirror CtrlObjectParam_RampEntryArtsLevel).
             record->field_00 = (u8)getBdatStringColumnValue(bdat, &strBase[0x83], self->field_00);
             union { u32 w[2]; f64 d; } conv2;
             conv2.w[0] = 0x43300000;
@@ -1096,17 +1096,17 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
             volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
             MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
-            func_80174AE8(&view->field_3358);
+            initItemNotch(&view->field_3358);
             volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
-            func_800A0860(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self),
+            CtrlObjectParam_RampEntryArtsLevel(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self),
                           record->field_00);
         }
     }
     // Shared tail: re-arm the arts list and refresh the actor param.
     __ct__8009F8B8(reinterpret_cast<cf::CtrlObjectParamArtsSlotOwner*>(self));
-    func_800A03F4(reinterpret_cast<cf::CtrlObjectParamArtsInitView*>(self));
-    func_800A2AF0(reinterpret_cast<cf::CtrlObjectParamTypeView*>(self));
+    CtrlObjectParam_InitArtsSlotSet(reinterpret_cast<cf::CtrlObjectParamArtsInitView*>(self));
+    CtrlObjectParam_ReapplyArtsSet(reinterpret_cast<cf::CtrlObjectParamTypeView*>(self));
     if (actor != 0) {
         void* a3 = findObjB28ById(self->field_00);
         if (a3 != 0) {
@@ -1200,19 +1200,19 @@ void* cf::CActorParam::CActorParam_getTensionStatus() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_3358;
 }
 
-// Arts-list / slot re-arm hook (called by func_800A18A4). noinline: the
+// Arts-list / slot re-arm hook (called by CtrlObjectParam_ClaimArtsSlotRow). noinline: the
 // empty stub body would otherwise fold into the caller and the retail
 // `bl __ct__8009F8B8` call site would vanish.
 extern "C" __declspec(noinline) void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotOwner* self){}
 
-// ── func_800A03F4 (us-800a0dcc) ───────────────────────────────────────────
+// ── CtrlObjectParam_InitArtsSlotSet (us-800a0dcc) ───────────────────────────────────────────
 // Arts-set init: refresh the six u16 arts-slot words of the getArtsSlotIds
 // result through the arts-stat / item bdat columns. The type-0 path writes
 // the three header words from stat columns and zeroes the rest; the main path
 // fills each slot from the column named by a digit-suffixed prefix, then
 // populates the per-slot attack-parameter record (getAtkParam) with the arts
 // name / level / flag bytes and the E6-derived flag bits.
-extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self) {
+extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView* self) {
     u16 artsKey = self->field_0C;
     void* v125 = self->mParam.CActorParam_getArtsSlotIds();
     reinterpret_cast<cf::CAttackSet*>(reinterpret_cast<u8*>(v125) + 0xC)->resetAttackSetArts();
@@ -1339,15 +1339,15 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* selfV) {
     return p->word0 & 0xFFFF;
 }
 
-// ── func_800A0860 (us-800a1238) ───────────────────────────────────────────
+// ── CtrlObjectParam_RampEntryArtsLevel (us-800a1238) ───────────────────────────────────────────
 // Entry init: fill the stats record (vtable slot 0x20C result) from the
 // arts-stat bdat columns (byte/float/short fields), refresh the embedded
 // CActorParam from the actor, then ramp the arts level from the current
-// value up to `val` (one step per outer-loop trip via func_800A0E64),
+// value up to `val` (one step per outer-loop trip via CtrlObjectParam_RampArtsStatStep),
 // refreshing the D4/D6 display fields from the item impl's label tables
 // when the E6 bit-2 flag is set, and finally copy the record to the
 // slot-0x224 result and repeat the D4/D6 refresh for the (new) item.
-extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
+extern "C" void __declspec(noinline) CtrlObjectParam_RampEntryArtsLevel(void* selfV, u16 val) {
     cf::CtrlObjectParamSlotView* self = reinterpret_cast<cf::CtrlObjectParamSlotView*>(selfV);
     // Two u32->f64 conversion temporaries (0x43300000 magic high words);
     // both are pre-initialized before the first virtual dispatch like retail.
@@ -1395,12 +1395,12 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
         u16 target = (u16)(v94->word0 + 1);
         u32 cur = v94->word0;
         while (cur < target && cur < 99) {
-            func_800A0E64(reinterpret_cast<u8*>(self), (u16)(cur + 1));
+            CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(cur + 1));
             cur = v94->word0;
         }
         void* item = 0;
         if (self->shortArr[5] > -1) {
-            item = func_80157C4C(2, self->shortArr[5]);
+            item = CItem_kindPtr(2, self->shortArr[5]);
         }
         if (item != 0) {
             cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
@@ -1425,7 +1425,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
             }
         }
         count++;
-        func_800A145C(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
+        CtrlObjectParam_LearnArtsSlots(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
     }
     stats->field_04 = stats->field_10;
     cf::CtrlObjectParamStats* other = reinterpret_cast<cf::CtrlObjectParamStats*>(
@@ -1433,7 +1433,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     *other = *stats;
     void* item2 = 0;
     if (self->shortArr[5] > -1) {
-        item2 = func_80157C4C(2, self->shortArr[5]);
+        item2 = CItem_kindPtr(2, self->shortArr[5]);
     }
     if (item2 != 0) {
         cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
@@ -1456,13 +1456,13 @@ void* cf::CActorParam::CActorParam_getBattleParams() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_17E4;
 }
 
-// ── func_800A0E64 (us-800a183c) ───────────────────────────────────────────
+// ── CtrlObjectParam_RampArtsStatStep (us-800a183c) ───────────────────────────────────────────
 // Arts-stat ramp: resolve the stat record via vtable slot 0x20C, bail when
 // the head equals the target level (or the target exceeds 99), then walk the
 // 4-column stat table, ramping each stat field toward the target level with
 // the f32 interpolation (2^52 u32->f64 conversions, shared by the two union
 // slots), and finally copy the record to the slot-0x224 result object.
-extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
+extern "C" void __declspec(noinline) CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 valueArg) {
     cf::CtrlObjectParamStats* param;
     u32 value = valueArg;
     cf::CtrlObjectParamArtsOwner0E64* self =
@@ -1557,7 +1557,7 @@ extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
     other->field_74 = param->field_74;
 }
 
-void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
+void CtrlObjectParam_RaiseArtsLevelBy(cf::CtrlObjectParamEntry11A4* self, int amount) {
     // Level-up helper: raise the actor param's arts/status word by `amount`
     // (one step per loop, capped at 99), then refresh the D4/D6 display
     // fields from the item impl's label tables when the E6 bit-2 flag is set.
@@ -1567,12 +1567,12 @@ void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
         self->mParam.CActorParam_getArtsDataBlock());
     u16 target = (u16)(view->word0 + amount);
     while (amount != 0 && view->word0 < target && view->word0 < 0x63) {
-        // one level per iteration; func_800A0E64 updates view->word0
-        func_800A0E64(reinterpret_cast<u8*>(self), (u16)(view->word0 + 1));
+        // one level per iteration; CtrlObjectParam_RampArtsStatStep updates view->word0
+        CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(view->word0 + 1));
     }
     void* item = 0;
     if (self->shortArr[5] > -1) {
-        item = func_80157C4C(2, *const_cast<volatile s16*>(&self->field_26));
+        item = CItem_kindPtr(2, *const_cast<volatile s16*>(&self->field_26));
     }
     if (item != 0) {
         cf::CtrlObjectParamWordView* view2 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
@@ -1625,14 +1625,14 @@ void CtrlObjectParam_SyncParamFromActorEx(cf::CtrlObjectParamArtsView* self, u32
     }
 }
 
-// ── func_800A145C (us-800a1e34) ───────────────────────────────────────────
+// ── CtrlObjectParam_LearnArtsSlots (us-800a1e34) ───────────────────────────────────────────
 // Arts-learn flow: gate on the party-member frame count (type 3 / state
 // 0x1D), refresh the embedded CActorParam from the actor (or the 0xA4
 // slot), then walk the 3x8 column-name grid, claiming an empty arts slot
 // in the 0x49-stride row selected by the +0x58 column byte. The claim
 // scans the two offset tables (lbl_eu_804FBC70 / lbl_eu_804FBC50) and
 // stamps the slot record via getArtsParamRC2 / setArtsSlotRC.
-extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
+extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* self) {
     volatile u8 learnFlag = 0;   // retail keeps this in a stack slot across all calls
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {   // retail cmpli
@@ -1766,7 +1766,7 @@ u32 cf::CActorParam::CActorParam_getArtsLevel() {
 
 extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
 
-// ── func_800A18A4 (us-800a227c) ───────────────────────────────────────────
+// ── CtrlObjectParam_ClaimArtsSlotRow (us-800a227c) ───────────────────────────────────────────
 // Arts-slot update: resolve the actor for the type id, refresh the embedded
 // CActorParam (via func_80175A50 or the 0xA4 slot), then claim an arts-slot
 // row in the 0x49-stride table at +0xE8: the bdat columns +0x58/+0x253/+0x109
@@ -1774,7 +1774,7 @@ extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
 // base+elem*8+flag*8+0x31 == 0) is stamped with arg2, else a 0x76 fallback
 // writes the two byte slots directly. Finally re-arms the arts list via
 // __ct__8009F8B8 and refreshes the actor param again.
-extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) {
+extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) {
     u8* rows;
     if (arg2 == 0) return;
     void* actor = findObjB28ById(self->field_00);
@@ -1837,13 +1837,13 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
     reinterpret_cast<cf::CtrlObjectParamHelpFlag*>(lbl_eu_80664A10)->field_16 = 1;
 }
 
-// func_800A1E3C (char arts/level helper) is defined below; func_800A21F8
+// CtrlObjectParam_AdjustPartyArtsLevel (char arts/level helper) is defined below; CtrlObjectParam_ApplyArtsRankUp
 // (rank/level helper) is a stub in this TU but both are called by
-// func_800A26A4 below; the retail call-site relocs use the plain names, so
+// CtrlObjectParam_RunPartyArtsFlow below; the retail call-site relocs use the plain names, so
 // the stub carries the real parameter list. noinline: an empty body would
-// otherwise be folded into the caller and the retail `bl func_800A21F8`
+// otherwise be folded into the caller and the retail `bl CtrlObjectParam_ApplyArtsRankUp`
 // call site would vanish.
-// ── func_800A21F8 (us-800a2bd0) ───────────────────────────────────────────
+// ── CtrlObjectParam_ApplyArtsRankUp (us-800a2bd0) ───────────────────────────────────────────
 // Arts rank/level helper: gate on the party-member frame count (type 3 /
 // state 0x1D), forward the change to the actor (slot 0x1F4) when present,
 // else apply it to the embedded CActorParam (slots 0x1DC/0x1FC) and the
@@ -1851,7 +1851,7 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
 // count vs the 0x263 column), refreshes the D4/D6 display fields from the
 // item impl labels when the E6 bit-2 flag is set, and gates the
 // arts-change write (Counter884_AddClamped) on party membership.
-extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a, u32 b) {
+extern "C" __declspec(noinline) void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u32 b) {
     cf::CtrlObjectParamTypeView* self = reinterpret_cast<cf::CtrlObjectParamTypeView*>(selfV);
     cf::CtrlObjectParamArtsRankView* view =
         reinterpret_cast<cf::CtrlObjectParamArtsRankView*>(self);
@@ -1897,12 +1897,12 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
         u16 target = (u16)(v94->word0 + 1);
         u32 cur = v94->word0;
         while (cur < target && cur < 0x63) {
-            func_800A0E64(reinterpret_cast<u8*>(self), (u16)(cur + 1));
+            CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(cur + 1));
             cur = v94->word0;
         }
         void* item = 0;
         if (self->shortArr[5] > -1) {
-            item = func_80157C4C(2, self->shortArr[5]);
+            item = CItem_kindPtr(2, self->shortArr[5]);
         }
         if (item != 0) {
             cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
@@ -1947,24 +1947,24 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
         repeat = 1;
     }
     if (repeat != 0) {
-        func_800A145C(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
+        CtrlObjectParam_LearnArtsSlots(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
     }
     if (argB != 0) {
-        func_800A2AF0(self);
+        CtrlObjectParam_ReapplyArtsSet(self);
     }
 }
 
-// ── func_800A1E3C (us-800a2814) ───────────────────────────────────────────
+// ── CtrlObjectParam_AdjustPartyArtsLevel (us-800a2814) ───────────────────────────────────────────
 // Party-member arts-level adjust: read the member's current arts level
 // through vtable slot 0x108 (and the actor's, when one exists), accumulate
-// the level/rank totals via func_800A1B08, then rescale *v1/*v2 by the
+// the level/rank totals via CtrlObjectParam_AccumCharLevelRank, then rescale *v1/*v2 by the
 // level-difference windows (125%, 150%, half, two-thirds) and, for big
 // level gaps, overwrite them from the arts bdat level columns. Finally
 // scale by the slot-membership/flag-derived percentages and derive *v3
 // (rank * average level / 10) unless arg7 disables it.
 // Frame-slot notes: retail locals are conv-scratch(+0x28), a/b(+0x24/+0x20),
 // rank/lvl(+0x1C/+0x18), v1v/v2v(+0x14/+0x10), tmpIndex/tmpType(+0xC/+0x8).
-extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
+extern "C" void CtrlObjectParam_AdjustPartyArtsLevel(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
                               int arg5, int arg6, int arg7) {
     int a;
     int b;
@@ -1982,7 +1982,7 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
     }
     a = 0;
     b = 0;
-    func_800A1B08(self->field_00, &a, &b, (int)result, arg5, arg6);
+    CtrlObjectParam_AccumCharLevelRank(self->field_00, &a, &b, (int)result, arg5, arg6);
     if (arg5 > 0) {
         diff = arg5 - (int)result;
         if (diff > 2 && diff < 6) {
@@ -2013,7 +2013,7 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
     *v2 = *v2 * b / 100;
     tmpIndex = 0;
     tmpType = 0;
-    func_8009E344(reinterpret_cast<const unsigned int*>(lbl_eu_80663E88 + 0x1F98),
+    CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(lbl_eu_80663E88 + 0x1F98),
                   self->field_00, &tmpType, &tmpIndex);
     int levelA = (tmpType == 1) ? 100 : 90;
     int levelB = levelA;
@@ -2025,7 +2025,7 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
     rank = 10;
     lvl = 0;
     if (arg7 == 0) {
-        func_800A1CA0(reinterpret_cast<u8*>(self->field_00), &lvl, &rank, arg5, arg6);
+        CtrlObjectParam_AvgPartyArtsLevel(reinterpret_cast<u8*>(self->field_00), &lvl, &rank, arg5, arg6);
         // u32->f64 via the 0x43300000 magic-double trick (retail shape).
         union { u32 w[2]; f64 d; } conv;
         conv.w[0] = 0x43300000;
@@ -2041,7 +2041,7 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
 // Add the character's arts/status counters into *outA / *outB. The 4th/5th
 // parameters (r6/r7) are unused by retail; the flag arrives in r8 (6th
 // parameter) and switches the base values from 100/100 to 125/125.
-extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
+extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int* outB,
                               int unkArg4, int unkArg5, int flag) {
     u32 rowOff = (u16)rowIndex * 0x3DD4;
     u32 work = lbl_eu_80663E88;
@@ -2078,12 +2078,12 @@ extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
     }
 }
 
-// ── func_800A1CA0 (us-800a2678) ───────────────────────────────────────────
+// ── CtrlObjectParam_AvgPartyArtsLevel (us-800a2678) ───────────────────────────────────────────
 // Compute the party average arts level (slotTable rows 0..2) and derive an
 // out-level / out-rank pair from the caller's target level. The 0x3356
 // resource lookup gates the whole computation; when no arts rows exist the
 // rank falls back through a diff window chain.
-extern "C" void func_800A1CA0(u8* self, int* outLevel, int* outRank,
+extern "C" void CtrlObjectParam_AvgPartyArtsLevel(u8* self, int* outLevel, int* outRank,
                               int targetLevel, int flag) {
     int sum = 0;
     int count = 0;
@@ -2098,7 +2098,7 @@ extern "C" void func_800A1CA0(u8* self, int* outLevel, int* outRank,
     }
     *outLevel = 0;
     u8* base = reinterpret_cast<u8*>(lbl_eu_80663E88) + 0x1F98;
-    int found = func_8009E344(reinterpret_cast<const unsigned int*>(base),
+    int found = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(base),
                               reinterpret_cast<unsigned int>(self), &tmpType, &tmpIndex);
     if (tmpType == 1) {
         *outLevel = 100;
@@ -2157,13 +2157,13 @@ void cf::CActorParam::CActorParam_addSecondCurrency(u32 addend) {
     }
 }
 
-// ── func_800A26A4 (us-800a307c) ───────────────────────────────────────────
+// ── CtrlObjectParam_RunPartyArtsFlow (us-800a307c) ───────────────────────────────────────────
 // Party-member arts/level flow: verify the character row id is a party
 // member (slotTable membership), then run the arts/level helper with the
 // caller's out-pointer block; arg9 clears the two secondary outputs.
-extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int arg5,
+extern "C" void CtrlObjectParam_RunPartyArtsFlow(cf::CtrlObjectParamTypeView* self, int arg4, int arg5,
                               int arg6, int arg7, int arg8, int arg9) {
-    // Rank/level output block, handed to func_800A1E3C by address.
+    // Rank/level output block, handed to CtrlObjectParam_AdjustPartyArtsLevel by address.
     int v[3];
     v[0] = arg4;
     v[1] = arg5;
@@ -2197,17 +2197,17 @@ extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int a
             if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
         }
         findObjB28ById(self->field_00);
-        func_800A1E3C(self, &v[0], &v[1], &v[2], arg6, arg7, arg8);
+        CtrlObjectParam_AdjustPartyArtsLevel(self, &v[0], &v[1], &v[2], arg6, arg7, arg8);
         if (arg9 != 0) {
             v[1] = 0;
             v[2] = 0;
         }
-        func_800A21F8(self, v[0], v[1], v[2]);
+        CtrlObjectParam_ApplyArtsRankUp(self, v[0], v[1], v[2]);
     }
 }
 
-extern "C" void func_800A282C(cf::CtrlObjectParamTypeView* self, int arg4) {
-    // Arts-change gate (same shape as func_800A2974): valid row id < 9,
+extern "C" void CtrlObjectParam_BumpArtsCounter(cf::CtrlObjectParamTypeView* self, int arg4) {
+    // Arts-change gate (same shape as CtrlObjectParam_WriteArtsCounter): valid row id < 9,
     // nonzero delta, party member or isResourceFlagSet pass, and for row 3 the
     // frame counter below 0x1D - then bump the arts counter at +0x3534.
     u16 type = self->field_00;
@@ -2236,13 +2236,13 @@ probed:
     Counter884_AddClamped(self->big, arg4);
 }
 
-// ── func_800A2974 (us-800a334c) ───────────────────────────────────────────
+// ── CtrlObjectParam_WriteArtsCounter (us-800a334c) ───────────────────────────────────────────
 // Arts-change gate: when the character row id is a party member (or the
 // flag-bit test passes) and the sequence is past the 0x1D early frame,
 // write the arts-set counter at self+0x3534.
 //
-// Party-membership probe shared (inlined) by func_800A282C / func_800A26A4 /
-// func_800A2974 / func_800A2DE8: the slot-table chain at work+0x1F9C with
+// Party-membership probe shared (inlined) by CtrlObjectParam_BumpArtsCounter / CtrlObjectParam_RunPartyArtsFlow /
+// CtrlObjectParam_WriteArtsCounter / CtrlObjectParam_WriteArtsSlotIn: the slot-table chain at work+0x1F9C with
 // the found flag in r0 and the second base materialized mid-chain.
 static inline int isPartySlotMatch(int type) {
     cf::CtrlObjectParamSlotTable* tbl =
@@ -2261,7 +2261,7 @@ static inline int isPartySlotMatch(int type) {
     return found;
 }
 
-extern "C" void func_800A2974(void* selfV, u16 arg2) {
+extern "C" void CtrlObjectParam_WriteArtsCounter(void* selfV, u16 arg2) {
     cf::CtrlObjectParamTypeView* self = reinterpret_cast<cf::CtrlObjectParamTypeView*>(selfV);
     u16 type = self->field_00;
     if (type >= 9 || arg2 == 0) return;
@@ -2306,16 +2306,16 @@ void cf::CActorParam::CActorParam_setSpentCurrency(u32 val) {
     unk1604 = val;
 }
 
-// ── func_800A2AF0 (us-800a34c8) ───────────────────────────────────────
+// ── CtrlObjectParam_ReapplyArtsSet (us-800a34c8) ───────────────────────────────────────
 // Arts-set re-apply: walk the 11 x 0xC4 arts groups at +0x3534. For the
 // group matching the selected row (field_3DD0), claim the first empty slot
 // whose bdat cost (byte*100) fits the row's level cap at +0x3DBC: pay it via
-// Counter_AddClamped, fill the slot (func_8025F528), re-run this pass recursively,
+// Counter_AddClamped, fill the slot (KizunagramStoreTotalEntry), re-run this pass recursively,
 // and reload the cap from the (possibly moved) selected row. Non-empty slots
-// with a zero flag are re-armed via func_8025F2E8. Afterwards rebuild the
+// with a zero flag are re-armed via KizunagramStoreChartEntry. Afterwards rebuild the
 // arts set when any group is dirty or a claim happened, mirror it into the
-// type-3/type-8 global tables, and tick func_80280F44.
-extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
+// type-3/type-8 global tables, and tick SysWinLog_SweepSlotPressure.
+extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* selfV) {
     cf::CtrlObjectParamArtsRankView* view =
         reinterpret_cast<cf::CtrlObjectParamArtsRankView*>(selfV);
     int learned = 0;
@@ -2346,9 +2346,9 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
                     if (cost <= cap) {
                         Counter_AddClamped(reinterpret_cast<u8*>(view) + 0x3534,
                                       view->field_3DD0, -cost);
-                        func_8025F528(reinterpret_cast<u8*>(view) + 0x3534,
+                        KizunagramStoreTotalEntry(reinterpret_cast<u8*>(view) + 0x3534,
                                       row, s + 1, (u32)idx);
-                        func_800A2AF0(selfV);
+                        CtrlObjectParam_ReapplyArtsSet(selfV);
                         cap = *(const int*)(reinterpret_cast<const u8*>(view) +
                                            view->field_3DD0 * 4 + 0x3DBC);
                         learned = 1;
@@ -2356,7 +2356,7 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
                     break;
                 }
             } else if (*(const u16*)(rec + 0x24) == 0) {
-                func_8025F2E8(reinterpret_cast<u8*>(view) + 0x3534, g, s + 1);
+                KizunagramStoreChartEntry(reinterpret_cast<u8*>(view) + 0x3534, g, s + 1);
             }
             s++;
             rec += 0x20;
@@ -2366,7 +2366,7 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
     } while (g < 11);
     if (*(const u16*)(reinterpret_cast<const u8*>(view) +
                       view->field_3DD0 * 0xC4 + 0x3538) != 0 || learned != 0) {
-        func_8025EE94(reinterpret_cast<u8*>(view) + 0x3534);
+        KizunagramRebuildSlotList(reinterpret_cast<u8*>(view) + 0x3534);
     }
     if (view->field_00 == 3) {
         u8* p = reinterpret_cast<u8*>(lbl_eu_80663E88) + 0x265C4;
@@ -2378,18 +2378,18 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
         func_eu_80263A24(p, reinterpret_cast<u8*>(view) + 0x3534);
         *reinterpret_cast<u32*>(p + 0x390C) = 3;
     }
-    func_80280F44();
+    SysWinLog_SweepSlotPressure();
     return learned;
 }
 
-// ── func_800A2DE8 (us-800a36b0) ───────────────────────────────────────────
+// ── CtrlObjectParam_WriteArtsSlotIn (us-800a36b0) ───────────────────────────────────────────
 // Arts-slot write-in: read the source row's 12-bit arts type (top bits of
 // the u16 at +4) plus seven bdat columns (ids/levels/flags), scan the source
 // row's 2x4 slots for a matching id (honoring the two byte flags v5/v6),
 // fall back to the first empty slot of the destination table, then stamp the
 // slot: id, byte flags, level, a level bump from the row header, the two
 // flag bits, and a clamped level field (+8 or +0xA depending on v4).
-extern "C" void func_800A2DE8(cf::CtrlObjectParamArtsTable8* self,
+extern "C" void CtrlObjectParam_WriteArtsSlotIn(cf::CtrlObjectParamArtsTable8* self,
                               cf::CtrlObjectParamArtsSrcRow* srcRow, int value) {
     // Declared in the retail claim order (saved high->low): v2->r31, v4->r30,
     // strBase->r26, type->r25, bdat->r24, v1->r23, v5->r22; v3 stays on the
@@ -2485,7 +2485,7 @@ extern "C" void func_800A2DE8(cf::CtrlObjectParamArtsTable8* self,
     }
 }
 
-extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner* selfV) {
+extern "C" __declspec(noinline) void CtrlObjectParam_RecollectArtsRows(cf::CtrlObjectParamActorOwner* selfV) {
     // Re-collect the arts rows: clear the stack arts table, fold in every row
     // of the +0x26 arts item (flag 1), then one row per equip slot
     // (+0x1C..+0x24, flag 0), and hand the table to the +0x184 sub-object's
@@ -2503,14 +2503,14 @@ extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner
     memset(&table, 0, sizeof(table));
     void* item = 0;
     if (self->shortArr[5] > -1) {
-        item = func_80157C4C(2, row->shortArr[5]);
+        item = CItem_kindPtr(2, row->shortArr[5]);
     }
     if (item != 0) {
         int i = 0;
         while (i < (u16)(CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf30(reinterpret_cast<CItemData*>(item)))) {
             void* srcRow = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf2C(reinterpret_cast<CItemData*>(item), i);
             if (srcRow != 0) {
-                func_800A2DE8(&table,
+                CtrlObjectParam_WriteArtsSlotIn(&table,
                               reinterpret_cast<cf::CtrlObjectParamArtsSrcRow*>(srcRow), 1);
             }
             ++i;
@@ -2519,12 +2519,12 @@ extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner
     for (int i = 0; i < 5; ++i) {
         void* item2 = 0;
         if (row->shortArr[i] > -1) {
-            item2 = func_80157C4C(i > 4 ? 2 : i + 4, row->shortArr[i]);
+            item2 = CItem_kindPtr(i > 4 ? 2 : i + 4, row->shortArr[i]);
         }
         if (item2 != 0) {
             void* srcRow = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf2C(reinterpret_cast<CItemData*>(item2), 0);
             if (srcRow != 0) {
-                func_800A2DE8(&table,
+                CtrlObjectParam_WriteArtsSlotIn(&table,
                               reinterpret_cast<cf::CtrlObjectParamArtsSrcRow*>(srcRow), 0);
             }
         }
@@ -2569,7 +2569,7 @@ extern "C" void CtrlObjectParam_RefreshAllEquipImpls() {
         for (j = 0; j <= 5; ++j) {
             inst = 0;
             if (*(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C) > -1) {
-                inst = func_80157C4C(
+                inst = CItem_kindPtr(
                     (u32)j > 4 ? 2 : j + 4,
                     *(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C));
             }
@@ -2582,7 +2582,7 @@ extern "C" void CtrlObjectParam_RefreshAllEquipImpls() {
     }
 }
 
-extern "C" u32 func_800A33C8(void* arg) {
+extern "C" u32 CtrlObjectParam_FindCharByItemInst(void* arg) {
     // Look a character up in the party's equip slots: walk the 9-row slot
     // table; for each non-empty row, walk the 6 equip entries and compare
     // the resolved item instance against arg.
@@ -2598,7 +2598,7 @@ extern "C" u32 func_800A33C8(void* arg) {
                 for (int j = 0; j <= 5; ++j) {
                     void* inst = 0;
                     if (row->shortArr[j] > -1) {
-                        inst = func_80157C4C((u32)j > 4 ? 2 : j + 4, row->shortArr[j]);
+                        inst = CItem_kindPtr((u32)j > 4 ? 2 : j + 4, row->shortArr[j]);
                     }
                     if (inst == arg) {
                         return *(u32*)(slots + (i << 2));
@@ -2661,7 +2661,7 @@ extern "C" void CtrlObjectParam_InitArtsListEntry(cf::CtrlObjectParamArtsSlot* s
     }
 }
 
-extern "C" void* func_800A3594(cf::CtrlObjectParamArtsList* list, u32 value) {
+extern "C" void* CtrlObjectParam_AllocArtsListNode(cf::CtrlObjectParamArtsList* list, u32 value) {
     // Find the 0x1111 row whose count is the smallest fit for the (value+31)/32
     // slot need; an exact match stops the walk early. On success, re-tag the
     // row as 0xAAAA and split the surplus slots off as a new 0x1111 node.
@@ -2682,7 +2682,7 @@ extern "C" void* func_800A3594(cf::CtrlObjectParamArtsList* list, u32 value) {
         } else if (type == 0xAAAA) {
             // pass-through row: skip
         } else {
-            func_800A3A6C(list);
+            CtrlObjectParam_ScanArtsListRows(list);
             break;
         }
         e = e->next;
@@ -2759,7 +2759,7 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
 // ── CtrlObjectParam_MergeArtsListNode (us-800a4094) ───────────────────────────────────────────
 // Arts-list merge: locate the 0xAAAA node whose data area (+0x20) is the
 // caller's target pointer, validate the list through a second walk (unknown
-// tags trigger the func_800A3A6C row-scan abort), then re-tag the node
+// tags trigger the CtrlObjectParam_ScanArtsListRows row-scan abort), then re-tag the node
 // 0x1111 and fold its adjacent 0x1111 neighbours' counts into it.
 // Walk the arts list looking for the 0xAAAA row whose data area (+0x20) is
 // target; retail inlines this walker, materializing the result at each exit.
@@ -2767,7 +2767,7 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
 // target; retail inlines this walker, materializing the result at each exit.
 static bool findArtsNode(cf::CtrlObjectParamArtsList* list,
                          cf::CtrlObjectParamArtsListEntry* target) {
-    // Same walker idiom as func_800A39E8: switch over the row tag.
+    // Same walker idiom as CtrlObjectParam_WriteArtsListEntry: switch over the row tag.
     int found = 0;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
@@ -2806,7 +2806,7 @@ extern "C" void CtrlObjectParam_MergeArtsListNode(cf::CtrlObjectParamArtsList* l
         int type = head->field_00;
         if (type != 0x1111 && type != 0xAAAA) {
             // Bad tag after any good row: run the arts-list abort handler.
-            if (prev != 0) func_800A3A6C(list);
+            if (prev != 0) CtrlObjectParam_ScanArtsListRows(list);
             break;
         }
         prev = head;
@@ -2889,7 +2889,7 @@ extern "C" int CtrlObjectParam_GetArtsListTotalSize(cf::CtrlObjectParamArtsList*
     return total;
 }
 
-extern "C" int func_800A39E8(cf::CtrlObjectParamArtsList* list, u8* target,
+extern "C" int CtrlObjectParam_WriteArtsListEntry(cf::CtrlObjectParamArtsList* list, u8* target,
                              u32 index, u32 value) {
     // Walk the arts list for an 0xAAAA row whose data area (+0x20) is the
     // target; write value into row->data[index] and re-verify the row tag.
@@ -2930,7 +2930,7 @@ ret0:
 // sprintf their data[1] name into a local buffer; any other tag aborts the
 // walk. Rows with a non-zero data[0] after handling get it formatted via
 // func_800AA33C.
-extern "C" void func_800A3A6C(cf::CtrlObjectParamArtsList* list) {
+extern "C" void CtrlObjectParam_ScanArtsListRows(cf::CtrlObjectParamArtsList* list) {
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
         switch (e->field_00) {
@@ -2955,7 +2955,7 @@ done:;
 }
 
 extern "C" void CtrlObjectParam_SetEquipSlot5(void* a, void* c) {
-    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 5, c);
+    CtrlObjectParam_WriteEquipSlotValue(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 5, c);
 }
 
 // absorb: split1 retail data sections

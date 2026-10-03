@@ -218,7 +218,7 @@ void CSystemWindow::cbRenderBefore() {
     // scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }

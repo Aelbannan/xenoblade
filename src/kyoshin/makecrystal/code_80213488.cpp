@@ -23,7 +23,7 @@ struct MakeCrystalTable {
     u8  current;                     // +0x1004 current row cursor
 };
 
-// First word of a func_80157C4C item record (CMCItemBoxEntry / CrystalInfo
+// First word of a CItem_kindPtr item record (CMCItemBoxEntry / CrystalInfo
 // word0 shape). Live check and >>20 subcategory both read this word.
 struct MakeCrystalItemObj {
     u32 word0;
@@ -32,7 +32,7 @@ struct MakeCrystalItemObj {
 // --- imports ---
 // Item-table helpers (retail unmangled symbols): declared with the proper
 // C-linkage signatures in the shared kyoshin menu header.
-#include "kyoshin/CItemBoxGrid.hpp"   // func_80157C4C, CItemBlock_countKindSlots, CItemBlock_getFlag120EC
+#include "kyoshin/CItemBoxGrid.hpp"   // CItem_kindPtr, CItemBlock_countKindSlots, CItemBlock_getFlag120EC
 // CItem_initItemImplInstances comes from CfGameManager.hpp (harness chain).
 
 // Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
@@ -46,6 +46,9 @@ struct CrystalItemImpl {
 };
 
 // sdata2 constants used by MakeCrystal_CollectByTarget's ceil(count / scale) computation.
+// NOTE: defining these two in source makes MWCC const-propagate the literals
+// and emit extra .sdata2 pool words (measured: 0x20 vs retail 0x18).  They must
+// come from the code path that uses them once that is reconstructed.
 extern f32 lbl_eu_80668458; // 30.0f scale
 // lbl_eu_8066845C is the 0.0f used for the fractional-part comparison.
 extern f32 lbl_eu_8066845C;
@@ -123,7 +126,7 @@ void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
     u16 i = 0;
     while ((u16)i < total) {
         MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, (s16)i);
+            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, (s16)i);
         if (obj != 0 && obj->word0 != 0) {
                 CrystalItemImpl* inst =
                     (CrystalItemImpl*)CItem_initItemImplInstances(obj);
@@ -205,7 +208,7 @@ u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, d->entries[adj].id);
+            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, d->entries[adj].id);
         if (obj != 0) {
             u32 v = obj->word0;
             if (v != 0) return v >> 20;
@@ -220,7 +223,7 @@ MakeCrystalItemObj* MakeCrystal_GetItemObject(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =
-            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, d->entries[adj].id);
+            (MakeCrystalItemObj*)CItem_kindPtr(d->byte_1002, d->entries[adj].id);
         if (obj != 0 && obj->word0 != 0) return obj;
     }
     return 0;

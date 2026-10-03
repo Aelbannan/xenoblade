@@ -54,7 +54,7 @@ f32 ScMain_GetRoundedMetric(void*);
 void playUISound__FUl(u32);
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
-void func_80137F88(void*, void*);
+void PaneSetTexPalette(void*, void*);
 u16 BdatGetU16Direct(void*, const char*, u32);
 char* MakeTplNameSysFile(u32);
 
@@ -217,7 +217,7 @@ static inline void menuVisionBeginSilent(CMenuVisionEntry& entry) {
 
 static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image) {
     if (image != 0) {
-        func_80137F88(pane, image);
+        PaneSetTexPalette(pane, image);
         pane->SetVisible(true);
     }
 }
@@ -444,7 +444,7 @@ void CMenuVision::cbRenderBefore() {
     // scope-exit destructor).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     for (u8 i = 0; i < 6; i++) {
         drawLayout(mEntries[i].mLayout,
                       (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
@@ -992,7 +992,7 @@ extern "C" void func_801AD504(int flags) {
                         if (previous == idList[(u8)i]) {
                             void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
-                                func_80137F88(panic, image);
+                                PaneSetTexPalette(panic, image);
                                 panic->SetVisible(true);
                             }
                             break;
@@ -1028,7 +1028,7 @@ extern "C" void func_801AD504(int flags) {
                         if (current == idList[(u8)i]) {
                             void* image = CUICfManager_getArcResourceAccessor()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
-                                func_80137F88(panic, image);
+                                PaneSetTexPalette(panic, image);
                                 panic->SetVisible(true);
                             }
                             break;

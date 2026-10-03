@@ -152,7 +152,7 @@ void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol 
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Cur_DrawLayout(void*, void*);
-void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 int IsMenuState621F0();
@@ -188,8 +188,8 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 }
 
 // C++-linkage helper - retail emits the mangled form
-// func_80137250__FPQ34nw4r3lyt8DrawInfo (same convention as CSystemWindow.hpp).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo (same convention as CSystemWindow.hpp).
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Raw view onto the object header so the constructor can install vtables by
 // hand (the CProcess base's vtable slot lives at +0x10).

@@ -133,7 +133,7 @@ struct CMCrySlotEntry {
     u8 _04[0x8 - 0x4];
 };
 
-// CModelDispMakeCrystal fields used by func_80220E14.
+// CModelDispMakeCrystal fields used by MakeCrystal_BuildCrystalList.
 struct CMCCrySelfFields {
     u8 _00[0xc];
     u8* field_0c;            // +0x0c allocator/parent
@@ -183,12 +183,12 @@ extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* obj, int flag);
 
 // Plain-C-linkage functions defined in this TU (retail symbol = plain name).
 extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal*, u8);
-extern "C" void func_8021FD44(CModelDispMakeCrystal*);
+extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal*);
 extern "C" void MakeCrystal_AdvanceSlotEntries(void*);
-extern "C" void func_80220954(void*, int, u8);
+extern "C" void MakeCrystal_SpawnCrystalItem(void*, int, u8);
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 
-// C-linkage helpers for the cylinder-count finalize (func_8021E5C0):
+// C-linkage helpers for the cylinder-count finalize (MakeCrystal_FinalizeCylCount):
 // item-step-list setup and scrollbar refresh.
 extern "C" void func_80158300(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);

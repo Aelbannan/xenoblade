@@ -98,10 +98,10 @@ extern "C" __declspec(noinline) void CSLCur_freeBufs(UnkStruct_3Ptr* p) {
 
 #pragma optimize_for_size on
 extern "C" void CSLCur_bindSlots(CSLCur* p) {
-    // Call func_8023FA64 for each of the 3 heap pointers with the callback
-    func_8023FA64(p->mField0, 1, CSLCur_setFlag);
-    func_8023FA64(p->mField4, 2, CSLCur_setFlag);
-    func_8023FA64(p->mField8, 3, CSLCur_setFlag);
+    // Call NandRegHeapCb for each of the 3 heap pointers with the callback
+    NandRegHeapCb(p->mField0, 1, CSLCur_setFlag);
+    NandRegHeapCb(p->mField4, 2, CSLCur_setFlag);
+    NandRegHeapCb(p->mField8, 3, CSLCur_setFlag);
     // Zero out the 6 byte fields at offsets 0x0C-0x11
     p->mFieldC = 0;
     p->mFieldD = 0;
@@ -324,7 +324,7 @@ struct UnkTwoPtr;
 
 // Abstract class to match the font object's vtable layout
 // The vtable has 2 MWCC implicit entries (RTTI/dtor) before user virtuals
-// Slot 9 (offset 0x24) returns a u32 value used by func_8013676C
+// Slot 9 (offset 0x24) returns a u32 value used by ApplyFontToTxtPanes
 class FontHelper {
 public:
     virtual void v0() = 0;
@@ -355,7 +355,7 @@ extern "C" void CSLSub_create(UnkED70_Struct* s) {
     
     // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
     u32 result = static_cast<FontHelper*>(fontObj)->v7();
-    func_8013676C((nw4r::lyt::Pane*)rootPane, result);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, result);
 
     CSLSub_bindPane((UnkTwoPtr*)s);
 }
@@ -1094,7 +1094,7 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
-        func_8023F860((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
+        NandQueueChk860((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
 
         lbl_eu_80662AD0 = 0;
     } else if (self->mField129 != 0) {
@@ -1104,7 +1104,7 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
-        func_8023FB28((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
+        NandQueueLoadCk((s8)self->mField124 + 1, (void*)CSaveLoad_onFile);
 
         lbl_eu_80662AD0 = 2;
 
@@ -1129,7 +1129,7 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
-        func_8023F3C0((s8)self->mField124 + 1, (void*)CSaveLoad_onFile, self->mField12B);
+        NandQueueSaveCk((s8)self->mField124 + 1, (void*)CSaveLoad_onFile, self->mField12B);
 
         lbl_eu_80662AD0 = 3;
     }
@@ -1400,7 +1400,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
         void* paneA = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(numBuf, 1);
         void* paneB = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(
             strBase + 0xc4, 1);
-        func_80137924(paneBuf, paneA, paneB, *(void**)((char*)self->mLayout + 0x10));
+        ScalePaneWorldPos(paneBuf, paneA, paneB, *(void**)((char*)self->mLayout + 0x10));
         CSLCur_setPos((char*)self + 0x28, paneBuf);
     }
 }
@@ -1443,14 +1443,14 @@ void func_80290994(CSaveLoad* self) {
             // Empty slot
             sprintf(textBuf, (const char*)&strBase[0xde], str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
             LayoutSetTextBoxFmtValue(self->mLayout, slotNameBuf, (char*)&strBase[0xfd], 0u);
 
             sprintf(textBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             // Language-specific formatting
             if (isJapanese != 0) {
@@ -1465,12 +1465,12 @@ void func_80290994(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             // Format empty slot detail text
             sprintf(textBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
             sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             // Hide all 7 per-slot buttons
             for (u8 btn = 0; btn < 7; btn++) {
@@ -1503,10 +1503,10 @@ void func_80290994(CSaveLoad* self) {
             // Format slot data strings
             sprintf(textBuf, (const char*)&strBase[0x1aa], *(u16*)(slotData + 0x64));
             sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
 
             // Format time played string (minutes clamped to 59 when over an hour cap)
             u16 playTime = *(u16*)(slotData + 0xa);
@@ -1522,7 +1522,7 @@ void func_80290994(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             // Format slot details based on language and save data
             if (isJapanese != 0) {
@@ -1543,12 +1543,12 @@ void func_80290994(CSaveLoad* self) {
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(textBuf, (const char*)&strBase[0x1ba],
                     *(u8*)(slotData + 0x8), str4a, *(u8*)(slotData + 0x2));
             sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
-            func_80136A1C(self->mLayout, slotNameBuf, textBuf, 0u);
+            LayoutSetTextBoxText(self->mLayout, slotNameBuf, textBuf, 0u);
 
             // Set up the 7 award buttons
             for (u8 btn = 0; btn < 7; btn++) {
@@ -1581,7 +1581,7 @@ void func_80290994(CSaveLoad* self) {
             }
 
             // Resolve the character-class indicator string
-            u8 charResult = func_80141BA0(*(u16*)(slotData + 0xe), *(u8*)(slotData + 0x11));
+            u8 charResult = bdatLookupRes(*(u16*)(slotData + 0xe), *(u8*)(slotData + 0x11));
             char* slotIndicator;
             // NOTE: retail reloads the +0x66 class byte for each test (no cached local).
             if (*(u8*)(slotData + 0x66) != 0) {
@@ -1776,7 +1776,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     void* rootPane = *(void**)((char*)self->mLayout + 0x10);
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
     u32 fontResult = static_cast<FontHelper*>(fontObj)->v7();
-    func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
+    ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, fontResult);
 
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)CUICfManager_getPackedFontD8();

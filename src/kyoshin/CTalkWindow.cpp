@@ -157,7 +157,7 @@ skip_b9d4:;
 // ---------------------------------------------------------------------------
 // func_8012DA6C (us-8012e53c)
 // Window-state 2 driver: find the three page panes, blend the tag-processor
-// animation (TagProcPumpMessage / func_8012615C depending on the confirm button),
+// animation (TagProcPumpMessage / TagProcStepMessage depending on the confirm button),
 // then dispatch the result: state 4 accepts the selection, otherwise the
 // voice/page logic runs (or the page-loop flag flips).
 // ---------------------------------------------------------------------------
@@ -185,7 +185,7 @@ void func_8012DA6C(CTalkWindow* self) {
         if (confirm != 0)
             state = TagProcPumpMessage(self->field_5C, p1, p2, p3);
         else
-            state = func_8012615C(self->field_5C, p1, p2, p3);
+            state = TagProcStepMessage(self->field_5C, p1, p2, p3);
     }
 
     if (state == 4) {
@@ -650,7 +650,7 @@ void CTalkWindow::Init() {
 
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, mpLayout);
-        func_8013676C(mpLayout->GetRootPane(),
+        ApplyFontToTxtPanes(mpLayout->GetRootPane(),
                       reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle());
 
         // Prime the message-window pane and bind the four corner panes.
@@ -659,7 +659,7 @@ void CTalkWindow::Init() {
         paneB0->FreeStringBuffer();
         paneB0->AllocStringBuffer(0x20);
 
-        char* msg = func_80138DA4(reinterpret_cast<char*>(
+        char* msg = GetBdatNameByNumId(reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(
                 findObjectById(field_68))->CObjectParam_getParamPtr()));
         LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
@@ -679,7 +679,7 @@ void CTalkWindow::Init() {
         LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x108], &lbl_eu_804FFCA4[0x107], 0);
         LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_804FFCA4[0x113], &lbl_eu_804FFCA4[0x107], 0);
 
-        func_80127764(field_5C,
+        TagProcRenderPage(field_5C,
                       mpLayout->GetRootPane()->FindPaneByName(
                           &lbl_eu_804FFCA4[0xf1], 1),
                       mpLayout->GetRootPane()->FindPaneByName(
@@ -942,7 +942,7 @@ void CTalkWindow::cbRenderBefore() {
     // its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -958,7 +958,7 @@ extern "C" CTalkWindow* TalkWin_Create_CC78(CProcess* parent, u32 arg1, u32 arg2
                                       u32 arg5) {
     u8 buf[0x800];
     memset(buf, 0, 0x800);
-    func_80136400((const char*)msgSrc, (u16*)buf, 0x400);
+    Utf8ToWcsCopyFix((const char*)msgSrc, (u16*)buf, 0x400);
 
     u32 workMem = CWorkThreadSystem::getWorkMem();
     CTalkWindow* obj =

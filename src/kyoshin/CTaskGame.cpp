@@ -646,7 +646,7 @@ extern "C" void CTaskGame_callCGameInit() {
     initGameState__5CGameFv();
 }
 // Object pointed to by CTaskGame::unkF0 has a flag byte at offset 0xE9
-// (CTaskGame_moveAfterSave sets it to 1; func_80041E54 clears it).
+// (CTaskGame_moveAfterSave sets it to 1; CTaskGame_moveLoadCaption clears it).
 struct CTaskGameFlagE9 {
     u8 gap0[0xE9];
     u8 flagE9;   // +0xE9
@@ -824,7 +824,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         {
             u8 drawInfo[0x54];
             __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-            func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
             CLoadDrawIfVisible(lbl_eu_80663D1C, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
             lbl_eu_80663D28 = 1;
             __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
@@ -929,7 +929,7 @@ L_80043460:
             {
                 u8 drawInfo[0x54];
                 __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-                func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
                 lbl_eu_80663D20->drawBattery((nw4r::lyt::DrawInfo*)&drawInfo[0]);
                 __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
             }
@@ -1180,7 +1180,7 @@ void CTaskGame_stub_80040DE4(){}
 // individual stw's).
 // NOTE: no optimize_for_size here - probing whether retail used plain -O4,p
 // codegen for this function (address-fold behavior differs).
-void func_80040EB4(CTaskGame* self) {
+extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
     self->unk100++;
     u32* base = lbl_eu_80525568;
     if (CTaskGame_windowGate(self) != 0) {
@@ -1293,8 +1293,8 @@ extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
 }
 // Target us-8004177c: save/load invalid-reset sequence. Marks save/load
 // reset-invalid, toggles the Hbm state off/on, resets the NAND state
-// (func_8023FD4C), clears/sets unk68 flag bits ((unk68 | 0x200000) &
-// 0xFE6030FF), then asks func_8023FC18 whether the reset path applies and
+// (NandResetMode), clears/sets unk68 flag bits ((unk68 | 0x200000) &
+// 0xFE6030FF), then asks NandQueueReset whether the reset path applies and
 // switches the move-hook ptmf to pool lbl_eu_80525610 (bit 0x100 set) or
 // lbl_eu_8052561C (bit 0x2000 set).
 extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
@@ -1303,8 +1303,8 @@ extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
     CLibHbm::setHbmStopFlag(true);
     DevFile_SetByteA9(0);
     self->unk68 = (self->unk68 | 0x200000) & 0xFE6030FF;
-    func_8023FD4C(0);
-    if (func_8023FC18(&CTaskGame_nandCallback) != 0) {
+    NandResetMode(0);
+    if (NandQueueReset(&CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525610);
@@ -1335,7 +1335,7 @@ extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
 // optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
 #pragma optimize_for_size on
-void func_8004125C(CTaskGame* self) {
+extern "C" void CTaskGame_moveSelectErrWin(CTaskGame* self) {
     // Pool entries are whole 12-byte move-hook ptmf elements of the region
     // behind lbl_eu_80525568 (offsets 0xC0/0xCC/0xD8 = indices 16/17/18);
     // base is materialized once in r31 (retail shape).
@@ -1411,13 +1411,13 @@ extern "C" void CTaskGame_moveClrErrWin(CTaskGame* self) {
     }
 }
 // Target us-800419b4: clear the 0x100/0x800000/0x1000000 unk68 flag bits,
-// ask the NAND state check (func_8023F2F4) with (unkFC, CTaskGame_nandCallback
+// ask the NAND state check (NandQueueChkFc) with (unkFC, CTaskGame_nandCallback
 // callback) whether the reset path applies, then switch the move-hook ptmf
 // to pool lbl_eu_80525658 (bit 0x100 set) or lbl_eu_80525664 (bit 0x2000
 // set).
 extern "C" void CTaskGame_moveNandChkFc(CTaskGame* self) {
     self->unk68 &= 0xFFF7FEFF;
-    if (func_8023F2F4(self->unkFC, &CTaskGame_nandCallback) != 0) {
+    if (NandQueueChkFc(self->unkFC, &CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525658);
@@ -1474,18 +1474,18 @@ extern "C" void CTaskGame_moveErrWin56(CTaskGame* self) {
         words->field_0x44 = pool[2];
     }
 }
-// func_8023F860 is declared void in CSaveLoad.hpp (call sites discard the
+// NandQueueChk860 is declared void in CSaveLoad.hpp (call sites discard the
 // result); retail CTaskGame_moveNandChk860 branches on the return value, so declare the
 // caller's shape here (same scheme as the CLibCri caller-shape imports).
-extern "C" int func_8023F860(u32 value, void (*cb)(u32, u32, u32, u32));
+extern "C" int NandQueueChk860(u32 value, void (*cb)(u32, u32, u32, u32));
 // Target us-80041af8: clear the 0x100/0x100000/0x1000000 unk68 flag bits,
-// ask the NAND state check (func_8023F860) with (unkFC, CTaskGame_nandCallback
+// ask the NAND state check (NandQueueChk860) with (unkFC, CTaskGame_nandCallback
 // callback) whether the reset path applies, then switch the move-hook ptmf
 // to pool lbl_eu_80525688 (bit 0x100 set) or lbl_eu_80525694 (bit 0x2000
 // set).
 extern "C" void CTaskGame_moveNandChk860(CTaskGame* self) {
     self->unk68 &= 0xFFEFFEFF;
-    if (func_8023F860(self->unkFC, &CTaskGame_nandCallback) != 0) {
+    if (NandQueueChk860(self->unkFC, &CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525688);
@@ -1541,13 +1541,13 @@ extern "C" void CTaskGame_moveErrWin56b(CTaskGame* self) {
     }
 }
 // Target us-80041c3c: clear the 0x60300 unk68 flag bits (0x100/0x200/
-// 0x20000/0x40000), ask the NAND state check (func_8023FBA0) with the
+// 0x20000/0x40000), ask the NAND state check (NandQueueChkBA0) with the
 // CTaskGame_nandCallback callback whether the reset path applies, then switch the
 // move-hook ptmf to pool lbl_eu_805256B8 (bit 0x100 set) or lbl_eu_805256C4
 // (bit 0x2000 set).
 extern "C" void CTaskGame_moveNandChkBA0(CTaskGame* self) {
     self->unk68 &= 0xFFF9FCFF;
-    if (func_8023FBA0(&CTaskGame_nandCallback) != 0) {
+    if (NandQueueChkBA0(&CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_805256B8);
@@ -1608,12 +1608,12 @@ extern "C" void CTaskGame_moveErrWin54(CTaskGame* self) {
     }
 }
 // Target us-80041da0: clear the 0x901 unk68 flag bits (0x1/0x100/0x800), ask
-// the NAND state check (func_8023F690) with the CTaskGame_nandCallback callback
+// the NAND state check (NandQueueChk690) with the CTaskGame_nandCallback callback
 // whether the reset path applies, then switch the move-hook ptmf to pool
 // lbl_eu_805256E8 (bit 0x100 set) or lbl_eu_805256F4 (bit 0x2000 set).
 extern "C" void CTaskGame_moveNandChk690(CTaskGame* self) {
     self->unk68 &= 0xFFFFF6FF;
-    if (func_8023F690(&CTaskGame_nandCallback) != 0) {
+    if (NandQueueChk690(&CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_805256E8);
@@ -1669,12 +1669,12 @@ extern "C" void CTaskGame_moveErrWin56c(CTaskGame* self) {
     }
 }
 // Target us-80041edc: clear the 0x800100 unk68 flag bits (0x100/0x800000),
-// ask the NAND state check (func_8023FCCC) with the CTaskGame_nandCallback callback
+// ask the NAND state check (NandQueueChkCCC) with the CTaskGame_nandCallback callback
 // whether the reset path applies, then switch the move-hook ptmf to pool
 // lbl_eu_80525718 (bit 0x100 set) or lbl_eu_80525724 (bit 0x2000 set).
 extern "C" void CTaskGame_moveNandChkCCC(CTaskGame* self) {
     self->unk68 &= 0xFF7FFEFF;
-    if (func_8023FCCC(&CTaskGame_nandCallback) != 0) {
+    if (NandQueueChkCCC(&CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525718);
@@ -1695,12 +1695,12 @@ extern "C" void CTaskGame_moveNandChkCCC(CTaskGame* self) {
     }
 }
 // Target us-80041fd4: clear the 0x100/0x1000000 unk68 flag bits, ask the
-// NAND state check (func_8023F5CC) with the CTaskGame_nandCallback callback whether
+// NAND state check (NandQueueChk5CC) with the CTaskGame_nandCallback callback whether
 // the reset path applies, then switch the move-hook ptmf to pool
 // lbl_eu_80525748 (bit 0x100 set) or lbl_eu_80525754 (bit 0x2000 set).
 extern "C" void CTaskGame_moveNandChk5CC(CTaskGame* self) {
     self->unk68 &= 0xFEFFFEFF;
-    if (func_8023F5CC(&CTaskGame_nandCallback) != 0) {
+    if (NandQueueChk5CC(&CTaskGame_nandCallback) != 0) {
         self->unk68 |= 0x100;
         u32 v0;
         u32* pool = reinterpret_cast<u32*>(lbl_eu_80525748);
@@ -1746,7 +1746,7 @@ extern "C" void CTaskGame_moveClrErrWin2(CTaskGame* self) {
 // lbl_eu_80525784.
 // optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
-void func_80041BC0(CTaskGame* self) {
+extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
     CLibHbm::setHbmStopFlag(false);
     CLibHbm::setHbmActiveFlag(false);
@@ -1788,7 +1788,7 @@ void func_80041BC0(CTaskGame* self) {
 // lbl_eu_804FA890[0x6E] caption with the scene's alloc handle
 // (func_80043738). Pokes the unkD4 event object; then when unk68 bit 0x1000
 // is set: clear bit 0x800, and by unkF4 mode clear the unkF0 object's +0x39
-// busy byte (0), run the func_80134C34 / CUICfManager_queueOptionMenu pair and store the
+// busy byte (0), run the CUICfManager_openSaveMenu / CUICfManager_queueOptionMenu pair and store the
 // scene's Scn_GetUnk80Resource byte into unk188 (1/2), then push the float
 // constants through the vec4 setter into the scene at framerate/2 and switch
 // the move-hook ptmf to pool lbl_eu_80525790. Otherwise clear the unkF0
@@ -1806,7 +1806,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
             // Retail loads unkF4 first and clears the tested 0x1000 bit
             // (rlwinm 20,18) with a FRESH unk68 read (retail re-loads r0,
             // 0x68 instead of reusing the test value); the volatile read
-            // stops MWCC's value CSE (same shape as func_8004125C).
+            // stops MWCC's value CSE (same shape as CTaskGame_moveSelectErrWin).
             s32 f4 = static_cast<s32>(self->unkF4);
             volatile u32* f68 = &self->unk68;
             *f68 = *f68 & ~0x1000;
@@ -1816,7 +1816,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
                     self->unkF0 = 0;
                 }
             } else if (f4 == 1) {
-                func_80134C34();
+                CUICfManager_openSaveMenu();
                 self->unk188 = static_cast<u8>(Scn_GetUnk80Resource(self->unk74));
             } else if (f4 == 2) {
                 CUICfManager_queueOptionMenu(0);
@@ -1848,7 +1848,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
 // optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
 #pragma optimize_for_size on
-void func_80041E54(CTaskGame* self) {
+extern "C" void CTaskGame_moveLoadCaption(CTaskGame* self) {
     // Base held in one callee-saved register across all three cases (retail
     // lis/addi hoisted above the gate).
     u32* base = lbl_eu_80525568;
@@ -2016,7 +2016,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
 // pool lbl_eu_805257F0.
 // optimize_for_size: retail saves r29-r31 with a single stmw.
 #pragma optimize_for_size on
-void func_80042274(CTaskGame* self) {
+extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     if (Scn_GetUnk80Handle(self->unk74) == 0) {
         return;
     }
@@ -2217,7 +2217,7 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
 // counter, runs the loader shutdown helper, then deletes the object through
 // its virtual deleting-dtor slot and clears the global pointer.
 // dont_inline: retail callers keep this as a real bl call (e.g.
-// func_80041BC0); without this IPA folds the small body into its callers.
+// CTaskGame_moveShowTitle); without this IPA folds the small body into its callers.
 extern "C" void DECOMP_DONT_INLINE CTaskGame_deleteLoad() {
     if (lbl_eu_80663D1C != nullptr) {
         lbl_eu_80663D24 = 0;

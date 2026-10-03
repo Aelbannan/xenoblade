@@ -111,7 +111,7 @@ void* Bdat_GetTable_AA34(void);
 extern "C" void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* unused, void* holder);
 extern "C" void CfGimmick_LoadBdatAreaExtents(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
 extern "C" void CfGimmick_LoadBdatAreaRotation(cf::CfGimmick* self, f32* out, void* bdat, void* table);
-void func_8007B0C8(int idx);
+void CamEvtProgramEventCam(int idx);
 int CfGimmick_CheckStateFlag2CC8(u8* obj);
 void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 void removeLODEntry__8CTaskLODFv(u8 lod, float f);

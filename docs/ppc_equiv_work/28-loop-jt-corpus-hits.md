@@ -97,7 +97,7 @@ These are prime follow-up targets once CTR materialization rules widen.
 |---|---|---:|---:|---|---|
 | `kyoshin` | `func_8022A904` (`CQstLogInfo.s`) | `0x8022C8B8` | 13 | `r3` | readonly table image + indirect closure |
 | `kyoshin` | `__ct__CMapSel` | `0x80245444` | 28 | `r3` | same |
-| `kyoshin` | `func_80253B3C` (`CCollepedia.s`) | `0x80255EA4` | 25 | `r3` | same |
+| `kyoshin` | `clpBuildPages` (`CCollepedia.s`) | `0x80255EA4` | 25 | `r3` | same |
 | `RVL_SDK` | `DVDCancel` | `0x803119E8` | 38 | `r3` | SDK dispatch |
 | `RVL_SDK` | `GXSetVtxAttrFmtv` | `0x8031BD74` | 16 | `r6` | GX attr tables |
 | `PowerPC_EABI_Support` | `__pformatter` | `0x802C8D28` | 83 | `r3` | MSL switch |

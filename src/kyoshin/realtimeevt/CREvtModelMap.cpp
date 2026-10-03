@@ -84,9 +84,9 @@ extern const char lbl_eu_8050372C[];
 extern const char lbl_eu_80503718[];
 
 void func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-bool func_80181988(CREvtModelMap* self, CEventFile* ev);
-void func_8016BC1C(CREvtModelMap* self);
-bool func_8016BDA8(void* self, s32* pId);
+bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* ev);
+void EvtSeqInsertRtEvent(CREvtModelMap* self);
+bool EvtSeqProbeEvtSlot(void* self, s32* pId);
 u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
 void EvtSeqCheckEventRunGuard(CREvtModelMap* self);
@@ -105,7 +105,7 @@ void simSetFlag2OnTree(void* pEmote, int r4);
 void simSetLeafDist7B0(void* pEmote, float scale);
 void simRefreshFlag8(void* pEmote, float time);
 void scnLgtRemoveLgtItem(void* pData);
-void* func_804C1BA0(void* pData, void* pFile, int r5);
+void* scnLgtCreateEnvController(void* pData, void* pFile, int r5);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
 void* getGlobalSda();
 void __dt__80185754(CREvtModelMap* self);
@@ -224,7 +224,7 @@ CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
         self->mCallback[0] = w0;
         w2 = *src++;
         self->mCallback[2] = w2;
-        func_8016BC1C(self);
+        EvtSeqInsertRtEvent(self);
         if (*(s32*)((char*)self->mPtr1C + 0x30) != 0) {
             self->mFlags |= 0x30;
         }
@@ -275,7 +275,7 @@ int MapModel_CheckMagicMA(void* self) {
     return (info[0x10] == 0x6D && info[0x11] == 0x61) ? 1 : 0;
 }
 
-bool func_80180C88(CREvtModelMap* self)
+bool MapModel_Busy(CREvtModelMap* self)
 {
     return self->mFileHandle1 || self->mFileHandle2 || self->mFileHandle3;
 }
@@ -342,7 +342,7 @@ void MapModel_DisablePoints(CREvtModelMap* self)
     }
 }
 
-void func_80180E1C(CREvtModelMap* self)
+void MapModel_EnablePoints(CREvtModelMap* self)
 {
     if (lbl_eu_806642B0) {
         return;
@@ -352,11 +352,11 @@ void func_80180E1C(CREvtModelMap* self)
     enableLOD__8CTaskLODFv();
 }
 
-void func_80180E60(CREvtModelMap* self)
+void MapModel_ProbeSlot(CREvtModelMap* self)
 {
     s32* pId = &self->mCreatureId;
     *pId = -1;
-    if (func_8016BDA8(self, pId)) {
+    if (EvtSeqProbeEvtSlot(self, pId)) {
         u32 w1, w2, w0;
         u32* src = (u32*)lbl_eu_80531D38;
         w0 = *src++;
@@ -368,7 +368,7 @@ void func_80180E60(CREvtModelMap* self)
     }
 }
 
-void func_80180EBC(CREvtModelMap* self)
+void MapModel_LoadFiles(CREvtModelMap* self)
 {
     u32* tbl = (u32*)lbl_eu_80531D20;
     u32 flags = self->mFlags | 0x40;
@@ -482,7 +482,7 @@ void func_80180EBC(CREvtModelMap* self)
     }
 }
 
-void func_8018140C(CREvtModelMap* self)
+void MapModel_FinishLoad(CREvtModelMap* self)
 {
     if (self->mFlags & 2) {
         if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
@@ -519,7 +519,7 @@ void func_8018140C(CREvtModelMap* self)
     }
 }
 
-void func_8018152C(CREvtModelMap* self)
+void MapModel_Update(CREvtModelMap* self)
 {
     if (self->mEmoteModel) {
         f32 fTime = (f32)(s32)EvtSeqGetCounter100();
@@ -529,7 +529,7 @@ void func_8018152C(CREvtModelMap* self)
     EvtSeqCheckEventRunGuard(self);
 }
 
-void func_801815AC(CREvtModelMap* self, unsigned int visible)
+void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
 {
     if (self->mIsGuest) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
@@ -589,7 +589,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 acquireLODResource__8CTaskLODFv(self->mFileData2, 1);
             }
             if (self->mFileData3) {
-                self->mLoadedModelData = func_804C1BA0(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), self->mFileData3, 7);
+                self->mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), self->mFileData3, 7);
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
@@ -628,7 +628,7 @@ set_guest_flags:
     }
 }
 
-void func_801818BC(CREvtModelMap* self, int visible)
+void MapModel_ApplyVisible(CREvtModelMap* self, int visible)
 {
     if (self->mIsGuest) {
         if (cf::CfGameManager::getGameSubManager()) {
@@ -647,7 +647,7 @@ void func_801818BC(CREvtModelMap* self, int visible)
 
 int MapModel_VisFlag3(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
 
-bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
+bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* pEvent)
 {
     if (pEvent->mFileHandle == self->mFileHandle1) {
         if (pEvent->unk0 == 1) {
@@ -677,7 +677,7 @@ bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
 
 bool OnFileEvent__13CREvtModelMapFP10CEventFile(IWorkEvent* self, CEventFile* ev)
 {
-    return func_80181988(reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38), ev);
+    return MapModel_ClaimFileData(reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38), ev);
 }
 
 void MapModel_ThunkCtor38(void* self, int dealloc) {

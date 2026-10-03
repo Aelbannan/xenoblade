@@ -1,12 +1,9 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
 #include "kyoshin/CSysWinSave.hpp"
-// sdata2 scalars, defined HERE (not in the absorb block below) so MWCC
-// sees the section at the use sites and emits sda21 addressing like retail.
-// Retail labels are three separate scalars (0.0f, 1.0f, 2.0), not an array.
-__declspec(section ".sdata2") f32 lbl_eu_80668BA0 = 0.0f;
-__declspec(section ".sdata2") f32 lbl_eu_80668BA4 = 1.0f;
-__declspec(section ".sdata2") f64 lbl_eu_80668BA8 = 2.0;
+// sdata2 scalars (0.0f, 1.0f, 2.0-double) are pooled, NOT defined here:
+// (forward decl for kChainGaugeTwo, defined below after the pooling functions).
+extern const volatile f64 kChainGaugeTwo;
 extern void* lbl_eu_80538A60[16];
 extern void* lbl_eu_80662B08[2];
 extern void* lbl_eu_80662B10[2];
@@ -45,13 +42,13 @@ void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveF
 void SysWinSaveDtorThunk70(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 
 extern "C" void func_80294824__FPv(float* self) {
-    float v = lbl_eu_80668BA0;
+    float v = 0.0f;
     self[0] = v;
     self[1] = v;
 }
 
 extern "C" void func_80294834__FPv(float* self) {
-    float v = lbl_eu_80668BA0;
+    float v = 0.0f;
     self[0] = v;
     self[1] = v;
 }
@@ -68,19 +65,29 @@ extern "C" void setChainGauge(float* self, float param) {
     // FPR, so b lands f0 and a lands f2); assignment order keeps retail's
     // load sequence (BA4 into f2 before BA0 into f0).
     float b, a;
-    a = lbl_eu_80668BA4;
-    b = lbl_eu_80668BA0;
+    a = 1.0f;
+    b = 0.0f;
     self[0] = b;
     self[1] = b;
     if (a < param) {
         param -= a;
-        // Multiplier read as a single (retail lfs off the double's address).
-        float c = *(f32*)&lbl_eu_80668BA8;
+        // 8-byte 2.0 pooled via the file-scope const volatile below (lands
+        // last like retail's third slot); reading its low word emits a
+        // plain lfs with no conversion code. Volatile blocks MWCC folding
+        // the known constant through the pointer read (which would collapse
+        // it to a 4-byte pool entry).
+        float c = *(const f32*)&kChainGaugeTwo;
         float r = (c * param) - a;
         self[1] = r;
         self[0] = r;
     }
 }
+
+// 8-byte 2.0 constant for setChainGauge above. File-scope const volatile
+// (global linkage so the earlier use compiles; volatile blocks const-
+// folding) placed after the literal-pooling functions so it emits last,
+// matching retail's third sdata2 slot.
+const volatile f64 kChainGaugeTwo = 2.0;
 
 // ---------------------------------------------------------------------------
 // Producers of the save-window singleton. Kept as scaffold stubs (not matching
@@ -352,7 +359,7 @@ body:
     // its scope-exit destructor and bloat the body).
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     sysWinDrawLayout(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     Cur_DrawLayout(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);

@@ -143,7 +143,7 @@ void initTalkList(CKizunaTalkList* self) {
 }
 #pragma optimize_for_size off
 
-// Per-frame update while visible (retail func_8027336C): advance the state
+// Per-frame update while visible (retail updateTalkList): advance the state
 // machine, then refresh the layout and the embedded widgets.
 // Retail symbols are unmangled (advanceTalkAnim24 etc.), so these helpers are
 // declared with C linkage even though they take the list as a parameter.
@@ -153,7 +153,7 @@ extern "C" __declspec(noinline) void rewindTalkAnim28(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self);
 
 #pragma optimize_for_size on
-void func_8027336C(CKizunaTalkList* self) {
+void updateTalkList(CKizunaTalkList* self) {
     if (self->mState84 != 0) {
         switch (self->mState85) {
         case 1:
@@ -191,9 +191,9 @@ void drawTalkList(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 #pragma optimize_for_size off
 
 #pragma optimize_for_size on
-// Teardown (retail func_8027346C): release the BDAT query state, file handles,
+// Teardown (retail teardownTalkList): release the BDAT query state, file handles,
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
-void func_8027346C(CKizunaTalkList* self) {
+void teardownTalkList(CKizunaTalkList* self) {
     getEntry__5CBdatFUl(2);
     closeFileHandle((CFileHandle**)&self->mEntryCount);
     closeFileHandle((CFileHandle**)&self->mUnknown18);
@@ -215,7 +215,7 @@ void func_8027346C(CKizunaTalkList* self) {
 #pragma optimize_for_size off
 
 // Populate a talk-list entry with the given fields (retail fillTalkEntry).
-// noinline: retail keeps these as out-of-line calls from func_80272810.
+// noinline: retail keeps these as out-of-line calls from buildTalkList.
 __declspec(noinline) void fillTalkEntry(TalkListEntry* entry, u32 a, u32 b,
                                         u32 c, u32 d, s8 in12, s16 in10,
                                         u8 in13) {
@@ -277,10 +277,10 @@ public:
 
 // Whether an icon/texture row exists for the given subtype, by asking the
 // owning layout's shared resource accessor for the "timg" resource (retail
-// func_8027305C). v==0 queries the parent accessor directly; v!=0 re-resolves
+// findTalkIcon). v==0 queries the parent accessor directly; v!=0 re-resolves
 // the icon name through the shared character table first. noinline keeps
-// func_80272810 emitting a real bl (retail keeps it out-of-line).
-__declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
+// buildTalkList emitting a real bl (retail keeps it out-of-line).
+__declspec(noinline) u32 findTalkIcon(TalkListEntryArray* self, u8 v) {
     if (v == 0) {
         char* strs = lbl_eu_8050E990;
         void* found = ((KtlResView*)(void*)self->mParent)->v01(
@@ -300,11 +300,11 @@ __declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
 }
 
 // Build the talk-list entry table from the affinity talk data (retail
-// func_80272810). Reads the shared character database handed off in
+// buildTalkList). Reads the shared character database handed off in
 // lbl_eu_806648B8, collects the candidate character IDs that have talk
 // entries, then runs four passes to assemble type-1/type-2/type-3/name0
 // entries and finally bubble-sorts the table by entry subtype (field_13).
-void func_80272810(TalkListEntryArray* arr) {
+void buildTalkList(TalkListEntryArray* arr) {
     void* fp = lbl_eu_806648B8;
     u16 charCount = (u16)Bdat_GetMaxRow_B1EC(fp);
     char* fmt12 = BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
@@ -342,10 +342,10 @@ void func_80272810(TalkListEntryArray* arr) {
             if ((u32)m1 == 3) m1 = 8;
             if ((u32)m2 == 3) m2 = 8;
         }
-        if ((u32)n4 > (u32)func_8013A7D0(m1, m2)) continue;
+        if ((u32)n4 > (u32)LookupRelateValue(m1, m2)) continue;
 
-        u32 v1 = func_8027305C(arr, m1);
-        u32 v2 = func_8027305C(arr, m2);
+        u32 v1 = findTalkIcon(arr, m1);
+        u32 v2 = findTalkIcon(arr, m2);
         u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
@@ -379,8 +379,8 @@ void func_80272810(TalkListEntryArray* arr) {
             if ((u32)m2 == 3) m2 = 8;
         }
 
-        u32 v1 = func_8027305C(arr, m1);
-        u32 v2 = func_8027305C(arr, m2);
+        u32 v1 = findTalkIcon(arr, m1);
+        u32 v2 = findTalkIcon(arr, m2);
         u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
@@ -408,8 +408,8 @@ void func_80272810(TalkListEntryArray* arr) {
             if ((u32)m2 == 3) continue;
         }
 
-        u32 v1 = func_8027305C(arr, 0);
-        u32 v2 = func_8027305C(arr, 0);
+        u32 v1 = findTalkIcon(arr, 0);
+        u32 v2 = findTalkIcon(arr, 0);
         u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
@@ -438,8 +438,8 @@ void func_80272810(TalkListEntryArray* arr) {
             if ((u32)m2 == 3) m2 = 8;
         }
 
-        u32 v1 = func_8027305C(arr, m1);
-        u32 v2 = func_8027305C(arr, m2);
+        u32 v1 = findTalkIcon(arr, m1);
+        u32 v2 = findTalkIcon(arr, m2);
         u8 x = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = BdatGetPtrDirect((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)BdatGetU8Direct((u32)fp, &lbl_eu_8050E990[0x3b], id);
@@ -486,7 +486,7 @@ void showTalkList(CKizunaTalkList* self) {
         self->mState85 = 1;
         self->mNeedsRebuild = 0;
         bindScrollOutAnims(self);
-        func_802740E4(self);
+        moveTalkCursor(self);
         f32 vec[3];
         vec[0] = lbl_eu_806689C8;
         vec[1] = lbl_eu_806689CC;
@@ -510,7 +510,7 @@ void hideTalkList(CKizunaTalkList* self) {
     }
 }
 
-void func_80273654(CKizunaTalkList* self) {
+void scrollTalkListUp(CKizunaTalkList* self) {
     // Scroll up one position through the talk entries.
     u8 count = self->mEntryArray.mCount;
     u8 dec = self->mUnknown88 - 1;
@@ -532,13 +532,13 @@ void func_80273654(CKizunaTalkList* self) {
             }
         }
     }
-    func_80273B30(self);
-    func_802740E4(self);
+    renderTalkRows(self);
+    moveTalkCursor(self);
     CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
     playUISound__FUl(1);
 }
 
-void func_80273710(CKizunaTalkList* self) {
+void scrollTalkListDown(CKizunaTalkList* self) {
     // Scroll down one position through the talk entries.
     u8 count = self->mEntryArray.mCount;
     if (count >= 7) {
@@ -559,8 +559,8 @@ void func_80273710(CKizunaTalkList* self) {
             self->mUnknown8A = 0;
         }
     }
-    func_80273B30(self);
-    func_802740E4(self);
+    renderTalkRows(self);
+    moveTalkCursor(self);
     CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
     playUISound__FUl(1);
 }
@@ -581,13 +581,13 @@ void pageTalkListUp(CKizunaTalkList* self) {
         self->mUnknown88 = 0;
         self->mUnknown8A = 0;
     }
-    func_80273B30(self);
-    func_802740E4(self);
+    renderTalkRows(self);
+    moveTalkCursor(self);
     CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
     playUISound__FUl(1);
 }
 
-void func_8027387C(CKizunaTalkList* self) {
+void pageTalkListDown(CKizunaTalkList* self) {
     // Scroll down by a page of seven entries, clamping to the list end.
     u8 count = self->mEntryArray.mCount;
     if (count >= 7) {
@@ -605,8 +605,8 @@ void func_8027387C(CKizunaTalkList* self) {
         if (self->mUnknown88 < 0)
             self->mUnknown88 = 0;
     }
-    func_80273B30(self);
-    func_802740E4(self);
+    renderTalkRows(self);
+    moveTalkCursor(self);
     CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
     playUISound__FUl(1);
 }
@@ -623,7 +623,7 @@ extern "C" __declspec(noinline) void advanceTalkAnim24(CKizunaTalkList* self) {
 extern "C" __declspec(noinline) void advanceTalkAnim28(CKizunaTalkList* self) {
     if (advanceAnimTransform(self->mpAnim28, 2.0f) != 0) {
         self->mState85 = 3;
-        func_802740E4(self);
+        moveTalkCursor(self);
         self->mNeedsRebuild = 1;
     }
 }
@@ -660,8 +660,8 @@ void bindScrollInAnims(){}
 // Rebuild/render the visible list. For each of the (up to) 7 visible rows it
 // pulls the entry, binds the pane names (built with sprintf row suffixes),
 // resolves the affinity-level animation string and the row highlight colour,
-// and drives the pane visibility flag (retail func_80273B30).
-extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
+// and drives the pane visibility flag (retail renderTalkRows).
+extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
     char buf[0x10];
     char* lbl = lbl_eu_8050E990;
     int i = 0;
@@ -765,11 +765,11 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
     } while (i < 7);
 }
 
-// Rebuild/render the cursor row highlight (retail func_802740E4): resolve the
+// Rebuild/render the cursor row highlight (retail moveTalkCursor): resolve the
 // two layout panes named after the current row, build the cursor target
 // position from them and hand it to the cursor via its vtable slot 4.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
     nw4r::math::VEC3 pos;
     u32 _pad;
     char name[0x28];
@@ -784,16 +784,16 @@ extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self) {
     nw4r::lyt::Pane* paneB =
         self->mpLayout20->GetRootPane()->FindPaneByName(lbl + 0x1aa, true);
 
-    func_80137924(&pos, paneA, paneB, self->mpLayout20->GetRootPane());
+    ScalePaneWorldPos(&pos, paneA, paneB, self->mpLayout20->GetRootPane());
 
     ((CCur18View*)&self->mCursor[0])->v02(&pos);
 }
 #pragma optimize_for_size off
 
-// Rebuild the visible talk list (retail func_802741B0): requires both the
+// Rebuild the visible talk list (retail rebuildTalkList): requires both the
 // shared BDAT data and the layout accessor. Builds a fresh local table via
 // __ct__802726F4, copies it over the member array, then rebuilds/sorts.
-void func_802741B0(CKizunaTalkList* self) {
+void rebuildTalkList(CKizunaTalkList* self) {
     u32 accessor = self->mUnknown1C;
     if (accessor == 0)
         return;
@@ -815,10 +815,10 @@ void func_802741B0(CKizunaTalkList* self) {
     self->mEntryArray.mParent = tmp.mParent;
     __destroy_arr(&tmp, (void*)__dt__80272774, 0x14, 0x100);
 
-    func_80272810(&self->mEntryArray);
+    buildTalkList(&self->mEntryArray);
     self->mUnknown86 = 1;
     self->mState84 = 1;
-    func_80273B30(self);
+    renderTalkRows(self);
 }
 
 // ---------------------------------------------------------------------------
@@ -856,7 +856,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         void* rootPane = *(void**)((char*)this->mpLayout20 + 0x10);
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, this->mpLayout20);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-        func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
+        ApplyFontToTxtPanes((nw4r::lyt::Pane*)rootPane, fontResult);
 
         bindScrollOutAnims(this);
 
@@ -879,7 +879,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         // Cursor virtual slot 2 (offset 0x08) on the embedded cursor.
         ((void (*)(void*))(((void**)(*(u32*)((u8*)this + 0x2c)))[0x08 / 4]))((u8*)this + 0x2c);
 
-        func_802741B0(this);
+        rebuildTalkList(this);
 
         this->mEntryCount = 0;
         ((UnkClass_8045F564*)((u8*)this + 4))->validateHeap();
@@ -894,7 +894,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         setBdatEntry__5CBdatFUlPv(2, data2);
         Bdat_GetTable_AA34();
         lbl_eu_806648B8 = (void*)getFP__FPCc(&lbl_eu_8050E990[0x217]);
-        func_802741B0(this);
+        rebuildTalkList(this);
         this->mUnknown18 = 0;
         return 1;
     }

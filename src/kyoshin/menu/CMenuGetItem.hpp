@@ -117,7 +117,7 @@ extern char lbl_eu_805018D0[];
 // declarations must sit under extern "C" to emit the retail reloc names).
 extern "C" u8 isLandTelopActive();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void* func_801394D4(u32);
+extern "C" void* BuildItemNameStr(u32);
 // Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
 // extern "C" keeps the literal identifier (no double mangling).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);

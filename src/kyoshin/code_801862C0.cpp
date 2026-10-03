@@ -35,7 +35,7 @@ void* ArtsSelect_GetContainer(void) {
    (id, ptr) each) and the fast-path cache pair at 0x1700/0x1704. Returns p.
    Note: tbl/bucket declared before i/j pins register colors (bucket=r6,
    counter=r7). */
-void* func_801862E0(void* p) {
+void* ArtsSelect_Clear(void* p) {
     CArtsSelectContainer* tbl = (CArtsSelectContainer*)p;
     CArtsSelectBucket* bucket = tbl->buckets;
     int i;
@@ -51,7 +51,7 @@ void* func_801862E0(void* p) {
     return p;
 }
 
-void* func_801863F4(void* self, void* src) {
+void* ArtsSelect_Insert(void* self, void* src) {
     // Insert (srcId, src) into the first free slot of the id's hash bucket.
     u32 srcId = *reinterpret_cast<const u32*>(static_cast<const u8*>(src) + 0x74);
 
@@ -91,7 +91,7 @@ extern "C" void* ArtsSelect_CacheEntry(void* dst, void* src) {
 // Bucket index = rotl((id<<28) - bit31(id), 4) + bit31(id); each of the 46
 // slots holds an (id, ptr) pair. On hit both words are cleared and the slot
 // address is returned; a miss returns the container itself.
-void* func_80186474(void* self, void* src){
+void* ArtsSelect_Remove(void* self, void* src){
     CArtsSelectSlot* slot;
     CArtsSelectSlot* slots;
     u32 srcId = *reinterpret_cast<const u32*>(static_cast<const u8*>(src) + 0x74);
@@ -129,11 +129,11 @@ extern "C" void* __ct__80186578(void* self){
     return self;
 }
 
-// func_801864DC: widget id lookup. Fast path: field_1700 == id returns
+// ArtsSelect_Lookup: widget id lookup. Fast path: field_1700 == id returns
 // field_1704. Otherwise a hash-indexed table search: index =
 // ((((id>>4)&0xF) - sign) << 4) + sign (sign = bit 31), stride 0x170, 46
 // entries of 8 bytes; miss falls back to findObjectById(id).
-void* func_801864DC(void* pObj, int slot) {
+void* ArtsSelect_Lookup(void* pObj, int slot) {
     u8* self = (u8*)pObj;
     u32 id = (u32)slot;
     u32 t;
@@ -165,7 +165,7 @@ void* func_801864DC(void* pObj, int slot) {
 }
 
 // Destructor for the arts-select container: same teardown walk as
-// func_80186664 (free armed slots, clear pointer + halfword flag at
+// ArtsSelect_FreeSlots (free armed slots, clear pointer + halfword flag at
 // +0x100), then clear the singleton pointer and delete the object when the
 // scalar-deleting flag is set (> 0). Body guarded by a null-this check.
 extern "C" void* __dt__801865C4(void* self, int flags) {
@@ -198,11 +198,11 @@ extern "C" void* __dt__801865C4(void* self, int flags) {
     return self;
 }
 
-// func_80186664 (recovered): teardown loop over 64 widget slots.  For each
+// ArtsSelect_FreeSlots (recovered): teardown loop over 64 widget slots.  For each
 // armed slot: run the check helper (lookupWorkAtAddr) and, when it passes, the
 // free helper (gmFileObject); both the slot pointer and the slot's halfword
 // flag at +0x100 are cleared on the armed path only.
-void func_80186664(u8* self) {
+void ArtsSelect_FreeSlots(u8* self) {
     void** p = (void**)self;
     u16* f = (u16*)self;
     s32 i;
@@ -225,14 +225,14 @@ void func_80186664(u8* self) {
     }
 }
 
-/* func_801866F0: spawn one map object from the bdat "map" table row `row`
+/* ArtsSelect_SpawnRow: spawn one map object from the bdat "map" table row `row`
    and configure it. Column order (lbl_eu_805038C8 pool): model, motion,
    posX/Y/Z, rotX/Y/Z, ground, gravity, scale, disp. Position uses a 0.0001
    fixed-point scale; rotations are hundredths of a degree converted to
    radians; the scale column is tenths. The gravity column doubles as an
    invert-visibility flag, and the disp column sets/clears state bits in the
    object's 0x6C flag word. */
-void func_801866F0(MapProxy** objects, int row) {
+void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
     // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
     Bdat_GetTable_AA34();
     const char* cols = (const char*)lbl_eu_805038C8;
@@ -303,13 +303,13 @@ void func_801866F0(MapProxy** objects, int row) {
     }
 }
 
-/* func_80186A70: arts-availability check for row `row` of the current bdat
+/* ArtsSelect_CheckAvail: arts-availability check for row `row` of the current bdat
    table. Reads seven columns (c1..c7): if c1 is non-zero it must fall inside
    the [c2,c3] window around the cf game manager resource counter
    (getResourceFromTable); otherwise a second counter (getQueuedFileEventCount) must fall in
    either the [c4,c5] or [c6,c7] window (a zero upper bound disables a
    window). Returns 1 when any applicable window contains the counter. */
-int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
+int ArtsSelect_CheckAvail(void* p, s32 row, const char* c1, const char* c2,
                   const char* c3, const char* c4, const char* c5,
                   const char* c6, const char* c7) {
     void* bdat;
@@ -349,11 +349,11 @@ int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
     return 0;
 }
 
-// func_80186BC8: look up entry `p` in the arts-select container's entry
+// ArtsSelect_GetEntry: look up entry `p` in the arts-select container's entry
 // array, restricted to the bdat table's valid row range
 // [rowBase, rowBase + rowCount). Returns NULL when the container singleton,
 // the requested index, or the slot itself is absent.
-void* func_80186BC8(int p) {
+void* ArtsSelect_GetEntry(int p) {
     void* bdat;
     void** entries;
     int rowBase;
@@ -373,13 +373,13 @@ void* func_80186BC8(int p) {
     return 0;
 }
 
-// func_80186C7C: notify every armed widget in the arts-select container.
+// ArtsSelect_NotifyAll: notify every armed widget in the arts-select container.
 // For each of the 64 slots: if the slot holds a widget with a notifier, call
 // the notifier's vtable+0x88 entry with 1 when the widget's 0x6C flag bit
 // 0x10000000 is set AND the argument is non-zero, else 0. The container
 // pointer is re-read from the singleton each iteration (retail reloads it;
 // the virtual call may mutate it).
-void func_80186C7C(void* p) {
+void ArtsSelect_NotifyAll(void* p) {
     if (lbl_eu_806642D0 != 0) {
         s32 i;
         for (i = 0; i < 64; i++) {
@@ -403,13 +403,13 @@ void func_80186C7C(void* p) {
     }
 }
 
-/* func_80186D20: per-row sync of the arts-select container against the bdat
-   table. For each valid row: run the availability check (func_80186A70);
+/* ArtsSelect_SyncRows: per-row sync of the arts-select container against the bdat
+   table. For each valid row: run the availability check (ArtsSelect_CheckAvail);
    spawn the map object when the slot is empty and available, or tear down
    (flag + clear) when it is occupied but no longer available. Occupied rows
    then optionally apply a state id read from the bdat columns, gated on the
    global flag words lbl_eu_80663E24/28 and a second availability window. */
-void func_80186D20(void* p) {
+void ArtsSelect_SyncRows(void* p) {
     void* bdat = lbl_eu_806640B0;
     const char* gateCol;
     const char* cols;
@@ -428,12 +428,12 @@ void func_80186D20(void* p) {
     // callee-saved register ahead of the loop.
     gateCol = cols + 0xe4;
     for (; row < end; row++, slots++, slotFlags++) {
-        int avail = func_80186A70(p, row, cols + 0xa0, cols + 0xac,
+        int avail = ArtsSelect_CheckAvail(p, row, cols + 0xa0, cols + 0xac,
                                   cols + 0xb9, cols + 0xc6, cols + 0xd0,
                                   cols + 0xda, gateCol);
         MapProxy* entry = *slots;
         if (entry == NULL && avail != 0) {
-            func_801866F0(reinterpret_cast<MapProxy**>(p), row);
+            ArtsSelect_SpawnRow(reinterpret_cast<MapProxy**>(p), row);
         }
         if (*slots != NULL && avail == 0) {
             (*slots)->field_68 |= 0x40;
@@ -459,7 +459,7 @@ void func_80186D20(void* p) {
             if (doState) {
                 u8 stateId = (u8)getBdatStringColumnValue(curTable, cols + 0x4b, row);
                 if (stateId != 0 &&
-                    func_80186A70(p, row, cols + 0x52, cols + 0x5e,
+                    ArtsSelect_CheckAvail(p, row, cols + 0x52, cols + 0x5e,
                                   cols + 0x6b, cols + 0x78, cols + 0x82,
                                   cols + 0x8c, cols + 0x96) != 0 &&
                     stateId != slotFlags[0x80]) {
@@ -470,11 +470,11 @@ void func_80186D20(void* p) {
         }
     }
 }
-void func_80186D20_UNUSED(void* p) {
+void ArtsSelect_SyncRows_UNUSED(void* p) {
     (void)p;
 }
 
-// func_80186C7C: notify every armed widget in the arts-select container.
+// ArtsSelect_NotifyAll: notify every armed widget in the arts-select container.
 // For each of the 64 slots: if the slot holds a widget with a notifier, call
 // the notifier's vtable+0x88 entry with 1 when the widget's 0x6C flag bit
 // 0x10000000 is set AND the argument is non-zero, else 0. The container

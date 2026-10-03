@@ -19,14 +19,14 @@ extern "C" {
 // C-linkage imports previously supplied by CVS_THREAD_EHP.hpp, which is no
 // longer included here (it redefines CVoiceHandle; the canonical definition
 // now lives in the shared base header CVS_THREAD.hpp).
-// func_802A3E88 comes from CVS_THREAD.hpp (C++ linkage).
+// IsThreadVoiceActive comes from CVS_THREAD.hpp (C++ linkage).
 extern "C" {
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    CVoiceHandle* func_802A330C(int size, int align);
-    CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
-    int func_802A7B90(CVoiceHandle* handle, CVoiceHandle* owner);
-    int func_802A77E8(CVoiceHandle* handle);
+    void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
+    CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
+    int HpVoice_CheckPair26(CVoiceHandle* handle, CVoiceHandle* owner);
+    int HpVoice_MapSubState(CVoiceHandle* handle);
 }
 
 // The voice manager/factory object. The flags field at offset 0x3F00
@@ -60,10 +60,10 @@ struct CVS_THREAD_TENSION_UP_ptmf {
 
 // us-802ab968 (TensUp_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the
-// playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 2).
+// playback-start virtual (CVS_THREAD::PlayThreadVoice, vtable slot 2).
 void TensUp_TryRunSlotAction(CVS_THREAD_TENSION_UP* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -72,7 +72,7 @@ void TensUp_TryRunSlotAction(CVS_THREAD_TENSION_UP* self) {
 // single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
 // 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
 void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
@@ -96,7 +96,7 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     if (index < 3) {
         return NULL;
     }
-    if (func_802A330C(0x82, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x82, 1) == NULL) {
         return NULL;
     }
     CVS_THREAD_TENSION_UP* self = (CVS_THREAD_TENSION_UP*)CCharVoiceMan_AllocVoiceArena(0x2c);
@@ -164,13 +164,13 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
             if (handle != NULL) {
                 embedded = &handle->voice;
             }
-            if (func_802A3C44(self, embedded, 0x5DE) != 0) {
+            if (TryRequestVoice(self, embedded, 0x5DE) != 0) {
                 return;
             }
         }
 
         if (self->field_0x24 == 3) {
-            int ownerState = func_802A77E8(self->field_0x20);
+            int ownerState = HpVoice_MapSubState(self->field_0x20);
             int isThird;
             if (ownerState != 4) {
                 isThird = 0;
@@ -188,7 +188,7 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
                 if (handle != NULL) {
                     embedded = &handle->voice;
                 }
-                if (func_802A3C44(self, embedded, 0x5DE) != 0) {
+                if (TryRequestVoice(self, embedded, 0x5DE) != 0) {
                     return;
                 }
             } else {
@@ -198,7 +198,7 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
                 if (handle != NULL) {
                     embedded = &handle->voice;
                 }
-                if (func_802A3C44(self, embedded, 0x5DD) != 0) {
+                if (TryRequestVoice(self, embedded, 0x5DD) != 0) {
                     return;
                 }
             }
@@ -206,14 +206,14 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
     }
 
 tail:
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802ab784 (func_802A9030)
 // Voice-select and play function. Reloads slot-state, finds a free handle,
 // selects voice ID based on owner state and flag.
 void func_802A9030(CVS_THREAD_TENSION_UP* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -230,14 +230,14 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
     state->word0 = state0;
     state->word2 = *src;
 
-    handle = func_802A7998(handle);
+    handle = HpVoice_PickIdleVoice(handle);
     if (handle == NULL) {
         goto fallback;
     }
 
     // Retail lowers this as a sequential cmpwi/beq chain over the owner state;
     // each arm re-reads the flag byte.
-    switch (func_802A77E8(self->field_0x20)) {
+    switch (HpVoice_MapSubState(self->field_0x20)) {
     case 1:
         voiceId = (self->field_0x28 != 0) ? 0x5DF : 0x5E6;
         break;
@@ -265,10 +265,10 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
     }
 
     // Special-case overrides checked against the freshly selected ID.
-    if (voiceId == 0x5E4 && func_802A7B90(handle, self->field_0x20) != 0) {
+    if (voiceId == 0x5E4 && HpVoice_CheckPair26(handle, self->field_0x20) != 0) {
         voiceId = 0x89F;
     }
-    if (voiceId == 0x5EB && func_802A7B90(handle, self->field_0x20) != 0) {
+    if (voiceId == 0x5EB && HpVoice_CheckPair26(handle, self->field_0x20) != 0) {
         voiceId = 0x451;
     }
 
@@ -278,13 +278,13 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
         if (handle != NULL) {
             handle = (CVoiceHandle*)&handle->voice;
         }
-        if (func_802A3C44(self, (CCharVoice*)handle, voiceId) != 0) {
+        if (TryRequestVoice(self, (CCharVoice*)handle, voiceId) != 0) {
             return;
         }
     }
 
 fallback:
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // Virtual method override: returns the buffer size for this thread type.

@@ -20,15 +20,15 @@
 extern "C" int BdatGetU16Direct(const void*, const void*, int);
 
 // C-linkage imports live in kyoshin/CEquipItemBox.hpp.
-// func_80157C4C stays inline: CEquipChange.hpp / CItemBoxInfo.hpp declare it
+// CItem_kindPtr stays inline: CEquipChange.hpp / CItemBoxInfo.hpp declare it
 // with different signatures and CEquipChange.cpp includes both (via
 // CEquipChange.hpp -> CEquipItemBox.hpp).
-extern "C" void* func_80157C4C(u8, s16);
-// C-linkage import: CEquipChange.hpp declares func_801D47D4 with a u16 arg4,
-// but retail passes the full 32-bit word (r6 -> mr -> func_801D8E34), so the
+extern "C" void* CItem_kindPtr(u8, s16);
+// C-linkage import: CEquipChange.hpp declares renderItemBoxByKind with a u16 arg4,
+// but retail passes the full 32-bit word (r6 -> mr -> setupItemBoxDetail), so the
 // u32 form is declared here to avoid a call-site mask. Kept local like
-// func_80157C4C (the sibling headers disagree on the signature).
-extern "C" void func_801D47D4(CItemBoxInfo*, u16, void*, u32);
+// CItem_kindPtr (the sibling headers disagree on the signature).
+extern "C" void renderItemBoxByKind(CItemBoxInfo*, u16, void*, u32);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Pane-visibility helpers (C-ABI retail symbols; declared in CEquipItemBox.hpp
@@ -39,9 +39,9 @@ extern const float lbl_eu_80668B04;
 
 // varargs name formatter (MWCC keeps the unmangled library name).
 int sprintf(char*, const char*, ...);
-// SysWin name probe + pane-position reader (func_80289CC0 tail).
+// SysWin name probe + pane-position reader (updateEIBCursorPos tail).
 extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
-extern "C" void func_801375A0(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 
 extern "C" __declspec(noinline) u8 getEIBOpenFlag(CEquipItemBox* self) { return self->unk_40; }
 
@@ -108,7 +108,7 @@ extern "C" __declspec(noinline) void copyEIBItem(CEquipItemData* dst, const CEqu
 extern "C" __declspec(noinline) void* getEIBItemObj(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
-        u32* obj = (u32*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, grid->data[offset].unk0);
         if (obj && *obj) {
             return obj;
         }
@@ -123,7 +123,7 @@ extern "C" __declspec(noinline) void* getEIBItemObj(CEquipItemGrid* grid, u16 id
 extern "C" u32 getEIBItemKind(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
-        u32* obj = (u32*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, grid->data[offset].unk0);
         if (obj && *obj) {
             return *obj >> 20;
         }
@@ -140,7 +140,7 @@ extern "C" __declspec(noinline) s16 getEIBItemId(CEquipItemGrid* grid, u16 idx) 
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj && *obj) {
             return item->unk0;
         }
@@ -182,7 +182,7 @@ extern "C" __declspec(noinline) s8 chkEIBEquip(CEquipItemGrid* grid, u16 param) 
     u16 offset = (u16)((s8)grid->idx * 0x1e + param);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        CItemInstance* obj = (CItemInstance*)func_80157C4C(grid->cat, item->unk0);
+        CItemInstance* obj = (CItemInstance*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj != 0 && obj->word != 0) {
             int cat = grid->cat;
             switch (cat) {
@@ -222,7 +222,7 @@ extern "C" u8 getEIBByte3(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj && *obj) {
             return item->unk3;
         }
@@ -236,7 +236,7 @@ extern "C" u8 getEIBByte4(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj && *obj) {
             return item->unk4;
         }
@@ -251,7 +251,7 @@ extern "C" __declspec(noinline) u32 getEIBByte6(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj && *obj) {
             return item->unk6;
         }
@@ -261,7 +261,7 @@ extern "C" __declspec(noinline) u32 getEIBByte6(CEquipItemGrid* grid, u16 idx) {
 #pragma pop
 
 // Return the grid cell's byte 7 (unk7) value, or 0 when out of range.
-// noinline: retail callers emit a `bl` (func_80289754's 30-cell loop).
+// noinline: retail callers emit a `bl` (refreshEIBPageDisp's 30-cell loop).
 extern "C" __declspec(noinline) u8 getEIBByte7(CEquipItemGrid* grid, u32 param) {
     u16 off = (u16)((s8)grid->idx * 30 + (int)param);
     if ((u32)off < 0x400) {
@@ -287,7 +287,7 @@ extern "C" u8 getEIBByte2(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        u32* obj = (u32*)CItem_kindPtr(grid->cat, item->unk0);
         if (obj && *obj) {
             return item->unk2;
         }
@@ -305,7 +305,7 @@ extern "C" u8 getEIBByte2(CEquipItemGrid* grid, u16 idx) {
 extern "C" __declspec(noinline) char* fmtEIBItemName(CEquipItemGrid* grid, u32 param) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + param);
     if ((u32)offset < (u32)grid->count) {
-        CItemInstance* obj = (CItemInstance*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        CItemInstance* obj = (CItemInstance*)CItem_kindPtr(grid->cat, grid->data[offset].unk0);
         if (obj != 0) {
             if (obj->word != 0) {
                 sprintf(&grid->field_2006[0], &lbl_eu_8050EFDC[0x2a],
@@ -332,9 +332,9 @@ extern "C" __declspec(noinline) char* fmtEIBItemName(CEquipItemGrid* grid, u32 p
 #pragma push
 #pragma optimize_for_size on
 #pragma auto_inline off
-extern "C" void func_8028345C(CEquipItemGrid* grid) {
+extern "C" void sortEIBGridByPage(CEquipItemGrid* grid) {
     u8 cat = grid->cat;
-    func_80283E64(grid, cat);
+    sortEIBGridByCat(grid, cat);
     u8 page = (u8)CItemBlock_getFlag120EC(cat);
     // Category dispatch first (retail test order), then the three per-category
     // page dispatches with the cat-2 body laid out first (retail body order).
@@ -346,27 +346,27 @@ cat2:
     sortEIBByFlags(grid);
     switch (page) {
     case 0:
-        func_80284C30(grid, 1);
+        sortEIBByNameMode(grid, 1);
         break;
     case 1:
         sortEIBFlagAsc(grid); sortEIBByVf30(grid); sortEIBByProg(grid);
-        func_80284C30(grid, 1);
+        sortEIBByNameMode(grid, 1);
         break;
     case 2:
         sortEIBFlagAsc(grid); sortEIBByVf30(grid); sortEIBByProg(grid);
-        func_80284DCC(grid); func_80284C30(grid, 1);
+        sortEIBByNameKey(grid); sortEIBByNameMode(grid, 1);
         break;
     case 3:
         sortEIBFlagAsc(grid); sortEIBByVf30(grid); sortEIBByProg(grid);
-        func_80284F1C(grid); func_80284C30(grid, 1);
+        sortEIBByNameKey69(grid); sortEIBByNameMode(grid, 1);
         break;
     case 4:
         sortEIBByProg(grid); sortEIBByVf30(grid); sortEIBFlagDesc(grid);
-        func_80284C30(grid, 1);
+        sortEIBByNameMode(grid, 1);
         break;
     case 5:
         sortEIBByProg(grid); sortEIBByVf30(grid); sortEIBFlagAsc(grid);
-        func_80284C30(grid, 1);
+        sortEIBByNameMode(grid, 1);
         break;
     case 6:
         sortEIBByCount(grid);
@@ -424,48 +424,48 @@ cat3:
             sortEIBByFlags(grid);
             break;
         case 1:
-            sortEIBByVf90(grid); func_80283E64(grid, cat); sortEIBByVf08(grid);
+            sortEIBByVf90(grid); sortEIBGridByCat(grid, cat); sortEIBByVf08(grid);
             break;
         case 2:
-            func_80283E64(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
+            sortEIBGridByCat(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 0); sortEIBByNm00(grid, 1);
             break;
         case 3:
-            func_80283E64(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
+            sortEIBGridByCat(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
             sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0); sortEIBByNm00(grid, 2);
             break;
         case 4:
-            func_80283E64(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
+            sortEIBGridByCat(grid, cat); sortEIBByVf90(grid); sortEIBByVf08(grid);
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
             break;
         case 5:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 1);
             break;
         case 6:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 2);
             break;
         case 7:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 3);
             break;
         case 8:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 4);
             break;
         case 9:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 5);
             break;
         case 10:
             sortEIBByNm00(grid, 2); sortEIBByNm00(grid, 1); sortEIBByNm00(grid, 0);
-            sortEIBByVf90(grid); sortEIBByVf08(grid); func_80283E64(grid, cat);
+            sortEIBByVf90(grid); sortEIBByVf08(grid); sortEIBGridByCat(grid, cat);
             sortEIBByNm58(grid, 6);
             break;
         case 11:
@@ -495,7 +495,7 @@ extern "C" __declspec(noinline) CEquipItemData* copyEIBItemRet(CEquipItemData* d
 // cat 3 scales the bdat count by a per-item float record, cat 9 sums four
 // instance-slot records scaled by the same table, everything else multiplies
 // by an accumulated per-count increment. Result is returned *10.
-extern "C" __declspec(noinline) u32 func_80283B60(CEquipItemGrid* grid, CItemInstance* item) {
+extern "C" __declspec(noinline) u32 calcEIBCountKey(CEquipItemGrid* grid, CItemInstance* item) {
     u32 word = item->word;
     u16 kind = BdatGetItemId(word >> 20);
     u8 cat = (word >> 12) & 0xF;
@@ -524,7 +524,7 @@ extern "C" __declspec(noinline) u32 func_80283B60(CEquipItemGrid* grid, CItemIns
             }
         }
     } else {
-        u32 v = func_801393CC(kind);
+        u32 v = LookupItemTypeTable(kind);
         u32 count = BdatGetU16Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x40], kind);
         u8 n = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf30(item);
         float inc = lbl_eu_80668B28;
@@ -542,7 +542,7 @@ extern "C" __declspec(noinline) u32 func_80283B60(CEquipItemGrid* grid, CItemIns
 // cat 9 by slot occupancy / byte-7 clamp, everything else by the raw kind.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80283E64(CEquipItemGrid* grid, u32 cat) {
+extern "C" __declspec(noinline) void sortEIBGridByCat(CEquipItemGrid* grid, u32 cat) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
@@ -550,8 +550,8 @@ extern "C" __declspec(noinline) void func_80283E64(CEquipItemGrid* grid, u32 cat
             CEquipItemData* b = &grid->data[j + 1];
             // objB declared first so its web claims the higher saved
             // register (retail r23), matching the sibling sorts.
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
             if (cat == 3) {
                 // Descending vf54 name-key sort (u16 compare).
                 CItemInstance* implA =
@@ -633,8 +633,8 @@ extern "C" __declspec(noinline) void sortEIBByFlags(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             if ((u32)objA->flags > (u32)objB->flags) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -650,7 +650,7 @@ extern "C" __declspec(noinline) void sortEIBByFlags(CEquipItemGrid* grid) {
 }
 #pragma pop
 
-// Bubble-sort the grid entries ascending by func_80283B60's per-item key
+// Bubble-sort the grid entries ascending by calcEIBCountKey's per-item key
 // (unsigned compare). Same 5-copy chained swap as sortEIBByFlags.
 #pragma push
 #pragma optimize_for_size on
@@ -660,9 +660,9 @@ extern "C" __declspec(noinline) void sortEIBByCount(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
-            if (func_80283B60(grid, objA) < func_80283B60(grid, objB)) {
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
+            if (calcEIBCountKey(grid, objA) < calcEIBCountKey(grid, objB)) {
                 CEquipItemData tC;
                 CEquipItemData tB;
                 CEquipItemData tA;
@@ -688,8 +688,8 @@ extern "C" __declspec(noinline) void sortEIBByVf08(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 keyB = (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf08(objB);
             if ((u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf08(objA) < keyB) {
                 CEquipItemData tC;
@@ -718,8 +718,8 @@ extern "C" __declspec(noinline) void sortEIBByNm58(CEquipItemGrid* grid, int par
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
@@ -752,8 +752,8 @@ extern "C" __declspec(noinline) void sortEIBByNm00(CEquipItemGrid* grid, int par
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
@@ -786,8 +786,8 @@ extern "C" __declspec(noinline) void sortEIBByProg(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             double keyA = getEIBProgress((CEquipItemBox*)grid, objA);
             double keyB = getEIBProgress((CEquipItemBox*)grid, objB);
             if (keyA < keyB) {
@@ -816,8 +816,8 @@ extern "C" __declspec(noinline) void sortEIBByVf30(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf30(objB);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf30(objA);
             if ((u16)keyA < (u16)keyB) {
@@ -846,8 +846,8 @@ extern "C" __declspec(noinline) void sortEIBFlagAsc(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = hasEIBSlotFlag((CEquipItemBox*)grid, objA);
             u32 keyB = hasEIBSlotFlag((CEquipItemBox*)grid, objB);
             if (keyA < keyB) {
@@ -884,8 +884,8 @@ extern "C" __declspec(noinline) void sortEIBFlagDesc(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = hasEIBSlotFlag((CEquipItemBox*)grid, objA);
             u32 keyB = hasEIBSlotFlag((CEquipItemBox*)grid, objB);
             if (keyA > keyB) {
@@ -909,14 +909,14 @@ extern "C" __declspec(noinline) void sortEIBFlagDesc(CEquipItemGrid* grid) {
 extern "C" u8 getEIBNameKey(CEquipItemBox* self, CItemInstance* item);
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80284C30(CEquipItemGrid* grid, u32 mode) {
+extern "C" __declspec(noinline) void sortEIBByNameMode(CEquipItemGrid* grid, u32 mode) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = getEIBNameKey((CEquipItemBox*)grid, objA);
             u32 keyB = getEIBNameKey((CEquipItemBox*)grid, objB);
             if (mode != 0) {
@@ -955,15 +955,15 @@ extern "C" __declspec(noinline) void func_80284C30(CEquipItemGrid* grid, u32 mod
 // BdatGetU8Direct's bdat lookup (u8 compare). Same 3-temp chained copy swap.
 #pragma push
 #pragma dont_inline on
-extern "C" __declspec(noinline) void func_80284DCC(CEquipItemGrid* grid) {
+extern "C" __declspec(noinline) void sortEIBByNameKey(CEquipItemGrid* grid) {
     const char* base = lbl_eu_8050EFDC;
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
             u32 nameA = BdatGetU8Direct(gA, base + 0x61, BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
@@ -988,7 +988,7 @@ extern "C" __declspec(noinline) void func_80284DCC(CEquipItemGrid* grid) {
 // 3-temp chained copy swap.
 #pragma push
 #pragma dont_inline on
-extern "C" __declspec(noinline) void func_80284F1C(CEquipItemGrid* grid) {
+extern "C" __declspec(noinline) void sortEIBByNameKey69(CEquipItemGrid* grid) {
     const char* base = lbl_eu_8050EFDC;
     CEquipItemData* a;
     for (u16 i = 0; i < grid->count - 1; i++) {
@@ -996,8 +996,8 @@ extern "C" __declspec(noinline) void func_80284F1C(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 gA = lbl_eu_806640F4;
             u32 nameA = BdatGetU8Direct(gA, base + 0x69, BdatGetItemId(objA->word >> 20));
             u32 gB = lbl_eu_806640F4;
@@ -1027,8 +1027,8 @@ extern "C" __declspec(noinline) void sortEIBByNm72(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x72], kindA);
@@ -1058,8 +1058,8 @@ extern "C" __declspec(noinline) void sortEIBByNm7A(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x7a], kindA);
@@ -1091,8 +1091,8 @@ extern "C" __declspec(noinline) void sortEIBByNm17(CEquipItemGrid* grid, int key
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x17], kindA);
@@ -1124,8 +1124,8 @@ extern "C" __declspec(noinline) void sortEIBByNm82(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            CItemInstance* objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u16 kindA = BdatGetItemId(objA->word >> 20);
             u16 kindB = BdatGetItemId(objB->word >> 20);
             u32 nameA = BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
@@ -1156,8 +1156,8 @@ extern "C" __declspec(noinline) void sortEIBByVf90(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
-            CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
+            objA = (CItemInstance*)CItem_kindPtr(grid->cat, a->unk0);
+            CItemInstance* objB = (CItemInstance*)CItem_kindPtr(grid->cat, b->unk0);
             u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf90(objA);
             u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf90(objB);
             if ((u8)keyA < (u8)keyB) {
@@ -1195,7 +1195,7 @@ extern "C" double getEIBProgress(CEquipItemBox* self, CItemInstance* item) {
     int result = BdatGetU16Direct((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
     u32 v2 = BdatGetU8Direct(g, &lbl_eu_8050EFDC[0x92], kind);
     if (v2 & 4) {
-        void* obj = func_8009EC9C(1);
+        void* obj = CtrlObjectParam_GetCharEntry(1);
         u16 n = (u16)CtrlObjectParam_GetArtsDataWord(obj);
         result = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)result * (u32)n));
         if ((u16)result >= 0x3E7) result = 0x3E7;
@@ -1704,7 +1704,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
         u8 val = self->unk_374 - 1;
         self->unk_374 = val;
         if ((s8)(u8)val < 0) self->unk_374 = 1;
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
         playUISound__FUl(1);
         return;
     }
@@ -1746,8 +1746,8 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
             self->unk_1f5 = val;
             if ((s8)(u8)val < -1)
                 self->unk_1f5 = ::getEIBColCount((CEquipItemBox*)wrapGrid) - 1;
-            func_80289CC0(self);
-            func_80289AA4(self);
+            updateEIBCursorPos(self);
+            refreshEIBItemList(self);
         }
     }
     playUISound__FUl(1);
@@ -1756,14 +1756,14 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
 // Down/confirm handler: page the syswin sub-window forward, finish the sort
 // menu scroll, advance the name-pane column selection, or move the row
 // cursor down (wrapping at 5 with a grid-page step when it wraps).
-extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
         if (CSysWin_isActive(&self->_padSysWin1[0]) != 0) {
             u8 v = self->unk_374 + 1;
             self->unk_374 = v;
             if ((s8)v > 1) self->unk_374 = 0;
-            func_80289CC0(self);
+            updateEIBCursorPos(self);
             playUISound__FUl(1);
         }
         return;
@@ -1805,12 +1805,12 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
     if ((s8)v >= ::getEIBColCount((CEquipItemBox*)((u8*)self + 0x37e))) {
         self->unk_1f5 = -1;
     }
-    func_80289CC0(self);
-    func_80289AA4(self);
+    updateEIBCursorPos(self);
+    refreshEIBItemList(self);
     playUISound__FUl(1);
 }
 
-// Up/back handler: mirror of func_802869B4 - pages backward through the
+// Up/back handler: mirror of eibNavDown - pages backward through the
 // syswin window / sort menu scroll / name-pane columns / row cursor.
 extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
@@ -1849,7 +1849,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) {
         if (self->unk_372 > 1) {
             eibSortPagePrev(self);
-            func_80289CC0(self);
+            updateEIBCursorPos(self);
         }
         return;
     }
@@ -1857,13 +1857,13 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
     if ((s8)b == 0) {
         self->unk_1f4 = 4;
         eibPagePrev(self);
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
     } else {
         u8 v = (u8)(b - 1);
         self->unk_1f4 = v;
         if ((s8)v < 0) self->unk_1f4 = 4;
-        func_80289CC0(self);
-        func_80289AA4(self);
+        updateEIBCursorPos(self);
+        refreshEIBItemList(self);
     }
     playUISound__FUl(1);
 }
@@ -1909,20 +1909,20 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) {
         if (self->unk_372 > 1) {
             eibSortPageNext(self);
-            func_80289CC0(self);
+            updateEIBCursorPos(self);
         }
         return;
     }
     if ((int)self->unk_1f4 == 4) {
         self->unk_1f4 = 0;
-        func_80286F6C(self);
-        func_80289CC0(self);
+        eibPageNext(self);
+        updateEIBCursorPos(self);
     } else {
         u8 v = (u8)(self->unk_1f4 + 1);
         self->unk_1f4 = v;
         if ((s8)v >= 5) self->unk_1f4 = 0;
-        func_80289CC0(self);
-        func_80289AA4(self);
+        updateEIBCursorPos(self);
+        refreshEIBItemList(self);
     }
     playUISound__FUl(1);
 }
@@ -1933,7 +1933,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
 // lists.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void CEquipItemBox::func_80286F6C() {
+__declspec(noinline) void CEquipItemBox::eibPageNext() {
     if (CSysWin_getUnk34(_padSysWin1) != 0) return;
     if (sortMenuIsVisible28(_padSortMenu) != 0) return;
     CEquipItemGrid* grid = (CEquipItemGrid*)&_pad37D[1];
@@ -1941,8 +1941,8 @@ __declspec(noinline) void CEquipItemBox::func_80286F6C() {
     if ((s8)unk_1f5 >= ::getEIBColCount((CEquipItemBox*)grid)) {
         unk_1f5 = (u8)(::getEIBColCount((CEquipItemBox*)grid) - 1);
     }
-    func_80289754();
-    func_80289AA4();
+    refreshEIBPageDisp();
+    refreshEIBItemList();
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
@@ -1953,7 +1953,7 @@ __declspec(noinline) void CEquipItemBox::func_80286F6C() {
 
 // Step the equip-grid page cursor backward when the box is idle; wrap the
 // page index at the grid extent and play the page-change sound for multi-page
-// lists (backward mirror of func_80286F6C).
+// lists (backward mirror of eibPageNext).
 extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return;
@@ -1962,8 +1962,8 @@ extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 >= getEIBColCount((CEquipItemBox*)grid)) {
         self->unk_1f5 = (u8)(getEIBColCount((CEquipItemBox*)grid) - 1);
     }
-    func_80289754(self);
-    func_80289AA4(self);
+    refreshEIBPageDisp(self);
+    refreshEIBItemList(self);
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
@@ -1981,7 +1981,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
     if (self->unk_375 != 0) return;
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
         self->unk_58 = 1;
         Cur_SetVisible(&self->ccur18[0], 0);
         sortMenuToState4Page(&self->_padSortMenu[0]);
@@ -1994,7 +1994,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
     nw4r::lyt::Pane* root = self->field_38->GetRootPane();
     // Args evaluated right-to-left by MWCC: paneA's lookup runs first and its
     // result stays live across paneB's call (retail saves it to r31).
-    func_80137924(&result,
+    ScalePaneWorldPos(&result,
                   root->FindPaneByName(&lbl_eu_8050EFDC[0x18a], true),
                   root->FindPaneByName(&lbl_eu_8050EFDC[0x193], true),
                   root);
@@ -2038,7 +2038,7 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
         self->unk_58 = 1;
         Cur_SetVisible(&self->ccur18[0], 0);
         sortMenuToState4Page(&self->_padSortMenu[0]);
@@ -2056,13 +2056,13 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
 }
 #pragma pop
 
-extern "C" int func_8028CBCC(CEquipItemBox* self);
+extern "C" int useEIBSelectedItem(CEquipItemBox* self);
 // Main confirm-button handler (state 2, name pane down). Three top-level
-// paths: (1) syswin1 open -> close it, optionally run func_8028CBCC;
+// paths: (1) syswin1 open -> close it, optionally run useEIBSelectedItem;
 // (2) sort menu open -> commit selection, reset cursor state; (3) neither ->
 // item move/equip dispatch for the selected cell. Sets unk_1fe when an
 // action fired and the page table reports 8 equipped slots.
-extern "C" void func_802873D8(){}
+extern "C" void handleEIBConfirm(){}
 
 // Advance page-2 system-window state while it is visible and active.
 extern "C" __declspec(noinline) void stepEIBSysWin2(CEquipItemBox* self) {
@@ -2122,7 +2122,7 @@ extern "C" __declspec(noinline) void setEIBBoxInfo(CEquipItemBox* self, u32 val)
 
 // Advance the equip-grid selection: map the low nibble of unk_1fc to a window
 // kind (2..8), then hand the page grid, the selected page byte, the input
-// category and the kind to func_80282610 and refresh the page list.
+// category and the kind to rebuildEIBGridPage and refresh the page list.
 extern "C" void eibApplySelect(CEquipItemBox* self, u32 param) {
     u8 arg = (param >> 8) & 0xFF;
     u8 b = (param != 0) ? GetCollectedFlagByte(arg) : 0;
@@ -2141,8 +2141,8 @@ extern "C" void eibApplySelect(CEquipItemBox* self, u32 param) {
     case 7: hi = 7; break;
     case 8: hi = 8; break;
     }
-    func_80282610(grid, self->unk_36c[(s8)self->unk_373], b, hi);
-    func_80289754(self);
+    rebuildEIBGridPage(grid, self->unk_36c[(s8)self->unk_373], b, hi);
+    refreshEIBPageDisp(self);
 }
 
 // Name-pane confirm handler (entry states 2/4): with the name pane visible,
@@ -2151,7 +2151,7 @@ extern "C" void eibApplySelect(CEquipItemBox* self, u32 param) {
 // first non-empty list column (column 8 preferred when populated).
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
     if (self->unk_41 != 2 && self->unk_41 != 4) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return;
@@ -2175,8 +2175,8 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
             u16 v = ArrayGet12(&list->field_00[0], idx);
             if (v == 0) return;
             void* text;
-            if (func_801EF034((const u8*)list, idx) == 3) {
-                text = func_801D3C74(list, idx);
+            if (ItemBoxGetTab((const u8*)list, idx) == 3) {
+                text = formatItemBoxName(list, idx);
             } else {
                 text = BdatGetPtrDirect((const void*)lbl_eu_806649E0,
                                      &lbl_eu_8050EFDC[0x1a2], v);
@@ -2240,7 +2240,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
 #pragma push
 #pragma optimize_for_size on
 #pragma auto_inline off
-extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
+extern "C" __declspec(noinline) int isEIBSelectBlocked(CEquipItemBox* self) {
     self->unk_37c = 0;
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) return 1;
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
@@ -2249,7 +2249,7 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     if (getEIBItemKind(grid, idx) == 0) return 0;
     u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
     u8 catB = (u8)GetCollectedFlagByte(cat);
-    CEquipItemBoxItemView* cfg = (CEquipItemBoxItemView*)func_8009EC9C(catB);
+    CEquipItemBoxItemView* cfg = (CEquipItemBoxItemView*)CtrlObjectParam_GetCharEntry(catB);
     if (catB >= 9) return 0;
     u8 page = self->unk_36c[(s8)self->unk_373];
     if (page == 2 && (u8)getEIBByte2(grid, idx) == catB) return 0;
@@ -2268,7 +2268,7 @@ extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
     s16 elem = table[page];
     void* item = 0;
     if (elem != -1) {
-        item = func_80157C4C(page, elem);
+        item = CItem_kindPtr(page, elem);
     }
     if (item == 0) return 1;
     u32 w = *(u32*)item;
@@ -2316,7 +2316,7 @@ extern "C" unsigned char getEIBSelCat(u8* self) {
 extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
     s16 target;  // declared before items so MWCC colors it r31 (retail order)
     CEquipItemBoxItemView* items;
-    items = (CEquipItemBoxItemView*)func_8009EC9C(GetCollectedFlagByte((self->unk_1fc >> 8) & 0xFF));
+    items = (CEquipItemBoxItemView*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte((self->unk_1fc >> 8) & 0xFF));
     u8 idx = (u8)((u8)self->unk_1f5 * 5 + self->unk_1f4);
     target = getEIBItemId((CEquipItemGrid*)&self->_pad37D[1], idx);
     CEquipItemBoxSlotTable table = lbl_eu_8050EF90;
@@ -2329,7 +2329,7 @@ extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
     for (u8 e = 0; e < 6; e++) {
         s16 item = table.slots[e].item;
         if (item == -1) continue;
-        CItemInstance* obj = (CItemInstance*)func_80157C4C(table.slots[e].cat, item);
+        CItemInstance* obj = (CItemInstance*)CItem_kindPtr(table.slots[e].cat, item);
         if (obj == 0) continue;
         if (obj->word == 0) continue;
         u8 count = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf30(obj);
@@ -2346,7 +2346,7 @@ extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
 
 // us-8028ab5c: guarded teardown -- skips while the sort/syswin sub-objects are
 // busy; on success flags unk_1f5 = -1 and runs the close sequence
-// (func_80289CC0, func_80289AA4, playUISound(2)).
+// (updateEIBCursorPos, refreshEIBItemList, playUISound(2)).
 extern "C" void eibTryCloseRow(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) return;
     if (self->unk_375 != 0) return;
@@ -2354,8 +2354,8 @@ extern "C" void eibTryCloseRow(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     self->unk_1f5 = -1;
-    func_80289CC0(self);
-    func_80289AA4(self);
+    updateEIBCursorPos(self);
+    refreshEIBItemList(self);
     playUISound__FUl(2);
 }
 
@@ -2427,7 +2427,7 @@ extern "C" __declspec(noinline) int eibHudPrompt(CEquipItemBox* self) {
 #pragma optimize_for_size on
 // Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
 // GetCollectedFlagByte's category byte; an unk_1f5 of -1 always returns 0.
-extern "C" int func_80288948(CEquipItemBox* self) {
+extern "C" int isEIBCatMatch(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) return 0;
     u32 b;
     int idx;
@@ -2449,7 +2449,7 @@ extern "C" __declspec(noinline) void eibPlayEntry(CEquipItemBox* self) {
         self->unk_43 = 1;
         self->unk_58 = 1;
         self->pagecur[0x14] = 1;
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
     }
 }
 
@@ -2468,17 +2468,17 @@ extern "C" __declspec(noinline) void eibSysWin1Done(CEquipItemBox* self) {
     if (CSysWin_isActive(self->_padSysWin1) != 0) {
         self->unk_41 = 2;
         Cur_SetVisible(self->ccur18, 1);
-        func_80289CC0(self);
+        updateEIBCursorPos(self);
     }
 }
 
 // If both pointer fields 0x34 and 0x38 are non-null, clear the sort menu
 // (passing self) and set unk_42. noinline: retail callers (OnFileEvent)
 // emit a `bl` to the unmangled retail name.
-extern "C" __declspec(noinline) void func_80288AC0(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void closeEIBSortMenu(CEquipItemBox* self) {
     if (self->field_38 == 0) return;
     if (!(self->field_34 == 0)) {
-        func_80139198(0);
+        BuildSlotItemLists(0);
         self->unk_42 = 1;
     }
 }
@@ -2486,7 +2486,7 @@ extern "C" __declspec(noinline) void func_80288AC0(CEquipItemBox* self) {
 // Per-cell texture bind: kind-3 items resolve an id-keyed icon first, then
 // the generic kind lookup; the b7 flag finally overrides with one of two
 // fixed textures selected by the current sort page.
-extern "C" __declspec(noinline) void func_80288B14(CEquipItemBox* self, u16 kind, void* itemPtr,
+extern "C" __declspec(noinline) void bindEIBCellTexture(CEquipItemBox* self, u16 kind, void* itemPtr,
                                                    u8 i, u8 b7) {
     char buf[0x20];
     // Retail reuses one register for the icon name and the bound resource.
@@ -2546,7 +2546,7 @@ extern "C" __declspec(noinline) void func_80288B14(CEquipItemBox* self, u16 kind
 // build its text - items of kind 3/9 append a per-slot count suffix, positive
 // cell states show the carry-count string, negative states show error text.
 // bufName lands at sp+0x28 and bufText at sp+0x8 in retail (declaration order).
-extern "C" __declspec(noinline) void func_802891B8(CEquipItemBox* self, s8 v,
+extern "C" __declspec(noinline) void refreshEIBCellText(CEquipItemBox* self, s8 v,
                                                    CItemInstance* item, u8 i) {
     char bufName[0x20];
     char bufText[0x20];
@@ -2576,7 +2576,7 @@ extern "C" __declspec(noinline) void func_802891B8(CEquipItemBox* self, s8 v,
     } else {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     }
-    func_80136A1C(self->field_38, bufName, bufText, 0);
+    LayoutSetTextBoxText(self->field_38, bufName, bufText, 0);
 }
 
 extern "C" __declspec(noinline) void bindEIBCellIcon(CEquipItemBox* self, u16 kind, void* item, u8 i) {
@@ -2720,7 +2720,7 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
     case 7: hi = 7; break;
     case 8: hi = 8; break;
     }
-    func_80282610(grid, page, b, hi);
+    rebuildEIBGridPage(grid, page, b, hi);
     if (a != 0 && self->field_27A4 != 0) {
         grid->idx = 0;
         int found = 0;
@@ -2750,15 +2750,15 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
     }
     u8 idx2 = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
     void* item2 = getEIBItemObj(grid, idx2);
-    func_801D47D4((CItemBoxInfo*)self->unk_20c, self->unk_1fc, item2, 1);
+    renderItemBoxByKind((CItemBoxInfo*)self->unk_20c, self->unk_1fc, item2, 1);
     setItemBoxNamedText((CItemBoxInfo*)self->unk_20c, 1, fmtEIBItemName(grid, idx2));
     u32 x = countEIBPages(grid);
     setLayoutTextBoxNumber(self->field_38, &lbl_eu_8050EFDC[0x27c], (u8)x);
-    func_80289754(self);
-    func_80289AA4(self);
+    refreshEIBPageDisp(self);
+    refreshEIBItemList(self);
     fillEIBSortMenu(self);
     if (getItemBoxState__FP12CItemBoxInfo((void*)self->unk_20c) != 0) {
-        func_801D4260((CItemBoxInfo*)self->unk_20c, page);
+        hideItemBoxPanes((CItemBoxInfo*)self->unk_20c, page);
     }
 }
 #pragma pop
@@ -2769,7 +2769,7 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
 // dispatch the per-cell refresh helpers for the whole 5x6 grid.
 #pragma push
 #pragma auto_inline off
-void CEquipItemBox::func_80289754() {
+void CEquipItemBox::refreshEIBPageDisp() {
     u32 vec[3];
     char buf2[0x20];
     char buf1[0x20];
@@ -2815,9 +2815,9 @@ void CEquipItemBox::func_80289754() {
         u32 kind = getEIBItemKind(grid, i);
         void* item = getEIBItemObj(grid, i);
         u8 b7 = getEIBByte7(grid, i);
-        func_80288B14(this, (u16)kind, item, i, b7);
+        bindEIBCellTexture(this, (u16)kind, item, i, b7);
         bindEIBCellIcon(this, (u16)kind, item, i);
-        func_802891B8(this, (s8)chkEIBEquip(grid, i), (CItemInstance*)item, i);
+        refreshEIBCellText(this, (s8)chkEIBEquip(grid, i), (CItemInstance*)item, i);
         u32 show;
         if ((u16)kind != 0) {
             show = getEIBByte6(grid, i);
@@ -2835,7 +2835,7 @@ void CEquipItemBox::func_80289754() {
 // layout, re-dispatch the interaction for the selected grid cell, then copy
 // the per-page item ids/records into the item-box info list (+0xB0 region).
 // noinline: retail callers (rebuildEIBPage etc.) emit a `bl`.
-__declspec(noinline) void CEquipItemBox::func_80289AA4() {
+__declspec(noinline) void CEquipItemBox::refreshEIBItemList() {
     u8 idx = (u8)(unk_1f4 + unk_1f5 * 5);
     CEquipItemGrid* grid = (CEquipItemGrid*)&_pad37D[1];
     if ((s8)unk_1f5 == -1) {
@@ -2847,7 +2847,7 @@ __declspec(noinline) void CEquipItemBox::func_80289AA4() {
     void* item;
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
-    func_801D47D4((CItemBoxInfo*)unk_20c, unk_1fc, item, getEIBByte6(grid, idx));
+    renderItemBoxByKind((CItemBoxInfo*)unk_20c, unk_1fc, item, getEIBByte6(grid, idx));
     setItemBoxNamedText((CItemBoxInfo*)unk_20c, 1, fmtEIBItemName(grid, idx));
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
@@ -2861,7 +2861,7 @@ __declspec(noinline) void CEquipItemBox::func_80289AA4() {
         u16 v = ArrayGet12(&view->field_210[0], (u8)i);
         if (v == 0) continue;
         list->field_00[(u8)i] = v;
-        list->field_A8[(u8)i] = func_801EF034((const u8*)&view->field_210[0], (u8)i);
+        list->field_A8[(u8)i] = ItemBoxGetTab((const u8*)&view->field_210[0], (u8)i);
         u8 b;
         if ((u8)i < 0xc) b = view->field_2C4[(u8)i];
         else b = 0;
@@ -2885,7 +2885,7 @@ __declspec(noinline) void CEquipItemBox::func_80289AA4() {
 #pragma push
 #pragma optimize_for_size on
 // branch in retail (no shared helper), so keep both copies textual.
-extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void updateEIBCursorPos(CEquipItemBox* self) {
     u8 winName[0x18];
     // Retail allocates SEPARATE stack copies per branch (pageName sp+80,
     // itemName sp+48, and two distinct 'pos' slots) because none of them
@@ -2903,7 +2903,7 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
             nw4r::lyt::Pane* pane =
                 ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                     ->FindPaneByName(pageName, true);
-            func_801375A0(&pos, pane);
+            AccumPaneWorldPos(&pos, pane);
             pane = ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                        ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
             pos.x *= pane->GetScale().x;
@@ -2916,7 +2916,7 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
             nw4r::lyt::Pane* pane =
                 ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                     ->FindPaneByName(itemName, true);
-            func_801375A0(&pos, pane);
+            AccumPaneWorldPos(&pos, pane);
             pane = ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
                        ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
             pos.x *= pane->GetScale().x;
@@ -3003,7 +3003,7 @@ extern "C" __declspec(noinline) void eibSortPageNext(CEquipItemBox* self) {
     if ((int)(s8)v >= self->unk_372) {
         self->unk_373 = 0;
     }
-    func_8028A5D8(self, 0);
+    refreshEIBSortPages(self, 0);
     rebuildEIBPage(self, 0);
     playUISound__FUl(0x70);
 }
@@ -3018,7 +3018,7 @@ extern "C" __declspec(noinline) void eibSortPagePrev(CEquipItemBox* self) {
     if ((s8)v < 0) {
         self->unk_373 = self->unk_372 - 1;
     }
-    func_8028A5D8(self, 1);
+    refreshEIBSortPages(self, 1);
     rebuildEIBPage(self, 0);
     playUISound__FUl(0x70);
 }
@@ -3057,9 +3057,9 @@ extern "C" void refreshEIBSortTabs(CEquipItemBox* self) {
         setPaneVisible(pane1, flagA);
         nw4r::lyt::Pane* pane2 = self->field_38->GetRootPane()->FindPaneByName(buf2, true);
         setPaneVisible(pane2, flagB);
-        func_8028A374(self, v, i);
+        bindEIBPageTexture(self, v, i);
     }
-    func_8028A5D8(self, self->unk_373);
+    refreshEIBSortPages(self, self->unk_373);
     rebuildEIBPage(self, 0);
 }
 
@@ -3067,7 +3067,7 @@ extern "C" void refreshEIBSortTabs(CEquipItemBox* self) {
 // format-string table, fetch the 'timg' resource via the layout's arc
 // accessor (falling back to the shared accessor's default name), then bind
 // it to the pane named by the page index.
-extern "C" __declspec(noinline) void func_8028A374(CEquipItemBox* self, u8 v, u8 i) {
+extern "C" __declspec(noinline) void bindEIBPageTexture(CEquipItemBox* self, u8 v, u8 i) {
     char texName[0x20];
     char paneName[0x10];
     nw4r::lyt::Pane* pane;
@@ -3110,7 +3110,7 @@ extern "C" __declspec(noinline) void func_8028A374(CEquipItemBox* self, u8 v, u8
 // page around unk_373, clamped to the page range), toggle the two pane names
 // per page slot, then recolour the 15 page-name panes (highlighted pair for
 // pages 2/4..8/0xB, idle pair otherwise).
-extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {
+extern "C" void refreshEIBSortPages(CEquipItemBox* self, int a) {
     u8 buf[2];
     buf[0] = self->unk_373;
     s8 v = (s8)self->unk_373;
@@ -3195,17 +3195,17 @@ extern "C" __declspec(noinline) void dispatchEIBKind(CEquipItemBox* self, int a,
     int v = (u8)BdatGetItemType(a);
     switch (v) {
     case 2:
-        func_8028AF98(self, a, b);
+        rebuildEIBEquipPage(self, a, b);
         break;
     case 4:
     case 5:
     case 6:
     case 7:
     case 8:
-        func_8028B7CC(self, a, b);
+        rebuildEIBKind48Page(self, a, b);
         break;
     case 3:
-        func_8028BE74(self, a, b);
+        rebuildEIBKind3Page(self, a, b);
         break;
     }
 }
@@ -3264,11 +3264,11 @@ extern "C" __declspec(noinline) void resetEIBPageView(CEquipItemBox* self) {
 // stat/name tables (bdat lookups keyed by the kind word), scale the two
 // drop-rate counters by the RNG when the flag word says so, then bind the
 // computed texts (0x522/0x546/0x552/0x52e/0x53a), re-tint the stat panes and
-// hand the box to the per-cell grid rebuild (func_8028C280). optimize_for_size
+// hand the box to the per-cell grid rebuild (rebuildEIBKind2Cells). optimize_for_size
 // selects retail's _savegpr prologue for this 13-saved-reg frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
+extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
     // Declaration order follows retail's saved-register allocation
     // (self=r19, a=r20, b=r21, rateB=r22, rateA=r23, g=r24, base=r25,
     // kind2=r26, name72=r27, name7a=r28, name61=r29, hi=r30, name69=r31).
@@ -3326,7 +3326,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     name69 = BdatGetU8Direct(g, base + 0x69, kind2);
     u32 flag92 = BdatGetU8Direct(g, base + 0x92, kind2);
     if (flag92 & 4) {
-        void* obj = func_8009EC9C(1);
+        void* obj = CtrlObjectParam_GetCharEntry(1);
         rateA = (int)(lbl_eu_80668B4C * (f32)(int)((u32)(u16)rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
         rateB = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj)));
         if ((u32)(u16)rateA >= 0x3e7) rateA = 0x3e7;
@@ -3342,7 +3342,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     BlendFloatAvgScale((u32)rateA, (u32)rateB, 0, f);
     char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0xb);
     sprintf(buf, base + 0x618, rateA, str, rateB);
-    func_80136A1C(self->field_38, base + 0x522, buf, 0);
+    LayoutSetTextBoxText(self->field_38, base + 0x522, buf, 0);
     setLayoutTextBoxNumber(self->field_38, base + 0x546, (u8)name72);
     setLayoutTextBoxNumber(self->field_38, base + 0x552, (u8)name7a);
     char* n1 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
@@ -3352,7 +3352,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     } else {
         sprintf(buf, base + 0x626, (u8)name61, n2);
     }
-    func_80136A1C(self->field_38, base + 0x52e, buf, 0);
+    LayoutSetTextBoxText(self->field_38, base + 0x52e, buf, 0);
     n1 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
     n2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x80);
     if ((u8)name69) {
@@ -3360,7 +3360,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     } else {
         sprintf(buf, base + 0x626, (u8)name69, n2);
     }
-    func_80136A1C(self->field_38, base + 0x53a, buf, 0);
+    LayoutSetTextBoxText(self->field_38, base + 0x53a, buf, 0);
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x55e, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x50c, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(self->field_38, base + 0x517, base + 0x228, 0);
@@ -3371,7 +3371,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     PaneMatSetTevColorsByName(self->field_38, base + 0x4d5, lbl_eu_80664970, lbl_eu_80664978);
     PaneMatSetTevColorsByName(self->field_38, base + 0x4f6, lbl_eu_80664980, lbl_eu_80664988);
     PaneMatSetTevColorsByName(self->field_38, base + 0x501, lbl_eu_80664980, lbl_eu_80664988);
-    func_8028C280(self, a, b);
+    rebuildEIBKind2Cells(self, a, b);
 }
 #pragma pop
 
@@ -3382,7 +3382,7 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
 // r24 prologue for this 8-saved-reg frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
+extern "C" void rebuildEIBKind48Page(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     u16 kind2;
     u32 nameA, nameB, nameC;
@@ -3459,7 +3459,7 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     PaneMatSetTevColorsByName(self->field_38, base + 0x4d5, lbl_eu_80664980, lbl_eu_80664988);
     PaneMatSetTevColorsByName(self->field_38, base + 0x4f6, lbl_eu_80664970, lbl_eu_80664978);
     PaneMatSetTevColorsByName(self->field_38, base + 0x501, lbl_eu_80664970, lbl_eu_80664978);
-    func_8028C280(self, kind, item);
+    rebuildEIBKind2Cells(self, kind, item);
 }
 #pragma pop
 
@@ -3469,7 +3469,7 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
 // +0x2c0 state byte 3, +0x2cc count byte) and the embedded item-box index.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
+extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     // All pane lookups in this handler go through the layout's pane-finder
     // sub-object (vtable slot 13), not the root pane.
@@ -3515,7 +3515,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
             sprintf(buf, base + 0x63c,
                     ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
         }
-        func_80136A1C(self->field_38, base + 0x5fe, buf, 0);
+        LayoutSetTextBoxText(self->field_38, base + 0x5fe, buf, 0);
     }
     // Category label: name-byte + 0x15 selects the category string.
     u32 cat = BdatGetU8Direct(lbl_eu_806640D8, base + 0, (u16)key);
@@ -3530,7 +3530,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
         ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
             ->FindPaneByName(base + 0x193, true);
     float pos[3];
-    func_80137924(pos, paneDetail, paneAnchor,
+    ScalePaneWorldPos(pos, paneDetail, paneAnchor,
                   ((CEquipItemBoxLayoutView*)self->field_38)->field_10);
     CEquipItemBoxKind3View* view = (CEquipItemBoxKind3View*)self;
     view->field_220 = (u16)key;
@@ -3548,7 +3548,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
 // the pane, and store the per-cell ids/bytes/shorts into the page tables at
 // +0x210/+0x2B8/+0x2C4/+0x2D0 (+ the page VEC3 records at +0x228). The
 // slot==-1 path reads the item's flag list instead.
-extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
+extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
     char* base = lbl_eu_8050EFDC;
     if (b == 0) return;
     if (((CItemInstance*)b)->word == 0) return;
@@ -3576,7 +3576,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
             s16 slot = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)b))
                            ->vf40((CItemInstance*)b, (u8)idx);
             if (slot != -1) {
-                CItemInstance* item = (CItemInstance*)func_80157C4C(3, slot);
+                CItemInstance* item = (CItemInstance*)CItem_kindPtr(3, slot);
                 u32 g = lbl_eu_806640D8;
                 u16 kind = (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf54(item);
                 storeKind = kind;
@@ -3618,13 +3618,13 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                         sprintf(buf40, base + 0x63c, key90);
                     }
                     sprintf(buf, base + 0x6f4, i1);
-                    func_80136A1C(self->field_38, buf, buf40, 0);
+                    LayoutSetTextBoxText(self->field_38, buf, buf40, 0);
                 }
                 char* str2 = BdatGetPtrDirect((const void*)g, base + 0x36, kind);
                 sprintf(buf40, base + 0x3b, str2, name);
                 storeByte = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf08(item);
                 storeKey = (s16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf90(item);
-                func_80137F88(pane, (unsigned long)icon);
+                PaneSetTexPalette(pane, (unsigned long)icon);
             } else {
                 CItemInstance* entry = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)b))
                                            ->vf2C((CItemInstance*)b, (u8)idx);
@@ -3670,28 +3670,28 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                             sprintf(buf40, base + 0x63c, bit11);
                         }
                         sprintf(buf, base + 0x6f4, i1);
-                        func_80136A1C(self->field_38, buf, buf40, 0);
+                        LayoutSetTextBoxText(self->field_38, buf, buf40, 0);
                     }
                     char* str4 = BdatGetPtrDirect((const void*)g2, base + 0x36, kind2);
                     sprintf(buf40, base + 0x3b, str4, name2);
                     storeByte = (u8)bits3;
                     storeKey = (s16)((entry->word >> 11) & 0x7FF);
-                    func_80137F88(pane, (unsigned long)icon);
+                    PaneSetTexPalette(pane, (unsigned long)icon);
                 } else {
                     icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                     sprintf(buf, base + 0x6f4, i1);
                     LayoutSetTextBoxFmtValue(self->field_38, buf, base + 0x228, 0);
                     sprintf(buf40, base + 0x2a, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x2a));
                     sprintf(buf, base + 0x705, i1);
-                    func_80136A1C(self->field_38, buf, buf40, 0);
-                    func_80137F88(pane, (unsigned long)icon);
+                    LayoutSetTextBoxText(self->field_38, buf, buf40, 0);
+                    PaneSetTexPalette(pane, (unsigned long)icon);
                 }
             }
         }
         nw4r::lyt::Pane* pane193 =
             self->field_38->GetRootPane()->FindPaneByName(base + 0x193, true);
         float out[3];
-        func_80137924(out, pane, pane193, self->field_38->GetRootPane());
+        ScalePaneWorldPos(out, pane, pane193, self->field_38->GetRootPane());
         u8 v = (u8)(idx + 8);
         if (v < 0xc) {
             ((CEquipItemBoxPageDataView*)self)->field_210[v] = storeKind;
@@ -3718,7 +3718,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
 // cell is empty or the kind is rejected (BdatGetItemType == 2), else 1.
 #pragma push
 #pragma optimize_for_size on
-extern "C" int func_8028CBCC(CEquipItemBox* self) {
+extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
     u8 idx = (u8)((u8)self->unk_1f4 + self->unk_1f5 * 5);
     s16 itemId = getEIBItemId(grid, idx);
@@ -3763,7 +3763,7 @@ extern "C" int func_8028CBCC(CEquipItemBox* self) {
                 if (kindByte != 3) {
                     // Clear the item from the owning party member's slots.
                     u8 cat = GetCollectedFlagByte(slot);
-                    void* owner = func_8009EC9C(cat);
+                    void* owner = CtrlObjectParam_GetCharEntry(cat);
                     switch (BdatGetItemType(cat)) {
                     case 2: CtrlObjectParam_SetEquipSlot5(owner, -1); break;
                     case 4: CtrlObjectParam_SetEquipSlot0(owner, -1); break;
@@ -3787,7 +3787,7 @@ extern "C" int func_8028CBCC(CEquipItemBox* self) {
         if (cleared) break;
         u16 n = (u16)CItemBlock_countKindSlots(cats.b[c2]);
         for (u16 j = 0; j < n; j++) {
-            CItemInstance* obj = (CItemInstance*)func_80157C4C(cats.b[c2], (s16)j);
+            CItemInstance* obj = (CItemInstance*)CItem_kindPtr(cats.b[c2], (s16)j);
             if (obj == 0 || obj->word == 0) continue;
             u32 cnt = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf30(obj);
             for (u8 k = 0; k < (u8)cnt; k++) {
@@ -3859,7 +3859,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
-        func_8013676C(root, ((IDeviceFontInfo*)font)->getFont());
+        ApplyFontToTxtPanes(root, ((IDeviceFontInfo*)font)->getFont());
         char* msg = getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
         setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
@@ -3905,9 +3905,9 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
             field_38->GetRootPane()->FindPaneByName(base + 0x784, true);
         copyVEC3((float*)&((CEquipItemBoxPagePosView*)this)->pos[0],
                  &((CEquipItemBoxPaneView*)posPane)->mTranslate[0]);
-        CEquipItemBoxFourShorts c0 = func_80139658(field_38, base + 0x791, 0);
+        CEquipItemBoxFourShorts c0 = PaneMatGetS16QuadByName(field_38, base + 0x791, 0);
         CopyVec4s(lbl_eu_80664920, &c0);
-        CEquipItemBoxFourShorts c1 = func_80139658(field_38, base + 0x791, 1);
+        CEquipItemBoxFourShorts c1 = PaneMatGetS16QuadByName(field_38, base + 0x791, 1);
         CopyVec4s(lbl_eu_80664928, &c1);
         s16 v0c = lbl_eu_80664920[3];
         s16 v1c = lbl_eu_80664928[3];
@@ -3970,31 +3970,31 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         LayoutSetTextBoxFmtValue(field_38, base + 0x5a5, base + 0x228, 0);
         nw4r::lyt::Pane* paneB =
             field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true);
-        CEquipItemBoxFourShorts p1 = func_801397AC(paneB, 0);
+        CEquipItemBoxFourShorts p1 = PaneMatGetS16Quad(paneB, 0);
         CopyVec4s(lbl_eu_80664970, &p1);
-        CEquipItemBoxFourShorts p2 = func_801397AC(paneB, 1);
+        CEquipItemBoxFourShorts p2 = PaneMatGetS16Quad(paneB, 1);
         CopyVec4s(lbl_eu_80664978, &p2);
         lbl_eu_80664980[3] = lbl_eu_80664970[3];
         lbl_eu_80664988[3] = lbl_eu_80664978[3];
         nw4r::lyt::Pane* pane5 =
             field_38->GetRootPane()->FindPaneByName(base + 0x522, true);
-        p1 = func_801397AC(pane5, 0);
+        p1 = PaneMatGetS16Quad(pane5, 0);
         CopyVec4s(lbl_eu_80664990, &p1);
-        p2 = func_801397AC(pane5, 1);
+        p2 = PaneMatGetS16Quad(pane5, 1);
         CopyVec4s(lbl_eu_80664998, &p2);
         lbl_eu_806649A0[3] = lbl_eu_80664990[3];
         lbl_eu_806649A8[3] = lbl_eu_80664998[3];
         nw4r::lyt::Pane* pane79 =
             field_38->GetRootPane()->FindPaneByName(base + 0x79e, true);
-        p1 = func_801397AC(pane79, 0);
+        p1 = PaneMatGetS16Quad(pane79, 0);
         CopyVec4s(lbl_eu_806649B0, &p1);
-        p2 = func_801397AC(pane79, 1);
+        p2 = PaneMatGetS16Quad(pane79, 1);
         CopyVec4s(lbl_eu_806649B8, &p2);
         lbl_eu_806649C0[3] = lbl_eu_806649B0[3];
         lbl_eu_806649C8[3] = lbl_eu_806649B8[3];
         lbl_eu_806649D0[3] = lbl_eu_806649B0[3];
         lbl_eu_806649D8[3] = lbl_eu_806649B8[3];
-        func_80288AC0(this);
+        closeEIBSortMenu(this);
         field_24 = 0;
         validateHeap__17UnkClass_8045F564Fv(&_pad04[0]);
         __dt__14Class_8045F858Fv(guard, -1);
@@ -4012,7 +4012,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_34 = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_34, buf2, base + 0x71f);
-        func_80288AC0(this);
+        closeEIBSortMenu(this);
         field_28 = 0;
         validateHeap__17UnkClass_8045F564Fv(&_pad04[0x14]);
         __dt__14Class_8045F858Fv(guard2, -1);
@@ -4027,7 +4027,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
             setBdatEntry__5CBdatFUlPv(5, buf3);
         }
         lbl_eu_806649E0 = getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]);
-        func_80288AC0(this);
+        closeEIBSortMenu(this);
         field_2C = 0;
         return 1;
     }
@@ -4070,11 +4070,11 @@ extern "C" void sinit_8028DAB0() {
 // then walk the page's items and populate the cells with their slot state.
 // Category 3 cross-references the six equipment categories; the general path
 // (categories 2 and 4..8) matches item slots directly. Ends by recomputing the
-// page count and dispatching func_8028345C.
+// page count and dispatching sortEIBGridByPage.
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u8 b, u8 hi) {
+extern "C" __declspec(noinline) void rebuildEIBGridPage(CEquipItemGrid* grid, u8 v, u8 b, u8 hi) {
     grid->count = 0;
     for (u16 i = 0; i < 0x400; i++) {
         CEquipItemData temp;
@@ -4085,7 +4085,7 @@ extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u
     CEquipItemBoxCatWordTable catsTemp = lbl_eu_8050EF50;
     const char* base = lbl_eu_8050EFDC;
     for (u16 n = 0; n < (u16)total; n++) {
-        CItemInstance* obj = (CItemInstance*)func_80157C4C(v, (s16)n);
+        CItemInstance* obj = (CItemInstance*)CItem_kindPtr(v, (s16)n);
         if (obj == 0 || obj->word == 0) continue;
         u16 count = grid->count;
         grid->count = count + 1;
@@ -4099,7 +4099,7 @@ extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u
                 u16 cnt2 = (u16)CItemBlock_countKindSlots(cat);
                 u32 kplus3 = (u32)(k + 3);
                 for (u16 m = 0; m < cnt2; m++) {
-                    CItemInstance* obj2 = (CItemInstance*)func_80157C4C(cat, (s16)m);
+                    CItemInstance* obj2 = (CItemInstance*)CItem_kindPtr(cat, (s16)m);
                     if (obj2 == 0 || obj2->word == 0) continue;
                     CEquipItemBoxItemImplView* impl2 = (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj2);
                     u16 num = (u16)impl2->vf30(obj2);
@@ -4111,7 +4111,7 @@ extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u
                         u16 m2 = m;
                         for (u8 q = 0; q < (u8)code80135FDC_getByte_64077(); q++) {
                             u8 catB = (u8)GetCollectedFlagByte(q);
-                            CItemInstance* obj3 = (CItemInstance*)func_8009EC9C(catB);
+                            CItemInstance* obj3 = (CItemInstance*)CtrlObjectParam_GetCharEntry(catB);
                             s16 slot2 = 0;
                             switch (cat) {
                             case 2: slot2 = ((CEquipItemBoxItemView*)obj3)->field_26; break;
@@ -4173,17 +4173,17 @@ general:
                 if ((u32)(n3 - 4) <= 9) {
                     /* no-op */
                 } else if (n3 == 3) {
-                    if (Counter_TestBit((u8*)func_8009EC9C(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
                 }
                 if (n3 == 2) {
-                    if (Counter_TestBit((u8*)func_8009EC9C(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
                 }
             }
             // Second category scan: match the cell's item id against the
             // equipment slot table of every category.
             for (u8 q = 0; q < (u8)code80135FDC_getByte_64077(); q++) {
                 u8 catB = (u8)GetCollectedFlagByte(q);
-                CItemInstance* obj3 = (CItemInstance*)func_8009EC9C(catB);
+                CItemInstance* obj3 = (CItemInstance*)CtrlObjectParam_GetCharEntry(catB);
                 s16 slot2 = 0;
                 switch (v) {
                 case 2: slot2 = ((CEquipItemBoxItemView*)obj3)->field_26; break;
@@ -4222,7 +4222,7 @@ tail:
         // Mark the used equipment slots (unk7 = 1) and compute the per-cell
         // count threshold.
         u32 cnt = CItemBlock_countKindSlots(v);
-        u32 base = func_801576C8(v);
+        u32 base = CItem_slotCnt(v);
         s32 last = (s32)(cnt - 1);
         s32 diff = (s32)(cnt - base);
         s32 i2;
@@ -4241,7 +4241,7 @@ tail:
             }
         }
     }
-    func_8028345C(grid);
+    sortEIBGridByPage(grid);
 }
 #pragma pop
 // Page count for the current category: min(10, ceil(count / pagesize)).

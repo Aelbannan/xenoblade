@@ -41,9 +41,9 @@ s8 BdatGetS8ByTableKey(const void*, const void*, u32);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 u8 BdatGetU8Direct(u32, const char*, u32);
 char* BdatGetPtrDirect(const void*, const void*, int);
-void func_8013676C(void*, u32);
+void ApplyFontToTxtPanes(void*, u32);
 #endif
-void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 // Retail symbols for these ARE the Itanium-mangled names; declare them under
 // C linkage so calls bind to the literal mangled identifier (declaring them
@@ -68,7 +68,7 @@ void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
@@ -94,9 +94,9 @@ extern "C" u8 code80135FDC_getByte_64077();
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
 
-// func_80136A1C/func_80136D74 dispatch through real classes (no local pads):
+// LayoutSetTextBoxText/SetLayoutSelfText dispatch through real classes (no local pads):
 // - tagProc slot 0x14 is CTagProcessorBase::Proc (kyoshin/CTagProcessor.hpp,
-//   retail func_80125B58); the TU-local decl lives in code_80135FDC.cpp
+//   retail TagProcPreprocessMessage); the TU-local decl lives in code_80135FDC.cpp
 //   (CTagProcessor.hpp cannot be included here: its byte-wise ut::Color
 //   clashes with the lyt headers above).
 // - the slot-0x7C string setter is nw4r::lyt::TextBox::SetString.
@@ -108,7 +108,7 @@ struct CViewFrame37038 {
     /* 0x194 */ f32 projection[4][4];
 };
 
-// BDAT filename pointer tables copied to the stack by func_8013ACFC. Retail
+// BDAT filename pointer tables copied to the stack by RevealMinimapArea. Retail
 // copies them with inline mtctr/lwzu/stwu 8-byte loops; struct assignment is
 // the only source shape that makes MWCC emit those loops (memcpy would emit
 // bl memcpy).
@@ -119,7 +119,7 @@ struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 extern "C" u8 GetCollectedFlagByte(u32);
 #endif
 
-// Pane colour / material dispatches (func_80137B44 and siblings) go through
+// Pane colour / material dispatches (PaneSetVtxColorByName and siblings) go through
 // real nw4r virtuals: slot 0x28 is Pane::SetVtxColor, slot 0x3C is
 // Pane::FindPaneByName, slot 0x68 is Pane::GetMaterial, slots 0x58/0x64/0x6C
 // are Pane::FindAnimationLinkSelf/GetMaterialNum/GetMaterial, and slot 0x24
@@ -143,7 +143,7 @@ extern void* getCurrentView__5CViewFv();
 extern void* Scn_HasCamItem(void*, void*);
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
 extern void CfT_PlayClockSnapshot(u16*, u16*);
-extern int func_8006A6D0();
+extern int CfT_DispatchFrameCounts();
 extern u16 getReloadParam0();
 extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern u8 lbl_eu_8052E524[];
@@ -194,7 +194,7 @@ extern f32 lbl_eu_80667304;
 extern f32 lbl_eu_80667308;
 extern f32 lbl_eu_8066730C;
 // 67310-6733C hold face-string pointers (read as u32 bit patterns via the
-// float externs below by func_8013A7D0/AC3C); typed as pointers here.
+// float externs below by LookupRelateValue/AC3C); typed as pointers here.
 extern const char* lbl_eu_80667310;
 extern const char* lbl_eu_80667314;
 extern const char* lbl_eu_80667318;
@@ -252,7 +252,7 @@ extern ml::CVec3 zero__Q22ml5CVec3;
 // (Bdat_GetMaxRow_B1EC / CtrlObjectParam_GetSlotTableBase / CtrlRemote_SetSharedBit stay inline in
 //  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
-extern "C" void* func_8009EC9C(u32 idx);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);
 extern "C" int CtrlObjectParam_GetItemBitFlag(u32 idx);
 extern "C" void CtrlObjectParam_SetItemBitFlag(u32 idx, u32 value);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
@@ -273,7 +273,7 @@ extern "C" void* getFP__FPCc(const char*);
 // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp (included above).
 
 // misc single decls
-extern "C" void func_80136D74(nw4r::lyt::Layout*, char*, u32);
+extern "C" void SetLayoutSelfText(nw4r::lyt::Layout*, char*, u32);
 extern "C" void* getInstance__14Class_80296898Fv();
 }
 

@@ -54,7 +54,7 @@ void cf::CfObjectTbox::initTbox() {
 }
 
 extern "C" void CfObjectTbox_ForwardToImpl(u8* self) {
-    extern void func_802753F8(void*);
+    extern void tboxSyncChild(void*);
     void* ptr = *(void**)((char*)self + 0x38);
-    if (ptr != 0) func_802753F8(ptr);
+    if (ptr != 0) tboxSyncChild(ptr);
 }

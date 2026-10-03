@@ -9,11 +9,11 @@
 // UnkClass_8045F564 storage through the void* free functions.
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
-#define func_80137924 func_80137924_csys_dup
+#define ScalePaneWorldPos ScalePaneWorldPos_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
-#undef func_80137924
+#undef ScalePaneWorldPos
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 
@@ -114,8 +114,8 @@ struct CfPadDataView {
     u32 field_104;              // button word
 };
 
-// DrawInfo helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // C-ABI imports (retail symbols are unmangled / pre-mangled C names).
 extern "C" {

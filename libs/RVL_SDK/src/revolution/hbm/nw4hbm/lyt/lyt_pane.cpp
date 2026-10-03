@@ -61,7 +61,10 @@ namespace detail {
  * Pane
  *
  ******************************************************************************/
-Pane::Pane(const res::Pane* pRes) {
+Pane::Pane(const res::Pane* pRes)
+    // Retail zeroes mSize from sPanePool[0] before the body assignments
+    // (explicit table reference; a default Size() would pool a TU-local 0.0f).
+    : mSize(sPanePool[0], sPanePool[0]) {
     mpParent = NULL;
     mpMaterial = NULL;
     mUserAllocated = false;
@@ -105,7 +108,9 @@ void Pane::AppendChild(Pane* pChild) {
 }
 
 ut::Rect Pane::GetPaneRect(const DrawInfo& rInfo) const {
-    ut::Rect rect;
+    // Retail builds the return Rect from four sPanePool[0] table references;
+    // a default Rect() would pool a TU-local 0.0f.
+    ut::Rect rect(sPanePool[0], sPanePool[0], sPanePool[0], sPanePool[0]);
     math::VEC2 base = GetVtxPos();
 
     rect.left = base.x;
@@ -113,7 +118,11 @@ ut::Rect Pane::GetPaneRect(const DrawInfo& rInfo) const {
     rect.right = base.x + mSize.width;
     rect.bottom = base.y + mSize.height;
 
-    if (rInfo.IsYAxisUp()) {
+    // Retail compares against sPanePool[0] (table ref); the shared IsYAxisUp()
+    // helper spells `< 0.0f`, which would pool a TU-local entry. The bool
+    // temporary reproduces the helper's mfcr/srwi materialization.
+    bool bUp = rInfo.GetViewRect().bottom - rInfo.GetViewRect().top < sPanePool[0];
+    if (bUp) {
         rect.top = -rect.top;
         rect.bottom = -rect.bottom;
     }
@@ -421,7 +430,8 @@ void Pane::LoadMtx(const DrawInfo& rInfo) {
     if (rInfo.IsMultipleViewMtxOnDraw()) {
         PSMTXConcat(rInfo.GetViewMtx(), mGlbMtx, mtx);
 
-        if (rInfo.IsYAxisUp()) {
+        bool bUp = rInfo.GetViewRect().bottom - rInfo.GetViewRect().top < sPanePool[0];
+        if (bUp) {
             mtx[0][1] = -mtx[0][1];
             mtx[1][1] = -mtx[1][1];
             mtx[2][1] = -mtx[2][1];
@@ -429,7 +439,8 @@ void Pane::LoadMtx(const DrawInfo& rInfo) {
 
         pMtx = mtx;
     } else {
-        if (rInfo.IsYAxisUp()) {
+        bool bUp = rInfo.GetViewRect().bottom - rInfo.GetViewRect().top < sPanePool[0];
+        if (bUp) {
             PSMTXCopy(mGlbMtx, mtx);
 
             mtx[0][1] = -mtx[0][1];

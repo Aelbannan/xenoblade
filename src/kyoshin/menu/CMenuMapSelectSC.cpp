@@ -270,7 +270,7 @@ void CMenuMapSelectSC::Term() {
 
     teardown(&mTitleAHelp);
     CFade_Unload(&mFade);
-    func_8024CB94(&mFloorMap);
+    FloorMap_Teardown(&mFloorMap);
 
     lbl_eu_806647C0 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -317,7 +317,7 @@ body:
     }
     updateHelp(&mTitleAHelp);
     CFade_Update(&mFade);
-    func_8024C1FC(&mFloorMap);
+    FloorMap_UpdateFrame(&mFloorMap);
 }
 
 void CMenuMapSelectSC::cbRenderBefore() {
@@ -343,8 +343,8 @@ body:
     // virtual-dispatch its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_8024C8F8(&mFloorMap, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    FloorMap_Draw(&mFloorMap, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     CFade_Draw(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
@@ -389,17 +389,17 @@ extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self) {
 extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         Scn_SetPauseFlag(reinterpret_cast<CScn*>(self->mParentRef), 0);
-        func_8024F1FC(&self->mFloorMap, (u8)lbl_eu_80664184);
-        func_8024C104(&self->mFloorMap);
+        FloorMap_SetMapTable(&self->mFloorMap, (u8)lbl_eu_80664184);
+        FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 2;
-        func_8013EC6C(1, 0);
+        UIWin_ControlWindowLists(1, 0);
     }
 }
 
 // World-map phase 2: once the scrollbar is visible, populate the title/help
 // bar text for the current map, start its animation and advance to phase 3.
 extern "C" void func_80251628(CMenuMapSelectSC* self) {
-    if (func_8024CE1C(&self->mFloorMap) != 0) {
+    if (FloorMap_GetField42Gated(&self->mFloorMap) != 0) {
         func_801C4654(&self->mTitleAHelp, 0);
         char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
         setInfoText(&self->mTitleAHelp, name);
@@ -408,7 +408,7 @@ extern "C" void func_80251628(CMenuMapSelectSC* self) {
         }
         func_801C41E8(&self->mTitleAHelp, 0);
         func_801C412C(&self->mTitleAHelp);
-        func_8024BE1C(&self->mFloorMap);
+        FloorMap_LoadStageLayout(&self->mFloorMap);
         playUISound(0x6d);
         CFade_FadeOut(&self->mFade);
         self->mState = 3;
@@ -449,81 +449,81 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
             }
         }
-        func_8024F5C4(&self->mFloorMap, 0);
+        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mTurboPressButtonFlags & 0x02000000) != 0 &&
             FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
             FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            func_8024F784(&self->mFloorMap) == 0) {
-            func_8024CE68(&self->mFloorMap);
+            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            FloorMap_UpdateRowPanePos(&self->mFloorMap);
             return;
         }
         if ((pad->mTurboPressButtonFlags & 0x04000000) != 0 &&
             FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
             FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            func_8024F784(&self->mFloorMap) == 0) {
-            func_8024D23C(&self->mFloorMap);
+            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
+            FloorMap_CursorNextFloor(&self->mFloorMap);
             return;
         }
 
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
-            func_8024EE50(&self->mFloorMap);
+            FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 6;
             }
         } else if ((pressed & 0x00400000) != 0) {
             if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
-                func_8024F55C(&self->mFloorMap);
-            } else if (func_8024F784(&self->mFloorMap) == 0) {
+                FloorMap_ConfirmSelect(&self->mFloorMap);
+            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 5;
                 playUISound(6);
             } else {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
             }
         } else if ((pressed & 0x00800000) != 0) {
-            if (func_8024F784(&self->mFloorMap) == 0) {
+            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 5;
                 playUISound(6);
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            func_8024D614(&self->mFloorMap);
+            FloorMap_UpdateCursorMove(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            func_8024DA0C(&self->mFloorMap);
+            FloorMap_UpdateWorldMap(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            func_8024DE08(&self->mFloorMap);
+            FloorMap_HandleMapDown(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            func_8024E2BC(&self->mFloorMap);
+            FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x01000000) != 0) {
-            func_8024F658(&self->mFloorMap);
+            FloorMap_Log2Field208(&self->mFloorMap);
         } else if ((pressed & 0x200) != 0) {
-            func_8024F72C(&self->mFloorMap);
+            FloorMap_Log2Field333C(&self->mFloorMap);
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.
             u32 flag = 1;
             if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                func_8024E650(&self->mFloorMap);
+                FloorMap_ScrollDown(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                func_8024E828(&self->mFloorMap);
+                FloorMap_ScrollUp(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                func_8024EA00(&self->mFloorMap);
+                FloorMap_ScrollRight(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                func_8024EC24(&self->mFloorMap);
+                FloorMap_ScrollLeft(&self->mFloorMap);
                 flag = 0;
             }
             if (flag != 0) {
-                func_8024F7CC(&self->mFloorMap);
+                FloorMap_MoveToCursorRow(&self->mFloorMap);
             }
         }
     } else {
@@ -541,80 +541,80 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
                 func_801C41E8(&self->mTitleAHelp, 0x4e);
             }
         }
-        func_8024F5C4(&self->mFloorMap, 0);
+        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mHeldButtonFlags & 0x1000) != 0 &&
             FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 &&
             FloorMap_GetField208Gated(&self->mFloorMap) != 0 &&
-            func_8024F784(&self->mFloorMap) == 0) {
+            FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x4f);
             if (self->mTimer > lbl_eu_806687C4) {
                 playUISound(2);
             }
             self->mTimer = lbl_eu_806687C0;
-            func_8024F5C4(&self->mFloorMap, 1);
+            FloorMap_SetPaneFlag(&self->mFloorMap, 1);
             if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                func_8024CE68(&self->mFloorMap);
+                FloorMap_UpdateRowPanePos(&self->mFloorMap);
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                func_8024D23C(&self->mFloorMap);
+                FloorMap_CursorNextFloor(&self->mFloorMap);
             }
         } else {
             u32 pressed = pad->mPressedButtonFlags;
             if ((pressed & 0x10) != 0) {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
                 if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
                     CFade_FadeIn(&self->mFade);
                     self->mState = 6;
                 }
             } else if ((pressed & 0x20) != 0) {
                 if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
-                    func_8024F55C(&self->mFloorMap);
-                } else if (func_8024F784(&self->mFloorMap) == 0) {
+                    FloorMap_ConfirmSelect(&self->mFloorMap);
+                } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                     CFade_FadeIn(&self->mFade);
                     self->mState = 5;
                     playUISound(6);
                 } else {
-                    func_8024EE50(&self->mFloorMap);
+                    FloorMap_OpenRowWindow(&self->mFloorMap);
                 }
             } else if ((pressed & 0x400) != 0) {
-                if (func_8024F784(&self->mFloorMap) == 0) {
+                if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                     CFade_FadeIn(&self->mFade);
                     self->mState = 5;
                     playUISound(6);
                 }
             } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                func_8024D614(&self->mFloorMap);
+                FloorMap_UpdateCursorMove(&self->mFloorMap);
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                func_8024DA0C(&self->mFloorMap);
+                FloorMap_UpdateWorldMap(&self->mFloorMap);
             } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-                func_8024DE08(&self->mFloorMap);
+                FloorMap_HandleMapDown(&self->mFloorMap);
             } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-                func_8024E2BC(&self->mFloorMap);
+                FloorMap_NormalizeMapPos(&self->mFloorMap);
             } else if ((pressed & 0x800) != 0) {
-                func_8024F658(&self->mFloorMap);
+                FloorMap_Log2Field208(&self->mFloorMap);
             } else if ((pressed & 0x200) != 0) {
-                func_8024F72C(&self->mFloorMap);
+                FloorMap_Log2Field333C(&self->mFloorMap);
             } else {
                 u32 flag = 1;
                 if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                    func_8024E650(&self->mFloorMap);
+                    FloorMap_ScrollDown(&self->mFloorMap);
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                    func_8024E828(&self->mFloorMap);
+                    FloorMap_ScrollUp(&self->mFloorMap);
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                    func_8024EA00(&self->mFloorMap);
+                    FloorMap_ScrollRight(&self->mFloorMap);
                     flag = 0;
                 }
                 if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                    func_8024EC24(&self->mFloorMap);
+                    FloorMap_ScrollLeft(&self->mFloorMap);
                     flag = 0;
                 }
                 if (flag != 0) {
-                    func_8024F7CC(&self->mFloorMap);
+                    FloorMap_MoveToCursorRow(&self->mFloorMap);
                 }
             }
         }
@@ -625,7 +625,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
 // floor map and move to phase 7 (idle).
 extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade)) {
-        func_8024CB94(&self->mFloorMap);
+        FloorMap_Teardown(&self->mFloorMap);
         self->mState = 7;
     }
 }

@@ -157,11 +157,11 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
     self->field_3038 = 0;
 }
 
-// func_800F49F8: append every source-list entry (copy of sObjInfo) to this
+// appendEnumEntries: append every source-list entry (copy of sObjInfo) to this
 // list.  Walks the source pointer array with a running pointer; mObjInfoCount
 // is bumped before the copy, so the mPtrArray entry points at the
 // just-appended slot via mObjInfoCount - 1.
-void func_800F49F8(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
+void appendEnumEntries(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
     for (u32 i = 0; i < src->mPtrCount; i++) {
         u32 idx = self->mObjInfoCount;
         cf::CfObjEnumList::sObjInfo* dst = &self->mObjInfo[idx];
@@ -424,14 +424,14 @@ extern const float lbl_eu_80666EB8;
 extern const float lbl_eu_80666EBC;
 // In-TU definition later (list-rebuild partner check); C-linkage so the
 // retail unmangled reloc name matches (same convention as func_800F4B5C).
-extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
+extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot);
 void* Scn_FindCamItem(void* scene, int index);   // scene pose/xform block
 void* Scn_SetCamIndex(void* scene, int flag);    // scene view frame
 int func_8049B59C(void* out, void* pose, void* pos); // view-space transform
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     void* rect, const void* frame);
-int func_804B1BDC(void* self, void* a, void* b); // aux cone probe (two vecs)
+int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vecs)
 }
 
 // Two register-allocation variants of the append helper.  The retail's
@@ -1092,19 +1092,19 @@ extern "C" int findSortPivot(CfSortableList* self, int lo, int hi);
 // partitionSortList: Hoare partition (defined below).
 extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot);
 
-// func_800F7DEC: quicksort recursion over the sortable list.  With the unit's
+// quicksortSortableList: quicksort recursion over the sortable list.  With the unit's
 // -inline auto, MWCC expands findSortPivot/partitionSortList at every call site,
 // producing the retail multi-stage inline blob.
-extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
+extern "C" void quicksortSortableList(CfSortableList* self, int lo, int hi) {
     if (lo != hi) {
         int p = findSortPivot(self, lo, hi);
         if (p != -1) {
             int m = partitionSortList(self, lo, hi, p);
             if (lo != m - 1) {
-                func_800F7DEC(self, lo, m - 1);
+                quicksortSortableList(self, lo, m - 1);
             }
             if (m != hi) {
-                func_800F7DEC(self, m, hi);
+                quicksortSortableList(self, m, hi);
             }
         }
     }
@@ -1124,7 +1124,7 @@ extern "C" int findSortPivot(CfSortableList* self, int lo, int hi) {
     return p;
 }
 
-// (func_800F7DEC is defined above, before its callees.)
+// (quicksortSortableList is defined above, before its callees.)
 
 // partitionSortList: Hoare partition of the sortable list.  The pivot value is
 // read via value(pivot), then the list is scanned from both ends (value(i) <
@@ -1158,11 +1158,11 @@ extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
-// func_800F9AEC: refresh each entry's sort value via the actor's vtable
+// resortByActorValue: refresh each entry's sort value via the actor's vtable
 // 0x128 float accessor (reached through func_8016FE34), then quicksort the
 // embedded sortable list at +0x624 over [0, count-1].  Needs at least two
 // entries to do anything.
-void func_800F9AEC(cf::CfObjEnumList* self) {
+void resortByActorValue(cf::CfObjEnumList* self) {
     if (self->mPtrCount < 2) {
         return;
     }
@@ -1175,15 +1175,15 @@ void func_800F9AEC(cf::CfObjEnumList* self) {
     }
     int hi = self->mPtrCount - 1;
     self->field_062C = 1;
-    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+    quicksortSortableList(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
                   hi);
 }
 
-// func_800F6ED0: recompute each entry's distance from spot (vtable 0xAC
+// sortEntriesByDistance: recompute each entry's distance from spot (vtable 0xAC
 // position vector minus spot, PSVECMag), clear field_062C, then sort over
 // [0, count-1] via the recursive quicksort (MWCC auto-inlines the cascade
 // here, as in retail).
-void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
+void sortEntriesByDistance(cf::CfObjEnumList* self, ml::CVec3* spot) {
     if (self->mPtrCount < 2) {
         return;
     }
@@ -1202,7 +1202,7 @@ void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
     }
     int hi = self->mPtrCount - 1;
     self->field_062C = 0;
-    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+    quicksortSortableList(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
                   hi);
 }
 
@@ -1215,12 +1215,12 @@ struct EnumViewFrameShorts {
     s16 sizeY;               // 0x232
 };
 
-// us-800f94c4 | func_800F89DC: project every entry through the scene view
+// us-800f94c4 | sortEntriesByScreenX: project every entry through the scene view
 // transform (marking processed entries with the 0x1 bit), recompute each sort
 // value as screen-x minus half the frame origin, quicksort, find the largest
 // unflagged |sort value| as a centre, then re-append entries from a stack
 // snapshot round-robin.
-extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
+extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
     if (self->mPtrCount < 2) {
         return;
     }
@@ -1277,7 +1277,7 @@ extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
     // Pass 3: quicksort the embedded sortable list.
     int hi = self->mPtrCount - 1;
     self->field_062C = 0;
-    func_800F7DEC(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
+    quicksortSortableList(reinterpret_cast<CfSortableList*>(&self->mSortVtableA), 0,
                   hi);
 
     // Pass 4: centre = max |sort value| over unmarked entries, seeded from
@@ -1324,7 +1324,7 @@ extern "C" void func_800F89DC(cf::CfObjEnumList* self) {
 // the scene's view transform: Scn_FindCamItem/Scn_SetCamIndex fetch the pose block
 // and view frame, func_8049B59C writes the view-space position into info+8 for
 // two probe slots, then a screen-rect gate (getFrame2ViewOffset), the coli
-// probe ScnRes_SegQueryForward_E348 on t[k]+border-offset, and the global func_804B5088
+// probe ScnRes_SegQueryForward_E348 on t[k]+border-offset, and the global ColiQuerySegment
 // probe decide acceptance.  Accepted entries get the 0x10 mark bit; every
 // entry is re-appended.
 void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
@@ -1445,7 +1445,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
                     }
                 }
                 if (keep) {
-                    keep = func_804B5088(lbl_eu_80665958, (u8*)pose + 0x10C,
+                    keep = ColiQuerySegment(lbl_eu_80665958, (u8*)pose + 0x10C,
                                          &t[k], 1, 0) == 0;
                 }
             }
@@ -1470,7 +1470,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
 
 // __ct__800FAE3C: rebuild the object list keeping only entries whose position
 // is NOT accepted by the collision probe: ScnRes_SegQueryForward_E348(arg1, pos, 0x44A45,
-// 0, 0), falling back to func_804B5088(globalProbe, pos, arg1, 1, 0).  The
+// 0, 0), falling back to ColiQuerySegment(globalProbe, pos, arg1, 1, 0).  The
 // position comes from vtable 0x12C(0x64)/0x128 (floats at +0xC/+0x1C/+0x2C)
 // or, if those return null, vtable 0xAC (plain vec3).  Mark bit 0x10.
 void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
@@ -1529,7 +1529,7 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
         }
         if (!flag) {
             flag = (flag |
-                    func_804B5088(
+                    ColiQuerySegment(
                         reinterpret_cast<cf::CfCamFollow*>(lbl_eu_80665958),
                         &vec, arg1, 1, 0)) != 0;
         }
@@ -1550,8 +1550,8 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
 // __ct__800FB044: rebuild the object list by distance from spot.  dist =
 // PSVECMag(obj->vAC() - spot), minus aux->field_63C when aux exists.  The
 // entry is marked 0x20 / kept when dist < threshold and either the aux cone
-// probe accepts (func_804B1AD8 on aux+0x60C, accept-on-zero) or the
-// func_800FD3FC fallback accepts (also inverted, options bit 3).  Options
+// probe accepts (ColiCheckMoveGate on aux+0x60C, accept-on-zero) or the
+// probePartnerSegment fallback accepts (also inverted, options bit 3).  Options
 // bit 1 inverts the final decision; kept entries are only re-appended when
 // options bit 0 is set.
 void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
@@ -1609,12 +1609,12 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
         }
         int flag = p->field_14 < threshold;
         if ((obj->field68 & 4) && flag && aux != 0) {
-            flag = func_804B1AD8(
+            flag = ColiCheckMoveGate(
                        &reinterpret_cast<CfEnumActorView*>(aux)->field_60C,
                        spot, threshold) == 0;
         }
         if (!flag && (options & 8)) {
-            flag = func_800FD3FC(list, aux, spot) == 0;
+            flag = probePartnerSegment(list, aux, spot) == 0;
         }
         if (invert) {
             flag = !flag;
@@ -1630,13 +1630,13 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
     }
 }
 
-// us-800fbd58 | func_800FB270: rebuild the list by distance + facing cone from
+// us-800fbd58 | rebuildByDistanceCone: rebuild the list by distance + facing cone from
 // spot.  dist = PSVECMag(obj->vAC() - spot); the heading is wrapped into
 // [-pi, pi] and must fall inside +-cone*halfScale of angleOffset (arg3) while
 // targetDist (range + aux radius) reaches dist.  Options bit 2 inverts the
 // keep decision; kept entries get the 0x40 mark and are only re-appended when
 // flags bit 0 is set (otherwise appended unconditionally).
-void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
+void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                    float range, float cone, float angleOffset) {
     u32 invert = flags & 2;
     if (self->mPtrCount == 0) {
@@ -1707,7 +1707,7 @@ void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                            spot, range, cone, angleOffset) == 0;
         }
         if (!rejected && (flags & 8)) {
-            rejected = func_800FD3FC(self, aux, spot) == 0;
+            rejected = probePartnerSegment(self, aux, spot) == 0;
         }
         if (invert) {
             rejected = !rejected;
@@ -1723,11 +1723,11 @@ void func_800FB270(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     }
 }
 
-// us-800fc094 | func_800FB5AC: like func_800FB270 but with a second probe
+// us-800fc094 | rebuildByDualCone: like rebuildByDistanceCone but with a second probe
 // pass: when the first cone test hits, the position/heading are recomputed
 // and tested against a second offset (angleMax) with half-angle cone (cone2).
 // The aux probe needs BOTH cone pairs to fail before hit is cleared.
-void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
+void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                    float range, float cone, float angleOffset,
                    float cone2, float angleMax) {
     if (self->mPtrCount == 0) {
@@ -1817,7 +1817,7 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                       spot, range, cone2, angleMax) == 0;
         }
         if (!hit && (flags & 8)) {
-            hit = func_800FD3FC(self, aux, spot) != 0;
+            hit = probePartnerSegment(self, aux, spot) != 0;
         }
         if (invert) {
             hit = !hit;
@@ -1840,9 +1840,9 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
 // to [0,1] via double literals), the point-segment distance is computed
 // (with the retail quirk that pos.y is compared against the closest point's
 // Z), guarded by an nw4r::db::Warning non-finite check, reduced by the aux
-// radius, and compared against `threshold`.  The func_804B1BDC cone probe on
+// radius, and compared against `threshold`.  The ColiCheckStateGate cone probe on
 // aux+0x60C rescues coarse rejections when flags64 bit 4 is set; the
-// func_800FD3FC fallback (options bit 3) double-checks them.  Options bit 1
+// probePartnerSegment fallback (options bit 3) double-checks them.  Options bit 1
 // inverts; rejected entries get the 0x70 mark and are only re-appended when
 // options bit 0 is set.
 void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
@@ -1980,13 +1980,13 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
         if ((obj->field68 & 4) && rejected) {
             CfEnumActor* aux2 = func_800BBC0C(obj);
             if (aux2 != NULL) {
-                rejected = func_804B1BDC(
+                rejected = ColiCheckStateGate(
                     &reinterpret_cast<CfEnumActorView*>(aux2)->field_60C, &pa,
                     &pb) == 0;
             }
         }
         if (rejected && (options & 8)) {
-            rejected = func_800FD3FC(list, aux, spot) == 0;
+            rejected = probePartnerSegment(list, aux, spot) == 0;
         }
         if (invert) {
             rejected = !rejected;
@@ -2116,7 +2116,7 @@ void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
 }
 
 // __ct__800FC19C: rebuild the object list keeping only entries whose actor's
-// arts-state gate (func_80174C98 on the slot-0x30 word, queried with arg1)
+// arts-state gate (testActorStatus on the slot-0x30 word, queried with arg1)
 // reports failure; when arg1 == 0x1C and the gate passed, additionally
 // require the embedded move sub-object's vtable-0x84 result to be non-zero.
 void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
@@ -2151,7 +2151,7 @@ void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         }
         CfEnumActorView* actorView = reinterpret_cast<CfEnumActorView*>(actor);
         u32 val = actorView->field_04->b30()->field_0;
-        bool rejected = func_80174C98(actor, &val, (int)arg1) == 0;
+        bool rejected = testActorStatus(actor, &val, (int)arg1) == 0;
         if (arg1 == 0x1c && !rejected && actorView->sub.f31() == 0) {
             rejected = !rejected;   // rejected is provably 0 here -> becomes 1
         }
@@ -2170,7 +2170,7 @@ void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
 }
 
 // __ct__800FC32C: rebuild the object list keeping only entries whose actor
-// fails BOTH arts-state gates (func_80174C98 with arg1 and arg2); when
+// fails BOTH arts-state gates (testActorStatus with arg1 and arg2); when
 // arg1 == 0x1C and the gates passed, additionally require the embedded move
 // sub-object's vtable-0x84 word to be non-zero.
 void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
@@ -2206,9 +2206,9 @@ void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
         CfEnumActorView* actorView = reinterpret_cast<CfEnumActorView*>(actor);
         bool rejected = false;
         u32 val1 = actorView->field_04->b30()->field_0;
-        if (func_80174C98(actor, &val1, (int)arg1) == 0) {
+        if (testActorStatus(actor, &val1, (int)arg1) == 0) {
             u32 val2 = actorView->field_04->b30()->field_0;
-            if (func_80174C98(actor, &val2, (int)arg2) == 0) {
+            if (testActorStatus(actor, &val2, (int)arg2) == 0) {
                 rejected = true;
             }
         }
@@ -2641,7 +2641,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
 }
 
 // __ct__800FCF1C: rebuild the object list keeping only entries whose actor's
-// arts-state gate (func_80174C98, mode 0x806) fails, or whose vf298() battle
+// arts-state gate (testActorStatus, mode 0x806) fails, or whose vf298() battle
 // block byte at +0x42 differs from arg1 (or is missing).
 void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     if (list->mPtrCount == 0) {
@@ -2675,7 +2675,7 @@ void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
         }
         CfEnumActorView* actorView = reinterpret_cast<CfEnumActorView*>(actor);
         u32 val = actorView->field_04->b30()->field_0;
-        bool rejected = func_80174C98(actor, &val, 0x806) == 0;
+        bool rejected = testActorStatus(actor, &val, 0x806) == 0;
         if (!rejected) {
             CfEnumBattleBlock* blk =
                 actorView->vf298()->field_0x50;
@@ -2702,7 +2702,7 @@ void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
 }
 
 // __ct__800FD0B4: rebuild the object list keeping only entries whose actor
-// fails the arts-state gate func_80174C98(mode 0xA), or whose vf298() battle
+// fails the arts-state gate testActorStatus(mode 0xA), or whose vf298() battle
 // block's +0x3C u16 is not one of {2, 3, 6}.
 void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
     if (list->mPtrCount == 0) {
@@ -2737,7 +2737,7 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
         CfEnumActorView* actorView = reinterpret_cast<CfEnumActorView*>(actor);
         bool rejected = true;
         u32 val = actorView->field_04->b30()->field_0;
-        if (func_80174C98(actor, &val, 0xa) != 0) {
+        if (testActorStatus(actor, &val, 0xa) != 0) {
             CfEnumBattleBlock* blk = actorView->vf298()->field_0x50;
             if (blk != 0) {
                 int t = blk->field_0x3C;
@@ -2837,13 +2837,13 @@ void* findPrevCleanObjectId(cf::CfObjEnumList* self, int index) {
     return (void*)obj->objectId;
 }
 
-// us-800fdee4 | func_800FD3FC: list-rebuild partner check.  The `list` param
+// us-800fdee4 | probePartnerSegment: list-rebuild partner check.  The `list` param
 // is unused (retail never reads r3); aux's position comes from vtable 0x128
 // (CfEnumPosBlock, floats at +0xC/+0x1C/+0x2C) or, if null, vtable 0xAC (plain
 // vec3).  The two Ys are nudged by lbl_eu_80666ECC and ordered so the first
 // arg to ScnRes_SegQueryForward_E348 has the larger Y.  A lazy-initialized 12-float probe
 // table (4 diagonal offsets) is added to both corners; any probe hit returns 1.
-extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
+extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot) {
     // Copy into a local first: MWCC then moves the param into a callee-saved
     // reg BEFORE the null-test branch (retail cmpwi/mr/bne order).

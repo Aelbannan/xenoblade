@@ -55,10 +55,10 @@ extern "C" void CollObjSetupRotBoxState5(cf::CfObject* obj, void* moveObj, ml::C
 // getBdatStringColumnValue has a single canonical declaration on
 // kyoshin/plugin/ocBdat.hpp.
 extern "C" void* ArtsSelect_GetContainer(void);
-extern "C" void* func_801862E0(void* p);
-extern "C" void* func_801863F4(void* p, void* obj);
+extern "C" void* ArtsSelect_Clear(void* p);
+extern "C" void* ArtsSelect_Insert(void* p, void* obj);
 extern "C" void* ArtsSelect_CacheEntry(void* dst, void* src);
-extern "C" void* func_801864DC(void* pObj, int slot);
+extern "C" void* ArtsSelect_Lookup(void* pObj, int slot);
 
 struct Vec3f {
     f32 x;
@@ -67,7 +67,7 @@ struct Vec3f {
 };
 
 // Flag words of the objects returned by the OC spawn/lookup plugin
-// func_8003BD7C (bdat-name dispatch): CfObject::unk64 (0x64) and
+// getUnitObject (bdat-name dispatch): CfObject::unk64 (0x64) and
 // CfObject::mFlags68 (0x68), spelled through the real class now.
 
 // OC handle words read straight off the lookup result (+0x04) and the

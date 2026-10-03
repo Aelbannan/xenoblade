@@ -248,7 +248,7 @@ void CMenuOption::cbRenderBefore() {
     // (a C++ local would virtual-dispatch its scope-exit destructor).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     COptionDraw(&mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);

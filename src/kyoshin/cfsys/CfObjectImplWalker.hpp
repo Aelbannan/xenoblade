@@ -743,7 +743,7 @@ struct CfWalkCastFlags {
     u8 field_91;                             // 0x91
 };
 
-// Art/action record (func_80140AFC / func_80140CA4 result): id word at +0x4.
+// Art/action record (UIWin_BuildFlagBufBySlot / UIWin_BuildFlagBufCanShow result): id word at +0x4.
 struct CfWalkArtRec {
     u8 _00[0x4];                             // 0x00-0x03
     u32 field_4;                             // 0x4
@@ -885,7 +885,7 @@ public:
 // Minimal view of cf::CBattleManager for the vtable slots this TU calls
 // (setPartyMaskFlag at 0x1c). The real class lives in CBattleManager.hpp, which
 // is not included here: its CChainActorList.hpp/CSuddenCommu.hpp chain
-// conflicts on the func_80174C98 extern "C" declaration. With -RTTI on,
+// conflicts on the testActorStatus extern "C" declaration. With -RTTI on,
 // declared index N -> vtable offset (N+2)*4.
 class CfWalkBMView {
 public:
@@ -924,14 +924,14 @@ extern bool isGlobalCamFlagSet(int mask);
 extern "C" {
 void ObjPc_NotifyVf10_6EC0(void* self);
 void CfObjectImplMoveClearLinkIfMatch(void* self);
-void func_800C969C(void* self);
+void ObjPc_BattleStartReset_969C(void* self);
 void ObjPc_InitLink_5998(void* self);
 void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self);
-void func_800C525C(cf::CfObjectImplWalker* self);
-void func_800CC020(void* self);
-void func_800C5B00(void);
+void Walker_FinishLeave(cf::CfObjectImplWalker* self);
+void MoveImplRepositionEffect(void* self);
+void ObjPc_BattleChangeDriver_5B00(void);
 extern "C" void updatePosition(void* self);
-void func_80140E00(u32 a, u32 b, u32 c);
+void UIWin_BuildFlagBuf(u32 a, u32 b, u32 c);
 bool QstCnt_HasInstance_6B94(void);
 u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
@@ -940,10 +940,10 @@ int KizunagramIsCreated(void);
 int CMenuTutorialList_IsActive(void);
 void MenuUpdate_SignalGlobalField64(void);
 void* CtrlObjectParam_GetSlotTableBase(void);
-u32 func_8009EC9C(u32 id);
+u32 CtrlObjectParam_GetCharEntry(u32 id);
 int Counter_TestBit(u32 a, u32 b);
 void BtlDmg_FilterNotifyDamage(u32 a, u32 b, u32 c);
-void func_800E1B5C(void* mgr, void* battleObj);
+void evalBattleTarget(void* mgr, void* battleObj);
 cf::CfWalkGlobal* Selector_GetInstance();
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 void* CfObjectMove_getSelfIfActive(void* objParam);
@@ -958,20 +958,20 @@ void* getObjectIdAt(void* list, int index);
 void* func_800BBC0C(void* objParam);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
-int func_8013EB90(int v);
+int UIWin_HasPendingUpdate(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* func_8016FE34(void* src);
 void CfObjectTbox_ForwardToImpl(void* obj, int flag);
-void func_8013EC6C(u32 a, u32 b);
+void UIWin_ControlWindowLists(u32 a, u32 b);
 void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManagerApi.hpp owner)
 void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 void setTargetFlag04(void* obj);
 void setTargetFlag08(void* obj);
 u32 func_800FE7D8(void* obj);
 void func_800FE738();
-void func_800C819C();
-void func_800C86E8(void* self);
-void func_800D9978(void* mgr, void* obj);
+void ObjPc_BattleEventDispatch_819C();
+void ObjPc_BattleActorScan_86E8(void* self);
+void registerBattleActor(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CUICfManager_queueFactoryMenu(int id, float f);
@@ -989,7 +989,7 @@ void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* ds
 
 // Enum-list / selector helpers (CfObjectEnumList + selector subsystem).
 void* getObjectAt(void* list, u32 index);
-void func_800F6ED0(void* list, void* value);
+void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
 void* getEntryAt(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
 int func_800FE6A4(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
@@ -1032,12 +1032,12 @@ void* ScnRes_GetEntryHead2_E520(int index);
 void CfObjectMove_relaySubB0Slot54(void* obj, int a, int b, u32 c, f32 d, f32 e);
 void CfObjectMove_setMoveSpeedGated(void* obj, f32 value);
 int TalkWin_IsActive_CD24(void);
-void func_8013D1E8(void* obj);
+void UIWin_ShowTalkWindow(void* obj);
 void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void awardQuestFlags(void);
 void CtrlObjectParam_SetWorkTailValue(u32 id);
-void* func_80140AFC(u32 id);
-void* func_80140CA4(u32 id);
+void* UIWin_BuildFlagBufBySlot(u32 id);
+void* UIWin_BuildFlagBufCanShow(u32 id);
 void UIWin_FlagBufCommit(void* obj);
 void UIWin_ThunkFlagBufReset(void* obj);
 void UIWin_FlagBufReset(void* obj);
@@ -1052,8 +1052,8 @@ void* __ct__800FA9B4(void* list, void* obj, int b);
 
 // Intra-unit callbacks (C linkage so the reloc names match retail).
 void Walker_ToggleTargetSel(cf::CfObjectImplWalker* self);
-int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 arg);
-int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b);
+int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 arg);
+int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b);
 }
 
 // sdata2 literals referenced by this unit (global scope: not mangled).

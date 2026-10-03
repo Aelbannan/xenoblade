@@ -16,9 +16,9 @@ namespace {
 // function (retail symbol getRootView__9CViewRootFP5CView); the read-only
 // CViewRoot.hpp only stubs a no-arg member form.
 extern "C" CView* getRootView__9CViewRootFP5CView(CView* view);
-// CGXCache ring command-2 cache update (retail func_8044A578__8CGXCacheFv);
+// CGXCache ring command-2 cache update (retail updateCmd2Color__8CGXCacheFv);
 // the read-only CGXCache.hpp omits it.
-extern "C" void func_8044A578__8CGXCacheFv(CGXCache* self, CTaskGame_setVec4_tmp* color, int flag);
+extern "C" void updateCmd2Color__8CGXCacheFv(CGXCache* self, CTaskGame_setVec4_tmp* color, int flag);
 // CDeviceFile work-thread detach (retail setParent__11CDeviceFileFP11CWorkThread);
 // the read-only CDeviceFile.hpp only stubs a no-arg member form.
 extern "C" void setParent__11CDeviceFileFP11CWorkThread(CWorkThread* parent);
@@ -142,7 +142,7 @@ bool CDesktop::wkStandbyLogin(){
     // CDeviceFile that the desktop owns the file work threads.
     CGXCache* cache = CDeviceGX::getCacheInstance();
     CTaskGame_setVec4_tmp col1;
-    func_8044A578__8CGXCacheFv(cache, CTaskGame_setVec4(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
+    updateCmd2Color__8CGXCacheFv(cache, CTaskGame_setVec4(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
     setParent__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give

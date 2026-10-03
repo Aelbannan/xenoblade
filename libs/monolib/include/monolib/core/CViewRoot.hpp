@@ -74,4 +74,4 @@ GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
 void renderView__5CViewFv(CView* view);
 }
-extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c);
+extern "C" void cacheScissor__8CGXCacheFv(void* self, void* a, void* b, void* c);

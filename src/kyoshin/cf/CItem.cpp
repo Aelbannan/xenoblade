@@ -94,7 +94,7 @@ s32 CItem_rollBoxContents(u32 row, u32 flag) {
 
 // extern "C": retail symbol is unmangled, so call-site relocs (CItemParam_setIdAndRank)
 // reference the plain name.
-extern "C" int func_80155854(unsigned int param_1) {
+extern "C" int CItem_rankVal(unsigned int param_1) {
     int result;
     if (param_1 < 0xC9) {
         if (param_1 < 0x65) {
@@ -135,7 +135,7 @@ extern "C" void CItemRec_packFromBdat(CItemRec* rec, u32 a, u32 b, u32 c, u32 d)
     rec->field_00 = w;
     rec->field_04 = (u16)h;
 
-    int v = func_80155854(b);
+    int v = CItem_rankVal(b);
 
     h = rec->field_04;
     h = __rlwimi(h, v, 1, 28, 30);
@@ -187,7 +187,7 @@ extern "C" void CItemRec_packFromBdat(CItemRec* rec, u32 a, u32 b, u32 c, u32 d)
 // Category-driven item-name refresh on an inventory slot (52-byte CItemExt):
 // clear the count, then re-derive it from the BDAT name column when the
 // packed word's family id and category select a valid handle.
-void func_80155A00(CItemExt* self) {
+void CItem_reCount(CItemExt* self) {
     u32 word = self->field_00;
     self->mCount = 0;
     if ((word >> 20) != 0) {
@@ -217,13 +217,13 @@ void func_80155A00(CItemExt* self) {
 // Resolve an item entry to its record: bounds-check idx against the u8
 // count at 0x30, fetch the s16 entry (out-of-range leaves 0, which is
 // still looked up), map entry value -1 to no record.
-CItemRec* func_80155AA0(CItemExt* self, s32 idx) {
+CItemRec* CItem_slotRec(CItemExt* self, s32 idx) {
     // Ternary keeps both locals live across the branch; retail initializes
     // rec's register before v's.
     s16 v = idx < self->mCount ? self->mEntries[idx] : 0;
     CItemRec* rec = 0;
     if (v != -1) {
-        rec = (CItemRec*)func_80157C4C(3, v);
+        rec = (CItemRec*)CItem_kindPtr(3, v);
         // A record whose packed word is empty counts as no record.
         if (rec->field_00 == 0) rec = 0;
     }
@@ -384,7 +384,7 @@ const char* CItemRec_getNameIfKind2(u32 unused, CItemRec* rec) {
 // Build the sort scratch buffer for self: lazily zero the shared buffer,
 // then collect the per-category impl counts (vtable slots 0x4C/0x80/0x78/
 // 0x08) plus the packed field_07 bits and hand them to func_80159D74.
-CItemSortBuf* func_80155F34(u32 unused, CItemData* self) {
+CItemSortBuf* CItem_sortBuf(u32 unused, CItemData* self) {
     if (!lbl_eu_806641FC) {
         lbl_eu_80573FC0.field_00 = 0;
         lbl_eu_80573FC0.field_40 = 0;
@@ -413,7 +413,7 @@ extern "C" void CItemImpl_thunkVf20(CItemImpl* self, CItemData* p) { self->vf20(
 
 // Lazy-init the shared sort scratch buffer, then collect the per-category
 // impl counts (vtable slots 0x4C/0x80/0x78/0x08) plus the packed field_07
-// bits and hand them to func_80159D74. Same shape as func_80155F34 but with
+// bits and hand them to func_80159D74. Same shape as CItem_sortBuf but with
 // its own guard/buffer pair.
 CItemSortBuf* CItemData_fillSortBufA(u32 unused, CItemData* self) {
     if (!lbl_eu_806641FD) {
@@ -582,7 +582,7 @@ void func_80156350(u32 unused, CItemExt* self) {
     }
 }
 
-// Refresh an item slot from its BDAT row (same family as func_80156934):
+// Refresh an item slot from its BDAT row (same family as CItem_refRow2):
 // resolve the family's kind/row ids, refresh the +0x16 name byte and the
 // field_07 name bits, roll a random amount for the impl state (vf0C), then
 // build a shuffled 8-entry slot table (slot ids offset by the category's
@@ -679,7 +679,7 @@ u8 CItemInfo_getByte22(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
 // (min, max) pair from the lbl_eu_80662290 table, and each of the two
 // halfword entries is initialized via vf50/vf68 with a random amount in
 // [min, max) (halved for the second entry).
-void func_80156934(u32 unused, CItemData* self) {
+void CItem_refRow2(u32 unused, CItemData* self) {
     u16 halfs[2];
     union {
         u32 v;
@@ -770,8 +770,8 @@ u8 CItemInfo_getByte22_dup1(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22
 // slot flag word, refresh the per-category impl state (vf0C/vf84), re-derive
 // the item-name byte from BDAT (column +0x6D), pack the id into field_18,
 // then re-rank the four u16 slot flags (each low nibble, plus the
-// func_80155854 rank).
-void func_80156BE4(u32 unused, CItemData* self) {
+// CItem_rankVal rank).
+void CItem_rerank4(u32 unused, CItemData* self) {
     u32 word = self->field_00;
     void* handle = lbl_eu_806640D8;
     u32 v = (word >> 5) & 0x7FF;
@@ -796,7 +796,7 @@ void func_80156BE4(u32 unused, CItemData* self) {
         u32 sv = slots[i];
         sv = __rlwinm(sv, 0, 28, 15);
         slots[i] = (u16)sv;
-        u32 rank = (u32)func_80155854(0);
+        u32 rank = (u32)CItem_rankVal(0);
         // Volatile re-read after the call: retail reloads the halfword here;
         // a plain load would fold to the stored register value (callee is pure).
         u32 h = *(volatile u16*)&slots[i];
@@ -826,13 +826,13 @@ void CItemData_setSlotFamily(u32 unused, CItemData* obj, int index, int value) {
         obj->field_07 = (u8)f7;
     }
 
-    // Volatile slot view: retail reloads the halfword after the func_80155854
+    // Volatile slot view: retail reloads the halfword after the CItem_rankVal
     // call; MWCC folds a non-volatile reload into the stored register value.
     u16* slot = (u16*)&obj->field_08[index * 2];
     u32 h = slot[0];
     h = __rlwimi(h, value, 4, 16, 27);
     slot[0] = (u16)h;
-    int rank = func_80155854(value);
+    int rank = CItem_rankVal(value);
     // Volatile re-read after the call: retail reloads the halfword here;
     // a plain load would fold to the stored register value (callee is pure).
     h = *(volatile u16*)slot;
@@ -845,7 +845,7 @@ void CItemData_setSlotFamily(u32 unused, CItemData* obj, int index, int value) {
 // refresh the per-category impl state via vf0C, then rebuild the 8-byte
 // record at field_08 (memset when family is 0, else via CItemRec_packFromBdat with
 // the +0x4A/+0x51 column values).
-void func_80156DAC(u32 unused, CItemData* self) {
+void CItem_wordRef(u32 unused, CItemData* self) {
     u32 word = self->field_00;
     u16 val;
     if ((word >> 20) != 0) {
@@ -906,7 +906,7 @@ void CItemData_setRowAndPack(u32 unused, CItemData* obj, u32 val) {
 
 // Map an item category (0-15) to the record stride used by CItemBlock_getKindList's
 // kind table: 2/4-8 -> 52 (0x34), 9 -> 28 (0x1c), 3 -> 16 (0x10), else 8.
-extern "C" int func_80156F54(u32 v) {
+extern "C" int CItem_catSize(u32 v) {
     int rank;
     if ((int)(u16)v < 4) goto sw;
     if ((int)(u16)v > 8) goto sw;
@@ -931,19 +931,19 @@ done:
 }
 
 // Copy an item record to dst, sized by the category recorded in the source
-// word's bits 16-19 (func_80156F54 maps the category to the record stride).
+// word's bits 16-19 (CItem_catSize maps the category to the record stride).
 void* CItem_copyRecordByCat(void* dst, const void* src) {
     u32 w = *(const u32*)src;
-    int size = func_80156F54((u16)((w >> 16) & 0xF));
+    int size = CItem_catSize((u16)((w >> 16) & 0xF));
     memcpy(dst, src, size);
     return dst;
 }
 
 // Copy an item record to dst, sized by the category recorded in the source
-// word's bits 16-19 (func_80156F54 maps the category to the record stride).
+// word's bits 16-19 (CItem_catSize maps the category to the record stride).
 void* CItem_copyRecMasked(void* dst, const void* src) {
     u32 w = *(const u32*)src;
-    int size = func_80156F54((w >> 16) & 0xF);
+    int size = CItem_catSize((w >> 16) & 0xF);
     memcpy(dst, src, size);
     return dst;
 }
@@ -1005,7 +1005,7 @@ extern "C" void* CItemBlock_getPtr20E8(void) { return *(void**)((u8*)lbl_eu_8066
 // the word at block+0x12108 when v matches one of the six u16 entries of
 // the lbl_eu_8052F6B8 table (t[0] via the lhzu-updated pointer, then
 // t[2..6] -- the first entry's post-increment skews the offsets by one).
-void func_8015720C(u32 v, u32 set) {
+void CItem_famFlag(u32 v, u32 set) {
     if (v < 1) return;
     if (v > 0xb) return;
     u32 bit = 1u << v;
@@ -1127,7 +1127,7 @@ done:
 // form forces retail's rotl-1/bit-31 extract instead of an srwi.
 inline u32 flagTest(u32 m) { return __rlwinm(-m | m, 1, 31, 31); }
 
-// Retail symbol is unmangled (C linkage) - the func_801576C8 call-site
+// Retail symbol is unmangled (C linkage) - the CItem_slotCnt call-site
 // reloc references the plain name.
 extern "C" u32 CItemBlock_testKindFlag(u32 v, u32 kind) {
     // goto keeps the two bounds checks as separate compares branching to a
@@ -1163,7 +1163,7 @@ end:
 // reads the signed high bytes of the per-slot u16 table at block+0x12038
 // (8 entries per slot); other kinds use CItemBlock_testKindFlag's family-flag lookup
 // for each of the 11 slots.
-extern "C" s32 func_801576C8(u32 kind) {
+extern "C" s32 CItem_slotCnt(u32 kind) {
     s32 count = 0;
     u32 i = 1;
     do {
@@ -1352,7 +1352,7 @@ extern "C" u32 CItemBlock_countKindSlots(u16 arg) {
 // Returns a pointer to the item record for the given family/kind.
 // Retail emits a 14-entry jump table whose slots all share the default
 // multiply body, so the source keeps the explicit case labels 0..13.
-extern "C" __declspec(noinline) CItemExt* func_80157C4C(u32 a, s16 b) {
+extern "C" __declspec(noinline) CItemExt* CItem_kindPtr(u32 a, s16 b) {
     if (b == -1) return 0;
     s32 out1;
     u32 stride;
@@ -1397,7 +1397,7 @@ s32 CItemBlock_countEmpty(u32 arg) {
             if (*(u32*)(p + off) == 0) result++;
         }
         if (arg - 2 <= 6) {
-            result -= func_801576C8(arg);
+            result -= CItem_slotCnt(arg);
             if (result < 0) result = 0;
         }
     }
@@ -1410,7 +1410,7 @@ s32 CItemBlock_countEmpty(u32 arg) {
 // free-record search runs. For other kinds a record is only taken when the
 // kind-2..8 randomizer has free capacity. The found record index is written
 // to *pOut.
-CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family) {
+CItemExt* CItem_freeRec(u32 arg, s16* pOut, u32 family) {
     *pOut = -1;
     s32 count;
     s32 stride;
@@ -1563,7 +1563,7 @@ extern "C" void __declspec(noinline) CItemData_initFromFamily(CItemData* self, u
     u16 row;
     CItem_resolveFamilyBdat(a, &kind, &row);
     u16 old04 = *(u16*)&self->field_04;
-    s32 size = func_80156F54(kind);
+    s32 size = CItem_catSize(kind);
     if (self != 0 && size != 0) {
         memset(self, 0, (u32)size);
     }
@@ -1612,7 +1612,7 @@ void CItem_noop3() {}
 // kind/row ids plus the byte-7 low flags, then refresh the impl state via
 // the vtable methods at 0x58 and 0x0C and set the byte-7 rank bits to 4.
 void func_80158300(CItemData* self, u32 id) {
-    s32 size = func_80156F54(9);
+    s32 size = CItem_catSize(9);
     if (self != 0 && size != 0) {
         memset(self, 0, (u32)size);
     }
@@ -1638,7 +1638,7 @@ void CItemData_enableFamFlag(CItemData* self, u32 a) {
 
 // Create/locate an item record for the family id: when the +0xBD name column
 // is in [0x0A, 0x0D] the record is located by family scan (falling back to a
-// free record), otherwise a free record is found via func_80157D6C. The
+// free record), otherwise a free record is found via CItem_freeRec. The
 // amount (*pOut2) and the record's per-kind rank fields are bumped, the
 // record is (re)initialized via CItemData_initFromFamily, and kind-3 records get their
 // +0x42 name byte re-derived through the impl vtable. Returns the record.
@@ -1687,10 +1687,10 @@ extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b
             }
         }
         if (result == 0) {
-            result = func_80157D6C(t1.h[0], pOut1, a);
+            result = CItem_freeRec(t1.h[0], pOut1, a);
         }
     } else {
-        result = func_80157D6C(t1.h[0], pOut1, a);
+        result = CItem_freeRec(t1.h[0], pOut1, a);
     }
     if (result != 0) {
         u32 count;
@@ -1715,7 +1715,7 @@ extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b
             s32 n, stride;
             CItemBlock_getKindList(kind, &n, &stride);
             for (s32 i = 0; i < n; i++) {
-                CItemRec* rec = (CItemRec*)func_80157C4C(kind, (s16)i);
+                CItemRec* rec = (CItemRec*)CItem_kindPtr(kind, (s16)i);
                 if (rec != 0 && rec->field_00 != 0 && rec->field_04 < 0xffffu) {
                     rec->field_04++;
                 }
@@ -2181,7 +2181,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
     // Declared with the top-level locals per Rule A (retail colors it r30).
     u16 t;
     for (s32 id = 1; id <= 13; id++) {
-        u8* cd = (u8*)func_8009EC9C((u16)id);
+        u8* cd = (u8*)CtrlObjectParam_GetCharEntry((u16)id);
         // Clear the three parallel per-character u16 tables (8 entries each).
         for (s32 k = 0; k <= 7; k++) {
             p[0x4E + k] = -1;    // mArr1[id-1][k]
@@ -2197,7 +2197,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
             if (*(const s16*)(cdc + 0x1c) > -1) {
                 rec = (CItemData*)CtrlObjectParam_ResolveEquipItem((s16*)(cd + 0x1c), (u32)s);
                 if (rec->field_00 == 0) {
-                    func_8009DBF4(cd, (u32)s, (void*)-1);
+                    CtrlObjectParam_WriteEquipSlotValue(cd, (u32)s, (void*)-1);
                 } else {
                     u16 count =
                         (u16)CItem_initItemImplInstances(rec)->vf30(rec);
@@ -2219,7 +2219,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
             t = *(u16*)(cd + (u16)s * 2 + 2);
             *sc = (s16)CtrlObjectParam_ReadItemDataU16(cd, (u32)s,
                                      (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
-            func_8009DBF4(cd, (u32)s, (void*)-1);
+            CtrlObjectParam_WriteEquipSlotValue(cd, (u32)s, (void*)-1);
             CtrlObjectParam_WriteU16RowEntry(cd, (u16)s, t);
             sc++;
         }
@@ -2317,7 +2317,7 @@ extern "C" s32 func_80159524() {
     }
     // Re-sync every character's equip slots against the compacted tables.
     for (s32 id = 1; id <= 13; id++) {
-        u8* cd = (u8*)func_8009EC9C((u16)id);
+        u8* cd = (u8*)CtrlObjectParam_GetCharEntry((u16)id);
         s16* p = &slots.mSlots[id - 1][0];
         s16* pb = &slots.mSlots[id - 1][2];
         for (s32 i = 0; i <= 5; i++) {
@@ -2339,7 +2339,7 @@ extern "C" s32 func_80159524() {
             } else if (i == 5) {
                 slotVal = buf[0x258 / 2 + id2];
             }
-            func_8009DBF4(cd, (u32)i, (void*)(s32)slotVal);
+            CtrlObjectParam_WriteEquipSlotValue(cd, (u32)i, (void*)(s32)slotVal);
             CItemData* rec = (CItemData*)CtrlObjectParam_ResolveEquipItem((s16*)&cd[0x1c], (u32)i);
             for (s32 j = 0; j < 8; j++) {
                 if (pb[0xb6 + j] == (s16)i) {
@@ -2400,7 +2400,7 @@ extern "C" CItemExt* CItemData_lookupOrAlloc(CItemData* self, s16* pOut) {
                 CItemBlock_getKindList(kind, &count, &stride2);
                 n = count;
                 for (i = 0; i < n; i++) {
-                    CItemRec* rec = (CItemRec*)func_80157C4C(kind, (s16)i);
+                    CItemRec* rec = (CItemRec*)CItem_kindPtr(kind, (s16)i);
                     if (rec != 0 && rec->field_00 != 0 && rec->field_04 < 0xffffu) {
                         rec->field_04++;
                     }
@@ -2664,12 +2664,12 @@ extern "C" __declspec(noinline) void func_80159D74(CItemSortBuf* buf, u32 a,
 }
 
 // Initialize an item slot: clamp the kind to [1,6], zero a record sized by
-// func_80156F54(3) when the slot is non-null, then pack the family/kind/
+// CItem_catSize(3) when the slot is non-null, then pack the family/kind/
 // row ids into the slot word (bits 20-31 / 16-19 / 5-15 / 2-4) and refresh
 // the per-category impl state via the vtable method at 0x1C.
 void func_80159F6C(CItemData* self, u32 family, u32 row, u16 kind) {
     kind = kind < 1 ? 1 : (kind > 6 ? 6 : kind);
-    s32 size = func_80156F54(3);
+    s32 size = CItem_catSize(3);
     if (self != 0 && size != 0) {
         memset(self, 0, (u32)size);
     }
@@ -2719,7 +2719,7 @@ s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e) {
         int pct = r2v.b[0];
         int rnd = ml::math::mtRand(100);
         if (r1v.h[0] != 0 && rnd < pct) {
-            s32 size = func_80156F54(9);
+            s32 size = CItem_catSize(9);
             if (size != 0) {
                 memset(&local, 0, (u32)size);
             }
@@ -2746,7 +2746,7 @@ s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e) {
             // Volatile re-read: the mCount store may alias the address-taken
             // scratch record, so retail reloads field_00 here instead of
             // folding the stored register value.
-            u32 size2 = (u32)func_80156F54(
+            u32 size2 = (u32)CItem_catSize(
                 (u16)((*(volatile u32*)&local.field_00 >> 16) & 0xF));
             memcpy(dst, &local, size2);
             return 1;
@@ -2809,7 +2809,7 @@ extern "C" s32 func_8015A238(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
             u32 count = self->mCount;
             self->mCount = count + 1;
             self = (CItemFour*)((char*)self + count * 0x34);
-            u32 size = (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF));
+            u32 size = (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF));
             memcpy(self, &local, size);
             return 1;
         }
@@ -2867,7 +2867,7 @@ s32 func_8015A51C(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
             u32 count = self->mCount;
             self->mCount = count + 1;
             self = (CItemFour*)((char*)self + count * 0x34);
-            u32 size = (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF));
+            u32 size = (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF));
             memcpy(self, &local, size);
             return 1;
         }
@@ -2914,7 +2914,7 @@ extern "C" s32 func_8015A3CC(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
             u32 count = self->mCount;
             self->mCount = count + 1;
             self = (CItemFour*)((char*)self + count * 0x34);
-            u32 size = (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF));
+            u32 size = (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF));
             memcpy(self, &local, size);
             return 1;
         }
@@ -2960,7 +2960,7 @@ extern "C" s32 func_8015A6AC(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
             u32 count = self->mCount;
             self->mCount = count + 1;
             self = (CItemFour*)((char*)self + count * 0x34);
-            u32 size = (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF));
+            u32 size = (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF));
             memcpy(self, &local, size);
             return 1;
         }
@@ -3009,7 +3009,7 @@ extern "C" __declspec(noinline) s32 func_8015A7FC(CItemFour* self, u32 item,
             u32 n = self->mCount;
             self->mCount = n + 1;
             CItemExt* dst = (CItemExt*)((u8*)self + n * 0x34);
-            memcpy(dst, &local, (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF)));
+            memcpy(dst, &local, (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF)));
             return 1;
         }
     }
@@ -3060,7 +3060,7 @@ extern "C" void func_8015A930(CItemFour* self, u32 row, s32 maxCount,
             u32 n = self->mCount;
             self->mCount = n + 1;
             CItemExt* dst = (CItemExt*)((u8*)self + n * 0x34);
-            memcpy(dst, &local, (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF)));
+            memcpy(dst, &local, (u32)CItem_catSize((u16)((local.field_00 >> 16) & 0xF)));
             added++;
         }
         if (added >= maxCount) break;
@@ -3354,7 +3354,7 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
                     CItemExt* dst = &block->mItems[block->mCount];
                     block->mCount++;
                     u32 word = scratch.field_00;
-                    u32 size = (u32)func_80156F54((u16)__rlwinm(word, 16, 28, 31));
+                    u32 size = (u32)CItem_catSize((u16)__rlwinm(word, 16, 28, 31));
                     memcpy(dst, &scratch, size);
                 }
             }
@@ -3417,13 +3417,13 @@ void CItem_noop9() {}
 int CItemData_isFalse4(CItemData*) { return 0; }
 
 // Pack the family id into u16 field_0C bits 0-11 and the rank (from
-// func_80155854) into bits 12-14.
+// CItem_rankVal) into bits 12-14.
 void CItemParam_setIdAndRank(u32 unused, CItemParam* obj, u32 val) {
     u16 h = obj->field_0C;
     h = __rlwimi(h, val, 4, 16, 27);
     obj->field_0C = (u16)h;
 
-    int v = func_80155854(val);
+    int v = CItem_rankVal(val);
     h = obj->field_0C;
     h = __rlwimi(h, v, 1, 28, 30);
     obj->field_0C = (u16)h;
@@ -3481,7 +3481,7 @@ int CItemExt_getSize28(CItemExt*) { return 28; }
 extern "C" void CItem_packSlotValRank(void* a, u8* base, u32 index, u32 value) {
     u16* p = (u16*)(base + index * 2 + 8);
     *p = (u16)__rlwimi(*p, value, 4, 16, 27);
-    int rank = func_80155854(value);
+    int rank = CItem_rankVal(value);
     *p = (u16)__rlwimi(*p, (u32)rank, 1, 28, 30);
 }
 
@@ -3498,9 +3498,9 @@ void func_8015B6B4(u32 unused, CItemExt* obj) {
         if (v != -1 && i < obj->mCount) {
             obj->mEntries[i] = -1;
             memset(obj->field_08 + i * 8, 0, 8);
-            s32 r = func_800A33C8(obj);
+            s32 r = CtrlObjectParam_FindCharByItemInst(obj);
             if (r > 0) {
-                func_800A30E4(func_8009EC9C((u16)r));
+                CtrlObjectParam_RecollectArtsRows(CtrlObjectParam_GetCharEntry((u16)r));
             }
         }
     }
@@ -3520,7 +3520,7 @@ void CItemExt_setEquipEntry(u32 unused, CItemExt* self, s32 index, s16 value) {
                 v = self->mEntries[index];
             }
             if (v != -1) {
-                rec = func_80157C4C(3, v);
+                rec = CItem_kindPtr(3, v);
                 if (rec->field_00 == 0) rec = 0;
             }
             if (rec != 0) {
@@ -3532,9 +3532,9 @@ void CItemExt_setEquipEntry(u32 unused, CItemExt* self, s32 index, s16 value) {
         } else {
             memset(&self->field_08[index * 8], 0, 8);
         }
-        s32 c = func_800A33C8(self);
+        s32 c = CtrlObjectParam_FindCharByItemInst(self);
         if (c > 0) {
-            func_800A30E4(func_8009EC9C((u16)c));
+            CtrlObjectParam_RecollectArtsRows(CtrlObjectParam_GetCharEntry((u16)c));
         }
     }
 }

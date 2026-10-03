@@ -19,9 +19,9 @@ public:
     nw4r::math::FRUSTUM mFrustum; // 0x2B8
 };
 
-// Base-class camera refresh helpers (retail func_8049EBF0 / func_8049F8E4).
-extern "C" void func_8049EBF0(CScnItemCameraNw4r* self);
-extern "C" void func_8049F8E4(CScnItemCameraNw4r* self);
+// Base-class camera refresh helpers (retail ScnCamRebuild / ScnCamViewReg).
+extern "C" void ScnCamRebuild(CScnItemCameraNw4r* self);
+extern "C" void ScnCamViewReg(CScnItemCameraNw4r* self);
 
 //
 // The base class header (monolib/scn/CScnItemCamera.hpp) is a draft whose
@@ -85,7 +85,7 @@ void ScnCamNw4r_RefreshFrustumA(CScnItemCameraNw4r* self) {
     CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
 
     // Refresh camera internals in the base object first.
-    func_8049EBF0(self);
+    ScnCamRebuild(self);
 
     f32 farZ = cam->mFarZ;
     f32 nearZ = cam->mNearZ;
@@ -103,7 +103,7 @@ void ScnCamNw4r_RefreshFrustumB(CScnItemCameraNw4r* self) {
     CScnItemCameraNw4rLayout* cam = (CScnItemCameraNw4rLayout*)self;
 
     // Refresh camera internals in the base object first.
-    func_8049F8E4(self);
+    ScnCamViewReg(self);
 
     f32 farZ = cam->mFarZ;
     f32 nearZ = cam->mNearZ;

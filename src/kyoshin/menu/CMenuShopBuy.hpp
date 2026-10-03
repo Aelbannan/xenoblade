@@ -218,7 +218,7 @@ extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);
 extern "C" void ItemBoxLine_UnloadFiles(CItemBoxLine* self);
-extern "C" void func_801ED864(CItemBoxLine* self);
+extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);
 
 // func_8018C258 pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
@@ -229,14 +229,14 @@ extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
 extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
 extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
-extern "C" void func_801EE788(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ResolveEntry(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
 extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
-extern "C" void func_801EDC94(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageBack(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
-extern "C" void func_801EEDF8(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ShowDetailWin(CItemBoxLine* self);
 extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
 extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
@@ -278,7 +278,7 @@ extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* 
 // virtual-dispatched) and the DrawInfo setup helper (C++ mangled name).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Phase handlers (same TU, extern "C" definitions in CMenuShopBuy.cpp) plus
 // the factory and ctor (retail unmangled names). __declspec(noinline) stops

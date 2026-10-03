@@ -78,7 +78,7 @@ void CUIErrMesWin::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     sysWinDrawLayout(mSysWin, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
 }
@@ -280,7 +280,7 @@ extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self) {
 // func_802B5970 (us-802b83e0) - play an error-message voice for a battle
 // triple (owner, attacker, target). Resolves both actors' action sources,
 // requires both to exist and be voice-idle, picks a voice id via
-// ErrWin_PickOwnerRand_5AC8, verifies the arts-state gate (func_80174C98, mode 0x803)
+// ErrWin_PickOwnerRand_5AC8, verifies the arts-state gate (testActorStatus, mode 0x803)
 // and allocates a 0xA0 voice handle before playing through the attacker's
 // embedded +0x3E9C sub-object. Always returns 0.
 int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
@@ -298,19 +298,19 @@ int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
 
     // Query the attacker's +4 arts-state sub-object and gate on its word.
     u32 val = *hA->unk4->vf30();
-    if (func_80174C98(hA, &val, 0x803) == 0) return 0;
-    if (func_802A330C(0xa0, 1) == 0) return 0;
+    if (testActorStatus(hA, &val, 0x803) == 0) return 0;
+    if (CCharVoiceMan_DispatchById(0xa0, 1) == 0) return 0;
 
     CCharVoice* voice = reinterpret_cast<CCharVoice*>(hA);
     if (hA != 0) voice = reinterpret_cast<CCharVoice*>(&hA->sub);
-    func_802A3D54(voice, voiceId, 0xa0);
+    RequestVoicePlayback(voice, voiceId, 0xa0);
     return 0;
 }
 
 // ErrWin_PickOwnerRand_5AC8 (us-802b8538) - pick the error-message voice id for a
 // battle-relevant triple (owner/attacker/target flag words). Requires the
 // attacker flag bit 2 and both other flag bit 1, plus a 25% random gate;
-// then maps the two actors' battle states (func_802A77E8) to a voice id
+// then maps the two actors' battle states (HpVoice_MapSubState) to a voice id
 // (0x900..0x902) or -1. C linkage so the definition emits the retail
 // unmangled name ErrWin_PickOwnerRand_5AC8.
 extern "C" int ErrWin_PickOwnerRand_5AC8(CErrMesOwner* a, CErrMesOwner* b, CErrMesOwner* c) {
@@ -318,8 +318,8 @@ extern "C" int ErrWin_PickOwnerRand_5AC8(CErrMesOwner* a, CErrMesOwner* b, CErrM
     if (!(b->field_0x3F00 & 0x2)) return -1;
     if (!(c->field_0x3F00 & 0x2)) return -1;
     if (ml::math::mtRand(100) >= 25) return -1;
-    int x = func_802A77E8(b);
-    int y = func_802A77E8(c);
+    int x = HpVoice_MapSubState(b);
+    int y = HpVoice_MapSubState(c);
     if (x == 1 && y == 3) return 0x900;
     if (x == 1 && y == 2) return 0x901;
     if (x == 1 && y == 4) return 0x902;
@@ -376,7 +376,7 @@ void CMenuTitle::cbRenderBefore() {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         u8 drawInfo[0x60];
         __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-        func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+        SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
         CTitle_draw(&field_0x60[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
         __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
     }

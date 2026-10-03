@@ -110,11 +110,11 @@ extern const f32 lbl_eu_80667244;
 extern const f32 lbl_eu_80667248;
 extern const f32 lbl_eu_8066724C;
 
-// sdata2 float constant used by func_8012615C's auto-speed gate
+// sdata2 float constant used by TagProcStepMessage's auto-speed gate
 // (retail .sdata2:0x80667208).
 extern const f32 lbl_eu_80667208;
 
-// sdata2 float constants used by the tag-writer family (func_801287BC's
+// sdata2 float constants used by the tag-writer family (TagProcBuildOpenText's
 // message-speed select / line math; retail .sdata2:0x806671F8..0x80667258).
 extern const f32 lbl_eu_806671F8;
 extern const f32 lbl_eu_8066720C;
@@ -142,7 +142,7 @@ extern const f32 lbl_eu_8066725C;
 extern const u32 lbl_eu_80667188;
 extern const u16 lbl_eu_8066718C;
 
-// sdata2 float used by func_8012B070's scratch-writer scale setup
+// sdata2 float used by TagWriterMeasureStrings's scratch-writer scale setup
 // (retail .sdata2:0x80667264).
 extern const f32 lbl_eu_80667264;
 
@@ -199,10 +199,10 @@ extern char lbl_eu_8052DCB8[];  // TagWriterMeasureScratch chain-1 file
 extern char lbl_eu_8052DC84[];  // TagWriterMeasureScratch chain-1 message
 extern char lbl_eu_8052DE94[];  // TagWriterMeasureScratch chain-2 file
 extern char lbl_eu_8052DE60[];  // TagWriterMeasureScratch chain-2 message
-extern char lbl_eu_8052DB08[];  // func_8012B440 chain-1 file
-extern char lbl_eu_8052DAD4[];  // func_8012B440 chain-1 message
-extern char lbl_eu_8052DAC0[];  // func_8012B440 chain-2 file
-extern char lbl_eu_8052DA8C[];  // func_8012B440 chain-2 message
+extern char lbl_eu_8052DB08[];  // TagWriterJustifyPair chain-1 file
+extern char lbl_eu_8052DAD4[];  // TagWriterJustifyPair chain-1 message
+extern char lbl_eu_8052DAC0[];  // TagWriterJustifyPair chain-2 file
+extern char lbl_eu_8052DA8C[];  // TagWriterJustifyPair chain-2 message
 
 /* Tag parameter block (12 bytes, retail tag-proc layout). */
 struct TagParam {
@@ -217,7 +217,7 @@ struct TagParam {
 };
 
 /* 0x68-byte view of the nw4r TextWriterBase used by TagWriterCopyBlock's copy
- * and the tag-writer scratch writers (func_8012B070 / TagWriterMeasureScratch). */
+ * and the tag-writer scratch writers (TagWriterMeasureStrings / TagWriterMeasureScratch). */
 struct TagCopyBlock {
     u32 w00, w04, w08, w0C, w10, w14, w18, w1C;
     u32 w20, w24, w28, w2C, w30, w34, w38, w3C;
@@ -335,7 +335,7 @@ public:
     f32 charSpace;     // +0x50 mCharSpace
     u8  pad_54[0x8];   // +0x54 mLineSpace / mFontSize.x
     /* +0x5C mFontSize.y region: the accessors treat it as u32, while
-     * func_8012B440 stores raw float bits into the scratch copy. */
+     * TagWriterJustifyPair stores raw float bits into the scratch copy. */
     union {
         u32 field_5C;
         f32 field_5Cf;
@@ -413,12 +413,12 @@ struct CTalkTextBoxVtbl {
     virtual void v78();        // +0x78 FreeStringBuffer()
 };
 
-/* Talk-pane view for func_801287BC: extends the TextBox vtable view with
+/* Talk-pane view for TagProcBuildOpenText: extends the TextBox vtable view with
  * the +0x7C text-setter (next slot after FreeStringBuffer) and the data
  * fields the function touches (position VEC3 at +0x2C, VEC2 at +0x4C,
  * message-speed f32 at +0xF0). */
 /* 12-byte vector copied as an aggregate (MWCC emits lwz/stw pairs) by
- * func_80127764's pane-position shuffling. */
+ * TagProcRenderPage's pane-position shuffling. */
 struct TagVec3 {
     f32 v[3];
 };
@@ -446,7 +446,7 @@ struct TagEntry {
 
 extern TagEntry lbl_eu_8052D478[];
 
-/* Name-table view of the tag dispatch table used by func_80125B58: same
+/* Name-table view of the tag dispatch table used by TagProcPreprocessMessage: same
  * 12-byte entries as TagEntry, but +4 is the handler's name string
  * (wcscmp argument) and +8 is the handler object whose vtable slot +0x14
  * processes the tag body and returns the new buffer position. */
@@ -467,12 +467,12 @@ public:
     virtual nw4r::ut::TagProcessorBase<wchar_t>::Operation CalcRect(
         nw4r::ut::Rect* rect, u16 tag,
         nw4r::ut::PrintContext<wchar_t>* ctx);  // slot 4
-    // slot 5 @ +0x14: tag-body processor called by func_80125B58's name
+    // slot 5 @ +0x14: tag-body processor called by TagProcPreprocessMessage's name
     // dispatch (consumes the '<name=value>' tag, returns the new position).
     virtual u16* v14(u16* p, const wchar_t* value, TagParam* param);
 };
 
-/* Text-pane view for func_80127FB4 (SE message pump): only the 2-arg
+/* Text-pane view for TagProcStepSEMessage (SE message pump): only the 2-arg
  * SetText at +0x7C is called (next slot after FreeStringBuffer). */
 struct SeTalkPane : public CTalkTextBoxVtbl {
     virtual void v7C(const u16* text, u16 flag);  // +0x7C SetText (2-arg)
@@ -487,11 +487,11 @@ struct TagFlagTable {
 extern const TagFlagTable lbl_eu_804FF608;
 extern const TagFlagTable lbl_eu_804FF6E0;
 
-// sdata2 float constants used by func_80127FB4's tag-5 auto-speed gate
+// sdata2 float constants used by TagProcStepSEMessage's tag-5 auto-speed gate
 // (retail .sdata2:0x80667250).
 extern const f32 lbl_eu_80667250;
 
-/* Text-pane view for func_8012615C's message pane (`a`) and its context
+/* Text-pane view for TagProcStepMessage's message pane (`a`) and its context
  * node list (a->field_0C): the vtable slots called are the context-pane
  * factory (+0x3C, returns a per-name pane), string-buffer alloc/free
  * (+0x74/+0x78) and the 3-arg SetText at +0x7C. MWCC emits 2 hidden
@@ -578,7 +578,7 @@ struct TalkNamePane {
     nw4r::ut::Color field_E0;  // +0xE0
 };
 
-/* Party-member object (func_8012615C's r29->field_98): the +0x58 virtual
+/* Party-member object (TagProcStepMessage's r29->field_98): the +0x58 virtual
  * toggles the member's auto-follow/emphasis state (called with (this, on, 0)). */
 struct TagMemberObj {
     virtual void v08();
@@ -604,10 +604,10 @@ struct TagMemberObj {
     virtual void v58(int a, int b);  // +0x58
 };
 
-/* Talk-window/icon object (func_8012615C's r29->field_C4): the +0x80
+/* Talk-window/icon object (TagProcStepMessage's r29->field_C4): the +0x80
  * virtual is a busy/accept query; the object is passed to func_8004B9D4
  * for icon display. field_270 is the event-flag word polled by
- * func_80127FB4's icon handler and pending-icon tail. */
+ * TagProcStepSEMessage's icon handler and pending-icon tail. */
 struct TagC4Obj {
     virtual void v08();
     virtual void v0C();
@@ -655,7 +655,7 @@ struct TagTalkSrc {
     TagC4Obj* field_C4;    // +0xC4
 };
 
-/* Pad-data views for the CfGameManager pad getters used by func_8012615C. */
+/* Pad-data views for the CfGameManager pad getters used by TagProcStepMessage. */
 struct TagPadView {
     u8  pad[0x4];
     u32 field_04;   // +0x04 button bits
@@ -684,7 +684,7 @@ struct __declspec(novtable) CTagProcessorBase
     : public nw4r::ut::TagProcessorBase<wchar_t> {
     CTagProcessorBase();
     virtual ~CTagProcessorBase();
-    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14 retail func_80125B58
+    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14 retail TagProcPreprocessMessage
 
     u16 mBuf[0x400];    // +0x04 message buffer (0x800 bytes)
     u32 field_804;      // +0x804
@@ -728,7 +728,7 @@ struct TagCharContext {
 
 /* Holder for the active nw4r text writer (TagWriterCharSpacePP reads field_00
  * twice - once into a local, once for the TagWriterGetCursorY argument;
- * func_8012B070 also reads field_04/field_10 and rewrites field_04). */
+ * TagWriterMeasureStrings also reads field_04/field_10 and rewrites field_04). */
 struct TagWriterHolder {
     nw4r::ut::TextWriterBase<wchar_t>* field_00;  // +0x00
     const u8* field_04;                           // +0x04 tag string buffer
@@ -746,7 +746,7 @@ struct TagColorArg {
 
 /* Message-context view used by the tag-writer position clamp
  * (TagProcCalcPageLayout): wchar_t* message string at +0xD8, copied into a local
- * buffer before func_80125D00 measures it. func_80125D00 reads the float
+ * buffer before TagProcMeasureText measures it. TagProcMeasureText reads the float
  * at +0xF4 (per-char spacing added to each glyph width). */
 struct CTagMsgView {
     u8 pad[0xD8];        // +0x00
@@ -763,7 +763,7 @@ struct CTagOutView {
     f32 field_50;    // +0x50
 };
 
-/* Output view used by func_8012B070: reads field_00, writes field_08
+/* Output view used by TagWriterMeasureStrings: reads field_00, writes field_08
  * (addToCharSpace additionally touches +0x04/+0x0C via the u8* helper). */
 struct TagLineOutView {
     f32 field_00;  // +0x00
@@ -791,7 +791,7 @@ struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
 // C-ABI imports used by the tag-writer family. These retail symbols are
 // unmangled, so they must stay C-linkage or MWCC appends a __F<argtypes>
 // suffix to the emitted reloc names (MWCC_CASES core pattern 2).
-// TagProcPumpMessage / func_8012615C / TagProcStartMessage / func_801287BC are also
+// TagProcPumpMessage / TagProcStepMessage / TagProcStartMessage / TagProcBuildOpenText are also
 // declared in CTalkWindow.hpp / CSimpleEveTalkWin.hpp with these signatures.
 extern "C" {
 void WcsToUpperInPlace(u16* str);  // uppercase wide string (code_80135FDC.cpp)
@@ -800,23 +800,23 @@ void initTagParam(u8* obj, unsigned char a, unsigned char b, float c);  // 12-by
 void copyTagParam(u8* dst, const u8* src);  // 12-byte tag-param copy
 int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
-int func_8012615C(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+int TagProcStepMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
-// SE message pump (CTagProcessorSE variant of func_8012615C, no name list).
-int func_80127FB4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* pane);
-// Voice/sound helpers used by func_80127FB4's auto-advance gate.
-s32 func_80189A04(s32 index);                                // sound-slot busy check
-void func_8018986C(int handle, f32 fadeTime);                 // stop voice
+// SE message pump (CTagProcessorSE variant of TagProcStepMessage, no name list).
+int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* pane);
+// Voice/sound helpers used by TagProcStepSEMessage's auto-advance gate.
+s32 MenuSnd_QuerySlotLive_89A04(s32 index);                                // sound-slot busy check
+void MenuSnd_SilenceByName_8986C(int handle, f32 fadeTime);                 // stop voice
 // Plugin UI mode query (pluginUi.cpp).
 int MenuStateCheck64064or30();
 int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane);
 // Retail r5 is a string (wcscpy source), not a flag. The CSimpleEveTalkWin.hpp
 // copy still declares the older int-flag shape; the two headers are never
 // included together, and extern "C" keeps the symbol flat either way.
-void func_801287BC(CTagProcessorBase* tagProc, nw4r::lyt::Pane* pane,
+void TagProcBuildOpenText(CTagProcessorBase* tagProc, nw4r::lyt::Pane* pane,
                    const wchar_t* str);
 // Same signatures as the CTalkWindow.hpp declarations (shared C-ABI symbols).
-void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
                    TalkPaneView* c, const wchar_t* text);
 void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
@@ -884,7 +884,7 @@ void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* 
 // (TagProcCalcPageLayout): out = (x, y) computed from the message context + string.
 // noinline: the retail kept this as a real call (0x384-byte body); the local
 // stub body must not be folded into TagProcCalcPageLayout's call site.
-void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf);
+void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf);
 // Tag-writer position clamp: copy the message into a local buffer, measure
 // it, clamp/snap the y position to the fixed step table, and write the
 // resulting VEC2 to out->field_4C.
@@ -907,12 +907,12 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str);
 void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst);
 // Tag-writer line layout: measure two adjacent strings from the tag buffer
 // into a scratch writer, advance the buffer pointer, return 2.
-int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
+int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
                   TagWriterHolder* holder);
 // Tag-writer two-string layout: measure the first string in a scratch
 // writer, distribute any excess width of the real writer's copy as char
 // space, print both strings, and advance the buffer pointer. Returns 2.
-int func_8012B440(void* unused, void* unused2, TagWriterHolder* holder);
+int TagWriterJustifyPair(void* unused, void* unused2, TagWriterHolder* holder);
 u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str);
 u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str);
 // Tag-code writer (code 0xB): split the arg string on ':', map token 0 to a
@@ -923,13 +923,13 @@ u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str);
 u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str);
 // String splitter (code_80135FDC.cpp): split src on delim into outTokens,
 // returns the token count.
-int func_801365E4(u16* src, u16 delim, u16** outTokens);
+int SplitWStringTrim(u16* src, u16 delim, u16** outTokens);
 // BDAT s16-keyed lookup (code_80135FDC.cpp): maps a key into the table pair
 // to an s16 value (TagWriterCode2Lookup's tag-2 name chain).
 s16 BdatGetS16ByTableKey(const void* a, const void* b, u32 key); // u32: matches defining TU code_80135FDC.cpp verbatim
 // Message pre-processor: copy the raw message, normalize/compact the buffer
 // (CRLF strip + '<name=value>' tag dispatch), return the buffer.
-u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b,
+u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f32 b,
                    u32 c);
 // Talk-open text setup (TagProcStartMessage's callee): build the display string
 // from the message buffer (or the caller's string) and lay out the pane.
@@ -943,9 +943,9 @@ u32 TagWriterApplyColor(void* unused, void* ret, TagColorArg* arg);
 // Tag-writer: print a marker into a scratch writer and advance the cursor.
 int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder);
 // Accumulated pane translate (code_80135FDC.cpp).
-void func_801375A0(f32* out, nw4r::lyt::Pane* pane);
+void AccumPaneWorldPos(f32* out, nw4r::lyt::Pane* pane);
 
-// func_8012615C's C-ABI imports: flat (or pre-mangled) retail names.
+// TagProcStepMessage's C-ABI imports: flat (or pre-mangled) retail names.
 extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = prior call's result)
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 u32 CtrlRemote_TouchBitByArg(u32 id);
@@ -963,7 +963,7 @@ void code80135FDC_setPair_6405C_64060(u32 a, u32 b);
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Local context-walk helpers (defined in CTagProcessor.cpp).
 void* TagCtxGetNodeHeader(void* self);
-u32 func_801276C8(const u32* a, const u32* b);
+u32 TagProcCompareIds(const u32* a, const u32* b);
 void* TagCtxAdvanceHead(void* self, int a);
 const wchar_t* getContextStr(u8* self);
 const wchar_t** getContextStrPtr(u8* self);

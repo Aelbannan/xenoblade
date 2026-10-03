@@ -29,7 +29,7 @@ public:
     void clearStubFunc(u32 r4);
     void bindTextureGX(GXTexObj* pTexObj, u16 r5, u16 r6);
     ml::CCol4* getClearColor();
-    void func_8044B660();
+    void setOrthoProj();
     bool resetGXStateA();
     void resetMtxState();
     void setZCompareMD(int r4, int r5);
@@ -39,8 +39,8 @@ public:
     void setDirectColA(int r4);
     void setDirectColB(int r4);
     void setBlendState(int r4, int r5);
-    void func_8044B8CC(float f1, float f2, float f3);
-    u32 func_8044BD74(UNKWORD r3);
+    void setPerspProj(float f1, float f2, float f3);
+    u32 scaleRingWidth(UNKWORD r3);
 
     //0x0: vtable
     //0x0-0x4: IStateCache

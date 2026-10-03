@@ -37,7 +37,7 @@ void advancePresentState(CPresentWin* self) {
 // Present-window rank display (state 2): look up the player's time for the
 // current item, show the appropriate rank/result panes + textures, then hand
 // control to the closing animation.
-void func_8022DD90(CPresentWin* self) {
+void showPresentRank(CPresentWin* self) {
     if (self->mField37 != 2) return;
 
     u32 itemId = BdatGetItemId(self->mField34) & 0xFFFF;
@@ -105,7 +105,7 @@ void func_8022DD90(CPresentWin* self) {
     {
         u8 idxA = lookupPresentRank(self, self->mField32);
         u8 idxB = lookupPresentRank(self, self->mField33);
-        func_8013A95C(idxA, idxB, (s8)res);
+        AdjustRelateValue(idxA, idxB, (s8)res);
     }
 
 tail:
@@ -130,10 +130,10 @@ tail:
 
 // Store the anim index (+0x34), call the anim loader, then bind the loaded
 // frame (+0xB7 offset string) through the +8 layout.
-extern "C" void* func_801394D4(u32);
-extern "C" void func_8022E204(void* self, u16 idx) {
+extern "C" void* BuildItemNameStr(u32);
+extern "C" void setPresentAnimText(void* self, u16 idx) {
     *(u16*)((u8*)self + 0x34) = idx;
-    void* anim = func_801394D4(idx);
+    void* anim = BuildItemNameStr(idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
 }
 
@@ -175,35 +175,35 @@ void stepPresentCounter(CPresentWin* self) {
             self->mField33 = (u8)(self->mField33 + 1);
             if ((s8)self->mField33 >= self->mDataCount) self->mField33 = 0;
         }
-        func_8022E744(self);
+        repaintPresentItemB(self);
     } else {
         self->mField32 = (u8)(self->mField32 + 1);
         if ((s8)self->mField32 >= self->mDataCount) self->mField32 = 0;
-        func_8022E698(self);
+        repaintPresentItemA(self);
     }
 }
 
-// retail: tail-branch to func_8022E254 (passes `this` through in r3)
-extern "C" void dispatchCounterStepBack(CPresentWin* self) { func_8022E254(self); }
+// retail: tail-branch to stepPresentCounterBack (passes `this` through in r3)
+extern "C" void dispatchCounterStepBack(CPresentWin* self) { stepPresentCounterBack(self); }
 
 // Toggle mField31 (which animation path is active). When toggling ON, skip the
 // frame if the secondary counter would collide; when OFF, repaint the label
 // and (re)load the texture bound to mPane2C.
 #pragma push
 #pragma optimize_for_size on
-void func_8022E3AC(CPresentWin* self) {
+void togglePresentPath(CPresentWin* self) {
     self->mField31 = (u8)((self->mField31 ^ 1) != 0);
     if (self->mField31) {
         if ((s8)self->mField33 == (s8)self->mField32) {
             self->mField33 = (u8)(self->mField32 + 1);
             if ((s8)self->mField33 >= self->mDataCount) self->mField33 = 0;
         }
-        func_8022E744(self);
+        repaintPresentItemB(self);
     } else {
-        func_80136D74((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
         void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
         if (tex) {
-            func_80137F88(self->mPane2C, tex);
+            PaneSetTexPalette(self->mPane2C, tex);
         }
     }
 }
@@ -215,8 +215,8 @@ u8 isPresentBusy(CPresentWin* self) { return self->mField36; }
 
 // Get the world position of the selected pane of another present window and
 // scale its x by that window's label pane (+0x14) horizontal scale factor.
-void func_8022E498(nw4r::math::VEC3* out, CPresentWin* src) {
-    func_801375A0(out, src->mField31 != 0 ? src->mPane1C : src->mPane18);
+void getPresentPaneWorldPos(nw4r::math::VEC3* out, CPresentWin* src) {
+    AccumPaneWorldPos(out, src->mField31 != 0 ? src->mPane1C : src->mPane18);
     out->x = out->x * src->mPane14->GetScale().x;
 }
 
@@ -226,7 +226,7 @@ extern "C" u8 getPresentRankA(CPresentWin* self) { return lookupPresentRank(self
 // retail: lbz r4,0x33(r3); b lookupPresentRank
 extern "C" u8 getPresentRankB(CPresentWin* self) { return lookupPresentRank(self, self->mField33); }
 
-extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
+extern "C" __declspec(noinline) void stepPresentOpenAnim(CPresentWin* self) {
     if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
@@ -234,7 +234,7 @@ extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
 }
 
 extern const f32 lbl_eu_8066862C;
-extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self) {
+extern "C" __declspec(noinline) void stepPresentCloseAnim(CPresentWin* self) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066862C)) {
         *((u8*)self + 0x37) = 0;
         *((u8*)self + 0x38) = 1;
@@ -246,7 +246,7 @@ extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self) {
 
 // Frame-update handler: when animTrans1 finishes, switch to state 2, enable
 // both animations, show the window and reset the two labelled panes.
-extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
+extern "C" __declspec(noinline) void stepPresentResultAnim(CPresentWin* self) {
     if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_8066862C) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
@@ -265,32 +265,32 @@ extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
 // Repaint helper for the mField32 (primary) item: look up the item name and
 // message id from the BDAT table, bind the name to pane20's text box and the
 // message texture to mPane28.
-extern "C" __declspec(noinline) void func_8022E698(CPresentWin* self) {
+extern "C" __declspec(noinline) void repaintPresentItemA(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField32);
     char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
-    func_80136D74((nw4r::lyt::Layout*)self->mPane20, name, 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane20, name, 0);
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
-        func_80137F88(self->mPane28, tex);
+        PaneSetTexPalette(self->mPane28, tex);
     }
 }
 
 // Same repaint for the mField33 (secondary) item, targeting mPane24/mPane2C.
-extern "C" __declspec(noinline) void func_8022E744(CPresentWin* self) {
+extern "C" __declspec(noinline) void repaintPresentItemB(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField33);
     char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
-    func_80136D74((nw4r::lyt::Layout*)self->mPane24, name, 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, name, 0);
     u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
-        func_80137F88(self->mPane2C, tex);
+        PaneSetTexPalette(self->mPane2C, tex);
     }
 }
 
 // Retail uses the stmw/lmw block-save frame (MWCC optimize_for_size shape).
-// Retail calls this from func_8022DB7C rather than inlining it.
-extern "C" __declspec(noinline) void func_8022E7F0(CPresentWin* self) {
+// Retail calls this from openPresentWin rather than inlining it.
+extern "C" __declspec(noinline) void collectPresentData(CPresentWin* self) {
     self->mDataCount = 0;
     u8 count = code80135FDC_getByte_64077();
     for (u8 i = 0; i < count; i++) {
@@ -308,7 +308,7 @@ extern "C" __declspec(noinline) void func_8022E7F0(CPresentWin* self) {
 // Unload: wait for the VI, drop the active flag, destroy the layout through
 // its vtable slot-2 virtual (guarded by the retail double null check) and
 // clear the layout + accessor pointers.
-extern "C" __declspec(noinline) void func_8022DB04(CPresentWin* self) {
+extern "C" __declspec(noinline) void termPresentWin(CPresentWin* self) {
     waitForDrawDone__9CDeviceVIFv();
     self->mField30 = 0;
     if (self->mpLayout != NULL) {
@@ -324,7 +324,7 @@ extern "C" __declspec(noinline) void func_8022DB04(CPresentWin* self) {
 // Step the selected labelled pane counter backwards, wrapping through
 // mDataCount; when the two counters collide after a step, step again. Then
 // tail-call the repaint helper for the active path.
-extern "C" __declspec(noinline) void func_8022E254(CPresentWin* self) {
+extern "C" __declspec(noinline) void stepPresentCounterBack(CPresentWin* self) {
     if (self->mField36 != 0) return;
     if (self->mField31 != 0) {
         self->mField33 = (u8)(self->mField33 - 1);
@@ -333,11 +333,11 @@ extern "C" __declspec(noinline) void func_8022E254(CPresentWin* self) {
             self->mField33 = (u8)(self->mField33 - 1);
             if ((s8)self->mField33 < 0) self->mField33 = self->mDataCount - 1;
         }
-        func_8022E744(self);
+        repaintPresentItemB(self);
     } else {
         self->mField32 = (u8)(self->mField32 - 1);
         if ((s8)self->mField32 < 0) self->mField32 = self->mDataCount - 1;
-        func_8022E698(self);
+        repaintPresentItemA(self);
     }
 }
 
@@ -352,18 +352,18 @@ extern "C" __declspec(noinline) u8 lookupPresentRank(CPresentWin* self, u32 r4) 
 // Open handler: mark the window active, rebuild the item data, repaint the
 // labels, load the "timg" texture for mPane2C and the message texture, then
 // position the message pane at the texture's dimensions.
-void func_8022DB7C(CPresentWin* self) {
+void openPresentWin(CPresentWin* self) {
     if (self->mField37 != 0) return;
     self->mField37 = 1;
     self->mField38 = 0;
     self->mField30 = 1;
-    func_8022E7F0(self);
-    func_8022E698(self);
+    collectPresentData(self);
+    repaintPresentItemA(self);
 
-    func_80136D74((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
     void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
     if (tex) {
-        func_80137F88(self->mPane2C, tex);
+        PaneSetTexPalette(self->mPane2C, tex);
     }
 
     char* s1 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x2b);
@@ -411,7 +411,7 @@ void func_8022DB7C(CPresentWin* self) {
 #pragma optimize_for_size on
 // Init: load the layout + animation transforms, bind the font, enable the
 // default animation and look up the 7 pane handles used by the window.
-void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) {
+void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) {
     // Shared u32->float scratch (2^52 magic): hi words are written up front
     // so the stores schedule into the prologue, exactly as retail.
     union {
@@ -434,7 +434,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     u32 fontResult = ((CPresentFontView*)fontObj)->sf9();
     // No persistent rootPane local: retail reloads GetRootPane() per use,
     // keeping callee-saved pressure down to r29-r31.
-    func_8013676C(self->mpLayout->GetRootPane(), fontResult);
+    ApplyFontToTxtPanes(self->mpLayout->GetRootPane(), fontResult);
 
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, true);
@@ -450,8 +450,8 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
 
     setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(pool + 0xae, 1), 0);
     LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xb7, pool + 0xc4, 0);
-    func_80136D74((nw4r::lyt::Layout*)self->mPane20, pool + 0xc4, 0);
-    func_80136D74((nw4r::lyt::Layout*)self->mPane24, pool + 0xc4, 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane20, pool + 0xc4, 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, pool + 0xc4, 0);
 
     char* s1 = BdatTouchStringCell(pool + 0xc5, pool + 0xd3, 0x2b);
     LayoutSetTextBoxFmtValue(self->mpLayout, pool + 0xd8, s1, 0);
@@ -503,19 +503,19 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
 }
 #pragma pop
 
-extern "C" void func_8022DA58(CPresentWin* self) {
+extern "C" void updatePresentWin(CPresentWin* self) {
     if (self->mField30 == 0) {
         return;
     }
     switch (self->mField37) {
     case 1:
-        func_8022E50C(self);
+        stepPresentOpenAnim(self);
         break;
     case 3:
-        func_8022E558(self);
+        stepPresentCloseAnim(self);
         break;
     case 4:
-        func_8022E5B0(self);
+        stepPresentResultAnim(self);
         break;
     }
     self->mpLayout->Animate(0);

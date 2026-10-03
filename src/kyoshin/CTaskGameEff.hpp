@@ -13,7 +13,7 @@ extern "C" void func_804CBB84(void*, void*);
 extern "C" void EffRender_PassFilteredB(void*);
 extern "C" void EffSys_ResetAlpha(void*);
 extern "C" void EffSys_Thunk8688(void*);
-// Per-frame effect update helpers (func_80045044) and singleton teardown
+// Per-frame effect update helpers (runEffectPassA) and singleton teardown
 // (Term) - retail unmangled C linkage like the others.
 extern "C" void EffSys_DriveRandom(void*, f32);
 extern "C" void EffRender_PassFirst(void*);
@@ -59,7 +59,7 @@ extern const u8 lbl_eu_80525C6C[];
 
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 
-// Virtual container embedded at battle-object +0x3E9C (func_8004513C resolves
+// Virtual container embedded at battle-object +0x3E9C (attachEffectById resolves
 // effects through its vtable slot 0x220, which takes the full id word).
 // Never instantiated here, so no vtable is emitted.
 class EffHostContainer {
@@ -102,7 +102,7 @@ public:
     virtual void* vfn220(u32 id);   // vtable slot 0x220
 };
 
-// Battle/effect host object handed to func_8004513C: embeds a virtual
+// Battle/effect host object handed to attachEffectById: embeds a virtual
 // container at +0x3E9C whose vtable slot 0x220 resolves an effect by id.
 struct EffHostObj {
     u8 field_0x0[0x3E9C];
@@ -122,7 +122,7 @@ extern "C" const void* lbl_eu_80661970;
 extern "C" const void* lbl_eu_806618F0;
 
 // Minimal CScn declaration local to this TU set: only the render-callback
-// members used by Init/Term/func_800452EC/unregisterEffectScene. Declared with the
+// members used by Init/Term/registerEffScene/unregisterEffectScene. Declared with the
 // real class tag so member calls emit the retail mangled symbols
 // addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
 // Guarded so the kyoshin task headers can be included together in one TU

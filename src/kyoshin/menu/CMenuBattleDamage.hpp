@@ -310,7 +310,7 @@ int GetSysStateFlag24();
 int IsMenuState621F0();
 const char* func_80145AA8(int index);
 char* BdatGetPtrDirect(const void*, const void*, int);
-void func_8013676C(void*, u32);
+void ApplyFontToTxtPanes(void*, u32);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
 // full slot word with no rlwinm truncation at the call site (the callee only
 // reads the low byte), so the declaration must not force a u32->u8 mask.
@@ -339,7 +339,7 @@ void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shared data symbols (global-scope plain externs keep the unmangled names).
 extern char lbl_eu_804FD524[];

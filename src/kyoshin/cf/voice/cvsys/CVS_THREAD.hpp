@@ -77,8 +77,8 @@ public:
     CVS_THREAD();
 
     //Virtual table (0x1c)
-    virtual void func_802A3B50();
-    virtual void func_802A3BEC(u32 id);
+    virtual void PlayThreadVoice();
+    virtual void DetachThreadVoice(u32 id);
     virtual int blank1();
     virtual void func_802A1EA0();
     virtual void func_802A3740();
@@ -86,7 +86,7 @@ public:
     int downVoiceFixed240() { return 240; }
 };
 
-extern "C" int func_802A3E88(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)
+extern "C" int IsThreadVoiceActive(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)
 
 // Raw ptmf reference the voice nodes are matched against (.data blob).
 extern unsigned char lbl_eu_805398F8[12];
@@ -96,9 +96,9 @@ extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" long __ptmf_test(void* ptmf);
 
 // Node sweep entry point: invokes each voice-event node's stored handler.
-extern "C" void func_802A3ACC(void* node);
+extern "C" void RunVoiceNodeHandler(void* node);
 
-// ── Scene-audio volume constants (sdata2 floats used by func_802A3D54) ────
+// ── Scene-audio volume constants (sdata2 floats used by RequestVoicePlayback) ────
 extern float lbl_eu_80668C88;   // base volume
 extern float lbl_eu_80662CB0;   // scale multiplier
 extern float lbl_eu_80662CB4;   // pan/pitch constant, normal branch
@@ -108,8 +108,8 @@ extern "C" unsigned int CCharVoiceMan_MakeVoiceEventId(unsigned int value);
 
 // Scratch-buffer allocator shared by the cvsys voice threads (same
 // C-ABI import as kyoshin/code_802B8A3C.hpp).
-extern "C" CVoiceHandle* func_802A330C(int size, int align);
+extern "C" CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
 
-// Equipment-category table lookup + category check used by func_802A4120.
-extern "C" void* func_8009EC9C(u32 index);
+// Equipment-category table lookup + category check used by CheckEquipVoiceTarget.
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* mgr);

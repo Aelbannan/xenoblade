@@ -562,7 +562,7 @@ void CScn::Term() {
 extern "C" void Move__4CScnFv(CScnMoveView* self) {
     if (self->unk3E4 == 0 && self->unk3E7 == 0) {
         self->frame->update();
-        func_804C12A4(self->lgtCtrl);
+        scnLgtStepLightItems(self->lgtCtrl);
         self->itemPool->update();
         self->filterMan->update();
         self->fadeMan->update();

@@ -170,7 +170,7 @@ void CMenuBattleDamage::Init() {
         {
             nw4r::lyt::Pane* root = e.mLayout0->GetRootPane();
             u32 font = getPackedFont();
-            func_8013676C(root, font);
+            ApplyFontToTxtPanes(root, font);
         }
         e.mLayout0->UnbindAllAnimation();
 
@@ -185,7 +185,7 @@ void CMenuBattleDamage::Init() {
                 static_cast<CMenuBattleDamageFontView*>(
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                         1, e.mLayout1));
-            func_8013676C(root, fontObj->sf7());
+            ApplyFontToTxtPanes(root, fontObj->sf7());
         }
 
         e.mLayout1->SetAnimationEnable(e.mAnim3, true);
@@ -353,7 +353,7 @@ body:
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
 
     // Draw order: start with 0..31, then bubble-sort active entries to
     // the front (by ascending field_31), leaving inactive entries last.

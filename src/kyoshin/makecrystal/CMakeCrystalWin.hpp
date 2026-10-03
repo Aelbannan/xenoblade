@@ -82,10 +82,10 @@ int getCrystalStateB(CModelDispMakeCrystal* self);
 int getCrystalStateC(CModelDispMakeCrystal* self);
 int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self);
 void setCrystalCursor(CModelDispMakeCrystal* self, u32 val);
-void func_80221B90(CModelDispMakeCrystal* self, u8 a, u8 b);
+void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 a, u8 b);
 void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
 void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
-void func_8021C6E4(CModelDispMakeCrystal* self);
+void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
 void func_80210E9C(u8* dst, const u8* src);
 int MenuTutorialIsCreated();
 int getCrystalBoxSysWin(CMCCrystalBox* self);
@@ -93,7 +93,7 @@ int isCrystalBoxReady(CMCCrystalBox* self);
 void openCrystalBox(CMCCrystalBox* self);
 void teardownCrystalBox(CMCCrystalBox* self);
 void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* drawInfo);
-int func_8021625C(CMCCrystalBox* self);
+int rebuildCrystalBoxSelTable(CMCCrystalBox* self);
 u8 getCrystalBoxKindA(CMCCrystalBox* self);
 u8 getCrystalBoxKindB(CMCCrystalBox* self);
 void func_80211CEC(CMCCrystalBox* self, const CMCCrystalBox* src);
@@ -123,11 +123,11 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 extern "C" int getCrystalBoxActive(CMCCrystalBox* self);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" int func_8021CA3C(CModelDispMakeCrystal* self);
-extern "C" void func_8021CB20(CModelDispMakeCrystal* self);
+extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
+extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);
 
-// DrawInfo setup helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// DrawInfo setup helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80535B70[];   // CMakeCrystalWin vtable data (IScnRender sub-vtable at +0x88)

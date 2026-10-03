@@ -8,15 +8,15 @@
 // us-802a98c0 (HageVxOnComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
 void HageVxOnComplete(CVS_THREAD_HAGE* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
 // us-802a9908 (func_802A71D4)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20: load handle, bias if non-null, compare with voicePtr
     CVoiceHandle* handle = self->field_0x20;
@@ -45,7 +45,7 @@ void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
 // the voice is still active (CActorParam slot 138 at 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0xC27).
 void func_802A70C8(CVS_THREAD_HAGE* self) {
-    if (func_802A3E88(self) == 0) {
+    if (IsThreadVoiceActive(self) == 0) {
         // v0 declared before p so the lwzu result claims the lower scratch
         // register (retail: r4) and the base pointer takes r5.
         u32 v0;
@@ -68,9 +68,9 @@ void func_802A70C8(CVS_THREAD_HAGE* self) {
                 }
                 int voiceId = ml::math::mtRand(2);
                 voiceId += 0xC27;
-                if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+                if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
                     // Playback failed -- call completion callback
-                    self->func_802A3B50();
+                    self->PlayThreadVoice();
                 }
             }
         }
@@ -89,7 +89,7 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (!(owner2->field_0x3F00 & 2)) return NULL;
 
     // Allocate handle buffer (0xF0 bytes, discarded)
-    if (func_802A330C(0xF0, 1) == NULL) return NULL;
+    if (CCharVoiceMan_DispatchById(0xF0, 1) == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_HAGE object
     CVS_THREAD_HAGE* self = (CVS_THREAD_HAGE*)CCharVoiceMan_AllocVoiceArena(0x28);
@@ -132,7 +132,7 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 // random selection: mtRand(4) picks between three specific voice IDs
 // (0xC24, 0xC25, 0xC26) or a dynamic ID based on the slot 2 iterator
 // (iter + 0xC1C) if the iterator check and slot conflict check both pass.
-// Retries until a voice ID is selected, then plays via func_802A3C44.
+// Retries until a voice ID is selected, then plays via TryRequestVoice.
 void func_802A6F8C(CVS_THREAD_HAGE* self) {
     // Copy init data; slot-1 handle is read mid-copy (between word 0 and
     // word 1 loads) as in retail, so keep the reads interleaved.
@@ -155,7 +155,7 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
     if (((cf::CActorParam*)handle)->CActorParam_isBattleLocked() != 0) return;
 
     // Get voice iterator from slot 2 handle
-    int iter = func_802A77E8(self->field_0x24);
+    int iter = HpVoice_MapSubState(self->field_0x24);
     int voiceId = -1;
 
     // Loop until a voice ID is selected
@@ -166,8 +166,8 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
         switch (roll) {
         default: // 0 -- dynamic selection: iterator must pass its check and
                  // the two slots must not conflict, otherwise retry.
-            if (func_802A7850(iter) != 0 &&
-                func_802A7B90(self->field_0x20, self->field_0x24) == 0) {
+            if (HpVoice_ValidIter(iter) != 0 &&
+                HpVoice_CheckPair26(self->field_0x20, self->field_0x24) == 0) {
                 voiceId = iter + 0xC1C;
             }
             break;
@@ -190,9 +190,9 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
     if (playHandle != NULL) {
         voicePtr = &playHandle->voice;
     }
-    if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+    if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
         // Playback failed -- call completion callback
-        self->func_802A3B50();
+        self->PlayThreadVoice();
     }
 }
 

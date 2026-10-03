@@ -74,7 +74,7 @@ struct CCur18Data {
 };
 
 // Abstract view of the object returned by CDeviceFont::getFontInfo; the
-// 8th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
+// 8th user virtual (vtable+0x24) yields the u32 bound by ApplyFontToTxtPanes.
 // All-pure, never constructed directly (CPartyState::FontHelper scheme) - a
 // real C++ virtual call forces MWCC's canonical r12 vtable dispatch.
 class CQuestWinFontView {
@@ -209,11 +209,11 @@ extern char lbl_eu_8052D238[];
 // Window-count .sbss counter (incremented by the ctor, decremented by Term).
 extern u32 lbl_eu_80663FD0;
 
-// Quest-name table indexed by func_80138138(field_B8) then passed to
+// Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to
 // BdatGetU8Direct (func_80122EF8).
 extern u32 lbl_eu_80573D18[];
 
-// Quest-name table indexed by func_80138138(field_B8) then passed to getFP
+// Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to getFP
 // (onQuestFileEvent stores the file pointer at +0xD0).
 extern const char* lbl_eu_8052CFF4[];
 
@@ -253,7 +253,7 @@ extern const f32 lbl_eu_80667140;
 // re-written by the dtor (with the +0x24/+0xAC IWorkEvent/IScnRender slots).
 extern char lbl_eu_8052D0F0[];
 
-// Quest-name table indexed by func_80138138(field_B8) (Init).
+// Quest-name table indexed by SearchThresholdIdx(field_B8) (Init).
 extern const char* lbl_eu_8052CF80[];
 
 // Window arc path pointer (.sdata) fed to CDeviceFile::readFile (Init).
@@ -286,7 +286,7 @@ void Cur_DrawLayout(void*, void*); // cursor draw
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
-u32 func_80138138(u32 questId);             // quest id -> name-table index
+u32 SearchThresholdIdx(u32 questId);             // quest id -> name-table index
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
 void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
@@ -332,7 +332,7 @@ u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
 void getEntry__5CBdatFUl(u32);
-void func_80137924(void*, void*, void*, void*);
+void ScalePaneWorldPos(void*, void*, void*, void*);
 void playUISound__FUl(u32);
 void incrementEventCounter__FUl(u32);
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
@@ -364,8 +364,8 @@ void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
-u32 func_8013732C(u32);
-void* func_80138DA4(const char*);
+u32 BdatGetRankByName(u32);
+void* GetBdatNameByNumId(const char*);
 u32 CtrlObjectParam_GetWorkField50();
 void CtrlObjectParam_SetWorkField50(u16);
 void UIWin_CreateMenuUpdate(u32, u32, u32, u32);

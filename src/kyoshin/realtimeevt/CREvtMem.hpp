@@ -40,8 +40,8 @@ extern const f32 lbl_eu_80667650;
 
 // Arena bounds helpers imported from the CInfoCf TU (bodies in
 // kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250).
-u32 InfoCfGetUnk0C(void);
-u32 InfoCfGetUnk10(void);
+extern "C" void* InfoCfGetUnk0C(void);
+extern "C" void* InfoCfGetUnk10(void);
 
 // Initialise the arena and allocate the two realtime-event chunks.
 extern "C" u32 func_80167D40(u32 size, u32 offset);

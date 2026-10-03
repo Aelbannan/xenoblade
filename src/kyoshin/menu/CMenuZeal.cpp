@@ -219,7 +219,7 @@ body:
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout1, &drawInfo, 0, 1);
         drawLayout(mLayout2, &drawInfo, 0, 1);
         if (mField_A0 != 0) {

@@ -82,7 +82,7 @@ extern "C" void func_804E3FB0(CScheduleItem* item, ScheduleEntry* entries,
         } else {
             slotVal = -1;
         }
-        s16 handle = func_804DFCC4(entries, entry, sched, slotVal, count & 0xFF);
+        s16 handle = SchedFx_ClaimConstruct(entries, entry, sched, slotVal, count & 0xFF);
         item->mSlots[count] = handle;
         if (handle >= 0) {
             if (slotIndex >= 0) {
@@ -181,7 +181,7 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
         obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL && obj->mField2E > 0) {
             void* arg = func_804CB5FC(obj);
-            func_804DF808(sched, arg, obj, delta);
+            SchedElem_ClaimNode(sched, arg, obj, delta);
         }
     }
 }
@@ -212,7 +212,7 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
     flags->b11 = hasScale;
 
     if (flags->b13 || flags->b12 || flags->b11) {
-        func_804DCA88(&self->mMatrix, &self->field_0x28);
+        CERotEulerXYZ(&self->mMatrix, &self->field_0x28);
         self->mMatrix.m[0][3] += self->field_0x1c;
         self->mMatrix.m[1][3] += self->field_0x20;
         self->mMatrix.m[2][3] += self->field_0x24;

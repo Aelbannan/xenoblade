@@ -34,9 +34,9 @@ void CollCircle_DrawDebugShape(void* context, cf::CfObjectColl* shape){
 }
 
 // CollCircle_ForwardDrawCall: debug draw helper that forwards position + radius to
-// func_800A50AC after going through the shape's virtual getter.
+// VecMath_PushOutCircleXZ after going through the shape's virtual getter.
 void CollCircle_ForwardDrawCall(void* context, cf::CfObjectColl* shape, void* c, void* d){
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    func_800A50AC(c, pos, static_cast<float>(uval), d);
+    VecMath_PushOutCircleXZ(c, pos, static_cast<float>(uval), d);
 }

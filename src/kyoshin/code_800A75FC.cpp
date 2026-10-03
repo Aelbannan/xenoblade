@@ -9,6 +9,16 @@
 // Forward declarations for external functions in other TUs.
 struct GlobalStruct_80572B94;
 
+// Arts-list helpers defined in cf/CtrlObjectParam.cpp. The TU's own header
+// (include/kyoshin/code_800A75FC.hpp) already declares the rest of the family;
+// these two are missing there. The allocator takes retail's third register
+// (r5 = 0 at every retail call site, verified in kyoshin/code_800A75FC asm)
+// which the callee never reads.
+extern "C" void* CtrlObjectParam_AllocArtsListNode(void* list, u32 value, u32 flag);
+// Word values (index/value) travel as void* at this TU's call sites, which is
+// ABI-identical to the owner's u32 parameters (all four go in registers).
+extern "C" int CtrlObjectParam_WriteArtsListEntry(void* list, void* target, void* index, void* value);
+
 // View of retail blocks that store a size word at +0xC.
 struct SizeWordAtC {
     u32 start; // 0x0
@@ -149,25 +159,25 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
     }
 
     // --- Sub-allocations from the three regions ---
-    g->field_0x20 = func_800A3594(blk + 0x10, 0x300000, 0);
-    g->field_0xA0 = func_800A3594(blk + 0x10, 0x00051000, 0);
-    g->field_0xA4 = func_800A3594(blk + 0x10, 0x46800, 0);
-    g->field_0xA8 = func_800A3594(blk + 0x10, 0x10000, 0);
-    g->field_0x1C = func_800A3594(blk + 0x10, 0xA000, 0);
+    g->field_0x20 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x10, 0x300000, 0);
+    g->field_0xA0 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x10, 0x00051000, 0);
+    g->field_0xA4 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x10, 0x46800, 0);
+    g->field_0xA8 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x10, 0x10000, 0);
+    g->field_0x1C = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x10, 0xA000, 0);
 
-    g->field_0xAC = func_800A3594(blk + 0x30, 0xF4000, 0);
-    g->field_0x2C = func_800A3594(blk + 0x30, 0xA90000, 0);
-    g->field_0x24 = func_800A3594(blk + 0x30, 0xD00800, 0);
-    g->field_0x38 = func_800A3594(blk + 0x30, 0x106000, 0);
-    g->field_0x3C = func_800A3594(blk + 0x30, 0x1A0000, 0);
-    g->field_0x50 = func_800A3594(blk + 0x30, 0xF800, 0);
-    g->field_0x4C = func_800A3594(blk + 0x30, 0x40000, 0);
-    g->field_0x9C = func_800A3594(blk + 0x30, 0x5F8800, 0);
-    g->field_0x28 = func_800A3594(blk + 0x30, 0x718800, 0);
+    g->field_0xAC = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0xF4000, 0);
+    g->field_0x2C = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0xA90000, 0);
+    g->field_0x24 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0xD00800, 0);
+    g->field_0x38 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0x106000, 0);
+    g->field_0x3C = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0x1A0000, 0);
+    g->field_0x50 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0xF800, 0);
+    g->field_0x4C = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0x40000, 0);
+    g->field_0x9C = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0x5F8800, 0);
+    g->field_0x28 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x30, 0x718800, 0);
 
     g->field_0x30 = zero;
-    g->field_0x40 = func_800A3594(blk + 0x50, 0x20000, 0);
-    g->field_0x44 = func_800A3594(blk + 0x50, 0x28000, 0);
+    g->field_0x40 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x50, 0x20000, 0);
+    g->field_0x44 = (int)CtrlObjectParam_AllocArtsListNode(blk + 0x50, 0x28000, 0);
 
     // base addresses derived from field_0x2C
     u32 base = g->field_0x2C;
@@ -257,9 +267,9 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
     gbl->field_0x34 = zero;
     gbl->field_0xB0 = zero;
 
-    u32 alloc = func_800A3594(blk + 0xb0, 0x700000, 0);
+    u32 alloc = (int)CtrlObjectParam_AllocArtsListNode(blk + 0xb0, 0x700000, 0);
     g->field_0x54 = alloc;
-    func_800A39E8(blk + 0xb0, (void*)alloc, (void*)2, (void*)0x11111111);
+    CtrlObjectParam_WriteArtsListEntry(blk + 0xb0, (void*)alloc, (void*)2, (void*)0x11111111);
     g->field_0x58 = zero;
 }
 
@@ -745,7 +755,7 @@ extern "C" u32 KyoshinHeap_GetBlk98(int index) {
 extern "C" int KyoshinHeap_Alloc38(int param) {
     if (param == 0) return 0;
     if (param > 0) {
-        return func_800A3594((void*)lbl_eu_80572B38, param, 0);
+        return (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B38, param, 0);
     } else {
         return func_800A36A4((void*)lbl_eu_80572B38, -param, 0);
     }
@@ -766,7 +776,7 @@ extern "C" int KyoshinHeap_Contains38(u32 param) {
 extern "C" int KyoshinHeap_Register38(void* p1, void* p2, void* p3) {
     int result = 0;
     if (p1 != 0) {
-        func_800A39E8((void*)lbl_eu_80572B38, p1, p2, p3);
+        CtrlObjectParam_WriteArtsListEntry((void*)lbl_eu_80572B38, p1, p2, p3);
         result = 1;
     }
     return result;
@@ -869,15 +879,15 @@ extern "C" int func_800A8E6C(int size, int arg2) {
         g->field_0x54 = 0;
     }
     if (g->field_0x58 == 0) {
-        int h = func_800A3594((void*)lbl_eu_80572B78, 0x500000, 0);
+        int h = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B78, 0x500000, 0);
         g->field_0x58 = h;
         if (h != 0) {
-            func_800A39E8((void*)lbl_eu_80572B78, (void*)h, (void*)2, (void*)0x99999999);
+            CtrlObjectParam_WriteArtsListEntry((void*)lbl_eu_80572B78, (void*)h, (void*)2, (void*)0x99999999);
         }
     }
     int r;
     if (size > 0) {
-        r = func_800A3594((void*)lbl_eu_80572B78, size, arg2);
+        r = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B78, size, arg2);
     } else {
         r = func_800A36A4((void*)lbl_eu_80572B78, -size, arg2);
     }
@@ -979,16 +989,16 @@ extern "C" int func_800A9134() {
     CtrlObjectParam_InitArtsListEntry((void*)lbl_eu_80572B78, g->field_0x28, 0x70E800, 4);
     g->field_0x54 = 0;
     g->field_0x58 = 0;
-    int h = func_800A3594((void*)lbl_eu_80572B78, 0x700000, 0);
+    int h = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B78, 0x700000, 0);
     g->field_0x54 = h;
-    func_800A39E8((void*)lbl_eu_80572B78, (void*)h, (void*)2, (void*)0x22222222);
+    CtrlObjectParam_WriteArtsListEntry((void*)lbl_eu_80572B78, (void*)h, (void*)2, (void*)0x22222222);
     return g->field_0x54;
 }
 
 extern "C" int KyoshinHeap_Register78(void* p1, void* p2, void* p3) {
     int result = 0;
     if (p1 != 0) {
-        func_800A39E8((void*)lbl_eu_80572B78, p1, p2, p3);
+        CtrlObjectParam_WriteArtsListEntry((void*)lbl_eu_80572B78, p1, p2, p3);
         result = 1;
     }
     return result;
@@ -1093,7 +1103,7 @@ extern "C" void KyoshinHeap_AllocFld10(int index) {
     if (index == 0) {
         r = 0;
     } else if (index > 0) {
-        r = func_800A3594((void*)lbl_eu_80572B58, index, 0);
+        r = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B58, index, 0);
     } else {
         r = func_800A36A4((void*)lbl_eu_80572B58, -index, 0);
     }
@@ -1133,7 +1143,7 @@ extern "C" void KyoshinHeap_AllocFld14(int index) {
     if (index == 0) {
         r = 0;
     } else if (index > 0) {
-        r = func_800A3594((void*)lbl_eu_80572B58, index, 0);
+        r = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B58, index, 0);
     } else {
         r = func_800A36A4((void*)lbl_eu_80572B58, -index, 0);
     }
@@ -1174,7 +1184,7 @@ extern "C" void KyoshinHeap_AllocFld18(int index) {
     if (neg == 0) {
         r = 0;
     } else if (neg > 0) {
-        r = func_800A3594((void*)lbl_eu_80572B58, neg, 0);
+        r = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B58, neg, 0);
     } else {
         r = func_800A36A4((void*)lbl_eu_80572B58, index, 0);
     }
@@ -1215,7 +1225,7 @@ extern "C" void KyoshinHeap_AllocFld34(int index) {
     if (neg == 0) {
         r = 0;
     } else if (neg > 0) {
-        r = func_800A3594((void*)lbl_eu_80572B58, neg, 0);
+        r = (int)CtrlObjectParam_AllocArtsListNode((void*)lbl_eu_80572B58, neg, 0);
     } else {
         r = func_800A36A4((void*)lbl_eu_80572B58, index, 0);
     }

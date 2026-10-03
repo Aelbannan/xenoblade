@@ -34,15 +34,15 @@ struct CVSPlayQueue {
 
 // C-linkage imports (genuine retail C-ABI symbols from sibling voice modules).
 extern "C" {
-    int    func_802A3E88(CVS_THREAD* self);
-    void   func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int    func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int    func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int    IsThreadVoiceActive(CVS_THREAD* self);
+    void   DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int    TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int    RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*    CCharVoiceMan_AllocVoiceArena(int size);
     void   __ct__cf_CVS_THREAD();
-    int    func_802A77E8(CVoiceHandle* handle);
-    CVoiceHandle* func_802A7A54(int a);
+    int    HpVoice_MapSubState(CVoiceHandle* handle);
+    CVoiceHandle* HpVoice_FindBySubState(int a);
     void*  findObjectById__Fi(int id);
     void*  func_8016FE34(void* src);
 }

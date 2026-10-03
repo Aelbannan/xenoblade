@@ -90,7 +90,7 @@ namespace cf {
 
     // Minimal mirror of the battle-object sub-object at +0x04: its vtable
     // slot 0x30 returns a word holder (first word = actor id for
-    // func_80174C98). Declared virtual N lands at vtable byte offset (N+2)*4
+    // testActorStatus). Declared virtual N lands at vtable byte offset (N+2)*4
     // (kyoshin builds with -RTTI on).
     class CChainSub4 {
     public:

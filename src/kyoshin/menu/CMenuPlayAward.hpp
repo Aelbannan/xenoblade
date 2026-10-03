@@ -138,7 +138,7 @@ public:
 
 // View into the object returned by CDeviceFont::getFontInfo (cf.
 // CMenuBattleCommu.hpp): with MWCC's 2-entry vtable prefix the 8th virtual
-// lands at +0x24 and returns the font handle passed to func_8013676C.
+// lands at +0x24 and returns the font handle passed to ApplyFontToTxtPanes.
 // Never instantiated here, so no vtable is emitted.
 class CPlayAwardFontObj {
 public:
@@ -290,9 +290,9 @@ extern "C" int KyoshinHeap_GetField44();
 // Scene-active query (retail-unmangled; gates cbRenderBefore draws).
 extern "C" int IsMenuState621F0();
 
-// DrawInfo layout setup (retail MANGLED name func_80137250__FPQ34nw4r3lyt8DrawInfo;
+// DrawInfo layout setup (retail MANGLED name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo;
 // declared with C++ linkage so MWCC re-derives the mangled reloc).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Layout DrawInfo ctor/dtor (retail keeps the mangled names verbatim). A
 // class-typed local would make MWCC virtual-dispatch the dtor, so cbRenderBefore
@@ -424,7 +424,7 @@ extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 
 // Pane-position translation helper (retail-unmangled): resolve a position in
 // pane1's space into pane2/root space (cf. CSelShopWin/CSysWin usage).
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Scroll-bar layout load + per-frame update/draw helpers, and the cursor
 // update helper (retail-unmangled names; CScrollBar.hpp cannot be included).

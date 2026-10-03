@@ -277,7 +277,7 @@ struct CFloorMapCtorView {
 
 // Colour/name query used by the cursor ctor: returns a pointer to four s16
 // colour entries for the named layout group.
-s16* func_80139658(nw4r::lyt::Layout* layout, const char* name, int index);
+s16* PaneMatGetS16QuadByName(nw4r::lyt::Layout* layout, const char* name, int index);
 extern const char lbl_eu_805370EC[];
 extern const char lbl_eu_805370D4[];
 extern const char lbl_eu_805370BC[];
@@ -298,12 +298,12 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 struct CFloorMapLayoutData0;
 struct CFloorMapRowList;
 extern "C" void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0*);
-extern "C" void func_80246330(CFloorMapLayoutBlock*);
-extern "C" u32 func_8024FB78(void*);
-extern "C" void func_8024830C(void*, void*);
-extern "C" void func_80247490(void*, u8, u32, f32);
-void func_8024808C(CFloorMapFull* self, u32 idx);
-extern "C" void func_8024B6F8(CFloorMapRowList*, void*, u32, u32, u32);
+extern "C" void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock*);
+extern "C" u32 FloorMap_FindFloorRow(void*);
+extern "C" void FloorMap_ResolveMapPos(void*, void*);
+extern "C" void FloorMap_ReloadMarkerPanes(void*, u8, u32, f32);
+void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx);
+extern "C" void FloorMap_SetRowTexPalette(CFloorMapRowList*, void*, u32, u32, u32);
 extern "C" u32 getAllocHandle__10CLibLayoutFv();
 
 // Per-map layout-name table copied by OnFileEvent branch 2 (28 u32 names,
@@ -409,7 +409,7 @@ struct CFloorMapCursor {
     void* field_3134;         // +0x3134 - scrollbar widget pointer
 };
 
-// 0x30C-stride floor-name entry written by func_80245950 (base at
+// 0x30C-stride floor-name entry written by FloorMap_RefreshFloorRows (base at
 // cursor + fi*0x30C): the floor-id/name fields sit at +0x10..+0x17 (the
 // marker-block header at base+0x10) and the row-count byte at +0x318 (the
 // marker block's count at +0x308).
@@ -424,7 +424,7 @@ struct CFloorMapFloorNameEntry {
 };
 
 // 0x18-byte map-marker record shared by the local entry table (built by
-// func_80245DF8) and the per-floor marker lists the entries are merged into.
+// FloorMap_RebuildMarkers) and the per-floor marker lists the entries are merged into.
 struct CFloorMapMarkerEntry {
     u16 id;      // +0x00 row/map id
     u8 type;     // +0x02 marker type
@@ -449,7 +449,7 @@ struct CFloorMapMarkerBlock {
 };
 
 // Global gimmick settings container returned by getUnk80664658 (flag word at
-// +0x214); used by the marker flag check in func_80245DF8.
+// +0x214); used by the marker flag check in FloorMap_RebuildMarkers.
 struct CFloorMapGimmickGlobal {
     u8 _00[0x214];
     u32 field_214;   // +0x214
@@ -464,7 +464,7 @@ struct CFloorMapCursorTarget {
 
 // 0x18-byte map row inside a floor block: the row-id u16 sits at +0x00 of
 // each row; the row array starts at floorBlock+0x214. The byte at +0x02 and
-// the pointer at +0x04 are handed to func_8024808C by OnFileEvent.
+// the pointer at +0x04 are handed to FloorMap_PlaceFloorMarker by OnFileEvent.
 struct CFloorMapRow {
     u16 field_00;             // +0x00 row id
     u8 field_02;              // +0x02
@@ -483,7 +483,7 @@ struct CFloorMapFloorBlock {
     u8 field_514;             // +0x514 row count
 };
 
-// Linked-list node view used by func_80248558: the child panes of the map
+// Linked-list node view used by FloorMap_PickMarkerRow: the child panes of the map
 // pane are walked through their raw ut::LinkListNode fields (node = Pane+4),
 // so the embedded pane name sits at node+0xB8 (= Pane::mName at 0xBC).
 struct CFloorMapChildNode {
@@ -507,7 +507,7 @@ struct CFloorMapHolderChildren {
     CFloorMapChildNode* first; // +0x14
 };
 
-// Two-step anchor used by func_80247490 (retail forms base+0x10 first, then
+// Two-step anchor used by FloorMap_ReloadMarkerPanes (retail forms base+0x10 first, then
 // reads the child-list node at +0x04): keeps MWCC from folding the address
 // into a single pane+0x14 displacement.
 struct CFloorMapGroupAnchor {
@@ -517,13 +517,13 @@ struct CFloorMapGroupAnchor {
 
 // One 8-byte slot of the 20-entry layout array at CFloorMap+0x150: the
 // loaded layout plus the truncated world-y of the row marker written by
-// func_80246330.
+// FloorMap_RefreshLayoutBlock.
 struct CFloorMapLayoutSlot {
     nw4r::lyt::Layout* layout; // +0x00
     s32 posY;                  // +0x04
 };
 
-// Block addressed by func_80246330 (the address of CFloorMap::mLayouts150):
+// Block addressed by FloorMap_RefreshLayoutBlock (the address of CFloorMap::mLayouts150):
 // 20 layout slots, the populated-slot count byte, and the shared arc resource
 // accessor used to load them.
 struct CFloorMapLayoutBlock {
@@ -533,7 +533,7 @@ struct CFloorMapLayoutBlock {
     nw4r::lyt::ArcResourceAccessor* accessor; // +0xA4
 };
 
-// Translate view of an nw4r::lyt::Pane used by func_80246330's marker
+// Translate view of an nw4r::lyt::Pane used by FloorMap_RefreshLayoutBlock's marker
 // placement (writes +0x2C/+0x30/+0x34 directly).
 struct CFloorMapPaneTransXYZ {
     u8 _00[0x2C];
@@ -542,10 +542,10 @@ struct CFloorMapPaneTransXYZ {
     f32 trans34; // +0x34
 };
 
-// View of the layout-slot block passed to func_80248558 (the address of
+// View of the layout-slot block passed to FloorMap_PickMarkerRow (the address of
 // CFloorMap::mLayout140): +0x00 is the map Layout*, +0x08 the pane whose
 // FindPaneByName resolves the row-marker pane names. +0x0C holds the
-// current map-row id (read by func_802497B0's marker merge loop).
+// current map-row id (read by FloorMap_PlaceMarkers's marker merge loop).
 struct CFloorMapLayoutSlots {
     nw4r::lyt::Layout* layout; // +0x00
     u32 _04;                   // +0x04
@@ -607,7 +607,7 @@ struct CCur18Data {
     u8 field_15;    // +0x15
 };
 
-// Object used by func_8024B6F8 (row-visibility update); only +0x00 is used.
+// Object used by FloorMap_SetRowTexPalette (row-visibility update); only +0x00 is used.
 struct CFloorMapRowList {
     nw4r::lyt::Layout* mData; // +0x00
 };
@@ -670,7 +670,7 @@ struct CFloorMapObj {
     u8 m91;                                  // 0x91 - marker kind (6 = landmark)
 };
 
-// 0x4C-byte landmark entry walked by func_8024A748 case 2 (CPartsChange_GetLandmarkTable
+// 0x4C-byte landmark entry walked by FloorMap_PlaceWorldMarker case 2 (CPartsChange_GetLandmarkTable
 // array); the id sits at +0x1C.
 struct CFloorMapCase2Elem {
     f32 x;                                   // +0x00
@@ -692,14 +692,14 @@ extern "C" void* prepareReslistArg(int);
 extern "C" void* getReslistBC8();
 extern "C" void* getReslistB68();
 extern "C" void* CPartsChange_GetLandmarkTable();
-extern "C" void func_80141DC4(float*, int = 0);
+extern "C" void bdatGetPosXYZ(float*, int = 0);
 
 // C-linkage UI helper imports. buildLayout/bindLayoutAnimTransform keep their retail
 // mangled names through MWCC's natural C++ mangling; the flat-named helpers
 // need extern "C" so MWCC does not append a parameter suffix.
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 // C-linkage name/label helpers from code_80135FDC.cpp. BdatTouchStringCell builds
 // a pane name from a format string, a base string and an index (JP retail
 // symbol BdatTouchStringCell__FPcPcUl = (char*, char*, u32); fixed args so MWCC
@@ -707,12 +707,12 @@ extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 extern "C" void CScrollBar_PlaceThumb(void*, u16);
 // C linkage so the same-TU definition emits the retail symbol
 // FloorMap_RefreshCursorRows instead of the mangled C++ name at every call site.
 extern "C" void FloorMap_RefreshCursorRows(void*);
-extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void* PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
@@ -721,21 +721,21 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // mangled name playUISound__FUl.
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
-extern "C" u32 func_80248558(void*);
-extern "C" void func_80248A6C(CFloorMapLayoutSlots*);
-extern "C" void func_8024B234(CFloorMapFull*);
-extern "C" void func_8024AEEC(void*);
-extern "C" void func_8024A748(void*);
-extern "C" void func_8024A448(void*);
-extern "C" void func_80249C1C(CFloorMapLayoutSlots*);
-extern "C" void func_802497B0(void*);
-extern "C" void func_80249344(CFloorMapLayoutSlots*);
-extern "C" void func_80248ED8(CFloorMapLayoutSlots*);
+extern "C" u32 FloorMap_PickMarkerRow(void*);
+extern "C" void FloorMap_PlaceMarkersB(CFloorMapLayoutSlots*);
+extern "C" void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull*);
+extern "C" void FloorMap_PlacePlayerMarker(void*);
+extern "C" void FloorMap_PlaceWorldMarker(void*);
+extern "C" void FloorMap_PlaceLandmarks(void*);
+extern "C" void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots*);
+extern "C" void FloorMap_PlaceMarkers(void*);
+extern "C" void FloorMap_PlaceMarkersD(CFloorMapLayoutSlots*);
+extern "C" void FloorMap_PlaceMarkersC(CFloorMapLayoutSlots*);
 // C linkage so the same-TU definition emits the retail plain name.
-extern "C" void* func_80248920(void*, const char*, f32, f32, void*, const char*);
+extern "C" void* FloorMap_CreateMarkerPicture(void*, const char*, f32, f32, void*, const char*);
 extern "C" void FloorMap_SetCursorState(void*, u16);
-extern "C" void func_802452C4(void*);
-extern "C" void func_8024B4CC(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
+extern "C" void FloorMap_CursorUp(void*);
+extern "C" void FloorMap_AccumPaneTranslate(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
 extern void playUISound(u32);
 
 // C-ABI imports used by the floor-map update functions (retail plain names).
@@ -750,8 +750,8 @@ extern "C" s16 BdatGetS16Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
-extern "C" void func_80125D00(f32* out, nw4r::lyt::Pane* pane, u16* str);
+extern "C" void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
+extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
 extern "C" s32 BdatGetS8Direct(const void*, const void*, s32);
 // Height thresholds picking which of the three status panes lights up.
 extern f32 lbl_eu_80668780;
@@ -816,8 +816,8 @@ struct CFloorMapPaneRotate {
     f32 rotZ; // +0x40
 };
 
-// C-ABI helpers used by func_80245950 (defined in code_80135FDC.cpp).
-extern "C" int func_8013AC3C(u8 max, u8 count, u16 off);
+// C-ABI helpers used by FloorMap_RefreshFloorRows (defined in code_80135FDC.cpp).
+extern "C" int GetMapItemBitFlag(u8 max, u8 count, u16 off);
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern u32 lbl_eu_8066479C;
 extern u32 lbl_eu_806640A8;
@@ -868,10 +868,10 @@ public:
     virtual CFloorMapMgrSrc* getScaleSrc(); // +0x1C
 };
 
-// Per-table BDAT entry pointers + flat-name helpers used by func_80249C1C
+// Per-table BDAT entry pointers + flat-name helpers used by FloorMap_PlaceTypedMarkers
 // (retail symbols are unmangled).
 extern void* lbl_eu_80573D18[0x1C];
-int func_80138138(int idx);
+int SearchThresholdIdx(int idx);
 extern "C" u32 func_80138574(const char* name, u32 id);
 extern "C" u32 CheckState2CC8Active(u16 id);
 extern "C" CFloorMapVec3* GimFindPosByRow(CFloorMapGimmickGlobal* mgr, u16 id);

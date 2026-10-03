@@ -35,7 +35,6 @@ public:
     void* func_8046EF7C(CTaskLOD* task);
     void clearManagers();
     void updateLodTick();
-    float func_8046F01C();
     void func_8046F024(int a, int b);
 
 private:
@@ -150,6 +149,7 @@ extern "C" void setElementLodLevel__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTa
 extern "C" void setElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void refreshElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" float getElementScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" float getBaseScale__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void* getElementState__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
@@ -161,7 +161,7 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void scnLgtCallLightV26(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
 extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
-extern "C" void* func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
+extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
 extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
 extern "C" void scnLgtCallLightV27(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, void* a);
@@ -296,7 +296,7 @@ extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
 }
 
 // Allocate/replace the secondary LODMemMan when `enable` is set, then return
-// the active LODMemMan's func_8046D898 result (0 when there is no singleton).
+// the active LODMemMan's resetAndReload result (0 when there is no singleton).
 extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
     if (lbl_eu_80665730[0]) {
         if (enable) {
@@ -318,7 +318,7 @@ extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
             t->mpActiveLOD = lod;
             setPauseFlag__Q23LOD9LODMemManFv(&t->mLODMemMan, 0);
         }
-        return func_8046D898__Q23LOD9LODMemManFv(
+        return resetAndReload__Q23LOD9LODMemManFv(
             lbl_eu_80665730[0]->mpActiveLOD, self, lbl_eu_80665730[0]->mParam1);
     }
     return 0;
@@ -365,7 +365,7 @@ void CTaskLOD::restorePrimaryLOD() {
 // entry at 0x8066A5B8 after the call).
 float CTaskLOD::getLODScale() {
     if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->func_8046F01C();
+        getBaseScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD);
     }
     return 1.0f;
 }

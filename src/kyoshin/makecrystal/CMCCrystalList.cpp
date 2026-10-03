@@ -34,7 +34,7 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" {
 u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-void func_8013676C(void*, u32);
+void ApplyFontToTxtPanes(void*, u32);
 char* BdatTouchStringCell(const void*, const void*, int);
 u8 BdatGetU8Direct(u32, const char*, u32);
 char* BdatGetPtrDirect(const void*, const void*);
@@ -91,7 +91,7 @@ extern "C" void* __dt__14CMCCrystalListFv(void* self, int flags) {
 // Retail 0x80222848: start async loads of the crystal-list layout archive
 // (root name) and its secondary archive (+0x1a), then clear mDataFlag.
 #pragma optimize_for_size on
-void func_80222848(CMCCrystalList* self)
+void crystalListLoadFiles(CMCCrystalList* self)
 {
     self->mFileHandle1 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_805092C0, self, 0, 0);
@@ -101,12 +101,12 @@ void func_80222848(CMCCrystalList* self)
 }
 #pragma optimize_for_size off
 
-// Per-state animation handlers for the func_802228B8 dispatcher (defined below).
+// Per-state animation handlers for the crystalListDispatch dispatcher (defined below).
 // extern "C" so call relocs resolve to the unmangled retail names; noinline
 // keeps MWCC's -inline auto from folding the handlers into the dispatcher.
 extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* self);
 extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* self);
-extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self);
+extern "C" void __declspec(noinline) crystalListPollSlots(CMCCrystalList* self);
 extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* self);
 extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* self);
 extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* self);
@@ -119,13 +119,13 @@ extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* sel
 // switch default) fall through to the same Animate tail.
 // NOTE: case 8 keeps its own label (not merged with default), otherwise MWCC
 // shrinks the jump-table bound immediate from 8 to 7.
-void func_802228B8(CMCCrystalList* self)
+void crystalListDispatch(CMCCrystalList* self)
 {
     if (self->mState != 0) {
         switch (self->mStateIdx) {
         case 0: crystalListWaitAnim1To2(self); break;
         case 1: crystalListWaitAnim2To3(self); break;
-        case 2: func_80223444(self); break;
+        case 2: crystalListPollSlots(self); break;
         case 3: crystalListRewindAnim2To5(self); break;
         case 4: crystalListRewindAnim1To0(self); break;
         case 5: crystalListWaitAnim3To3(self); break;
@@ -177,10 +177,10 @@ u8 CMCCrystalList::crystalListIsActive() { return mIsActive; }
 // Forward decls for functions defined later in this TU. They are C-linkage in
 // retail (unmangled symbols), so extern "C" keeps the call relocs unmangled.
 extern "C" void crystalListEnableAnim1(CMCCrystalList* self);
-extern "C" void func_80223988(CMCCrystalList* self);
-extern "C" void func_80223614(CMCCrystalList* self, u32 idx);
+extern "C" void crystalListDisableAnims(CMCCrystalList* self);
+extern "C" void crystalListStepSlot(CMCCrystalList* self, u32 idx);
 extern "C" void crystalListEnableAnim2(CMCCrystalList* self);
-extern "C" int func_8013BC0C(void*, void*);
+extern "C" int StepAnimLinkFrame(void*, void*);
 extern "C" void crystalListEnableAnim3(CMCCrystalList* self);
 extern "C" void crystalListEnableAnim4(CMCCrystalList* self);
 
@@ -296,9 +296,9 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
 // in an active state, also refresh visibility and clear the slot's active
 // flag (note: index runs 1..8, so slot 0 is never cleared - retail quirk).
 #pragma optimize_for_size on
-extern "C" void func_80222D9C(CMCCrystalList* self, u32 arg) {
+extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
     if (arg == 0 && self->mStateIdx >= 3) {
-        func_80223988(self);
+        crystalListDisableAnims(self);
     }
     for (u8 i = 1; i <= 8; i++) {
         char buf[0x28];
@@ -333,16 +333,16 @@ extern "C" void func_80222D9C(CMCCrystalList* self, u32 arg) {
 
 // Retail 0x80222F64: format the pane name for slot idx+1, look up two panes
 // through the layout root (a fixed label pane and the formatted slot pane),
-// then bind them via func_80137924.
+// then bind them via ScalePaneWorldPos.
 #pragma optimize_for_size on
-void func_80222F64(CMCCrystalList* self, int idx)
+void crystalListAlignSlot(CMCCrystalList* self, int idx)
 {
     char buf[0x28];
     sprintf(buf, &lbl_eu_805092C0[0x14b], idx + 1);
     nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
     void* paneA = rootPane->FindPaneByName(&lbl_eu_805092C0[0x158], true);
     void* paneB = rootPane->FindPaneByName(buf, true);
-    func_80137924(self, paneB, paneA, rootPane);
+    ScalePaneWorldPos(self, paneB, paneA, rootPane);
 }
 #pragma optimize_for_size off
 
@@ -356,7 +356,7 @@ void func_80222F64(CMCCrystalList* self, int idx)
 // Finally toggles pane visibility: first two panes follow `result`, the third
 // gets its inverse.
 #pragma optimize_for_size on
-void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
+void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
     u32 slot = idx + 1;
     nw4r::lyt::Pane* paneA;
     nw4r::lyt::Pane* paneB;
@@ -376,29 +376,29 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
     case 0:
         if (val >= 200) {
             self->mSlotStates[idx] = 1;
-            func_80223988(self);
+            crystalListDisableAnims(self);
             AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x167], NULL); // 'itmg'
             if (tex != NULL) {
-                func_80137F88(paneC, tex);
+                PaneSetTexPalette(paneC, tex);
             }
             result = 0;
         } else {
             self->mSlotStates[idx] = 0;
-            func_80223988(self);
+            crystalListDisableAnims(self);
             AnimResetToFirst(paneC, self->mAnimRes5);
         }
         break;
     case 1:
         if (val >= 300) {
             self->mSlotStates[idx] = 1;
-            func_80223988(self);
+            crystalListDisableAnims(self);
             AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
             if (tex != NULL) {
-                func_80137F88(paneC, tex);
+                PaneSetTexPalette(paneC, tex);
             }
             result = 0;
         } else {
@@ -406,8 +406,8 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x167], NULL);
             if (tex != NULL) {
-                func_80137F88(paneC, tex);
-                func_80223988(self);
+                PaneSetTexPalette(paneC, tex);
+                crystalListDisableAnims(self);
                 AnimJumpToLast(paneC, self->mAnimRes5);
             }
             result = 0;
@@ -419,8 +419,8 @@ void func_80223004(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             void* tex = self->mArcResAccessor->GetResource(
                 0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
             if (tex != NULL) {
-                func_80137F88(paneC, tex);
-                func_80223988(self);
+                PaneSetTexPalette(paneC, tex);
+                crystalListDisableAnims(self);
                 AnimJumpToLast(paneC, self->mAnimRes5);
             }
         }
@@ -445,7 +445,7 @@ void crystalListResetAnim4Play(CMCCrystalList* self)
 
 // Retail 0x80223334: switch to anim set 3 (crystalListEnableAnim3), rewind anim trans
 // 3 to (frame-size - sentinel) frames, then re-animate the layout.
-void func_80223334(CMCCrystalList* self)
+void crystalListResetAnim3(CMCCrystalList* self)
 {
     crystalListEnableAnim3(self);
     float f = self->mAnimTrans3->GetFrameSize();
@@ -473,32 +473,32 @@ extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* sel
     }
 }
 
-// Retail 0x80223444: for each crystal slot in state 1, run func_80223614.
+// Retail 0x80223444: for each crystal slot in state 1, run crystalListStepSlot.
 // u8 loop counter: MWCC masks it once into r4 (clrlwi), which serves both as
 // the array-index add operand and the second call argument.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self)
+extern "C" void __declspec(noinline) crystalListPollSlots(CMCCrystalList* self)
 {
     for (u8 i = 0; i < 8; i++) {
         if ((s8)self->mSlotStates[i] == 1) {
-            func_80223614(self, i);
+            crystalListStepSlot(self, i);
         }
     }
 }
 #pragma optimize_for_size off
 
-// func_80223614 (recovered): format the slot icon pane name (fmt @ 0x13E),
+// crystalListStepSlot (recovered): format the slot icon pane name (fmt @ 0x13E),
 // resolve the pane through the layout root FindPaneByName virtual, and when
-// the func_8013BC0C check passes, clear the slot's state byte.
+// the StepAnimLinkFrame check passes, clear the slot's state byte.
 // optimize_for_size merges the r30/r31 saves into the retail stmw r30
 // prologue (MWCC_CASES: two-param leaf prologue pattern).
 #pragma optimize_for_size on
-extern "C" void __declspec(noinline) func_80223614(CMCCrystalList* self, u32 idx) {
+extern "C" void __declspec(noinline) crystalListStepSlot(CMCCrystalList* self, u32 idx) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805092C0[0x13e], idx + 1);
     nw4r::lyt::Pane* pane =
         self->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    if (func_8013BC0C(pane, self->mAnimRes5) != 0) {
+    if (StepAnimLinkFrame(pane, self->mAnimRes5) != 0) {
         self->mSlotStates[idx] = 0;
     }
 }
@@ -597,7 +597,7 @@ extern "C" void __declspec(noinline) crystalListEnableAnim4(CMCCrystalList* self
 
 // Retail 0x802257C8: disable all four layout anim transforms, then enable the
 // root-pane animation resource (only once mStateIdx has reached state 3).
-extern "C" void __declspec(noinline) func_80223988(CMCCrystalList* self) {
+extern "C" void __declspec(noinline) crystalListDisableAnims(CMCCrystalList* self) {
     if (self->mStateIdx >= 3) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans2, false);
@@ -649,7 +649,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        func_8013676C(rootPane,
+        ApplyFontToTxtPanes(rootPane,
             reinterpret_cast<CMCCrystalListFontView*>(
                 CDeviceFont::getFontInfo(1, mLayout))
                 ->vf7());

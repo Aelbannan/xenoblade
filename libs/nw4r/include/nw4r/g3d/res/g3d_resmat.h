@@ -36,7 +36,7 @@ class ResGenMode : public ResCommon<ResGenModeData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResGenMode);
 
-    ResGenMode CopyTo(ResGenModeData* pDst) const;
+    ResGenMode CopyTo(void* pDst) const;
 
     void GXSetNumTexGens(u8 num);
     void GXSetNumChans(u8 num);
@@ -100,7 +100,7 @@ class ResMatMisc : public ResCommon<ResMatMiscData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResMatMisc);
 
-    ResMatMisc CopyTo(ResMatMiscData* pDst) const;
+    ResMatMisc CopyTo(void* pDst) const;
 
     GXBool GXGetZCompLoc() const;
     int GetLightSetIdx() const;
@@ -134,7 +134,7 @@ public:
     NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTexCoordGen, ResTexCoordGenDL);
 
     void DCStore(bool sync);
-    ResMatTexCoordGen CopyTo(ResTexCoordGenDL* pDst) const;
+    ResMatTexCoordGen CopyTo(void* pDst) const;
 
     void CallDisplayList(u8 numGens, bool sync) const;
 
@@ -163,7 +163,7 @@ class ResTexObj : public ResCommon<ResTexObjData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResTexObj);
 
-    ResTexObj CopyTo(ResTexObjData* pDst) const;
+    ResTexObj CopyTo(void* pDst) const;
 
     const GXTexObj* GetTexObj(GXTexMapID id) const;
     GXTexObj* GetTexObj(GXTexMapID id);
@@ -190,7 +190,7 @@ class ResTlutObj : public ResCommon<ResTlutObjData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResTlutObj);
 
-    ResTlutObj CopyTo(ResTlutObjData* pDst) const;
+    ResTlutObj CopyTo(void* pDst) const;
 
     const GXTlutObj* GetTlut(GXTlut tlut) const;
     GXTlutObj* GetTlut(GXTlut tlut);
@@ -233,7 +233,7 @@ class ResTexSrt : public ResCommon<ResTexSrtData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResTexSrt);
 
-    ResTexSrt CopyTo(ResTexSrtData* pDst) const;
+    ResTexSrt CopyTo(void* pDst) const;
 
     bool GetEffectMtx(u32 id, math::MTX34* pMtx) const;
     bool SetEffectMtx(u32 id, const math::MTX34* pMtx);
@@ -301,7 +301,7 @@ class ResMatChan : public ResCommon<ResChanData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatChan, ResChanData);
 
-    ResMatChan CopyTo(ResChanData* pDst) const;
+    ResMatChan CopyTo(void* pDst) const;
 
     bool GXGetChanMatColor(GXChannelID id, GXColor* pColor) const;
     void GXSetChanMatColor(GXChannelID id, GXColor color);
@@ -343,7 +343,7 @@ public:
     NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatPix, ResPixDL);
 
     void DCStore(bool sync);
-    ResMatPix CopyTo(ResPixDL* pDst) const;
+    ResMatPix CopyTo(void* pDst) const;
 
     void CallDisplayList(bool sync) const;
 
@@ -391,7 +391,7 @@ public:
     NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTevColor, ResTevColorDL);
 
     void DCStore(bool sync);
-    ResMatTevColor CopyTo(ResTevColorDL* pDst) const;
+    ResMatTevColor CopyTo(void* pDst) const;
 
     void CallDisplayList(bool sync) const;
 
@@ -434,7 +434,7 @@ public:
     NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatIndMtxAndScale, ResIndMtxAndScaleDL);
 
     void DCStore(bool sync);
-    ResMatIndMtxAndScale CopyTo(ResIndMtxAndScaleDL* pDst) const;
+    ResMatIndMtxAndScale CopyTo(void* pDst) const;
 
     void CallDisplayList(u8 indNum, bool sync) const;
 
@@ -487,9 +487,7 @@ public:
         return ResName(NULL);
     }
 
-    ResTex GetResTex() const {
-        return ResTex(ptr()->pTexData);
-    }
+    ResTex GetResTex() const;
 
     ResName GetPlttResName() const {
         const ResTexPlttInfoData& r = ref();

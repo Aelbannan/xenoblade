@@ -52,47 +52,47 @@ struct CScnItemModelNw4rFrameOut {
 };
 
 // Owner/scene-object handle (prefix mirrors CScnItemModelOwner's layout).
-// +0x5C is the virtual-light object fed by func_80489584 (scnVlUpdate
+// +0x5C is the virtual-light object fed by scnImN4UpdateBounds (scnVlUpdate
 // arg); +0x7C is the light-env handle read by scnImN4LgtModeSw; +0x8C is the
-// scene-root handle passed to the camera-hookup helpers func_8048F7A8 /
-// func_8048F630 by scnImN4SyncVisFlg / scnImN4SyncCamFlg.
+// scene-root handle passed to the camera-hookup helpers RootNw4r_DetachCamChild /
+// RootNw4r_AttachCamOne by scnImN4SyncVisFlg / scnImN4SyncCamFlg.
 struct CScnItemModelNw4rOwner {
     u8 _00[0x5C];                   // 0x00..0x5C
-    CScnVirtualLight* field_0x5C;   // 0x5C (scnVlUpdate arg, func_80489584)
+    CScnVirtualLight* field_0x5C;   // 0x5C (scnVlUpdate arg, scnImN4UpdateBounds)
     u8 _60[0x18];                   // 0x60..0x78
     u8* field_0x78;                 // 0x78 (fog manager, FogManCopyFogParams arg in the ctor)
     u8* field_7C;                   // 0x7C (light-env handle, scnImN4LgtModeSw)
     u8 _80[0x4];                    // 0x80..0x84
     // Fade-control sub-object at +0x84 (f32 fade value at +8, read by
-    // func_80487EE0's fade state machine).
+    // scnImN4UpdateVis's fade state machine).
     struct {
         u8 _00[0x8];
         f32 value8;   // +0x08
     }* field_0x84;                  // 0x84
     u8 _88[0x4];                    // 0x88..0x8C
-    CScnRootNw4r* field_0x8C;       // 0x8C (scene root, func_8048F7A8 arg)
+    CScnRootNw4r* field_0x8C;       // 0x8C (scene root, RootNw4r_DetachCamChild arg)
     u8 _90[0x24];                   // 0x90..0xB4
-    u8* field_0xB4;                 // 0xB4 (distance-check object, func_804885FC)
+    u8* field_0xB4;                 // 0xB4 (distance-check object, scnImN4UpdateXform)
     u8 _B8[0x32C];                  // 0xB8..0x3E4
     u8 field_0x3E4;                 // 0x3E4 (busy flag read by scnImN4UnlinkOth)
 };
 
 // Opaque env-light sub-object at CScnItemModelNw4r+0x31C (0x420 bytes; the
 // real type is CScnItemModelEnvLight from CScnItemModel.hpp). The busy byte
-// at abs 0x3E4 is read by func_80489C94 before building a new model.
+// at abs 0x3E4 is read by scnImN4CreateModel before building a new model.
 struct CScnItemModelNw4rEnvLight {
     u8 data[0xC8];              // 0x31C..0x3E4
-    u8 field_0x3E4;             // abs 0x3E4 (busy flag, func_80489C94)
+    u8 field_0x3E4;             // abs 0x3E4 (busy flag, scnImN4CreateModel)
     u8 data2[0x420 - 0xC9];     // 0x3E5..0x73C
 };
 
 // Scale-source object at CScnItemModelNw4r+0x14AC: a 4x3 matrix view.
-// +0x00 is a Vec (PSVECMag input in func_80489584); the translation column
+// +0x00 is a Vec (PSVECMag input in scnImN4UpdateBounds); the translation column
 // at +0xC / +0x1C / +0x2C is copied to the +0x310 triple by scnImN4SyncScale
-// and to the +0x2DC bounding vec by func_80489584. The whole first 0x30
-// bytes are copied into the act-data mMtx1 by func_80489584.
+// and to the +0x2DC bounding vec by scnImN4UpdateBounds. The whole first 0x30
+// bytes are copied into the act-data mMtx1 by scnImN4UpdateBounds.
 struct CScnItemModelNw4r14AC {
-    nw4r::math::VEC3 vec0;  // +0x00 (PSVECMag input, func_80489584)
+    nw4r::math::VEC3 vec0;  // +0x00 (PSVECMag input, scnImN4UpdateBounds)
     f32 f0xC;    // 0x0C
     u8 _10[0xC];
     f32 f0x1C;   // 0x1C
@@ -118,7 +118,7 @@ struct CScnItemModelNw4rScnMdlView {
 
 // Virtual-dispatch view for the vtable-0x74 slot of the model's primary
 // vtable (declared virtual N lands at 8+4*N, so v27 -> 0x74). Used by
-// func_80489014 to query the model's own "handled" state; the real virtual
+// scnImN4PoseHook to query the model's own "handled" state; the real virtual
 // is CScnItemModel::vfunc74 (declared void in the shared header, so a local
 // int-returning view is required for the call-site test).
 struct CScnItemModelNw4rV74 {
@@ -154,7 +154,7 @@ struct CScnItemModelNw4rV74 {
 
 // Virtual-dispatch views for the anim-object handles at +0x1484 / +0x1488 /
 // +0x148C: vtable-0x24 (f32 arg) on the +0x1484 handle and vtable-0x28 on
-// the +0x1488/+0x148C handles, used by func_80487EE0's fade push.
+// the +0x1488/+0x148C handles, used by scnImN4UpdateVis's fade push.
 struct CScnItemModelNw4rAnimV24 {
     virtual void v00() = 0;
     virtual void v01() = 0;
@@ -179,7 +179,7 @@ struct CScnItemModelNw4rAnimV28 {
 };
 
 // Opaque view of the g3d scene object's +0x122 u16 slot (frame-table entry
-// copy by func_80487EE0).
+// copy by scnImN4UpdateVis).
 struct CScnItemModelNw4rScnObj122 {
     u8 _00[0x122];
     u16 field_0x122;   // +0x122
@@ -223,13 +223,13 @@ struct CScnItemModelNw4rNodeIdList {
 
 // Minimal view of the anim sub-object at CScnItemModelNw4r+0xC (the retail
 // CScn80496B0C from CScn_80496B0C.cpp; only the +0x0 owner pointer is
-// checked by func_80489014 before passing the object to func_804979A4).
+// checked by scnImN4PoseHook before passing the object to func_804979A4).
 struct CScnItemModelNw4rAnimC {
     void* field_0x0;   // +0x00 owner (CScn*)
 };
 
 // Virtual-dispatch view for the vtable-0x20 slot of the Scn_FindCamItem result
-// (declared virtual N lands at 8+4*N, so v06 -> 0x20). Used by func_804885FC
+// (declared virtual N lands at 8+4*N, so v06 -> 0x20). Used by scnImN4UpdateXform
 // to query the owner's node at the -1 index.
 struct CScnItemModelNw4rV20 {
     virtual void v00() = 0;
@@ -238,12 +238,12 @@ struct CScnItemModelNw4rV20 {
     virtual void v03() = 0;
     virtual void v04() = 0;
     virtual void v05() = 0;
-    virtual u32 v06(void* arg) = 0;   // vtable 0x20 (func_804885FC distance check)
+    virtual u32 v06(void* arg) = 0;   // vtable 0x20 (scnImN4UpdateXform distance check)
     virtual void v07() = 0;
 };
 
 // Virtual-dispatch view for the vtable-0x10 slot of the owner's +0xB4
-// distance-check object (v02 -> 0x10). func_804885FC passes the +0x2DC vec
+// distance-check object (v02 -> 0x10). scnImN4UpdateXform passes the +0x2DC vec
 // and the +0x2E8 radius; a non-zero return re-hides the model (bit 16).
 struct CScnItemModelNw4rB4V10 {
     virtual void v00() = 0;
@@ -274,7 +274,7 @@ struct CScnItemModelNw4rVtbl {
     virtual void v01() = 0;
     virtual void v02() = 0;
     virtual void v03() = 0;
-    virtual u32 v04() = 0;   // vtable 0x18 (func_80489C94: returns list id)
+    virtual u32 v04() = 0;   // vtable 0x18 (scnImN4CreateModel: returns list id)
     virtual void v05() = 0;
     virtual void v06() = 0;
     virtual void v07() = 0;
@@ -310,7 +310,7 @@ struct CScnItemModelNw4rVtbl {
     virtual void v37() = 0;
     virtual void v38() = 0;
     virtual void v39() = 0;
-    virtual void* v40() = 0;  // vtable 0xA8 (func_80489C94 tail call; retail re-uses its r3 result as the return value)
+    virtual void* v40() = 0;  // vtable 0xA8 (scnImN4CreateModel tail call; retail re-uses its r3 result as the return value)
     virtual void v41() = 0;
     virtual void v42() = 0;
     virtual void v43() = 0;
@@ -320,7 +320,7 @@ struct CScnItemModelNw4rVtbl {
 };
 
 // Virtual-dispatch view for the +0x7F0 hook-table entries (vtable-0xC slot
-// called with the model as the sole arg by func_80489584).
+// called with the model as the sole arg by scnImN4UpdateBounds).
 struct CScnItemModelNw4rHookV0C {
     virtual void v00() = 0;
     virtual void v01() = 0;
@@ -362,14 +362,14 @@ public:
     /* 0x04 */ CScnItemModelNw4rOwner* field_04;     // owner (same slot as CScnItemModel::field_04)
     /* 0x08 */ u8 _pad_0x08[0x4];                    // to 0x0C
     /* 0x0C */ u8 field_0xC[0x54];                   // CScn80496B0C anim sub-object prefix (owner ptr at +0x0)
-    /* 0x60 */ u8* field_0x60;                       // scene-item pool (CScnItemPool_hasFreeSlot/8C630 arg, func_80489C94)
+    /* 0x60 */ u8* field_0x60;                       // scene-item pool (CScnItemPool_hasFreeSlot/8C630 arg, scnImN4CreateModel)
     /* 0x64 */ u8 field_0x64[0x194];                 // rest of the anim sub-object (to 0x1F8)
     /* 0x1F8 */ u8 _pad_0x1F8[0x48];                 // to 0x240
     /* 0x240 */ nw4r::math::MTX34 field_0x240;       // matrix pushed to the g3d scene object (SetMtx)
     /* 0x270 */ u8 _pad_0x270[0x6C];                 // to 0x2DC
-    /* 0x2DC */ f32 field_0x2DC[3];                  // transform output vec (PSMTXMultVec dst, func_804885FC)
-    /* 0x2E8 */ f32 field_0x2E8;                     // distance/radius scaled by max scale (func_804885FC)
-    /* 0x2EC */ f32 field_0x2EC[6];                  // two 3-float groups summed by func_804885FC
+    /* 0x2DC */ f32 field_0x2DC[3];                  // transform output vec (PSMTXMultVec dst, scnImN4UpdateXform)
+    /* 0x2E8 */ f32 field_0x2E8;                     // distance/radius scaled by max scale (scnImN4UpdateXform)
+    /* 0x2EC */ f32 field_0x2EC[6];                  // two 3-float groups summed by scnImN4UpdateXform
     /* 0x304 */ f32 field_0x304;                     // scale triple copied into the ScnObj
     /* 0x308 */ f32 field_0x308;
     /* 0x30C */ f32 field_0x30C;
@@ -382,29 +382,29 @@ public:
     /* 0x770 */ u32 field_0x770;
     /* 0x774 */ u32 field_0x774;
     /* 0x778 */ u8 _pad_0x778[0x14];                 // to 0x78C
-    /* 0x78C */ f32 field_0x78C;                     // color quadruple (func_80488D54 table copy)
+    /* 0x78C */ f32 field_0x78C;                     // color quadruple (scnImN4SyncMatCol table copy)
     /* 0x790 */ f32 field_0x790;
     /* 0x794 */ f32 field_0x794;
     /* 0x798 */ f32 field_0x798;
     /* 0x79C */ u8 _pad_0x79C[0x4];                  // to 0x7A0
-    /* 0x7A0 */ u32 field_0x7A0;                     // flag word (bits 0x8/0x10 set by func_80488D54)
+    /* 0x7A0 */ u32 field_0x7A0;                     // flag word (bits 0x8/0x10 set by scnImN4SyncMatCol)
     /* 0x7A4 */ u32 field_0x7A4;                     // flag word (bit 27 = 0x08000000 via scnImN4SetBit27)
     /* 0x7A8 */ u32 field_0x7A8;                     // flag word (bit 8 synced by scnImN4SyncCamFlg)
-    /* 0x7AC */ f32 field_0x7AC;                     // radius scaled by max scale (func_804885FC)
+    /* 0x7AC */ f32 field_0x7AC;                     // radius scaled by max scale (scnImN4UpdateXform)
     /* 0x7B0 */ u8 _pad_0x7B0[0x4];                  // to 0x7B4
     /* 0x7B4 */ CScnItemModelNw4r* slots7B4[4];      // reference list (same slot as CScnItemModel::slots7B4)
     /* 0x7C4 */ CScnItemModel* field_0x7C4;          // chain link (same slot as CScnItemModel::field_0x7C4)
-    /* 0x7C8 */ void* field_0x7C8;                   // secondary attached model (func_80489200)
-    /* 0x7CC */ nw4r::math::VEC3 vec7CC;             // translate VEC3 - func_80489014
-    /* 0x7D8 */ nw4r::math::VEC3 vec7D8;             // second translate VEC3 (func_80489014)
+    /* 0x7C8 */ void* field_0x7C8;                   // secondary attached model (scnImN4SyncShadow)
+    /* 0x7CC */ nw4r::math::VEC3 vec7CC;             // translate VEC3 - scnImN4PoseHook
+    /* 0x7D8 */ nw4r::math::VEC3 vec7D8;             // second translate VEC3 (scnImN4PoseHook)
     /* 0x7E4 */ u8 _pad_0x7E4[0xC];                  // to 0x7F0
-    /* 0x7F0 */ u32 field_0x7F0[0xC];                // per-frame hook table (12 entries; iterated by func_80489584)
+    /* 0x7F0 */ u32 field_0x7F0[0xC];                // per-frame hook table (12 entries; iterated by scnImN4UpdateBounds)
     /* 0x820 */ int field_0x820;                     // hook-table count (signed: retail cmpw)
     /* 0x824 */ CScnItemModel824 member824;          // 0x824..0x834 buffer holder (dtor __dt__804871B0)
     /* 0x834 */ CScnItemModelNw4r* slots834[4];     // second reference list (same slot as CScnItemModel::slots834)
     /* 0x844 */ u32 field_844[4];                    // per-slot link ids (same slot as CScnItemModel::field_844..850)
     /* 0x854 */ u32 field_854;                       // link id (same slot as CScnItemModel::field_854)
-    /* 0x858 */ f32 field_0x858;                     // fade value compared by func_8048A588
+    /* 0x858 */ f32 field_0x858;                     // fade value compared by scnImN4UpdateMatFade
     /* 0x85C */ u32 field_0x85C;                     // buffer flag word (bit 2/3 = node table carved from the static pool)
     /* 0x860 */ u32 field_0x860;                     // buffer used-bytes counter (0xC00 pool, see scnImN4PoolHasSpc)
     /* 0x864 */ u8 _pad_0x864[0xC08];                // to 0x146C
@@ -422,21 +422,21 @@ public:
     /* 0x1498 */ void* field_0x1498;                 // second node table buffer (static pool or heap)
     /* 0x149C */ u16 field_0x149C;                    // cleared by the ctor
     /* 0x149E */ u16 field_0x149E;                    // u16 flag cleared by scnImN4UnlinkChain
-    /* 0x14A0 */ u32 field_0x14A0;                    // node index compared by func_80489014
+    /* 0x14A0 */ u32 field_0x14A0;                    // node index compared by scnImN4PoseHook
     /* 0x14A4 */ u8 _pad_0x14A4[0x4];                 // to 0x14A8
     /* 0x14A8 */ u32 field_0x14A8;                    // link id (-1 = unlinked, scnImN4UnlinkOth)
     /* 0x14AC */ CScnItemModelNw4r14AC* field_0x14AC; // scale-source object (floats at +0xC/+0x1C/+0x2C)
     /* 0x14B0 */ u32 field_0x14B0;                   // link id written by scnImN4LinkList2
-    /* 0x14B4 */ nw4r::math::VEC3 field_0x14B4;      // translate result (GetTranslate by func_80489014)
+    /* 0x14B4 */ nw4r::math::VEC3 field_0x14B4;      // translate result (GetTranslate by scnImN4PoseHook)
     /* 0x14C0 */ u32 field_0x14C0;                  // self-pointer to the +0x14C4 effect sub-object (ctor)
     /* 0x14C4 */ u8 field_0x14C4[0x18C];             // CScnEffectActNw4r sub-object
     /* 0x1650 */ u8 field_0x1650[0x54];              // CScn::FvMaruShadowNw4r sub-object (to 0x16A4)
-    /* 0x16A4 */ void* field_0x16A4;                 // allocator alloc fn (func_8048BD1C, ctor)
+    /* 0x16A4 */ void* field_0x16A4;                 // allocator alloc fn (scnImN4AllocFromBuf, ctor)
     /* 0x16A8 */ void* field_0x16A8;                 // allocator free fn (scnImN4AllocFree, ctor)
     /* 0x16AC */ MEMAllocator allocator;             // nw4r MEMAllocator (funcs=&field_0x16A4, heap=0, heapParam1=this)
-    /* 0x16BC */ f32 field_0x16BC;                   // fade latch (func_80487EE0 state machine)
+    /* 0x16BC */ f32 field_0x16BC;                   // fade latch (scnImN4UpdateVis state machine)
     /* 0x16C0 */ s16 field_0x16C0;                   // param u16 (ctor; -1 default -> 7)
-    /* 0x16C2 */ u16 field_0x16C2;                   // u16 flag cleared by func_804885FC
+    /* 0x16C2 */ u16 field_0x16C2;                   // u16 flag cleared by scnImN4UpdateXform
     /* 0x16C4 */ u16 field_0x16C4;                   // frame counter (u16, advanced by scnImN4FeedLook)
     /* 0x16C6 */ u8 _pad_0x16C6[0x2];                // to 0x16C8
     /* 0x16C8 */ CScnItemModelNw4rSub16C8 field_0x16C8;  // CMdlMaterial sub-object (0x38 bytes)
@@ -463,11 +463,11 @@ extern "C" void simNotifyVfunc94(CScnItemModelNw4r* self);
 extern "C" int func_804E6358(CScnItemModelNw4rSub16C8* sub);
 extern "C" int func_804E5FD4(CScnItemModelNw4rSub16C8* sub);
 
-// func_80488C78 / scnImN4LinkGrpA cross-TU imports (defined in CMdlMaterial.cpp
+// scnImN4CheckMat / scnImN4LinkGrpA cross-TU imports (defined in CMdlMaterial.cpp
 // / CScnItemModel.cpp). extern "C" keeps the retail func_* names verbatim
-// (MWCC mangles class-typed params). func_80488D54 passes a zero-color vec
+// (MWCC mangles class-typed params). scnImN4SyncMatCol passes a zero-color vec
 // and a mode flag as the trailing args (defaulted so the 1-arg call site in
-// func_80488C78 keeps its bytes).
+// scnImN4CheckMat keeps its bytes).
 extern "C" int func_804E6158(CScnItemModelNw4rSub16C8* sub, ml::CVec3* vec = 0,
                              u32 param = 0);
 extern "C" int simProbeModelVec(CScnItemModelNw4r* self, u32 a, u32 b);
@@ -511,7 +511,7 @@ extern "C" void simRefreshFadeChain(CScnItemModelNw4r* self);
 extern "C" void EyeAnm_SetState(CMdlAnmEye* self, u32 val);
 // Light-env init / clear (defined in CScnEnvLgtCtrl.cpp).
 extern "C" void scnLgtDeactLightMan(u8* self, CScnItemModelNw4rEnvLight* lgt);
-extern "C" void func_804C172C(u8* self);
+extern "C" void scnLgtRefreshLightMan(u8* self);
 
 // Retail destructor symbol is the unmangled member name; written as a
 // fragment function (like __dt__13CScnItemModelFv) so the vtable label is
@@ -522,7 +522,7 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
 // Cross-TU sub-object hooks (defined in CMdlDynamics.cpp; retail names are
 // unmangled func_* symbols).
 extern "C" void MdlDyn_MarkAllDynamic(u8* self);
-extern "C" void func_804EB7F8(u8* self);
+extern "C" void MdlDyn_AddVecAll(u8* self);
 
 // scnImN4Teardown cross-TU imports: anim sub-object teardown (defined in
 // CScn_80496B0C.cpp), pool deregistration (CScnItemModel.cpp), CMdlDynamics
@@ -530,12 +530,12 @@ extern "C" void func_804EB7F8(u8* self);
 // and the +0x16C8 sub-object destructor fragment.
 extern "C" void scn80496ReleaseChildren(void* self);
 extern "C" void simRemoveFromPool(CScnItemModel* self);
-extern "C" void func_804EB8A0(u8* self);
+extern "C" void MdlDyn_FreeAll(u8* self);
 // CMdlDynamics world-matrix sync (defined in CMdlDynamics.cpp), called by
-// func_80489200 after the shadow-matrix copy pass.
-extern "C" void func_804EBBCC(void* self, nw4r::math::MTX34* mtxs);
-// Shadow-matrix propagation tail of func_80489200 (defined later in this TU).
-void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
+// scnImN4SyncShadow after the shadow-matrix copy pass.
+extern "C" void MdlDyn_Update(void* self, nw4r::math::MTX34* mtxs);
+// Shadow-matrix propagation tail of scnImN4SyncShadow (defined later in this TU).
+void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
 extern "C" void* getScnRootSlot10(void* self);
 extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);
@@ -568,21 +568,21 @@ extern const char* lbl_eu_806638D4;
 // camera-hookup helpers (CScnRootNw4r.cpp).
 extern "C" void simSetFlag200000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simSetFlag7A8_100(CScnItemModelNw4r* self, u32 enable);
-extern "C" bool func_8048F7A8(CScnRootNw4r* self, CScnCamLayout* cam);
-extern "C" s32 func_8048F630(CScnRootNw4r* self, CScnCamLayout* cam);
+extern "C" bool RootNw4r_DetachCamChild(CScnRootNw4r* self, CScnCamLayout* cam);
+extern "C" s32 RootNw4r_AttachCamOne(CScnRootNw4r* self, CScnCamLayout* cam);
 
 // Reference-list notify (defined in CScnItemModel.cpp): vtable-0x28 on every
 // live model in the 4-slot list and the +0x7C4 link.
 extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b);
 
-// Anim sub-object helpers used by func_80489014 (defined in
+// Anim sub-object helpers used by scnImN4PoseHook (defined in
 // CScn_80496B0C.cpp / CMdlAnmUV.cpp / CMdlMouth.cpp).
 extern "C" void func_804979A4(void* self, ml::CVec3* outA, ml::CVec3* outB,
                               ml::CVec3* outC, u32 nodeIdx);
 extern "C" int func_804E72D0(void* self, u32 arg2, void* res);
 extern "C" int MdlMouthPollAnim(void* self, u32 arg2, void* res);
 
-// func_80487EE0 per-frame anim helpers (defined in CMdlAnmEye.cpp /
+// scnImN4UpdateVis per-frame anim helpers (defined in CMdlAnmEye.cpp /
 // CMdlMouth.cpp): eye-anim / mouth-anim refresh.
 extern "C" void EyeAnm_TickBlink(void* self);
 extern "C" void MdlMouthTeardown(void* self);
@@ -593,11 +593,11 @@ extern "C" void simRefreshActDist(CScnItemModelNw4r* self);
 // Handled-state queries (defined in CScnItemModel.cpp).
 extern "C" int simGetLeafFlagBit9(CScnItemModelNw4r* self);
 extern "C" int simQueryLeafAnim(CScnItemModelNw4r* self);
-// Flag-bit setter for func_80487EE0 (defined in CScnItemModel.cpp).
+// Flag-bit setter for scnImN4UpdateVis (defined in CScnItemModel.cpp).
 extern "C" void simSetFlag2000000(CScnItemModelNw4r* self, u32 enable);
-// Material fade apply (defined in CScnItemModel.cpp), func_8048A588 tail.
+// Material fade apply (defined in CScnItemModel.cpp), scnImN4UpdateMatFade tail.
 extern "C" void simSetAndPropRate(CScnItemModelNw4r* self, f32 param);
-// CMdlDynamics per-frame refresh (defined in CMdlDynamics.cpp), func_80487EE0
+// CMdlDynamics per-frame refresh (defined in CMdlDynamics.cpp), scnImN4UpdateVis
 // +0x17A0 hook.
 extern "C" void MdlDyn_UpdateAnimSpeed(void* self);
 
@@ -613,7 +613,7 @@ extern "C" void* __dt__17CScnEffectActNw4rFv(void* self, int deleting);
 extern "C" CScnItemModel* __dt__13CScnItemModelFv(CScnItemModel* self,
                                                   int deleting);
 
-// func_8048A588 material/tev assert strings (.data) + varargs (.sdata) and
+// scnImN4UpdateMatFade material/tev assert strings (.data) + varargs (.sdata) and
 // the 255.0f alpha constant (.sdata2).
 extern char lbl_eu_8056E0D0[];   // tev null assert file
  extern char lbl_eu_8056E0B0[];
@@ -625,8 +625,8 @@ extern char lbl_eu_806638F4;     // tev null vararg (.sdata)
  extern char lbl_eu_806638FC;
  extern const char lbl_eu_806638E8[7];
  extern char lbl_eu_806638F0;
-extern const float lbl_eu_8066A8E4;   // 255.0f (func_8048A588 alpha scale)
-// func_80487EE0 fade clamp minimum (.sdata2).
+extern const float lbl_eu_8066A8E4;   // 255.0f (scnImN4UpdateMatFade alpha scale)
+// scnImN4UpdateVis fade clamp minimum (.sdata2).
 extern const float lbl_eu_8066A900;
 extern char lbl_eu_8056E130[];   // panic file path (.data)
 extern char lbl_eu_8056E110[];   // panic format string (.data)
@@ -641,7 +641,7 @@ extern char lbl_eu_80663918;     // node-resolve panic vararg string (.sdata, @s
 extern char lbl_eu_80529678[];   // node-buffer panic file path (.data)
 extern char lbl_eu_80529658[];   // node-buffer panic format string (.data)
 
-// func_8048A17C nw4r ResUserData accessor assert strings (.data) + varargs
+// scnImN4ScanUserData nw4r ResUserData accessor assert strings (.data) + varargs
 // (.sdata, @sda21) + the searched name pointer (.sdata).
 extern char lbl_eu_80530D18[];   // user-data null assert file
  extern char lbl_eu_80530CFC[];
@@ -666,7 +666,7 @@ extern char lbl_eu_80663924;     // item null assert vararg #1
 extern char lbl_eu_80530D94[];   // item null assert file #2
  extern char lbl_eu_80530D78[];
 extern char lbl_eu_80663920;     // item null assert vararg #2
-// func_8048A17C searched user-data item name (.sdata pointer; the string it
+// scnImN4ScanUserData searched user-data item name (.sdata pointer; the string it
 // points to is .data). Loaded with lwz @sda21, passed to strcmp.
 extern const char* lbl_eu_806638D0;
 
@@ -683,7 +683,7 @@ extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param);
 // resource's ResNode).
 extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name);
 
-// scnImN4LinkList2 / func_80488D54 / scnImN4SetTevSwap / func_80489C94 cross-TU
+// scnImN4LinkList2 / scnImN4SyncMatCol / scnImN4SetTevSwap / scnImN4CreateModel cross-TU
 // imports (defined in CScnItemModel.cpp / CScn.cpp / CScnItemPool.cpp).
 extern "C" void simNotifyVfunc9C(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
@@ -713,39 +713,39 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     void* pMem, CScnItemModelNw4r* pSrc, nw4r::g3d::ResMdl* pResMdl,
     void* resFileData, u32 param, u32 flags);
 
-// func_80488D54 mode/color data: 12-float .data table (4 groups of 3) and
+// scnImN4SyncMatCol mode/color data: 12-float .data table (4 groups of 3) and
 // the .sdata2 zero-color constant the query vector is inited with.
 extern const float lbl_eu_8056DE50[12];
-extern const float lbl_eu_8066A8FC;   // 1.0f (func_80489584 scale denominator)
-extern const float lbl_eu_8066A8E0;   // 0.0f (func_80489584 zero/threshold)
+extern const float lbl_eu_8066A8FC;   // 1.0f (scnImN4UpdateBounds scale denominator)
+extern const float lbl_eu_8066A8E0;   // 0.0f (scnImN4UpdateBounds zero/threshold)
 
-// func_804885FC half-scale constant (.sdata2, 0.5f) used to halve the summed
+// scnImN4UpdateXform half-scale constant (.sdata2, 0.5f) used to halve the summed
 // bounding-box extents before scaling by the model scale.
 extern const float lbl_eu_8066A904;
 
-// nw4r FSqrt assert source-file + message (.data) used by func_80489584's
+// nw4r FSqrt assert source-file + message (.data) used by scnImN4UpdateBounds's
 // column-normalize Warning (retail file/line of the inlined FSqrt helper).
 extern char lbl_eu_80526324[];
 extern char lbl_eu_80526300[];
 
 // Owner memory/nodelist lookup (defined in CScn.cpp): resolve the owner's
-// node at `idx` (-1 = default). func_804885FC calls vtable-0x20 on the
+// node at `idx` (-1 = default). scnImN4UpdateXform calls vtable-0x20 on the
 // result.
 extern "C" void* Scn_FindCamItem(void* rsrc, int idx);
-// Owner scale getter (defined in CScn.cpp), func_8048AB2C fade scale input.
+// Owner scale getter (defined in CScn.cpp), scnImN4UpdateShadowMtx fade scale input.
 
-// func_8048AB2C shadow-math constants (.sdata2).
+// scnImN4UpdateShadowMtx shadow-math constants (.sdata2).
 extern const float lbl_eu_8066A908;  // short-delta length-squared threshold
  extern const float lbl_eu_8066A90C;  // normalize extra scale
  extern const float lbl_eu_8066A910;  // -1.0f (Y clamp step)
-extern const float lbl_eu_8066A914;  // u16 angle -> radians scale (func_8048AB2C)
+extern const float lbl_eu_8066A914;  // u16 angle -> radians scale (scnImN4UpdateShadowMtx)
 extern const float lbl_eu_8066A918;  // offset Y advance per frame scale
 extern const float lbl_eu_8066A91C;  // offset normalization length-squared min
 extern const float lbl_eu_8066A920;  // normalized offset magnitude cap
 extern const float lbl_eu_8066A924;  // quaternion dot fallback threshold
 extern const float lbl_eu_8066A928;  // half-angle scale for the quaternion w
 
-// func_80489C94 ResFile-alignment panic strings (.data).
+// scnImN4CreateModel ResFile-alignment panic strings (.data).
 extern char lbl_eu_8052637C[];
 extern char lbl_eu_80526354[];
 
@@ -779,11 +779,11 @@ extern "C" void* getScnRootSel46C(CScn* self);
 extern "C" u32 getScnRootPtr(CScn* self);
 
 // Sub-object init hooks (retail unmangled fragment names): CMdlDynamics
-// (func_804E95E0), CMdlMaterial (func_804E54B8 / func_804E5990), CMdlMouth
+// (MdlDyn_BuildLists), CMdlMaterial (func_804E54B8 / func_804E5990), CMdlMouth
 // (func_804E65CC), CMdlAnmUV (func_804E6C80), CMdlAnmEye (func_804E75B8),
 // CMdlLook (func_804E7B38), CScnMaruShadowNw4r (func_8048E69C),
 // CScnEffectActNw4r (func_8049B9EC), anim sub-object (func_80496F14).
-extern "C" void func_804E95E0(void* self, void* model);
+extern "C" void MdlDyn_BuildLists(void* self, void* model);
 extern "C" void func_804E54B8(void* self, void* model);
 extern "C" void func_804E5990(void* self, void* node, void* mtx);
 extern "C" void func_804E65CC(void* self, void* model);

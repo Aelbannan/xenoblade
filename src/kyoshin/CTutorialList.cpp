@@ -376,7 +376,7 @@ extern "C" void TutorialList_ConfirmOpenMenu(CTutorialList* self) {
     nw4r::lyt::Pane* root = self->mLayout20->GetRootPane();
     // Both panes resolved inline in the call: MWCC evaluates args
     // right-to-left, so the bar pane (arg 3) is looked up and spilled first.
-    func_80137924(&pos,
+    ScalePaneWorldPos(&pos,
                   root->FindPaneByName(&lbl_eu_80510B78[0x46], true),
                   root->FindPaneByName(&lbl_eu_80510B78[0x4e], true),
                   root);
@@ -480,7 +480,7 @@ extern "C" __declspec(noinline) void TutorialList_EnableCloseAnims(CTutorialList
 
 // TutorialList_MoveCursorToRow - move the cursor onto the current tutorial row: format the
 // page number, resolve the root pane, find the page-name pane and the
-// scrollbar thumb pane, ask func_80137924 for the position between them and
+// scrollbar thumb pane, ask ScalePaneWorldPos for the position between them and
 // feed it to the cursor's Move virtual (vtable +0x10).
 extern "C" __declspec(noinline) void TutorialList_MoveCursorToRow(CTutorialList* self) {
     // Retail frame: pos at sp+0x08 (16-byte slot), name buffer at sp+0x18.
@@ -492,7 +492,7 @@ extern "C" __declspec(noinline) void TutorialList_MoveCursorToRow(CTutorialList*
         self->mLayout20->GetRootPane()->FindPaneByName(name, true);
     nw4r::lyt::Pane* barPane =
         self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
-    func_80137924((nw4r::math::VEC3*)pos, pagePane, barPane, self->mLayout20->GetRootPane());
+    ScalePaneWorldPos((nw4r::math::VEC3*)pos, pagePane, barPane, self->mLayout20->GetRootPane());
     ((CBaseCur*)self->mGap2C)->setRootPaneTranslate((const nw4r::math::VEC3*)pos);
 }
 
@@ -589,7 +589,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((char*)mLayout20 + 0x10);
         u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
             CDeviceFont::getFontInfo(1, mLayout20))->getFont();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         TutorialList_EnableOpenAnims(this);
         mLayout20->Animate(0);
@@ -682,11 +682,11 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
 extern "C" int TutorialList_PlayTutorialVoice(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 0x2) == 0) return 0;
     if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
-    if (func_802A77E8(self) != 5) return 0;
-    if (func_802A330C(0xa0, 1) == 0) return 0;
+    if (HpVoice_MapSubState(self) != 5) return 0;
+    if (CCharVoiceMan_DispatchById(0xa0, 1) == 0) return 0;
     CCharVoice* voice = (CCharVoice*)self;
     if (self != 0) voice = &self->voice;
-    func_802A3D54(voice, 0xdd2, 0xa0);
+    RequestVoicePlayback(voice, 0xdd2, 0xa0);
     return 0;
 }
 

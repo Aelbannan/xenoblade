@@ -179,13 +179,13 @@ int pcTalk(VMThread* pThread) {
     PcBattleTalkObj* obj =
         (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
                                          &lbl_eu_806618D8, 0);
-    func_800C4244(obj->field_3ED4, id, id == 8);
+    Walker_StepBattleArts(obj->field_3ED4, id, id == 8);
     return 0;
 }
 
 // winTalkWait: park the thread while a talk window is open.
 int winTalkWait(VMThread* pThread) {
-    if (func_8013EB90(1)) {
+    if (UIWin_HasPendingUpdate(1)) {
         vmWaitModeSet(pThread);
     } else {
         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -271,8 +271,8 @@ int createCol6Invite(VMThread* pThread) {
     return 0;
 }
 int createCol6Init(VMThread* pThread) {
-    extern void func_80139CEC();
-    func_80139CEC();
+    extern void InitCol6LodTables();
+    InitCol6LodTables();
     return 0;
 }
 int checkCol6Bat(VMThread* pThread) {
@@ -565,7 +565,7 @@ int kizunaTalkEnd(){
 // Report priority-request window state: type 2 when busy, type 1 otherwise.
 int isPrioReq(VMThread* pThread) {
     VMArg arg;
-    int busy = func_80135708();
+    int busy = CUICfManager_isUIBusy();
     arg.type = !busy + 1;
     vmRetValSet(pThread, &arg);
     return 1;

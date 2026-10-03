@@ -26,7 +26,7 @@ extern "C" void* Scn_CallUnk8C_V9(void* scene);
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 
-// Two-word ring record built on the caller's frame by func_80061870; both
+// Two-word ring record built on the caller's frame by CfRes_pushRec; both
 // members stay memory-resident in retail (header at 0x8(sp), data at 0xC(sp)).
 
 // Append a header/data record to the ring buffer. Each stored word lands at
@@ -34,7 +34,7 @@ extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 // Returns 0 when the record would overflow the 0x100-word budget.
 #pragma push
 #pragma optimization_level 1
-int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
+int CfRes_pushRec(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
                   unsigned int dataVal, unsigned int* src, int count) {
     if (buffer->field_404 + count + 2 >= 0x100) {
         return 0;
@@ -66,7 +66,7 @@ int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfw
 }
 #pragma pop
 
-// Backward-write variant of func_80061870: the record ends at the current
+// Backward-write variant of CfRes_pushRec: the record ends at the current
 // field_400, so the write index walks backwards (field_400 - count - 2).
 // Header layout: key byte at bits 24-31, payload halfword at bits 16-31,
 // count nibble at bits 8-11; bits 12-19 come from the caller's headerBits
@@ -74,7 +74,7 @@ int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfw
 // aliasing with field_400 forces retail to reload it for every word.
 #pragma push
 #pragma optimization_level 1
-int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword,
+int CfResBuffer::pushBackwards(unsigned char byte1, unsigned short halfword,
                                unsigned int dataVal, unsigned int* src, int count,
                                unsigned int headerBits) {
     unsigned int total = field_404 + count + 2;
@@ -162,7 +162,7 @@ static CfResRingPair CfRes_popPair(CfResBuffer* buffer) {
     return pr;
 }
 
-// func_80061D2C: scan the CfResBuffer ring for records whose header key byte
+// CfRes_markKey: scan the CfResBuffer ring for records whose header key byte
 // (bits 24-31) matches `mode`; each match marks that record's header word
 // with bit 19 (0x00080000) in place and sets the result. Each visited record
 // pops its header+data word pair, then skips its payload words (count nibble
@@ -171,7 +171,7 @@ static CfResRingPair CfRes_popPair(CfResBuffer* buffer) {
 // exit, so the scan never consumes the ring.
 #pragma push
 #pragma optimization_level 1
-bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
+bool CfRes_markKey(CfResBuffer* buffer, u32 mode) {
     bool found = false;
     u32 saved400 = buffer->field_400;
     u32 saved404 = buffer->field_404;
@@ -196,14 +196,14 @@ bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
 }
 #pragma pop
 
-// func_80061E8C: scan the CfResBuffer ring for a record whose header key
+// CfRes_findKey: scan the CfResBuffer ring for a record whose header key
 // byte (bits 24-31) matches `mode`; return 1 immediately on the first match
 // (the remaining data words of the matched record are not popped). Each
 // visited record consumes its header+data word pair (both advance the read
 // index), then skips its payload words (count nibble at bits 16-19 of the
 // header). Ring indices are saved at entry and restored at exit, so the scan
 // never consumes the ring.
-bool func_80061E8C(CfResBuffer* buffer, u32 mode) {
+bool CfRes_findKey(CfResBuffer* buffer, u32 mode) {
     bool found = false;
     u32 saved400 = buffer->field_400;
     u32 saved404 = buffer->field_404;
@@ -369,14 +369,14 @@ int CfRes_getNameRecCount(CfResNameRec* rec) {
     return 0;
 }
 
-// func_800621F4: resolve the extension class of a resource record path.
+// CfRes_extType: resolve the extension class of a resource record path.
 // The record lives at self + index*0x18 + 8; its +8 word is a relative path
 // offset from self, +0xC and +0x10 are output words. The resolved path is
 // matched against the shared extension table (lbl_eu_804FB214) and the
 // matched class id is stored to *outType. Returns the resolved path pointer
 // (null when self is missing or carries the manager key). Retail re-checks
 // the key condition redundantly before selecting the record.
-char* func_800621F4(char* self, int index, u32* outType, u32* outFieldC, u32* outField10) {
+char* CfRes_extType(char* self, int index, u32* outType, u32* outFieldC, u32* outField10) {
     u32* rec;
     char* result = 0;
     *outType = 0;
@@ -640,11 +640,11 @@ extern "C" int CfRes_lookupLocalIndex(void* self) {
 }
 
 // CfRes_tryResolveToken: forward (a, b) into the manager's resource resolver
-// (func_800641CC) when the CfRes manager exists; 0 otherwise.
+// (CfRes_resolveTokenEntry) when the CfRes manager exists; 0 otherwise.
 __declspec(noinline) int CfRes_tryResolveToken(int a, int b) {
     int ret = 0;
     if (CfRes_getInstance() != 0) {
-        ret = func_800641CC(CfRes_getInstance(), a, b);
+        ret = CfRes_resolveTokenEntry(CfRes_getInstance(), a, b);
     }
     return ret;
 }
@@ -652,7 +652,7 @@ __declspec(noinline) int CfRes_tryResolveToken(int a, int b) {
 // CfRes_tryDelegateLoad1: forward (a, b) into the manager's delegate-op handler
 // (CfRes_delegateOp1) when the CfRes manager exists; 0 otherwise. The
 // delegate is declared to return a value (retail callers capture r3) even
-// though its body is a void call to func_800643F0 followed by blr.
+// though its body is a void call to CfRes_dispatchLoad followed by blr.
 int CfRes_tryDelegateLoad1(int a, int b) {
     int ret = 0;
     if (CfRes_getInstance() != 0) {
@@ -664,13 +664,13 @@ int CfRes_tryDelegateLoad1(int a, int b) {
 }
 
 // Retail callers capture r3 after this call, so the delegate is declared with
-// an int return even though the body is a void call to func_800643F0 followed
-// by blr (the value left in r3 is func_800643F0's result). Omitting the
+// an int return even though the body is a void call to CfRes_dispatchLoad followed
+// by blr (the value left in r3 is CfRes_dispatchLoad's result). Omitting the
 // return statement keeps the compiled bytes identical to the void form.
 // noinline keeps callers (CfRes_tryDelegateLoad1) from inlining this body.
 extern "C" int __declspec(noinline) CfRes_delegateOp1(void* a, void* b, void* c) {
-    extern void func_800643F0(void*, void*, unsigned long, void*);
-    func_800643F0(a, b, 1, c);
+    extern void CfRes_dispatchLoad(void*, void*, unsigned long, void*);
+    CfRes_dispatchLoad(a, b, 1, c);
 }
 
 // CfRes_tryDelegateLoad0: forward (a, b) into the manager's delegate-op handler
@@ -686,11 +686,11 @@ int CfRes_tryDelegateLoad0(int a, int b) {
 }
 
 // Retail callers capture r3 after this call, so the delegate is declared with
-// an int return even though the body is a void call to func_800643F0 followed
-// by blr (the value left in r3 is func_800643F0's result).
+// an int return even though the body is a void call to CfRes_dispatchLoad followed
+// by blr (the value left in r3 is CfRes_dispatchLoad's result).
 extern "C" int __declspec(noinline) CfRes_delegateOp0(void* a, void* b, void* c) {
-    extern void func_800643F0(void*, void*, unsigned long, void*);
-    func_800643F0(a, b, 0, c);
+    extern void CfRes_dispatchLoad(void*, void*, unsigned long, void*);
+    CfRes_dispatchLoad(a, b, 0, c);
 }
 
 extern "C" void CfRes_readCommonArchive(unsigned long a, const char* b, void* c) {
@@ -1079,12 +1079,12 @@ void CfRes_rolloverResFields() {
     }
 }
 
-// func_80063560: resolve a resource id to one of the 7 resource-table slots.
+// CfRes_acquireSlot: resolve a resource id to one of the 7 resource-table slots.
 // If the handle lookup fails, special-case ids 3/8 re-check under the paired
 // id (3<->8) after a game-mode query; otherwise fall back to preferred slots
 // per id, then to a linear free-slot scan (field_04 == 0). Bumps refcounts
 // when requested.
-extern "C" int func_80063560(int id, int incRef, int incCount) {
+extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount) {
     u32 uid = (u32)id;
     int idx = -1;
 
@@ -1274,7 +1274,7 @@ extern "C" int __declspec(noinline) CfRes_tryLoadFromCache(void* a, void* b, u32
     if (count > 0) {
         const char* filePtr = ml::CPathUtil::getFilePtrFromPath((const char*)d);
         ml::FixStr<64> str;
-        func_80063C7C(str, filePtr);
+        CfRes_stripExtension(str, filePtr);
         for (int i = 0; i < count; i++) {
             u32 field40;
             unsigned long dataPtr;
@@ -1324,12 +1324,12 @@ extern "C" __declspec(noinline) void CfRes_resetState2(u8* self) {
 
 extern "C" void CfRes_stub_63C78() {}
 
-// func_80063C7C: copy src into dest, then strip the file extension: scan
+// CfRes_stripExtension: copy src into dest, then strip the file extension: scan
 // backward from the end of the string for the last '.' (the lbl_eu_80661A40
 // key) and cut everything from it onward so only the bare name remains.
 // Returns 1 when an extension was removed, 0 when the string is empty, has
 // no '.', or the '.' sits at index 0.
-extern "C" int __declspec(noinline) func_80063C7C(ml::FixStr<64>& dest, const char* src) {
+extern "C" int __declspec(noinline) CfRes_stripExtension(ml::FixStr<64>& dest, const char* src) {
     dest.mLength = strlen(src);
     strcpy(dest.mString, src);
 
@@ -1442,7 +1442,7 @@ struct ResScanSlot {
 // null check when the index is out of range - retail does the same load from
 // a null base.
 // extern "C": retail exports this helper under its pre-mangled name; the
-// callers here (CfRes_isLocalResReady / func_800641CC) carry the unmangled reloc.
+// callers here (CfRes_isLocalResReady / CfRes_resolveTokenEntry) carry the unmangled reloc.
 extern "C" ResInfoEntry* CfRes_scanTableById(ResInfoEntry* base, int value, int start, int end, int stride, int offset) {
     ResScanSlot* slots = (ResScanSlot*)base;
     ResInfoEntry* result = 0;
@@ -1520,19 +1520,19 @@ extern "C" int __declspec(noinline) CfRes_isPackedMarker(u32 self) {
 
 extern "C" __declspec(noinline) u32 CfRes_getAddrLow10(void* self) { return (u32)(uintptr_t)self & 0x3FF; }
 
-// func_800641CC: resolve a packed resource token `a` through the manager's
+// CfRes_resolveTokenEntry: resolve a packed resource token `a` through the manager's
 // resource table. Special bit-27 fields (7/8) are normalized before the
 // scan; after a match, `out` receives whether the entry's load is complete
 // and, for the special types, the entry's +0x2C lookup object is finalized
 // through its vtable.
-// func_800641CC: resolve a packed resource token `packed` through the
+// CfRes_resolveTokenEntry: resolve a packed resource token `packed` through the
 // manager's resource table (CfRes_scanTableById scan of 0x82 slots). Bits 27-31 of
 // the token select normalization (7 -> 4, 8 -> 3 unless already the pure
 // (8,0,0) marker reported by CfRes_isPackedMarker). After a hit, *out receives
 // whether the entry finished loading; finished special-class entries are
 // finalized through their lookup-object vtable, everything
 // else through getResourceBase with the token's bits 20-26.
-int __declspec(noinline) func_800641CC(void* inst, u32 packed, u32* out) {
+int __declspec(noinline) CfRes_resolveTokenEntry(void* inst, u32 packed, u32* out) {
     int result = 0;
     *out = -1;
     if (packed == 0) {
@@ -1614,12 +1614,12 @@ extern "C" bool CfRes_stubFalse_643C8() { return false; }
 
 extern "C" bool CfRes_stubFalse_643E8() { return false; }
 
-// func_800643F0: resource-load dispatcher. `packed` is the packed resource
+// CfRes_dispatchLoad: resource-load dispatcher. `packed` is the packed resource
 // token; a jump table keyed on its bits-27-31 field selects a pre-check
 // (already-loaded probe, pending-read poll, or token repack). Then the entry
 // is located/cleaned up, a buffer is allocated (archive cache first, then the
 // MEM2/MEM1/scene memory-manager fallback chain) and handed to the loader.
-int func_800643F0(void* self, u32 packed, int flag, int kind) {
+int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
     // Declaration order feeds MWCC's callee-saved register coloring (retail:
     // low=r25, check=r26, inst=r27, result=r28, queued=r29, bits=r30, e24=r31).
     int result = 0;
@@ -1649,7 +1649,7 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
 
     if (bits == 0) {
         if (low != 9) {
-            result = func_80063560(CfRes_extractBits20_7((void*)(uintptr_t)packed), 1, flag);
+            result = CfRes_acquireSlot(CfRes_extractBits20_7((void*)(uintptr_t)packed), 1, flag);
         }
         if (low == 9 || result < 0) {
             queued = 1;
@@ -2119,7 +2119,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, 
     ml::FixStr<64> str;
     if (func_800AA33C(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
-        func_80063C7C(path, CfRes_stub_63ACC(&str)->mString);
+        CfRes_stripExtension(path, CfRes_stub_63ACC(&str)->mString);
         CfRes_strcatAppend((char*)&path, lbl_eu_804FB214 + 0x1a);
         if (CfRes_dispatchArchiveRead((void*)(uintptr_t)inst, vc, packed, CfRes_stub_63ACC(&path), slot, c) == 0) {
             packed = 0;
@@ -2144,7 +2144,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlot130(int inst, int a, int b,
     ml::FixStr<64> str;
     if (func_800AA33C(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
-        func_80063C7C(path, CfRes_stub_63ACC(&str)->mString);
+        CfRes_stripExtension(path, CfRes_stub_63ACC(&str)->mString);
         CfRes_strcatAppend((char*)&path, lbl_eu_804FB214 + 0x1e);
         if (CfRes_dispatchArchiveRead((void*)(uintptr_t)inst, (void*)(uintptr_t)a, packed,
                           CfRes_stub_63ACC(&path), slot, d) == 0) {

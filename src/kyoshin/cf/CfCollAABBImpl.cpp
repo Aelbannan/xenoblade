@@ -61,8 +61,8 @@ extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
 
 // Render AABB collision shape into a collision query context.
 // r4 is the CfObjectColl carrying AABB data; r3 (unused, the CfCollImpl this)
-// is ignored. Tail-calls func_800A5FE8.
+// is ignored. Tail-calls VecMath_PushOutBoxMtx.
 extern "C" void CollAABB_RenderQuery(void* /*ctx*/, cf::CfObjectColl* coll, void* query, void* result) {
     cf::CfCollAABBImpl* aabb = reinterpret_cast<cf::CfCollAABBImpl*>(coll);
-    func_800A5FE8(query, &aabb->mMin, &aabb->mMax, &aabb->mCenter, result);
+    VecMath_PushOutBoxMtx(query, &aabb->mMin, &aabb->mMax, &aabb->mCenter, result);
 }

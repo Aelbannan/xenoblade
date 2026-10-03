@@ -107,7 +107,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     void** fontObj = (void**)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mLayout90);
     u32 fontResult = ((u32 (*)(void*))fontObj[0x24 / 4])(fontObj);
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     self->mLayout90->SetAnimationEnable(self->mAnim94, true);
     self->mAnim94->SetFrame(lbl_eu_80668B84);
@@ -200,7 +200,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     // Slot panes: active slots (< count) get the member icon texture bound,
     // inactive slots are hidden (pane cleared).
     {
-        func_80139198(0);
+        BuildSlotItemLists(0);
         u8 count = code80135FDC_getByte_64077();
         for (u32 i = 0; i < 7; i++) {
             u8 idx = (u8)i;

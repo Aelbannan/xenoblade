@@ -262,7 +262,7 @@ public:
     virtual void* mAt2BC() = 0;             // index 173 -> vtable 0x2bc
 };
 
-// func_8028120C slot-table view: a 0x80-byte entry carries a used flag at +0x0
+// SysWinLog_AllocFreeSlot slot-table view: a 0x80-byte entry carries a used flag at +0x0
 // and its vtable pointer at +0x70; table A holds 3 entries at +0x00, table B
 // holds 0x38 entries at +0x180, and the two round-robin indexes live at
 // +0x1D80 / +0x1D84.
@@ -279,7 +279,7 @@ struct CSysWinSlotTable {
     int mIdxB;                          // +0x1D84 (cap 0x38)
 };
 
-// func_8028120C helper: call the found slot entry's virtual at vtable offset
+// SysWinLog_AllocFreeSlot helper: call the found slot entry's virtual at vtable offset
 // 0xc (slot 3). Raw dispatch - retail has no null guard at this call site.
 // Written as a single expression so MWCC chains both loads through r12 like
 // retail (a named vtable local spills it to a second register).
@@ -295,7 +295,7 @@ struct CSysWinListNode {
     CSysWinListNode* next; // +0x00
 };
 
-// Actor/device-list walk used by func_80280640 / func_8027F148: the list
+// Actor/device-list walk used by SysWinLog_ScanDeviceOwners / SysWinLog_CheckOpenGate: the list
 // returned by getListB28__Fv shares the CErrMesList shape (sentinel at
 // +0x04, item pointer at +0x08 pointing at the embedded +0x3E9C sub-object).
 struct CSysWinActorListNode {
@@ -312,8 +312,8 @@ struct CSysWinActorList {
 // plain C++ linkage reproduces the Fv suffix).
 CSysWinActorList* getListB28();
 
-// func_8027F148 view: the owner's +0x4 sub-object carries a virtual at vtable
-// offset 0x30 returning an object whose field_0 feeds the func_80174C98
+// SysWinLog_CheckOpenGate view: the owner's +0x4 sub-object carries a virtual at vtable
+// offset 0x30 returning an object whose field_0 feeds the testActorStatus
 // arts-state gate. With -RTTI, index N sits at (N+2)*4, so mAt30 (index 10)
 // lands on 0x30.
 struct CSysWinSubResult {
@@ -339,7 +339,7 @@ public:
 };
 
 // SysWinLog_BuildLayout font-object view: vtable slot 0x24 returns the font handle
-// handed to func_8013676C (same shape as CTalkWindow's CTalkFontObj).
+// handed to ApplyFontToTxtPanes (same shape as CTalkWindow's CTalkFontObj).
 class CSysWinFontObjView {
 public:
     virtual void v00() = 0;  // 0x08
@@ -352,7 +352,7 @@ public:
     virtual u32 getFontHandle() = 0;  // index 7 -> 0x24
 };
 
-// SysWinLog_BuildLayout / func_8027EA6C root-pane view: a custom virtual at vtable
+// SysWinLog_BuildLayout / SysWinLog_OpenContent root-pane view: a custom virtual at vtable
 // offset 0x3C (name + flag, returns the pane). The trailing region carries
 // the tag-processor pointer (+0xF8) and the texture size floats (+0x4C/+0x50).
 class CSysWinPaneView {
@@ -378,7 +378,7 @@ public:
     u32 field_0xF8;           // +0xF8 tag-processor pointer
 };
 
-// func_8027EA6C texture-result view: the GetResource result carries a dims
+// SysWinLog_OpenContent texture-result view: the GetResource result carries a dims
 // pointer at +0x8 (u16 width at +2, u16 height at +0).
 struct CSysWinTexDims {
     u16 field_0x0;            // +0x0 height
@@ -398,7 +398,7 @@ union CSysWinF64Conv {
     double d;
 };
 
-// func_80280F44 view: character-slot entry at +0x3534 of the func_8009EC9C
+// SysWinLog_SweepSlotPressure view: character-slot entry at +0x3534 of the CtrlObjectParam_GetCharEntry
 // data (0xC4 stride; five sub-slot pointers at +0x20..+0xA0, 0x20 apart).
 struct CSysWinCharSlot {
     u8 _0[0x20];
@@ -446,7 +446,7 @@ struct CSysWinPadView {
     u32 mButtons; // +0x4
 };
 
-// Sub-object structure used by func_8027F2DC: the owner stores a pointer to a
+// Sub-object structure used by SysWinLog_AdvanceOwnerLadder: the owner stores a pointer to a
 // small sub-state object at +0x3F60 whose +0x8 points at an inner object with
 // a u32 sub-state value at +0x18.
 struct CScenarioLogSubInner {
@@ -458,16 +458,16 @@ struct CScenarioLogSub {
     CScenarioLogSubInner* field_0x8;     // +0x8
 };
 
-// func_8027F848 / func_8027F2DC / SysWinLog_DriveCounters argument view: a big object
+// SysWinLog_PollSequenceProgress / SysWinLog_AdvanceOwnerLadder / SysWinLog_DriveCounters argument view: a big object
 // with a scenario-flag dword at +0x3F00 (bit 1 = gate), a u16 flag at
 // +0x3E6C (bit 12), and an embedded player object whose address at +0x3E9C is
 // compared against CfGameManager::getPlayer(0). The sub-state tracking fields
-// (+0x3F28 u16 index, +0x3F60 sub-object pointer) are read by func_8027F2DC.
+// (+0x3F28 u16 index, +0x3F60 sub-object pointer) are read by SysWinLog_AdvanceOwnerLadder.
 struct CScenarioLogOwner {
     u8 _0[0x4];
-    void* field_0x4;                     // +0x4 arts-state source object (func_8027F148)
+    void* field_0x4;                     // +0x4 arts-state source object (SysWinLog_CheckOpenGate)
     u8 _8[0x3374 - 0x8];
-    u32 field_0x3374;                    // +0x3374 device flags (func_80280640)
+    u32 field_0x3374;                    // +0x3374 device flags (SysWinLog_ScanDeviceOwners)
     u8 _3378[0x3E6C - 0x3378];
     u16 field_0x3E6C;                    // +0x3E6C flags (bit 12 = forced player)
     u8 _3E6E[0x3E9C - 0x3E6E];
@@ -830,7 +830,7 @@ inline CSysWinDevice* csysWinCall28C(CScenarioLogOwner* self) {
     return ((CSysWinOwnerView*)self)->mAt28C();
 }
 
-// arg2 view for func_8027F848: window/state dword at +0x74 (bit 8) and
+// arg2 view for SysWinLog_PollSequenceProgress: window/state dword at +0x74 (bit 8) and
 // +0x78 (bit 1).
 struct CScenarioLogArg2 {
     u8 _0[0x74];
@@ -894,15 +894,15 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 extern "C" f32 lbl_eu_80668AE0;
 extern "C" f32 lbl_eu_80668AE4;
 
-// Scenario-log unit imports (func_80280640 / func_8027F148 / SysWinLog_BuildLayout /
-// func_8027EA6C / func_80280F44). Retail-unmangled C-ABI symbols.
-extern "C" void* func_8009EC9C(u32 index);            // character-data lookup
+// Scenario-log unit imports (SysWinLog_ScanDeviceOwners / SysWinLog_CheckOpenGate / SysWinLog_BuildLayout /
+// SysWinLog_OpenContent / SysWinLog_SweepSlotPressure). Retail-unmangled C-ABI symbols.
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);            // character-data lookup
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();                       // character-data category
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);               // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-count lookup
 extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
-// call sites truncate with an explicit (u16) cast (see func_8027EA6C).
+// call sites truncate with an explicit (u16) cast (see SysWinLog_OpenContent).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 // BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
@@ -912,7 +912,7 @@ extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const 
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void* res);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char*);
@@ -942,7 +942,7 @@ extern "C" void playUISound__FUl(u32);
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;
-extern "C" void func_8027EA6C(CSysWinScenarioLog* self);
+extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 
 // Bottom-of-file helper definitions (see CSysWinScenarioLog.cpp): declared
 // here so callers below emit a direct `bl` to the retail symbol instead of an
@@ -953,7 +953,7 @@ extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self);
 // cbRenderBefore imports (retail emits direct bl to these symbols).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int arg2, int arg3);
 extern "C" u32 KyoshinHeap_GetField44();

@@ -75,7 +75,7 @@ struct SymbolMarkRenderItem {
     u32 field68;           // 0x68
     u8 field6C;            // 0x6C: live flag
     u8 pad6D[0x70 - 0x6D];
-    u32 state70;           // 0x70 (compared against 0x1A by func_8011E540)
+    u32 state70;           // 0x70 (compared against 0x1A by SymMark_Store)
     u8 field74;            // 0x74
     u8 pad75[0x78 - 0x75];
     u32 field78;           // 0x78 (zeroed by Init)
@@ -128,11 +128,11 @@ struct ScnXformBlock {
     f32 proj120[4];           // +0x120
 };
 
-// Retail imports used by func_8011EFB0.
+// Retail imports used by SymMark_AddTouchMark.
 extern "C" void* prepareReslistArg(u32 idx);
 extern "C" void* CPartsChange_GetLandmarkTable();
 
-// Input record consumed by func_8011E778: three world floats at +0xC/+0x1C/+0x2C.
+// Input record consumed by SymMark_Place: three world floats at +0xC/+0x1C/+0x2C.
 struct EntryInputPos {
     u8 pad00[0x0C];
     f32 posX;                 // +0x0C
@@ -160,7 +160,7 @@ struct LytLayoutFields {
 
 // Real Pane type provides FindPaneByName at 0x3C (replaces LytPaneFindView pad)
 
-// Current map/area id global (read by func_8011E540's state gate).
+// Current map/area id global (read by SymMark_Store's state gate).
 extern u32 lbl_eu_80664184;
 
 // Pointer-to-member-function triple (copied as a struct so MWCC lowers the
@@ -235,7 +235,7 @@ struct CfObjList {
     CfObjListNode* sentinel; // +0x04
 };
 
-// Field view over the marker objects walked by func_8011EDDC: flag bits at
+// Field view over the marker objects walked by SymMark_RebuildIdsB: flag bits at
 // +0x64 (0x10000/0x20000 gate) and a name/id word at +0x74.
 struct CfMarkerFields {
     u8 pad00[0x64];
@@ -244,8 +244,8 @@ struct CfMarkerFields {
     u32 name74;
 };
 
-// Scene-bound object view used by func_8011EDDC: two world-space positions
-// (anchor at +0x10C, extent at +0x138) fed to func_8013A4B4.
+// Scene-bound object view used by SymMark_RebuildIdsB: two world-space positions
+// (anchor at +0x10C, extent at +0x138) fed to CheckViewAngle60.
 struct ScnObjPositions {
     u8 pad00[0x10C];
     f32 posX;  // +0x10C
@@ -353,7 +353,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 // Unmangled retail helper imports.
 extern "C" {
 u32 BdatGetU16Direct(const void* table, const char* str, u32 index);
-int func_80138234(const void* table, u32 index);
+int CheckEntryConditions(const void* table, u32 index);
 void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);
 void* Bdat_GetTable_AA34(void);

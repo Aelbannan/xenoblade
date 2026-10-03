@@ -149,7 +149,7 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
         if ((int)self->field_0x98 == 3) {
             self->field_0x150 = lbl_eu_80666910;
         } else {
-            self->field_0x150 = func_800A4B5C(
+            self->field_0x150 = VecMath_SegmentParam(
                 *reinterpret_cast<const ml::CVec3*>(&self->field_0xA0),
                 *reinterpret_cast<const ml::CVec3*>(&self->field_0xAC),
                 *obj->CfObject_getPosVector());
@@ -173,7 +173,7 @@ extern "C" void copyCollPosition__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, 
 
 // Pointers stay non-const: retail interleaves loads with stores (aliasing).
 // Locals declared in store order to steer MWCC's register coloring.
-void func_800ABF24(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
+void CollObjSetupVecsState5(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     self->func_80047814(a);
     u32 v4 = a->w4;
     u32 v0 = a->w0;
@@ -201,7 +201,7 @@ void func_800ABF24(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float
 // all four stores after the lfs. Every source lever tried (const-ness, locals
 // vs direct statements, decl-order permutations, volatile reads) either
 // regresses or leaves the shape unchanged.
-void func_800AB7F8(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b,
+void CollObjSetupVecsState6(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b,
                    u16 p4, u16 p5, u16 p6, u16 p7, float val) {
     self->func_80047814(a);
     // Pointers stay non-const: retail interleaves loads with the self stores.
@@ -234,7 +234,7 @@ void func_800AB7F8(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b,
 // Residual: retail schedules the flag's `ori` one slot later (after the
 // b->w0 load); every source shape tried yields ori at the first free ALU slot
 // and base-grouped loads (open-item packet in session notes).
-void func_800AB8CC(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
+void CollObjSetupVecsState1(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     self->func_80047814(a);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
@@ -258,7 +258,7 @@ void func_800AB8CC(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float
 
 // Copy two 12-byte vector blocks into the object and store the pair of
 // scalars, after refreshing the packed resource through virtual slot 0x9C.
-void func_800AB978(cf::CfObjectColl* self, cf::CollVec* vecA, cf::CollVec* vecB, float f1, float f2) {
+void CollObjSetupVecPair(cf::CfObjectColl* self, cf::CollVec* vecA, cf::CollVec* vecB, float f1, float f2) {
     self->func_80047814(vecA);
     u32 t = vecA->w0;
     self->field_0xC0 = vecA->w4;
@@ -331,7 +331,7 @@ void CollObjSetupRotBoxFromAVec(cf::CfObjectColl* self, cf::CollVec* a, const ml
 
 // Lerp the stored vector pair A'(0xBC)..B'(0xC8) toward B' by the factor at
 // +0x150 and write the result through the out pointer.
-void func_800ABB9C(ml::CVec3* out, cf::CfObjectColl* self) {
+void CollObjLerpVecPair(ml::CVec3* out, cf::CfObjectColl* self) {
     float s = self->field_0x150;
     ml::CVec3* b = reinterpret_cast<ml::CVec3*>(&self->field_0xC8);
     ml::CVec3* a = reinterpret_cast<ml::CVec3*>(&self->field_0xBC);
@@ -357,7 +357,7 @@ static ml::CVec3 CollVecSum(cf::CfObjectColl* self) {
 // Every source lever tried (operator+ vs add()/scale() statics, by-value
 // helpers, named vs anonymous temps, decl-order permutations) either elides
 // the mid set() copy or leaves the rotation unchanged.
-void func_800ABC5C(ml::CVec3* out, cf::CfObjectColl* self) {
+void CollObjScaledVecSum(ml::CVec3* out, cf::CfObjectColl* self) {
     if ((int)self->field_0x98 == 3) {
         out->set(*self->CfObject_getPosVector());
     } else {
@@ -367,7 +367,7 @@ void func_800ABC5C(ml::CVec3* out, cf::CfObjectColl* self) {
 
 // Copy two 12-byte vector blocks into the 0xA0/0xAC region, store the scalar,
 // then stamp the state marker words at 0x94/0x98.
-void func_800ABD44(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
+void CollObjSetupVecsState0(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
     self->func_80047814(a);
     // Retail interleaves each load with the following store instead of
     // batching all six loads up front.
@@ -388,7 +388,7 @@ void func_800ABD44(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollV
 // then stamp the state marker words at 0x94/0x98.
 // Pointers stay non-const: retail interleaves each load with the following
 // store, which requires potential aliasing between self and a/b.
-void func_800ABDE4(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
+void CollObjSetupVecsState2(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
     self->func_80047814(a);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
@@ -410,7 +410,7 @@ void func_800ABDE4(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float
 // Parameter order puts the B-block pointer in r4/r30; MWCC's RA sorts the
 // trailing loads by (offset, base reg), so the low base must belong to `b`
 // for the reused register to land on b->w8 like retail.
-void func_800ABE84(cf::CfObjectColl* self, const cf::CollVec* b, cf::CollVec* a, float val) {
+void CollObjSetupVecsState3(cf::CfObjectColl* self, const cf::CollVec* b, cf::CollVec* a, float val) {
     self->func_80047814(b);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
@@ -475,7 +475,7 @@ void CollObjSetupRotBoxState5(cf::CfObjectColl* self, ml::CVec3* pos, const ml::
 // Load order, store positions, size (172B) and relocs all match; every
 // source lever tried (const-ness, local creation order, struct-copy,
 // volatile) either regresses scheduling or leaves the swap unchanged.
-void func_800AC110(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
+void CollObjSetupVecsState4(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
     self->field_0x154 = lbl_eu_80666910;
     self->func_80047814(a);
     u32 v0 = a->w0;
@@ -570,7 +570,7 @@ void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b) {
     *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
 }
 
-unsigned long func_800AC460(void* self) {
+unsigned long CollObjSetResIdReady(void* self) {
     extern unsigned long CtrlRemote_SetSharedBit(unsigned long);
     unsigned long v = *(unsigned long*)((char*)self + 0x9c);
     return CtrlRemote_SetSharedBit((v >> 16) + 0x20c8);

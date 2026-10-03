@@ -49,7 +49,7 @@ extern const char lbl_eu_80524044[];
 namespace ml {
 struct CVec4;  // full definition in monolib/math/CVec4.hpp
 }
-extern "C" void func_80058BD8(ml::CVec4* out, const ml::CVec4* in, float s);
+extern "C" void Env_ScaleVec4(ml::CVec4* out, const ml::CVec4* in, float s);
 
 // Single-float math helpers used by func_804933AC's direction-vector to
 // dir-light-angle conversion (flat-name retail symbols; not yet decompiled).

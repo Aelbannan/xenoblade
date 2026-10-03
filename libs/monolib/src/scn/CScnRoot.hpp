@@ -114,7 +114,7 @@ struct CScnGroupTailLayout {
 
 // Custom allocator callbacks for the nw4r MEMAllocator instances (defined in
 // CScnRootNw4r.cpp; plain global-scope names).
-void* func_8048FE34(CScnRootNw4r* allocator, u32 size);
+void* RootNw4r_AllocBuf(CScnRootNw4r* allocator, u32 size);
 void RootNw4r_FreeBuf(CScnRootNw4r* allocator, void* block);
 
 // Second-stage bloom constructor (defined in CScnBloom.cpp).

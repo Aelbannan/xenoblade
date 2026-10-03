@@ -19,7 +19,7 @@ extern char lbl_eu_80510CC8[];
 // nw4r layout animation helpers (retail names; resolved by symbol tooling).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);

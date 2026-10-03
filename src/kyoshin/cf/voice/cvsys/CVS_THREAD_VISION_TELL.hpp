@@ -85,14 +85,14 @@ extern u32 lbl_eu_80539DD4[7];
 // C-linkage imports used by this TU's thread helpers / factory. Genuine
 // retail C/ABI symbols imported from sibling voice modules.
 extern "C" {
-    int           func_802A3E88(CVS_THREAD* self);
-    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int           func_802A77E8(CVoiceHandle* handle);
-    int           func_802A7850(int iter);
-    int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    int           IsThreadVoiceActive(CVS_THREAD* self);
+    void          DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int           HpVoice_MapSubState(CVoiceHandle* handle);
+    int           HpVoice_ValidIter(int iter);
+    int           HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
     int           HpVoice_CheckPairGate(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    CVoiceHandle* func_802A330C(int size, int align);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     void          __ct__cf_CVS_THREAD(void* self);
 }

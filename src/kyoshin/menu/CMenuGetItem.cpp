@@ -225,7 +225,7 @@ void CMenuGetItem::Init() {
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         mLayout->SetAnimationEnable(mField_78, true);
         reinterpret_cast<AnimFrameView*>(mField_78)->frame = lbl_eu_80667418;
@@ -252,7 +252,7 @@ void CMenuGetItem::Init() {
     case 1:
         title = (const char*)mField_98;
         if (title == NULL) {
-            title = (const char*)func_801394D4((u16)mField_94);
+            title = (const char*)BuildItemNameStr((u16)mField_94);
         }
         break;
     case 2:
@@ -341,7 +341,7 @@ void CMenuGetItem::cbRenderBefore() {
     // scope-exit (virtual) destructor on top of the explicit call.
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }

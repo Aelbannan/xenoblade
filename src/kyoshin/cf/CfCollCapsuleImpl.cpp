@@ -11,7 +11,7 @@ extern const float lbl_eu_80666948; // 0.75f
 
 // Collision query helper: process capsule against collision context.
 // Retail names this symbol UNMANGLED (plain C linkage).
-extern "C" void func_800A4C48(void* query, const ml::CVec3* start,
+extern "C" void VecMath_SegSphereProbe(void* query, const ml::CVec3* start,
                                const ml::CVec3* end, float radius);
 
 // Render the capsule for debug visualization.
@@ -55,6 +55,6 @@ void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
 // r3 is unused.
 extern "C" void collCapsuleQueryOffset(void* /*unused*/, cf::CfCollCapsuleImpl* capsule,
                                void* query, float offsetRadius) {
-    func_800A4C48(query, &capsule->mStart, &capsule->mEnd,
+    VecMath_SegSphereProbe(query, &capsule->mStart, &capsule->mEnd,
                   capsule->mRadius + offsetRadius);
 }

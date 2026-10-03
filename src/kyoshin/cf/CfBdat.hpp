@@ -36,7 +36,7 @@ extern void* lbl_eu_8066411C;   // spItmArmListFileData
 extern void* lbl_eu_80664120;   // spItmWaistListFileData
 extern void* lbl_eu_80664124;   // spItmLeggListFileData
 extern void* lbl_eu_80664190;   // sinit instance pointer
-// Additional sbss bdat file-data globals used by func_801421C4.
+// Additional sbss bdat file-data globals used by bdatGetItemName.
 extern BdatFileData* lbl_eu_806640D8;
 extern BdatFileData* lbl_eu_806640EC;
 extern BdatFileData* lbl_eu_806640F0;
@@ -45,7 +45,7 @@ extern BdatFileData* lbl_eu_80664104;
 extern BdatFileData* lbl_eu_80664108;
 extern BdatFileData* lbl_eu_8066410C;
 extern BdatFileData* lbl_eu_80664110;
-// Cached field-map row state written by func_80141C6C (retail sbss labels).
+// Cached field-map row state written by bdatSetResRow (retail sbss labels).
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 extern u32 lbl_eu_80664188;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float
@@ -63,9 +63,9 @@ namespace cf{
         static void loadBdatFileTable();
         static void resetMapBdatFileDataPointers();
         static void loadMapBdatFileDataPointers(int mapId, int areaId);
-        static void* func_80141B20(const char* pName);
-        static const char* func_801421C4(u16 index);
-        static u32 func_801422A8(u32 param1);
+        static void* bdatFetchCache(const char* pName);
+        static const char* bdatGetItemName(u16 index);
+        static u32 resolveWpnTok(u32 param1);
         static const char* getBdatStringEntry(u16 index);
 
         //Pointers to file data for bdat files

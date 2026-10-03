@@ -88,7 +88,7 @@ struct CfObjectImplPc3F60 {
 
 // Battle object's +0x04 sub-object: vtable slots 0x20 (flag setter) and 0x30
 // (returns a word holder whose first word is read as an id) are called by
-// func_800C86E8. Never instantiated, so no vtable is emitted.
+// ObjPc_BattleActorScan_86E8. Never instantiated, so no vtable is emitted.
 class CfObjectImplPcBattle4 {
 public:
     virtual void b08();              // index 0
@@ -277,7 +277,7 @@ public:
 };
 
 // Polymorphic object stored at CfObjectImplPc18::field_3ED4 (source operand
-// of the __dynamic_cast in func_800C75D4). Never instantiated here.
+// of the __dynamic_cast in ObjPc_BattleEventCmdDispatch_75D4). Never instantiated here.
 class CfObjectImplPcED4 {
 public:
     virtual void e08();              // index 0
@@ -303,7 +303,7 @@ struct CfObjectImplPc149154 {
     s32 field_10;                    // 0x10
 };
 
-// Command-name view of the event record passed to func_800C75D4.
+// Command-name view of the event record passed to ObjPc_BattleEventCmdDispatch_75D4.
 struct CfObjectImplPcEvtCmd {
     u8 _pad00[0x0A];
     u8 field_0A;                     // 0x0A request mode (0x12 gate)
@@ -312,13 +312,13 @@ struct CfObjectImplPcEvtCmd {
 };
 
 // View of the object returned by Selector_GetInstance: word at +0x90E4 feeds
-// findObjectById in func_800C891C's actor fallback.
+// findObjectById in ObjPc_BattleStartEffects_891C's actor fallback.
 struct CfObjectImplPcFe68C {
     u8 _pad00[0x90E4];
     u32 field_90E4;                  // 0x90E4
 };
 
-// Status-effect request built on the stack in func_800C75D4 (memset 0x34).
+// Status-effect request built on the stack in ObjPc_BattleEventCmdDispatch_75D4 (memset 0x34).
 struct CfObjectImplPcEffArg {
     u32 field_00;                    // 0x00 battle id
     u8 _pad04[0x08 - 0x04];
@@ -866,7 +866,7 @@ struct CfObjectImplPc14 {
     u8 _pad8E[0x98 - 0x8E];          // 0x8E-0x97
     CfObjectImplPc98* field_98;      // 0x98
     u8 _pad9C[0xC4 - 0x9C];          // 0x9C-0xC3
-    u32 field_C4;                    // 0xC4 token id (func_800C75D4 gate)
+    u32 field_C4;                    // 0xC4 token id (ObjPc_BattleEventCmdDispatch_75D4 gate)
 };
 
 // Player-character implementation object. Fields at +0x14 / +0x18 / +0x28 /
@@ -945,7 +945,7 @@ public:
 
 } // namespace cf
 
-// Event record passed as arg2 to func_800C9A20 / func_800CAB30:
+// Event record passed as arg2 to ObjPc_EventDispatch_9A20 / MoveImplDispatchStart:
 // u16 event id at +0x0C, u16 gate at +0x2E, flag word at +0x30 (bit 1).
 struct CfObjectImplPcEvt {
     u8 _pad00[0x0A];
@@ -956,7 +956,7 @@ struct CfObjectImplPcEvt {
     u8 field_0E;                     // effect type (low 7 bits) + flag bit 7
     u8 _pad0F[0x20 - 0x0F];
     f32 field_20;                    // 0x20 float payload (word-copied by
-                                     // the struct copy in func_800C9CEC)
+                                     // the struct copy in ObjPc_ArtsCmdEventDispatch_9CEC)
     u8 _pad24[0x2E - 0x24];
     u16 field_2E;
     u32 field_30;
@@ -985,7 +985,7 @@ void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners
 // (CVision.hpp owner) so TUs including several of these headers see one
 // declaration per retail name (MWCC 10197). Opaque pointers - ABI unchanged.
 void* getObjectAt(void* list, u32 idx); // canonical void* return (CVision.hpp owner)
-void func_800F6ED0(void* list, void* value);
+void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
@@ -1006,33 +1006,33 @@ void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
 void setAnimCount(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
 void CCharVoiceMan_EnqueuePcStateVoice(void* obj);
 void CBattleMan_RunBattleEvent(void* mgr, void* obj, void* evtCopy, s32 flag);
-void func_800CB454(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
+void MoveImplDispatchEvent(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 void PartyGaugeAddClamped(void* obj, int value);
 void aiActionClearBlockADC(void* blk);
-void func_801B248C(int value);
-void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
+void dropPendingFx(int value);
+void MoveImplDispatchStart(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 // (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
-void func_800CD5DC(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
+void MoveImplDriveTransition(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 int getAnimChain(void* obj);
 // func_8004B9D4 is TU-local in CfObjectImplPc.cpp (same 5-arg form as below):
 // the shared CfObjectMove.hpp decl is a 4-arg overload (MWCC 10197).
 void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void CCharVoiceMan_EnqueuePcActionVoice(void* obj);
-void func_800CC964(void);
-void func_800983B8(void* a, int b);
+void MoveImplDispatchRequest(void);
+void CtrlPc_DispatchPadAction(void* a, int b);
 unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
                                                     unsigned int b,
                                                     unsigned int c);
 int IdTable_QuerySumFloat(void* obj, int id, u32* outW, f32* outF);
 void CBattleMan_FireActorEvent918(void* mgr, void* obj, void* arg, int a, int b);
-void func_800D81A8(int a, void* obj, int c);
+void calcBattleDamage(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
-void func_802809C8(void);
+void SysWinLog_TickCounter23(void);
 void* findBattleStatusEntry(void* obj, int id);
 void CUICfManager_queueFactoryMenu(int a, float b);
 int CBattleMan_ListHasValue(void* mgr, void* obj);
 void bindIndexedEffect(u32 entry, void* sub);
-void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
+void* CtrlObjectParam_GetCharEntry(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }
 
@@ -1042,8 +1042,8 @@ bool isGlobalCamFlagSet(int mask);                      // isGlobalCamFlagSet__F
 cf::CfObjectImplPc18* getCfObjectPc(cf::CfObjectMove* objMove);  // getCfObjectPc__FPQ22cf12CfObjectMove
 // (findObjectById__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 
-// sdata2 constants used by func_800CA294 / func_800C86E8 / func_800C9A20 /
-// func_800C75D4.
+// sdata2 constants used by ObjPc_BattleActorRecount_A294 / ObjPc_BattleActorScan_86E8 / ObjPc_EventDispatch_9A20 /
+// ObjPc_BattleEventCmdDispatch_75D4.
 extern f32 lbl_eu_80666BC8;
 extern f32 lbl_eu_80666BCC;
 extern f32 lbl_eu_80666BD0;
@@ -1057,7 +1057,7 @@ extern f32 lbl_eu_80666C00;
 extern f64 lbl_eu_80666BD8;
 extern f64 lbl_eu_80666BE0;
 
-// Handler-entry table copied to the stack by func_800C75D4 (indexed by the
+// Handler-entry table copied to the stack by ObjPc_BattleEventCmdDispatch_75D4 (indexed by the
 // battle id at +0x3F28) and the two typeinfo operands of its __dynamic_cast.
 extern u32 lbl_eu_804FC730[9];
 extern u32 lbl_eu_804FC718[6];
@@ -1075,13 +1075,13 @@ extern "C" void func_800EC918(void* mgr, void* obj, void* obj2, void* arg,
 extern "C" int Counter_TestBit(void* obj, u32 idx);
 extern "C" int IdTable_SumValues(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
 extern "C" void MoveImplNoopA(void* self);
-extern "C" void func_8014AC38(void* blk, void* rec);
+extern "C" void aiRingPrepend(void* blk, void* rec);
 extern "C" void CBattleMan_ClearEventNotify(void* mgr, void* obj, s32 id);
 extern "C" void CBattleMan_ClearActorStatus(void* mgr, void* obj, s32 id);
-extern "C" void func_800E9B54(void* mgr, void* obj, u32 a, u32 b);
-extern "C" void func_800D9CA0(void* mgr, void* obj);
+extern "C" void spreadChainArtsHits(void* mgr, void* obj, u32 a, u32 b);
+extern "C" void unregisterBattleActor(void* mgr, void* obj);
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
-extern "C" int func_801B1CCC(int idx);
+extern "C" int getSlotEffectId(int idx);
 extern "C" int findObjB48ById(int id);
 extern "C" void func_80084654__Q22cf13CfGameManagerFv(int flag);
 extern "C" int IdTable_MaxValueC(void* obj, u32 idx);

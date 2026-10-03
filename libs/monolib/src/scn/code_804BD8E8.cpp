@@ -29,26 +29,26 @@ extern "C" CVec3 zero__Q22ml5CVec3;
 // Cross-TU imports (monolib/coli code_804B59C8). C linkage keeps the retail
 // plain symbol names (MWCC would mangle C++-linkage declarations).
 extern "C" u32 Coli_IsSlotActive_ADA0(const char* self);
-extern "C" void func_804BA7BC(const char* self, u32 a, u32 b);
-extern "C" void func_804BA26C(const char* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void launchRayScan(const char* self, u32 a, u32 b);
+extern "C" void obbVolumePass(const char* self, u32 a, u32 b, u32 c, u32 d);
 
 // Cross-TU imports (monolib/coli collision manager entry points).
-extern "C" void func_804B9E14(char* state, const f32* offset, u32 flags, int mode);
-extern "C" void func_804B877C(char* state, const f32* offset, u32 flags, int mode);
-extern "C" void func_804B7804(char* self);
+extern "C" void beginColiPass(char* state, const f32* offset, u32 flags, int mode);
+extern "C" void beginLinkPass(char* state, const f32* offset, u32 flags, int mode);
+extern "C" void initColiMover(char* self);
 
 // Cross-TU imports (monolib/coli ray/query passes; retail plain symbols).
 // Note: MWCC Wii/1.1 rejects extern "C" calls where all six arguments are
 // lvalues (10248); one argument is cast to an rvalue at each callsite.
 extern "C" {
-void func_804B8C2C(void* state, const void* a1, const void* a2,
+void segVolumePass(void* state, const void* a1, const void* a2,
                    u32 a3, u32 a4, u32 a5);
-void func_804B91E0(void* state, const void* pos, u32 filterA,
+void updownRayPass(void* state, const void* pos, u32 filterA,
                    u32 mode, u32 flag);
-void func_804B9818(char* state);
+void updownRayFlag(char* state);
 void ScnEnvLgt_noopF59C(void* obj, void* other);
 void noopAnimVec3(void* obj);
-void func_804BA8B4(void* state, void* a1, void* a2, void* a3, void* a4,
+void scanVertQuery(void* state, void* a1, void* a2, void* a3, void* a4,
                    void* a5);
 }
 extern u8 lbl_eu_8066597F;
@@ -118,7 +118,7 @@ struct ScnRmObj {
 void* __dt__804BD8E8(ScnRmObj* obj, s32 flags) {
     if (obj != NULL) {
         obj->field_0x00 = 0;
-        func_804B7804(lbl_eu_8065F32C);
+        initColiMover(lbl_eu_8065F32C);
         if (flags > 0) {
             ::operator delete(obj);
         }
@@ -127,8 +127,8 @@ void* __dt__804BD8E8(ScnRmObj* obj, s32 flags) {
 }
 
 // Begin a registration pass over the scene resources. select picks between
-// the default matrix configuration pass (func_804B9E14) and the linked-
-// object/default-table swapping pass (func_804B877C).
+// the default matrix configuration pass (beginColiPass) and the linked-
+// object/default-table swapping pass (beginLinkPass).
 // Begin a registration pass over the scene resources.
 //
 // Sets up the shared crossing state (anchor position, thresholds, flags),
@@ -195,7 +195,7 @@ s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
         e->field_0x10 += cur.y;
         e->field_0x14 += cur.z;
         e->field_0x10 += moveY;
-        func_804B9E14(lbl_eu_8065F32C, &base.x, 0, 1);
+        beginColiPass(lbl_eu_8065F32C, &base.x, 0, 1);
         if (lbl_eu_80665988 == 0) {
             continue;
         }
@@ -316,9 +316,9 @@ s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
 // Begin a registration pass over the scene resources.
 s32 ScnRes_RegPassSelect_E2E8(const f32* offset, u32 flags, int mode, int select) {
     if (select != 0) {
-        func_804B9E14(lbl_eu_8065F32C, offset, flags, mode);
+        beginColiPass(lbl_eu_8065F32C, offset, flags, mode);
     } else {
-        func_804B877C(lbl_eu_8065F32C, offset, flags, mode);
+        beginLinkPass(lbl_eu_8065F32C, offset, flags, mode);
     }
     return lbl_eu_80665988;
 }
@@ -327,24 +327,24 @@ s32 ScnRes_RegPassSelect_E2E8(const f32* offset, u32 flags, int mode, int select
 // shared entry count.
 u32 ScnRes_SegQueryForward_E348(const void* a1, const void* a2, u32 a3, u32 a4,
                   u32 a5) {
-    func_804B8C2C((void*)lbl_eu_8065F32C, a1, a2, a3, a4, a5);
+    segVolumePass((void*)lbl_eu_8065F32C, a1, a2, a3, a4, a5);
     return lbl_eu_80665988;
 }
 
 // Forward the vertical ray registration pass to the collision manager.
 u32 ScnRes_VertRayForward_E398(const void* a1, u32 a2, u32 a3, u32 a4) {
-    func_804B91E0((void*)lbl_eu_8065F32C, a1, a2, a3, a4);
+    updownRayPass((void*)lbl_eu_8065F32C, a1, a2, a3, a4);
     return lbl_eu_80665988;
 }
 
 void ScnRes_Notify4Word_E3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
-    func_804BA26C(lbl_eu_8065F32C, a1, a2, a3, a4);
+    obbVolumePass(lbl_eu_8065F32C, a1, a2, a3, a4);
 }
 
 // Run the mover ray pass variant, then project the tracked position when
 // any resource entry is active.
 s32 func_804BE408(void* a1) {
-    func_804B9818(lbl_eu_8065F32C);
+    updownRayFlag(lbl_eu_8065F32C);
     if (lbl_eu_80665988 != 0) {
         return func_804BE62C((ml::CVec3*)a1);
     }
@@ -392,12 +392,12 @@ struct ScnWork {
 };
 
 void ScnRes_Notify2Word_E458(u32 a1, u32 a2) {
-    func_804BA7BC(lbl_eu_8065F32C, a1, a2);
+    launchRayScan(lbl_eu_8065F32C, a1, a2);
 }
 
 void ScnRes_Notify5Ptr_E470(void* a1, void* a2, void* a3, void* a4, void* a5) {
     extern char lbl_eu_8065F32C[];
-    func_804BA8B4(lbl_eu_8065F32C, a1, a2, a3, a4, a5);
+    scanVertQuery(lbl_eu_8065F32C, a1, a2, a3, a4, a5);
 }
 
 u32 ScnRes_IsStateActive_E4A0() {

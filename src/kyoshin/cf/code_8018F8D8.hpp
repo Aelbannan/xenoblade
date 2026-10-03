@@ -507,7 +507,7 @@ struct CMenuPTWinCopyView {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" int IsMenuState621F0();
-extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 
 // --- imports used by the Move / dispatcher functions ---------------------
 
@@ -596,6 +596,6 @@ extern "C" int CfResBuf_popRecord(MenuCmdRingView* buffer, u32* headerOut,
                              u32* dataOut);
 
 // Party-slot character-data lookups used by func_8018FA2C.
-extern "C" void* func_8009EC9C(u32 index);  // matches CAIAction.hpp declaration
-extern "C" void func_800A30E4(void* data);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);  // matches CAIAction.hpp declaration
+extern "C" void CtrlObjectParam_RecollectArtsRows(void* data);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void* data);

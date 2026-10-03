@@ -320,7 +320,7 @@ void func_8020CB28(cf::CfGimmickLock* self) {
 extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
     if ((self->flags & 1) == 0) {
         if (lbl_eu_80665958 != 0) {
-            func_804B4BDC(lbl_eu_80665958, &self->subA);
+            ColiListAppend(lbl_eu_80665958, &self->subA);
         }
         self->flags |= 1;
         if (self->stateIndex - 3 <= 1) {
@@ -411,7 +411,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
     if ((self->flags & 0x1000) == 0) {
         self->flags |= 0x1000;
         if (lbl_eu_80665958 != 0) {
-            func_804B4BDC(lbl_eu_80665958, &self->subB);
+            ColiListAppend(lbl_eu_80665958, &self->subB);
         }
     }
 }

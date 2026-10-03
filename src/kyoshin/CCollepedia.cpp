@@ -21,7 +21,7 @@ int sprintf(char*, const char*, ...);
 extern "C" void clpPrevPageIx(u8*);
 extern "C" u8 clpGetPageCat(u8*);
 extern "C" u32 func_80254144(u8*);
-extern "C" __declspec(noinline) void func_80255F98(CCollepedia*);
+extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia*);
 extern "C" __declspec(noinline) void clpSetPageVis();
 extern "C" void clpSetSelTxt(CCollepedia*);
 extern "C" void clpRefreshCur(CCollepedia*);
@@ -38,9 +38,9 @@ extern "C" void clpEnterBrows(CCollepedia*);
 extern "C" void clpWaitOutro(CCollepedia*);
 extern "C" void clpEnterIdle(CCollepedia*);
 extern "C" void clpEnabDetCur(CCollepedia*);
-extern "C" void func_802559DC(CCollepedia*);
+extern "C" void clpEnterDetail(CCollepedia*);
 extern "C" void collepediaCreateItemMulti(CCollepedia*);
-extern "C" void func_80255B60(CCollepedia*);
+extern "C" void clpOpenComplete(CCollepedia*);
 extern "C" void clpPlayTblSe(CCollepedia*);
 
 
@@ -193,7 +193,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     nw4r::lyt::Pane* rootPane = pg->mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
     u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontHandle);
+    ApplyFontToTxtPanes(rootPane, fontHandle);
 
     char* tagStr = (char*)CUICfManager_getPackedFont9C();
     setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
@@ -328,7 +328,7 @@ extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 // us-80255bac
-// Format a pane name, find two panes by name, and call func_80137924 to copy text
+// Format a pane name, find two panes by name, and call ScalePaneWorldPos to copy text
 // Retail saves r28-r31 with stmw and uses a 0x40-byte stack frame
 // Retail reloads rootPane from *(layout+0x10) each time (no caching)
 extern "C" void clpCalcCurPos(CCollepedia* this_, LayoutContainer* container, int arg3) {
@@ -336,7 +336,7 @@ extern "C" void clpCalcCurPos(CCollepedia* this_, LayoutContainer* container, in
     sprintf(buf, &lbl_eu_8050C6E8[0x14f], arg3 + 1);
     nw4r::lyt::Pane* pane1 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
-    func_80137924((nw4r::math::VEC3*)this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
+    ScalePaneWorldPos((nw4r::math::VEC3*)this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
 }
 #pragma pop
 
@@ -388,8 +388,8 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
 //  4. select the default category page and append a sentinel page (0x1a),
 //  5. distribute every collected item into the pages' 6x5 grids, starting a
 //     new row whenever the item sub-category changes.
-extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
-    extern void func_8025449C(u8* self, int a, int b, int c, int itemId);
+extern "C" __declspec(noinline) void clpBuildPages(u8* self_) {
+    extern void clpFillEntry(u8* self, int a, int b, int c, int itemId);
 
     u16 n = 0;
     u16 numIds = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_806640EC);
@@ -482,16 +482,16 @@ extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
             u8 sub = (u8)BdatGetU8Direct((u32)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
             if (row == 0) {
                 grp[0 * 0x34 + 0xC] = sub;
-                func_8025449C(self_, g, row, 0, itemId);
+                clpFillEntry(self_, g, row, 0, itemId);
                 row = 1;
                 col = 1;
             } else if (sub != grp[row * 0x34 - 0x28]) {
                 grp[row * 0x34 + 0xC] = sub;
-                func_8025449C(self_, g, row, 0, itemId);
+                clpFillEntry(self_, g, row, 0, itemId);
                 row++;
                 col = 1;
             } else {
-                func_8025449C(self_, g, row - 1, col++, itemId);
+                clpFillEntry(self_, g, row - 1, col++, itemId);
             }
         }
         grp[5] = row;
@@ -518,7 +518,7 @@ extern "C" __declspec(noinline) bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2
 // Residual (16 mm / 3 structural): MWCC associates the pointer sum as
 // (self+row)+idx while retail folds self+idx first; scheduler-invariant
 // across every source shape tried (flat/subscript/cast/chained-&/locals).
-extern "C" __declspec(noinline) void func_80253F3C(u8* self, u32 row, u32 col) {
+extern "C" __declspec(noinline) void clpSelectItem(u8* self, u32 row, u32 col) {
     if (row >= 6) return;
     if (col >= 5) return;
 
@@ -637,7 +637,7 @@ extern "C" __declspec(noinline) float clpGetPagePrg(u8* this_) {
 // us-8025650c
 // Look up an entry in the sub-array, check +0x10 u16 and +0x16 byte.
 // If byte != 1, resolve string via BdatGetPtrDirect.
-extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2) {
+extern "C" __declspec(noinline) char* clpGetEntryStr(u8* self, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return nullptr;
     if (arg2 >= 5) return nullptr;
     // Fold the whole entry address into one expression to match retail dataflow
@@ -653,7 +653,7 @@ extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2
 // us-8025658c
 // Look up an entry in the sub-array, check if item is unlocked (via CtrlObjectParam_GetStateBitFlag), format its name
 // Returns nullptr if the entry is invalid or locked
-extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
+extern "C" char* clpGetItemName(u8* self, u32 arg2, u32 arg3) {
     if (lbl_eu_806647D8 == NULL) return NULL;
     if (arg2 >= 6) return NULL;
     if (arg3 >= 5) return NULL;
@@ -697,7 +697,7 @@ extern "C" __declspec(noinline) u32 clpIsPageDone(u8* this_) {
 // us-802566d8
 // Fill one grid entry (stride 0xA at self + a*0x140 + b*0x34 + c*0xA):
 // item id, category lookups, and an unlock-state byte.
-extern "C" void func_8025449C(u8* self, int a, int b, int c, u16 itemId) {
+extern "C" void clpFillEntry(u8* self, int a, int b, int c, u16 itemId) {
     // Retail rebuilds the entry address from three live stride offsets before
     // every store (see open-item note below).
     *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0xE) = itemId;
@@ -894,7 +894,7 @@ void clpStartLoads(CCollepedia* this_) {
     this_->_E9[0] = tmp._01;
     this_->field_EC = tmp.data;
 
-    func_80253B3C(&this_->field_E8);
+    clpBuildPages(&this_->field_E8);
 }
 #pragma pop
 
@@ -929,7 +929,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     case 7:
         break;
     case 8:
-        func_802559DC(this_);
+        clpEnterDetail(this_);
         break;
     case 9:
         if (CSysWin_isActive(&this_->field_9C)) {
@@ -942,7 +942,7 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
         collepediaCreateItemMulti(this_);
         break;
     case 12:
-        func_80255B60(this_);
+        clpOpenComplete(this_);
         break;
     case 13:
         if (CSysWin_isActive(&this_->field_9C)) {
@@ -1213,7 +1213,7 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
         clpRefreshCur(this_);
     }
 
-    func_80255F98(this_);
+    clpRefreshPage(this_);
     clpSetSelTxt(this_);
     playUISound__FUl(10);
 }
@@ -1236,7 +1236,7 @@ extern "C" void clpPrevCatPg(CCollepedia* this_) {
         clpRefreshCur(this_);
     }
 
-    func_80255F98(this_);
+    clpRefreshPage(this_);
     clpSetSelTxt(this_);
     playUISound__FUl(10);
 }
@@ -1315,8 +1315,8 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
         if ((s8)this_->field_DA == 0) {
             // Grid page: grant the selected item, refresh both display pages,
             // then play a category-keyed fanfare.
-            func_80253F3C(&this_->field_E8, this_->field_D9, this_->field_D8);
-            func_80255F98(this_);
+            clpSelectItem(&this_->field_E8, this_->field_D9, this_->field_D8);
+            clpRefreshPage(this_);
             clpSetSelTxt(this_);
 
             u32 cat = clpGetRowSubc(&this_->field_E8, this_->field_D9);
@@ -1348,7 +1348,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     // List page: open the detail view for the selected entry.
     if (clpIsClaimabl(&this_->field_E8, this_->field_D9, this_->field_D8) == 0) return;
 
-    char* desc = func_802542D0(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* desc = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_28F0, &lbl_eu_8050C6E8[0x12b], desc, 0);
 
     clpSetPageNum(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]),
@@ -1446,7 +1446,7 @@ extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
 #pragma dont_inline on
 // us-80257c18
 // Open the collepedia detail view: set state, enable sub-object, update display, load file
-__declspec(noinline) void func_802559DC(CCollepedia* this_) {
+__declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
 
     this_->field_49 = 3;
@@ -1499,7 +1499,7 @@ extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this
 #pragma optimize_for_size on
 #pragma dont_inline on
 // Initialize collepedia display: check condition, set up CSysWin with text, play sounds, load file
-__declspec(noinline) void func_80255B60(CCollepedia* this_) {
+__declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
     if (GetItemMulti_IsActiveFlag()) return;
 
     this_->field_49 = 3;
@@ -1543,7 +1543,7 @@ void clpTryShow(CCollepedia* this_) {
         return;
     }
     clpSetPageVis();
-    func_80255F98(this_);
+    clpRefreshPage(this_);
     clpSetSelTxt(this_);
     this_->field_50 = 1;
     this_->field_48 = 1;
@@ -1554,7 +1554,7 @@ void clpTryShow(CCollepedia* this_) {
 // optimize_for_size gives the retail stmw/lmw block-save frame.
 #pragma push
 #pragma optimize_for_size on
-// noinline: retail callers (func_80255F98) invoke this out-of-line.
+// noinline: retail callers (clpRefreshPage) invoke this out-of-line.
 __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, int mode) {
     void* res = NULL;
     // Mode 3 intentionally shares mode 2's resource and falls through without break.
@@ -1585,7 +1585,7 @@ __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, in
 // optimize_for_size gives the retail stmw/lmw block-save frame (three call sites total).
 #pragma push
 #pragma optimize_for_size on
-// noinline: retail caller func_80255F98 invokes this out-of-line.
+// noinline: retail caller clpRefreshPage invokes this out-of-line.
 __declspec(noinline) void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
     void* tex;
     if (mode == 3) {
@@ -1654,7 +1654,7 @@ static double clpConvS32ToF64(s32 x) {
 // Refresh the detail page: show/hide panes, move the cursor, description
 // text, collected-count label, per-entry rows and texture slots.
 // Retail frame is 0x70 with _savegpr_25: only r25-r31 stay live across calls.
-extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
+extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
     char buf[0x18];
     u8 idx = (u8)(this_->_E9[0] + 1); // retail reads the index byte unsigned
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
@@ -1676,7 +1676,7 @@ extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
     u8 slot = (u8)(lbl_eu_80668814 * ratio); // fctiwz truncation
     char* label = BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
     sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
-    func_80136A1C(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
+    LayoutSetTextBoxText(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
 
     u32 count = func_80254144(&this_->field_E8);
     // Exactly six rows exist per page; visibility still follows the count.
@@ -1721,9 +1721,9 @@ extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" __declspec(noinline) void clpSetSelTxt(CCollepedia* this_) {
-    char* str1 = func_802542D0(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* str1 = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2e2], str1, 0);
-    char* str2 = func_80254350(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* str2 = clpGetItemName(&this_->field_E8, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
 }
 #pragma pop
@@ -1751,7 +1751,7 @@ extern "C" __declspec(noinline) void clpRefreshCur(CCollepedia* this_) {
         nw4r::lyt::Pane* pane1 = this_->field_38->GetRootPane()->FindPaneByName(name, true);
         nw4r::lyt::Pane* pane2 = this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
 
-        func_80137924(reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C), pane1, pane2,
+        ScalePaneWorldPos(reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C), pane1, pane2,
             this_->field_38->GetRootPane());
 
         ((CBaseCur*)&this_->field_54)->setRootPaneTranslate(
@@ -1800,7 +1800,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         // Bind the device font into every text pane via the root pane.
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-        func_8013676C(field_38->GetRootPane(), fontHandle);
+        ApplyFontToTxtPanes(field_38->GetRootPane(), fontHandle);
 
         char* tagStr = (char*)getPackedFont();
         setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);

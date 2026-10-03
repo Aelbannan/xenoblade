@@ -30,7 +30,7 @@ struct CfGimmickTableSet {
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
 // u16 sequence windows / ids scanned by the per-frame eligibility checks
-// (func_801F7978 / func_801F7B44 / func_801F7D38).
+// (GimObjGateOnStateFlags / GimObjGateStepAvailability / GimObjTickStepGate).
 struct CfGimmickObjectArea {
     /* 0x00 */ u16 field_00;
     /* 0x02 */ u16 field_02;
@@ -42,7 +42,7 @@ struct CfGimmickObjectArea {
     /* 0x0E */ u16 field_0E;
 };
 
-// Third argument of func_801F6B98: per-frame LOD state record. Only the flag
+// Third argument of GimObjApplyLodFrame: per-frame LOD state record. Only the flag
 // byte (+0x05), id byte (+0x06) and frame count (+0x0C) are read.
 struct CfGimmickLodFrame {
     /* 0x00 */ u8 gap_00[0x05];
@@ -52,12 +52,12 @@ struct CfGimmickLodFrame {
     /* 0x0C */ u16 field_0C;  // frame count converted to f32 for func_80462FD8
 };
 
-// 16-byte per-step entry at +0xA4 (indexed by field_188 in func_801F6780).
+// 16-byte per-step entry at +0xA4 (indexed by field_188 in GimObjUpdateStep).
 // The +0x05/+0x06/+0x0C bytes double as the CfGimmickLodFrame layout handed
-// to func_801F6B98 (retail passes the step pointer through unchanged).
+// to GimObjApplyLodFrame (retail passes the step pointer through unchanged).
 struct CfGimmickObjectStep {
     /* 0x00 */ u16 field_00;   // activation frames (seeds field_170)
-    /* 0x02 */ u16 field_02;   // camera-event id passed to func_8007B0C8
+    /* 0x02 */ u16 field_02;   // camera-event id passed to CamEvtProgramEventCam
     /* 0x04 */ u8 field_04;    // map-object status id (CfObjectMove_setAnimModeArgs)
     /* 0x05 */ u8 field_05;    // LOD flags (CfGimmickLodFrame alias)
     /* 0x06 */ u8 field_06;    // LOD id byte (CfGimmickLodFrame alias)
@@ -107,7 +107,7 @@ public:
     /* 0x60 */ u32 field_60;
     /* 0x64 */ u16 field_64;
     /* 0x66 */ u16 field_66;
-    /* 0x68 */ u16 field_68;           // map-object id passed to func_80186BC8
+    /* 0x68 */ u16 field_68;           // map-object id passed to ArtsSelect_GetEntry
     /* 0x6A */ u16 field_6A;
     /* 0x6C */ u16 field_6C;
     /* 0x6E */ u16 field_6E;
@@ -121,48 +121,48 @@ public:
     /* 0xA4 */ CfGimmickObjectStep field_A4[2];  // 2 x 0x10 per-step entries
     /* 0xC4 */ u16 field_C4;
     /* 0xC6 */ u8 gap_C6[0xC9 - 0xC6];
-    /* 0xC9 */ u8 field_C9;           // mode bits 5..7 gate the busy-flag raise (func_801F7F24)
+    /* 0xC9 */ u8 field_C9;           // mode bits 5..7 gate the busy-flag raise (GimObjDriveSpawnEffects)
     /* 0xCA */ u8 gap_CA[0xF4 - 0xCA];
     /* 0xF4 */ u8 field_F4[0x30];      // collider B 3x4 matrix dest (func_802089BC)
     /* 0x124 */ u8 gap_124[0x138 - 0x124];
-    /* 0x138 */ u32 field_138;         // jumptable_eu_80535830 dispatch index (func_801F7F24)
+    /* 0x138 */ u32 field_138;         // jumptable_eu_80535830 dispatch index (GimObjDriveSpawnEffects)
     /* 0x13C */ u16 field_13C;
     /* 0x13E */ u16 field_13E;
     /* 0x140 */ u16 field_140;
     /* 0x142 */ u16 field_142;
-    /* 0x144 */ u16 field_144[3];      // u16 id table fired by func_801F8BB8
-    /* 0x14A */ u16 field_14A[4];      // u16 table scanned by func_801F72A4
+    /* 0x144 */ u16 field_144[3];      // u16 id table fired by GimObjRefreshStepState
+    /* 0x14A */ u16 field_14A[4];      // u16 table scanned by GimObjScanIdTable
     /* 0x152 */ u16 field_152;         // party-member flag word (GimObjProbePartySlots)
     /* 0x154 */ u16 field_154;
     /* 0x156 */ u16 field_156;
     /* 0x158 */ u16 field_158;         // gimmick id passed to CfGimmick_PlaySoundAtPos
     /* 0x15A */ u16 field_15A;
-    /* 0x15C */ u16 field_15C;         // countdown seed (func_801F879C)
-    /* 0x15E */ u8 field_15E;          // mode byte (1 = active) checked by func_801F8BB8
+    /* 0x15C */ u16 field_15C;         // countdown seed (GimObjTickCountdownSteps)
+    /* 0x15E */ u8 field_15E;          // mode byte (1 = active) checked by GimObjRefreshStepState
     /* 0x15F */ u8 field_15F;
     /* 0x160 */ u8 field_160;
-    /* 0x161 */ u8 field_161;          // flag byte (bit 7) tested by func_801F8BB8
+    /* 0x161 */ u8 field_161;          // flag byte (bit 7) tested by GimObjRefreshStepState
     /* 0x162 */ u8 field_162;
-    /* 0x163 */ u8 field_163;          // LOD refresh id (func_801F879C)
-    /* 0x164 */ u8 field_164;          // mode byte (1 = active) checked by func_801F8BB8
+    /* 0x163 */ u8 field_163;          // LOD refresh id (GimObjTickCountdownSteps)
+    /* 0x164 */ u8 field_164;          // mode byte (1 = active) checked by GimObjRefreshStepState
     /* 0x165 */ u8 field_165;
     /* 0x166 */ u8 gap_166[0x168 - 0x166];
-    /* 0x168 */ CfGimmickObject* field_168;  // linked peer object (busy check func_801F634C)
-    /* 0x16C */ f32 field_16C;         // LOD fade countdown timer (func_801F634C / func_801F6E60)
-    /* 0x170 */ f32 field_170;         // countdown timer (func_801F75CC)
+    /* 0x168 */ CfGimmickObject* field_168;  // linked peer object (busy check GimObjUpdateStepCountdowns)
+    /* 0x16C */ f32 field_16C;         // LOD fade countdown timer (GimObjUpdateStepCountdowns / GimObjDispatchStateRefresh)
+    /* 0x170 */ f32 field_170;         // countdown timer (GimObjTickStepCountdown)
     /* 0x174 */ f32 field_174;
     /* 0x178 */ f32 field_178;         // LOD timer diff (GimObjRefreshLodTimer)
     /* 0x17C */ f32 field_17C;
-    /* 0x180 */ f32 field_180;         // effect timer (func_801F76A8 / func_801F6780)
-    /* 0x184 */ u32 field_184;         // player bitmask (func_801F72A4)
+    /* 0x180 */ f32 field_180;         // effect timer (GimObjCleanupStepMachine / GimObjUpdateStep)
+    /* 0x184 */ u32 field_184;         // player bitmask (GimObjScanIdTable)
     /* 0x188 */ s16 field_188;         // step counter (clamped to 0..6)
-    /* 0x18A */ s16 field_18A;         // LOD fade frames (func_801F634C / func_801F6E60)
-    /* 0x18C */ s16 field_18C;         // +0x14A table scan index (func_801F72A4)
-    /* 0x18E */ s16 field_18E;         // countdown frames (func_801F89B8)
-    /* 0x190 */ u16 field_190;         // sound id (func_801F6780 / func_801F76A8)
+    /* 0x18A */ s16 field_18A;         // LOD fade frames (GimObjUpdateStepCountdowns / GimObjDispatchStateRefresh)
+    /* 0x18C */ s16 field_18C;         // +0x14A table scan index (GimObjScanIdTable)
+    /* 0x18E */ s16 field_18E;         // countdown frames (GimObjTickSpawnSteps)
+    /* 0x190 */ u16 field_190;         // sound id (GimObjUpdateStep / GimObjCleanupStepMachine)
     /* 0x192 */ u16 field_192;         // sound kind selector
     /* 0x194 */ u16 field_194;
-    /* 0x196 */ s16 field_196;         // remaining target count (func_801F72A4)
+    /* 0x196 */ s16 field_196;         // remaining target count (GimObjScanIdTable)
     /* 0x198 */ s16 field_198;
     /* 0x19A */ u8 gap_19A[0x60C - 0x19A];
     /* 0x60C */ u8 field_60C[0x20];    // chain/attach data (ColiSetMoveEnableFlag)
@@ -193,7 +193,7 @@ extern "C" void CfGimmick_LoadBdatClAreaExtents(void* self, void* out, void* bda
 extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat, void* holder);
 
 // PMF dispatch tables (6 x 12-byte member pointers) indexed by field_188 in
-// func_801F5B00; MWCC lowers (self->*table[idx])() to mulli/add + `bl
+// GimObjDriveStepMachine; MWCC lowers (self->*table[idx])() to mulli/add + `bl
 // __ptmf_scall` against the retail __ptmf_scall helper.
 typedef int (cf::CfGimmickObject::*CfGimmickObjectPMF)();
 // Word/PMF dual view of one dispatch entry: initialized via w (raw words
@@ -208,7 +208,7 @@ union CfGimmickObjectPmfEntry {
 extern CfGimmickObjectPmfEntry lbl_eu_80534E70[6];
 extern CfGimmickObjectPmfEntry lbl_eu_80534EB8[6];
 
-// Global flag word tested by func_801F856C (bit 5 = object busy).
+// Global flag word tested by GimObjCheckStepBusy (bit 5 = object busy).
 extern u32 lbl_eu_80663E28;
 
 // ---------------------------------------------------------------------------
@@ -225,24 +225,24 @@ void setLODEnable__8CTaskLODFv(u8 lod, int mode);
 void* getScnHandle__Fv(void);
 void ScnData_FwdB7D9C(void* snd, u8 id);
 void ScnData_FwdB7DD4(void* snd, u8 id);
-void* func_80186BC8(int id);
+void* ArtsSelect_GetEntry(int id);
 void ColiSetMoveEnableFlag(void* self, int mode);
 // Same-TU call targets (scaffold stubs; signatures match the stubs in the .cpp).
-int func_801F72A4(cf::CfGimmickObject* self, u16* table);
-void func_801F6780(cf::CfGimmickObject* self);
-int func_801F634C(cf::CfGimmickObject* self);
-void func_801F76A8(cf::CfGimmickObject* self);
-void func_801F61B0(cf::CfGimmickObject* self, int mode);
-void func_801F6E60(cf::CfGimmickObject* self, u8 arg);
-void func_801F5C2C(cf::CfGimmickObject* self, int a, int b);
+int GimObjScanIdTable(cf::CfGimmickObject* self, u16* table);
+void GimObjUpdateStep(cf::CfGimmickObject* self);
+int GimObjUpdateStepCountdowns(cf::CfGimmickObject* self);
+void GimObjCleanupStepMachine(cf::CfGimmickObject* self);
+void GimObjRefreshLodTasks(cf::CfGimmickObject* self, int mode);
+void GimObjDispatchStateRefresh(cf::CfGimmickObject* self, u8 arg);
+void GimObjActivateStepRange(cf::CfGimmickObject* self, int a, int b);
 // Sound-stop helper (CfSoundMan_ApplySlotStop) is declared in CfGimmick.hpp.
-void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
+void GimObjApplyLodFrame(cf::CfGimmickObject* self, u8 lod,
                    const CfGimmickLodFrame* frame);
 // Same-TU per-frame updates (raw retail names).
-int func_801F879C(cf::CfGimmickObject* self);
-int func_801F89B8(cf::CfGimmickObject* self);
+int GimObjTickCountdownSteps(cf::CfGimmickObject* self);
+int GimObjTickSpawnSteps(cf::CfGimmickObject* self);
 // Same-TU matched functions (raw retail names).
-int func_801F75CC(cf::CfGimmickObject* self);
+int GimObjTickStepCountdown(cf::CfGimmickObject* self);
 int GimObjProbePartySlots(cf::CfGimmickObject* self);
 void GimObjRefreshLodTimer(cf::CfGimmickObject* self, u8 lod, int mode);
 // Cross-TU imports (retail names - C linkage keeps the raw names unmangled;
@@ -258,7 +258,7 @@ void detachLODObject__8CTaskLODFv(u8 lod, int mode);
 void addLODEntry__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 int* CtrlObjectParam_GetSlotTableBase();
-int func_8009E284(int* data, int id);
+int CtrlObjectParam_HasSlotValue(int* data, int id);
 extern "C" void CfGimmick_SetGlobalFlag80000();
 extern "C" void CfGimmick_SetGlobalFlagC0042();
 extern "C" void CfGimmick_SetGlobalFlag8();
@@ -279,8 +279,8 @@ u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 extern "C" u16 CfGimmick_PlaySoundAtPos(u16 id, f32* vec);
 void CPartsChange_FireIdEffect(int id);
-// Step-table / sound helpers (func_801F6780 / func_801F76A8).
-void func_80140E00(u32 a, u32 b, u32 c);
+// Step-table / sound helpers (GimObjUpdateStep / GimObjCleanupStepMachine).
+void UIWin_BuildFlagBuf(u32 a, u32 b, u32 c);
 void CItem_createBoxContents(u16 id);
 void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
@@ -294,7 +294,7 @@ extern "C" u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
 void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 CfGimmickSoundSlot* CfSoundMan_TouchSlotById(u16 handle);
 int CPartsChange_SpawnById(int id);
-void func_8007B0C8(int idx);
+void CamEvtProgramEventCam(int idx);
 extern "C" void CfGimmick_SetGlobalFlag400000();
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
@@ -306,25 +306,25 @@ void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
 // Small-data globals read by this TU (retail @sda21 accesses; global-scope
 // variables keep their names without `extern "C"`).
 // ---------------------------------------------------------------------------
-// .sdata2 countdown constants (func_801F75CC) and friends: owned by the
+// .sdata2 countdown constants (GimObjTickStepCountdown) and friends: owned by the
 // Sdata2_GimmickObject struct at the top of CfGimmickObject.cpp (which
 // #defines these label names to the struct members, so no externs here).
 
 // ---------------------------------------------------------------------------
-// Cast-only helper layouts (CfGimmickObject.cpp func_801F6780 / func_801F72A4).
+// Cast-only helper layouts (CfGimmickObject.cpp GimObjUpdateStep / GimObjScanIdTable).
 // ---------------------------------------------------------------------------
 
 
 
 // Base of a CfObjectMove player (getReslistB48 nodes point at base+0x3E9C);
-// +0x456C holds the u16 id/bit byte scanned by func_801F72A4.
+// +0x456C holds the u16 id/bit byte scanned by GimObjScanIdTable.
 struct CfGimmickPlayerBase {
     void** vtable;           // +0x00
     u8 gap_456C[0x456C - 0x04];
     u16 field_456C;          // +0x456C
 };
 
-// Base of a CfObjectMove player scanned by func_801F7F24's id-collection
+// Base of a CfObjectMove player scanned by GimObjDriveSpawnEffects's id-collection
 // loop; +0x3F04/+0x3F08 are flag words raised before clearPlayerEffect fires.
 struct CfGimmickPlayerFlags {
     void** vtable;                     // +0x00

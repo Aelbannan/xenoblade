@@ -86,7 +86,7 @@ public:
 };
 
 /* Layout view of the CItemBoxLine body, used only by the copy helper
- * func_801BE208 (the full class lives in CItemBoxLine.hpp, which cannot be
+ * ItemEx_CopyLine (the full class lives in CItemBoxLine.hpp, which cannot be
  * included here: its CSysWin.hpp dependency redeclares
  * __dt__17UnkClass_8045F564Fv with a typed pointer that clashes with
  * CItemBoxGrid.hpp's void* form). Offsets match the retail class exactly. */
@@ -176,11 +176,11 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 // the C-linkage name back to the unmangled ItemEx_CopyBgTex).
 extern "C" CBgTex* ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src);
 // CTitleAHelp field-by-field copy helper (retail func_ name).
-extern "C" CTitleAHelp* func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
+extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 // CItemBoxLine body copy helper (retail func_ name).
-extern "C" void func_801BE208(CItemBoxLine* dest, CItemBoxLine* src);
+extern "C" void ItemEx_CopyLine(CItemBoxLine* dest, CItemBoxLine* src);
 // CItemBoxGrid body copy helper (retail func_ name).
-extern "C" void func_801BE590(CItemBoxGrid* dest, CItemBoxGrid* src);
+extern "C" void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src);
 
 // Subobject ctors/dtors/load hooks (retail keeps the unmangled ctor names for
 // these menu widgets; the dtors keep their C++ manglings).
@@ -209,7 +209,7 @@ extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animat
 extern "C" int isInitialized(CTitleAHelp* self);       // help-bar ready query
 extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);      // line ready query
-extern "C" void func_801ED864(CItemBoxLine* self);     // finish line load
+extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);     // finish line load
 extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
 extern "C" void playUISound__FUl(u32 op);            // global menu-op kicker
 
@@ -232,7 +232,7 @@ extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);  // C++ linkage (mangled retail symbol)
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
 extern "C" void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* di);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
@@ -248,16 +248,16 @@ extern "C" int ItemBoxLine_IsBusy(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ResetCursorB8(CItemBoxLine* self, u32 arg);
 extern "C" void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self);
 extern "C" void ItemBoxLine_Info2SelectNext(CItemBoxLine* self);
-extern "C" void func_801EE788(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ResolveEntry(CItemBoxLine* self);
 extern "C" int ItemBoxLine_GetArmedFlag(CItemBoxLine* self);
 extern "C" u16 ItemBoxLine_TouchTabEntryItem(CItemBoxLine* self);     // selected line entry
 extern "C" void ItemBoxLine_LeaveState3(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self);
-extern "C" void func_801EDC94(CItemBoxLine* self);
+extern "C" void ItemBoxLine_CursorPageBack(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageDown(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageUp(CItemBoxLine* self);
 extern "C" void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self);
-extern "C" void func_801EEDF8(CItemBoxLine* self);
+extern "C" void ItemBoxLine_ShowDetailWin(CItemBoxLine* self);
 extern "C" void ItemBoxLine_RefreshTabSelect(CItemBoxLine* self);
 extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
 extern "C" int func_801CCAF0(CItemBoxGrid* self);

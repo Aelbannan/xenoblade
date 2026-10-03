@@ -127,7 +127,7 @@ end:
  */
 void CMenuBattleChain::Init() {
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    char* base = lbl_eu_8051088C;
+    char* base = (char*)lbl_eu_8051088C;
     mRegion.createRegion(mem2, 0x4000, base, 0);
     Class_8045F858 regionGuard(&mRegion);
 
@@ -145,7 +145,7 @@ void CMenuBattleChain::Init() {
         mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    func_8013676C(rootPane, getPackedFont());
+    ApplyFontToTxtPanes(rootPane, getPackedFont());
 
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnim0);
@@ -275,7 +275,7 @@ body:
     // each call site (no named pointer local) to keep retail's regalloc.
     u8 drawInfoBuf[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
     drawLayout(mLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), -1);
 }
@@ -362,11 +362,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
     case 0:
         break;
     case 1: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A68, lbl_eu_80664A70);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D70);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D70);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D70);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D70);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D70);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D70);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D90, lbl_eu_80662D94);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AE8, lbl_eu_80664AF0);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B68, lbl_eu_80664B70);
@@ -376,11 +376,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 2: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A78, lbl_eu_80664A80);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D74);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D74);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D74);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D74);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D74);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D74);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662D98, lbl_eu_80662D9C);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664AF8, lbl_eu_80664B00);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B78, lbl_eu_80664B80);
@@ -390,11 +390,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 3: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A88, lbl_eu_80664A90);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D78);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D78);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D78);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D78);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D78);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D78);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA0, lbl_eu_80662DA4);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B08, lbl_eu_80664B10);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B88, lbl_eu_80664B90);
@@ -404,11 +404,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 4: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664A98, lbl_eu_80664AA0);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D7C);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D7C);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D7C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D7C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D7C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D7C);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DA8, lbl_eu_80662DAC);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B18, lbl_eu_80664B20);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664B98, lbl_eu_80664BA0);
@@ -418,11 +418,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 5: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AA8, lbl_eu_80664AB0);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D80);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D80);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D80);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D80);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D80);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D80);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB0, lbl_eu_80662DB4);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B28, lbl_eu_80664B30);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BA8, lbl_eu_80664BB0);
@@ -432,11 +432,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 6: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AB8, lbl_eu_80664AC0);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D84);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D84);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D84);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D84);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D84);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D84);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DB8, lbl_eu_80662DBC);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B38, lbl_eu_80664B40);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BB8, lbl_eu_80664BC0);
@@ -446,11 +446,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 7: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AC8, lbl_eu_80664AD0);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D88);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D88);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D88);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D88);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D88);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D88);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC0, lbl_eu_80662DC4);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B48, lbl_eu_80664B50);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BC8, lbl_eu_80664BD0);
@@ -460,11 +460,11 @@ extern "C" void applyChainColorScheme(CMenuBattleChain* self) {
         break;
     }
     case 8: {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         PaneMatSetTevColorsByName(self->mLayout, &base[0xc9], lbl_eu_80664AD8, lbl_eu_80664AE0);
-        func_80137CD4(self->mLayout, &base[0xd0], -1, lbl_eu_80662D8C);
-        func_80137CD4(self->mLayout, &base[0xdc], -1, lbl_eu_80662D8C);
-        func_80137CD4(self->mLayout, &base[0xe8], -1, lbl_eu_80662D8C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xd0], -1, lbl_eu_80662D8C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xdc], -1, lbl_eu_80662D8C);
+        PaneSetVtxColorPairsByName(self->mLayout, &base[0xe8], -1, lbl_eu_80662D8C);
         PaneSetColorFieldPair(self->mLayout, &base[0xf4], lbl_eu_80662DC8, lbl_eu_80662DCC);
         PaneMatSetTevColorsByName(self->mLayout, &base[0xfc], lbl_eu_80664B58, lbl_eu_80664B60);
         PaneMatSetTevColorsByName(self->mLayout, &base[0x106], lbl_eu_80664BD8, lbl_eu_80664BE0);
@@ -486,7 +486,7 @@ extern "C" void tickChainCounter(CMenuBattleChain* self) {
     self->mField9E = count;
     if (count >= 5) {
         self->mField9E = 5;
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xdc], true)->SetVisible(false);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xe8], true)->SetVisible(true);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xf4], true)->SetVisible(false);
@@ -494,7 +494,7 @@ extern "C" void tickChainCounter(CMenuBattleChain* self) {
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x124], true)->SetVisible(true);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x133], true)->SetVisible(false);
     } else {
-        char* base = lbl_eu_8051088C;
+        char* base = (char*)lbl_eu_8051088C;
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xdc], true)->SetVisible(true);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xe8], true)->SetVisible(false);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0xf4], true)->SetVisible(true);
@@ -606,6 +606,10 @@ extern "C" bool isChainMenuBusy(CBattleChainMenuState* self) {
 
 extern "C" void requestAnimReset(CBattleChainMenuState* self) { self->mFlag5 = 1; }
 
+// Battle-chain singleton instance (retail .sbss head slot lbl_eu_80664A60;
+// the 48 colour records follow it, matching the split range
+// 0x80664A60-0x80664BE8).
+CMenuBattleChain* lbl_eu_80664A60;
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Battle-chain pane colour records (zero-init .sbss; values filled at startup
 // by sinit_802AAF24). Pairs are consumed by applyChainColorScheme per chain type.
@@ -657,6 +661,68 @@ u16 lbl_eu_80664BC8[4];
 u16 lbl_eu_80664BD0[4];
 u16 lbl_eu_80664BD8[4];
 u16 lbl_eu_80664BE0[4];
+
+// Battle-chain resource-name strings (retail .rodata). lbl_eu_80510878 is
+// the layout region name; lbl_eu_8051088C is the resource-name table whose
+// field offsets (+0x11 layout, +0x2a/+0x46/+0x64/+0x87/+0xaa anims,
+// +0xc9..0x133 panes) applyChainColorScheme indexes into. Bytes verified
+// against the retail object (build/us/obj/kyoshin/menu/CMenuBattleChain.o
+// .rodata); the table carries six trailing zero bytes (size 0x144).
+extern const char lbl_eu_80510878[] = "CMenuBattleChain";
+const char lbl_eu_8051088C[] =
+    "CMenuBattleChain\0"
+    "mf70_cf54_sideinfo.brlyt\0"
+    "mf70_cf54_sideinfo_in.brlan\0"
+    "mf70_cf54_sideinfo_glow.brlan\0"
+    "mf70_cf54_sideinfo_chang_out.brlan\0"
+    "mf70_cf54_sideinfo_change_in.brlan\0"
+    "mf70_cf54_sideinfo_break.brlan\0"
+    "pic_ic\0"
+    "pic_chain00\0"
+    "pic_chain01\0"
+    "pic_chain02\0"
+    "txt_num\0"
+    "pic_ic_gl\0"
+    "pic_chain00_gl\0"
+    "pic_chain01_gl\0"
+    "pic_chain02_gl\0"
+    "txt_num_gl\0\0\0\0\0\0";
+
+// Anim-frame constants (retail .sdata2 pool lbl_eu_80668CB0/B4: 0.0f frame
+// reset, 1.0f "finished" threshold). Values verified against the retail
+// object (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata2).
+extern const f32 lbl_eu_80668CB0 = 0.0f;
+extern const f32 lbl_eu_80668CB4 = 1.0f;
+
+// Chain-type colour/position constants (retail .sdata lbl_eu_80662D70..DCC).
+// Values verified against the retail object
+// (build/us/obj/kyoshin/menu/CMenuBattleChain.o .sdata): slots 0x70-0x8C
+// are the eight per-type colours, slots 0x90-0xCC repeat them as
+// (white, colour) pairs consumed by PaneSetColorFieldPair.
+u32 lbl_eu_80662D70 = 0xF06969FF;
+u32 lbl_eu_80662D74 = 0x8A64FEFF;
+u32 lbl_eu_80662D78 = 0x48BA2AFF;
+u32 lbl_eu_80662D7C = 0xF0DC40FF;
+u32 lbl_eu_80662D80 = 0xEA7F2DFF;
+u32 lbl_eu_80662D84 = 0x4D97F2FF;
+u32 lbl_eu_80662D88 = 0xE672DEFF;
+u32 lbl_eu_80662D8C = 0xA0A0A0FF;
+u32 lbl_eu_80662D90 = 0xF0F0F0FF;
+u32 lbl_eu_80662D94 = 0xF06969FF;
+u32 lbl_eu_80662D98 = 0xF0F0F0FF;
+u32 lbl_eu_80662D9C = 0x8A64FEFF;
+u32 lbl_eu_80662DA0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DA4 = 0x48BA2AFF;
+u32 lbl_eu_80662DA8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DAC = 0xF0DC40FF;
+u32 lbl_eu_80662DB0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DB4 = 0xEA7F2DFF;
+u32 lbl_eu_80662DB8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DBC = 0x4D97F2FF;
+u32 lbl_eu_80662DC0 = 0xF0F0F0FF;
+u32 lbl_eu_80662DC4 = 0xE672DEFF;
+u32 lbl_eu_80662DC8 = 0xF0F0F0FF;
+u32 lbl_eu_80662DCC = 0xA0A0A0FF;
 
 /*
  * Static initializer filling the 48 battle-chain colour records. Written in

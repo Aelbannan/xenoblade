@@ -115,7 +115,7 @@ extern "C" u32 CfTFile_TestField828(u8* self) {
 }
 
 // First non-null entry of the mData+0x400 file-event section.
-cf::CfTFileEntry* func_80069C28(CfTFile* self) {
+cf::CfTFileEntry* CfTFile_FirstEntry3(CfTFile* self) {
     cf::CfTFileData* data = &self->mData;
     if (data != 0) {
         u16 count = data->mCount3;
@@ -164,7 +164,7 @@ static inline cf::CfTFileEntry* findEventEntry(cf::CfTFileData* data, int key) {
     return 0;
 }
 
-cf::CfTFileEntry* func_80069C78(CfTFile* self, int key) {
+cf::CfTFileEntry* CfTFile_FindEntryByKey(CfTFile* self, int key) {
     union {
         cf::CfTFileData* p;
         u32 w;
@@ -220,7 +220,7 @@ bool CfT_IsTvPal() { return CDeviceVI::isTvFormatPal(); }
 // Returns the play time, converting the u16 frame counter through the
 // shared float state (seconds vs frame-count split). The (float) cast of the
 // u16 emits the retail 2^52 double-magic conversion (fsubs, not fsub).
-float func_80069EE4() {
+float CfT_PlayTimeGet() {
     if (lbl_eu_80663D94 < lbl_eu_80663D98) {
         return lbl_eu_80661AF0 * (float)lbl_eu_80661AF8;
     }
@@ -231,7 +231,7 @@ float func_80069EE4() {
 // flag, advance the shared clock by the u16 frame counter (Kahan-style
 // residual kept in lbl_eu_80663D9C), then roll the elapsed-time counters once
 // the clock passes the display threshold.
-void func_80069F2C() {
+void CfT_PlayClockUpdate() {
     if (CfRes_getD80Flag()) {
         // Retail reuses the flag call's r3 as the scene-pointer argument.
         lbl_eu_80661AF0 = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
@@ -278,13 +278,13 @@ extern "C" void CfT_PlayClockReset(float v) {
 // Play-clock advance: report the current rates as truncated u16 frames, then
 // fold the caller's two u32 counters into the shared float clock (the u32 ->
 // float casts emit MWCC's inline 2^52 double-magic conversion).
-void func_8006A03C(u32 a, u32 b) {
+void CfT_PlayClockAccumulate(u32 a, u32 b) {
     int y, x;
     x = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
     y = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
     // Discarded fmod: retail still performs the call.
     fmod(lbl_eu_80663D94, lbl_eu_80666230);
-    func_8006A53C((u16)x, (u16)y);
+    CfT_SelectDisplayMode((u16)x, (u16)y);
     lbl_eu_80663D9C = lbl_eu_80666238;
     lbl_eu_80663D98 = lbl_eu_80663D94;
     lbl_eu_80663D94 =
@@ -294,7 +294,7 @@ void func_8006A03C(u32 a, u32 b) {
 // Advance the shared play clock by one frame: the delta is fmod'ing the
 // current second counter against the 60 Hz frame rate; the caller-supplied
 // value is folded in through the 2^52 double-magic (u32 -> float).
-void func_8006A12C(u32 v) {
+void CfT_PlayClockAdvanceFrame(u32 v) {
     float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
     union {
         u32 w[2];
@@ -306,12 +306,12 @@ void func_8006A12C(u32 v) {
     lbl_eu_80663D94 = lbl_eu_8066623C * (float)(conv.d - lbl_eu_80666220) + lbl_eu_80666248 * t;
 }
 
-// Same clock advance as func_8006A12C, but the frame-delta term is the
+// Same clock advance as CfT_PlayClockAdvanceFrame, but the frame-delta term is the
 // truncated integer frame count (u16) of the fmod result instead of the
 // caller-supplied value. Both int-to-float conversions use direct builtin
 // casts so MWCC emits the single-rounded 0x43300000 magic (fsubs) rather
 // than the double-rounded manual-union form.
-void func_8006A1A0(u32 v) {
+void CfT_PlayClockAdvanceInt(u32 v) {
     float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
     u16 m = (u16)(int)t;
     lbl_eu_80663D9C = lbl_eu_80666238;
@@ -321,7 +321,7 @@ void func_8006A1A0(u32 v) {
 
 // Snapshot the current play-clock rates into two u16 frame counters, and
 // return the truncated frame count of the raw second counter. Mirrors the
-// func_8006A6D0 fmod trio; the caller-supplied pair is written through the
+// CfT_DispatchFrameCounts fmod trio; the caller-supplied pair is written through the
 // out pointers.
 u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
     *outA = (u16)(int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
@@ -331,7 +331,7 @@ u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
 
 // True when the current sub-second frame falls in the [6,17] window of the
 // 60 Hz second (u16 wrap-around range check on the frame counter).
-int func_8006A2E0() {
+int CfT_FrameInWindow() {
     int frame = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
     int result = 0;
     // +0x10000 before -6 keeps MWCC from folding the offset into one addi
@@ -364,7 +364,7 @@ u16 CfT_FrameCounterLoad() { return lbl_eu_80661AF8; }
 // the given mode are picked from the string table, the cells read back as
 // bytes (minutes*60 + seconds). Falls back to the static u16 tables when the
 // bdat file or the column is unavailable.
-int func_8006A40C(int mode) {
+int CfT_GetClockTimeByMode(int mode) {
     Bdat_GetTable_AA34();
     u32 bdat = getGlobalPtr640A8__Q22cf13CfGameManagerFv();
     int row = (int)getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
@@ -418,13 +418,13 @@ static int inWindow(u32 target, u32 hi, u32 lo) {
 // wrap-shifted copy sel[] = times[2..4],times[1], then scans the three
 // consecutive minute windows with wrap-around indexing; returns 1..3 for a
 // window hit and 4 when the target falls in none of them.
-int func_8006A53C(u16 a, u16 b) {
+int CfT_SelectDisplayMode(u16 a, u16 b) {
     u32 target = (u16)(b + a * 60);
     u16 times[5];
     u16 sel[4];
     int i = 1;
     do {
-        times[i] = (u16)func_8006A40C(i);
+        times[i] = (u16)CfT_GetClockTimeByMode(i);
     } while (++i <= 4);
     for (i = 0; i < 4; i++) {
         int idx = i + 2;
@@ -444,11 +444,11 @@ int func_8006A53C(u16 a, u16 b) {
 // Truncated frame counts of the two play-time rates, passed to the
 // file-event entry matcher as u16 pairs. The intermediate fmod against
 // lbl_eu_80666230 is a discarded calibration call kept for side effects.
-void func_8006A6D0() {
+void CfT_DispatchFrameCounts() {
     int a = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
     int b = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
     fmod(lbl_eu_80663D94, lbl_eu_80666230);
-    func_8006A53C((u16)a, (u16)b);
+    CfT_SelectDisplayMode((u16)a, (u16)b);
 }
 
 // Advance the file-event frame timer (60 Hz sub-second / second / minute

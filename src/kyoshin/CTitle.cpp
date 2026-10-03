@@ -7,7 +7,7 @@
 #include "kyoshin/code_80135FDC.hpp" // buildLayout / bindLayoutAnimTransform layout+anim builders
 
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getPlayer
-#include "kyoshin/help/CHelp_Talk.hpp"  // func_80174C98
+#include "kyoshin/help/CHelp_Talk.hpp"  // testActorStatus
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"   // CLibLayout::createArcResourceAccessor
 #include "monolib/util/MemManager.hpp"
@@ -15,7 +15,7 @@
 
 #include <nw4r/math.h>
 #include <stdio.h>
-#include "kyoshin/CSysWin.hpp" // func_80137924 cursor-position helper
+#include "kyoshin/CSysWin.hpp" // ScalePaneWorldPos cursor-position helper
 
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
@@ -329,7 +329,7 @@ extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu* self) {
 
 // Build the cursor target position for a menu entry: format the pane name
 // into a stack buffer, look up both panes under the layout root, then let
-// func_80137924 combine their transforms into dest.
+// ScalePaneWorldPos combine their transforms into dest.
 // -O4,s forces the retail [stmw]/lmw r28-r31 block frame.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest,
@@ -340,7 +340,7 @@ extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* 
     nw4r::lyt::Pane* pPaneA = menu->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pPaneB =
         menu->mLayout->GetRootPane()->FindPaneByName(strs + 0x124, true);
-    func_80137924(dest, pPaneA, pPaneB, menu->mLayout->GetRootPane());
+    ScalePaneWorldPos(dest, pPaneA, pPaneB, menu->mLayout->GetRootPane());
 }
 #pragma optimize_for_size off
 
@@ -507,7 +507,7 @@ extern "C" void CTitle_startLoad(CTitle* self) {
     self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_80513628[0x133], self, 0, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
-    if (func_8023FEDC(CTitle_fileEventCallback) == 0) {
+    if (NandTitleFile(CTitle_fileEventCallback) == 0) {
         self->field_0x25 = 0;
     }
     self->field_0x1C = 0;
@@ -737,7 +737,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
 
 // Refresh the "to attack" button caches: resolve the current player's battle
 // object, and if either cached button state says "held" while the live query
-// (func_80174C98) reports otherwise, return 1 (state changed). Otherwise
+// (testActorStatus) reports otherwise, return 1 (state changed). Otherwise
 // re-query both buttons (A = 0x7, Z = 0x800), store the results, return 0.
 int cf::CHelp_ToAttack::updateState() {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
@@ -749,22 +749,22 @@ int cf::CHelp_ToAttack::updateState() {
     if (battleObj != 0) {
         if (field_0xC != 0) {
             valA = *battleObj->field_0x4->vf30();
-            if (func_80174C98(battleObj, &valA, 0x7) == 0) {
+            if (testActorStatus(battleObj, &valA, 0x7) == 0) {
                 return 1;
             }
         }
         if (field_0xD != 0) {
             valB = *battleObj->field_0x4->vf30();
-            if (func_80174C98(battleObj, &valB, 0x08000000) == 0) {
+            if (testActorStatus(battleObj, &valB, 0x08000000) == 0) {
                 return 1;
             }
         }
         int rc;
         valC = *battleObj->field_0x4->vf30();
-        rc = func_80174C98(battleObj, &valC, 0x7);
+        rc = testActorStatus(battleObj, &valC, 0x7);
         field_0xC = rc;
         valD = *battleObj->field_0x4->vf30();
-        rc = func_80174C98(battleObj, &valD, 0x08000000);
+        rc = testActorStatus(battleObj, &valD, 0x08000000);
         field_0xD = rc;
         return 0;
     }

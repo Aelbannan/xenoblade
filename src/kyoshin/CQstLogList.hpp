@@ -114,7 +114,7 @@ struct CQstLogList {
     u8 mUnk04[0x10];                 // 0x04..0x13 UnkClass_8045F564
     CFileHandle* mFileHandle;        // 0x14 - loaded arc file handle
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x18 - resource accessor
-    nw4r::lyt::Layout* mpLayout;     // 0x1C - layout (func_80136A1C target)
+    nw4r::lyt::Layout* mpLayout;     // 0x1C - layout (LayoutSetTextBoxText target)
     nw4r::lyt::AnimTransform* mpAnim0;  // 0x20 - animation transform 0
     nw4r::lyt::AnimTransform* mpAnim1;  // 0x24 - animation transform 1
     u8 mCur18[0x18];                 // 0x28..0x3F CCur18 cursor sub-object
@@ -205,7 +205,7 @@ extern "C" void copyQstInfo(u8*, const u8*);      // 8-byte QstInfo copy
 extern "C" void func_80227260(u8*, u32, u32);
 extern "C" u16 selectQstIndex(const u8*);
 extern "C" CQstLogListQstInfo* QstCnt_GetInfoAt_76F4(u8*, u16);
-extern "C" u32 func_80138138(u16);
+extern "C" u32 SearchThresholdIdx(u16);
 extern "C" void func_802270CC(u8*);               // QstData refresh
 // Quest-list row count for the given quest-log list id (returns u16).
 extern "C" u16 func_80227710(u8*, u16);
@@ -220,8 +220,8 @@ extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 // code_80135FDC.hpp set is co-included for BdatGetPtrDirect/LayoutSetTextBoxFmtValue).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void func_80137F88(nw4r::lyt::Pane*, const char*);
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 

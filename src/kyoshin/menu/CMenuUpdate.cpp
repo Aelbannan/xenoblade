@@ -178,7 +178,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
     u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
-    func_8013676C((void*)getField10((u8*)obj->mLayout), (void*)result2);
+    ApplyFontToTxtPanes((void*)getField10((u8*)obj->mLayout), (void*)result2);
 
     // Disable the alt animation, enable the main one, then tick the layout.
     obj->mLayout->SetAnimationEnable(obj->mAnim2, false);
@@ -252,7 +252,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
     drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(obj->mLayout, &drawInfo, 0, 1);
     // No explicit dtor: the implicit member destruction emits the retail's
     // single __dt__ call (an explicit call would double it).
@@ -560,7 +560,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
                           pairA[wideFlag]));
         MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x156), s1);
         MenuUpdate_FormatNotifyText(obj, (void*)((const char*)lbl_eu_805013C8 + 0x161), s2);
-        func_80137B44(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, -1);
+        PaneSetVtxColorByName(obj->mLayout, (const char*)lbl_eu_805013C8 + 0x156, -1);
 
         if (obj->mCounter < 0) {
             setPaneVisible(((nw4r::lyt::Pane*)getField10((u8*)obj->mLayout))

@@ -67,8 +67,8 @@ cf::CREvtMem::~CREvtMem() {
 // ============================================================================
 u32 func_80167D40(u32 size, u32 offset) {
     // Establish the arena bounds from the realtime event region.
-    lbl_eu_80664260->field_08 = InfoCfGetUnk0C();
-    lbl_eu_80664260->field_0C = InfoCfGetUnk10();
+    lbl_eu_80664260->field_08 = (u32)InfoCfGetUnk0C();
+    lbl_eu_80664260->field_0C = (u32)InfoCfGetUnk10();
     lbl_eu_80664260->arenaStart = lbl_eu_80664260->field_08;
     lbl_eu_80664260->arenaEnd = lbl_eu_80664260->field_08 + lbl_eu_80664260->field_0C;
     lbl_eu_80664260->arenaSize = lbl_eu_80664260->arenaEnd - lbl_eu_80664260->arenaStart;

@@ -168,7 +168,7 @@ extern "C" int func_8027C1A8(cf::CChainChanceS* self,
                              cf::CChainBattleObj* objA,
                              cf::CChainBattleObj* objB);
 extern "C" __declspec(noinline) void ScnLog_ClearStateWords(cf::CChainActorList* self);
-extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
+extern "C" cf::CChainActor* SysWinLog_AllocFreeSlot(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
 extern "C" u32 getAnimModelId(void* battleObj);
 

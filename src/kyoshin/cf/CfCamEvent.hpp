@@ -149,7 +149,7 @@ public:
 // because the shared CfCam.hpp closure carries conflicting signatures for
 // several of these (e.g. cfCam_nopVirtFloat takes one argument at this call site).
 extern "C" float cfCam_vecToAngles(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* out);
-extern "C" void func_80074090(void* out);
+extern "C" void cfCam_pickFollowAim(void* out);
 extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
 extern const f32 lbl_eu_80666268;
 extern "C" void cfCam_andcUnk04(void* self, u32 mask);  // clears bits in the 0x04 flag word
@@ -175,11 +175,11 @@ extern "C" int getNullPtrC__Q22cf13CfGameManagerFv(u32);
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" cf::CfCamNodeList* getFirstGimmick__Q22cf13CfGameManagerFv();
 extern "C" void cfCam_nopVirtFloat(void*);
-extern "C" void func_8006D8D0(void*, void*);
+extern "C" void cfCam_syncCamFlags(void*, void*);
 extern "C" void* func_800BBC0C(void*);
 extern "C" int lookupWorkAtAddr(void*);
-extern "C" void func_800707C0(void*, void*, void*);
-extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
+extern "C" void cfCam_nop07C0(void*, void*, void*);
+extern "C" int cfCam_correctCamGround(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void cfCam_applyRelPos(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
 extern "C" float Scn_GetFrameDelta();                     // scene elapsed-time getter

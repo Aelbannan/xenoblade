@@ -18,7 +18,7 @@
 #define func_801D202C func_801D202CFloorMap
 #define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
 #define CScrollBar_PlaceThumb CScrollBar_PlaceThumbFloorMap
-#define func_8013676C func_8013676CFloorMap
+#define ApplyFontToTxtPanes ApplyFontToTxtPanesFloorMap
 #define CScrollBar_requestScrollIn CScrollBar_requestScrollInFloorMap
 #define CScrollBar_InitRootPane CScrollBar_InitRootPaneFloorMap
 #define CScrollBar_UpdateThumb CScrollBar_UpdateThumbFloorMap
@@ -33,7 +33,7 @@
 #undef func_801D202C
 #undef sysWinDispatchPhase
 #undef CScrollBar_PlaceThumb
-#undef func_8013676C
+#undef ApplyFontToTxtPanes
 #undef CScrollBar_requestScrollIn
 #undef CScrollBar_InitRootPane
 #undef CScrollBar_UpdateThumb
@@ -57,7 +57,7 @@ extern const float lbl_eu_80668710;
 extern const float lbl_eu_8066A210;  // pi/2 variant used by FX init scaling
 
 extern "C" {
-void func_8013EC6C(u32, u32);                       // UI mode switch helper
+void UIWin_ControlWindowLists(u32, u32);                       // UI mode switch helper
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);                  // resource query
 int CMainMenu_IsOpen();                                // scene transition gate
 int CMainMenu_GetInstancePtr();
@@ -69,9 +69,9 @@ void func_80242368(class CMenuMapSelect* self);     // world map input handler
 void func_80242524(class CMenuMapSelect* self);     // world map phase 2 setup
 void func_80242A28(class CMenuMapSelect* self);     // floor map input handler
 void updateMapSel(class CMapSel* self);
-int func_80243680(class CMapSel* self);
-int func_802436C4(class CMapSel* self);
-void func_802436CC(class CMapSel* self);
+int getMapSelVisibleFlag(class CMapSel* self);
+int getMapSelInitFlag(class CMapSel* self);
+void initMapSel(class CMapSel* self);
 // Retail keeps the CTitleAHelp/CBgTex/CFade helpers as unmangled symbols.
 int BgTex_IsLoaded_3E34(class CBgTex* self);
 void BgTex_Tick_3D54(class CBgTex* self);
@@ -87,14 +87,14 @@ void func_801C46DC(class CTitleAHelp* self, u32 arg);
 extern "C" void CFade_Update(class CFade* self);
 extern "C" int CFade_IsVisible(class CFade* self);
 extern "C" void CFade_FadeOut(class CFade* self);
-int func_8024CE1C(class CFloorMap* self);
-void func_8024BE1C(class CFloorMap* self);
-void func_8024CB94(class CFloorMap* self);
+int FloorMap_GetField42Gated(class CFloorMap* self);
+void FloorMap_LoadStageLayout(class CFloorMap* self);
+void FloorMap_Teardown(class CFloorMap* self);
 int FloorMap_GetField40Flag(class CFloorMap* self);
-void func_8024C1FC(class CFloorMap* self);
+void FloorMap_UpdateFrame(class CFloorMap* self);
 u16 FloorMap_GetU16Field5A(class CFloorMap* self);
-void func_80243560(class CMapSel* self, class nw4r::lyt::DrawInfo* drawInfo);
-void func_8024C8F8(class CFloorMap* self, class nw4r::lyt::DrawInfo* drawInfo);
+void drawMapSel(class CMapSel* self, class nw4r::lyt::DrawInfo* drawInfo);
+void FloorMap_Draw(class CFloorMap* self, class nw4r::lyt::DrawInfo* drawInfo);
 // Retail keeps these draw helpers as unmangled free symbols taking sub-object pointers.
 void BgTex_Draw_3D7C(class CBgTex* self, class nw4r::lyt::DrawInfo* drawInfo);
 void drawHelp(class CTitleAHelp* self, class nw4r::lyt::DrawInfo* drawInfo);
@@ -104,8 +104,8 @@ void __ct__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(class nw4r::lyt::DrawInfo* self, int flags);
 int IsMenuState621F0();
 // Camera/transform position setters (retail keeps unmangled symbols)
-void func_8049F168(void* obj, ml::CVec3* pos);
-void func_8049F204(void* obj, ml::CVec3* pos);
+void ScnCamShiftBy(void* obj, ml::CVec3* pos);
+void ScnCamTurnAim(void* obj, ml::CVec3* pos);
 }
 
 // sdata2 float constants used by the FX easing helpers
@@ -117,7 +117,7 @@ extern const float lbl_eu_80668720;
 extern const float lbl_eu_80668724;
 extern const float lbl_eu_8066A200;  // pi/2 (sdata2)
 
-// One easing/pulse channel driven by func_80240614 (0x3C bytes).
+// One easing/pulse channel driven by MapFxStepPulseChannel (0x3C bytes).
 struct MapFxChannel {
     float field_00;   // +0x00 playback time
     float field_04;   // +0x04 wobble accumulator
@@ -137,7 +137,7 @@ struct MapFxChannel {
     float field_38;   // +0x38 end-scale factor
 };
 
-// Container updated by func_802408D4: two pairs of channels feeding the
+// Container updated by MapFxStepMenuChannels: two pairs of channels feeding the
 // position vectors at +0x170/+0x17C.
 struct MenuFxObj {
     u8 field_00;           // +0x00 active flag
@@ -149,7 +149,7 @@ struct MenuFxObj {
     ml::CVec3 pos2;        // +0x17C
 };
 
-/* Per-entry FX parameter block passed to func_80240C98. Only the fields the
+/* Per-entry FX parameter block passed to MapFxAllocEntry. Only the fields the
    initializer reads are named; the rest is padding. */
 struct FxParams {
     float field_00;   // +0x00 swing amplitude
@@ -168,7 +168,7 @@ struct FxParams {
 };
 
 /* Field-exact view of CFloorMap for the retail memberwise copy helper
-   func_80241920. Widths mirror the retail copy: words for data blocks, bytes
+   FloorMapCopy. Widths mirror the retail copy: words for data blocks, bytes
    for flags, floats for scalar state, and two pair-array loops (20 x 8 bytes
    at +0x150, 0x618 x 8 bytes at +0x20C). The vtable word (+0x00), the small
    inter-block gaps and the trailing word pair (+0x3340/+0x3344, stored in
@@ -327,7 +327,7 @@ struct __attribute__((packed)) CMapSelCopyViewSrc {
 };
 
 /* Field-exact view of CMapSel for the retail memberwise copy helper
-   func_80240614-style (func_80241640). Widths follow the retail copy:
+   MapFxStepPulseChannel-style (MapSelCopy). Widths follow the retail copy:
    words for 0x04-0x2C / 0x38-0x54 / 0x70-0xAD, bytes for the flag fields,
    floats for 0x5C-0x6C and 0xB0. The vtable word (+0x00) and +0x34-0x37
    are not copied by retail. */
@@ -347,7 +347,7 @@ struct CMapSelCopyView {
 };
 
 /* Field-exact view of CFade for the retail memberwise copy helper
-   func_8024189C: everything from mMemRegion (+0x04) through the four flag
+   FadeCopy: everything from mMemRegion (+0x04) through the four flag
    bytes (+0x24..0x27). The vtable word (+0x00) is not copied. Two
    structurally identical but distinct types are used for the source and
    destination views so strict aliasing lets MWCC hoist every load above

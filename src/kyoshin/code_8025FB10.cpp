@@ -1510,7 +1510,7 @@ void TextState_Reset(int arg) {
 namespace {
 
 // UTF-16 string staging helper from code_80135FDC.cpp (C linkage there).
-extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
+extern "C" void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 
 // Field view of the game tag-processor object stored at lbl_eu_8066486C;
 // slot +0x14 renders a UTF-16 string buffer at a float position.
@@ -1566,7 +1566,7 @@ void func_80261960(int idx) {
         lbl_eu_80664874 = 0;
         return;
     }
-    func_80136400((const char*)found, (u16*)lbl_eu_80664870, 0x200);
+    Utf8ToWcsCopyFix((const char*)found, (u16*)lbl_eu_80664870, 0x200);
     lbl_eu_80664874 = ((TagProcMsgView*)lbl_eu_8066486C)
                           ->drawMessage((u16*)lbl_eu_80664870,
                                         lbl_eu_806688C0, lbl_eu_806688C0, 0);

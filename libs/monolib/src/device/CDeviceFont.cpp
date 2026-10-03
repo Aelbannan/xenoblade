@@ -938,6 +938,29 @@ extern "C" void* getInstance__8CDesktopFv();
 // While this device owns the work-root exception, fade in a centered UTF-16
 // string over a shadowed quad (4 offset black passes + alpha-scaled gray
 // center pass) using an orthographic full-screen projection.
+// int->double without a TU-local pool (MWCC pools the 0x43300000 magic
+// doubles per-TU; retail keeps them in the shared CGXCache slice). Helpers
+// use the already-declared shared externs (CDeviceFont.hpp); the 0x43300000
+// word is a lis immediate, so no literal pools.
+static inline f64 S32ToF64_Shared(s32 v) {
+    union {
+        u32 w[2];
+        f64 d;
+    } t;
+    t.w[1] = (u32)v ^ 0x80000000u;
+    t.w[0] = 0x43300000u;
+    return t.d - lbl_eu_8066A3B8;
+}
+static inline f64 U16ToF64_Shared(u16 v) {
+    union {
+        u32 w[2];
+        f64 d;
+    } t;
+    t.w[1] = v;
+    t.w[0] = 0x43300000u;
+    return t.d - lbl_eu_8066A3C0;
+}
+
 void CDeviceFont::wkRender() {
     // Exception handoff: while the desktop is up and we own the work-root
     // exception, count frames; release the exception once the counter wraps
@@ -962,12 +985,12 @@ void CDeviceFont::wkRender() {
         lbl_eu_80665684 = 0;
     }
 
-    // Fade-in alpha ramp over the first 1000 counted frames. Natural
-    // int->double cast: the compiler generates the 0x43300000 magic-double
-    // sequence itself (matching retail) instead of a manual union build.
+    // Fade-in alpha ramp over the first 1000 counted frames. Shared-bias
+    // s32->double (no TU-local pool); the xoris+uint-magic is exact for the
+    // signed range, matching retail's shared A3B8 use.
     f32 fade = lbl_eu_8066A3D0 *
-                   static_cast<f32>(static_cast<f64>(
-                       static_cast<s32>(lbl_eu_80665684 - 1000)) /
+                   static_cast<f32>(S32ToF64_Shared(static_cast<s32>(
+                       lbl_eu_80665684 - 1000)) /
                                    lbl_eu_8066A3D4) +
                lbl_eu_8066A3CC;
     if (fade < lbl_eu_8066A3D8) {
@@ -1027,11 +1050,11 @@ void CDeviceFont::wkRender() {
 
     rmo = CDeviceVI::getRenderModeObj();
     scaledW =
-        lbl_eu_8066A3F0 * static_cast<f32>(static_cast<f64>(rmo->fbWidth) -
+        lbl_eu_8066A3F0 * static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) -
                                            lbl_eu_8066A3C0);
     rmo = CDeviceVI::getRenderModeObj();
     scaledH =
-        lbl_eu_8066A3F0 * static_cast<f32>(static_cast<f64>(rmo->efbHeight) -
+        lbl_eu_8066A3F0 * static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
                                            lbl_eu_8066A3C0);
 
     writer.SetupGX();
@@ -1046,10 +1069,10 @@ void CDeviceFont::wkRender() {
     f32 width;
     rmo = CDeviceVI::getRenderModeObj();
     width =
-        static_cast<f32>(static_cast<f64>(rmo->fbWidth) - lbl_eu_8066A3C0);
+        static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) - lbl_eu_8066A3C0);
     rmo = CDeviceVI::getRenderModeObj();
     C_MTXOrtho(mtx, lbl_eu_8066A3D8,
-               static_cast<f32>(static_cast<f64>(rmo->efbHeight) -
+               static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
                                 lbl_eu_8066A3C0),
                lbl_eu_8066A3D8, width, lbl_eu_8066A3D8, lbl_eu_8066A3F4);
     GXSetProjection(mtx, GX_ORTHOGRAPHIC);

@@ -13,7 +13,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern void playUISound(u32);
 extern const float lbl_eu_80668610;
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
@@ -113,7 +113,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = static_cast<CExchangeWinFontView*>(fontObj)->sf9();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     mLayout->SetAnimationEnable(mAnimTransform, true);
     mLayout->Animate(0);
@@ -201,7 +201,7 @@ extern "C" void ExWin_CopyPanePair(void* dst, CExchangeWin* src, u8 val) {
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
     pane1 = win->mLayout->GetRootPane()->FindPaneByName(buf, true);
     pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
-    func_80137924(dst, pane1, pane2, win->mLayout->GetRootPane());
+    ScalePaneWorldPos(dst, pane1, pane2, win->mLayout->GetRootPane());
 }
 extern "C" void ExWin_LoadFile(CExchangeWin* self) {
     self->mFileHandle = CDeviceFile::readFile(

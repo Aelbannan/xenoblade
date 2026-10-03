@@ -58,11 +58,11 @@ extern const f64 lbl_eu_80667098;
 extern const f64 lbl_eu_806670A8;
 extern f32 lbl_eu_806670A4;   // clock anim frame target (advanceAnimTransform/80137510 arg)
 extern f32 lbl_eu_806670B0;   // ctor grid-scale multiplier
-extern f32 lbl_eu_806670B4;   // func_8011B05C SRT rotation constant
-extern f32 lbl_eu_806670BC;   // func_8011B05C scale factor
-extern f32 lbl_eu_8066A1F8;   // func_8011B05C scale divisor
-extern f32 lbl_eu_806670C0;   // func_8011B05C battle-target node scale
-// Panic file/format strings used by func_8011B05C (u8 pools).
+extern f32 lbl_eu_806670B4;   // MiniMapUpdateMapView SRT rotation constant
+extern f32 lbl_eu_806670BC;   // MiniMapUpdateMapView scale factor
+extern f32 lbl_eu_8066A1F8;   // MiniMapUpdateMapView scale divisor
+extern f32 lbl_eu_806670C0;   // MiniMapUpdateMapView battle-target node scale
+// Panic file/format strings used by MiniMapUpdateMapView (u8 pools).
 extern u8 lbl_eu_8052CBC0[];
 extern u8 lbl_eu_8052CB8C[];
 extern u8 lbl_eu_8052CB80[];
@@ -110,14 +110,14 @@ extern "C" CMMGlobalGimmick* getUnk80664658();
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 void closeFileHandle(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (Bdat_GetTable_AA34 / getFP__FPCc).
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char* name);
-// Gimmick-row helpers used by func_80116B40 (unmangled retail symbols;
+// Gimmick-row helpers used by MiniMapRebuildGimmickPanes (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
 extern "C" u32 CheckState2CC8Active(u16 id);
 struct CMMGimmickPos { f32 x; f32 y; f32 z; };
@@ -130,7 +130,7 @@ extern "C" u32 isMapSelectActive();
 extern "C" bool MapSelectSCIsCreated();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
 extern "C" u32 CUICfManager_queueWorldMapMenu();
-extern "C" void func_8013ACFC();
+extern "C" void RevealMinimapArea();
 extern "C" int GetSysStateFlag11();
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
@@ -198,12 +198,12 @@ struct CMMTableBlock {
     u8 mFlag39;      // 0x39
     u8 mFlag3A;      // 0x3A
     u8 mPad3B;
-    u32 mW[0x4F];    // 0x3C..0x178 (func_801160A8 marker table)
+    u32 mW[0x4F];    // 0x3C..0x178 (MiniMapBuildMarkerPanes marker table)
 };
 
 // Gimmick-view region 0x178..0x820.
 struct CMMViewBlock {
-    u32 mW[0x1AA];   // func_80116670 gimmick view
+    u32 mW[0x1AA];   // MiniMapInitGimmickTables gimmick view
 };
 
 // Stack mirror of CMMClock used by CMenuMiniMap2::Init: retail hand-builds the
@@ -224,7 +224,7 @@ struct CMMClockInit {
     u8 mUnk1C[0x10];
 };
 
-// Minimap map-image loader object (func_80117734): requests the current map's
+// Minimap map-image loader object (MiniMapRequestMapImage): requests the current map's
 // image arc into MEM2 and records the selected BDAT row / resource variant.
 struct CMMMapImg {
     void* mVtable;              // 0x00 (untouched here)
@@ -256,8 +256,8 @@ public:
     char* mField24;                        // 0x24 - getFP-resolved pane name
     u32 mField28;                          // 0x28 - getFP-resolved layout name
     CMMSubHead mSub;                       // 0x2C..0x38 (flags in mField3C head)
-    CMMTableBlock mField3C;                // 0x38..0x178 (marker-table region, func_801160A8)
-    CMMViewBlock mField17C;                // 0x178..0x820 (gimmick-view region, func_80116670)
+    CMMTableBlock mField3C;                // 0x38..0x178 (marker-table region, MiniMapBuildMarkerPanes)
+    CMMViewBlock mField17C;                // 0x178..0x820 (gimmick-view region, MiniMapInitGimmickTables)
     u32 mPad820;                           // 0x820..0x824
     // Raw UnkClass_8045F564 storage: retail constructs these mid-ctor body
     // (after the table init calls), so they are placement-new'd there instead
@@ -331,7 +331,7 @@ struct MiniMapTable {
     nw4r::lyt::Pane* field_13C;   // 0x13C - pane parent (layout root pane)
 };
 
-// Pane-entry record written by func_801168A0: integer-truncated grid coords
+// Pane-entry record written by MiniMapUpdateGimmickRows: integer-truncated grid coords
 // at +0x2C/+0x30, constant at +0x34, and a per-entry enable byte at +0xB7
 // (bit0 cleared when a row exceeds the grid radius).
 struct CMMMapEntry {
@@ -343,8 +343,8 @@ struct CMMMapEntry {
     u8 field_BB;
 };
 
-// Gimmick/marker view tables used by func_801165EC / MiniMapFillMarkerEntry /
-// func_801168A0 (subobject of the minimap object at +0x17C).
+// Gimmick/marker view tables used by MiniMapResetGimmickTables / MiniMapFillMarkerEntry /
+// MiniMapUpdateGimmickRows (subobject of the minimap object at +0x17C).
 struct CMiniMapGimmickView {
     const char* field_0x00;            // 0x00 - bdat table pointer
     u32 field_0x04;                    // 0x04
@@ -380,10 +380,10 @@ struct CMiniMapGimmickView {
 
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):
 // extern "C" keeps the emitted call relocs matching retail
-// (func_80118058 / __ct__CMiniMap) instead of re-deriving mangled names.
-extern "C" void func_80118058(CMiniMap* self);
+// (MiniMapTeardownMarkerPanes / __ct__CMiniMap) instead of re-deriving mangled names.
+extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self);
 extern "C" void __ct__CMiniMap(CMiniMap* self);
 MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self);
-void func_801165EC(CMiniMapGimmickView* self);
+void MiniMapResetGimmickTables(CMiniMapGimmickView* self);
 // Per-frame gimmick-view updater (retail unmangled symbol).
-extern "C" void func_801168A0(CMiniMapGimmickView* self);
+extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickView* self);

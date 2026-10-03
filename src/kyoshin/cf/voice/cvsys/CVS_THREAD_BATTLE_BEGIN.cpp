@@ -38,7 +38,7 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
         count = 0;
 
     // Allocate the (discarded) handle buffer and the object itself.
-    if (func_802A330C(0x1e, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x1e, 1) == NULL) {
         return NULL;
     }
     CVS_THREAD_BATTLE_BEGIN* obj = (CVS_THREAD_BATTLE_BEGIN*)CCharVoiceMan_AllocVoiceArena(0x3c);
@@ -80,11 +80,11 @@ void BtlBeg_InitSlots_FC54(CVS_THREAD_BATTLE_BEGIN* self) {
     ((CVSThreadStateTriple*)self)->a = v0;
     ((CVSThreadStateTriple*)self)->c = *p;
 
-    int cnt = func_802A7870(&self->field_0x28[0], 3, 0);
+    int cnt = HpVoice_CollectIdle(&self->field_0x28[0], 3, 0);
     s16 scnt = (s16)cnt;
     self->field_0x38 = scnt;
     if (scnt > 0) return;
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 void BtlBeg_ReinitSlots_FCC8(){}
@@ -93,7 +93,7 @@ void BtlBeg_ReinitSlots_FCC8(){}
 // Advance the active-slot counter (up or down, per the direction flag).  When
 // the counter wraps back to 0 the process virtual is dispatched again.
 void BtlBeg_AdvanceSlot_00EC(CVS_THREAD_BATTLE_BEGIN* self) {
-    if (func_802A3E88(self) != 0) return;
+    if (IsThreadVoiceActive(self) != 0) return;
 
     u32 v0;
     const u32* p = lbl_eu_8053ACAC;
@@ -115,14 +115,14 @@ void BtlBeg_AdvanceSlot_00EC(CVS_THREAD_BATTLE_BEGIN* self) {
     }
 
     if (self->field_0x36 != 0) return;
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802b2c20 (BtlBeg_RemoveVoice_01B0)
 // Remove a released voice from the slot array (and the dedicated slot) by
 // matching the embedded CCharVoice pointer against the one being freed.
 void BtlBeg_RemoveVoice_01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
     CVoiceHandle* handle;
     CCharVoice* vp;
     // Word-walk over the object so the slot loads fold the 0x28 field offset
@@ -153,11 +153,11 @@ void BtlBeg_RemoveVoice_01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr
 
 // us-802b2cb8 (BtlBeg_SelectVoiceId_0248)
 // Select a battle-start voice ID from the current handle playback state.
-// Dispatches on func_802A77E8(handle); the first arg (self) is unused.
+// Dispatches on HpVoice_MapSubState(handle); the first arg (self) is unused.
 int BtlBeg_SelectVoiceId_0248(CVS_THREAD_BATTLE_BEGIN* self, CVoiceHandle* handle) {
     CVSHandleFieldView* hf = (CVSHandleFieldView*)handle;
     int r;
-    switch (func_802A77E8(handle)) {
+    switch (HpVoice_MapSubState(handle)) {
     case 1: {
         int x = (int)hf->field_0x3374;
         if ((x & 0x4000) != 0) {
@@ -203,10 +203,11 @@ int BtlBeg_SelectVoiceId_0248(CVS_THREAD_BATTLE_BEGIN* self, CVoiceHandle* handl
     return r;
 }
 
-// Virtual override of blank1(): returns buffer size for BATTLE_BEGIN thread.
-int CVS_THREAD_BATTLE_BEGIN::blank1() {
-    return BUFFER_SIZE;
-}
+// (No blank1() override defined here: the 0x1E const-return body is already
+// provided as BtlBeg_PlayGate_033C below under its retail spelling, and
+// defining a virtual would make MWCC emit a vtable in this TU (CVS_THREAD_HP
+// precedent). The blank1() member decl in the header still satisfies the
+// class interface; the thread vtable is the retail lbl_eu_8053ACB8 data.)
 
 // us-802b2dac (BtlBeg_PlayGate_033C)
 // Flat-named copy of the blank1 body: retail emits the 0x1E const-return
@@ -225,7 +226,7 @@ int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
     CVoiceHandle* h = self;
     CCharVoice* vp = (CCharVoice*)h;
     if (h != NULL) vp = &h->voice;
-    func_802A3D54(vp, func_802AED0C(), 0x1e);
+    RequestVoicePlayback(vp, func_802AED0C(), 0x1e);
     return 0;
 }
 

@@ -154,7 +154,7 @@ void CTaskGameCf::Draw() {}
         unk_5E = 1;
         unk_60 = 12;
         unk_62 = 0;
-        mMoveFunc = &CTaskGameCf::func_8004451C;
+        mMoveFunc = &CTaskGameCf::bootGameWorld;
     }
 
     void CTaskGameCf::startContinue(){
@@ -166,7 +166,7 @@ void CTaskGameCf::Draw() {}
         unk_5E = 1;
         unk_60 = 12;
         unk_62 = 0;
-        mMoveFunc = &CTaskGameCf::func_8004451C;
+        mMoveFunc = &CTaskGameCf::bootGameWorld;
     }
 
 void cf::CTaskGameCf::func_800444DC(){
@@ -182,7 +182,7 @@ void CTaskGameCf::func_800444FC(){
 }
 
     #pragma optimize_for_size on
-    void CTaskGameCf::func_8004451C(){
+    void CTaskGameCf::bootGameWorld(){
         // New-game/continue boot path: build the battle scene, managers and UI
         // tasks. Bit 3 of unk_54 marks a restart (skip the scene-color reset).
         if(!(unk_54 & 8)){
@@ -231,19 +231,19 @@ void CTaskGameCf::func_800444FC(){
             CtrlObjectParam_GetSlotTableBase();
 
             if((lbl_eu_80663E28 & 0x01000000) == 0){
-                func_8009E574(party, 2, 1, 1);
-                func_8009E574(party, 4, 1, 2);
-                func_8009E574(party, 3, 2, 0);
-                func_8009E574(party, 5, 2, 1);
-                func_8009E574(party, 6, 2, 2);
-                func_8009E574(party, 7, 2, 3);
+                CtrlObjectParam_InsertSlotEntry(party, 2, 1, 1);
+                CtrlObjectParam_InsertSlotEntry(party, 4, 1, 2);
+                CtrlObjectParam_InsertSlotEntry(party, 3, 2, 0);
+                CtrlObjectParam_InsertSlotEntry(party, 5, 2, 1);
+                CtrlObjectParam_InsertSlotEntry(party, 6, 2, 2);
+                CtrlObjectParam_InsertSlotEntry(party, 7, 2, 3);
             }
         }
 
         func_80086B5C__Q22cf13CfGameManagerFv(unk_60, unk_62, 0);
         func_8007E514__Q22cf13CfGameManagerFv(unk_5C, unk_5E,
-            unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, func_8024005C());
-        func_80059C58(pTaskGame, pTaskGame->getScene());
+            unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, NandImageLive());
+        Env_CreateTask(pTaskGame, pTaskGame->getScene());
         CTaskCulling::create(pTaskGame, pTaskGame->getScene());
         if(CtrlRemote_TouchBitByArg((u32)0x20) == 0){
             CtrlRemote_SetSharedBit(0x20, 1);
@@ -256,7 +256,7 @@ void CTaskGameCf::func_800444FC(){
     }
     #pragma optimize_for_size off
 
-    void CTaskGameCf::func_800447B4(){
+    void CTaskGameCf::tickExitCheck(){
         if(Class_80296898::getInstance()->mFrameCount == 0){
             u8 frame = 10;
             Class_80296898::getInstance()->mFrameCount = frame;

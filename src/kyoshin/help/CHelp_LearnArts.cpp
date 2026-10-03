@@ -47,7 +47,7 @@ bool CHelp_LearnArts::func_802B8398() {
     threshold = mWpnTypeCount;
     for (int character = 1; character <= 13; ++character) {
         colName = (const char*)lbl_eu_805138AC;
-        cf::CHelpLearnArtsCharData* charData = (cf::CHelpLearnArtsCharData*)func_8009EC9C((u16)character);
+        cf::CHelpLearnArtsCharData* charData = (cf::CHelpLearnArtsCharData*)CtrlObjectParam_GetCharEntry((u16)character);
         artsBase = charData->mArts;
         col.v = getBdatStringColumnValue(lbl_eu_806640F4, colName, charData->mWpnType);
         byteVal = col.b[0];

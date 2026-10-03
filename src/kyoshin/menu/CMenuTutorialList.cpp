@@ -190,7 +190,7 @@ body:
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     TutorialList_DrawVisible(reinterpret_cast<CTutorialList*>(mTutorialList), &drawInfo);
     Tutorial_DrawLayoutGated(reinterpret_cast<CTutorial*>(mTutorial), &drawInfo);

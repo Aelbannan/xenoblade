@@ -209,16 +209,16 @@ void CDrawGX::setupGX(){
 
     if(checkFlag(FLAG_PERSPECTIVE)){
         if(checkFlag(FLAG_5)){
-            CDeviceGX::getCacheInstance()->func_8044B8CC(unk2C, unk28, unk24);
+            CDeviceGX::getCacheInstance()->setPerspProj(unk2C, unk28, unk24);
             ml::CMat34 mat = unk90 * unk60;
             ml::CMat34 copy = mat;
             GXLoadPosMtxImm(*copy, 0);
         }else{
-            CDeviceGX::getCacheInstance()->func_8044B8CC(unk2C, unk28, unk24);
+            CDeviceGX::getCacheInstance()->setPerspProj(unk2C, unk28, unk24);
             GXLoadPosMtxImm(*unk60, 0);
         }
     }else{
-        CDeviceGX::getCacheInstance()->func_8044B660();
+        CDeviceGX::getCacheInstance()->setOrthoProj();
     }
 
     if(checkFlag(FLAG_LINES | FLAG_POINTS)){
@@ -272,7 +272,7 @@ void CDrawGX::begin(u32 primType, u32 r5){
 
     GXBegin((GXPrimitive)mPrimitive, GX_VTXFMT0, mVerts);
 
-    mZPos = (s16)CDeviceGX::getCacheInstance()->func_8044BD74(unk1C);
+    mZPos = (s16)CDeviceGX::getCacheInstance()->scaleRingWidth(unk1C);
     mVertCount = 0;
 
     setFlag(FLAG_INITIALIZED, true);

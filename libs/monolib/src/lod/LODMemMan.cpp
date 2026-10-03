@@ -238,12 +238,12 @@ extern GXColor lbl_eu_8066A71C;
 
 // func_80470634 per-type update constants (.sdata2 pool).
 extern f64 lbl_eu_8066A6E0;   // 2^52 double magic (u8 -> double conversion)
-extern f64 lbl_eu_8066A6E8;   // 2^52 double magic variant (func_8046D264)
+extern f64 lbl_eu_8066A6E8;   // 2^52 double magic variant (rebuildFromSharedBuffer)
 extern f64 lbl_eu_8066A6C8;   // double base (random offset addend)
 extern f64 lbl_eu_8066A6D0;   // double scale (random offset factor)
 extern f32 lbl_eu_8066A6D8;   // scale divisor
 extern f32 lbl_eu_8066A6C0;   // 0.0f LOD distance constant
-extern f32 lbl_eu_8066A6C4;   // random-value scale (func_8046D264)
+extern f32 lbl_eu_8066A6C4;   // random-value scale (rebuildFromSharedBuffer)
 extern f32 lbl_eu_8066A210;   // angle scale (func_8046F594)
 extern f32 lbl_eu_8066A6F8;   // FIdx angle scale (func_8046F594)
 // Shared LOD distance globals published by the per-element update
@@ -681,7 +681,7 @@ struct LODSubMgrView {
 // reloc_map tool's approved fix for name drift).
 // ---------------------------------------------------------------------------
 extern "C" void func_804702F0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem);
-extern "C" void func_8046DD9C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, f32 f1);
+extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, f32 f1);
 extern "C" void func_8046E1DC__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8* p, int a);
 
 // TU-internal callees with extra args (retail symbol names).  MWCC appends
@@ -733,7 +733,7 @@ extern "C" void resetLightColor__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 x);
 
 // Reset-tail view: the per-frame scratch words at +0x3C..+0x50 and the
-// +0x84 scale slot cleared by func_8046D898.
+// +0x84 scale slot cleared by resetAndReload.
 struct LODResetView {
     u8  mPad_00[0x3C];
     u32 field_0x3C;
@@ -802,7 +802,7 @@ void LOD::LODMemMan::updateSubObject() {
 // keeps its first word, slots[1..16] get words 0/4 cleared (the word-0 walk
 // is a pointer loop that MWCC keeps as a real loop; the word-4 and +0x194
 // walks unroll), then the +0xa44 sub-manager is initialised (vtable, first
-// fields, name string) and the embedded UnkClass_8046A530 / func_8046DA04
+// fields, name string) and the embedded UnkClass_8046A530 / resetFrameFields
 // are run.
 // ---------------------------------------------------------------------------
 LOD::LODMemMan::LODMemMan() {
@@ -836,7 +836,7 @@ LOD::LODMemMan::LODMemMan() {
     strcpy(cv->mSub.mStr_34, (const char*)&lbl_eu_80663834);
 
     mSubObject.func_8046A530();
-    func_8046DA04();
+    resetFrameFields();
 }
 
 LOD::LODMemMan::~LODMemMan() {}
@@ -941,7 +941,7 @@ struct LODScnProcUD {
 
 // Retail calls this member-shaped rebuild with the shared-buffer base in the
 // second (register-only) argument; keep the exact retail ABI.
-extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg) {
+extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     LOLDBufHdr* bh = (LOLDBufHdr*)arg;
     u8* buf = (u8*)arg;
@@ -1166,13 +1166,13 @@ extern "C" void func_8046D264__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg)
 }
 
 // ---------------------------------------------------------------------------
-// func_8046D898: full reset/reload entry point.  When flag bit 0x4 of +0x6C is
+// resetAndReload: full reset/reload entry point.  When flag bit 0x4 of +0x6C is
 // set the two g3d objects are detached/destroyed and the sub-managers torn
 // down first (keeping only flag bit 0x8000); both paths then re-initialise
 // the per-frame fields, store `view` into +0x1C, set flag bit 0 and run the
 // scene refresh passes.
 // ---------------------------------------------------------------------------
-extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg, u8* view) {
+extern "C" bool resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg, u8* view) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0x6C & 4) {
         if (l->field_0xA8 != 0) {
@@ -1214,11 +1214,11 @@ extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg,
     l->mView_1C = view;
     l->field_0x6C = flags;
     self->setArchiveReadyFlag();
-    func_8046D264__Q23LOD9LODMemManFv(self, arg);
+    rebuildFromSharedBuffer__Q23LOD9LODMemManFv(self, arg);
     return true;
 }
 
-void LOD::LODMemMan::func_8046DA04() {
+void LOD::LODMemMan::resetFrameFields() {
     LODMemManLayout* l = (LODMemManLayout*)this;
     // Float pool constants are cached in locals so MWCC CSEs them into
     // f1 (1.0f) / f0 (scale divisor); the clears follow in field order.
@@ -1269,13 +1269,13 @@ void clearManagers__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8046DAC0: release the two g3d objects (+0xA8 / +0xAC), detaching each
+// teardownG3dObjects: release the two g3d objects (+0xA8 / +0xAC), detaching each
 // from the scene's root group (getScnGroupChild index 7/8) first, then tear down
 // the +0xCC sub-manager and the +0xA44 sub-manager (plus its clearFlagAndResetName
 // pass when `param` is set).  Ends by clearing the view/shared-buffer pointers
 // and toggling flag bits 0x3087 -> 0x8000.
 // ---------------------------------------------------------------------------
-void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
+void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (l->field_0xA8) {
         nw4r::g3d::ScnGroup* group = (nw4r::g3d::ScnGroup*)getScnGroupChild((CScn*)l->mView_1C, 7);
@@ -1308,7 +1308,7 @@ void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param) {
 // clears the element list at +0x68, drops flag bit 0x1000000, tears down the
 // +0xCC sub-manager when bit 0x10000 was held and re-marks bit 0x10000 while
 // bit 0x8000 survives.  Load pass otherwise: drives the archive state
-// machine, optionally re-runs func_8046D264, scales the base value by the
+// machine, optionally re-runs rebuildFromSharedBuffer, scales the base value by the
 // frame delta, walks the element index chain through func_804702F0, runs the
 // per-type update, folds the shrink accumulator and finally updates the
 // embedded UnkClass_8046A530 when bit 0x10 is clear.
@@ -1336,7 +1336,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     driveArchiveLoadState__Q23LOD9LODMemManFv((LOD::LODMemMan*)((u8*)self + 0xA44));
     if (!(l->field_0x6C & 4)) {
         if (((LODCtorView*)self)->mSub.field_0x20 & 2) {
-            func_8046D264__Q23LOD9LODMemManFv(self, ((LODCtorView*)self)->mSub.field_0x4);
+            rebuildFromSharedBuffer__Q23LOD9LODMemManFv(self, ((LODCtorView*)self)->mSub.field_0x4);
         } else {
             return;
         }
@@ -1378,7 +1378,7 @@ extern "C" void updateLodTick__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     }
 }
 
-// Retail-named imports used only by func_8046DD9C.
+// Retail-named imports used only by updateLodLayersForView.
 void updateViewLayers__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODViewDesc* view);
 void func_80470184__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count);
 void func_8047108C__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LOD::LODMemMan* sub);
@@ -1400,7 +1400,7 @@ struct DD9Chans {
     f32 c[3];                // 0xC0, 0xC4, 0xC8
 };
 
-// Element view used by func_8046DD9C's chain walk: next link at +0x14,
+// Element view used by updateLodLayersForView's chain walk: next link at +0x14,
 // type-descriptor index at +0x18, own index at +0x1A; 0x20-byte stride.
 struct DD9ElemView {
     u8  mPad00[0x14];
@@ -1411,7 +1411,7 @@ struct DD9ElemView {
 };
 
 // ---------------------------------------------------------------------------
-// func_8046DD9C: per-frame LOD layer update for one view.  Requires flag bits
+// updateLodLayersForView: per-frame LOD layer update for one view.  Requires flag bits
 // 1|0x100 of +0x6C; advances the three distance channels (+0xC0..+0xC8)
 // toward or away from their limits (mode byte at +0xBE selects which channel
 // grows when bit 0x200 is set), derives the LOD plane distance (+0x38) from
@@ -1419,7 +1419,7 @@ struct DD9ElemView {
 // resets the used-element bitmap, rebuilds the element chains and refreshes
 // texture bindings.
 // ---------------------------------------------------------------------------
-extern "C" void func_8046DD9C__Q23LOD9LODMemManFv(
+extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(
     LOD::LODMemMan* self, u8* p, f32 scale) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     u32 flags = l->field_0x6C;
@@ -2960,7 +2960,7 @@ extern "C" void func_804708B4__Q23LOD9LODMemManFv(
 // ---------------------------------------------------------------------------
 // dispatchViewUpdate: resolve the current view frame and, when the caller passes a
 // nonzero task, push the layer scale and the frame data into the sub-manager
-// (func_8046DD9C is skipped while the scene gate byte is set).
+// (updateLodLayersForView is skipped while the scene gate byte is set).
 // ---------------------------------------------------------------------------
 void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
     LODMemManLayout* l = (LODMemManLayout*)self;
@@ -2969,7 +2969,7 @@ void dispatchViewUpdate__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
     LOD::LODMemMan* sub = ((LODSubMgrView*)self)->field_0xF0;
     if (task != 0) {
         if (((LODScnGate*)getScnRootPtr(Scn_GetCurrentScene()))->field_0x19 == 0) {
-            func_8046DD9C__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
+            updateLodLayersForView__Q23LOD9LODMemManFv(sub, frame->field_0x9C, frame->field_0x1E0);
         }
         func_8046E1DC__Q23LOD9LODMemManFv(sub, frame->field_0x9C, task);
     }
@@ -3275,7 +3275,7 @@ void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 // slot, then - when a scene is supplied - remove the manager object from the
 // scene's root group (index 7).  Auto-inline is off so callers emit a real
 // `bl notifyG3dManager__...` (retail keeps the call, and the loop body would
-// otherwise be inlined into func_8046DAC0 / the destructor).
+// otherwise be inlined into teardownG3dObjects / the destructor).
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off

@@ -45,7 +45,7 @@ extern const u32 lbl_eu_80531090[3];
 extern u8 lbl_eu_8053109C[];
 
 // Battle-side initializers called by the CfObjectActor constructor.
-// NOTE: func_80174B4C is declared here in its LOCAL 5-arg form inside
+// NOTE: dispatchItemLoad is declared here in its LOCAL 5-arg form inside
 // CfObjectActor.cpp (the shared headers carry the common 2-arg form;
 // the two extern "C" signatures cannot coexist - error 10197).
 extern "C" void aiActionStoreWordB14(void* obj, unsigned int value);
@@ -86,7 +86,7 @@ extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
-extern "C" float func_800D81A8(void* obj, void* target, void* source);
+extern "C" float calcBattleDamage(void* obj, void* target, void* source);
 
 extern "C" void PartyGaugeAddClamped(void* obj, int value);   // party-gauge add
 
@@ -230,7 +230,7 @@ namespace cf {
 
     // View of CfObjectActor's pointer at absolute offset 0x04 (the
     // CActorState sub-object pointer): its vtable slot +0x30 returns a u32*
-    // whose first word is the actor id queried by func_80174C98.
+    // whose first word is the actor id queried by testActorStatus.
     struct CfActorField04 {
         u8 _pad[0x4];
         u8* field_0x04;  // 0x04

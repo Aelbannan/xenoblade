@@ -29,24 +29,24 @@ extern "C" void __dt__10CScrollBarFv(void* self, int flags);
 // Forward decls for the layout-build helpers defined below (extern "C" so the
 // call sites in Col6_HintOnFile_DB08 / Col6_SysOnFile_0118 bind to the unmangled retail
 // symbols). Col6_HintOnFile_DB08 is the CCol6Hint file-load completion handler (its
-// layout build func_8015DD4C operates on hint offsets 0x9C/0x11C/0x124).
-extern "C" void func_8015DD4C(CCol6Hint* self);
-extern "C" void func_80160370(CCol6System* self);
-extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx);
+// layout build col6HintBuild operates on hint offsets 0x9C/0x11C/0x124).
+extern "C" void col6HintBuild(CCol6Hint* self);
+extern "C" void col6SysLayout(CCol6System* self);
+extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx);
 // Item-box input handlers defined later in this TU (called by Move).
-extern "C" void func_80161178(CCol6System* self);
-extern "C" void func_8016169C(CCol6System* self);
-extern "C" void func_80161C5C(CCol6System* self);
+extern "C" void col6PadHandle(CCol6System* self);
+extern "C" void col6SwitchBox(CCol6System* self);
+extern "C" void col6WinScroll(CCol6System* self);
 extern "C" void Col6_SyncBoxSlot_0EE4(u32 unused, s32 arg);
-extern "C" void func_80162000(CCol6System* self);
+extern "C" void col6DoOpenBox(CCol6System* self);
 extern "C" void func_80162C40(CCol6System* self);
 extern "C" void Col6_OpenBox_2DB4(CCol6System* self);
-extern "C" void func_80162EF8(CCol6System* self);
+extern "C" void col6Win2Count(CCol6System* self);
 extern "C" void Col6_Win2CountLadder_3614(CCol6System* self);
 extern "C" void Col6_Win2Interact_378C(CCol6System* self);
-extern "C" void func_801638C0(CCol6System* self);
-extern "C" void func_80163AF4(CCol6System* self);
-extern "C" void func_8015E0BC(CCol6Hint* self);
+extern "C" void col6Win2PerPl(CCol6System* self);
+extern "C" void col6JoinCheck(CCol6System* self);
+extern "C" void col6HintInput(CCol6Hint* self);
 
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
@@ -514,13 +514,13 @@ void CCol6Hint::Move() {
                     reinterpret_cast<CCol6PaneView*>(mAnimHost->mPane10)
                         ->setText(&lbl_eu_80502050[0x17], 1);
                 nw4r::math::VEC3 vec;
-                func_80137924(&vec, pane1, pane2, mAnimHost->mPane10);
+                ScalePaneWorldPos(&vec, pane1, pane2, mAnimHost->mPane10);
                 reinterpret_cast<CCol6Cur18View*>(&mCur18)->vf04(&vec);
             }
             break;
 
         case 3:
-            func_8015E0BC(this);
+            col6HintInput(this);
             break;
 
         case 4:
@@ -561,7 +561,7 @@ void CCol6Hint::Move() {
 
 // Col6_HintOnFile_DB08 - CCol6Hint file-load completion handler: create the scratch
 // region + host, detach the arc buffer into a fresh accessor, build the hint
-// layout (func_8015DD4C), flag it ready and register the render callback with
+// layout (col6HintBuild), flag it ready and register the render callback with
 // the parent scene (the +0x84 slot holds the stored parent pointer).
 extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
     // Retail branches to a late failure label (bne) rather than skipping the
@@ -592,7 +592,7 @@ extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
             (u32)(uintptr_t)CLibLayout::createArcResourceAccessor();
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C)
             ->Attach(data, &pool[0x42]);
-        func_8015DD4C(self);
+        col6HintBuild(self);
         self->mFlag98 = 1;
 
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
@@ -644,7 +644,7 @@ draw:
     // a callee-saved register.
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
                   reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), 0, 1);
     CScrollBar_draw(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
@@ -656,11 +656,11 @@ draw:
 // in CUIWindowManager.hpp).
 class IUIWindow;
 
-// func_8015DCD0 - hint-window factory: allocate 0x17c bytes of work memory,
+// col6HintAlloc - hint-window factory: allocate 0x17c bytes of work memory,
 // construct the CCol6Hint into it and register it under pParent. The store
 // to the singleton global and Regist run even when allocation failed (obj
 // stays NULL); returns the (possibly NULL) singleton.
-extern "C" IUIWindow* func_8015DCD0(CProcess* pParent, CScn* pScene) {
+extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
     if (lbl_eu_80664234 != 0) {
         return 0;
     }
@@ -677,12 +677,12 @@ extern "C" IUIWindow* func_8015DCD0(CProcess* pParent, CScn* pScene) {
     return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664234);
 }
 
-// func_8015DD4C - builds the CCol6Hint layout: attaches the arc, loads the two
+// col6HintBuild - builds the CCol6Hint layout: attaches the arc, loads the two
 // anim transforms, binds the device font into the root pane, rebuilds the
 // embedded cursor from a stack temp, labels the count panes, then scans the
 // item-box threshold tables to fill the per-slot entries (mUnk9C) and label
 // the six slots with the resolved strings.
-extern "C" void func_8015DD4C(CCol6Hint* self) {
+extern "C" void col6HintBuild(CCol6Hint* self) {
     // Build the layout into the +0x54 slot and load the two anim transforms
     // (the +0x54 anim host IS the layout object).
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -705,7 +705,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
         reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost))->mpRootPane;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost));
-    func_8013676C(rootPane,
+    ApplyFontToTxtPanes(rootPane,
                   reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
 
     // Start the two anims (setAnim at +0x2C) and tick once (+0x38).
@@ -810,12 +810,12 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
     }
 }
 
-// func_8015E0BC - CCol6Hint::Move state-3 pad handler: held up/down switch the
+// col6HintInput - CCol6Hint::Move state-3 pad handler: held up/down switch the
 // state and reposition the scroll position; the four short-press buttons
 // scroll the hint selection with wrap (single row down/up via the row pair,
 // page down/up via the page pair), re-labelling the six slot panes and
 // repositioning the cursor each time.
-extern "C" void func_8015E0BC(CCol6Hint* self) {
+extern "C" void col6HintInput(CCol6Hint* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int sels, confirm, up2, down2, up, down;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -899,7 +899,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
@@ -951,7 +951,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
@@ -999,7 +999,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
@@ -1051,7 +1051,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)->mpRootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
@@ -1329,7 +1329,7 @@ inline void CCol6System::updateCursorPos() {
         nw4r::lyt::Pane* pane2 = reinterpret_cast<CCol6PaneView*>(rootPane)
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2, rootPane);
+        ScalePaneWorldPos(&vec, pane1, pane2, rootPane);
         reinterpret_cast<CCol6Cur18View*>(mCur1)->vf04(&vec);
     }
 }
@@ -1377,7 +1377,7 @@ body:
         break;
 
     case 3:
-        func_80161178(this);
+        col6PadHandle(this);
         break;
 
     case 4:
@@ -1421,7 +1421,7 @@ body:
         break;
 
     case 7:
-        func_8016169C(this);
+        col6SwitchBox(this);
         break;
 
     case 8:
@@ -1448,7 +1448,7 @@ body:
         break;
 
     case 0xb:
-        func_80161C5C(this);
+        col6WinScroll(this);
         break;
 
     case 0xc:
@@ -1466,7 +1466,7 @@ body:
         break;
 
     case 0xd:
-        func_80162000(this);
+        col6DoOpenBox(this);
         break;
 
     case 0xe:
@@ -1596,7 +1596,7 @@ body:
         break;
 
     case 0x1c:
-        func_80162EF8(this);
+        col6Win2Count(this);
         break;
 
     case 0x1d:
@@ -1626,7 +1626,7 @@ body:
         break;
 
     case 0x20:
-        func_801638C0(this);
+        col6Win2PerPl(this);
         break;
 
     case 0x21:
@@ -1653,7 +1653,7 @@ body:
         break;
 
     case 0x22:
-        func_80163AF4(this);
+        col6JoinCheck(this);
         break;
 
     case 0x23:
@@ -1798,7 +1798,7 @@ body:
 
 // Col6_SysOnFile_0118 - second layout file-load completion handler: create the
 // scratch region + host, detach the arc buffer into a fresh accessor, build
-// the layout (func_80160370), flag it ready and register the render callback.
+// the layout (col6SysLayout), flag it ready and register the render callback.
 extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
     // Same shape as Col6_HintOnFile_DB08: late failure label (no dtor on that
     // path), host scoped to the success block, pool base materialized after
@@ -1822,7 +1822,7 @@ extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
 
         self->mArcAccessor = CLibLayout::createArcResourceAccessor();
         self->mArcAccessor->Attach(data, &pool[0x42]);
-        func_80160370(self);
+        col6SysLayout(self);
         self->mFlagA0 = 1;
 
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
@@ -1855,7 +1855,7 @@ end:
 draw:
     GXSetZMode((GXBool)0, GX_NEVER, (GXBool)0);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     if (mFlagA1 == 0) {
         drawLayout(mpLayout, &drawInfo, 0, 1);
         Cur_DrawLayout(&mCur1, &drawInfo);
@@ -1865,10 +1865,10 @@ draw:
     sysWinDrawLayout(&mSysWin2, &drawInfo);
 }
 
-// func_801602F4 - item-box system-window factory (same shape as
-// func_8015DCD0, but constructs a 0x240-byte CCol6System and uses its own
+// col6SysCreate - item-box system-window factory (same shape as
+// col6HintAlloc, but constructs a 0x240-byte CCol6System and uses its own
 // singleton global lbl_eu_80664238).
-extern "C" IUIWindow* func_801602F4(CProcess* pParent, CScn* pScene) {
+extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
     if (lbl_eu_80664238 != 0) {
         return 0;
     }
@@ -1883,12 +1883,12 @@ extern "C" IUIWindow* func_801602F4(CProcess* pParent, CScn* pScene) {
     return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664238);
 }
 
-// func_80160370 - builds the second CCol6System layout: attaches the arc
+// col6SysLayout - builds the second CCol6System layout: attaches the arc
 // ("out" + four anims), binds the device font, labels the 21 count panes when
 // the font value is present, rebuilds both embedded cursors, labels the
 // player-count rows and summary panes, then refreshes the per-player item box
-// (func_80160A6C) and writes the reserved-slot count string.
-extern "C" void func_80160370(CCol6System* self) {
+// (col6FillSlots) and writes the reserved-slot count string.
+extern "C" void col6SysLayout(CCol6System* self) {
     self->mPadA5[0] = 0;
 
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -1911,7 +1911,7 @@ extern "C" void func_80160370(CCol6System* self) {
         reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mpLayout);
-    func_8013676C(rootPane, reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
+    ApplyFontToTxtPanes(rootPane, reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
 
     // If the font value is present, label all 21 count panes with it.
     u32 fontVal = CUICfManager_getPackedFont9C();
@@ -2030,7 +2030,7 @@ extern "C" void func_80160370(CCol6System* self) {
                       0);
     }
 
-    func_80160A6C(self, (s8)self->mPadA5[0]);
+    col6FillSlots(self, (s8)self->mPadA5[0]);
 
     // Remaining summary rows.
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x281],
@@ -2075,11 +2075,11 @@ extern "C" void func_80160370(CCol6System* self) {
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
 }
 
-// func_80160A6C - refresh the item-box layout for a player slot: write the
+// col6FillSlots - refresh the item-box layout for a player slot: write the
 // four player-count labels, then either (count < 5) fill the per-slot item
 // panes from the item table, or blank them; an out-of-range slot blanks
 // everything.
-extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
+extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
     // Four player-count labels (0x7fe + 0..3).
     for (s32 i = 0; i < 4; i++) {
         char buf[0x20];
@@ -2124,7 +2124,7 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
                 if (id2 != 0) {
                     BdatGetItemType(id2);
                     BdatGetItemId(id2);
-                    char* name = func_801394D4(id2);
+                    char* name = BuildItemNameStr(id2);
                     char bufC8[0x20];
                     sprintf(bufC8, &lbl_eu_80502050[0x32b], idx);
                     u8 v = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x2cc], bufC8,
@@ -2271,10 +2271,10 @@ extern "C" int Col6_ValidateBox_1024(CCol6System* self) {
     return 1;
 }
 
-// func_80161178 - item-box input handling: up opens the box for player 1 (or
+// col6PadHandle - item-box input handling: up opens the box for player 1 (or
 // flips the anim pair for other players), down flips the anim pair, and the
 // select/confirm pad bits scroll the player index with wrap.
-void func_80161178(CCol6System* self) {
+void col6PadHandle(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -2301,7 +2301,7 @@ void func_80161178(CCol6System* self) {
                 ->setAnim(self->mAnim94, 0);
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim98, 1);
-            func_80160A6C(self, 0);
+            col6FillSlots(self, 0);
             playUISound(0x6d);
         } else {
             // Other players: switch the anim pair.
@@ -2357,7 +2357,7 @@ void func_80161178(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2389,7 +2389,7 @@ void func_80161178(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2398,10 +2398,10 @@ void func_80161178(CCol6System* self) {
     }
 }
 
-// func_8016169C - item-box input handling (5-player): up on player 5 opens
+// col6SwitchBox - item-box input handling (5-player): up on player 5 opens
 // the box; other up/down inputs switch players or open the per-player box;
 // select/confirm scroll the player index with wrap.
-void func_8016169C(CCol6System* self) {
+void col6SwitchBox(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -2477,7 +2477,7 @@ void func_8016169C(CCol6System* self) {
         // Player index down (wrap to 4) and refresh the box.
         self->mPadA5[0] = self->mPadA5[0] - 1;
         if ((s8)self->mPadA5[0] < 0) self->mPadA5[0] = 4;
-        func_80160A6C(self, (s8)self->mPadA5[0]);
+        col6FillSlots(self, (s8)self->mPadA5[0]);
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
@@ -2500,7 +2500,7 @@ void func_8016169C(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2510,7 +2510,7 @@ void func_8016169C(CCol6System* self) {
         // Player index up (wrap to 0) and refresh the box.
         self->mPadA5[0] = self->mPadA5[0] + 1;
         if ((s8)self->mPadA5[0] > 4) self->mPadA5[0] = 0;
-        func_80160A6C(self, (s8)self->mPadA5[0]);
+        col6FillSlots(self, (s8)self->mPadA5[0]);
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
@@ -2533,7 +2533,7 @@ void func_8016169C(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2542,10 +2542,10 @@ void func_8016169C(CCol6System* self) {
     }
 }
 
-// func_80161C5C - item-box window interaction: the select/confirm pad bits
+// col6WinScroll - item-box window interaction: the select/confirm pad bits
 // scroll the slot counter (with wrap), the up/down buttons open the box for
 // the current player; window-open updates reposition the cursor.
-void func_80161C5C(CCol6System* self) {
+void col6WinScroll(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -2586,7 +2586,7 @@ void func_80161C5C(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2618,7 +2618,7 @@ void func_80161C5C(CCol6System* self) {
                     ->mpRootPane)
                 ->setText(&lbl_eu_80502050[0x17], 1);
             nw4r::math::VEC3 vec;
-            func_80137924(
+            ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
@@ -2639,12 +2639,12 @@ void func_80161C5C(CCol6System* self) {
     }
 }
 
-// func_80162000 - open the item box: bump the player count and the two
+// col6DoOpenBox - open the item box: bump the player count and the two
 // summary counters from the per-player table, seed the TaskLOD/audio slots
 // (v1/v2/v3 chains identical to initMpfSystem's own seeding), write the camera
 /// vector block from the s16-keyed lookup, then refresh the layout labels
 // (0x10f/0x11d/0x2b6) and the item box for the current player.
-extern "C" void func_80162000(CCol6System* self) {
+extern "C" void col6DoOpenBox(CCol6System* self) {
     CCol6Fade* fade = getFadeMenu();
     if (fade == 0) return;
     if (isFadeActive(fade) != 0) return;
@@ -2917,7 +2917,7 @@ extern "C" void func_80162000(CCol6System* self) {
     char* s2b6 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
 
-    func_80160A6C(self, (s8)self->mPadA5[0]);
+    col6FillSlots(self, (s8)self->mPadA5[0]);
     self->mFlagA1 = 1;
     self->mFieldA4 = 0xf;
 }
@@ -2998,12 +2998,12 @@ void Col6_OpenBox_2DB4(CCol6System* self) {
     }
 }
 
-// func_80162EF8 - window-2 player-count ladder: while window 2 is active,
+// col6Win2Count - window-2 player-count ladder: while window 2 is active,
 // respond to the pad-confirm button; otherwise scan the player-count buckets
 // (0x7fe..0x801 must all reach the 0x802 total), write the per-bucket camera/
 // vector block from the s16-keyed lookup table, then post the 0x16 fade, the
 // "player N joined" banner (count >= 5) or the per-slot threshold scan.
-extern "C" void func_80162EF8(CCol6System* self) {
+extern "C" void col6Win2Count(CCol6System* self) {
     if (CSysWin_getUnk34(&self->mSysWin2) != 0) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
@@ -3278,11 +3278,11 @@ void Col6_Win2Interact_378C(CCol6System* self) {
     }
 }
 
-// func_801638C0 - per-player window-2 ladder: when the task is idle and the
+// col6Win2PerPl - per-player window-2 ladder: when the task is idle and the
 // current player's count clears the 5-player threshold, post the join banner
 // (player-specific string char); otherwise scan the per-slot threshold tables
 // and (re)assign the join-slot global, then fade the screen.
-void func_801638C0(CCol6System* self) {
+void col6Win2PerPl(CCol6System* self) {
     if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }
@@ -3367,11 +3367,11 @@ void func_801638C0(CCol6System* self) {
     }
 }
 
-// func_80163AF4 - window-2 player-count ladder: when the task is idle and the
+// col6JoinCheck - window-2 player-count ladder: when the task is idle and the
 // player count (0x802) clears the 5-player threshold, post the join banner;
 // otherwise scan the per-slot threshold tables and (re)assign the join-slot
 // global, then fade the screen (same scan shape as CCol6Invite::Move).
-void func_80163AF4(CCol6System* self) {
+void col6JoinCheck(CCol6System* self) {
     if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }

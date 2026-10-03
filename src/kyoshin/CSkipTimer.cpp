@@ -232,7 +232,7 @@ void func_802A041C(CSkipTimer* self) {
 extern "C" __declspec(noinline) void CSkipTimerStampSlotText(CSkipTimer* self, int arg1, int arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_80510568[0x4a], arg1, arg2);
-    func_80136A1C(self->mLayout, &lbl_eu_80510568[0x41], buf, 0);
+    LayoutSetTextBoxText(self->mLayout, &lbl_eu_80510568[0x41], buf, 0);
 }
 #pragma pop
 

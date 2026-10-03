@@ -229,19 +229,19 @@ extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
 extern "C" u32 func_800AA714(const char* path);
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
-extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
+extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
 
 namespace cf {
 class CfBdat {
 public:
-    static u32 func_801422A8(u32 param1);
+    static u32 resolveWpnTok(u32 param1);
     static const char* getBdatStringEntry(u16 index);
 };
 }
 
 // us-80142a78 - resolve a family/item id into an equip/resource handle.
-// Category 2 reads the ITM_wpnlist name column; 4..8 map onto func_80141E90 slots.
-extern "C" u32 func_80142074(u32 owner, u32 itemId, u32 flags) {
+// Category 2 reads the ITM_wpnlist name column; 4..8 map onto bdatPcPartsRes slots.
+extern "C" u32 bdatResolveItem(u32 owner, u32 itemId, u32 flags) {
     if (itemId == 0) {
         return 0;
     }
@@ -264,12 +264,12 @@ extern "C" u32 func_80142074(u32 owner, u32 itemId, u32 flags) {
     } else if (category == 8) {
         slot = 5;
     }
-    return func_80141E90(owner, (s16)index, slot, flags);
+    return bdatPcPartsRes(owner, (s16)index, slot, flags);
 }
 
 // Weapon-id translator: ids with top-5-bit tag 5 pass through; other
 // nonzero ids index the ITM_wpnlist table via its name column.
-u32 cf::CfBdat::func_801422A8(u32 param1) {
+u32 cf::CfBdat::resolveWpnTok(u32 param1) {
     if (param1 != 0) {
         u32 result;
         void* data;

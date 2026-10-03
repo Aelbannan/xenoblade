@@ -34,14 +34,14 @@
 // Copy helpers for member sub-object initialization
 // ItemEx_CopyBgTex: copies CBgTex field-by-field from src to dest
 extern void ItemEx_CopyBgTex(CBgTex* dest, CBgTex* src);
-// func_801BE16C: copies CTitleAHelp field-by-field from src to dest
-extern void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
+// ItemEx_CopyTitle: copies CTitleAHelp field-by-field from src to dest
+extern void ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 
 // Init helpers for sub-objects (defined later in this TU)
-void func_80241640(CMapSel* dest, CMapSel* src);
-void func_8024189C(CFade* dest, CFade* src);
-void func_80241920(CFloorMap* dest, CFloorMap* src);
-extern void func_8024343C(CMapSel* mapSel);
+void MapSelCopy(CMapSel* dest, CMapSel* src);
+void FadeCopy(CFade* dest, CFade* src);
+void FloorMapCopy(CFloorMap* dest, CFloorMap* src);
+extern void startMapSelLoad(CMapSel* mapSel);
 extern void CFade_StartLoad(CFade* fade);
 
 // String table base for MNU_item / MNU_kyeassign lookups
@@ -55,9 +55,9 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_802435CC(CMapSel* self);
+extern "C" void termMapSel(CMapSel* self);
 extern "C" void CFade_Unload(CFade* self);
-extern "C" void func_8024CB94(CFloorMap* self);
+extern "C" void FloorMap_Teardown(CFloorMap* self);
 extern u32 lbl_eu_80664790;
 }
 
@@ -85,7 +85,7 @@ struct MapPointEntry {
 /* Per-landmark pulse channel step. Advances the playback time and computes
    the vertical offset (field_10) from a damped sine wobble with lead-in /
    tail-out fading. Returns whether the channel is still alive. */
-extern "C" bool func_80240614(MapFxChannel* fx, float delta) {
+extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     if (fx->field_2c <= lbl_eu_8066A208) return false;
     if (delta <= lbl_eu_8066A208) return true;
 
@@ -176,7 +176,7 @@ void func_80240878(){}
 // Indexed position writes keep the store anchored at +0x170 off the
 // object base (retail strength-reduces them to a +4 byte walker); the
 // !(x <= eps) form reproduces retail's cror eq,lt,eq branch fusion.
-extern "C" void func_802408D4(MenuFxObj* obj) {
+extern "C" void MapFxStepMenuChannels(MenuFxObj* obj) {
     float delta = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     obj->pos = ml::CVec3::zero;
@@ -195,7 +195,7 @@ extern "C" void func_802408D4(MenuFxObj* obj) {
         // fcmpo + cror eq,lt,eq + mfcr/extrwi sequence.
         done = fx->field_2c <= lbl_eu_8066A208;
         if (!done) {
-            func_80240614(fx, delta);
+            MapFxStepPulseChannel(fx, delta);
             posOut[0x5C + i] = fx->field_10;
             mainHit = true;
         }
@@ -206,7 +206,7 @@ extern "C" void func_802408D4(MenuFxObj* obj) {
         MapFxChannel* fx = &obj->fx[j];
         done = fx->field_2c <= lbl_eu_8066A208;
         if (!done) {
-            func_80240614(fx, delta);
+            MapFxStepPulseChannel(fx, delta);
             posOut[0x5C + j] = fx->field_10;
             subHit = true;
         }
@@ -240,22 +240,22 @@ void MenuFx_ClearSlotFlags(u8* base) {
 }
 
 // Advances the landmark FX for every active map point entry.
-extern "C" void func_80240AAC(MenuFxObj* entries) {
+extern "C" void MapFxStepAllEntries(MenuFxObj* entries) {
     u32 base = (u32)entries;
     u32 off = 0;
     for (u32 i = 0; i < 8; i++) {
         if (*(u8*)(base + off) != 0)
-            func_802408D4((MenuFxObj*)(base + off));
+            MapFxStepMenuChannels((MenuFxObj*)(base + off));
         off += sizeof(MenuFxObj);
     }
 }
 
 // Accumulates positions from active map point entries and applies them
-// to a camera or transform object via func_8049F168 / func_8049F204.
+// to a camera or transform object via ScnCamShiftBy / ScnCamTurnAim.
 // Retail keeps four zero-assigned locals (two are dead after optimization)
 // and walks the 8 entries as an unrolled pair inside a 4-iteration ctr loop;
 // the sums are in-place nw4r VEC3Add paired-single operations.
-void func_80240B10(MapPointEntry* entries, void* target) {
+void MapFxApplyEntryPositions(MapPointEntry* entries, void* target) {
     if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
@@ -299,8 +299,8 @@ void func_80240B10(MapPointEntry* entries, void* target) {
     }
 
     if (anyActive) {
-        func_8049F168(target, &acc[0]);
-        func_8049F204(target, &acc[1]);
+        ScnCamShiftBy(target, &acc[0]);
+        ScnCamTurnAim(target, &acc[1]);
     }
 }
 
@@ -347,7 +347,7 @@ static inline void InitFxChannel(MapFxChannel* fx, const FxParams* p, float widt
 // for channels 3-5 come pre-scaled by pi/2), the active flag is set, live
 // channels inherit the caller's enable byte, and a shared counter value is
 // stamped into the entry id. Always returns 0.
-s32 func_80240C98(MenuFxObj* entries, FxParams* params, u8 flagVal) {
+s32 MapFxAllocEntry(MenuFxObj* entries, FxParams* params, u8 flagVal) {
     MenuFxObj* obj = entries;
     for (int i = 0; i < 8; i++, obj++) {
         if (obj->field_00 != 0) continue;
@@ -395,7 +395,7 @@ s32 func_80240C98(MenuFxObj* entries, FxParams* params, u8 flagVal) {
 
 // Clears each landmark slot flag whose live counter has risen above the
 // epsilon floor, for active entries matching id (or all when id == 0).
-void func_8024125C(MapPointEntry* entries, u32 id) {
+void MapFxClearSlotFlags(MapPointEntry* entries, u32 id) {
     MapPointEntry* e = entries;
     for (int i = 0; i < 8; i++, e++) {
         if (e->flag == 0) continue;
@@ -411,7 +411,7 @@ void func_8024125C(MapPointEntry* entries, u32 id) {
 
 // Resets active landmark entries matching id (or all when id == 0):
 // clears each live slot counter and zeroes the stored positions.
-void func_80241344(MapPointEntry* entries, u32 id) {
+void MapFxResetEntries(MapPointEntry* entries, u32 id) {
     MapPointEntry* e = entries;
     for (int i = 0; i < 8; i++, e++) {
         if (e->flag == 0) continue;
@@ -472,25 +472,25 @@ void CMenuMapSelect::Init() {
     char* helpStr = (char*)BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
     {
         CTitleAHelp titleHelp(helpStr, 0x4a);
-        func_801BE16C(&mTitleHelp, &titleHelp);
+        ItemEx_CopyTitle(&mTitleHelp, &titleHelp);
     } // titleHelp destructor runs here
     mTitleHelp.CTitleAHelp_load();
 
     {
         CMapSel mapSel;
-        func_80241640(&mMapSel, &mapSel);
+        MapSelCopy(&mMapSel, &mapSel);
     } // mapSel destructor runs here
-    func_8024343C(&mMapSel);
+    startMapSelLoad(&mMapSel);
 
     {
         CFade fade;
-        func_8024189C(&mFade, &fade);
+        FadeCopy(&mFade, &fade);
     } // fade destructor runs here
     CFade_StartLoad(&mFade);
 
     {
         CFloorMap floorMap;
-        func_80241920(&mFloorMap, &floorMap);
+        FloorMapCopy(&mFloorMap, &floorMap);
     } // floorMap destructor runs here
 
     char* cb = (char*)this;
@@ -503,7 +503,7 @@ void CMenuMapSelect::Init() {
 // for their definitions).
 #pragma push
 #pragma auto_inline off
-void func_80241640(CMapSel* dest, CMapSel* __restrict src) {
+void MapSelCopy(CMapSel* dest, CMapSel* __restrict src) {
     // Memberwise copy matching retail's per-field widths. Tail fields from
     // +0x8E on are copied with unaligned word accesses (packed view).
     CMapSelCopyView& d = *reinterpret_cast<CMapSelCopyView*>(dest);
@@ -573,7 +573,7 @@ void func_80241640(CMapSel* dest, CMapSel* __restrict src) {
 // __restrict lets MWCC prove dest/src don't alias so it hoists all loads
 // above the stores; the four mMemRegion words are assigned ascending to
 // match retail's reversed scheduling within the word block.
-void func_8024189C(CFade* dest, CFade* __restrict src) {
+void FadeCopy(CFade* dest, CFade* __restrict src) {
     CFadeCopyView& d = *reinterpret_cast<CFadeCopyView*>(&dest->mMemRegion);
     const CFadeCopyViewSrc& s = *reinterpret_cast<const CFadeCopyViewSrc*>(&src->mMemRegion);
 
@@ -596,7 +596,7 @@ void func_8024189C(CFade* dest, CFade* __restrict src) {
 // (retail copy helper used by Init). Field widths follow the retail copy; the
 // two large pair arrays use loop copies and the trailing word pair at
 // +0x3340/+0x3344 is stored in reverse order.
-void func_80241920(CFloorMap* dest, CFloorMap* src) {
+void FloorMapCopy(CFloorMap* dest, CFloorMap* src) {
     CFloorMapCopyView& d = *reinterpret_cast<CFloorMapCopyView*>(dest);
     const CFloorMapCopyView& s = *reinterpret_cast<const CFloorMapCopyView*>(src);
 
@@ -708,9 +708,9 @@ void CMenuMapSelect::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleHelp);
-    func_802435CC(&mMapSel);
+    termMapSel(&mMapSel);
     CFade_Unload(&mFade);
-    func_8024CB94(&mFloorMap);
+    FloorMap_Teardown(&mFloorMap);
 
     lbl_eu_80664790 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -731,18 +731,18 @@ void CMenuMapSelect::Move() {
     case 0:
         if (BgTex_IsLoaded_3E34(&mBgTex) == 0) break;
         if (isInitialized(&mTitleHelp) == 0) break;
-        if (func_80243680(&mMapSel) == 0) break;
+        if (getMapSelVisibleFlag(&mMapSel) == 0) break;
         func_801C412C(&mTitleHelp);
-        func_802436CC(&mMapSel);
+        initMapSel(&mMapSel);
         mState = 1;
         playUISound__FUl(0x6d);
-        func_8013EC6C(1, 0);
+        UIWin_ControlWindowLists(1, 0);
         Scn_SetPauseFlag(mScn, 0);
         break;
 
     case 1:
         if (isIdle__11CTitleAHelpFv(&mTitleHelp) == 0) break;
-        if (func_802436C4(&mMapSel) == 0) break;
+        if (getMapSelInitFlag(&mMapSel) == 0) break;
         mState = 2;
         break;
 
@@ -752,7 +752,7 @@ void CMenuMapSelect::Move() {
 
     case 3:
         if (isIdle__11CTitleAHelpFv(&mTitleHelp) == 0) break;
-        if (func_802436C4(&mMapSel) == 0) break;
+        if (getMapSelInitFlag(&mMapSel) == 0) break;
         mField54 = 1;
         break;
 
@@ -761,14 +761,14 @@ void CMenuMapSelect::Move() {
         break;
 
     case 5:
-        if (func_8024CE1C(&mFloorMap) == 0) break;
+        if (FloorMap_GetField42Gated(&mFloorMap) == 0) break;
         func_801C4654(&mTitleHelp, 0);
         setInfoText(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         if (CtrlRemote_TouchBitByArg((u32)0x3212) != 0) {
             func_801C46DC(&mTitleHelp, 1);
         }
         func_801C41E8(&mTitleHelp, 0);
-        func_8024BE1C(&mFloorMap);
+        FloorMap_LoadStageLayout(&mFloorMap);
         playUISound__FUl(0x6d);
         CFade_FadeOut(&mFade);
         mState = 6;
@@ -785,7 +785,7 @@ void CMenuMapSelect::Move() {
 
     case 8:
         if (CFade_IsVisible(&mFade) == 0) break;
-        func_8024CB94(&mFloorMap);
+        FloorMap_Teardown(&mFloorMap);
         func_801C4654(&mTitleHelp, 1);
         setInfoText(&mTitleHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         func_801C46DC(&mTitleHelp, 0);
@@ -820,7 +820,7 @@ void CMenuMapSelect::Move() {
     }
     updateHelp(&mTitleHelp);
     CFade_Update(&mFade);
-    func_8024C1FC(&mFloorMap);
+    FloorMap_UpdateFrame(&mFloorMap);
 }
 
 // CMenuMapSelect::cbRenderBefore - scene render callback. Skips drawing while
@@ -836,12 +836,12 @@ void CMenuMapSelect::cbRenderBefore() {
     // construction; retail calls the ctor/dtor symbols directly (flag -1).
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     if (FloorMap_GetField40Flag(&mFloorMap) == 0) {
         BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-        func_80243560(&mMapSel, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+        drawMapSel(&mMapSel, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     }
-    func_8024C8F8(&mFloorMap, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    FloorMap_Draw(&mFloorMap, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     drawHelp(&mTitleHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     CFade_Draw(&mFade, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);

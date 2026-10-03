@@ -31,20 +31,20 @@ struct CFileHandle;
 struct CEventFile;
 
 // C-linkage imports used by QstLogInfo_LoadCommonArchive (retail names are unmangled).
-extern "C" u32 func_80138138(u16);
+extern "C" u32 SearchThresholdIdx(u16);
 extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // Pane helpers (retail unmangled).
-extern "C" void func_80137F88(nw4r::lyt::Pane*, const char*);
+extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 // BDAT text / name helpers (retail unmangled).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 BdatGetItemId(u32);
-extern "C" void* func_80138DA4(const char*);
+extern "C" void* GetBdatNameByNumId(const char*);
 extern "C" char* CUICfManager_getPackedFont9C();
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
@@ -60,7 +60,7 @@ extern "C" void* Bdat_GetTable_AA34();
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640EC;
 extern u32 lbl_eu_80664104;
-// Quest-category name table indexed by func_80138138 (split1 .data).
+// Quest-category name table indexed by SearchThresholdIdx (split1 .data).
 extern char* lbl_eu_80536398[];
 
 // View into a nw4r::lyt::Pane's trailing user-data region: OnFileEvent stores

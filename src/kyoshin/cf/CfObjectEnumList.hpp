@@ -77,13 +77,13 @@ public:
 #define ENUM_VIEW_DUMMY(n_) virtual void v##n_()
 
 // Word block returned by CfEnumSubObj4::b30() (vtable slot 0x30); its first
-// word feeds the func_80174C98 arts-state gate.
+// word feeds the testActorStatus arts-state gate.
 struct CfEnumB30Word {
     u32 field_0;             // 0x00
 };
 
 // Actor's +0x4 sub-object: vtable slot 0x30 (index 10) returns the word
-// block whose first word is queried by func_80174C98.
+// block whose first word is queried by testActorStatus.
 class CfEnumSubObj4 {
 public:
     ENUM_VIEW_DUMMY(0);  ENUM_VIEW_DUMMY(1);  ENUM_VIEW_DUMMY(2);  ENUM_VIEW_DUMMY(3);
@@ -172,7 +172,7 @@ public:
 
     CfEnumSubObj4* field_04;         // 0x04
     u8 _pad_08[0x60C - 0x08];        // 0x08-0x60B
-    u8 field_60C[4];                 // 0x60C (probe block passed to func_804B1AD8)
+    u8 field_60C[4];                 // 0x60C (probe block passed to ColiCheckMoveGate)
     u8 _pad_610[0x63C - 0x610];      // 0x610-0x63B
     float field_63C;                 // 0x63C (radius/offset subtracted from distance)
     u8 _pad_640[0x3E9C - 0x640];     // 0x640-0x3E9B
@@ -223,7 +223,7 @@ public:
     virtual CfEnumPosBlock* v12C(int a);   // index 73 -> vtable 0x12C
 };
 
-// Object view used by func_800F89DC's projection pass: vtable 0xAC (index
+// Object view used by sortEntriesByScreenX's projection pass: vtable 0xAC (index
 // 41) returns the plain position vector; 0x120 (index 70) returns a
 // CfEnumPosBlock given a context pointer.
 class CfEnumProjView {
@@ -251,7 +251,7 @@ public:
 };
 
 // Actor view whose vtable slot 0x128 (index 72) returns a float sort value
-// directly (used by func_800F9AEC's distance refresh).
+// directly (used by resortByActorValue's distance refresh).
 class CfEnumActorValueView {
 public:
     ENUM_VIEW_DUMMY(0);   ENUM_VIEW_DUMMY(1);   ENUM_VIEW_DUMMY(2);   ENUM_VIEW_DUMMY(3);
@@ -279,19 +279,19 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void Sc4798_GetSignedItemValue(void* self);
-extern "C" int func_804B5088(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
+extern "C" int ColiQuerySegment(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);   // coli probe query
 // cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
 extern "C" int ColiCheckMoveScaled(void* self, void* spot, float a, float b, float c);
-// func_804B5088 (object enum probe) is declared above; do not redeclare here.
-extern "C" int func_804B1AD8(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
+// ColiQuerySegment (object enum probe) is declared above; do not redeclare here.
+extern "C" int ColiCheckMoveGate(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
 // sdata: global coli probe object (accessed via sda21)
 extern void* lbl_eu_80665958;
 // Data import used by the list-rebuild ctor __ct__800FD250 (reslist-ish sort
 // descriptor table; only its address is taken, at +0 and +8).
 extern u8 lbl_eu_8052BDA0[0x20];
 
-// Context blob passed to CfEnumProjView::vX120 by func_800F89DC.
+// Context blob passed to CfEnumProjView::vX120 by sortEntriesByScreenX.
 extern u8 lbl_eu_804FCD24[];
 
 // reslist<T> vtable stored by the CfObjectSelectorObj +4 list dtor (retail
@@ -329,7 +329,7 @@ struct EnumRotMtx33 {
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-// .bss probe-offset table written by func_800FD3FC (12 floats).
+// .bss probe-offset table written by probePartnerSegment (12 floats).
 extern float lbl_eu_80573A30[12];
 
 // .sbss flag byte guarding the probe-offset table init (signed: retail

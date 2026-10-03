@@ -33,10 +33,10 @@ struct KizunaPadData {
 // C-linkage callees defined in kyoshin/CKizunaTalkList.cpp (retail symbols
 // are bare globals, so extern "C" like initTalkList below).
 extern "C" void hideTalkList(CKizunaTalkList* self);
-extern "C" void func_80273654(CKizunaTalkList* self);
-extern "C" void func_80273710(CKizunaTalkList* self);
+extern "C" void scrollTalkListUp(CKizunaTalkList* self);
+extern "C" void scrollTalkListDown(CKizunaTalkList* self);
 extern "C" void pageTalkListUp(CKizunaTalkList* self);
-extern "C" void func_8027387C(CKizunaTalkList* self);
+extern "C" void pageTalkListDown(CKizunaTalkList* self);
 extern "C" void initTalkList(CKizunaTalkList* self);
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int needsTalkRebuild(CKizunaTalkList* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_8027346C(CKizunaTalkList* self);
+extern "C" void teardownTalkList(CKizunaTalkList* self);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" int hasVisibleTalks(CKizunaTalkList* self);
@@ -66,7 +66,7 @@ extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawTalkList(CKizunaTalkList* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8027336C(CKizunaTalkList* self);
+extern "C" void updateTalkList(CKizunaTalkList* self);
 
 // Skip-timer helpers used by the cancel handler in Move().
 extern "C" int CMainMenu_GetInstancePtr();
@@ -300,7 +300,7 @@ void CMenuKizunaTalkList::Term() {
 
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    func_8027346C(&mKizunaTalkList);
+    teardownTalkList(&mKizunaTalkList);
 
     lbl_eu_806648B0 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -348,7 +348,7 @@ void CMenuKizunaTalkList::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     updateHelp(&mTitleAHelp);
-    func_8027336C(&mKizunaTalkList);
+    updateTalkList(&mKizunaTalkList);
 }
 
 // Render the kizuna talk-list screen through a stack DrawInfo: gate on the
@@ -365,7 +365,7 @@ void CMenuKizunaTalkList::cbRenderBefore() {
     // (a C++ local would virtual-dispatch its scope-exit destructor).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawTalkList(&mKizunaTalkList, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
@@ -453,13 +453,13 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
         hideTalkList(&self->mKizunaTalkList);
         self->mState = 3;
     } else if (up) {
-        func_80273654(&self->mKizunaTalkList);
+        scrollTalkListUp(&self->mKizunaTalkList);
     } else if (down) {
-        func_80273710(&self->mKizunaTalkList);
+        scrollTalkListDown(&self->mKizunaTalkList);
     } else if (pageUp) {
         pageTalkListUp(&self->mKizunaTalkList);
     } else if (pageDown) {
-        func_8027387C(&self->mKizunaTalkList);
+        pageTalkListDown(&self->mKizunaTalkList);
     }
 }
 

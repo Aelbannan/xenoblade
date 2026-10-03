@@ -26,7 +26,7 @@ struct CScnRootNw4rRes;
  * Layout recovered from retail:
  *  - primary vtable (lbl_eu_8056E768) = RTTI + offset-to-top + 12 virtual
  *    slots; slot vf9 (retail scnImN4GetWord4AC) sits at vtable offset 0x2C and
- *    is the callee of func_80490040. The virtuals below are declared but
+ *    is the callee of RootNw4r_GetAllocHandle. The virtuals below are declared but
  *    never defined here (no key function -> no vtable emitted), purely so
  *    that call site compiles to the retail lwz/lwz/mtctr/bctrl sequence.
  *  - The real object derives from CScnRoot (+0x00) and
@@ -105,7 +105,7 @@ struct CGXCacheScissorArea {
 CGXCacheViewportRect* getViewRectGX__8CGXCacheFv(CGXCache* cache);
 
 // Callback object stored in the (callback, id) pair table (mArrA).
-// Slot +0xC is dispatched by func_8048FED8 each frame.
+// Slot +0xC is dispatched by RootNw4r_DispatchFrame each frame.
 struct CScnPairCb {
     virtual ~CScnPairCb() {}          // +0x8
     virtual void vf1(u32 value) = 0;  // +0xC
@@ -114,13 +114,13 @@ struct CScnPairCb {
 // Unmangled monolib callees (retail C-linkage names).
 extern "C" void Scn_SetCurrentScene(u32 value);
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
-extern "C" void func_804C22F0(CScnEnvLgtCtrl* ctrl);
+extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 extern "C" void func_8049B024(CScnCameraMan* cam);
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);
 extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
-extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag);
+extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag);
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateViewRoot__9CViewRootFv();
 
@@ -174,16 +174,16 @@ struct CScnDrawList {
 class CScnRootNw4r {
 public:
     virtual ~CScnRootNw4r();          // vf0 (+0x08)
-    virtual void vf1(u32 value);      // vf1 (+0x0C) func_8048F5C8
-    virtual void vf2();               // vf2 (+0x10) func_8048F4D0
+    virtual void vf1(u32 value);      // vf1 (+0x0C) RootNw4r_RemoveId
+    virtual void vf2();               // vf2 (+0x10) RootNw4r_ApplyCamera
     virtual void vf3();               // vf3 (+0x14) RootNw4r_UpdateFrame
-    virtual void vf4();               // vf4 (+0x18) func_8048F994
-    virtual void vf5();               // vf5 (+0x1C) func_8048FC68
-    virtual void vf6(u32 a, u32 b);   // vf6 (+0x20) func_8048FF90
-    virtual void vf7(u32 a, u32 b);   // vf7 (+0x24) func_8048FFBC
+    virtual void vf4();               // vf4 (+0x18) RootNw4r_DrawFrame
+    virtual void vf5();               // vf5 (+0x1C) RootNw4r_AttachQueued
+    virtual void vf6(u32 a, u32 b);   // vf6 (+0x20) RootNw4r_AddPair
+    virtual void vf7(u32 a, u32 b);   // vf7 (+0x24) RootNw4r_RemovePair
     virtual void vf8();               // vf8 (+0x28) getScnRootGroupHandle
     virtual u32 vf9();                // vf9 (+0x2C) scnImN4GetWord4AC
-    virtual u32 vf10();               // vf10 (+0x30) func_80490040
+    virtual u32 vf10();               // vf10 (+0x30) RootNw4r_GetAllocHandle
     virtual u32 vf11();               // vf11 (+0x34) RootNw4r_GetField14
 
     // Fields (offsets verified against retail accessors).

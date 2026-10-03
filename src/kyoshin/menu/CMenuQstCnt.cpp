@@ -225,7 +225,7 @@ void CMenuQstCnt::Init() {
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuQstCntFont*>(fontObj)->getFontHandle();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     // First three text fields are filled straight from the message table.
     setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], getPackedFont());
@@ -351,7 +351,7 @@ void CMenuQstCnt::cbRenderBefore() {
     // scope-exit destructor is not virtual-dispatched (CMenuBattleEnd scheme).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
@@ -499,13 +499,13 @@ void func_80226E54(CMenuQstCnt* self) {
     if (self->mSelEntry.f4 > self->mSelEntry.f5) {
         self->mSelEntry.f4 = self->mSelEntry.f5;
     }
-    u32 v = func_80138138(self->mSelEntry.f0);
+    u32 v = SearchThresholdIdx(self->mSelEntry.f0);
     char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], self->mSelEntry.f0);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x64], s, 0);
     if (self->mSelEntry.f6 == 0) {
         s = BdatGetPtrDirect(lbl_eu_80664094, &lbl_eu_80509A10[0x85], self->mSelEntry.f2);
     } else {
-        s = func_801394D4(self->mSelEntry.f2);
+        s = BuildItemNameStr(self->mSelEntry.f2);
     }
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x74], s, 0);
     if (self->mSelEntry.f6 == 0) {
@@ -556,15 +556,15 @@ end:
 }
 
 // Rebuild the 0x400-entry quest-info table from the game's quest catalog.
-// Categories 1..0x1A (ranges from func_801380A0) each contribute their quests;
+// Categories 1..0x1A (ranges from GetU16PairEntry) each contribute their quests;
 // entries whose kind is 0 / 0xC8 are skipped.
 void func_802270CC(QstData* self) {
     self->field_2000 = 0;
     u16 cat;
     for (cat = 1; cat < 0x1B; cat++) {
-        u32 start = func_801380A0(cat);
+        u32 start = GetU16PairEntry(cat);
         if ((start & 0xffff) == 0) continue;
-        u16 end = func_801380A0(cat + 1);
+        u16 end = GetU16PairEntry(cat + 1);
         u16 i = (u16)start;
         for (; i < end; i++) {
             u8 kind = (u8)CtrlRemote_TouchBitByArg(i + 0x220);
@@ -577,7 +577,7 @@ void func_802270CC(QstData* self) {
             } else {
                 r22 = 2;
             }
-            u32 v = func_80138138(i);
+            u32 v = SearchThresholdIdx(i);
             u32 tbl = lbl_eu_80573D18[v];
             u32 res = BdatGetU8Direct(tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;

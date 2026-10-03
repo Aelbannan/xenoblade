@@ -16,7 +16,7 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
 // (MWCC -ipa file quirk: keep at least one line between the two includes -
 // dropping the remap block's lines outright perturbs pool/regalloc in
-// func_80187B70/func_80187C90; see docs/MWCC_CASES.md IPA line-count note.)
+// PTGaugeEntAct/PTGaugeClsAnm; see docs/MWCC_CASES.md IPA line-count note.)
 #include "kyoshin/cf/CBattleManager.hpp"
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
@@ -101,13 +101,13 @@ void CMenuPTGauge::Init() {
 
     // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
     // CDeviceFont::getFontInfo(1, layout) returns an object whose vt+0x24
-    // (no explicit args) yields the u32 passed to func_8013676C. The virtual
+    // (no explicit args) yields the u32 passed to ApplyFontToTxtPanes. The virtual
     // call through CMenuPTGaugeFont makes MWCC emit retail's r12 dispatch.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuPTGaugeFont* fontObj =
         static_cast<CMenuPTGaugeFont*>(CDeviceFont::getFontInfo(1, mLayout));
     u32 fontResult = fontObj->sf9();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     mLayout->Animate(0);
     mLayout->UnbindAllAnimation();
@@ -328,7 +328,7 @@ void CMenuPTGauge::cbRenderBefore() {
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE); // disable Z compare, always pass
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
     }
 done:
@@ -483,7 +483,7 @@ typedef CMenuPTGauge* (*PTGaugeCtorFn)(CMenuPTGauge*, CProcess*);
 // Singleton factory: creates the PT Gauge on the work-thread heap (0xA4 = full
 // object size), registers it as a child of `parent`, and caches it in the
 // global pointer. Returns NULL when the gauge already exists.
-CMenuPTGauge* func_80187694(CProcess* parent, CProcess* ctorArg) {
+CMenuPTGauge* PTGaugeCreate(CProcess* parent, CProcess* ctorArg) {
     if (lbl_eu_806642D8 != NULL) {
         return NULL;
     }
@@ -501,7 +501,7 @@ CMenuPTGauge* func_80187694(CProcess* parent, CProcess* ctorArg) {
     reinterpret_cast<CProcess*>(gauge)->Regist(parent, false);
     return lbl_eu_806642D8;
 }
-void func_80187718() {
+void PTGaugeTickSP() {
     // When the gauge is active (phase 2) on the default action and the party
     // value hits 300, switch to the special action with a 300-frame counter.
     CMenuPTGauge* self = lbl_eu_806642D8;
@@ -525,7 +525,7 @@ extern const float lbl_eu_80667A00;
 // Per-frame gauge counter tick: decrement unk9C by lbl_eu_806679F8 through
 // the .sdata2 double path, clamp at zero (resetting action/base state), then
 // when the value changed resize the gauge pane proportionally.
-void func_80187858(CMenuPTGauge* self) {
+void PTGaugeTickDn(CMenuPTGauge* self) {
     // Manual s32->double conversion (MWCC_PATTERNS 7i): xoris word first, then
     // 0x43300000; subtracting the shared bias blob completes the conversion.
     // lbl_eu_806679F0 is declaration-only here, so the fsubs keeps the named
@@ -562,7 +562,7 @@ void func_80187858(CMenuPTGauge* self) {
         }
     }
 }
-void func_80187958(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeSpecUp(CMenuPTGauge* self, s32 partyVal) {
     // Advance the special animation one frame (result unused).
     advanceAnimTransform(self->mAnimSpecial, lbl_eu_806679EC);
 
@@ -626,7 +626,7 @@ after_five:
         }
     }
 }
-void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
     advanceAnimTransform(self->mAnimClose, lbl_eu_806679EC);
 
@@ -666,7 +666,7 @@ void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
 // Close-action dispatch entry: once the party value reaches lbl_eu_806679FC,
 // reset the gauge base state to 1 and re-bind the open animation from frame 0
 // with SE 0x65.
-void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
     // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
     // 0x4330000080000000 bit pattern and subtract the shared .sdata2 magic
     // lbl_eu_806679F0 so the fsubs names the retail blob.
@@ -691,7 +691,7 @@ void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
 // Entry-action dispatch entry: re-seed the open animation to frame 1, then
 // switch between close state (value >= lbl_eu_80667A00) or reset-to-entry
 // (value < 100) with SE 0x65.
-void func_80187B70(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
     // Retail seeds this frame through the out-of-line helper, not the inline
     // SetFrame accessor.
     advanceAnimTransform(self->mAnimOpen, lbl_eu_806679EC);
@@ -719,7 +719,7 @@ extern CMenuPTGaugePtmf lbl_eu_80532420[]; // Dispatch table indexed by mGaugeBa
 // Gauge refresh + action dispatch: when the displayed value changed, resize
 // the gauge pane proportionally to the party value, then always dispatch the
 // per-state handler selected by mGaugeBase.
-void func_80187778(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeDispat(CMenuPTGauge* self, s32 partyVal) {
     if (self->mLayout != NULL && self->mGaugeInit != partyVal) {
         self->mGaugeInit = partyVal;
         nw4r::lyt::Pane* pane =
@@ -739,7 +739,7 @@ void func_80187778(CMenuPTGauge* self, s32 partyVal) {
 // PTMF dispatch entry: advance the idle animation, then when the party value
 // drops below 300 switch the gauge base state to 2 and re-bind the close
 // animation from frame 0.
-void func_80187E28(CMenuPTGauge* self, s32 partyVal) {
+void PTGaugeIdlAct(CMenuPTGauge* self, s32 partyVal) {
     // Advance the idle animation one frame (result unused).
     advanceAnimTransform(self->mAnimIdle, lbl_eu_806679EC);
 

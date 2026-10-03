@@ -177,16 +177,16 @@ struct EffObject {
     u8 link1[0x10];          // 0x94
     u8 pad_0xa4[0xdc - 0xa4];
     u32 field_0xdc[16];      // 0xdc..0x118 resolved pointers
-    f32 sub_0x11c[6];        // 0x11c..0x134 sub-region (func_804E0580/E06B4 target)
+    f32 sub_0x11c[6];        // 0x11c..0x134 sub-region (SchedAnim_InitVec28/E06B4 target)
     ml::CVec3 field_0x134;   // 0x134 (emission vector + y read at 0x138)
     u8 pad_0x140[0x14c - 0x140];
-    f32 sub_0x14c[6];        // 0x14c..0x164 (func_804E0788/E08BC target)
+    f32 sub_0x14c[6];        // 0x14c..0x164 (SchedAnim_InitVec28B/E08BC target)
     ml::CVec3 field_0x164;   // 0x164 (emission vector)
     u8 pad_0x170[0x17c - 0x170];
-    f32 sub_0x17c[6];        // 0x17c..0x194 (func_804E0990/E0B94 target)
-    f32 sub_0x194[12];       // 0x194..0x1c4 (func_804E1D50/E2088 target)
-    f32 sub_0x1c4[16];       // 0x1c4..0x204 (func_804E214C/E24A8 target)
-    f32 sub_0x204[8];        // 0x204..0x224 (func_804E26D8/E2A5C target)
+    f32 sub_0x17c[6];        // 0x17c..0x194 (SchedAnim_RerollSlots/E0B94 target)
+    f32 sub_0x194[12];       // 0x194..0x1c4 (SchedAnim_InitRand3Ch/E2088 target)
+    f32 sub_0x1c4[16];       // 0x1c4..0x204 (SchedAnim_InitPosDir/E24A8 target)
+    f32 sub_0x204[8];        // 0x204..0x224 (SchedAnim_InitColor10/E2A5C target)
 };
 
 // Tail-state view used by func_804C8D90 (0x180..0x18c, inside the 0x17c
@@ -206,7 +206,7 @@ void SchedList_FindBoth(u32 x);
 u32 SchedFx_CountActive(void);
 void SchedRes_ReinitTables(void);
 void DbgCopyCamProj(void* obj, void* arg);
-void func_804F3B60(void* obj, int flag, f32 w, f32 h);
+void getProjMatrix(void* obj, int flag, f32 w, f32 h);
 void func_804D854C(void);
 void SchedRes_ClearBuf60(void);
 void func_804D9364(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
@@ -258,7 +258,7 @@ extern "C" {
 void SchedRes_ClearLiveCount(void);
 void __dt__804DF744(void);
 void SchedList_TeardownAll(u32 x);
-u32 func_804DF4BC(void* key);
+u32 SchedRes_ReleaseEntries(void* key);
 void EffCtl_EmptyStub8C(void);
 void EffCtl_EmptyStub84(void* scene);
 u32 SchedFx_CountTotal(void);
@@ -280,12 +280,12 @@ void EffRender_PassSecond(EffectRoot* self);
 void EffRender_PassNoHide(EffectRoot* self);
 void EffRender_PassHideSet(EffectRoot* self);
 void EffFxReleaseNodeChain(EffectNode* self);
-void func_804DD754(void);
-u32 func_804DF344(u32 p, u32 size);
-u32 func_804DFA08(u32 p, u32 size);
-u32 func_804DFC48(u32 p, u32 size);
-u32 func_804DFF00(u32 p, u32 size);
-u32 func_804DF5F8(u32* outC, CScheduleEntryData** out8, u32 a, u32 c);
+void CEBuildSinCos(void);
+u32 SchedRes_AllocEntries(u32 p, u32 size);
+u32 SchedItem_AllocPool(u32 p, u32 size);
+u32 SchedFx_AllocPool(u32 p, u32 size);
+u32 SchedNode_AllocPool(u32 p, u32 size);
+u32 SchedRes_FindEntryValue(u32* outC, CScheduleEntryData** out8, u32 a, u32 c);
 u32 SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5);
 extern EffectListNode* lbl_eu_80665A30;
 extern f32 lbl_eu_8066B0A0;
@@ -293,22 +293,22 @@ extern f32 lbl_eu_8066B0A4;
 
 // Effect sub-region bind/refresh helpers (stubs in code_804DEDA8.cpp): first
 // arg is a sub-object inside the effect object, second the bound data pointer
-// from the 0xdc tail block; the func_804E06B4-family take the float THIRD
+// from the 0xdc tail block; the SchedAnim_AdvanceVec28-family take the float THIRD
 // and the scene/desktop pointer last (retail schedules the f1 argument load
 // between the r4 and r5 loads).
-void func_804E0580(void* dst, const void* src);
-void func_804E0788(void* dst, const void* src);
-void func_804E0990(void* dst, const void* src);
-void func_804E1D50(void* dst, const void* src);
-void func_804E214C(void* dst, const void* src, u32 a3);
-void func_804E26D8(void* dst, const void* src);
-void func_804E06B4(void* dst, const void* src, f32 f, const void* a3);
-void func_804E08BC(void* dst, const void* src, f32 f, const void* a3);
-void func_804E0B94(void* dst, const void* src, f32 f, const void* a3);
+void SchedAnim_InitVec28(void* dst, const void* src);
+void SchedAnim_InitVec28B(void* dst, const void* src);
+void SchedAnim_RerollSlots(void* dst, const void* src);
+void SchedAnim_InitRand3Ch(void* dst, const void* src);
+void SchedAnim_InitPosDir(void* dst, const void* src, u32 a3);
+void SchedAnim_InitColor10(void* dst, const void* src);
+void SchedAnim_AdvanceVec28(void* dst, const void* src, f32 f, const void* a3);
+void SchedAnim_AdvanceVec28B(void* dst, const void* src, f32 f, const void* a3);
+void SchedAnim_AdvanceColor8(void* dst, const void* src, f32 f, const void* a3);
 void SchedAnim_LerpVec24(void* dst, const void* src, f32 f, const void* a3);
-void func_804E24A8(void* dst, const void* src, f32 f, const void* a3);
-void func_804E2A5C(void* dst, const void* src, f32 f, const void* a3);
-void func_804E0CF0(void* dst, const void* src);
+void SchedAnim_AdvanceQuad(void* dst, const void* src, f32 f, const void* a3);
+void SchedAnim_AdvanceColor10(void* dst, const void* src, f32 f, const void* a3);
+void SchedAnim_BlendFrameU16(void* dst, const void* src);
 int CERot_RemapIndex(int val);
 void EffFxStoreNodeParams(void* self, const void* a, void* b);
 
@@ -318,7 +318,7 @@ void* EffFxStepNextNode(void* self);
 EffectNode* EffFxFetchHeadNode(EffectNode* self);
 void EffFxProcessNodeChain(void* self);
 void EffFxAppendChainNode(void* self, s32 index);
-void func_804CC808(void* self, const void* src);
+void EffFxSetupSceneXforms(void* self, const void* src);
 
 // Scene/resource helpers (defined in code_804BD8E8.cpp).
 int ScnRes_VertRayForward_E398(Vec* v, u32 a, u32 b, u32 c, f32 f1, f32 f2);
@@ -349,7 +349,7 @@ struct EffMtx {
     u32 w[12];
 };
 
-// Emission packet built by func_804CAC08 and passed to func_804CC808 as a
+// Emission packet built by func_804CAC08 and passed to EffFxSetupSceneXforms as a
 // SrcMtx (first 0x54 bytes: three vectors + one matrix); the trailing matrix
 // is copied along but not part of SrcMtx.
 struct EmitData {
@@ -545,12 +545,12 @@ void* EffSys_GetConstBase(void){ return (void*)0x2FDA00; }
 // generator, marks the 0x8800 flags, then creates the effect memory region.
 void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
     u32 p = memAlloc;
-    p = func_804DF344(p, 0x80);
-    p = func_804DFA08(p, 0x200);
-    p = func_804DFC48(p, 0x200);
-    p = func_804DFF00(p, 0xc80);
+    p = SchedRes_AllocEntries(p, 0x80);
+    p = SchedItem_AllocPool(p, 0x200);
+    p = SchedFx_AllocPool(p, 0x200);
+    p = SchedNode_AllocPool(p, 0xc80);
     OSInitFastCast();
-    func_804DD754();
+    CEBuildSinCos();
     CERand::init();
     self->flags0 = (u16)(self->flags0 | 0x8800);
     self->allocHandle =
@@ -571,7 +571,7 @@ void EffSys_InitScene(EffectRoot* self, void* scene, u32 arg) {
         SchedFx_CountTotal();
         SchedRes_AllocElemTables();
         __ct__804E4B64(0);
-        func_804DF4BC(0);
+        SchedRes_ReleaseEntries(0);
         func_804D82DC(scene);
         EffCtl_EmptyStub84(scene);
     }
@@ -613,7 +613,7 @@ void func_804CBB84(EffectRoot* self, void* scene) {
                 DbgCopyCamProj(&self->field_0x08, scene);
                 f32 h = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->efbHeight);
                 f32 w = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->fbWidth);
-                func_804F3B60(&self->field_0x48, 1, w, h);
+                getProjMatrix(&self->field_0x48, 1, w, h);
                 self->flags0 = (u16)(self->flags0 | 0x4000);
             }
             func_804D854C();
@@ -770,7 +770,7 @@ void EffSys_Teardown(EffectRoot* self) {
     if ((self->flags0 >> 13) & 1) {
         __dt__804DF744();
         SchedList_TeardownAll(0);
-        func_804DF4BC(0);
+        SchedRes_ReleaseEntries(0);
         EffCtl_EmptyStub8C();
         self->flags0 = (u16)(self->flags0 & ~0x2000);
         mtl::MemManager::erase(self->allocHandle);
@@ -782,23 +782,23 @@ void EffSys_Teardown(EffectRoot* self) {
 // forward the key to the matching schedule-list lookup and tail-return its
 // result; otherwise 0. The retail halfword is read once (lhz) and the flag
 // extracted with rlwinm. r0,r0,17,31,31 ((flags0 >> 15) & 1).
-extern "C" u32 func_804DF3D0(void* key);
+extern "C" u32 SchedRes_FindOrClaim(void* key);
 u32 EffSched_LookupA(EffectRoot* self, void* key) {
     if ((self->flags0 >> 15) & 1) {
-        return func_804DF3D0(key);
+        return SchedRes_FindOrClaim(key);
     }
     return 0;
 }
 
 u32 EffSched_LookupB(EffectRoot* self, void* key) {
     if ((self->flags0 >> 15) & 1) {
-        return func_804DF4BC(key);
+        return SchedRes_ReleaseEntries(key);
     }
     return 0;
 }
 
 // func_804CC1F4: add a schedule request. When either the 0x2000 or 0x1000
-// flag is set, resolve an entry range via func_804DF5F8 and forward it to the
+// flag is set, resolve an entry range via SchedRes_FindEntryValue and forward it to the
 // schedule lists; returns 0 when no flag is set or the entry carries no data.
 namespace {
 // End offset resolver. Retail computes this through an inlined helper, so the
@@ -815,7 +815,7 @@ u32 func_804CC1F4(EffectRoot* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     }
     u32 outC;
     void* pv;
-    if (func_804DF5F8(&outC, (CScheduleEntryData**)&pv, a, c) == 0) return 0;
+    if (SchedRes_FindEntryValue(&outC, (CScheduleEntryData**)&pv, a, c) == 0) return 0;
     // Typed alias lives in a register for guard/select; the raw void* stays
     // memory-resident and is re-loaded for the call argument (retail shape).
     CScheduleEntryData* entry = (CScheduleEntryData*)pv;
@@ -898,12 +898,12 @@ s32 func_804C8830(EffObject* self, const u8* base, const EffInitBlob* data,
         self->field_0xdc[11] = off ? (u32)(base + off) : 0;
     }
 
-    func_804E0580(self->sub_0x11c, (const void*)self->field_0xdc[2]);
-    func_804E0788(self->sub_0x14c, (const void*)self->field_0xdc[4]);
-    func_804E0990(self->sub_0x17c, (const void*)self->field_0xdc[5]);
-    func_804E1D50(self->sub_0x194, (const void*)self->field_0xdc[13]);
-    func_804E214C(self->sub_0x1c4, (const void*)self->field_0xdc[12], 0);
-    func_804E26D8(self->sub_0x204, (const void*)self->field_0xdc[14]);
+    SchedAnim_InitVec28(self->sub_0x11c, (const void*)self->field_0xdc[2]);
+    SchedAnim_InitVec28B(self->sub_0x14c, (const void*)self->field_0xdc[4]);
+    SchedAnim_RerollSlots(self->sub_0x17c, (const void*)self->field_0xdc[5]);
+    SchedAnim_InitRand3Ch(self->sub_0x194, (const void*)self->field_0xdc[13]);
+    SchedAnim_InitPosDir(self->sub_0x1c4, (const void*)self->field_0xdc[12], 0);
+    SchedAnim_InitColor10(self->sub_0x204, (const void*)self->field_0xdc[14]);
 
     // Pack flags1: 0xC000 base plus sign/type/select bits from the blob via
     // rlwimi inserts (operand order mirrors retail).
@@ -1069,7 +1069,9 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     } else {
         f32 v1 = u16ToF_b0b8(dd->f2);
         if (v1 < mag) {
-            factor = (1.0f - ratio) * (1.0f - (mag - v1) / (v2 - v1)) + ratio;
+            // lbl_eu_8066B0A4 is 1.0f (retail loads this extern for both
+            // subtractions; a literal 1.0f would pool its own sdata2 entry).
+            factor = (lbl_eu_8066B0A4 - ratio) * (lbl_eu_8066B0A4 - (mag - v1) / (v2 - v1)) + ratio;
         }
     }
     return factor;
@@ -1129,22 +1131,22 @@ void func_804C8D90(EffObject* obj, f32 delta) {
             ok = 0;
         }
         if (ok) {
-            func_804E06B4(obj->sub_0x11c, (const void*)obj->field_0xdc[2], obj->field_0x14,
+            SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], obj->field_0x14,
                           (const void*)obj->field_0x08);
-            func_804E08BC(obj->sub_0x14c, (const void*)obj->field_0xdc[4], obj->field_0x14,
+            SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], obj->field_0x14,
                           (const void*)obj->field_0x08);
-            func_804E0B94(obj->sub_0x17c, (const void*)obj->field_0xdc[5], obj->field_0x14,
+            SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], obj->field_0x14,
                           (const void*)obj->field_0x08);
             if (obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) {
                 SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], obj->field_0x14,
                               (const void*)obj->field_0x08);
             }
             if (obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) {
-                func_804E24A8(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], obj->field_0x14,
+                SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], obj->field_0x14,
                               (const void*)obj->field_0x08);
             }
             if (obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) {
-                func_804E2A5C(obj->sub_0x204, (const void*)obj->field_0xdc[14], obj->field_0x14,
+                SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], obj->field_0x14,
                               (const void*)obj->field_0x08);
             }
         }
@@ -1200,7 +1202,7 @@ void func_804C8D90(EffObject* obj, f32 delta) {
                 EffFxAppendChainNode((void*)obj->renderArg, (s32)(u32)&arg);
             }
         }
-        func_804E0CF0(obj->sub_0x17c, (const void*)obj->field_0xdc[5]);
+        SchedAnim_BlendFrameU16(obj->sub_0x17c, (const void*)obj->field_0xdc[5]);
         obj->field_0x18 = (f32)u16ToF_b0b8(ft->field_0x188);
     } else {
         // ---- alternate path (bit 0x1000 set): walk the parent effect's node chain ----
@@ -1238,13 +1240,13 @@ void func_804C8D90(EffObject* obj, f32 delta) {
             if (go) {
                 f32 d = nt - lbl_eu_8066B0A4;
                 obj->sub_0x11c[0] = d;
-                func_804E06B4(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A4,
                               (const void*)obj->field_0x08);
                 obj->sub_0x14c[0] = d;
-                func_804E08BC(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A4,
                               (const void*)obj->field_0x08);
                 obj->sub_0x17c[0] = d;
-                func_804E0B94(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A4,
                               (const void*)obj->field_0x08);
                 if (obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) {
                     obj->sub_0x194[0] = d;
@@ -1253,12 +1255,12 @@ void func_804C8D90(EffObject* obj, f32 delta) {
                 }
                 if (obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) {
                     obj->sub_0x1c4[0] = d;
-                    func_804E24A8(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A4,
+                    SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A4,
                                   (const void*)obj->field_0x08);
                 }
                 if (obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) {
                     obj->sub_0x204[0] = d;
-                    func_804E2A5C(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A4,
+                    SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A4,
                                   (const void*)obj->field_0x08);
                 }
                 if (EffSys_RebindSceneLinks((EffectRoot*)obj, (void*)1, node) != 0) {
@@ -1289,7 +1291,7 @@ void func_804C8D90(EffObject* obj, f32 delta) {
                             EffFxAppendChainNode((void*)obj->renderArg, (s32)(u32)&arg);
                         }
                     }
-                    func_804E0CF0(obj->sub_0x17c, (const void*)obj->field_0xdc[5]);
+                    SchedAnim_BlendFrameU16(obj->sub_0x17c, (const void*)obj->field_0xdc[5]);
                     *((f32*)((u8*)node + ((u32)obj->field_0x22 << 2))) = (f32)u16ToF_b0b8(ft->field_0x188);
                 }
             }
@@ -1358,7 +1360,7 @@ extern "C" void EffFxSceneTickDispatch(void* self);
 
 // Build one emission transform pair for the 0x64 (anchor 0x140, position
 // 0x128) or 0xac (anchor 0x170, vector 0x158) matrices: negate the anchor
-// column, build a matrix with func_804DB980, add the (optionally scaled)
+// column, build a matrix with CERotEulerOrder, add the (optionally scaled)
 // position, then concatenate. When the bound scene's 0x800 flag is clear the
 // scaled variant is just a copy of the unscaled result.
 // NOTE: deliberately NOT a helper - retail duplicates this block textually at
@@ -1370,7 +1372,7 @@ extern "C" void EffFxSceneTickDispatch(void* self);
         neg.x = -(anchorSrc)[0]; \
         neg.y = -(anchorSrc)[1]; \
         neg.z = -(anchorSrc)[2]; \
-        func_804DB980(&anchor.mtx, &neg, (s32)obj->field_0x48); \
+        CERotEulerOrder(&anchor.mtx, &neg, (s32)obj->field_0x48); \
         (emMain) = anchor; \
         (emMain).f[3] += (addSrc)[0]; \
         (emMain).f[7] += (addSrc)[1]; \
@@ -1393,7 +1395,7 @@ extern "C" void EffFxSceneTickDispatch(void* self);
 
 // func_804C9D30: per-frame effect-object update. When the lifetime (0x2e) is
 // positive, builds the two emission transforms (negated anchor columns via
-// func_804DB980, position added, concatenated with the 0x64/0xac matrices;
+// CERotEulerOrder, position added, concatenated with the 0x64/0xac matrices;
 // optionally rescaled by the bound scene's 0x34 factors) once up front and
 // again per node inside the chain walk, calling func_804CAC08 and folding the
 // resulting matrices back into each node.
@@ -1495,7 +1497,7 @@ extern "C" void EffObj_StepNode(EffObject* self) {
 // emits two emission vectors (mode/scale from the 0xdc tail block), builds a
 // direction vector (either the difference of the two matrix translations or
 // of the emission vectors), normalizes it, and hands the packet to
-// func_804CC808.
+// EffFxSetupSceneXforms.
 void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
                    const Mtx* m2, const EffMtx* m3, const EffMtx* m4) {
     f32 f31;
@@ -1504,22 +1506,22 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
         if (node == 0) return;
         f31 = ((const EffNode10*)node)->field_0x10;
         obj->sub_0x11c[0] = f31 - lbl_eu_8066B0A4;
-        func_804E06B4(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+        SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         obj->sub_0x14c[0] = f31 - lbl_eu_8066B0A4;
-        func_804E08BC(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+        SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         obj->sub_0x17c[0] = f31 - lbl_eu_8066B0A4;
-        func_804E0B94(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+        SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         if ((obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) != 0) {
             obj->sub_0x194[0] = f31 - lbl_eu_8066B0A4;
             SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         }
         if ((obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) != 0) {
             obj->sub_0x1c4[0] = f31 - lbl_eu_8066B0A4;
-            func_804E24A8(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+            SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         }
         if ((obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) != 0) {
             obj->sub_0x204[0] = f31 - lbl_eu_8066B0A4;
-            func_804E2A5C(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+            SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
         }
     }
 
@@ -1572,7 +1574,7 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     }
     data.m3 = *m3;
     data.m4 = *m4;
-    func_804CC808(scene, &data);
+    EffFxSetupSceneXforms(scene, &data);
 }
 
 // EffSys_RebindSceneLinks: update both scene-bind links (0x4c and 0x94) for a scene

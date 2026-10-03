@@ -66,7 +66,7 @@ void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle
 void func_8043E010__5CViewFv(CView* view);
 CView* getFullScreenView__9CViewRootFv();
 CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
-void func_8044A578__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
+void updateCmd2Color__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
 void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
 void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
 void func_80442B54__9CViewRootFPvPv(void* viewRect, void* scissorRect, void* insetRect);
@@ -1614,7 +1614,7 @@ renderView_after_cross:
         cacheColor.r = r;
         cacheColor.g = g;
         cacheColor.b = b;
-        func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &cacheColor, 0);
+        updateCmd2Color__8CGXCacheFv(CDeviceGX::getCacheInstance(), &cacheColor, 0);
     }
 
 renderView_after_cache_color:

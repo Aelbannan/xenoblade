@@ -34,7 +34,7 @@ class CfObjectEff;
 } // namespace cf
 
 // Target data struct pointed to by CfObjectMove::mTargetC4.
-// Real name unknown; used by func_80275454.
+// Real name unknown; used by tboxState0Tick.
 struct UnkTargetData {
     u8 _00[0xC];
     u32 field_0xC;           // bit flags
@@ -60,7 +60,7 @@ struct UnkPosContainer {
 };
 
 // Camera/scene settings object returned by Scn_QueryUnk80State.
-// Real name unknown; float at 0xC read by func_80275454.
+// Real name unknown; float at 0xC read by tboxState0Tick.
 struct UnkCamObj {
     u8 _00[0xC];
     float field_0xC;
@@ -89,7 +89,7 @@ public:
 };
 
 // State-dispatch ptmf table (.data: lbl_eu_80537F98), indexed by field_0x6C.
-// Entries: state 0 -> func_80275454, state 1 -> func_802756F0. MWCC lowers
+// Entries: state 0 -> tboxState0Tick, state 1 -> tboxState1Tick. MWCC lowers
 // (self->*table[idx])() to mulli/lis/addi + `bl __ptmf_scall`.
 typedef void (UnkCode8027513C::*UnkCode8027513CStateFn)();
 extern UnkCode8027513CStateFn lbl_eu_80537F98[2];

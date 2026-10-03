@@ -26,7 +26,7 @@ CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
     // Best-known shape: unrolls x10 like retail; residual vs retail is
     // MWCC post-unroll strength reduction (retail keeps slwi/add addressing
     // and an addi counter chain; every source form folds to displacements
-    // plus hoisted constants - cf. KB func_800A26A4 note).
+    // plus hoisted constants - cf. KB CtrlObjectParam_RunPartyArtsFlow note).
     unsigned short n = 0;
     for (; n < 10; n++) {
         mCount = n;
@@ -34,7 +34,7 @@ CScnCameraMan::CScnCameraMan(CScnCameraParam* param) {
     }
     mCount = 10;
     for (int i = 0; i < 10; i++) {
-        func_8049F9A8((CScnCameraItemHost*)mParam, i);
+        ScnCamFactory((CScnCameraItemHost*)mParam, i);
     }
 }
 
@@ -321,7 +321,7 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
 //   call/camId scheduling (-8B).
 // - retail carries a dead `cmpwi cr0,r30,0` (mCamId vs 0, result unused);
 //   no source idiom found that folds to a bare dead compare.
-// - reloc names for func_8049EB60/F6D4/F824 are C++-mangled until those
+// - reloc names for ScnCamDepthUp/F6D4/F824 are C++-mangled until those
 //   definitions adopt their plain retail symbol names.
 bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
     CEvent1* ev = (CEvent1*)payload;
@@ -370,16 +370,16 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
     cam->field_0x68 = *(u32*)&rot.z;
 
     cam->mFovY = getFloatParam__7CEvent1Fv(ev, 3);
-    func_8049EB60(item);
+    ScnCamDepthUp(item);
 
     f32 farZ = getFloatParam__7CEvent1Fv(ev, 5);
     cam->mNearZ = getFloatParam__7CEvent1Fv(ev, 4);
     cam->mFarZ = farZ;
-    func_8049EB60(item);
+    ScnCamDepthUp(item);
 
     // Slot 1 holds the new position; slot 6 the camera distance.
-    func_8049F6D4(item, (ml::CVec3*)getPtrParam__7CEvent1Fv(ev, 1));
-    func_8049F824(item, getFloatParam__7CEvent1Fv(ev, 6));
+    ScnCamPlaceAt(item, (ml::CVec3*)getPtrParam__7CEvent1Fv(ev, 1));
+    ScnCamSetDist(item, getFloatParam__7CEvent1Fv(ev, 6));
     return true;
 }
 

@@ -11,8 +11,8 @@
 // Global-scope lbl_* (data imports); declaring them outside namespace cf keeps
 // their global (unmangled) symbol name instead of cf::-mangling them.
 extern const f32 lbl_eu_80667A30;
-extern f32 lbl_eu_80667A34;
-extern f32 lbl_eu_80667A38;
+extern const f32 lbl_eu_80667A34;
+extern const f32 lbl_eu_80667A38[2];
 
 namespace cf {
 
@@ -160,7 +160,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             if ((oldVal < 0x64 && clamped >= 0x64) ||
                 (oldVal < 0xc8 && clamped >= 0xc8))
             {
-                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
             }
         }
     }
@@ -189,13 +189,13 @@ s32 PartyGaugeAddClamped(UnkClass_8018C5FC* _this, s32 delta) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
     }
 
     return _this->gaugeValue;
 }
 
-// Set the party gauge counter to a value, clamp to [0, 300], and return the new value.
+// Set the party gauge counter
 s32 PartyGaugeSetClamped(UnkClass_8018C5FC* _this, s32 val) {
     u32 cf8cVal = CtrlRemote_TouchBitByArg(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
@@ -216,10 +216,18 @@ s32 PartyGaugeSetClamped(UnkClass_8018C5FC* _this, s32 val) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
     }
 
     return _this->gaugeValue;
 }
 
 } // namespace cf
+
+// Retail .sdata2 (this TU's split 0x80667A30-0x80667A40): the float constants
+// the gauge code loads. 80667A38 is an 8-byte pair (0.6f + trailing 0.0f),
+// hence the [2]. Defined here at file bottom (cf. CChainTime): the earlier
+// extern-view coloring of the matched functions is preserved.
+const float lbl_eu_80667A30 = 0.0f;
+const float lbl_eu_80667A34 = 1.0f;
+const float lbl_eu_80667A38[2] = { 0.6f, 0.0f };

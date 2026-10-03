@@ -5,7 +5,7 @@
 #include "kyoshin/cf/object/CAIAction.hpp"
 // Owner-header decls for imports whose copies were removed from CAIAction.hpp:
 // getArtsSlotRC/getArtsParamRC2 (canonical const void*/short forms) and
-// func_8009EC9C (single owner decl on CArtsInfo.hpp).
+// CtrlObjectParam_GetCharEntry (single owner decl on CArtsInfo.hpp).
 #include "kyoshin/cf/chain/CChainActorList.hpp"
 #include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
@@ -200,7 +200,7 @@ void aiActionStoreWordB14(void* obj, unsigned int value) {
 // already matches bytes [0x5..0xD] of `in`, returns 0 (duplicate); otherwise
 // stores the slot, increments unk214, sets bit 0x8 in the new slot's flags,
 // and returns 1.
-extern "C" u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+extern "C" u32 aiRingPrepend(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 count = self->unk214;
     for (u32 i = 0; i < count; i++) {
         u32 ringIdx = (self->unk210 + i) % self->unk218;
@@ -269,7 +269,7 @@ static inline void CAIRingCopyTail(cf::CAIActionSlot* dst,
 // of the ring is closer (shift entries down and bump the head, or shift
 // entries up), decrementing unk214. The removed slot's float is read into a
 // scratch local first.
-void func_8014AE00(cf::CAIAction* self) {
+void aiRingCompact(cf::CAIAction* self) {
     for (u32 i = 0; i < self->unk214; i++) {
         cf::CAIActionSlot* slot = CAIRingGetU(self, i);
         if ((slot->unk10 & 0x8) == 0)
@@ -311,7 +311,7 @@ void func_8014AE00(cf::CAIAction* self) {
         i--;
     }
 }
-extern "C" int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+extern "C" int aiAppendToRing(cf::CAIAction* self, const cf::CAIActionSlot* in) {
     u32 i;
     for (i = 0; i < self->unk214; i++) {
         u32 pos = self->unk210 + i;
@@ -411,7 +411,7 @@ struct CAIRemovedScratch {
 // Consumes the AI action queued at ring offset `index`: a terminal id byte
 // (0x3F..0x48) latches `id-0x3E` into unk4/trailer and flushes the ring;
 // otherwise the entry is copied to the trailer and compacted out of the ring.
-void func_8014B344(cf::CAIAction* self, u32 index) {
+void aiRingConsume(cf::CAIAction* self, u32 index) {
     // Ring entry at offset `index`; retail recomputes the modulo expression
     // (unsigned) at each use and reloads the ring fields from `self`.
     cf::CAIActionSlot* slot = (cf::CAIActionSlot*)(
@@ -428,7 +428,7 @@ void func_8014B344(cf::CAIAction* self, u32 index) {
         self->unk214 = 0;
         self->unk210 = 0;
         return;
-    }
+    }}
 
     u16 flags = slot->unk10;
     if (flags & 2)
@@ -567,7 +567,7 @@ void initAIActionTable(void* tableArg) {
     }
 }
 // memset the 160-element x 14-byte action table at +0x21C.
-extern "C" void func_8014B7B0(void* self) {
+extern "C" void aiResetTables(void* self) {
     void* p = (u8*)self + 0x21C;
     for (int i = 0; i < 160; i++) {
         memset(p, 0, 14);
@@ -578,9 +578,9 @@ void func_8014B8BC(){}
 
 
 
-// func_8014CE78 - evaluate one AI action entry for a party member and fill
+// aiJudgeAction - evaluate one AI action entry for a party member and fill
 // the 0x20-byte result slot. Returns 1 when the action is usable.
-extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot* out) {
+extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot* out) {
     using namespace cf;
     u8* ob = (u8*)out;
     // Retail reloads self->unkB14 lazily in each branch (no prologue cache),
@@ -629,7 +629,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             u32 v;
             u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
             v = *p;
-            if (func_80174C98(p, &v, 0x800) == 0)
+            if (testActorStatus(p, &v, 0x800) == 0)
                 return 0;
             break;
         }
@@ -720,14 +720,14 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             break;
         case 0x3E: {
             // Character category must match.
-            void* ch = func_8009EC9C(party->unk3F28);
+            void* ch = CtrlObjectParam_GetCharEntry(party->unk3F28);
             if (CtrlObjectParam_GetCurrentRowKey(ch) != b[i])
                 return 0;
             break;
         }
         case 0x3F: {
             // BDAT column byte-3 comparison via the select table.
-            void* ch = func_8009EC9C(party->unk3F28);
+            void* ch = CtrlObjectParam_GetCharEntry(party->unk3F28);
             u16 v = *(u16*)((u8*)ch + 0xA);
             if (CItem_getNameIdFromFam(v)) {
                 u32 col = getBdatStringColumnValue((void*)lbl_eu_806640F8,
@@ -813,7 +813,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     // Post-loop: optional target selection, then an extra filter.
     if (ob[6] != 0) {
-        u32 r = (u32)(uintptr_t)func_80150618(self, (CAIActionQuery*)out);
+        u32 r = (u32)(uintptr_t)aiTargetQuery(self, (CAIActionQuery*)out);
         out->unk00 = r;
         if (r == 0)
             return 0;
@@ -851,7 +851,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
                 u32 v;
                 u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
                 v = *p;
-                if (func_80174C98(p, &v, 0x1F) != 0) {
+                if (testActorStatus(p, &v, 0x1F) != 0) {
                     __dt__80043E88(&h, -1);
                     return 0;
                 }
@@ -913,7 +913,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         u32 v;
         u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
         v = *p;
-        if (func_80174C98(p, &v, 6) == 0)
+        if (testActorStatus(p, &v, 6) == 0)
             return 0;
         if (func_80148778((u8*)party + 8, 0xCC) != 0)
             return 0;
@@ -1011,7 +1011,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             u32 v;
             u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
             v = *p;
-            if (func_80174C98(p, &v, 0x1A) != 0)
+            if (testActorStatus(p, &v, 0x1A) != 0)
                 return 0;
         }
         return CtrlRemote_TouchBitByArg(0x335f) == 0;
@@ -1059,7 +1059,7 @@ extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
     case 1: {
         u16 f = in->unk10 | 0x400;
         in->unk10 = f;
-        void* r = func_80150618(self, in);
+        void* r = aiTargetQuery(self, in);
         in->unk00 = (u32)(uintptr_t)r;
         if (r == 0)
             return 0;
@@ -1135,7 +1135,7 @@ extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
 // vtable (or the cached battle handle at 0x3F10), with bit 0x400 in the
 // query's flags set in two pre-dispatch paths.
 
-void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
+extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
     CAIActionEnumHolder holder;
     void* result;
 
@@ -1213,7 +1213,7 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
     return result;
 }
 
-// Returns the dispatch result for the query (see func_80150618 above; this
+// Returns the dispatch result for the query (see aiTargetQuery above; this
 // comment block previously held an untyped draft implementation).
 
 
@@ -1607,18 +1607,18 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 57: {
         void* moveBase = (u8*)self->unkB14 + 0x3E9C;
-        func_800F6ED0(CTaskGame_enumListGet(&holder), ((cf::CfObject*)moveBase)->CfObject_getPosVector());
+        sortEntriesByDistance(CTaskGame_enumListGet(&holder), ((cf::CfObject*)moveBase)->CfObject_getPosVector());
         break;
     }
 
     case 59:
-        func_800F9AEC(CTaskGame_enumListGet(&holder));
+        resortByActorValue(CTaskGame_enumListGet(&holder));
         __ct__800FC4FC(CTaskGame_enumListGet(&holder), 0, 0.2f);
         __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x1C, 2);
         break;
 
     case 60:
-        func_800F9AEC(CTaskGame_enumListGet(&holder));
+        resortByActorValue(CTaskGame_enumListGet(&holder));
         __ct__800FC19C(CTaskGame_enumListGet(&holder), 0x1C, 0);
         break;
 
@@ -2301,20 +2301,20 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
         case 57: {
             // +0x6A20 : position-based action
             void* pos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
-            func_800F6ED0(CTaskGame_enumListGet(&it), pos);
+            sortEntriesByDistance(CTaskGame_enumListGet(&it), pos);
             break;
         }
 
         case 59:
             // +0x6A4C
-            func_800F9AEC(CTaskGame_enumListGet(&it));
+            resortByActorValue(CTaskGame_enumListGet(&it));
             __ct__800FC4FC(CTaskGame_enumListGet(&it), 0, 0.2f);
             __ct__800FC19C(CTaskGame_enumListGet(&it), 28, 2);
             break;
 
         case 60:
             // +0x6A84
-            func_800F9AEC(CTaskGame_enumListGet(&it));
+            resortByActorValue(CTaskGame_enumListGet(&it));
             __ct__800FC19C(CTaskGame_enumListGet(&it), 28, 0);
             break;
 
@@ -2654,7 +2654,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
     }
     __dt__80043E88(&it, -1);
     return (void*)result;
-}
+}}
 
 
 
@@ -2670,14 +2670,14 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 // CfObjEnumList fields accessed by this function.
 
 
-// Move-subobject interface view used by func_801537F0: slot 0x4C returns
+// Move-subobject interface view used by aiRebootAction: slot 0x4C returns
 // the battle handle, slot 0x50 sets/clears it.
 
 
 // Resets the action ring (count/start/trailer), then queries the party's
 // current state via three tagged probes (3 / 0x1c / 0x805); if none hits,
 // queues action 0x31 and refreshes the battle-object handle.
-extern "C" void func_801537F0(cf::CAIAction* self) {
+extern "C" void aiRebootAction(cf::CAIAction* self) {
     // Reset the ring; retail computes unk8|4 between clearing unk214/unk210.
     self->unk8 = self->unk8 | 4;
     self->unk214 = 0;
@@ -2693,13 +2693,13 @@ extern "C" void func_801537F0(cf::CAIAction* self) {
     {
         CAIPartyObj* pr1 = (CAIPartyObj*)self->unkB14;
         tagA = *(u32*)((cf::CObjectState*)pr1->unk04)->CObjectState_getStateData();
-        if (func_80174C98(pr1, &tagA, 3) == 0) {
+        if (testActorStatus(pr1, &tagA, 3) == 0) {
             CAIPartyObj* pr2 = (CAIPartyObj*)self->unkB14;
             tagB = *(u32*)((cf::CObjectState*)pr2->unk04)->CObjectState_getStateData();
-            if (func_80174C98(pr2, &tagB, 0x1c) == 0) {
+            if (testActorStatus(pr2, &tagB, 0x1c) == 0) {
                 CAIPartyObj* pr3 = (CAIPartyObj*)self->unkB14;
                 tagC = *(u32*)((cf::CObjectState*)pr3->unk04)->CObjectState_getStateData();
-                if (func_80174C98(pr3, &tagC, 0x805) == 0) {
+                if (testActorStatus(pr3, &tagC, 0x805) == 0) {
                     CfObjectMove_setAnimModeArgs(
                         (u8*)(CAIPartyObj*)self->unkB14 + 0x3E9C, 0x31, 0, -1, 1);
                 }
@@ -2728,7 +2728,7 @@ extern "C" void func_801537F0(cf::CAIAction* self) {
 // entry's 0xC-byte action sub-entries are installed via aiActionStoreIndexedBytes.
 // sel doubles as the lookup id throughout: retail keeps it in one
 // callee-saved register, re-derived to 0x70/0x65/0x63 as the walk proceeds.
-void func_8015396C(cf::CAIAction* self, u32 sel) {
+void aiInstallArts(cf::CAIAction* self, u32 sel) {
     cf::CAIActionTable* table = lbl_eu_806641B0;
     u32 want;
     u32 raw = table->count;

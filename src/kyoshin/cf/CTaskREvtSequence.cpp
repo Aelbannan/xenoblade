@@ -23,18 +23,18 @@
 #include "monolib/device/CDeviceVI.hpp"
 // CDeviceSC::getLanguage (static) is called by EvtSeqOnFileEvent.
 #include "monolib/device/CDeviceSC.hpp"
-// CPathUtil::getFilePtrFromPath (static) is called by func_8016C450.
+// CPathUtil::getFilePtrFromPath (static) is called by EvtSeqXorSeqBuffer.
 #include "monolib/util/CPathUtil.hpp"
 // CFileHandle::getData (inline) is used by EvtSeqOnFileEvent.
 #include "monolib/device/CFileHandle.hpp"
-// ml::CCol4::white/black are passed to Scn_ReleaseUnk80 by func_80169050.
+// ml::CCol4::white/black are passed to Scn_ReleaseUnk80 by EvtSeqPumpCxStream.
 #include "monolib/math/CCol4.hpp"
-// CGame::setTaskManagerUpdateCount (static) is called by func_8016A480.
+// CGame::setTaskManagerUpdateCount (static) is called by EvtSeqStopSequence.
 #include "kyoshin/CGame.hpp"
 // The +0x2F3C game-manager sub-object is a CScnEnvLgtCtrlListItem (real
 // owner in libs/monolib/src/scn/CScnEnvLgtCtrl.hpp, which cannot be
 // included here over this TU's conflicting decls). TU-local view under the
-// real owner name with retail arities (CfObjectMap.cpp idiom); func_8016A480
+// real owner name with retail arities (CfObjectMap.cpp idiom); EvtSeqStopSequence
 // dispatches its v24 slot (0x68) directly. No fake-named iface is kept.
 class CScnEnvLgtCtrlListItem {
 public:
@@ -78,11 +78,11 @@ public:
     virtual void v37(int flag);
 };
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
-// nw4r g3d resource walk used by func_8016AF4C / EvtSeqFindResAddr.
+// nw4r g3d resource walk used by EvtSeqResolveAnmChr / EvtSeqFindResAddr.
 #include "nw4r/g3d/res/g3d_resfile.h"
 #include "nw4r/g3d/res/g3d_resdict.h"
 #include "nw4r/db/db_assert.h"
-// CX streaming-uncompression context (EvtSeqOnFileEvent / func_80169050).
+// CX streaming-uncompression context (EvtSeqOnFileEvent / EvtSeqPumpCxStream).
 #include "revolution/cx/CXStreamingUncompression.h"
 // Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
 // decl). Declared here: this TU does not include that header.
@@ -268,7 +268,7 @@ void EvtSeqPublishIdHalfwords() {
     // the two calls (the first call may update it).
     func_80086B5C__Q22cf13CfGameManagerFv(lbl_eu_80664268->field_0x116,
                                           lbl_eu_80664268->field_0x118, 0);
-    func_800599E0(getGlobalSda(), lbl_eu_80664268->field_0x116,
+    Env_SetClock(getGlobalSda(), lbl_eu_80664268->field_0x116,
                   lbl_eu_80664268->field_0x118, 0);
 }
 
@@ -392,7 +392,7 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
     self->field_0x44 = w2;
 }
 
-extern "C" void func_8016872C(cf::CTaskREvtSequence* self) {
+extern "C" void EvtSeqLoadSeqFile(cf::CTaskREvtSequence* self) {
     // Load the sequence file: read size/flags from the header object, size the
     // arena chunk, free the old header buffer, then async-read into the new
     // buffer and install the +0x3C move-callback table.
@@ -423,7 +423,7 @@ extern "C" void func_8016872C(cf::CTaskREvtSequence* self) {
     self->field_0x44 = w2;
 }
 
-extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
+extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
     // Event-sequence setup, run once the common-archive read has landed
     // (field_0xBC idle): walk the type-tagged tables in the sequence buffer
     // and publish each matched entry address into a scratch word, allocate
@@ -755,11 +755,11 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
     u32 flags = reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xC4)->field_0x4C;
     if (flags & 0x1C) {
         if (flags & 0x4) {
-            func_8016DF4C(1);
+            seedReloadTmr(1);
         } else if (flags & 0x8) {
-            func_8016DF4C(2);
+            seedReloadTmr(2);
         } else if (flags & 0x10) {
-            func_8016DF4C(0);
+            seedReloadTmr(0);
         }
         updatePresentationTick__Q22cf13CfGameManagerFv();
     }
@@ -822,7 +822,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     // Walk the realtime-event list once calling vf_0x24 on every entry, then
     // (unless a 60-frame cadence expired) a second walk that aborts the whole
     // function on a vf_0x18()==0 entry; finally reset the voice manager, run
-    // the func_80169DD0 advance and install the +0x3C ptmf table. `scaled` is
+    // the EvtSeqAdvanceSequence advance and install the +0x3C ptmf table. `scaled` is
     // an explicit induction variable so the back-edge increments sit in
     // source order (n++, scaled+=4) like retail.
     u32 scaled = 0;
@@ -857,8 +857,8 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
             scaled += 4;
         }
     }
-    func_802A1500();
-    func_80169DD0(self, self->field_0xF8);
+    CCharVoiceMan_FlushAll();
+    EvtSeqAdvanceSequence(self, self->field_0xF8);
     // Install the move callback (3-word ptmf at +0x3C) from the .data table.
     // Pointer-walk (*src++) so MWCC folds the base addi into the first load
     // (retail emits lwzu + lwz / stw,stw / lwz,stw). Value locals are declared
@@ -876,7 +876,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
 
 int CREvtObjVfunc10Default(void* self) { return 1; }
 
-void func_80169050(cf::CTaskREvtSequence* self) {
+void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
     // CX stream pump + event-state update. While the stream-active flag (bit
     // 25) is set, drain the 0x250 context in 0x2000-byte steps; on EOF clear
     // the bit again and move the walk cursor to the arena base. Then (unless
@@ -975,7 +975,7 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_8016925C(cf::CTaskREvtSequence* self) {
+void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
     // Event-sequence start. Aborts while CfGameManager is busy or any
     // realtime-event entry reports not-ready (vf_0x20). Then: optional BGM
     // stream kick for the field_0xE0 subtitle table, id-halfword publish,
@@ -1038,7 +1038,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         func_80086B5C__Q22cf13CfGameManagerFv(
             (u16)pair->field_0x40, (u16)pair->field_0x42, 0);
         pair = reinterpret_cast<EvtSeqC4Pair*>(self->field_0xC4);
-        func_800599E0(getGlobalSda(), (u16)pair->field_0x40,
+        Env_SetClock(getGlobalSda(), (u16)pair->field_0x40,
                       (u16)pair->field_0x42, 0);
     }
     // Walk 1+2: full reset (two virtual steps + flags-object arm) over the
@@ -1138,7 +1138,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         }
     }
     MapModel_DisablePoints();
-    func_80169F28(self);
+    EvtSeqDispatchObjs(self);
     {
         u32 scaled = 0;
         u32 n = 0;
@@ -1182,15 +1182,15 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
 
 int CREvtObjIsBusyDefault(void* self) { return 0; }
 
-void func_801696CC(cf::CTaskREvtSequence* self) {
+void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     // 12-byte ptmf table overlay (retail copies these as struct reads).
     struct EvtSeqPtmf3 {
         u32 w0;
         u32 w1;
         u32 w2;
     };
-    // Event-sequence update (variant B): pump func_8016B860, then the same
-    // color/ptmf prologue as func_80169A38 (table 0x80530AB8). The walk-index
+    // Event-sequence update (variant B): pump EvtSeqUpdateEvtTable, then the same
+    // color/ptmf prologue as EvtSeqUpdateSequence (table 0x80530AB8). The walk-index
     // snapshots (retail r29/r28) are read before either branch so the
     // 0x4-flag path can restore them after the fade-counter increments.
     // The ptmf tables live at fixed offsets inside the 0x80530A40 pool;
@@ -1204,7 +1204,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
     u32 flag1;
     u32 flag2;
     UnkStateTable_D0* entry;
-    func_8016B860(self);
+    EvtSeqUpdateEvtTable(self);
     if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
@@ -1285,7 +1285,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
                 self->field_0x124 += 0x2000;
             }
             self->field_0xF8 += 1;
-            func_80169F28(self);
+            EvtSeqDispatchObjs(self);
             EvtSeqWalkBuf* cc =
                 reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
             if (self->field_0xF8 + 1 < cc->field_0x8) {
@@ -1322,7 +1322,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
             EvtSeqWalkBuf* cc =
                 reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
             if (self->field_0xF8 + 1 < cc->field_0x8) {
-                func_80169DD0(self, self->field_0xF8 + 1);
+                EvtSeqAdvanceSequence(self, self->field_0xF8 + 1);
             }
             self->field_0x5C |= 0x200000;
         }
@@ -1353,15 +1353,15 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
 
 void CREvtObjVfunc08Default() {}
 
-void func_80169A38(cf::CTaskREvtSequence* self) {
+void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
     // Main event-sequence update: run the CX pump + event dispatch
-    // (func_8016B860), then (unless CfGameManager is busy) color the scene
+    // (EvtSeqUpdateEvtTable), then (unless CfGameManager is busy) color the scene
     // window and install a move-callback table when the 0x8 flag is set,
     // otherwise advance the event walk (fade the scene, bump the counters,
     // compare the walk index against the table entry) and dispatch the
     // realtime-event list. `less` (retail r31) is the signed walk-index <
     // entry-limit comparison used twice at the end.
-    func_8016B860(self);
+    EvtSeqUpdateEvtTable(self);
     if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
@@ -1488,8 +1488,8 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
     // manager holds a live player object, restore its fov/position floats.
     func_80086B5C__Q22cf13CfGameManagerFv(self->field_0x116,
                                           self->field_0x118, 0);
-    func_800599E0(getGlobalSda(), self->field_0x116, self->field_0x118, 0);
-    func_8016DF4C(self->field_0x134);
+    Env_SetClock(getGlobalSda(), self->field_0x116, self->field_0x118, 0);
+    seedReloadTmr(self->field_0x134);
     EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14);
     scene->field_0x5C->field_0xD4 = lbl_eu_80667670;
     if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
@@ -1498,7 +1498,7 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
         Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF, &v);
     }
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
-    ((void(*)(void*))func_8016A480)(self);
+    ((void(*)(void*))EvtSeqStopSequence)(self);
     evtGetManagerAddr();
     evtTeardownActive();
     // The retail re-fetches the camera manager between each gate; keep the
@@ -1511,16 +1511,16 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
                 ->vf_0x3C(lbl_eu_80667674);
             CfEvtCamManager* mgr4 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
             // Local keeps the player object in one register (retail reuses r3
-            // across the two float stores and the func_8049EB60 call).
+            // across the two float stores and the ScnCamDepthUp call).
             UnkEvtPlayer* player = mgr4->field_0xC;
             player->field_0x1EC = lbl_eu_80667678;
             player->field_0x1F0 = lbl_eu_8066767C;
-            func_8049EB60(player);
+            ScnCamDepthUp(player);
         }
     }
 }
 
-void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
+void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx) {
     // Event-sequence advance: if the sequence file handle is idle, clear the
     // 0x4 flag, select the entry at `idx` in the field_0xD0 table, and either
     // advance the field_0x120 walk cursor or (re)load the sequence file into
@@ -1573,7 +1573,7 @@ void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
 
 void CREvtObjVfunc24Default() {}
 
-void func_80169F28(cf::CTaskREvtSequence* self) {
+void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
     // Event-sequence dispatch. The walk header's table pointers are cached
     // into the object's scratch words (0x23C-0x24C), then the four id lists
     // (camera/effect/light/movie) are walked feeding each realtime-event
@@ -1854,23 +1854,23 @@ void cf::CTaskREvtSequence::Init() {
 
 void cf::CTaskREvtSequence::Term() {
     // Clear the scene's byte flag, then run the sequence teardown callback if
-    // the 0x115 gate is clear. func_8016A480's stub body is empty, so call it
+    // the 0x115 gate is clear. EvtSeqStopSequence's stub body is empty, so call it
     // through a cast to stop MWCC from inlining/eliding the call.
     Scn_SetPalFixFlag((u8*)lbl_eu_80663E14, 0);
     if (field_0x115 == 0) {
-        ((void(*)(void*))func_8016A480)(this);
+        ((void(*)(void*))EvtSeqStopSequence)(this);
     }
     CTaskCulling::setOccDisabled(0);
     lbl_eu_80663EE0 &= ~0x40;
     MaruShadowStoreGlobalFloat(field_0x12C);
 }
 
-// Event-sequence teardown (retail func_8016A480, the body behind
+// Event-sequence teardown (retail EvtSeqStopSequence, the body behind
 // cf::CTaskREvtSequence::Term): stop the VI pipeline, reset every manager
 // list, cancel pending async file loads, drain the realtime-event entry
 // array, apply BGM/fade events from the sequence buffer, then release the
 // scene callback and restore task-manager state.
-void func_8016A480(void* selfv) {
+void EvtSeqStopSequence(void* selfv) {
     cf::CTaskREvtSequence* self =
         static_cast<cf::CTaskREvtSequence*>(selfv);
     CDeviceVI::waitForDrawDone();
@@ -1879,7 +1879,7 @@ void func_8016A480(void* selfv) {
         lbl_eu_80663E28 &= ~0x00800000u;
         stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 0);
     }
-    func_80180E1C();
+    MapModel_EnablePoints();
     if (self->field_0x10C != 0) {
         mtl::MemManager::deallocate(
             reinterpret_cast<void*>(self->field_0x10C));
@@ -2056,11 +2056,11 @@ void func_8016A480(void* selfv) {
                                     CDeviceVI::getSecPerFrame());
                             }
                             if (ty == 1) {
-                                func_80189034(
+                                MenuSnd_SetBGM_89034(
                                     reinterpret_cast<const char*>(&e->field_0x10),
                                     1, f1, lbl_eu_8066766C);
                             } else {
-                                func_80188D34(
+                                MenuSnd_RestartBGM_88D34(
                                     reinterpret_cast<const char*>(&e->field_0x10),
                                     1, f1, lbl_eu_8066766C);
                             }
@@ -2144,7 +2144,7 @@ void func_8016A480(void* selfv) {
     if (MiniMapHasGlobalData() == 0) {
         if (isEventPending() == 0 &&
             strstr(self->mPath, &lbl_eu_80503098[0x49]) == 0) {
-            func_801338C8();
+            CUICfManager_createQueuedMenus();
         }
     }
     if ((self->field_0x5C & 0x00040000) != 0) {
@@ -2170,7 +2170,7 @@ bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
             CFileHandle* h = reinterpret_cast<CFileHandle*>(self->field_0xB8);
             self->field_0xC0 = reinterpret_cast<u32>(h->getData());
             // Cast keeps MWCC from inlining the empty sibling stub.
-            ((void(*)(u32, u32, u32))func_8016C450)(ev->field_0C,
+            ((void(*)(u32, u32, u32))EvtSeqXorSeqBuffer)(ev->field_0C,
                                                     ev->field_10, 0x800);
         }
         self->field_0xB8 = 0;
@@ -2180,7 +2180,7 @@ bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
         if (ev->field_00 == 1) {
             self->field_0x5C |= 0x2;
             // Cast keeps MWCC from inlining the empty sibling stub.
-            ((void(*)(u32, u32, u32))func_8016C450)(ev->field_0C,
+            ((void(*)(u32, u32, u32))EvtSeqXorSeqBuffer)(ev->field_0C,
                                                     ev->field_10,
                                                     0xFFFFFFFF);
             s32 lang = CDeviceSC::getLanguage();
@@ -2314,7 +2314,7 @@ extern "C" cf::CTaskREvtSequence* EvtSeqCreateTask(CProcess* parent, const char*
     return obj;
 }
 
-int func_8016AF4C(u8* data, const char* name, s32* out) {
+int EvtSeqResolveAnmChr(u8* data, const char* name, s32* out) {
     // Walk the ResFile's character-animation entries and resolve `name`
     // through the entry's user-data dictionary; the first hit publishes the
     // resolved entry data's first word into `out` and returns 1. Each guard
@@ -2378,8 +2378,8 @@ int func_8016AF4C(u8* data, const char* name, s32* out) {
     return 0;
 }
 
-int func_8016B164(u8* data, const char* name, s32* out, s32* out2) {
-    // Same ResFile walk as func_8016AF4C, but with a second output: the
+int EvtSeqResolveAnmChr2(u8* data, const char* name, s32* out, s32* out2) {
+    // Same ResFile walk as EvtSeqResolveAnmChr, but with a second output: the
     // resolved entry's +0x8 word is published into `out2` (between the dead
     // null-check and the entry-type check), then the resolved data pointer
     // (or 0 when field_0x4 is null) goes into `out`. `userData` is reused for
@@ -2506,9 +2506,9 @@ int EvtSeqFindResFloat(u8* data, const char* name, f32* out) {
 }
 
 int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
-    // Same ResFile walk as func_8016AF4C, but the matched entry must be a
+    // Same ResFile walk as EvtSeqResolveAnmChr, but the matched entry must be a
     // type-2 user-data record and the resolved data pointer (not its first
-    // word) is published into `out`. Locals follow func_8016AF4C's register
+    // word) is published into `out`. Locals follow EvtSeqResolveAnmChr's register
     // plan (numAnmChr/i hoisted, userData/result declared in-loop -> r31).
     // Decl order drives MWCC's callee-saved coloring: i -> r29, numAnmChr
     // -> r30, in-loop userData/result -> r31.
@@ -2579,7 +2579,7 @@ int EvtSeqCheckRegionStatus(u8* data) {
     s32 out = 0;
     const char* name = (const char*)lbl_eu_80503098;
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
-    ((void(*)(u8*, const char*, s32*))func_8016AF4C)(data, name + 0x5D, &out);
+    ((void(*)(u8*, const char*, s32*))EvtSeqResolveAnmChr)(data, name + 0x5D, &out);
     int v = Env_RegionCode(getGlobalSda());
     switch (out) {
     case 1:
@@ -2594,7 +2594,7 @@ int EvtSeqCheckRegionStatus(u8* data) {
     return 0;
 }
 
-void func_8016B860(cf::CTaskREvtSequence* self) {
+void EvtSeqUpdateEvtTable(cf::CTaskREvtSequence* self) {
     // Event-sequence update: arm the minimap/event gates, pump the CX stream,
     // then walk the field_0xE8 table for the entry matching field_0x104 and
     // dispatch its type (1/2/3/5/7) to the menu sound/BGM helpers. The frame
@@ -2647,14 +2647,14 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
         u8 type = entry->field_0xA;
         switch (type) {
         case 1:
-            func_80189034(reinterpret_cast<const char*>(
+            MenuSnd_SetBGM_89034(reinterpret_cast<const char*>(
                               reinterpret_cast<u8*>(entry) + 0x10),
                           1, dur, lbl_eu_8066766C);
             self->field_0x108 = 1;
             break;
         case 2:
             if (entry->field_0xE == 0) {
-                func_80188D34(reinterpret_cast<const char*>(
+                MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                   reinterpret_cast<u8*>(entry) + 0x10),
                               1, dur, lbl_eu_8066766C);
             } else {
@@ -2662,7 +2662,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
                     u32 c1 = (lbl_eu_80664268 != 0) &&
                              (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c1 == 0) {
-                        func_80188D34(reinterpret_cast<const char*>(
+                        MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
                                       1, dur, lbl_eu_8066766C);
                     }
@@ -2671,7 +2671,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
                     u32 c2 = (lbl_eu_80664268 != 0) &&
                              (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c2 != 0) {
-                        func_80188D34(reinterpret_cast<const char*>(
+                        MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
                                       1, dur, lbl_eu_8066766C);
                     }
@@ -2743,7 +2743,7 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
     }
 }
 
-void func_8016BC1C(UnkEvtListEntry* self) {
+void EvtSeqInsertRtEvent(UnkEvtListEntry* self) {
     // Insert `self` into the realtime-event list, sorted by the name-data
     // priority word (+0x30): find an existing same-name entry with a HIGHER
     // priority and replace it in place, otherwise append at the end. Either
@@ -2851,7 +2851,7 @@ void func_8016BC1C(UnkEvtListEntry* self) {
     } while (swapped != 0);
 }
 
-int func_8016BDA8(EvtBdabModel* self, u32* out) {
+int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
     // Event-slot claim probe (called from the realtime-event dispatcher).
     // Inactive while the shared state walk is past its first frame window;
     // otherwise scans this model's claimed id/slot table for a slot matching
@@ -3042,7 +3042,7 @@ void EvtSeqClearStateBit9() {
     }
 }
 
-int func_8016C300(UnkEvtListEntry* self) {
+int EvtSeqCheckRunGate(UnkEvtListEntry* self) {
     // Event-run gate: if bit 11 of the state flag word is set, run the walk
     // over type-2 entries whose packed token (name object +0x20) unpacks to a
     // 3/8 payload id (return 1), otherwise set bit 0x800 and stop.
@@ -3107,7 +3107,7 @@ u32 EvtSeqIsSlotIndexFour() {
     return cf::CfGameManager::getCurrentSlotIndex() == 4;
 }
 
-void func_8016C450(const char* path, EvtC450Buf* buf, s32 limit) {
+void EvtSeqXorSeqBuffer(const char* path, EvtC450Buf* buf, s32 limit) {
     // Filename-strip + byte cipher. The path's file portion is copied into a
     // local key buffer with its extension stripped (searching for the
     // lbl_eu_806623C0 marker), then `buf`'s data area

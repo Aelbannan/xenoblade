@@ -64,15 +64,15 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// CLibCriStreamingPlay factory function (static, 8 args)
-// Called from dispatchFilePlayback with various parameters
-extern "C" int func_8045B5AC(
-    int fileIdOrName,
-    u32 allocHandle,
-    int fileHandle,
-    int out2,
-    int out3,
-    bool hasPrefix
+// CLibCriStreamingPlay factory (static, 8 args; member-flavoured retail name
+// on a free function).
+extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(
+    const char* filename,
+    int allocHandle,
+    int loopFlag,
+    int afsId,
+    int afsSubId,
+    bool forceAhx
 );
 
 // String constant (CRI file extension marker: lbl_eu_80522FD8)

@@ -69,26 +69,26 @@ extern char lbl_eu_80661B28[];
 // so MWCC emits sda21 li's at use sites); the vtable needs its address.
 void __dt__Q22cf11CfCamFollowFv();
 void __dt__Q22cf5CfCamFv();
-void func_8006CC68(); void cfCam_getPlus1C(); void cfCam_copyToPlus28(); void cfCam_updFollowPos();
-void cfCam_nestedPlus118(); void func_8006E884(); void cfCam_nopVirt24(); void func_8006BFDC();
+void resetCamEntry(); void cfCam_getPlus1C(); void cfCam_copyToPlus28(); void cfCam_updFollowPos();
+void cfCam_nestedPlus118(); void frameDriver(); void cfCam_nopVirt24(); void resetCamConsts();
 void cfCam_copyToPlus10(); void cfCam_getPlus10(); void cfCam_getPlus40(); void cfCam_initFollowS();
 void cfCam_setFollowD(); void cfCam_storeUnk08(); void cfCam_returnZero(); void cfCam_copyCamState();
 void camPluginNoopV4C(); void camPluginNoopV50(); void camPluginNoopV54(); void cfCam_get1E0Again();
-void cfCam_setFollowTg(); void cfCam_loadUnk164(); void camPluginNoopV64(); void func_80073D8C();
-void camPluginNoopV6C(); void cfCam_getActivePad(); void func_80074AA4(); void camPluginNoopV68();
+void cfCam_setFollowTg(); void cfCam_loadUnk164(); void camPluginNoopV64(); void propagateFollowParam();
+void camPluginNoopV6C(); void cfCam_getActivePad(); void runCamAction(); void camPluginNoopV68();
 }
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80527260[34] = {
     lbl_eu_80661B28, 0,
     (const void*)__dt__Q22cf11CfCamFollowFv,
-    (const void*)func_8006CC68, (const void*)cfCam_getPlus1C, (const void*)cfCam_copyToPlus28,
-    (const void*)cfCam_updFollowPos, (const void*)cfCam_nestedPlus118, (const void*)func_8006E884,
-    (const void*)cfCam_nopVirt24, (const void*)func_8006BFDC, (const void*)cfCam_copyToPlus10,
+    (const void*)resetCamEntry, (const void*)cfCam_getPlus1C, (const void*)cfCam_copyToPlus28,
+    (const void*)cfCam_updFollowPos, (const void*)cfCam_nestedPlus118, (const void*)frameDriver,
+    (const void*)cfCam_nopVirt24, (const void*)resetCamConsts, (const void*)cfCam_copyToPlus10,
     (const void*)cfCam_getPlus10, (const void*)cfCam_getPlus40, (const void*)cfCam_initFollowS,
     (const void*)cfCam_setFollowD, (const void*)cfCam_storeUnk08, (const void*)cfCam_returnZero,
     (const void*)cfCam_copyCamState, (const void*)camPluginNoopV4C, (const void*)camPluginNoopV50,
     (const void*)camPluginNoopV54, (const void*)cfCam_get1E0Again, (const void*)cfCam_setFollowTg,
-    (const void*)cfCam_loadUnk164, (const void*)camPluginNoopV64, (const void*)func_80073D8C,
-    (const void*)camPluginNoopV6C, (const void*)cfCam_getActivePad, (const void*)func_80074AA4,
+    (const void*)cfCam_loadUnk164, (const void*)camPluginNoopV64, (const void*)propagateFollowParam,
+    (const void*)camPluginNoopV6C, (const void*)cfCam_getActivePad, (const void*)runCamAction,
     &lbl_eu_80661B30, 0, 0, 0
 };
 DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_vt1, lbl_eu_80527260);
@@ -206,13 +206,13 @@ static inline u8 getCol8(void* table, const char* col, int row) {
 // CamEventVecWords itself is defined in CfCamEvent_1.hpp.
 
 // Memory-resident triplet locals (POD: ml::CVec3 would emit default ctor
-// calls). Used by func_800778E4's column reads and func_800784A0's out
+// calls). Used by CamEvtBuildFollowState's column reads and CamEvtCreateSlotObj's out
 // vectors.
 struct CamTripletLocals {
     f32 x, y, z;
 };
 
-// Raw 0x28-byte vector snapshot handed to func_8007990C. Word-based so no
+// Raw 0x28-byte vector snapshot handed to CamEvtDispatchState. Word-based so no
 // CVec3 ctor/operator= calls are emitted - retail fills it with raw GPR
 // word copies from the slot accessors.
 struct CamEventVecSrcRaw {
@@ -223,17 +223,17 @@ struct CamEventVecSrcRaw {
 };
 
 // Re-seat a cam slot. Categorises `first` into a 0/1/2 slot index via
-// func_800755BC; when the slot at that index does not already hold the
+// CamEvtClassId; when the slot at that index does not already hold the
 // current cam state the old slot is deleted and a new one constructed from
 // `second` (with the pose returned by Scn_FindCamItem as its second ctor
 // arg). Then every slot is handed off to cfCam_andcUnk04 and the freshly
 // seated slot woken via cfCam_setClear04.
 // Category 0 forwards the outgoing slot's vectors through cfCam_recomputeEyeTarget;
 // category 1 rebuilds a cam table from `sixth` (or falls back to
-// func_800778E4) and runs the shared follow-cam setup func_80076F88.
-// NOTE: the fourth func_80077F20 call passes `first` as its source argument
+// CamEvtBuildFollowState) and runs the shared follow-cam setup CamEvtSetupFollowCam.
+// NOTE: the fourth CamEvtBlendSlotVecs call passes `first` as its source argument
 // (retail quirk - the source argument is the category id, not the voice).
-CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
+CfCamEventObj* CamEvtCreateSlotObj(u32 first, CfCamEventObj* second,
                               CfCamEventObj* third, CfCamEventObj* fourth,
                               CfCamEventObj* fifth,
                               CfCamDataTable* sixth, CfCamEventObj* seventh) {
@@ -243,7 +243,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
     // Retail reads the current state word twice: a throwaway temp picks the
     // outgoing slot, then the state is re-loaded after the categorize call.
     CfCamEventSlot* cur = mgr->slots[mgr->field_0x3C];
-    int idx = func_800755BC(mgr, first);
+    int idx = CamEvtClassId(mgr, first);
     CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
     s16 oldState = m->field_0x3C;
 
@@ -430,31 +430,31 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
 
                 u16 c1 = (u16)CamEvtMapActionToCampaign(sixth->h0A, sixth->h0C);
                 u16 c2 = (u16)CamEvtMapActionToCampaign(sixth->h0E, sixth->h10);
-                func_80077F20(&toutA, second, player, c1,
+                CamEvtBlendSlotVecs(&toutA, second, player, c1,
                               sixth->h0A, &sixth->f1C);
                 tbl.f1C = toutA.x;
                 tbl.f20 = toutA.y;
                 tbl.f24 = toutA.z;
-                func_80077F20(&toutB, second, player, c1,
+                CamEvtBlendSlotVecs(&toutB, second, player, c1,
                               sixth->h0C, &sixth->f28);
                 tbl.f28 = toutB.x;
                 tbl.f2C = toutB.y;
                 tbl.f30 = toutB.z;
-                func_80077F20(&toutC, second, player, c2,
+                CamEvtBlendSlotVecs(&toutC, second, player, c2,
                               sixth->h0E, &sixth->f34);
                 tbl.f34 = toutC.x;
                 tbl.f38 = toutC.y;
                 tbl.f3C = toutC.z;
                 // Retail quirk: this call passes `first`, not `second`.
-                func_80077F20(&toutD, (CfCamEventObj*)first, player, c2,
+                CamEvtBlendSlotVecs(&toutD, (CfCamEventObj*)first, player, c2,
                               sixth->h10, &sixth->f40);
                 tbl.f40 = toutD.x;
                 tbl.f44 = toutD.y;
                 tbl.f48 = toutD.z;
-                result = (CfCamEventObj*)func_80076F88((CfCamEventManager*)lbl_eu_80663DF0,
+                result = (CfCamEventObj*)CamEvtSetupFollowCam((CfCamEventManager*)lbl_eu_80663DF0,
                                        first, second, &tbl);
             } else {
-                result = (CfCamEventObj*)func_800778E4((CfCamEventManager*)lbl_eu_80663DF0,
+                result = (CfCamEventObj*)CamEvtBuildFollowState((CfCamEventManager*)lbl_eu_80663DF0,
                                        first, second, (u32)fifth);
             }
             if (result == 0 && oldState != idx) {
@@ -479,7 +479,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
 // table carries a running value that is interpolated between element ids.
 // The same code serves the manager's three shake tables (0x7C / 0x1F4 /
 // 0x36C) through the shared CfCamShakeState region layout.
-int func_80074F4C(CfCamShakeState* self, int mode) {
+int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
     u8 active = self->flag_active;
     self->flag_finish = 0;
     int result = (active != 0) ? 1 : 0;
@@ -591,11 +591,11 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
     // interpolation parameter is passed as the trailing float argument
     // (retail keeps it in f1 across the waveform dispatch).
     if (self->field_0x160 == 1) {
-        func_800A41BC((f32*)&self->baseX, (CfCamEventElem*)&self->elems[prev],
+        VecMath_CatmullRom((f32*)&self->baseX, (CfCamEventElem*)&self->elems[prev],
                       (CfCamEventElem*)eCur, (CfCamEventElem*)eMid,
                       (CfCamEventElem*)&self->elems[next], t);
     } else if (self->field_0x160 == 0 || self->field_0x160 == 2) {
-        func_800A40E8((f32*)&self->baseX, (CfCamEventElem*)eCur,
+        VecMath_LerpVec((f32*)&self->baseX, (CfCamEventElem*)eCur,
                       (CfCamEventElem*)eMid, t);
     }
     }
@@ -716,7 +716,7 @@ void CamEvtReleaseAllSlots(CfCamEventManager* self) {
 }
 
 void CamEvtReleaseMappedSlot(CfCamEventManager* self, u32 idx) {
-    u32 n = func_800755BC(self, idx);
+    u32 n = CamEvtClassId(self, idx);
     CfCamEventSlot* p = self->slots[n];
     if (p) {
         if (p) {
@@ -734,16 +734,16 @@ void* CamEvtFetchSlotPtr(void* self, unsigned long idx) {
 // Categorise an environment/prompt id (r4) into a 0/1/2 bucket. The
 // manager pointer in r3 is unused by this helper. The declaration in
 // CfCamEvent_1.hpp keeps the call reloc name unmangled (retail symbol
-// func_800755BC).
+// CamEvtClassId).
 // NOTE: retail lays the four result blocks at the end (checks fall through
 // with jump-on-true); Wii/1.1 -O4,p inlines them with jump-on-false, and a
 // goto/switch form that reproduces the end layout instead normalizes the
-// == 0xb equality into a setnz chain (same version wall as func_8007560C's
+// == 0xb equality into a setnz chain (same version wall as CamEvtBusyChk's
 // two-cmpi range check).
-// Retail calls these outlined from func_800784A0; dont_inline keeps IPA from
+// Retail calls these outlined from CamEvtCreateSlotObj; dont_inline keeps IPA from
 // folding their bodies into the caller (repo convention, cf. CfGameManager).
 #pragma dont_inline on
-int func_800755BC(CfCamEventManager* /*unused*/, int idx) {
+int CamEvtClassId(CfCamEventManager* /*unused*/, int idx) {
     // Goto-to-end result blocks: retail is `li r3,0` then ble/beq
     // forward to dedicated `li r3,N; blr` tails (PLAN §17.6 gate chain).
     int result = 0;
@@ -769,7 +769,7 @@ ret2b:
 // folds the range into (u16)(v-0x10)<=0x1b (subi/rlwinm/cmpli); the two-cmpi
 // retail form only matches under mw_version="GC/3.0a5.2" (configure.py switch
 // pending, read-only this session).
-int func_8007560C() {
+int CamEvtBusyChk() {
     CfCamEventGlobal* g = lbl_eu_80663DF0;
     if (g == nullptr) return 0;
     s16 v = g->field_0x3E;
@@ -783,8 +783,8 @@ int func_8007560C() {
 }
 
 // True when the global cam state exists and is in the "intro" frame range.
-// Same range-check wall as func_8007560C (needs GC/3.0a5.2 for the two-cmpi form).
-int func_80075640() {
+// Same range-check wall as CamEvtBusyChk (needs GC/3.0a5.2 for the two-cmpi form).
+int CamEvtIsIntro() {
     CfCamEventGlobal* g = lbl_eu_80663DF0;
     if (g == nullptr) return 0;
     s16 v = g->field_0x3E;
@@ -801,7 +801,7 @@ int func_80075640() {
 // the f32 at 0x1E0) from the source object into the manager's 0x54..0x78
 // range. Temporaries reproduce retail's load-ascending / store-descending
 // schedule (load pair, store high first, then the single).
-void func_80075674(CfCamEventManager* dst, CfCamEventCopySrc* src) {
+void CamEvtCopyBlk(CfCamEventManager* dst, CfCamEventCopySrc* src) {
     if (src == 0) return;
     // Retail copies the triplets as raw GPR words (lwz/stw pairs), not
     // per-float lfs/stfs - use u32 word regions on both sides.
@@ -838,7 +838,7 @@ void func_80075674(CfCamEventManager* dst, CfCamEventCopySrc* src) {
 // Body/anchor coordinates are staged through locals so MWCC emits the
 // retail stfs-to-stack + GPR block-copy schedule; the follow-snap block is
 // textually duplicated because retail emits two identical copies.
-void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
+void CamEvtCalcAimPoint(ml::CVec3* out, CinemCamSrc* src) {
     CinemAimBody* body;
     CinemAimBody* anchor;
 
@@ -915,14 +915,14 @@ zero_init:
 // Camera depth/pose solver for the event cam. Computes a blended aim point
 // from one or two camera sources:
 //  - c1==4 short-circuits to raw vector copies;
-//  - otherwise both sources are run through func_800756D0, summed and scaled
+//  - otherwise both sources are run through CamEvtCalcAimPoint, summed and scaled
 //    by a yaw term derived from Atan2FIdx of the two voices' position delta
 //    (or re-queried per-source when the sources differ / match c1/c2 pairs);
 //  - the global cam-table flag word (0x4C) then shapes two working copies of
 //    the v1/v2 vectors (dead-end stack temps in retail);
 //  - finally out1/out2 are produced by cfCam_applyBasis blends selected by
 //    c1/c2, with demo-mode y-corrections applied at the tail.
-void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
+void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
                    ml::CVec3* v1, ml::CVec3* v2, u16 c1, u16 c2, u8 s0, u8 s1) {
     f32 scale = a->getScale5B4();
     if (c1 == 4) {
@@ -944,15 +944,15 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         return;
     }
 
-    // Blended aim accumulator; func_800756D0 fills it from source a.
+    // Blended aim accumulator; CamEvtCalcAimPoint fills it from source a.
     CamTripletLocals aimA; // retail stack slot 0x1E8
-    func_800756D0((ml::CVec3*)&aimA,
+    CamEvtCalcAimPoint((ml::CVec3*)&aimA,
                   a ? (CinemCamSrc*)&a->voice : (CinemCamSrc*)a);
 
     CamTripletLocals anchB; // b's follow limits snapshot (retail 0x1F4)
     if (b != 0) {
         CamTripletLocals aimB; // retail stack slot 0x194
-        func_800756D0((ml::CVec3*)&aimB, (CinemCamSrc*)&b->voice);
+        CamEvtCalcAimPoint((ml::CVec3*)&aimB, (CinemCamSrc*)&b->voice);
 
         // Sum the two aims, then scale by the constant yaw factor.
         CamTripletLocals sum; // retail stack slot 0x110
@@ -1065,7 +1065,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         CamTripletLocals res; // retail 0xEC / 0xD4
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
-            func_800756D0((ml::CVec3*)&in, v);
+            CamEvtCalcAimPoint((ml::CVec3*)&in, v);
             cfCam_applyBasis(&res, &in, scale, &p1);
         } else {
             res.x = p1.x; res.y = p1.y; res.z = p1.z;
@@ -1096,7 +1096,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
         CamTripletLocals res; // retail 0xBC / 0xA4
         CinemCamSrc* v = src ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
         if (v != 0) {
-            func_800756D0((ml::CVec3*)&in, v);
+            CamEvtCalcAimPoint((ml::CVec3*)&in, v);
             cfCam_applyBasis(&res, &in, scale, &p2);
         } else {
             res.x = p2.x; res.y = p2.y; res.z = p2.z;
@@ -1204,7 +1204,7 @@ static inline void camEventAnglePair(ml::CVec3* o1, ml::CVec3* o2,
 // vectors, scan tab0 for the first element whose marker word is set, then
 // run the shared pose solver over the matching cam pair and reshape the
 // table elements into aim angles. Returns 1 when active.
-int func_800762A0(CfCamEventManager* self) {
+int CamEvtAdvanceEvent(CfCamEventManager* self) {
     if ((self->field_0x48 & 0x9) == 0) return 1;
 
     ml::CVec3 v[4];
@@ -1235,7 +1235,7 @@ int func_800762A0(CfCamEventManager* self) {
         // No marked element: rework the last one.
         idx--;
         if (idx < 0) return 1;
-        func_80075934(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[2], &v[3],
+        CamEvtSolveAimPair(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[2], &v[3],
                       h0E, h10,
                       (u8)((self->field_0x48 & 2) != 0),
                       (u8)((self->field_0x48 & 0x10000) != 0));
@@ -1245,7 +1245,7 @@ int func_800762A0(CfCamEventManager* self) {
     }
 
     if (self->field_0x48 & 0x1) {
-        func_80075934(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[0], &v[1],
+        CamEvtSolveAimPair(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[0], &v[1],
                       h0A, h0C,
                       (u8)((self->field_0x48 & 2) != 0),
                       (u8)((self->field_0x48 & 0x10000) != 0));
@@ -1253,7 +1253,7 @@ int func_800762A0(CfCamEventManager* self) {
                           &self->shake[0].u.elems[idx]);
         idx++;
     }
-    func_80075934(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[2], &v[3],
+    CamEvtSolveAimPair(&o1, &o2, (CamCamSrc*)sa, (CamCamSrc*)sb, &v[2], &v[3],
                   h0E, h10,
                   (u8)((self->field_0x48 & 2) != 0),
                   (u8)((self->field_0x48 & 0x10000) != 0));
@@ -1323,7 +1323,7 @@ extern "C" int CamEvtMatchTypeFlag(int type_, int flags) {
 // each column's byte weight from a rand(100) draw until one is hit. Stores the
 // winning row and column byte into *outRow / *outCol and returns 1.
 // Declared in CfCamEvent_1.hpp; retail calls it with a bare unmangled bl.
-int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* other,
+int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* other,
                   u32* outRow, u32* outCol) {
     char* buf2;                             // inner-loop column buffer
     const char* colBase;                    // base of the type-column names
@@ -1392,11 +1392,11 @@ cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_getBattleStats() {
 // Set up the follow-cam state for one frame. Resolves the source object's
 // voice and follow target, copies the cam table into the global, resets the
 // manager's shake groups, and feeds the two aim pairs into the shared pose
-// solver (func_80075934 / func_80078D08). The shake-table tail duplicates
-// func_80079B34's busy/flag logic. Returns 1 on success.
-// __declspec(noinline): retail calls it outlined from func_800784A0.
+// solver (CamEvtSolveAimPair / CamEvtPushCamEntry). The shake-table tail duplicates
+// CamEvtStepShk's busy/flag logic. Returns 1 on success.
+// __declspec(noinline): retail calls it outlined from CamEvtCreateSlotObj.
 #pragma dont_inline on
-void* func_80076F88(CfCamEventManager* self, int unk34,
+void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam) {
     CamEventSrc* src = (CamEventSrc*)func_8016FE34(srcArg);
     u32 field_0x3F10 = (u32)src->field_0x3F10;
@@ -1515,7 +1515,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
         aim->field_0x0C = voice;
         aim->field_0x10 = ((CamEventAimObj*)voice)->field_0x74;
         CamTripletLocals tmp;
-        func_800756D0((ml::CVec3*)&tmp, (CinemCamSrc*)voice);
+        CamEvtCalcAimPoint((ml::CVec3*)&tmp, (CinemCamSrc*)voice);
         // Word-copy the out vector (retail uses GPR loads/stores here).
         CamEventVecWords* tw = (CamEventVecWords*)&tmp;
         CamEventVecWords* d14 = (CamEventVecWords*)&aim->field_0x14;
@@ -1532,7 +1532,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
         aim->field_0x20 = followObj;
         aim->field_0x24 = ((CamEventAimObj*)followObj)->field_0x74;
         CamTripletLocals tmp;
-        func_800756D0((ml::CVec3*)&tmp, (CinemCamSrc*)followObj);
+        CamEvtCalcAimPoint((ml::CVec3*)&tmp, (CinemCamSrc*)followObj);
         CamEventVecWords* tw = (CamEventVecWords*)&tmp;
         CamEventVecWords* d28 = (CamEventVecWords*)&aim->field_0x28;
         u32 wy = tw->w[1];
@@ -1565,7 +1565,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
     // vectors, 0x20 copies the slot's four vectors into a local block.
     int stateArg = 0;
     if (self->field_0x48 & 0x4) {
-        func_8007990C(self, 0, 1, (CamEventVecSrc*)&self->field_0x54, 0);
+        CamEvtDispatchState(self, 0, 1, (CamEventVecSrc*)&self->field_0x54, 0);
         stateArg = 0x1E;
     } else if (self->field_0x48 & 0x20) {
         CamEventVecSrcRaw tmp;
@@ -1593,31 +1593,31 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
             tmp.v2.w[2] = v->w[2];
             tmp.f_24 = s->getFloat58();
         }
-        func_8007990C(self, 0, 1, (CamEventVecSrc*)&tmp, 0);
+        CamEvtDispatchState(self, 0, 1, (CamEventVecSrc*)&tmp, 0);
         stateArg = 0x1E;
     }
 
     CamTripletLocals o1, o2;
     if ((self->field_0x48 & 0x4) == 0) {
-        func_80075934((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
+        CamEvtSolveAimPair((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
                       (CamCamSrc*)otherVoice,
                       (ml::CVec3*)&cam->f1C, (ml::CVec3*)&cam->f28,
                       cam->h0A, cam->h0C,
                       (u8)((self->field_0x48 >> 1) & 1),
                       (u8)((self->field_0x48 >> 16) & 1));
-        func_80078D08(self, stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, cam->h08,
+        CamEvtPushCamEntry(self, stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, cam->h08,
                       0, cam->f14);
         stateArg += cam->h06;
     }
-    func_80075934((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
+    CamEvtSolveAimPair((ml::CVec3*)&o1, (ml::CVec3*)&o2, (CamCamSrc*)srcVoice,
                   (CamCamSrc*)otherVoice,
                   (ml::CVec3*)&cam->f34, (ml::CVec3*)&cam->f40,
                   cam->h0E, cam->h10,
                   (u8)((self->field_0x48 >> 1) & 1),
                   (u8)((self->field_0x48 >> 16) & 1));
-    func_80078D08(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 0, 0,
+    CamEvtPushCamEntry(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 0, 0,
                   cam->f18);
-    func_80078D08(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 4, 0,
+    CamEvtPushCamEntry(self, (u16)stateArg, (ml::CVec3*)&o1, (ml::CVec3*)&o2, 4, 0,
                   cam->f18);
     if (self->field_0x48 & 0x40) {
         CamEventVecSrcRaw tmp2;
@@ -1644,10 +1644,10 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
             tmp2.v2.w[2] = v->w[2];
             tmp2.f_24 = s->getFloat58();
         }
-        func_8007990C(self, (u16)(stateArg + 0x1E), 0, (CamEventVecSrc*)&tmp2, 0);
+        CamEvtDispatchState(self, (u16)(stateArg + 0x1E), 0, (CamEventVecSrc*)&tmp2, 0);
     }
 
-    // Shake tail (same busy/flag logic as func_80079B34).
+    // Shake tail (same busy/flag logic as CamEvtStepShk).
     self->tab0.flag_active = 1;
     self->tab0.field_0x163 = 0;
 
@@ -1730,11 +1730,11 @@ union CamWordBits {
 // Build the cam-event follow state from a bdat row: resolve the source's
 // follow target, pick a table row (or take the caller override), fill a
 // local CfCamDataTable from the row's byte/angle columns, run the shared
-// pose setup (func_80076F88), then patch the cam-table entry selected by
+// pose setup (CamEvtSetupFollowCam), then patch the cam-table entry selected by
 // the row's speed columns. Returns 1 on success.
-// __declspec(noinline): retail calls it outlined from func_800784A0.
+// __declspec(noinline): retail calls it outlined from CamEvtCreateSlotObj.
 #pragma dont_inline on
-void* func_800778E4(
+void* CamEvtBuildFollowState(
     CfCamEventManager* self, int unk34, void* srcArg,
     u32 rowOverride) {
     // Declared low-to-high in retail's stack map: MWCC gives the first
@@ -1773,7 +1773,7 @@ void* func_800778E4(
 
     // NOTE: retail reads the winning row back from the SIXTH argument slot,
     // so the row target goes last here (the fifth is never read again).
-    int hit = func_80076D8C((int)self, unk34, voiceSrc, otherArg, &colTmp, &row);
+    int hit = CamEvtPickWeightedRow((int)self, unk34, voiceSrc, otherArg, &colTmp, &row);
     if (rowOverride != 0) {
         row = rowOverride;
     } else if (hit == 0 || row == 0) {
@@ -1852,7 +1852,7 @@ void* func_800778E4(
     tbl.f44 = t4.y;
     tbl.f48 = t4.z;
 
-    if (func_80076F88(self, unk34, srcArg, &tbl) == 0)
+    if (CamEvtSetupFollowCam(self, unk34, srcArg, &tbl) == 0)
         return 0;
 
     // Patch the cam-table entry picked by this row's speed columns.
@@ -1874,7 +1874,7 @@ void* func_800778E4(
         e->f_28 = lbl_eu_80666464 * t;
         CfCamEventGlobal* g = lbl_eu_80663DF0;
         if (g != 0 && g->field_0x38 != 0) {
-            func_80240C98(g->field_0x38, (int)e, 0);
+            MapFxAllocEntry(g->field_0x38, (int)e, 0);
         }
     }
     return (void*)1;
@@ -1882,7 +1882,7 @@ void* func_800778E4(
 
 // Compile-only stub; retail calls it outlined (dont_inline keeps the bl).
 #pragma dont_inline on
-void func_80077F20(void* out, void* a,
+void CamEvtBlendSlotVecs(void* out, void* a,
                                                      void* b, u16 c, u16 d,
                                                      void* e) {}
 #pragma dont_inline reset
@@ -1904,7 +1904,7 @@ done:
 #pragma dont_inline reset
 
 void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
-    u32 n = (u32)func_800755BC(self, idx);
+    u32 n = (u32)CamEvtClassId(self, idx);
     CfCamEventSlot* p = self->slots[n];
     if (p) {
         if (p) {
@@ -1913,14 +1913,14 @@ void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
         }
         self->slots[n] = 0;
     }
-    func_800784A0(idx, (CfCamEventObj*)param, 0, 0, 0, 0, 0);
+    CamEvtCreateSlotObj(idx, (CfCamEventObj*)param, 0, 0, 0, 0, 0);
 }
 
 // Reset the cam-event manager: clear the low halfword of the flags word,
 // re-seed the three shake-table groups (manager 0x1DC group + the two shake
 // units) with the given id/float constants, then forward the parameters to
 // the cam-data setup helper when the game manager is alive.
-void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
+void CamEvtResetManager(CfCamEventManager* self, u32 first, u32 second,
                    u32 third, u32 fourth, u32 fifth) {
     getCamManagerData__Q22cf13CfGameManagerFv(first);
     f32 f1C = lbl_eu_8066641C;
@@ -1955,17 +1955,17 @@ void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
     self->field_0x34 = fifth;
     UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (third != 0 && gm != 0) {
-        func_8007990C(self, 0, fourth, (CamEventVecSrc*)&self->field_0x54, 0);
+        CamEvtDispatchState(self, 0, fourth, (CamEventVecSrc*)&self->field_0x54, 0);
         self->field_0x40 = (u16)third;
     }
 }
 
 // Camera-event state machine: dispatches on the manager's cam-state id (0x3E).
 // State 9 scales the +0x18 triplet into a temp and appends it; states 8 / 0xA
-// subtract the +0x34 source's aim vector (PS vector sub) or run func_80074230
+// subtract the +0x34 source's aim vector (PS vector sub) or run cfCam_xformAimPairInv
 // on the two +0x00/+0x0C aim vectors; the default state appends the raw pair
 // when the global cam state is in its busy frame range [0x10, 0x2b].
-void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32 d) {
+void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32 d) {
     // Keep the state id in an int after the lha so the busy-range compare
     // below stays as two signed cmpi (an s16 local would let MWCC fold the
     // [0x10,0x2b] test into a subi/rlwinm/cmpli trio).
@@ -1982,7 +1982,7 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         tmp.x *= lbl_eu_8066A20C;
         tmp.y *= lbl_eu_8066A20C;
         tmp.z *= lbl_eu_8066A20C;
-        func_80078D08(self, a, (ml::CVec3*)c, (ml::CVec3*)&tmp, b, 0, c->f_24);
+        CamEvtPushCamEntry(self, a, (ml::CVec3*)c, (ml::CVec3*)&tmp, b, 0, c->f_24);
     } else if (st == 8) {
         // Copy both aim vectors, then (when the follow cam exists) subtract
         // its aim vector from each.
@@ -2003,7 +2003,7 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
             nw4r::math::VEC3Sub(pv1, pv1, pd);
             nw4r::math::VEC3Sub(pv2, pv2, pd);
         }
-        func_80078D08(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
+        CamEvtPushCamEntry(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
     } else if (st == 0xA) {
         CamTripletLocals v1;
         CamTripletLocals v2;
@@ -2014,9 +2014,9 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         v2.y = c->v1.y;
         v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
-            func_80074230((ml::CVec3*)&v1, (ml::CVec3*)&v2);
+            cfCam_xformAimPairInv((ml::CVec3*)&v1, (ml::CVec3*)&v2);
         }
-        func_80078D08(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
+        CamEvtPushCamEntry(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
     } else {
         // Default: only append while the global cam state is in its busy
         // frame range.
@@ -2026,7 +2026,7 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
             if (g >= 0x10 && g <= 0x2b) on = 1;
         }
         if (on != 0) {
-            func_80078D08(self, a, (ml::CVec3*)c, &c->v1, b, d, c->f_24);
+            CamEvtPushCamEntry(self, a, (ml::CVec3*)c, &c->v1, b, d, c->f_24);
         }
     }
 }
@@ -2047,7 +2047,7 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
 // Every appended element shares the id halfword (add + field_0x40) and the
 // p7/p8 word fields. The angle-pair body is duplicated below exactly as
 // retail duplicates it (a helper would add a call).
-void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r6,
+void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r6,
                    int p7, int p8, f32 p1) {
     // Retail zero-extends the truncated sum into a u32 (clrlwi r31); the
     // element stores narrow it back to a halfword.
@@ -2460,12 +2460,12 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
 // Advance each element of the shake table toward its predecessor by 2*PI once
 // the gap reaches PI. Written inline in each path below (retail keeps several
 // copies of the loop).
-void func_80079B34(CfCamEventManager* self) {
+void CamEvtStepShk(CfCamEventManager* self) {
     self->tab0.flag_active = 1;
     self->tab0.field_0x163 = 0;
 
     // Degenerate advance over tab0 kept from the original source (the same
-    // broken pointer-vs-count comparison as func_80079D6C): the table pointer
+    // broken pointer-vs-count comparison as CamEvtDeadStp): the table pointer
     // is compared against its own s16 count word, so the loop never iterates
     // at runtime - retail still emits the body.
     {
@@ -2554,7 +2554,7 @@ void func_80079B34(CfCamEventManager* self) {
 // f0<->f1 renames at the ABI boundary (cycle us-8007a708: "abi-boundary |
 // rho perm maps fpr f0 -> f1"). This is therefore a permanent 60% near-miss
 // unless a caller-convention trick is ever found; body is otherwise identical.
-void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
+void CamEvtDeadStp(f32 step, CfCamEventShakeElem* e) {
     while ((s32)e < (s32)e->count) {
         f32 d = (f32)__fabs((f64)(e->x4 - ((CfCamEventElem*)e - 1)->x4));
         if (d >= step) {
@@ -2570,7 +2570,7 @@ void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
 // three checks branchy with separate return blocks. Advancing a byte pointer
 // in-source pins the addi so the optimizer cannot refold it into the load
 // displacements.
-bool func_80079DBC(CfCamEventManager* manager) {
+bool CamEvtShkActv(CfCamEventManager* manager) {
     // CLOSED OPEN ITEM (us-8007a758): retail materializes base+0x1F4 via
     // `addi r3,r3,500` before the 2nd/3rd byte tests. Exhausted shapes: raw
     // u8* indexing, member access shake[i], tab0-strided array, array
@@ -2581,7 +2581,7 @@ bool func_80079DBC(CfCamEventManager* manager) {
     return manager->shake[1].field_0x162 != 0;
 }
 
-// One composition step of the fixed 3x3 recurrence used by the func_80079E04
+// One composition step of the fixed 3x3 recurrence used by the CamEvtUpdateFrame
 // rotation body. Folds a fresh sin/cos pair into the running block; written
 // inline twice per branch exactly as retail duplicates it.
 
@@ -2592,7 +2592,7 @@ bool func_80079DBC(CfCamEventManager* manager) {
 // resulting offset vectors into the dynamic object's setters; state 9 just
 // renormalizes the unit-0 base anchor. Returns whether either shake table
 // finished (or the delegate's result when busy).
-int func_80079E04(CfCamEventManager* self) {
+int CamEvtUpdateFrame(CfCamEventManager* self) {
     UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     CfDynMgr* dyn = (CfDynMgr*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                               (const void*)&lbl_eu_80661B30, 0);
@@ -2605,13 +2605,13 @@ int func_80079E04(CfCamEventManager* self) {
     if (!(val <= lbl_eu_8066641C)) return 0;
 
     if (self->tab0.flag_active == 0) {
-        // Flag 0x1DE clear: busy range still hands off to func_8007AA4C;
+        // Flag 0x1DE clear: busy range still hands off to CamEvtAdvanceBusy;
         // otherwise the one-shot flag 0x46 is released via the game manager.
         if (lbl_eu_80663DF0 != 0) {
             s16 g = lbl_eu_80663DF0->field_0x3E;
             if (g >= 0x10 && g <= 0x2b) {
                 if (self->field_0x48 & 1) {
-                    func_8007AA4C(self);
+                    CamEvtAdvanceBusy(self);
                 }
                 return 0;
             }
@@ -2626,17 +2626,17 @@ int func_80079E04(CfCamEventManager* self) {
     // Unit-1 active flag (0x4CE); survives to the tail scalar push.
     int flag = (self->shake[1].field_0x162 != 0);
 
-    // Busy early-out: hand the whole advance to func_8007AA4C.
+    // Busy early-out: hand the whole advance to CamEvtAdvanceBusy.
     if (lbl_eu_80663DF0 != 0) {
         s16 g = lbl_eu_80663DF0->field_0x3E;
-        if (g >= 0x10 && g <= 0x2b) return func_8007AA4C(self);
+        if (g >= 0x10 && g <= 0x2b) return CamEvtAdvanceBusy(self);
     }
 
     // Advance the three shake tables.
     CfCamEventShakeUnit* u0 = &self->shake[0];
-    func_80074F4C((CfCamShakeState*)&self->tab0, 0);
-    func_80074F4C((CfCamShakeState*)u0, 0);
-    func_80074F4C((CfCamShakeState*)&self->shake[1], 0);
+    CamEvtAdvanceShake((CfCamShakeState*)&self->tab0, 0);
+    CamEvtAdvanceShake((CfCamShakeState*)u0, 0);
+    CamEvtAdvanceShake((CfCamShakeState*)&self->shake[1], 0);
 
     // Busy word: either unit 0's finish flag or the table-0 finish flag.
     int result = (u0->field_0x164 != 0) || (self->tab0.flag_finish != 0);
@@ -2812,22 +2812,22 @@ int func_80079E04(CfCamEventManager* self) {
 }
 
 
-// Busy-range cam-event advance (called from func_80079E04). Advances the
+// Busy-range cam-event advance (called from CamEvtUpdateFrame). Advances the
 // three shake tables, then pushes the current aim pair into the dynamic
 // object obtained from the game manager: in demo mode (global cam table
 // h00 set) the pair is composed from the same fixed 3x3 recurrence used by
-// func_80079E04 - base matrix from sin/cos of (k*1), stepped by the unit-0
+// CamEvtUpdateFrame - base matrix from sin/cos of (k*1), stepped by the unit-0
 // base axis (baseX, then baseY), with the unit-0 baseZ magnitude folded in -
 // otherwise the raw table/unit base anchors are forwarded. Returns whether
 // either shake table finished.
-int func_8007AA4C(CfCamEventManager* self) {
+int CamEvtAdvanceBusy(CfCamEventManager* self) {
     int flag = self->field_0x48 & 1;
-    int ret = func_800762A0(self);
+    int ret = CamEvtAdvanceEvent(self);
     if (flag != 0 && ret == 0) return 0;
 
-    func_80074F4C((CfCamShakeState*)&self->tab0, flag);
-    func_80074F4C((CfCamShakeState*)&self->shake[0], flag);
-    func_80074F4C((CfCamShakeState*)&self->shake[1], flag);
+    CamEvtAdvanceShake((CfCamShakeState*)&self->tab0, flag);
+    CamEvtAdvanceShake((CfCamShakeState*)&self->shake[0], flag);
+    CamEvtAdvanceShake((CfCamShakeState*)&self->shake[1], flag);
 
     f32 wx = self->tab0.baseX;
     f32 wy = self->tab0.baseY;
@@ -2924,28 +2924,28 @@ extern void CamEvtClearSlotBytes(u8* self) {
 }
 
 // Forward shake state to the shared handler if the global cam state is alive.
-int func_8007B044(int arg0, int arg1) {
+int CamEvtForwardShakeFlag(int arg0, int arg1) {
     CfCamEventGlobal* g = lbl_eu_80663DF0;
     if (g != 0 && g->field_0x38 != 0) goto docall;
     return 0;
 docall:
-    return func_80240C98(g->field_0x38, arg0, arg1);
+    return MapFxAllocEntry(g->field_0x38, arg0, arg1);
 }
 
-int func_8007B078(int val) {
+int CamEvtLookupStateVal(int val) {
     CfCamEventGlobal* g = lbl_eu_80663DF0;
     if (g == nullptr) return val;
     u32 state = g->field_0x38;
     if (state == 0) return state;  // r3 already holds 0 here
-    return func_8024125C(state, val);
+    return MapFxClearSlotFlags(state, val);
 }
 
-int func_8007B0A0(int val) {
+int CamEvtSearchStateVal(int val) {
     CfCamEventGlobal* g = lbl_eu_80663DF0;
     if (g == nullptr) return val;
     u32 state = g->field_0x38;
     if (state == 0) return state;  // r3 already holds 0 here
-    return func_80241344(state, val);
+    return MapFxResetEntries(state, val);
 }
 
 // bdat column reads as function-like macros: MWCC ignores inline hints for
@@ -2955,7 +2955,7 @@ int func_8007B0A0(int val) {
 #define getColB(table, col, row) ((u8)getBdatStringColumnValue(table, col, row))
 
 // Snapshot a cam slot's four camera vectors into the raw 0x28-byte block
-// layout retail builds on the stack before calling func_8007990C.
+// layout retail builds on the stack before calling CamEvtDispatchState.
 // Accessor order (0x10 / 0x34 / 0x1C / 0x58) matches retail.
 #define slotSnapRaw(dst, slot) \
     do { \
@@ -2977,11 +2977,11 @@ int func_8007B0A0(int val) {
 //    0x126/0x132 (angle / duration, divided by the cam-table speed divisor
 //    and scaled by the sdata2 factor) and the shared handler is notified.
 // 2. Otherwise the event-cam mode is programmed (getCamManagerData/80082008),
-//    an optional slot snapshot is fed to func_8007990C, and up to six
+//    an optional slot snapshot is fed to CamEvtDispatchState, and up to six
 //    per-frame rows are walked: runtime-built column names (ml::FixStr<16>
 //    + format) feed two aim triplets through isEffectReady, and each row's
 //    follow column seeds another cam-table entry.
-void func_8007B0C8(int idx) {
+void CamEvtProgramEventCam(int idx) {
     if (lbl_eu_80663DF0 == 0) return;
     void* mgr = lbl_eu_806640BC;
     if (idx < 1) return;
@@ -3018,7 +3018,7 @@ void func_8007B0C8(int idx) {
         CfCamEventGlobal* g = lbl_eu_80663DF0;
         if (g == 0) return;
         if (g->field_0x38 == 0) return;
-        func_80240C98(g->field_0x38, (int)entry, 0);
+        MapFxAllocEntry(g->field_0x38, (int)entry, 0);
         return;
     }
 
@@ -3046,7 +3046,7 @@ void func_8007B0C8(int idx) {
             // with them at table index 1.
             CamEventVecSrcRaw snap;
             slotSnapRaw(snap, slot0);
-            func_8007990C(m, 0, 1, (CamEventVecSrc*)&snap, 0);
+            CamEvtDispatchState(m, 0, 1, (CamEventVecSrc*)&snap, 0);
         }
         angle = getColH(mgr, colBase + 0x157, idx);
     }
@@ -3140,7 +3140,7 @@ void func_8007B0C8(int idx) {
             e2->f_28 = lbl_eu_80666464 * t2;
             CfCamEventGlobal* g = lbl_eu_80663DF0;
             if (g != 0 && g->field_0x38 != 0)
-                func_80240C98(g->field_0x38, (int)e2, 0);
+                MapFxAllocEntry(g->field_0x38, (int)e2, 0);
         }
         angle += colA;
     }
@@ -3161,7 +3161,7 @@ void func_8007B0C8(int idx) {
             // Feed the freshly blended vectors into the pose solver.
             CamEventVecSrcRaw snap;
             slotSnapRaw(snap, slot0);
-            func_8007990C(m, (u16)angle, 4, (CamEventVecSrc*)&snap, 0);
+            CamEvtDispatchState(m, (u16)angle, 4, (CamEventVecSrc*)&snap, 0);
         }
     } else {
         isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
@@ -3171,7 +3171,7 @@ void func_8007B0C8(int idx) {
 }
 
 
-u8 func_8007BAE4() {
+u8 CamEvtGetFl46() {
     u8 result = 0;
     if (lbl_eu_80663DF0) {
         result = lbl_eu_80663DF0->field_0x46;
@@ -3186,7 +3186,7 @@ u8 func_8007BAE4() {
 // nw4r warning on violation), acos'd and compared against a threshold; when
 // both angles are within the threshold r30 is cleared. Retail computes the
 // squared lengths with paired-single dot products over a 12-word block copy.
-void func_8007BAFC(CfCamEventManager* self) {
+void CamEvtCheckAimAngles(CfCamEventManager* self) {
     if (self->field_0x3C == 1) {
         CfCamEventSlot* s0 = (CfCamEventSlot*)self->slots[0];
         if (s0 != 0) {
@@ -3200,7 +3200,7 @@ void func_8007BAFC(CfCamEventManager* self) {
     u8 flag = 0;
     if (lbl_eu_80663DF0 != 0) flag = lbl_eu_80663DF0->field_0x46;
 
-    int updateResult = func_80079E04(self);
+    int updateResult = CamEvtUpdateFrame(self);
     if (updateResult != 0) {
         if (self->field_0x3C == 2 && flag == 0) {
             // Snapshot the slot's camera-vector block before the update call;
@@ -3260,11 +3260,11 @@ void func_8007BAFC(CfCamEventManager* self) {
     }
 
     if (self->field_0x38 != 0) {
-        func_80240AAC(self->field_0x38);
+        MapFxStepAllEntries(self->field_0x38);
         // Retail reloads the slot pointer and its vector block here.
         CfCamEventSlot* tail =
             (CfCamEventSlot*)self->slots[self->field_0x3C];
-        func_80240B10(self->field_0x38, tail->field_0x0C);
+        MapFxApplyEntryPositions(self->field_0x38, tail->field_0x0C);
     }
 }
 

@@ -15,14 +15,14 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the func_800CF064 /
-// func_800CF810 ground probes; TU-local no-arg view of CfCode_GetSubObject below.
+// Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the MoveImplGroundProbeA /
+// MoveImplGroundProbeB ground probes; TU-local no-arg view of CfCode_GetSubObject below.
 extern "C" void* CfCode_GetSubObject();
 typedef int (*BE398PtrF32)(void*, u32, u32, u32, void*, f32);
 
-void func_800CEE80(CfObjectImplMoveObj* self);
-void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param);
-void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param);
+void MoveImplPresentEffect(CfObjectImplMoveObj* self);
+void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param);
+void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param);
 
 void MoveImplInitFields(CfObjectImplMoveObj* self) {
     // Init helper: -1 at 0x20, 0 at 0x1c, shared float constant at 0x24.
@@ -95,7 +95,7 @@ void MoveImplNoopA(void) {}
 // the presentation gate. Case bodies are laid out in retail's emission order
 // (0x10, 0xf, 9/0xb, 0xa/0xc-0xe) so MWCC's jump table and body placement
 // match.
-void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
+void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
     MoveImplDispatch204(self, id);
     if (id == 0x111) {
@@ -124,7 +124,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         {
             CfActorObj* a6 = self->field_0x18;
             u32 v6 = a6->field_04->b30()->field_0;
-            if (func_80174C98(a6, &v6, 0x805) == 0)
+            if (testActorStatus(a6, &v6, 0x805) == 0)
                 CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
         }
         break;
@@ -135,14 +135,14 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         // self->field_0x18 for each of these stores).
         self->field_0x18->mst.field_214 = 0;
         self->field_0x18->mst.field_210 = 0;
-        func_8014AE00(self->field_0x18->mst.buf);
+        aiRingCompact(self->field_0x18->mst.buf);
         self->field_0x18->field_3E98 = 0;
         self->field_0x18->mst.field_8 &= ~0x10;
         // Retail caches the actor in r29 for exactly this probe pair.
         {
             CfActorObj* actor = self->field_0x18;
             u32 v805 = actor->field_04->b30()->field_0;
-            if (func_80174C98(actor, &v805, 0x805) == 0) {
+            if (testActorStatus(actor, &v805, 0x805) == 0) {
                 // Re-request the base move state unless the c4 object
                 // reports 5.
                 if (((CfMoveC4Obj*)self->field_0x18->sub.field_C4)->field_374 != 5) {
@@ -181,7 +181,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         {
             CfActorObj* a9 = self->field_0x18;
             u32 v802 = a9->field_04->b30()->field_0;
-            if (func_80174C98(a9, &v802, 0x802) != 0)
+            if (testActorStatus(a9, &v802, 0x802) != 0)
                 self->field_0x18->sub.vfn00(0x100);
         }
         break;
@@ -202,17 +202,17 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             CfActorObj* ac = self->field_0x18;
             if ((ac->sub.field_64 & 2) != 0) {
                 u32 vA = ac->field_04->b30()->field_0;
-                if (func_80174C98(ac, &vA, 0xa) == 0)
+                if (testActorStatus(ac, &vA, 0xa) == 0)
                     CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
             } else {
                 u32 vB = ac->field_04->b30()->field_0;
-                if (func_80174C98(ac, &vB, 0xa) == 0)
+                if (testActorStatus(ac, &vB, 0xa) == 0)
                     CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
             }
         } else {
             CfActorObj* ae = self->field_0x18;
             u32 v805b = ae->field_04->b30()->field_0;
-            if (func_80174C98(ae, &v805b, 0x805) == 0)
+            if (testActorStatus(ae, &v805b, 0x805) == 0)
                 CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
         }
         // Release handlers 0xee..0xf8.
@@ -286,7 +286,7 @@ void MoveImplDispatch204(CfObjectImplMoveObj* self, u32 id) {
 // conditional 0x31 move-state request behind three handler probes; case 0x10
 // re-registers handlers behind a 0x30 request; ids 0x33/0xf7 discard eight
 // vf29C results while clearing flag-bit groups of the actor's +0x74 word.
-void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
+void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     // Retail reloads the id halfword from the parameter block for every
     // comparison (param stays cached in r31), so no local copy is kept.
     MoveImplGateEventCmd(self, param->field_C);
@@ -295,7 +295,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         self->field_0x18->f43();
         break;
     case 0xb:
-        func_80174C24(self->field_0x18, 0x40);
+        requestItemLoad(self->field_0x18, 0x40);
         // fallthrough
     case 9:
     case 0xc: {
@@ -325,7 +325,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             req.at4.body.field_10 = 0;
             req.at4.body.field_6 = 6;
         }
-        func_8014AC38(self->field_0x18->mst.buf, &req);
+        aiRingPrepend(self->field_0x18->mst.buf, &req);
         break;
     }
     case 0x10: {
@@ -333,10 +333,10 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         // then request state 0x30 unless the driver flag (or its +0x4ec
         // mirror on the +0xc4 object) blocks it.
         u32 v1a = self->field_0x18->field_04->b30()->field_0;
-        if (func_80174C98(self->field_0x18, &v1a, 0x1a) != 0)
+        if (testActorStatus(self->field_0x18, &v1a, 0x1a) != 0)
             break;
         u32 v19 = self->field_0x18->field_04->b30()->field_0;
-        if (func_80174C98(self->field_0x18, &v19, 0x19) != 0)
+        if (testActorStatus(self->field_0x18, &v19, 0x19) != 0)
             break;
         if (self->field_0x18->f173() != 0)
             break;
@@ -374,19 +374,19 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                     req.at4.body.field_10 = 0;
                     req.at4.body.field_6 = 6;
                 }
-                func_8014AC38(self->field_0x18->mst.buf, &req);
+                aiRingPrepend(self->field_0x18->mst.buf, &req);
             }
         }
         // Handler probes (ids 0x805/0x1a/0x19), then a conditional 0x31
         // move-state request gated on the driver flag word.
         u32 v805 = self->field_0x18->field_04->b30()->field_0;
-        if (func_80174C98(self->field_0x18, &v805, 0x805) != 0)
+        if (testActorStatus(self->field_0x18, &v805, 0x805) != 0)
             break;
         u32 v1a = self->field_0x18->field_04->b30()->field_0;
-        if (func_80174C98(self->field_0x18, &v1a, 0x1a) != 0)
+        if (testActorStatus(self->field_0x18, &v1a, 0x1a) != 0)
             break;
         u32 v19 = self->field_0x18->field_04->b30()->field_0;
-        if (func_80174C98(self->field_0x18, &v19, 0x19) != 0)
+        if (testActorStatus(self->field_0x18, &v19, 0x19) != 0)
             break;
         if (self->field_0x18->f173() != 0)
             break;
@@ -485,14 +485,14 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
 // the found actor accepts event 0xf8), or runs the filtered enum sweep that
 // repositions / clears move effects, and finally fires the 0x200 request when
 // actor id 5 is registered and its float counter exceeds the threshold.
-void func_800CBBD8(CfObjectImplMoveObj* self) {
+void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
     getInstance__Q22cf13CfGameManagerFv();
     if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666C60) {
         void* src = (void*)self->field_0x18->sub.vfn13();
         if (src == nullptr) {
             // No source bound: only reset when the probe stays empty.
             if (self->field_0x18->sub.vfn13() == 0) {
-                func_80174B4C(self->field_0x18, 0x80000);
+                dispatchItemLoad(self->field_0x18, 0x80000);
             }
         } else {
             CfActorObj* found = (CfActorObj*)func_8016FE34(
@@ -500,23 +500,23 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
             if (found == nullptr || found->f173() != 0 ||
                 func_80148778(found->field_08, 0xf8) != 0) {
                 self->vf70(nullptr);
-                func_80174B4C(self->field_0x18, 0x80000);
+                dispatchItemLoad(self->field_0x18, 0x80000);
             }
         }
     }
     // Main sweep block. Retail reloads field_0x18 for every check group.
     CfActorObj* actor = self->field_0x18;
     u32 v6 = actor->field_04->b30()->field_0;
-    bool any = func_80174C98(actor, &v6, 6) != 0;
+    bool any = testActorStatus(actor, &v6, 6) != 0;
     if (!any) {
         u32 vA = actor->field_04->b30()->field_0;
-        if (func_80174C98(actor, &vA, 0x806) == 0)
+        if (testActorStatus(actor, &vA, 0x806) == 0)
             return;
     }
     u32 vB = actor->field_04->b30()->field_0;
-    if (func_80174C98(actor, &vB, 0x40000000) == 0) {
+    if (testActorStatus(actor, &vB, 0x40000000) == 0) {
         u32 vC = actor->field_04->b30()->field_0;
-        if (func_80174C98(actor, &vC, 0x800000) == 0)
+        if (testActorStatus(actor, &vC, 0x800000) == 0)
             return;
     }
     CfMoveEnumHolder holder;
@@ -524,7 +524,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     CTaskGame_enumListGet(&holder);
     startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0x800);
     int handle = self->vf48();
-    func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
+    sortEntriesByDistance(CTaskGame_enumListGet(&holder), (void*)handle);
     if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
         // Effects exist: clear the driver state and re-register the sub-object.
         self->field_0x18->mst.field_214 = 0;
@@ -541,10 +541,10 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
             lbl_eu_80666C60);
         CfActorObj* act = self->field_0x18;
         u32 vD = act->field_04->b30()->field_0;
-        if (func_80174C98(act, &vD, 0x806) != 0) {
+        if (testActorStatus(act, &vD, 0x806) != 0) {
             aiActionClearBlockADC(act->mst.buf);
         } else {
-            func_80174B4C(act, 5);
+            dispatchItemLoad(act, 5);
             act->f138();
             int count = ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620;
             for (int i = 0; i < count; i++) {
@@ -556,7 +556,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
     __dt__80043E88(&holder, -1);
     actor = self->field_0x18;
     u32 vE = actor->field_04->b30()->field_0;
-    if (func_80174C98(actor, &vE, 5) != 0) {
+    if (testActorStatus(actor, &vE, 5) != 0) {
         if (actor->f139()->field_0 > lbl_eu_80666C60) {
             self->field_0x18->sub.vfn00(0x200);
         }
@@ -571,7 +571,7 @@ void MoveImplNoopB(void) {}
 // NOTE: a middle block of the retail routine was not available during this
 // pass; the reconstructed flow covers the gate chain, handler resolution and
 // the visible tail.
-void func_800CC020(CfObjectImplMoveObj* self) {
+void MoveImplRepositionEffect(CfObjectImplMoveObj* self) {
     CfActorObj* actor = self->field_0x18;
     CfMoveEvt60* evt = (CfMoveEvt60*)actor->sub.field_C4;      // actor +0x3F60
     if (evt == nullptr)
@@ -619,11 +619,11 @@ void MoveImplOnBattleEntry(CfObjectImplMoveObj* self, u32 battleId) {
     CfActorObj* actor = self->field_0x18;
     if (actor != 0 && battleId == actor->sub.field_C4) {
         self->vf64();
-        func_800E1B5C(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        evalBattleTarget(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
     }
 }
 
-void func_800CC638(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
+void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
     // Move-request driver: gate on the driver's id, then resolve the move
     // object from the request mode, reposition it for the 0x65/0x66 event
     // pair, and finally attach partner objects / fire the count effect.
@@ -727,7 +727,7 @@ struct CfMoveReqParam {
     char field_1C[8];             // 0x1c (ASCII digit)
 };
 
-void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
+void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
     if (id != ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->field_C4) {
         return;
     }
@@ -735,10 +735,10 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
     // per case; retail re-reads self->mSubObj around every dispatch).
     switch (param->field_A) {
     case 0:
-        func_800CF064(self, (CfMoveContact*)param);
+        MoveImplGroundProbeA(self, (CfMoveContact*)param);
         break;
     case 1:
-        func_800CF810(self, (CfMoveContact*)param);
+        MoveImplGroundProbeB(self, (CfMoveContact*)param);
         break;
     case 2: {
         // Only the first player's own driver plays the jingle.
@@ -962,7 +962,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
     }
 }
 
-void func_800CD268(){}
+void MoveImplDriveMoveSounds(){}
 
 // Camera-shake trigger: when the bound move event object exists, measure the
 // distance between the actor's target position and the scene pose position;
@@ -1016,7 +1016,7 @@ void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Target* targe
                           (nw4r::math::VEC3*)&shake.vecA, scale);
     nw4r::math::VEC3Scale((nw4r::math::VEC3*)&shake.vecB,
                           (nw4r::math::VEC3*)&shake.vecB, scale);
-    func_8007B044(&shake, 0);
+    CamEvtForwardShakeFlag(&shake, 0);
 }
 
 extern "C" void CfObjectMove_setRegionAttached(void*, unsigned int);
@@ -1032,7 +1032,7 @@ void CfObjectImplMoveData::MoveImplMatchIdSetRegion(unsigned int a, unsigned int
 // toggles the 0x1000 state bits on the driver sub-object, runs the
 // chainId==2 vf29C presentation chain, executes the per-kind body, then
 // forwards the transition to the partner actor linked at sub.field_71C.
-void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
+void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                    u32 chainId, u32 extraParam) {
     if (id != self->mSubObj->mSomeId) {
         return;
@@ -1150,80 +1150,80 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                 t = (evt != nullptr) ? evt->field_374 : 0;
                 if (t == 0xf && ac2->sub.field_0x8C >= 0x9c5 &&
                     ac2->sub.field_0x8C <= 0x9c7) {
-                    func_80174B4C(ac2, 0x10);
+                    dispatchItemLoad(ac2, 0x10);
                     goto tail;
                 }
                 if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), ac2) == 0) {
                     CfActorObj* ac3 = self->field_0x18;
                     if ((ac3->field_3374 & 8) == 0) {
                         u32 v1d = ac3->field_04->b30()->field_0;
-                        if (func_80174C98(ac3, &v1d, 0x1d) == 0) {
+                        if (testActorStatus(ac3, &v1d, 0x1d) == 0) {
                             CfActorObj* ac4 = self->field_0x18;
                             u32 v8 = ac4->field_04->b30()->field_0;
-                            if (func_80174C98(ac4, &v8, 8) == 0) {
+                            if (testActorStatus(ac4, &v8, 8) == 0) {
                                 CfActorObj* ac5 = self->field_0x18;
                                 ac5->sub.vfn00(0x200);
-                                func_800D9978(getInstance__Q22cf14CBattleManagerFv(),
+                                registerBattleActor(getInstance__Q22cf14CBattleManagerFv(),
                                     self->field_0x18);
                             }
                         }
                     }
                 }
                 self->field_0x18->sub.vfn20C(0x100);
-                func_80174B4C(self->field_0x18, 6);
+                dispatchItemLoad(self->field_0x18, 6);
                 goto tail;
             }
         }
         t = (evt != nullptr) ? evt->field_374 : 0;
         if (t == 4) {
-            func_80174B4C(self->field_0x18, 0x17);
+            dispatchItemLoad(self->field_0x18, 0x17);
             goto tail;
         }
         t = (evt != nullptr) ? evt->field_374 : 0;
         if (t == 5) {
-            func_80174B4C(self->field_0x18, 0x15);
+            dispatchItemLoad(self->field_0x18, 0x15);
             goto tail;
         }
         t = (evt != nullptr) ? evt->field_374 : 0;
         if (t == 1) {
-            func_80174B4C(self->field_0x18, 0x11);
+            dispatchItemLoad(self->field_0x18, 0x11);
             goto tail;
         }
         t = (evt != nullptr) ? evt->field_374 : 0;
         if (t == 0xa) {
-            func_80174B4C(self->field_0x18, 0x10);
+            dispatchItemLoad(self->field_0x18, 0x10);
             goto tail;
         }
         {
             CfActorObj* ac6 = self->field_0x18;
             u32 v1 = ac6->field_04->b30()->field_0;
-            if (func_80174C98(ac6, &v1, 1) != 0) {
+            if (testActorStatus(ac6, &v1, 1) != 0) {
                 goto tail;
             }
             CfActorObj* ac7 = self->field_0x18;
             u32 v2 = ac7->field_04->b30()->field_0;
-            if (func_80174C98(ac7, &v2, 2) != 0) {
+            if (testActorStatus(ac7, &v2, 2) != 0) {
                 goto tail;
             }
             self->field_0x18->sub.vfn20C(0x200);
-            func_80174B4C(self->field_0x18, 3);
+            dispatchItemLoad(self->field_0x18, 3);
         }
         break;
     }
     case 7:
-        func_80174B4C(self->field_0x18, 7);
+        dispatchItemLoad(self->field_0x18, 7);
         self->field_0x18->sub.vfn20C(0x100);
         self->field_0x18->sub.vfn20C(0x200);
         self->field_0x18->sub.vfn00(4);
-        func_800D9978(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        registerBattleActor(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
         break;
     case 0x1f:
-        func_80174B4C(self->field_0x18, 0x1f);
+        dispatchItemLoad(self->field_0x18, 0x1f);
         break;
     case 8: {
         // Full teardown: clear counters, reset the move buffer state and hand
         // the actor back to the battle/voice managers.
-        func_80174B4C(self->field_0x18, 8);
+        dispatchItemLoad(self->field_0x18, 8);
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         self->field_0x18->sub.vfn204(2, 0, -1, 0, 0);
         self->field_0x18->sub.vfn20C(0x200);
@@ -1232,26 +1232,26 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         a4->mst.field_214 = 0;
         a4->mst.field_210 = 0;
         self->vf70();
-        func_800D9CA0(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
+        unregisterBattleActor(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18);
         CCharVoiceMan_FlushPendingActorVoice(self->field_0x18);
         break;
     }
     case 0x10:
-        func_80174B4C(self->field_0x18, 0x10);
+        dispatchItemLoad(self->field_0x18, 0x10);
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         break;
     case 0x16:
         self->field_0x18->sub.f03();
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         self->field_0x18->sub.vfn204(2, 0, -1, 0, 0);
-        func_80174B4C(self->field_0x18, 0x16);
+        dispatchItemLoad(self->field_0x18, 0x16);
         break;
     case 0x15:
         self->field_0x18->sub.f03();
-        func_80174B4C(self->field_0x18, 0x15);
+        dispatchItemLoad(self->field_0x18, 0x15);
         break;
     case 0x18:
-        func_80174B4C(self->field_0x18, 0x18);
+        dispatchItemLoad(self->field_0x18, 0x18);
         break;
     case 0x19: {
         // Release the presentation handler set unless either flag-word bit 30
@@ -1261,7 +1261,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         CfMoveC4Obj* e9 = (CfMoveC4Obj*)a9->sub.field_C4;
         if ((a9->sub.field_64 & 2) == 0 || (e9->field_4EC & 2) == 0) {
             setAnimCount(e9, 0xb);
-            func_80174B4C(self->field_0x18, 0x19);
+            dispatchItemLoad(self->field_0x18, 0x19);
         }
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
@@ -1275,7 +1275,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         CfMoveC4Obj* ea = (CfMoveC4Obj*)aa->sub.field_C4;
         if ((aa->sub.field_64 & 2) == 0 || (ea->field_4EC & 2) == 0) {
             setAnimCount(ea, 0xb);
-            func_80174B4C(self->field_0x18, 0x1a);
+            dispatchItemLoad(self->field_0x18, 0x1a);
         }
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x10);
         ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf);
@@ -1297,7 +1297,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         CfActorObj* ab = self->field_0x18;
         ab->mst.field_214 = 0;
         ab->mst.field_210 = 0;
-        func_80174B4C(self->field_0x18, 0x1c);
+        dispatchItemLoad(self->field_0x18, 0x1c);
         self->field_0x18->field_3E98 = 0;
         self->field_0x18->mst.field_8 &= ~0x10;
         break;
@@ -1305,7 +1305,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
     case 0x1d:
         self->field_0x18->field_04->b20(0x200000);
         self->field_0x18->field_04->b20(0x400000);
-        func_80174B4C(self->field_0x18, 0x1d);
+        dispatchItemLoad(self->field_0x18, 0x1d);
         break;
     case 9:
     case 0xa:
@@ -1313,18 +1313,18 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         // Knockback-strength scaling: the registered probe gates the float
         // dance driven by the slot-0x218 signed halfword.
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
-        func_800DA0A4(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18,
+        initBattleActorState(getInstance__Q22cf14CBattleManagerFv(), self->field_0x18,
             extraParam);
         if (self->field_0x18->vf298()->field_48 >= 0x10) {
-            func_80174B4C(self->field_0x18, 0xa);
+            dispatchItemLoad(self->field_0x18, 0xa);
         } else if (self->field_0x18->vf298()->field_48 >= 7) {
-            func_80174B4C(self->field_0x18, 0xb);
+            dispatchItemLoad(self->field_0x18, 0xb);
         } else {
-            func_80174B4C(self->field_0x18, 9);
+            dispatchItemLoad(self->field_0x18, 9);
         }
         CfActorObj* aT = self->field_0x18;
         u32 v9 = aT->field_04->b30()->field_0;
-        if (func_80174C98(aT, &v9, 9) == 0) {
+        if (testActorStatus(aT, &v9, 9) == 0) {
             f32 val = ((CfVf218Result*)self->field_0x18->vf218())->field_28;
             if (val > lbl_eu_80666C60) {
                 self->field_0x18->sub.vfn90(lbl_eu_80666C64 + val / lbl_eu_80666C78);
@@ -1342,44 +1342,44 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
     case 0xe: {
         CfActorObj* ad = self->field_0x18;
         u32 v802 = ad->field_04->b30()->field_0;
-        if (func_80174C98(ad, &v802, 0x802) != 0) {
-            func_80174B4C(self->field_0x18, 0xe);
+        if (testActorStatus(ad, &v802, 0x802) != 0) {
+            dispatchItemLoad(self->field_0x18, 0xe);
             self->field_0x18->sub.vfn00(0x100);
             goto tail;
         }
         CfActorObj* ae = self->field_0x18;
         u32 v805 = ae->field_04->b30()->field_0;
-        if (func_80174C98(ae, &v805, 0x805) != 0) {
+        if (testActorStatus(ae, &v805, 0x805) != 0) {
             self->field_0x18->sub.vfn00(0x100);
         }
-        func_80174B4C(self->field_0x18, 0xd);
+        dispatchItemLoad(self->field_0x18, 0xd);
         break;
     }
     case 0x12: {
         CfActorObj* af = self->field_0x18;
         u32 v802 = af->field_04->b30()->field_0;
-        if (func_80174C98(af, &v802, 0x802) != 0) {
+        if (testActorStatus(af, &v802, 0x802) != 0) {
             self->field_0x18->sub.vfn00(0x100);
         }
-        func_80174B4C(self->field_0x18, 0x12);
+        dispatchItemLoad(self->field_0x18, 0x12);
         break;
     }
     case 0x13: {
         CfActorObj* ag = self->field_0x18;
         u32 v802 = ag->field_04->b30()->field_0;
-        if (func_80174C98(ag, &v802, 0x802) != 0) {
+        if (testActorStatus(ag, &v802, 0x802) != 0) {
             self->field_0x18->sub.vfn00(0x100);
         }
-        func_80174B4C(self->field_0x18, 0x13);
+        dispatchItemLoad(self->field_0x18, 0x13);
         break;
     }
     case 0x14: {
         CfActorObj* ah = self->field_0x18;
         u32 v802 = ah->field_04->b30()->field_0;
-        if (func_80174C98(ah, &v802, 0x802) != 0) {
+        if (testActorStatus(ah, &v802, 0x802) != 0) {
             self->field_0x18->sub.vfn00(0x100);
         }
-        func_80174B4C(self->field_0x18, 0x14);
+        dispatchItemLoad(self->field_0x18, 0x14);
         break;
     }
     default:
@@ -1422,7 +1422,7 @@ void MoveImplSweepReposition(CfObjectImplMoveObj* self) {
     CTaskGame_enumListCtor(&holder);
     startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
     u32 handle = self->vf48();
-    func_800F6ED0(CTaskGame_enumListGet(&holder), (void*)handle);
+    sortEntriesByDistance(CTaskGame_enumListGet(&holder), (void*)handle);
     // The count is re-read through CTaskGame_enumListGet on every use (retail makes
     // a fresh call each time).
     if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
@@ -1469,8 +1469,8 @@ void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x00400000);
     self->field_0x18->field_04->b20(0x00800000);
     self->field_0x18->sub.vfn14(nullptr);
-    func_80174B4C(self->field_0x18, 0x08000000);
-    func_80174B4C(self->field_0x18, 0x10000000);
+    dispatchItemLoad(self->field_0x18, 0x08000000);
+    dispatchItemLoad(self->field_0x18, 0x10000000);
     self->field_0x18->field_3E98 = 0;
     self->field_0x18->mst.field_8 &= ~0x10;
     CfActorMstBlock* mst = &self->field_0x18->mst;
@@ -1499,12 +1499,12 @@ void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
     // Retail reloads self->field_0x18 (actor) from memory before every use.
     CfActorObj* actor = self->field_0x18;
     u32 valA = actor->field_04->b30()->field_0;
-    if (func_80174C98(actor, &valA, 0xa) != 0) {
+    if (testActorStatus(actor, &valA, 0xa) != 0) {
         return;
     }
     actor = self->field_0x18;
     u32 valB = actor->field_04->b30()->field_0;
-    if (func_80174C98(actor, &valB, 0xb) != 0) {
+    if (testActorStatus(actor, &valB, 0xb) != 0) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -1639,7 +1639,7 @@ void MoveImplNoopC(void) {}
 // +0x14ac object, builds the presentation vector, picks effect/sound ids from
 // the move timers, then drives the effect manager, the attach helper and the
 // positional sound.
-void func_800CEE80(CfObjectImplMoveObj* self) {
+void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
     if (self->mSubObj->field_0x98 == nullptr) {
         return;
     }
@@ -1728,7 +1728,7 @@ void func_800CEE80(CfObjectImplMoveObj* self) {
 // chain or selects tiered move/sound ids from the move state (+0x4ac) and
 // drives the effect-manager orientation update (quaternion decomposition of
 // the surface-relative direction into the slot-0xbc angle triple).
-void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
+void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if (self->mSubObj->field_0x98 == 0) {
         return;
     }
@@ -1780,7 +1780,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         }
         if (param->field_0xA == 0x13 &&
             ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 >= lbl_eu_80666C9C) {
-            func_800CEE80(self);
+            MoveImplPresentEffect(self);
             return;
         }
         if (!(((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 <= lbl_eu_80666C6C)) {
@@ -1978,7 +1978,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
 // effect (short-timer path) or rebuilds the effect orientation from the move
 // direction (quaternion decomposition into the slot-0xbc angle triple) before
 // the tiered impact sound.
-void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
+void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     CfObjectImplMoveSubObj* drv = self->mSubObj;
     if (drv->field_0x98 == 0)
         return;

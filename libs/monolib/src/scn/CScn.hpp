@@ -159,7 +159,7 @@ public:
 };
 
 class CScnEnvLgtCtrl;
-extern "C" u32 func_804C12A4(CScnEnvLgtCtrl* self);
+extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self);
 
 // Typed view of the CScn member fields written by __ct__CScn. Mirrors the
 // public-header layout without modifying it.

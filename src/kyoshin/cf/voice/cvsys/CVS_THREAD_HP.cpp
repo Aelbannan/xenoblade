@@ -62,7 +62,7 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
     }
 
     // Allocate the handle buffer (0xD2 bytes, discarded) and the object.
-    if (func_802A330C(0xD2, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0xD2, 1) == NULL) {
         return NULL;
     }
     CVS_THREAD_HP* self = (CVS_THREAD_HP*)CCharVoiceMan_AllocVoiceArena(0x28);
@@ -97,11 +97,11 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
 }
 #pragma optimize_for_size on
 
-// us-802a9b98 (func_802A7464)
+// us-802a9b98 (HpVoice_AdvancePlay)
 // Advance/play function: restore the base state triple from the init table,
 // then if the voice handle slot is present and idle, play the HP-change
-// voice ID; on failure fire the playback-start virtual (func_802A3B50).
-void func_802A7464(CVS_THREAD_HP* self) {
+// voice ID; on failure fire the playback-start virtual (PlayThreadVoice).
+void HpVoice_AdvancePlay(CVS_THREAD_HP* self) {
     // Restore the base state triple (lwzu/spread load-with-update form).
     // v0 is declared first so MWCC colours the lwzu destination low and the
     // base pointer high, matching retail register order.
@@ -121,8 +121,8 @@ void func_802A7464(CVS_THREAD_HP* self) {
         if (self->field_0x20 != NULL) {
             biased = &self->field_0x20->voice;
         }
-        if (func_802A3C44(self, biased, self->field_0x24) == 0) {
-            self->func_802A3B50();
+        if (TryRequestVoice(self, biased, self->field_0x24) == 0) {
+            self->PlayThreadVoice();
         }
     }
 }
@@ -135,7 +135,7 @@ void func_802A7464(CVS_THREAD_HP* self) {
 // a random idle voice handle (excluding this thread's own slot) and play the
 // HP-change voice; on failure fire the playback-start virtual (blank1).
 void HpVoice_PlayChange(CVS_THREAD_HP* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
     // Restore the base state triple (lwzu/spread load-with-update form).
@@ -151,9 +151,9 @@ void HpVoice_PlayChange(CVS_THREAD_HP* self) {
     words[2] = *p;
 
     // Pick a random idle handle, excluding this thread's own voice slot.
-    handle = func_802A7998(handle);
+    handle = HpVoice_PickIdleVoice(handle);
     if (handle == NULL) {
-        self->func_802A3B50();
+        self->PlayThreadVoice();
         return;
     }
     // Bias the handle to its embedded CCharVoice (voice lives at +0x3E9C).
@@ -161,17 +161,17 @@ void HpVoice_PlayChange(CVS_THREAD_HP* self) {
     if (handle != NULL) {
         biased = &handle->voice;
     }
-    if (func_802A3C44(self, biased, ml::math::mtRand(2) + 0x51F) == 0) {
-        self->func_802A3B50();
+    if (TryRequestVoice(self, biased, ml::math::mtRand(2) + 0x51F) == 0) {
+        self->PlayThreadVoice();
     }
 }
 #pragma optimize_for_size on
 
 // Completion callback: if no active voice, invoke the playback-start virtual
-// (CVS_THREAD::func_802A3B50, vtable slot 1).
+// (CVS_THREAD::PlayThreadVoice, vtable slot 1).
 void HpVoice_NotifyComplete(CVS_THREAD* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -183,7 +183,7 @@ void HpVoice_NotifyComplete(CVS_THREAD* self) {
 // stmw/lmw, which retail does not use here).
 #pragma optimize_for_size off
 void HpVoice_RemoveVoice(CVS_THREAD_HP* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
@@ -228,30 +228,30 @@ int HpVoice_InitPlayerVoice(CVoiceHandle* self) {
     if (((CVoiceVTV*)self)->idle() != 0) {
         return 0;
     }
-    if (func_802A330C(0x136, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x136, 1) == NULL) {
         return 0;
     }
     CCharVoice* selfBiased = (CCharVoice*)self;
     if (self != NULL) {
         selfBiased = &self->voice;
     }
-    func_802A3D54(selfBiased, ml::math::mtRand(2) + 0xED9, 0x136);
+    RequestVoicePlayback(selfBiased, ml::math::mtRand(2) + 0xED9, 0x136);
     return 0;
 }
 #pragma optimize_for_size on
 
-// us-802a9e78 (func_802A7744)
+// us-802a9e78 (HpVoice_InitVoiceId)
 // Voice-ID init helper. If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
 // HP-change voice (base 0xC81) through the sound system. Always returns 0.
-int func_802A7744(CVoiceHandle* self) {
+int HpVoice_InitVoiceId(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
     if (((CVoiceVTV*)self)->idle() != 0) {
         return 0;
     }
-    if (func_802A330C(0x41, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x41, 1) == NULL) {
         return 0;
     }
 
@@ -260,14 +260,14 @@ int func_802A7744(CVoiceHandle* self) {
     if (self != NULL) {
         biased = &self->voice;
     }
-    func_802A3D54(biased, ml::math::mtRand(3) + 0xC81, 0x41);
+    RequestVoicePlayback(biased, ml::math::mtRand(3) + 0xC81, 0x41);
     return 0;
 }
 
 // Map a voice handle's sub-state index (+0x3F28) to a voice-iterator value:
 // 8 -> 3, 9 -> 8, 0xA -> 9, 0xB -> 0xA, 0xC -> 0xB, 0xD -> 0xC; any other
 // value is returned unchanged.
-int func_802A77E8(CVoiceHandle* handle) {
+int HpVoice_MapSubState(CVoiceHandle* handle) {
     // Masking to 0xFFFF folds into the lhz but types the value as signed
     // int, so MWCC emits signed cmpi like retail.
     int subState = ((CVoiceHandleState*)handle)->field_0x3F28 & 0xFFFF;
@@ -295,7 +295,7 @@ int func_802A77E8(CVoiceHandle* handle) {
 // Validates the voice iterator: nonzero only for the state range [1, 7].
 // Retail keeps two signed cmpwi (GC/3.0a5.2 codegen; the unit is GC/3.0a5.2 -
 // Wii/1.1 merges the range into the unsigned (iter-1) <= 6 trick).
-extern "C" int func_802A7850(int iter) {
+extern "C" int HpVoice_ValidIter(int iter) {
     int result = 0;
     if (iter >= 1) {
         if (iter <= 7) {
@@ -305,14 +305,14 @@ extern "C" int func_802A7850(int iter) {
     return result;
 }
 
-// us-802a9fa4 (func_802A7870)
+// us-802a9fa4 (HpVoice_CollectIdle)
 // Collect idle voice handles from the voice-manager circular list into an
 // output array (excluding one handle), returning how many were stored.
 // `capacity` is a caller-side hint and is not used by the retail body.
 // NOTE: index the store as out[count] - a manual byte-offset local folds the
 // address into a pointer walk (stw+addi rOut,4); out[count] keeps base+index
 // separate (retail stwx rD,rOut,rOff; addi rOff,4) under GC/3.0a5.2 -O4,s.
-int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
+int HpVoice_CollectIdle(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
     CVoiceHandle* handle;
     CVoiceManager* mgr = getListB28();
     CVoiceListNode* node;
@@ -359,10 +359,10 @@ int HpVoice_CountActiveVoices(CVoiceHandle* exclude) {
     return count;
 }
 
-// us-802aa0cc (func_802A7998)
+// us-802aa0cc (HpVoice_PickIdleVoice)
 // Randomly pick one idle voice handle from the voice-manager circular list,
 // excluding `exclude`. Returns NULL when no idle handle is available.
-CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
+CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude) {
     // Indexing the store as out[count++] keeps base and offset registers
     // separate under GC/3.0a5.2 -O4,s (retail stwx rD,rOut,rOff; addi rOff,4);
     // a manual byte-offset local folds into a pointer walk and drops a reg.
@@ -391,11 +391,11 @@ CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
     return NULL;
 }
 
-// us-802aa188 (func_802A7A54)
+// us-802aa188 (HpVoice_FindBySubState)
 // Collect idle voice handles from the voice-manager circular list, then
 // return the first one whose sub-state maps to the given iterator value
 // `match` (NULL when none matches).
-CVoiceHandle* func_802A7A54(int match) {
+CVoiceHandle* HpVoice_FindBySubState(int match) {
     CVoiceManager* mgr = getListB28();
     CVoiceHandle* out[7];
     // Declaration order colours the registers like retail (MWCC colors in
@@ -452,11 +452,11 @@ CVoiceHandle* func_802A7A54(int match) {
     return NULL;
 }
 
-// us-802aa2c4 (func_802A7B90)
+// us-802aa2c4 (HpVoice_CheckPair26)
 // Battle-state gate: map both handles' sub-state indexes to voice-iterator
 // values; the HP-change voice may fire only when the pair is (2, 6) and the
 // cf sequence counter is below 0x91.
-int func_802A7B90(CVoiceHandleState* a, CVoiceHandleState* b) {
+int HpVoice_CheckPair26(CVoiceHandleState* a, CVoiceHandleState* b) {
     if (a == NULL) {
         return 0;
     }
@@ -509,11 +509,11 @@ int func_802A7B90(CVoiceHandleState* a, CVoiceHandleState* b) {
     return result;
 }
 
-// us-802aa3f8 (func_802A7CC4)
-// Battle-state gate: same sub-state mapping as func_802A7B90; the voice may
+// us-802aa3f8 (HpVoice_CheckPair13)
+// Battle-state gate: same sub-state mapping as HpVoice_CheckPair26; the voice may
 // fire only when the pair is (1, 3) and the cf sequence counter is below
 // 0x24.
-int func_802A7CC4(CVoiceHandleState* a, CVoiceHandleState* b) {
+int HpVoice_CheckPair13(CVoiceHandleState* a, CVoiceHandleState* b) {
     if (a == NULL) {
         return 0;
     }
@@ -562,11 +562,11 @@ int func_802A7CC4(CVoiceHandleState* a, CVoiceHandleState* b) {
     return result;
 }
 
-// us-802aa52c (func_802A7DF8)
+// us-802aa52c (HpVoice_CheckHpBase)
 // Map a voice handle's sub-state index (+0x3F28) to a voice-iterator value
-// (same mapping as func_802A77E8); when the result is the HP base state (3),
+// (same mapping as HpVoice_MapSubState); when the result is the HP base state (3),
 // also require the game-manager sequence counter to be below 0x24.
-int func_802A7DF8(CVoiceHandle* handle) {
+int HpVoice_CheckHpBase(CVoiceHandle* handle) {
     if (handle == NULL) {
         return 0;
     }
@@ -650,14 +650,14 @@ int HpVoice_CheckPairGate(CVoiceHandle* a, CVoiceHandle* b) {
     return result;
 }
 
-// us-802aa718 (func_802A7FE4)
+// us-802aa718 (HpVoice_CheckIdleGate)
 // Retail saves r28-r31 individually; unit-level -O4,s merges them into
 // stmw/lmw, so size-opt must be off here (same as HpVoice_PlayChange).
 #pragma optimize_for_size off
 // Count idle voice handles in the voice-manager circular list; when the
 // source handle's sub-state maps to one of the iterator values {1, 3, 7},
 // return whether at most one idle handle is available.
-int func_802A7FE4(CVoiceHandle* handle) {
+int HpVoice_CheckIdleGate(CVoiceHandle* handle) {
     if (handle == NULL) {
         return 0;
     }
@@ -712,7 +712,7 @@ int func_802A7FE4(CVoiceHandle* handle) {
 // Returns whether the cf sequence counter is below the battle-end shutdown
 // threshold (0x94). Retail emits the branchless highest-differing-bit scan
 // ((C << cntlzw(v ^ C)) & 0x80000000), so write that shape literally.
-int func_802A8140() {
+int HpVoice_SeqBelow94() {
     int v = cf::CfGameManager::getQueuedFileEventCount();
     return (u32)(0x94 << __cntlzw(v ^ 0x94)) >> 31;
 }

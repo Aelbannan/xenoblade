@@ -226,7 +226,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
         u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
                              CDeviceFont::getFontInfo(1, mpLayout))->getFont();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         u32 lang = getPackedFont();
         if (lang != 0) {

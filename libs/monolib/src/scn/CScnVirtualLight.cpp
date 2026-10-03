@@ -602,7 +602,7 @@ void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
         }
         scnVlIterNext((u32*)&it);
     }
-    func_80058BD8(&v18, src, value);
+    Env_ScaleVec4(&v18, src, value);
     copyWord4((u32*)&self->field_0x8C, (const u32*)&v18);
     copyWord4((u32*)&self->field_0xAC, (const u32*)&self->field_0x8C);
 }
@@ -645,7 +645,7 @@ void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
         }
         scnVlIterNext((u32*)&it);
     }
-    func_80058BD8(&v18, src, value);
+    Env_ScaleVec4(&v18, src, value);
     copyWord4((u32*)&self->field_0x9C, (const u32*)&v18);
 }
 
@@ -1095,9 +1095,9 @@ void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
     }
     ml::CVec4 v18;
     ml::CVec4 v8;
-    func_80058BD8(&v18, (const ml::CVec4*)&self->field_0x9C, self->field_0xBC);
+    Env_ScaleVec4(&v18, (const ml::CVec4*)&self->field_0x9C, self->field_0xBC);
     copyWord4((u32*)&self->field_0xAC, (const u32*)&v18);
-    func_80058BD8(&v8, (const ml::CVec4*)&self->field_0x8C, lbl_eu_8066AA18 - self->field_0xBC);
+    Env_ScaleVec4(&v8, (const ml::CVec4*)&self->field_0x8C, lbl_eu_8066AA18 - self->field_0xBC);
     scnVlVec4Add((f32*)&self->field_0xAC, (const f32*)&v8);
 }
 

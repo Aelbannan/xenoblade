@@ -46,12 +46,12 @@ struct ScnResEntry {
 extern "C" {
 ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
 void Coli_ClearOutFlag_8078(ScnResData* self, int index);
-void func_804B80CC(ScnResData* self);
-void func_804B7804(ScnResData* self);
+void getMoverEntry(ScnResData* self);
+void initColiMover(ScnResData* self);
 void Coli_CheckFlag(ScnResData*);
-void func_804B7D9C(int, int);
-void func_804B7DD4(ScnResData*);
+void clrSeenBitTbl(int, int);
+void setSeenBitTbl(ScnResData*);
 void Coli_RebiasIndices(int* dest, int baseOffset, int* src);
 void Coli_InstallDataPtrs_74F0(ScnResData* res, u8* data);
-void func_804B7540(ScnResData* res, u8* data, u16 param);
+void allocMoverTbl(ScnResData* res, u8* data, u16 param);
 }

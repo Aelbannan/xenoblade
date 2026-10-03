@@ -141,4 +141,4 @@ extern "C" void CScrollBar_UpdateThumb(void*, int, int);
 extern "C" void CScrollBar_requestScrollIn(void*);
 extern "C" void CScrollBar_requestScrollOut(void*);
 extern "C" void CScrollBar_PlaceThumb(void*, int);
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);

@@ -264,7 +264,7 @@ int CfResPcImpl_lookupPackedToken(cf::CfResPcImpl* self) {
         if (state < 0) {
             return 0;
         }
-        u32 token = (cf::CfBdat::func_801422A8(((cf::CfResPcCharData*)func_8009EC9C(result))->field_18) >> 20) & 0x7F;
+        u32 token = (cf::CfBdat::resolveWpnTok(((cf::CfResPcCharData*)CtrlObjectParam_GetCharEntry(result))->field_18) >> 20) & 0x7F;
         if ((result == 4 || (u32)(result - 0xC) <= 1) && token == 0x2B) {
             result = (result << 20) | 0x3800AC0A;
         } else {
@@ -398,7 +398,7 @@ int CfResPcImpl_requestBdatResource(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
         return 0;
     }
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(arg3);
-    int ret = CfRes_tryResolveByBits(state, cf::CfBdat::func_801422A8(arg2), 3);
+    int ret = CfRes_tryResolveByBits(state, cf::CfBdat::resolveWpnTok(arg2), 3);
     int ok = (u32)(-ret | ret) >> 31;
     (self)->CfResPcImpl_setSlotTableEntry(6, arg2);
     if (ok) {
@@ -418,12 +418,12 @@ int CfResPcImpl_requestBdatResource(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
 
 // Setter for the 8-slot table at +0x14. Indexes 6/7 run the value through
 // the bdat token resolver first (retail: subi/cmplwi range test, then
-// func_801422A8__Q22cf6CfBdatFUl).
+// resolveWpnTok__Q22cf6CfBdatFUl).
 void CfResPcImpl_setSlotTableEntry(cf::CfResPcImpl* self, int idx, u32 value)
 {
     if (idx < 8) {
         if ((u32)(idx - 6) <= 1) {
-            value = cf::CfBdat::func_801422A8(value);
+            value = cf::CfBdat::resolveWpnTok(value);
         }
         self->field_14[idx] = value;
     }
@@ -624,7 +624,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
     }
     cf::CfResPcCharData* charData =
-        (cf::CfResPcCharData*)func_8009EC9C(self->field_00->field_8C);
+        (cf::CfResPcCharData*)CtrlObjectParam_GetCharEntry(self->field_00->field_8C);
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
         int v = (self)->CfResPcImpl_getSlotTableEntry(i);
@@ -634,7 +634,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         } else if (self->field_40 != 0) {
             r5 = (u32)v;
         } else {
-            r5 = func_80141E90(self->field_00->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
+            r5 = bdatPcPartsRes(self->field_00->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
         }
         if ((u32)v != r5) {
             v = (int)r5;
@@ -1001,7 +1001,9 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
                 if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
                     if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
-                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc48(0.0f);
+                        // lbl_eu_80667A60 is 0.0f (sdata2_ResPcPool.f60); a literal
+                        // would pool a TU-local sdata2 entry.
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc48(lbl_eu_80667A60);
                     }
                     if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[0], (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[0]), 0) == 0) {
                         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(0);
@@ -1028,7 +1030,7 @@ u32 bdat = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[0]);
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(lbl_eu_80667A60);
                     } else {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
-                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(0.0f);
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(lbl_eu_80667A60);
                     }
                     if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[1], (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[1]), 0) == 0) {
                         reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(1);
@@ -1166,16 +1168,16 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
         if ((lbl_eu_80663E24 & 0x2) != 0) {
             // Retail reloads the flag word for the mask store even though the
             // test read it moments earlier; the volatile load keeps MWCC from
-            // CSE-eliminating the second read (same pattern as func_8016E854).
+            // CSE-eliminating the second read (same pattern as getReloadCand).
             *(volatile u32*)&lbl_eu_80663E24 &= ~0x2;
             lbl_eu_80663E28 &= ~0x10000;
             CfTFile_CancelResetNibble(file);
         } else {
-            func_80061A80((u32)self, 9, arg2, arg3, arg4, arg5);
+            pushBackwards((u32)self, 9, arg2, arg3, arg4, arg5);
             result = 1;
         }
     } else if (arg2 != 0) {
-        func_80061870((u32)self, 0xa, arg2, arg3, 0, 0);
+        CfRes_pushRec((u32)self, 0xa, arg2, arg3, 0, 0);
     } else {
         // Retail loads the flag word twice for the two bit pairs; the volatile
         // first read keeps MWCC from CSE-merging the second pair's load.
@@ -1187,7 +1189,7 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
             if (CfRes_resolveSelfPacked((int)arg3, 5) != 0) {
                 lbl_eu_80663E28 &= ~0x10000;
             } else {
-                func_80061A80((u32)self, 0x26, 0, arg3, 0, 0);
+                pushBackwards((u32)self, 0x26, 0, arg3, 0, 0);
             }
         }
     }
@@ -1202,7 +1204,7 @@ int CfResPcImpl_requestResourceLoad(cf::CfResPcImpl* self, int arg2, int arg3) {
     if (CfRes_resolveSelfPacked(arg3, 5) != 0) {
         lbl_eu_80663E28 &= ~0x10000;
     } else {
-        func_80061A80((u32)self, 0x26, (u16)(arg2 + 1), (u32)arg3, 0, 0);
+        pushBackwards((u32)self, 0x26, (u16)(arg2 + 1), (u32)arg3, 0, 0);
         result = 1;
     }
     return result;
@@ -1223,7 +1225,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     lbl_eu_80663E44 = arg3;
     lbl_eu_80663E24 = v;
     MapFx_ReleaseHandle(self->field_408->unkA0);
-    func_80186664(self->field_408->field_0xA4);
+    ArtsSelect_FreeSlots(self->field_408->field_0xA4);
     cf::CfBdat::resetMapBdatFileDataPointers();
     cf::CfResPcLookupEntry* entry = (cf::CfResPcLookupEntry*)CfRes_getInstPtr170();
     CfRes_cancelPendingRead(entry->field_2C, entry);
@@ -1250,7 +1252,7 @@ int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
     }
     processMapChange__Q22cf13CfGameManagerFv(4);
     for (int i = 1; i <= 13; i++) {
-        CtrlObjectParam_ActivateCharRow(func_8009EC9C((u16)i));
+        CtrlObjectParam_ActivateCharRow(CtrlObjectParam_GetCharEntry((u16)i));
     }
     return 0;
 }
@@ -1351,7 +1353,7 @@ int CfResPcImpl_loadPlayerOrEvent2(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, 
     cf::CfGameManager* manager = self->field_408;
     UnkClass_80083298* obj = manager->unk90;
     if (obj != 0 && reinterpret_cast<cf::CfObject*>(obj)->CfObject_isMoveActiveNow() == 0) {
-        func_80061A80((u32)self, 2, arg2, arg3, arg4, arg5);
+        pushBackwards((u32)self, 2, arg2, arg3, arg4, arg5);
         result = 1;
     } else {
         loadPlayerResources__Q22cf13CfGameManagerFv(arg2, (u16)arg3);
@@ -1366,20 +1368,20 @@ int CfResPcImpl_loadPlayerOrEvent2(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, 
 // against the static table and finally copies the file pair and syncs the
 // area ids.
 __declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
-    func_8007B0A0(0);
-    func_800B06C8();
+    CamEvtSearchStateVal(0);
+    loadLayoutScales();
     if (lbl_eu_80663E24 & 0x80000) {
 CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)4);
-        func_80061870((u32)self, 0x1b, 0,
+        CfRes_pushRec((u32)self, 0x1b, 0,
                       ((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 0, 0);
     } else {
 CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)5);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
         CfScript_FlagSlot0();
-        func_80061870((u32)self, 6, 2, 0, 0, 0);
-        func_80061870((u32)self, 0x19, 0, 0, 0, 0);
-        func_80061870((u32)self, 0x1a, 0, 0, 0, 0);
+        CfRes_pushRec((u32)self, 6, 2, 0, 0, 0);
+        CfRes_pushRec((u32)self, 0x19, 0, 0, 0, 0);
+        CfRes_pushRec((u32)self, 0x1a, 0, 0, 0, 0);
         if (CtrlRemote_TouchBitByArg(0x3520) != 0) {
             lbl_eu_80663E28 |= 0x2;
         } else if (lbl_eu_80663E28 & 0x8000) {

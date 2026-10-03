@@ -40,8 +40,8 @@ extern "C" CMenuMakeCrystal* __ct__CMenuMakeCrystal(CMenuMakeCrystal* pThis, voi
 // ---------------------------------------------------------------------------
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
-void func_801338C8();
-void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
+void CUICfManager_createQueuedMenus();
+void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
 int  IsMenuState621F0();
 void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
 void BgTex_Tick_3D54(void* self);                            // CBgTex animate
@@ -63,13 +63,13 @@ extern "C" void func_802124AC(void* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
 void func_80210E9C(void* dst, const void* src);            // big state copy
 void func_80211CEC(void* dst, const void* src);            // big state copy
-void func_801BE16C(void* dst, void* src);                  // win data post-ctor
+void ItemEx_CopyTitle(void* dst, void* src);                  // win data post-ctor
 void func_80212158(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
 int  CtrlRemote_TouchBitByArg(int id);
 void MiniMapSetActiveFlag();
-void func_802A1500();
-void func_80189C88();
+void CCharVoiceMan_FlushAll();
+void MenuSnd_StopAllSlots_89C88();
 void CTaskGame_stopVision();
 void cbRenderBefore__16CMenuMakeCrystalFv(void*);
 void* __dt__15CMakeCrystalWinFv(void*, int);
@@ -145,7 +145,7 @@ struct MCBgTemp {
     u8 field_0x1E;
 };
 // CMakeCrystalWin-shaped temp (frame +0x28): four words at +0x08 copied to
-// this+0x88..+0x94, remaining bytes consumed by func_801BE16C.
+// this+0x88..+0x94, remaining bytes consumed by ItemEx_CopyTitle.
 struct MCWinTemp {
     u8 _00[0x08];
     u32 field_0x08;     // frame +0x30
@@ -176,8 +176,8 @@ struct MCRecTail {
 };
 
 void CMenuMakeCrystal::Init() {
-    func_802A1500();
-    func_80189C88();
+    CCharVoiceMan_FlushAll();
+    MenuSnd_StopAllSlots_89C88();
     CTaskGame_stopVision();
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
@@ -196,7 +196,7 @@ void CMenuMakeCrystal::Init() {
     BgTex_Acquire_3C14(reinterpret_cast<u8*>(this) + 0x60);
 
     // Build a temporary CMakeCrystalWin seeded from this object, harvest its
-    // four words into this+0x88..+0x94, hand the rest to func_801BE16C, then
+    // four words into this+0x88..+0x94, hand the rest to ItemEx_CopyTitle, then
     // destroy the temp.
     MCWinTemp win;
     __ct__CMakeCrystalWin(
@@ -216,7 +216,7 @@ void CMenuMakeCrystal::Init() {
         u8 rec[0x32];
     } bufs;
 
-    func_801BE16C(reinterpret_cast<u8*>(this) + 0x98, win.tail);
+    ItemEx_CopyTitle(reinterpret_cast<u8*>(this) + 0x98, win.tail);
     func_80210E9C(reinterpret_cast<u8*>(this) + 0xD0, bufs.mid);
     func_80211CEC(reinterpret_cast<u8*>(this) + 0x2EA8, bufs.upper);
     func_80212158(reinterpret_cast<u8*>(this) + 0x43B0, bufs.rec);
@@ -308,7 +308,7 @@ public:
 
 void CMenuMakeCrystal::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    func_801338C8();
+    CUICfManager_createQueuedMenus();
     Scn_SetPauseFlag(*(void**)((u8*)this + 0x5C), 1);
     void* render = this;
     if (this) render = (u8*)this + 0x58;
@@ -385,7 +385,7 @@ void CMenuMakeCrystal::cbRenderBefore() {
         return;
     GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
     BgTex_Draw_3D7C(reinterpret_cast<u8*>(this) + 0x60, &drawInfo);
 }
 

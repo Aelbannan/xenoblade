@@ -177,14 +177,14 @@ void CSelShopWin::hideShopWin() {
 #pragma optimize_for_size on
 /* Determine the absolute screen position of the two named panes in the shop
    window layout (format a pane-name from idx+1, find both panes, sum ancestor
-translates via func_80137924). C-linkage (retail unmangled getShopWinPanePos).
+translates via ScalePaneWorldPos). C-linkage (retail unmangled getShopWinPanePos).
    Each GetRootPane() is a fresh load, matching retail's per-use reload. */
 extern "C" void getShopWinPanePos(nw4r::math::VEC3* pOutPos, CSelShopWin* window, int idx) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050A62C[0x17], idx + 1);
     nw4r::lyt::Pane* pane1 = window->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = window->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0x20], true);
-    func_80137924(pOutPos, pane1, pane2, window->mLayout->GetRootPane());
+    ScalePaneWorldPos(pOutPos, pane1, pane2, window->mLayout->GetRootPane());
 }
 #pragma pop
 
@@ -235,7 +235,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         ShopFontView* fontObj =
             (ShopFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = fontObj->getSpacing();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         mLayout->SetAnimationEnable(mAnimTransform, 1);
         mLayout->Animate(0);
@@ -252,7 +252,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             if (sub != NULL) {
                 ShopActorView* srcActor = (ShopActorView*)findObjectById(reinterpret_cast<int>(sub));
                 if (srcActor != NULL) {
-                    text = static_cast<char*>(func_80138DA4(srcActor->getName()));
+                    text = static_cast<char*>(GetBdatNameByNumId(srcActor->getName()));
                 }
             }
         }

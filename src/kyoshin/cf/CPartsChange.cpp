@@ -45,10 +45,10 @@ extern const char lbl_eu_80503C48[];
 u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
 // Manager-object helpers used by TeardownContainer.
-__declspec(noinline) void func_80197538(void* mgr, void* obj);
-__declspec(noinline) void func_80197DE8(void* mgr, void* obj, int a, int b);
+__declspec(noinline) void CPartsChange_RemoveBattleEntry(void* mgr, void* obj);
+__declspec(noinline) void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b);
 void CPartsChange_NotifySlotStates(u8* self);
-__declspec(noinline) void func_801953E8(void* mgr, void* elem, void* r5, int r6);
+__declspec(noinline) void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* r5, int r6);
 
 // Slot-name format string ("%s%s") and the "_ppp" name prefix pointer.
 extern const char lbl_eu_80503BFC[];
@@ -59,8 +59,8 @@ extern u32 lbl_eu_80663E24;
 void awardCollectCount(void* self);
 int isCollepediaId(void* self);
 int isResourceFlagSet__Q22cf13CfGameManagerFv(void* self);
-void* func_8009EC9C(u16 id);
-void func_800A282C(void* p, int flag);
+void* CtrlObjectParam_GetCharEntry(u16 id);
+void CtrlObjectParam_BumpArtsCounter(void* p, int flag);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 void fireLvUpMode2(void* p);
 
@@ -246,7 +246,7 @@ extern "C" void CPartsChange_SyncSlotState(u8* self, u32 idx, int flag) {
     }
 }
 
-void func_801931D0(){}
+void CPartsChange_ReseedElemTimer(){}
 
 // 0xB4: _reslist_base<cf::CfPartyInfo*>::~_reslist_base() -- reinstall the
 // base vtable, unlink every node (next=0), relink the sentinel to itself, then
@@ -402,7 +402,7 @@ extern "C" void* __dt__80193538(u8* self, int flags) {
 
 extern "C" u32 lbl_eu_8066430C;
 extern "C" int lbl_eu_80664308;
-extern "C" void func_80193810(u8* self);
+extern "C" void CPartsChange_FlushChangeList(u8* self);
 
 extern "C" u32 CPartsChange_GetActorTable(void) { return lbl_eu_8066430C; }
 
@@ -429,7 +429,7 @@ extern "C" void CPartsChange_FireIdEffect(u32 id) {
 // 0xF4: when the object is flagged (0x3F00 bit 3, live 0x45C0) clear the
 // element selected by 0x456C >> 4 after the 0xa8 virtual runs: drop flag 0x4,
 // zero the 0x10 timer, and clear the 9-byte name when the 0x14 timer expired.
-extern "C" void func_80193710(u8* obj) {
+extern "C" void CPartsChange_ClearElemTimerForObj(u8* obj) {
     u16 key;
     u8* mgr = (u8*)lbl_eu_8066430C;
     if (mgr == 0) return;
@@ -461,7 +461,7 @@ done:;
 
 extern "C" int CPartsChange_GetLandmarkTable(void) { return lbl_eu_80664308; }
 
-extern "C" void CPartsChange_DispatchChangeList(u8* self) { func_80193810(self); }
+extern "C" void CPartsChange_DispatchChangeList(u8* self) { CPartsChange_FlushChangeList(self); }
 
 extern void* findObjectById(int);
 extern "C" int lookupWorkAtAddr(void* addr);
@@ -472,7 +472,7 @@ extern "C" s16 lbl_eu_80664314;
 // table has bit0 set, resolve up to 16 object ids through findObjectById,
 // keep those that pass lookupWorkAtAddr, then notify each via gmFileObject
 // and reset the list / 0xA40-byte work buffer.
-extern "C" void func_80193810(u8* self) {
+extern "C" void CPartsChange_FlushChangeList(u8* self) {
     struct Slot {
         int id;
         u32 pad;
@@ -588,7 +588,7 @@ extern "C" void* CPartsChange_FindActorById(u8* self, u32 id) {
     return result;
 }
 
-void func_80193B0C(){}
+void CPartsChange_InitActorTable(){}
 // 0x54: wipe the 0x80-byte actor entry then re-seed its 0x90..0x9A block.
 extern "C" __declspec(noinline) void CPartsChange_InitActorEntry(u8* self) {
     memset(self, 0, 0x80);
@@ -604,17 +604,17 @@ extern "C" __declspec(noinline) void CPartsChange_InitActorEntry(u8* self) {
 __declspec(noinline) u16 CfActorAccessors::GetField9E() { return mField9E; }
 
 void CPartsChange_FindActorByObj(){}
-void func_80193D48(){}
+void CPartsChange_LoadBdatTables(){}
 
 // 0x180: sum the per-item offsets the B48 gimmick list reports and average
 // them (falling back to the second argument's vector when nothing matched).
 // Each item contributes through two virtual slots: 0xE0 (a float) and 0xAC (a
 // pointer) which, with the incoming float and the caller's vector, feed
-// func_800A5488 into a scratch vector that is accumulated on success.
+// VecMath_PushApartCircles into a scratch vector that is accumulated on success.
 extern "C" u8* getReslistB48();
-extern "C" int func_800A5488(void* a, void* b, f32 c, f32 d, void* out);
+extern "C" int VecMath_PushApartCircles(void* a, void* b, f32 c, f32 d, void* out);
 
-extern "C" int func_80194264(ml::CVec3* out, u8* arg2, f32 f1) {
+extern "C" int CPartsChange_AverageGimmickOffsets(ml::CVec3* out, u8* arg2, f32 f1) {
     *out = ml::CVec3::zero;
     ml::CVec3 tmp;
     s32 count = 0;
@@ -624,7 +624,7 @@ extern "C" int func_80194264(ml::CVec3* out, u8* arg2, f32 f1) {
         u8* item = *(u8**)(node + 8);
         f32 a = ((cf::CPartsChangeDevView*)item)->mAtE0();
         void* p = ((cf::CPartsChangeDevView*)item)->mAtAC();
-        if (func_800A5488(arg2, p, f1, a, &tmp) != 0) {
+        if (VecMath_PushApartCircles(arg2, p, f1, a, &tmp) != 0) {
             out->x += tmp.x;
             out->y += tmp.y;
             out->z += tmp.z;
@@ -642,15 +642,15 @@ extern "C" int func_80194264(ml::CVec3* out, u8* arg2, f32 f1) {
     return count != 0;
 }
 
-void func_801943E4(){}
+void CPartsChange_ComputeSpawnPoseBlend(){}
 
-void func_80194610(){}
+void CPartsChange_ApplyPoseToPlayer(){}
 
 // 0x11C: reload-parameter gate. Flags low nibble + the reload id (0..2) select
 // the ok path; then the same low nibble must name this slot (1..4) or the
 // whole gate passes vacuously when no low-nibble flag is set.
 extern "C" u32 getReloadParam2();
-extern "C" int func_801949E0(s32 self, u32 flags) {
+extern "C" int CPartsChange_CheckReloadGate(s32 self, u32 flags) {
     if (flags == 0) return 1;
     u32 v = getReloadParam2();
     int ok = 0;
@@ -670,9 +670,9 @@ extern "C" int func_801949E0(s32 self, u32 flags) {
     return 0;
 }
 
-void func_80194AFC(){}
+void CPartsChange_FindActorForFileEvent(){}
 
-void func_80194D5C(){}
+void CPartsChange_CheckPlayerReload(){}
 
 // 0x4C-stride party-change element + manager view for CPartsChange_UpdateElemSpeeds
 // (layout from CPartsChange.ctx.c).
@@ -695,7 +695,7 @@ extern u32 lbl_eu_80664184;
 // 0xA0: re-seed one party-change element: clear flag 0x4, read the BDAT row
 // (0 means 1), set the 0x14 delay to 1800 and the 0x10 timer to 60 * 30 *
 // (float)row, then wipe the 9-byte name at +0x42.
-extern "C" void func_801931D0(CfPartsElem4C* self) {
+extern "C" void CPartsChange_ReseedElemTimer(CfPartsElem4C* self) {
     self->field_1E &= (u16)~0x4u;
     u32 val = getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_80503C48,
                                        (s32)lbl_eu_80664184);
@@ -756,7 +756,7 @@ extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
     if (isCollepediaId(self) == 0) return;
     for (s32 i = 1; i <= 8; i++) {
         if (isResourceFlagSet__Q22cf13CfGameManagerFv((void*)(u32)i) != 0) {
-            func_800A282C(func_8009EC9C((u16)i), 1);
+            CtrlObjectParam_BumpArtsCounter(CtrlObjectParam_GetCharEntry((u16)i), 1);
         }
     }
     for (s32 j = 0; j < 3; j++) {
@@ -859,28 +859,28 @@ done:;
         found->field_1E |= 0x1;
         found->field_10 = lbl_eu_80667AD4;
         found->field_14 = lbl_eu_80667AD4;
-        func_801953E8(mgr, found, &zero, 0);
+        CPartsChange_DispatchChangeRecord(mgr, found, &zero, 0);
         found->field_20 &= (u16)~0x8u;
         found->field_1E |= 0x810;
     }
     return found != 0;
 }
 
-void func_80195BD4(){}
+void CPartsChange_SubmitSpawnRequest(){}
 
-void func_80195E5C(){}
+void CPartsChange_UpdatePartyState(){}
 
 // Not yet decompiled (0x6d8): manager spawn helper reached from
 // CPartsChange_SpawnById. Kept as a stub so the call site resolves.
-void func_801953E8(void* mgr, void* elem, void* r5, int r6){}
+void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* r5, int r6){}
 
 bool CompareSortKey(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
     return a->sortKey < b->sortKey;
 }
 
-void func_80196434(){}
+void CPartsChange_SortPartyRecords(){}
 
-void func_80196864(){}
+void CPartsChange_SortPartyRecordsStep(){}
 
 // 0x170: four-way swap dispatcher over the 8-byte {u32, f32} party records.
 // The dispatcher predicate lives in the function-pointer slot at +0 of the
@@ -919,7 +919,7 @@ extern "C" void CPartsChange_CopyObjFields(CfPair8* a, CfPair8* b, CfPair8* c, C
     }
 }
 
-void func_80196E04(){}
+void CPartsChange_RebuildPartyTable(){}
 
 extern "C" void* CPartsChange_FindEntryById(u8* self, u32 id) {
     // Ascending i < n → mtctr + cmpli/ble (PATTERNS); shared null epilogue.
@@ -955,7 +955,7 @@ extern "C" void* CPartsChange_FindPartsElem(u8* self, u8* obj) {
     return 0;
 }
 
-extern "C" __declspec(noinline) void func_80197538(void* mgr, void* obj){}
+extern "C" __declspec(noinline) void CPartsChange_RemoveBattleEntry(void* mgr, void* obj){}
 
 // 0x88: clear the actor's slot entry (0x9E index), reset the actor entry,
 // then unlink it from the +0xA808 list if that list is non-empty.
@@ -997,8 +997,8 @@ check:
 extern "C" void CPartsChange_TeardownContainer(u8* self) {
     if (self == 0) return;
     if (lbl_eu_8066430C == 0) return;
-    func_80197538((void*)lbl_eu_8066430C, self);
-    func_80197DE8((void*)lbl_eu_8066430C, self, 0, 0);
+    CPartsChange_RemoveBattleEntry((void*)lbl_eu_8066430C, self);
+    CPartsChange_ReleaseEntryWithDrop((void*)lbl_eu_8066430C, self, 0, 0);
 }
 
 // 0xC8: only when a live manager exists and the object reports ready (its
@@ -1019,8 +1019,8 @@ extern "C" void CPartsChange_ResetBattleEntry(u8* self, u32 a, u32 b) {
             *(u16*)(self + 0x45C8) = 0;
         }
     }
-    func_80197538((void*)lbl_eu_8066430C, self);
-    func_80197DE8((void*)lbl_eu_8066430C, self, (int)a, (int)b);
+    CPartsChange_RemoveBattleEntry((void*)lbl_eu_8066430C, self);
+    CPartsChange_ReleaseEntryWithDrop((void*)lbl_eu_8066430C, self, (int)a, (int)b);
 }
 
 // 0x17C: spawn the item-drop actor for `id` unless it is already in the
@@ -1083,7 +1083,7 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, lbl_eu_80662528[n], 0, 0, lbl_eu_80667AD0);
 }
 
-extern "C" __declspec(noinline) void func_80197DE8(void* mgr, void* obj, int a, int b){}
+extern "C" __declspec(noinline) void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
 
 int lbl_eu_80664308;
 u32 lbl_eu_8066430C;
@@ -1228,7 +1228,7 @@ extern "C" int mtRand__Q22ml4mathFi(int);
 //  3. each live slot's 0x3F28 id is looked up in the BDAT name column: a
 //     "2" result commits that id and breaks out, otherwise a 1-in-100 roll
 //     (<= 30) commits it while the 0x9A mirror is unset.
-extern "C" void func_80198524(u8* self) {
+extern "C" void CPartsChange_ResolveSlotReplayIds(u8* self) {
     for (s32 i = 0; i < 16; i++) {
         u8* act = PcActorOf(*(u32*)(self + i * 8));
         if (act != 0) {
@@ -1292,7 +1292,7 @@ extern "C" void CPartsChange_RemoveListNode(u8* self, void** key) {
     }
 }
 
-void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3) {
+void CfPartyInfo::InitRecord(void* r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
     int r7 = *(int*)((char*)r4 + 4);
     int r0 = *(int*)((char*)r4 + 8);
@@ -1364,7 +1364,7 @@ extern "C" void CPartsChange_CopyHeaderAndLoad(u32* src, u32* dst) {
 // 0x8066A210 scale feeds the angle, the mod-100 remainder with the 0x80667B4C
 // scale scales the radius (plus the 0x20 offset), and the rotated offset is
 // accumulated onto dst x/z.
-extern "C" void func_80198AE0(SpawnPose* src, SpawnPose* dst) {
+extern "C" void CPartsChange_ComputeSpawnPoseModulo(SpawnPose* src, SpawnPose* dst) {
     u32* s = (u32*)src;
     u32* d = (u32*)dst;
     s32 v = src->field_14;
@@ -1407,7 +1407,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseA(SpawnPose* src, SpawnPose* dst) {
 // 0xC8: pose rotation without the angle offset -- the FIdx argument is just
 // the field_18 angle (scaled), the radius is field_14 * field_1C, both
 // components subtract, then the party-collision probe.
-extern "C" void func_80198D44(SpawnPose* src, SpawnPose* dst) {
+extern "C" void CPartsChange_ComputeSpawnPoseDirect(SpawnPose* src, SpawnPose* dst) {
     u32* s = (u32*)src;
     u32* d = (u32*)dst;
     u32 w0 = s[0];
@@ -1482,7 +1482,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseD(SpawnPose* src, SpawnPose* dst) {
 
 // 0x13C: pose variant that subtracts half the step always and adds the
 // pi/2-offset rotation only when field_14 bit 0 is set.
-extern "C" void func_801990F0(SpawnPose* src, SpawnPose* dst) {
+extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose* dst) {
     u32* s = (u32*)src;
     u32* d = (u32*)dst;
     u32 w0 = s[0];

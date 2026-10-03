@@ -82,8 +82,8 @@ public:
 // C-ABI function imports / definitions: these retail symbols are unmangled
 // (C-linkage), so they must be declared `extern "C"` to stop MWCC appending a
 // __F<argtypes> suffix to the emitted reloc names.
-// func_80137250 is the exception: retail emits the mangled nw4r form
-// (func_80137250__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
+// SetWideLocAdjust is the exception: retail emits the mangled nw4r form
+// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
 extern "C" {
 void sysWinTermLayout(void* syswin);
@@ -111,8 +111,8 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }
 
 // C++-linkage helpers - MWCC mangles these to the retail symbols
-// func_80137250__FPQ34nw4r3lyt8DrawInfo / playUISound__FUl.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / playUISound__FUl.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void playUISound(u32 op);
 
 // Singleton factory (typed to __ct__CSystemWindow args).

@@ -232,7 +232,7 @@ struct CfResPcMgrHost {
     /* 0x408 */ CfResPcMgrView* field_408;
 };
 
-// Byte view of the object returned by func_8009EC9C: +0x18 holds the text
+// Byte view of the object returned by CtrlObjectParam_GetCharEntry: +0x18 holds the text
 // id (u16) read by CfResPcImpl_lookupPackedToken.
 struct CfResPcCharData {
     u8 field_00[0x0E];
@@ -447,7 +447,7 @@ extern "C" void CfRes_releaseCachedBase(cf::CfResPcLookupEntry* entry, bool clea
 extern "C" ::CfFileEventIdsView* CtrlRemote_GetFileEventIds();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
 extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
-extern "C" void* func_8009EC9C(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
 extern "C" void CfScript_LoadSlot0(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
@@ -490,7 +490,7 @@ extern "C" u8* CfRes_getInstanceField();
 extern "C" void CfRes_tryReregisterSlot(int a, u8* b);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" int CfRes_resolveSelfPacked(int a, int b);
-extern "C" int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
+extern "C" int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second);
 
 // C-ABI imports used by CfResPcImpl_reloadMapSection (defined in CfGameManager.cpp / the
@@ -524,9 +524,9 @@ extern "C" u32 CfTFile_TestField828(u8* self);
 extern "C" void CfTFile_CancelResetNibble(cf::CfTFile* self);
 extern "C" void CfTFile_CopyPayload(cf::CfTFile* dst, cf::CfTFile* src);
 extern "C" void CfRes_runUpdatePipeline();
-extern "C" u32 func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-extern "C" int func_8007B0A0(int val);
-extern "C" void func_800B06C8();
+extern "C" u32 CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
+extern "C" int CamEvtSearchStateVal(int val);
+extern "C" void loadLayoutScales();
 extern "C" void CfRes_tryRefreshByBits(u32 a, u32 b);
 extern "C" void CfScript_FlagSlot0();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
@@ -561,7 +561,7 @@ extern "C" cf::CfResPcFindEntry* findResEntry(u8* self, u32 id, u32* outIndex, u
 extern "C" void* CfRes_findMidEntry(u8* self, u32 id, u32* outIdx);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);
 extern "C" const void* func_8009E120(cf::CfResPcCharData* object, u16 value);
-extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
+extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
 extern "C" void CfObjectMove_setModelListLock(void* object, u32 value);
 extern "C" void CfObjectMove_ensureAnimTargets(void* parent);
 extern "C" int CfRes_getD80Flag();

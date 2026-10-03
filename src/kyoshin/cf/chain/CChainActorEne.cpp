@@ -80,8 +80,8 @@ extern "C" int ChainEne_ValidateCand_1384(cf::CChainActorEne* self, int arg) {
     if (obj == 0) return 0;
     void* sub = *(void**)((u8*)obj + 4);
     int v = *(int*)static_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
-    if (func_80174C98(obj, &v, 0x803) != 0) {
-        return func_8027A024((void*)self, (void*)arg);
+    if (testActorStatus(obj, &v, 0x803) != 0) {
+        return CChainActor_CheckReady((void*)self, (void*)arg);
     }
     return 0;
 }

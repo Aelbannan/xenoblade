@@ -179,7 +179,7 @@ extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat
 
 // 0x804B0xxx region-object library (not decompiled here).
 extern "C" void ColiNodeInit(void* region);
-extern "C" void func_804B4BDC(void* manager, void* region);
+extern "C" void ColiListAppend(void* manager, void* region);
 extern "C" void Coli_ListRemoveNode(void* manager, void* region);
 extern "C" int ColiCheckMoveRadius(void* region, void* target, int arg2, int arg3, f32 dist);
 extern "C" void __dt__804B095C(void* self, int flag);

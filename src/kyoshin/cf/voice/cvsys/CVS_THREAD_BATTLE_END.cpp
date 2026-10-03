@@ -10,7 +10,7 @@
 // Remove a released voice from the slot array by matching the embedded
 // CCharVoice pointer against the one being freed.
 void EndVoice_RemoveVoice(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
     CVoiceHandle* handle;
     CCharVoice* vp;
     CVS_THREAD_BATTLE_END* p = self;
@@ -34,7 +34,7 @@ void EndVoice_RemoveVoice(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
 // When the counter reaches field_0x2c, fire the end virtual; otherwise the
 // init triple is re-copied into the base fields.
 void EndVoice_AdvanceSlot(CVS_THREAD_BATTLE_END* self) {
-    if (func_802A3E88(self) != 0) return;
+    if (IsThreadVoiceActive(self) != 0) return;
 
     if (self->field_0x38 == 0) {
         // forward direction: bump the counter, wrap to 0 at the limit
@@ -60,9 +60,9 @@ void EndVoice_AdvanceSlot(CVS_THREAD_BATTLE_END* self) {
         head->word0 = v0;
         head->word8 = *p;
     } else {
-        // Advance/process virtual (vtable offset 8 = func_802A3B50), not the
+        // Advance/process virtual (vtable offset 8 = PlayThreadVoice), not the
         // size-getter blank1 (offset 0x10).
-        self->func_802A3B50();
+        self->PlayThreadVoice();
     }
 }
 
@@ -263,10 +263,10 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     head->word0 = v0;
     head->word8 = *p;
 
-    int cnt = func_802A7870(self->field_0x20, 3, 0);
+    int cnt = HpVoice_CollectIdle(self->field_0x20, 3, 0);
     self->field_0x34 = cnt;
     if (cnt <= 0) {
-        self->func_802A3B50();
+        self->PlayThreadVoice();
         return;
     }
 
@@ -313,7 +313,7 @@ store:
 // triple is copied outside the try.
 CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
     // handleBuf is validated then discarded (retail leaks it here).
-    if (func_802A330C(0x46, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x46, 1) == NULL) {
         return NULL;
     }
 
@@ -361,7 +361,7 @@ CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
 // us-802a71ac (func_802A4A78)
 // Play/advance the battle-end voice.  When the counter is not at the limit,
 // pick a random ending line; otherwise gate on the thread sub-state (via
-// func_802A77E8 mode) and play the appropriate variant ID.
+// HpVoice_MapSubState mode) and play the appropriate variant ID.
 void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
     // Re-seed the state triple via the lwzu/spread load-with-update pattern
     // (v0 declared first so MWCC colours the lwzu destination low).
@@ -382,21 +382,21 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
     if (self->field_0x30 == self->field_0x2c) {
         // Counter at limit: choose a battle-end variant line by sub-state.
         CVoiceHandle* h = self->field_0x20[self->field_0x30];
-        if (self->field_0x34 == 1 && func_802A77E8(h) == 1) {
+        if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 1) {
             if (ml::math::mtRand(100) < 0x1e) {
                 if (ml::math::mtRand(100) >= 0x32) voiceId = 0xb63;
                 else voiceId = 0xb55;
             } else {
                 voiceId = -1;
             }
-        } else if (self->field_0x34 == 1 && func_802A77E8(h) == 3) {
+        } else if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 3) {
             if (ml::math::mtRand(100) < 0x1e) {
                 if (ml::math::mtRand(100) >= 0x32) voiceId = 0xb61;
                 else voiceId = 0xb57;
             } else {
                 voiceId = -1;
             }
-        } else if (self->field_0x34 == 1 && func_802A77E8(h) == 7) {
+        } else if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 7) {
             if (ml::math::mtRand(100) < 0x1e) {
                 // Bool-to-int add reproduces retail's branchless subfc/subfe.
                 voiceId = 0x5dd + (int)(ml::math::mtRand(100) >= 0x32);
@@ -418,7 +418,7 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
     if (sl != NULL) {
         vp = &sl->voice;
     }
-    if (func_802A3C44(self, vp, voiceId) == 0) {
+    if (TryRequestVoice(self, vp, voiceId) == 0) {
         self->blank1();
     }
 }

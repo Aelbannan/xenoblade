@@ -517,8 +517,8 @@ extern "C" void* __dt__Q22cf13CfGameManagerFv(
 // C-linkage redeclarations across TUs.
 extern "C" void gmCallNopA();
 extern "C" void gmCallNopB();
-extern "C" void func_80079B34(CfCamEventManager* manager);
-extern "C" bool func_80079DBC(CfCamEventManager* manager);
+extern "C" void CamEvtStepShk(CfCamEventManager* manager);
+extern "C" bool CamEvtShkActv(CfCamEventManager* manager);
 extern "C" cf::CfObject* cfCam_getActiveObj(CfCamEventManager* manager);
 extern "C" bool CfScript_TestMask(u32 flag);
 extern "C" bool probeReadyLists();
@@ -588,7 +588,7 @@ struct CfFileEventIdsView {
     u8 field_0x4[0x8];
 };
 
-// func_8023C1B4 result view: caller loads the float at +0xC.
+// NandPartySnap result view: caller loads the float at +0xC.
 struct UnkC1B4Data {
     u8 field_0x0[0xC];
     float value_0xC;
@@ -684,8 +684,8 @@ extern "C" void MenuStateInitFlags();
 extern "C" void func_802062BC();
 extern "C" void evtTeardownActive();
 extern "C" void CCharVoiceMan_ClearFieldFlag();
-extern "C" int func_8023C1C0();
-extern "C" void* func_8023C1B4();
+extern "C" int NandQueueBusy();
+extern "C" void* NandPartySnap();
 extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void __dt__8023E448();
 extern "C" void CItem_rerankAllKinds();
@@ -736,7 +736,7 @@ extern "C" int CtrlObjectParam_InsertSlotValue(cf::CtrlObjectParamSlots* self, i
 extern "C" int func_8009E574(cf::CtrlObjectParamSlots* self, int value, int type, int index);
 extern "C" void func_8009E838(u8* self);
 extern "C" s32 countCollepedia();
-extern "C" void func_8015720C(s32 value, s32 mode);
+extern "C" void CItem_famFlag(s32 value, s32 mode);
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* data);
 extern "C" void func_800A0860(void* data, u16 value);
 extern "C" void func_800A21F8(void* data, u32 a, u32 b, u32 c);

@@ -16,7 +16,7 @@ cf::CChainTime::CChainTime() {
 
 void cf::CChainTime::resetChainTime() {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800EA484(bm, lbl_eu_80668A88, 0x13);
+    refreshBattleActors(bm, lbl_eu_80668A88, 0x13);
 
     int effId = (mLoop != 0) ? 0xB4 : 0xBB;
     chainBindEffectLink(&mChainEffect, 0, effId, 0, 0, 0);
@@ -29,7 +29,7 @@ void cf::CChainTime::resetChainTime() {
 
 extern "C" void startChainTimer(cf::CChainTime* self, u8 val) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800EA484(bm, lbl_eu_80668A88, 0x13);
+    refreshBattleActors(bm, lbl_eu_80668A88, 0x13);
 
     int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
     chainBindEffectLink(&self->mChainEffect, 0, effId, 0, 0, 0);
@@ -58,7 +58,7 @@ extern "C" void tickChainTimer(cf::CChainTime* self) {
                     chainUnbindMatchingObjects(0xCA, 0);
                 }
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                func_800EA484(bm, timer, 0x13);
+                refreshBattleActors(bm, timer, 0x13);
             }
         } else {
             if (timer <= lbl_eu_80668A8C) {
@@ -69,7 +69,7 @@ extern "C" void tickChainTimer(cf::CChainTime* self) {
                 chainUnbindMatchingObjects(0xCA, 0);
             }
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-            func_800EA484(bm, timer, 0x13);
+            refreshBattleActors(bm, timer, 0x13);
         }
 
         int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
@@ -77,7 +77,7 @@ extern "C" void tickChainTimer(cf::CChainTime* self) {
     } else {
         if (self->mPaused != 0) {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-            func_800EA484(bm, lbl_eu_80668A88, 0x13);
+            refreshBattleActors(bm, lbl_eu_80668A88, 0x13);
         }
 
         int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
@@ -86,3 +86,10 @@ extern "C" void tickChainTimer(cf::CChainTime* self) {
 
     self->mPaused = 0;
 }
+
+// Retail .sdata2 (this TU's split 0x80668A88-0x80668A90): the two float
+// constants the timer code loads (1.0f default, 0.0f compare). Defined
+// here, not in another TU: no other TU owns them. Kept at file bottom so
+// the earlier extern-view coloring of tickChainTimer is preserved.
+const float lbl_eu_80668A88 = 1.0f;
+const float lbl_eu_80668A8C = 0.0f;

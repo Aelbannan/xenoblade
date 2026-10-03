@@ -182,7 +182,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                 u32 type;
                 u32 out10;
                 u32 outC;
-                void* delegate = func_800621F4(iter, (s16)i, &type, &out10, &outC);
+                void* delegate = CfRes_extType(iter, (s16)i, &type, &out10, &outC);
                 void* obj = 0;
                 u32 flag = 0;
                 if (type == 1) {
@@ -268,7 +268,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         }
         if (self->field_0xE8 != 0) {
             CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
-                func_804C1BA0(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C,
+                scnLgtCreateEnvController(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C,
                               self->field_0xE8, 7));
             self->field_0x2F3C = fx;
             if (fx != 0) {

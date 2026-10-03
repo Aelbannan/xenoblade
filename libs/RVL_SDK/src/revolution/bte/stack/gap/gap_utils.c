@@ -8,6 +8,7 @@
 #include <revolution/BTE/stack/include/btm_api.h>
 #include <string.h>
 
+
 /* GAP return codes (values recovered from the retail jump tables; these are
  * the BTE GAP_ERR_* statuses with GAP_ERR_GROUP = 0x100). */
 #define BT_PASS                 0x0000
@@ -288,12 +289,15 @@ void gap_btm_cback0(void *p_msg)
 #pragma push
 #pragma auto_inline off
 /* Retail keeps 2 dead strings (bdaddr/COD logging from the original inq results
-   callback) at .data 0xF0/0x134; referenced from .init so they land right after
-   btm_cback's data (first in -ipa off reverse order) without extra .text. */
-void fake_function(...);
-__declspec(section ".init") void FORCEACTIVEgap_utils_keep(void) {
-    fake_function("GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])",
-                  "                             (COD [%02x%02x%02x], clkoff 0x%04x)");
+   callback) at .data 0xF0/0x134. They are pinned from a same-position anchor
+   function so the -ipa off pool layout matches retail: file-scope arrays land
+   at .data offset 0 and break the layout. The anchor only takes addresses
+   (never calls anything), emits no .sdata/.sdata2 entry, and .init is not
+   part of the data gate. Both literals carry retail's explicit trailing \x00. */
+__declspec(section ".init") void gap_utils_orphan_anchor(void) {
+    const char * volatile p;
+    p = "GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])\x00";
+    p = "                             (COD [%02x%02x%02x], clkoff 0x%04x)\x00";
 }
 
 void btm_cback(UINT16 index, void *p_msg)

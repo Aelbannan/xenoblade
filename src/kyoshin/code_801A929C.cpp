@@ -26,7 +26,7 @@ extern const f32 lbl_eu_8066A1FC; // 2*pi
 extern unsigned char lbl_eu_80664330;
 
 // Retail C-symbol import: camera/scene gate query.
-extern "C" int func_8007BAE4();
+extern "C" int CamEvtGetFl46();
 
 extern "C" void __dl__FPv(void*);
 
@@ -38,7 +38,7 @@ void BattleWork_MarkSlotFFFF(void* self) {
 // keeps C linkage for call-site reloc parity.
 
 // ----------------------------------------------------------------------------
-// func_801A9348 - compute a blend weight and attack direction toward a target.
+// BattleWork_ComputeAim - compute a blend weight and attack direction toward a target.
 // Weight falls linearly from 1 to 0 between the outer/inner radii; direction
 // comes either from the source matrix transform or, when the shared target
 // singleton is active, from wrapped atan2 angle differences.
@@ -60,7 +60,7 @@ struct DirTargetInfo {
     u8 mFlag18;     // +0x18
 };
 
-extern "C" void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
+extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSrc* src,
                    ml::CVec3* posB, ml::CVec3* targetPos,
                    float innerRadius, float outerRadius) {
 
@@ -70,7 +70,7 @@ extern "C" void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
     // NOTE: retail re-reads the singleton global at each use (no caching).
     s32 useTargetObj = 0;
     ml::CVec3 aim;
-    if ((lbl_eu_80663E24 & 0x40000) != 0 || func_8007BAE4() != 0) {
+    if ((lbl_eu_80663E24 & 0x40000) != 0 || CamEvtGetFl46() != 0) {
         DirTargetInfo* pTarget = *(DirTargetInfo**)(&lbl_eu_80664330);
         if (pTarget != 0 && pTarget->mFlag18 != 0) {
             useTargetObj = 1;
@@ -130,7 +130,7 @@ extern "C" void func_801A9348(ml::CVec3* outDir, float* outWeight, DirSrc* src,
 }
 
 // ----------------------------------------------------------------------------
-// func_801A96A0 - per-frame update of one ctrl-sound state object.
+// BattleWork_TickSndCtrl - per-frame update of one ctrl-sound state object.
 // Picks the listener aim point (game-manager position, overridden by the
 // shared ctrl-state singleton when presentation bit 13 / camera gate allow),
 // optionally syncs the entry position from a map object, then either scans
@@ -144,7 +144,7 @@ struct SndCtrlObj {
     ml::CVec3 mVec1; // +0x0C previous/best position
     f32 m18;         // +0x18 distance gate
     f32 m1C;         // +0x1C blend weight / volume factor
-    f32 m20;         // +0x20 direction (written through func_801A9348)
+    f32 m20;         // +0x20 direction (written through BattleWork_ComputeAim)
     f32 m24;         // +0x24 base volume
     f32 m28;         // +0x28 stored volume scale
     u16 m2C;         // +0x2C sound handle (0xFFFF = stopped)
@@ -168,7 +168,7 @@ struct GmRoot {
     GmPosNode* field_C;
 };
 
-// Map object returned by func_80186BC8 (catalog decl): the +0xB0 slot returns
+// Map object returned by ArtsSelect_GetEntry (catalog decl): the +0xB0 slot returns
 // the object's current position triplet. Real owner is MapProxy (vtable
 // lbl_eu_8052AC98); MapProxy::unkB0 is that slot (CfObject view: UVF24).
 
@@ -203,7 +203,7 @@ union SndConv {
 extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
 int CfRes_getD80Flag();
 D80VolObj* Scn_QueryUnk80State();
-extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
+extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
 SndSlotRef* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
@@ -220,7 +220,7 @@ extern u32 lbl_eu_8057164C[3];       // reference aim-point vector
 extern f32 lbl_eu_80667D74;          // initial best-distance sentinel
 extern f32 lbl_eu_8066A208;          // column-match threshold
 
-extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
+extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                                int entryBase) {
     GmRoot* root = (GmRoot*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (root == NULL) {
@@ -229,7 +229,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
     ml::CVec3 aim = root->field_C->mPos;
 
     if (self->m35 != 0) {
-        MapProxy* obj = (MapProxy*)func_80186BC8(self->m35);
+        MapProxy* obj = (MapProxy*)ArtsSelect_GetEntry(self->m35);
         if (obj == NULL) {
             return;
         }
@@ -238,7 +238,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
 
     // Presentation bit 13 or the camera gate enables the shared-singleton
     // aim override.
-    if ((lbl_eu_80663E24 & 0x40000) != 0 || func_8007BAE4() != 0) {
+    if ((lbl_eu_80663E24 & 0x40000) != 0 || CamEvtGetFl46() != 0) {
         DirTargetInfo* tgt = *(DirTargetInfo**)(&lbl_eu_80664330);
         if (tgt != NULL && tgt->mFlag18 != 0) {
             aim = tgt->m00;
@@ -287,7 +287,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                 if (allClose == 0) {
                     float tOut;
                     ml::CVec3 closest;
-                    f32 dist = func_800A47C8(prev, cur, aim, &tOut, &closest);
+                    f32 dist = VecMath_ClosestPtSeg(prev, cur, aim, &tOut, &closest);
                     if (dist < best) {
                         best = dist;
                         self->mVec1 = closest;
@@ -373,7 +373,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
     // Directed path: recompute the blend toward the scene pose target, then
     // apply the same D80/presentation-bit volume chain.
     DirSrc* pose = (DirSrc*)Scn_FindCamItem(lbl_eu_80663E14, -1);
-    func_801A9348((ml::CVec3*)&self->m20, &self->m1C, pose,
+    BattleWork_ComputeAim((ml::CVec3*)&self->m20, &self->m1C, pose,
                   (ml::CVec3*)lbl_eu_8057164C, &self->mVec1,
                   lbl_eu_80667D68, lbl_eu_80667D68 + self->m18);
     f32 vol = self->m1C * self->m24;
@@ -396,7 +396,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
 }
 
 // ----------------------------------------------------------------------------
-// func_801A9CCC - construct the 128-entry state work object: fill the header
+// BattleWork_InitStateWork - construct the 128-entry state work object: fill the header
 // floats/flags, default-initialize every entry, then invoke the shared
 // member-function callback (pointer-to-member-function blob in .data) on all
 // 128 entries and publish the object as the singleton.
@@ -441,7 +441,7 @@ union CtrlStateFnBits {
     u32 raw[3];
 };
 
-CtrlStateWork* func_801A9CCC(CtrlStateWork* work) {
+CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     work->m00 = lbl_eu_80667D64;
     work->m04 = lbl_eu_80667D60;
     work->m08 = lbl_eu_80667D64;
@@ -548,7 +548,7 @@ void BattleWork_InitCtrlWork(CtrlWork* work) {
 }
 
 // ----------------------------------------------------------------------------
-// func_801AA04C - fill the ctrl-state work entries from the shared bdat table:
+// BattleWork_FillStateWork - fill the ctrl-state work entries from the shared bdat table:
 // for every row of the table's row range, read named columns (rodata name blob
 // at lbl_eu_80503FA0) into one 0x38-byte entry slot of the caller's array.
 // Integer columns are converted to float through the 0x43300000 double trick:
@@ -602,7 +602,7 @@ extern char lbl_eu_80503FA0[];
 struct BdatTable;
 extern BdatTable* lbl_eu_806640B8;
 
-void func_801AA04C(void* param) {
+void BattleWork_FillStateWork(void* param) {
     BdatTable* tbl = lbl_eu_806640B8;
     BdatConv convA;
     BdatConv convB;
@@ -659,11 +659,11 @@ void func_801AA04C(void* param) {
 }
 
 // ----------------------------------------------------------------------------
-// func_801AA2A8 - per-frame ctrl-state update driver.
+// BattleWork_TickDriver - per-frame ctrl-state update driver.
 // Walks the shared bdat table rows, refreshing each ctrl-state entry: reads
 // named columns (rodata name blob), gates on play conditions (time window,
 // resource counts, far/near flags, presentation bits), then either starts /
-// updates the entry sound through func_801A96A0 or stops it.
+// updates the entry sound through BattleWork_TickSndCtrl or stops it.
 // ----------------------------------------------------------------------------
 
 // CfGameManager imports (retail mangled symbols). Player objects are
@@ -705,7 +705,7 @@ extern "C" int CfSoundMan_IsRecordActive(int a);
 
 // Defined later in this TU (C linkage so call-site relocs bind to the
 // retail-unmangled names).
-extern "C" int func_801AA960(int self, int phase, int area, int mode);
+extern "C" int BattleWork_TestModePhase(int self, int phase, int area, int mode);
 
 // View of one 0x38-byte ctrl-state entry, exposing the match key at +0x2E.
 struct ScanEntry {
@@ -713,7 +713,7 @@ struct ScanEntry {
     u16 m2E; // +0x2E
 };
 
-void func_801AA2A8(UpdWork* self) {
+void BattleWork_TickDriver(UpdWork* self) {
     cf::CfObject* player = (cf::CfObject*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (player == NULL) {
         return;
@@ -793,18 +793,18 @@ void func_801AA2A8(UpdWork* self) {
     // Resolve all column handles once up front (retail spills these to a
     // contiguous stack block, highest slot first).
     u32 colH[12];
-    colH[11] = (u32)func_8003B4B0(tbl, cols + 0x5f);
-    colH[10] = (u32)func_8003B4B0(tbl, cols + 0x49);
-    colH[9] = (u32)func_8003B4B0(tbl, cols + 0x67);
-    colH[8] = (u32)func_8003B4B0(tbl, cols + 0x71);
-    colH[7] = (u32)func_8003B4B0(tbl, cols + 0x7b);
-    colH[6] = (u32)func_8003B4B0(tbl, cols + 0x85);
-    colH[5] = (u32)func_8003B4B0(tbl, cols + 0x91);
-    colH[4] = (u32)func_8003B4B0(tbl, cols + 0x9e);
-    colH[3] = (u32)func_8003B4B0(tbl, cols + 0xab);
-    colH[2] = (u32)func_8003B4B0(tbl, cols + 0xb5);
-    colH[1] = (u32)func_8003B4B0(tbl, cols + 0xbf);
-    colH[0] = (u32)func_8003B4B0(tbl, cols + 0xc9);
+    colH[11] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x5f);
+    colH[10] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x49);
+    colH[9] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x67);
+    colH[8] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x71);
+    colH[7] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x7b);
+    colH[6] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x85);
+    colH[5] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x91);
+    colH[4] = (u32)Bdat_FindColumnEntry(tbl, cols + 0x9e);
+    colH[3] = (u32)Bdat_FindColumnEntry(tbl, cols + 0xab);
+    colH[2] = (u32)Bdat_FindColumnEntry(tbl, cols + 0xb5);
+    colH[1] = (u32)Bdat_FindColumnEntry(tbl, cols + 0xbf);
+    colH[0] = (u32)Bdat_FindColumnEntry(tbl, cols + 0xc9);
 
     // Entries visited this frame: full range once the row span exceeds 15,
     // otherwise a third of it.
@@ -873,7 +873,7 @@ void func_801AA2A8(UpdWork* self) {
                     if (modes[i] == 0) {
                         v = 1;
                     } else {
-                        v = func_801AA960((int)self, phase, area, modes[i]);
+                        v = BattleWork_TestModePhase((int)self, phase, area, modes[i]);
                     }
                 }
                 gate |= (v != 0);
@@ -933,7 +933,7 @@ void func_801AA2A8(UpdWork* self) {
         if (doPlay != 0) {
             // Retail forwards the +0xAC position pointer into r4 (unused by
             // the callee); keep the forwarding so the call shape matches.
-            func_801A96A0((SndCtrlObj*)((char*)entry + 0x20),
+            BattleWork_TickSndCtrl((SndCtrlObj*)((char*)entry + 0x20),
                           player->CfObject_getPosVector(), prio,
                           (int)((char*)entry));
         } else {
@@ -953,7 +953,7 @@ void func_801AA2A8(UpdWork* self) {
     }
 }
 
-extern "C" int func_801AA960(int self, int b, int c, int d) {
+extern "C" int BattleWork_TestModePhase(int self, int b, int c, int d) {
     // Else-if chain over the mode: retail presets r3=0, exits immediately on
     // a match, and funnels the last test through the shared epilogue.
     int result = 0;
@@ -1020,14 +1020,14 @@ bool BattleWork_CheckEffectTableReady(u32 id) {
 }
 
 // ----------------------------------------------------------------------------
-// func_801AAB64 - apply a sound-volume update over the shared ctrl-state
+// BattleWork_ApplyVolume - apply a sound-volume update over the shared ctrl-state
 // singleton's entry range (bdat table rows). For every entry whose key (+0x30)
 // equals id (or when id == 0, all entries) and whose sound index (+0x2C) is
 // valid, play index scaled by the entry's volume (+0x24) times scale. When
 // store is set, persist scale and kind into the entry.
 // The singleton global is re-read before each access, matching retail.
 // ----------------------------------------------------------------------------
-extern "C" void func_801AAB64(u32 id, u32 kind, int store, float scale) {
+extern "C" void BattleWork_ApplyVolume(u32 id, u32 kind, int store, float scale) {
     extern unsigned char lbl_eu_80664330;
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
@@ -1059,8 +1059,8 @@ extern "C" void func_801AAB64(u32 id, u32 kind, int store, float scale) {
 }
 
 // Retail 0x8 thunk: pass r3/r4/f1 through, force r5 (store) = 1, tail-call
-// func_801AAB64. Three-param + float pass-through emits just li r5,1; b.
-extern "C" void func_801AAC70(u32 a, u32 b, float s){ func_801AAB64(a, b, 1, s); }
+// BattleWork_ApplyVolume. Three-param + float pass-through emits just li r5,1; b.
+extern "C" void BattleWork_ApplyVolumeStore(u32 a, u32 b, float s){ BattleWork_ApplyVolume(a, b, 1, s); }
 
 extern "C" void func_801AAC78(u8 v) {
     extern unsigned char lbl_eu_80664330;
@@ -1068,7 +1068,7 @@ extern "C" void func_801AAC78(u8 v) {
     if (p == 0) return;
     *(u8*)((u8*)p + 0x1A) = v;
     if (v == 0) return;
-    func_801AAB64(0, 0, 0, lbl_eu_80667D64);
+    BattleWork_ApplyVolume(0, 0, 0, lbl_eu_80667D64);
 }
 
 extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
@@ -1077,7 +1077,7 @@ extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
     if (p) *(unsigned char*)((u8*)p + 0x1b) = v;
 }
 
-void func_801AACBC(unsigned int* r3, unsigned int* r4) {
+void BattleWork_CopyPairToWork(unsigned int* r3, unsigned int* r4) {
     extern unsigned char lbl_eu_80664330;
     unsigned int *p = (unsigned int *)&lbl_eu_80664330;
     if (!*p) return;

@@ -350,7 +350,7 @@ void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
         }
 
         if (self->field_92 != 0) {
-            func_8007B0C8(self->field_92);
+            CamEvtProgramEventCam(self->field_92);
         }
     }
 

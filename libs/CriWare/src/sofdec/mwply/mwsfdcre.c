@@ -376,7 +376,9 @@ void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
         if (sj == (u32)self->uni) {
             arg.a = 2;
             arg.b = sj;
-            arg.c = arg.d = arg.e = 0;
+            arg.c = 0;
+            arg.d = 0;
+            arg.e = 0;
             arg.f = 0;
         } else {
             if (sj == (u32)self->rbf) {
@@ -1301,13 +1303,16 @@ uint32_t criware_803A0BA8(void* r3_this, uint32_t r4) {
     uint32_t a = *(uint32_t*)((char*)r3_this + 0x54c);
     uint32_t limit = *(uint32_t*)((char*)r3_this + 0x544);
     uint32_t sum = a + r4;
+    uint32_t ret;
     if (sum > limit) {
-        return 0;
+        ret = 0;
+    } else {
+        uint32_t b = *(uint32_t*)((char*)r3_this + 0x548);
+        *(uint32_t*)((char*)r3_this + 0x54c) = sum;
+        *(uint32_t*)((char*)r3_this + 0x548) = b + r4;
+        ret = b;
     }
-    uint32_t b = *(uint32_t*)((char*)r3_this + 0x548);
-    *(uint32_t*)((char*)r3_this + 0x54c) = sum;
-    *(uint32_t*)((char*)r3_this + 0x548) = b + r4;
-    return b;
+    return ret;
 }
 
 void criware_803A0BDC(void* self) {

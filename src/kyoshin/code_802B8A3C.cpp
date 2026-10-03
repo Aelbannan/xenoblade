@@ -11,8 +11,8 @@
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (blank1, vtable slot 3 / offset 0x8).
 void completeOrderThreadVoice(CVS_THREAD_ORDER* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -24,7 +24,7 @@ void completeOrderThreadVoice(CVS_THREAD_ORDER* self) {
 CVS_THREAD_ORDER* __ct__CVS_THREAD_ORDER(CVoiceHandle* owner) {
     u32 v1;
 
-    if (func_802A330C(0x78, 0) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x78, 0) == NULL) {
         return NULL;
     }
     CVS_THREAD_ORDER* self = (CVS_THREAD_ORDER*)CCharVoiceMan_AllocVoiceArena(0x24);
@@ -74,7 +74,7 @@ void startOrderThreadPlayback(CVS_THREAD_ORDER* self) {
 
     if (((BattleMgrView*)cf::CBattleManager::getInstance())->field_0x20C8 != 0) {
         // Battle is active: jump straight to playback.
-        self->func_802A3B50();
+        self->PlayThreadVoice();
         return;
     }
 
@@ -99,8 +99,8 @@ void startOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     if (handle != NULL) {
         biased = &handle->voice;
     }
-    if (func_802A3C44(self, biased, tableVal) == 0) {
-        self->func_802A3B50();
+    if (TryRequestVoice(self, biased, tableVal) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -119,11 +119,11 @@ void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     int count;
     int rnd;
 
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
     if (((BattleMgrView*)cf::CBattleManager::getInstance())->field_0x20C8 != 0) {
-        self->func_802A3B50();
+        self->PlayThreadVoice();
         return;
     }
 
@@ -136,7 +136,7 @@ void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     ((OrderThreadWords*)self)->words[2] = src[1];
 
     handle = (CVoiceHandle*)func_8016FE34(cf::CfGameManager::getPlayer(0));
-    count = func_802A7870(arr, 3, handle);
+    count = HpVoice_CollectIdle(arr, 3, handle);
 
     // Counter/walker loop matching retail's register layout: reusing
     // `handle` as the entry variable (instead of a separate loop local)
@@ -149,8 +149,8 @@ void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
         // Rand result held in its own temp; the bias is added at the call
         // site (retail keeps mr/addi separate around the argument setup).
         rnd = ml::math::mtRand(2);
-        if (func_802A3C44(self, biased, rnd + 0x9C9) == 0) {
-            self->func_802A3B50();
+        if (TryRequestVoice(self, biased, rnd + 0x9C9) == 0) {
+            self->PlayThreadVoice();
         }
         bb++;
         zz++;
@@ -221,7 +221,7 @@ int func_802B8D4C() {
 
                 GimmickNameValue* nameObj = ((CGimmickNameView*)gh->field_4)->mAt30();
                 u32 val = nameObj->name;
-                if (func_80174C98(gh, &val, 0x803) != 0) {
+                if (testActorStatus(gh, &val, 0x803) != 0) {
                     OrderConfigEntry* e = lbl_eu_8053B840;
                     while (e->key != 0) {
                         if (e->key == gh->field_3F28) {
@@ -250,7 +250,7 @@ int func_802B8D4C() {
     s16 voiceId;
     CVoiceHandle* playHandle;
     if (cfg != NULL) {
-        playHandle = (CVoiceHandle*)func_802A7A54(cfg->field_4);
+        playHandle = (CVoiceHandle*)HpVoice_FindBySubState(cfg->field_4);
         if (playHandle == NULL) {
             voiceId = -1;
         } else {
@@ -262,7 +262,7 @@ int func_802B8D4C() {
     if (voiceId <= 0) {
         return 0;
     }
-    if (func_802A330C(0x14, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x14, 1) == NULL) {
         return 0;
     }
     if (CCharVoiceMan_AllocVoiceArena(0x20) == NULL) {
@@ -274,6 +274,6 @@ int func_802B8D4C() {
     if (playHandle != NULL) {
         playHandle = (CVoiceHandle*)&playHandle->voice;
     }
-    func_802A3D54((CCharVoice*)playHandle, voiceId, 0x14);
+    RequestVoicePlayback((CCharVoice*)playHandle, voiceId, 0x14);
     return 0;
 }

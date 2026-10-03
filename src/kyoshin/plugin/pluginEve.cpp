@@ -15,7 +15,7 @@ extern "C" void checkAvailableValue__Q22cf13CfGameManagerFv(int id);
 extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const float* color,
                                                        u32 param);
-extern "C" void func_80140E00(int a, int b, int c);
+extern "C" void UIWin_BuildFlagBuf(int a, int b, int c);
 extern "C" void awardQuestFlags();
 
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
@@ -78,7 +78,7 @@ int setFlag(VMThread* pThread) {
             // split high/low halves to match retail codegen.
             if ((u32)(flags - 0x02200000) == 0x3e8) {
                 if ((u32)(value - 0xfe) <= 1) {
-                    func_80140E00(4, idx, 0);
+                    UIWin_BuildFlagBuf(4, idx, 0);
                 }
             }
             if ((u32)(flags - 0x0a200000) == 0x12c) {
@@ -170,7 +170,7 @@ int realtimeEventPlay(VMThread* pThread) {
     return 0;
 }
 
-void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
+extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
 
 int realtimeEventEnd(VMThread* pThread) {
     clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();

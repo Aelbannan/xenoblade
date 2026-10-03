@@ -76,7 +76,7 @@ extern char* lbl_eu_80664090;
 
 // Sub-object hanging off the player at +0x3ED4 (real owner:
 // cf::CfObjectImplWalker, whose vf40 at +0x40 is the talk-busy probe used
-// by winTalkWait); handed to func_800C4244 (pcTalk).
+// by winTalkWait); handed to Walker_StepBattleArts (pcTalk).
 namespace cf { class CfObjectImplWalker; }
 struct PcBattleTalkObj {
     u8 _00[0x3ED4];
@@ -118,13 +118,13 @@ char* BdatGetPtrDirect(const void* tbl, const void* key, int id);
 // Open a party-talk window over an existing message box.
 void UIWin_CreateSysWin1(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.
-int func_8013EB90(int v);
+int UIWin_HasPendingUpdate(int v);
 // SE-talk voice busy probe (code80135FDC split unit).
 int MenuStateCheck64064or30();
 // Player accessor on the game manager (retail mangled global).
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Start/queue a party-chat line on the battle sub-object.
-int func_800C4244(cf::CfObjectImplWalker* sub, u32 id, u32 flag);
+int Walker_StepBattleArts(cf::CfObjectImplWalker* sub, u32 id, u32 flag);
 void UIWin_CreateKizunaTalk(int id);
 void UIWin_CreateEveTalkWin(int mode, const char* str);
 // Opens a system window with the given text.
@@ -167,7 +167,7 @@ int kizunaTalkEnd();
 int UIWin_GetTimer();
 // Busy/slot-state probe used by isPrioReq (nonzero when a priority request
 // window is active).
-int func_80135708();
+int CUICfManager_isUIBusy();
 // Fade-state probes: 1 when a fade is in progress / fade-wait pending.
 BOOL getFadeMenu();
 BOOL isFadeActive();

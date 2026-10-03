@@ -46,39 +46,39 @@ int CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);
 void CFade_FadeIn(CFade* self);
-void func_8024371C(CMapSel* self);
-void func_80243768(CMapSel* self);
+void beginMapSelClose(CMapSel* self);
+void moveMapSelUp(CMapSel* self);
 void moveMapSelSelection(CMapSel* self);
-void func_8024391C(CMapSel* self);
-void func_802439CC(CMapSel* self);
+void moveMapSelPageUp(CMapSel* self);
+void moveMapSelPageDown(CMapSel* self);
 u8 getMapGridCell(CMapSel* self);
-void func_8024F1FC(CFloorMap* self, u8 mapIdx);
-void func_8024C104(CFloorMap* self);
+void FloorMap_SetMapTable(CFloorMap* self, u8 mapIdx);
+void FloorMap_LoadMapFiles(CFloorMap* self);
 
 int FloorMap_ClassifyByte41(CFloorMap* self);
 int FloorMap_CheckRowVisited(CFloorMap* self);
 u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
 u8 FloorMap_GetField208Plain(CFloorMap* self);
 u8 FloorMap_GetField208Gated(CFloorMap* self);
-int func_8024F784(CFloorMap* self);
-void func_8024F5C4(CFloorMap* self, u32 arg);
+int FloorMap_IsSysWinBusy(CFloorMap* self);
+void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
 u16 FloorMap_GetU16Field5A(CFloorMap* self);
 u8 FloorMap_GetActiveFlag58(CFloorMap* self);
-void func_8024F55C(CFloorMap* self);
-void func_8024CE68(CFloorMap* self);
-void func_8024D23C(CFloorMap* self);
-void func_8024EE50(CFloorMap* self);
-void func_8024D614(CFloorMap* self);
-void func_8024DA0C(CFloorMap* self);
-void func_8024DE08(CFloorMap* self);
-void func_8024E2BC(CFloorMap* self);
-void func_8024F658(CFloorMap* self);
-void func_8024F72C(CFloorMap* self);
-void func_8024E650(CFloorMap* self);
-void func_8024E828(CFloorMap* self);
-void func_8024EA00(CFloorMap* self);
-void func_8024EC24(CFloorMap* self);
-void func_8024F7CC(CFloorMap* self);
+void FloorMap_ConfirmSelect(CFloorMap* self);
+void FloorMap_UpdateRowPanePos(CFloorMap* self);
+void FloorMap_CursorNextFloor(CFloorMap* self);
+void FloorMap_OpenRowWindow(CFloorMap* self);
+void FloorMap_UpdateCursorMove(CFloorMap* self);
+void FloorMap_UpdateWorldMap(CFloorMap* self);
+void FloorMap_HandleMapDown(CFloorMap* self);
+void FloorMap_NormalizeMapPos(CFloorMap* self);
+void FloorMap_Log2Field208(CFloorMap* self);
+void FloorMap_Log2Field333C(CFloorMap* self);
+void FloorMap_ScrollDown(CFloorMap* self);
+void FloorMap_ScrollUp(CFloorMap* self);
+void FloorMap_ScrollRight(CFloorMap* self);
+void FloorMap_ScrollLeft(CFloorMap* self);
+void FloorMap_MoveToCursorRow(CFloorMap* self);
 
 // CTitleAHelp help-bar id setter (retail-unmangled).
 void func_801C41E8(CTitleAHelp* self, u8 arg);
@@ -236,16 +236,16 @@ void CMenuMapSelect::func_80242368() {
     } else if (triggerBit2 != 0) {
         // Show help overlay.
         beginClose(&this->mTitleAHelp);
-        func_8024371C(&this->mMapSel);
+        beginMapSelClose(&this->mMapSel);
         this->mState = 3;
     } else if (cancel != 0) {
-        func_80243768(&this->mMapSel);
+        moveMapSelUp(&this->mMapSel);
     } else if (stickDir != 0) {
         moveMapSelSelection(&this->mMapSel);
     } else if (confirm != 0) {
-        func_8024391C(&this->mMapSel);
+        moveMapSelPageUp(&this->mMapSel);
     } else if (menu != 0) {
-        func_802439CC(&this->mMapSel);
+        moveMapSelPageDown(&this->mMapSel);
     } else if (triggerBit3 != 0) {
         // Confirm selection.
         if (CMainMenu_GetInstancePtr() != 0) {
@@ -267,8 +267,8 @@ void func_80242524(CMenuMapSelect* self) {
         self->mFloorMap = CFloorMap();
 
         u8 sel = getMapGridCell(&self->mMapSel);
-        func_8024F1FC(&self->mFloorMap, sel);
-        func_8024C104(&self->mFloorMap);
+        FloorMap_SetMapTable(&self->mFloorMap, sel);
+        FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 5;
     }
 }
@@ -310,60 +310,60 @@ void func_80242A28(CMenuMapSelect* self) {
         if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
             zooming = 1;
         }
-        if (zooming != 0 && func_8024F784(&self->mFloorMap) == 0) {
+        if (zooming != 0 && FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
             zoomReady = 1;
         }
 
-        func_8024F5C4(&self->mFloorMap, 0);
+        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         if ((pad->mTurboPressButtonFlags & 0x02000000) != 0 && zoomReady != 0) {
-            func_8024CE68(&self->mFloorMap);
+            FloorMap_UpdateRowPanePos(&self->mFloorMap);
             return;
         }
         if ((pad->mTurboPressButtonFlags & 0x04000000) != 0 && zoomReady != 0) {
-            func_8024D23C(&self->mFloorMap);
+            FloorMap_CursorNextFloor(&self->mFloorMap);
             return;
         }
 
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x00200000) != 0) {
-            func_8024EE50(&self->mFloorMap);
+            FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
             if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
-                func_8024F55C(&self->mFloorMap);
-            } else if (func_8024F784(&self->mFloorMap) == 0) {
+                FloorMap_ConfirmSelect(&self->mFloorMap);
+            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 8;
                 playUISound(6);
             } else {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            func_8024D614(&self->mFloorMap);
+            FloorMap_UpdateCursorMove(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            func_8024DA0C(&self->mFloorMap);
+            FloorMap_UpdateWorldMap(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            func_8024DE08(&self->mFloorMap);
+            FloorMap_HandleMapDown(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            func_8024E2BC(&self->mFloorMap);
+            FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x01000000) != 0) {
-            func_8024F658(&self->mFloorMap);
+            FloorMap_Log2Field208(&self->mFloorMap);
         } else if ((pressed & 0x200) != 0) {
-            func_8024F72C(&self->mFloorMap);
+            FloorMap_Log2Field333C(&self->mFloorMap);
         } else if ((pressed & 0x800000) != 0) {
-            if (func_8024F784(&self->mFloorMap) == 0) {
+            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
             } else {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
             }
         }
     } else {
@@ -387,87 +387,87 @@ void func_80242A28(CMenuMapSelect* self) {
         if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Gated(&self->mFloorMap) != 0) {
             zooming = 1;
         }
-        if (zooming != 0 && func_8024F784(&self->mFloorMap) == 0) {
+        if (zooming != 0 && FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
             zoomReady = 1;
         }
 
-        func_8024F5C4(&self->mFloorMap, 0);
+        FloorMap_SetPaneFlag(&self->mFloorMap, 0);
 
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 pressed = pad->mPressedButtonFlags;
         if ((pressed & 0x10) != 0) {
-            func_8024EE50(&self->mFloorMap);
+            FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
             if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
-                func_8024F55C(&self->mFloorMap);
-            } else if (func_8024F784(&self->mFloorMap) == 0) {
+                FloorMap_ConfirmSelect(&self->mFloorMap);
+            } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 CFade_FadeIn(&self->mFade);
                 self->mState = 8;
                 playUISound(6);
             } else {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
             }
         } else if ((pad->mHeldButtonFlags & 0x1000) != 0 && zooming != 0 &&
-                   func_8024F784(&self->mFloorMap) == 0) {
+                   FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x4f);
             if (self->mTimer > lbl_eu_8066872C) {
                 playUISound(2);
             }
             self->mTimer = lbl_eu_80668728;
-            func_8024F5C4(&self->mFloorMap, 1);
+            FloorMap_SetPaneFlag(&self->mFloorMap, 1);
             if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-                func_8024CE68(&self->mFloorMap);
+                FloorMap_UpdateRowPanePos(&self->mFloorMap);
             } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-                func_8024D23C(&self->mFloorMap);
+                FloorMap_CursorNextFloor(&self->mFloorMap);
             }
         } else if ((pressed & 0x400) != 0) {
-            if (func_8024F784(&self->mFloorMap) == 0) {
+            if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                     playUISound(6);
                 }
                 self->mState = 11;
             } else {
-                func_8024EE50(&self->mFloorMap);
+                FloorMap_OpenRowWindow(&self->mFloorMap);
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
-            func_8024D614(&self->mFloorMap);
+            FloorMap_UpdateCursorMove(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x8) != 0) {
-            func_8024DA0C(&self->mFloorMap);
+            FloorMap_UpdateWorldMap(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x80000000) != 0) {
-            func_8024DE08(&self->mFloorMap);
+            FloorMap_HandleMapDown(&self->mFloorMap);
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
-            func_8024E2BC(&self->mFloorMap);
+            FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x800) != 0) {
-            func_8024F658(&self->mFloorMap);
+            FloorMap_Log2Field208(&self->mFloorMap);
         } else if ((pressed & 0x200) != 0) {
-            func_8024F72C(&self->mFloorMap);
+            FloorMap_Log2Field333C(&self->mFloorMap);
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.
             u32 flag = 1;
             if ((pad->mHeldButtonFlags & 0x8000) != 0) {
-                func_8024E650(&self->mFloorMap);
+                FloorMap_ScrollDown(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x10000) != 0) {
-                func_8024E828(&self->mFloorMap);
+                FloorMap_ScrollUp(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x2000) != 0) {
-                func_8024EA00(&self->mFloorMap);
+                FloorMap_ScrollRight(&self->mFloorMap);
                 flag = 0;
             }
             if ((pad->mHeldButtonFlags & 0x4000) != 0) {
-                func_8024EC24(&self->mFloorMap);
+                FloorMap_ScrollLeft(&self->mFloorMap);
                 flag = 0;
             }
             if (flag != 0) {
-                func_8024F7CC(&self->mFloorMap);
+                FloorMap_MoveToCursorRow(&self->mFloorMap);
             }
         }
     }

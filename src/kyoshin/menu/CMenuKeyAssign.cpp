@@ -74,7 +74,7 @@ void CMenuKeyAssign::Init() {
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuKeyAssignFont*>(fontObj)->getFontHandle();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     // Hide the button panes that are not yet active (shared helper).
     hideKeyAssignPanes(this);
@@ -182,7 +182,7 @@ void CMenuKeyAssign::Move() {
             int handled = 0;
             if (arts != 0) {
                 u32 id = *arts->mSub04->getActorId();
-                if (func_80174C98(arts, &id, 0x803) != 0) {
+                if (testActorStatus(arts, &id, 0x803) != 0) {
                     if ((pad->mHeldButtonFlags & 8) != 0) {
                         int b2 = battleCommuIsActive();
                         if (battleMode == 0 && b2 == 0 &&
@@ -241,7 +241,7 @@ void CMenuKeyAssign::Move() {
                     goto artsDone;
                 }
             }
-            // arts == 0 or func_80174C98 == 0: retail dereferences arts here.
+            // arts == 0 or testActorStatus == 0: retail dereferences arts here.
             f32 gauge = ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
             if (gauge <= lbl_eu_80667078) {
                 func_801154D0(self, 0x18, 1, 9, 0, 0, 1);
@@ -388,7 +388,7 @@ void CMenuKeyAssign::Move() {
             if (b == 0 && func_8017FD44() == 0) {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
-                    if (func_80174C98(arts, &id, 0x803) != 0) {
+                    if (testActorStatus(arts, &id, 0x803) != 0) {
                         CMenuKeyAssignBattleMgr* bmv =
                             (CMenuKeyAssignBattleMgr*)bm;
                         u32 cnt = 0;
@@ -428,7 +428,7 @@ void CMenuKeyAssign::Move() {
         int handled = 0;
         if (arts != 0) {
             u32 id = *arts->mSub04->getActorId();
-            if (func_80174C98(arts, &id, 0x803) != 0) {
+            if (testActorStatus(arts, &id, 0x803) != 0) {
                 switch (player->mSub38->mState36C) {
                 case 1:
                     func_80115060(self, player->mSub38->mCount370 + 0x1b, 0, 0);
@@ -582,7 +582,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     // scope-exit (virtual) destructor on top of the explicit call.
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
@@ -697,7 +697,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -727,7 +727,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -753,7 +753,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -835,7 +835,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -864,7 +864,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -889,7 +889,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
                     self->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
                 cw.w[1] = (u32)w;
@@ -947,7 +947,7 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
             str.format(&base[0x66], mapped + 1);
             nw4r::lyt::Pane* pane =
                 self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
-            func_80137F88(pane, tex);
+            PaneSetTexPalette(pane, tex);
             // u16 -> f32 via MWCC's 0x43300000 magic double pair.
             cw.w[1] = (u32)tex->mHeader->mDims[1];
             ch.w[1] = (u32)tex->mHeader->mDims[0];

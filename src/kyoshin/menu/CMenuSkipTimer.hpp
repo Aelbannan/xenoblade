@@ -113,8 +113,8 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
-// func_80137250__FPQ34nw4r3lyt8DrawInfo.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 // CProcess base ctor (C-ABI, retail C-linkage symbol name).
 extern "C" void __ct__8CProcessFv(CProcess* self);
 // Scene-active gate for HUD draws (retail-unmangled; code_80135FDC.cpp).

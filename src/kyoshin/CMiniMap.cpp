@@ -33,7 +33,7 @@ extern "C" void __dl__FPv(void* p);
 // subi r3,r3,0x58 / b __dt__13CMenuMiniMap2Fv).
 void MiniMap2DtorThunk58(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 
-// (func_80117734 defined below, after the MiniMapObj view declaration)
+// (MiniMapRequestMapImage defined below, after the MiniMapObj view declaration)
 
 // Named .sdata2 conversion magics (defined in another TU; see CMiniMap.hpp).
 // Declared extern only: a local const definition lets MWCC const-fold reads
@@ -98,9 +98,9 @@ extern "C" void* __dt__13CMenuMiniMap2Fv(CMenuMiniMap2* _this, int flags) {
     return _this;
 }
 
-// func_80117C30 - per-frame minimap subobject update (called from Move with
-// &mMiniMap). Body defined below, after func_8011B05C.
-extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self);
+// MiniMapUpdateSubobject - per-frame minimap subobject update (called from Move with
+// &mMiniMap). Body defined below, after MiniMapUpdateMapView.
+extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self);
 
 #include <nw4r/lyt.h>
 #include "monolib/math/CVec3.hpp"
@@ -139,22 +139,22 @@ void* getReslistB68();
 void* prepareReslistC28();
 u32 getObjectIdAt(void* list, u32 index);
 void* CPartsChange_GetLandmarkTable();
-void func_800ABC5C(ml::CVec3* out, void* obj);
+void CollObjScaledVecSum(ml::CVec3* out, void* obj);
 void clearFrmHeap__17UnkClass_8045F564Fv(void* self);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* sub);
 void __dt__14Class_8045F858Fv(void* self, int);
-u32 func_801380A0(u16 row);
-u8 func_80138138(u32 id);
-void* func_80138234(void* bdat, u32 row);
-void* func_8013902C(int type);
-void func_80141DC4(ml::CVec3* out, u32 index);
+u32 GetU16PairEntry(u16 row);
+u8 SearchThresholdIdx(u32 id);
+void* CheckEntryConditions(void* bdat, u32 row);
+void* MakeIconTplName(int type);
+void bdatGetPosXYZ(ml::CVec3* out, u32 index);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void PaneSetVtxColorAll(void* pic, s32 arg);
-void func_80116B40(void* self);
+void MiniMapRebuildGimmickPanes(void* self);
 void* MiniMapFillMarkerEntry(void* self);
-void func_8011628C(void* self, u32 row);
-void func_801160A8(void* self, void* table, void* layout, f32 scale);
-void func_80116670(CMiniMapGimmickView* self, u32 arg, void* layout, f32 scale);
+void MiniMapPlaceMarkers(void* self, u32 row);
+void MiniMapBuildMarkerPanes(void* self, void* table, void* layout, f32 scale);
+void MiniMapInitGimmickTables(CMiniMapGimmickView* self, u32 arg, void* layout, f32 scale);
 void* CfObjectMove_getSelfIfActive(void* obj);
 void* createPicture__10CLibLayoutFv();
 void* createTextbox__10CLibLayoutFv();
@@ -167,13 +167,13 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 f32 FrSqrt__Q24nw4r4mathFf(f32);
 int sprintf(char*, const char*, ...);
-void func_80117734(CMMMapImg* self);
+void MiniMapRequestMapImage(CMMMapImg* self);
 }
 // C++-mangled retail helper: actor id -> action source object.
 void* findObjectById(int id);
 
 // ============================================================================
-// func_80118854 - CMiniMap marker/map-icon update (retail symbol unmangled).
+// MiniMapUpdateMapIcons - CMiniMap marker/map-icon update (retail symbol unmangled).
 // Reconstructed from retail ASM; high-level C++ only.
 // ============================================================================
 
@@ -218,7 +218,7 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     lbl_eu_80663FB8 = getFP__FPCc(buf);
 
     MiniMapInitTable3x5((MiniMapTable*)self->mField3C.mW);
-    func_801165EC((CMiniMapGimmickView*)self->mField17C.mW);
+    MiniMapResetGimmickTables((CMiniMapGimmickView*)self->mField17C.mW);
     new (&self->m824) UnkClass_8045F564();
     new (&self->m834) UnkClass_8045F564();
 
@@ -282,7 +282,7 @@ struct MiniMapLayout {
 // CMiniMap::OnFileEvent - build the minimap layout + animations once the arc
 // file (mFileHandle) reports it is loaded, then seed the clock textboxes and
 // the shared 'timg' picture onto the layout root and hand the tables to the
-// per-frame marker routines (func_801160A8 / func_80116670).
+// per-frame marker routines (MiniMapBuildMarkerPanes / MiniMapInitGimmickTables).
 // ============================================================================
 bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
@@ -327,7 +327,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         if (&lbl_eu_804FE1FC[0x202] == 0) {
             pic = 0;
         } else {
-            void* texName = func_8013902C(2);
+            void* texName = MakeIconTplName(2);
             if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
                 pic = 0;
             } else {
@@ -374,7 +374,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         if (&lbl_eu_804FE1FC[0x212] == 0) {
             clockPic = 0;
         } else {
-            void* texName = func_8013902C(1);
+            void* texName = MakeIconTplName(1);
             if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
                 clockPic = 0;
             } else {
@@ -395,8 +395,8 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x281], true);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, clockPic);
 
-        func_801160A8(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
-        func_80116670((CMiniMapGimmickView*)mField17C.mW, mField28, mLayout0C, mField20);
+        MiniMapBuildMarkerPanes(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
+        MiniMapInitGimmickTables((CMiniMapGimmickView*)mField17C.mW, mField28, mLayout0C, mField20);
         mReady = 1;
         ((UnkClass_8045F564*)m824)->validateHeap();
         }
@@ -416,13 +416,13 @@ struct MiniMapSelf {
         nw4r::lyt::Pane* m10;        // 0x10 - root pane (FindPaneByName)
     }* m0C;                          // 0x0C
     u8 pad10[0x1B - 0x10];
-    u8 m1B;                          // 0x1B (func_8011B05C result flag)
-    s16 m1C;                         // 0x1C (func_8011B05C rotation)
-    s16 m1E;                         // 0x1E (func_8011B05C rotation)
+    u8 m1B;                          // 0x1B (MiniMapUpdateMapView result flag)
+    s16 m1C;                         // 0x1C (MiniMapUpdateMapView rotation)
+    s16 m1E;                         // 0x1E (MiniMapUpdateMapView rotation)
     f32 m20;                         // 0x20 (marker grid scale)
     u32 m24;                         // 0x24 (BDAT table)
     u8 pad28[0x38 - 0x28];
-    u8 m38;                          // 0x38 (func_8011B05C gate flag)
+    u8 m38;                          // 0x38 (MiniMapUpdateMapView gate flag)
     u8 pad39[0x3C - 0x39];
     void* m3C;                       // 0x3C
     u8 pad40[0x17C - 0x40];
@@ -481,7 +481,7 @@ struct MiniMapObj {
 };
 
 // ============================================================================
-// func_80117734 - map-image loader request (retail symbol unmangled).
+// MiniMapRequestMapImage - map-image loader request (retail symbol unmangled).
 // Cancels any pending load and frees the previous buffer, selects the BDAT row
 // whose floor height is above the player's y, resolves the unlock-gated
 // resource variant, then requests the formatted image path into MEM2.
@@ -552,7 +552,7 @@ struct MiniMapTermView {
 // Clears every registered marker/clock pane, drops the fixed clock labels,
 // resets the marker/gimmick tables, releases the layout + accessor + UnkClass
 // scratch regions, and frees the cached 'timg' resource.
-extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
+extern "C" void __declspec(noinline) MiniMapTeardownMarkerPanes(CMiniMap* self) {
     self->mReady = 0;
     closeFileHandle(&self->mFileHandle);
     if (self->mLayout0C != 0) {
@@ -668,7 +668,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
 // Shared marker-placement tail (inlined twice by retail with distinct locals).
 // copy #1: diff1 @ sp+636, name1 @ sp+872, pane parent "panemapmark".
 // copy #2: diff2 @ sp+624, name2 @ sp+840.
-extern "C" void func_80118854(MiniMapSelf* self) {
+extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
     MiniMapEnumHolder holder;
     MiniMapEnumList* list;
     MiniMapObj* obj;
@@ -730,7 +730,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 node = next;
             }
         }
-        func_80116B40((u8*)self + 0x17C);
+        MiniMapRebuildGimmickPanes((u8*)self + 0x17C);
         clearFrmHeap__17UnkClass_8045F564Fv((u8*)self + 0x834);
     }
     {
@@ -827,7 +827,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(f32*)((u8*)pane + 0x34) = zero;
                             } else {
                                 void* pic = 0;
-                                void* texName = func_8013902C(7);
+                                void* texName = MakeIconTplName(7);
                                 if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name1);
@@ -1095,7 +1095,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(f32*)((u8*)pane + 0x34) = zero;
                             } else {
                                 void* pic = 0;
-                                void* texName = func_8013902C(7);
+                                void* texName = MakeIconTplName(7);
                                 if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name2);
@@ -1195,7 +1195,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             *(f32*)((u8*)pane + 0x34) = zero;
                         } else if (o->m91 == 6) {
                             void* pic = 0;
-                            void* texName = func_8013902C(15);
+                            void* texName = MakeIconTplName(15);
                             if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                 pic = createPicture__10CLibLayoutFv();
                                 SetName__Q34nw4r3lyt4PaneFPCc(pic, buf3);
@@ -1222,7 +1222,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
         // ---- row-table section ----
         {
             u8 rowB = (u8)lbl_eu_80664184;
-            void* bdat2 = (void*)func_801380A0(rowB);
+            void* bdat2 = (void*)GetU16PairEntry(rowB);
             void* bdatEntry = lbl_eu_80573D18[rowB - 1];
             u16 rowCount = (u16)Bdat_GetMaxRow_B1EC(bdatEntry);
             if (gimmickView != 0) {
@@ -1272,7 +1272,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         if (BdatGetU16Direct(bdat2, &lbl_eu_804FE1FC[702], (u16)k) !=
                             o->m8C)
                             continue;
-                        if (!func_80138234(bdat2, (u16)k)) continue;
+                        if (!CheckEntryConditions(bdat2, (u16)k)) continue;
                         {
                             ml::CVec3* otherPos = o->GetPos();
                             ml::CVec3* selfPos =
@@ -1295,7 +1295,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(f32*)((u8*)pane + 0x34) = zero;
                             } else {
                                 void* pic = 0;
-                                void* texName = func_8013902C(10);
+                                void* texName = MakeIconTplName(10);
                                 if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf4);
@@ -1386,7 +1386,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         *(f32*)((u8*)pane + 0x34) = zero;
                     } else {
                         void* pic = 0;
-                        void* texName = func_8013902C(12);
+                        void* texName = MakeIconTplName(12);
                         if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                             pic = createPicture__10CLibLayoutFv();
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf5);
@@ -1475,7 +1475,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                         *(f32*)((u8*)pane + 0x34) = zero;
                     } else {
                         void* pic = 0;
-                        void* texName = func_8013902C(16);
+                        void* texName = MakeIconTplName(16);
                         if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                             pic = createPicture__10CLibLayoutFv();
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf6);
@@ -1582,7 +1582,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             }
                             void* pic = 0;
                             if (type2 != 0) {
-                                void* texName = func_8013902C(type2);
+                                void* texName = MakeIconTplName(type2);
                                 if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf7);
@@ -1651,7 +1651,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     {
                         f32 radius = lbl_eu_806670B8 * self->m20;
                         ml::CVec3 pos;
-                        func_800ABC5C(&pos, o);
+                        CollObjScaledVecSum(&pos, o);
                         ml::CVec3* selfPos =
                             ((MiniMapObj*)((u8*)obj + 0x3E9C))->GetPos();
                         ml::CVec3 diff = *selfPos - pos;
@@ -1674,7 +1674,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(f32*)((u8*)pane + 0x34) = zero;
                             } else {
                                 void* pic = 0;
-                                void* texName = func_8013902C(3);
+                                void* texName = MakeIconTplName(3);
                                 if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0)) {
                                     pic = createPicture__10CLibLayoutFv();
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf8);
@@ -1699,7 +1699,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             }
         }
 
-        func_8011628C((u8*)self + 0x3C, lbl_eu_80664184);
+        MiniMapPlaceMarkers((u8*)self + 0x3C, lbl_eu_80664184);
         __dt__14Class_8045F858Fv(guard, -1);
         __dt__80043E88(&holder, -1);
     }
@@ -1707,7 +1707,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
 }
 
 // ============================================================================
-// func_8011B05C - per-frame map-view content update: position the map
+// MiniMapUpdateMapView - per-frame map-view content update: position the map
 // material's texture SRT at the player, then orient/scale the clock panes.
 // Reconstructed from retail ASM (setup -> SRT math -> pane loops).
 // ============================================================================
@@ -1772,7 +1772,7 @@ struct MiniMapB05CObjView {
 // and +0x68 GetMaterial() on a child pane.)
 
 // Best-effort reconstruction (elided retail loop body).
-extern "C" void func_8011B05C(MiniMapSelf* self) {
+extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     // 'panemapmark' holder pane + its material (pane via root-pane
     // FindPaneByName -> GetMaterial at vt+0x68).
     nw4r::lyt::Pane* pane =
@@ -2033,7 +2033,7 @@ void CMenuMiniMap2::Init() {
         mMiniMap.mField3C.mFlag38 = sub.mFlag0C;
         mMiniMap.mField3C.mFlag39 = sub.mFlag0D;
         mMiniMap.mField3C.mFlag3A = sub.mFlag0E;
-        func_80117734((CMMMapImg*)&mMiniMap.mSub);
+        MiniMapRequestMapImage((CMMMapImg*)&mMiniMap.mSub);
     }
 }
 
@@ -2058,7 +2058,7 @@ void CMenuMiniMap2::Term() {
     }
     releaseArcResourceAccessor(mClock.mAccessor);
     mClock.mUnk1C.deleteRegion();
-    func_80118058(&mMiniMap);
+    MiniMapTeardownMarkerPanes(&mMiniMap);
     lbl_eu_80663FB0 = 0;
 }
 
@@ -2084,11 +2084,11 @@ struct MiniMapPlayer {
 };
 
 // ============================================================================
-// func_80117C30 - per-frame minimap subobject update: while visible (states
+// MiniMapUpdateSubobject - per-frame minimap subobject update: while visible (states
 // 2/5/7) recompute the player's floor-height band and the row's unlock flags,
 // run the layout fade state machine on field_0x18, then refresh the markers.
 // ============================================================================
-extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
+extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self) {
     if (self->mLayout0C == NULL) return;
 
     u8 state = self->field_0x18;
@@ -2191,7 +2191,7 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
     case 6:
         // Kick off the map-image load request for the current row.
         self->field_0x18 = 7;
-        func_80117734((CMMMapImg*)&self->mSub);
+        MiniMapRequestMapImage((CMMMapImg*)&self->mSub);
         break;
     case 7:
         // Map image ready -> show it (uses the cached timg when present).
@@ -2209,8 +2209,8 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
         break;
     }
 
-    func_80118854((MiniMapSelf*)self);
-    func_8011B05C((MiniMapSelf*)self);
+    MiniMapUpdateMapIcons((MiniMapSelf*)self);
+    MiniMapUpdateMapView((MiniMapSelf*)self);
     self->mLayout0C->Animate(0);
 }
 
@@ -2338,7 +2338,7 @@ void CMenuMiniMap2::Move() {
         mClock.mLayout->Animate(0);
     }
 
-    func_80117C30(&mMiniMap);
+    MiniMapUpdateSubobject(&mMiniMap);
     if (lbl_eu_80663E24 & 0xBFE40000) return;
     if (func_801AC124()) return;
     // Active state: Classic/Wiimote A dismisses the minimap.
@@ -2354,7 +2354,7 @@ void CMenuMiniMap2::Move() {
         }
         if (btn) CUICfManager_queueWorldMapMenu();
     }
-    func_8013ACFC();
+    RevealMinimapArea();
     if (mField55 != 0) mField54 = 1;
 }
 
@@ -2373,7 +2373,7 @@ void CMenuMiniMap2::cbRenderBefore() {
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     if (mClock.mLayout != 0) {
         drawLayout(mClock.mLayout, &drawInfo, 0, 1);
     }
@@ -2486,7 +2486,7 @@ void MiniMapSetActiveFlag()
 }
 
 // Offset-adjusted dispatch thunks: the CMenuMiniMap2 subobject sits at self-0x5C.
-void func_8011C43C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
+void MiniMap2RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
 
 void MiniMap2DtorThunk5C(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
 
@@ -2524,12 +2524,12 @@ MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self) {
     return self;
 }
 // ============================================================================
-// func_801160A8 - build one marker picture pane per BDAT row whose 'map kind'
+// MiniMapBuildMarkerPanes - build one marker picture pane per BDAT row whose 'map kind'
 // column matches the current row index: resolve its texture, create/name the
 // picture, reset its SRT to the zero constant, then record pane/id/position/
 // flag into the marker tables (max 15 entries; hitting 16 ends the scan).
 // ============================================================================
-void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
+void MiniMapBuildMarkerPanes(MiniMapTable* self, void* table, void* layout, f32 scale) {
     self->field_08 = (u32)layout;
     self->field_04 = (u32)table;
     self->field_0C = scale;
@@ -2552,7 +2552,7 @@ void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
 
         char buf[0x20];
         sprintf(buf, &lbl_eu_804FE1FC[0x25], (u32)i);
-        void* texName = func_8013902C(0xe);
+        void* texName = MakeIconTplName(0xe);
         nw4r::lyt::Pane* pane;
         ml::CVec3 pos;
         if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, (const char*)texName, 0) == 0) {
@@ -2572,19 +2572,19 @@ void func_801160A8(MiniMapTable* self, void* table, void* layout, f32 scale) {
         if (pane == 0) continue;
         self->field_100[0][n] = pane;
         self->field_10[0][n] = i;
-        func_80141DC4(&pos, i);
+        bdatGetPosXYZ(&pos, i);
         self->field_4C[0][n] = pos;
         self->field_3D[n] = 0;
         if (n >= 15) return;
         n++;
     }
 }
-// func_8011628C - per-frame marker placement: for each live MiniMapTable
+// MiniMapPlaceMarkers - per-frame marker placement: for each live MiniMapTable
 // marker decide (by the player height band vs the marker band) whether the
 // marker pane is attached to the layout root, then pin it to its grid cell.
 // Retail keeps the player as (container-0x3E9C) so the CfObjectMove subobject
 // at +0x3E9C is addressed with a constant displacement.
-extern "C" void __declspec(noinline) func_8011628C(void* self, u32 row) {
+extern "C" void __declspec(noinline) MiniMapPlaceMarkers(void* self, u32 row) {
     MiniMapTable* table = (MiniMapTable*)self;
     if (table->field_08 == 0) return;
 
@@ -2655,12 +2655,12 @@ extern "C" void __declspec(noinline) func_8011628C(void* self, u32 row) {
     }
 }
 // ============================================================================
-// func_80116670 - initialize the gimmick-view tables (minimap+0x17C) from the
+// MiniMapInitGimmickTables - initialize the gimmick-view tables (minimap+0x17C) from the
 // BDAT gimmick table: stash table/layout/scale, resolve the marker parent pane
 // via the layout's pane manager (+0x10), then fill the per-row enable/id/valid
 // entries for rows 1..count and seed both name-lookup tables.
 // ============================================================================
-extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout, f32 scale) {
+extern "C" void MiniMapInitGimmickTables(CMiniMapGimmickView* self, u32 table, void* layout, f32 scale) {
     self->field_0x00 = (const char*)table;
     self->field_0x04 = (u32)layout;
     self->field_0x08 = scale;
@@ -2678,7 +2678,7 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
                                                 &lbl_eu_804FE1FC[0x45], i + 1);
             u16 id = BdatGetU16Direct((void*)self->field_0x00,
                                    &lbl_eu_804FE1FC[0x4C], i + 1);
-            void* entry = lbl_eu_80573D18[func_80138138(id)];
+            void* entry = lbl_eu_80573D18[SearchThresholdIdx(id)];
             u8 valid = (BdatGetU8Direct((u32)entry, &lbl_eu_804FE1FC[0x55], id) != 0);
             self->field_0x270[i] = valid;
             if (!valid) {
@@ -2701,7 +2701,7 @@ extern "C" void func_80116670(CMiniMapGimmickView* self, u32 table, void* layout
     }
 }
 // ============================================================================
-// func_801168A0 - update gimmick-view marker rows from the player's position.
+// MiniMapUpdateGimmickRows - update gimmick-view marker rows from the player's position.
 // For each live row: diff = player pos - row pos. Rows with the update flag
 // set are radius-clamped (Warning/FrSqrt idiom shared with the Move sections);
 // rows without it just drop out of range (clear the entry's enable bit).
@@ -2722,12 +2722,12 @@ struct MiniMapSubObj {
 };
 
 // ============================================================================
-// func_80117734 - map-image loader request (retail symbol unmangled).
+// MiniMapRequestMapImage - map-image loader request (retail symbol unmangled).
 // Cancels any pending load and frees the previous buffer, selects the BDAT row
 // whose floor height is above the player's y, resolves the unlock-gated
 // resource variant, then requests the formatted image path into MEM2.
 // ============================================================================
-extern "C" void func_80117734(CMMMapImg* self) {
+extern "C" void MiniMapRequestMapImage(CMMMapImg* self) {
     closeFileHandle(&self->mFileHandle);
     if (self->mData != NULL) {
         deallocate__Q23mtl10MemManagerFPv(self->mData);
@@ -2803,7 +2803,7 @@ extern "C" void func_80117734(CMMMapImg* self) {
     self->mReady = 0;
 }
 
-extern "C" void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
+extern "C" void __declspec(noinline) MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {
     // The position source is the +0x3E9C member of the player object; retail
     // null-tests the container-of pointer before dereferencing.
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
@@ -2864,14 +2864,14 @@ extern "C" void __declspec(noinline) func_801168A0(CMiniMapGimmickView* self) {
         entry->field_34 = zero;
     }
 }
-// func_80116B40 - rebuild the gimmick-view marker panes each frame. For every
+// MiniMapRebuildGimmickPanes - rebuild the gimmick-view marker panes each frame. For every
 // enabled row (enable array selected by field_0x590) dispatch on its type byte:
 // scan the matching object source (two global lists, the case-2 element array,
 // a BDAT position probe, or the global gimmick table), find the first entry
 // whose id and height band match the player's band, and record its position.
 // For rows that produced a record, create/name a 'timg' picture pane (kind
 // selects the resource name; 0 skips creation) and prepend it to the layout.
-extern "C" void __declspec(noinline) func_80116B40(void* self) {
+extern "C" void __declspec(noinline) MiniMapRebuildGimmickPanes(void* self) {
     char* strings = lbl_eu_804FE1FC;
     CMiniMapGimmickView* view = (CMiniMapGimmickView*)self;
     if (view->field_0x04 == 0) return;
@@ -3008,7 +3008,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
             ml::CVec3 probe;
             for (u32 k = 1; k <= rowCount; k++) {
                 s16 v = BdatGetS16Direct(lbl_eu_80663FB8, strings + 0x30, k);
-                func_80141DC4(&probe, dispId);
+                bdatGetPosXYZ(&probe, dispId);
                 if ((f64)v - lbl_eu_80667098 > probe.y) {
                     if (band == k) hit = true;
                     break;
@@ -3016,7 +3016,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
             }
             if (!hit) break;
             ml::CVec3 pos;
-            func_80141DC4(&pos, dispId);
+            bdatGetPosXYZ(&pos, dispId);
             u32 cnt = view->field_0x6A4;
             view->field_0x5D4[cnt].x = pos.x;
             view->field_0x5D4[cnt].y = pos.y;
@@ -3109,7 +3109,7 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
         nw4r::lyt::Pane* pane = NULL;
         f32 zero = lbl_eu_80667090;
         if (kind != 0) {
-            char* texName = (char*)func_8013902C(kind);
+            char* texName = (char*)MakeIconTplName(kind);
             if (CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0) == NULL) {
                 kind = 0;
             } else {
@@ -3128,12 +3128,12 @@ extern "C" void __declspec(noinline) func_80116B40(void* self) {
         view->field_0x6A4 = cnt + 1;
     }
 
-    func_801168A0(view);
+    MiniMapUpdateGimmickRows(view);
 }
 
-// func_801165EC - reset the minimap gimmick-view tables (retail unmangled
+// MiniMapResetGimmickTables - reset the minimap gimmick-view tables (retail unmangled
 // name; the CMiniMapGimmickView subobject sits at minimap+0x17C).
-void func_801165EC(CMiniMapGimmickView* self) {
+void MiniMapResetGimmickTables(CMiniMapGimmickView* self) {
     f32 zero = lbl_eu_80667090;
     self->field_0x04 = 0;
     u32 off = 0;
@@ -3166,7 +3166,7 @@ void func_801165EC(CMiniMapGimmickView* self) {
 }
 
 // MiniMapFillMarkerEntry - fill one marker-visibility table entry per call; returns 1
-// when the row budget ran out (func_80118854 uses the result as a bool).
+// when the row budget ran out (MiniMapUpdateMapIcons uses the result as a bool).
 u32 MiniMapFillMarkerEntry(CMiniMapGimmickView* self) {
     // Declaration order tuned for MWCC reverse-declaration reg allocation
     // (ret=r30, end=r29, i=r28).
@@ -3190,6 +3190,6 @@ u32 MiniMapFillMarkerEntry(CMiniMapGimmickView* self) {
             i++;
         }
     }
-    func_801168A0(self);
+    MiniMapUpdateGimmickRows(self);
     return ret;
 }

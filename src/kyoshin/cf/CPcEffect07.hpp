@@ -403,7 +403,7 @@ extern const f32 lbl_eu_80667DF0;       // sdata2 float constant (spawn reset va
 extern const f64 lbl_eu_80667DF8;       // sdata2 int->float conversion magic (0x4330000080000000)
 
 // Spawn/attach an effect object into a slot (see CPcEffect07.cpp).
-extern "C" s32 func_801B19F0(u8 type, s32 slotSel);
+extern "C" s32 spawnPcEffect(u8 type, s32 slotSel);
 
 // 0x18-stride mat-slot view: the transform pointer of slot i sits at
 // self + 0x18 + i*0x18 (overlaps PcEffectEntry.mMat).

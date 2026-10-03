@@ -41,7 +41,7 @@ extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // bool CtrlRemote_TouchBitByArg(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern u32 CtrlRemote_TouchBitByArg(u32);
-// forward decls: func_801375A0 calls these helpers before their definitions
+// forward decls: AccumPaneWorldPos calls these helpers before their definitions
 // (they are defined later in this TU).
 extern void code80135FDC_setVec3(float* self, float a, float b, float c);
 extern void Vec3AddInto(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
@@ -59,12 +59,12 @@ static inline void* getBdatStringColumnValue_str(void* bdat, const char* col,
 #define getBdatStringColumnValue(bdat, col, row) \
     getBdatStringColumnValue_str(bdat, col, row)
 
-// Tag-proc owner for func_80136A1C/func_80136D74's slot-0x14 dispatch.
+// Tag-proc owner for LayoutSetTextBoxText/SetLayoutSelfText's slot-0x14 dispatch.
 // The full CTagProcessorBase lives in kyoshin/CTagProcessor.hpp, which
 // cannot be included here: it defines its own byte-wise nw4r::ut::Color
 // that clashes with the real lyt headers used by this TU. Only the vtable
 // prefix matters for the virtual call below (the base provides slots
-// 0x08/0x0C/0x10, so Proc lands at retail slot 0x14 = func_80125B58);
+// 0x08/0x0C/0x10, so Proc lands at retail slot 0x14 = TagProcPreprocessMessage);
 // keep this in sync with CTagProcessor.hpp. No TU may include both headers.
 struct CTagProcessorBase : public nw4r::ut::TagProcessorBase<wchar_t> {
     virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14
@@ -77,7 +77,7 @@ struct CTagProcessorBase : public nw4r::ut::TagProcessorBase<wchar_t> {
 // Retail order: floats -> 2^52 -> floats -> face-string pointers -> floats ->
 // doubles. Non-const (matches extern decls, keeps load codegen); the 4-byte
 // pads before each double come from 8-alignment. 67310-6733C are pointers
-// read through float-typed externs as u32 bit patterns (func_8013A7D0/AC3C).
+// read through float-typed externs as u32 bit patterns (LookupRelateValue/AC3C).
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672D8 = 38.0f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672DC = -1000.0f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672E0 = 1000.0f;
@@ -114,12 +114,12 @@ __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667360 = 450360
 // Retail order: dispatch jumptable (opaque reloc blob) -> NW4R assert strings.
 // Declared before all code so MWCC emits them ahead of its own switch tables
 // (enables drop_data_tail=((".data", 0x118))). Gaps fold into array tails.
-// RESIDUAL: the 0x38 jumptable of func_801393CC cannot be expressed in C++
+// RESIDUAL: the 0x38 jumptable of LookupItemTypeTable cannot be expressed in C++
 // (branch-table targets are local .text labels mid-function); it stays a sized
 // static blob. Retail names it jumptable_eu_8052E488 (local); MWCC's own copy
 // of this table plus func_80138574's 21-entry switch table trail the section
 // natively. MWCC emits a switch table at its function's definition point, so
-// defining func_801393CC before this block with the retail case shape
+// defining LookupItemTypeTable before this block with the retail case shape
 // (case 0 -> epilogue, then 13 distinct case bodies) would emit the real table
 // at .data+0. The blob keeps a +0 canary only to stay in .data: all-zero
 // initializers (static/global, const/volatile/used, explicit section) route to
@@ -307,7 +307,7 @@ extern "C" void* BdatGetPtrDirect(const char* a, const char* b, const char* c) {
     return getBdatStringColumnValue((void*)a, b, c);
 }
 
-extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
+extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
     u32 srcLen = strlen(src);
     ENCResult result = ENCConvertStringUtf8ToUtf16(
         dst, &destLen, reinterpret_cast<const u8*>(src), &srcLen);
@@ -331,7 +331,7 @@ extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
 // optimize_for_size gives retail's cmpi-pair SJIS checks (at -O4 the range
 // checks coalesce into subi/cmpli); same pattern as CArtsInfo.cpp.
 #pragma optimize_for_size on
-extern "C" void func_eu_80136F90(char* str) {
+extern "C" void SjisDotToCommaEU(char* str) {
     extern int getLanguage__9CDeviceSCFv();
     int lang = getLanguage__9CDeviceSCFv();
     if ((u8)(lang + 0xFE) > 2) return;
@@ -365,7 +365,7 @@ next:
 }
 #pragma optimize_for_size off
 
-extern "C" int func_801364B8(char* src, char delim, char** outTokens) {
+extern "C" int SplitStringTrim(char* src, char delim, char** outTokens) {
     // next is a walking char** (retail keeps it as a raw byte offset in a
     // register, starting at outTokens+4)
     int count = 1;
@@ -411,7 +411,7 @@ extern "C" int func_801364B8(char* src, char delim, char** outTokens) {
     return count;
 }
 
-extern "C" int func_801365E4(u16* src, u16 delim, u16** outTokens) {
+extern "C" int SplitWStringTrim(u16* src, u16 delim, u16** outTokens) {
     int count = 1;
     int idx = 1;
     outTokens[0] = src;
@@ -459,7 +459,7 @@ extern "C" void WcsToUpperInPlace(u16* str) {
     }
 }
 
-extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
+extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
     extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
     extern const char lbl_eu_80500664[];
     if (node == NULL) return;
@@ -467,7 +467,7 @@ extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
     void* head = (u8*)node + 0x14;
     char buf[32];
     // tokens is oversized in retail (stack frame reserves 18 entries);
-    // func_801364B8 never fills more than a handful.
+    // SplitStringTrim never fills more than a handful.
     char* tokens[18];
     while (child != head) {
         if (child == NULL) {
@@ -478,7 +478,7 @@ extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
         sprintf(buf, lbl_eu_80500664, type + 0xBC);
-        func_801364B8(buf, '_', tokens);
+        SplitStringTrim(buf, '_', tokens);
         char* t0 = tokens[0];
         int tl = strlen(t0);
         int i = 0;
@@ -492,7 +492,7 @@ extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
                     (nw4r::lyt::TextBox*)type, font);
             }
         }
-        func_8013676C((void*)type, font);
+        ApplyFontToTxtPanes((void*)type, font);
         child = *(void**)child;
     }
 }
@@ -512,10 +512,10 @@ extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
     char buf[512];
     extern const char lbl_eu_80500664[];
     sprintf(buf, &lbl_eu_80500664[7], (int)value);
-    func_80136A1C(layout, name, buf, 0);
+    LayoutSetTextBoxText(layout, name, buf, 0);
 }
 
-extern "C" void func_80136A1C(
+extern "C" void LayoutSetTextBoxText(
     nw4r::lyt::Layout* layout, char* name, char* text, u32 tagProc) {
     nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(name, true);
     if (pane == NULL) return;
@@ -531,7 +531,7 @@ extern "C" void func_80136A1C(
         wcscpy(reinterpret_cast<wchar_t*>(buf),
                reinterpret_cast<const wchar_t*>(&lbl_eu_806621F4));
     } else {
-        // Pointer + counter scan (same loop shape as func_80136400): retail
+        // Pointer + counter scan (same loop shape as Utf8ToWcsCopyFix): retail
         // keeps len in a saved reg, walks buf with a pointer, and stores
         // the terminator via a zero register before the loop.
         int len = (int)destLen;
@@ -547,7 +547,7 @@ extern "C" void func_80136A1C(
     }
 
     if (tagProc != 0) {
-        // CTagProcessorBase::Proc (slot 0x14, retail func_80125B58)
+        // CTagProcessorBase::Proc (slot 0x14, retail TagProcPreprocessMessage)
         const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
             reinterpret_cast<wchar_t*>(buf), 0,
             lbl_eu_806672D8, lbl_eu_806672D8);
@@ -566,18 +566,18 @@ extern "C" void LayoutSetTextBoxFmtValue(
     char buf[520];
     // Retail passes the fmt param (r5) as the sprintf vararg; the format is
     // the constant lbl_eu_80500664 (r4 = lis/@l, fmt param never read as a
-    // format). The 4th func_80136A1C arg is the value param (r6 -> r31).
+    // format). The 4th LayoutSetTextBoxText arg is the value param (r6 -> r31).
     sprintf(buf, lbl_eu_80500664, fmt);
-    func_80136A1C(layout, name, buf, value);
+    LayoutSetTextBoxText(layout, name, buf, value);
 }
 
 extern "C" void LayoutSetTextBoxInt(nw4r::lyt::Layout* layout, u32 value) {
     char buf[512];
     sprintf(buf, &lbl_eu_80500664[7], (int)value);
-    func_80136D74(layout, buf, 0);
+    SetLayoutSelfText(layout, buf, 0);
 }
 
-extern "C" void func_80136D74(
+extern "C" void SetLayoutSelfText(
     nw4r::lyt::Layout* layout, char* text, u32 tagProc) {
     u16 buf[1024];
     u32 destLen = 1024;
@@ -590,7 +590,7 @@ extern "C" void func_80136D74(
         wcscpy(reinterpret_cast<wchar_t*>(buf),
                reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
     } else {
-        // same loop shape as func_80136400 (pointer + counter)
+        // same loop shape as Utf8ToWcsCopyFix (pointer + counter)
         buf[destLen] = 0;
         int len = (int)destLen;
         u16* p = buf;
@@ -604,7 +604,7 @@ extern "C" void func_80136D74(
     }
 
     if (tagProc != 0) {
-        // CTagProcessorBase::Proc (slot 0x14, retail func_80125B58);
+        // CTagProcessorBase::Proc (slot 0x14, retail TagProcPreprocessMessage);
         // retail passes the same float in f1 and f2
         const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
             reinterpret_cast<wchar_t*>(buf), 0,
@@ -696,7 +696,7 @@ extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     layout->Draw(*drawInfo);
 }
 
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo) {
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo) {
     if (!CDeviceSC::isWideAspectRatio()) return;
 
     // Toggle the locationAdjust flag bit and reload the location-adjust
@@ -740,7 +740,7 @@ ret0:
     return 0;
 }
 
-extern "C" int func_8013732C(const char* name) {
+extern "C" int BdatGetRankByName(const char* name) {
     // BDAT lookup: row index from one table keyed by name, then a u8 column
     // from another table keyed by that index; the byte maps through a range
     // tree identical to MapValueToRank6's (inlined here in retail).
@@ -843,7 +843,7 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float delta) {
     return result;
 }
 
-extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
     output->x = lbl_eu_806672F0;
     output->y = lbl_eu_806672F0;
     output->z = lbl_eu_806672F0;
@@ -882,7 +882,7 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
 
     copyVEC3(&tmp2, &ggp->GetTranslate());
     nw4r::math::VEC3 tmp3;
-    func_801375A0(&tmp3, ggp->GetParent());
+    AccumPaneWorldPos(&tmp3, ggp->GetParent());
     Vec3AddInto(&tmp2, &tmp3);
 
 add_temp:
@@ -894,7 +894,7 @@ add_out:
 }
 
 // __declspec(noinline): MWCC -inline auto would inline these small same-TU
-// helpers into func_801375A0/func_8013775C, but retail calls them out-of-line
+// helpers into AccumPaneWorldPos/AccumPaneWorldPosB, but retail calls them out-of-line
 // (bl relocs present at every call site). noinline blocks the auto-inline
 // without changing the helper bodies (both are byte-matched).
 extern "C" __declspec(noinline) void code80135FDC_setVec3(float* self, float a, float b, float c) {
@@ -908,7 +908,7 @@ extern "C" __declspec(noinline) void Vec3AddInto(nw4r::math::VEC3* output,
     nw4r::math::VEC3Add(output, output, value);
 }
 
-extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
+extern "C" void AccumPaneWorldPosB(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
     // Single load: retail keeps the zero constant live in f1 across the whole
     // function (one lfs up front, stfs at every init site).
     float z = lbl_eu_806672F0;
@@ -956,7 +956,7 @@ extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
                         if (ggpp != NULL) {
                             if (ggpp->GetParent() != NULL) {
                                 copyVEC3(&recurse, &ggpp->GetTranslate());
-                                func_8013775C(&rec2, ggpp->GetParent());
+                                AccumPaneWorldPosB(&rec2, ggpp->GetParent());
                                 Vec3AddInto(&recurse, &rec2);
                             }
                         }
@@ -973,7 +973,7 @@ extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
 done:;
 }
 
-extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
                               nw4r::lyt::Pane* scale, nw4r::lyt::Pane* offset) {
     output->x = lbl_eu_806672F0;
     output->y = lbl_eu_806672F0;
@@ -1018,7 +1018,7 @@ extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
                                     tmp2.x = ggp->GetTranslate().x;
                                     tmp2.y = ggp->GetTranslate().y;
                                     tmp2.z = ggp->GetTranslate().z;
-                                    func_8013775C(&recurse, gggp);
+                                    AccumPaneWorldPosB(&recurse, gggp);
                                     nw4r::math::VEC3Add(&tmp2, &tmp2, &recurse);
                                 }
                             }
@@ -1035,7 +1035,7 @@ extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
     nw4r::math::VEC3Add(output, output, &offset->GetTranslate());
 }
 
-extern "C" void func_80137B44(void* a, u32 b, u32 c) {
+extern "C" void PaneSetVtxColorByName(void* a, u32 b, u32 c) {
     if (a == NULL) return;
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
     nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
@@ -1059,7 +1059,7 @@ extern "C" void PaneSetVtxColorAll(void* obj, u32 value) {
     { u32 v = value; ((nw4r::lyt::Pane*)obj)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
-extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
+extern "C" void PaneSetVtxColorPairsByName(void* a, u32 b, u32 c, u32 d) {
     if (a == NULL) return;
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
     nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
@@ -1106,7 +1106,7 @@ extern "C" void PaneSetTexPaletteByName(void* a, u32 b, void* palette) {
     mat->GetTexMapAry()[0] = texMap;
 }
 
-extern "C" void func_80137F88(void* a, void* palette) {
+extern "C" void PaneSetTexPalette(void* a, void* palette) {
     if (a != NULL) {
         if (palette != NULL) {
             nw4r::lyt::Material* mat = ((nw4r::lyt::Pane*)a)->GetMaterial();
@@ -1136,14 +1136,14 @@ struct Table_80500188 {
     u32 words[14];
 };
 
-extern "C" u16 func_801380A0(u32 idx) {
+extern "C" u16 GetU16PairEntry(u32 idx) {
     struct Table_80500188 t;
     u32 n = idx - 1;
     t = lbl_eu_80500188;
     return ((u16*)&t)[n];
 }
 
-extern "C" u32 func_80138138(u32 val) {
+extern "C" u32 SearchThresholdIdx(u32 val) {
     u32 words[28];
     for (int i = 0; i < 28; i++) {
         words[i] = lbl_eu_805001C0[i];
@@ -1154,7 +1154,7 @@ extern "C" u32 func_80138138(u32 val) {
     return 0;
 }
 
-extern "C" u32 func_80138234(const char* name, u32 id) {
+extern "C" u32 CheckEntryConditions(const char* name, u32 id) {
     u32 flag = 0;
     if (CtrlRemote_TouchBitByArg(id + 0x220) != 0) return 0;
 
@@ -1315,7 +1315,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
             void* result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0xC0], (const char*)key);
             v5 = *(u8*)&result;
         }
-        if (v5 != 0 && v5 != func_8006A6D0()) return 0;
+        if (v5 != 0 && v5 != CfT_DispatchFrameCounts()) return 0;
 
         u8 v6 = 0;
         if (fp != NULL) {
@@ -1511,7 +1511,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     return 1;
 }
 
-extern "C" void* func_80138DA4(const char* str) {
+extern "C" void* GetBdatNameByNumId(const char* str) {
     int v = atoi(str);
     if (v <= 0) return (void*)str;
     const char* base = lbl_eu_80500664;
@@ -1533,7 +1533,7 @@ extern "C" u8 BdatGetSexFlag(const char* key) {
     return *(u8*)&result;
 }
 
-extern "C" u32 func_80138E90(const char* key) {
+extern "C" u32 MapSexFlagGroup(const char* key) {
     u8 v = 0;
     if (lbl_eu_80664098 != 0) {
         Bdat_GetTable_AA34(key);
@@ -1591,7 +1591,7 @@ extern "C" char* MakeTplNameSysFile(const char* key) {
     return &lbl_eu_80573B30[0];
 }
 
-extern "C" char* func_8013902C(const char* key) {
+extern "C" char* MakeIconTplName(const char* key) {
     // Register mapping in retail: key -> r29, file pointer -> r30, column
     // pointer -> r31; the column pointer is hoisted above the fp check.
     if (lbl_eu_8066406C == 0) {
@@ -1629,7 +1629,7 @@ extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::Arc
     }
 }
 
-// Cast-only view of the item-data object returned by func_8009EC9C: it has a
+// Cast-only view of the item-data object returned by CtrlObjectParam_GetCharEntry: it has a
 // per-item flag word at 0x176C (1 = already recorded).
 struct CDataObj {
     u8 field_0x00[0x176C];
@@ -1650,7 +1650,7 @@ struct ListData {
 // Collect up to 7 u32 entries from the global list; entries > 0 (filtered by
 // the per-item flag when arg is set) are appended to the u8 list, then the 3
 // trailing words are appended to the u16 list.
-void func_80139198(void* arg) {
+void BuildSlotItemLists(void* arg) {
     lbl_eu_80664077 = 0;
     lbl_eu_8066407E = 0;
     ListData* list = (ListData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
@@ -1663,7 +1663,7 @@ void func_80139198(void* arg) {
         }
         if ((s32)v > 0) {
             if (arg != NULL) {
-                CDataObj* obj = (CDataObj*)func_8009EC9C(v & 0xFFFF);
+                CDataObj* obj = (CDataObj*)CtrlObjectParam_GetCharEntry(v & 0xFFFF);
                 if (obj->field_0x176C != 1) {
                     u8 n = lbl_eu_80664077;
                     ((u8*)&lbl_eu_80664070)[n] = (u8)v;
@@ -1734,7 +1734,7 @@ extern "C" u16 BdatGetItemId(const char* name) {
     return *(u16*)&result;
 }
 
-extern "C" u32 func_801393CC(const char* name) {
+extern "C" u32 LookupItemTypeTable(const char* name) {
     u32 v = 0;
     if (lbl_eu_806640EC != 0) {
         Bdat_GetTable_AA34(name);
@@ -1761,8 +1761,8 @@ extern "C" u32 func_801393CC(const char* name) {
     return v;
 }
 
-extern "C" char* func_801394D4(const char* name) {
-    u32 a = func_801393CC(name);
+extern "C" char* BuildItemNameStr(const char* name) {
+    u32 a = LookupItemTypeTable(name);
     const char* col1DB = &lbl_eu_80500664[0x1DB];
     u16 b;
     if (lbl_eu_806640EC == 0) {
@@ -1809,7 +1809,7 @@ extern "C" char* func_801394D4(const char* name) {
     return &lbl_eu_80573C30[0];
 }
 
-extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
+extern "C" FourShorts PaneMatGetS16QuadByName(void* obj, void* arg2, u32 idx) {
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
     nw4r::lyt::Pane* cur = owner->FindPaneByName((const char*)arg2, true);
     if (cur == 0) {
@@ -1833,7 +1833,7 @@ extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
     return r;
 }
 
-extern "C" FourShorts func_801397AC(nw4r::lyt::Pane* owner, u32 idx) {
+extern "C" FourShorts PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
     FourShorts r = {0, 0, 0, 0};
     if (owner == NULL) return r;
     u8* data = (u8*)owner->GetMaterial();
@@ -1851,7 +1851,7 @@ extern "C" FourShorts func_801397AC(nw4r::lyt::Pane* owner, u32 idx) {
     return r;
 }
 
-extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
+extern "C" void PaneMatSetS16QuadByName(void* obj, void* arg2, void* src, u32 idx) {
     nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
     nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
     if (res == 0) return;
@@ -1863,7 +1863,7 @@ extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
                                    (const char*)lbl_eu_8052E568);
     }
     // clrlslwi r0, idx, 24, 3 => the multiply runs on an 8-bit-masked index
-    // ((idx & 0xFF) * 8), same as func_8013996C.
+    // ((idx & 0xFF) * 8), same as PaneMatSetS16Quad.
     u8 i8 = (u8)idx;
     s16* s = (s16*)src;
     s16* d = (s16*)(data + i8 * 8 + 0x10);
@@ -1877,7 +1877,7 @@ extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
     d[3] = tb;
 }
 
-extern "C" void func_8013996C(nw4r::lyt::Pane* owner, void* src, u32 idx) {
+extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, void* src, u32 idx) {
     if (owner == NULL) return;
     u8* data = (u8*)owner->GetMaterial();
     if (data == NULL) return;
@@ -1995,7 +1995,7 @@ extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
     return (lbl_eu_80667304 * (fa + fb) + fc) / d;
 }
 
-extern "C" void func_80139CEC(const char* arg) {
+extern "C" void InitCol6LodTables(const char* arg) {
     Bdat_GetTable_AA34(arg);
     getFP__FPCc(&lbl_eu_80500664[0x1F9]);
     void* gm = cf::CfGameManager::getGameSubManager();
@@ -2268,7 +2268,7 @@ extern "C" void func_80139CEC(const char* arg) {
     }
 }
 
-extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
+extern "C" int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
                             const nw4r::math::VEC3* c) {
     if (b->x == 0.0f && b->z == 0.0f) return 0;
 
@@ -2319,7 +2319,7 @@ extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* 
     return ((f32)acos(t) * lbl_eu_8066A20C) <= lbl_eu_8066730C;
 }
 
-extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
+extern "C" u16 LookupRelateValue(u16 arg1, u16 arg2) {
     const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
@@ -2359,7 +2359,7 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
     return (u16)result;
 }
 
-extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
+extern "C" void AdjustRelateValue(u16 arg1, u16 arg2, s8 delta) {
     const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
@@ -2401,7 +2401,7 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     }
 }
 
-extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
+extern "C" void FetchRelatePair(u8* out1, u8* out2, int idx) {
     // Retail derives every table/column name from the string-table base
     // lbl_eu_80500664 (no 4th param); the base address is re-materialized
     // per use (no persistent copy). The four column-name words are read
@@ -2448,7 +2448,7 @@ extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
 // (memcpy emits bl memcpy instead).
 struct XBMapTableAC3C { u32 w[31]; };
 
-extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
+extern "C" int GetMapItemBitFlag(u8 max, u8 count, u32 off) {
     XBMapTableAC3C table = *(const XBMapTableAC3C*)&lbl_eu_80500480[0];
     // Retail's copy loop leaves the tail word (the table name) in r3, which
     // is then passed straight to the validator.
@@ -2465,7 +2465,7 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
     return CtrlObjectParam_GetItemBitFlag(sum + off);
 }
 
-extern "C" void func_8013ACFC() {
+extern "C" void RevealMinimapArea() {
     // retail materializes the table base once (r22) and derives every
     // sub-table (+0x418/+0x378/+0x2F0) and column name from it
     u8* tbl = lbl_eu_80500108;
@@ -2579,7 +2579,7 @@ extern "C" void func_8013ACFC() {
     }
 }
 
-extern "C" void func_8013B1C4(u32 v) {
+extern "C" void SetMapAllBits(u32 v) {
     if (v != 0 && v <= 0x1D) {
     // 136-byte struct assignment -> retail's inline 17x8 mtctr copy loop
     // (same idiom as XBMapTable3).
@@ -2707,7 +2707,7 @@ extern "C" u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return
 extern u8 lbl_eu_8066407F;
 extern "C" u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
 
-extern "C" void func_8013B88C(u8 v) {
+extern "C" void TryRevealMapArea(u8 v) {
     if (v == 0) {
         return;
     } else if (v <= 0x1D) {
@@ -2731,7 +2731,7 @@ extern "C" void func_8013B88C(u8 v) {
             }
         }
         if (count == good) {
-            func_8013B1C4(v);
+            SetMapAllBits(v);
         }
     }
 }
@@ -2757,7 +2757,7 @@ extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080[0]; }
 // Find the anim item matching arg: returns the first non-NULL result from the
 // direct item list / vt58 slot, recursing into child lists. The retail returns
 // the raw call result (nonzero) rather than a literal 1.
-extern "C" void* func_8013B9AC(void* self, void* arg) {
+extern "C" void* FindAnimLink(void* self, void* arg) {
     nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
     void* anchor;
     void* current;
@@ -2781,14 +2781,14 @@ extern "C" void* func_8013B9AC(void* self, void* arg) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
                                        (const char*)lbl_eu_8052E4C0);
         }
-        void* r2 = func_8013B9AC(child, arg);
+        void* r2 = FindAnimLink(child, arg);
         if (r2 != 0) return r2;
         current = *(void**)current;
     }
     return 0;
 }
 
-extern "C" void func_8013BAD8(void* self, void* arg, f32 val) {
+extern "C" void SetAnimLinkFrame(void* self, void* arg, f32 val) {
     nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
     void* r0 = owner->FindAnimationLinkSelf(*(const nw4r::lyt::AnimResource*)arg);
     if (r0 != 0) {
@@ -2813,13 +2813,13 @@ extern "C" void func_8013BAD8(void* self, void* arg, f32 val) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
                                        (const char*)lbl_eu_8052E4C0);
         }
-        func_8013BAD8(child, arg, val);
+        SetAnimLinkFrame(child, arg, val);
         current = *(void**)current;
     }
 }
 
-extern "C" int func_8013BC0C(void* self, void* arg) {
-    void* t = (void*)func_8013B9AC(self, arg);
+extern "C" int StepAnimLinkFrame(void* self, void* arg) {
+    void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
         f32 f = *(f32*)((u8*)anim + 0x10);
@@ -2828,26 +2828,26 @@ extern "C" int func_8013BC0C(void* self, void* arg) {
         if (f >= limit) return 1;
         f32 d = f + lbl_eu_806672E8;
         if (d > limit) d = limit;
-        func_8013BAD8(self, arg, d);
+        SetAnimLinkFrame(self, arg, d);
         return 0;
     }
     return 1;
 }
 
 extern "C" void AnimResetToFirst(void* self, void* arg) {
-    if (func_8013B9AC(self, arg) != 0) {
-        func_8013BAD8(self, arg, lbl_eu_806672F0);
+    if (FindAnimLink(self, arg) != 0) {
+        SetAnimLinkFrame(self, arg, lbl_eu_806672F0);
     }
 }
 
 extern "C" void AnimJumpToLast(void* self, void* arg) {
-    void* t = (void*)func_8013B9AC(self, arg);
+    void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
         // Signed conversion (retail xoris r0,r3,0x8000): (u32) would emit the
         // unsigned double-trick without the sign flip.
         f32 f = (f32)(s32)(anim->GetFrameSize() - 1);
-        func_8013BAD8(self, arg, f);
+        SetAnimLinkFrame(self, arg, f);
     }
 }
 
@@ -2858,11 +2858,11 @@ extern "C" void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
 extern u8 lbl_eu_80664058;
 extern "C" u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
 
-// retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b func_8013EC6C
+// retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b UIWin_ControlWindowLists
 extern "C" void MenuStateSet64059Notify() {
-    extern void func_8013EC6C(u32, u32);
+    extern void UIWin_ControlWindowLists(u32, u32);
     lbl_eu_80664059 = 1;
-    func_8013EC6C(0, 0);
+    UIWin_ControlWindowLists(0, 0);
 }
 
 extern u8 lbl_eu_80664059;
@@ -2980,19 +2980,19 @@ u8 lbl_eu_80500108[0x80] = {
     0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-// 0x80500188: u16-pair table read via ((u16*)&t)[idx-1] (func_801380A0).
+// 0x80500188: u16-pair table read via ((u16*)&t)[idx-1] (GetU16PairEntry).
 __declspec(section ".rodata") __attribute__((used))
 struct Table_80500188 lbl_eu_80500188 = {{
     0x00000001, 0x00560074, 0x00AE0105, 0x01140137, 0x015F01D1, 0x01D201F0, 0x02180263, 0x02720281, 0x02A902D1, 0x02EF032B, 0x032B0352, 0x0353037B, 0x039903C1, 0x03CA0000
 }};
 
-// 0x805001C0: u32 lookup with -1 sentinels (func_80138138).
+// 0x805001C0: u32 lookup with -1 sentinels (SearchThresholdIdx).
 __declspec(section ".rodata") __attribute__((used))
 u32 lbl_eu_805001C0[28] = {
     0xFFFFFFFF, 0x00000001, 0x00000056, 0x00000074, 0x000000AE, 0x00000105, 0x00000114, 0x00000137, 0x0000015F, 0x000001D1, 0x000001D2, 0x000001F0, 0x00000218, 0x00000263, 0x00000272, 0x00000281, 0x000002A9, 0x000002D1, 0x000002EF, 0xFFFFFFFF, 0x0000032B, 0x00000352, 0x00000353, 0x0000037B, 0x00000399, 0x000003C1, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
-// 0x80500230: LOD-char table (func_80139CEC copies 5 words + 1 byte).
+// 0x80500230: LOD-char table (InitCol6LodTables copies 5 words + 1 byte).
 __declspec(section ".rodata") __attribute__((used))
 u8 lbl_eu_80500230[0x18] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x51, 0x52, 0x53, 0x54, 0xFF, 0x00, 0x00, 0x00

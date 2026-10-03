@@ -9,15 +9,15 @@
 // us-802a9460 (triggerFaintPlayback)
 // Completion callback: if no active voice, call the playback-start virtual.
 extern "C" void triggerFaintPlayback(CVS_THREAD_FAINT* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
 // us-802a94a8 (removeFaintVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 extern "C" void removeFaintVoice(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slot 1 (0x20): load handle, bias to its embedded CCharVoice if non-null,
     // and clear the slot when it references the removed voice.
@@ -47,14 +47,14 @@ extern "C" void removeFaintVoice(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
 // otherwise plays the 0x2BF line.
 extern "C" int playFaintVoice(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 2)) return 0;
-    if (func_802A330C(0xa, 1) == NULL) return 0;
+    if (CCharVoiceMan_DispatchById(0xa, 1) == NULL) return 0;
     if (func_800BE8F4(&self->voice) == 0xa) return 0;
 
     CCharVoice* voice = (CCharVoice*)self;
     if (self != NULL) {
         voice = &self->voice;
     }
-    func_802A3D54(voice, 0x2bf, 0xa);
+    RequestVoicePlayback(voice, 0x2bf, 0xa);
     return 0;
 }
 
@@ -84,8 +84,8 @@ extern "C" void advanceFaintSlot1(CVS_THREAD_FAINT* self) {
             if (handle20 != NULL) {
                 voicePtr = &handle20->voice;
             }
-            if (func_802A3C44(self, voicePtr, ml::math::mtRand(2) + 0x709) == 0) {
-                self->func_802A3B50();
+            if (TryRequestVoice(self, voicePtr, ml::math::mtRand(2) + 0x709) == 0) {
+                self->PlayThreadVoice();
             }
         }
     }
@@ -97,7 +97,7 @@ extern "C" void advanceFaintSlot1(CVS_THREAD_FAINT* self) {
 // the voice is still active, and if inactive, plays a voice ID chosen by
 // mtRand(2): 0x712 when rand==0, otherwise 0x70B.
 extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -122,8 +122,8 @@ extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
             if (handle24 != NULL) {
                 voicePtr = &handle24->voice;
             }
-            if (func_802A3C44(self, voicePtr, voiceId) == 0) {
-                self->func_802A3B50();
+            if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
+                self->PlayThreadVoice();
             }
         }
     }
@@ -141,7 +141,7 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (!(owner2->field_0x3F00 & 2)) return NULL;
 
     // Allocate handle buffer (0xF0 bytes, discarded)
-    if (func_802A330C(0xF0, 1) == NULL) return NULL;
+    if (CCharVoiceMan_DispatchById(0xF0, 1) == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_FAINT object
     CVS_THREAD_FAINT* self = (CVS_THREAD_FAINT*)CCharVoiceMan_AllocVoiceArena(0x28);
@@ -182,9 +182,13 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
-// Virtual method override: returns the buffer size for this thread type.
-// Matches CVS_THREAD::blank1 slot in vtable; FAINT subclass returns 0xF0 (240).
-int CVS_THREAD_FAINT::blank1() {
-    return BUFFER_SIZE;
+// Buffer-size getter for the blank1 vtable slot (retail func_802A6DEC,
+// 0x8 bytes: li r3,0xF0; blr). Defined with C linkage under the retail
+// spelling (CVS_THREAD_HP precedent: HpVoice_GetBufSize); the blank1()
+// member decl in the header still satisfies the class interface, and since
+// no virtual is defined in this TU MWCC emits no vtable here (the thread
+// vtable is the retail lbl_eu_80539B7C data). Returns 0xF0 (240).
+extern "C" int func_802A6DEC() {
+    return CVS_THREAD_FAINT::BUFFER_SIZE;
 }
 

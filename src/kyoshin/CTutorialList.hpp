@@ -7,7 +7,7 @@
 #include "kyoshin/CBaseCur.hpp"         // CBaseCur (embedded cursor virtuals)
 #include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // AnimRewindFrame, advanceAnimTransform, BdatTouchStringCell, LayoutSetTextBoxFmtValue
-#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, func_802A77E8/802A330C/802A3D54
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, HpVoice_MapSubState/802A330C/802A3D54
 
 /* CTutorialList -- tutorial list widget.
    Vtable at lbl_eu_8053A2A8 (split1 .data). Layout-compatible with IWorkEvent

@@ -1,9 +1,9 @@
-// (CfObjectMove_setAnimModeArgs / func_80174C98 now have single unified owner-header
+// (CfObjectMove_setAnimModeArgs / testActorStatus now have single unified owner-header
 // decls; no pre-include renames needed here.)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
-#undef func_80174C98
+#undef testActorStatus
 #include "kyoshin/plugin/pluginVoice.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/util.hpp"

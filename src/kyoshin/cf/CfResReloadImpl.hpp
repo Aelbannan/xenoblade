@@ -54,8 +54,8 @@ struct CfResReloadParent {
     /* 0x70 */ u8* field_70;  // resource pointer passed to CfRes_tryReregisterSlot
     /* 0x74 */ u8* field_74;  // sound-related pointer passed to CfSoundMan_PlayActorParam
     u8 field_78[0x18];        // 0x78..0x8F
-    /* 0x90 */ u8* field_90;  // slot +0x18 result (cleared by func_8016D3F8)
-    /* 0x94 */ u8* field_94;  // slot +0x1C result (cleared by func_8016D3F8)
+    /* 0x90 */ u8* field_90;  // slot +0x18 result (cleared by runReloadDrive)
+    /* 0x94 */ u8* field_94;  // slot +0x1C result (cleared by runReloadDrive)
     /* 0x98 */ ::CScnItemModel* field_98;  // model object (vtable slots 0x64/0x88 -> CScnItemModel::vfunc64/vfunc88)
     /* 0x9C */ u8* field_9C;
     u8 field_A0[0x24];        // 0xA0..0xC3
@@ -100,8 +100,8 @@ public:
     virtual ~CfResReloadImpl();                 // 0x08
     virtual void dispatchReloadState();               // 0x0C - PMTF dispatch
     virtual void bumpReloadDeviceCounts();               // 0x10
-    virtual void func_8016CE3C();               // 0x14
-    virtual int func_8016CE5C();                // 0x18 - in-use test
+    virtual void isReloadTypeOk();               // 0x14
+    virtual int isReloadInUse();                // 0x18 - in-use test
     virtual void syncReloadObjectNameScale();               // 0x1C
     virtual int getTypeId();                // 0x20 - type id (12)
     virtual void CfResObj_noop24();               // 0x24 - base CfResImpl slot
@@ -121,7 +121,7 @@ public:
     virtual void pauseReloadSound(int arg2, int arg3, int arg4); // 0x5C
     virtual int getReloadAttrId();                // 0x60
     virtual int getSubTypeId();                // 0x64 - sub-type id (1)
-    virtual int func_8016CF24();                // 0x68 - random byte
+    virtual int getReloadByte();                // 0x68 - random byte
 
     void*& vtbl() {
         return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10);
@@ -183,7 +183,7 @@ struct ReloadInfo {
 };
 
 // Entry returned by findResEntry / CfRes_findLowEntryOrMark (reload-table search used by
-// func_8016D3F8); the +0x0C word is cleared on a successful reload.
+// runReloadDrive); the +0x0C word is cleared on a successful reload.
 struct ResReloadFindEntry {
     u8 field_00[0x0C];
     /* 0x0C */ u32 field_0C;
@@ -197,20 +197,20 @@ struct ResReloadFindEntry {
 typedef void (cf::CfResReloadImpl::*CfResReloadImplPMF)();
 extern CfResReloadImplPMF lbl_eu_80530FC0[4];
 
-// Unit-internal helpers (defined in CfResReloadImpl.cpp). func_8016E430 /
-// func_8016E854 / func_8016E578 / func_8016EA68 have real bodies; the
-// not-yet-decompiled func_8016E654 / func_8016E1AC stubs are called through
+// Unit-internal helpers (defined in CfResReloadImpl.cpp). isReloadReady /
+// getReloadCand / testReloadSub / runReloadMain have real bodies; the
+// not-yet-decompiled calcReloadPrm / reloadInRange stubs are called through
 // incompatible casts (see MWCC_CASES "in-progress stub" pattern) so the
 // -ipa file inliner cannot fold them into the call sites. All are C-ABI-style
 // retail symbols (plain names), so extern "C" keeps the call relocs at the
 // plain retail names.
-extern "C" int func_8016E654(u32 type, u32 arg2, int arg3, u16* out1, u16* out2);
-extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3);
-extern "C" int func_8016E430(u32 type);
-extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
+extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2);
+extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3);
+extern "C" int isReloadReady(u32 type);
+extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
                              u16* out2, u16* out3);
-extern "C" int func_8016E578(u32 type, int sub);
-extern "C" void func_8016EA68(cf::CfResReloadImpl* self);
+extern "C" int testReloadSub(u32 type, int sub);
+extern "C" void runReloadMain(cf::CfResReloadImpl* self);
 
 // getEffOwner__ (retail C++ symbol getEffOwner____FPv, single void*
 // parameter): a plain C++ declaration (not extern "C") yields the matching
@@ -225,7 +225,7 @@ namespace cf { class CfObjectMove; }
 // CfObjectModel.cpp). extern "C" keeps the call-site reloc at the plain
 // retail name - a C++ declaration makes MWCC emit a mangled __F<params>
 // name (same convention as CfObjectModel.hpp).
-// C-ABI imports used by func_8016D3F8 (defined in CfRes.cpp / IResInfo.cpp /
+// C-ABI imports used by runReloadDrive (defined in CfRes.cpp / IResInfo.cpp /
 // code_800B06A4.cpp / object/CfObjectModel.cpp).
 extern "C" int CfRes_tryDelegateLoad1(u32 handle, u32 state);
 extern "C" int CfRes_tryDelegateLoad0(int handle, int state);
@@ -234,7 +234,7 @@ extern "C" cf::ResReloadFindEntry* CfRes_findLowEntryOrMark(u8* self, u32 id, u3
 extern "C" int evtTypeSlot7E(cf::CfResReloadParent* parent);
 extern "C" void maybeNullThenFlag(int arg);
 extern "C" void CfModel_ReattachTrg(cf::CfObjectModel* self);
-// Imports used by func_8016D688 (defined in CfTFile.cpp / CfRes.cpp /
+// Imports used by advanceReload (defined in CfTFile.cpp / CfRes.cpp /
 // CfGameManager.cpp / object/CfObjectModel.cpp).
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
@@ -249,8 +249,8 @@ extern "C" void CfObjectMove_setRegionAttached(cf::CfResReloadParent* parent, in
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
 // CfObjectMove_setAnimModeArgs is owned by kyoshin/cf/object/CfObjectMove.hpp.
 
-// Scene/manager globals read by func_8016D688.
-// .sdata2 floats used by func_8016D688 / func_8016E1AC.
+// Scene/manager globals read by advanceReload.
+// .sdata2 floats used by advanceReload / reloadInRange.
 extern float lbl_eu_8066769C;
 extern float lbl_eu_806676A0;
 extern float lbl_eu_806676CC;
@@ -270,11 +270,11 @@ extern "C" int BattleWork_CheckEffectTableReady(int a);
 extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
-extern "C" u16 func_8006A6D0();
+extern "C" u16 CfT_DispatchFrameCounts();
 extern "C" void* CfRes_getInstanceField();
-// More C-ABI imports used by func_8016DF4C / tickReloadState / func_8016EA68.
+// More C-ABI imports used by seedReloadTmr / tickReloadState / runReloadMain.
 extern "C" void MenuSnd_PushSlotVolume_896C(int index, unsigned int type, float f1, float f2);
-extern "C" float func_80069EE4();
+extern "C" float CfT_PlayTimeGet();
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* player);
 
@@ -284,7 +284,7 @@ extern u32 lbl_eu_80663E28;
 // Delay/timer floats (.sdata2) selected by getReloadDelay.
 extern float lbl_eu_806676B4;
 extern float lbl_eu_806676B8;
-// More .sdata2 constants used by tickReloadState / func_8016DF4C / func_8016EA68.
+// More .sdata2 constants used by tickReloadState / seedReloadTmr / runReloadMain.
 extern float lbl_eu_806676A4;    // vtable-slot-0x168 float arg
 extern float lbl_eu_806676A8;    // CfObjectMove_setMoveSpeedGated restore-heal float
 // 2^52 conversion constant: u16 -> float via the double-magic trick (retail
@@ -301,7 +301,7 @@ extern cf::CfResReloadImplVtbl lbl_eu_80530FF0;
 // pattern).
 extern const float lbl_eu_80667698;
 
-// BDAT table pointer and cached row index read by func_8016E578 / func_8016EC58.
+// BDAT table pointer and cached row index read by testReloadSub / updateReloadP1.
 extern void* lbl_eu_806640A8;   // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80664184;     // cached BDAT row index (read as u16)
 // Column-name string block base and pointer table used with getBdatStringColumnValue.

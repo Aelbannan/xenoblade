@@ -5,7 +5,7 @@
 
 // Owner-class definitions for the recovered virtual calls in this TU.
 // The three hidden free-function names keep this TU's retail-arity
-// prototypes (same scheme as CActParamAnim.cpp's func_80055B88_typed_hidden):
+// prototypes (same scheme as CActParamAnim.cpp's lookupParamByKey_typed_hidden):
 // the canonical headers declare these symbols with a different arity, which
 // would collide with the byte-exact decls further down. The class
 // definitions (CActParamAnim, CScnItemModel) come through intact.
@@ -123,7 +123,7 @@ struct CModelDispNameParam {
     u8 _00[4];
 };
 
-// Character/equip record returned by func_8009EC9C (ModelDispEquip_BuildEquipModel): the five
+// Character/equip record returned by CtrlObjectParam_GetCharEntry (ModelDispEquip_BuildEquipModel): the five
 // equip ids at +0x0E..0x16 and the u16 weapon id at +0x18. The equip ids are
 // u16 (retail lhz + extsh pairs at the call sites) - callers sign-extend.
 struct CModelDispCharRecord {
@@ -168,7 +168,7 @@ struct CModelDispParamSlot {
 // (was a +0xE0 flush pad here: virtual dispatch at vtable offset +0xE0, the flush
 // method on the act-param objects. CActParamAnim declares 59 virtuals with
 // MWCC's 2 leading slots, so index 54 lands at +0xE0 (the __vt_48/__vt_78/
-// __vt_F0 names confirm the (N+2)*4 layout): CActParamAnim::func_8004B114.
+// __vt_F0 names confirm the (N+2)*4 layout): CActParamAnim::initAnimState.
 // Call sites now use the owning class directly.)
 
 // (was a +0x28 notify pad here: virtual dispatch at vtable offset +0x28 taking a
@@ -362,7 +362,7 @@ extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
 extern "C" bool setTurnScale(void*, f32);
 extern "C" void* Scn_FindCamItem(void*, int);
-extern "C" void func_8049EFF8(void*, f32, void*, void*);
+extern "C" void ScnCamPointAt(void*, f32, void*, void*);
 extern "C" void* getAnimChain(void* self);
 extern "C" void func_8004B9D4(void* self, void* arg, u32, s32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
@@ -395,12 +395,12 @@ extern "C" void schedDetachChildSlot(CModelDispEffectView* effect, CModelDispEff
 extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol11(cf::CfObjectMove* move, int index);
 extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* move, int index);
 extern "C" CModelDispNameParam* CfModel_GetBdatString(u8 value);
-extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
+extern "C" u32 bdatBitFromCol(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
-extern "C" u32 func_80141FE0(int index);
+extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
+extern "C" u32 bdatResByIndex(int index);
 extern "C" int CfRes_isGridLoadIdle();
 extern "C" void* CfRes_tryResolveToken(u32 id, u32* outType);
 extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries);

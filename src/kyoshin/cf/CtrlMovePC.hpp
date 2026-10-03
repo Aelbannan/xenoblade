@@ -56,7 +56,7 @@ public:
     ml::CVec3 mVecC0;          // 0xC0
     ml::CVec3 mVecCC;          // 0xCC
     ml::CVec3 mVecD8;          // 0xD8
-    ml::CVec3 mVecE4;          // 0xE4 (recovered from func_8019CDA0)
+    ml::CVec3 mVecE4;          // 0xE4 (recovered from movePcSteerToGoal)
     ml::CVec3 mVecF0;          // 0xF0 follow-mode candidate spot
     f32 mDistFC;               // 0xFC
     f32 mFloat100;             // 0x100
@@ -157,9 +157,9 @@ struct CfPartyList {
 extern "C" {
 int  ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 void PSVECNormalize(const Vec* a, Vec* b);
-int  func_80088974(void* self, ml::CVec3* out, ml::CVec3* pos, int a, int b);
-void func_800896F4(cf::CCtrlMovePC* self, ml::CVec3* a, const ml::CVec3* b);
-void func_800898D4(cf::CCtrlMovePC* self, ml::CVec3* v);
+int  moveBaseUpdate(void* self, ml::CVec3* out, ml::CVec3* pos, int a, int b);
+void moveBaseChase(cf::CCtrlMovePC* self, ml::CVec3* a, const ml::CVec3* b);
+void moveBaseLerp(cf::CCtrlMovePC* self, ml::CVec3* v);
 int  ScnRes_EntryFlagThunk_E5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
@@ -168,19 +168,19 @@ cf::CfGlobalSettings* getUnk80664658();
 int  GimProbeLockAccept(void* a, void* b);
 void ctrlActUpdateData70(void* a);
 void maskMoveChildFlags(cf::CCtrlMovePC* self);
-int  func_80089E88(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
+int  moveBaseRoute(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 f32  FrSqrt__Q24nw4r4mathFf(f32 x);
 }
 
 // C-linkage imports for the move-state helpers (retail names).
 extern "C" {
-int  func_80198710(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
+int  InitRecord(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
 int  CPartsChange_ProcessPartyInfo(void* a, void* b);
 int  ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
 void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
-int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, void* g);
+int  ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f, void* g);
 int  Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
 void* findObjectById__Fi(int id);
 void* setAnimPosVec(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
@@ -273,7 +273,7 @@ struct CfPartyInfoOut {
     u8 mField9E;         // 0x9E
 };
 
-// Input block for func_80198710 (party-info builder).
+// Input block for InitRecord (party-info builder).
 struct CfPartyInfoIn {
     u8 pad_00[0x24];
     f32 mField24;        // 0x24 candidate height
@@ -290,19 +290,19 @@ void movePcTopTickDispatch(cf::CCtrlMovePC* self);
 void movePcReleaseTaskReset(cf::CCtrlMovePC* self);
 void movePcCondFullReset(void* ctrl, int flag); // matches CfGameManager.hpp / CfGimmickObject.hpp
 void movePcResetAndSetPos(cf::CCtrlMovePC* self, const Vec* pos);
-int  func_801999C0(cf::CCtrlMovePC* self);
+int  movePcUpdateTop(cf::CCtrlMovePC* self);
 void func_8019A9C4(cf::CCtrlMovePC* self);
-int  func_8019B4F0(cf::CCtrlMovePC* self);
-int  func_8019C0D4(cf::CCtrlMovePC* self);
-int  func_8019C304(cf::CCtrlMovePC* self);
+int  movePcUpdateWalk(cf::CCtrlMovePC* self);
+int  movePcEnterApproach(cf::CCtrlMovePC* self);
+int  movePcUpdateApproach(cf::CCtrlMovePC* self);
 int  movePcFacingSinCosUpdate(cf::CCtrlMovePC* self);
-int  func_8019CDA0(cf::CCtrlMovePC* self);
-int  func_8019D9E0(cf::CCtrlMovePC* self);
-int  func_8019DD54(cf::CCtrlMovePC* self);
-void func_8019E710(cf::CCtrlMovePC* self);
+int  movePcSteerToGoal(cf::CCtrlMovePC* self);
+int  movePcUpdateFollow(cf::CCtrlMovePC* self);
+int  movePcUpdateReposition(cf::CCtrlMovePC* self);
+void movePcTickState(cf::CCtrlMovePC* self);
 int  movePcTickCounterWrap(cf::CCtrlMovePC* self);
 int  movePcFlagTransitionReset(cf::CCtrlMovePC* self);
 int  movePcCounterFacingUpdate(cf::CCtrlMovePC* self);
-f32 func_8019EF90(cf::CCtrlMovePC* self);
-void func_8019F1E0(cf::CCtrlMovePC* self);
+f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self);
+void movePcUpdatePairFollow(cf::CCtrlMovePC* self);
 }

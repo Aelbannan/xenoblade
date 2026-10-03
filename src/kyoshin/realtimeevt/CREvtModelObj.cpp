@@ -39,15 +39,15 @@ extern "C" {
     extern void func_801729F0(void* self, void* r4, void* r5);
     extern void func_801726DC(void* self);
     extern void func_80172768(void* self);
-    extern void func_8016BC1C(void* self);
-    extern int func_8016BDA8(void* self, void* r4);
+    extern void EvtSeqInsertRtEvent(void* self);
+    extern int EvtSeqProbeEvtSlot(void* self, void* r4);
     extern int EvtSeqIsSameNameType3Busy(void* self);
     extern void* EvtSeqFindSameNameType3(void* self);
     extern int EvtSeqGetCounter100(void* self);
     extern int EvtSeqGetCounter104(void);
     extern int EvtSeqGetWalkIndex(void);
     extern void EvtSeqCheckEventRunGuard(void* self);
-    extern void func_801832D4(void* self);
+    extern void EvtObj_ScanPlayers(void* self);
     extern void func_801836CC(void* self, unsigned long value);
     extern int EvtSeqGetStateBit14(void);
     extern int EvtSeqGetStateBit5(void);
@@ -155,7 +155,7 @@ extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
     self->mCallback[1] = *p++;
     self->mCallback[2] = *p;
 
-    func_8016BC1C(self);
+    EvtSeqInsertRtEvent(self);
 
     // Pick the update callback based on the parent task's mode field:
     // -1 -> standalone mode (0x50 flags + alternate ptmf), other nonzero -> 0x30
@@ -226,9 +226,9 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
 }
 
 // ============================================================
-// func_80181C90 (us-80183098) - Per-player event file setup
+// EvtObj_SetupPlayer (us-80183098) - Per-player event file setup
 // ============================================================
-extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
+extern "C" void EvtObj_SetupPlayer(CREvtModelObj* self, void* r4, void* r5) {
     if (self->mFileHandle3 != 0) {
         schedClearFlag15Update(self->mFileHandle3);
         self->mFileHandle3 = 0;
@@ -267,9 +267,9 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
 }
 
 // ============================================================
-// func_80181DDC (us-801831e4) - Stop/cleanup function
+// EvtObj_Cancel (us-801831e4) - Stop/cleanup function
 // ============================================================
-extern "C" int func_80181DDC(CREvtModelObj* self) {
+extern "C" int EvtObj_Cancel(CREvtModelObj* self) {
     // Busy or still-referenced objects cannot be stopped
     if (self->mFlags & 0x80) {
         return 0;
@@ -333,9 +333,9 @@ extern "C" int func_80181DDC(CREvtModelObj* self) {
 }
 
 // ============================================================
-// func_80181F28 (us-80183330) - Reset function
+// EvtObj_ResetState (us-80183330) - Reset function
 // ============================================================
-extern "C" void func_80181F28(void* self) {
+extern "C" void EvtObj_ResetState(void* self) {
     char* s = (char*)self;
 
     // Bail out if a file load is in progress (state 1), the reset flag is
@@ -417,11 +417,11 @@ extern "C" void func_80181F28(void* self) {
 extern "C" void EvtObj_ResetStateB(void* self) {
     char* s = (char*)self;
 
-    func_801832D4(self);
+    EvtObj_ScanPlayers(self);
 
     FLD(s32, s, 0x74) = -1;
 
-    int result = func_8016BDA8(self, s + 0x74);
+    int result = EvtSeqProbeEvtSlot(self, s + 0x74);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -454,12 +454,12 @@ extern "C" int EvtObj_CheckEvtHandler(void* self) {
 }
 
 // ============================================================
-// func_80182178 (us-80183580) - Load/init function
+// EvtObj_StartLoad (us-80183580) - Load/init function
 // ============================================================
-extern "C" void func_80182178(void* self) {
+extern "C" void EvtObj_StartLoad(void* self) {
     char* s = (char*)self;
 
-    func_801832D4(self);
+    EvtObj_ScanPlayers(self);
 
     FLD(u32, s, 0x18) |= 0x40;
 
@@ -543,13 +543,13 @@ extern "C" void func_80182178(void* self) {
 }
 
 // ============================================================
-// func_80182B2C (us-80183f48) - Main update function
+// EvtObj_SetupModel (us-80183f48) - Main update function
 // (stub - needs full implementation)
 // ============================================================
-extern "C" void func_80182B2C(void* self) {
+extern "C" void EvtObj_SetupModel(void* self) {
     char* s = (char*)self;
 
-    func_801832D4(self);
+    EvtObj_ScanPlayers(self);
 
     if (FLD(u32, s, 0x6C) != 0) return;
 
@@ -774,13 +774,13 @@ extern "C" void EvtObj_TickUpdate(void* self) {
     }
 
     EvtSeqCheckEventRunGuard(self);
-    func_801832D4(self);
+    EvtObj_ScanPlayers(self);
 }
 
 // ============================================================
-// func_801832D4 (us-801846f0) - State check function
+// EvtObj_ScanPlayers (us-801846f0) - State check function
 // ============================================================
-extern "C" void func_801832D4(void* self) {
+extern "C" void EvtObj_ScanPlayers(void* self) {
     char* s = (char*)self;
 
     if (lbl_eu_806642B8 == 0) return;
@@ -861,9 +861,9 @@ extern "C" void func_801832D4(void* self) {
 }
 
 // ============================================================
-// func_8018351C (us-80184938) - Event handler check
+// EvtObj_CheckWalkEvt (us-80184938) - Event handler check
 // ============================================================
-extern "C" int func_8018351C(CREvtModelObj* self) {
+extern "C" int EvtObj_CheckWalkEvt(CREvtModelObj* self) {
     if (self->mField74 != EvtSeqGetWalkIndex() + 1) {
         return 0;
     }

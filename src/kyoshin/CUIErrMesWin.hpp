@@ -128,8 +128,8 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 
 // Layout DrawInfo setup helper - retail emits the mangled name
-// func_80137250__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo, so it is a plain C++ declaration.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Circular-list views used by ErrWin_ClearAllLists_58A4's active-flag sweeps. The lists
 // returned by getListB28__Fv / getReslistC08 share the same shape: the
@@ -275,11 +275,11 @@ extern "C" {
 int CfRes_getD80Flag();
 void* Scn_FindCamItem(void* scene, int index);
 void* func_8016FE34(void* source);
-int func_802A77E8(void* handle);
+int HpVoice_MapSubState(void* handle);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);
-void* func_802A330C(int size, int align);
-int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+void* CCharVoiceMan_DispatchById(int size, int align);
+int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
 }
 
 // C++-mangled retail helper (actor id -> action source).

@@ -134,7 +134,7 @@ extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void Cur_SetVisible(void* pCur, u8 val);
 extern "C" void func_801D202C(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
-extern "C" int func_8023FEDC(void (*pCallback)(void*, unsigned int, unsigned char));
+extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).
 void playUISound(u32);
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
@@ -166,7 +166,7 @@ class CfObjectMove;
 
 // +0x04 battle sub-object of a getCfObjectPc result (CfObjectPc): its vtable
 // +0x30 virtual (declared index 10 with the 2-entry RTTI prefix) returns a
-// word holder whose first word is the actor id queried by func_80174C98.
+// word holder whose first word is the actor id queried by testActorStatus.
 class CHelpBattleSub4 {
 public:
     virtual void vf00() = 0;  // index 0

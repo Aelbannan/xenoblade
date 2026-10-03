@@ -755,7 +755,7 @@ asm void __OSDBIntegrator(void) {
     // clang-format off
     nofralloc
 
-    li r5, OS_PHYS_DEBUG_INTERFACE
+    li r5, 64 // OS_PHYS_DEBUG_INTERFACE (asm blocks cannot see the OSHardware.h const)
 
     mflr r3
     stw r3, OSDebugInterface.exceptionHookLR(r5)

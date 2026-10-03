@@ -49,7 +49,7 @@ public:
 
 // Anonymous menu-sub-object constructed by __ct__8022FA58.
 // Shared by the func_8023xxxx helpers (ArtsCharList_getId, ArtsSubCursor_setVisible,
-// ArtsSlotCursor_clampFromEmpty, func_8022FE90).
+// ArtsSlotCursor_clampFromEmpty, artsGoPrevItem).
 class SArtsSub8022FA58 {
 public:
     u32 field_0x00;
@@ -514,7 +514,7 @@ public:
     virtual void v14(int a); // vtable +0x38 (declared index 12)
 };
 
-// View of the mSubObj124 layout-pair object rebuilt by func_8022FAD0: label
+// View of the mSubObj124 layout-pair object rebuilt by artsRebuildUI: label
 // layout at 0x00, arc accessor at 0x04, main layout driver at 0x08 and its
 // two AnimTransforms at 0x0C/0x10.
 struct SArtsFAD0 {
@@ -587,8 +587,8 @@ public:
     u8 field_0x12E;                 // 0x12E
 };
 
-// Large polymorphic object reached at func_8009EC9C(...) + 0x17C in
-// func_8022FF00. Declares enough virtuals to reach vtable slots 0x1F8
+// Large polymorphic object reached at CtrlObjectParam_GetCharEntry(...) + 0x17C in
+// artsShiftProg. Declares enough virtuals to reach vtable slots 0x1F8
 // (index 126) and 0x200 (index 128).
 class SArtsManager {
 public:
@@ -637,7 +637,7 @@ public:
     virtual void vFillA();
     virtual void vFillB();
     // Returns the arts-slot query receiver consumed by getArtsSlotRC
-    // (func_802308B0); ArtsSlot_isWindowEmpty ignores the result.
+    // (artsSyncSlots); ArtsSlot_isWindowEmpty ignores the result.
     virtual void* v157();  // declared index 157 -> vtable +0x27C
 };
 
@@ -658,7 +658,7 @@ public:
     SArts3CObj* field_0x10;
 };
 
-// 8-word blocks reloaded by func_802308B0: lbl_eu_8050AB08 lands on the
+// 8-word blocks reloaded by artsSyncSlots: lbl_eu_8050AB08 lands on the
 // object's +0x28 pane-name block, lbl_eu_8050AB88 on a stack-local copy.
 struct SArts308B0Block {
     u32 w[8];   // 0x20 bytes (MWCC counted word-copy loop)
@@ -666,7 +666,7 @@ struct SArts308B0Block {
 extern const SArts308B0Block lbl_eu_8050AB08;
 extern const SArts308B0Block lbl_eu_8050AB88;
 
-// View of the sub-object driven by func_802308B0 (mSubObj148): two leading
+// View of the sub-object driven by artsSyncSlots (mSubObj148): two leading
 // pointers, the character id byte at 0x26, and the 8-word block at 0x28.
 class SArts308B0View {
 public:
@@ -685,7 +685,7 @@ struct SArts32C78Pane {
 };
 
 // One 16-byte row of the arts table embedded at SArts32C78 offset 0x2C,
-// indexed by ((s8)field_0x21 + i) in func_80232C78.
+// indexed by ((s8)field_0x21 + i) in artsRenderRow.
 struct SArts32C78Row {
     u8 field_0x00;          // slot RC matched against getArtsSlotRC
     u8 field_0x01;
@@ -699,7 +699,7 @@ struct SArts32C78Row {
     char* field_0x0C;       // description text id for LayoutSetTextBoxFmtValue
 };
 
-// View of the CArtsList arts-table object driven by func_80232C78 (retail
+// View of the CArtsList arts-table object driven by artsRenderRow (retail
 // reads offsets 0x00/0x04/0x21/0x26 plus the 16-byte rows at 0x2C and the
 // count byte at 0x12C).
 class SArts32C78 {
@@ -721,7 +721,7 @@ public:
 // (plain-C retail symbol; sel is the demo/character gate complement).
 extern "C" u16 getArtsSlotRC(void* recv, short sel, u8 idx);
 
-// Root returned by func_8009EC9C; the manager object sits at offset 0x17C and
+// Root returned by CtrlObjectParam_GetCharEntry; the manager object sits at offset 0x17C and
 // an array of 0x49-byte arts elements starts at offset 0xE8 (ArtsSlot_isWindowEmpty).
 struct SArtsManagerRoot {
     char _pad[0xE8];
@@ -734,7 +734,7 @@ struct SArtsManagerRoot {
 // (emitted slot N = declaration index N+2), so: v0 (index 0) is the release
 // call at +0x08 in CMenuArtsSet_teardown, v11 (index 9) drives the two panes at
 // +0x2C in CMenuArtsSet_completeLayoutOut, v14 (index 12) is the state-advance at +0x38
-// driven by func_8023359C.
+// driven by artsStepState.
 class SArts1C {
 public:
     virtual void v0(int a);   // index 0 -> vtable +0x08
@@ -756,7 +756,7 @@ public:
 
 // View of the object returned by getFontInfo (CDeviceFont); its vtable
 // slot +0x24 (declared index 7; MWCC reserves a 2-entry header) yields the
-// font handle pushed onto the layout root pane by func_8013676C.
+// font handle pushed onto the layout root pane by ApplyFontToTxtPanes.
 class SDevFontV {
 public:
     virtual void v0();
@@ -974,22 +974,22 @@ extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(void*, u32);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
 extern "C" void playUISound__FUl(u32);
-extern "C" void* func_8009EC9C(u32);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
 extern "C" void __ct__8009F8B8(void* self);
-// Actor-param refresh + player resolution tail of func_80230D74.
+// Actor-param refresh + player resolution tail of artsClaimSlot.
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* self, u32 flag);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 
-// Player object returned by getCfObjectPc in func_80230D74's tail: the u16
+// Player object returned by getCfObjectPc in artsClaimSlot's tail: the u16
 // player id at +0x3F28 must equal the sub-object's 0x26 character id, then
 // the refresh virtual at vtable +0x32C runs. With the 2-entry RTTI header,
 // vtable +0x32C is declared index 201.
@@ -1080,13 +1080,13 @@ extern "C" void CScrollBar_PlaceThumb(void* p, u16 v);
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self);
 
-// Character-slot record view for func_80231014's mode-4/id-8 arm: the
+// Character-slot record view for artsReadSelId's mode-4/id-8 arm: the
 // signed halfword at +0x24 is the current entry id (-1 = none).
 struct SArtsCharData24 {
     char _pad[0x24];
     s16 field_0x24;
 };
-// Entry object returned by func_80157C4C; func_80231014 only reads the
+// Entry object returned by CItem_kindPtr; artsReadSelId only reads the
 // leading word (top 12 bits feed the category lookup).
 struct SArtsEntryWord {
     u32 field_0x00;
@@ -1094,19 +1094,19 @@ struct SArtsEntryWord {
 // Mode-4/id-8 imports (code_80135FDC.cpp / CItem.cpp; C symbols).
 extern "C" u16 BdatGetItemId(u32 value);
 extern "C" u8 BdatGetU8Direct(u32 entry, const char* text, u32 row);
-extern "C" SArtsEntryWord* func_80157C4C(u32 kind);
+extern "C" SArtsEntryWord* CItem_kindPtr(u32 kind);
 // Current BDAT text-table handle consumed by BdatGetU8Direct (.sdata word).
 extern u32 lbl_eu_806640F8;
 
 // Same-TU cursor/state helpers (retail unmangled names; definitions below).
-extern "C" u8 func_80231014(SArtsSub8022FA58* self);
-extern "C" u8 func_80231220(SArtsSub8022FA58* self);
+extern "C" u8 artsReadSelId(SArtsSub8022FA58* self);
+extern "C" u8 artsAvailFlag(SArtsSub8022FA58* self);
 extern "C" u8 ArtsTable_getSelectedId(SArts322BC* self);
 extern "C" u8 ArtsTable_getRowValue(SArts322BC* self, int key);
-extern "C" u16 func_80232370(SArts322BC* self, int key);
+extern "C" u16 artsGetRowPct(SArts322BC* self, int key);
 extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key);
 extern "C" void ArtsTableCursor_refresh(SArts327B0* self);
-extern "C" void func_80232C78(SArts327B0* self);
+extern "C" void artsRenderRow(SArts327B0* self);
 extern "C" void copyVEC2(float* dst, const float* src);
 extern "C" __declspec(noinline) int CMenuArtsSet_isListBusy(SArts34C84* self);
 extern "C" __declspec(noinline) int CMenuArtsSet_isLockedArtOpen(SArts34D14* self);
@@ -1123,11 +1123,11 @@ extern "C" void CArtsInfo_CursorPrev(CArtsInfo* self);
 extern "C" void CArtsInfo_CursorNext(CArtsInfo* self);
 // CArtsInfo state-machine advance (defined in CArtsInfo.cpp; C symbol).
 extern "C" void CArtsInfo_ToStateA(CArtsInfo* self);
-// CArtsInfo advance helpers used by func_802340C4 (CArtsInfo.cpp; C symbols).
+// CArtsInfo advance helpers used by artsDriveMenu (CArtsInfo.cpp; C symbols).
 extern "C" u32 CArtsInfo_IsCursorZero(CArtsInfo* self);
 extern "C" void CArtsInfo_ToStateC(CArtsInfo* self);
 extern "C" void CArtsInfo_OpenDetail6(CArtsInfo* self);
-// Locked-entry refresh driven by func_802340C4 when the 0x168 mode is 4.
+// Locked-entry refresh driven by artsDriveMenu when the 0x168 mode is 4.
 extern "C" void CMenuArtsSet_confirmLockedArt(CMenuArtsSet* self);
 // CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
 extern "C" int CSysWin_isActive(void* self);
@@ -1153,7 +1153,7 @@ extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
 extern "C" void CScrollBar_requestScrollIn(u8* scrollBar);
 // Scroll-bar teardown (CMenuArtsSet_teardown).
 extern "C" void CScrollBar_Teardown(void* obj34);
-extern "C" void func_8023587C(CArtsInfo* self);
+extern "C" void CArtsInfo_UpdateAnims(CArtsInfo* self);
 extern "C" void sysWinDispatchPhase(CSysWinFull* self);
 extern "C" void ArtsLayoutPair_advancePhases(SArts306F0* obj148);
 extern "C" void ArtsLayout_runTwinLayoutIn(SArts31648* self);
@@ -1192,7 +1192,7 @@ extern "C" void ArtsLayout_runLayoutIn(SArts3150C* self);
 // code_80135FDC.hpp cannot be co-included - BdatTouchStringCell signature clash).
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" u8 GetCollectedFlagByte(u32);
-extern "C" void func_80139198(u32);
+extern "C" void BuildSlotItemLists(u32);
 // File-handle / arc-accessor teardown; retail symbols are the mangled C++
 // names (closeFileHandle__FPP11CFileHandle etc.) so declare C++-linkage.
 void closeFileHandle(CFileHandle** self);
@@ -1237,7 +1237,7 @@ extern const SArts316F8Block lbl_eu_8050ABB4;
 // of ArtsSlotCursor_refresh's lbl_eu_8050ABB4).
 extern const SArts316F8Block lbl_eu_8050ABD8;
 
-// Per-character arts-list block copied onto the stack by func_802320C0
+// Per-character arts-list block copied onto the stack by artsFillTable
 // (18 bytes: nine {id,count} pairs, indexed by character; declared as
 // words+tail so MWCC emits the counted block-copy loop).
 struct SArts320C0Entry {
@@ -1249,16 +1249,16 @@ struct SArts320C0Block {
                 // counted block-copy loop (2x8 bytes + lhz tail)
 };
 extern const SArts320C0Block lbl_eu_8050ABFC;
-// Scrollbar list rebuild (func_802320C0 tail).
+// Scrollbar list rebuild (artsFillTable tail).
 extern "C" void CScrollBar_UpdateThumb(void* scrollBar, u32 pageSize, u8 count);
 
-// String-table lookup (func_80231220) and learn-arts flag-grid query
-// (func_80231220); C-linkage retail symbols.
+// String-table lookup (artsAvailFlag) and learn-arts flag-grid query
+// (artsAvailFlag); C-linkage retail symbols.
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
-// Accumulated pane translate (func_801375A0, defined in code_80135FDC.cpp)
+// Accumulated pane translate (AccumPaneWorldPos, defined in code_80135FDC.cpp)
 // and pane translate setter (Cur_SetPaneTranslate, defined in CSysWin.cpp).
-extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Window-arm chain used by CMenuArtsSet_armSysWin: build a label string pair then
 // drive the CSysWin sub-object. func_8022BFC8 is already declared in
@@ -1290,7 +1290,7 @@ extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" int sprintf(char*, const char*, ...);
 
 // ---------------------------------------------------------------------------
-// func_8022F544 (per-frame input dispatch) callees
+// artsMenuInput (per-frame input dispatch) callees
 // ---------------------------------------------------------------------------
 // Party-change notice gate (CUICfManager.cpp).
 extern "C" int MenuTutorialIsCreated();
@@ -1299,8 +1299,8 @@ extern "C" int MenuTutorialIsCreated();
 extern "C" u8 CMenuArtsSet_isBusy(SArts33888* self);
 extern "C" void CMenuArtsSet_armSysWin(CMenuArtsSet* self);
 extern "C" void CMenuArtsSet_selectPrevChar(CMenuArtsSet* self);
-extern "C" void func_802346BC(CMenuArtsSet* self);
-extern "C" void func_802340C4(CMenuArtsSet* self);
+extern "C" void artsStepAhead(CMenuArtsSet* self);
+extern "C" void artsDriveMenu(CMenuArtsSet* self);
 extern "C" void CMenuArtsSet_advanceIdle(CMenuArtsSet* self);
 extern "C" void CMenuArtsSet_beginClose(CMenuArtsSet* self);
 extern "C" void CMenuArtsSet_cursorUp(CMenuArtsSet* self);
@@ -1317,7 +1317,7 @@ extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // Member thunks called through their retail unmangled free-symbol forms by
-// func_8022F544 (the member declarations mangle differently).
+// artsMenuInput (the member declarations mangle differently).
 extern "C" void CMenuArtsSet_setArmedFlag(CMenuArtsSet* self, u8 val);
 extern "C" u32 CMenuArtsSet_isSlotWindowEmpty(CMenuArtsSet* self);
 extern "C" u32 CMenuArtsSet_isArtsInfoActive(CMenuArtsSet* self);

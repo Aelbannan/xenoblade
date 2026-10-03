@@ -238,7 +238,7 @@ stubs (17% of the frontier for ~3 sessions), then the data passes, then the
 real bodies in parallel.
 
 **Update 4 (frontier burn-down started).** `tools/coop/link_undefs.py` is the
-measuring instrument; the frontier was 1235 and is now **1003** (linkage batches: CfObjectEne + 11 units at the definition level, then 24 headers at the declaration level).  First batch:
+measuring instrument; the frontier was 1235 and is now **762** (linkage batches: CfObjectEne + 11 units at the definition level, 24 headers at the declaration level, the `g3d_resmat` `.sdata2` pool labels moved into source (1003 -> 767), then `ut_Font` rule shrink + the `fake_function` keep-alive conversion (767 -> 762)).  First batch:
 `CfObjectEne.cpp` (124 -> 10) by adding `extern "C"` to definitions whose MWCC
 mangling differs from the retail literal (skip names a header declares, and
 skip definitions whose natural mangling already matches).  Recipe, residual
@@ -252,3 +252,69 @@ the layout, and the §17.6 `add_symbols` mechanism runs out of string-table spac
 after ~51 new names.  Measurements, the failed experiment (frontier 1022 -> 780
 with a +8-byte layout drift) and the two viable tool-level fixes are in
 `docs/evidence/decomp/unit_rules_category_e_pool_labels.md` (update 6).
+
+
+**Update 6 (pool labels land in source).**  The 293 `g3d_resmat` `.sdata2`
+labels did **not** need the tool change update 6 of the evidence doc proposed.
+They are expressible as source objects: MWCC aligns each `.sdata2` object to
+`min(size, 8)`, so a label can be its own `unsigned char[]` definition exactly
+when its retail offset already satisfies that alignment.  Everything else
+(1-byte labels, 8-byte labels at 4-mod-8 offsets, header-declared names, the
+rule-aliased words) stays inside a filler piece.
+
+Result: 223 of 344 slice labels are now real definitions; `.sdata2` and `.text`
+are byte-identical to the byte-exact pre-edit object; every named symbol sits at
+`0x18 + (addr - 0x80669A68)`; unit hexdiff unchanged (54/56); frontier
+**1003 -> 767** (-236) with zero new missing.  Generator + full record:
+`.scratch/e_units/gen_resmat_pool.py` and evidence update 8.
+
+**What is left (767).**  The cheap classes are exhausted:
+
+* **Data reconstruction, not naming.**  Every other top frontier unit has
+  *absent* bytes — `CMenuBattleChain` `.rodata` 0 vs 0x158, `CVision` `.data`
+  0x10 vs 0x2D0, `CfScript` `.data` 0 vs 0x350, `CScrollBar`, `CtrlMoveNpc`,
+  `CChainActorList`, `CFade`, `CCur`, `CCharVoice`, the `CVS_THREAD_*` pair,
+  `code_80213488`, `CArtsSet`, `CREvtLight` — i.e. the ~404-label / 14.4 KB
+  class from update 3, one data pass per unit.
+* **Function bodies.**  ~150 symbols, concentrated in `CfGimmick`,
+  `UnkClass_80466348` (36 `setAmbColor*`/`setupVtxDesc*`), `CChainActorList`,
+  `CVision`, `CfObjectEne`, plus 25 `nw4r::g3d::Res*::CopyTo` in `g3d_resmat`.
+* **86 `<none>` symbols** with no retail owner in `splits.txt` — needs
+  identification before they can be placed.
+* `g3d_resmat`'s remaining 43 labels need the FORCEACTIVE + `add_symbols` route
+  (or the tool's `.strtab`/`.symtab` growth) since they are header-declared or
+  unaligned.
+
+
+**Update 7 — workstreams 1-3 done or reclassified (see evidence update 9).**
+
+* `fake_function` cleared: the keep-alive stubs are now explicit `.data` arrays
+  (OSError, dsp_task — those two units' `.data` *and* `.init` are now
+  byte-identical to retail) or call the defined `OSReport` (gap_utils,
+  OSPlayRecord — `.data` byte-identical).  `RVL_SDK/.../usb/usb.c` is parked
+  `NonMatching`: its stubs were rebuilt from retail but the emission order is
+  0x1C long; all strings are present, only the placement differs.
+* `ut_Font.o`: dropped `extern_data_sections=(".data",)` (its data already
+  matched retail; the strip was dangling four local table symbols).
+* The 9 remaining CRT symbols (`_stack_addr`, `_SDA_BASE_`, `__ArenaHi`, ...)
+  come from the retail linker script — they need the `.lcf` or a
+  `bake_linker_addrs` table entry (that is a *table* change: human sign-off).
+* The 7 vtables and the 37 `@N` leftovers are **not independent**: they are the
+  refs left dangling by `extern_data_sections` on units whose data is not
+  reconstructed, so they land with those units' data passes (workstream 6).
+
+Frontier **762**.  Next: the data passes (biggest first is `CCur` ~1.5 KB, then
+`CMenuBattleChain`, `CVision`, `CFade`, `CfScript`, `CScrollBar`, `CtrlMoveNpc`,
+`CChainActorList`, `CCharVoice`, `CVS_THREAD_*`, `code_80213488`, `CArtsSet`,
+`CREvtLight`), each of which also clears its `@N`/vtable residue.
+
+
+**Update 8 — data passes are code-driven (evidence update 10).**  The ~404
+absent-bytes labels cannot be emitted as an independent data block: defining
+`code_80213488`'s two missing `f32`s in source makes MWCC const-propagate them
+and add extra `.sdata2` pool words (0x20 vs retail 0x18, reverted), and every
+other candidate's missing data is reloc-bearing vtable/pointer data owned by
+unreconstructed code.  So workstream 6 merges into workstream 7: per-unit
+matching passes, biggest frontier first (`CMenuBattleChain` 77, `CVision` 63,
+`UnkClass_80466348` 36, `CfScript` 30, `CScrollBar` 27, `CtrlMoveNpc` 17,
+`CChainActorList` 15, `CFade`/`CCur`/`CCharVoice` 13).

@@ -5,6 +5,12 @@
 #include <nw4r/g3d.h>
 #include <nw4r/g3d/g3d_anmclr.h>
 
+// Retail 1.0f slot owned by g3d_resmat's .sdata2 slice (lbl_eu_80669B48).
+// Referencing it (instead of a 1.0f literal) keeps this TU's .sdata2 empty
+// like retail: MWCC pools literals per-TU, the linker slice assigns retail's
+// copy to resmat's range.
+extern const f32 lbl_eu_80669B48; // 1.0f
+
 namespace nw4r {
 namespace g3d {
 
@@ -112,7 +118,7 @@ void AnmObjMatClrRes::SetFrame(f32 frame) {
 void AnmObjMatClrRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (rate == 1.0f) {
+    if (rate == lbl_eu_80669B48) {
         if (mpResultCache != NULL) {
             f32 f = GetFrm();
             for (u32 i = 0; i < mNumBinding; i++) {
@@ -127,7 +133,7 @@ void AnmObjMatClrRes::SetUpdateRate(f32 rate) {
 }
 
 void AnmObjMatClrRes::UpdateFrame() {
-    if (GetRate() != 1.0f) {
+    if (GetRate() != lbl_eu_80669B48) {
         UpdateFrm();
 
         if (mpResultCache != NULL) {

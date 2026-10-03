@@ -61,9 +61,9 @@ extern "C" {
     void movePcCondFullReset(void*, int);
     void CItem_clearCharSubSlot(int, int, void*);
     void CItemData_initFromFamily(void*, int, int);
-    void func_80155A00(void*);
+    void CItem_reCount(void*);
     void updateReloadFloat(int);
-    void func_8016DF4C(int);
+    void seedReloadTmr(int);
 
     void GimDispatch14ByRow(int, int);
     void GimDispatch18ByRow(int, int);
@@ -76,7 +76,7 @@ extern "C" {
     // CItemImplInstances* - local void* form conflicts (10197).
     void* getInstance__14Class_80296898Fv();
     void walkListByItemId(int, int);
-    int func_800B8D5C();
+    int scanBattleReady();
     void CfObjectMove_forwardNpcSignal(int, bool);
     bool CtrlRemote_TouchBitByArg(int);
     // CtrlRemote_SetSharedBit: declared (u32,u32) by CfGameManager.hpp:767 - local
@@ -84,12 +84,12 @@ extern "C" {
     // concurrent rename, so spell the (u32,u32) form locally (identical
     // redeclaration is harmless even if a header provides it again).
     void CtrlRemote_SetSharedBit(u32, u32);
-    int* func_8009EC9C(int);
+    int* CtrlObjectParam_GetCharEntry(int);
     int* CtrlObjectParam_GetSlotTableBase();
     void CtrlObjectParam_SetEquipSlot5(int*, int);
-    int func_8009E284(int*, int);
+    int CtrlObjectParam_HasSlotValue(int*, int);
     int* CtrlObjectParam_ResolveEquipItem(int*, int);
-    void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* getInstance__Fv();
+    void setTrackedTarget(UnkClass_805764CC*, void*, int, float);    void* getInstance__Fv();
     void resetTboxThenMask(void*);
     void queueBdatTextB__Q22cf13CfGameManagerFv(float, int, int);
     void setupBattleCamera__Q22cf13CfGameManagerFv(int, int);
@@ -99,14 +99,14 @@ extern "C" {
     void func_8008566C__Q22cf13CfGameManagerFv(int, float*, int);
     int getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
     void* createBdatCollisionObj__Q22cf13CfGameManagerFv();
-    void func_800AB978(void*, float, float, void*, void*);
-    void func_800AB7F8(void*, float, void*, void*, int, int, int, int);
-    void func_800ABD44(void*, float*, float*, float);
-    void func_800ABDE4(void*, float*, float*, float);
+    void CollObjSetupVecPair(void*, float, float, void*, void*);
+    void CollObjSetupVecsState6(void*, float, void*, void*, int, int, int, int);
+    void CollObjSetupVecsState0(void*, float*, float*, float);
+    void CollObjSetupVecsState2(void*, float*, float*, float);
     void CollObjSetResIdPathName(void*, const char*, const char*);
-    void func_800ABE84(void*, float*, float*, float);
+    void CollObjSetupVecsState3(void*, float*, float*, float);
     void CollObjSetNameSlot(void*, const char*, int);
-    void func_800AB8CC(void*, float, void*, void*);
+    void CollObjSetupVecsState1(void*, float, void*, void*);
     void CollObjSetupRotBoxFromAVec(float, float*, float*);
     void CollObjSetResIdPairName(void*, int, int, const char*);
     void resetFieldState__Q22cf13CfGameManagerFv();
@@ -116,14 +116,14 @@ extern "C" {
     void loadFieldPartyState__Q22cf13CfGameManagerFv(int, int);
     void func_80085FB8__Q22cf13CfGameManagerFv(int);
     void gmWalkByType();
-    void func_800B98C8(int);
+    void setMonoFlag(int);
     void notifyFieldChange__Q22cf13CfGameManagerFv(const char*);
     bool isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
     bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
     void gmWalkByName(const char*);
-    bool func_8009E344(void*, int, int*, int*);
+    bool CtrlObjectParam_FindSlotTypeIndex(void*, int, int*, int*);
     void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, int, float);
-    void func_8009E3C0();
+    void CtrlObjectParam_ValidateSlotRange();
     int  CItem_thunkAllocRecord(int, int);
     void CItem_consumeFamilyCnt(int, int);
     int  CItem_sumFamilyByte6(int);
@@ -260,8 +260,8 @@ int setMapJumpArea(VMThread* pThread) {
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        func_800AB978(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
-        func_800AB8CC(mgr, warpH, &cornerMin, &cornerMax);
+        CollObjSetupVecPair(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
+        CollObjSetupVecsState1(mgr, warpH, &cornerMin, &cornerMax);
 
         // Center of the min/max pair, duplicated, scaled, duplicated again.
         center.x = cornerMin.x + cornerMax.x;
@@ -396,7 +396,7 @@ int setMapJumpAreaBox(VMThread* pThread) {
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        func_800AB978(mgr, lbl_eu_80665E48, lbl_eu_80665E34, &corners[3], &corners[3]);
+        CollObjSetupVecPair(mgr, lbl_eu_80665E48, lbl_eu_80665E34, &corners[3], &corners[3]);
         CollObjSetupRotBoxFromAVec(lbl_eu_80665E4C, &corners[6], &corners[0]);
         CollObjSetResIdPairName(mgr, ids[1], ids[0], name);
 
@@ -528,8 +528,8 @@ int setWarpArea(VMThread* pThread) {
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        func_800AB7F8(mgr, warpH, &cornerMin, &cornerMax, g0, g1, g2, g3);
-        func_800AB978(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
+        CollObjSetupVecsState6(mgr, warpH, &cornerMin, &cornerMax, g0, g1, g2, g3);
+        CollObjSetupVecPair(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
 
         // Center of the min/max pair, duplicated, scaled, duplicated again.
         center.x = cornerMin.x + cornerMax.x;
@@ -593,7 +593,7 @@ int setMapPreloadArea(VMThread* pThread) {
     cf::CfGameManager* mgr =
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
-        func_800ABD44(mgr, boxMax, boxMin, scale);
+        CollObjSetupVecsState0(mgr, boxMax, boxMin, scale);
         CollObjSetResIdPairName(mgr, argA, argB, 0);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -712,7 +712,7 @@ int setEventArea(VMThread* pThread) {
         pt.x = box[0];
         pt.y = box[1] + bottom;
         pt.z = box[2];
-        func_800ABDE4(mgr, (float*)&pt, box, top);
+        CollObjSetupVecsState2(mgr, (float*)&pt, box, top);
         CollObjSetResIdPathName(mgr, eventName, tag);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -806,7 +806,7 @@ int setTownArea(VMThread* pThread) {
         // lwz/stw bit-copy triple plus the lfs/fadds/stfs y update.
         ml::CVec3 pt = box;
         pt.y = pt.y + topOff;
-        func_800ABE84(mgr, (float*)&box, (float*)&pt, height);
+        CollObjSetupVecsState3(mgr, (float*)&box, (float*)&pt, height);
 
         if (name != NULL) {
         // Declared highest-first: MWCC puts the first local at the top of
@@ -942,7 +942,7 @@ int setMono(VMThread* pThread) {
     int val = vmArgBoolGet(2, arg);
     int neg = -val;
     int orVal = neg | val;
-    func_800B98C8((unsigned int)orVal >> 31);
+    setMonoFlag((unsigned int)orVal >> 31);
     return 0;
 }
 
@@ -1012,7 +1012,7 @@ int isMainParty(VMThread* pThread) {
     out[0] = 0;
     out[1] = -1;
     int* data = CtrlObjectParam_GetSlotTableBase();
-    func_8009E344((void*)data, val, &out[0], &out[1]);
+    CtrlObjectParam_FindSlotTypeIndex((void*)data, val, &out[0], &out[1]);
     
     int result = out[0];
     int orVal = (1 - result) | (result - 1);
@@ -1032,7 +1032,7 @@ int isResvParty(VMThread* pThread) {
     out[0] = 0;
     out[1] = -1;
     int* data = CtrlObjectParam_GetSlotTableBase();
-    func_8009E344((void*)data, val, &out[0], &out[1]);
+    CtrlObjectParam_FindSlotTypeIndex((void*)data, val, &out[0], &out[1]);
     
     int result = out[0];
     int orVal = (2 - result) | (result - 2);
@@ -1051,7 +1051,7 @@ int addParty(VMThread* pThread) {
     int out[2];
     out[0] = 0;
     out[1] = -1;
-    func_8009E344(CtrlObjectParam_GetSlotTableBase(), v31, &out[0], &out[1]);
+    CtrlObjectParam_FindSlotTypeIndex(CtrlObjectParam_GetSlotTableBase(), v31, &out[0], &out[1]);
 
     // count==2 (or the folded duplicate test) skips the group bookkeeping
     int isEq = ((unsigned)__cntlzw(out[0] - 2)) >> 5;
@@ -1230,7 +1230,7 @@ int makeGuestParty(VMThread* pThread) {
     data[0x28 / 4] = v30 & 0xFFFF;
     data[0x2C / 4] = v29 & 0xFFFF;
     data[0x30 / 4] = v31 & 0xFFFF;
-    func_8009E3C0();
+    CtrlObjectParam_ValidateSlotRange();
     return 0;
 }
 
@@ -1300,7 +1300,7 @@ int totalItem(VMThread* pThread) {
 // (for party characters 1-11) the inventory entry.
 // The five optionals stay in scalars until after the CtrlRemote_TouchBitByArg gate;
 // only then are they spilled into the stack array (retail stores the block
-// at sp+0x10 right before func_8009EC9C).
+// at sp+0x10 right before CtrlObjectParam_GetCharEntry).
 int equipItem(VMThread* vmThread) {
     // Same rolling-optional idiom as the matched makeGuestParty above:
     // index starts at the first omitted arg; each fetch is
@@ -1341,12 +1341,12 @@ int equipItem(VMThread* vmThread) {
     slots[3] = s3;
     slots[4] = idx;
 
-    int* charData = func_8009EC9C(charId & 0xFFFF);
+    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     int* mgrData = CtrlObjectParam_GetSlotTableBase();
     // Note: full (unmasked) char id passed here, unlike EC9C above.
     // The E284 result reuses the rolling-index variable (retail folds both
     // into r29).
-    idx = func_8009E284(mgrData, charId);
+    idx = CtrlObjectParam_HasSlotValue(mgrData, charId);
 
     for (slot = 0; slot <= 4; slot++) {
         int* slotRec = CtrlObjectParam_ResolveEquipItem(&charData[7], slot);
@@ -1375,7 +1375,7 @@ int equipItem(VMThread* vmThread) {
         if (act) {
             if (idx != 0) {
                 func_80158420(itemId & 0xFFFF, &outShort, 1, &outInt);
-                func_8009DBF4(charData, slot, (void*)(s32)outShort);
+                CtrlObjectParam_WriteEquipSlotValue(charData, slot, (void*)(s32)outShort);
             } else {
                 CtrlObjectParam_WriteU16RowEntry(charData, slot & 0xFFFF, itemId & 0xFFFF);
             }
@@ -1437,7 +1437,7 @@ int equipWeapon(VMThread* pThread) {
         return 0;
     }
 
-    charData = func_8009EC9C(charId & 0xFFFF);
+    charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     weaponSlot = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (weaponSlot != NULL) {
@@ -1454,7 +1454,7 @@ int equipWeapon(VMThread* pThread) {
         walkListByItemId(charId, 0);
         lbl_eu_80663E28 |= 0x08000000;
     } else {
-        CtrlObjectParam_WriteU16RowEntry(func_8009EC9C(charId & 0xFFFF), 5, weaponId & 0xFFFF);
+        CtrlObjectParam_WriteU16RowEntry(CtrlObjectParam_GetCharEntry(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
         if (charId >= 1 && charId <= 11) {
             int syncId;
@@ -1464,7 +1464,7 @@ int equipWeapon(VMThread* pThread) {
                 ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))->getItemId(invSlot);
             } else {
                 CItemData_initFromFamily(invSlot, weaponId & 0xFFFF, 1);
-                func_80155A00(invSlot);
+                CItem_reCount(invSlot);
             }
 
             for (int k = 0; k < 8; k++) {
@@ -1490,7 +1490,7 @@ int getWeaponSlot(VMThread* vmThread) {
 
     VMArg* arg = vmArgPtrGet(vmThread, 1);
     charId = vmArgIntGet(2, arg);
-    int* charData = func_8009EC9C(charId & 0xFFFF);
+    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     itemId = 0;
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
@@ -1533,7 +1533,7 @@ int setWeaponSlot(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     itemId = vmArgIntGet(3, arg);
 
-    int* charData = func_8009EC9C(charId & 0xFFFF);
+    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
@@ -1637,7 +1637,7 @@ int setDispOffArea(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     int areaId = vmArgFixedGet(3, arg);
 
-    void* obj = func_801864DC(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         // The singleton from getInstance__Fv is passed as the callee's self.
@@ -1645,7 +1645,7 @@ int setDispOffArea(VMThread* vmThread) {
         // (xoris/lis 0x4330/stw/stw/lfd/fsubs); its magic pools as a TU-local
         // label that resolves to lbl_eu_80665E40 (MWCC_CASES 7i/fsub-rule).
         UnkClass_805764CC* box = (UnkClass_805764CC*)getInstance__Fv();
-        func_800B6800(box, obj, 1, areaId);
+        setTrackedTarget(box, obj, 1, areaId);
     }
 
     return 0;
@@ -1666,7 +1666,7 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg);
     }
 
-    void* obj = func_801864DC(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);
@@ -1700,7 +1700,7 @@ int setWeatherArea(VMThread* vmThread) {
         areaId = vmArgIntGet(2, arg);
     }
 
-    func_8016DF4C(areaId);
+    seedReloadTmr(areaId);
     return 0;
 }
 
@@ -1770,7 +1770,7 @@ int setActMapObj(VMThread* vmThread) {
         state = vmArgIntGet(3, arg);
     }
 
-    void* mapObj = func_80186BC8(mapObjId & 0xFFFF);
+    void* mapObj = ArtsSelect_GetEntry(mapObjId & 0xFFFF);
     if (mapObj != NULL) {
         int* objPtr = (int*)((u8*)mapObj + 0xC4);
         if (*objPtr != 0) {
@@ -1834,7 +1834,7 @@ int clearPartyGauge(VMThread* vmThread) {
 
 // --- waitPop (us-8004b0e4) ---
 int waitPop(VMThread* vmThread) {
-    if (!func_800B8D5C()) {
+    if (!scanBattleReady()) {
         if (!(lbl_eu_80663E28 & 0x10)) {
             lbl_eu_80663EDC = lbl_eu_80665E4C;
         }
@@ -1935,7 +1935,7 @@ int getWeaponID(VMThread* vmThread) {
         charId = vmArgIntGet(2, arg);
     }
 
-    int* charData = func_8009EC9C(charId & 0xFFFF);
+    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
 
     VMArg ret;
     ret.type = 3;

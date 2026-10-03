@@ -13,8 +13,10 @@ Usage:
   python3 tools/coop/link_undefs.py --json out.json # machine-readable
   python3 tools/coop/link_undefs.py --top 40
 
-Stdlib only.  Reads ``build/<region>/main.elf.rsp`` (regenerate it with one
-``ninja build/<region>/main.elf`` run first) and ``config/<region>/{symbols,splits}.txt``.
+Stdlib only (plus the shared linker-script name parser).  Reads
+``build/<region>/main.elf.rsp`` (regenerate it with one
+``ninja build/<region>/main.elf`` run first), ``build/<region>/ldscript.lcf``,
+and ``config/<region>/{symbols,splits}.txt``.
 """
 from __future__ import annotations
 
@@ -28,6 +30,43 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 NM = ROOT / "build" / "binutils" / "powerpc-eabi-nm"
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.coop.lib.reloc_canon import ldscript_assigned_names  # noqa: E402
+
+#: Absolutes mwldeppc synthesizes itself (EABI small-data bases), never
+#: defined by any object: `-lcf` changes their *value* (the script drives the
+#: layout they derive from) but they resolve either way, so they are
+#: link-provided rather than missing. See the with/without-`-lcf` micro-link
+#: comparison in docs/evidence/decomp/unit_rules_category_e_pool_labels.md.
+EABI_LINKER_SYMBOLS = frozenset({"_SDA_BASE_", "_SDA2_BASE_"})
+
+
+def ldscript_provided(region: str) -> tuple[set[str], str]:
+    """(linker-provided names, lcf path) for one region.
+
+    dtk writes the retail-accurate ``build/<region>/ldscript.lcf``; the build
+    tree's copy always wins when it exists (same policy as reloc_canon).
+    """
+    lcf = ROOT / "build" / region / "ldscript.lcf"
+    if not lcf.is_file():
+        return set(EABI_LINKER_SYMBOLS), "<eabi built-ins only>"
+    return set(ldscript_assigned_names(lcf)) | EABI_LINKER_SYMBOLS, str(lcf)
+
+
+def split_missing(
+    undef: set[str], defined: set[str], provided: set[str]
+) -> tuple[list[str], list[str]]:
+    """(object-level missing, linker-provided references) - the frontier split.
+
+    A reference counts as object-level work only when no object defines it and
+    no linker script/EABI built-in provides it.
+    """
+    linker = sorted(n for n in undef if n in provided and n not in defined)
+    missing = sorted(set(undef) - defined - set(linker))
+    return missing, linker
 
 
 def object_symbols(path: pathlib.Path) -> tuple[set[str], dict[str, set[str]]]:
@@ -118,6 +157,7 @@ def main() -> int:
     if not rsp.exists():
         print(f"ERROR: {rsp} not found - run `ninja build/{args.region}/main.elf` once", file=sys.stderr)
         return 2
+    provided, lcf_source = ldscript_provided(args.region)
     objects = [l for l in rsp.read_text().split("\n") if l.strip()]
 
     defined: set[str] = set()
@@ -128,7 +168,7 @@ def main() -> int:
         for name, objs in u.items():
             undef.setdefault(name, set()).update(objs)
 
-    missing = sorted(set(undef) - defined)
+    missing, linker = split_missing(set(undef), defined, provided)
     symbols = _retail_symbols(args.region)
     ranges = _split_ranges(args.region)
     groups: collections.Counter = collections.Counter()
@@ -140,7 +180,12 @@ def main() -> int:
         rows.append({"symbol": name, "owner": owner, "referrers": sorted(undef[name])})
 
     print(f"objects: {len(objects)}  defined names: {len(defined)}  undefined names: {len(undef)}")
-    print(f"MISSING (referenced, defined nowhere): {len(missing)}")
+    print(f"MISSING (referenced, defined nowhere in any object): {len(missing)}")
+    if linker:
+        print(
+            f"linker-provided (not object work): {len(linker)} -> "
+            f"{', '.join(linker)}  [{lcf_source}]"
+        )
     print(f"\nmissing symbols by retail owner unit (top {args.top}):")
     for unit, count in groups.most_common(args.top):
         print(f"  {count:4d}  {unit}")
@@ -151,8 +196,22 @@ def main() -> int:
         print()
         for row in rows:
             print(f"{row['symbol']}\t{row['owner'] or '?'}")
+        if linker:
+            print(f"\n-- provided by the linker script (not object work): {lcf_source}")
+            for name in linker:
+                print(f"{name}\tlinker")
     if args.json:
-        pathlib.Path(args.json).write_text(json.dumps({"missing": rows}, indent=1) + "\n")
+        pathlib.Path(args.json).write_text(
+            json.dumps(
+                {
+                    "missing": rows,
+                    "linker_provided": linker,
+                    "lcf_source": lcf_source,
+                },
+                indent=1,
+            )
+            + "\n"
+        )
         print(f"\nwrote {args.json}")
     return 0 if not missing else 1
 

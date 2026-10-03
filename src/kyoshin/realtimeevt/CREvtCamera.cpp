@@ -21,8 +21,8 @@ extern "C" {
     CScnItemModel* Scn_SetupAnim(u32 global, u8* handle, int flag, int flag2);
     void Scn_IsAnimActiveOrNull(void* ptr);
     void* Scn_InitGlobalA(void* mgr, void* param, int flag);
-    void func_8049EB60();
-    void func_8049F774(CREvtCamObj* camObj, const f32 mtx[3][4]);
+    void ScnCamDepthUp();
+    void ScnCamLoadMtx(CREvtCamObj* camObj, const f32 mtx[3][4]);
     CREvtCamObj* Scn_FindCamItem(u32 mgr, int a);
     void simSetFlag2000Chain(CScnItemModel* obj, int flag);
     void simSetLeafDist7B0(CScnItemModel* obj, float val);
@@ -31,13 +31,13 @@ extern "C" {
     int EvtSeqGetCounter100();
     void* evtGetManagerAddr();
     void EvtSeqPublishIdHalfwords();
-    void func_8016AF4C(void* obj, const char* name, u32* out);
+    void EvtSeqResolveAnmChr(void* obj, const char* name, u32* out);
     int EvtSeqFindResAddr(void* obj, const char* name, void* out);
-    int func_8016B164(void* obj, const char* name, void* out1, void* out2);
+    int EvtSeqResolveAnmChr2(void* obj, const char* name, void* out1, void* out2);
     void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e);
     float simGetLeafAnimDist2(void* obj);
     void* getGlobalSda();
-    void func_800599E0(void* sda, u32 a, u32 b, u32 c);
+    void Env_SetClock(void* sda, u32 a, u32 b, u32 c);
     int atoi(const char* str);
 }
 
@@ -221,7 +221,7 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
                     (CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C;
                 player->field_0x1EC = f31;
                 player->field_0x1F0 = f30;
-                func_8049EB60();
+                ScnCamDepthUp();
             }
         }
 
@@ -351,11 +351,11 @@ extern "C" void func_801804CC(CREvtCamera* self) {
         getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(self->mMatrix28[2][3]);
     }
     camObj->field_0x1E0 = self->mMatrix28[2][3];
-    func_8049EB60();
+    ScnCamDepthUp();
     camObj->field_0x1EC = self->mMatrix28[0][3];
     camObj->field_0x1F0 = self->mMatrix28[1][3];
-    func_8049EB60();
-    func_8049F774(camObj, self->mMatrix58);
+    ScnCamDepthUp();
+    ScnCamLoadMtx(camObj, self->mMatrix58);
     self->mFieldA4 = 1;
 }
 
@@ -387,10 +387,10 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
             self->mField20 = (u32)taskObj;
             func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
             self->mField43C = (s32)(u32)simGetLeafAnimDist2((void*)self->mField1C);
-            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
-            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);
-            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 23, &self->mFieldA0);
-            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 30, &self->mField2B0);
+            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
+            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);
+            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 23, &self->mFieldA0);
+            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 30, &self->mField2B0);
 
             if (!((CREvtCamera*)lbl_eu_806642A8)->mFieldA5) {
                 ((CREvtCamTaskEvent*)evtGetManagerAddr())->field_1B8 = 1;
@@ -406,20 +406,20 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
                     EvtSeqPublishIdHalfwords();
                 } else {
                     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
-                    func_800599E0(getGlobalSda(), (u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
+                    Env_SetClock(getGlobalSda(), (u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
                 }
             }
 
             // The two task-id lists reuse the same stack locals (retail
             // reloads taskBuf/taskCount from 8(sp)/12(sp) for both loops).
-            if (func_8016B164((void*)self->mField20, lbl_eu_805036D8 + 43, &taskBuf, &taskCount)) {
+            if (EvtSeqResolveAnmChr2((void*)self->mField20, lbl_eu_805036D8 + 43, &taskBuf, &taskCount)) {
                 for (s32 i = 0; i < taskCount; i++) {
                     self->mTaskArrayA6[self->mTaskCount2A8] = (s16)taskBuf[i];
                     self->mTaskCount2A8++;
                 }
             }
 
-            if (func_8016B164((void*)self->mField20, lbl_eu_805036D8 + 51, &taskBuf, &taskCount)) {
+            if (EvtSeqResolveAnmChr2((void*)self->mField20, lbl_eu_805036D8 + 51, &taskBuf, &taskCount)) {
                 for (s32 i = 0; i < taskCount; i++) {
                     self->mTaskArray1A6[self->mTaskCount2AC] = (s16)taskBuf[i];
                     self->mTaskCount2AC++;

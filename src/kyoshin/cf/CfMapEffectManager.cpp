@@ -256,7 +256,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     subs[0] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x55, index);
     subs[1] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x5f, index);
     subs[2] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x69, index);
-    func_8006A6D0();
+    CfT_DispatchFrameCounts();
     int anySub = 0;
     for (int i = 0; i < 3; i++) {
         if (i != 0 && subs[i] == 0) {
@@ -297,7 +297,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
         u32 attachCol = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x7d, index);
         CfObject* extra = 0;
         if ((u8)attachCol != 0) {
-            extra = (CfObject*)func_80186BC8((u8)attachCol);
+            extra = (CfObject*)ArtsSelect_GetEntry((u8)attachCol);
             if (extra == 0) {
                 return;
             }

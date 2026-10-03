@@ -10,7 +10,7 @@
 #include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::playActorSound (single decl on owner header)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
-// (func_8009EC9C is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
+// (CtrlObjectParam_GetCharEntry is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -138,7 +138,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
         void* file;
         CfObjectPcArtsData* data;
         int col;
-        data = (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
+        data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
         file = lbl_eu_80664090;
         col = 4;
         // Signed compare (cmpi) in retail.
@@ -179,8 +179,8 @@ int cf::CfObjectPc::initialize() {
     this->pcMove()->setPointEnabled(1);
     CfObjectMove_setModelDisplayFlag((char*)self + 0x3E9C, 1);
     this->pcMove()->CfObjectModel_setModelVisible(1);
-    func_80174B4C(self, 0x8000000);
-    func_80174B4C(self, 0x10000000);
+    dispatchItemLoad(self, 0x8000000);
+    dispatchItemLoad(self, 0x10000000);
     CfObjectMove_setRegionAttached((u8*)((u32)self + 0x3E9C), 1);
     u8* region = self + 0x44A8;
     ColiSetMoveVec2(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
@@ -199,7 +199,7 @@ void cf::CfObjectPc::syncArtsEntry() {
     CActorParam_initStatusCounter();
     // Look up the arts data object for this PC's index, then write the
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
-    CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
+    CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
     func_80175A50(reinterpret_cast<cf::CActorParam*>(&artsData->field_0x17C),
 reinterpret_cast<cf::CActorParam*>(CActorParam_getCopyParam()));
@@ -210,7 +210,7 @@ reinterpret_cast<cf::CActorParam*>(CActorParam_getCopyParam()));
 // wrapper also satisfies the vtable slot for the virtual member.
 extern "C" void enablePcFlag__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     ((CfObjectPcSubFields*)self)->field_0x4568 = 1;
-    func_80174B4C((u8*)self, 0x00100000);
+    dispatchItemLoad((u8*)self, 0x00100000);
     ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
 }
 
@@ -220,14 +220,14 @@ extern "C" void enablePcFlag__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // thunks reference the global identifier, and the wrapper also satisfies the
 // vtable slot for the virtual member (same pattern as enablePcFlag).
 extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    CfObjectPcArtsData* data = (CfObjectPcArtsData*)func_8009EC9C(
+    CfObjectPcArtsData* data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)self)->field_0x3F28);
     // Recomputed lookup: retail keeps both results live (the first feeds
-    // func_8009EF9C across the call, the second forms the +0x3534 pointer).
-    CfObjectPcArtsData* data2 = (CfObjectPcArtsData*)func_8009EC9C(
+    // CtrlObjectParam_RefreshCharEntry across the call, the second forms the +0x3534 pointer).
+    CfObjectPcArtsData* data2 = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)self)->field_0x3F28);
     ((CfObjectPcSubFields*)self)->field_0x15E0 = (u32)data2 + 0x3534;
-    func_8009EF9C(data, 0);
+    CtrlObjectParam_RefreshCharEntry(data, 0);
     self->dispatchPlayerBranch();
     // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
     // three calls below, but MWCC value-numbers the identical receiver
@@ -267,7 +267,7 @@ void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u3
 // Scans the first six arts-data entries (indices 0..5) for one whose u16
 // flag at +0x1A is non-zero ("occupied"); stops at the first hit.
 void cf::CfObjectPc::scanArtsEntries() {
-    CfObjectPcArtsData* data = (CfObjectPcArtsData*)func_8009EC9C(
+    CfObjectPcArtsData* data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
     for (int i = 0; i <= 5; i++) {
         if (CtrlObjectParam_GetArtsStatsRow(&data->mEntries, i)->field_0x1A != 0) break;
@@ -282,7 +282,7 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
     if ((u32)itemId == (u32)((CfObjectPcSubFields*)self)->field_0x3F28) {
         __ct__8009ED08(dest, itemId);
         CfObjectPcArtsData* data =
-            (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
+            (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(itemId & 0xFFFF);
         self->CActorParam_copyArtsBlock17E4(
             reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         // Copies the arts entry INTO this object's CActorParam (opposite
@@ -294,15 +294,15 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
 
 // Looks up the data object for the index at +0x3F28, then runs its ctor.
 void CActorParam_UnkVirtualFunc166__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    __ct__8009F8B8((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
+    __ct__8009F8B8((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
 }
 
 void CActorParam_UnkVirtualFunc167__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    func_800A03F4((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
+    CtrlObjectParam_InitArtsSlotSet((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
 }
 
 void resetArtsState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    func_800A145C((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
+    CtrlObjectParam_LearnArtsSlots((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28));
 }
 
 // Adjuster-style override (retail mangled name is arg-less Fv but the vtable
@@ -310,7 +310,7 @@ void resetArtsState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // by the index at +0x3F28, passing the extra value through.
 void applyArtsParam__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int param) {
     if (param == 0) return;
-    func_800A18A4((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28), param);
+    CtrlObjectParam_ClaimArtsSlotRow((u8*)CtrlObjectParam_GetCharEntry(((CfObjectPcSubFields*)self)->field_0x3F28), param);
 }
 
 void cf::CfObjectPc::dispatchPlayerBranch() {
@@ -333,7 +333,7 @@ void cf::CfObjectPc::dispatchPlayerBranch() {
 // 7 and 0xE, gauge 100).
 void cf::CfObjectPc::resetActionTable() {
     u8* self = (u8*)this;
-    func_8014B7B0(self + 0x3380);
+    aiResetTables(self + 0x3380);
     aiActionStoreIndexedBytes(self + 0x3380, 0, 1, 0, 6, 0, 0, 7, 0, 0, 0, 2, 100, 0);
     aiActionStoreIndexedBytes(self + 0x3380, 1, 1, 0, 6, 0, 0, 0xE, 0, 0, 0, 2, 100, 0);
 }
@@ -342,20 +342,20 @@ void cf::CfObjectPc::setupActionTable() {
     // The three uses of this+0x3380 are written in different syntaxes so MWCC
     // does not CSE the address into a callee-saved register (retail recomputes
     // addi r3, r31, 0x3380 at each call site).
-    func_8014B7B0((u8*)this + 0x3380);
+    aiResetTables((u8*)this + 0x3380);
     if (((CfObjectPcSubFields*)this)->field_0x3F28 == 4) {
         // Arts-count bdat row: enable the art column when the string value's
         // first byte is '1' (the value is returned packed; read its low byte).
-        CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
+        CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
             ((CfObjectPcSubFields*)this)->field_0x3F28);
         u32 val = getBdatStringColumnValue(lbl_eu_806640F4,
             (const char*)lbl_eu_804FC5EC + 0x24, artsData->field_0xC);
         if (*(s8*)&val == 1) {
-            func_8015396C(&((u8*)this)[0x3380], 0x70, 0xd);
+            aiInstallArts(&((u8*)this)[0x3380], 0x70, 0xd);
             return;
         }
     }
-    func_8015396C((u8*)((u32)this + 0x3380), 0, 0);
+    aiInstallArts((u8*)((u32)this + 0x3380), 0, 0);
 }
 
 
@@ -382,9 +382,9 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     void* st2;
     void* st3;
     cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)self + 4);
-    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
+    int chk1 = testActorStatus(self, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
     cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)self + 4);
-    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
+    int chk2 = testActorStatus(self, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
 
     int any = (chk1 | chk2) != 0;
     int dd = func_800C0DD4(self, any);
@@ -428,7 +428,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     func_801765A4(self, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
-    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
+    int chkFlag = testActorStatus(self, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
@@ -452,8 +452,8 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
                 return;
             }
         } else {
-            if (chkFlag != 0 && func_8013EB90(1) == 0) {
-                func_80174B4C(self, 3);
+            if (chkFlag != 0 && UIWin_HasPendingUpdate(1) == 0) {
+                dispatchItemLoad(self, 3);
                 self->pcMove()->CObjectParam_signalActionEnd(0);
                 reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectModel_bindModelTo(0,
                     (const char*)lbl_eu_804FC5EC + 0x2D);
@@ -525,7 +525,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     cf::CfObjectPc* self, int arg1, int arg2, int arg3) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
     CfObjectPcArtsData* arts =
-        (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
+        (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
     // Clamp cap 0x5F5E0FF; keep the subtraction inline at each use so MWCC
     // recomputes it (lis/subi) instead of caching it in a register.
     u32 v1604 = f->field_0x1604 + (u32)arg1;
@@ -544,10 +544,10 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     // Drain the action queue through slot 0x35C.
     while (self->CActorParam_consumeCurrencyStep() != 0) {
         acted = 1;
-        func_800A282C((u8*)arts, 1);
+        CtrlObjectParam_BumpArtsCounter((u8*)arts, 1);
     }
     func_8010CE50(f->field_0x3F10, arg1, arg2, arg3);
-    if (arg3 != 0 && func_800A2AF0((u8*)arts) != 0) {
+    if (arg3 != 0 && CtrlObjectParam_ReapplyArtsSet((u8*)arts) != 0) {
         fireLvUpMode4(f->field_0x3F10);
     }
     if (acted != 0) {
@@ -564,9 +564,9 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         if (inBattle != 0) goto actedDone;
         if (bm->field_0x20C8 != 0) goto actedDone;
         state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData();
-        if (func_80174C98(self, (int*)&state, 6) ||
+        if (testActorStatus(self, (int*)&state, 6) ||
             ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData()),
-                func_80174C98(self, (int*)&state, 9))) {
+                testActorStatus(self, (int*)&state, 9))) {
             CfObjectMove_setAnimModeArgs((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
     actedDone:;
@@ -583,8 +583,8 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     int spent = self->CActorParam_getCurrencyBalance();
     if (spent <= 0) {
         CfObjectPcArtsData* data =
-            (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
-        func_800A11A4((u8*)data, 1);
+            (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(f->field_0x3F28);
+        CtrlObjectParam_RaiseArtsLevelBy((u8*)data, 1);
         self->CActorParam_copyArtsBlock1650(
             (const void*)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         u32 gained = self->CActorParam_getSpentCurrency();

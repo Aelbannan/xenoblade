@@ -218,7 +218,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
                 u32 fontHandle = CUICfManager_getPackedFont9C();
-                func_8013676C(rootPane, fontHandle);
+                ApplyFontToTxtPanes(rootPane, fontHandle);
             }
             {
                 u32 fontAccessor = CUICfManager_getPackedFontD8();
@@ -229,7 +229,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 // Bounding-rect query; the four halfwords fan out into the
                 // shared color tables (A gets all four, B/C only the last).
-                unsigned long long rect = func_80139658(slot.unk18, tbl + 0x245, 1);
+                unsigned long long rect = PaneMatGetS16QuadByName(slot.unk18, tbl + 0x245, 1);
                 s16 v0 = static_cast<s16>(rect);
                 s16 v1 = static_cast<s16>(rect >> 16);
                 s16 v2 = static_cast<s16>(rect >> 32);
@@ -375,7 +375,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 nw4r::lyt::Pane* subRoot = slot.unk78->GetRootPane();
                 u32 fontHandle = CUICfManager_getPackedFont9C();
-                func_8013676C(subRoot, fontHandle);
+                ApplyFontToTxtPanes(subRoot, fontHandle);
             }
 
             slot.unk78->SetAnimationEnable(slot.unk7C, true);
@@ -896,7 +896,7 @@ void CMenuBattlePlayerState::cbRenderBefore() {
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
 
         for (u8 i = 0; i < 3; i++) {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
@@ -1048,7 +1048,7 @@ extern "C" void __destroy_arr(void* ptr, void* dtor, u32 size, u32 count);
 // func_8012FAA8 semantics - pane/material helpers shared by menu TUs).
 extern "C" void* UIBattleGetTableB8();
 extern "C" void func_8012FAA8();
-extern "C" void func_80137F88(void* pane, u32 value);
+extern "C" void PaneSetTexPalette(void* pane, u32 value);
 extern "C" void func_8010A940(void* obj, u32 a, u32 b, u32 c);
 extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
 
@@ -1142,10 +1142,10 @@ extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
             break;
         }
         if (sel != 0) {
-            func_80137F88(slot->unk5C, sel);
-            func_80137F88(slot->unk60, sel);
-            func_80137F88(slot->unk64, sel);
-            func_80137F88(slot->unk68, sel);
+            PaneSetTexPalette(slot->unk5C, sel);
+            PaneSetTexPalette(slot->unk60, sel);
+            PaneSetTexPalette(slot->unk64, sel);
+            PaneSetTexPalette(slot->unk68, sel);
         } else {
             func_8012FAA8();
         }
@@ -1354,7 +1354,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                        func_80137F88(starPane, bound);
+                        PaneSetTexPalette(starPane, bound);
                         slot->unk268 = static_cast<u32>(static_cast<u8>(cursor));
                         break;
                     }
@@ -1404,7 +1404,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                        func_80137F88(starPane, bound);
+                        PaneSetTexPalette(starPane, bound);
                         slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                         return;
@@ -1423,7 +1423,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                             (starPane->flagsBB &
                              static_cast<u8>(~0x01)) |
                             0x01;
-                            func_80137F88(starPane, bound);
+                            PaneSetTexPalette(starPane, bound);
                             slot->unk26C =
                                 static_cast<u32>(static_cast<u8>(cur2));
                             return;
@@ -1460,8 +1460,8 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
     u32 prevStatus = slot->unk20C;
     slot->unk25C = 0xC6;
     sprintf(buf, lbl_eu_804FD720 + 0x401, prevStatus);
-    func_80136D74(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
-    func_80136D74(
+    SetLayoutSelfText(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
+    SetLayoutSelfText(
         reinterpret_cast<nw4r::lyt::Layout*>(slot->unk48),
         BdatTouchStringCell(lbl_eu_804FD720 + 0x406, lbl_eu_804FD720 + 0x410, 2),
         0);
@@ -1472,11 +1472,11 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
         LayoutSetTextBoxInt(slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            func_8013996C(slot->unk4C, lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);
         } else if (slot->unk210 == 0) {
-            func_8013996C(slot->unk4C, lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F40, 1);
         } else {
-            func_8013996C(slot->unk4C, lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F30, 1);
         }
     }
 
@@ -1584,8 +1584,8 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         slot->unk25C = masked & ~1u;
         char buf[0x10];
         sprintf(buf, tbl + 0x401, prevStatus);
-        func_80136D74(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
-        func_80136D74(
+        SetLayoutSelfText(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
+        SetLayoutSelfText(
             reinterpret_cast<nw4r::lyt::Layout*>(slot->unk48),
             BdatTouchStringCell(tbl + 0x406, tbl + 0x410, 2),
             0);
@@ -1597,11 +1597,11 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         LayoutSetTextBoxInt(slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            func_8013996C(slot->unk4C, lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F38, 1);
         } else if (slot->unk210 == 0) {
-            func_8013996C(slot->unk4C, lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F40, 1);
         } else {
-            func_8013996C(slot->unk4C, lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, lbl_eu_80663F30, 1);
         }
     }
 

@@ -23,10 +23,10 @@ public:
     virtual void CChainActor_ClearTargetRef() override;
     virtual void CChainActor_ToggleCancelVoice(int val) override;
     virtual void CChainActor_ToggleMoveFlag(int val) override;
-    virtual int func_8027A024(int arg) override;
-    virtual int func_8027A338(int arg) override;
-    virtual int func_8027A58C() override;
-    virtual int func_8027A8C8() override;
+    virtual int CChainActor_CheckReady(int arg) override;
+    virtual int CChainActor_ScanArtsSlots(int arg) override;
+    virtual int CChainActor_CheckFacing() override;
+    virtual int CChainActor_CheckVoice() override;
     virtual void CChain_noop_AA0C(int p1, cf::CChainActor* p2, int p3) override;
     virtual void CChain_noop_795D0() override;
     virtual void CChain_noop_78E00(int a, int b) override;
@@ -60,7 +60,7 @@ extern "C" void chainClearTwoWords(void*);
 extern "C" void chainTeardownLinkClear(void*);
 extern "C" void CChainActor_ClearTargetRef(void*);
 extern "C" int func_80148778(void*, int);
-extern "C" int func_8027A024(void*, void*);
+extern "C" int CChainActor_CheckReady(void*, void*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 
 // Retail symbol: CChainActor_ToggleMoveFlag

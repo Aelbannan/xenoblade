@@ -4,7 +4,7 @@
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/CVision.hpp"
 // NOTE: CfObjectActor.hpp deliberately not included - it drags in
-// CAIAction.hpp whose C-linkage import decls (func_80174C98/func_8009EC9C)
+// CAIAction.hpp whose C-linkage import decls (testActorStatus/CtrlObjectParam_GetCharEntry)
 // conflict with the owner declarations in CfMapItemManager.hpp.
 namespace cf { class CfObjectActor; }
 #include "kyoshin/cf/chain/CChainCombo.hpp"
@@ -25,10 +25,10 @@ static cf::CChainActor* searchActorByKey(cf::CChainActorList* self, u32 key);
 // instead of the list keeps no live copy of `self` across the inline
 // boundary, freeing r5/r6 for head/node like retail.
 static cf::CChainActor* searchActorByHead(_reslist_node<cf::CChainActor*>* head, u32 key);
-// Call-site overload (s32) so ChainCounter_Drain emits a real bl instead of
-// inlining the u32 definition below (retail keeps the call; the definition's
-// u32 overload is what matches retail Chain_EmitTallyEvents's bytes).
-void Chain_EmitTallyEvents(s32 param);
+// Retail keeps Chain_EmitTallyEvents as one bare-C function and emits a real
+// bl for it from ChainCounter_Drain; noinline keeps MWCC (-inline auto) from
+// inlining the same-TU definition at the call site (ChainList_Clear idiom).
+extern "C" __declspec(noinline) void Chain_EmitTallyEvents(unsigned int param);
 // noinline: -inline auto would inline this same-TU helper at call sites, but
 // retail emits a real bl ChainList_Clear (MWCC_CASES §8720).
 extern "C" __declspec(noinline) void ChainList_Clear(cf::CChainList* self);
@@ -196,7 +196,7 @@ extern "C" void func_8027B2CC(cf::CChainActorList* self){
             // Both hooks run on the current node; the member is grabbed after
             // the chainable test so no node temp lives across the calls.
             cur->mItem->CChainActor_CleanupVoiceEnd();
-            if (cur->mItem->func_8027A024(key) != 0) {
+            if (cur->mItem->CChainActor_CheckReady(key) != 0) {
                 cf::CChainActor* actor = cur->mItem;
                 cur = cur->mNext;
                 chainArr[chainCount++] = actor;
@@ -276,7 +276,7 @@ extern "C" cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u
     cf::CChainActor* found =
         searchActorByHead(self->mChainActorList.mStartNodePtr, key);
     if (found == 0) {
-        cf::CChainActor* newActor = func_8028120C(self);
+        cf::CChainActor* newActor = SysWinLog_AllocFreeSlot(self);
         func_8027B8C8(self, newActor);
         if (self->unk1DA8[0]) {
             newActor->CChainActor_ToggleMoveFlag(1);
@@ -378,7 +378,7 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
         if (node->mItem->CChain_getZero_A9FC((void*)(int)target) != 0) {
-            if (node->mItem->func_8027A024(
+            if (node->mItem->CChainActor_CheckReady(
                     reinterpret_cast<cf::CChainBattleObj*>(target)->mSub.v17()) != 0) {
                 ChainList_PushBack(other, node->mItem);
                 self->mChainActorList.remove(node->mItem);
@@ -463,7 +463,7 @@ extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
     int gate = (actor != 0) ? actor->CChain_getZero_A9EC() : 0;
     if (gate == 0) return 0;
     // ... and must be chainable against the key's voice sub-object.
-    if (actor->func_8027A024(
+    if (actor->CChainActor_CheckReady(
             reinterpret_cast<cf::CChainBattleObj*>(key)->mSub.v17()) == 0)
         return 0;
     // ... and must pass the "already chained" anti-gate (vtable[29]).
@@ -474,10 +474,10 @@ extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
     if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xf8) != 0) return 0;
     // The battle object's arts-selection state must not match the no-chain id.
     int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>(key)->field_04->f30());
-    if (func_80174C98((void*)key, &local, 0x1f) != 0) return 0;
+    if (testActorStatus((void*)key, &local, 0x1f) != 0) return 0;
     if (getAnimModelId(reinterpret_cast<cf::CChainBattleObj*>(key)->field_3F60) == 0x31)
         return 0;
-    if (actor->func_8027A338(1) == 0) return 0;
+    if (actor->CChainActor_ScanArtsSlots(1) == 0) return 0;
     // Count how many other actors are chainable against the candidate. The
     // sentinel is NOT cached here: retail re-reads self->... every iteration.
     int count = 0;
@@ -485,7 +485,7 @@ extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
     for (cur = self->mChainActorList.mStartNodePtr->mNext;
          cur != self->mChainActorList.mStartNodePtr; cur = cur->mNext) {
         if (cur->mItem->CChain_getZero_A9FC((void*)(int)key) != 0) {
-            if (cur->mItem->func_8027A024(
+            if (cur->mItem->CChainActor_CheckReady(
                     reinterpret_cast<cf::CChainBattleObj*>(key)->mSub.v17()) != 0) {
                 count++;
             }
@@ -509,7 +509,7 @@ extern "C" int Chain_HasValidTarget(cf::CChainActorList* self){
             func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->mSub8, 0xf8) == 0) {
             obj = reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0);
             int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->field_04->f30());
-            if (func_80174C98(obj, &local, 0x801) != 0) return 1;
+            if (testActorStatus(obj, &local, 0x801) != 0) return 1;
         }
         node = node->mNext;
     }
@@ -642,10 +642,10 @@ extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
     return 0;
 }
 // Emits chain-tally threshold events based on the accumulated counter.
-// ChainCounter_Drain calls the s32 overload declared above (a different mangled
-// symbol), so this u32 definition is never inlined there and stays a
-// byte-identical match.
-void Chain_EmitTallyEvents(unsigned int param) {
+// Single bare-C definition matching retail's bytes; the noinline decl above
+// keeps the ChainCounter_Drain call a real bl instead of inlining it here.
+// Thresholds 0xBB8/0x7530/0x186A0 queue SysWin events 0x33/0x34/0x35.
+extern "C" void Chain_EmitTallyEvents(unsigned int param) {
     if (param >= 0xBB8) {
         SysWinLog_QueueEvent(0x33);
     }
@@ -831,7 +831,7 @@ extern "C" int ChainList_HasCount(cf::CChainList* self, int key) {
     }
     return 0;
 }
-// Checks (via func_80174C98) whether the resident actors satisfy @p condition;
+// Checks (via testActorStatus) whether the resident actors satisfy @p condition;
 // the polarity of the result depends on @p check.
 extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int check){
     cf::CChainActor** p;
@@ -842,7 +842,7 @@ extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int ch
         for (int i = 0; i < (int)self->mCount; i++) {
             obj = reinterpret_cast<cf::CChainBattleObj*>((*p)->unk0);
             int local = *reinterpret_cast<int*>(obj->field_04->f30());
-            if (func_80174C98(obj, &local, target) != 0) return 1;
+            if (testActorStatus(obj, &local, target) != 0) return 1;
             p++;
         }
         return 0;
@@ -852,7 +852,7 @@ extern "C" int ChainList_CheckCondition(cf::CChainList* self, int target, int ch
     for (int i = 0; i < (int)self->mCount; i++) {
         obj = reinterpret_cast<cf::CChainBattleObj*>((*p)->unk0);
         int local = *reinterpret_cast<int*>(obj->field_04->f30());
-        if (func_80174C98(obj, &local, target) == 0) return 0;
+        if (testActorStatus(obj, &local, target) == 0) return 0;
         p++;
     }
     return 1;

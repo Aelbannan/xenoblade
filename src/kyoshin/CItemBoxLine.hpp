@@ -27,7 +27,7 @@ extern "C" void setPaneVisible(void* pane, u32 a); // set pane visible flag (C-A
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int); // typed dtor (CSysWin.hpp form)
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
-extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
 extern "C" void func_8022BFC8(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
@@ -61,18 +61,18 @@ struct CIBLTabEntry {
     u8 f9;    // +0x9
 };
 
-/* 8-byte animation-color vector (4 shorts) returned by func_80139658. */
+/* 8-byte animation-color vector (4 shorts) returned by PaneMatGetS16QuadByName. */
 struct FourShorts {
     s16 a, b, c, d;
 };
 
 /* Tab holder embedded in CItemBoxLine (+0x3A4): 12 entries, a halfword count
- * and two selector bytes (field93 written by func_801EF518). */
+ * and two selector bytes (field93 written by ItemBoxLine_CompactTabList). */
 struct CIBLTab {
     CIBLTabEntry entries[12]; // +0x00..0x8F
     u16 count;                // +0x90
     u8 field92;               // +0x92
-    u8 field93;               // +0x93 (armed by func_801EF518 when field390 == 2)
+    u8 field93;               // +0x93 (armed by ItemBoxLine_CompactTabList when field390 == 2)
 };
 
 /* Tab holder with a trailing FixStr<32> name buffer at +0x94 (ItemBoxLine_FormatTabEntryName). */
@@ -83,7 +83,7 @@ struct CIBLTabFormat {
     ml::FixStr<32> str94;     // +0x94
 };
 
-/* Full tab-format object used by func_801EBAD4 (init), func_801EC808
+/* Full tab-format object used by ItemBoxLine_InitTabFormat (init), ItemBoxLine_AllocEntryStock
  * (name dispatch) and the ctor: 12 entries + halfword count + two selector
  * bytes + a FixStr<32> name (mLength at +0xB4) + a FixStr<128> name
  * (mLength at +0x138). The ctor writes the strings via strcpy/strlen,
@@ -189,7 +189,7 @@ struct CIBLColorSrc {
 };
 
 /* Vtable view of the font-info object returned by CDeviceFont::getFontInfo:
- * virtual index 7 (vtable+0x24) yields the pane data bound via func_8013676C
+ * virtual index 7 (vtable+0x24) yields the pane data bound via ApplyFontToTxtPanes
  * (same scheme as COption::OnFileEvent). */
 class CItemBoxFontView {
 public:
@@ -286,10 +286,10 @@ class CItemBoxLine {public:
     u8 pad_387[0x38C - 0x387];  // 0x387..0x38B
     s16 unk38C;                 // +0x38C: read by ItemBoxLine_TouchTabEntryItem
     s16 unk38E;                 // +0x38E: read by ItemBoxLine_TouchTabEntryItem
-    u8 field390;                // +0x390: read by func_801EF518 (== 2 arms unk3A4.field93)
+    u8 field390;                // +0x390: read by ItemBoxLine_CompactTabList (== 2 arms unk3A4.field93)
     u8 pad_391;                 // +0x391
     s16 field392;               // +0x392: tab page counter (written by ItemBoxLine_CommitOverlayState)
-    u16 field394;               // +0x394: page id read by func_801EFFC4
+    u16 field394;               // +0x394: page id read by ItemBoxLine_RefreshLineState
     GXColorS10 field396;        // +0x396..0x39D: nameplate colour (set by OnFileEvent)
     u8 unk39E;                  // +0x39E: read by ItemBoxLine_GetArmedFlag
     u8 field39F;                // +0x39F: current cursor position (ItemBoxLine_Info2SelectNext)
@@ -307,7 +307,7 @@ class CItemBoxLine {public:
     s16 pageShorts5A0[12];      // +0x5A0
 };
 
-/* Page-data region read/written by func_801F0488. It overlaps the opaque
+/* Page-data region read/written by ItemBoxLine_RefreshPageList. It overlaps the opaque
  * info2/num-select/scrollbar/syswin byte regions of CItemBoxLine; only the
  * named fields are used. Cast from &mInfo2D0[0xB0] (self+0x180). */
 struct CIBLPageData {
@@ -321,7 +321,7 @@ struct CIBLPageData {
     s16 pageShorts2C0[12];      // +0x140 (self+0x2C0)
     u8 pad_158[0x360 - 0x158];  // 0x158..0x35F
     u16 pageWords4E0[12];       // +0x360 (self+0x4E0)
-    CIBLVec3 pageVecs4F8[12];   // +0x378 (self+0x4F8) - written by func_801F2434
+    CIBLVec3 pageVecs4F8[12];   // +0x378 (self+0x4F8) - written by ItemBoxLine_BuildPageData
     u8 pageBytes588[12];        // +0x408 (self+0x588)
     u8 pageBytes594[12];        // +0x414 (self+0x594)
     s16 pageShorts5A0[12];      // +0x420 (self+0x5A0)
@@ -356,7 +356,7 @@ extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);   // bind font pane data to root
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
@@ -366,7 +366,7 @@ extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor 
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);
-extern "C" FourShorts func_801397AC(void*, u32);                   // pane colour getter (r3:r4 pair)
+extern "C" FourShorts PaneMatGetS16Quad(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
 extern "C" u32 NumSel_GetActiveFlag_B020(void*);          // num-select busy flag (+0x2C)
 extern "C" u32 NumSel_GetField2D_B018(void*);          // num-select busy flag (+0x2D)
@@ -383,7 +383,7 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_801393CC(u32);
+extern "C" u32 LookupItemTypeTable(u32);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
@@ -412,12 +412,12 @@ extern "C" void CScrollBar_UpdateThumb(void*, int, int);      // scrollbar range
 extern "C" void CScrollBar_InitRootPane(void*, const float*);  // scrollbar init (3-float vec)
 extern "C" void CScrollBar_requestScrollIn(void*);                // scrollbar show
 extern "C" void startItemBox2Open(void*);                // info2 state open
-extern "C" void func_801E14DC(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
+extern "C" void renderItemBox2ByKind(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
 extern "C" void setItemBox2NamedText(void*, char*, char*);  // info2 tab-name set
 extern "C" void ItemBoxLine_SetInfo2Item(void*, unsigned int);  // active-tab dispatch
 extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
 extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
-extern "C" int func_801EC8D8(void*, unsigned int);   // name-dispatch lookup (external overload)
+extern "C" int ItemBoxLine_ProbeNameSlot(void*, unsigned int);   // name-dispatch lookup (external overload)
 // nav-state dispatch helpers (external overloads of the C++ bodies in this TU)
 extern "C" void ItemBoxLine_EnterState0(void*);
 extern "C" void ItemBoxLine_EnterState1(void*);
@@ -439,14 +439,14 @@ extern "C" int Cur_BothSubPanesOn(CBaseCur*);
 
 // Forward declarations for sibling functions resolved at link via the symbol map
 // (retail treats these as external relocs, not same-TU symbols). The C++
-// definitions in this TU mangle to func_801F0488__FP12CItemBoxLine etc.; these
+// definitions in this TU mangle to ItemBoxLine_RefreshPageList__FP12CItemBoxLine etc.; these
 // C-linkage overloads keep the HEAD callers' (void*) calls external/unmangled.
-extern "C" void func_801EFFC4(void*);
-extern "C" void func_801F0030(void*);
-extern "C" void func_801F0488(void*);
+extern "C" void ItemBoxLine_RefreshLineState(void*);
+extern "C" void ItemBoxLine_RefreshTabPanes(void*);
+extern "C" void ItemBoxLine_RefreshPageList(void*);
 extern "C" void ItemBoxLine_RefreshLineRows(void*);
 
-// Layout/anim builders (code_80135FDC unit) used by func_801ECC10. The
+// Layout/anim builders (code_80135FDC unit) used by ItemBoxLine_BuildLineLayout. The
 // unmangled C++ forms mangle to the retail symbols
 // (buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc /
 // bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc).
@@ -455,7 +455,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4
 // Cursor deactivation tail handler (CCur unit) - genuine C-ABI helper.
 extern "C" void Cur_DeactivateTail(void*);
 
-extern "C" void* func_801394D4(u32);
+extern "C" void* BuildItemNameStr(u32);
 extern "C" char lbl_eu_805071B0[]; // rodata string pool
 extern const float lbl_eu_80668114; // .sdata2 animation-completion threshold (lfs-hoist: const routes it to readonly sdata2)
 extern const float lbl_eu_80668124; // .sdata2 tab-slot float divider (page-slot -> page index conversion)
@@ -463,7 +463,7 @@ extern const float lbl_eu_806680F8; // .sdata2 tab-pane placement z (setVec3)
 extern const float lbl_eu_8066811C; // .sdata2 tab-pane placement x
 extern const float lbl_eu_80668120; // .sdata2 tab-pane placement y
 
-// func_801F107C: .sdata2 name/ratio constants (divisor + multipliers).
+// ItemBoxLine_ShowSlotCounts: .sdata2 name/ratio constants (divisor + multipliers).
 extern const float lbl_eu_80668128;
 extern const float lbl_eu_8066812C;
 extern const float lbl_eu_80668130;
@@ -472,14 +472,14 @@ extern const float lbl_eu_80668130;
 extern const double lbl_eu_80668108;
 extern const double lbl_eu_80668100;
 
-// func_801F107C: character-data / item helpers (C-ABI).
+// ItemBoxLine_ShowSlotCounts: character-data / item helpers (C-ABI).
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" float GetFloatTableEntry(unsigned int);
 extern "C" void BlendFloatAvgScale(u16, u16, u32, float);
 
-// func_801EBC00: tab-format / item-name helpers + rodata tables.
+// ItemBoxLine_BuildTabEntries: tab-format / item-name helpers + rodata tables.
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
-// func_801EC438: language selector (CDeviceS static getter, C-ABI).
+// ItemBoxLine_FormatDisplayName: language selector (CDeviceS static getter, C-ABI).
 extern "C" u8 getLanguage__9CDeviceSCFv();
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
@@ -489,7 +489,7 @@ extern "C" void* getFP__FPCc(const char*);
 extern "C" u32 MapValueToRank6(unsigned int);
 extern "C" u16 CtrlRemote_TouchBitByArg(u32);
 extern "C" int Counter_TestBit(u32, u32);
-extern "C" u32 func_801EC9E0(void*, unsigned int);
+extern "C" u32 ItemBoxLine_CalcCountKey(void*, unsigned int);
 
 // Tab-accessor C-linkage overloads: the typed C++ bodies live in this TU
 // (their mangled names map to the retail symbols); these C-linkage
@@ -498,20 +498,20 @@ extern "C" u32 func_801EC9E0(void*, unsigned int);
 extern "C" void* ItemBoxLine_FormatTabEntryName(void*, unsigned int);
 extern "C" u32 ItemBoxLine_GetTabEntryValue(void*, unsigned int);
 extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
-extern "C" u8 func_801EC284(void*, unsigned int);
+extern "C" u8 ItemBoxLine_ProbePageSlot(void*, unsigned int);
 
 // Sibling tab-dispatch helpers in this merged unit (external relocs in retail).
 extern "C" void ItemBoxLine_ResetPageTables(void*, unsigned int);
-extern "C" void func_801F107C(void*, unsigned int);
-extern "C" void func_801F183C(void*, unsigned int);
-extern "C" void func_801F1E64(void*, unsigned int);
-extern "C" void func_801F20F0(void*, unsigned int);
-extern "C" void func_801F2298(void*, unsigned int);
-extern "C" void func_801F2434(void*, unsigned int);
+extern "C" void ItemBoxLine_ShowSlotCounts(void*, unsigned int);
+extern "C" void ItemBoxLine_ShowSlotCounters(void*, unsigned int);
+extern "C" void ItemBoxLine_FormatGemName(void*, unsigned int);
+extern "C" void ItemBoxLine_ShowPageTabs(void*, unsigned int);
+extern "C" void ItemBoxLine_FormatKindDName(void*, unsigned int);
+extern "C" void ItemBoxLine_BuildPageData(void*, unsigned int);
 extern "C" void ItemBoxLine_RebuildTabList(void*);
 extern "C" void ItemBoxLine_TabNext(void*);
-extern "C" void func_801EDB80(void*);
-extern "C" void func_80139198(unsigned int);
+extern "C" void ItemBoxLine_TabPrev(void*);
+extern "C" void BuildSlotItemLists(unsigned int);
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
@@ -519,7 +519,7 @@ extern "C" char* getErrMesText15(void);
 // (defined in CItemBoxInfo.cpp): C-linkage so calls bind to the retail names.
 extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void sysWinOpenPhase1(void*);
-extern "C" u32 func_801D3C74(void*, u32);
+extern "C" u32 formatItemBoxName(void*, u32);
 
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
 // setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
@@ -528,10 +528,10 @@ extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layo
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" char* BdatGetPtrDirect(void*, char*);
-extern "C" void func_80137F88(void*, u32);  // bind texture resource to pane
+extern "C" void PaneSetTexPalette(void*, u32);  // bind texture resource to pane
 
 // Item-box-line refresh helpers (external retail symbols).
-extern "C" void func_801EBC00(CIBLTab*, unsigned char, unsigned short, unsigned char);
+extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned short, unsigned char);
 extern "C" u32 GetCollectedFlagByte(u32);
 
 extern "C" void sysWinAdvancePhase3(void*);
@@ -545,15 +545,15 @@ extern "C" void NumSel_Teardown_AF9C(CNumSelectFull*);          // num-select de
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
-extern "C" void func_801E13F8(CItemBoxInfo2*);           // info2 destroy
+extern "C" void closeItemBox2(CItemBoxInfo2*);           // info2 destroy
 extern "C" void CScrollBar_Teardown(CScrollBar*);              // scrollbar destroy
 extern "C" void sysWinTermLayout(CSysWinFull*);             // syswin destroy
-// Tab-page helpers used by func_801F0488 (retail plain names).
+// Tab-page helpers used by ItemBoxLine_RefreshPageList (retail plain names).
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u16 ArrayGet12(const u16*, u8);
-extern "C" u8 func_801EF034(const u8*, unsigned int);   // same-TU body kept external
-extern "C" char* func_801EC438(CIBLTabFull*, u16);    // tab-format setter (external call shape)
+extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);   // same-TU body kept external
+extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
 extern "C" u16 BdatGetU16Direct(u32 table, const void* name, int id);
@@ -564,16 +564,16 @@ extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern u32 lbl_eu_806640F4;
 extern u32 lbl_eu_806640F8;
 
-// func_801F2880: item-kind table base (character-data owner table).
+// ItemBoxLine_ProbeAvailability: item-kind table base (character-data owner table).
 extern u32 lbl_eu_80664110;
 
-// func_801EC284: character-data lookup helpers (C-ABI).
+// ItemBoxLine_ProbePageSlot: character-data lookup helpers (C-ABI).
 extern "C" u32 CItemBlock_countEmpty(u8);
 extern "C" u32 CItem_sumFamilyByte6(unsigned int);
 
-// func_801F2880: string/kind-table helpers (C-ABI).
+// ItemBoxLine_ProbeAvailability: string/kind-table helpers (C-ABI).
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
-extern "C" void* func_8009EC9C(u32);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
@@ -581,14 +581,14 @@ extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void ItemBoxLine_DrawTabRowText(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void ItemBoxLine_DrawTabRowIcon(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void func_801EF954(void*, u32, s8, u32); // item-slot name format (external overload)
-extern "C" void func_801EFDF4(void*, u32, u8);    // pane visibility toggle (external overload)
-extern "C" FourShorts func_80139658(void*, void*, u32);  // animation color fetch
+extern "C" void ItemBoxLine_SetPaneVisible(void*, u32, u8);    // pane visibility toggle (external overload)
+extern "C" FourShorts PaneMatGetS16QuadByName(void*, void*, u32);  // animation color fetch
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32); // layout text bind
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32); // layout text bind
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32); // RGB color builder
 
-// func_801EF518: .sbss item-box guard words (SDA-accessed, compared to 0).
+// ItemBoxLine_CompactTabList: .sbss item-box guard words (SDA-accessed, compared to 0).
 extern u32 lbl_eu_80664648;
 extern u32 lbl_eu_8066464C;
 extern u32 lbl_eu_80664650;
@@ -611,4 +611,4 @@ extern u8 lbl_eu_80664638[8];
 extern u8 lbl_eu_80664640[8];
 
 // ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
-extern "C" void func_801EFB24(CItemBoxLine*, u8, u32);
+extern "C" void ItemBoxLine_BindSlotTexture(CItemBoxLine*, u8, u32);

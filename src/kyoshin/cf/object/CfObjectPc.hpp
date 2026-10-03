@@ -23,7 +23,7 @@ extern "C" u8* __ct__cf_CfResPcImpl(u8* obj, cf::CfObjectMove* parent);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 
 
-// Arts data object returned by func_8009EC9C: the per-entry table scanned by
+// Arts data object returned by CtrlObjectParam_GetCharEntry: the per-entry table scanned by
 // scanArtsEntries starts at +0x1C (passed to CtrlObjectParam_GetArtsStatsRow).
 struct CfObjectPcArtsData {
     u8 _0[0xC];
@@ -43,17 +43,17 @@ struct UnkStruct_8009D7E4_Ret {
 
 // C-ABI imports from other kyoshin units: retail links them under their
 // unmangled names, so the declarations need C linkage to emit the exact
-// reloc symbols (func_8009EC9C is declared in kyoshin/CArtsInfo.hpp).
+// reloc symbols (CtrlObjectParam_GetCharEntry is declared in kyoshin/CArtsInfo.hpp).
 extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ctor)
-extern "C" void func_800A03F4(u8* obj);    // CtrlObjectParam.cpp
-extern "C" void func_800A145C(u8* obj);    // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_InitArtsSlotSet(u8* obj);    // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_LearnArtsSlots(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void ObjPc_ForwardVf0C_A42C(u8* obj);    // CfObjectImplPc.cpp
-extern "C" void func_800A18A4(u8* obj, int value);      // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_ClaimArtsSlotRow(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
-extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
-extern "C" void func_8015396C(u8* obj, u32 a, u32 b);    // CAIAction.cpp
+extern "C" void aiResetTables(u8* obj);                  // CAIAction.cpp
+extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
-extern "C" void func_8009EF9C(void* self, u32 arg2);     // CtrlObjectParam.cpp
+extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);     // CtrlObjectParam.cpp
 extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
@@ -72,20 +72,20 @@ extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, i
 // (pulled in via CAIAction.hpp).
 extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(
     cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
-extern "C" void func_800A11A4(u8* obj, int flag);         // CtrlObjectParam.cpp
-extern "C" void* func_8009EC9C(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
+extern "C" void CtrlObjectParam_RaiseArtsLevelBy(u8* obj, int flag);         // CtrlObjectParam.cpp
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void CfResPcImpl_loadPcState(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
 extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp
-extern "C" int func_8013EB90(int flag);                   // CfObjectImplWalker.cpp
+extern "C" int UIWin_HasPendingUpdate(int flag);                   // CfObjectImplWalker.cpp
 extern const float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc4)
 extern const float lbl_eu_80666B28;
 extern const double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
 extern "C" void func_8010CE50(u8* obj, int a, int b, int c);
 extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
-extern "C" void func_800A282C(u8* obj, int flag);
-extern "C" int func_800A2AF0(u8* obj);
+extern "C" void CtrlObjectParam_BumpArtsCounter(u8* obj, int flag);
+extern "C" int CtrlObjectParam_ReapplyArtsSet(u8* obj);
 extern "C" void fireLvUpMode4(u8* obj);
 extern "C" void fireLvUpCombo(u8* obj, u32 value);
 // .rodata literal copied onto the stack by UnkVirtualFunc4 (struct defined

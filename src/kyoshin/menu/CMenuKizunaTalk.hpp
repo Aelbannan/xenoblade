@@ -201,8 +201,8 @@ struct KizunaTalkPadData {
 // declarations in CSysWinSelect.hpp/CSysWinSave.hpp would mangle them).
 extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
-extern "C" u16 func_8013A7D0(u8 a, u8 b);
-extern "C" int func_8006A6D0();
+extern "C" u16 LookupRelateValue(u8 a, u8 b);
+extern "C" int CfT_DispatchFrameCounts();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* Bdat_GetTable_AA34();
 

@@ -352,7 +352,7 @@ extern "C" int TagProcDefaultOp(void) { return 0; }
 // the saved tail (everything past '>') is then copied down over the consumed
 // text. An unmatched tag name is stripped the same way (the handler loop just
 // falls through). Returns the buffer.
-u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c) {
+u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c) {
     wchar_t bigbuf[0x400];
     u16 scratchA[0x80];
     wchar_t* tokens[16];
@@ -379,7 +379,7 @@ u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c
                 count++;
                 off += 2;
             }
-            func_801365E4(scratchA, 0x3D, (u16**)tokens);
+            SplitWStringTrim(scratchA, 0x3D, (u16**)tokens);
             WcsToUpperInPlace((u16*)tokens[0]);
             wcscpy(bigbuf, p + count + 2);
             const wchar_t* name = tokens[0];
@@ -426,7 +426,7 @@ u16* func_80125B58(CTagProcessorBase* self, const void* src, f32 a, f32 b, u32 c
 //    jumptable_eu_8052D5A4 despite equal size; likely follows from .data
 //    layout, may resolve once (1) is fixed.
 #pragma optimize_for_size on
-__declspec(noinline) void func_80125D00(f32* out, CTagMsgView* msg, wchar_t* buf) {
+__declspec(noinline) void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
     u32 vals[16];
     nw4r::lyt::Font* font = ((nw4r::lyt::TextBox*)msg)->GetFont();
     f32 lineH = lbl_eu_806671F4;
@@ -585,7 +585,7 @@ CTagProcessor::~CTagProcessor() {}
 // of the frame down (first declared = highest address), and the per-walk
 // ctx/pair/color temps follow the walk order - the declaration order below
 // mirrors the retail frame (0x8..0x480 locals, 0x480..0xC80 namebuf).
-__declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
+__declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                                         nw4r::lyt::Pane* a,
                                         nw4r::lyt::Pane* b,
                                         nw4r::lyt::Pane* c) {
@@ -922,7 +922,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     namebuf[charIdx] = 0;
                     pane->v78();
                     pane->v74(0x40);
-                    func_80127764(msg, (TalkPaneView*)pane, (TalkPaneView*)b,
+                    TagProcRenderPage(msg, (TalkPaneView*)pane, (TalkPaneView*)b,
                                    (TalkPaneView*)c, (const wchar_t*)namebuf);
                     u8* ctxBase = (u8*)pane->field_0C + 0x10;
                     // walk 1: find the context node matching the current text
@@ -935,7 +935,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         ctxA = (u32*)*ctxA;
                         pair1[0] = (u32)getContextStrPtr(ctxBase);
                         pair1[1] = (u32)ctxA;
-                        if (func_801276C8(&pair1[1], &pair1[0]) == 0)
+                        if (TagProcCompareIds(&pair1[1], &pair1[0]) == 0)
                             break;
                     }
                     TagCtxAdvanceHead(&ctxA, 0);
@@ -944,7 +944,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     for (;;) {
                         pair2[0] = (u32)getContextStrPtr(ctxBase);
                         pair2[1] = (u32)ctxA;
-                        if (func_801276C8(&pair2[1], &pair2[0]) == 0)
+                        if (TagProcCompareIds(&pair2[1], &pair2[0]) == 0)
                             break;
                         if (paneIdx >= msg->field_830)
                             break;
@@ -978,7 +978,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             ctxB = (u32*)*ctxB;
                             pair3[0] = (u32)getContextStrPtr(ctxBase);
                             pair3[1] = (u32)ctxB;
-                            if (func_801276C8(&pair3[1], &pair3[0]) == 0)
+                            if (TagProcCompareIds(&pair3[1], &pair3[0]) == 0)
                                 break;
                         }
                         TagCtxAdvanceHead(&ctxB, 0);
@@ -987,7 +987,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         for (;;) {
                             pair4[0] = (u32)getContextStrPtr(ctxBase);
                             pair4[1] = (u32)ctxB;
-                            if (func_801276C8(&pair4[1], &pair4[0]) == 0)
+                            if (TagProcCompareIds(&pair4[1], &pair4[0]) == 0)
                                 break;
                             if (paneIdx >= msg->field_830)
                                 break;
@@ -1049,7 +1049,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                                 ctxD = (u32*)*ctxD;
                                 pair5p[0] = (u32)getContextStrPtr(ctxBase2);
                                 pair5p[1] = (u32)ctxD;
-                                if (func_801276C8(&pair5p[1], &pair5p[0]) == 0)
+                                if (TagProcCompareIds(&pair5p[1], &pair5p[0]) == 0)
                                     break;
                             }
                             TagCtxAdvanceHead(&ctxD, 0);
@@ -1058,7 +1058,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             for (;;) {
                                 pair6p[0] = (u32)getContextStrPtr(ctxBase2);
                                 pair6p[1] = (u32)ctxD;
-                                if (func_801276C8(&pair6p[1], &pair6p[0]) == 0)
+                                if (TagProcCompareIds(&pair6p[1], &pair6p[0]) == 0)
                                     break;
                                 if (paneIdx2 >= msg->field_830)
                                     break;
@@ -1095,7 +1095,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                             ctxC = (u32*)*ctxC;
                             pair5[0] = (u32)getContextStrPtr(ctxBase3);
                             pair5[1] = (u32)ctxC;
-                            if (func_801276C8(&pair5[1], &pair5[0]) == 0)
+                            if (TagProcCompareIds(&pair5[1], &pair5[0]) == 0)
                                 break;
                         }
                         TagCtxAdvanceHead(&ctxC, 0);
@@ -1104,7 +1104,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         for (;;) {
                             pair6[0] = (u32)getContextStrPtr(ctxBase3);
                             pair6[1] = (u32)ctxC;
-                            if (func_801276C8(&pair6[1], &pair6[0]) == 0)
+                            if (TagProcCompareIds(&pair6[1], &pair6[0]) == 0)
                                 break;
                             if (paneIdx3 >= msg->field_830)
                                 break;
@@ -1155,7 +1155,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         ctxE = (u32*)*ctxE;
                         pair7[0] = (u32)getContextStrPtr(ctxBase4);
                         pair7[1] = (u32)ctxE;
-                        if (func_801276C8(&pair7[1], &pair7[0]) == 0)
+                        if (TagProcCompareIds(&pair7[1], &pair7[0]) == 0)
                             break;
                     }
                     TagCtxAdvanceHead(&ctxE, 0);
@@ -1164,7 +1164,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     for (;;) {
                         pair8[0] = (u32)getContextStrPtr(ctxBase4);
                         pair8[1] = (u32)ctxE;
-                        if (func_801276C8(&pair8[1], &pair8[0]) == 0)
+                        if (TagProcCompareIds(&pair8[1], &pair8[0]) == 0)
                             break;
                         if (paneIdx4 >= msg->field_830)
                             break;
@@ -1203,7 +1203,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         ctxF = (u32*)*ctxF;
                         pair9[0] = (u32)getContextStrPtr(ctxBase5);
                         pair9[1] = (u32)ctxF;
-                        if (func_801276C8(&pair9[1], &pair9[0]) == 0)
+                        if (TagProcCompareIds(&pair9[1], &pair9[0]) == 0)
                             break;
                     }
                     TagCtxAdvanceHead(&ctxF, 0);
@@ -1212,7 +1212,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     for (;;) {
                         pair10[0] = (u32)getContextStrPtr(ctxBase5);
                         pair10[1] = (u32)ctxF;
-                        if (func_801276C8(&pair10[1], &pair10[0]) == 0)
+                        if (TagProcCompareIds(&pair10[1], &pair10[0]) == 0)
                             break;
                         if (paneIdx5 >= msg->field_830)
                             break;
@@ -1361,7 +1361,7 @@ void* TagCtxGetNodeHeader(void* self) {
 // Retail uses the -O4,s addic/subfe setnz idiom; optimize_for_size on
 // forces the -O4,s lowering even though the unit compiles at -O4,p.
 #pragma optimize_for_size on
-u32 func_801276C8(const u32* a, const u32* b) {
+u32 TagProcCompareIds(const u32* a, const u32* b) {
     return *a != *b;
 }
 #pragma optimize_for_size off
@@ -1374,7 +1374,7 @@ extern "C" void* TagCtxAdvanceHead(void* self, int a) {
 
 // Tag-processor message pump: check the next tag code at buf[field_810+2]; if
 // the message is exhausted return 3, otherwise keep running the text-processing
-// step func_8012615C until it reports <= 4 (page/section done).
+// step TagProcStepMessage until it reports <= 4 (page/section done).
 #pragma optimize_for_size on
 int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
@@ -1384,13 +1384,13 @@ int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
         return 3;
     u32 r;
     do {
-        r = (u32)func_8012615C(tag, a, b, c);
+        r = (u32)TagProcStepMessage(tag, a, b, c);
     } while (r > 4);
     return (int)r;
 }
 #pragma optimize_for_size off
 
-// noinline: func_801287BC keeps the bl TagCopyVec2f / copyVEC3 calls in
+// noinline: TagProcBuildOpenText keeps the bl TagCopyVec2f / copyVEC3 calls in
 // retail - the tiny same-TU bodies would otherwise be folded into the call
 // sites (same convention as copyVEC2 below).
 extern "C" __declspec(noinline) void TagCopyVec2f(float* dst, const float* src) {
@@ -1421,7 +1421,7 @@ extern "C" __declspec(noinline) void copyVEC3(float* dst, const float* src) {
 // (`!(x >= lbl)` / flipped-operand forms). Fix that one cror shape and the
 // whole tail should realign byte-for-byte.
 #pragma optimize_for_size on
-__declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+__declspec(noinline) void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
                    TalkPaneView* c, const wchar_t* text) {
     wchar_t buf[0x400];   // page scratch (+0x190)
     u32 counts[0x10];     // ruby per-entry char counts (+0x50)
@@ -1491,7 +1491,7 @@ __declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkP
     a->field_F0 = lbl_eu_806671F8;
 
     f32 meas[2];  // +0x30 measured {x, y} from the layout step
-    func_80125D00(meas, (CTagMsgView*)a, buf);
+    TagProcMeasureText(meas, (CTagMsgView*)a, buf);
     meas[1] = lbl_eu_8066720C * meas[1];
     f32 pos2[2];  // +0x28 clamped cursor position
     pos2[0] = meas[0];
@@ -1554,7 +1554,7 @@ __declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkP
 #pragma optimize_for_size off
 
 // Tag-writer position clamp: copy the message string into a local buffer,
-// measure the text position (func_80125D00), then y = c34*(y-cF4)+c30 with a
+// measure the text position (TagProcMeasureText), then y = c34*(y-cF4)+c30 with a
 // low clamp and a snap-down to the fixed step table; write the VEC2 result
 // to out->field_4C. The r3 arg is unused (family idiom).
 // The y-transform and clamp must be written with the constants INLINE (no
@@ -1564,7 +1564,7 @@ void TagProcCalcPageLayout(void* unused, CTagMsgView* msg, CTagOutView* out) {
     wchar_t buf[0x400];
     f32 xy[2];
     wcscpy(buf, msg->field_D8);
-    func_80125D00(xy, msg, buf);
+    TagProcMeasureText(xy, msg, buf);
     xy[1] = lbl_eu_80667234 * (xy[1] - lbl_eu_806671F4) + lbl_eu_80667230;
     xy[0] += lbl_eu_80667238;
     if (xy[1] < lbl_eu_80667230)
@@ -1669,8 +1669,8 @@ void __declspec(noinline) TagMeasureTextWidth(f32* out, void* unused,
 
 // Message-pane text reset hook: free the old textbox string buffer, allocate
 // a fresh 1024-char one, advance the tag-proc write position, run the message
-// step (func_80127764) and clear the done flag. No explicit return: the
-// retail leaves r3 as whatever func_80127764 left there.
+// step (TagProcRenderPage) and clear the done flag. No explicit return: the
+// retail leaves r3 as whatever TagProcRenderPage left there.
 #pragma push
 #pragma optimize_for_size on
 void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
@@ -1680,7 +1680,7 @@ void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
     tb->v74(0x400);     // AllocStringBuffer(0x400)
     CTagProcMsg* msg = (CTagProcMsg*)tag;
     msg->field_810++;
-    func_80127764(msg, (TalkPaneView*)a, (TalkPaneView*)b, (TalkPaneView*)c,
+    TagProcRenderPage(msg, (TalkPaneView*)a, (TalkPaneView*)b, (TalkPaneView*)c,
                   0);
     msg->field_820 = 0;
 }
@@ -1712,14 +1712,14 @@ void* __ct__CTagProcessorSE(void* self) {
 CTagProcessorSE::~CTagProcessorSE() {}
 #pragma optimize_for_size off
 
-// SE message-pump step (CTagProcessorSE variant of func_8012615C, no name
+// SE message-pump step (CTagProcessorSE variant of TagProcStepMessage, no name
 // list): dispatch the next tag code at buf[field_810]. Handlers push tag
 // data to the text pane via the 2-arg +0x7C SetText and advance the read
 // counters. Tag 5 is the auto-advance speed gate; tags 8/9 drive icons and
 // party-member emphasis. Frame layout: locals assigned from the top down
 // (first declared = highest address: 0x2F8 conv temp, 0xF8 outbuf,
 // 0x1C flag table, 0x10 vals, 0x8 hdr).
-__declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
+__declspec(noinline) int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
                                        nw4r::lyt::Pane* paneArg) {
     CTagProcessorSE* msg = (CTagProcessorSE*)tag;
     SeTalkPane* pane = (SeTalkPane*)paneArg;
@@ -1795,7 +1795,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
             if (msg->field_824 >= lbl_eu_80667208) {
                 if (msg->field_824 < lbl_eu_80667250) {
                     if (MenuStateCheck64064or30() == 0 &&
-                        func_80189A04(0) != 0 && msg->field_804 != 0 &&
+                        MenuSnd_QuerySlotLive_89A04(0) != 0 && msg->field_804 != 0 &&
                         member != 0)
                         member->v58(0, 0);
                     msg->field_824 = lbl_eu_80667234;
@@ -1813,7 +1813,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
                     msg->field_824 = lbl_eu_806671F0;
                     msg->field_810 += 2;
                     msg->field_820 += 2;
-                    func_8018986C(0, lbl_eu_806671F0);
+                    MenuSnd_SilenceByName_8986C(0, lbl_eu_806671F0);
                 }
             } else {
                 msg->field_824 += lbl_eu_806671F4;
@@ -1822,7 +1822,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         }
         if (v == -2) {
             // Unconditional skip once the voice slot is free.
-            if (func_80189A04(0) != 0) {
+            if (MenuSnd_QuerySlotLive_89A04(0) != 0) {
                 msg->field_824 = lbl_eu_806671F0;
                 msg->field_810 += 2;
                 msg->field_820 += 2;
@@ -1948,12 +1948,12 @@ finish:
     return -1;
 }
 
-void func_801286E0(){}
+void TagProcPumpSEMessage(){}
 
 // Talk-open hook: reset the message text pane's string buffer (free the old
 // buffer, allocate a fresh 1024-char one), advance the tag-proc write position,
 // run the message start step, and clear the done flag. No explicit return: the
-// retail leaves r3 as whatever func_801287BC left there.
+// retail leaves r3 as whatever TagProcBuildOpenText left there.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt::Pane* pane) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)pane;
@@ -1961,7 +1961,7 @@ extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt
     tb->v74(0x400);     // AllocStringBuffer(0x400)
     CTagProcMsg* msg = (CTagProcMsg*)tagProc;
     msg->field_810++;
-    func_801287BC((CTagProcessorBase*)tagProc, pane, 0);
+    TagProcBuildOpenText((CTagProcessorBase*)tagProc, pane, 0);
     msg->field_820 = 0;
 }
 #pragma optimize_for_size off
@@ -1973,7 +1973,7 @@ extern "C" __declspec(noinline) int TagProcStartMessage(void* tagProc, nw4r::lyt
 // flag, measure the line position, and update the pane's position VEC3.
 // -O4,s save shape (_savegpr_28).
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
+extern "C" __declspec(noinline) void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
                    const wchar_t* str) {
     wchar_t buf2[0x400];
     f32 out[2];
@@ -2007,12 +2007,12 @@ extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r:
         pv->field_F0 = lbl_eu_80667254;
     else
         pv->field_F0 = lbl_eu_806671F8;
-    func_80125D00(out, (CTagMsgView*)pane, buf2);
+    TagProcMeasureText(out, (CTagMsgView*)pane, buf2);
     if (newline)
         out[1] = lbl_eu_8066720C * out[1] + lbl_eu_80667254;
     else
         out[1] = lbl_eu_8066720C * out[1];
-    func_801375A0(out2, pane);
+    AccumPaneWorldPos(out2, pane);
     TagCopyVec2f(v3, pv->field_4C);
     // Retail computes BOTH differences first, then both products; out2
     // entries forward the stored v3 values.
@@ -2032,7 +2032,7 @@ extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r:
 // NOTE: retail prologue is stwu; mflr; stw r0; stmw r30; or r30,r4,r4;
 // or r31,r6,r6 — the optimize_for_size pragma merges the callee-saved saves
 // into stmw/lmw and fixes the copy order (MWCC_CASES CPartyState
-// func_801FD0A0 pattern); plain -O4,p emits reversed stw pairs + moves.
+// drawPartyState pattern); plain -O4,p emits reversed stw pairs + moves.
 #pragma optimize_for_size on
 extern "C" void* TagWriterCode7(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
@@ -2122,7 +2122,7 @@ extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
 #pragma optimize_for_size off
 
 // Tag-param writer for a 1-value tag: split the arg string on ':' via
-// func_801365E4, uppercase the first token and map it to a tag index via the
+// SplitWStringTrim, uppercase the first token and map it to a tag index via the
 // tag-string table (offsets +0x00/+0x08/+0x14 select 0..2), then init a
 // tag-param block: when a second token exists its decimal value is parsed
 // with wcstol and converted to float (builtin s32->f32, byte-identical to
@@ -2137,7 +2137,7 @@ extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
 void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst) {
     wchar_t* tokens[16];
     TagParam p;
-    int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
     u8 idx = 0;
     WcsToUpperInPlace((u16*)tokens[0]);
     if (wcscmp(tokens[0], &lbl_eu_80661FC8[0]) == 0)
@@ -2180,7 +2180,7 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
     TagColorValues values;
     TagColorNames names;
-    int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
     values = lbl_eu_804FEFB8;
     names = lbl_eu_804FF488;
     out.w.c1 = lbl_eu_80667188;
@@ -2212,7 +2212,7 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
 #pragma optimize_for_size on
 u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
-    int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
     memset(lens, 0, sizeof(lens));
     int i;
@@ -2237,7 +2237,7 @@ u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
 #pragma optimize_for_size on
 u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
-    int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
     memset(lens, 0, sizeof(lens));
     int i;
@@ -2616,7 +2616,7 @@ __declspec(noinline) float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>*
     return tw->field_28;
 }
 
-// extern "C" + noinline: the tag-writer family (func_8012B070) calls it via
+// extern "C" + noinline: the tag-writer family (TagWriterMeasureStrings) calls it via
 // bl in retail; noinline keeps -ipa from folding the 0x68-byte struct copy
 // into the call site (the retail kept it as a real 0x104-byte call).
 extern "C" __declspec(noinline) void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
@@ -2791,7 +2791,7 @@ void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* ds
 #pragma optimize_for_size on
 u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
     wchar_t* tokens[16];
-    int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
     u8 tag1 = 0xff;
     int tag3 = 0xff;
     int tag4 = 0xff;
@@ -3030,14 +3030,14 @@ u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
 }
 #pragma optimize_for_size off
 
-// Tag-code writer (code 1): split the arg string on '/' via func_801365E4,
+// Tag-code writer (code 1): split the arg string on '/' via SplitWStringTrim,
 // record each token's length, write a 2-entry header (count + combined first
 // two lengths), then copy every token into dst in order, advancing by each
 // token's stored length. Returns the end of the copied region.
 #pragma optimize_for_size on
 u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
     wchar_t* tokens[16];
-    int count = func_801365E4((u16*)str, 0x2f, (u16**)tokens);
+    int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
     memset(lens, 0, sizeof(lens));
     int i;
@@ -3065,7 +3065,7 @@ u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
 // optimize_for_size: retail saves r24-r31 + f30/f31 with _savegpr_24 (the
 // -O4,s save shape).
 #pragma optimize_for_size on
-int func_8012B070(void* unused, TagLineOutView* out, void* unused2,
+int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
                   TagWriterHolder* holder) {
     const u8* buf = holder->field_04;
     nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
@@ -3182,7 +3182,7 @@ __declspec(noinline) float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_
 // cursor (y lifted by ascent+descent), the excess is walked back off the
 // real writer's cursor twice (once per print), and the buffer pointer
 // advances past both strings. Returns 2.
-__declspec(noinline) int func_8012B440(void* unused, void* unused2,
+__declspec(noinline) int TagWriterJustifyPair(void* unused, void* unused2,
                                        TagWriterHolder* holder) {
     // Long-lived locals declared up front in MWCC's callee-saved priority
     // order (first declared -> highest register); assigned in statement order

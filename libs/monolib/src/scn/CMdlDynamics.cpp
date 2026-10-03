@@ -57,8 +57,8 @@ extern const char lbl_eu_80530E1C[];  // panic file name (MdlDyn_GetEntryDataUnc
 extern const char lbl_eu_80530DD8[];  // panic message (MdlDyn_GetEntryDataUnchecked)
 extern char lbl_eu_80663CC4[4]; // panic format arg (.sdata, sda21, MdlDyn_GetEntryData)
 
-// --- FSqrt-style normalize warnings (func_804EC8AC) and asin-domain warning
-// --- (func_804EC514); rodata strings addressed via lis/addi.
+// --- FSqrt-style normalize warnings (MdlDyn_NormalizeMtx) and asin-domain warning
+// --- (MdlDyn_QuatToEuler); rodata strings addressed via lis/addi.
 extern const char lbl_eu_80526324[]; // warning file
 extern const char lbl_eu_80526300[]; // warning message
 extern const char lbl_eu_8052ADB0[]; // asin-domain warning file
@@ -76,7 +76,7 @@ extern const float lbl_eu_8066B3D8;  // min length-squared epsilon
 extern const float lbl_eu_8066B3DC;  // normalized-direction scale
 extern const float lbl_eu_8066B3E0;  // velocity decay scale
 
-// --- Cross-TU math/scene helpers invoked by func_804EBBCC ---
+// --- Cross-TU math/scene helpers invoked by MdlDyn_Update ---
 extern "C" void noopAnimVec3(nw4r::math::VEC3* p);
 extern "C" void noopAnimQuat(void* p);
 extern "C" void cfCam_nopCtorSlot(void* p);
@@ -97,7 +97,7 @@ extern "C" f32 cfCam_vecLenSq(const nw4r::math::VEC3* v);
 extern "C" f32 safeFSqrt(f32 x);
 extern "C" void cfCam_psAddVec3(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
                               const nw4r::math::VEC3* b);
-extern "C" void func_80052584(void* out, const void* a, const void* b);
+extern "C" void quatFromToVec(void* out, const void* a, const void* b);
 extern "C" void cfCam_extractTrans(void* out, const Mtx m);
 extern "C" void cfCam_copyBlock48(void* out, const nw4r::math::MTX34* m);
 extern "C" s32 cfCam_isVecNear0(void* self);
@@ -110,7 +110,7 @@ extern "C" void simSetValue7E8(void* model, s32 flag);
 extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
                                                             unsigned long idx);
 
-// --- Cross-TU imports used by func_804EAA18 ---
+// --- Cross-TU imports used by MdlDyn_BuildElem ---
 extern "C" float scaleByGlobal(float val);
 extern "C" void zeroFirstWord(void* self);   // zero the u32 at self
 extern "C" void ScnFilterMan_setFlags(u32* self, u32 flags); // OR flag bits
@@ -121,7 +121,7 @@ extern const char lbl_eu_80524840[]; // "Dwet\0Ddmp\0Dsta\0Dbld\0Dlrx..." tags
 extern const char lbl_eu_80570230[]; // panic file name (shape payload checks)
 extern const char lbl_eu_80570208[]; // panic message (shape payload checks)
 
-// Element-array allocator used by func_804EA284.
+// Element-array allocator used by MdlDyn_ScanShapes.
 extern "C" void* scnImN4PoolAlloc(void* heap, u32 size);
 extern "C" s32 scnImN4PoolHasSpc(void* heap, u32 size); // heap space query
 extern "C" u32 Scn_CallUnk8C_V8(void* scene); // scene -> mtl::ALLOC_HANDLE
@@ -296,7 +296,7 @@ struct CMdlDynHolder {
 
 extern "C" __declspec(noinline) u32 MdlDyn_HasDictEntry(void* self) { return *(u32*)self != 0; }
 
-// 0x98-stride dynamic-model element driven by func_804ECAC4.
+// 0x98-stride dynamic-model element driven by MdlDyn_SolveElem.
 struct CMdlDynElem98 {
     u32 field_0x0;                 // 0x0 resource id
     nw4r::math::MTX34 field_0x4;   // 0x4 local matrix
@@ -327,7 +327,7 @@ struct DynShapeData {
 // shape kind byte (ball shapes skip the animation solve).
 extern "C" u32 MdlDyn_GetShapeKind(const CMdlDynHolder* self);
 // Retail symbol is the unmangled C name.
-extern "C" void func_804EA284(CMdlDynamics* self) {
+extern "C" void MdlDyn_ScanShapes(CMdlDynamics* self) {
     u32 ids[16];
     u32 count = 0;
 
@@ -838,7 +838,7 @@ extern "C" __declspec(noinline) u32 MdlDyn_InitIdBuffer(u8* self, u32 a, u32 b) 
     return b << 2;
 }
 
-extern "C" __declspec(noinline) void func_804EB720(u8* self, const void* src) {
+extern "C" __declspec(noinline) void MdlDyn_AppendWord(u8* self, const void* src) {
     u32 idx = *(u32*)((u8*)self + 4);
     *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
     *(u32*)((u8*)self + 4) = idx + 1;
@@ -853,7 +853,7 @@ extern "C" __declspec(noinline) u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b
 
 extern "C" __declspec(noinline) void MdlDyn_StoreLensHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-__declspec(noinline) void func_804EB764(void *r3, void *r4) {
+__declspec(noinline) void MdlDyn_AppendRec(void *r3, void *r4) {
     int *p = (int *)r3;
     int *src = (int *)r4;
     int idx = p[1];
@@ -884,7 +884,7 @@ void MdlDyn_MarkAllDynamic(CMdlDynSet* self) {
 // every element of every list owned by the set (dynamic-model update).
 // Uses the nw4r VEC3Add kernel so the adds lower to retail's paired-single
 // sequence instead of scalar lfs/fadds.
-void func_804EB7F8(CMdlDynSet* self, const nw4r::math::VEC3* src) {
+void MdlDyn_AddVecAll(CMdlDynSet* self, const nw4r::math::VEC3* src) {
     // Volatile re-reads stop MWCC from hoisting the end pointer into a
     // register; retail reloads both fields from self every iteration.
     volatile CMdlDynSet* vself = self;
@@ -916,7 +916,7 @@ void func_804EB7F8(CMdlDynSet* self, const nw4r::math::VEC3* src) {
 // resets), then releases the list-pointer array and the element-kind array.
 // The zero/sentinel constants are kept in locals so MWCC pins them to
 // registers across the deallocate calls, matching retail.
-void func_804EB8A0(CMdlDynamics* self) {
+void MdlDyn_FreeAll(CMdlDynamics* self) {
     if (self->buf08.field_0x4 != 0) {
         CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
         u32 zero = 0;
@@ -1094,7 +1094,7 @@ u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
 // - dictB (sub-node user data) carries axis tags Dlrx/Dlry/Dlrz, each a
 //   4-float record whose first two entries are enable flags (bits accumulated
 //   in elem.field_0x8C) and whose last two are bounds kept ordered x <= y.
-void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
+void MdlDyn_BuildElem(MdlDynObj* model, CMdlDynList* list, u32 index) {
     nw4r::g3d::ResMdl mdl(
         (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)model->field_0x4));
     unsigned long nodeIdx =
@@ -1306,7 +1306,7 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
                 GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl2, *(u32*)e98);
             nw4r::g3d::ResNode nres;
             MdlDyn_StoreResRef((u8*)&nres, &nid);
-            func_804EB720((u8*)&last->buf90, &nres);
+            MdlDyn_AppendWord((u8*)&last->buf90, &nres);
         }
     }
 
@@ -1335,7 +1335,7 @@ void func_804EAA18(MdlDynObj* model, CMdlDynList* list, u32 index) {
             rec[1] =
                 (u32)(unsigned long)*(f32*)((u8*)MdlDyn_GetEntryData(&lens) + i * 4);
             rec[2] = recIdx;
-            func_804EB764((u8*)&last->bufA0, (void*)rec);
+            MdlDyn_AppendRec((u8*)&last->bufA0, (void*)rec);
         }
     }
 
@@ -1368,16 +1368,16 @@ u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self);
 u8* MdlDyn_ResolveSubData(CMdlDynHolder* self);
 extern "C" void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                    const nw4r::math::MTX34* b);
-extern "C" s32 func_804EC514(const Quaternion* q, nw4r::math::VEC3* out);
-extern "C" nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v);
+extern "C" s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out);
+extern "C" nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v);
 extern "C" void MdlDyn_AddMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
                    const nw4r::math::MTX34* b);
 extern "C" void MdlDyn_ScaleMatrix(nw4r::math::MTX34* out, const nw4r::math::MTX34* a, f32 f);
-extern "C" void func_804EC8AC(nw4r::math::MTX34* m);
+extern "C" void MdlDyn_NormalizeMtx(nw4r::math::MTX34* m);
 extern "C" void MdlDyn_ClampToBounds(CMdlDynSet* owner, nw4r::math::VEC3* vec, CMdlDynElem* self);
-extern "C" void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt,
+extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt,
                               nw4r::math::MTX34* matrices);
-extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices);
+extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matrices);
 extern "C" u32 MdlDyn_GetAnchorBase(u8* self);
 extern "C" void* MdlDyn_GetAnchorEnd(u8* self);
 extern "C" u32 MdlDyn_IsEnabled(u8* self);
@@ -1385,7 +1385,7 @@ extern "C" u32 MdlDyn_IsSuspended(u8* self);
 extern "C" u32 MdlDyn_IsAnimHeldA(u8* self);
 extern "C" u32 MdlDyn_IsAnimHeldB(u8* self);
 extern "C" u32 MdlDyn_IsPoseFrozen(u8* self);
-extern "C" void func_804EC3D0(u8* self, void* out);
+extern "C" void MdlDyn_FetchVec3(u8* self, void* out);
 extern "C" void MdlDyn_SetVec3(u8* self, float a, float b, float c);
 extern "C" void MdlDyn_CopyVec3(u8* self, const void* src);
 extern "C" u8* MdlDyn_GetShapeOffset(const CMdlDynHolder* self);
@@ -1396,7 +1396,7 @@ extern "C" void MdlDyn_QuatToMatrix(Mtx a, const Quaternion* b);
 // frame-count x lists x 0xB0-stride elements relaxing positions/velocities
 // toward the anchor nodes and re-blending the anchor world matrices through
 // each element's local offset.
-void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
+extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     if (self->field_0x4 == 0) {
         return;
     }
@@ -1468,7 +1468,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                 if (MdlDyn_IsPoseFrozen((u8*)self->field_0x4) == 0) {
                     if (dynOk != 0 && frame == 0) {
                         // Seed the element pose from the anchor translation.
-                        func_804EC3D0((u8*)mD->mtx, &e->field_0x68);
+                        MdlDyn_FetchVec3((u8*)mD->mtx, &e->field_0x68);
                         void* p = copyVec3Words(&e->field_0x5C, &e->field_0x68);
                         copyVec3Words(&e->field_0x80, p);
                         cfCam_zeroVec3(&e->field_0x74);
@@ -1559,7 +1559,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                 noopAnimVec3(&vE0);
 
                 if (MdlDyn_IsPoseFrozen((u8*)self->field_0x4) == 0) {
-                    func_80052584(&vF0, &v10C, &v100);
+                    quatFromToVec(&vF0, &v10C, &v100);
                     MdlDyn_QuatToMatrix(v2C0.mtx, &vF0);
                     nw4r::math::MTX34 v260;
                     MdlDyn_ConcatMatrix(&v260, mD, &v2C0);
@@ -1569,7 +1569,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     nw4r::math::MTX34 v44;
                     cfCam_extractTrans(&v44, v2C0.mtx);
                     copyVec3Words(&e->field_0x68, &v44);
-                    func_804ECAC4((MdlDynObj*)self, (CMdlDynTarget*)e, matrices);
+                    MdlDyn_SolveElem((MdlDynObj*)self, (CMdlDynTarget*)e, matrices);
                 }
 
                 nw4r::math::VEC3 v38;
@@ -1579,10 +1579,10 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     MdlDyn_SetVec3((u8*)&v100, zero, zero, one);
                 }
                 normVec3(&v100);
-                func_80052584(&vF0, &v10C, &v100);
-                func_804EC514(&vF0, &vE0);
+                quatFromToVec(&vF0, &v10C, &v100);
+                MdlDyn_QuatToEuler(&vF0, &vE0);
                 MdlDyn_ClampToBounds((CMdlDynSet*)self, &vE0, e);
-                func_804EC76C(&v2C0, (const f32*)&vE0);
+                MdlDyn_SetRotXYZ(&v2C0, (const f32*)&vE0);
 
                 if (e->field_0x10 == zero) {
                     nw4r::math::MTX34 v230;
@@ -1599,7 +1599,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     nw4r::math::MTX34 v1D0;
                     MdlDyn_AddMatrix(&v1D0, &v1A0, &v170);
                     cfCam_copyBlock48(mD, &v1D0);
-                    func_804EC8AC(mD);
+                    MdlDyn_NormalizeMtx(mD);
                 }
                 nw4r::math::MTX34 v140;
                 MdlDyn_ConcatMatrix(&v140, mD, &e->field_0x2C);
@@ -1627,7 +1627,7 @@ void func_804EBBCC(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
             lstIt++;
         }
         if (MdlDyn_IsPoseFrozen((u8*)self->field_0x4) == 0) {
-            func_804ED67C(self, matrices);
+            MdlDyn_SolveContacts(self, matrices);
         }
         frame++;
     }
@@ -1652,7 +1652,7 @@ extern "C" __declspec(noinline) u32 MdlDyn_IsAnimHeldB(u8* self) { return (*(u32
 
 extern "C" __declspec(noinline) u32 MdlDyn_IsPoseFrozen(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
-extern "C" __declspec(noinline) void func_804EC3D0(u8* self, void* out) {
+extern "C" __declspec(noinline) void MdlDyn_FetchVec3(u8* self, void* out) {
     const float c = *(float*)((u8*)self + 0x2C);
     const float b = *(float*)((u8*)self + 0x1C);
     const float a = *(float*)((u8*)self + 0x0C);
@@ -1700,7 +1700,7 @@ extern "C" __declspec(noinline) void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out,
 // us-804f09d0: quaternion-to-Euler conversion with a pitch singularity split
 // at +/- lbl_eu_8066A200. out->y takes the asin pitch, out->x/out->z the two
 // Atan2FIdx angles. Returns 1 on the regular branch, 0 at the singularity.
-extern "C" __declspec(noinline) s32 func_804EC514(const Quaternion* q, nw4r::math::VEC3* out) {
+extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     f32 x2 = q->x + q->x;
     f32 y2 = q->y + q->y;
     f32 z2 = q->z + q->z;
@@ -1768,7 +1768,7 @@ extern "C" __declspec(noinline) s32 func_804EC514(const Quaternion* q, nw4r::mat
 // rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0,
 // owned by the CGXCache .sdata2 pool). Referenced through the named extern so
 // this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
-extern "C" __declspec(noinline) nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
+extern "C" __declspec(noinline) nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v) {
     extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
     return nw4r::math::MTX34RotXYZFIdx(mtx, lbl_eu_8066B3F0 * v[0],
                                        lbl_eu_8066B3F0 * v[1],
@@ -1794,7 +1794,7 @@ extern "C" __declspec(noinline) void MdlDyn_ScaleMatrix(nw4r::math::MTX34* out, 
 // us-804f0d68: normalizes each basis column of the matrix (components read
 // with a 4-byte stride down the three rows). Zero-length columns are left
 // untouched; negative/NaN lengths raise the nw4r math warning.
-extern "C" void func_804EC8AC(nw4r::math::MTX34* m) {
+extern "C" void MdlDyn_NormalizeMtx(nw4r::math::MTX34* m) {
     for (u32 i = 0; i < 3; i++) {
         nw4r::math::VEC3 v;
         v.x = m->m[0][i];
@@ -1849,7 +1849,7 @@ extern "C" void MdlDyn_ClampToBounds(CMdlDynSet* owner, nw4r::math::VEC3* vec, C
     }
 }
 
-extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   CMdlDynElem98* elem, nw4r::math::MTX34* matrices);
 
 // us-804f1370: sphere push-out against the bounding sphere of res node
@@ -1857,7 +1857,7 @@ extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::
 // (direction from the matrix-array anchor to the point), writes the surface
 // point into *pos and the (scaled) penetration vector into *out. Returns 0
 // when the point is outside/on the sphere or degenerate, else 1.
-extern "C" s32 func_804ECEB4(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+extern "C" s32 MdlDyn_PushSphere(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   u32* idxPtr, nw4r::math::MTX34* matrices) {
     u32 idx = *idxPtr;
     MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
@@ -1906,7 +1906,7 @@ extern "C" s32 func_804ECEB4(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::
 // around the +/-Y poles, resolves the element's res node and finally pushes
 // the position back through the world/matrix chain, reporting the penetration
 // vector scaled by lbl_eu_8066B3F4. Returns 0 when the point misses.
-extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
+extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   CMdlDynElem98* elem, nw4r::math::MTX34* matrices) {
     // Unit-sphere pole anchor, starting at the origin.
     ml::CVec3 axis(lbl_eu_8066B3D0, lbl_eu_8066B3D0, lbl_eu_8066B3D0);
@@ -2005,11 +2005,11 @@ extern "C" s32 func_804ED18C(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::
 
 // us-804f0f80: per-element dynamics update. Walks the target's element-id
 // list and dispatches on each element's update kind: kinds 1/3 run a sphere/
-// ray helper (func_804ECEB4 / func_804ED18C) accumulating its output vector
+// ray helper (MdlDyn_PushSphere / MdlDyn_PushPole) accumulating its output vector
 // into both target velocities; kind 2 transforms the target position through
 // the element's local/view/world matrices and accumulates the (negated)
 // delta scaled by lbl_eu_8066B3F4 when view-space y is in front of the camera.
-extern "C" void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matrices) {
+extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MTX34* matrices) {
     u32* it;
     for (it = tgt->ids90; it != tgt->ids90 + tgt->count94; it++) {
         // Element array base lives at obj+0x18 with a 0x98-byte stride.
@@ -2018,7 +2018,7 @@ extern "C" void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MT
         case 1: {
             // Sphere push-out helper; accumulate its output into both velocities.
             ml::CVec3 delta;
-            if (!func_804ECEB4(obj, (nw4r::math::VEC3*)&tgt->pos68,
+            if (!MdlDyn_PushSphere(obj, (nw4r::math::VEC3*)&tgt->pos68,
                                (nw4r::math::VEC3*)&delta, &e->field_0x0, matrices)) {
                 break;
             }
@@ -2084,7 +2084,7 @@ extern "C" void func_804ECAC4(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math::MT
         case 3: {
             // Capsule projection helper; accumulate its output into both velocities.
             ml::CVec3 delta;
-            if (!func_804ED18C(obj, (nw4r::math::VEC3*)&tgt->pos68,
+            if (!MdlDyn_PushPole(obj, (nw4r::math::VEC3*)&tgt->pos68,
                                (nw4r::math::VEC3*)&delta, e, matrices)) {
                 break;
             }
@@ -2130,7 +2130,7 @@ struct BufViewRec {
 // relaxes each element's position/velocity toward the anchor matrix columns
 // referenced by its entry array, then dispatches the per-element update kinds
 // accumulating into both the element and a stack-local accumulator element.
-extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
+extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     // Shared scratch vectors; MWCC pins their addresses to the non-volatile
     // registers across the nested loops (retail r14-r25/r30/r31).
     ml::CVec3 vSum;  // kind-1 position sum
@@ -2226,7 +2226,7 @@ extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     vSum = *(ml::CVec3*)&pAcc->field_0x68 +
                            *(ml::CVec3*)&tgt->field_0x68;
                     pc = vSum * blendK;
-                    if (func_804ECEB4((MdlDynObj*)self,
+                    if (MdlDyn_PushSphere((MdlDynObj*)self,
                                       (nw4r::math::VEC3*)&pc,
                                       (nw4r::math::VEC3*)&dOut1,
                                       &e->field_0x0, matrices)) {
@@ -2329,7 +2329,7 @@ extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                         *(ml::CVec3*)&tgt->field_0x68;
                     ml::CVec3 p = sum * blendK;
                     pc = p;
-                    if (func_804ED18C((MdlDynObj*)self,
+                    if (MdlDyn_PushPole((MdlDynObj*)self,
                                       (nw4r::math::VEC3*)&pc,
                                       (nw4r::math::VEC3*)&dOut3, e,
                                       matrices)) {
@@ -2387,7 +2387,7 @@ extern "C" void func_804ED67C(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     }
 }
 
-// Typed view of the model resource root used by func_804E95E0: scene/
+// Typed view of the model resource root used by MdlDyn_BuildLists: scene/
 // allocator-provider pointer at +0x4, update flag word at 0x7A4, and the
 // ResMdl data word at 0x146C.
 struct DynModelRoot {
@@ -2412,10 +2412,10 @@ struct CMdlDynLink {
 // opens a new list whose elements are collected from the following run of
 // matching sub-nodes. Kept lists are registered in the owner's list array,
 // cross-links are resolved, and a final pass flags every live element.
-extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
+extern "C" __declspec(noinline) void MdlDyn_BuildLists(CMdlDynamics* self,
                                                    DynModelRoot* root) {
     self->field_0x4 = (u32)root;
-    func_804EA284(self);
+    MdlDyn_ScanShapes(self);
 
     CMdlDynList* kept[16];
     u32 ids[16];
@@ -2585,7 +2585,7 @@ extern "C" __declspec(noinline) void func_804E95E0(CMdlDynamics* self,
                 list->field_0x8 = cnt;
             }
             for (u32 k = 0; k < cnt; k++) {
-                func_804EAA18((MdlDynObj*)self, list, ids[k]);
+                MdlDyn_BuildElem((MdlDynObj*)self, list, ids[k]);
             }
 
             if (list->field_0x4 != 0) {

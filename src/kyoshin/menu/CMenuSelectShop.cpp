@@ -392,7 +392,7 @@ void CMenuSelectShop::cbRenderBefore() {
     // scope-exit destructor is not auto-emitted (CMenuShopBuy scheme).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
+    SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
     drawShopWin(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     if ((s32)mSelIndex >= 0)
         Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);

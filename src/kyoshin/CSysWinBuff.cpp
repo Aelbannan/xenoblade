@@ -158,7 +158,7 @@ void CSysWinBuff::cbRenderBefore() {
     if (MenuTutorialIsCreated() != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     sysWinDrawLayout(&mSysWin[0], &drawInfo);
     // Scope-exit dtor is auto-emitted as the retail direct
     // `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit

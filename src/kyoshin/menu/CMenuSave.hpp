@@ -96,7 +96,7 @@ extern "C" int CSaveLoad_isReady(CSaveLoad* self);
 extern "C" u8 func_8028FFD4(CSaveLoad* self);
 extern "C" void CSaveLoad_reset(CSaveLoad* self);
 extern "C" void CSaveLoad_open(CSaveLoad* self);
-extern "C" void func_80240420();
+extern "C" void NandTeardown();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" void playUISound__FUl(u32 op);
 
@@ -135,7 +135,7 @@ extern "C" void __ct__CBgTex(void* self, int arg);
 extern "C" void __ct__CTitleAHelp(void* self, char* name, int id);
 extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" void func_80240360();
+extern "C" void NandAllocBufs();
 extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
@@ -144,9 +144,9 @@ extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
                                                       u32 b);
 
 // DrawInfo helper - retail emits the mangled nw4r form
-// (func_80137250__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
+// (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is declared as a normal C++
 // global function to let MWCC mangle it - NOT inside the extern "C" block.
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Destructor retail symbols (kept mangled in US; the dtor D2 form addresses
 // them by their literal names; __dt__800FED0C is the game-side CProcess dtor

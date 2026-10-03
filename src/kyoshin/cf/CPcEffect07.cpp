@@ -12,7 +12,7 @@
 extern "C" void* __dt__Q22cf11CPcEffect07Fv(void*, int);
 
 extern "C" { extern char lbl_eu_80533744[]; }  // vtable data (retail .data)
-extern "C" void func_801B23D0(cf::CPcEffect07*);  // effect cleanup
+extern "C" void freePcEffects(cf::CPcEffect07*);  // effect cleanup
 
 namespace cf {}
 using namespace cf;
@@ -69,7 +69,7 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
     if (this_ != 0) {
         *(u32*)((char*)this_ + 0) = (u32)lbl_eu_80533744;
         *(u32*)((char*)this_ + 4) = (u32)lbl_eu_80533744 + 0x10;
-        func_801B23D0(this_);
+        freePcEffects(this_);
         if ((void*)lbl_eu_80664398 == (void*)this_) {
             lbl_eu_80664398 = 0;
         }
@@ -90,7 +90,7 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
 // recorded in the entry and the global maxEffects byte.
 // r3 = effect type (selects the 0x700+n id via the switch AND is recorded as
 // the entry/global id byte); r4 = slot selector (negative = auto-pick).
-extern "C" s32 func_801B19F0(u8 type, s32 slotSel) {
+extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     PcEffectData* data = lbl_eu_80664398;
     s32 slot = slotSel;
     if (data == 0)
@@ -181,10 +181,10 @@ extern "C" s32 func_801B19F0(u8 type, s32 slotSel) {
 
 // Current effect-bank byte: -1 when the global bank is absent or the lookup
 // fails, else the bank byte at +0x58 (retail reloads it for the return).
-extern "C" int func_801B1C5C(void) {
+extern "C" int spawnBankByte(void) {
     if (lbl_eu_80664398 == 0)
         return -1;
-    if (func_801B19F0(*(u8*)((u8*)lbl_eu_80664398 + 0x58), -1) < 0)
+    if (spawnPcEffect(*(u8*)((u8*)lbl_eu_80664398 + 0x58), -1) < 0)
         return -1;
     return *(u8*)((u8*)lbl_eu_80664398 + 0x58);
 }
@@ -199,7 +199,7 @@ int getEffectMax() {
 // Slot id lookup: negative index scans slots 2..0 for the first active entry;
 // a non-negative index addresses the slot directly. Returns the entry's slot
 // ID byte, or -1 when no bank/no active entry.
-s32 func_801B1CCC(int index) {
+s32 getSlotEffectId(int index) {
     PcEffectData* data = lbl_eu_80664398;
     if (data == 0)
         return -1;
@@ -266,7 +266,7 @@ extern "C" u32 countPcEffectSlots(u32 index) {
 // attached to the handle, the active flag becomes 2, and the per-args state
 // is stored. When amount <= 0 the object also gets a setChildB59__ poke with
 // the sign-folded flag (retail's neg/or/srwi idiom always yields 1).
-s32 func_801B1E74(u32 handle, s32 index, s32 bankByte, s32 amount) {
+s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
     PcEffectData* data = lbl_eu_80664398;
     if (data == 0)
         return 0;
@@ -352,7 +352,7 @@ int countActiveSlots() {
 // or the id looked up in the wstring table for negative selectors. When a
 // positive amount is given and a schedule is attached, drive its fixed
 // timestep via schedSetStepIntervals.
-PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, s32 id, s32 sel, s32 amount) {
+PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amount) {
     PcEffectSchedHolder* result;
     if (sel >= 0) {
         result = self->mField0C->mSub.GetSlot(0);
@@ -376,7 +376,7 @@ PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, s32 id, s32 sel, s32 amoun
 
 // Clear the caller's +0xB0 slot, then scan the 3-entry table at the global
 // bank's +0x10 (24-byte stride) for the entry pointing at r4 and wipe it.
-extern "C" void func_801B218C(void* a1, void* r4) {
+extern "C" void clearPcEffect(void* a1, void* r4) {
     if (lbl_eu_80664398 == 0)
         return;
     *(u32*)((u8*)r4 + 0xB0) = 0;
@@ -398,7 +398,7 @@ extern "C" void func_801B218C(void* a1, void* r4) {
 // when the duration hits zero the object gets a setChildB59__ poke with a
 // sign-folded constant. Afterwards the two timers at +0x5C/+0x60 are stepped
 // down by an sdata2 epsilon and clamped to it.
-void func_801B21E0(CPcEffect07* self) {
+void tickPcEffects(CPcEffect07* self) {
     if (lbl_eu_80664398 == NULL)
         return;
     if (cf::CfGameManager::isSceneLoading())
@@ -440,7 +440,7 @@ void func_801B21E0(CPcEffect07* self) {
 
 // Per-frame update: for each active slot, push the transform's translation and
 // rotation into the effect object through its SetPos/SetRot virtuals.
-void func_801B2318(CPcEffect07* self) {
+void updatePcEffect(CPcEffect07* self) {
     // Two induction pointers mirror retail: e walks the entry array
     // (self+0x10+i*0x18), base walks the interleaved mat slots (self+i*0x18
     // with the CMat34* at +0x18). Mat pointers are re-read (not cached) so
@@ -468,7 +468,7 @@ void func_801B2318(CPcEffect07* self) {
 // 0x40 flag, then drop the slot (pointer, active flag, aux flag).
 // Retail order matters: the global bank is null-checked FIRST (before the
 // argument defaulting), then the argument defaults to it.
-void func_801B23D0(PcEffectData* data) {
+void freePcEffects(PcEffectData* data) {
     if (lbl_eu_80664398 == 0)
         return;
     if (data == 0)
@@ -488,11 +488,11 @@ void func_801B23D0(PcEffectData* data) {
     }
 }
 
-// Release every active slot (same as func_801B23D0 but only for slots whose
+// Release every active slot (same as freePcEffects but only for slots whose
 // active flag is exactly 1).
 // Retail order matters: the global bank is loaded and null-checked FIRST,
 // then the argument defaults to it.
-void func_801B248C(PcEffectData* data) {
+void dropPendingFx(PcEffectData* data) {
     PcEffectData* bank = lbl_eu_80664398;
     if (bank == 0)
         return;
@@ -525,15 +525,15 @@ void func_801B248C(PcEffectData* data) {
 
 // This-adjusting forwarders (retail func_801B2544 / func_801B254C): re-base
 // `this` onto the embedded CPcEffect07 (-0x4) and tail-jump to the per-frame
-// tick (func_801B21E0) / update (func_801B2318). C linkage like the fwdPcEffect*
+// tick (tickPcEffects) / update (updatePcEffect). C linkage like the fwdPcEffect*
 // siblings so the emitted symbols keep their retail unmangled names.
-extern "C" void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
+extern "C" void thunk_adj4_reset(void* self) { ((void(*)(void*))tickPcEffects)((char*)self - 0x4); }
 
-extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
+extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))updatePcEffect)((char*)self - 0x4); }
 
 // Effect-bank byte, zero default (retail func_801B1CB0): 0 when the global
 // bank is absent, else the bank byte at +0x58. Simpler sibling of
-// func_801B1C5C (which returns -1 on lookup failure); CArtsParam treats 0
+// spawnBankByte (which returns -1 on lookup failure); CArtsParam treats 0
 // as "no bank".
 extern "C" int getEffectBankByte() {
     if (lbl_eu_80664398 == 0)
@@ -551,6 +551,6 @@ extern "C" int isPcEffectSlotActive(int index) {
     return data->entries[index].mActive == 1;
 }
 
-extern "C" void fwdPcEffect20C8(u8* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
+extern "C" void fwdPcEffect20C8(u8* self) { ((void(*)(void*))getSchedHolder)((char*)self - 0x4); }
 
 extern "C" void fwdPcEffectDtor(u8* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }

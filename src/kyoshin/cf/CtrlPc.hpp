@@ -12,7 +12,7 @@ class CtrlPlayerSub3ED4;
 
 namespace cf { class CCtrlMovePC; }
 // Declared fully in CtrlMovePC.hpp (not includable here - conflicting views);
-// retail C-ABI names for the CCtrlMovePC tick helpers used by func_80097134.
+// retail C-ABI names for the CCtrlMovePC tick helpers used by CtrlPc_UpdatePadState.
 extern "C" void movePcTopTickDispatch(cf::CCtrlMovePC* self);
 extern "C" void func_8019A9C4(cf::CCtrlMovePC* self);
 
@@ -40,7 +40,7 @@ struct CtrlPlayerSub298 {
 };
 
 // 0x20-byte AI-action parameter slot (same layout as CVision.cpp's
-// CVisionFxParam); installed on player->mField3380 via func_8014AC38.
+// CVisionFxParam); installed on player->mField3380 via aiRingPrepend.
 struct CVisionFxParam {
     u32 w00;             // 0x00 (enum-list hit id / source word)
     u8 pad04[2];         // 0x04
@@ -86,7 +86,7 @@ public:
     virtual void v45();  virtual void v46();
     virtual void v47(f32 arg);             // 0xC4
     virtual void v48(f32 arg);             // 0xC8
-    // Padding out to retail slot 0x220 (used by func_80097A5C).
+    // Padding out to retail slot 0x220 (used by CtrlPc_HandleMenuSelect).
     virtual void v49();
     virtual void v51();  virtual void v52();  virtual void v53();
     virtual void v54();  virtual void v55();  virtual void v56();
@@ -193,14 +193,14 @@ public:
     int returnTrue();
 
     // +0x00: implicit vptr (novtable: stored manually as lbl_eu_80527DB0)
-    u32 mField4;                 // 0x04 (pad/battle flags: bits 2/3 set by func_80097134/97598)
+    u32 mField4;                 // 0x04 (pad/battle flags: bits 2/3 set by CtrlPc_UpdatePadState/97598)
     char _pad_08[0x0C - 0x08];   // 0x08-0x0B
     f32 mFieldC;                 // 0x0C (target angle/position state)
     f32 mField10;                // 0x10 (computed facing angle)
     f32 mField14;                // 0x14 (aim/fx state flag value)
-    u32 mField18;                // 0x18 (combo step count, written by func_80098810)
+    u32 mField18;                // 0x18 (combo step count, written by CtrlPc_MatchArtsSelection)
     char _pad_1C[0x24 - 0x1C];   // 0x1C-0x23
-    u32 mField24;                // 0x24 (pad-state written by func_80098A04: -1/0/1)
+    u32 mField24;                // 0x24 (pad-state written by CtrlPc_UpdatePadTriState: -1/0/1)
     char _pad_28[0x2C - 0x28];   // 0x28-0x2B
     u32 mPadFlags;                // 0x2C (bit flags: bits 8-20 tested)
     char _pad_30[0x5C - 0x30];   // 0x30-0x5B
@@ -249,11 +249,11 @@ struct CfObj90E4 {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_80089F68(void* self);
-extern "C" int func_80089B24(cf::CCtrlMoveBase* self, ml::CVec3* out);
-extern "C" void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
+extern "C" void moveBaseScnCmd(void* self);
+extern "C" int moveBaseSway(cf::CCtrlMoveBase* self, ml::CVec3* out);
+extern "C" void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                               const ml::CVec3* src, int flag);
-extern "C" int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
+extern "C" int moveBaseSeekTo(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                              const ml::CVec3* src, int flag);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Direct (non-inlinable) call to the CtrlPc destructor (retail symbol name).
@@ -267,10 +267,10 @@ extern "C" void __dt__80043E88(void* holder, int flags);
 extern "C" void* getObjectIdAt(void* list, int index);
 // CBattleManager singleton + actor-id query helper (retail C-ABI names).
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.
-// (func_80174C98 comes from CtrlMovePC.hpp.)
+// (testActorStatus comes from CtrlMovePC.hpp.)
 class UnkClass_800821F8View;   // defined below (getCameraDataBlock result view)
 extern "C" void clrAnimEff(void* obj);
-extern "C" void func_8014AC38(void* a, void* b);
+extern "C" void aiRingPrepend(void* a, void* b);
 extern "C" void CChain_TryActivateChain(void* a, int b);
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
@@ -286,7 +286,7 @@ extern "C" CfObj90E4* Selector_GetInstance(void);
 extern "C" const void* lbl_eu_80661C60;   // __dynamic_cast src typeinfo
 extern "C" const void* lbl_eu_80661BE8;   // __dynamic_cast dst typeinfo
 // In-TU function, C-linkage so the call reloc is the retail name.
-extern "C" void* func_80098694(cf::CtrlPc* self);
+extern "C" void* CtrlPc_FindSyncSource(cf::CtrlPc* self);
 extern "C" u32 getPadConfigEntry(int index);
 // getCfObjectPc(CfObjectMove*) (retail mangled name
 // getCfObjectPc__FPQ22cf12CfObjectMove); proper C++ decl so MWCC emits the
@@ -299,12 +299,12 @@ CtrlPlayerObj* getCfObjectPc(cf::CfObjectMove* objMove);
 // Global-scope data arrays (MWCC does not mangle global variable names).
 extern u32 lbl_eu_80527E98[];
 extern u32 lbl_eu_80527F10[];
-// sdata2 float constants used by func_80098694 / func_80098194. const
+// sdata2 float constants used by CtrlPc_FindSyncSource / CtrlPc_InstallArtsAction. const
 // declarations so MWCC treats the loads as constants and hoists them into
 // the prologue (see MWCC_CASES §extern const float hoist).
 extern const f32 lbl_eu_80666720;
 extern const f32 lbl_eu_80666724;
-extern const f32 lbl_eu_80666718;   // facing-angle scale used by func_80096974
+extern const f32 lbl_eu_80666718;   // facing-angle scale used by CtrlPc_UpdateLockOnAim
 // Retail CtrlPc vtable data (.data at 0x80527DB0). Stored manually because
 // the class is __declspec(novtable).
 extern u8 lbl_eu_80527DB0[];
@@ -340,7 +340,7 @@ public:
 };
 
 // player->mField4: sub-object whose vtable slot 0x30 returns a u32 word
-// holder (first word read as the actor id fed to func_80174C98).
+// holder (first word read as the actor id fed to testActorStatus).
 class CtrlPlayerSub4 {
 public:
     virtual void vf00();
@@ -374,7 +374,7 @@ struct CtrlPlayerSub50 {         // target of vf2A4-result->mField50
     s8 mField77;                 // 0x77 (pad-handler selector byte, signed cmps)
 };
 
-// Retail func_80097A5C / func_80098194 imports.
+// Retail CtrlPc_HandleMenuSelect / CtrlPc_InstallArtsAction imports.
 // func_8017FD44 result view: selector word at +0xB8.
 struct Fd44State {
     u8 _00[0xB8];
@@ -394,16 +394,16 @@ extern "C" void appendObjectById(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
 // overloads of the same name are illegal).
 extern "C" void* findFirstCleanObjectId(void* list);
-// Enum list with the extra word at +0x3030 cleared by func_80098194.
+// Enum list with the extra word at +0x3030 cleared by CtrlPc_InstallArtsAction.
 struct CfListBig : CfEnumList {
     u8 _624[0x3030 - 0x624];
     u32 mField3030;  // 0x3030
 };
 // C-linkage so call relocs keep the retail unmangled names (and MWCC does
 // not inline the in-TU bodies).
-extern "C" void func_80098194(cf::CtrlPc* self, char arg1, char arg2);
-extern "C" int func_80097E00(cf::CtrlPc* self);
-extern "C" void func_800983B8(cf::CtrlPc* self, s8 arg);
+extern "C" void CtrlPc_InstallArtsAction(cf::CtrlPc* self, char arg1, char arg2);
+extern "C" int CtrlPc_IsPadIdle(cf::CtrlPc* self);
+extern "C" void CtrlPc_DispatchPadAction(cf::CtrlPc* self, s8 arg);
 
 namespace cf { class CAttackParam; }
 
@@ -594,7 +594,7 @@ public:
     virtual void vf171();
     virtual void vf172();
     virtual int vf173();                // vtable slot 0x2BC
-    // Padding to the slots used by func_80097A5C / func_80098194.
+    // Padding to the slots used by CtrlPc_HandleMenuSelect / CtrlPc_InstallArtsAction.
     virtual void vf174(); virtual void vf175(); virtual void vf176();
     virtual void vf177(); virtual void vf178(); virtual void vf179();
     virtual void vf180(); virtual void vf181(); virtual void vf182();
@@ -667,7 +667,7 @@ public:
     u8 _9[0x1530 - 0x9];
     u32 mField1530;               // 0x1530
     u8 _1534[0x3380 - 0x1534];
-    CVisionFxParam mField3380;    // 0x3380 (AI-action slot installed via func_8014AC38)
+    CVisionFxParam mField3380;    // 0x3380 (AI-action slot installed via aiRingPrepend)
     u8 _33A0[0x3E9C - 0x33A0];
     CVoiceOwnerIntfPc mSub3E9C;   // 0x3E9C embedded voice-owner interface (getPosition @ 0xAC)
     u8 _3EA0[0x3ED4 - 0x3EA0];
@@ -684,7 +684,7 @@ public:
 // Helper views used by the pad-handler functions in this TU.
 // ---------------------------------------------------------------------------
 
-// Result of __dynamic_cast on player->mSub3ED4 in func_800983B8; slot 0xF8.
+// Result of __dynamic_cast on player->mSub3ED4 in CtrlPc_DispatchPadAction; slot 0xF8.
 class CtrlPlayerSub3ED4Cast {
 public:
     virtual void vf00();  virtual void vf01();  virtual void vf02();

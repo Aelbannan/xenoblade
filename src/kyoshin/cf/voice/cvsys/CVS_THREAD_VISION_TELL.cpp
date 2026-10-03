@@ -9,15 +9,15 @@
 // us-802ac1fc (VisionTell_NotifyComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
 void VisionTell_NotifyComplete(CVS_THREAD_VISION_TELL* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
 // us-802ac244 (VisionTell_RemoveVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
 void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20: load handle, bias if non-null, compare with voicePtr
     CVoiceHandle* handle = self->field_0x20;
@@ -50,7 +50,7 @@ void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) 
 // elides the __end__catch epilogue.
 CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     // Allocate handle buffer (discarded).
-    if (func_802A330C(0x32, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x32, 1) == NULL) {
         return NULL;
     }
 
@@ -115,11 +115,11 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
     if (((CVS_THREAD_VISION_TELL_Vtbl*)handle20)->isVoiceActive() != 0) return;
 
     // Get iterator from slot 2 handle
-    if (func_802A7850(func_802A77E8(self->field_0x24)) == 0) return;
+    if (HpVoice_ValidIter(HpVoice_MapSubState(self->field_0x24)) == 0) return;
 
     // Select voice ID based on iterator value
     int voiceId;
-    switch (func_802A77E8(self->field_0x24)) {
+    switch (HpVoice_MapSubState(self->field_0x24)) {
     case 2:
         voiceId = 0xC9;
         break;
@@ -131,7 +131,7 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
         break;
     case 6:
         // Ternary arm order matters: retail emits li 0x76F; bne; li 0xCC.
-        voiceId = (func_802A7B90(self->field_0x20, self->field_0x24) == 0) ? 0xCC : 0x76F;
+        voiceId = (HpVoice_CheckPair26(self->field_0x20, self->field_0x24) == 0) ? 0xCC : 0x76F;
         break;
     case 7:
         voiceId = 0xCD;
@@ -143,7 +143,7 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
         voiceId = (HpVoice_CheckPairGate(self->field_0x20, self->field_0x24) == 0) ? 0xCF : 0x51A;
         break;
     default:
-        self->func_802A3B50();
+        self->PlayThreadVoice();
         return;
     }
 
@@ -155,8 +155,8 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
     }
 
     // Try to play the selected voice
-    if (func_802A3C44(self, voicePtr, voiceId) == 0) {
-        self->func_802A3B50();
+    if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -164,7 +164,7 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
 // Advance/play function for voice slot 2 (field_0x24). Retail re-reads
 // self->field_0x24/field_0x20 from memory at each use (no long-lived caches).
 void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -186,15 +186,15 @@ void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
     if (((CVS_THREAD_VISION_TELL_Vtbl*)handle24)->isVoiceActive() != 0) return;
 
     // Iterator active?
-    if (func_802A7850(func_802A77E8(self->field_0x24)) != 0) {
+    if (HpVoice_ValidIter(HpVoice_MapSubState(self->field_0x24)) != 0) {
         // Slot-1 voice is in an active state (1): play the scripted voice.
-        if (self->field_0x20 != NULL && func_802A77E8(self->field_0x20) == 1) {
+        if (self->field_0x20 != NULL && HpVoice_MapSubState(self->field_0x20) == 1) {
             CCharVoice* voicePtr = (CCharVoice*)self->field_0x24;
             if (self->field_0x24 != NULL) {
                 voicePtr = &self->field_0x24->voice;
             }
-            if (func_802A3C44(self, voicePtr, 0x12D) == 0) {
-                self->func_802A3B50();
+            if (TryRequestVoice(self, voicePtr, 0x12D) == 0) {
+                self->PlayThreadVoice();
             }
             return;
         }
@@ -204,25 +204,25 @@ void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
         if (self->field_0x24 != NULL) {
             voicePtr = &self->field_0x24->voice;
         }
-        if (func_802A3C44(self, voicePtr, lbl_eu_80662D58[ml::math::mtRand(4)]) == 0) {
-            self->func_802A3B50();
+        if (TryRequestVoice(self, voicePtr, lbl_eu_80662D58[ml::math::mtRand(4)]) == 0) {
+            self->PlayThreadVoice();
         }
         return;
     }
 
     // Iterator inactive: allow only slot-2 states 8 or 10. Retail re-reads
-    // field_0x24 and re-calls func_802A77E8 for EACH state test (two calls),
+    // field_0x24 and re-calls HpVoice_MapSubState for EACH state test (two calls),
     // so use a short-circuit || (not a cached local) to reproduce the second
     // lwz + bl pair.
-    if (func_802A77E8(self->field_0x24) == 8 ||
-        func_802A77E8(self->field_0x24) == 10) {
+    if (HpVoice_MapSubState(self->field_0x24) == 8 ||
+        HpVoice_MapSubState(self->field_0x24) == 10) {
         // Random slot-2 voice from the second table.
         CCharVoice* voicePtr = (CCharVoice*)self->field_0x24;
         if (self->field_0x24 != NULL) {
             voicePtr = &self->field_0x24->voice;
         }
-        if (func_802A3C44(self, voicePtr, lbl_eu_80662D60[ml::math::mtRand(3)]) == 0) {
-            self->func_802A3B50();
+        if (TryRequestVoice(self, voicePtr, lbl_eu_80662D60[ml::math::mtRand(3)]) == 0) {
+            self->PlayThreadVoice();
         }
     }
 }

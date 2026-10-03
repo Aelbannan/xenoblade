@@ -48,7 +48,7 @@ public:
     u8 mState;                                // +0x31
     u8 field_0x32;                            // +0x32
     u8 mFlag33;                               // +0x33
-    u8 func_802436C4() { return mFlag33; }
+    u8 getMapSelInitFlag() { return mFlag33; }
     bool OnFileEvent(CEventFile* event);
     u8 mScrollBar[0x40];                      // +0x34 - CScrollBar
     u8 mCursor[0x18];                         // +0x74 - CCur18
@@ -91,7 +91,7 @@ struct CCur18Data {
 };
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (index 7, no args) yields the u32 passed to func_8013676C. All-pure so no
+// (index 7, no args) yields the u32 passed to ApplyFontToTxtPanes. All-pure so no
 // vtable is emitted.
 class CDeviceFontView {
 public:
@@ -152,12 +152,12 @@ extern "C" void CScrollBar_requestScrollIn(u8*);                    // scrollbar
 // AnimRewindFrame pseudo-import so code_802405F4.cpp's define stays a no-op.
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void func_8013676C(void*, u32);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void PaneSetTexPaletteByName(void*, const char*, const void*);
 extern "C" char* MakeTplNameSysFile(u32);
 #endif
 // Cursor position helper: fill output with the point derived from two panes.
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void playUISound__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).

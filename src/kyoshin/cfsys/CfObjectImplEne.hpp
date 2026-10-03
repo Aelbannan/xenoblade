@@ -279,7 +279,7 @@ struct CfEnumList {
 };
 
 // battleObj->field_04: sub-object whose vtable slot 0x30 returns a word holder
-// (first word read as the actor id by func_80174C98 callers).
+// (first word read as the actor id by testActorStatus callers).
 class CfImplEneBattleObj4 {
 public:
     virtual void bf00() = 0;                 // index 0
@@ -712,13 +712,13 @@ public:
 extern "C" {
 void MoveImplInitFields(void* self);
 void MoveImplResetFull(void* self);
-void func_800CD5DC(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
+void MoveImplDriveTransition(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
 void func_8015BB3C(void* a, void* b, void* c);
 void attachOwner(void* self, void* owner);
 void* lookupCA0By45C0(void* self);
 void* func_8016FE34(void* src);
 void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
-void func_800D9978(void* mgr, void* obj);
+void registerBattleActor(void* mgr, void* obj);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void schedClearFlag15Update(void* effect);
@@ -758,10 +758,10 @@ float simGetLeafDist7B0(void* obj);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void CfObjectMove_setRegionAttached(void* obj, int flag);
 void CBattleMan_BumpUnk94Key(void* mgr, u32 key);
-void func_800E9B54(void* mgr, void* obj, int a, int b);
-void func_800D9CA0(void* mgr, void* target);
+void spreadChainArtsHits(void* mgr, void* obj, int a, int b);
+void unregisterBattleActor(void* mgr, void* target);
 void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
-void func_80140E00(u32 a, u32 b, u32 c);
+void UIWin_BuildFlagBuf(u32 a, u32 b, u32 c);
 void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7, u32 a8, u32 a9);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);

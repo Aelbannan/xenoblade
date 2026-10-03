@@ -18,7 +18,7 @@
 // Retail constructor(C) at 0x8005AA64 (unmangled symbol): base-constructs
 // the ::CActParamAnim subobject, stores the retail vtable manually
 // (novtable class), zeroes the flag fields, invokes the +0xE0 virtual
-// (CActParamAnim::func_8004B114, overridden in the retail table by
+// (CActParamAnim::initAnimState, overridden in the retail table by
 // resetAnimGame), then parks the link argument at +0x4E8 and returns this.
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
@@ -26,7 +26,7 @@ cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParam
     *(u32*)((u8*)self + 0x4EC) = 0;
     *(u32*)((u8*)self + 0x4F0) = 0;
     *(u16*)((u8*)self + 0x530) = 0;
-    self->func_8004B114();
+    self->initAnimState();
     *(cf::CActParamAnimGameLink**)((u8*)self + 0x4E8) = arg;
     return self;
 }
@@ -38,26 +38,26 @@ cf::CActParamAnimGame::CActParamAnimGame() {
     *(u32*)((u8*)this + 0x4EC) = 0;
     *(u32*)((u8*)this + 0x4F0) = 0;
     *(u16*)((u8*)this + 0x530) = 0;
-    this->func_8004B114();
+    this->initAnimState();
 }
 
 cf::CActParamAnimGame::~CActParamAnimGame() {}
 
 // Retail C-ABI sibling (unmangled name; defined in kyoshin/action/CActParamAnim.cpp)
-extern "C" void func_8004BC94(void*);
+extern "C" void startAnimDual(void*);
 
 // Forward decls for the state-gate probes defined below (kept noinline so
 // the call sites in func_8005D76C/D99C/DA44 keep retail's bl + cmpwi shape).
 // Retail symbols are unmangled C-ABI globals; extern "C" keeps the call-site
-// relocs on the retail names (same precedent as func_8005A5B0 below).
+// relocs on the retail names (same precedent as trackGroundAt below).
 extern "C" bool func_8005E60C(cf::CActParamAnimGame* self);
-extern "C" bool func_8005E7C4(cf::CActParamAnimGame* self);
-bool func_8005DE68(cf::CActParamAnimGame* self);
-bool func_8005E28C(cf::CActParamAnimGame* self);
-bool func_8005E990(cf::CActParamAnimGame* self);
+extern "C" bool snapActorDown(cf::CActParamAnimGame* self);
+bool probeGroundAt(cf::CActParamAnimGame* self);
+bool refineHitNorm(cf::CActParamAnimGame* self);
+bool probeWallPair(cf::CActParamAnimGame* self);
 
 void cf::CActParamAnimGame::resetAnimGame() {
-    CActParamAnim::func_8004B114();
+    CActParamAnim::initAnimState();
     // sdata2 constants written inline (const-float globals hoist the loads at
     // retail's position and allocate retail's FPR coloring, MWCC_CASES
     // SDA-const hoist / FPR-coloring rules). Use raw offsets for retail
@@ -81,17 +81,17 @@ void cf::CActParamAnimGame::resetAnimGame() {
 // noinline (repo pattern, see CQstLogList.cpp) so -ipa does not fold the
 // call sites away, and extern "C" so the call-site reloc keeps the retail
 // unmangled name (same precedent as func_8005BC14 in this file).
-// func_8005A5B0 is defined below (after the collision-query typedefs).
-extern "C" void func_8005A5B0(cf::CActParamAnimGame* self);
+// trackGroundAt is defined below (after the collision-query typedefs).
+extern "C" void trackGroundAt(cf::CActParamAnimGame* self);
 
-// Forward decls for func_8005B820 below (C-linkage retail names; most are
+// Forward decls for applyFallMove below (C-linkage retail names; most are
 // also declared in the shared block further down).
 extern "C" {
 void addAnimHeight(void*, f32);
 int shiftAnimPos(void*);
 void mulAnimHeight(void*, f32);
-void func_800527E8(void*);
-void func_80051CD4(void*);
+void clampAnimMove(void*);
+void steerAnimHead(void*);
 void setActiveBit(void*, int);
 void clrAnimHeight(void*);
 void stopAnimMove(void*);
@@ -106,7 +106,7 @@ bool setAnimSubPos(void*, const ml::CVec3*);
 // or lands via setActiveBit/clrAnimHeight.
 // Retail symbol is an unmangled C-ABI global; extern "C" keeps the call-site
 // reloc on the retail name (approved fix, PLAN.md §17.6).
-extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV) {
+extern "C" void __declspec(noinline) applyFallMove(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     shiftAnimPos(self);
     self->f394 = lbl_eu_806660B0;
@@ -136,7 +136,7 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
         }
         addAnimHeight(self, -self->f380);
         mulAnimHeight(self, lbl_eu_806660C4);
-        func_800527E8(self);
+        clampAnimMove(self);
         // Advance velocity and move vec over the frame time; the accumulated
         // drift is (vel*dt + face dir) + move*dt. The intermediate copies are
         // kept so each stage lands in its own stack temporary (retail layout).
@@ -195,7 +195,7 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
         setAnimSubPos(self, &pos);
     }
     if ((self->flags0C & 0x40) == 0) {
-        func_80051CD4(self);
+        steerAnimHead(self);
     }
     stopAnimMove(self);
     self->flags0C &= ~0x80;
@@ -220,8 +220,8 @@ void setAnimPosVec(void*, const ml::CVec3*);
 void addAnimHeight(void*, f32);
 int shiftAnimPos(void*);
 void mulAnimHeight(void*, f32);
-void func_800527E8(void*);
-void func_80051CD4(void*);
+void clampAnimMove(void*);
+void steerAnimHead(void*);
 void setActiveBit(void*, int);
 void clrAnimHeight(void*);
 int isSpeedBelow(void*);
@@ -241,7 +241,7 @@ void* ScnRes_GetEntryHead2_E520(int);
 void* ScnRes_GetEntryPtr_E50C(u32);
 u32 getTargetFramerate__9CDeviceVIFv(void);
 void scnImN4DynStop(void*, void*);
-int func_804B1164(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
+int ColiResolveNodeMove(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
 int Coli_WalkReport(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
 void setAnimHeight(void*, f32);
 void ScnRes_XCrossCbThunk_E628(int);
@@ -287,7 +287,7 @@ struct CActParamAnimGameBeObj {
 // by func_8005D2C4. Goes through the absolute-offset view: the embedded base
 // compiles 0x36C larger than retail, so direct member access shifts every
 // displacement.
-extern "C" void __declspec(noinline) func_8005A5B0(cf::CActParamAnimGame* selfV) {
+extern "C" void __declspec(noinline) trackGroundAt(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     self->f47C = lbl_eu_8066604C;
     self->flags0C &= ~0x800;
@@ -1066,7 +1066,7 @@ exit:
     stopAnimMove(self);
 }
 
-void cf::CActParamAnimGame::func_8005D2C4() {
+void cf::CActParamAnimGame::dispatchState() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     // Snapshot the flag word, clear it to the run mask, and reset the
     // air/height state; the +0x530 flags lose their low bit. The first
@@ -1088,7 +1088,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
 
     getScnHandle__Fv();
     if (ScnData_FwdBC9A0() != 0 && (v->flags4EC & 1) == 0) {
-        func_8005A5B0(this);
+        trackGroundAt(this);
     }
 
     if (v->state374 == 2) {
@@ -1105,7 +1105,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
             // Air timer exceeded the fall timer: switch to falling state.
             v->flags4EC |= 2;
             v->flags0C &= ~0x80000;
-            func_8005B820(this);
+            applyFallMove(this);
             goto d2c4_fall_done;
         }
         {
@@ -1148,7 +1148,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
                 v->f394 = lbl_eu_80666044;
                 v->f398 = lbl_eu_80666044;
             }
-            ((CActParamAnim*)this)->func_80052934(nullptr);
+            ((CActParamAnim*)this)->stepAnimFrame(nullptr);
         }
     d2c4_fall_done:;
     }
@@ -1199,8 +1199,8 @@ struct CActParamAnimGameViewD608 {
 // Action-readiness query: requires a +0x8 link object, the collision filter
 // inside the [0x4,0x4A09] window, the move vec NOT past the fall vec (the
 // dead mfcr/extrwi GT capture of the fcmpo), and bit 2 set in the link's
-// +0x4 flags; then notifies the region via func_8004BC94. The type arg is
-// forwarded to func_8004BC94 untouched (retail leaves r4 as-is), so keeping
+// +0x4 flags; then notifies the region via startAnimDual. The type arg is
+// forwarded to startAnimDual untouched (retail leaves r4 as-is), so keeping
 // it a live parameter pins r4 and colors the locals into retail's r5/r6.
 bool cf::CActParamAnimGame::isActionReady(u32 type) {
     CActParamAnimGameViewD608* self = reinterpret_cast<CActParamAnimGameViewD608*>(this);
@@ -1216,7 +1216,7 @@ bool cf::CActParamAnimGame::isActionReady(u32 type) {
     }
 flags:
     if ((owner->flags04 & 4) == 0) goto fail;
-    ((void (*)(void*, u32))func_8004BC94)(this, type);
+    ((void (*)(void*, u32))startAnimDual)(this, type);
     return true;
 fail:
     return false;
@@ -1225,13 +1225,13 @@ fail:
 // C-ABI sibling (retail unmangled name; defined in kyoshin/action/CActParamAnim.cpp)
 
 // Returns true when the +0x4F8 float exceeds the +0x508 float; the linked
-// region is then notified via func_8004BC94. The explicit bool local keeps
+// region is then notified via startAnimDual. The explicit bool local keeps
 // MWCC's dead mfcr/rlwinm capture of the fcmpo result (retail `extrwi.` shape).
 bool cf::CActParamAnimGame::checkHeightThreshold() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     bool cond = self->f4F8 > self->f508;
     if (cond) {
-        func_8004BC94(this);
+        startAnimDual(this);
         return true;
     }
     return false;
@@ -1243,7 +1243,7 @@ bool cf::CActParamAnimGame::checkHeightBelow() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     bool cond = !(self->f4F8 > self->f508);
     if (cond) {
-        func_8004BC94(this);
+        startAnimDual(this);
         return true;
     }
     return false;
@@ -1263,7 +1263,7 @@ bool cf::CActParamAnimGame::clearFlag80000() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if ((self->flags4EC & 0x80000) != 0) {
         self->flags4EC = *(volatile u32*)&self->flags4EC & ~0x80000;
-        func_8004BC94(this);
+        startAnimDual(this);
         return true;
     }
     return false;
@@ -1273,56 +1273,56 @@ bool cf::CActParamAnimGame::clearFlag80000() {
 // CBattleState_UnkVirtualFunc3 status; only when that status AND isSpeedBelow
 // both clear is
 // the 0x200 flag raised before notifying the region.
-bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
+bool cf::CActParamAnimGame::startMoveGate(u32 type, u32 state) {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if (state == 0) {
-        if (func_8005DE68(this)) {
+        if (probeGroundAt(this)) {
             field_530 = (field_530 | 4) & ~0x100;
-            ((void (*)(void*, u32))func_8004BC94)(this, type);
+            ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     } else if (state == 1) {
-        if (func_8005E28C(this)) {
+        if (refineHitNorm(this)) {
             field_530 = (field_530 | 8) & ~0x100;
             if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() == 0 && isSpeedBelow(this) == 0) {
                 field_530 |= 0x200;
             }
-            ((void (*)(void*, u32))func_8004BC94)(this, type);
+            ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     }
     return false;
 }
 
-// Sets the +0x530 0x40 flag and notifies the linked region (func_8004BC94,
+// Sets the +0x530 0x40 flag and notifies the linked region (startAnimDual,
 // forwarded the passed type) when the actor is actionable and the current
 // +0x52C state matches the requested one. r4 = type forwarded to
-// func_8004BC94, r5 = requested state (0..3).
+// startAnimDual, r5 = requested state (0..3).
 bool cf::CActParamAnimGame::func_8005D84C(u32 type, u32 state) {
     if (field_530 & 0x1C0) return false;
     if (isSpeedAbove(this) != 0 || isSpeedInRange(this) != 0) {
         if (state == 0) {
             if (field_52C == 1 && (field_530 & 0x200) == 0) {
                 field_530 |= 0x40;
-                ((void (*)(void*, u32))func_8004BC94)(this, type);
+                ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 1) {
             if (field_52C == 2) {
                 field_530 |= 0x40;
-                ((void (*)(void*, u32))func_8004BC94)(this, type);
+                ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 2) {
             if (field_52C == 4) {
                 field_530 |= 0x40;
-                ((void (*)(void*, u32))func_8004BC94)(this, type);
+                ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 3) {
             if (field_52C == 3) {
                 field_530 |= 0x40;
-                ((void (*)(void*, u32))func_8004BC94)(this, type);
+                ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         }
@@ -1331,17 +1331,17 @@ bool cf::CActParamAnimGame::func_8005D84C(u32 type, u32 state) {
 }
 
 // State-0/1 gate: state 1 uses the facing-offset ground probe
-// (func_8005E7C4), state 0 the waiting probe (func_8005E60C); on success the
+// (snapActorDown), state 0 the waiting probe (func_8005E60C); on success the
 // matching 0x20/0x10 bit goes up and the 0x100 bit comes down.
 bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
     CActParamAnimGameViewBC14* view = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if (state == 1) {
-        if (func_8005E7C4(this)) {
+        if (snapActorDown(this)) {
             u16 flags = view->flags530;
             flags |= 0x20;
             flags &= ~0x100;
             view->flags530 = flags;
-            ((void (*)(void*, u32))func_8004BC94)(this, type);
+            ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     } else if (state == 0) {
@@ -1350,7 +1350,7 @@ bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
             flags |= 0x10;
             flags &= ~0x100;
             view->flags530 = flags;
-            ((void (*)(void*, u32))func_8004BC94)(this, type);
+            ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     }
@@ -1358,22 +1358,22 @@ bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
 }
 
 // Dash-start gate: needs the base 0x40 flag and the action-source probe
-// (func_8005E990), raises the 0x100 flag, zeroes the move vec, resets the
+// (probeWallPair), raises the 0x100 flag, zeroes the move vec, resets the
 // move-vec accumulator, requests mode 2, then notifies the region.
-bool cf::CActParamAnimGame::func_8005DA44(u32 type) {
+bool cf::CActParamAnimGame::dashStartGate(u32 type) {
     if (!(field_270 & 0x40)) return false;
-    if (func_8005E990(this) == false) return false;
+    if (probeWallPair(this) == false) return false;
     field_530 |= 0x100;
     field_3F0 = zero__Q22ml5CVec3;
     setAnimPosVec(this, &zero__Q22ml5CVec3);
     setAnimCount(this, 2);
-    ((void (*)(void*, u32))func_8004BC94)(this, type);
+    ((void (*)(void*, u32))startAnimDual)(this, type);
     return true;
 }
 
 bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
     if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 0x00040000) {
-        func_8004BC94(self);
+        startAnimDual(self);
         return true;
     }
     return false;
@@ -1382,10 +1382,10 @@ bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
 // Walks the game-manager linked list: for each node resolves its action
 // source via func_8016FE34 and compares scale * CActorParam_getDamageScale
 // against CActorParam_getHp; when
-// any source passes, notifies the region via func_8004BC94. The list head is
+// any source passes, notifies the region via startAnimDual. The list head is
 // re-fetched from the manager every iteration (retail reloads it at the loop
 // bottom).
-bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
+bool cf::CActParamAnimGame::scanActorList(u32 type) {
     CActParamAnimGameObj3A0* obj = (CActParamAnimGameObj3A0*)field_3A0;
     if (obj == 0) return false;
     if (*(u32*)obj->_00 != (u32)lbl_eu_80663E14) return false;
@@ -1406,7 +1406,7 @@ bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
         node = (CActParamAnimGameListNode*)node->next;
     }
     if (found) {
-        ((void (*)(void*, u32))func_8004BC94)(this, type);
+        ((void (*)(void*, u32))startAnimDual)(this, type);
         return true;
     }
     return false;
@@ -1416,20 +1416,20 @@ float cf::CActorParam::CActorParam_getDamageScale() { return *(float*)((u8*)this
 
 // Returns true (and notifies the linked region) when the +0x4F4 link is
 // active; otherwise falls back to the +0x4E8 link when +0x4F4 is null.
-// func_8004BC94 takes (self, type) in retail; the type slot (r4) is a
+// startAnimDual takes (self, type) in retail; the type slot (r4) is a
 // leftover register at these call sites. Declaring it as a (live) second
 // parameter keeps r4 busy as a call-arg register so the CSE'd link pointer
 // lands in r5 like retail (__wpadInfoCallback precedent).
 bool cf::CActParamAnimGame::func_8005DC30(u32 type) {
     CActParamAnimGameLink* link = field_4F4;
     if (link != 0 && link->active != 0) {
-        ((void (*)(void*, u32))func_8004BC94)(this, type);
+        ((void (*)(void*, u32))startAnimDual)(this, type);
         return true;
     }
     if (link == 0) {
         link = field_4E8;
         if (link != 0 && link->active != 0) {
-            ((void (*)(void*, u32))func_8004BC94)(this, type);
+            ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     }
@@ -1448,10 +1448,10 @@ bool isAlwaysFalse__Q22cf17CActParamAnimGame() { return false; }
 // The yaw is snapshotted into a local for the first sin/cos pair (keeps two
 // callee-saved FPRs live like retail); the second pair reads field_444
 // directly so MWCC reloads it fresh each time.
-void cf::CActParamAnimGame::func_8005DCA8() {
+void cf::CActParamAnimGame::snapFacingYaw() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     if (v->state374 != 2) {
-        func_8004FFBC();
+        solveHeadRate();
         return;
     }
     f32 ang = v->f444;
@@ -1506,11 +1506,11 @@ struct CActParamAnimGameHitRec {
     f32 t;   // +0x14
 };
 
-// Facing-dir ground-step probe (variant of func_8005E28C used while moving):
+// Facing-dir ground-step probe (variant of refineHitNorm used while moving):
 // lifts pos by (0,1,0), requires the facing dir to point along the movement
 // cone (dot >= lbl_8066605C), probes ahead, refines the yaw against the hit
 // normal, and records the ground point at +0x514.
-bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
+bool __declspec(noinline) probeGroundAt(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     ml::CVec3 vecUp;
     vecUp.x = lbl_eu_80666040;
@@ -1607,7 +1607,7 @@ bool __declspec(noinline) func_8005DE68(cf::CActParamAnimGame* selfV) {
 // facing dir, validates the landing point stays within radius of the actor,
 // then refines the facing vector against the hit normal and records the new
 // ground point at +0x514. Returns false when any probe misses.
-bool __declspec(noinline) func_8005E28C(cf::CActParamAnimGame* selfV) {
+bool __declspec(noinline) refineHitNorm(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     ml::CVec3 up(lbl_eu_80666040, lbl_eu_80666044, lbl_eu_80666040);
     ml::CVec3 start = self->pos3A8 + up;
@@ -1714,7 +1714,7 @@ extern "C" bool func_8005E60C(cf::CActParamAnimGame* selfV) {
 // Ground-probe variant for states 2-4: offsets the position along the facing
 // direction, probes down, and when a ground hit is found, records the ground
 // point, re-probes, and snaps the actor to it.
-extern "C" bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
+extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     ml::CVec3 vec;
     if ((u32)(self->state52C - 2) <= 2u) {
@@ -1760,7 +1760,7 @@ extern "C" bool func_8005E7C4(cf::CActParamAnimGame* selfV) {
 // refined ground point to +0x514/+0x518/+0x51C. Three sweeps share the same
 // ray shape (lifted anchor +/- facing dir): wall probes without the region
 // filter first, then the filtered probe whose contact pair must agree.
-bool __declspec(noinline) func_8005E990(cf::CActParamAnimGame* selfV) {
+bool __declspec(noinline) probeWallPair(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     // Copy the facing dir once; normalization below happens in place.
     ml::CVec3 dir = self->face3CC;
@@ -1864,7 +1864,7 @@ bool __declspec(noinline) func_8005E990(cf::CActParamAnimGame* selfV) {
 // Obstacle/facing update: adjusts the move vector against the linked
 // region's probe results and refines it via the two scan loops, then runs
 // the ground-follow / fallback logic. Returns a bool-ish status (r31).
-int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
+int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
     ml::CVec3 moveV(*move);
     ml::CVec3 v134(0.0f, 0.0f, 0.0f);
     int r31v = 0;
@@ -1879,7 +1879,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
                 v11c.y = 0.0f;
                 u16 saved = field_4E8->f6BE;
                 field_4E8->f6BE = 0x1f4;
-                func_804B1164(&field_4E8->f60C, &v128, &v11c, &v110);
+                ColiResolveNodeMove(&field_4E8->f60C, &v128, &v11c, &v110);
                 field_4E8->f6BE = saved;
                 if (v110.x != 0.0f || v110.z != 0.0f) {
                     v128.x += v110.x;
@@ -1915,7 +1915,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
                 }
             }
         }
-        if (func_804B1164(&field_4E8->f60C, &v134, pos, move)) {
+        if (ColiResolveNodeMove(&field_4E8->f60C, &v134, pos, move)) {
             if (v134.y > lbl_eu_8066606C) {
                 field_47C = pos->y + v134.y;
                 r31v = 1;
@@ -2288,7 +2288,7 @@ l60418:
 // this object's position, and when the delta is non-trivial, orients the
 // link toward the actor (CfObject_setMoveHeadAngle) with the heading from
 // Atan2FIdx.
-void cf::CActParamAnimGame::func_80060110() {
+void cf::CActParamAnimGame::aimAtActorPos() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     // Retail reloads the +0x4E8 link for every dispatch; keep the loads
     // independent so MWCC colors them like retail.
@@ -2325,7 +2325,7 @@ void cf::CActParamAnimGame::syncYawToLink() {
     region->CfObject_setMoveHeadAngle(value);
 }
 
-extern "C" bool func_80060290(void* r3) {
+extern "C" bool pushYawToLink(void* r3) {
     int r0 = *(int*)((char*)r3 + 0x270);
     int r4 = 0;
     if ((r0 & 0x800000) != 0) {

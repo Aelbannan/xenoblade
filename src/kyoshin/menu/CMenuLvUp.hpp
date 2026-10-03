@@ -212,7 +212,7 @@ CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene);
 MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
-int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
+int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
                   const nw4r::math::VEC3* c);
 void CCharVoiceMan_PlayLevelUpVoice(int id);
 void waitForDrawDone__9CDeviceVIFv();

@@ -89,13 +89,13 @@ extern s16 lbl_eu_80662D48[4]; // Voice IDs for field_0x24 < 3 phase
 // C-linkage imports from sibling voice TUs (retail symbol names - keep
 // linkage/signatures verbatim). Genuine retail C/ABI symbols.
 extern "C" {
-    int           func_802A3E88(CVS_THREAD* self);
-    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int           IsThreadVoiceActive(CVS_THREAD* self);
+    void          DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int           RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     void*         CCharVoiceMan_AllocVoiceArena(int size);
-    CVoiceHandle* func_802A7A54(int arg);
+    CVoiceHandle* HpVoice_FindBySubState(int arg);
     void*         func_8016FE34(void* r3);
     void          CfObjectMove_releaseVoiceHandle(void* voice);
 

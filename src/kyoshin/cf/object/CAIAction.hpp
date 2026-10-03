@@ -60,7 +60,7 @@ struct CAIActionTable {
     CAIActionTableEntry entries[1]; // 0x02 - variable
 };
 
-// Party object referenced by CAIAction::unkB14 (fields used by func_8015396C).
+// Party object referenced by CAIAction::unkB14 (fields used by aiInstallArts).
 struct CAIPartyInfo {
     u8 pad[0x3F00];
     u32 flags;  // 0x3F00 - bits 1/2 select the lookup id (0x70 / 0x65)
@@ -119,8 +119,8 @@ public:
 // same pattern as CHelp.hpp's lbl_eu_8053B3A0.
 extern cf::CAIActionVtbl lbl_eu_8052F598;
 
-// (The former C++-linkage forward decls of func_801537F0 / func_8014B120 /
-// func_8014AC38 were removed: they overloaded the extern "C" forms on
+// (The former C++-linkage forward decls of aiRebootAction / aiAppendToRing /
+// aiRingPrepend were removed: they overloaded the extern "C" forms on
 // CVision.hpp / chain/CChain.hpp (MWCC 10197) in every TU that includes
 // both headers. The definitions in CAIAction.cpp are marked extern "C"
 // directly; callers use the canonical extern "C" header decls.)
@@ -141,7 +141,7 @@ extern void clearAIActionTable();
 
 // .sbss object at 0x806641B0 - pointer to the AI action config table
 // (u16 entry count at +0, variable-length entries at +2). Walked by
-// func_8015396C; cleared by clearAIActionTable.
+// aiInstallArts; cleared by clearAIActionTable.
 extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* findObjectById(int);        // C++ linkage -> findObjectById__Fi
 
@@ -155,8 +155,8 @@ struct CAIPartyMoveObj {
     u32 moveFlags;            // +0x64 (abs 0x3F00; bits 1/2 select lookup id)
 };
 
-// Party/battle object stored in CAIAction::unkB14 (used by func_801537F0 /
-// func_80150618). Real class is CfObjectActor/CfObjectPc/CActorParam; state sub-object at +4 is CObjectState (slot 0x30 = CObjectState_getStateData).
+// Party/battle object stored in CAIAction::unkB14 (used by aiRebootAction /
+// aiTargetQuery). Real class is CfObjectActor/CfObjectPc/CActorParam; state sub-object at +4 is CObjectState (slot 0x30 = CObjectState_getStateData).
 struct CAIPartyObj {
     void* vtable;        // 0x00 (slot 0x5C0 used - real CfObjectActor_sharesMoveFlags)
     cf::CObjectState* unk04;   // 0x04 state sub-object (slot 0x30 = CObjectState_getStateData)
@@ -201,7 +201,7 @@ struct CAIChDataView {
     u16 field45C0;
 };
 
-// Battle manager singleton fields probed by func_8014CE78.
+// Battle manager singleton fields probed by aiJudgeAction.
 struct CBattleMgrAIView {
     u8 pad00[0x194];
     s32 field194;             // 0x194 turn/frame counter
@@ -209,8 +209,8 @@ struct CBattleMgrAIView {
     u32 field824;             // 0x824 flag bits (bit 0x20000)
 };
 
-// Imports used by func_8014CE78 (unmangled retail symbols).
-extern "C" long func_80174C98(void* p, void* out, u32 arg);
+// Imports used by aiJudgeAction (unmangled retail symbols).
+extern "C" long testActorStatus(void* p, void* out, u32 arg);
 extern "C" int canAIUseArts(void* party, u32 arg);
 extern "C" int lookupArtsParamById(void* artsSet, int idx);
 extern "C" int isPcEffectSlotActive(int idx);
@@ -244,7 +244,7 @@ struct CAIQueryTarget {
     u16 unk5C;                // 0x5C dispatch selector (1/2/3)
 };
 
-// 0x20-byte query struct passed to func_80150828 / func_80150618.
+// 0x20-byte query struct passed to func_80150828 / aiTargetQuery.
 struct CAIActionQuery {
     u32 unk00;                // 0x00
     u8 unk04;                 // 0x04
@@ -288,11 +288,11 @@ extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" void* func_80150828(cf::CAIAction*, CAIActionQuery*);
-extern "C" void* func_80150618(cf::CAIAction*, CAIActionQuery*);
+extern "C" void* aiTargetQuery(cf::CAIAction*, CAIActionQuery*);
 extern "C" int func_8014B8BC(void* a, void* b);
 extern "C" void* func_801522C4(cf::CAIAction*, const void*);
-extern "C" int func_8014CE78(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
-void func_8014B344(cf::CAIAction*, u32);
+extern "C" int aiJudgeAction(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
+void aiRingConsume(cf::CAIAction*, u32);
 
 // CfObjEnumList helper family (retail names unmangled -> extern "C").
 extern "C" void* CTaskGame_enumListGet(void*);
@@ -301,8 +301,8 @@ extern "C" void appendObjectById(void*, u32);
 extern "C" void* findFirstCleanObjectId(void*);
 extern "C" void* getObjectAt(void*, u32);
 extern "C" void* getEntryAt(void*, u32);
-extern "C" void func_800F6ED0(void*, void*);
-extern "C" void func_800F9AEC(void*);
+extern "C" void sortEntriesByDistance(void*, void*);
+extern "C" void resortByActorValue(void*);
 extern "C" void __ct__800FBF08(void*, u32, u32);
 extern "C" void __ct__800FC040(void*, u32, u32, u32);
 extern "C" void __ct__800FC19C(void*, u32, u32);

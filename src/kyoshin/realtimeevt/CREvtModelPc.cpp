@@ -53,9 +53,9 @@ extern "C" {
     // Task helpers
     extern int EvtSeqGetWalkIndex();
     extern int EvtSeqGetCounter100();
-    extern void func_8016BC1C(void* self);
-    extern int func_8016BDA8(void* self, void* pId);
-    extern void* func_8016C300(void* self);
+    extern void EvtSeqInsertRtEvent(void* self);
+    extern int EvtSeqProbeEvtSlot(void* self, void* pId);
+    extern void* EvtSeqCheckRunGate(void* self);
     extern void EvtSeqCheckEventRunGuard(void* self);
     extern int EvtSeqGetStateBit14();
     extern int EvtSeqGetStateBit12();
@@ -131,7 +131,7 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
         FLD(u32, s, 0x10) = ptmf[2];
     }
 
-    func_8016BC1C(self);
+    EvtSeqInsertRtEvent(self);
 
     u32* pParent = FLD(u32*, s, 0x1C);
     u32 field30 = pParent[0x30 / 4];
@@ -340,7 +340,7 @@ extern "C" void EvtModelPc_InitCounter(void* self) {
 
     FLD(s32, s, 0xB0) = -1;
 
-    int result = func_8016BDA8(self, s + 0xB0);
+    int result = EvtSeqProbeEvtSlot(self, s + 0xB0);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -405,7 +405,7 @@ extern "C" void func_80183C90(void* self) {
     // If the request is for character 3 or 8, check whether such a character
     // is already being loaded by another model object.
     if (decB == 3 || decB == 8) {
-        isNewFile = (func_8016C300(self) != 0) ? 1 : 0;
+        isNewFile = (EvtSeqCheckRunGate(self) != 0) ? 1 : 0;
         if (isNewFile == 0) {
             gameMgr = getGimmickListHead__Q22cf13CfGameManagerFv();
             objList = FLD(void*, gameMgr, 0x04);

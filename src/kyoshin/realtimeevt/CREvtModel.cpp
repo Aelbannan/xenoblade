@@ -17,7 +17,7 @@ extern void EvtObj_RunCallback(void* self);
 extern void* EvtObj_AllocBlock(u32 size);
 extern u32 Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
-extern void func_8016AF4C(void* data, const char* name, int* outValue);
+extern void EvtSeqResolveAnmChr(void* data, const char* name, int* outValue);
 extern void EvtSeqFindResFloat(void* data, const char* name, void* outValue);
 extern int  EvtSeqCheckRegionStatus(void* data);
 extern u32  REvtCam_GetFieldA5Flag(void);
@@ -227,8 +227,8 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     FLD(u32, model, 0x7A4) |= 0x20000000;
     FLD(s32, self, 0x2C) = 0;
     FLD(s32, self, 0x30) = 0;
-    { int tmp = 0; func_8016AF4C(newData, &lbl_eu_80503344[0], &tmp); FLD(s32, self, 0x2C) = tmp; }
-    { int tmp = 0; func_8016AF4C(newData, &lbl_eu_80503344[0x0B], &tmp); FLD(s32, self, 0x30) = tmp; }
+    { int tmp = 0; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0], &tmp); FLD(s32, self, 0x2C) = tmp; }
+    { int tmp = 0; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0x0B], &tmp); FLD(s32, self, 0x30) = tmp; }
     u32 check = REvtCam_IsField98Set();
     CREvtModel* obj2 = (CREvtModel*)self;
     if (check == 0) {
@@ -236,9 +236,9 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     } else {
         obj2->setVisible((FLD(s32, self, 0x2C) != 2) ? 1 : 0);
     }
-    int sv = 0; func_8016AF4C(newData, &lbl_eu_80503344[0x13], &sv);
+    int sv = 0; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0x13], &sv);
     if (sv >= 1) { func_80482B3C(model, 1); }
-    int sv2 = 1; func_8016AF4C(newData, &lbl_eu_80503344[0x1E], &sv2);
+    int sv2 = 1; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0x1E], &sv2);
     if (sv2 != 0) { FLD(u32, model, 0x7A0) |= 0x8; }
     else { FLD(u32, model, 0x7A0) &= ~0x8; }
     if (REvtCam_GetFieldA5Flag() == 0) { func_80172EA4(self, newData, model, 0); }
@@ -258,7 +258,7 @@ void func_80172CE4(void* self, void* model) {
     int stackVal = 0;
     float stackF1 = lbl_eu_80667774;
     float stackF0 = lbl_eu_80667778;
-    func_8016AF4C(FLD(void*, self, 0x24), &strBase[0x24], &stackVal);
+    EvtSeqResolveAnmChr(FLD(void*, self, 0x24), &strBase[0x24], &stackVal);
     if (stackVal > 0) {
         stackVal--;
         EvtSeqFindResFloat(FLD(void*, self, 0x24), &strBase[0x2C], &stackF1);

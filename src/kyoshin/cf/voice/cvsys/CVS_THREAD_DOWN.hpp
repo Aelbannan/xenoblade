@@ -72,10 +72,10 @@ struct CVS_THREAD_DOWN_raw {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-    int func_802A3E88(CVS_THREAD* self);
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int IsThreadVoiceActive(CVS_THREAD* self);
+    void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8* CCharVoiceMan_AllocVoiceArena(int size);
 }
 

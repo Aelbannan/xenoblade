@@ -14,7 +14,7 @@ public:
     /* 0x2C */ u8 mField2C;
 };
 
-// Struct filled by func_80198710 (likely CfPartyInfo)
+// Struct filled by InitRecord (likely CfPartyInfo)
 struct CfPartyInfo {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u32 field_04;
@@ -32,7 +32,7 @@ struct CfPartyInfo {
     /* 0x2E */ u8 field_2E;
 
     void SetField2D(u8 val);
-    void func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3);
+    void InitRecord(void* r4, float f1, int r5, int r6, float f2, float f3);
 };
 
 // Comparator key struct for CompareSortKey

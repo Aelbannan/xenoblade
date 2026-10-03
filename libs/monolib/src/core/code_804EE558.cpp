@@ -52,17 +52,17 @@ extern void initEffectDrawCtx(void* draw);
 extern int setupEffectDrawCtx(void* draw, void* desktop, void* material);
 extern void releaseEffectDrawTex(void* draw);
 extern void blitEffectViewRect(void* draw, int a, int b);
-extern void func_804DCA88(void* dst, void* src);
-extern void func_804DCD94(void* dst, void* src);
-extern void func_804DD440(void* dst, void* src, float f);
-extern void func_804DD4F8(void* mtx, float angle);
-extern void func_804DF164(void* a, int b, int c, void* d);
+extern void CERotEulerXYZ(void* dst, void* src);
+extern void CERotEulerZXY(void* dst, void* src);
+extern void CERotYMatrix(void* dst, void* src, float f);
+extern void CERotZMatrix(void* mtx, float angle);
+extern void SchedTexLoadCached(void* a, int b, int c, void* d);
 extern void DbgBindAnimPlayer(void* player, void* anim, u32 id);
-extern void func_804F2B20(void* player, void* anim);
-extern void func_804F2C04(void* player, void* mtx);
-extern void func_804F2DF0(void* player, void* vec);
-extern Mtx* func_804F42A0(u32 a, u32 b);
-extern void func_804F4628(u32 a, float w, float h);
+extern void attachAnim(void* player, void* anim);
+extern void getAnimRotMtx(void* player, void* mtx);
+extern void getAnimPos(void* player, void* vec);
+extern Mtx* getTexMtx(u32 a, u32 b);
+extern void pushProjMtx(u32 a, float w, float h);
 
 // Static per-vertex color table, initialized by sinit_804F01C8.
 extern float lbl_eu_80661748[30];
@@ -178,9 +178,9 @@ struct CAnimPlayerRef {
     void* mPlayer; // 0x8
 
     void init(void* anim, u32 id) { DbgBindAnimPlayer(this, anim, id); }
-    void update(void* anim) { func_804F2B20(this, anim); }
-    void getMtx(ml::CMat34* mtx) { func_804F2C04(this, mtx); }
-    void getPos(ml::CVec3* pos) { func_804F2DF0(this, pos); }
+    void update(void* anim) { attachAnim(this, anim); }
+    void getMtx(ml::CMat34* mtx) { getAnimRotMtx(this, mtx); }
+    void getPos(ml::CVec3* pos) { getAnimPos(this, pos); }
 };
 
 // The bind/track object itself (0x48 bytes).
@@ -281,10 +281,10 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
     case 11: {
         if (self->mFlag == 0) {
             void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
-            func_804DCD94(&self->mMtx, (u8*)obj + 0x118);
+            CERotEulerZXY(&self->mMtx, (u8*)obj + 0x118);
         } else {
             void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
-            func_804DD440(&self->mMtx, obj, *(float*)((u8*)obj + 0x11C));
+            CERotYMatrix(&self->mMtx, obj, *(float*)((u8*)obj + 0x11C));
         }
         break;
     }
@@ -293,7 +293,7 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
         if (obj == NULL) {
             break;
         }
-        func_804DCA88(&self->mMtx, obj->getMtx());
+        CERotEulerXYZ(&self->mMtx, obj->getMtx());
         break;
     }
     case 22: {
@@ -301,7 +301,7 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
         if (obj == NULL) {
             break;
         }
-        func_804DCA88(&self->mMtx, obj->getMtx());
+        CERotEulerXYZ(&self->mMtx, obj->getMtx());
         break;
     }
     case 26:
@@ -415,7 +415,7 @@ extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos,
                               const ml::CVec3& size, float angle) {
     Mtx rotMtx;
     if (angle != lbl_eu_8066B408) {
-        func_804DD4F8(rotMtx, angle);
+        CERotZMatrix(rotMtx, angle);
     }
 
     for (s16 i = 0; i < 10; i++) {
@@ -664,7 +664,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
 
     float h4628 = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
     float w4628 = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
-    func_804F4628(1, w4628, h4628);
+    pushProjMtx(1, w4628, h4628);
 
     Mtx ident;
     PSMTXIdentity(ident);
@@ -678,7 +678,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     if (flag < 0) {
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
-        Mtx* texMtx = func_804F42A0(1, 0);
+        Mtx* texMtx = getTexMtx(1, 0);
         GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
                           0x7D);
@@ -708,7 +708,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
         if (mtxSrc == NULL) {
             GXSetNumTexGens(2);
             GXSetNumTevStages(2);
-            Mtx* texMtx = func_804F42A0(1, 0);
+            Mtx* texMtx = getTexMtx(1, 0);
             GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
                               0x7D);
@@ -717,7 +717,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
         } else {
             GXSetNumTexGens(2);
             GXSetNumTevStages(2);
-            Mtx* texMtx = func_804F42A0(1, 0);
+            Mtx* texMtx = getTexMtx(1, 0);
             GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
                               0x7D);
@@ -792,7 +792,7 @@ extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* 
         } else {
             blitEffectViewRect(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
-                func_804DF164(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
+                SchedTexLoadCached(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
             func_804EECB0(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
                           vertRot);

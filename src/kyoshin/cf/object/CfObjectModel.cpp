@@ -165,7 +165,7 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
     flags = self->mFlags68;
         *(void**)self = (void*)lbl_eu_80529318;
         if (flags & 0x40000000) {
-            func_80186474(ArtsSelect_GetContainer(), self);
+            ArtsSelect_Remove(ArtsSelect_GetContainer(), self);
         }
         // Real virtual dispatch through the installed CfObject vtable
         // (slot +0x68 = CfObject_releaseMoveTargets, the Wave-39 alias for
@@ -431,11 +431,11 @@ void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 }
 
 // Collision/ground-query helpers used by UnkVirtualFunc25 below (retail ABI:
-// ScnRes_VertRayForward_E398 takes four GPR args plus two FP args; func_800A7094 takes a
+// ScnRes_VertRayForward_E398 takes four GPR args plus two FP args; VecMath_GroundProbeDown takes a
 // probe vector, result vector, filter word and two floats).
 // ScnRes_VertRayForward_E398/BE4B4/BE4E0 come from CActParamAnim.hpp (retail ABI: four
 // GPR args plus two FP args on the probe).
-extern "C" int func_800A7094(ml::CVec3* pos, ml::CVec3* out, int filter,
+extern "C" int VecMath_GroundProbeDown(ml::CVec3* pos, ml::CVec3* out, int filter,
                              float f, float g);
 
 // Base ground-snap entry point. Retail symbol is Fv (the base header declares
@@ -466,7 +466,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
     }
 
     if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) != 0) {
-        func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
+        VecMath_GroundProbeDown(pos, &probe, filter, scale, lbl_eu_80666A68);
 
         // Probe down from the hit point...
         int found = ScnRes_VertRayForward_E398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
@@ -490,7 +490,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
         // Same call shape with the selected filter (retail reuses the filter
         // word here: r5 is not reloaded on this path, so the else probe uses
         // the default 0x44a09, not a fresh 0x4a05 immediate).
-        func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
+        VecMath_GroundProbeDown(pos, &probe, filter, scale, lbl_eu_80666A68);
     }
     self->CfObject_setMoveTargetVec(&probe);
 }
@@ -1003,7 +1003,7 @@ extern "C" void CfObject_setPosXZ__Q22cf8CfObjectFv(cf::CfObject* self, float a,
 }
 
 void CfModel_UpdateBdat() {
-    func_80142428();
+    lookupExwpTag();
 }
 
 const char* CfModel_GetBdatString(u16 index) {

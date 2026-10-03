@@ -48,16 +48,16 @@ extern "C" {
 void __ct__800FB044(void* list, void* spot, u32 options, f32 threshold);
 void __ct__800FD250(void* list);
 void __ct__800FA9B4(void* list, void* obj, u32 options);
-void func_800F89DC(void* list);
+void sortEntriesByScreenX(void* list);
 void* getEntryAt(void* list, s32 index);
 void* getObjectIdAt(void* list, s32 index);
 void* findNextCleanObjectId(void* list, s32 index);
 void* findPrevCleanObjectId(void* list, s32 index);
-// func_80174C98 / findObjectById come from the kyoshin headers (CChainTimer.hpp
+// testActorStatus / findObjectById come from the kyoshin headers (CChainTimer.hpp
 // / CTalkWindow.hpp) already on the include chain.
-void func_800FB270(void* self, void* pos, u32 flags, f32 a, f32 b, f32 c);
-void func_800F49F8(void* dst, void* src);
-// func_800F6ED0 comes from CfObjectImplMove.hpp: (CfMoveEnumList*, u32).
+void rebuildByDistanceCone(void* self, void* pos, u32 flags, f32 a, f32 b, f32 c);
+void appendEnumEntries(void* dst, void* src);
+// sortEntriesByDistance comes from CfObjectImplMove.hpp: (CfMoveEnumList*, u32).
 }
 
 // Selector request worker (defined below); bare C-linkage name matches
@@ -626,7 +626,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
     __ct__800FA9B4(&self->mList, (void*)self->w3050, 1);
     if (self->w3044 == 0) {
         void* spot = ((SelPosDispatch*)self->w3054)->vAC();
-        func_800F6ED0(reinterpret_cast<CfMoveEnumList*>(&self->mList),
+        sortEntriesByDistance(reinterpret_cast<CfMoveEnumList*>(&self->mList),
                       spot);
         u32 got =
             (u32)findFirstCleanObjectId(reinterpret_cast<CfMoveEnumList*>(&self->mList));
@@ -636,7 +636,7 @@ extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
             self->w3068 |= 0x10;
         }
     } else {
-        func_800F89DC(&self->mList);
+        sortEntriesByScreenX(&self->mList);
         // Find the current result entry's index in the rebuilt list.
         u32 idx = 0;
         do {
@@ -842,7 +842,7 @@ struct SelMgrDispatch {
 };
 
 // Owner+0x04 sub-object: slot 0x30 returns a record whose first word is
-// probed by func_80174C98.
+// probed by testActorStatus.
 struct SelTok {
     u32 v;
 };
@@ -923,7 +923,7 @@ void func_800FE104(cf::CfObjectSelectorData* self) {
     {
         SelOwnerView* owner = reinterpret_cast<SelOwnerView*>(self->fieldC17C);
         u32 token = owner->mpSub4->s030()->v;
-        if (func_80174C98(reinterpret_cast<void*>(owner), &token, 3) == 0) {
+        if (testActorStatus(reinterpret_cast<void*>(owner), &token, 3) == 0) {
             goto l_ff100;
         }
     }
@@ -944,14 +944,14 @@ void func_800FE104(cf::CfObjectSelectorData* self) {
                         reinterpret_cast<u8*>(reinterpret_cast<SelOwnerView*>(self->fieldC17C)) + 0x3E9C)->vAC();
         f32 facing = reinterpret_cast<SelFacingDispatch*>(
                          reinterpret_cast<SelOwnerView*>(self->fieldC17C))->getFacing();
-        func_800FB270(self, pos, 0, lbl_eu_80661DB0, lbl_eu_80663F10, facing);
+        rebuildByDistanceCone(self, pos, 0, lbl_eu_80661DB0, lbl_eu_80663F10, facing);
         pos = reinterpret_cast<SelPosDispatch*>(
                   reinterpret_cast<u8*>(reinterpret_cast<SelOwnerView*>(self->fieldC17C)) + 0x3E9C)->vAC();
         __ct__800FB044(&self->mList2, pos, 0, lbl_eu_80661DB0);
-        func_800F49F8(self, &self->mList2);
+        appendEnumEntries(self, &self->mList2);
         pos = reinterpret_cast<SelPosDispatch*>(
                   reinterpret_cast<u8*>(reinterpret_cast<SelOwnerView*>(self->fieldC17C)) + 0x3E9C)->vAC();
-        func_800F6ED0(reinterpret_cast<CfMoveEnumList*>(self), pos);
+        sortEntriesByDistance(reinterpret_cast<CfMoveEnumList*>(self), pos);
 
         if (self->field620 == 0) goto l_ff090;
 

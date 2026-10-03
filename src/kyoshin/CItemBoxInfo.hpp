@@ -93,12 +93,12 @@ struct CItemBoxQuadColor {
     CItemBoxQuadColor(s16 _r, s16 _g, s16 _b, s16 _a) : r(_r), g(_g), b(_b), a(_a) {}
 };
 
-// 4 selection/vertex colours (0x20 bytes) built per-slot in func_801E2928.
+// 4 selection/vertex colours (0x20 bytes) built per-slot in renderItemBox2Kind2.
 struct CItemBoxQuad {
     CItemBoxQuadColor col[4];
 };
 
-// POD views without ctors: func_801D6394 builds its colour pair member-wise
+// POD views without ctors: renderItemBoxDetail builds its colour pair member-wise
 // at the use site (retail shows bare sth/stw sequences, no ctor calls).
 struct CItemBoxColorPOD {
     s16 r, g, b, a;
@@ -114,7 +114,7 @@ union CItemBoxSlotBytes {
     u8 bytes[6];
 };
 
-// 0x1C-byte per-slot comparison record built by func_801D5274: three s16
+// 0x1C-byte per-slot comparison record built by buildItemBoxSlotFlags: three s16
 // labels (read sign-extended by lha) plus a flat 22-byte flag region written
 // at i+0 / i+7 / i+14 (the three per-slot flag banks overlap at their
 // boundary bytes), copied out as one unit.
@@ -130,7 +130,7 @@ union CItemBoxSlotFlagsAny {
     u32 w[7];
 };
 
-// 0x34-byte per-slot comparison record built by func_801D4E2C / func_801E197C
+// 0x34-byte per-slot comparison record built by buildItemBoxCmpRecord / buildItemBox2CmpRecord
 // and copied out as one unit. The three flag banks at +0x1D/+0x24/+0x2B hold
 // per-slot {1,2,0} comparison results (candidate vs current item values); the
 // word0 float is the BlendFloatAvgScale result and word4 the name ratio.
@@ -152,7 +152,7 @@ struct CItemBoxCompRecord {
 };
 
 
-// 0xA4-byte item-name record written by func_801D5564 (copied out as one
+// 0xA4-byte item-name record written by buildItemBoxNameRec (copied out as one
 // unit): header word, count byte, label string pointer, 0x10-byte name
 // buffer, two state bytes, an equip-state colour and a 0x20-byte text buffer
 // used by the SJIS-aware width scan; the 0xA4 copy drags in the unused tail.
@@ -179,8 +179,8 @@ struct CItemBoxLabelTable {
     u32 tail[2];     // 0x14..0x1B
 };
 
-// 0xA4-byte item-name record written by func_801E20FC (ItemBox2 twin of
-// func_801D5564, copied out as one unit): unlike CItemBoxNameRecord the
+// 0xA4-byte item-name record written by buildItemBox2NameRec (ItemBox2 twin of
+// buildItemBoxNameRec, copied out as one unit): unlike CItemBoxNameRecord the
 // count byte sits at +0 (no u32 prefix), so str is at +4 and the name buffer
 // at +8. The two state bytes at +0x18/+0x19 and the equip colour at +0x1C
 // sit inside the tail of the name buffer (retail overwrites them after the
@@ -199,9 +199,9 @@ struct CItemBoxNameRecord2 {
     u8 _40[0x64];    // 0x40..0xA3
 };
 
-// 9-byte per-slot flag record written by func_801D5AA0 (u32 + u32 + u8);
+// 9-byte per-slot flag record written by buildItemBoxSelRec (u32 + u32 + u8);
 // bytes [1..8] are per-slot flags for slots 0..7 and byte [8] also selects
-// the item-box row-height label in func_801D77BC / func_801E2FEC. The type is
+// the item-box row-height label in refreshItemBoxSlotRows / refreshItemBox2SlotRows. The type is
 // padded to 16 bytes (retail stack slots step by 16); only 9 bytes are ever
 // copied/read.
 struct CItemBoxSlotFlagRecord {
@@ -212,7 +212,7 @@ struct CItemBoxSlotFlagRecord {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// Out-record built by func_801D59C0 / func_801E2558: {u8, ptr, u8, ptr}.
+// Out-record built by getItemBoxLabelRec / getItemBox2LabelRec: {u8, ptr, u8, ptr}.
 // The mixed-width field stores (stb/stw) plus one whole-struct copy reproduce
 // the retail four-word block copy into the caller's u32 out-buffer.
 struct CItemBoxLabelRec {
@@ -229,33 +229,33 @@ extern "C" char lbl_eu_8050634C[];
 extern "C" char lbl_eu_80506380[];extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" int Counter_TestBit(void*, u32);extern "C" u32 IdTable_SumValues(void*, u32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-extern "C" void* func_8009EC9C(u32);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
 extern "C" u16 BdatGetItemId(u32);
 extern "C" u32 BdatGetItemType(u32);
-extern "C" u32 func_801393CC(void*);
+extern "C" u32 LookupItemTypeTable(void*);
 extern "C" void clearItemBoxPairTexts(CItemBoxInfo*);
-extern "C" void func_801D85D8(CItemBoxInfo*);
-extern "C" void func_801D59C0(u32*, void*, void*);
+extern "C" void resetItemBoxRowPanes(CItemBoxInfo*);
+extern "C" void getItemBoxLabelRec(u32*, void*, void*);
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
 extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" char lbl_eu_8052E590[];
 extern "C" char lbl_eu_8052E568[];
-extern "C" void func_801D4C9C(CItemBoxInfo*);
-extern "C" void func_801D4D64(CItemBoxInfo*);
-extern "C" void func_801E17EC(CItemBoxInfo2*);
+extern "C" void openItemBoxPhase1(CItemBoxInfo*);
+extern "C" void closeItemBoxPhase1(CItemBoxInfo*);
+extern "C" void openItemBox2Phase1(CItemBoxInfo2*);
 extern "C" void clearItemBox2PairTexts(CItemBoxInfo2*);
-extern "C" void func_801E3B9C(CItemBoxInfo2*);
-extern "C" void func_801E2558(u32*, void*, void*);
+extern "C" void resetItemBox2RowPanes(CItemBoxInfo2*);
+extern "C" void getItemBox2LabelRec(u32*, void*, void*);
 extern "C" u32 getItemBoxCondStat2D(void*, void*);
 extern "C" u32 getItemBoxCondStat(void*, void*, u32);
-extern "C" u32 func_801DF610(void*, void*, u32, void*);
+extern "C" u32 getItemBoxEffect(void*, void*, u32, void*);
 extern "C" double lbl_eu_80668028;
 extern "C" void openItemBox2Phase2(CItemBoxInfo2*);
-extern "C" void func_801E18B4(CItemBoxInfo2*);
+extern "C" void closeItemBox2Phase1(CItemBoxInfo2*);
 extern "C" void closeItemBox2Phase2(CItemBoxInfo2*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
@@ -263,11 +263,11 @@ extern "C" void* lbl_eu_80534B28[];
 extern "C" void* lbl_eu_80534A90[];
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void copyVEC3(void*, const void*);
-// C-linkage position-set helper (retail-unmangled func_80137924; same
+// C-linkage position-set helper (retail-unmangled ScalePaneWorldPos; same
 // signature as CSysWin.hpp / CMenuPlayAward.hpp).
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 // More flat retail (unmangled) helpers used by the item-box renderers.
-extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void PaneMatSetTevColorsByName(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
@@ -275,8 +275,8 @@ extern "C" u32 func_801392C0();
 extern "C" int GetCollectedFlagByte(u8);
 extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
 extern "C" void clearItemBox2SlotTexts(CItemBoxInfo2*);
-extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
-extern "C" void func_801E27D0(u8*, void*, void*, void*);
+extern "C" void setupItemBox2Detail(CItemBoxInfo2*, u16, void*, u16, u32);
+extern "C" void buildItemBox2SlotRec(u8*, void*, void*, void*);
 // cf/CfGameManager.hpp (pulled in via harness_catalog) already declares the
 // singleton no-arg form of this import at global scope; MWCC rejects a second,
 // differently-prototyped extern "C" declaration as an illegal overload. Keep
@@ -286,22 +286,22 @@ namespace itemimplshim {
 extern "C" void* CItem_initItemImplInstances(void*);
 }
 #define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
-extern "C" void func_801D62F8(void*, u32, const void*);
-extern "C" void func_801D8930(CItemBoxInfo*);
+extern "C" void setItemBoxVtxColor(void*, u32, const void*);
+extern "C" void applyItemBoxSelColors(CItemBoxInfo*);
 // 9-byte flag-record builder: (out, unused, data) - param2 is never read in
 // retail (callers pass the item-box pointer through it).
-extern "C" void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data);
-extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
+extern "C" void buildItemBoxSelRec(CItemBoxInfo* out, void* unused, void* data);
+extern "C" void renderItemBox2SlotList(CItemBoxInfo2*, void*, void*);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void initItemBoxVecTable(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 isItemBoxType9Flagged(void*);
-extern "C" void func_801D6394(CItemBoxInfo*, u32, void*, u32);
-extern "C" void func_801D5DA4(CItemBoxInfo*, u16, void*, u16);
-extern "C" void func_801D79F8(CItemBoxInfo*, u16, void*, u32);
+extern "C" void renderItemBoxDetail(CItemBoxInfo*, u32, void*, u32);
+extern "C" void renderItemBoxKind2(CItemBoxInfo*, u16, void*, u16);
+extern "C" void renderItemBoxKind3(CItemBoxInfo*, u16, void*, u32);
 
-// 0xA8-byte detail record built by func_801D5564 for func_801D79F8; only the
+// 0xA8-byte detail record built by buildItemBoxNameRec for renderItemBoxKind3; only the
 // 0xA4-byte body (offset 4..0xA7) is copied out whole by the callers (retail
 // mtctr 8-byte-pair copy loop over 20 iterations).
 struct CItemBoxDetailBody {
@@ -318,7 +318,7 @@ struct CItemBoxDetailRec {
 };
 
 // Six per-slot equip s16 values staged from the lookup record inside the
-// func_801D79F8 slot loop ([0] = record+0x26 field, [1..5] = +0x1c..+0x24).
+// renderItemBoxKind3 slot loop ([0] = record+0x26 field, [1..5] = +0x1c..+0x24).
 union CItemBoxSlotVals {
     struct {
         s16 v26;
@@ -331,40 +331,40 @@ union CItemBoxSlotVals {
     s16 s[6];
 };
 
-// .sdata2 table-handle pair staged once before the func_801D79F8 slot loop.
+// .sdata2 table-handle pair staged once before the renderItemBoxKind3 slot loop.
 extern const u32 lbl_eu_80668030;
 extern const u16 lbl_eu_80668034;
-extern "C" void func_801D8058(CItemBoxInfo*, u32);
-extern "C" void func_801D77BC(CItemBoxInfo*, u16);
-extern "C" void func_801D8318(CItemBoxInfo*);
+extern "C" void renderItemBoxLabels(CItemBoxInfo*, u32);
+extern "C" void refreshItemBoxSlotRows(CItemBoxInfo*, u16);
+extern "C" void setupItemBoxSlotPanes(CItemBoxInfo*);
 extern "C" void clearItemBoxTripleRows(CItemBoxInfo*);
-extern "C" void func_801E1E0C(CItemBoxSlotFlags*, void*, void*);
+extern "C" void buildItemBox2SlotFlags(CItemBoxSlotFlags*, void*, void*);
 extern "C" void clearItemBoxQuadTexts(CItemBoxInfo*);
-extern "C" void func_801E2928(CItemBoxInfo2*, u16, void*, u16);
-extern "C" void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
-extern "C" void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
-extern "C" void func_801E3730(CItemBoxInfo2*, u32);
-extern "C" void func_801E2FEC(CItemBoxInfo2*, u16);
-extern "C" void func_801E3918(CItemBoxInfo2*);
+extern "C" void renderItemBox2Kind2(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void renderItemBox2Kind3(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void renderItemBox2Detail(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void renderItemBox2Labels(CItemBoxInfo2*, u32);
+extern "C" void refreshItemBox2SlotRows(CItemBoxInfo2*, u16);
+extern "C" void setupItemBox2SlotPanes(CItemBoxInfo2*);
 extern "C" void clearItemBox2TripleRows(CItemBoxInfo2*);
-extern "C" void func_801E3EB8(CItemBoxInfo2*);
+extern "C" void applyItemBox2SelColors(CItemBoxInfo2*);
 extern "C" void clearItemBox2QuadTexts(CItemBoxInfo2*);
-extern "C" void func_801D5C38(void*, void*, void*, void*);
+extern "C" void buildItemBoxSlotRec(void*, void*, void*, void*);
 extern "C" void clearItemBoxSlotTexts(CItemBoxInfo*);
-extern "C" void func_801D8C0C(CItemBoxInfo*);
-extern "C" void func_801E4194(CItemBoxInfo2*);
-extern "C" void func_801E14DC(CItemBoxInfo2*, u16, void*, u16, u32);
-extern "C" void func_801D80EC(CItemBoxInfo*, u16, void*);
-// Slot-selection table filled by func_801E2638: arr[0] is the selected-count
+extern "C" void stampItemBoxSlotTex(CItemBoxInfo*);
+extern "C" void stampItemBox2SlotTex(CItemBoxInfo2*);
+extern "C" void renderItemBox2ByKind(CItemBoxInfo2*, u16, void*, u16, u32);
+extern "C" void renderItemBoxSlotList(CItemBoxInfo*, u16, void*);
+// Slot-selection table filled by buildItemBox2SelTable: arr[0] is the selected-count
 // category flag, arr[1+i] the per-slot "selected" flag consumed by
-// func_801E2FEC; flag2 is the extra category-gate byte.
+// refreshItemBox2SlotRows; flag2 is the extra category-gate byte.
 struct CItemBoxSlotSelTable {
     u32 selWords[2];   // byte [0] = category flag, bytes [1..7] = per-slot flags
     u8 flag2;          // also selects the row-height label size (0x2c vs 0x2b)
 };
 
-// 0xA0-byte label record written by func_801E20FC and consumed by
-// func_801E3228 (CItemBoxNameRecord2 minus its unused 4-byte tail).
+// 0xA0-byte label record written by buildItemBox2NameRec and consumed by
+// renderItemBox2Kind3 (CItemBoxNameRecord2 minus its unused 4-byte tail).
 struct CItemBoxInfo2LabelRec {
     u32 count;       // 0x00
     char* str;       // 0x04 - pane text pointer for the fixed label
@@ -377,7 +377,7 @@ struct CItemBoxInfo2LabelRec {
     u8 _40[0x60];    // 0x40..0x9F
 };
 
-// Per-slot equip-value entry staged in func_801E3228: the table handle pair
+// Per-slot equip-value entry staged in renderItemBox2Kind3: the table handle pair
 // comes from two .sdata2 constants, the six s16 values from the slot's item
 // table record.
 struct CItemBoxSlotEntry {
@@ -388,13 +388,13 @@ struct CItemBoxSlotEntry {
 };
 
 // Hoisted table-handle pair (lbl_eu_80668064 / lbl_eu_80668068) staged once
-// before the per-slot loop in func_801E3228.
+// before the per-slot loop in renderItemBox2Kind3.
 struct CItemBoxTagStage {
     u32 tbl;
     u16 h;
 };
 
-// POD (ctor-less) 8-byte colours used by func_801E2FEC: the s16 view builds
+// POD (ctor-less) 8-byte colours used by refreshItemBox2SlotRows: the s16 view builds
 // the alpha-only defaults with individual halfword stores, the u32 view lets
 // the selected-item pair move as word loads/stores (retail stw/lwz shape).
 struct CItemBoxColorRaw {
@@ -410,22 +410,22 @@ union CItemBoxColorAny {
     CItemBoxColorRaw c;
     CItemBoxColorBlock w;
 };
-// .sdata2 table-handle pair staged by func_801E3228.
+// .sdata2 table-handle pair staged by renderItemBox2Kind3.
 extern const u32 lbl_eu_80668064;
 extern const u16 lbl_eu_80668068;
-// 0x10-byte POD vertex-colour quad built per-slot in func_801D79F8 from
-// info+0x9C..0xA8 and consumed pairwise by func_801D62F8.
+// 0x10-byte POD vertex-colour quad built per-slot in renderItemBoxKind3 from
+// info+0x9C..0xA8 and consumed pairwise by setItemBoxVtxColor.
 struct CItemBoxVertexColors {
     u32 w[4];
 };
 
 // Unmangled retail imports (plain symbol names in the retail binary).
-extern "C" void func_801E20FC(void*, void*, void*, void*);
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" char* func_801394D4(u32);
-extern "C" void func_801E2638(CItemBoxSlotSelTable*, CItemBoxInfo2*, void*);
+extern "C" void buildItemBox2NameRec(void*, void*, void*, void*);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" char* BuildItemNameStr(u32);
+extern "C" void buildItemBox2SelTable(CItemBoxSlotSelTable*, CItemBoxInfo2*, void*);
 extern "C" void* CItemBlock_getPtr20E8();
-extern "C" void func_80137F88(void*, u32);
+extern "C" void PaneSetTexPalette(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
@@ -435,22 +435,22 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // signature shapes verbatim so the mangled names line up).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 extern "C" char* CUICfManager_getPackedFont9C(void);
-extern "C" char* func_80138DA4(const char* msg);
+extern "C" char* GetBdatNameByNumId(const char* msg);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 
-extern "C" u32 func_80138E90(u16);
+extern "C" u32 MapSexFlagGroup(u16);
 extern u32 lbl_eu_80664098;
 
-// 8-byte GXColorS10 returned by value in r3:r4 from func_801397AC.
+// 8-byte GXColorS10 returned by value in r3:r4 from PaneMatGetS16Quad.
 struct CItemBoxGXColor {
     s16 r, g, b, a;
 };
 // Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
-extern "C" CItemBoxGXColor func_801397AC(void* obj, int index);
+extern "C" CItemBoxGXColor PaneMatGetS16Quad(void* obj, int index);
 
 
 // renderers): count byte, string pointer, per-slot text pointers, a 4-byte
@@ -468,7 +468,7 @@ struct CItemBoxSlotRecord {
 };
 
 // 0x2C-byte item-box slot record with per-slot pair counts (built by
-// func_801D5C38, copied out as one unit): count byte, string pointer,
+// buildItemBoxSlotRec, copied out as one unit): count byte, string pointer,
 // per-slot text pointers, per-slot byte values, a counter byte at 0x21, and
 // two u16 pair counts at 0x22.
 struct CItemBoxSlotRecord1 {

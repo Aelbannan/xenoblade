@@ -74,13 +74,13 @@ class CScn;
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 
 // This unit's own slot helpers (flat retail names; bodies live in the .cpp).
-extern "C" int func_801359AC(u8* singleton);
-extern "C" int func_8013042C(u8* base, u8 index);
-extern "C" void func_801311B8(u8* base);          // slot-rebuild helper (this unit)
-extern "C" void func_80131820(u8* base);          // slot re-sort helper (this unit)
-extern "C" void func_8012FFB4(u8* base);          // slot dispatch + rebuild (this unit)
+extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton);
+extern "C" int CUICfManager_claimFreeSlotByIndex(u8* base, u8 index);
+extern "C" void CUICfManager_sortSlotsByFlag(u8* base);          // slot-rebuild helper (this unit)
+extern "C" void CUICfManager_sortSlotList(u8* base);          // slot re-sort helper (this unit)
+extern "C" void CUICfManager_dispatchFreeSlot(u8* base);          // slot dispatch + rebuild (this unit)
 
-// --- flat imports for the free-menu helpers (func_8012FFB4 family) ---
+// --- flat imports for the free-menu helpers (CUICfManager_dispatchFreeSlot family) ---
 // Caller-shape CTaskGame imports (the full CTaskGame.hpp conflicts with this
 // TU's local flat decls for Scn_QueryUnk80State / lbl_eu_80663E14; declared with
 // the verbatim retail names per the CLibCri caller-shape scheme in CTaskGame.hpp).
@@ -100,7 +100,7 @@ extern "C" void UIWin_CreateB4790Win(u8* str, int flags);
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
 extern "C" void UIWin_CreateSysWin1(char* a, char* b, int c, int d);
-// Enum-list holder helpers for func_801359AC (defining TU: code_80043E08 TU).
+// Enum-list holder helpers for CUICfManager_checkMenuOpenGate (defining TU: code_80043E08 TU).
 // CTaskGame_enumListFill takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
 extern "C" u8* __ct__800FC32C(u8* list, int a, int b, int c);
@@ -133,7 +133,7 @@ struct CUICfSlotFlagView {
 };
 
 // Manager view offsetting the slot-flag array to +0x14C (avoids raw pointer
-// arithmetic at func_801359AC's flag==4 scan).
+// arithmetic at CUICfManager_checkMenuOpenGate's flag==4 scan).
 struct CUICfManagerSlotView {
     u8 pad[0x14C];
     CUICfSlotFlagView slots[8];  // +0x14C, 0x168 stride
@@ -160,14 +160,14 @@ struct CUICfSwapStr {
     char b[0x40];
 };
 
-// Player-wrapper view for func_801359AC's pose/state checks (CfObjectMove is
+// Player-wrapper view for CUICfManager_checkMenuOpenGate's pose/state checks (CfObjectMove is
 // at +0x3E9C inside the wrapper; +0x3F60 points at the battle object).
 struct CUICfPlayerView {
     u8 pad[0x3F60];
     u8* field_3F60;              // +0x3F60
 };
 
-// Battle-object view for func_801359AC's flag checks (+0x530 halfword bit 0,
+// Battle-object view for CUICfManager_checkMenuOpenGate's flag checks (+0x530 halfword bit 0,
 // +0x4EC word bits 1/8/15).
 struct CUICfObj3F60View {
     u8 pad[0x4EC];
@@ -186,7 +186,7 @@ struct CBattleListHead {
     CUICfListLink* head;         // +0x8
 };
 
-// Enum-list view for func_801359AC's population check (count at +0x620).
+// Enum-list view for CUICfManager_checkMenuOpenGate's population check (count at +0x620).
 struct CUICfEnumList620 {
     u8 pad[0x620];
     u32 count;                   // +0x620
@@ -226,7 +226,7 @@ struct CUICfInitBlock {
     u8 unk06[0x34 - 6];
 };
 
-// Full slot record used by the func_801311B8/func_80131820 swap helpers
+// Full slot record used by the CUICfManager_sortSlotsByFlag/CUICfManager_sortSlotList swap helpers
 // (same 0x168 layout as the init slots at base+i*0x168).
 struct CUICfSwapSlot {
     u8 field_0;                  // +0x00 flag
@@ -243,7 +243,7 @@ struct CUICfSwapSlot {
     CUICfSwapStr str126;         // +0x126
 }; // size 0x166
 
-// Dispatch view over one init-slot region for func_8012FFB4 (base =
+// Dispatch view over one init-slot region for CUICfManager_dispatchFreeSlot (base =
 // &mInitSlots[0].unk04). Flag/state bytes at +0/+1, block data at +4,
 // five u16 ids at +0xD8..+0xE0, u16 id at +0xE2, u8 state at +0xE4, and the
 // two sprintf buffers at +0xE6 / +0x126.
@@ -381,7 +381,7 @@ struct CUICfInitSlot {
     CUICfInitTail unkD8;
 }; // size = 0x168
 
-// Write view over one init-slot region for func_80130B74's slot fill
+// Write view over one init-slot region for CUICfManager_claimFreeSlotByIdState's slot fill
 // (flag byte at +0, u16 id at +0xE2, u8 state at +0xE4).
 struct CUICfSlotWriteView {
     u8 field_0x00;             // +0x00 slot flag (4 = in use)
@@ -390,7 +390,7 @@ struct CUICfSlotWriteView {
     u8 field_0xE4;             // +0xE4
 };
 
-// Write view over one init-slot region for func_80130960's 5-id claim
+// Write view over one init-slot region for CUICfManager_claimFreeSlotByIds's 5-id claim
 // (flag byte at +0, five u16 ids at +0xD8..+0xE0).
 struct CUICfSlotIdWriteView {
     u8 field_0x00;             // +0x00 slot flag (2 = claiming)
@@ -402,7 +402,7 @@ struct CUICfSlotIdWriteView {
     u16 field_E0;              // +0xE0
 };
 
-// Write view over one init-slot region for func_80130D80/func_80130F98's
+// Write view over one init-slot region for CUICfManager_claimFreeSlotFormatted/CUICfManager_claimFreeSlotByTwoIds's
 // sprintf fills (flag byte at +0, char buffer at +0xE6).
 struct CUICfSlotStrView {
     u8 field_0x00;             // +0x00 slot flag
@@ -410,7 +410,7 @@ struct CUICfSlotStrView {
     char str[0x80];            // +0xE6 sprintf target
 };
 
-// 0x168-stride slot write view for func_80130720's block-copy claim
+// 0x168-stride slot write view for CUICfManager_claimFreeSlotByCopy's block-copy claim
 // (flag byte at +0, four 0x34-byte blocks at +4/+0x38/+0x6C/+0xA0,
 // u32 at +0xD4).
 struct CUICfSlotCopyView {
@@ -423,7 +423,7 @@ struct CUICfSlotCopyView {
     u32 field_D4;                  // +0xD4
 };
 
-// Source-side view of the template arg for func_80130720's block copy.
+// Source-side view of the template arg for CUICfManager_claimFreeSlotByCopy's block copy.
 struct CUICfSrcCopyView {
     CUICfInitBlock block1;         // +0x00
     CUICfInitBlock block2;         // +0x34

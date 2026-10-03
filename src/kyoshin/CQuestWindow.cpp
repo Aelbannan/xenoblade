@@ -120,7 +120,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         char* fontStr = (char*)CUICfManager_getPackedFont9C();
         if (fontStr != 0) {
@@ -180,7 +180,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         setBdatEntry__5CBdatFUlPv(2, fileData);
         Bdat_GetTable_AA34();
         self->field_0xD0 =
-            (u32)getFP__FPCc(lbl_eu_8052CFF4[func_80138138(self->field_B8)]);
+            (u32)getFP__FPCc(lbl_eu_8052CFF4[SearchThresholdIdx(self->field_B8)]);
         func_801231C4(self);
         self->field_0x8C = 0;
         return true;
@@ -203,7 +203,7 @@ void CQuestWindow::cbRenderBefore() {
     // its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     if (field_0xC0 >= 0) {
         Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
@@ -436,7 +436,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     if (self->field_0xDC != 0) {
         f64 two52 = lbl_eu_80667160;
         for (int i = 1; i <= 8; i++) {
-            void* obj = func_8009EC9C((u16)i);
+            void* obj = CtrlObjectParam_GetCharEntry((u16)i);
             if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) != 0 ||
                 (i == 4 && CtrlObjectParam_GetCurrentRowKey() != 0)) {
                 char* p = (char*)obj + 0x3534;
@@ -457,7 +457,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
                 s32 result =
                     (s32)(val + ((val > lbl_eu_8066713C) ? lbl_eu_80667150
                                                           : lbl_eu_80667158));
-                func_800A21F8(obj, (u16)result, 0, 0);
+                CtrlObjectParam_ApplyArtsRankUp(obj, (u16)result, 0, 0);
             }
         }
     }
@@ -466,7 +466,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         UIWin_CreateItemMulti(self->field_0xD4, self->field_0xD6, self->field_0xD8,
                       0, 1, 1, 0, 1, 0);
     }
-    u8 r = BdatGetU8Direct(lbl_eu_80573D18[func_80138138(self->field_B8)],
+    u8 r = BdatGetU8Direct(lbl_eu_80573D18[SearchThresholdIdx(self->field_B8)],
                          &lbl_eu_804FEC84[0xa2], self->field_B8);
     if (r == 0 || r == 3) {
         incrementEventCounter__FUl(0xb4);
@@ -515,7 +515,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
 void func_801231C4(CQuestWindow* self) {
     if (self->field_0x94 == 0 || self->field_0xD0 == 0) return;
     u32 questId = self->field_B8;
-    u32 questRow = lbl_eu_80573D18[func_80138138(questId)];
+    u32 questRow = lbl_eu_80573D18[SearchThresholdIdx(questId)];
 
     self->field_0xDC =
         (BdatGetU16Direct((const void*)questRow, &base[0xb5], questId) & 0xFFFF) * 10;
@@ -565,7 +565,7 @@ void func_801231C4(CQuestWindow* self) {
     s = BdatGetPtrDirect((const void*)questRow, &base[0x15d], questId);
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x163], s, 0);
     u32 v172 = BdatGetU16Direct((const void*)questRow, &base[0x172], questId);
-    s = (char*)func_80138DA4(
+    s = (char*)GetBdatNameByNumId(
         BdatGetPtrDirect((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
     LayoutSetTextBoxFmtValue(self->mpLayout, &base[0x179], s, 0);
     s = BdatGetPtrDirect((const void*)self->field_0xD0, &base[0x182], questId);
@@ -768,7 +768,7 @@ void func_801231C4(CQuestWindow* self) {
                     sprintf(buf4, &base[0x2c0]);
                 }
                 u32 v30 = BdatGetU16Direct((const void*)questRow, buf4, questId);
-                u8 v27b = (u8)func_8013732C(
+                u8 v27b = (u8)BdatGetRankByName(
                     BdatGetU16Direct((const void*)questRow, &base[0x172], questId) & 0xFFFF);
                 if ((v30 & 0xFFFF) != 0) {
                     s32 v21 = (s32)(v27b & 0xFF) + 0x21;
@@ -846,7 +846,7 @@ extern "C" void enableAnimB(QuestWinObj* self) {
 // func_8012435C (us-80124e38): position the quest-window cursor over the
 // selected pane. Reads two pane names per cursor slot from the float tables
 // (their 4 bytes spell the name), resolves them via FindPaneByName, derives a
-// point with func_80137924 and moves the cursor there.
+// point with ScalePaneWorldPos and moves the cursor there.
 // ---------------------------------------------------------------------------
 __attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
     if (self->field_0xC0 < 0) return;
@@ -861,7 +861,7 @@ __attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
             nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->FindPaneByName(
                 &lbl_eu_804FEC84[0x2f7], true);
             nw4r::math::VEC3 pos;
-            func_80137924(&pos, p1, p2, self->mpLayout->GetRootPane());
+            ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
             reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
         } else {
             nw4r::lyt::Pane* p1 = self->mpLayout->GetRootPane()->FindPaneByName(
@@ -869,7 +869,7 @@ __attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
             nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->FindPaneByName(
                 &lbl_eu_804FEC84[0x2f7], true);
             nw4r::math::VEC3 pos;
-            func_80137924(&pos, p1, p2, self->mpLayout->GetRootPane());
+            ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
             reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
         }
     } else {
@@ -878,7 +878,7 @@ __attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
         nw4r::lyt::Pane* p2 = self->mpLayout->GetRootPane()->FindPaneByName(
             &lbl_eu_804FEC84[0x2f7], true);
         nw4r::math::VEC3 pos;
-        func_80137924(&pos, p1, p2, self->mpLayout->GetRootPane());
+        ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
         reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
     }
 }
@@ -943,7 +943,7 @@ void CQuestWindow::Init() {
     }
     field_0x8C = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
-        lbl_eu_8052CF80[func_80138138(field_B8)], evt, 0, 0);
+        lbl_eu_8052CF80[SearchThresholdIdx(field_B8)], evt, 0, 0);
     IWorkEvent* evt2 = (IWorkEvent*)this;
     if (this != 0) {
         evt2 = (IWorkEvent*)((u8*)this + 0x6c);

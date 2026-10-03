@@ -85,11 +85,11 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-80154880 | kyoshin/cf/CArtsSet | `getArtsParamRC2` | getArtsParamRC2 | 0x80154880 |
 | us-80154898 | kyoshin/cf/CArtsSet | `getArtsParamByIdx` | getArtsParamByIdx | 0x80154898 |
 | us-800d84ec | kyoshin/cf/CBattleManager | `applyBattleDamage__2cfFPQ22cf10CfObjectPcPQ22cf11CfObjectEne` | cf::func_800D7A04(...*, Q, 2, 2, char, float, 1, 0, C, float, O, bool, j, e, char, t, ...*, char, ...*, Q, 2, 2, char, float, 1, 1, C, float, O, bool, j, e, char, t, E, n, e) | 0x800D84EC |
-| us-800d8c90 | kyoshin/cf/CBattleManager | `func_800D81A8` | func_800D81A8 | 0x800D8C90 |
+| us-800d8c90 | kyoshin/cf/CBattleManager | `calcBattleDamage` | calcBattleDamage | 0x800D8C90 |
 | us-800d9460 | kyoshin/cf/CBattleManager | `__dt__30reslist<PQ22cf13CfObjectActor>Fv` | reslist<PQ22cf13CfObjectActor>::~reslist<PQ22cf13CfObjectActor>() | 0x800D9460 |
 | us-800d95cc | kyoshin/cf/CBattleManager | `__dt__29reslist<PQ22cf12IBattleEvent>Fv` | reslist<PQ22cf12IBattleEvent>::~reslist<PQ22cf12IBattleEvent>() | 0x800D95CC |
 | us-800d99d8 | kyoshin/cf/CBattleManager | `__dt__Q22cf14CBattleManagerFv` | cf::CBattleManager::~CBattleManager() | 0x800D99D8 |
-| us-800d9d00 | kyoshin/cf/CBattleManager | `func_800D9218__Q22cf14CBattleManagerFv` | cf::CBattleManager::func_800D9218() | 0x800D9D00 |
+| us-800d9d00 | kyoshin/cf/CBattleManager | `resetBattleState__Q22cf14CBattleManagerFv` | cf::CBattleManager::resetBattleState() | 0x800D9D00 |
 | us-800ead8c | kyoshin/cf/CBattleManager | `CBattleMan_SendActorEvent` | CBattleMan_SendActorEvent | 0x800EAD8C |
 | us-800f4440 | kyoshin/cf/CBattleManager | `CBattleMan_ClearActorStatus` | CBattleMan_ClearActorStatus | 0x800F4440 |
 | us-800f4754 | kyoshin/cf/CBattleManager | `CBattleMan_BumpUnk94Key` | CBattleMan_BumpUnk94Key | 0x800F4754 |
@@ -111,8 +111,8 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-801a9830 | kyoshin/cf/CVision | `clearVisionEffect` | clearVisionEffect | 0x801A9830 |
 | us-800ab8dc | kyoshin/cf/CfCollCylinderImpl | `func_800AB010` | func_800AB010 | 0x800AB8DC |
 | us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` | CfGimmick_SetGlobalB8Value | 0x8020ACBC |
-| us-80174c98 | kyoshin/cf/CfMapItemManager | `func_8017389C` | func_8017389C | 0x80174C98 |
-| us-80174ca0 | kyoshin/cf/CfMapItemManager | `func_801738A4` | func_801738A4 | 0x80174CA0 |
+| us-80174c98 | kyoshin/cf/CfMapItemManager | `getMapItemTable` | getMapItemTable | 0x80174C98 |
+| us-80174ca0 | kyoshin/cf/CfMapItemManager | `getValueItemTable` | getValueItemTable | 0x80174CA0 |
 | us-800ff17c | kyoshin/cf/CfObjectSelectorObj | `setFloatPair` | setFloatPair | 0x800FF17C |
 | us-800ff3f8 | kyoshin/cf/CfObjectSelectorObj | `testFlagBit10` | testFlagBit10 | 0x800FF3F8 |
 | us-800ff408 | kyoshin/cf/CfObjectSelectorObj | `setTargetFlag04` | setTargetFlag04 | 0x800FF408 |
@@ -223,8 +223,8 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-8044a644 | monolib/src/device/CDeviceSC | `isInitialized__9CDeviceSCFv` | CDeviceSC::isInitialized() | 0x8044A644 |
 | us-8044e88c | monolib/src/device/CGXCache | `getSubRectPtr__8CGXCacheFv` | CGXCache::func_8044BE1C() | 0x8044E88C |
 | us-8044e894 | monolib/src/device/CGXCache | `getAdjustFlag__8CGXCacheFv` | CGXCache::func_8044BE24() | 0x8044E894 |
-| us-804e1bb4 | monolib/src/effect/code_804DB938 | `func_804DD89C` | func_804DD89C | 0x804E1BB4 |
-| us-804e1be0 | monolib/src/effect/code_804DB938 | `func_804DD8C8` | func_804DD8C8 | 0x804E1BE0 |
+| us-804e1bb4 | monolib/src/effect/code_804DB938 | `CEVec3LerpPS` | CEVec3LerpPS | 0x804E1BB4 |
+| us-804e1be0 | monolib/src/effect/code_804DB938 | `CEVec4LerpPS` | CEVec4LerpPS | 0x804E1BE0 |
 | us-8045d408 | monolib/src/lib/CLib | `isInitialized__4CLibFv` | CLib::isInitialized() | 0x8045D408 |
 | us-8045f410 | monolib/src/lib/CLibCriMoviePlay | `func_8045B3E4__16CLibCriMoviePlayFv` | CLibCriMoviePlay::func_8045B3E4() | 0x8045F410 |
 | us-804617f0 | monolib/src/lib/CLibHbm | `isInitialized__7CLibHbmFv` | CLibHbm::isInitialized() | 0x804617F0 |

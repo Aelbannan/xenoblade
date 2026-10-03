@@ -16,7 +16,7 @@ struct CVS_THREAD_CHAIN_VtblView {
 // us-802a802c (chainVoiceClearIdleSlot)
 // If the thread reports no active voice, clear the voice handle slot.
 void chainVoiceClearIdleSlot(cf::CVS_THREAD_CHAIN* self) {
-    if (func_802A3E88(self) == 0) {
+    if (IsThreadVoiceActive(self) == 0) {
         self->field_0x20 = nullptr;
     }
 }
@@ -26,7 +26,7 @@ void chainVoiceClearIdleSlot(cf::CVS_THREAD_CHAIN* self) {
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
 void chainVoiceRemoveByPtr(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* embedded = (CCharVoice*)handle;
@@ -43,8 +43,8 @@ void chainVoiceRemoveByPtr(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
 // if busy), store the inverse-biased handle into the slot, re-bias to the
 // embedded CCharVoice and play the given voice ID.
 int chainVoicePlayById(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId) {
-    if (func_802A3E88(self) != 0) {
-        func_802A3E28(self);
+    if (IsThreadVoiceActive(self) != 0) {
+        StopThreadVoice(self);
     }
 
     // Convert CCharVoice* to the containing CVoiceHandle*.
@@ -59,7 +59,7 @@ int chainVoicePlayById(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voi
     if (handle != nullptr) {
         embedded = &handle->voice;
     }
-    return func_802A3C44(self, embedded, voiceId);
+    return TryRequestVoice(self, embedded, voiceId);
 }
 
 // us-802a8238 (chainVoiceActorTrigger)
@@ -71,14 +71,14 @@ int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
-    if (func_802A330C(0xA, 1) == nullptr) {
+    if (CCharVoiceMan_DispatchById(0xA, 1) == nullptr) {
         return 0;
     }
     CCharVoice* embedded = (CCharVoice*)self;
     if (self != nullptr) {
         embedded = &self->voice;
     }
-    func_802A3D54(embedded, ml::math::mtRand(2) + 0x321, 0xA);
+    RequestVoicePlayback(embedded, ml::math::mtRand(2) + 0x321, 0xA);
     return 0;
 }
 
@@ -87,7 +87,7 @@ int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
 cf::CVS_THREAD_CHAIN* __ct__802A5830() {
-    CVoiceHandle* handleBuf = func_802A330C(1, 0);
+    CVoiceHandle* handleBuf = CCharVoiceMan_DispatchById(1, 0);
     if (handleBuf == nullptr) {
         return nullptr;
     }
@@ -143,7 +143,7 @@ int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
     if (func_800BE8F4(&self->voice) == 0x12C) {
         return 0;
     }
-    if (func_802A330C(0x12C, 1) == nullptr) {
+    if (CCharVoiceMan_DispatchById(0x12C, 1) == nullptr) {
         return 0;
     }
     if (flag == 0) {
@@ -151,13 +151,13 @@ int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
         if (self != nullptr) {
             embedded = &self->voice;
         }
-        func_802A3D54(embedded, ml::math::mtRand(2) + 0x2BD, 0x12C);
+        RequestVoicePlayback(embedded, ml::math::mtRand(2) + 0x2BD, 0x12C);
     } else {
         CCharVoice* embedded = (CCharVoice*)self;
         if (self != nullptr) {
             embedded = &self->voice;
         }
-        func_802A3D54(embedded, 0x2BF, 0x12C);
+        RequestVoicePlayback(embedded, 0x2BF, 0x12C);
     }
     return 0;
 }

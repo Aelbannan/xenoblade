@@ -110,7 +110,7 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
 // it with hikariInitFreshRecord, copy the caller's 12-byte vector into +0x00..+0x08
 // and append it to the manager's record array.  Returns the record (or NULL
 // when the array is full).  Count compares signed (retail cmpwi).
-CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
+CfHikariItemRecord* hikariAddRecord(cf::CfHikariItemManager* self, const u32* src,
                                   u16 value) {
     if ((int)self->field_1198 >= 0x40) {
         return NULL;
@@ -202,9 +202,9 @@ void hikariSetEnableBit0(CfHikariItemRecord* self, u32 enable) {
 // projection + inverse position matrix, normalizes the two camera axes into
 // vec1/vec2, sets up a fixed TEV/channel/texgen state, then either updates
 // every live record (fade == 0) or runs the delta-update/removal path
-// (func_802B3810).  Finally it draws the record quads in four passes, one per
-// sbss counter (C18/C1C with func_802B3E04/3F20, C20 with func_802B403C,
-// C24 with func_802B44C8), each building its quad corners from the two
+// (hikariTickRecord).  Finally it draws the record quads in four passes, one per
+// sbss counter (C18/C1C with hikariEmitQuad0/3F20, C20 with hikariEmitSparkle,
+// C24 with hikariEmitGradQuad), each building its quad corners from the two
 // normalized axes scaled by the pass-specific constants.
 void cf::CfHikariItemManager::cbRenderBefore() {
     // Declaration order drives the stack slots (first declared = highest
@@ -325,7 +325,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         // Full update of every live record, then a pass over the pool slots
         // bumping the C24 counter for still-active entries.
         for (u32 i = 0; i < this->field_1198; i++) {
-            func_802B3CA0(this->records[i]);
+            hikariUpdateRecord(this->records[i]);
         }
         u32 slot = this->field_11A0;
         for (u32 iter = 0; iter < 0x80; iter++) {
@@ -345,7 +345,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         // Fade path: per-record update; records whose update returns nonzero
         // are deleted and the array tail shifted down.
         for (u32 i = 0; i < this->field_1198; i++) {
-            if (func_802B3810(this->records[i], fade) != 0) {
+            if (hikariTickRecord(this->records[i], fade) != 0) {
                 if (this->records[i] != NULL) {
                     __dt__802B37B4(this->records[i], 1);
                     this->records[i] = NULL;
@@ -400,7 +400,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C18 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
-            func_802B3E04(this->records[i], &corners);
+            hikariEmitQuad0(this->records[i], &corners);
         }
     }
     if (lbl_eu_80664C1C != 0) {
@@ -419,7 +419,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP3, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C1C * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
-            func_802B3F20(this->records[i], &corners);
+            hikariEmitQuad1(this->records[i], &corners);
         }
     }
 
@@ -432,7 +432,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C20 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
-            func_802B403C(this->records[i], &corners);
+            hikariEmitSparkle(this->records[i], &corners);
         }
     }
     if (lbl_eu_80664C24 != 0) {
@@ -457,7 +457,7 @@ void cf::CfHikariItemManager::cbRenderBefore() {
             }
             u32 bit = 1u << (slot & 0x1F);
             if (((u32*)&this->unk1104[0])[slot >> 5] & bit) {
-                func_802B44C8((CfHikariItemRecord*)&this->unk104[slot * 0x20],
+                hikariEmitGradQuad((CfHikariItemRecord*)&this->unk104[slot * 0x20],
                               &corners);
             }
             slot++;
@@ -481,7 +481,7 @@ static inline f32 hikariS32ToF32(Convert64& c, s32 v) {
 // record pool (bitfield at +0x1104, 0x20-byte entries at +0x104), bail if it
 // is already active, else perturb the spawn position by scaled random offsets
 // (each component gets its own random draw) and init the entry via hikariInitRandomEntry.
-extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
+extern "C" void hikariSpawnSlot(cf::CfHikariItemManager* self, const f32* src,
                               s16 val, f32 scaleX, f32 scaleY) {
     // Signed count so MWCC emits the retail srawi/clrlwi/slwi bit-math run.
     // The slot address is recomputed from memory at the call site (retail
@@ -596,7 +596,7 @@ extern "C" void hikariInitRecordTimers(CfHikariItemRecord* self) {
 // when the 0x80 flag is clear, advances the 0x18 accumulator and spawns
 // sparkle offsets, then refreshes the 0x38/0x3C colours through the
 // 0x10/0x20 flag pair.  Returns 0 while the record stays alive.
-extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
+extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
     u32 flags = self->field_42;
     CfHikariItemRecord* rec = self;
     s32 ret = 1;
@@ -609,7 +609,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
         if (rec->field_1C == lbl_eu_80668EF8) {
             for (int i = 0; i < 8; i++) {
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
-                func_802B3568(mgr, (const f32*)rec, rec->field_40,
+                hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
         }
@@ -622,7 +622,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
             if (rec->field_14 < lbl_eu_80668F0C) {
                 rec->field_14 = lbl_eu_80668EF8;
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
-                func_802B3568(mgr, (const f32*)rec, rec->field_40,
+                hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
                               lbl_eu_80668EFC, lbl_eu_80668F00);
             }
         }
@@ -640,21 +640,21 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
             // colours from the moving progress values.
             rec->field_0C += delta;
             rec->field_10 += delta;
-            rec->field_30 = func_802B41E4(
+            rec->field_30 = hikariGradColor(
                 &rec->field_0C,
                 (const f32*)&g[4 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            rec->field_34 = func_802B41E4(
+            rec->field_34 = hikariGradColor(
                 &rec->field_10,
                 (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
             rec->field_42 |= 0x100;
         } else if (!(flags & 0x100)) {
-            rec->field_30 = func_802B41E4(
+            rec->field_30 = hikariGradColor(
                 &rec->field_0C,
                 (const f32*)&g[4 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
-            rec->field_34 = func_802B41E4(
+            rec->field_34 = hikariGradColor(
                 &rec->field_10,
                 (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
                 lbl_eu_80513588, 2);
@@ -694,7 +694,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
                 if (rec->field_14 >= lbl_eu_80668F04) {
                     rec->field_14 = lbl_eu_80668EF8;
                     cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
-                    func_802B3568(mgr, (const f32*)rec, rec->field_40,
+                    hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
                                   lbl_eu_80668F34, lbl_eu_80668F0C);
                 }
             }
@@ -707,7 +707,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
         if (rec->field_42 & (0x10 << i)) {
             ret = 0;
             *fp += delta;
-            rec->colors[2 + i] = func_802B41E4(
+            rec->colors[2 + i] = hikariGradColor(
                 fp, (const f32*)&g[0x24 + (s16)rec->field_40 * 8],
                 lbl_eu_80513598, 2);
             if (*fp == lbl_eu_80668EF8) {
@@ -727,7 +727,7 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
 // flag is clear, then re-derives the 0x38/0x3C colors through the 0x10/0x20
 // flag pair.  r30 mirrors the 0x80 flag (0 when set, 1 when clear) - it gates
 // the sbss counters and the 0x3/0x4<<i flag bits.
-extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
+extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
     // Hoisted base pointers mirror the retail prologue (lis/addi up front).
     u32* g = lbl_eu_80577680;
     u16 flags = self->field_42;
@@ -736,11 +736,11 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
 
     if (!(flags & 0x40)) {
         if (!(flags & 0x100)) {
-            self->field_30 = func_802B41E4(
+            self->field_30 = hikariGradColor(
                 &self->field_0C,
                 (const f32*)&g[4 + (s16)self->field_40 * 8],
                 lbl_eu_80513588, 2);
-            self->field_34 = func_802B41E4(
+            self->field_34 = hikariGradColor(
                 &self->field_10,
                 (const f32*)&g[0x14 + (s16)self->field_40 * 8],
                 lbl_eu_80513588, 2);
@@ -758,7 +758,7 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
     const f32* rows = (const f32*)&g[0x24];
     for (int i = 0; i < 2; i++) {
         if (self->field_42 & (0x10 << i)) {
-            self->colors[2 + i] = func_802B41E4(
+            self->colors[2 + i] = hikariGradColor(
                 src,
                 rows + (s16)self->field_40 * 8,
                 lbl_eu_80513598, 2);
@@ -775,9 +775,9 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
 // (us-802b6874): emit a Hikari quad through the GX FIFO - four
 // vertices at self.pos + corner offset, with the 0x30 color word and the
 // (1,0)/(1,1)/(0,1)/(0,0) byte pair.  Runs only while flag bit 0 is set.
-// Per-vertex sums go into named locals first (same shape as func_802B3F20)
+// Per-vertex sums go into named locals first (same shape as hikariEmitQuad1)
 // so the volatile FIFO stores don't perturb the load/fadd schedule.
-extern "C" void func_802B3E04(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
+extern "C" void hikariEmitQuad0(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
     if ((self->field_42 & 1) == 0) {
         return;
     }
@@ -823,9 +823,9 @@ extern "C" void func_802B3E04(CfHikariItemRecord* self, const CfHikariQuadCorner
     WGPIPE.uc = 0;
 }
 
-// (us-802b6990): same quad emitter as func_802B3E04 but gated by
+// (us-802b6990): same quad emitter as hikariEmitQuad0 but gated by
 // flag bit 1 and using the 0x34 color word.
-extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
+extern "C" void hikariEmitQuad1(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
     if ((self->field_42 & 2) == 0) {
         return;
     }
@@ -878,7 +878,7 @@ extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorner
 // paired-single ops on stacked VEC3s), then emits one quad stretched
 // upward: bottom vertices get the +0x28/+0x2C brightness added to y, top
 // vertices the -0.3 constant.
-extern "C" void func_802B403C(CfHikariItemRecord* self,
+extern "C" void hikariEmitSparkle(CfHikariItemRecord* self,
                               const CfHikariQuadCorners* corners) {
     if ((self->field_42 & 0xC) == 0) {
         return;
@@ -949,7 +949,7 @@ extern "C" void func_802B403C(CfHikariItemRecord* self,
 // while the weight lookup re-indexes from the base (lfsx) - keep both forms.
 // noinline: retail always calls this (never inlines it into the quad
 // emitters); leaving it inlineable perturbs the callers' register allocation.
-extern "C" __declspec(noinline) u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int count) {
+extern "C" __declspec(noinline) u32 hikariGradColor(f32* self, const f32* rows, const f32* table, int count) {
     f32 out[4];
     // End-pointer threshold check (retail add/lfs -4(r7)).
     const f32* end = table + count;
@@ -989,7 +989,7 @@ extern "C" __declspec(noinline) u32 func_802B41E4(f32* self, const f32* rows, co
 // for the +0x10 axis) with a zeroed +0x18 accumulator.  Field 0x14 is written
 // before 0x18 so MWCC schedules the last mtRand call ahead of the zero store
 // (retail order: call, conversion, 0x18 store, 0x14 store).
-// noinline: retail calls this (bl from func_802B3568 / func_802B3810); leaving
+// noinline: retail calls this (bl from hikariSpawnSlot / hikariTickRecord); leaving
 // it inlineable makes MWCC absorb it into the spawn caller.
 extern "C" __declspec(noinline) void hikariInitRandomEntry(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale) {
     self->field_1C_h[0] = 0;
@@ -1029,9 +1029,9 @@ extern "C" __declspec(noinline) s32 hikariUpdateSlotRecord(CfHikariItemRecord* s
 // (us-802b6f38): gradient-driven quad emitter.  Derives a scale from
 // the +0x18 progress value against the table thresholds, scales each corner
 // offset by it, then pushes four vertices (pos + scaled corner) with the
-// func_802B41E4 colour and the (1,0)/(1,1)/(0,1)/(0,0) byte pair.
-extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
-    u32 color = func_802B41E4(
+// hikariGradColor colour and the (1,0)/(1,1)/(0,1)/(0,0) byte pair.
+extern "C" void hikariEmitGradQuad(CfHikariItemRecord* self, const CfHikariQuadCorners* corners) {
+    u32 color = hikariGradColor(
         &self->field_18,
         (const f32*)&lbl_eu_80577750[(s16)self->field_1C_h[1] * 8],
         lbl_eu_805135A8, 2);
@@ -1103,7 +1103,7 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
 }
 
 // (us-802b7150): static-init the .bss gradient table.  Four
-// 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (func_802B3CA0
+// 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (hikariUpdateRecord
 // reads the first three rows indexed by field_40).  Constants are read
 // directly from sdata2 so MWCC CSEs one lfs per value up-front and colours
 // them exactly like retail (f27-f31 for {F70,F74,F78,F7C,F80}, volatiles

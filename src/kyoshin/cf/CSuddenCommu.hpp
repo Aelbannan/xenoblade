@@ -28,7 +28,7 @@ namespace cf{
         /* 0x0A */ s16 field_A;
         /* 0x0C */ s16 field_C;
         /* 0x0E */ s16 field_E;
-        /* 0x10 */ volatile u32 field_10; // voice id probed via func_802A3748
+        /* 0x10 */ volatile u32 field_10; // voice id probed via CCharVoiceMan_IsNodeActive
         /* 0x14 */ u32 field_14;
         /* 0x18 */ volatile float field_18;
         /* 0x1C */ float field_1C;
@@ -55,7 +55,7 @@ struct CSuddenCommuVoiceAct {
 };
 
 // Sub-object at actor+0x04: virtual slot 0x30 returns the object-list head
-// (its first word is read as u32 and handed to func_80174C98).
+// (its first word is read as u32 and handed to testActorStatus).
 // Abstract - cast-only, never constructed.
 struct CSuddenCommuSub4 {
     virtual void v00() = 0; virtual void v01() = 0; virtual void v02() = 0; virtual void v03() = 0;
@@ -191,7 +191,7 @@ extern "C" {
     void func_801BC6A4(cf::CSuddenCommu* self, int val, int num);
     // Imported voice-node lookup (defined in voice/CCharVoiceMan.cpp): returns
     // 0 when no voice node is registered for the given voice id.
-    int func_802A3748(u32 arg);
+    int CCharVoiceMan_IsNodeActive(u32 arg);
     // Same-TU siblings (defined in CSuddenCommu.cpp; C linkage so the call
     // relocs and definitions keep the unmangled retail names).
     int SuddenCommuCanStart(cf::CSuddenCommu* self);
@@ -202,13 +202,13 @@ extern "C" {
     void SuddenCommuResetPairingState(cf::CSuddenCommu* self);
     // Voice-manager imports (defined in voice/CCharVoiceMan.cpp): retire/next
     // voice id. C linkage keeps the call relocs at the unmangled retail names.
-    void func_802A35B8(u32 arg);
+    void CCharVoiceMan_PlayNodeById(u32 arg);
     int CCharVoiceMan_AllocCommuVoiceId();
     // Battle-voice dispatch (defined in voice/CCharVoiceMan.cpp): run the
     // voice node for `voiceId` with the target spot and the commu's result id.
     // Signature matches CChain.hpp (int/CChainBattleObjTail*/int) so both
     // headers can be included in one TU without a rename guard.
-    int func_802A3680(int a, CChainBattleObjTail* b, int c);
+    int CCharVoiceMan_ForwardNodeCall(int a, CChainBattleObjTail* b, int c);
     // Battle-manager singleton: declared once in
     // kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
@@ -229,7 +229,7 @@ extern void* lbl_eu_805339C0[];
 // here because CChainTime.hpp's decl conflicts with the current CChainEffect
 // return type in this TU).
 namespace cf { class CBattleManager; }
-extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
+extern "C" void refreshBattleActors(cf::CBattleManager*, f32, int);
 
 // Effect-linkage allocator (CTaskGameEff.cpp owner).
 extern "C" void* bindIndexedEffect(u32 cls, int param);
@@ -261,10 +261,10 @@ extern "C" {
     int func_80260264(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
     void CBattleMan_FireActorEvent918(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
-    float func_800D81A8(void* obj, void* target, void* source);
+    float calcBattleDamage(void* obj, void* target, void* source);
     void PartyGaugeAddClamped(void* obj, int value);
     // Voice/battle-manager helpers.
-    void func_80280BF0();
+    void SysWinLog_TickCounter5A();
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
     // CfGameManager gate used by the commu re-arm (retail pre-mangled name;
     // the class member is declared in CfGameManager.hpp, this is the bare

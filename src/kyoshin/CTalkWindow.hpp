@@ -177,7 +177,7 @@ struct CTalkActorId {
 };
 
 // CTagProcessor field view for Init's early-init switch: vtable+0x14 is the
-// message-setup call (retail word: func_80125B58, same (src, a, b, c) arity
+// message-setup call (retail word: TagProcPreprocessMessage, same (src, a, b, c) arity
 // as its free-function signature), +0x814..+0x81C the mode/flag/message
 // fields. Deriving from the real nw4r base puts Proc at 0x14 with no filler.
 class CTalkWinTagProc : public nw4r::ut::TagProcessorBase<wchar_t> {
@@ -237,7 +237,7 @@ public:
 };
 
 // getFontInfo(1, layout) result view: vtable+0x24 returns the font handle
-// handed to func_8013676C.
+// handed to ApplyFontToTxtPanes.
 class CTalkFontObj {
 public:
     virtual ~CTalkFontObj();           // 0x00 (dtor at 0x08)
@@ -261,7 +261,7 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-void func_80136400(const char* src, u16* dst, u32 destLen);
+void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 int IsMenuState621F0();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
@@ -278,7 +278,7 @@ int getAnimModelId(CTalkWinTalkC4* talkC4);
 void func_8004B9D4(CTalkWinTalkC4* talkC4, int a, int b, int c, int d);
 int TagProcPumpMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
-int func_8012615C(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
+int TagProcStepMessage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
@@ -288,13 +288,13 @@ void UIWin_CreateShopWin(u16 id);
 void UIWin_CreateBEDE0Win(u16 id);
 void CUICfManager_queueMakeCrystalMenu();
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-char* func_80138DA4(const char* msg);
+char* GetBdatNameByNumId(const char* msg);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout* layout, const char* name, const char* text,
                    u32 flag);
 void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
-void func_80127764(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
+void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
-void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
+void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
 u32 getAllocHandle__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
@@ -311,7 +311,7 @@ void func_8049B59C(nw4r::math::VEC3* out, CTalkWinPose* pose,
 }
 
 // C++-linkage imports (retail emits the mangled forms).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 void* findObjectById(int id);

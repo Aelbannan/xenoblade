@@ -46,7 +46,7 @@ extern "C" int Sched_RebuildHandles(CSchedule* self) {
         if (entry->flags == 0 || entry->flags >= 0xFFFF) {
             return 0;
         }
-        s16 handle = func_804DFA84(self->mEntries, entry, self);
+        s16 handle = SchedItem_ClaimFree(self->mEntries, entry, self);
         if (handle < 0) {
             return 0;
         }

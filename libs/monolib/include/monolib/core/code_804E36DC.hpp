@@ -30,14 +30,14 @@ extern "C" f32 Scn_GetFrameDelta(void* view);
 extern "C" void* Scn_FindCamItem(void* view, s32 idx);
 
 // Effect system helpers (monolib/src/core/code_804DEDA8, effect TUs)
-extern "C" void func_804DCA88(void* mtx, const void* params);
+extern "C" void CERotEulerXYZ(void* mtx, const void* params);
 extern "C" void* SchedItem_FetchByHandle(s16 handle);   // item pool lookup
 extern "C" void SchedFx_ReleaseHandle(s16 handle);    // release object handle
 extern "C" CEffectObj* SchedFx_FetchByHandle(s16 handle); // object pool lookup
-extern "C" s16 func_804DFCC4(ScheduleEntry* entries, CItemEntry* entry,
+extern "C" s16 SchedFx_ClaimConstruct(ScheduleEntry* entries, CItemEntry* entry,
                              CSchedule* sched, s32 slotVal, u32 index);
 extern "C" void* func_804CB5FC(CEffectObj* obj);
-extern "C" void func_804DF808(CSchedule* sched, void* arg, CEffectObj* obj, f32 delta);
+extern "C" void SchedElem_ClaimNode(CSchedule* sched, void* arg, CEffectObj* obj, f32 delta);
 extern "C" void func_804C8D90(CEffectObj* obj, f32 delta);
 extern "C" void EffSys_AdvanceChain(CEffectObj* obj);
 extern "C" void func_804C9D30(CEffectObj* obj);

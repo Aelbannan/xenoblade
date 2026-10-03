@@ -11,7 +11,7 @@ class CScn;
 
 // Mirror of the font object returned by CDeviceFont::getFontInfo. vtable
 // slot 0x24 (index 9) yields the u32 bound into the layout's font pane via
-// func_8013676C. Never instantiated, so no vtable is emitted; a genuine
+// ApplyFontToTxtPanes. Never instantiated, so no vtable is emitted; a genuine
 // virtual call makes MWCC emit retail's r12 dispatch sequence
 // (CSimpleFontObj / CMenuPTGaugeFont scheme).
 class CMenuQstCntFont {
@@ -119,9 +119,9 @@ extern "C" int MenuTutorialIsCreated();
 extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int SysWinGetSingleton();
 extern "C" int isQuestLogMenuActive();
-extern "C" char* func_801394D4(u16);
-extern "C" u16 func_801380A0(u16);
-extern "C" u32 func_80138138(u16);
+extern "C" char* BuildItemNameStr(u16);
+extern "C" u16 GetU16PairEntry(u16);
+extern "C" u32 SearchThresholdIdx(u16);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" u32 __ptmf_null[];

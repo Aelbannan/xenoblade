@@ -114,7 +114,7 @@ extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d,
 extern "C" void func_804BE4B4(void* out, int a);
 u16 CfGimmick_PlaySoundAtPos(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
-void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
+void InitRecord(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
 int CPartsChange_ProcessPartyInfo(WarpVec3*, WarpVec3*);
 void movePcResetAndSetPos(u8*, const WarpVec3*);
 // getCameraDataBlock__Q22cf13CfGameManagerFv: declared (UnkClass_800821F8*
@@ -324,7 +324,7 @@ extern "C" void func_8020D998(WarpData* self) {
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
                 u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
-                if (func_80174C98(player, &value, 0x803) != 0) {
+                if (testActorStatus(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
                     if (!tail->CObjectState_checkStateFlags(0x200)) {
                         tail->CObjectState_setStateBitMask(0x200);
@@ -404,7 +404,7 @@ extern "C" void func_8020D998(WarpData* self) {
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
                 u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
-                if (func_80174C98(player, &value, 0x803) != 0) {
+                if (testActorStatus(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
                     if (!tail->CObjectState_checkStateFlags(0x200)) {
                         tail->CObjectState_setStateBitMask(0x200);
@@ -517,7 +517,7 @@ extern "C" void func_8020DF04(WarpData* self) {
     if (player != 0) {
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
         u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
-        if (func_80174C98(player, &value, 0x803) != 0) {
+        if (testActorStatus(player, &value, 0x803) != 0) {
             cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
             if (!tail->CObjectState_checkStateFlags(0x200)) {
                 tail->CObjectState_setStateBitMask(0x200);
@@ -626,9 +626,9 @@ extern "C" void func_8020E3F0(WarpData* self) {
         cf::CfObject* ctl = reinterpret_cast<cf::CfObject*>(reinterpret_cast<char*>(player) - 0x3E9C);
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(ctl) + 4);
         u32 stateA = *static_cast<u32*>(sub->CObjectState_getStateData());
-        if (func_80174C98(ctl, &stateA, 8) == 0) {
+        if (testActorStatus(ctl, &stateA, 8) == 0) {
             u32 stateB = *static_cast<u32*>(sub->CObjectState_getStateData());
-            if (func_80174C98(ctl, &stateB, 7) == 0) {
+            if (testActorStatus(ctl, &stateB, 7) == 0) {
                 continue;
             }
         }
@@ -753,7 +753,7 @@ extern "C" void func_8020E704(WarpData* self) {
             }
             WarpVec3 base = centre;
             WarpVec3 out68;
-            func_80198710(&out68, &base, distance, 6, i,
+            InitRecord(&out68, &base, distance, 6, i,
                           lbl_eu_806683DC, lbl_eu_806683C8);
             WarpVec3 out4c;
             if (CPartsChange_ProcessPartyInfo(&out68, &out4c) != 0) {

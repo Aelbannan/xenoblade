@@ -485,3 +485,107 @@ free functions must carry C linkage), not a regression: freshness passes
 (`--check --no-strict`: ok) and `docs/CODE_SMELLS.md` is regenerated.  The
 strict gate compares against the committed baseline, so the human re-baselines
 at commit time.
+
+## Session update 8 — the g3d_resmat pool labels land in source (1003 -> 767)
+
+Update 6 concluded the 293 `g3d_resmat` `.sdata2` labels needed a *tool* change
+(grow `.strtab`/`.symtab`).  They do not: they can be **source objects**.
+
+What was wrong with the earlier attempt is only alignment.  MWCC aligns every
+`.sdata2` object to `min(size, 8)`, so a label is expressible in C++ exactly
+when its retail offset already satisfies that alignment; everything else
+(1-byte labels, 8-byte labels at 4-mod-8 offsets, labels a header declares with
+another type, the words the rule already aliases) must stay inside a filler
+piece and keep its symbol from the unit rule.
+
+`g3d_resmat.cpp` now carries a regenerated pool block (`.scratch/e_units/gen_resmat_pool.py`):
+one `extern __declspec(section ".sdata2") const unsigned char lbl_eu_80669XXX[N]`
+per label, 4-byte-max filler pieces for the gaps, and the seven typed
+`const f32` definitions plus two new ones (`lbl_eu_80669EEC` = 0f,
+`lbl_eu_80669EF0` = 2^52 + 2^31 magic, both declared in
+`nw4r/include/nw4r/snd/snd_BasicSound.h`) kept verbatim.
+
+Verified:
+* `.sdata2` **byte-identical** to the pre-edit (already byte-exact) object, and
+  `.text` byte-identical; every named symbol sits at
+  `0x18 + (addr - 0x80669A68)` (223 of 223 checked).
+* unit hexdiff unchanged (54/56), `UNIT_RULES` untouched.
+* frontier **1003 -> 767** (-236, zero new missing).
+
+Residual for this unit: 43 labels that need the rule path (header-declared /
+unaligned), and 25 genuinely missing function bodies
+(`ResGenMode::CopyTo`, `ResMatChan::CopyTo`, ...).
+
+Note: `run.py data diff` reports MISMATCH for this unit in this checkout because
+the retail split object on disk is 0x6E0 where the unit's slice is 0x710; the
+source reproduces the 0x710 slice exactly (verified against the pre-edit
+object).
+
+## Session update 9 — workstreams 1-3 (CRT symbols, vtables, @N leftovers)
+
+The 86 "unattributed" symbols split into infrastructure, not decompilation, and
+the two named classes turned out to be symptoms of the same data problem:
+
+**1. CRT / link-config (10).**  `_stack_addr`, `_stack_end`, `_db_stack_end`,
+`_SDA_BASE_`, `_SDA2_BASE_`, `__ArenaHi`, `__ArenaLo`, `__end__catch`, `__mftb`
+are provided by the retail linker script (no `.lcf` in this checkout; the
+proposal is a `bake_linker_addrs` entry, which is a table change needing human
+sign-off).  `fake_function` was ours: it is the callee of the
+`DECOMP_FORCEACTIVE` keep-alive stubs and had no definition anywhere.
+
+**2. Vtables (7) + 3. `@N` leftovers (37) are not independent.**  Every `@N` is
+a local whose section a rule externalised (`extern_data_sections`) because the
+unit's data is not reconstructed: the strip zeroes the section and turns the
+locals into UNDEFs, so the refs dangle.  They come free with the unit's data
+pass (workstream 6), not with a symbol rename.
+
+**Landed now:**
+
+* `ut_Font.o` — its `.data` already reproduces the retail split byte-for-byte
+  (0x30), so its `extern_data_sections=(".data",)` was turning four valid local
+  table symbols into UNDEFs.  Dropped the field (shrink-only, allowed):
+  frontier -4, `.data` still identical.
+* `fake_function` — cleared.  The keep-alive stubs now either become explicit
+  `.data` arrays (OSError, dsp_task: `.data` **and** `.init` byte-identical to
+  retail, 0x0) or call the *defined* `OSReport` (gap_utils, OSPlayRecord:
+  `.data` byte-identical).  This also removes the undefined reference and, for
+  the two array conversions, the extra `.init` bytes.
+* `usb.c` **parked** as `NonMatching` with a comment: its four original
+  keep-alive stubs were rebuilt from the retail `.data`, but the emission order
+  comes out 0x1C too long (all strings present, wrong placement).  The retail
+  placeholder keeps the link byte-exact until the original 4-stub placement is
+  re-derived.
+
+Frontier **767 -> 762** (ut_Font -4, fake_function -1, zero new missing).
+
+**Known residual:** keep-alive stubs that stay in `.init` add bytes versus
+retail (`gap_utils` `.init` 0x30, `OSPlayRecord` 0x10); the array conversion
+removes them but only when the unit's literal emission order survives the move.
+
+## Session update 10 — the data-pass class is code-driven, not a data dump
+
+Attempting the first data pass showed that the "404 labels whose bytes are
+absent" do **not** have a source-side data home independent of the code:
+
+* `code_80213488` (the one unit with reloc-free missing data): retail
+  `.sdata2` 0x18 holds `30.0f`, `0.0f` and two 2^52 doubles ahead of the two
+  pooled doubles we already emit.  Defining the two `f32`s in source as
+  `extern "C" __declspec(section ".sdata2") const f32 ... = 30.0f/0.0f;` makes
+  MWCC const-propagate them into `MakeCrystal_CollectByTarget`'s division and
+  emit **extra pool words** (`.sdata2` 0x20 vs retail 0x18), so the two words
+  must come from the code path that uses them, not from a data block.  Reverted
+  byte-identically (0x10, 11/11 still matched).
+* Every other top candidate has the same shape: the source carries 9-54 string
+  literals where retail's `.rodata` is 80-504 bytes, and the missing `.data` is
+  reloc-bearing (70/68/176/46/... `.rela.data` entries) — vtables and pointer
+  tables belonging to classes/functions that are not reconstructed yet.
+
+So workstream 6 (data passes) is not separable from workstream 7 (function
+bodies): each unit's data lands when its code lands.  The mechanical part that
+*is* available — naming sub-objects inside data we already emit byte-exactly —
+was done for `g3d_resmat` (223 labels) and `ut_Font` (4).
+
+Workable next targets are therefore per-unit matching passes, biggest first:
+`CMenuBattleChain` (77), `CVision` (63), `UnkClass_80466348` (36),
+`CfScript` (30), `CScrollBar` (27), `CtrlMoveNpc` (17), `CChainActorList` (15),
+`CFade` (13), `CCur` (13), `CCharVoice` (13).

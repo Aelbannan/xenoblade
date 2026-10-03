@@ -359,14 +359,14 @@ extern "C" {
     CEventMgrB0* EvtSeqCreateTask(CProcess* parent, const char* name);
     void EvtSeqSetStateBit9();
     // Imports for func_801663A8
-    void func_8016C450(u32 a, u32 b, u32 c);
+    void EvtSeqXorSeqBuffer(u32 a, u32 b, u32 c);
     void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
     // Imports for func_80165DF4
     s32 isMoveFuncActive__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();
     bool TalkWin_IsActive_CD24();
     UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void func_8049EB60();
+    void ScnCamDepthUp();
     // Imports for Move (CRI player state / frame timing / object lists)
     void CTaskGame_setStreamVol(float v);
     u32 isMoviePlaying__7CLibCriFv(CLibCri* self);
@@ -389,7 +389,7 @@ extern "C" {
     extern f32 lbl_eu_80667640;
     void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);
     u8* getGlobalSda();
-    void func_800599E0(u32 a, u32 b, u32 c, u32 d);
+    void Env_SetClock(u32 a, u32 b, u32 c, u32 d);
     CFileHandle* readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         u32 handle, const char* path, IWorkEvent* sink, int a, int b);
 }

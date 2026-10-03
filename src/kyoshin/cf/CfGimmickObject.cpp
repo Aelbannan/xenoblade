@@ -33,17 +33,17 @@ const Sdata2_GimmickObject sdata2_GimmickObject = {
 #include "kyoshin/cf/CfGimmickObject.hpp"
 static float delta = 0.0f;
 // Free-function targets of the PMF tables below (defined later in this TU).
-int func_801F7978(cf::CfGimmickObject* self);
-int func_801F7B44(cf::CfGimmickObject* self);
-int func_801F7D38(cf::CfGimmickObject* self);
-int func_801F7F24(cf::CfGimmickObject* self);
-int func_801F8564();
-int func_801F856C(cf::CfGimmickObject* self);
-int func_801F85C4(cf::CfGimmickObject* self);
-int func_801F8658(cf::CfGimmickObject* self);
-int func_801F879C(cf::CfGimmickObject* self);
-int func_801F89B8(cf::CfGimmickObject* self);
-int func_801F8BB8(cf::CfGimmickObject* self);
+int GimObjGateOnStateFlags(cf::CfGimmickObject* self);
+int GimObjGateStepAvailability(cf::CfGimmickObject* self);
+int GimObjTickStepGate(cf::CfGimmickObject* self);
+int GimObjDriveSpawnEffects(cf::CfGimmickObject* self);
+int GimObjStepDone();
+int GimObjCheckStepBusy(cf::CfGimmickObject* self);
+int GimObjAdvanceStep(cf::CfGimmickObject* self);
+int GimObjDriveStepActivation(cf::CfGimmickObject* self);
+int GimObjTickCountdownSteps(cf::CfGimmickObject* self);
+int GimObjTickSpawnSteps(cf::CfGimmickObject* self);
+int GimObjRefreshStepState(cf::CfGimmickObject* self);
 // Shared column-name strings owned by other TUs (targets of the pointer
 // tables below).
 extern char lbl_eu_80507AA0[];
@@ -67,26 +67,26 @@ extern char lbl_eu_80668198[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // .data 0xD8: PMF dispatch tables and column-name pointer tables. They
-// come before the code so MWCC's compiler-generated func_801F6E60 dispatch
+// come before the code so MWCC's compiler-generated GimObjDispatchStateRefresh dispatch
 // table lands after them at 0xD8, exactly like retail (zeros + section
 // relocs in the .o). Every object sits on an aligned offset.
 __declspec(section ".data") __attribute__((used))
 CfGimmickObjectPmfEntry lbl_eu_80534E70[6] = {
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F7978 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F7B44 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F7D38 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F7F24 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F8564 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F856C }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjGateOnStateFlags }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjGateStepAvailability }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickStepGate }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjDriveSpawnEffects }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjStepDone }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjCheckStepBusy }},
 };
 __declspec(section ".data") __attribute__((used))
 CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F85C4 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F85C4 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F8658 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F879C }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F89B8 }},
-    {{ 0, 0xFFFFFFFFu, (u32)func_801F8BB8 }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjAdvanceStep }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjDriveStepActivation }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickCountdownSteps }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjTickSpawnSteps }},
+    {{ 0, 0xFFFFFFFFu, (u32)GimObjRefreshStepState }},
 };
 __declspec(section ".data") __attribute__((used))
 const char* lbl_eu_80534F00[8] = {
@@ -109,8 +109,8 @@ using namespace cf;
 // by harness_catalog.hpp) with the s32(long) row parameter.
 
 // Same-TU availability checks used by the ctor's initial step seeding.
-int func_801F7978(cf::CfGimmickObject* self);
-int func_801F7B44(cf::CfGimmickObject* self);
+int GimObjGateOnStateFlags(cf::CfGimmickObject* self);
+int GimObjGateStepAvailability(cf::CfGimmickObject* self);
 
 // Column fetch helpers mirroring retail's (u16)/(u8) truncation round-trip
 // through the ctor frame (same shape as the matched CfGimmickItem ctor).
@@ -290,8 +290,8 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
         // Collision-gated: run the availability chain and jump straight to
         // step 3 when the map object and both checks pass.
         if (CfGimmick_CheckStateFlag2CC8((void*)(u32)self->field_64) != 0 &&
-            func_801F7978(self) != 0 && func_801F7B44(self) != 0) {
-            func_801F5C2C(self, 0, 3);
+            GimObjGateOnStateFlags(self) != 0 && GimObjGateStepAvailability(self) != 0) {
+            GimObjActivateStepRange(self, 0, 3);
             self->field_188 = 3;
         }
     } else if (self->field_15E == 3) {
@@ -316,7 +316,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
                 }
             }
             if (uniq != 0 && stepInit != 0)
-                func_801F5C2C(self, 0, 5);
+                GimObjActivateStepRange(self, 0, 5);
             else
                 self->field_188 = 6;
         }
@@ -358,12 +358,12 @@ cf::CfGimmickObject::~CfGimmickObject() {
     // (delete-flag ? operator delete(this) : skip) automatically.
 }
 
-// func_801F5B00 - step-machine driver. While the step index stays below 6,
+// GimObjDriveStepMachine - step-machine driver. While the step index stays below 6,
 // promote the 0x80000 busy flag to 0x40000000, then dispatch through the
 // field_74 0x400 gate: the lbl_eu_80534EB8 pmf table when set, otherwise the
-// func_801F634C helper (which may clear work via CfGimmick_SetGlobalFlag8) or the
+// GimObjUpdateStepCountdowns helper (which may clear work via CfGimmick_SetGlobalFlag8) or the
 // lbl_eu_80534E70 pmf table. Stop on a 0 return and run the cleanup hook.
-void func_801F5B00(cf::CfGimmickObject* self) {
+void GimObjDriveStepMachine(cf::CfGimmickObject* self) {
     while (self->field_188 < 6) {
         if ((self->field_74 & 0x80000) != 0)
             // volatile read so the RMW re-loads field_74 (retail does not
@@ -373,7 +373,7 @@ void func_801F5B00(cf::CfGimmickObject* self) {
             if ((self->*lbl_eu_80534EB8[self->field_188].p)() == 0)
                 break;
         } else {
-            if (func_801F634C(self) != 0) {
+            if (GimObjUpdateStepCountdowns(self) != 0) {
                 if ((self->field_74 & 0x200) != 0)
                     CfGimmick_SetGlobalFlag8();
                 break;
@@ -384,7 +384,7 @@ void func_801F5B00(cf::CfGimmickObject* self) {
                 break;
         }
     }
-    func_801F76A8(self);
+    GimObjCleanupStepMachine(self);
 }
 
 void GimObjSetBusyBit(void* self) {
@@ -400,14 +400,14 @@ extern "C" void GimObjFinishStep(u8* self) {
     *(unsigned long*)((char*)self + 0x74) = 0;
 }
 
-// func_801F5C2C - step-range activation. Re-seeds the step machine from the
+// GimObjActivateStepRange - step-range activation. Re-seeds the step machine from the
 // mode byte (+0x15E), clears the pending 0x400 state bit and gates the LOD
 // re-register on the +0x162/+0x163 id bytes. Then scans the +0xA4 step table
 // over [a, b): picks the last non-0.0f map-object status / area-manager id /
 // sound entry, refreshes the linked map object (CfObjectMove_setAnimModeArgs) and the area
 // manager attach, updates the +0x190/+0x192 sound state, and finally applies
 // per-LOD frame updates to both registered LOD tasks.
-__declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b) {
+__declspec(noinline) void GimObjActivateStepRange(cf::CfGimmickObject* self, int a, int b) {
     if (self->field_15E == 1)
         self->field_188 = 0;
     else
@@ -415,7 +415,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
     self->field_74 &= ~0x400u;
 
     if (self->field_162 == 9) {
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
         return;
     }
 
@@ -435,11 +435,11 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
     }
 
     if (sel == 0) {
-        func_801F61B0(self, 0);
+        GimObjRefreshLodTasks(self, 0);
         return;
     }
     if ((self->field_161 & 0x2) != 0)
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
 
     // Scan [a, b) for the last step with a map-object status.
     if (self->field_68 != 0) {
@@ -452,7 +452,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             }
         }
         if (statusId != 0) {
-            u8* obj = (u8*)func_80186BC8(self->field_68);
+            u8* obj = (u8*)ArtsSelect_GetEntry(self->field_68);
             if (obj != 0) {
                 // With flags 0x10000|0x8000|0x01000000 all raised the status
                 // is forced to 0x24 (hidden-state override).
@@ -608,7 +608,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
 }
 
 // Refresh the per-LOD task registrations and the linked map object.
-void func_801F61B0(cf::CfGimmickObject* self, int mode) {
+void GimObjRefreshLodTasks(cf::CfGimmickObject* self, int mode) {
     for (int i = 0; i < 2; i++) {
         if (self->field_70[i] != 0) {
             setLODEnable__8CTaskLODFv(self->field_70[i], mode);
@@ -621,7 +621,7 @@ void func_801F61B0(cf::CfGimmickObject* self, int mode) {
     }
 
     if (self->field_68 != 0) {
-        ::CfGimmickObject* obj = (::CfGimmickObject*)func_80186BC8(self->field_68);
+        ::CfGimmickObject* obj = (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
         if (obj != 0) {
             // Slot 0x158 through the abstract vtable view so MWCC emits the
             // canonical virtual-call register chain.
@@ -662,13 +662,13 @@ refresh:
     self->field_74 |= 0x10;
 }
 
-// func_801F634C - per-frame LOD/countdown update for the step machine.
+// GimObjUpdateStepCountdowns - per-frame LOD/countdown update for the step machine.
 // Gates six independent countdowns on field_74 bits 0..5; each decrements a
 // per-field timer by the frame delta and, on expiry, resets the field's LOD
 // task alpha via func_80462E3C. Returns 1 while any work remains active.
 //
 // The s16->f32 conversion of field_18A uses the direct cast so MWCC emits
-int func_801F634C(cf::CfGimmickObject* self) {
+int GimObjUpdateStepCountdowns(cf::CfGimmickObject* self) {
     return 0;
 }
 #if 0
@@ -681,7 +681,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
                 f32 v = self->field_16C - delta;
                 self->field_16C = v;
                     self->field_74 &= ~4;
-                    func_801F61B0(self, 0);
+                    GimObjRefreshLodTasks(self, 0);
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
                             refreshLOD__8CTaskLODFv(self->field_70[i],
@@ -755,24 +755,24 @@ int func_801F634C(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F6780 - per-step gimmick update. The +0xA4 step table (indexed by
+// GimObjUpdateStep - per-step gimmick update. The +0xA4 step table (indexed by
 // field_188, 16 bytes per entry) drives: a +0x170 activation countdown,
-// camera events (func_8007B0C8), per-LOD frame updates (func_801F6B98), the
+// camera events (CamEvtProgramEventCam), per-LOD frame updates (GimObjApplyLodFrame), the
 // +0x68 map-object status (CfObjectMove_setAnimModeArgs), a player-control reset (getPlayer
 // slot 0x110 -> movePcCondFullReset), the area-manager attach (createBattleActor with
 // vtable slots 0x9C/0xC4) and the step sound (CfSoundMan_ApplySlotStop / playActorSound /
 // CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos, plus the CfSoundMan_TouchSlotById volume slot).
 #endif
 
-void func_801F6780(cf::CfGimmickObject* self) {
+void GimObjUpdateStep(cf::CfGimmickObject* self) {
     return;
 }
 
-// func_801F6B98 - per-LOD frame update. Seeded from a +0x0C frame count,
+// GimObjApplyLodFrame - per-LOD frame update. Seeded from a +0x0C frame count,
 // then dispatched on the +0x05 flag byte: 0x4/0x2 re-register the LOD task,
 // 0x1/0x2 raise a LOD timer, 0x30 rebuilds the LOD2 range and 0x8 flips the
 // LOD register mode. A +0x06 id byte change refreshes the +0x194 slot.
-void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
+void GimObjApplyLodFrame(cf::CfGimmickObject* self, u8 lod,
                    const CfGimmickLodFrame* frame) {
     f32 constv;
     f32 a;
@@ -828,7 +828,7 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
 
 // GimObjProbePartySlots - party-membership gate. With the 0x8000 flag of +0x152 set,
 // returns 1 when any flagged character slot (bits 0..14) IS registered in the
-// party (func_8009E284 != 0); otherwise returns 1 when any flagged slot is
+// party (CtrlObjectParam_HasSlotValue != 0); otherwise returns 1 when any flagged slot is
 // NOT registered. field_152 is re-read every iteration because the party
 // queries may mutate it.
 int GimObjProbePartySlots(cf::CfGimmickObject* self) {
@@ -837,13 +837,13 @@ int GimObjProbePartySlots(cf::CfGimmickObject* self) {
         if ((flags & 0x8000) != 0) {
             for (int i = 0; i < 15; i++) {
                 if ((self->field_152 & (1 << i)) != 0 &&
-                    func_8009E284(CtrlObjectParam_GetSlotTableBase(), i + 1) != 0)
+                    CtrlObjectParam_HasSlotValue(CtrlObjectParam_GetSlotTableBase(), i + 1) != 0)
                     return 1;
             }
         } else {
             for (int i = 0; i < 15; i++) {
                 if ((self->field_152 & (1 << i)) != 0 &&
-                    func_8009E284(CtrlObjectParam_GetSlotTableBase(), i + 1) == 0)
+                    CtrlObjectParam_HasSlotValue(CtrlObjectParam_GetSlotTableBase(), i + 1) == 0)
                     return 1;
             }
         }
@@ -851,11 +851,11 @@ int GimObjProbePartySlots(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F6E60 - state refresh dispatcher. The u8 argument selects a
+// GimObjDispatchStateRefresh - state refresh dispatcher. The u8 argument selects a
 // per-state re-init: cases 1..3 arm a +0x16C countdown (flag 0x2) and heal
 // the linked map object, cases 4..6 arm the peer-gated countdown (flag 0x4),
 // and cases 7/8 refresh the LOD registrations. Uses a jump table.
-__declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
+__declspec(noinline) void GimObjDispatchStateRefresh(cf::CfGimmickObject* self, u8 arg) {
     // Retail emits an explicit equality test before the switch bounds check,
     // so state 0 must be guarded here instead of folded in as a case label.
     if (arg == 0)
@@ -867,33 +867,33 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
         self->field_74 |= 2;
         if (self->field_68 != 0) {
             ::CfGimmickObject* obj =
-                (::CfGimmickObject*)func_80186BC8(self->field_68);
+                (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
             if (obj != 0) {
             }
         }
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
         break;
     case 2:
         self->field_18A = 60;
         self->field_74 |= 2;
         if (self->field_68 != 0) {
             ::CfGimmickObject* obj =
-                (::CfGimmickObject*)func_80186BC8(self->field_68);
+                (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
             if (obj != 0) {
             }
         }
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
         break;
     case 3:
         self->field_18A = 90;
         self->field_74 |= 2;
         if (self->field_68 != 0) {
             ::CfGimmickObject* obj =
-                (::CfGimmickObject*)func_80186BC8(self->field_68);
+                (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
             if (obj != 0) {
             }
         }
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
         break;
     case 4:
         // Peer-busy gate written as a materialized 0/1 flag: retail builds
@@ -906,12 +906,12 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                 self->field_74 |= 4;
                 if (self->field_68 != 0) {
                     ::CfGimmickObject* obj =
-                        (::CfGimmickObject*)func_80186BC8(self->field_68);
+                        (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
                     if (obj != 0) {
                         (void)obj;
                     }
                 }
-                func_801F61B0(self, 1);
+                GimObjRefreshLodTasks(self, 1);
                 self->field_16C = (f32)self->field_18A;
             }
         }
@@ -925,12 +925,12 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                 self->field_74 |= 4;
                 if (self->field_68 != 0) {
                     ::CfGimmickObject* obj =
-                        (::CfGimmickObject*)func_80186BC8(self->field_68);
+                        (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
                     if (obj != 0) {
                         (void)obj;
                     }
                 }
-                func_801F61B0(self, 1);
+                GimObjRefreshLodTasks(self, 1);
                 self->field_16C = (f32)self->field_18A;
             }
         }
@@ -944,25 +944,25 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                 self->field_74 |= 4;
                 if (self->field_68 != 0) {
                     ::CfGimmickObject* obj =
-                        (::CfGimmickObject*)func_80186BC8(self->field_68);
+                        (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
                     if (obj != 0) {
                         (void)obj;
                     }
                 }
-                func_801F61B0(self, 1);
+                GimObjRefreshLodTasks(self, 1);
                 self->field_16C = (f32)self->field_18A;
             }
         }
         break;
     case 7:
-        func_801F61B0(self, 1);
+        GimObjRefreshLodTasks(self, 1);
         break;
     case 8:
         {
             register int run =
                 self->field_168 == 0 || (self->field_168->field_74 & 2) == 0;
             if (run != 0)
-                func_801F61B0(self, 0);
+                GimObjRefreshLodTasks(self, 0);
         }
         break;
     }
@@ -988,14 +988,14 @@ static int cfCountMatchingPlayers(CfGimmickList* mgr, int found) {
     return count;
 }
 
-// func_801F72A4 - availability scan for the +0x14A id table. With the 0x2000
+// GimObjScanIdTable - availability scan for the +0x14A id table. With the 0x2000
 // flag set, counts how many live players with a matching id (high nibble of
 // the +0x456C byte, low nibble = bit index into field_184) remain; the
 // 0x400000 flag is raised while any remain. When the count drops to 0.0f the
 // table scan index (field_18C) advances to the next non-0.0f entry, the id is
 // spawned via CPartsChange_SpawnById, and a clean end of the table clears 0x2000 /
 // 0x400000 and raises 0x80000000 ("done").
-int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
+int GimObjScanIdTable(cf::CfGimmickObject* self, u16* table) {
     u32 flags = self->field_74;
     if ((flags & 0x80000000) != 0)
         return 1;
@@ -1106,112 +1106,112 @@ done_reset:
     return 1;
 }
 
-// func_801F75CC - countdown/activation step. While flag 0x4000 is set,
+// GimObjTickStepCountdown - countdown/activation step. While flag 0x4000 is set,
 // decrement +0x170 by the scene allocator's frame delta and keep returning 1
 // sound for the old handle, refresh the handle via CfGimmick_PlaySoundAtPos and return 1.
-int func_801F75CC(cf::CfGimmickObject* self) {
+int GimObjTickStepCountdown(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F76A8 - step-machine cleanup: resolves the +0x6A area registration
+// GimObjCleanupStepMachine - step-machine cleanup: resolves the +0x6A area registration
 // (func_8020A6B0 / CfGimmick_UnregisterSpawnedObject), runs the +0x180 effect countdown
 // (Scn_GetFrameDelta delta; on expiry notify CfGimmick_ClearManagerBinding, otherwise scale the
 // remaining time into setChildV40__'s position vector), and plays / refreshes
 // the step sound selected by field_192 (playActorSound for kind 3,
 // CfGimmick_PlaySoundAtPosScaled for kinds 2/1, CfGimmick_PlaySoundAtPos otherwise). The sound-slot
 // volume (CfSoundMan_TouchSlotById +0x1C) is forced to 0/1 by the global 0x8 flag.
-void func_801F76A8(cf::CfGimmickObject* self) {
+void GimObjCleanupStepMachine(cf::CfGimmickObject* self) {
     return;
 }
-int func_801F7978(cf::CfGimmickObject* self) {
+int GimObjGateOnStateFlags(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F7B44 - availability gate for the +0x156 area id (mirrors
-// func_801F7978's first block), then scans both +0x84 area tables against
+// GimObjGateStepAvailability - availability gate for the +0x156 area id (mirrors
+// GimObjGateOnStateFlags's first block), then scans both +0x84 area tables against
 // the scenario/sequence windows, and finally the +0x74 party flags: while
 // the 0x8000/0x10000 bits are raised and the global 0x4 bit is clear, the
-// step machine is (re)initialized via func_801F5C2C.
-int func_801F7B44(cf::CfGimmickObject* self) {
+// step machine is (re)initialized via GimObjActivateStepRange.
+int GimObjGateStepAvailability(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F7D38 - per-frame update. Party membership (GimObjProbePartySlots) puts
+// GimObjTickStepGate - per-frame update. Party membership (GimObjProbePartySlots) puts
 // the step machine into state 1; while the +0x15E mode byte is active the
 // +0x6C..0x6E and per-area +0x04/0x06 sequence windows must contain the
 // current scenario sequence. The +0x66 flags then drive the spawn/effect
 // gate (func_802098EC) and, on the fail path, the +0x6A area registration
 // retry (CfGimmick_IsMessageSystemBusy / CfGimmick_CheckPartyIdLoaded).
-int func_801F7D38(cf::CfGimmickObject* self) {
+int GimObjTickStepGate(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F7F24 - spawn/effect driver. Runs the field_66 gate: 0x20 =
+// GimObjDriveSpawnEffects - spawn/effect driver. Runs the field_66 gate: 0x20 =
 // collision check via func_802098EC (success re-registers the map object),
 // otherwise a jumptable_eu_80535830[idx] checker is run against either the
 // reference point, the object list (getReslistB48 / getReslistB68) or the
 // players (slot 0xAC spot). The +0x74 flag 0x800 tail then drives the
 // field_164 state machine (availability table / id-table effects).
-int func_801F7F24(cf::CfGimmickObject* self) {
+int GimObjDriveSpawnEffects(cf::CfGimmickObject* self) {
     return 0;
 }
 
-int func_801F8564() {
+int GimObjStepDone() {
     return 1;
 }
 
 // Busy-gate: an object flagged busy in field_74 (bit 12) with the global
 // busy bit (lbl_eu_80663E28 bit 5) set, or whose +0x14A table fails
-// func_801F72A4, is NOT available (returns 0).
-int func_801F856C(cf::CfGimmickObject* self) {
+// GimObjScanIdTable, is NOT available (returns 0).
+int GimObjCheckStepBusy(cf::CfGimmickObject* self) {
     return 0;
 }
 
 // Advance the +0x188 step counter (down while flagged busy, up otherwise,
 // clamped to 0..6), clearing the working bits on the way out.
-int func_801F85C4(cf::CfGimmickObject* self) {
+int GimObjAdvanceStep(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F8658 - per-frame step/activation driver (continuation of
-// func_801F85C4's step-machine). Runs the countdown via func_801F75CC; when
+// GimObjDriveStepActivation - per-frame step/activation driver (continuation of
+// GimObjAdvanceStep's step-machine). Runs the countdown via GimObjTickStepCountdown; when
 // it expires, re-seeds the +0x17C timer from +0x15A, refreshes the area
-// checks (func_801F6E60 / func_801F6780), sets the busy bits and advances
+// checks (GimObjDispatchStateRefresh / GimObjUpdateStep), sets the busy bits and advances
 // the +0x188 step counter (down while busy, up otherwise, clamped 0..6).
-int func_801F8658(cf::CfGimmickObject* self) {
+int GimObjDriveStepActivation(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F879C - per-frame gimmick update. The +0x15C value seeds a
+// GimObjTickCountdownSteps - per-frame gimmick update. The +0x15C value seeds a
 // countdown in +0x17C (0x80 flag raised while it runs); the 0x200 gate
 // funnels busy objects through CfGimmick_SetGlobalFlag8. Afterwards the +0x66 0x20 gate
-// runs func_801F75CC, the +0x163 id refreshes the LOD registration
-// (func_801F6E60), the field_161 0x40 / global 0x4 combo resets the step
-// machine (func_801F5C2C), and func_801F6780 drives the step table. The
-// +0x188 counter advances like func_801F89B8's (down while the 0x08000000
+// runs GimObjTickStepCountdown, the +0x163 id refreshes the LOD registration
+// (GimObjDispatchStateRefresh), the field_161 0x40 / global 0x4 combo resets the step
+// machine (GimObjActivateStepRange), and GimObjUpdateStep drives the step table. The
+// +0x188 counter advances like GimObjTickSpawnSteps's (down while the 0x08000000
 // busy flag is set, up otherwise, clamped 0..6); the 0x200/0x400/0x80/
 // 0x2000000 work flags are cleared on the way out.
-int func_801F879C(cf::CfGimmickObject* self) {
+int GimObjTickCountdownSteps(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F89B8 - per-frame gimmick update (sibling of func_801F879C). The
+// GimObjTickSpawnSteps - per-frame gimmick update (sibling of GimObjTickCountdownSteps). The
 // +0x150 field seeds a short countdown in +0x18E (0x40 flag raised while it
 // runs; 0x200 funnels busy objects into CfGimmick_SetGlobalFlag8). Then the +0x64 map
-// object is (re)spawned if missing, func_801F6780 drives the step table, and
+// object is (re)spawned if missing, GimObjUpdateStep drives the step table, and
 // the +0x188 step counter advances (down while the 0x08000000 busy flag is
 // set, up otherwise, clamped 0..6). The 0x200/0x400/0x8000/0x10000 work
 // flags are cleared on the way out.
-int func_801F89B8(cf::CfGimmickObject* self) {
+int GimObjTickSpawnSteps(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// func_801F8BB8 - state refresh. Set the +0x188 step from the +0x15E mode
+// GimObjRefreshStepState - state refresh. Set the +0x188 step from the +0x15E mode
 // byte (2 when +0x161 bit 7 is set, else 0; 6 when not active), fire the
 // id-table effects (CPartsChange_FireIdEffect) for the +0x14A / +0x144 entries when the
 // matching field_74 bits are raised, then clear the 0x80000000/0x400 work
 // flags and report "not busy".
-// func_801F8BB8 helpers: fire CPartsChange_FireIdEffect for the first three nonzero
+// GimObjRefreshStepState helpers: fire CPartsChange_FireIdEffect for the first three nonzero
 // entries of one of the gimmick's u16 id tables.
 static inline void fireTable14A(cf::CfGimmickObject* o) {
     for (int i = 0; i < 3; i++) {
@@ -1228,7 +1228,7 @@ static inline void fireTable144(cf::CfGimmickObject* o) {
             CPartsChange_FireIdEffect(id);
     }
 }
-int func_801F8BB8(cf::CfGimmickObject* self) {
+int GimObjRefreshStepState(cf::CfGimmickObject* self) {
     return 0;
 }
 

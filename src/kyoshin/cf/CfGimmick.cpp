@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <cstring>
+#define CtrlRemote_SetSharedBit CfGimmick_SetSharedBit_hidden // chain has 2-arg decls; TU uses 1-arg view
 
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/CTaskGame.hpp"   // CTaskGameCamView
@@ -11,6 +12,7 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#undef CtrlRemote_SetSharedBit
 
 // typed retail data (replaces old byte blobs): declared up top so MWCC emits
 // them before its own code-literal pool (else the int->double magics land at
@@ -425,9 +427,7 @@ extern "C" int CfGimmick_CheckStateFlag2CC8(u8* obj) {
     return (v == 1) ? 1 : 0;
 }
 
-// Sound trigger helper; retail callers reach it through a single-argument
-// view (r4 is never initialised), so only the destination is named here.
-void CtrlRemote_SetSharedBit(u32 destination);
+extern "C" void CtrlRemote_SetSharedBit(u32 destination); // 1-arg view; r4 uninit per retail
 // `id` is the gimmick's resource-id base; the sound trigger lives at +0x2CC8.
 extern "C" void CfGimmick_TriggerSound2CC8(u32 id) { CtrlRemote_SetSharedBit(id + 0x2CC8); }
 
@@ -788,7 +788,7 @@ extern "C" int CfGimmick_CheckFightListPlayerAlive(u32 playerId) {
 extern "C" CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int other, const CfGimmickVec3* point) {
     CfGimmickVec3 pos;
     char buf[0x40];
-    CfGimmickObject* obj = func_800B20B4(getInstance(), 0x4000, 0, 0);
+    CfGimmickObject* obj = spawnMaskedObject(getInstance(), 0x4000, 0, 0);
     if (obj != 0) {
         if (strlen(name) >= 0x20) {
             strcpy(buf, name);
@@ -818,7 +818,7 @@ extern "C" CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int oth
 
 extern "C" void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self) {
     if (self->field_00) {
-        func_800B3A88(getInstance(), self->field_00);
+        removeManagedObject(getInstance(), self->field_00);
         self->field_00 = 0;
     }
 }
@@ -921,7 +921,7 @@ void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
         // check, keeping one shared return path for both guard fails.
         f32 lenSq = VEC3LenSq(&diff);
         if (lenSq > radiusSq && self->field_00 != 0) {
-            func_800B3A88(getInstance(), self->field_00);
+            removeManagedObject(getInstance(), self->field_00);
             self->field_00 = 0;
         }
         return;
@@ -958,7 +958,7 @@ defaultName:
         name = (const char*)lbl_eu_80662788;
 resolvedName:;
 
-    CfGimmickObject* obj = func_800B20B4(getInstance(), 0x4000, 0, 0);
+    CfGimmickObject* obj = spawnMaskedObject(getInstance(), 0x4000, 0, 0);
         CfGimmickObject* result;
         if (obj == 0) {
             result = 0;

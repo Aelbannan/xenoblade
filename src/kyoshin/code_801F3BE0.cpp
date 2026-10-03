@@ -143,7 +143,7 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
 // CfGimmick shared bdat-row reset (CfGimmick.cpp): stores the row into a
 // global state slot.
 extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
-// Gimmick object list accessor (func_80174C98 comes from CChainTimer.hpp).
+// Gimmick object list accessor (testActorStatus comes from CChainTimer.hpp).
 extern "C" CGimmickList* getReslistB48();
 
 // Sibling spawn / lifecycle functions defined later in this TU (func_801F3CCC
@@ -477,7 +477,7 @@ void GimNoopA(void) {}
 // 0.0f sets the 0x20 flag; any other value clears it (and is a no-op when the
 // flag is already clear). While enabled, every gimmick-list battle object and
 // every player gets the value pushed into its vtable slot 0x5C4, gated on the
-// func_80174C98 actor-id check (flag 3).
+// testActorStatus actor-id check (flag 3).
 void GimSetVisionResumeDist(CGimmickGlobal* self, f32 value) {
     if (lbl_eu_80668158 == value) {
         self->mFlags |= 0x20;
@@ -496,7 +496,7 @@ void GimSetVisionResumeDist(CGimmickGlobal* self, f32 value) {
         if (obj)
             obj = (cf::CChainBattleObj*)((u8*)obj - 0x3E9C);
         u32 local = *(u32*)obj->field_04->f30();
-        if (func_80174C98(obj, (int*)&local, 3) == 0)
+        if (testActorStatus(obj, (int*)&local, 3) == 0)
             obj->v367(value);
         node = node->next;
     }

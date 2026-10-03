@@ -118,18 +118,18 @@ struct CVoiceHandleList {
 
 extern "C" {
 // Sibling TU functions (unmangled global symbols).
-int func_802A3E88(CVS_THREAD* self);
-void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
-CVoiceHandle* func_802A330C(int size, int align);
+int IsThreadVoiceActive(CVS_THREAD* self);
+void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+int TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
+CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
 CVoiceHandleList* getReslistB48();
-int func_802A7FE4(CVoiceHandle* handle);
-int func_802A77E8(CVoiceHandle* handle);
-int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
+int HpVoice_CheckIdleGate(CVoiceHandle* handle);
+int HpVoice_MapSubState(CVoiceHandle* handle);
+int HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
 // Collect free voice handles from `slots`; returns usable count.
-int func_802A7870(CVoiceHandle** slots, int count, CVoiceHandle* exclude);
+int HpVoice_CollectIdle(CVoiceHandle** slots, int count, CVoiceHandle* exclude);
 }
 
 // Slot-state triples used by the EHP playback selector (selectEhpVoiceByHp).

@@ -27,7 +27,7 @@ void* mVtable;                              // +0x00
     u8 mField31;                               // 0x31
     u8 mField32;                               // 0x32
     u8 mField33;                               // 0x33
-    u16 mField34;                              // 0x34-0x35 (item id read by func_8022DD90)
+    u16 mField34;                              // 0x34-0x35 (item id read by showPresentRank)
     u8 mField36;                               // 0x36
     u8 mField37;                               // 0x37
     u8 mField38;                               // 0x38
@@ -82,7 +82,7 @@ extern void* lbl_eu_80664090;
 // linkage so calls bind to the literal mangled identifier.
 extern "C" {
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void func_80137F88(void*, void*);
+void PaneSetTexPalette(void*, void*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
@@ -99,7 +99,7 @@ public:
 // reloc and drift at the reloc gate).
 extern "C" {
 void waitForDrawDone__9CDeviceVIFv();
-void func_801375A0(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
+void AccumPaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* pane);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void setPaneVisible(nw4r::lyt::Pane*, u32);
 void writePanePos(nw4r::lyt::Pane*, float*);
@@ -107,10 +107,10 @@ u32 BdatGetItemId(u32);
 int BdatGetS8Direct(const char*, const char*, const char*);
 char* BdatGetPtrDirect(const void*, const void*, int);
 u32 BdatGetU16Direct(const void*, const void*, int);
-void func_8013A95C(u16, u16, s8);
-void func_8022E698(CPresentWin* self);
-void func_8022E744(CPresentWin* self);
-void func_8022E254(CPresentWin* self);
+void AdjustRelateValue(u16, u16, s8);
+void repaintPresentItemA(CPresentWin* self);
+void repaintPresentItemB(CPresentWin* self);
+void stepPresentCounterBack(CPresentWin* self);
 u8 lookupPresentRank(CPresentWin* self, u32 r4);
 }
 void playUISound(u32); // mangles to playUISound__FUl

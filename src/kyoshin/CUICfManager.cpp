@@ -251,7 +251,7 @@ void CUICfManager::Term() {
 
 extern "C" {
 int lbl_eu_80664050;
-int func_80138138(int);
+int SearchThresholdIdx(int);
 u32 code80135FDC_setByte_6407F(u8);
 int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 // Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
@@ -313,7 +313,7 @@ void* __ct__8011C1B8(void* ctx, u32 scene);
 // Busy/state probe called by CUICfManager_queueWorldMapMenu with the singleton as its arg
 // (retail passes the just-loaded singleton through r3). noinline keeps
 // the retail bl (MWCC would fold the trivial body otherwise).
-int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
+int __declspec(noinline) CUICfManager_isWorldMapBusy(CUICfManagerCreateView* singleton) {
     u8 mode = (u8)lbl_eu_80664184;
     if (mode == 0x1a || mode == 0x1c) {
         return 1;
@@ -321,7 +321,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
     if (singleton->field_0x120 > 0) {
         return 1;
     }
-    int st = func_801359AC((u8*)singleton);
+    int st = CUICfManager_checkMenuOpenGate((u8*)singleton);
     if (st != 0) {
         if (st == 2) {
             playUISound(5);
@@ -363,11 +363,11 @@ u32 __ct__CMenuGCItem(CUICfUnk144*, u32, u8);
 u32 CMenuGetItem_CreateSingle(CUICfUnk144*, u32, u16);
 u32 createSaveMenu(CUICfUnk144*, u32, u32, u32, u32);
 void UIWin_CreateQuestWin(int, int, int);
-void* func_8009EC9C(u16);
+void* CtrlObjectParam_GetCharEntry(u16);
 // Same caller-shape as the decl in include/kyoshin/cf/CfGameManager.hpp
 // (defining TU: cf/CtrlObjectParam.cpp); declared here because including
 // CfGameManager.hpp pulls conflicting flat decls into this TU.
-void func_800A21F8(void*, u32, u32, u32);
+void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32);
 u8 BdatGetU8Direct(u32, const char*, u32);
 u16 BdatGetU16ByTableKey(char*, char*, u16);
 void* lbl_eu_80573D18[];
@@ -439,7 +439,7 @@ range_221_607: {
         goto end;
     }
 
-    int idx = func_80138138(off);
+    int idx = SearchThresholdIdx(off);
     void* tableVal = lbl_eu_80573D18[idx];
     u8 res = (u8)BdatGetU8Direct((u32)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
     if (res == 2) {
@@ -544,8 +544,8 @@ range_312c_31f3: {
             goto party_check;
         party_body:
             {
-                void* r = func_8009EC9C((u16)i);
-                func_800A21F8(r, ret2, 0, 0);
+                void* r = CtrlObjectParam_GetCharEntry((u16)i);
+                CtrlObjectParam_ApplyArtsRankUp(r, ret2, 0, 0);
                 i++;
             }
         party_check:
@@ -639,7 +639,7 @@ end:
 
 // Flat retail symbol (Move calls it by the unmangled name).
 extern "C" u32 CUICfManager_queueMoveBaseMenu();
-extern "C" u32 func_801338C8(CUICfManager*);
+extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
@@ -669,7 +669,7 @@ void* Scn_FindCamItem(void* obj, int index);
 void* getEntryAt(void* list, int index); // &slot -> has +0x4 object ptr
 void* getObjectIdAt(void* list, int index); // *slot -> object*
 int lookupWorkAtAddr(void*);
-int func_8013A4B4(void* a, void* b, void* c);
+int CheckViewAngle60(void* a, void* b, void* c);
  // &mInitSlots[0].unk04
 }
 
@@ -731,7 +731,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xfffd);
         }
-        func_801338C8(this);
+        CUICfManager_createQueuedMenus(this);
         goto after_flags;
     }
     if ((flags & 0x1) != 0) {
@@ -1064,7 +1064,7 @@ enum_body:
     posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
     posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
     posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
-    if (func_8013A4B4(posA, posB, posC) == 0) {
+    if (CheckViewAngle60(posA, posB, posC) == 0) {
         goto enum_next;
     }
     list = CTaskGame_enumListGet(&holder);
@@ -1191,7 +1191,7 @@ unlink_done:
 
     mInitSlots[0].unk00[0] = 0;
     mInitSlots[0].unk00[1] = 0;
-    func_8012FFB4(&mInitSlots[0].unk04);
+    CUICfManager_dispatchFreeSlot(&mInitSlots[0].unk04);
 
     nextCount = (int)unk120 - 1;
     unk120 = (u32)nextCount;
@@ -1285,61 +1285,61 @@ int CUICfManager_tryResetSlots() {
     return CUICfManager_tryResetFreeSlot(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
 }
 // CUICfManager_claimSlotByTemplate: like CUICfManager_tryResetSlots but forwards its first argument (the
-// caller's this) as the src arg of the template-copy claim func_80130720.
-// Declaring func_80130720 extern "C" makes its C++ definition emit the
+// caller's this) as the src arg of the template-copy claim CUICfManager_claimFreeSlotByCopy.
+// Declaring CUICfManager_claimFreeSlotByCopy extern "C" makes its C++ definition emit the
 // flat retail symbol.
-extern "C" int func_80130720(u8* base, CUICfSrcCopyView* src);
+extern "C" int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src);
 extern "C" int CUICfManager_claimSlotByTemplate(CUICfSrcCopyView* src) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130720(
+    return CUICfManager_claimFreeSlotByCopy(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), src);
 }
 // CUICfManager_claimSlotByIds: forwards all five args to the 5-id slot claim
-// func_80130960 after the null gate (retail shifts the arg registers up).
-extern "C" int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5);
+// CUICfManager_claimFreeSlotByIds after the null gate (retail shifts the arg registers up).
+extern "C" int CUICfManager_claimFreeSlotByIds(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5);
 extern "C" int CUICfManager_claimSlotByIds(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130960(
+    return CUICfManager_claimFreeSlotByIds(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots),
         a1, a2, a3, a4, a5);
 }
 // CUICfManager_claimSlotByIdState: forwards both args (id, state) to the slot claim
-// func_80130B74 after the null gate (retail: or r5,r4,r4; or r4,r3,r3).
-extern "C" int func_80130B74(u8* base, u16 id, u8 state);
+// CUICfManager_claimFreeSlotByIdState after the null gate (retail: or r5,r4,r4; or r4,r3,r3).
+extern "C" int CUICfManager_claimFreeSlotByIdState(u8* base, u16 id, u8 state);
 extern "C" int CUICfManager_claimSlotByIdState(u16 id, u8 state) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130B74(
+    return CUICfManager_claimFreeSlotByIdState(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), id, state);
 }
 // CUICfManager_claimSlotFormatted: forwards its first argument as the (u16) second arg of the
-// sprintf-based slot claim func_80130D80 (same null-gate shape as the other
+// sprintf-based slot claim CUICfManager_claimFreeSlotFormatted (same null-gate shape as the other
 // slot helpers).
-extern "C" int func_80130D80(u8* base, u16 arg1);
+extern "C" int CUICfManager_claimFreeSlotFormatted(u8* base, u16 arg1);
 extern "C" int CUICfManager_claimSlotFormatted(u16 arg1) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130D80(
+    return CUICfManager_claimFreeSlotFormatted(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), arg1);
 }
-// CUICfManager_claimSlotByTwoIds: same two-arg forward to func_80130F98 (slot claim with id + arg).
-extern "C" int func_80130F98(u8* base, u16 a1, u16 a2);
+// CUICfManager_claimSlotByTwoIds: same two-arg forward to CUICfManager_claimFreeSlotByTwoIds (slot claim with id + arg).
+extern "C" int CUICfManager_claimFreeSlotByTwoIds(u8* base, u16 a1, u16 a2);
 extern "C" int CUICfManager_claimSlotByTwoIds(u16 a1, u16 a2) {
     CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
     if (m == 0) {
         return 0;
     }
-    return func_80130F98(
+    return CUICfManager_claimFreeSlotByTwoIds(
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), a1, a2);
 }
 extern "C" int CUICfManager_hasInUseSlot() {
@@ -1370,16 +1370,16 @@ void Term__Q212CUICfManager5CTestFv(){}
 void Init__Q212CUICfManager5CTestFv(){}
 
 // ---------------------------------------------------------------------------
-// func_8012FFB4 (us-80130a88)
+// CUICfManager_dispatchFreeSlot (us-80130a88)
 //
 // Per-slot state machine for the free-menu system. Runs only when the task /
 // global gate bits are clear, then dispatches on the slot's flag byte:
 //   0 -> close the party window; 1 -> claim a tutorial slot; 2 -> open the
 //   5-id selection window; 3 -> reset a block region; 4 -> open the id window;
 //   5/6 -> open the message windows. The slot flag is then reset to 7 (free)
-// and the slot list is re-sorted (func_80131820).
+// and the slot list is re-sorted (CUICfManager_sortSlotList).
 // ---------------------------------------------------------------------------
-extern "C" void func_8012FFB4(u8* base) {
+extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
     volatile u32 savedRet;
     CUICfSlotDispView* slot;
     CUICfManagerCreateView* inst;
@@ -1488,11 +1488,11 @@ extern "C" void func_8012FFB4(u8* base) {
         UIWin_CreateB4790Win(reinterpret_cast<u8*>(&slot->block_04), 1);
         break;
     case 2: {
-        // Retail holds 1 in one reg (arg6 immediate), copies it to r9/r10.
-        int one;
-        one = 1;
+        // The three trailing 1 args share one materialized constant in
+        // retail (single li, copies to r9/r10); plain literals reproduce
+        // the TU's constant shape without a synthetic local.
         UIWin_CreateItemMulti(slot->field_D8, slot->field_DA, slot->field_DC, slot->field_DE,
-                      slot->field_E0, 1, one, one, 0);
+                      slot->field_E0, 1, 1, 1, 0);
         break;
     }
     case 4:
@@ -1509,12 +1509,12 @@ extern "C" void func_8012FFB4(u8* base) {
     }
 
     slot->field_0x00 = 7;
-    func_80131820(base);
+    CUICfManager_sortSlotList(base);
     }
 }
 // CUICfManager_tryResetFreeSlot (us-80130d18): slot reset. When no busy gate is set and
 // some init slot is in use, clears the first free (state 7) slot and rebuilds
-// the slot list (func_801311B8) unless the 0xb40 byte is set.
+// the slot list (CUICfManager_sortSlotsByFlag) unless the 0xb40 byte is set.
 extern "C" int CUICfManager_tryResetFreeSlot(u8* base) {
     int flag;
     if (PTNotice_IsActive_3C10() != 0) {
@@ -1555,18 +1555,18 @@ extern "C" int CUICfManager_tryResetFreeSlot(u8* base) {
             }
         }
         if (changed != 0 && base[0xb40] == 0) {
-            func_801311B8(base);
+            CUICfManager_sortSlotsByFlag(base);
         }
         return 1;
     }
     return 0;
 }
-// func_8013042C (us-80130f00): slot claim. Same busy-gate + all-free scan
-// skeleton as func_80130960; the claim body sets flag 1 and the index byte
+// CUICfManager_claimFreeSlotByIndex (us-80130f00): slot claim. Same busy-gate + all-free scan
+// skeleton as CUICfManager_claimFreeSlotByIds; the claim body sets flag 1 and the index byte
 // at +1, then rebuilds the slot list unless the 0xb40 byte is set. The
 // claim loop keeps `changed` uninitialized on the no-claim path (retail
 // never materializes a 0 init; the flag is only read after a claim).
-extern "C" int func_8013042C(u8* base, u8 index) {
+extern "C" int CUICfManager_claimFreeSlotByIndex(u8* base, u8 index) {
     int ret;
     int changed;
 
@@ -1621,15 +1621,15 @@ extern "C" int func_8013042C(u8* base, u8 index) {
         changed = 1;
     }
     if (changed != 0 && base[0xb40] == 0) {
-        func_801311B8(base);
+        CUICfManager_sortSlotsByFlag(base);
     }
     return 1;
 }
-// func_80130720 (us-801311f4): template-copy slot claim. Same
+// CUICfManager_claimFreeSlotByCopy (us-801311f4): template-copy slot claim. Same
 // gate/scan skeleton; the claim body sets slot flag 3 and copies four
 // 0x34-byte blocks (src +0/0x34/0x68/0x9C -> slot +4/0x38/0x6C/0xA0) plus a
 // word (src +0xD0 -> slot +0xD4) via the block-copy helper.
-int func_80130720(u8* base, CUICfSrcCopyView* src) {
+int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src) {
     int gateBusy;
     if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
@@ -1673,16 +1673,16 @@ int func_80130720(u8* base, CUICfSrcCopyView* src) {
         }
     }
     if (changed != 0 && base[0xb40] == 0) {
-        func_801311B8(base);
+        CUICfManager_sortSlotsByFlag(base);
     }
     return 1;
 }
-// func_80130960 (us-80131434): 5-id slot claim. When the busy gates are
+// CUICfManager_claimFreeSlotByIds (us-80131434): 5-id slot claim. When the busy gates are
 // clear and every init slot is free (state 7), fills the first free slot
 // with flag 2 and the five u16 ids at +0xD8..+0xE0, then rebuilds the slot
 // list unless the 0xb40 byte is set. Returns 1 when it claimed (or was
 // busy), 0 when everything was already idle.
-int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
+int CUICfManager_claimFreeSlotByIds(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     // Gate chain: if/else-if form materializes the flag per branch (retail
     // emits li r0,1; b common per gate); a plain || chain would branch to a
     // shared flag-set instead (12B-spaced gates vs retail's 20B).
@@ -1734,15 +1734,15 @@ int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
             }
         }
         if (changed != 0 && base[0xb40] == 0) {
-            func_801311B8(base);
+            CUICfManager_sortSlotsByFlag(base);
         }
         return 1;
     }
 }
-// func_80130B74 (us-80131648): slot claim. When idle, fills the first free
+// CUICfManager_claimFreeSlotByIdState (us-80131648): slot claim. When idle, fills the first free
 // init slot (state 7) with flag 4, the passed id (u16 at +0xE2) and state
 // (u8 at +0xE4), then rebuilds the slot list unless the 0xb40 byte is set.
-int func_80130B74(u8* base, u16 id, u8 state) {
+int CUICfManager_claimFreeSlotByIdState(u8* base, u16 id, u8 state) {
     // Flag stays symbolic through every busy path: retail funnels all of
     // them (gates + slot scan) into one shared test before the claim body,
     // so the flag must not be const-folded per path.
@@ -1786,15 +1786,15 @@ int func_80130B74(u8* base, u16 id, u8 state) {
         }
     }
     if (changed != 0 && base[0xb40] == 0) {
-        func_801311B8(base);
+        CUICfManager_sortSlotsByFlag(base);
     }
     return 1;
 }
-// func_80130D80 (us-80131854): single-arg slot claim that sprintf-formats
+// CUICfManager_claimFreeSlotFormatted (us-80131854): single-arg slot claim that sprintf-formats
 // the passed id into the slot's +0xE6 buffer. Same gate/scan skeleton as
-// func_80130960; the claim body sets slot flag 5, formats the id, then sets
+// CUICfManager_claimFreeSlotByIds; the claim body sets slot flag 5, formats the id, then sets
 // changed (live across the sprintf, hence a saved register).
-int func_80130D80(u8* base, u16 arg1) {
+int CUICfManager_claimFreeSlotFormatted(u8* base, u16 arg1) {
     int gateBusy;
     if (PTNotice_IsActive_3C10() != 0) {
         gateBusy = 1;
@@ -1834,16 +1834,16 @@ int func_80130D80(u8* base, u16 arg1) {
             }
         }
         if (changed != 0 && base[0xb40] == 0) {
-            func_801311B8(base);
+            CUICfManager_sortSlotsByFlag(base);
         }
         return 1;
     }
 }
-// func_80130F98 (us-80131a6c): two-arg slot claim that sprintf-formats both
+// CUICfManager_claimFreeSlotByTwoIds (us-80131a6c): two-arg slot claim that sprintf-formats both
 // ids into the slot's +0xE6 and +0x126 buffers. Same gate/scan skeleton as
-// func_80130D80; both sprintf calls share the pool-base format address (kept
+// CUICfManager_claimFreeSlotFormatted; both sprintf calls share the pool-base format address (kept
 // in a saved register across the calls).
-int func_80130F98(u8* base, u16 a1, u16 a2) {
+int CUICfManager_claimFreeSlotByTwoIds(u8* base, u16 a1, u16 a2) {
     // Busy gates as a nested if/else chain: each site shares one merge block
     // (retail keeps the result in r0).
     int flag;
@@ -1883,12 +1883,12 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
         }
     }
     if (changed != 0 && base[0xb40] == 0) {
-        func_801311B8(base);
+        CUICfManager_sortSlotsByFlag(base);
     }
     return 1;
 }
 // ---------------------------------------------------------------------------
-// func_801311B8 (us-80131c8c)
+// CUICfManager_sortSlotsByFlag (us-80131c8c)
 //
 // Bubble-sort pass over the 8 init slots by flag byte (ascending; flag 7 =
 // free sorts last). Each pass compares adjacent slots and, when out of
@@ -1896,7 +1896,7 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
 // copies + sprintf of the two id strings). Passes repeat until a pass makes
 // no swap; the pass length shrinks by one each time (retail subfic limit).
 // ---------------------------------------------------------------------------
-extern "C" void func_801311B8(u8* base) {
+extern "C" void CUICfManager_sortSlotsByFlag(u8* base) {
     CUICfSwapSlot slots[3]; // [0]=writeback A, [1]=buffer B, [2]=template
     u8 start = 0;
     u8 didSwap;
@@ -2052,14 +2052,14 @@ extern "C" void func_801311B8(u8* base) {
         start++;
     } while (start < 7);
 }
-// func_80131820 (us-801322f4)
+// CUICfManager_sortSlotList (us-801322f4)
 //
-// Same bubble-sort pass as func_801311B8, but sorting by in-use status:
+// Same bubble-sort pass as CUICfManager_sortSlotsByFlag, but sorting by in-use status:
 // a slot is swapped before its neighbour when it is in use (flag != 7) and
 // the neighbour is free (flag == 7), so freed slots sink to the end. The
 // comparison booleanizes each flag's != 7 (retail subfic/subi/or/srwi).
 // ---------------------------------------------------------------------------
-extern "C" void func_80131820(u8* base) {
+extern "C" void CUICfManager_sortSlotList(u8* base) {
     CUICfSwapSlot bufA;
     CUICfSwapSlot bufB;
     CUICfSwapSlot tpl;
@@ -2350,7 +2350,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     }
     inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffe);
     {
-        int st = func_801359AC((u8*)lbl_eu_80664054);
+        int st = CUICfManager_checkMenuOpenGate((u8*)lbl_eu_80664054);
         if (st != 0) {
             if ((lbl_eu_80663E24 & 0x40000000u) == 0) {
                 if (CtrlRemote_TouchBitByArg(0x20) > 4 && st == 2) {
@@ -2402,9 +2402,9 @@ slot_found:
     }
     return savedRet;
 }
-// func_801338C8: create the menu via __ct__8011C1B8 and queue it
+// CUICfManager_createQueuedMenus: create the menu via __ct__8011C1B8 and queue it
 // (mFlags bit 0x2; busy-bit/accessor gates + scene-mode guard).
-extern "C" u32 func_801338C8(CUICfManager* self) {
+extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3397,7 +3397,7 @@ slot_found:
     }
     return savedRet;
 }
-// us-8013500c: probe func_80135D04, then create the world-map menu via
+// us-8013500c: probe CUICfManager_isWorldMapBusy, then create the world-map menu via
 // func_802514D4 and queue it.
 u32 CUICfManager_queueWorldMapMenu() {
     CUICfManagerCreateView* inst;
@@ -3411,7 +3411,7 @@ u32 CUICfManager_queueWorldMapMenu() {
     if (inst == NULL) {
         return 0;
     }
-    if (func_80135D04(inst) != 0) {
+    if (CUICfManager_isWorldMapBusy(inst) != 0) {
         return 0;
     }
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
@@ -3688,8 +3688,8 @@ slot_found:
     return savedRet;
 }
 
-// func_80134C34: create the save menu with fixed ctor args (1, 0, 1) and queue it.
-u32 func_80134C34() {
+// CUICfManager_openSaveMenu: create the save menu with fixed ctor args (1, 0, 1) and queue it.
+u32 CUICfManager_openSaveMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
     int i;
@@ -3745,7 +3745,7 @@ slot_found:
 
 // CUICfManager_queueTutorialMenu: create the tutorial menu via MenuTutorialCreate and queue it.
 // arg0 = slot index (u8), arg1 = scene id (or the manager's own when 0),
-// arg2 = skip-reset flag (0 resets the slot via func_8013042C first).
+// arg2 = skip-reset flag (0 resets the slot via CUICfManager_claimFreeSlotByIndex first).
 extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
@@ -3765,7 +3765,7 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
         if (inst == NULL) {
             reset = 0;
         } else {
-            reset = func_8013042C((u8*)inst + 0x14c, (u8)a0);
+            reset = CUICfManager_claimFreeSlotByIndex((u8*)inst + 0x14c, (u8)a0);
         }
         if (reset != 0) {
             return 0;
@@ -4092,10 +4092,10 @@ slot_found:
     }
     return savedRet;
 }
-// func_80135708 (us-801361dc): busy/slot-state probe. Gates funnel into a
+// CUICfManager_isUIBusy (us-801361dc): busy/slot-state probe. Gates funnel into a
 // flag variable (shared compare), then the slot scan is fully unrolled by
 // MWCC (per-index li/mulli/lbzx).
-int func_80135708() {
+int CUICfManager_isUIBusy() {
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst == NULL) {
         return 0;
@@ -4130,7 +4130,7 @@ int func_80135708() {
     return 0;
 }
 // Minimal cf::CBattleManager view (the full CBattleManager.hpp pulls the
-// object/chain headers; only getInstance is needed for func_801359AC).
+// object/chain headers; only getInstance is needed for CUICfManager_checkMenuOpenGate).
 namespace cf {
 class CBattleManager {
 public:
@@ -4141,14 +4141,14 @@ public:
 // Float-returning vtable slot (vtable +0x128) of the player wrapper.
 typedef float (*CUICfVFloatFn)(CUICfPlayerView*);
 
-// func_801359AC (us-80136480): busy/slot-state probe. Returns 1 when any
+// CUICfManager_checkMenuOpenGate (us-80136480): busy/slot-state probe. Returns 1 when any
 // menu-system busy gate is set (sound/state gates first), 2 when the battle
 // list, an enum-list fill, the player pose/state, the global settings bit,
 // or any in-use slot (flag == 4) blocks the menus, else 0.
 // Retail callers load the singleton into r3 immediately before the bl; the
 // body never uses it, but the parameter must exist so call sites emit the
 // retail lwz r3 sequence.
-extern "C" int func_801359AC(u8* singleton) {
+extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     (void)singleton;
     int count;
     int slotUsed;

@@ -9,12 +9,12 @@ struct CfResBuffer {
     u32 field_400;    // ring read index (byte 0-255)
     u32 field_404;    // remaining word count
 
-    int func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits);
+    int pushBackwards(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits);
 };
 
 // Ring-record appender; the scratch header word is an intentionally
 // uninitialized local (retail reads the raw frame slot).
-int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
+int CfRes_pushRec(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
                   unsigned int dataVal, unsigned int* src, int count);
 
 // Entry-table helpers shared across CfRes (defined in CfRes.cpp).
@@ -26,9 +26,9 @@ extern "C" void cfResNopValueSink(u32 value);
 
 // Acquire a resource-table entry for a resource id, bumping refcounts.
 // extern "C" keeps the call reloc carrying the retail unmangled name.
-extern "C" int func_80063560(int id, int incRef, int incCount);
+extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount);
 
-// Helpers used by the func_800643F0 load dispatcher (defined across cf TUs;
+// Helpers used by the CfRes_dispatchLoad load dispatcher (defined across cf TUs;
 // C linkage keeps the call relocs carrying the retail unmangled names).
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(void* self);
 extern "C" void CfRes_clearE28Mask(u32 mask);
@@ -67,7 +67,7 @@ extern "C" int CfRes_checkMask_64A08(u8* res, u32 mask);
 // Resource-load dispatcher: resolves a packed resource token to a resident
 // buffer, allocating through the archive cache or the memory-manager
 // fallback chain.
-int func_800643F0(void* self, u32 packed, int flag, int kind);
+int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind);
 
 struct CfRes_64994 {
     u32 field_00;
@@ -209,7 +209,7 @@ struct CfResStrTableRec {
     char str[4];    // 0x18 - name string
 };
 
-// 0x18-stride record of the entry table walked by func_800621F4: field_08 is
+// 0x18-stride record of the entry table walked by CfRes_extType: field_08 is
 // a path offset relative to the table base, +0xC/+0x10 are output words.
 struct CfResExtRec {
     u8 _00[8];
@@ -225,7 +225,7 @@ extern const char* lbl_eu_80661A24;
 // Name-key string pointer (in .sdata; table key compared by CfRes_lookupStrTable).
 extern const char* lbl_eu_80661A20;
 
-// Extension separator character (in .sdata, ".\0"): the key func_80063C7C
+// Extension separator character (in .sdata, ".\0"): the key CfRes_stripExtension
 // strips from the end of a path. Declared as a scalar (not an array) so MWCC
 // emits the retail @sda21 addressing; use &lbl_eu_80661A40 as the string.
 extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
@@ -351,7 +351,7 @@ extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" u32 CfRes_getAddrLow10(void* self);
 
 // Same-TU packed-token repacker and vtable dispatch thunks used by
-// func_800641CC (defined in CfRes.cpp; C linkage so the call relocs carry
+// CfRes_resolveTokenEntry (defined in CfRes.cpp; C linkage so the call relocs carry
 // the retail unmangled names). int-returning so callers capture r3.
 extern "C" unsigned long CfRes_packShift27(unsigned long a, unsigned long b);
 
@@ -365,7 +365,7 @@ extern "C" u32 func_800AA714(const char* path);
 extern "C" int CfRes_resolveSlot220(int inst, int a, int b);
 extern "C" int CfRes_resolveSlotByBits(int inst, int a, int b);
 extern "C" int CfRes_resolveSlot298(int inst, int a, int b);
-extern "C" int func_800641CC(int inst, int a, int b);
+extern "C" int CfRes_resolveTokenEntry(int inst, int a, int b);
 
 // Same-TU resource resolvers called by the func_80062xxx wrappers. C linkage
 // so the call relocs carry the retail unmangled names (same rule as the
@@ -385,7 +385,7 @@ extern "C" void EffSched_LookupA(void* mgr, void* data);
 
 // Delegate-op dispatcher (defined in CfRes.cpp). Declared int-returning so
 // callers can capture the r3 result (retail callers do `mr r3r31, r3` after
-// the call); the body is a void call to func_800643F0 followed by blr.
+// the call); the body is a void call to CfRes_dispatchLoad followed by blr.
 extern "C" int CfRes_delegateOp1(void* a, void* b, void* c);
 extern "C" int CfRes_delegateOp0(void* a, void* b, void* c);
 
@@ -395,7 +395,7 @@ extern "C" int CfRes_resolveTokenByBits(int inst, int a, int b, int c);
 extern "C" int CfRes_resolveTokenType0(int inst, int a, int b, int c);
 extern "C" int CfRes_resolveTableToken(int inst, int a, int b, int d, int e);
 extern "C" int CfRes_registerTblHandle(int handle);
-extern "C" int func_80063C7C(ml::FixStr<64>& dest, const char* src);
+extern "C" int CfRes_stripExtension(ml::FixStr<64>& dest, const char* src);
 extern "C" int CfRes_resolveGridToken(int inst, int a, int b, int d, int e);
 extern "C" int CfRes_getDeviceFileSize(void* self);
 extern "C" ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str);

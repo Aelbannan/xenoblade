@@ -283,7 +283,7 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
 // Returns the stream id, or -1 on failure.
 // The shadow locals are declared in retail's colouring order (first-declared
 // gets the highest callee-saved register): slot=r31 .. forceAhx=r24.
-extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int param2, bool loopFlag,
+extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int param2, int loopFlag,
                   int afsId, int afsSubId, bool forceAhx) {
     StreamEntry* slot;
     int subId = afsSubId;

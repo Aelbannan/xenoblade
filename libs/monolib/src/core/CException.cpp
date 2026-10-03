@@ -131,7 +131,7 @@ extern "C" {
     bool wkStandbyLogin__5CProcFv(CProc* self);
     void __dt__5CProcFv(CProc* self, int flag);
     CException* getException__9CWorkRootFv();
-    void func_8044A578__8CGXCacheFv(CGXCache* cache, const ml::CCol4* color, int flag);
+    void updateCmd2Color__8CGXCacheFv(CGXCache* cache, const ml::CCol4* color, int flag);
     extern CGXCache* cacheInstance__9CDeviceGX;
 
     // Output rectangle/ring data helpers.
@@ -611,7 +611,7 @@ extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
     if (message == nullptr || message[0] == 0 || CDeviceVI::getInstance() == nullptr) {
         for (;;) {}
     }
-    func_8044A578__8CGXCacheFv(cacheInstance__9CDeviceGX, &ml::CCol4::black, 1);
+    updateCmd2Color__8CGXCacheFv(cacheInstance__9CDeviceGX, &ml::CCol4::black, 1);
     lbl_eu_806656C8 = 0;
     for (;;) {
         endFrame__9CDeviceVIFv();

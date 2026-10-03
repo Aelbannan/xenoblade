@@ -458,8 +458,8 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
             // mMaterial for each call rather than keeping a local alive).
             self->mTime = 0;
             self->mType = 0;
-            func_8016AF4C(self->mMaterial, &lbl_eu_80503800[4], &self->mTime);
-            func_8016AF4C(self->mMaterial, &lbl_eu_80503800[0xF], &self->mType);
+            EvtSeqResolveAnmChr(self->mMaterial, &lbl_eu_80503800[4], &self->mTime);
+            EvtSeqResolveAnmChr(self->mMaterial, &lbl_eu_80503800[0xF], &self->mType);
         }
     }
 

@@ -124,7 +124,7 @@ namespace cf {
 
     // 12-byte position block returned by CfSoundActorSrc::getPosition
     // (vtable +0xAC). Copied word-wise into CfSoundSlot::field_0x08..0x10 by
-    // the sound-slot starters (func_801C10C0 / CfSoundMan_ReadSlotPosition).
+    // the sound-slot starters (CfSoundMan_PlaySoundSimple / CfSoundMan_ReadSlotPosition).
     struct CfSoundActorPos {
         /* 0x00 */ u32 field_0x00;
         /* 0x04 */ u32 field_0x04;
@@ -227,7 +227,7 @@ struct CfSoundPlayerView {
     /* 0x04 */ CfSoundListNode mList;
 };
 
-// nw4r assertion strings used by func_801C1618's checked list deref.
+// nw4r assertion strings used by CfSoundMan_PauseRecordSounds's checked list deref.
 extern const char lbl_eu_80533C54[];
 extern const char lbl_eu_80533C30[];
 extern const char lbl_eu_80533C84[];
@@ -257,8 +257,8 @@ extern cf::CfSoundPauseParam lbl_eu_80576528;
 extern const float lbl_eu_80667E98;
 extern const float lbl_eu_80667E9C;
 
-// Default FX-send volume (retail .sdata2; passed to func_801C0DC4 by
-// func_801C0FCC when starting a sound slot at the default volume).
+// Default FX-send volume (retail .sdata2; passed to CfSoundMan_StartSlotSound by
+// CfSoundMan_StartTableSound when starting a sound slot at the default volume).
 extern const float lbl_eu_80667EA0;
 
 // Master-volume backing store (retail .sdata, 8 bytes; written by
@@ -284,14 +284,14 @@ extern "C" u32 ClearMenu_IsPresent();
 extern "C" bool isInitialized__10CMenuPauseFv();
 
 // Sound-id counter for freshly allocated slots (retail .sdata u16; read and
-// written by func_801C0DC4 when a new slot id is assigned).
+// written by CfSoundMan_StartSlotSound when a new slot id is assigned).
 extern u16 lbl_eu_80664438;
 
 // Sound-system-init flag byte (retail .sbss, one byte; cleared by the
 // manager ctor before the first InitSoundSystem call).
 extern u8 lbl_eu_8066443A;
 
-// No-op notification handler. Called from func_801C0DC4 when
+// No-op notification handler. Called from CfSoundMan_StartSlotSound when
 // nw4r::snd::detail::SoundStartable::detail_StartSound succeeds.
 // Left intentionally empty in the retail binary (single blr).
 extern "C" void CfSoundMan_PlayFailHook();

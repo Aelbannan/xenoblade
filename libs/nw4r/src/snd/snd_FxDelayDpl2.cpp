@@ -14,6 +14,9 @@ extern FxDelayDpl2Vtbl lbl_eu_8056A7C0[];
 extern const f32 lbl_eu_80669F80; // 160.0f (delay / delayTimeMax default)
 extern const f32 lbl_eu_80669F84; // 0.4f  (feedback default)
 extern const f32 lbl_eu_80669F88; // 1.0f  (outGain / iir default)
+extern const f32 lbl_eu_80669F8C; // minDelay clamp bound
+extern const f32 lbl_eu_80669F90; // feedback clamp bound
+extern const f32 lbl_eu_80669F94; // feedback/iir/outGain upper + sendGain init
 
 namespace nw4r {
 namespace snd {
@@ -30,9 +33,9 @@ struct FxDelayParam {
 
 } // namespace detail
 
-// __declspec(novtable): the retail vtable is shared data (lbl_eu_8056A7C0),
-// so MWCC must not emit a local __vt__FxDelayDpl2; the ctor stores the
-// extern vtable address explicitly (retail's vptr store is in the ctor body).
+// __declspec(novtable): retail's link merged the vtable elsewhere
+// (lbl_eu_8056A7C0) and keeps no bodies here; the ctor stores the extern
+// vtable address explicitly (retail's vptr store is in the ctor body).
 class __declspec(novtable) FxDelayDpl2 : public FxBase {
 public:
     FxDelayDpl2();
@@ -40,7 +43,7 @@ public:
     virtual ~FxDelayDpl2() {
         Shutdown();
         ReleaseWorkBuffer();
-    } // at 0x8
+    } // at 0x8 (inline; unused here so discarded, like retail)
 
     virtual bool StartUp();  // at 0xC
     virtual void Shutdown(); // at 0x10
@@ -203,27 +206,27 @@ bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
     mDelayExpDpl2.delayTime = clampedDelay;
     mDelayExp.delayTime = clampedDelay;
 
-    // Clamp feedback to [0, maxFeedback]
-    f32 clampedFeedback = ut::Clamp(rParam.feedback, 0.0f, lbl_eu_80669F90);
+    // Clamp feedback to [maxFeedback]
+    f32 clampedFeedback = ut::Clamp(rParam.feedback, lbl_eu_80669F90, lbl_eu_80669F94);
     mDelayExpDpl2.feedback = clampedFeedback;
     mDelayExp.feedback = clampedFeedback;
 
-    // Clamp iir to [0, 1]
-    f32 clampedIir = ut::Clamp(rParam.iir, 0.0f, 1.0f);
+    // Clamp iir to [1, max]
+    f32 clampedIir = ut::Clamp(rParam.iir, lbl_eu_80669F88, lbl_eu_80669F94);
     mDelayExpDpl2.iir = clampedIir;
     mDelayExp.iir = clampedIir;
 
-    // Clamp outGain to [0, 1]
-    f32 clampedOutGain = ut::Clamp(rParam.outGain, 0.0f, 1.0f);
+    // Clamp outGain to [1, max]
+    f32 clampedOutGain = ut::Clamp(rParam.outGain, lbl_eu_80669F88, lbl_eu_80669F94);
     mDelayExpDpl2.outGain = clampedOutGain;
     mDelayExp.outGain = clampedOutGain;
 
     mDelayExp.busIn = NULL;
     mDelayExp.busOut = NULL;
-    mDelayExp.sendGain = 0.0f;
+    mDelayExp.sendGain = lbl_eu_80669F94;
     mDelayExpDpl2.busIn = NULL;
     mDelayExpDpl2.busOut = NULL;
-    mDelayExpDpl2.sendGain = 0.0f;
+    mDelayExpDpl2.sendGain = lbl_eu_80669F94;
 
     if (!mIsActive) {
         return true;

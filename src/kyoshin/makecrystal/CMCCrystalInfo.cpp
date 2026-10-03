@@ -11,7 +11,7 @@
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 void SplitU32ToS16s(void*, u32);
 void setGXColorS10(void*, u32, u32, u32, u32);
 extern "C" void MCCrystal_StepIntro(CMCCrystalInfo*);
@@ -25,7 +25,7 @@ extern "C" void MCCrystal_RewindAnim3(CMCCrystalInfo*);
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
 
-void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
+void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
 
 // The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
 // (not a mangled member name), so it is written as a C-linkage function that
@@ -70,7 +70,7 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
 
 #pragma push
 #pragma optimize_for_size on
-void func_8021A718(CMCCrystalInfo* self)
+void MCCrystal_LoadLayouts(CMCCrystalInfo* self)
 {
     // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a).
     u32 handle = (u32)mtl::MemManager::getHandleMEM2();
@@ -80,7 +80,7 @@ void func_8021A718(CMCCrystalInfo* self)
 }
 #pragma pop
 
-void func_8021A780(CMCCrystalInfo* self)
+void MCCrystal_StepState(CMCCrystalInfo* self)
 {
     if (self->mEnabled) {
         switch (self->mState) {
@@ -190,7 +190,7 @@ void MCCrystal_PlayAnim3B(CMCCrystalInfo* self)
 
 #pragma push
 #pragma optimize_for_size on
-void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
+void MCCrystal_ShowItem(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
 {
     CMCCItemData* p;
     if (item != 0) {
@@ -215,14 +215,14 @@ void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
     }
     // Type 9 (crystal) routes to the crystal slot fill; otherwise clear them.
     if ((code & 0xFFFF) == 9) {
-        func_8021B2E0(self, (u16)val, item);
+        MCCrystal_ShowSlots(self, (u16)val, item);
     } else {
-        func_8021B42C(self);
+        MCCrystal_ClearTexts(self);
     }
 }
 #pragma pop
 
-void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
+void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
 {
     char buf[0x20];
     u32 msgId = arg5;   // materialized first: retail spills it (r25) before idxBase
@@ -324,7 +324,7 @@ extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 
 #pragma push
 #pragma optimize_for_size on
-void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
+void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
 {
     char buf[0x20];
     sprintf(buf, &lbl_eu_80508DF8[0x13e], r5 + 1);
@@ -334,7 +334,7 @@ void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
     nw4r::lyt::Pane* r2 =
         (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))
             ->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
-    func_80137924(self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
+    ScalePaneWorldPos(self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
 }
 #pragma pop
 
@@ -398,7 +398,7 @@ __declspec(noinline) void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
 // separate functions (bl), so inlining would balloon the caller sizes.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, CMCCItemHandle* item)
+__declspec(noinline) void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, CMCCItemHandle* item)
 {
     CrystalItemBuf buf;
     CMCCItemHandle* item2;
@@ -437,14 +437,14 @@ __declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* sel
 }
 
 // Fill the crystal slot texts from the item's crystal entries.
-__declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
+__declspec(noinline) void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
 {
     char buf[0x20];
-    func_8021B42C(self);
+    MCCrystal_ClearTexts(self);
     CrystalItemBuf bufB;
-    func_8021B188(&bufB, self, arg2, item);
+    MCCrystal_BuildItemBuf(&bufB, self, arg2, item);
     // Word-pair block copy of the filled buffer into a fixed frame slot;
-    // under optimize_for_size (scope extended from func_8021B188 above) MWCC
+    // under optimize_for_size (scope extended from MCCrystal_BuildItemBuf above) MWCC
     // keeps this as the retail counted lwzu/stwu loop.
     CrystalItemBuf slots;
     u32* dst = (u32*)((char*)&slots - 4);
@@ -470,7 +470,7 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItem
 // Clears every crystal-slot text entry (used before refilling the display).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)
+__declspec(noinline) void MCCrystal_ClearTexts(CMCCrystalInfo* self)
 {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
@@ -581,7 +581,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane =
             ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
-        func_8013676C(rootPane,
+        ApplyFontToTxtPanes(rootPane,
             reinterpret_cast<CMCCrystalInfoFontView*>(
                 CDeviceFont::getFontInfo(1, (nw4r::lyt::Layout*)mLayout))
                 ->vf7());
@@ -623,18 +623,18 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // channel of the shared slot colours.
         nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName(&lbl_eu_80508DF8[0x2b1], true);
-        FourShorts fs1a = func_801397AC(pane1, 0);
+        FourShorts fs1a = PaneMatGetS16Quad(pane1, 0);
         CopyVec4s(lbl_eu_806646D8, (short*)&fs1a);
-        FourShorts fs1b = func_801397AC(pane1, 1);
+        FourShorts fs1b = PaneMatGetS16Quad(pane1, 1);
         CopyVec4s(lbl_eu_806646E0, (short*)&fs1b);
         lbl_eu_806646E8[3] = lbl_eu_806646D8[3];
         lbl_eu_806646F0[3] = lbl_eu_806646E0[3];
 
         nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
             ->FindPaneByName(&lbl_eu_80508DF8[0x2c0], true);
-        FourShorts fs2a = func_801397AC(pane2, 0);
+        FourShorts fs2a = PaneMatGetS16Quad(pane2, 0);
         CopyVec4s(lbl_eu_806646F8, (short*)&fs2a);
-        FourShorts fs2b = func_801397AC(pane2, 1);
+        FourShorts fs2b = PaneMatGetS16Quad(pane2, 1);
         CopyVec4s(lbl_eu_80664700, (short*)&fs2b);
         lbl_eu_80664708[3] = lbl_eu_806646F8[3];
         lbl_eu_80664710[3] = lbl_eu_80664700[3];

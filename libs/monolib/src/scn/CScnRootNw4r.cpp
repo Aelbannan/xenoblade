@@ -84,7 +84,7 @@ extern "C" void* RootNw4r_Ptr49C(u8* self) { return (void*)((u8*)self + 0x49c); 
 
 // us-80493ea8: allocate `size` bytes from the scene-root allocator.
 // Falls back to the MEM2 region when the current region cannot hold size*2.
-void* func_8048FE34(CScnRootNw4r* self, u32 size) {
+void* RootNw4r_AllocBuf(CScnRootNw4r* self, u32 size) {
     CScnRootNw4rBuffer* buffer = self->field_0x8;
     u32 handle = self->field_0xC;
     u8 flag = buffer->field_0x448;
@@ -109,7 +109,7 @@ void RootNw4r_FreeBuf(CScnRootNw4r* self, u8* p) {
 
 // us-80493f4c: advance the frame counter and dispatch to every registered
 // (callback, id) pair whose id matches the current frame counter.
-extern "C" void func_8048FED8(CScnRootNw4r* self, u32 r4,
+extern "C" void RootNw4r_DispatchFrame(CScnRootNw4r* self, u32 r4,
                               nw4r::g3d::G3dObj* obj) {
     if (obj != NULL) {
         obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));
@@ -123,13 +123,13 @@ extern "C" void func_8048FED8(CScnRootNw4r* self, u32 r4,
     self->field_0x1C = self->field_0x1C + 1;
 }
 
-extern "C" void func_8048FF90(CScnRootNw4r* self, u32 a, u32 b) {
+extern "C" void RootNw4r_AddPair(CScnRootNw4r* self, u32 a, u32 b) {
     self->mArrA[self->mPairCount] = a;
     self->mArrB[self->mPairCount++] = b;
 }
 
 // us-80494030: remove the (a, b) pair entry, shifting later entries down.
-extern "C" void func_8048FFBC(CScnRootNw4r* self, u32 a, s32 b) {
+extern "C" void RootNw4r_RemovePair(CScnRootNw4r* self, u32 a, s32 b) {
     u32 count = self->mPairCount;
     for (u32 i = 0; i < count; i++) {
         u32 cur = self->mArrA[i];
@@ -148,7 +148,7 @@ extern "C" u32 RootNw4r_GetField14(u8* self) { return *(u32*)((u8*)self + 0x14);
 
 // us-804940b4: return the +0x4B8 alloc handle, creating it lazily through
 // the virtual at vtable+0x2C when it is still invalid (-1).
-extern "C" u32 func_80490040(CScnRootNw4r* self) {
+extern "C" u32 RootNw4r_GetAllocHandle(CScnRootNw4r* self) {
     u32 handle = self->field_0x4B8;
     // Invalid-handle test: (handle + 0x10000) == 0xFFFF holds only when both
     // halves of the packed alloc handle are 0xFFFF (i.e. all ones); this is
@@ -162,7 +162,7 @@ extern "C" u32 func_80490040(CScnRootNw4r* self) {
     return handle;
 }
 
-extern "C" void RootNw4r_ThunkFED8(u8* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }
+extern "C" void RootNw4r_ThunkFED8(u8* self) { ((void(*)(void*))RootNw4r_DispatchFrame)((char*)self - 0xc); }
 
 extern "C" void RootNw4r_ThunkDtor(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
 
@@ -181,7 +181,7 @@ extern "C" void updateScnCounter__FUl(u32 param) {
 }
 
 // us-8049363c: remove the entry equal to `value`, shifting later entries down.
-extern "C" void func_8048F5C8(CScnRootNw4r* self, u32 value) {
+extern "C" void RootNw4r_RemoveId(CScnRootNw4r* self, u32 value) {
     u32 count = self->mIdCount;
     for (u32 i = 0; i < count; i++) {
         u32 id = self->mIds[i];
@@ -202,7 +202,7 @@ extern double lbl_eu_8066A9F8;
 
 // us-80493544: apply the camera matrices plus the GX viewport/scissor from
 // the GX cache, then select the camera on the nw4r scene root.
-extern "C" void func_8048F4D0(CScnRootNw4r* self, CScnCamLayout* cam) {
+extern "C" void RootNw4r_ApplyCamera(CScnRootNw4r* self, CScnCamLayout* cam) {
     // Two s16->f32 conversion temporaries through the shared signed magic
     // double: seed the 0x43300000 exponent word once, fill mantissa words,
     // subtract the magic (retail reuses each temp for two conversions).
@@ -247,7 +247,7 @@ extern "C" void func_8048F4D0(CScnRootNw4r* self, CScnCamLayout* cam) {
 // pass and 1 is returned; otherwise the camera's registered child object is
 // inserted into the group at the child-array tail, bumping the attach
 // counter. Returns whether an insertion happened.
-s32 func_8048F630(CScnRootNw4r* self, CScnCamLayout* cam) {
+s32 RootNw4r_AttachCamOne(CScnRootNw4r* self, CScnCamLayout* cam) {
     u8 ready = self->field_0x4->field_0x3E8;
     if (ready == 0) {
         // Not ready yet: push back onto the queue and retry next frame.
@@ -290,7 +290,7 @@ s32 func_8048F630(CScnRootNw4r* self, CScnCamLayout* cam) {
 // us-8049381c: remove a child from the camera's ScnGroup. The child must be
 // ScnGroup-derived; which of the two candidate pointers is removed depends
 // on cam->field_0x1470 being set. Returns 1 when a removal happened.
-s32 func_8048F7A8(CScnRootNw4r* self, CScnCamLayout* cam) {
+s32 RootNw4r_DetachCamChild(CScnRootNw4r* self, CScnCamLayout* cam) {
     s16 idx = cam->field_0x16C0;
     nw4r::g3d::ScnRoot* scnRoot = self->mScnRoot;
     if ((u32)idx >= scnRoot->Size()) {
@@ -345,7 +345,7 @@ extern "C" void RootNw4r_UpdateFrame(CScnRootNw4r* self) {
 
 // us-80493a08: per-frame draw pass - camera-manager cull, per-manager
 // updates, view calc + gather, then the two callback phases.
-extern "C" void func_8048F994(CScnRootNw4r* self) {
+extern "C" void RootNw4r_DrawFrame(CScnRootNw4r* self) {
     if (self->mScnRoot == NULL) {
         return;
     }
@@ -373,7 +373,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
             (ml::CFrustum*)Scn_FindCamItem(self->field_0x4, -1));
     }
 
-    func_804C22F0(self->field_0x4->mEnvLgtCtrl);
+    scnLgtUpdateSceneLights(self->field_0x4->mEnvLgtCtrl);
     LightManInvokeLightV3(self->field_0x4->mLightMan);
     FogManIsFogEnabled(self->field_0x4->mFogMan);
     CScnItemPool_forEachCallVfunc14(self->field_0x4->mItemPool);
@@ -383,8 +383,8 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
 
     // Called through a cast so MWCC's IPA cannot elide the calls to the
     // empty same-TU placeholder (MWCC_PATTERNS 7h).
-    ((void (*)(CScnRootNw4r*, u32))func_8048FAA8)(self, 0);
-    ((void (*)(CScnRootNw4r*, u32))func_8048FAA8)(self, 1);
+    ((void (*)(CScnRootNw4r*, u32))RootNw4r_DrawDispatch)(self, 0);
+    ((void (*)(CScnRootNw4r*, u32))RootNw4r_DrawDispatch)(self, 1);
 
     scnLgtEnterMode20(self->field_0x4->mEnvLgtCtrl);
 }
@@ -396,7 +396,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
 //  phase 1: gated on the bloom object's enable bit; latches redraw requests
 //           from every list item, re-runs the full draw when one is pending,
 //           otherwise runs the half-res bloom path, then clears all flags.
-extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
+extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag) {
     if (flag == 0) {
         self->field_0x19 = 0;
         nw4r::g3d::G3dReset();
@@ -459,7 +459,7 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
 // Each queue entry whose scene flag (+0x3E8) is still clear is re-queued for
 // the next pass; otherwise the camera's registered child object is inserted
 // into the group at the child-array tail, bumping the attach counter.
-void func_8048FC68(CScnRootNw4r* self) {
+void RootNw4r_AttachQueued(CScnRootNw4r* self) {
     // Signed loop compare (retail emits cmpw/blt against the queue count).
     for (u32 i = 0; i < self->mIdCount; i++) {
         CScnCamLayout* cam = (CScnCamLayout*)self->mIds[i];
@@ -516,16 +516,16 @@ extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6
 extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&lbl_eu_806639A0, 0x00000000,
     (u32)&__dt__12CScnRootNw4rFv,
-    (u32)&func_8048F5C8,
-    (u32)&func_8048F4D0,
+    (u32)&RootNw4r_RemoveId,
+    (u32)&RootNw4r_ApplyCamera,
     (u32)&RootNw4r_UpdateFrame,
-    (u32)&func_8048F994,
-    (u32)&func_8048FC68,
-    (u32)&func_8048FF90,
-    (u32)&func_8048FFBC,
+    (u32)&RootNw4r_DrawFrame,
+    (u32)&RootNw4r_AttachQueued,
+    (u32)&RootNw4r_AddPair,
+    (u32)&RootNw4r_RemovePair,
     (u32)&getScnRootGroupHandle,
     (u32)&scnImN4GetWord4AC,
-    (u32)&func_80490040,
+    (u32)&RootNw4r_GetAllocHandle,
     (u32)&RootNw4r_GetField14,
     (u32)&lbl_eu_806639A0,
     0xFFFFFFF4,
@@ -535,7 +535,7 @@ extern "C" u32 lbl_eu_8056E768[23] = {
     (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
     (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
     (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
-    (u32)&func_8048FED8,
+    (u32)&RootNw4r_DispatchFrame,
 };
 extern "C" u32 lbl_eu_8056E7C4[3] = { (u32)&lbl_eu_80663998, 0x00000000, 0x00000000 };
 

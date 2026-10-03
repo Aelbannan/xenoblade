@@ -181,7 +181,7 @@ void CMenuLvUp::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     for (u8 i = 0; i < 3; i++) {
         drawLayout(mEntries[i].field_0x00, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
         drawLayout(mEntries[i].field_0x08, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
@@ -486,7 +486,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         b.y = pose->field_0x138.y;
         b.z = pose->field_0x138.z;
         c = *actor->vfnAC();
-        if (func_8013A4B4(&a, &b, &c) == 0) {
+        if (CheckViewAngle60(&a, &b, &c) == 0) {
             entry->field_0x00->GetRootPane()->SetVisible(false);
             entry->field_0x08->GetRootPane()->SetVisible(false);
         }

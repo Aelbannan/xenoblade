@@ -243,11 +243,11 @@ extern "C" __declspec(noinline) void cbRenderBefore__12CTaskGameEffFv(void* self
     EffSys_StepSchedules(lbl_eu_8065FC18);
 }
 
-// func_80045044: flush GX state, fold this->mActive into bit 11 (0x800) of the
+// runEffectPassA: flush GX state, fold this->mActive into bit 11 (0x800) of the
 // effect-singleton flag word at lbl_eu_8065FC18, run the per-frame effect
 // update pass, then flush GX state again.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* param) {
+extern "C" __declspec(noinline) void runEffectPassA(CTaskGameEff* self, void* param) {
     CDeviceGX::getCacheInstance()->resetGXStateA();
     CViewRoot::updateViewRoot();
     // Bitfield assign folds to the retail lhz/rlwimi/sth insert of mActive
@@ -270,12 +270,12 @@ extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* par
 
 extern "C" void noopGameEffTask() {}
 
-// func_8004513C: resolve an effect object by id and attach it to the battle
+// attachEffectById: resolve an effect object by id and attach it to the battle
 // host's +0x3E9C container. mode selects the resolver: 1 = the host
 // container's vtable slot 0x220, 2 = createBattleActor, otherwise createNpcActor.
 // The attach target is the caller's +0x3E9C container (or null itself).
 #pragma optimize_for_size on
-void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
+extern "C" void* attachEffectById(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
     void* obj;
     if (mode == 1) {
         obj = host->field_0x3E9C.vfn220(id);
@@ -325,7 +325,7 @@ void* bindIndexedEffect(int index, void* manager) {
 // Renders/updates effect resources via the global effect singleton at lbl_eu_8065FC18.
 // First parameter (this) is unused; second parameter is forwarded to func_804CBB84.
 // The cache/ViewRoot pair flushes GX state before and after the effect calls.
-// NOTE: runEffectPassB and func_800452EC share one `optimize_for_size on`
+// NOTE: runEffectPassB and registerEffScene share one `optimize_for_size on`
 // region - retail saves r30+r31 via stmw in both.
 #pragma optimize_for_size on
 extern "C" void runEffectPassB(void* unused, void* param) {
@@ -339,12 +339,12 @@ extern "C" void runEffectPassB(void* unused, void* param) {
     CViewRoot::updateViewRoot();
 }
 
-// func_800452EC: register `scene` with the effect task - push it onto the
+// registerEffScene: register `scene` with the effect task - push it onto the
 // scene list (inlined reslist push_back incl. setItem's guarded item store)
 // and attach the task's three render callbacks to the scene.
 // optimize_for_size on: retail saves r30+r31 via stmw and keeps sp in r31
 // (the inlined setItem try-block SP store targets 0x1c(r31)).
-void func_800452EC(CScn* scene) {
+extern "C" void registerEffScene(CScn* scene) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask != nullptr && scene != nullptr) {
         gTask->mSceneList.push_back(scene);
@@ -415,7 +415,7 @@ extern "C" void fwdEffDtor54(void* self, int flags) {
 }
 
 extern "C" void fwdEffFrameCb58(CTaskGameEff* self, void* param) {
-    func_80045044(reinterpret_cast<CTaskGameEff*>(reinterpret_cast<char*>(self) - 0x58), param);
+    runEffectPassA(reinterpret_cast<CTaskGameEff*>(reinterpret_cast<char*>(self) - 0x58), param);
 }
 
 extern "C" void fwdEffDtor58(void* self, int flags) {

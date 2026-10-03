@@ -154,7 +154,7 @@ body:
         // calls (a C++ local would virtual-dispatch its scope-exit dtor).
         u8 drawInfo[0x54];
         __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
         sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
         Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
         __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);

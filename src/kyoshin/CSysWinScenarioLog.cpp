@@ -50,7 +50,7 @@ static inline void scenarioClose(u32 id) {
 }
 
 // Bump the scenario counter `id` by one while the scene is active, then close
-// the sequence once the counter passes 100 (0x64). Used by func_8027F2DC's
+// the sequence once the counter passes 100 (0x64). Used by SysWinLog_AdvanceOwnerLadder's
 // 1..7 ladder (ids 0x3F..0x45).
 static inline void scenarioLadder(u32 id) {
     u32 w = scenarioBump(id);
@@ -71,7 +71,7 @@ void SysWinLog_ResetState() {
 }
 
 // Definitions of these two helpers are placed at the BOTTOM of this file so
-// that callers below (SysWinLog_AdvanceTiers / SysWinLog_ScanGrid / func_80280E9C) only see
+// that callers below (SysWinLog_AdvanceTiers / SysWinLog_ScanGrid / SysWinLog_ScanSegmentSlots) only see
 // the prototypes from CSysWinScenarioLog.hpp - MWCC then emits a direct `bl`
 // to the retail symbol instead of inlining the body at each call site (retail
 // calls them out-of-line).
@@ -116,7 +116,7 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
 
     ((CSysWinProcessVtable*)s)->mpVtable = (u32)lbl_eu_8052D238;
     // ptmf-triplet copies: walking-pointer reads with the store order [1],[0],[2]
-    // reproduce retail's lwzu-fused load schedule (CREvtModelMap func_80180E60
+    // reproduce retail's lwzu-fused load schedule (CREvtModelMap MapModel_ProbeSlot
     // pattern).
     u32 w1, w2, w0;
     u32 n1, n2, n0;
@@ -225,7 +225,7 @@ void SysWinLog_PollBattleStart() {
 }
 
 // ---------------------------------------------------------------------------
-// func_80280804 (us-80282c88)
+// SysWinLog_TickCounter0B (us-80282c88)
 // Object that owns a state-flags dword at +0x3F00.
 // ---------------------------------------------------------------------------
 struct CScenarioFlagObj {
@@ -236,7 +236,7 @@ struct CScenarioFlagObj {
 // Bump sequence counter 0xB once (while not paused), then close it once the
 // counter passes 100. Written as a two-arm if/else so MWCC emits retail's
 // `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
-void func_80280804(CScenarioFlagObj* self) {
+void SysWinLog_TickCounter0B(CScenarioFlagObj* self) {
     if ((self->field_0x3F00 & 0x2) != 0) {
         u32 n;
         u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0xB);
@@ -346,7 +346,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     // the body keeps retail's direct bl sequence.
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     drawLayout(mpLayout,
                   reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(
@@ -378,7 +378,7 @@ void CSysWinScenarioLog::Move() {
     {
         switch (mState) {
         case 0:
-            func_8027EA6C(this);
+            SysWinLog_OpenContent(this);
             break;
         case 1:
             if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mpAnim, lbl_eu_80668AD0) != 0) {
@@ -413,14 +413,14 @@ void CSysWinScenarioLog::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027EA6C (us-80280ef0)
+// SysWinLog_OpenContent (us-80280ef0)
 // Open the scenario-log window content (Move state 0): guard on the layout
 // being loaded and the BDAT file pointer being set, mark the window busy,
 // pick the first message row whose id reaches the message-count threshold,
 // stamp the four text fields, resolve the texture for the current game mode
 // and size the picture pane from its dims.
 // ---------------------------------------------------------------------------
-extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
+extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     if (self->mpLayout == 0) {
         return;
     }
@@ -482,14 +482,14 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027F148 (us-802815cc)
+// SysWinLog_CheckOpenGate (us-802815cc)
 // Scenario-log open gate: every actor in the manager list must report its
 // device usable (vtable 0x2bc) and pass the arts-state gate
-// (func_80174C98 with the +0x4 sub-object's slot-0x30 state, mode 0x1d);
+// (testActorStatus with the +0x4 sub-object's slot-0x30 state, mode 0x1d);
 // when all pass, bump/close the 0x3c counter (100-threshold close) and the
 // 0x57 counter (50-threshold close).
 // ---------------------------------------------------------------------------
-void func_8027F148() {
+void SysWinLog_CheckOpenGate() {
     int result;
     u32 n;
     CSysWinActorList* list = getListB28();
@@ -513,7 +513,7 @@ void func_8027F148() {
         }
         u32 x = ((CSysWinSubObjView*)((CSysWinOwnerSubView*)base)->field_0x4)
                     ->mAt30()->field_0;
-        if (func_80174C98(base, &x, 0x1d) != 0) {
+        if (testActorStatus(base, &x, 0x1d) != 0) {
             result = 0;
             goto done;
         }
@@ -551,14 +551,14 @@ done:
 }
 
 // ---------------------------------------------------------------------------
-// func_8027F2DC (us-80281760)
+// SysWinLog_AdvanceOwnerLadder (us-80281760)
 // Advance scenario-log counters based on the owner's sub-state. Guards against
 // two condition shapes (base==1 with sub value 7, base==5 with sub value in
 // [7,14]) that force an early return, bumps/closes the 0x3d/0x3e counters,
 // then, when the embedded player matches, runs a 1..7 ladder (0x3F..0x45) and
 // marks the shown flag.
 // ---------------------------------------------------------------------------
-void func_8027F2DC(CScenarioLogOwner* self) {
+void SysWinLog_AdvanceOwnerLadder(CScenarioLogOwner* self) {
     if ((self->field_0x3F00 & 0x2) == 0) {
         return;
     }
@@ -678,13 +678,13 @@ void func_8027F2DC(CScenarioLogOwner* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8027F848 (us-80281ccc)
+// SysWinLog_PollSequenceProgress (us-80281ccc)
 // Scenario-log sequence progress. Guarded by the owner flag word bit 1. Emits
 // one-shot sequence-close calls at several time/event gates, bumps and closes
 // the 0x26/0x38 counters, then marks the global flags and increments the
 // open-window counter.
 // ---------------------------------------------------------------------------
-void func_8027F848(CScenarioLogOwner* arg0, s32 arg1, CScenarioLogArg2* arg2) {
+void SysWinLog_PollSequenceProgress(CScenarioLogOwner* arg0, s32 arg1, CScenarioLogArg2* arg2) {
     if (arg0->field_0x3F00 & 0x2) {
         if (arg1 >= 0xBB8) {
             scenarioClose(0x1);
@@ -955,7 +955,7 @@ walk:
 }
 
 // ---------------------------------------------------------------------------
-// func_80280640 (us-80282ac4)
+// SysWinLog_ScanDeviceOwners (us-80282ac4)
 // Device-side scenario-log gate (variant of SysWinLog_GateDevice): when the device's
 // owner is set with flag bit 2 live and the one-shot byte is clear, ask the
 // device (vtable 0x2bc) whether it is usable; if so, scan the actor list for
@@ -971,7 +971,7 @@ walk:
 // node=r30 / owner=r29. Same class as menu-bps-move party-fill permutation.
 // ---------------------------------------------------------------------------
 
-void func_80280640(CSysWinDevice* self) {
+void SysWinLog_ScanDeviceOwners(CSysWinDevice* self) {
     int flag = 0;
     if (((CSysWinDevView*)self)->mAt9C() != 0 &&
         ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
@@ -1002,7 +1002,7 @@ void func_80280640(CSysWinDevice* self) {
                 }
             }
         } else if (h == 4) {
-            func_8009EC9C(4);
+            CtrlObjectParam_GetCharEntry(4);
             result = (CtrlObjectParam_GetCurrentRowKey() == 1);
         } else {
             result = 0;
@@ -1033,7 +1033,7 @@ void SysWinLog_GateOwner(CScenarioLogOwner* self) {
         }
     }
 }
-void func_802808AC(s32 self) {
+void SysWinLog_TickCounter2C(s32 self) {
     if (self < 4) {
         return;
     }
@@ -1083,12 +1083,12 @@ after:
 }
 
 // ---------------------------------------------------------------------------
-// func_802809C8 (us-80282e4c)
+// SysWinLog_TickCounter23 (us-80282e4c)
 // Bump/close the scenario-log sequence counters at three gates (10 / 100 /
 // 500). Retails only clamps once per open window and only closes each gate
 // when the scene is not booting and no subwindow is freezing the game.
 // ---------------------------------------------------------------------------
-void func_802809C8() {
+void SysWinLog_TickCounter23() {
     u32 n;
     u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x23);
     // Two-arm if/else assigning n on both sides reproduces retail's
@@ -1125,11 +1125,11 @@ after:
     }
 }
 
-void func_80280ADC() {
+void SysWinLog_TickCounter29() {
     u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x29);
     u32 n;
     // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` pair (same shape as func_80280BF0).
+    // `beq bump; b after` pair (same shape as SysWinLog_TickCounter5A).
     if (lbl_eu_80664772 == 0) {
         n = seq + 1;
         if (n >= 0xFFFF) {
@@ -1162,11 +1162,11 @@ void func_80280ADC() {
 // Bump sequence counter 0x5A once while the scene is active, then fire
 // one-shot closes at the 1 / 300 / 2000 thresholds. All three gates read the
 // post-bump value (retail keeps it live in r31 across every gate).
-void func_80280BF0() {
+void SysWinLog_TickCounter5A() {
     u32 n;
     u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x5A);
     // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` guard pair (same shape as func_802809C8).
+    // `beq bump; b after` guard pair (same shape as SysWinLog_TickCounter23).
     if (lbl_eu_80664772 != 0) {
         // Scene frozen by a subwindow: keep the un-bumped value.
         n = cur;
@@ -1284,14 +1284,14 @@ void SysWinLog_ScanGrid(u8* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80280E9C (us-80283320)
+// SysWinLog_ScanSegmentSlots (us-80283320)
 // Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for any
 // taken slot at +0x24. Returns early when a whole run is free; otherwise
 // closes the sequence for 0x4E once all segments have at least one taken
 // slot. The three run-scans are written out inline (retail unrolls them),
 // and the segment stride is +0x24C (3 * 0xC4).
 // ---------------------------------------------------------------------------
-void func_80280E9C(u8* self) {
+void SysWinLog_ScanSegmentSlots(u8* self) {
     u8* r;
     u8* s;
     int seg;
@@ -1322,13 +1322,13 @@ void func_80280E9C(u8* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80280F44 (us-802833c8)
+// SysWinLog_SweepSlotPressure (us-802833c8)
 // Character-slot pressure sweep: for each character id 1..7 count how many of
 // the 5 party-slot entries are fully occupied, emit sequence gates at 1 / 3
 // (per-id 0x50..0x56 ladder) / 5 occupied entries, and close with a summary
 // gate once 7 characters reached the >= 5 threshold.
 // ---------------------------------------------------------------------------
-void func_80280F44() {
+void SysWinLog_SweepSlotPressure() {
     // Trip-count holders: constant-propagated to `li 5` and hoisted by LICM to
     // the function entry, where each colors into a callee-saved register that
     // feeds `mtctr` at every inner-loop entry (retail r31/r30/r29).
@@ -1343,7 +1343,7 @@ void func_80280F44() {
     int i;
     for (i = 1; i <= 7; i++) {
         if (i != 3) {
-            u8* p = (u8*)func_8009EC9C((u16)i) + 0x3534;
+            u8* p = (u8*)CtrlObjectParam_GetCharEntry((u16)i) + 0x3534;
             count = 0;
             for (int k = nN; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p;
@@ -1367,7 +1367,7 @@ void func_80280F44() {
                 p += 0xC4;
             }
         } else {
-            u8* p3 = (u8*)func_8009EC9C(3) + 0x3534;
+            u8* p3 = (u8*)CtrlObjectParam_GetCharEntry(3) + 0x3534;
             c3 = 0;
             for (int k = n3; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p3;
@@ -1390,7 +1390,7 @@ void func_80280F44() {
                 }
                 p3 += 0xC4;
             }
-            u8* p8 = (u8*)func_8009EC9C(8) + 0x3534;
+            u8* p8 = (u8*)CtrlObjectParam_GetCharEntry(8) + 0x3534;
             count = 0;
             for (int k = n8; k > 0; k--) {
                 CSysWinCharSlot* e = (CSysWinCharSlot*)p8;
@@ -1459,14 +1459,14 @@ extern "C" void ScnLog_ClearStateWords(u8* self){
 }
 
 // ---------------------------------------------------------------------------
-// func_8028120C (us-80283690)
+// SysWinLog_AllocFreeSlot (us-80283690)
 // Find a free slot in one of the two round-robin slot tables (selected by the
 // owner's flag word: bit 1 -> table A at +0x00, bit 2 -> table B at +0x180),
 // bump the table's index (wrapping at 3 / 0x38), call the free slot's vtable
 // slot-3 method, and return the slot pointer. Returns null when neither bit is
 // set.
 // ---------------------------------------------------------------------------
-void* func_8028120C(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
+void* SysWinLog_AllocFreeSlot(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
     void* result;
     u32 flags = arg0->field_0x3F00;
     if ((flags & 0x2) != 0) {
@@ -1552,7 +1552,7 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
-        func_8013676C(rootPane, fontHandle);
+        ApplyFontToTxtPanes(rootPane, fontHandle);
         self->mpLayout->SetAnimationEnable(self->mpAnim, true);
         self->mpLayout->Animate(0);
         void* pane = ((CSysWinPaneView*)self->mpLayout->GetRootPane())->mSetText(

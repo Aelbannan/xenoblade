@@ -213,7 +213,7 @@ void CMenuLandTelop::Move() {
                     if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) == 0)
                         continue;
 
-                    u32 data = (u32)func_8009EC9C((u16)i);
+                    u32 data = (u32)CtrlObjectParam_GetCharEntry((u16)i);
                     u32 rec = data + 0x3534;
                     u32 weight = 100;
                     if (Counter_TestBit((void*)rec, 0x8a) != 0) {
@@ -229,13 +229,13 @@ void CMenuLandTelop::Move() {
                         (s32)(((f64)(u32)(msgId * weight) - bias) * scale + limit);
                     switch (kind) {
                     case 0:
-                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        CtrlObjectParam_ApplyArtsRankUp((void*)data, (u16)frames, col0, col1);
                         break;
                     case 1:
-                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        CtrlObjectParam_ApplyArtsRankUp((void*)data, (u16)frames, col0, col1);
                         break;
                     case 2:
-                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        CtrlObjectParam_ApplyArtsRankUp((void*)data, (u16)frames, col0, col1);
                         break;
                     }
                 }
@@ -319,7 +319,7 @@ void CMenuLandTelop::cbRenderBefore() {
     // its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(field_54, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -593,7 +593,7 @@ void func_8014548C(CMenuLandTelop* self) {
     // Font handle dispatches through the owning IDeviceFontInfo::getFont
     // slot (+0x24); the import returns void* and is cast at the call site
     // (CEquipChange.cpp idiom).
-    func_8013676C(self->field_54->GetRootPane(),
+    ApplyFontToTxtPanes(self->field_54->GetRootPane(),
                    (u32)static_cast<IDeviceFontInfo*>(
                        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                            1, self->field_54))->getFont());

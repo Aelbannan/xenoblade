@@ -18,7 +18,7 @@
 
 // Rotate `mtx` about the X axis by `angle` (code_804DB938.cpp).
 extern "C" {
-void func_804DD388(Mtx mtx, f32 angle);
+void CERotXMatrix(Mtx mtx, f32 angle);
 
 // Shared sdata2 constants (retail linker names).
 extern f32 lbl_eu_8066B1E8; // pi/2
@@ -81,7 +81,7 @@ static inline f32 cosTbl(f32 rad) {
 
 // cerandRotateX90Wrapper: load pi/2 and tail-call the X-axis rotation helper.
 void cerandRotateX90Wrapper(Mtx mtx) {
-    func_804DD388(mtx, lbl_eu_8066B1E8);
+    CERotXMatrix(mtx, lbl_eu_8066B1E8);
 }
 
 // cerandTransposeObjCC: transpose the matrix stored at obj+0xCC into mtx.

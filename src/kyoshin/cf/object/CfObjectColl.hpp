@@ -19,7 +19,7 @@ namespace ml { struct CVec3; }
 // Presentation/event bitfield owned by CUICfManager (.sbss).
 
 // Shared distance helper (defined in code_800A3B24.cpp); retail symbol is flat.
-extern "C" float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c);
+extern "C" float VecMath_SegmentParam(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c);
 
 namespace cf {
 

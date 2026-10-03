@@ -4,7 +4,7 @@
 
 class CLibCriStreamingPlay; // forward decl: the C-linkage alias below predates the class body
 
-// C-linkage thunk target / deleting dtor (retail symbol name — keep verbatim)
+// C-linkage thunk target / deleting dtor (retail symbol name - keep verbatim)
 extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self, int flag);
 
 //size: 0x540 (estimated based on CLibCri + streaming fields)

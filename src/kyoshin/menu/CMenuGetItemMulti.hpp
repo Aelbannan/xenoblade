@@ -104,10 +104,10 @@ public:
     u8 field_20E;
     u8 field_20F;
     // Rank-item slot display arrays (shared by the category-3/9 item
-    // handlers GetItemMulti_FillEntryRankPane / func_801B70BC / func_801B7A58): per-slot item
+    // handlers GetItemMulti_FillEntryRankPane / GetItemMulti_ShowItemRank / GetItemMulti_FillRankSlots): per-slot item
     // ids, positions and the "slot filled" flag byte. Slots 8-11 are the
     // rank-item display. The +0x2C4/+0x2D0 arrays are only written by
-    // func_801B7A58 (extra per-slot rank data).
+    // GetItemMulti_FillRankSlots (extra per-slot rank data).
     u16 mRankSlotIds[12];             // +0x210
     nw4r::math::VEC3 mRankSlotPos[12]; // +0x228
     u8 mRankSlotFlag[12];             // +0x2B8
@@ -190,7 +190,7 @@ extern CMenuGetItemFourShorts lbl_eu_80664408;
 // and is cleared by Term.
 extern u32 lbl_eu_80663E28;
 
-// Pane size/position step factor used by func_801B5630's pane adjustments
+// Pane size/position step factor used by GetItemMulti_FitPanes's pane adjustments
 // (.sdata2). Sibling lbl_eu_80667E18 is the int->double conversion magic
 // (0x43300000_80000000) that MWCC emits for the (f32)(s32) casts there.
 // Plain (non-const) extern: a `const f64` reference gets internalized by
@@ -200,13 +200,13 @@ extern f64 lbl_eu_80667E18;
 
 // Anim frame target used by Move's open/close states (advanceAnimTransform /
 // AnimRewindFrame argument), plus the rank-window size/position constants
-// func_801B6184 scales the item window by.
+// GetItemMulti_ShowEquipped scales the item window by.
 extern f32 lbl_eu_80667E10;
 extern f32 lbl_eu_80667E20;
 extern f32 lbl_eu_80667E24;
 extern f32 lbl_eu_80667E28;
 
-// Slot-window page step: func_801B82E8's A-press multiplies the selected
+// Slot-window page step: GetItemMulti_HandlePad's A-press multiplies the selected
 // slot index by this to derive the page (field_20D), using the sibling
 // int->double magic constant 80667E08 for the (f64) index conversion.
 extern f32 lbl_eu_80667E2C;
@@ -215,7 +215,7 @@ extern f32 lbl_eu_80667E2C;
 extern f64 lbl_eu_80667E08;
 
 // Item-window font/table pointers (.sbss) used by the category-4/8 item
-// handlers (func_801B6184 / GetItemMulti_ShowEntryDetailPanes) and func_801B7A58.
+// handlers (GetItemMulti_ShowEquipped / GetItemMulti_ShowEntryDetailPanes) and GetItemMulti_FillRankSlots.
 extern u32 lbl_eu_806640F4;
 extern u32 lbl_eu_806640F8;
 
@@ -264,18 +264,18 @@ extern "C" void sysWinTermLayout(u8* syswin);          // CSysWin teardown (Term
 extern "C" void sysWinDrawLayout(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void Cur_DrawLayout(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void sysWinAdvancePhase3(u8* syswin);          // CSysWin re-layout
-// CSysWin content setters (grade-up window setup in func_801B8E2C /
-// func_801B82E8); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
+// CSysWin content setters (grade-up window setup in GetItemMulti_PruneEntries /
+// GetItemMulti_HandlePad); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
 extern "C" void func_8022B9B4(u8* syswin, char* text, u32 flag);
 extern "C" void sysWinOpenPhase1(u8* syswin);
 extern "C" void sysWinSetTwoTextValues(u8* syswin, char* a, char* b);
-// Item removal helpers (item sweeps in func_801B8E2C): release an entry
+// Item removal helpers (item sweeps in GetItemMulti_PruneEntries): release an entry
 // and notify the item system.
 extern "C" void CItemData_lookupOrAlloc(CMenuGetItemMultiEntry* entry, u32 flags);
 extern "C" void CItem_thunkAllocRecord(u32 id, u32 flags);
-extern "C" void func_80140E00(u32 a, u32 id, u32 b);
-// Slot-window name source used by func_801B82E8's A-press open (no args).
-extern "C" char* func_801D3C74();
+extern "C" void UIWin_BuildFlagBuf(u32 a, u32 id, u32 b);
+// Slot-window name source used by GetItemMulti_HandlePad's A-press open (no args).
+extern "C" char* formatItemBoxName();
 // Cursor position + window selection helpers (pad-input handlers).
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, u8* syswin, u8 sel);
 extern "C" void Cur_SetVisible(CBaseCur* cur, u8 val); // cursor visibility setter
@@ -292,9 +292,9 @@ extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" f32 GetFloatTableEntry(u32 idx);
 extern "C" void BlendFloatAvgScale(u16 a, u16 b, int c, f32 d);
-extern "C" void func_80137F88(void* pane, void* tex); // pane texture setter
+extern "C" void PaneSetTexPalette(void* pane, void* tex); // pane texture setter
 extern "C" void removeTboxById(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
-extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                                nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
 // UI sound effect (retail pre-mangled name).
 extern "C" void playUISound__FUl(u32 sound);
@@ -309,12 +309,12 @@ extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 
 // (actor id -> action source).
 int findObjectById(int id);
 
-// Character-record lookup helpers (func_801B78B4's category-13 display):
-// func_8009EC9C fetches the manager object for a slot id, and
+// Character-record lookup helpers (GetItemMulti_ShowCat13's category-13 display):
+// CtrlObjectParam_GetCharEntry fetches the manager object for a slot id, and
 // CtrlObjectParam_GetCurrentRowKey reads the character index from it.
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void* mgr);
 // Active-character id read off the slot-manager object
-// (func_801B6184's equipped-item window scaling).
+// (GetItemMulti_ShowEquipped's equipped-item window scaling).
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* mgr);
 
 // Per-rank slot record returned by the item impl's getSlot (+0x2C): bit 0

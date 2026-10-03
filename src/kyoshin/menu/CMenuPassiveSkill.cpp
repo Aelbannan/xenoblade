@@ -181,7 +181,7 @@ void CMenuPassiveSkill::Init() {
 
     __dt__Q22UI13CPassiveSkillFv(tempPS, -1);
 
-    func_8026D5A8(&mPassiveSkill[0]);
+    CPassiveSkill_loadSkillData(&mPassiveSkill[0]);
 
     // Register this screen as a render callback on the owning scene (the
     // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
@@ -280,7 +280,7 @@ body:
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         CPassiveSkill_draw(mPassiveSkill, &drawInfo);
         drawHelp(&mTitleAHelp, &drawInfo);

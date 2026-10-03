@@ -125,7 +125,7 @@ void __ct__8CProcessFv(CProcess*);
 
 void* BtlDmg_Create(void* proc, void* scn);
 void* createVisionMenu(void* proc, void* scn);
-void* func_80187694(void* proc, void* scn);
+void* PTGaugeCreate(void* proc, void* scn);
 void* battleCommuCreateRegister(void* proc, void* scn);
 void* CMenuArtsSelect_CreateMenu(void* proc, void* scn);
 void* BpsStateCreateSingleton(void* proc, void* scn);
@@ -304,7 +304,7 @@ void CUIBattleManager::Move() {
             } else {
                 lbl_eu_80664048->unk82 &= 0xef;
                 retCreate87694 =
-                    func_80187694(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    PTGaugeCreate(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                 if (retCreate87694 != NULL) {
                     inst = lbl_eu_80664048;
                     i = 0;
@@ -415,7 +415,7 @@ void CUIBattleManager::Move() {
             if (player != NULL) {
                 actor = static_cast<CUIBattleActor*>(func_8016FE34(NULL));
                 vcallRes = *vslot<GetU32Fn>(actor->field_04, 0x30)(actor->field_04);
-                if (func_80174C98(actor, &vcallRes, 0x803) != 0) {
+                if (testActorStatus(actor, &vcallRes, 0x803) != 0) {
                     if (CMenuArtsSelect_isCreated() == 0) {
                         handle = vslot<GetIntFn>(actor->field_3E9C, 0x4C)(
                             actor->field_3E9C);

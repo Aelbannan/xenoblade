@@ -26,6 +26,10 @@ struct BattleManagerLayout {
     s16 field_20C8;                                  // +0x20C8 chain/timer state
 };
 
+// C-ABI import from the CVS voice-thread family (retail .text:0x802A6488,
+// unmangled name; the CVS_THREAD_* classes declare the same parameter list).
+extern "C" int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+
 // Retail symbol is the unmangled BattleGaugeTierVoiceGate (C linkage) - CCharVoiceMan
 // and other TUs reference it via extern "C"; without this the mangled
 // __FP11BattleGaugeff breaks the main.dol link.
@@ -65,17 +69,17 @@ extern "C" bool BattleGaugeTierVoiceGate(BattleGauge* obj, f32 curVal, f32 prevV
     }
 
     // Request the voice-subsystem resources first; bail if unavailable.
-    if (!func_802A330C(0x7D, 1)) {
+    if (!CCharVoiceMan_DispatchById(0x7D, 1)) {
         return false;
     }
     if (!CCharVoiceMan_AllocVoiceArena(0x20)) {
         return false;
     }
 
-    // Play the cue through the battle object's own voice-position sub-object.
+// Play the cue through the battle object's own voice-position sub-object.
     if (obj != NULL) {
         obj = reinterpret_cast<BattleGauge*>(&obj->voiceEntry);
     }
-    func_802A3D54(reinterpret_cast<CCharVoice*>(obj), voiceID, 0x7D);
+    RequestVoicePlayback(reinterpret_cast<CCharVoice*>(obj), voiceID, 0x7D);
     return false;
 }

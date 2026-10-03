@@ -24,12 +24,12 @@ public:
 // (not in the .cpp) because they are genuine retail C/ABI symbols imported
 // from sibling voice modules.
 extern "C" {
-    int           func_802A3E88(CVS_THREAD* self);
-    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    void          func_802A3E28(CVS_THREAD* self);
-    int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int           IsThreadVoiceActive(CVS_THREAD* self);
+    void          DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    void          StopThreadVoice(CVS_THREAD* self);
+    int           RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     int           func_800BE8F4(CCharVoice* voicePtr);
     void          __ct__cf_CVS_THREAD();

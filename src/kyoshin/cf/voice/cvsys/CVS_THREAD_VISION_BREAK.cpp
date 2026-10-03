@@ -8,21 +8,21 @@
 #include "monolib/math/Random.hpp"
 #include "monolib/util/reslist.hpp"
 
-// All sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
-// func_802A3D54, func_802A330C, CCharVoiceMan_AllocVoiceArena, func_802A7A54,
+// All sibling-voice imports (IsThreadVoiceActive, DetachThreadVoice, TryRequestVoice,
+// RequestVoicePlayback, CCharVoiceMan_DispatchById, CCharVoiceMan_AllocVoiceArena, HpVoice_FindBySubState,
 // func_8016FE34, CfObjectMove_releaseVoiceHandle), the base constructor __ct__cf_CVS_THREAD,
 // and getListB28 are declared in CVS_THREAD_VISION_BREAK.hpp.
 
-// Sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
-// func_802A3D54, func_802A330C, CCharVoiceMan_AllocVoiceArena, func_802A7A54,
+// Sibling-voice imports (IsThreadVoiceActive, DetachThreadVoice, TryRequestVoice,
+// RequestVoicePlayback, CCharVoiceMan_DispatchById, CCharVoiceMan_AllocVoiceArena, HpVoice_FindBySubState,
 // func_8016FE34, CfObjectMove_releaseVoiceHandle) and the base constructor
 // __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
 // us-802abc94 (VisBreak_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the playback
-// virtual (CVS_THREAD::func_802A3B50, vtable slot 1).
+// virtual (CVS_THREAD::PlayThreadVoice, vtable slot 1).
 void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -32,7 +32,7 @@ void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
 void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
     // Direct call to the free function at 0x802A3BEC.
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
@@ -46,16 +46,16 @@ void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePt
 
 // us-802abd3c (VisBreak_AllocVoiceHandle)
 // Standalone voice selector for vision-break. Finds a free voice handle via
-// func_802A7A54(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
+// HpVoice_FindBySubState(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
 // based on the current game-manager frame count. Always returns 0.
 int VisBreak_AllocVoiceHandle() {
-    CVoiceHandle* handle = func_802A7A54(1);
+    CVoiceHandle* handle = HpVoice_FindBySubState(1);
     if (handle == NULL) {
         return 0;
     }
 
     // Allocate a 0x32-byte playback buffer.
-    if (func_802A330C(0x32, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x32, 1) == NULL) {
         return 0;
     }
 
@@ -80,7 +80,7 @@ int VisBreak_AllocVoiceHandle() {
         voicePtr = &handle->voice;
     }
 
-    func_802A3D54(voicePtr, voiceId, 0x32);
+    RequestVoicePlayback(voicePtr, voiceId, 0x32);
     return 0;
 }
 
@@ -108,7 +108,7 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     }
 
     // Allocate a temporary 0xF-byte buffer (voice handle reservation).
-    if (func_802A330C(0xF, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0xF, 1) == NULL) {
         return NULL;
     }
 
@@ -204,10 +204,10 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
             voicePtr = &h->voice;
         }
         voiceId = lbl_eu_80662D40[ml::math::mtRand(3)];
-        if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+        if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
             // Play failed -- fire the advance/process virtual (vtable offset
-            // 8 = func_802A3B50), not the size-getter blank1 (offset 0x10).
-            self->func_802A3B50();
+            // 8 = PlayThreadVoice), not the size-getter blank1 (offset 0x10).
+            self->PlayThreadVoice();
         }
     } else {
         // Early phase: handle + voice IDs from lbl_eu_80662D48.
@@ -217,10 +217,10 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
             voicePtr = &h->voice;
         }
         voiceId = lbl_eu_80662D48[ml::math::mtRand(3)];
-        if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+        if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
             // Play failed -- fire the advance/process virtual (vtable offset
-            // 8 = func_802A3B50), not the size-getter blank1 (offset 0x10).
-            self->func_802A3B50();
+            // 8 = PlayThreadVoice), not the size-getter blank1 (offset 0x10).
+            self->PlayThreadVoice();
         }
     }
 }

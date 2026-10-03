@@ -48,7 +48,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransf
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
@@ -583,7 +583,7 @@ void func_80297B68(CMCGetItemBox* self) {
     (*(void(**)(void*))((void**)&self->subObj_70)[3])(&self->subObj_70);
     (*(void(**)(void*))((void**)&self->subObj_88)[3])(&self->subObj_88);
     (*(void(**)(void*))((void**)&self->subObj_A0)[3])(&self->subObj_A0);
-    func_801D4174((void*)self->itemBox);
+    closeItemBox1((void*)self->itemBox);
     sysWinTermLayout((void*)&self->sysWin_B8);
 }
 
@@ -614,7 +614,7 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     (s8&)self->field_301 = -1;
     startItemBoxOpen((CItemBoxInfo*)self->itemBox);
     initMCGetItemBoxList(self, arg, unk, byte);
-    func_801D4260((CItemBoxInfo*)self->itemBox, arg);
+    hideItemBoxPanes((CItemBoxInfo*)self->itemBox, arg);
     // Declared in this order so MWCC colors the callee-saved regs like retail
     // (entry->r31, idx->r30, sub->r29).
     CMCItemBoxEntry* entry;
@@ -624,7 +624,7 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     sub = &self->sub_314;
     entry = getMCItemSubEntry(sub, idx);
     u32 iconId = getMCItemSubItemId(sub, idx);   // held in a reg temp in retail
-    func_801D47D4((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
+    renderItemBoxByKind((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
     setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, idx));
 }
 #pragma pop
@@ -922,7 +922,7 @@ void func_80298614(CMCGetItemBox* self) {
                 u8 v = combined < 0xc ? arr->flags[combined] : 0;
                 void* res;
                 if (v == 3) {
-                    res = func_801D3C74(arr->table, combined);
+                    res = formatItemBoxName(arr->table, combined);
                 } else {
                     res = BdatTouchStringCell(&lbl_eu_8050FF8C[0x119],
                                         &lbl_eu_8050FF8C[0x123], r);
@@ -1227,7 +1227,7 @@ __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int r4, 
                 BdatTouchStringCell(&lbl_eu_8050FF8C[0x3], &lbl_eu_8050FF8C[0xc],
                               0x1e - ((s8)r4 - 1)));
     }
-    func_80136A1C(self->layout40, buf1, buf2, 0);
+    LayoutSetTextBoxText(self->layout40, buf1, buf2, 0);
 }
 #pragma pop
 
@@ -1267,7 +1267,7 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
     func_8029967C(self);
     refreshMCGetItemBoxTexts(self);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
-        func_801D4260((void*)self->itemBox, arg);
+        hideItemBoxPanes((void*)self->itemBox, arg);
     }
 }
 #pragma pop
@@ -1353,7 +1353,7 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* sel
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         CMCItemBoxEntry* entry = getMCItemSubEntry(sub, (u16)idx);
         u32 iconId = getMCItemSubItemId(sub, (u16)idx);   // held in a reg temp in retail
-        func_801D47D4((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
+        renderItemBoxByKind((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
         setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, func_80296E98(sub, (u16)idx));
     }
 }
@@ -1378,7 +1378,7 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         tbl = lbl_eu_8050FF8C;
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1dc], true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
-        func_80137924(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
+        ScalePaneWorldPos(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
         ((CBaseCur*)&self->subObj_88)->setRootPaneTranslate(&posIf);
         Cur_SetVisible(&self->subObj_88, 1);
         Cur_SetVisible(&self->subObj_58, 0);
@@ -1387,7 +1387,7 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         sprintf(nameBuf, &tbl[0x161], (int)(s8)self->field_300 + (int)page * 10 + 1);
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(nameBuf, true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
-        func_80137924(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
+        ScalePaneWorldPos(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
         ((CBaseCur*)&self->subObj_58)->setRootPaneTranslate(&posElse);
         Cur_SetVisible(&self->subObj_88, 0);
         Cur_SetVisible(&self->subObj_58, 1);
@@ -1435,7 +1435,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* rootPane = this->layout40->GetRootPane();
         void* font = CDeviceFont::getFontInfo(1, this->layout40);
         void* fontData = ((IDeviceFontInfo*)font)->getFont();
-        func_8013676C(rootPane, (u32)fontData);
+        ApplyFontToTxtPanes(rootPane, (u32)fontData);
 
         u32 w = (u32)getPackedFont();
         setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);

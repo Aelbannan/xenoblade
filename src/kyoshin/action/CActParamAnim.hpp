@@ -4,7 +4,7 @@
 
 #include "kyoshin/action/CActParamData.hpp"
 #include "kyoshin/action/CActParamAnimForeign.hpp"
-#include "monolib/math/CVec3.hpp"  // ml::CVec3 for func_80053490 (same-TU helper)
+#include "monolib/math/CVec3.hpp"  // ml::CVec3 for alignAnimQuat (same-TU helper)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 // Full object layout for C-linkage accessors
@@ -23,14 +23,14 @@ struct CActParamAnimStateView {
     CActParamAnimOwner* owner08;  // +0x08: owner object
     u32 field0C;                // +0x0C: flags
     u8 mChildData10[0x24 - 0x10];   // +0x10..+0x23 (embedded CActParamData base, start)
-    f32 field24;                // +0x24 (anim scale, func_8004CC8C)
+    f32 field24;                // +0x24 (anim scale, updateLeafDist)
     u8 _pad_28[0x2C - 0x28];
-    s32 field2C;                // +0x2C (copied to field374 in func_8004BDCC)
-    s32 field30;                // +0x30 (copied to field374 in func_8004D194)
+    s32 field2C;                // +0x2C (copied to field374 in switchSubAnim)
+    s32 field30;                // +0x30 (copied to field374 in dispatchAnimSlot)
     u8 _pad_34[0x26C - 0x34];   // +0x34..+0x26B (rest of embedded CActParamData base)
     u8* field26C;               // +0x26C: eff request record (NULL = none)
     u32 field270;               // +0x270
-    u32 field274;               // +0x274 (guard flag, func_8004C608)
+    u32 field274;               // +0x274 (guard flag, blendAnimHeading)
     u32 field278;               // +0x278
     u32 field27C;               // +0x27C
     u8 _pad_280[0x28C - 0x280]; // +0x280..+0x28B
@@ -46,7 +46,7 @@ struct CActParamAnimStateView {
     u8 _pad_2EE[0x2FC - 0x2EE];
     u32 field2FC;               // +0x2FC
     u8 _pad_300[0x304 - 0x300]; // +0x300..+0x303
-    f32 field304;               // +0x304 (sub-object anim value, func_8004CC8C)
+    f32 field304;               // +0x304 (sub-object anim value, updateLeafDist)
     u8 _pad_308[0x334 - 0x308];
     f32 field334;               // +0x334 (start heading, sel!=0)
     u8 _pad_338[0x33C - 0x338];
@@ -57,11 +57,11 @@ struct CActParamAnimStateView {
     s32 field370;               // +0x370
     s32 field374;               // +0x374: anim counter (setAnimCounter)
     s32 field378;               // +0x378
-    s32 field37C;               // +0x37C (guard counter, func_8004F484)
+    s32 field37C;               // +0x37C (guard counter, fireTwinCount)
     f32 field380;               // +0x380
-    f32 field384;               // +0x384 (anim blend, func_8004FE58)
+    f32 field384;               // +0x384 (anim blend, fireBlendCust)
     f32 field388;               // +0x388 (anim speed scale, tickAnimFrame)
-    f32 field38C;               // +0x38C (func_8004CC8C)
+    f32 field38C;               // +0x38C (updateLeafDist)
     f32 field390;               // +0x390: anim speed (tickAnimFrame stores here)
     f32 field394;               // +0x394: anim speed
     f32 field398;               // +0x398
@@ -106,12 +106,12 @@ struct CActParamAnimStateView {
     f32 field43C;               // +0x43C (turn radius, func_80053198)
     f32 field440;               // +0x440
     f32 field444;               // +0x444
-    f32 field448;               // +0x448 (func_8004CC8C: anim blend accumulator)
+    f32 field448;               // +0x448 (updateLeafDist: anim blend accumulator)
     f32 field44C;               // +0x44C
     f32 field450;               // +0x450
     f32 field454;               // +0x454
     f32 field458;               // +0x458
-    f32 field45C;               // +0x45C (func_8004BDCC blend reset)
+    f32 field45C;               // +0x45C (switchSubAnim blend reset)
     f32 field460;               // +0x460
     f32 field464;               // +0x464
     f32 field468;               // +0x468
@@ -130,7 +130,7 @@ struct CActParamAnimStateView {
     u8 _pad_4A8[0x4B0 - 0x4A8];
     u32 field4B0;               // +0x4B0 (tickAnimFrame: cleared each frame)
     u32 field4B4;               // +0x4B4 (eff timer fallback when no owner)
-    u32 field4B8;               // +0x4B8 (anim id matched in func_8004F5FC)
+    u32 field4B8;               // +0x4B8 (anim id matched in fireOwnerIdGt)
     u8 _pad_4BC;                // +0x4BC
     u8 field4BD;                // +0x4BD
     u8 field4BE;                // +0x4BE
@@ -168,7 +168,7 @@ struct CActParamAnimData3 {
     u32 z;
 };
 
-// Word view of the position triple at +0x3C0..+0x3C8. func_8004FAB4/F884
+// Word view of the position triple at +0x3C0..+0x3C8. fireBlendDflt/F884
 // store the rotated anim-axis result here as plain words (lwz/stw in retail).
 struct CActParamAnimPosView {
     u8 _pad_000[0x3C0];
@@ -177,7 +177,7 @@ struct CActParamAnimPosView {
     u32 z;   // +0x3C8
 };
 
-// Float-typed view of the anim-state region used by the func_8004B114
+// Float-typed view of the anim-state region used by the initAnimState
 // initializer: offsets that CActParamAnimStateView declares as u32 (word
 // copies in setAnimSubPos/B40C) are written/read as floats here (lfs/stfs
 // in retail), and the tail region +0x3C8..+0x4E4 is exposed as named fields.
@@ -290,7 +290,7 @@ struct CActParamAnimInitView {
     u32 field4E4;           // +0x4E4
 };
 
-// Cast-only view of the attached sub-object region read by func_8004CC8C:
+// Cast-only view of the attached sub-object region read by updateLeafDist:
 // the anim divisor value at +0x304.
 struct CActParamAnimSubObjView {
     u8 _pad_000[0x304];
@@ -304,7 +304,7 @@ extern "C" float simGetLeafAnimDist4(u8* object);
 extern "C" int simRefreshFadeDist(u8* object);
 extern "C" int simRefreshFadeDist2(u8* object, u32 param);
 extern "C" u32 evalParamBySlot(u8* data, u32* out, u32 param, u32 byte, u32 flag);
-extern "C" u32 func_80054614(u8* data, u32* out, u32 param, u32 flag, u32 zero);
+extern "C" u32 evalParamChain(u8* data, u32* out, u32 param, u32 flag, u32 zero);
 extern "C" int getParamByteSel(u8* data, u32 param);
 extern "C" void saveParamShadow(void* data);
 // Declared here with C linkage so call-site relocs keep the retail names
@@ -314,8 +314,8 @@ extern "C" void resetParamShorts(void* self);
 extern "C" int hasParamSubObjB(void* self);
 extern "C" void checkParamBlks(void* data);
 extern "C" void clearParamShadow(void* data);
-extern "C" void func_8004C608(void* self);
-extern "C" void func_8004CC8C(void* self);
+extern "C" void blendAnimHeading(CActParamAnim* self);
+extern "C" void updateLeafDist(CActParamAnim* self);
 extern "C" void pushParamNode(void* data);
 extern "C" void* Scn_FindCamItem(void* obj, s32 id);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
@@ -328,7 +328,7 @@ extern "C" void func_804BE4E0(void* out, int a);
 // Notify target behind CActParamAnim::object3A0+0x7EC (reached via the
 // +0x3A0 attached sub-object). Retail dispatches vtable+0x08 with an int
 // fall-state gate (func_8005D2C4), +0x14 with a position vector
-// (func_8005A5B0/func_8005EEB4), and +0x18 with an int flag
+// (trackGroundAt/func_8005EEB4), and +0x18 with an int flag
 // (func_8005EEB4). Same shape as Cf7ECTarget in CfObjectMove.hpp: a tiny
 // named iface on the owning object, never constructed here, so no vtable
 // is emitted by including TUs. The +0x0C/+0x10 slots mirror CObjectState
@@ -355,59 +355,59 @@ public:
     virtual float getAttachedAnimScale();
     virtual float getAttachedAnimRate();
     virtual void clearAnimState();
-    virtual void func_8004D194();
-    virtual void func_8004DDD0();
-    virtual void func_8004DF9C();
-    virtual void func_8004E168();
-    virtual void func_8004E334();
-    virtual void func_8004E500();
-    virtual void func_8004E828();
-    virtual void func_8004D2F8();
-    virtual void func_8004D4AC();
-    virtual void func_8004E694();
-    virtual void func_8004D650();
+    virtual void dispatchAnimSlot();
+    virtual void startFlag2000Anim();
+    virtual void startFlag0800Anim();
+    virtual void startFlag0400Anim();
+    virtual void startFlag1000Anim();
+    virtual void fireSpeedGate();
+    virtual void fireBlendGate();
+    virtual void startUnfinishedAnim();
+    virtual void startFinishedAnim();
+    virtual void fireSpeedOkGt();
+    virtual void fireAnimParam();
     virtual void __vt_48();
-    virtual void func_8004D7EC();
-    virtual void func_8004D950();
+    virtual void startOwnerFlag8Anim();
+    virtual void startOwnerFlag2Anim();
     virtual void func_8004E9EC();
     virtual void func_8004ECF4() const;
-    virtual void func_8004F1E4();
-    virtual void func_8004F334();
+    virtual void fireCountGate();
+    virtual void fireWord378Gt();
     virtual void func_8004F884();
-    virtual int func_8004FAB4(u32 param);
-    virtual void func_8004FCE0();
-    virtual void func_8004FE58();
-    virtual void func_80050744();
+    virtual int fireBlendDflt(u32 param);
+    virtual void fireParamGate();
+    virtual void fireBlendCust();
+    virtual void startIfActive();
     virtual void __vt_78();
-    virtual int func_80050890(u32 a, u32 b);
+    virtual int fireTimerGate(u32 a, u32 b);
     virtual int calcAnimBlendWeight(u32 arg);
-    virtual int func_80050C50(u32 a, u32 b);
-    virtual void func_80050DB0();
-    virtual void func_80050F5C();
-    virtual void func_800510FC();
-    virtual void func_800512A8();
-    virtual void func_80051448();
-    virtual void func_8004F484();
-    virtual int func_8004F5FC(u32 a, u32 b);
+    virtual int startRandAnim(u32 a, u32 b);
+    virtual void fireAngleGate();
+    virtual void fireAngleLoGt();
+    virtual void fireAngleBand();
+    virtual void fireAngleHiGt();
+    virtual void fireOpenGate1();
+    virtual void fireTwinCount();
+    virtual int fireOwnerIdGt(u32 a, u32 b);
     virtual bool isAnimFrameActive();
     virtual bool isAnimTransActive();
     virtual bool isAnimUpdateActive();
     virtual bool isAnimScaleActive();
     virtual bool isAnimRotateActive();
     virtual bool isAnimEffectActive();
-    virtual void func_800516C0();
-    virtual void func_80051584();
+    virtual void fireOpenGate3();
+    virtual void fireOpenGate2();
     virtual void func_8004DAE0();
-    virtual void func_800517FC();
-    virtual void func_8005194C();
+    virtual void fireFlag4D4Gt();
+    virtual void fire4D4ZeroGt();
     virtual bool isAnimChainActive();
     virtual bool isAnimLoopActive();
     virtual bool isAnimMotionActive();
     virtual bool isAnimBlendActive();
-    virtual void func_8004B114();
-    virtual void func_80052934(const ml::CVec3* v);
+    virtual void initAnimState();
+    virtual void stepAnimFrame(const ml::CVec3* v);
     virtual int initAnimBlendVectors(const ml::CVec3* a, const ml::CVec3* b);
-    virtual void func_8004FFBC();
+    virtual void solveHeadRate();
     virtual void __vt_F0();
     // Legacy non-virtual wrappers (kept for compatibility, now virtual above)
     // func_8004E9EC is a forced-name free function (retail mangles it as a
@@ -455,9 +455,9 @@ private:
     CActParamData mChildData; // +0x10: embedded CActParamData sub-object
 };
 
-// Same-TU helper (target us-80053ac8), forward-declared for func_8004FFBC.
+// Same-TU helper (target us-80053ac8), forward-declared for solveHeadRate.
 // extern "C" so the call-site reloc keeps the retail name verbatim.
-extern "C" int func_80053490(CActParamAnim* self, const ml::CVec3* dirParam);
+extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dl__FPv(void* object);
@@ -475,14 +475,14 @@ extern "C" void* getSubObjPlus14(void* param);
 extern "C" void resetParamSubB(void* data);
 extern "C" void flushParamPair(void* data, u32 flag);
 extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
-extern "C" void func_8004BDCC(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
-extern "C" void func_8004CC8C(void* self);
+extern "C" void switchSubAnim(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void updateLeafDist(CActParamAnim* self);
 extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 extern "C" {
 extern float lbl_eu_80665ECC;
-extern float lbl_eu_80665ED0; // atan2 scale (func_8004C608)
-extern float lbl_eu_80665ED4; // wrap-diff gate (func_8004C608)
+extern float lbl_eu_80665ED0; // atan2 scale (blendAnimHeading)
+extern float lbl_eu_80665ED4; // wrap-diff gate (blendAnimHeading)
 }
 extern "C" u8 lbl_eu_80663D4C;
 // sdata2 float constants used by the anim start/setup helpers (f32, loaded
@@ -494,14 +494,14 @@ extern const float lbl_eu_80665EA0; // const: lets MWCC hoist the sdata2 load li
 extern const float lbl_eu_80665ED8; // fidx scale (makeAxisAngleQ / sinAnimFIdx)
 extern const float lbl_eu_80665F00; // half-angle (makeAxisAngleQ)
 extern float lbl_eu_80665F18;
-extern const float lbl_eu_80665E98; // (func_8004B114 init)
-extern const float lbl_eu_80665EA4; // (func_8004B114 init)
-extern const float lbl_eu_80665EA8; // (func_8004B114 init)
-extern const float lbl_eu_80665EAC; // (func_8004B114 init)
-extern const float lbl_eu_80665EB0; // (func_8004B114 init / func_800504DC clamp)
-extern const float lbl_eu_80665EB4; // (func_8004B114 init / func_800504DC)
-extern const float lbl_eu_80665EBC; // (func_8004B114 init: pre-multiplied with 8066A210)
-extern const float lbl_eu_8066A210; // (func_8004B114 init: pre-multiplied with 80665EBC)
+extern const float lbl_eu_80665E98; // (initAnimState init)
+extern const float lbl_eu_80665EA4; // (initAnimState init)
+extern const float lbl_eu_80665EA8; // (initAnimState init)
+extern const float lbl_eu_80665EAC; // (initAnimState init)
+extern const float lbl_eu_80665EB0; // (initAnimState init / func_800504DC clamp)
+extern const float lbl_eu_80665EB4; // (initAnimState init / func_800504DC)
+extern const float lbl_eu_80665EBC; // (initAnimState init: pre-multiplied with 8066A210)
+extern const float lbl_eu_8066A210; // (initAnimState init: pre-multiplied with 80665EBC)
 extern const float lbl_eu_80665EC0; // (func_8004B9D4 angle normalization divisor)
 extern const float lbl_eu_80665F04; // (func_800504DC rand scale)
 extern const float lbl_eu_80665F1C; // (func_800504DC angle threshold)
@@ -517,29 +517,29 @@ extern const float lbl_eu_80665F44; // (func_800504DC clamp scale)
 extern const float lbl_eu_80665F48; // (func_800504DC clamp bound)
 extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / func_8004ECF4 gate)
 extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / func_8004ECF4 gate)
-extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, func_8004FE58/FCE0)
+extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, fireBlendCust/FCE0)
 extern const float lbl_eu_80665EF4; // (func_8004E9EC direction-length gate)
 extern const float lbl_eu_80665F08; // (func_8004ECF4 anim clamp bound)
-extern const float lbl_eu_80665F10; // (func_8004FFBC anim angle bound)
+extern const float lbl_eu_80665F10; // (solveHeadRate anim angle bound)
 extern const float lbl_eu_80665F0C; // (func_8004ECF4/FFBC speed limit scale)
 extern float lbl_eu_80663D48; // (sdata anim gate, sinit_800539E0 + func_8004ECF4)
-extern const float lbl_eu_80665EC4; // (func_8004CC8C)
-extern const float lbl_eu_80665EC8; // (func_8004CC8C)
+extern const float lbl_eu_80665EC4; // (updateLeafDist)
+extern const float lbl_eu_80665EC8; // (updateLeafDist)
 extern const float lbl_eu_80665EDC; // (func_8004ECF4/FFBC speed limit scale)
-extern const float lbl_eu_80665EE0; // (func_8004CC8C: anim blend threshold)
+extern const float lbl_eu_80665EE0; // (updateLeafDist: anim blend threshold)
 extern float lbl_eu_80665F3C;
 extern float lbl_eu_80665F4C;
 extern float lbl_eu_80665F50;
 extern float lbl_eu_80665F54;
-extern const float lbl_eu_80665F14; // (func_80053490 acos-angle epsilon)
-extern const float lbl_eu_80665F5C; // (func_80053490 dot threshold)
+extern const float lbl_eu_80665F14; // (alignAnimQuat acos-angle epsilon)
+extern const float lbl_eu_80665F5C; // (alignAnimQuat dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, wrapAnglePi)
 extern float lbl_eu_8066A1FC; // two*pi (angle wrap, wrapAnglePi)
-extern const float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
+extern const float lbl_eu_8066A20C; // angle gate scale (fireAngleLoGt / fireAngleHiGt) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
 
-// Same-TU helpers called from func_80052934.
+// Same-TU helpers called from stepAnimFrame.
 void func_800504DC(CActParamAnim* self);
 void func_80053198(CActParamAnim* self, ml::CVec3* v);
 
@@ -554,7 +554,7 @@ extern const float lbl_eu_80665F74; // (func_80053198 min-move scale)
 extern "C" int getParamRefS16A(void* data);
 extern "C" int getParamRefS16B(void* data);
 
-// C-linkage imports used by func_80051CD4 / func_80052934.
+// C-linkage imports used by steerAnimHead / stepAnimFrame.
 extern "C" void* getAnimChild(CActParamAnim* self);
 extern "C" int testAnimBit5(CActParamAnim* self);
 extern "C" int testAnimBit13(CActParamAnim* self);
@@ -575,10 +575,10 @@ extern "C" void noopAnimVec3(void* q);
 extern "C" f32 atan2AnimFIdx(f32 a, f32 b);
 extern "C" void storeObjVec3(void* dstObj, const f32* srcVec);
 extern "C" void* crossVec3(void* self, const void* a, const void* b);
-extern "C" void func_80052584(Quaternion* out, const Vec* a, const Vec* b);
+extern "C" void quatFromToVec(Quaternion* out, const Vec* a, const Vec* b);
 extern "C" void makeAxisAngleQ(Quaternion* out, const Vec* axis, f32 angle);
 extern "C" Quaternion* mulQuatSelf(Quaternion* self, const Quaternion* param);
-extern "C" void func_80052780(void* self, void* src);
+extern "C" void storeAnimQuat(void* self, void* src);
 extern "C" f32 simGetLeafDist7B0(u8* obj);
 // Global-scope C++ declaration: mangles to the retail symbol getScnHandle__Fv.
 int getScnHandle();
@@ -595,7 +595,7 @@ extern float lbl_eu_8066AF20;
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-// nw4r acos-domain assert strings (func_80053490, line 0xef).
+// nw4r acos-domain assert strings (alignAnimQuat, line 0xef).
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];
 

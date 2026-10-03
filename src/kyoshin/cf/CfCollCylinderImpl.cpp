@@ -81,7 +81,7 @@ extern "C" void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, vo
 
     if (f1 < lbl_eu_80666940) {
         // Whole cylinder: probe straight from mStart with radius grown by f1.
-        func_800A5B18(query, &impl->mStart, out, impl->mRadius + f1, heightDiff);
+        VecMath_PushOutCylinder(query, &impl->mStart, out, impl->mRadius + f1, heightDiff);
     } else {
         // Truncated segment: drop the probe origin by 0.4*f1 and extend the
         // height span by what remains (f1 - 0.4*f1).
@@ -91,6 +91,6 @@ extern "C" void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, vo
         float adj = lbl_eu_80666944 * f1;
         pos.z = impl->mStart.z;
         pos.y -= adj;
-        func_800A5B18(query, &pos, out, impl->mRadius + f1, heightDiff + (f1 - adj));
+        VecMath_PushOutCylinder(query, &pos, out, impl->mRadius + f1, heightDiff + (f1 - adj));
     }
 }

@@ -31,12 +31,12 @@ public:
 // C-linkage imports used by this TU's thread helpers.  Kept here (not in the
 // .cpp) because they are genuine retail C/ABI symbols from sibling modules.
 extern "C" {
-    int func_802A3E88(CVS_THREAD* self);
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    int func_802A7870(void* arr, int capacity, int unused);
+    int IsThreadVoiceActive(CVS_THREAD* self);
+    void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    int HpVoice_CollectIdle(void* arr, int capacity, int unused);
     int func_802AED0C(void);
-    CVoiceHandle* func_802A330C(int size, int align);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8* CCharVoiceMan_AllocVoiceArena(int size);
     int func_802AF388(CVoiceHandle* a);
     void __ct__cf_CVS_THREAD(CVS_THREAD_BATTLE_BEGIN* self);
@@ -44,7 +44,7 @@ extern "C" {
 
 // Voice-playback state helper shared by the voice thread TUs (genuine
 // retail C-ABI symbol; kept extern "C" so the name is unmangled).
-extern "C" int func_802A77E8(CVoiceHandle* handle);
+extern "C" int HpVoice_MapSubState(CVoiceHandle* handle);
 
 // Offset layout over CVoiceHandle for the fields this TU's helpers access
 // (the manager's large handle block: state flags at 0x3374 and a half-word

@@ -73,7 +73,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* func_8003B4B0(void* bdat, const char* col);
+extern "C" void* Bdat_FindColumnEntry(void* bdat, const char* col);
 // Canonical declaration of the shared bdat column reader (defining TU:
 // ocBdat.cpp; retail signature `u32 (void*, const char*, s32)`). The third
 // parameter MUST be spelled s32 (= signed long under MWCC), never int - the

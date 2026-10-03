@@ -18,7 +18,7 @@ public:
 };
 
 // Minimal CtrlAct declaration for this TU's dtor. The full CtrlAct.hpp header
-// pulls in CtrlPc.hpp, whose two-arg extern "C" decl of func_80089B24
+// pulls in CtrlPc.hpp, whose two-arg extern "C" decl of moveBaseSway
 // conflicts with the one-arg delegate decls below (illegal overloading), so
 // only the class is declared here.
 class CtrlAct {
@@ -34,7 +34,7 @@ public:
 // ---------------------------------------------------------------------------
 
 // Sub-object at battle-actor +0x04: vtable slot 0x30 (index 10) returns a
-// word holder whose first word is the actor id (func_80174C98 out value).
+// word holder whose first word is the actor id (testActorStatus out value).
 class CtrlEnemyActor4 {
 public:
     virtual void b008(); virtual void b00C(); virtual void b010();
@@ -450,16 +450,16 @@ bool  isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-void func_80089B24(void* self);  // one-arg delegate form
-void func_80089E88(void* self);  // one-arg delegate form
-void func_80089F68(void* self);  // one-arg delegate form
+void moveBaseSway(void* self);  // one-arg delegate form
+void moveBaseRoute(void* self);  // one-arg delegate form
+void moveBaseScnCmd(void* self);  // one-arg delegate form
 void __ct__800D10DC(void* self, void* parent);  // CtrlEnemy base ctor
 void __ct__8008A104(void* self, void* parent);  // +0x84 sub-object ctor
 void* func_8016FE34(void* source);              // voice/battle-list resolve
 void CtrlMoveEne_ForwardBaseRefresh(void* self);                 // +0x84 sub-object dtor (blr)
-void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
+void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                    const ml::CVec3* src, int flag);
-int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
+int moveBaseSeekTo(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag);
 // getInstance__Q22cf14CBattleManagerFv is declared by
 // kyoshin/cf/CBattleManagerApi.hpp (via cf/CtrlPc.hpp's include chain).
@@ -468,10 +468,10 @@ void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
 int func_80148778(void* obj, int id);
 void* findBattleStatusEntry(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
-void func_800D9CA0(void* mgr, void* target);
+void unregisterBattleActor(void* mgr, void* target);
 void CtrlMoveEne_UpdateBattleMove(void* sub);
 void CtrlMoveEne_DispatchMoveHook(void* sub);
-void func_8008A2C8(void* sub);
+void CtrlMoveEne_UpdateBattleAI(void* sub);
 int CtrlMoveEne_TryLatchTargetActor(void* sub, void* obj);
 int CtrlMoveEne_ConsumeTargetResolve(void* sub);
 void* getUnk80664658(void);
@@ -489,4 +489,4 @@ void* __ct__800FB044(void* list, f32 f, void* obj, int a);
 void* __ct__800FAE3C(void* list, void* vec, int a);
 void* __ct__800FD0B4(void* list, int a);
 void* __ct__800FC4FC(void* list, f32 f, int a);
-void func_800FB270(void* list, void* obj, f32 a, f32 b, f32 c, int d);
+void rebuildByDistanceCone(void* list, void* obj, f32 a, f32 b, f32 c, int d);

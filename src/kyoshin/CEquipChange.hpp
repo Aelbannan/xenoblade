@@ -4,19 +4,19 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
-/* CItemBoxInfo.hpp declares func_801393CC(void*) while CEquipItemBox.hpp
+/* CItemBoxInfo.hpp declares LookupItemTypeTable(void*) while CEquipItemBox.hpp
    (included above) already declares the real u32(u32) - MWCC rejects the
    overload. This unit never calls it, so rename the stale declaration away
    for this inclusion only. */
-#define func_801393CC func_801393CC_stale_voidp
+#define LookupItemTypeTable LookupItemTypeTable_stale_voidp
 #define GetCollectedFlagByte GetCollectedFlagByte_stale_int_u8
-#define func_80136A1C func_80136A1C_stale_constcharp
-#define func_801397AC func_801397AC_stale_gxcolor
+#define LayoutSetTextBoxText LayoutSetTextBoxText_stale_constcharp
+#define PaneMatGetS16Quad PaneMatGetS16Quad_stale_gxcolor
 #include "kyoshin/CItemBoxInfo.hpp"
-#undef func_801393CC
+#undef LookupItemTypeTable
 #undef GetCollectedFlagByte
-#undef func_80136A1C
-#undef func_801397AC
+#undef LayoutSetTextBoxText
+#undef PaneMatGetS16Quad
 
 namespace nw4r {
 namespace lyt {
@@ -57,9 +57,9 @@ public:
     u8 EquipChange_IsActiveFlag();
     void EquipChange_CheckBoxOpen();
     void EquipChange_IsMenuBusy();
-    void func_8020397C();
-    void func_80203984();
-    void func_8020398C();
+    void EquipChange_ShowSubPanes();
+    void EquipChange_HandleEIBName();
+    void EquipChange_TryCloseEIBRow();
 
     // 0x04: UnkClass_8045F564 (size 0x10)
     u8 _pad04[0x10];
@@ -108,15 +108,15 @@ struct CEqChCursorRec {
     u32 field_04;
 };
 
-// Per-slot bdat message-table handles read indexed by func_802042C0
+// Per-slot bdat message-table handles read indexed by EquipChange_RebuildCursorList
 // (lbl_eu_806640D8 is an array of handles; the scalar extern comes from
 // CEquipItemBox.hpp).
 #define lbl_eu_806640D8_arr ((void**)(void*)&lbl_eu_806640D8)
 
-// Character-data table returned by func_8009EC9C; +0x176C holds a state word
+// Character-data table returned by CtrlObjectParam_GetCharEntry; +0x176C holds a state word
 // that is 1 when the character is busy (same object as CPartyCharData). The
 // +0x1C..+0x26 s16 slots hold the per-category equipped item ids (weapon/
-// armour rows) read by func_80203210 / func_802042C0.
+// armour rows) read by EquipChange_RunMainFlow / EquipChange_RebuildCursorList.
 struct CBdatCharData {
     u8 _pad[0x1C];
     s16 field_1C;   // 0x1C
@@ -336,21 +336,21 @@ extern u32 lbl_eu_80664698;
 extern u32 lbl_eu_80508120[];
 extern char lbl_eu_80508168[];
 
-// Sub-cursor equip lookup tables (func_80202EB4): a u32 category word at
+// Sub-cursor equip lookup tables (EquipChange_RefreshCategory): a u32 category word at
 // byte offset 2*i plus a byte at 2*i+4 per row i. Fixed sizes keep the
 // symbols sdata-eligible so MWCC emits the retail sda21 addressing.
 extern u8 lbl_eu_806682A0[8];
 extern u8 lbl_eu_806682A4[8];
 
 // Result of the item-impl fetch hook
-// func_802052A8: packed word at +0 and a halfword at +4 whose low bit picks
+// EquipChange_ResolveEquipItem: packed word at +0 and a halfword at +4 whose low bit picks
 // between the direct-equip and bdat-rebuild paths.
 struct CEquipV9Result {
     u32 field_00;
     u16 field_04;
 };
 
-// Scratch CItem record rebuilt from bdat by func_802052A8's fallback path
+// Scratch CItem record rebuilt from bdat by EquipChange_ResolveEquipItem's fallback path
 // (cleared once, guarded by lbl_eu_8066469C).
 struct CEquipWorkItem {
     u32 field_00;
@@ -360,7 +360,7 @@ struct CEquipWorkItem {
 extern CEquipWorkItem lbl_eu_80576568;
 extern s8 lbl_eu_8066469C;
 
-// bdat helpers used by func_802052A8's rebuild path.
+// bdat helpers used by EquipChange_ResolveEquipItem's rebuild path.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" void func_80159F6C(void* self, u32 family, u32 row, u16 kind);
 
@@ -372,11 +372,11 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
 // CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
 extern "C" u32 startItemBoxOpen(CItemBoxInfo* info);
-extern "C" u32 func_801D4260(CItemBoxInfo* info, u8 arg2);
-extern "C" void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
+extern "C" u32 hideItemBoxPanes(CItemBoxInfo* info, u8 arg2);
+extern "C" void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
 extern "C" void func_801D202C(void* cur);
 extern "C" void updateItemBoxAnims(CItemBoxInfo* info);
-extern "C" void func_801D4174(CItemBoxInfo* info);
+extern "C" void closeItemBox1(CItemBoxInfo* info);
 
 // Free-function form (retail: advanceItemBoxState__FP12CItemBoxInfo).
 void advanceItemBoxState(CItemBoxInfo* info);
@@ -403,35 +403,35 @@ extern "C" void EquipChange_RefreshCursorPos(CEquipChange* self);
 extern "C" void loadItemBoxFiles(void* info);
 extern "C" void loadEIBFiles(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" void func_802042C0(CEquipChange* self);
+extern "C" void EquipChange_RebuildCursorList(CEquipChange* self);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
-extern "C" void* func_8009EC9C(u32);
-extern "C" void* func_80157C4C(u32 index, s16 value);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
+extern "C" void* CItem_kindPtr(u32 index, s16 value);
 extern "C" void setEIBBoxInfo(CEquipItemBox* box, u32 val);
 extern "C" void eibOpenPages(CEquipItemBox* box, u16 packed, void* arg3, u16 arg4);
 extern "C" void openEIBBox(CEquipItemBox* box);
 extern "C" int eibHudPrompt(CEquipItemBox* box);
 extern "C" void drawEIBBox(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void* func_802052A8(CEquipChange* self);
+extern "C" void* EquipChange_ResolveEquipItem(CEquipChange* self);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
-extern "C" void func_802869B4(CEquipItemBox* box);
+extern "C" void eibNavDown(CEquipItemBox* box);
 extern "C" void eibNavUp(CEquipItemBox* box);
 extern "C" void eibNavRight(CEquipItemBox* box);
-extern "C" int func_80288948(CEquipItemBox* box);
+extern "C" int isEIBCatMatch(CEquipItemBox* box);
 extern "C" int getEIBSelCat(CEquipItemBox* box);
 extern "C" int eibRowMatches(CEquipItemBox* box);
 extern "C" int findEIBEquipSlot(CEquipItemBox* box);
 
 // bdat item-name table (sdata pointer) and message-count lookup used by
-// func_80203210's category equip checks.
+// EquipChange_RunMainFlow's category equip checks.
 extern u32 lbl_eu_806640EC;
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
-// Per-category equipped-item row setters (func_80203210 case tails).
+// Per-category equipped-item row setters (EquipChange_RunMainFlow case tails).
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
@@ -440,12 +440,12 @@ extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
-// 3-word scene-name table read by func_80203210's refresh block (.rodata).
+// 3-word scene-name table read by EquipChange_RunMainFlow's refresh block (.rodata).
 extern u32 lbl_eu_80508068[3];
 
 // CfObjEnumList helper family (opaque void* params repo-wide - see
 // CPartyStateWin.hpp); struct views for the stack holder / list / slot used
-// by func_80203210's refresh block.
+// by EquipChange_RunMainFlow's refresh block.
 struct CEquipEnumHolder { void* field_0x0; u32 field_0x4; };
 struct CEquipEnumList { u8 _00[0x620]; u32 field_0x620; };
 struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
@@ -457,17 +457,17 @@ extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" int stepEIBSysWin2(CEquipItemBox* box);
-extern "C" int func_802882A4(CEquipItemBox* box);
-extern "C" void func_802873D8(CEquipItemBox* box);
+extern "C" int isEIBSelectBlocked(CEquipItemBox* box);
+extern "C" void handleEIBConfirm(CEquipItemBox* box);
 extern "C" void eibApplySelect(CEquipItemBox* box, u16 arg2, void* arg3);
-extern "C" void func_80202EB4(CEquipChange* self, u8 cat);
+extern "C" void EquipChange_RefreshCategory(CEquipChange* self, u8 cat);
 
 // Sub-cursor activate (defined in CCur.cpp).
 extern "C" void Cur_SetActive(CBaseCur* cur);
 
 // Accumulate a pane's translate into output (CPartyState.hpp also declares
 // this C-ABI helper).
-extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Sub-object destructors referenced by ~CEquipChange. Defined in CCur.cpp /
 // CItemBoxInfo.cpp / CEquipItemBox.cpp.

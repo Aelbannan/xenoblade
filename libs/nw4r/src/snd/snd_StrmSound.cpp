@@ -185,13 +185,10 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Retail UpdateParam is a StrmSound virtual, but the stale header does not
-// declare it; the body is emitted under the retail mangled name as a free
-// function (same ABI: r3 = this), like SetTrackVolume in snd_StrmPlayer.cpp.
-void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv(StrmSound* pSound) {
-    pSound->BasicSound::UpdateParam();
+void StrmSound::UpdateParam() {
+    BasicSound::UpdateParam();
 
-    StrmSoundRetail* self = reinterpret_cast<StrmSoundRetail*>(pSound);
+    StrmSoundRetail* self = reinterpret_cast<StrmSoundRetail*>(this);
     StrmSoundRetail* track = self;
 
     for (int i = 0; i < 8; i++) {
@@ -210,11 +207,9 @@ void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv(StrmSound* pSound) {
     }
 }
 
-// See UpdateParam above: OnUpdatePlayerPriority is likewise undeclared in the
-// stale header, so it is emitted under the retail mangled name.
-void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv(StrmSound* pSound) {
-    StrmSoundRetail* self = reinterpret_cast<StrmSoundRetail*>(pSound);
-    self->mManager->UpdatePriority(pSound, pSound->CalcCurrentPlayerPriority());
+void StrmSound::OnUpdatePlayerPriority() {
+    StrmSoundRetail* self = reinterpret_cast<StrmSoundRetail*>(this);
+    self->mManager->UpdatePriority(this, this->CalcCurrentPlayerPriority());
 }
 
 const nw4r::ut::detail::RuntimeTypeInfo* StrmSound::GetRuntimeTypeInfo() const {

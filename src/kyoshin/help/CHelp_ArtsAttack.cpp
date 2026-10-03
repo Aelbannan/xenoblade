@@ -15,7 +15,7 @@ u32 CHelp_ArtsAttack::checkHelpCondition() {
         u32* ret = static_cast<u32*>(sub->_q030());
         u32 localVal = *ret;
 
-        u32 funcResult = func_80174C98(objPc, &localVal, 0xA);
+        u32 funcResult = testActorStatus(objPc, &localVal, 0xA);
         u32 boolVal = funcResult == 0;
 
         return this->func_802B7CBC(boolVal);

@@ -8,7 +8,7 @@ extern int lbl_eu_80663FA0;
 extern "C" {
 extern char lbl_eu_804FDEA8[];  // String table: +0xa layout, +0x18 anim, +0x26 pane name
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // Shared ARC resource accessor
-void func_80137B44(nw4r::lyt::Layout*, const char*, u32);  // Pane color setter
+void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);  // Pane color setter
 }
 
 CMenuFade::CMenuFade(){
@@ -44,7 +44,7 @@ end:
  * shared ARC resource at string offsets 0xa and 0x18 respectively. Enables
  * mAnimDefault, computes per-frame durations from the animation frame size,
  * and sets the initial frame based on field_0x90. Configures pane alpha via
- * func_80137B44 based on field_0x98. Registers this object as an IScnRender
+ * PaneSetVtxColorByName based on field_0x98. Registers this object as an IScnRender
  * render callback at priority 0xd on the owning scene.
  */
 void CMenuFade::Init() {
@@ -100,10 +100,10 @@ void CMenuFade::Init() {
     // Configure pane alpha via string offset 0x26
     switch (field_0x98) {
     case 0:
-        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, 0xff);
+        PaneSetVtxColorByName(mLayout, lbl_eu_804FDEA8 + 0x26, 0xff);
         break;
     case 1:
-        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, (u32)-1);
+        PaneSetVtxColorByName(mLayout, lbl_eu_804FDEA8 + 0x26, (u32)-1);
         break;
     }
 

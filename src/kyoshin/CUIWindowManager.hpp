@@ -14,7 +14,7 @@ class IUIWindowSubView; // timer view behind IUIWindow::unk5C (defined in CUIWin
 class CTalkWindow;
 class CCol6Invite;
 
-// Item-availability query row (0x2A bytes), indexed by arg1 in func_80140854.
+// Item-availability query row (0x2A bytes), indexed by arg1 in UIWin_QueryItemAvail.
 struct CItemQueryRow {
     u8  field_0x00;      //+0x00
     u8  field_0x01;      //+0x01 - nonzero enables the flag-table lookup
@@ -25,7 +25,7 @@ struct CItemQueryRow {
 
 // 0xC8-byte flag buffer (retail BSS at lbl_eu_80573C50): a build/active flag,
 // per-table byte flags, and the quest/mission slot ids consumed by the
-// flag-buffer helpers UIWin_FlagBufCanShow / func_80140AFC in this unit.
+// flag-buffer helpers UIWin_FlagBufCanShow / UIWin_BuildFlagBufBySlot in this unit.
 struct CFlagBuffer {
     u8  field_0x00;              //0x00 - bit0: active/build flag
     u8  field_0x01[3];           //0x01-0x03
@@ -56,7 +56,7 @@ struct CFlagBuffer {
     u8* field_0xC4;              //0xC4 - per-item byte table
 };
 
-// Item-availability query table (retail func_80140854): two per-item rows at
+// Item-availability query table (retail UIWin_QueryItemAvail): two per-item rows at
 // 0x6E/0x98 and a signed byte table behind field_0xC4.
 struct CItemQuery {
     u8  field_0x00;               //0x00 - bit0: active flag
@@ -72,12 +72,12 @@ struct CItemQuery {
 // CSysWinSave / CMenuItemExchange / CMenuKizunaTalk / CSysWinBuff). Each
 // creates a window under the manager's parent/scene and returns it (or 0).
 // C linkage so call relocs bind to the literal retail names - a C++
-// declaration would mangle them (e.g. func_8015DCD0FP8CProcessP4CScn) and
+// declaration would mangle them (e.g. col6HintAllocFP8CProcessP4CScn) and
 // drift at the reloc gate.
-extern "C" IUIWindow* func_8015DCD0(CProcess* pParent, CScn* pScene);
-extern "C" IUIWindow* func_801602F4(CProcess* pParent, CScn* pScene);
+extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene);
+extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* __ct__802944D8(CProcess* pParent, CScn* pScene);
-extern "C" IUIWindow* func_801BEDE0(CProcess* pParent, CScn* pScene, u32 id);
+extern "C" IUIWindow* ItemEx_Create(CProcess* pParent, CScn* pScene, u32 id);
 extern "C" IUIWindow* func_801BCEBC(CProcess* pParent, CScn* pScene, u32 charId);
 extern "C" IUIWindow* create__11CSysWinBuffFv(CProcess* pParent, CScn* pScene, u16 id);
 extern "C" IUIWindow* createBattleEndMenu(CProcess* pParent, CScn* pScene, u32 type, u32 id);
@@ -103,7 +103,7 @@ u32 Bdat_GetMaxRow_B1EC(void* fp);
 
 // Quest-entry index lookup (owning TU: CUICfManager). Full-width arg/result
 // (retail passes/returns the register unmasked).
-u32 func_80138138(u32 idx);                 // quest id -> name-table index
+u32 SearchThresholdIdx(u32 idx);                 // quest id -> name-table index
 
 // Multi-item entry guard (owning TU: CUICfManager): 5 u16 args, nonzero
 // blocks the window creation.
@@ -152,11 +152,11 @@ IUIWindow* MenuUpdate_SpawnProcessForMode(CProcess* self, CScn* pScene, int r5, 
 u32 BdatGetU8Direct(u32 entry, const char* text, u32 row);
 
 // Flag-buffer helpers (owning TU: this unit).
-u8* func_80140AFC(u32 target);
-void func_8013D26C(int mode);
-int func_80140854(CItemQuery* self, u32 arg1, u32 arg2);
+u8* UIWin_BuildFlagBufBySlot(u32 target);
+void UIWin_SweepQueue(int mode);
+int UIWin_QueryItemAvail(CItemQuery* self, u32 arg1, u32 arg2);
 int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf);
-void func_8013FFF8(void* flagBuf, void* entry, u32 value);
+void UIWin_SetTableFlag(void* flagBuf, void* entry, u32 value);
 
 // C-ABI imports used by the window-manager ctor and the flag-buffer helpers
 // (owning TUs: CScn / CCol6System / CQuestWindow / CMenuGetItemMulti /
@@ -191,18 +191,18 @@ void __dla__FPv(void* p);
 extern const u8 lbl_eu_8052E61C[0x10];
 
 // Presentation/event bitfield (.sbss, other splits) - talk-event bit gates
-// the 0x608 window path of func_8013CBB4.
+// the 0x608 window path of UIWin_OpenWindow.
 
 // Actor id -> actor object lookup (plain decl so the call reloc binds to the
 // C++-mangled retail symbol findObjectById__Fi).
 void* findObjectById(int id);
 
-// C-ABI imports used by func_8013CBB4.
+// C-ABI imports used by UIWin_OpenWindow.
 extern "C" {
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void CtrlObjectParam_SetWorkTailValue(u32 id);
 u8 BdatGetU8ByTableKey(const void* tbl, const void* key, u32 idx);
-void func_8013B88C(u8 v);
+void TryRevealMapArea(u8 v);
 }
 
 // findObjectById result view used by the 0x608 window path: +0x64 flags word
@@ -243,19 +243,19 @@ extern char lbl_eu_80500A50[];  // bdat column-name blob (getBdatStringColumnVal
 
 // bdat pointer used by the flag-buffer column reads (.sdata, other split).
 extern u8* lbl_eu_80664098;
-// rodata flag table (other split), byte-offset indexed by func_80140854.
+// rodata flag table (other split), byte-offset indexed by UIWin_QueryItemAvail.
 extern u8 lbl_804FC260[];
 
 // Per-entry time thresholds (rodata lbl_804FC240): two slots per entry,
 // selected by the query slot id. Values gate per-entry updates in
-// func_8013F6C4 and double as blocked flag-memory states.
+// UIWin_UpdateItemAvail and double as blocked flag-memory states.
 struct CQuestTimeEntry {
     u32 v[2];
 };
 extern CQuestTimeEntry lbl_804FC240[4];
 
 // bdat item/enum table handle (.sbss, other split); source of the column
-// reads func_8013F6C4 issues after absorbing an entry.
+// reads UIWin_UpdateItemAvail issues after absorbing an entry.
 extern void* lbl_eu_806640EC;
 
 class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{

@@ -41,12 +41,12 @@ struct ArtsParamLocal : ArtsParamLocalBase {
     virtual f32 mFn14();     // slot 5 (+0x14) - getMax
 };
 
-// 4 x s16 aggregate returned by func_80139658 in r3:r4 (retail FourShorts).
+// 4 x s16 aggregate returned by PaneMatGetS16QuadByName in r3:r4 (retail FourShorts).
 struct FourShorts {
     s16 a, b, c, d;
 };
 
-// Gauge highlight box passed to func_801398A4 (us-801079b0): three window
+// Gauge highlight box passed to PaneMatSetS16QuadByName (us-801079b0): three window
 // coords, a fourth filled from the gauge quad's last short, then the whole
 // quad copied verbatim (MWCC lowers the initializer to a word-pair copy of
 // the FourShorts plus an lha readback for .w).
@@ -55,7 +55,7 @@ struct ArtsGaugeBox {
     FourShorts quad;
 };
 
-// Per-mode arts name/gauge-id rodata tables (func_80107580 copies them
+// Per-mode arts name/gauge-id rodata tables (refreshPaneTextures copies them
 // by value into locals, indexed by unk328).
 struct ArtsModeIds {
     u16 id[8];
@@ -63,7 +63,7 @@ struct ArtsModeIds {
 extern const ArtsModeIds lbl_eu_804FD138;
 extern const ArtsModeIds lbl_eu_804FD148;
 
-// Read-only view of the CfObjectMove fields func_80107580 needs (the real
+// Read-only view of the CfObjectMove fields refreshPaneTextures needs (the real
 // cf::CfObjectMove is opaque in this TU's include closure).
 struct CfObjectMoveArtsView {
     u8 _00[0x8c];
@@ -78,19 +78,19 @@ public:
     void cbRenderBefore();
 
     void func_80104454();
-    void func_80105A34();
-    void func_80105D54();
+    void updatePageMode();
+    void handleConfirm();
     void advanceConfirmState();
-    void func_801065E4();
-    void func_80106900();
+    void driveArtsGauge();
+    void driveTalentGauge();
     void updateSlotGauge(s32 index);
-    void func_80106EC8(s32 index);
+    void updateSlotHighlight(s32 index);
     void advanceSlotToggle(s32 index);
-    void func_801072E0();
-    void func_80107580();
-    int func_80107970(s32 index);
-    int func_80107C54(s32 index);
-    void func_801080F8();
+    void refreshHelpText();
+    void refreshPaneTextures();
+    int isSlotAvailable(s32 index);
+    int checkSlotUsable(s32 index);
+    void updateSlotStates();
     void bindEntryPanes();
 
     // Process base (CProcess): CDoubleListNode + vtable@0x10 + child list + flags@0x38.
@@ -154,7 +154,7 @@ public:
     u32 unk31C; // 0x31C
     u8 unk320; // 0x320
     u8 unk321[0x324 - 0x321];
-    s32 unk324; // 0x324 - compared to 4 after func_80107580
+    s32 unk324; // 0x324 - compared to 4 after refreshPaneTextures
     s32 unk328; // 0x328 - render mode (unk98 draw gate == 4)
     u32 unk32C; // 0x32C
     u32 unk330; // 0x330
@@ -192,7 +192,7 @@ extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr);
 extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
 extern "C" void* EneSt_GetSingleton();
 extern "C" void* BpsStateSingletonToInt();
-extern "C" void func_8010EDE4(void*);
+extern "C" void EneSt_CursorReset(void*);
 extern "C" void BtlDmg_CursorReset(void*);
 extern "C" void CUICfManager_queueMoveBaseMenu();
 extern "C" void* func_8016FE34(void* r3);

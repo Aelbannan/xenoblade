@@ -56,7 +56,7 @@ static inline f32 s32ToF32_a808(s32 v, S32Cast* c) {
 }
 
 // ---------------------------------------------------------------------------
-// Data layouts recovered from the retail assembly (func_804753B4 walks the
+// Data layouts recovered from the retail assembly (testDrawEntry walks the
 // 2D map triangle grid and interpolates height + color at the current
 // position).
 //
@@ -131,7 +131,7 @@ struct MPFDrawDisplayListLayout {
 
 // Draw-data chain handed to setPlainDrawNode / setColorDrawNode (retail r4).  The
 // pointer is stored at self+0x04 and forwarded to the sibling draw walkers
-// (func_804795BC / drawColoredList) when the chain carries data.
+// (drawPlainList / drawColoredList) when the chain carries data.
 struct MPFDrawNode {
     u32 field_0x0;            // +0x00 arena offset of the batch data
     u32 field_0x4;            // +0x04 non-zero when the chain has draw data
@@ -199,7 +199,7 @@ struct MPFDrawItem {
 
 // Global draw state at lbl_eu_80665838 (pointer).  The render-state object
 // spans +0x00..+0x2E08 (UnkClass_80471EC8); the current cell index lives at
-// +0x2E12 (advanced by func_80477F80).
+// +0x2E12 (advanced by paintDrawNode).
 struct MPFDrawGlobal {
     u8 gap00[0x2DFC];             // +0x00
     f32 field_0x2DFC;             // +0x2DFC
@@ -208,10 +208,10 @@ struct MPFDrawGlobal {
     s16 field_0x2E12;             // +0x2E12 current cell index
 };
 
-// Per-billboard item data (0x4c stride) consumed by func_804783D0 and
-// func_80478C94.  The position is at +0x00/+0x04, the flag word at +0x10,
+// Per-billboard item data (0x4c stride) consumed by scanBillboard and
+// writeDispList.  The position is at +0x00/+0x04, the flag word at +0x10,
 // the layer index at +0x1b and the spread value at +0x20; the sibling draw
-// walkers (func_804795BC etc.) read the remaining fields.
+// walkers (drawPlainList etc.) read the remaining fields.
 struct MPFBillItem {
     f32 x;                    // +0x00
     f32 y;                    // +0x04
@@ -230,7 +230,7 @@ struct MPFBillItem {
 };
 
 // 0x10-byte probe entry inside each slot (slot + 0x2c); the walk in
-// func_80478C94 advances it by 0x10 per billboard.
+// writeDispList advances it by 0x10 per billboard.
 struct MPFDrawProbe {
     f32 x;                    // +0x00
     f32 y;                    // +0x04
@@ -241,9 +241,9 @@ struct MPFDrawProbe {
     u8 counter;               // +0x0F proximity counter
 };
 
-// Display-list entry written by func_80478C94 (0xcc0-byte stride).
+// Display-list entry written by writeDispList (0xcc0-byte stride).
 // field_0x10/field_0x14 are the position/color cursors; field_0x4 counts
-// the written quads and doubles as the copy format for func_804782C4.
+// the written quads and doubles as the copy format for setupDrawCmds.
 struct MPFDispEntryFull {
     u16 field_0x0;            // +0x00 layer
     u16 field_0x2;            // +0x02 flags
@@ -337,7 +337,7 @@ struct MPFDrawCfg {
     u8 field_0x20;            // +0x20
 };
 
-// Draw command used by func_804782C4: index, format, size and buffer.
+// Draw command used by setupDrawCmds: index, format, size and buffer.
 struct MPFDrawCmd {
     u16 field_0x0;            // +0x00 index
     u16 field_0x2;            // +0x02 flags (bit 1)
@@ -348,7 +348,7 @@ struct MPFDrawCmd {
     u8* field_0x18;           // +0x18 destination buffer
 };
 
-// Source buffers for func_804782C4 (self+0x28 / self+0x2c).  Kept as u32 so
+// Source buffers for setupDrawCmds (self+0x28 / self+0x2c).  Kept as u32 so
 // the offset arithmetic is plain integer adds (byte-identical to the retail
 // pointer math without pointer-add canonicalization).
 struct MPFDrawSrcLayout {
@@ -513,21 +513,21 @@ void disableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 // Sibling draw walkers (retail Fv names; called with the node chain in r4).
-void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
+void drawPlainList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
 void drawColoredList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
 
 // Per-item draw helpers (retail Fv names; still stubs - called from
-// func_80477F80 with the item index / scale values below).
-bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
-bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
-void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit);
-void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut);
+// paintDrawNode with the item index / scale values below).
+bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
+bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
+void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit);
+void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut);
 
 // Height/color walker + position advance (defined below in this unit).
-bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e);
-bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self);
+bool testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e);
+bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self);
 MPFDrawSlot* allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2);
-bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell);
+bool probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell);
 void createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr);
 
 // collectActiveSlots: collect the in-use, non-empty slots from the global chain
@@ -569,13 +569,13 @@ void collectActiveSlots__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayL
     }
 }
 
-// func_80475C78: walk the cell grid from the node bounds.  Each cell
+// walkDrawCells: walk the cell grid from the node bounds.  Each cell
 // interpolates a quantized grid coordinate from the vertex pair, then either
 // descends into a sub-cell (even grid value) or runs its draw-list entries
-// through the height/color walker (func_804753B4) and advances the position
-// (func_80476104).  The x coordinate re-reads the i1 vertex x as its own
+// through the height/color walker (testDrawEntry) and advances the position
+// (shiftDrawSlot).  The x coordinate re-reads the i1 vertex x as its own
 // multiplier (retail shape).
-bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+bool walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     // Declarations in MWCC scratch-color priority (ascending); assignments
     // keep the retail load/statement order.
@@ -616,8 +616,8 @@ bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 p++;
                 s32 i = 0;
                 while (i < n) {
-                    if (func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x30[*p])) {
-                        if (func_80476104__Q26mpfsys18MPFDrawDisplayListFv(self)) return true;
+                    if (testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x30[*p])) {
+                        if (shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(self)) return true;
                     }
                     i++;
                     p++;
@@ -632,7 +632,7 @@ bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     return false;
 }
 
-// func_80476104: advance the walk position by one step.  The current slot's
+// shiftDrawSlot: advance the walk position by one step.  The current slot's
 // bounds are grown to include the position; when the slot's step counter
 // exceeds its limit the position is moved to the embedded second slot, and
 // when the slot list is exhausted a fresh slot is allocated from the arena.
@@ -641,7 +641,7 @@ bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // reloads the walk position and the current slot around every call/store.
 // Declaration order drives scratch colors to r27/r26 and the third clamp
 // result stays in r0.
-bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+bool shiftDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     s32 n;
     s32 rnd;
@@ -722,7 +722,7 @@ void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayLis
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     d->field_0x4 = node;
     if (node->field_0x4 != 0) {
-        func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(self, node);
+        drawPlainList__Q26mpfsys18MPFDrawDisplayListFv(self, node);
     }
 }
 
@@ -805,7 +805,7 @@ bool checkProbeRange__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList
 
 // Height/color walker: test the current position against the map triangle
 // grid, then interpolate the height plane and vertex colors at the position.
-bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e) {
+bool testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e) {
     MPFDrawDisplayListLayout& d = *(MPFDrawDisplayListLayout*)self;
     const MPFDrawVert* v0;
     const MPFDrawVert* v1;
@@ -1071,11 +1071,11 @@ void updateSlotChain__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList
     }
 }
 
-// func_804782C4: prepare a draw-list command.  Format 0xfc copies the whole
+// setupDrawCmds: prepare a draw-list command.  Format 0xfc copies the whole
 // 0x300-byte slot; otherwise the destination buffer is offset into the
 // self+0x2c arena, the size is rounded up to a 32-byte boundary, the source
 // is memcpy'd from the self+0x28 arena and the tail is zero-filled.
-void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCmd* arg) {
+void setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCmd* arg) {
     MPFDrawSrcLayout* s = (MPFDrawSrcLayout*)self;
     if (arg->field_0x4 == 0xfc) {
         u16 idx = arg->field_0x0;
@@ -1105,7 +1105,7 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 }
 
-// func_804795BC: draw the plain (no vertex color) display list.  Walks the
+// drawPlainList: draw the plain (no vertex color) display list.  Walks the
 // MPFDrawCfg entry array (0xcc0-byte stride) for the node chain attached at
 // self+0x04, submitting each enabled entry's position/color arrays and its
 // display list.
@@ -1115,7 +1115,7 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // this source into a loop-carried pointer (or-copy + +=1 step).  Recompute
 // forms instead trigger strength reduction (cursor steals r31); declaration
 // order here is required for the retail register map (off=r31 .. entry=r24).
-void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+void drawPlainList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
     // Declaration order drives MWCC's preserved-register assignment (first
     // declared takes the highest GPR), so the walk state is declared in
     // retail allocation order: off, posOff, clrOff, dataBase, entries,
@@ -1171,7 +1171,7 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 }
 
 // drawColoredList: draw the vertex-colored display list.  Same walk as
-// func_804795BC but for entries with bit 1 set, with the color TEV alpha
+// drawPlainList but for entries with bit 1 set, with the color TEV alpha
 // inputs reconfigured up front.
 //
 // Declaration order drives MWCC's preserved-register assignment (first
@@ -1233,16 +1233,16 @@ void drawColoredList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList
     }
 }
 
-// func_80478C94: walk the slot chain (self+0x58), probe-test each slot's
+// writeDispList: walk the slot chain (self+0x58), probe-test each slot's
 // position against the moving display range, and emit per-layer display-list
 // quads.  The retail Fv symbol actually receives (self, dst entries, entry
-// counter, counter limit) - see the call site in func_80477F80.
+// counter, counter limit) - see the call site in paintDrawNode.
 //
 // Each probe's proximity counter (MPFDrawProbe.counter) decays toward the
 // band edges; the emitted quad corners are probe + arena[0..1] and
 // probe + arena[i .. i+1] with the arena index derived from the probe colour
 // sum, so consecutive quads tile the arena buffer.
-void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit) {
+void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     MPFDrawNode* node = d->field_0x4;
     s32 prevLayer = -1;
@@ -1285,17 +1285,17 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 
                 if (prevLayer != layer) {
                     if (pendingA != 0) {
-                        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
+                        setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
                         pendingA = 0;
                     }
                     if (pendingB != 0) {
-                        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
+                        setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
                         pendingB = 0;
                     }
                     if (limit <= *counter && pendingA == 0 && pendingB == 0) {
                         return;
                     }
-                    func_804783D0__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)item, arena, &countA, &countB);
+                    scanBillboard__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)item, arena, &countA, &countB);
                     prevLayer = layer;
                     u32 fv = item->flags;
                     u32 r22 = (fv & 1) ? 0 : 1;   // odd flag word selects the alternate entry
@@ -1485,7 +1485,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         entry->field_0x4 += 4;
                         entry->field_0x8 += 0xc;
                         if (entry->field_0x4 >= 0xfc) {
-                            func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)entry);
+                            setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)entry);
                             if (r19 == 0xff && (item->flags & 1) == 0) {
                                 pendingA = 0;
                             } else {
@@ -1503,20 +1503,20 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 
     if (pendingA != 0) {
-        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
+        setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
     }
     if (pendingB != 0) {
-        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
+        setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
     }
 }
 
-// func_80476344: regenerate the display-list quads for the given map cell.
+// trackGridStep: regenerate the display-list quads for the given map cell.
 // The retail Fv symbol actually receives (self, cell index, density mode,
-// scale) - see the call sites in func_80477F80.  When the cell aligns to the
+// scale) - see the call sites in paintDrawNode.  When the cell aligns to the
 // density spacing the cell index is advanced and the caller retries;
 // otherwise a fresh slot is allocated for every in-range grid position and
-// the walk is handed to func_80475E64.
-bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
+// the walk is handed to probeDrawCell.
+bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     MPFDrawGlobal* g = lbl_eu_80665838;
     f32* cell = (f32*)((u8*)g + 0x2d20 + index * 0xc);
@@ -1674,7 +1674,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     d->field_0x44 = f18;
                     d->field_0x48 = f2;
                     d->field_0x4C = f1;
-                    walked = func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34);
+                    walked = probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34);
                 }
                 if (walked) {
                     // Grid walk hit: scatter billboards over the fresh quad.
@@ -1690,7 +1690,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             s32 rv2 = rand();
                             f32 base2 = f22 * s32ToF32_a808(i % span, &cvtB) + f18 - f21;
                             d->field_0x14->z = f31 * s32ToF32_a808(rv2 % 100, &cvtA) + (base2 - f29 * f22);
-                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                            if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                 break;
                             }
                         }
@@ -1700,7 +1700,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         for (s32 i = 0; i < r23; i++) {
                             d->field_0x14->x = f31 * s32ToF32_a808(rand() % (span * 100), &cvtA) + f20 - f21;
                             d->field_0x14->z = f31 * s32ToF32_a808(rand() % (span * 100), &cvtB) + f18 - f21;
-                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                            if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                 break;
                             }
                         }
@@ -1709,7 +1709,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         for (s32 i = 0; i < r23; i++) {
                             d->field_0x14->x = f22 * s32ToF32_a808(i % span, &cvtA) + f20 - f21;
                             d->field_0x14->z = f22 * s32ToF32_a808(i / span, &cvtB) + i - f21;
-                            if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                            if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                 break;
                             }
                         }
@@ -1779,11 +1779,11 @@ failReset:
     return false;
 }
 
-// func_80476E50: regenerate the display-list quads for the given map cell,
+// buildDrawItem: regenerate the display-list quads for the given map cell,
 // with an interpolated half-step refinement between the density rows.  The
 // retail Fv symbol actually receives (self, cell index, density mode, scale)
-// - see the call site in func_80477F80.
-bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
+// - see the call site in paintDrawNode.
+bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     MPFDrawGlobal* g = lbl_eu_80665838;
     // Two persistent int->float bit-cast slots (retail stores both 0x43300000
@@ -1974,7 +1974,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             d->field_0x44 = f19;
                             d->field_0x48 = f2;
                             d->field_0x4C = f19;
-                            if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
+                            if (probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
                                 placed++;
                                 if (placed > 0x14 && d->field_0x3c == 0) {
                                     cell[0] = lbl_eu_8066A818;
@@ -2010,7 +2010,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                 s32 m = v % r24;
                                 d->field_0x14->x = f24 * (m % mode) + f20 - f23;
                                 d->field_0x14->z = f24 * (m / mode) + f19 - f23;
-                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                     break;
                                 }
                                 cnt++;
@@ -2030,7 +2030,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                 s32 rnd2 = rand() % 100;
                                 d->field_0x14->z = f24 * q + f19 - f23 - f14 * f24 +
                                                    ramp * s32ToF_a808(rnd2);
-                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                     break;
                                 }
                                 cnt++;
@@ -2044,7 +2044,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                 d->field_0x14->x = ramp * s32ToF_a808(rnd1) + f20 - f23;
                                 s32 rnd2 = rand() % r28;
                                 d->field_0x14->z = ramp * s32ToF_a808(rnd2) + f19 - f23;
-                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                     break;
                                 }
                                 cnt++;
@@ -2078,13 +2078,13 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     return false;
 }
 
-// func_80475E64: recursively walk the cell grid region bounded by the
+// probeDrawCell: recursively walk the cell grid region bounded by the
 // current bounds (self+0x40..+0x4C).  The four corner coordinates are
 // converted from the vertex-pair gradient form (same (bnd - v1)*v0 shape the
 // walker uses) into integer grid ranges, then every grid cell in the range
 // is tested: empty cells are skipped, odd values report a hit and even
 // values recurse into the referenced sub-cell.
-bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell) {
+bool probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     // Two alternating bit-cast slots (retail pre-stores both 0x43300000
     // headers up front, then reuses slot A for the min bounds and slot B
@@ -2133,16 +2133,16 @@ bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             u32 val = d->field_0x20[cell->offset + stride + iz];
             if (val == 0) continue;
             if (val & 1) return true;
-            if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x34[val])) return true;
+            if (probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x34[val])) return true;
         }
         stride += h;
     }
     return false;
 }
 
-// func_804783D0: build the per-billboard display vectors.  The retail Fv
+// scanBillboard: build the per-billboard display vectors.  The retail Fv
 // symbol actually receives (item data, dst vectors, count out, flags out) -
-// see the call site in func_80478C94.
+// see the call site in writeDispList.
 //
 // Bit 0 of item->flags (flags & 2) selects the two-vector billboard shape;
 // otherwise a four-vector fan (spread == 0) or a 10-entry ramp is emitted.
@@ -2150,7 +2150,7 @@ bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // counter through the probe-range scale (lbl_eu_8066A810) and a spread
 // scale (lbl_eu_8066A730 / lbl_eu_8066A83C).  Bit 1 (flags & 4) mirrors the
 // emitted vectors' y components at the end.
-void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut) {
+void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut) {
     MPFBillItem* item = (MPFBillItem*)self;
     Vec a;
     Vec b;
@@ -2298,16 +2298,16 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 }
 
-// func_80477F80: per-frame billboard regeneration driver.  Chains the arena
+// paintDrawNode: per-frame billboard regeneration driver.  Chains the arena
 // region bases off the attached draw node, then for each active map cell that
 // has come due (round-robin index in the global state) regenerates its display
-// list quads via func_80476E50 / func_80476344, collecting a completion mask.
+// list quads via buildDrawItem / trackGridStep, collecting a completion mask.
 // The mask drives the slot retirement walk (updateSlotChain), after which the
 // slots are bucketed (collectActiveSlots) and the accumulated display-list buffers
 // are flushed into the configured entry array and cache-stored.
 //
 // The retail Fv symbol actually receives (self, draw node, flagA, flagB).
-void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node,
+void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node,
                                                     s32 flagA, s32 flagB) {
     // Declarations in retail scratch-color order.
     s32 count;
@@ -2371,9 +2371,9 @@ void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     f32 scale = item->field_0x28;
                     bool ok;
                     if (item->field_0x16 >= 6 && scale < threshold) {
-                        ok = func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16 - 2, scale);
+                        ok = buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16 - 2, scale);
                     } else {
-                        ok = func_80476344__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16, scale);
+                        ok = trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(self, k, item->field_0x16, scale);
                     }
                     if (ok) {
                         doneMask |= 1u << k;
@@ -2402,14 +2402,14 @@ void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         cfg->field_0x4 = 0;
         entries += cfg->field_0xc * sizeof(MPFDispEntryFull);
         d->field_0x2C = d->field_0x28 + ((MPFDrawNode*)d->field_0x4)->field_0x4 * 0x300;
-        func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x4,
+        writeDispList__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x4,
                                                        cfg->field_0xc);
         DCStoreRange(entries, cfg->field_0x4 * 0xcc0);
     } else {
         cfg->field_0x8 = (u16)(flags | 3);
         cfg->field_0x0 = 0;
         d->field_0x2C = d->field_0x28 + ((MPFDrawNode*)d->field_0x4)->field_0x4 * 0x900;
-        func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x0,
+        writeDispList__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDispEntryFull*)entries, &cfg->field_0x0,
                                                        cfg->field_0xc);
         DCStoreRange(entries, cfg->field_0x0 * 0xcc0);
     }

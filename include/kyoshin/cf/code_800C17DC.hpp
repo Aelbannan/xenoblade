@@ -1,7 +1,13 @@
 #pragma once
 
 #include <types.h>
+// code_800AA008.hpp declares func_800AA714 with C++ linkage; retail keeps
+// the bare C name (CfBdat.hpp form). Hide it for this include and declare
+// the retail spelling here (single includer: code_800C17DC.cpp).
+#define func_800AA714 code_800C17DC_func_800AA714_hidden
 #include "kyoshin/code_800AA008.hpp"
+#undef func_800AA714
+extern "C" u32 func_800AA714(const char* path);
 
 // Callback table record at lbl_eu_805739F8 (size 0x28).
 // Owns an array of callbacks invoked by func_800C1EB8; field20 is the index

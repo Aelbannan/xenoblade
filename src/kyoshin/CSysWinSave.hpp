@@ -195,7 +195,7 @@ struct CSysWinSaveVtShim {
 
 // C-ABI function imports / definitions: these retail symbols are unmangled so
 // they must be declared `extern "C"` to stop MWCC suffixing the reloc name.
-// (func_80137250 is the exception: retail emits the mangled nw4r form, so it
+// (SetWideLocAdjust is the exception: retail emits the mangled nw4r form, so it
 // is declared below as a normal C++ function to let MWCC mangle it.)
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
@@ -237,8 +237,8 @@ char* BdatTouchStringCell(const void* a, const void* b, int id);
 void CUICfManager_queueSaveMenu(int a, int b);
 }
 
-// DrawInfo helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+// DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSave* lbl_eu_80664A08;   // singleton instance pointer (.sbss)

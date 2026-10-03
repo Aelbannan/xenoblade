@@ -31,11 +31,11 @@ struct SceneResMgrView {
 };
 
 
-// Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
+// Resource globals / imports (C ABI from external TUs). scnLgtCreateEnvController is
 // declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
 // const char* (CREvtLight) and void* (CfObjectMap) call sites.
 extern "C" void scnLgtRemoveLgtItem(void* mgr, void* handle);
-extern "C" void* func_804C1BA0(void* mgr, const void* name, int flag);
+extern "C" void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
 extern "C" u32   REvtCam_IsTaskListEmpty(void);
 
 // Own vtable and math constants / helpers.
@@ -134,7 +134,7 @@ void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fiel
     // Load new resource
     if (resourceName != nullptr) {
         void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
-        void* handle = func_804C1BA0(mgr, resourceName, 7);
+        void* handle = scnLgtCreateEnvController(mgr, resourceName, 7);
         self->field_20 = handle;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {

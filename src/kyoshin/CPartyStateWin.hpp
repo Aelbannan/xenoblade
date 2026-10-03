@@ -201,10 +201,10 @@ extern "C" int EquipChange_IsActiveFlag(CEquipChange*);
 // result directly (an u8 return would add a normalizing rlwinm).
 extern "C" int isPartyIdle(CPartyState*);
 extern "C" int isPartySettled(CPartyState*);
-extern "C" void func_801FD194(CPartyState*);
+extern "C" void setupPartySelect(CPartyState*);
 extern "C" int ModelDispGetDoneFlag(CModelDisp*);
 extern "C" void ModelDispStartFadeOut(CModelDisp*);
-extern "C" void func_80202EB4(CEquipChange*, u8);
+extern "C" void EquipChange_RefreshCategory(CEquipChange*, u8);
 extern "C" int EquipChange_IsSubcurBusy(CEquipChange*);
 
 // Per-frame party-state input handlers used by func_801FA674's pad chain
@@ -214,16 +214,16 @@ extern "C" void cancelPartySelect(CPartyState*);
 extern "C" int isPartyCloseRequested(CPartyState*);
 extern "C" int isPartyHighlightSet(CPartyState*);
 extern "C" void func_801FD594(CPartyState*);
-extern "C" void func_801FD220(CPartyState*);
-extern "C" void func_801FD290(CPartyState*);
+extern "C" void stepPartySelectBack(CPartyState*);
+extern "C" void stepPartySelectFwd(CPartyState*);
 extern "C" void pageDownPartySelect(CPartyState*);
 extern "C" void pageUpPartySelect(CPartyState*);
 extern "C" void confirmPartySelect(CPartyState*);
-extern "C" void func_801FD1BC(CPartyState*);
+extern "C" void startPartyPanelClose(CPartyState*);
 extern "C" void markReplayClose(CTitleAHelp*);
 extern "C" void beginClose(CTitleAHelp*);
 extern "C" void ModelDispStartFadeIn(CModelDisp*);
-extern "C" void func_80139198(u32);
+extern "C" void BuildSlotItemLists(u32);
 
 // C-linkage imports for the embedded CTitleAHelp sub-object (retail unmangled
 // names; CTitleAHelp.cpp defines the same symbols). int return for isInitialized
@@ -335,12 +335,12 @@ extern "C" int IsMenuState621F0();
 
 // nw4r DrawInfo helpers (retail emits the pre-mangled names; a C++ local
 // would virtual-dispatch its scope-exit destructor and bloat the body).
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 
 // Sub-object render helpers taking a DrawInfo (retail unmangled).
-extern "C" void func_801FD0A0(CPartyState*, nw4r::lyt::DrawInfo*);
+extern "C" void drawPartyState(CPartyState*, nw4r::lyt::DrawInfo*);
 extern "C" void EquipChange_DrawLayouts(CEquipChange*, nw4r::lyt::DrawInfo*);
 extern "C" void sysWinDrawLayout(CSysWin*, nw4r::lyt::DrawInfo*);
 
@@ -423,7 +423,7 @@ struct CTaskGameProcView {
 // cannot be included here). ModelDispEquip_ResetDisplay is declared above.
 extern "C" void teardown(CTitleAHelp*);
 extern "C" void func_801FC0C4(CModelDisp*);
-extern "C" void func_801FD0F4(CPartyState*);
+extern "C" void termPartyState(CPartyState*);
 extern "C" void EquipChange_CleanupFiles(CEquipChange*);
 extern "C" void sysWinTermLayout(CSysWin*);
 
@@ -443,9 +443,9 @@ extern "C" void updateHelp(CTitleAHelp*);
 extern "C" void ModelDispTickState(CModelDisp*);
 extern "C" void advancePartyPanel(CPartyState*);
 extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquipView*);
-extern "C" void func_80202110(CEquipChange*);
+extern "C" void EquipChange_AdvanceScreen(CEquipChange*);
 extern "C" void sysWinDispatchPhase(CSysWin*);
-extern "C" void func_802024CC(CEquipChange*);
+extern "C" void EquipChange_InitScreen(CEquipChange*);
 extern "C" int CSysWin_isActive(CSysWin*);
 
 // C-linkage imports for the embedded CEquipChange / CSysWin / CModelDispEquip
@@ -453,13 +453,13 @@ extern "C" int CSysWin_isActive(CSysWin*);
 // unmangled; the embedded sub-object headers cannot be included here).
 // u8/u16 returns where the retail masks the call result (clrlwi) before
 // comparing; int returns where the retail cmpwi's the call result directly.
-extern "C" void func_8020397C(CEquipChange*, u32);
+extern "C" void EquipChange_ShowSubPanes(CEquipChange*, u32);
 extern "C" int EquipChange_IsSortOrSubPage(CEquipChange*);
 extern "C" int EquipChange_IsWeaponRow(CEquipChange*);
 extern "C" int EquipChange_CheckBoxOpen(CEquipChange*);
 extern "C" u8 EquipChange_MapCursorToCat(CEquipChange*);
-extern "C" u8 func_80203210(CEquipChange*);
-extern "C" void func_80202CCC(CEquipChange*);
+extern "C" u8 EquipChange_RunMainFlow(CEquipChange*);
+extern "C" void EquipChange_ConfirmSelect(CEquipChange*);
 extern "C" int EquipChange_GetBoxCount(CEquipChange*);
 extern "C" u8 EquipChange_GetLockedState(CEquipChange*);
 extern "C" int EquipChange_GetBoxTailByte(CEquipChange*);
@@ -468,12 +468,12 @@ extern "C" void EquipChange_OpenSubPage(CEquipChange*);
 extern "C" void EquipChange_CloseScreen(CEquipChange*);
 extern "C" void EquipChange_CursorPrev(CEquipChange*);
 extern "C" void EquipChange_CursorNext(CEquipChange*);
-extern "C" void func_802028E4(CEquipChange*);
-extern "C" void func_80202A70(CEquipChange*);
+extern "C" void EquipChange_CursorUp(CEquipChange*);
+extern "C" void EquipChange_CursorRight(CEquipChange*);
 extern "C" void EquipChange_ConfirmSort(CEquipChange*);
 extern "C" int EquipChange_IsMenuBusy(CEquipChange*);
-extern "C" void func_80203984(CEquipChange*);
-extern "C" void func_8020398C(CEquipChange*);
+extern "C" void EquipChange_HandleEIBName(CEquipChange*);
+extern "C" void EquipChange_TryCloseEIBRow(CEquipChange*);
 extern "C" u32 EquipChange_GetMenuId(CEquipChange*);
 extern "C" void func_8022B9B4(CSysWin*, char*, u32);
 extern "C" void func_8022BFC8(CSysWin*, u32);
@@ -741,7 +741,7 @@ struct PartyGaugeRecord {
 // Factory imports (retail unmangled names; the embedded sub-object headers
 // cannot be included here - see the forward-decl note at the top).
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
+extern "C" void ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 extern "C" void ModelDispInitPoseSlots(CModelDisp* self);
 extern "C" void loadPartyLayoutArc(CPartyState* self);
 extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquipView* self);
@@ -750,7 +750,7 @@ extern "C" void Scn_GetCamWorkInt(CScn* scn, CWorkThread* work, u32 flag);
 extern "C" void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
 extern "C" void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src);
 // Defined with C++ linkage in CTaskGameEff.cpp; declared here to match.
-void func_800452EC(CScn* scn);
+void registerEffScene(CScn* scn);
 extern "C" u8* getField5C(CScn* scn);
 extern "C" void scnVlInitLights2(u8* unk5c);
 class CProcess;

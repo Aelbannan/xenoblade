@@ -8,8 +8,8 @@
 namespace cf {
 
 // 8-byte entry in the file-event lookup tables (sections at mData+0x000 /
-// +0x100 / +0x200 / +0x400 / +0x600). func_80069C78 matches entries by mKey;
-// func_80069C28 returns the first entry whose mField00 is non-zero.
+// +0x100 / +0x200 / +0x400 / +0x600). CfTFile_FindEntryByKey matches entries by mKey;
+// CfTFile_FirstEntry3 returns the first entry whose mField00 is non-zero.
 struct CfTFileEntry {
     u32 mField00;  // 0x00
     u16 mField04;  // 0x04
@@ -56,7 +56,7 @@ namespace cf {
 using ::CfTFile;
 } // namespace cf
 
-// C-ABI helper imports referenced by this TU. func_8006A53C is defined in
+// C-ABI helper imports referenced by this TU. CfT_SelectDisplayMode is defined in
 // CfTFile.cpp; CmText_ParseWithStaticProc is defined in the code_800C17DC TU (its C++
 // definition there is emitted under the retail C name via the symbol map).
 // The remaining entries are cross-TU imports: retail-unmangled C names, plus
@@ -65,8 +65,8 @@ using ::CfTFile;
 // (outside namespace cf) so the TU's global-scope helpers can call them.
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" {
-__declspec(noinline) int func_8006A53C(u16 a, u16 b);
-int func_8006A40C(int mode);
+__declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b);
+int CfT_GetClockTimeByMode(int mode);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1);

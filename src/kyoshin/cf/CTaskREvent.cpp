@@ -768,7 +768,7 @@ static inline void evtSubtitlePush(cf::CTaskREvent* self) {
     f32 b = lbl_eu_8066763C * (a - (f32)(s32)a);
     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)idx, (u32)(u16)(s32)a);
     u8* sda = getGlobalSda();
-    func_800599E0((u32)sda, (u32)(u16)idx, (u32)(u16)(s32)a, (u32)(u16)(s32)b);
+    Env_SetClock((u32)sda, (u32)(u16)idx, (u32)(u16)(s32)a, (u32)(u16)(s32)b);
 }
 
 void cf::CTaskREvent::Move() {
@@ -1151,7 +1151,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
                     getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0xC;
                 obj->field_0x1EC = lbl_eu_80667644;
                 obj->field_0x1F0 = lbl_eu_80667648;
-                func_8049EB60();
+                ScnCamDepthUp();
             }
         }
     }
@@ -1301,7 +1301,7 @@ int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
     if (ev->field_04 == self->field_0x1C4) {
         self->field_0x1C4 = 0;
         if (ev->field_00 == 1) {
-            func_8016C450(ev->field_0C, ev->field_10, 0x8000);
+            EvtSeqXorSeqBuffer(ev->field_0C, ev->field_10, 0x8000);
             CTaskREventDataBuf* buf =
                 reinterpret_cast<CTaskREventDataBuf*>(ev->field_10);
             // Zeroed here so MWCC re-emits the constant after the call

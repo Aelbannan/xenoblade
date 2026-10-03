@@ -146,7 +146,7 @@ void CfCamEvt_DispatchSetPos(CfCamEvent* self, ml::CVec3* pos) {
 void CfCamEvt_RequestFollowStd(CfCamEvent* self, s32 cond) {
     if (cond != 0) {
         ml::CVec3 local;
-        func_80074090(&local);
+        cfCam_pickFollowAim(&local);
         self->dispatchFollow(&local);
     }
 }
@@ -155,7 +155,7 @@ void CfCamEvt_RequestFollowStd(CfCamEvent* self, s32 cond) {
 void CfCamEvt_RequestFollowAlt64(CfCamEvent* self, s32 cond) {
     if (cond != 0) {
         ml::CVec3 local;
-        func_80074090(&local);
+        cfCam_pickFollowAim(&local);
         self->dispatchFollow64(&local);
     }
 }
@@ -245,7 +245,7 @@ void func_8006ACC0(CfCamEvent* self) {
     }
 
     if (flagByte != 0 || follow != 0) {
-        func_8006D8D0(self, func_800BBC0C(o164));
+        cfCam_syncCamFlags(self, func_800BBC0C(o164));
         if (follow != 0) {
             // Follow path: keep the aim point on-screen by clamping it
             // against the ground-probe results, then forward to the
@@ -265,11 +265,11 @@ void func_8006ACC0(CfCamEvent* self) {
                     aim.y = lbl_eu_80666274 + probe2.y;
                 }
             }
-            func_800707C0(self, &aim, &pos);
+            cfCam_nop07C0(self, &aim, &pos);
         } else {
             // Non-follow path: pull the aim point part-way toward the
             // camera position.
-            if (func_80073640(self, &self->mLookat, &aim, &self->unk34, 0) != 0) {
+            if (cfCam_correctCamGround(self, &self->mLookat, &aim, &self->unk34, 0) != 0) {
                 diff = aim - self->unk34;
                 probe1 = diff * lbl_eu_80666278;
                 aim = self->unk34 + probe1;
@@ -328,7 +328,7 @@ void cfCam_nopVirt24();
 void cfCam_copyToPlus10();
 void cfCam_copyCamState();
 void cfCam_getActivePad();
-void func_80074AA4();
+void runCamAction();
 extern const char lbl_eu_804FB470[];
 extern const char lbl_eu_804FB480[];
 extern const char lbl_eu_804FB494[];

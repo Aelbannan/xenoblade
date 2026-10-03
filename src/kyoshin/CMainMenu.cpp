@@ -63,7 +63,7 @@ public:
 };
 
 // C-linkage import (retail unmangled symbol).
-extern "C" void func_8013676C(void* node, u32 font);
+extern "C" void ApplyFontToTxtPanes(void* node, u32 font);
 void closeFileHandle(CFileHandle** handle);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
@@ -392,7 +392,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
             // Bind the device font: ask the font object for its pane (vtable+0x24)
             // and push it onto the layout root.
             nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
-            func_8013676C(
+            ApplyFontToTxtPanes(
                 rootPane,
                 reinterpret_cast<CMainMenuFontView*>(
                     getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
@@ -493,7 +493,7 @@ void CMainMenu::cbRenderBefore() {
     // Scope-exit dtor is auto-emitted as the retail direct call; an explicit
     // dtor call would emit a virtual dispatch.
     nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
+    SetWideLocAdjust(&drawInfo);
     drawLayout(field_0x7C, &drawInfo, 0, 1);
     Cur_DrawLayout((char*)this + 0x90, &drawInfo);
     Cur_DrawLayout((char*)this + 0xA8, &drawInfo);
@@ -957,7 +957,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
     char buf[0x20];
     sprintf(buf, base + 0x121, self->field_0xC0 + 1, self->field_0xC4 + 1);
     // First two lookups go through the root-pane virtual; the fourth argument
-    // of func_80137924 is the layout's raw +0x10 root pointer (no dispatch).
+    // of ScalePaneWorldPos is the layout's raw +0x10 root pointer (no dispatch).
     // Declaration order nudges MWCC's callee-saved coloring.
     nw4r::lyt::Pane* pane1;
     nw4r::lyt::Pane* pane2;
@@ -966,7 +966,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
     pane2 = root->FindPaneByName(base + 0x133, true);
     nw4r::math::VEC3 vec;
     // Fourth argument reloads the raw root pointer (no dispatch).
-    func_80137924(&vec, pane1, pane2,
+    ScalePaneWorldPos(&vec, pane1, pane2,
                   *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
     ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
     if (idx > 0) {
@@ -1067,7 +1067,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
                 ->FindPaneByName(base + 0x133, true);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
@@ -1101,7 +1101,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
             (*(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10))
                 ->FindPaneByName(base + 0x133, true);
         nw4r::math::VEC3 vec;
-        func_80137924(&vec, pane1, pane2,
+        ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
@@ -1244,7 +1244,7 @@ extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self) {
         case 6:
             switch (self->field_0xC4) {
             case 0: CUICfManager_queueSaveMenu(0, 1); break;
-            case 1: func_80134C34(); break;
+            case 1: CUICfManager_openSaveMenu(); break;
             case 2: CUICfManager_queueOptionMenu(1); break;
             }
             break;
@@ -1332,7 +1332,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     if (saveOk != 0) {
         d0 = 1;
     } else {
-        func_80139198(1);
+        BuildSlotItemLists(1);
         d0 = (u8)code80135FDC_getByte_64077() < 2;
     }
     self->field_0xD0 = d0;
@@ -1384,14 +1384,14 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
             pos[2] = 0x1e;
             pos[1] = 0x32;
             pos[0] = 0x3c;
-            func_801398A4(self->field_0x7C, buf, pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, buf, pos, 1);
         } else {
             s16 pos[4];
             pos[3] = 0xff;
             pos[2] = 0xff;
             pos[1] = 0xff;
             pos[0] = 0xff;
-            func_801398A4(self->field_0x7C, buf, pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, buf, pos, 1);
         }
     }
 
@@ -1406,14 +1406,14 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
             pos[2] = 0x1e;
             pos[1] = 0x32;
             pos[0] = 0x3c;
-            func_801398A4(self->field_0x7C, names[(u8)i], pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], pos, 1);
         } else {
             s16 pos[4];
             pos[3] = 0xff;
             pos[2] = 0xff;
             pos[1] = 0xff;
             pos[0] = 0xff;
-            func_801398A4(self->field_0x7C, names[(u8)i], pos, 1);
+            PaneMatSetS16QuadByName(self->field_0x7C, names[(u8)i], pos, 1);
         }
     }
 }

@@ -231,7 +231,7 @@ int main(){
     CLibVM::setCallbacks(&vmInitPluginRegistCallback, &vmInitCallback);
     CWorkSystemPack::SaveStaticArcFilenameStringPtr(scStaticArcStr);
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);
-    CActParamData::func_80057CDC();
+    CActParamData::initParamStatics();
     CLibHbm::setHbmActiveFlag(true);
     CDeviceFont_SetSharedText(getErrMesText03());
     CWorkRoot::run();

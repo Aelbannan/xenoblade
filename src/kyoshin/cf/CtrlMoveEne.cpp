@@ -62,13 +62,13 @@ cf::CCtrlMoveEne* __ct__8008A104(cf::CCtrlMoveEne* self) {
 }
 
 // Dispatches the +0x12C move hook when the movement sub-object's +0x8C slot
-// reports a nonzero rate, the +0x12C hook is set, and func_8008D51C accepts.
+// reports a nonzero rate, the +0x12C hook is set, and CtrlMoveEne_CheckKeepMoving accepts.
 void CtrlMoveEne_DispatchMoveHook(cf::CCtrlMoveEne* self) {
     if (self->field_0x34->field_0x28->CfObject_getMoveSpeedRate() != lbl_eu_806665C0) {
-        func_800895A8(self);
+        moveBaseSyncVel(self);
         CtrlMoveEne_TickMoveControl(self);
         if (__ptmf_test(&self->mMoveHook) != 0) {
-            if (func_8008D51C(self) != 0) {
+            if (CtrlMoveEne_CheckKeepMoving(self) != 0) {
                 (self->*self->mMoveHook)();
             }
         }
@@ -76,11 +76,11 @@ void CtrlMoveEne_DispatchMoveHook(cf::CCtrlMoveEne* self) {
 }
 
 // The +0x3E9C embedded sub-object of the enemy battle object, as
-// func_8008A2C8 calls it (vtable slots 0x0C/0x4C/0x50/0x8C/0xAC/0x110/0x150).
+// CtrlMoveEne_UpdateBattleAI calls it (vtable slots 0x0C/0x4C/0x50/0x8C/0xAC/0x110/0x150).
 static cf::CFunc8008A2C8Sub* A2C8Sub(cf::CFunc8008B580Obj* obj) {
     return (cf::CFunc8008A2C8Sub*)&obj->mSub2;
 }
-// func_8008A2C8's word copy of the base position (+0x0C) into mVec144
+// CtrlMoveEne_UpdateBattleAI's word copy of the base position (+0x0C) into mVec144
 // (plus the move-sub height into +0x148, matching the retail store order).
 static void A2C8CopyPos(cf::CFunc8008A2C8View* view,
                         cf::CFunc8008B580Obj* obj) {
@@ -97,17 +97,17 @@ static cf::CFunc8008E760Vec3W& A2C8PosW(cf::CFunc8008A2C8View* view) {
     return *(cf::CFunc8008E760Vec3W*)&view->mPos0;
 }
 
-// Enemy move-controller per-frame update (retail func_8008A2C8): the big
+// Enemy move-controller per-frame update (retail CtrlMoveEne_UpdateBattleAI): the big
 // battle-AI driver. It refreshes the controller state, orients the velocity
 // toward the move-sub heading, runs the battle-object busy/HP gate, dispatches
-// func_8008BEEC for the actor-word checks, runs the approach/ground-probe
+// CtrlMoveEne_CheckActorState for the actor-word checks, runs the approach/ground-probe
 // chain (actor lookup via findObjectById__Fi / func_8016FE34, the collision
 // height-band scan, the +0x192 timer), then the heading / +0x178 / +0x168
 // pursuit gates, the player proximity scan and the mVec144 commit, the
 // +0x8000 / +0x4 / +0x5 flag paths and finally the +0x31 battle event.
-void func_8008A2C8(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
     cf::CFunc8008A2C8View* view = (cf::CFunc8008A2C8View*)self;
-    func_800895A8(self);
+    moveBaseSyncVel(self);
     view->field_0x17C &= 0x7F613E7F;
     if ((view->field_0x17C & 0x1000u) == 0) {
         if ((view->field_0x17C & 0x08000000u) == 0) {
@@ -146,19 +146,19 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
         if (f60 != 0) {
             int r31 = 1;
             u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
-            if (func_80174C98(obj, &w, 0xA) == 0) {
+            if (testActorStatus(obj, &w, 0xA) == 0) {
                 u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
-                if (func_80174C98(obj, &w2, 0x9) == 0) {
+                if (testActorStatus(obj, &w2, 0x9) == 0) {
                     r31 = 0;
                 }
             }
-            func_8008BEEC(self, obj, 1, r31);
+            CtrlMoveEne_CheckActorState(self, obj, 1, r31);
             u32 f180 = self->field_0x180;
             if ((f180 & 0x1C000000u) != 0) {
                 if ((f180 & 0x8u) != 0) {
                     view->field_0x17C &= ~0x8000u;
                     u32 w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
-                    if (func_80174C98(obj, &w3, 0x1C) != 0) {
+                    if (testActorStatus(obj, &w3, 0x1C) != 0) {
                         setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                         reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
                     } else if ((view->field_0x17C & 0x800000u) != 0) {
@@ -669,14 +669,14 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             CtrlMoveEne_ResetMoveState(self, (cf::CFunc8008D444Obj*)obj, 1);
             if (f60 != 0) {
                 u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
-                if (func_80174C98(obj, &w, 0x10) != 0 ||
-                    func_80174C98(obj, &w, 0xA) != 0 ||
-                    func_80174C98(obj, &w, 0x9) != 0) {
+                if (testActorStatus(obj, &w, 0x10) != 0 ||
+                    testActorStatus(obj, &w, 0xA) != 0 ||
+                    testActorStatus(obj, &w, 0x9) != 0) {
                     CfObjectMove_setAnimModeArgs(&obj->mSub2, 0x31, 0, -1, 1);
                 }
             }
             void* bm2 = getInstance__Q22cf14CBattleManagerFv();
-            func_800D9CA0(bm2, obj);
+            unregisterBattleActor(bm2, obj);
             return;
         }
         return;
@@ -701,7 +701,7 @@ void* CActorParam_getMoveRecord__Q22cf11CActorParamFv(void* self) { return (void
 
 void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
-    func_800895A8(self);
+    moveBaseSyncVel(self);
     u32 flags = self->field_0x17C & 0x7F613E7Fu;
     self->field_0x17C = flags;
     if ((flags & 0x1000u) != 0) return;
@@ -738,7 +738,7 @@ void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
         return;
     }
     if (f60 == 0) return;
-    func_8008BEEC(self, obj, 1, 0);
+    CtrlMoveEne_CheckActorState(self, obj, 1, 0);
     if ((self->field_0x180 & 0x38u) != 0) {
         if ((self->field_0x180 & 0x8u) != 0) {
             // Death/forced-stop states: clear the +0x10000 move flag, then
@@ -747,15 +747,15 @@ void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
             // and the sub-object's +0x150 slot.
             self->field_0x17C &= ~0x10000u;
             u32 w1 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
-            if (func_80174C98(obj, &w1, 0x1C) != 0) {
+            if (testActorStatus(obj, &w1, 0x1C) != 0) {
                 setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                 ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
             } else {
                 u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                 u32 w3;
-                if (func_80174C98(obj, &w2, 0x805) != 0 ||
+                if (testActorStatus(obj, &w2, 0x805) != 0 ||
                     (w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0,
-                     func_80174C98(obj, &w3, 0x18)) != 0) {
+                     testActorStatus(obj, &w3, 0x18)) != 0) {
                     setSnapFlags(f60, 0, 1, lbl_eu_806665C0);
                     ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
                 }
@@ -786,8 +786,8 @@ void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
 // Trampoline: CtrlMoveEne_ForwardBaseRefresh forwards to the base refresh helper (retail
 // references the unmangled C-ABI name, hence the extern "C" decl).
 struct CCtrlMoveNpc;
-extern "C" void func_8008962C(CCtrlMoveNpc* self);
-void CtrlMoveEne_ForwardBaseRefresh(CCtrlMoveNpc* self) { func_8008962C(self); }
+extern "C" void moveBaseUnlink(CCtrlMoveNpc* self);
+void CtrlMoveEne_ForwardBaseRefresh(CCtrlMoveNpc* self) { moveBaseUnlink(self); }
 
 // Flag-guarded set of the +0x8000 flag bit and the +0x15C actor id; returns
 // 0 when the +0x2 bit is set (1 otherwise).
@@ -821,7 +821,7 @@ int CtrlMoveEne_ConsumeTargetResolve(cf::CCtrlMoveEneView* self) {
     return 0;
 }
 
-// Enemy approach probe (retail func_8008B9C0): picks a candidate point around
+// Enemy approach probe (retail CtrlMoveEne_ProbeApproachPoint): picks a candidate point around
 // `other` at a random walk distance interpolated between f2 and f1 (or along
 // the move sub's +0xCC heading when arg is set), and accepts it only when the
 // XZ distance to the move sub stays at/above (lbl_80666610 * f1). With the
@@ -829,9 +829,9 @@ int CtrlMoveEne_ConsumeTargetResolve(cf::CCtrlMoveEneView* self) {
 // move sub; otherwise it runs a ground probe and a height-band scan to pick
 // the fall height, gates on the +0x40 flag and the target's +0x508 height,
 // then re-probes before committing.
-// noinline keeps func_8008F9EC's call site an opaque bl (retail has one): with
+// noinline keeps CtrlMoveEne_UpdateFleeWander's call site an opaque bl (retail has one): with
 // a visible body -ipa file would transform the `!= 0` test at the call site.
-__declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
+__declspec(noinline) int CtrlMoveEne_ProbeApproachPoint(cf::CCtrlMoveEne* self,
                                        ml::CVec3* out,
                                        cf::CCtrlMoveEne* other, f32 f1,
                                        f32 f2, int arg) {
@@ -939,8 +939,8 @@ __declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
         }
         if (any) {
             pos.y = lo;
-            if (func_8008A01C(self, &pos) != 0) {
-                if (func_80088974(self, out, &pos, 0, 0) != 0) {
+            if (moveBaseQuery(self, &pos) != 0) {
+                if (moveBaseUpdate(self, out, &pos, 0, 0) != 0) {
                     v->mPosition = pos;
                     self->field_0x17C |= 0x20;
                     return 1;
@@ -953,7 +953,7 @@ __declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
 
 // noinline keeps the retail bl opaque at every call site in this TU.
 // noinline keeps the retail bl opaque at every call site in this TU.
-extern "C" __declspec(noinline) void func_8008BEEC(
+extern "C" __declspec(noinline) void CtrlMoveEne_CheckActorState(
     cf::CCtrlMoveEne* self, void* obj, int arg2, u32 arg3) {
 }
 
@@ -962,7 +962,7 @@ extern "C" __declspec(noinline) void func_8008BEEC(
 // target constant, dispatches CtrlMoveEne_ResetMoveState while the +0x198 timer is at/over
 // 90 with the +0x08000000 flag set and the +0x1000 / +0x2 bits clear, clears
 // the +0x40000000/+0x10000000/+0x08000000/+0x04000000/+0x400 flag bits,
-// forwards the +0x1000 bit to func_8008BEEC and mirrors the +0x180 flag bits
+// forwards the +0x1000 bit to CtrlMoveEne_CheckActorState and mirrors the +0x180 flag bits
 // into the +0x3F60 sub-object.
 // noinline keeps CtrlMoveEne_DispatchMoveHook's call site an opaque bl (retail has one).
 __declspec(noinline) void CtrlMoveEne_TickMoveControl(cf::CCtrlMoveEne* self) {
@@ -982,7 +982,7 @@ __declspec(noinline) void CtrlMoveEne_TickMoveControl(cf::CCtrlMoveEne* self) {
     self->field_0x190 = 0;
     if (obj->field_3F60 != 0) {
         cf::CfObj3F60View* f60 = obj->field_3F60;
-        func_8008BEEC(self, obj, 0, (newFlags >> 12) & 1u);
+        CtrlMoveEne_CheckActorState(self, obj, 0, (newFlags >> 12) & 1u);
         if ((self->field_0x180 & 0x38u) != 0) {
             if ((self->field_0x180 & 0x8u) != 0) {
                 if ((self->field_0x17C & 0x10000u) == 0) {
@@ -1004,19 +1004,19 @@ __declspec(noinline) void CtrlMoveEne_TickMoveControl(cf::CCtrlMoveEne* self) {
     }
 }
 
-// Enemy move-controller pursuit helper (retail func_8008C660, stub): takes
+// Enemy move-controller pursuit helper (retail CtrlMoveEne_CheckPursuitStop, stub): takes
 // the controller, a direction vector and a scaled move distance; returns
 // nonzero when the pursuit should stop.
-int func_8008C660(cf::CCtrlMoveEne* self, ml::CVec3* vec, f32 f);
+int CtrlMoveEne_CheckPursuitStop(cf::CCtrlMoveEne* self, ml::CVec3* vec, f32 f);
 
-// Enemy move-controller direction/turn helper (retail func_8008CDE8): while the
+// Enemy move-controller direction/turn helper (retail CtrlMoveEne_TrackMoveTarget): while the
 // +0x40000 flag is set, re-approaches the +0x150 target point (or resets the
 // +0x18A timer and clears the flag once the move sub is within reach); then
 // computes the direction to the move sub into `out`. With the +0x20000 flag it
 // probes the collision system at the sub position plus a heading-scaled offset
 // and, on success, latches the probe point as the new target; otherwise it
 // steps the timer and retries after a delay.
-void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
+void CtrlMoveEne_TrackMoveTarget(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
     cf::CFunc8008CDE8View* v = (cf::CFunc8008CDE8View*)self;
     cf::CfObject* sub = self->field_0x34->field_0x28;
     if ((v->field_0x17C & 0x40000u) != 0) {
@@ -1026,7 +1026,7 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
             v->field_0x18A = 0x3c;
             v->field_0x17C &= ~0x60000u;
         } else {
-            if (func_80088974(self, out, &v->mVec150, 0, 0) != 0) {
+            if (moveBaseUpdate(self, out, &v->mVec150, 0, 0) != 0) {
                 u16 t = v->field_0x18A;
                 v->field_0x18A = t - 1;
                 if (t == 0) {
@@ -1040,7 +1040,7 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
             return;
         }
     }
-    if (func_80089E88(self, &v->mPosition, 1) != 0) {
+    if (moveBaseRoute(self, &v->mPosition, 1) != 0) {
         // Direction from the move sub to the controller position (fresh access
         // to the move sub, matching the retail lwz/lwz reload here).
         *out = v->mPosition -
@@ -1055,7 +1055,7 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
             }
         }
     } else {
-        func_80088974(self, out, &v->mPosition, 0, 0);
+        moveBaseUpdate(self, out, &v->mPosition, 0, 0);
     }
     if ((v->field_0x17C & 0x20000u) != 0) {
         // Probe the ground ahead: sub position plus a heading/rand-scaled
@@ -1079,10 +1079,10 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
         dir.z = cos;
         ml::CVec3 scaled = dir * (lbl_eu_806665D0 + f1);
         ml::CVec3 dest = tgt + scaled;
-        if (func_804B526C(lbl_eu_80665958, (u8*)sub + 0x60c, &tgt, &dest, 2, 1,
+        if (ColiWalkSegment(lbl_eu_80665958, (u8*)sub + 0x60c, &tgt, &dest, 2, 1,
                           lbl_eu_80571810) == 0) {
             ml::CVec3 dest2 = *sub->CfObject_getPosVector() + scaled;
-            if (func_80089E88(self, &dest2, 1) != 0) {
+            if (moveBaseRoute(self, &dest2, 1) != 0) {
                 v->mVec150 = *sub->CfObject_getPosVector() + scaled;
                 v->field_0x17C = (v->field_0x17C | 0x40000) & ~0x20000u;
                 v->field_0x18A = 0x96;
@@ -1107,7 +1107,7 @@ void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1) {
             tgt.z = sub->CfObject_getPosVector()->z;
             ml::CVec3 scaled = *out * f1;
             ml::CVec3 dest = tgt + scaled;
-            if (func_804B526C(lbl_eu_80665958, (u8*)sub + 0x60c, &tgt, &dest,
+            if (ColiWalkSegment(lbl_eu_80665958, (u8*)sub + 0x60c, &tgt, &dest,
                               2, 1, lbl_eu_80571810) != 0) {
                 v->field_0x18A = 0;
                 v->field_0x17C |= 0x20000;
@@ -1148,7 +1148,7 @@ void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* ob
 }
 
 // Zeroes the +0x1928 move-data slots of the battle object (retail emits the
-// 60-store block inline at each of the four call sites in func_8008D51C).
+// 60-store block inline at each of the four call sites in CtrlMoveEne_CheckKeepMoving).
 static void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
     for (int i = 0; i < 10; i++) {
         cf::CFunc8008D51CSlot& s = obj->slots[i];
@@ -1161,14 +1161,14 @@ static void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
     }
 }
 
-// Enemy move-controller hook gate (retail func_8008D51C, called by the +0x12C
+// Enemy move-controller hook gate (retail CtrlMoveEne_CheckKeepMoving, called by the +0x12C
 // move hook dispatch): returns nonzero while the controller should keep
 // running its move. The +0x1000 flag gates the whole body; with the +0x2 bit
 // set it tracks the battle state via the +0x8C slot and resets the battle
 // object when the +0x168 accumulator crosses the threshold; otherwise it runs
 // the close-range / approach logic against the +0x144 target point and the
 // +0x3F60 flag object, then handles the +0x100 / +0x200 timer flags.
-__declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
+__declspec(noinline) int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self) {
     cf::CFunc8008D51CView* view = (cf::CFunc8008D51CView*)self;
     cf::CFunc8008D51CObj* obj = (cf::CFunc8008D51CObj*)(
         self->field_0x34->field_0x28
@@ -1207,13 +1207,13 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
             D51CZeroSlots(obj);
             reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
             if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-                func_80174B4C(obj, 3);
+                dispatchItemLoad(obj, 3);
             }
             view->field_0x168 = lbl_eu_806665C0;
             maskMoveChildFlags(self);
             view->field_0x19C = lbl_eu_806665C0;
             view->field_0x184 = 0;
-            func_80193710(obj);
+            CPartsChange_ClearElemTimerForObj(obj);
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
         }
@@ -1248,7 +1248,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
             D51CZeroSlots(obj);
             reinterpret_cast<cf::CObjectParam*>(sub2)->CObjectParam_signalActionEnd(0);
             if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-                func_80174B4C(obj, 3);
+                dispatchItemLoad(obj, 3);
             }
             view->field_0x168 = lbl_eu_806665C0;
             if ((self->field_0x180 & 0x8u) != 0 &&
@@ -1280,17 +1280,17 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                     lbl_eu_80666640) {
                     f32 rate = lbl_eu_80666644 /
                                *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_getMoveRateScale();
-                    func_80089694(self, &dir, rate);
+                    setMoveFacing(self, &dir, rate);
                 } else {
                     ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                         lbl_eu_806665C0;
                 }
             } else {
                 ml::CVec3 dir;
-                func_80088974(self, &dir, &view->mVec144, 1, 0);
+                moveBaseUpdate(self, &dir, &view->mVec144, 1, 0);
                 f32 rate = lbl_eu_80666644 /
                            *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_getMoveRateScale();
-                func_80089694(self, &dir, rate);
+                setMoveFacing(self, &dir, rate);
             }
         }
     } else {
@@ -1302,7 +1302,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
         D51CZeroSlots(obj);
         reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
         if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-            func_80174B4C(obj, 3);
+            dispatchItemLoad(obj, 3);
         }
         view->field_0x168 = lbl_eu_806665C0;
         if ((self->field_0x180 & 0x8u) != 0 && view->field_0x18E != 0) {
@@ -1325,7 +1325,7 @@ d51c_780:
     D51CZeroSlots(obj);
     reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
     if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
-        func_80174B4C(obj, 3);
+        dispatchItemLoad(obj, 3);
     }
     view->field_0x168 = lbl_eu_806665C0;
     if ((self->field_0x180 & 0x8u) != 0 && view->field_0x18E != 0) {
@@ -1384,11 +1384,11 @@ d51c_97c:
 
 void* CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e4); }
 
-// Enemy movement-controller (re)initialisation (retail func_8008E06C): picks a
+// Enemy movement-controller (re)initialisation (retail CtrlMoveEne_InitMoveHook): picks a
 // state from a bdat column, installs the matching move hook, seeds the +0x4C
 // word via the embedded sub-object's vtable +0xC4 slot with a rand angle, then
 // stores the movement-rate divisor and a level-derived value into +0x58/+0x5C.
-void func_8008E06C(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_InitMoveHook(cf::CCtrlMoveEne* self) {
     cf::CFunc8008D444Obj* obj =
         (cf::CFunc8008D444Obj*)(self->field_0x34->field_0x28
                                     ? (u8*)self->field_0x34->field_0x28 - 0x3E9C
@@ -1447,13 +1447,13 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
     }
 }
 
-// Enemy move-controller (re)initialisation (retail func_8008E2D4): installs
+// Enemy move-controller (re)initialisation (retail CtrlMoveEne_InitMoveList): installs
 // the +0x13C dispatch hook, reads a match id and a state byte from bdat
 // columns, seeds the +0x5C state / +0x60 timer, scans the move-table rows for
 // the match id and fills either the +0x4C..+0x70 fields (flag row) or one of
 // the +0x78 move-list entries, then installs the +0x148 hook or dispatches the
 // state record and commits the entry count / scaled timer.
-void func_8008E2D4(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_InitMoveList(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveInitView* view = (cf::CfObjectMoveInitView*)self;
     cf::CfObject* subView = self->field_0x34->field_0x28;
     cf::CFunc8008D444Obj* obj = (cf::CFunc8008D444Obj*)subView;
@@ -1615,17 +1615,17 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
     }
 }
 
-// Enemy move-controller (re)initialisation (retail func_8008E760): the big
+// Enemy move-controller (re)initialisation (retail CtrlMoveEne_InitBattleMove): the big
 // setup split between the battle-state probe (r28) and the plain path. When
 // the +0x3F00 bit-26 state is clear and lookupCA0BySelf reports the object
 // inactive, the plain path installs the +0x16C hook, seeds the +0x58/+0x5A/
 // +0x5C counters, runs the actor-id lookup / party-info probe, copies the
 // battle position and computes the movement-rate divisor. The active path
-// installs one of the +0x154 / +0x160 hooks or dispatches func_8008E06C /
-// func_8008E2D4 by the +0x58 bdat column. The shared tail then resolves the
+// installs one of the +0x154 / +0x160 hooks or dispatches CtrlMoveEne_InitMoveHook /
+// CtrlMoveEne_InitMoveList by the +0x58 bdat column. The shared tail then resolves the
 // +0x18E mode from the parts element, computes the +0x160/+0x16C scale
 // values from the bdat columns and commits the position to mVec144.
-void func_8008E760(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
     // Hook-table base (retail keeps it in a callee-saved register across the
     // whole function).
     const CfMoveHookPtmfsE760* hooks =
@@ -1674,9 +1674,9 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
             row58.w = getEneBdatColumn(obj, lbl_eu_804FB9E8 + 0x58);
             u8 v58 = row58.b;
             if ((v58 & 1) != 0) {
-                func_8008E06C(self);
+                CtrlMoveEne_InitMoveHook(self);
             } else if ((v58 & 4) != 0) {
-                func_8008E2D4(self);
+                CtrlMoveEne_InitMoveList(self);
             } else {
                 maskMoveBaseFlags(self);
                 self->mMoveHook = hooks->hook160;
@@ -1718,7 +1718,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                              reinterpret_cast<cf::CfObjectActor*>(r31b));
                 f32 sum = obj->field_44D8 + r31b->field_44D8;
                 cf::CFunc8008E760PartyInfo info;
-                func_80198710(&info, &tmp20, f1, r27, r28v, f31, sum);
+                InitRecord(&info, &tmp20, f1, r27, r28v, f31, sum);
                 if ((self->field_0x180 & 1) != 0) info.field_2D = 0;
                 int r = CPartsChange_ProcessPartyInfo(&info, &view->field_0C);
                 if ((obj->field_3374 & 0x100u) != 0) {
@@ -1832,7 +1832,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
 }
 
 
-void func_8008EF04(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_UpdateMoveHeading(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     // Battle-start pulse: with the +0x18E mode, +0x8 flag and no +0x10000 flag,
     // dismiss the +0xC4 target icon and refresh the move sub's +0x150 slot.
@@ -1937,7 +1937,7 @@ check:
     }
 }
 
-void func_8008F2E0(){}
+void CtrlMoveEne_UpdatePursuit(){}
 
 // Returns bit 8 of the +0x270 state word of the +0xC4 target object, or 1
 // when the target is absent.
@@ -1948,12 +1948,12 @@ extern "C" int CfObject_checkTargetState__Q22cf12CfObjectMoveFv(cf::CCtrlMoveEne
     return 1;
 }
 
-// Enemy flee/wander controller (retail func_8008F9EC): with the +0x20 flag
+// Enemy flee/wander controller (retail CtrlMoveEne_UpdateFleeWander): with the +0x20 flag
 // clear the enemy wanders (refreshing the +0x58 rate divisor and picking a
-// random heading via func_8008B9C0); with it set it flees the +0x4C-marked
+// random heading via CtrlMoveEne_ProbeApproachPoint); with it set it flees the +0x4C-marked
 // target until the +0x54 timer expires or it stays pinned near mVec138 for
 // 60 frames, then clears the flee/wander flag bits.
-void func_8008F9EC(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_UpdateFleeWander(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     cf::CFunc8008F9ECSub* sub =
         (cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28;
@@ -1974,7 +1974,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
             v->field_0x58 = rate;
         }
         ml::CVec3 out;
-        if (func_8008B9C0(self, &out, self, v->field_0x5C,
+        if (CtrlMoveEne_ProbeApproachPoint(self, &out, self, v->field_0x5C,
                           lbl_eu_806665C0, 0) != 0) {
             // Random heading change, scaled by the wander radius.
             v->field_0x60 = v->field_0x5C *
@@ -1989,7 +1989,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
                 lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle());
             dir.y = lbl_eu_806665C0;
             dir.z = cz;
-            func_80089694(self, &dir, v->field_0x58);
+            setMoveFacing(self, &dir, v->field_0x58);
         } else {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
@@ -2022,10 +2022,10 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
                     CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
                 v->mPosition.z;
         tgt.y = v->mPosition.y;
-        func_800896F4(self, &dir, &tgt);
+        moveBaseChase(self, &dir, &tgt);
         if ((s32)--self->field_0x54 <= 0) cont = 0;
     } else {
-        func_800896F4(self, &dir, &v->mPosition);
+        moveBaseChase(self, &dir, &v->mPosition);
         // Already next to the target: latch the flee state and a fresh
         // randomized timer (parity seeds the half-turn offset bit).
         f32 dx = v->mPosition.x -
@@ -2040,7 +2040,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
             }
         }
     }
-    func_80089694(self, &dir, v->field_0x58);
+    setMoveFacing(self, &dir, v->field_0x58);
     if (cont != 0) {
         // Pinned-proximity gate: count consecutive frames spent near mVec138.
         ml::CVec3* pos = self->field_0x34->field_0x28->CfObject_getPosVector();
@@ -2073,7 +2073,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
     }
 }
 
-// Enemy move-controller per-frame update (retail func_8008FE8C): the +0x8000
+// Enemy move-controller per-frame update (retail CtrlMoveEne_StepMoveList): the +0x8000
 // flag path reinstalls the +0x184 hook and resets the move-list state; the
 // main path steps the +0x60 timer, latches the current move-list entry into
 // the base position, and runs the direction / turn logic (the +0x70 & 0x40
@@ -2081,7 +2081,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
 // +0x100000 pursuit branch), then the talk-state takeover, the +0x74 heading
 // gate, the mVec138 pursuit-distance gate and finally the +0x5A row advance
 // with the +0x190 / +0x19C / dispatch hooks.
-void func_8008FE8C(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
     cf::CFunc8008FE8CView* view = (cf::CFunc8008FE8CView*)self;
     // Kept live across the branchy region (retail parks it in a callee-saved
     // register); every assignment reads the same movement-data slot.
@@ -2161,11 +2161,11 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                 view->field_0x70 |= 0x80;
                 view->field_0x74 = 0xA;
             } else if (sub->field_63C <= lbl_eu_806665C4) {
-                func_80088974(self, &dir, &view->mPosition, 0, 0);
+                moveBaseUpdate(self, &dir, &view->mPosition, 0, 0);
                 view->field_0x60 = 12;
                 view->field_0x17C |= 0x100000;
             } else {
-                func_80088974(self, &dir, &view->mPosition, 0, 0);
+                moveBaseUpdate(self, &dir, &view->mPosition, 0, 0);
                 ml::CVec3 d = view->mPosition - *reinterpret_cast<cf::CfObject*>(sub)->CfObject_getPosVector();
                 if (d.x != lbl_eu_806665C0 || d.y != lbl_eu_806665C0 ||
                     d.z != lbl_eu_806665C0) {
@@ -2198,7 +2198,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
     } else if ((view->field_0x17C & 0x100000u) != 0) {
         // Pursuit: turn toward the controller position, then hand off.
         ml::CVec3 dir;
-        func_80088974(self, &dir, &view->mPosition, 0, 0);
+        moveBaseUpdate(self, &dir, &view->mPosition, 0, 0);
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
         if (t > 0) {
@@ -2278,10 +2278,10 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
             }
         }
         dir74 = d;
-        func_800898D4(self, &dir74);
+        moveBaseLerp(self, &dir74);
     } else if (sub->field_63C <= lbl_eu_806665C4) {
         ml::CVec3 vel = view->mVelocity;
-        func_80088974(self, &dir74, &view->mPosition, 0, 0);
+        moveBaseUpdate(self, &dir74, &view->mPosition, 0, 0);
         view->mVelocity = vel;
         f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getMoveHeadAngle();
         f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
@@ -2297,9 +2297,9 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         if (dot <= lbl_eu_806665DC) {
             view->field_0x3C = lbl_eu_80666658;
         }
-        func_800898D4(self, &dir74);
+        moveBaseLerp(self, &dir74);
     } else {
-        func_80088974(self, &dir74, &view->mPosition, 1, 0);
+        moveBaseUpdate(self, &dir74, &view->mPosition, 1, 0);
     }
     cf::CfMoveSubEntry* entry3 =
         &view->field_0x78[(s16)view->field_0x5A];
@@ -2346,9 +2346,9 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         r0 = 0;
     }
     if (r0 != 0) {
-        func_80089694(self, &dir74, lbl_eu_806665E4);
+        setMoveFacing(self, &dir74, lbl_eu_806665E4);
     } else {
-        func_80089694(self, &dir74, view->field_0x6C);
+        setMoveFacing(self, &dir74, view->field_0x6C);
     }
     if (r29 != 0) {
         if ((self->field_0x180 & 0x8u) != 0) {
@@ -2428,16 +2428,16 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
 }
 
 
-// Enemy move-controller per-frame update (retail func_80090DB4): the +0x8000
+// Enemy move-controller per-frame update (retail CtrlMoveEne_StepMoveEntry): the +0x8000
 // flag path reinstalls the +0x1A8 hook, resets the move-list counters and
 // copies the heading into the base position; otherwise the move-list entry at
 // +0x78 + field_0x5A*0x14 drives the update: when the +0x72 gate is clear it
 // installs the +0x1B4 hook, dispatches the +0x5C record, steps the +0x5A
 // timer and clears the flags; when set it decrements the +0x72 gate and runs
-// the approach/pursuit logic (func_8008B9C0 probe, direction commit via the
+// the approach/pursuit logic (CtrlMoveEne_ProbeApproachPoint probe, direction commit via the
 // +0xC4 heading, the +0x20 / +0x100000 / +1 flag branches, the mVec138
 // pursuit-distance gate) before dispatching the state record again.
-void func_80090DB4(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_StepMoveEntry(cf::CCtrlMoveEne* self) {
     const CfMoveHookPtmfsAll& hooks = lbl_eu_80527830;
     cf::CFunc80090DB4View* view = (cf::CFunc80090DB4View*)self;
     int flag;
@@ -2506,16 +2506,16 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
     cf::CFunc80090DB4Sub* sub =
         (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
     if ((flags & 0x20u) == 0) {
-        // Approach a candidate point around the entry (func_8008B9C0).
+        // Approach a candidate point around the entry (CtrlMoveEne_ProbeApproachPoint).
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
         if ((int)t > 0) return;
         view->field_0x60 = 0;
         ml::CVec3 out;
-        if (func_8008B9C0(self, &out, (cf::CCtrlMoveEne*)entry,
+        if (CtrlMoveEne_ProbeApproachPoint(self, &out, (cf::CCtrlMoveEne*)entry,
                           entry->field_0x10, lbl_eu_806665C0, 0) != 0) {
             if ((self->field_0x180 & 0x8u) == 0 &&
-                func_80089E88(self, &view->mPosition, 1) == 0) {
+                moveBaseRoute(self, &view->mPosition, 1) == 0) {
                 // Probe rejected: retry after a short delay.
                 view->field_0x60 = 12;
                 view->field_0x17C |= 0x100000;
@@ -2558,7 +2558,7 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
         // Pursuit: head toward the controller position while the +0x60 timer
         // runs, then re-approach.
         ml::CVec3 dir;
-        func_80088974(self, &dir, &view->mPosition, 0, 0);
+        moveBaseUpdate(self, &dir, &view->mPosition, 0, 0);
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
         if (t == 0) {
@@ -2618,13 +2618,13 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
     f32 dz = view->mPosition.z - pb->z;
     if (dx * dx + dz * dz > lbl_eu_806665E4) {
         // Out of reach: count the escape frames, then pursue via
-        // func_8008C660 / the mVec138 waypoint latch.
+        // CtrlMoveEne_CheckPursuitStop / the mVec138 waypoint latch.
         u16 esc = view->field_0x186;
         view->field_0x186 = esc + 1;
         if (esc < 0x258) {
             ml::CVec3 z(lbl_eu_806665C0, lbl_eu_806665C0,
                         lbl_eu_806665C0);
-            if (func_8008C660(self, &z,
+            if (CtrlMoveEne_CheckPursuitStop(self, &z,
                               lbl_eu_80666628 * sub->field_63C) != 0) {
                 return;
             }
@@ -2648,7 +2648,7 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
                 view->field_0x184 = 0;
             }
             if (done == 0) {
-                func_80089694(self, &z, view->field_0x6C);
+                setMoveFacing(self, &z, view->field_0x6C);
                 return;
             }
         }
@@ -2665,10 +2665,10 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
 }
 
 
-// Enemy pursuit scan (retail func_8009156C): while the +0x8000 flag is set,
+// Enemy pursuit scan (retail CtrlMoveEne_ScanGimmickTargets): while the +0x8000 flag is set,
 // either leap toward the move sub's position (when far) or, once close, run a
 // two-tick gate before scanning the gimmick list for nearby targets to mark.
-void func_8009156C(cf::CCtrlMoveEne* self) {
+void CtrlMoveEne_ScanGimmickTargets(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     cf::CfObject* sub;
     if ((v->field_0x17C & 0x8000u) != 0) {
@@ -2678,8 +2678,8 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
                  self->field_0x34->field_0x28->CfObject_getPosVector()->z;
         if (dx * dx + dz * dz > lbl_eu_806665E4) {
             ml::CVec3 zero(lbl_eu_806665C0, lbl_eu_806665C0, lbl_eu_806665C0);
-            func_80088974(self, &zero, &v->mPosition, 1, 0);
-            func_80089694(self, &zero, lbl_eu_806665E4);
+            moveBaseUpdate(self, &zero, &v->mPosition, 1, 0);
+            setMoveFacing(self, &zero, lbl_eu_806665E4);
             return;
         }
         // Close: honour the +0x70 event bits, then step the +0x72 gate.
@@ -2745,11 +2745,11 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
         lbl_eu_806665C0;
 }
 
-// Enemy movement state machine (retail func_80091864). Validates the enemy
+// Enemy movement state machine (retail CtrlMoveEne_RunMoveStateMachine). Validates the enemy
 // battle object, plans a wander / party-info goal, then either waits on the
 // +0x20 bit or pursues: arts-speed latch, distance bands, heading commit
-// (func_80089398 / func_8008CDE8 / func_80089694) or a close-range face.
-void func_80091864(cf::CCtrlMoveEne* selfRaw) {
+// (aimMoveTarget / CtrlMoveEne_TrackMoveTarget / setMoveFacing) or a close-range face.
+void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
     cf::CFunc80091864View* self = (cf::CFunc80091864View*)selfRaw;
     cf::CFunc80091864Actor* ene;
     cf::CFunc8008E760B89* b89;
@@ -2952,7 +2952,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         f32 partyR = b89->field_8C;
         if (esc != 1) partyR += ene->field_44D8;
         cf::CFunc8008E760PartyInfo pi;
-        func_80198710(&pi, &pos, head2, (int)esc, (int)seedOrCount, partyR,
+        InitRecord(&pi, &pos, head2, (int)esc, (int)seedOrCount, partyR,
                       ene->field_44D8 + player->field_44D8);
         if ((self->field_0x180 & 1) != 0) pi.field_2D = 0;
         if ((self->field_0x180 & 0x8) != 0) {
@@ -3043,12 +3043,12 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                         u32 w = ((cf::CFunc8008B580Word*)player->field_04
                                      ->CObjectState_getStateData())
                                     ->field_0;
-                        if (func_80174C98(player, &w, 0x19) == 0) {
+                        if (testActorStatus(player, &w, 0x19) == 0) {
                             u32 w2 =
                                 ((cf::CFunc8008B580Word*)player->field_04
                                      ->CObjectState_getStateData())
                                     ->field_0;
-                            if (func_80174C98(player, &w2, 3) != 0) {
+                            if (testActorStatus(player, &w2, 3) != 0) {
                                 tgt = (cf::CFunc80091864Target*)(
                                     reinterpret_cast<cf::CfObject*>(
                                         &player->mSub)
@@ -3296,10 +3296,10 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     ml::CVec3 dir;
     ml::CVec3 goal2 = goal;
     if ((self->field_0x180 & 0x8) != 0) {
-        func_80089398(selfRaw, &dir, &goal2, 0);
+        aimMoveTarget(selfRaw, &dir, &goal2, 0);
     } else {
         ((void (*)(cf::CCtrlMoveEne*, ml::CVec3*, const ml::CVec3*, f32))
-             func_8008CDE8)(selfRaw, &dir, &goal2,
+             CtrlMoveEne_TrackMoveTarget)(selfRaw, &dir, &goal2,
                             lbl_eu_80666690 * ene->field_44D8);
     }
     self->mVelocity = savedVel;
@@ -3357,8 +3357,8 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     }
 
     ml::CVec3 commitDir = dir;
-    func_800898D4(selfRaw, &commitDir);
-    func_80089694(selfRaw, &commitDir, speed);
+    moveBaseLerp(selfRaw, &commitDir);
+    setMoveFacing(selfRaw, &commitDir, speed);
 
     ml::CVec3* ep2 = reinterpret_cast<cf::CfObject*>(&ene->mSub)
                          ->CfObject_getPosVector();

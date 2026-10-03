@@ -144,19 +144,19 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__CScrollBar(void* self, u8 direction);
-extern "C" void func_80137924(void* out, void* paneA, void* paneB, void* paneC);extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
+extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
-// Data/build helpers used by func_80272810.
+// Data/build helpers used by buildTalkList.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u16 BdatGetU16Direct(const void* fp, const void* name, int id);
-extern "C" u16 func_8013A7D0(u8 a, u8 b);
-u32 func_8027305C(TalkListEntryArray* self, u8 v);
+extern "C" u16 LookupRelateValue(u8 a, u8 b);
+u32 findTalkIcon(TalkListEntryArray* self, u8 v);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer
 
 // data / rodata labels
@@ -178,8 +178,8 @@ extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entr
 // retail keeps them as separate out-of-line functions in this TU).
 extern "C" __declspec(noinline) void bindScrollInAnims(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void bindScrollOutAnims(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self);
-extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self);
 
 // Misc helpers used by the row-draw / visibility paths.
 extern "C" int CScrollBar_isVisible(void*);

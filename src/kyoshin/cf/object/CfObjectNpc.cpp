@@ -116,7 +116,7 @@ void CfObjectNpc::updateNpcDialog() {
             this->CObjectState_checkStateFlags8(1) != 0 &&
             this->CObjectState_checkStateFlags(1) == 0 &&
             this->CObjectState_checkStateFlags(0x10) == 0 &&
-            func_8013EB90(1) == 0) {
+            UIWin_HasPendingUpdate(1) == 0) {
             if (this->mTimer > lbl_eu_80666AEC) {
                 this->CObjectState_applyStateFlags(3);
                 static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);

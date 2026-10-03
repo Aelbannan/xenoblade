@@ -116,7 +116,7 @@ struct CArtsQuadColor {
     s16 c6;
 };
 
-// 8-byte pane colour pair returned in r3/r4 by func_801397AC.
+// 8-byte pane colour pair returned in r3/r4 by PaneMatGetS16Quad.
 struct CArtsColorPair {
     u32 lo;
     u32 hi;
@@ -141,7 +141,7 @@ struct CArtsStatBlock {
     s16 field_0x20;                     // +0x20
 };
 
-// Character-data object returned by func_8009EC9C (see CPartyCharData).
+// Character-data object returned by CtrlObjectParam_GetCharEntry (see CPartyCharData).
 struct CArtsCharData {
     u8 _00[0x1C];
     s16 field_0x1C;                     // +0x1C
@@ -154,7 +154,7 @@ struct CArtsCharData {
     u8 stats[4];                        // +0x17C (vptr; see note above)
 };
 
-// (List entries come from func_80157C4C as CItemExt*; see kyoshin/cf/CItem.hpp.)
+// (List entries come from CItem_kindPtr as CItemExt*; see kyoshin/cf/CItem.hpp.)
 
 // Sub-entry returned by the slot-info virtual (vtable +0x2C). The arts list
 // loop reads an id field at +0x4 (bits 4..15 of the u16) and a value at
@@ -165,7 +165,7 @@ struct CArtsItemInfo {
 };
 
 
-// Six-byte item slot-type flags for the arts list loop (func_80236E6C): a
+// Six-byte item slot-type flags for the arts list loop (CArtsInfo_GetEquipValue): a
 // u32 + u16 loaded from the sdata objects at 0x80668688/0x8066868C, then
 // byte-indexed per loop iteration. The union gives the byte view without
 // pointer arithmetic.
@@ -178,10 +178,10 @@ union CArtsSlotFlags {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// func_eu_80136F90 is defined in code_80135FDC.cpp (C linkage);
-// func_eu_8023D490 is a same-unit retail symbol (unmangled, C linkage).
-extern "C" void func_eu_80136F90(char* str);
-extern "C" void func_eu_8023D490(CArtsInfo*, u32, char*);
+// SjisDotToCommaEU is defined in code_80135FDC.cpp (C linkage);
+// CArtsInfo_DotToCommaDE is a same-unit retail symbol (unmangled, C linkage).
+extern "C" void SjisDotToCommaEU(char* str);
+extern "C" void CArtsInfo_DotToCommaDE(CArtsInfo*, u32, char*);
 extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" s8 BdatGetS8ByTableKey(const void*, const char*, u8); // BDAT string -> s8
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
@@ -200,7 +200,7 @@ extern "C" void __dl__FPv(void*);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // BDAT row string lookup
 extern "C" void playUISound__FUl(u32);
@@ -213,8 +213,8 @@ extern "C" s16 BdatGetS16ByTableKey(const void*, const void*, u32); // u32: matc
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16); // colour init
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
-extern "C" void func_80137924(void*, void*, void*, void*);
-extern "C" void* func_8009EC9C(u32);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
 // rejects differing extern "C" redeclarations as illegal overloading).
@@ -223,7 +223,7 @@ extern "C" u16 BdatGetItemId(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
-// (func_80157C4C is declared by kyoshin/cf/CItem.hpp: the real 2-arg
+// (CItem_kindPtr is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
 extern "C" void func_801D202C(void*);
 extern "C" void Cur_DrawLayout(void*, void*);
@@ -242,7 +242,7 @@ extern "C" int Counter_TestBit(void*, u32);
 extern "C" int IdTable_SumValues(void*, u32);
 
 // Float -> s32 conversion helper used by the arts-grid percentage functions
-// (func_8023916C): takes the scaled float in f1 and returns the truncated
+// (CArtsInfo_FmtRow09): takes the scaled float in f1 and returns the truncated
 // integer in r3.
 extern "C" s32 RoundHalfAway0(float);
 
@@ -266,7 +266,7 @@ extern const double lbl_eu_80668698;
 extern double lbl_eu_806686A8;
 
 // Float constant in the small data area (sda21-accessed via lfs) scaling the
-// converted double in func_8023A460.
+// converted double in CArtsInfo_FmtRow17.
 extern float lbl_eu_806686A4;
 
 // Float constants in the small data area (sda21-accessed via lfs): scaling
@@ -274,24 +274,24 @@ extern float lbl_eu_806686A4;
 extern float lbl_eu_80668690;
 extern float lbl_eu_80668694;
 
-// Float scale for the arts-level percentage computation in func_80239FC4
+// Float scale for the arts-level percentage computation in CArtsInfo_FmtRow12
 // (percentage = 806686BC * level + base, sda21-accessed via lfs).
 extern float lbl_eu_806686BC;
 
 // Float constants in the small data area (sda21-accessed via lfs): fixed
-// values for the arts-type switch in func_80237E24 (field_0x55 0x68/0x69/0x70
+// values for the arts-type switch in CArtsInfo_FmtRow03 (field_0x55 0x68/0x69/0x70
 // overrides the first grid value).
 extern float lbl_eu_806686B0;
 extern float lbl_eu_806686B4;
 extern float lbl_eu_806686B8;
 
-// Item slot-type flags for the func_80236E6C list loop (6 bytes: a u32
+// Item slot-type flags for the CArtsInfo_GetEquipValue list loop (6 bytes: a u32
 // followed by a u16 at 0x8066868C). Loaded as lwz + lhz, byte-indexed via
 // the CArtsSlotFlags union.
 extern u32 lbl_eu_80668688;
 extern u16 lbl_eu_8066868C;
 
-// Arts bdat file pointer used by func_80236E6C's final row lookup
+// Arts bdat file pointer used by CArtsInfo_GetEquipValue's final row lookup
 // (BdatGetU16Direct, value passed as the first argument).
 // void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
 extern void* lbl_eu_806640D8;
@@ -301,7 +301,7 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep s
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 extern "C" char* CUICfManager_getPackedFont9C(void);
 extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -315,7 +315,7 @@ extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void func_8023B430(CArtsInfo* self);
-extern "C" CArtsColorPair func_801397AC(void* pane, int idx);
+extern "C" CArtsColorPair PaneMatGetS16Quad(void* pane, int idx);
 extern "C" void CopyVec4s(CArtsQuadColor* dst, const CArtsColorPair* src);
 
 // Float constant in the small data area (sda21-accessed via lfs): the anchor

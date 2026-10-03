@@ -182,9 +182,9 @@ void __declspec(noinline) UnkClass_8047CD0C::freeGlobalHeap() {
 
 // ------------------------------------------------------------------
 // func_8047CD0C -- constructor from a scene-config blob.
-// If the config begins with the magic 0x57504F49, adopt the node array
-// (config+0x0C), (re)size the global pool via configurePoolLayout, and attach
-// every node element to the pool.  Fv-annotated but really takes config.
+// Config magic 0x57504F49: adopt node array (config+0x0C), resize the pool,
+// attach nodes. Retail calls init__17UnkClass_8047E110Fv(self, config+0x0C).
+extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self, void* desc);
 // ------------------------------------------------------------------
 
 extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
@@ -197,7 +197,7 @@ extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
     }
     config += 0xC;
     self->mData = config;
-    ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
+    init__17UnkClass_8047E110Fv((UnkClass_8047E110*)lbl_eu_80658560, config);
     configurePoolLayout__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
                                          (UnkClass_8047CD0C*)self->mData);
     if (self->mField08 != 0) {

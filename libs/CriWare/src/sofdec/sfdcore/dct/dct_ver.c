@@ -14,11 +14,15 @@ __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051C430[0
 };
 __attribute__((aligned(4))) u32 lbl_eu_80606DC8;
 __attribute__((aligned(4))) u32 lbl_eu_80606DCC;
-__attribute__((aligned(8))) void* lbl_eu_80606DD0;
+// Two 4-byte slots (symbols.txt size 0x8 data:4byte): [0] is the version
+// string pointer, [1] is zero. Plain align(4) so MWCC keeps retail's
+// declaration order (DC8, DCC, DD0); an aligned(8) here would sort DD0
+// first and shrink the section to 0xC.
+void* lbl_eu_80606DD0[2];
 
 
 char* DCT_GetVerStr(void) {
-    return lbl_eu_80606DD0 = lbl_eu_8051C430;
+    return lbl_eu_80606DD0[0] = lbl_eu_8051C430;
 }
 
 void fn_803BDF3C(u32 a, u32 b) {

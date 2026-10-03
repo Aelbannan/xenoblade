@@ -64,8 +64,8 @@ u32 notifyBattleSystem__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                           u32 fourth, u32 fifth);
 void isEffectReady__Q22cf13CfGameManagerFv(u32 first, ml::CVec3* pos,
                                            ml::CVec3* lookat, u32 extra, f32 seventh);
-void func_8007B044(void* data, int flag);
-void func_8007B078(s32 val);
+void CamEvtForwardShakeFlag(void* data, int flag);
+void CamEvtLookupStateVal(s32 val);
 void func_8016FD84(f32 val1, f32 val2);
 }
 
@@ -238,7 +238,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = ArtsSelect_GetContainer();
-    void* slot = func_801864DC(obj, oc->field_0x04);
+    void* slot = ArtsSelect_Lookup(obj, oc->field_0x04);
     cam->setPositionOfs(slot, &pos, -flags);
     return 0;
 }
@@ -263,7 +263,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = ArtsSelect_GetContainer();
-    void* slot = func_801864DC(obj, oc->field_0x04);
+    void* slot = ArtsSelect_Lookup(obj, oc->field_0x04);
     cam->setLookAtOfs(slot, &lookat, -flags);
     func_8016FD84(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
@@ -353,7 +353,7 @@ extern "C" int keyBegin(VMThread* pThread) {
     // Resolve the OC instance to a camera key id (0 when omitted/invalid).
     u32 ocId = 0;
     if (oc != nullptr) {
-        ocId = (u32)func_801864DC(ArtsSelect_GetContainer(), oc->field_0x04);
+        ocId = (u32)ArtsSelect_Lookup(ArtsSelect_GetContainer(), oc->field_0x04);
     }
 
     notifyBattleSystem__Q22cf13CfGameManagerFv(
@@ -479,12 +479,12 @@ extern "C" int shake(VMThread* pThread) {
     data[11] = (f32)fixed10 / lbl_eu_80666168;
     data[12] = (f32)fixed11 / lbl_eu_80666168;
 
-    func_8007B044(data, (u32)(-boolParam | boolParam) >> 31);
+    CamEvtForwardShakeFlag(data, (u32)(-boolParam | boolParam) >> 31);
     return 0;
 }
 
 extern "C" int stopShake(VMThread* pThread) {
-    func_8007B078(0);
+    CamEvtLookupStateVal(0);
     return 0;
 }
 

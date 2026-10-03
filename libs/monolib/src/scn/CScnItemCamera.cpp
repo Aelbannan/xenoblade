@@ -30,14 +30,14 @@ extern const f32 lbl_eu_8066AC1C;
 extern const f32 lbl_eu_8066AC20;
 extern const f32 lbl_eu_8066AC24;
 extern const f32 lbl_eu_8066AC28;
-extern const f32 lbl_eu_8066AC04;     // viewport aspect-ratio scale (func_8049F8E4)
+extern const f32 lbl_eu_8066AC04;     // viewport aspect-ratio scale (ScnCamViewReg)
 extern const f64 lbl_eu_8066AC08;     // 2^52 (u16 -> float conversion magic)
 extern const f64 lbl_eu_8066AC30;     // signed int->float magic (2^52 + 2^31)
 
 // Named-magic conversion helpers (retail references the shared pool labels
 // instead of pooling local .sdata2 entries; this TU emits no .sdata2).
 // (u16/s16 conversions now use plain builtin casts - see the ctor.)
-extern const char lbl_eu_80524258[];  // FixStr<32> format string (func_8049F9A8)
+extern const char lbl_eu_80524258[];  // FixStr<32> format string (ScnCamFactory)
 extern const char lbl_eu_80526324[];  // nw4r db Warning file name
 // nw4r db Warning message (lbl_eu_80526300)
 extern const char lbl_eu_80526300[];
@@ -81,7 +81,7 @@ extern "C" void ScnCam_NoopVFunc() {}
 // projection matrix occupies 0x154-0x1D4 (0x80 bytes), the viewport
 // fields sit at 0x1D4-0x1E0, 0x1E4 is the cot-of-half-FOV value, and
 // the sub-object arrays are at 0x1F8 / 0x258 (the header's draft
-// layout is 0x44 short). func_8049F168 stores the transform
+// layout is 0x44 short). ScnCamShiftBy stores the transform
 // position bits (0x54) as raw u32s.
 struct CScnItemCameraLayout {
     u8 pad_0x00[0x4];
@@ -91,7 +91,7 @@ struct CScnItemCameraLayout {
     u32 mPosY;                  // 0x58 - mTransform.mPos.y
     u32 mPosZ;                  // 0x5C - mTransform.mPos.z
     u8 pad_0x60[0x10C - 0x60];
-    f32 field_0x10C[3];         // 0x10C - base aim offset (func_8049F204)
+    f32 field_0x10C[3];         // 0x10C - base aim offset (ScnCamTurnAim)
     u8 pad_0x118[0x138 - 0x118];
     u32 mCamParam0;             // 0x138 (raw bits)
     u32 mCamParam1;             // 0x13C
@@ -210,7 +210,7 @@ struct CGXCacheViewportRect {
 // artifact). The header is shared and read-only here, so C-linkage
 // declarations reproduce the exact retail reloc names.
 extern "C" CGXCacheViewportRect* getViewRectGX__8CGXCacheFv(CGXCache* cache);
-extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* cache, f32* projOut,
+extern "C" void makePerspProj__8CGXCacheFv(CGXCache* cache, f32* projOut,
                                            f32 fovY, f32 nearZ, f32 farZ);
 
 // Scene-item pool helpers (retail reloc names are unmangled short forms, so
@@ -237,7 +237,7 @@ struct CScnItemParentLayout {
     void* field_0x8C;            // +0x8C
 };
 
-// Host object for func_8049F9A8: a scene-item pool at +0x60.
+// Host object for ScnCamFactory: a scene-item pool at +0x60.
 struct CScnCameraItemHost {
     u8 pad_0x00[0x60];
     u8* mPool;                   // 0x60 - scene-item pool
@@ -253,12 +253,12 @@ struct CScnItemSceneVtbl {
 
 
 // ============================================================
-// func_8049EB60 - rebuild the camera depth-range parameters from
+// ScnCamDepthUp - rebuild the camera depth-range parameters from
 // the FOV / aspect / near plane:
 //   tan(halfFov) = tan(A * fovY * B * C * D) with B = pi/180
 //   (A, C, D are shared .sdata2 pool constants, product 0.5).
 // ============================================================
-void func_8049EB60(CScnItemCamera* self) {
+void ScnCamDepthUp(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     f32 rad = lbl_eu_8066AC10 * cam->mFovY;
@@ -278,13 +278,13 @@ void func_8049EB60(CScnItemCamera* self) {
 }
 
 // ============================================================
-// func_8049F168 - add a world-space offset vector to the camera
+// ScnCamShiftBy - add a world-space offset vector to the camera
 // parameter vector (0x138) and to the transform position (0x54),
 // then refresh through vtable slot 9. The paired-single add comes
 // from the nw4r VEC3Add helper; the position is written back as
 // raw u32 bits.
 // ============================================================
-void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
+void ScnCamShiftBy(CScnItemCamera* self, ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     // Position (0x54) += v: operator+ returns through a hidden sret temp
@@ -332,11 +332,11 @@ void sinit_8049FC60() {
 // ============================================================
 
 // ============================================================
-// func_8049F6D4 - move the camera position to `v` (raw bit copy into
+// ScnCamPlaceAt - move the camera position to `v` (raw bit copy into
 // mTransform.mPos) and point the camera parameter vector (0x138) at
 // (mCamParam - v); store the distance and refresh via vtable slot 9.
 // ============================================================
-void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v) {
+void ScnCamPlaceAt(CScnItemCamera* self, const ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     // Stack slots mirror retail: kernel-out@sp+0x08, dir@sp+0x14.
@@ -368,11 +368,11 @@ void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v) {
 }
 
 // ============================================================
-// func_8049F774 - replace the camera's embedded matrix
+// ScnCamLoadMtx - replace the camera's embedded matrix
 // (mTransform.mMtx1 at 0x6C) with `mtx` and set FLAG_0, then
 // refresh via vtable slot 9.
 // ============================================================
-void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
+void ScnCamLoadMtx(CScnItemCamera* self, const ml::CMat34* mtx) {
     self->mTransform.mMtx1 = *mtx;
     self->mTransform.mFlags |= ml::CAttrTransform::FLAG_0;
 
@@ -381,12 +381,12 @@ void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
 }
 
 // ============================================================
-// func_8049F824 - store `f1` as the camera distance, transform the
+// ScnCamSetDist - store `f1` as the camera distance, transform the
 // (0, 0, -f1) normal by the inverse local matrix, offset the result
 // by the camera position and write it into the camera parameter
 // vector (0x138) as raw bits.
 // ============================================================
-void func_8049F824(CScnItemCamera* self, f32 f1) {
+void ScnCamSetDist(CScnItemCamera* self, f32 f1) {
 
     // Declared in retail stack-slot order (first -> highest offset):
     // normal@0x38, tmp@0x2C, v@0x20, out@0x14, sum@0x08.
@@ -423,8 +423,8 @@ void func_8049F824(CScnItemCamera* self, f32 f1) {
 }
 
 // ============================================================
-// func_8049F8E4 - update viewport + aspect ratio from the GX cache
-// viewport, rebuild the projection matrix via CGXCache::func_8044BB20
+// ScnCamViewReg - update viewport + aspect ratio from the GX cache
+// viewport, rebuild the projection matrix via CGXCache::makePerspProj
 // (fovY/near/far into 0x194), then register the camera on the
 // parent's scene object (vtable slot 4).
 // ============================================================
@@ -437,7 +437,7 @@ struct CScnItemSceneRegIf {
     virtual void registerCamera(CScnItemCamera* cam);
 };
 
-extern "C" void func_8049F8E4(CScnItemCamera* self) {
+extern "C" void ScnCamViewReg(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     CGXCacheViewportRect* vp =
@@ -460,7 +460,7 @@ extern "C" void func_8049F8E4(CScnItemCamera* self) {
 
     cam->mAspectRatio = ((f32)width / (f32)height) * lbl_eu_8066AC04;
 
-    func_8044BB20__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
+    makePerspProj__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
                                fovY, nearZ, farZ);
 
     CScnItemParentLayout* parent = (CScnItemParentLayout*)cam->mParent;
@@ -468,12 +468,12 @@ extern "C" void func_8049F8E4(CScnItemCamera* self) {
 }
 
 // ============================================================
-// func_8049EFF8 - point the camera at a target: copy the target
+// ScnCamPointAt - point the camera at a target: copy the target
 // position into the camera parameters (0x138) and the look-at
 // origin into mTransform.mPos, then derive yaw/pitch from the
 // (mCamParam - v) vector and refresh via vtable slot 9.
 // ============================================================
-void func_8049EFF8(CScnItemCamera* self, const ml::CVec3* v,
+void ScnCamPointAt(CScnItemCamera* self, const ml::CVec3* v,
                    const ml::CVec3* v2, f32 f1) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
@@ -585,22 +585,22 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     f32 farZ = cam->mFarZ;
     f32 nearZ = cam->mNearZ;
     f32 fovY = cam->mFovY;
-    func_8044BB20__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
+    makePerspProj__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
                                fovY, nearZ, farZ);
     return obj;
 }
 
 // ============================================================
-// func_8049EBF0 - rebuild the camera's depth-split projection and the six
+// ScnCamRebuild - rebuild the camera's depth-split projection and the six
 // frustum plane normals: recompute the depth-range parameters (same math as
-// func_8049EB60), refresh the embedded transform, build the depth-split
+// ScnCamDepthUp), refresh the embedded transform, build the depth-split
 // projection matrix at 0x154, then transform each of the six local frustum
 // planes by mLocalMat and store the world-space planes into mSubObjArray2.
 // ============================================================
-extern "C" void func_8049EBF0(CScnItemCamera* self) {
+extern "C" void ScnCamRebuild(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    // Rebuild the depth-range parameters (same computation as func_8049EB60).
+    // Rebuild the depth-range parameters (same computation as ScnCamDepthUp).
     f32 tanHalf = (f32)tan(lbl_eu_8066AC10 * cam->mFovY * lbl_eu_8066A210 *
                            lbl_eu_8066AC18 * lbl_eu_8066AC14);
     f32 invTan = lbl_eu_8066AC1C / tanHalf;
@@ -717,13 +717,13 @@ extern "C" void func_8049EBF0(CScnItemCamera* self) {
 }
 
 // ============================================================
-// func_8049F204 - apply a rotation delta to the camera and rebuild its aim
+// ScnCamTurnAim - apply a rotation delta to the camera and rebuild its aim
 // point: add `delta` to the embedded rotation, build the combined Z-then-X
 // rotation matrix from the FIdx-scaled angles, rotate the base aim offset
 // (0x10C) by the matrix scaled by the camera distance, and store the result
 // as the new camera parameter vector, then refresh via vtable slot 9.
 // ============================================================
-void func_8049F204(CScnItemCamera* self, const ml::CVec3* delta) {
+void ScnCamTurnAim(CScnItemCamera* self, const ml::CVec3* delta) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     // Add the rotation delta to the embedded rotation.
@@ -806,13 +806,13 @@ void func_8049F204(CScnItemCamera* self, const ml::CVec3* delta) {
 }
 
 // ============================================================
-// func_8049F9A8 - camera-manager factory: allocate a CScnItemCameraNw4r
+// ScnCamFactory - camera-manager factory: allocate a CScnItemCameraNw4r
 // from the scene-item pool, name it from arg2, seed its transform position
 // and aim point from the static default tables, aim it at the table origin,
 // then rebuild its frustum parameters. Returns the new camera (or null when
 // the pool is full).
 // ============================================================
-CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
+CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     if (CScnItemPool_hasFreeSlot(self->mPool, 4) == 0) {
         return 0;
     }
@@ -1086,8 +1086,8 @@ extern "C" u32 lbl_eu_8066AE1C;
 
 // [.data] 0x8056ECC0-0x8056F014 (0x354B)
 extern "C" u32 lbl_eu_8056ECC0[213] = {
-    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&func_8049F8E4, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
-    0x00000000, (u32)&func_8049EBF0, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
+    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamViewReg, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
+    0x00000000, (u32)&ScnCamRebuild, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
     (u32)&lbl_eu_8066AC58, 0x00000001, (u32)&lbl_eu_8066AC60, 0x00000001, (u32)&lbl_eu_8066AC68, 0x00000001, (u32)&lbl_eu_8066AC70, 0x00010001,
     (u32)&lbl_eu_80524268, 0x00020001, (u32)&lbl_eu_80524274, 0x00010001, (u32)&lbl_eu_80524280, 0x00020001, (u32)&lbl_eu_8052428C, 0x00010001,
     (u32)&lbl_eu_80524298, 0x00020001, (u32)&lbl_eu_805242A8, 0x00010001, (u32)&lbl_eu_805242B4, 0x00020001, (u32)&lbl_eu_8066AC78, 0x00010001,

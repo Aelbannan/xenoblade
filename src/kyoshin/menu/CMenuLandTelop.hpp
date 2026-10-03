@@ -164,7 +164,7 @@ const char* func_80145AA8(int index);
 }
 
 // C++-linkage helpers (retail symbols are their mangled forms).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 

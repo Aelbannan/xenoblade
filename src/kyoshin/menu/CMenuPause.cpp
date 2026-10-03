@@ -46,7 +46,7 @@ void CMenuPause::Init() {
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = ((CMenuPauseFontView*)fontObj)->sf9();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     mLayout->SetAnimationEnable(
         reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80), true);
@@ -223,7 +223,7 @@ body:
     {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         if (mLayout != NULL) {
             drawLayout(mLayout, &drawInfo, 0, 1);
         }

@@ -118,9 +118,9 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // DrawInfo layout setup (retail MANGLED name
-// func_80137250__FPQ34nw4r3lyt8DrawInfo; declared as plain C++ so MWCC
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo; declared as plain C++ so MWCC
 // re-derives the same mangling).
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // This-unit phase handlers (retail-unmangled func_ names). extern "C" keeps
 // the call relocs bare (retail keeps the unmangled names at these call sites).

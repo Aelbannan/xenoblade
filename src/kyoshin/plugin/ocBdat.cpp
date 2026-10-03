@@ -11,7 +11,7 @@
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);
-    void* colEntry = func_8003B4B0(hdr, col);
+    void* colEntry = Bdat_FindColumnEntry(hdr, col);
     if (colEntry == 0) {
         return 0;
     }
@@ -46,12 +46,12 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
 }
 
 #pragma dont_inline on
-// func_eu_8003B720: decode obfuscated BDAT entries. Each flagged entry holds
+// Bdat_DecodeEntries: decode obfuscated BDAT entries. Each flagged entry holds
 // two running-XOR key bytes at +0x16 and two [start,end) byte ranges (+0x18/
 // +0x1C relative to the entry, and +0x06/+0x0A u16 ranges); bytes are XORed
 // with alternating key bytes which advance by the original byte value. The
 // second range uses the complemented seeds. Clears the flag when done.
-extern "C" void func_eu_8003B720(void* tblVoid) {
+extern "C" void Bdat_DecodeEntries(void* tblVoid) {
     char* base = static_cast<char*>(tblVoid);
     u32 count = *reinterpret_cast<u32*>(base);
     u32* offsets = reinterpret_cast<u32*>(base + 8);
@@ -151,7 +151,7 @@ void* CBdat::clearEntries() {
 
 void CBdat::setBdatEntry(u32 idx, void* p) {
     lbl_eu_805705D0[idx] = p;
-    func_eu_8003B720(p);
+    Bdat_DecodeEntries(p);
 }
 
 void CBdat::getEntry(u32 idx) {
@@ -237,7 +237,7 @@ extern "C" u32 Bdat_DecodeValue_B6A0(void* bdat, void* data, u32 elemType) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void* func_8003B4B0(void* bdat, const char* col){
+extern "C" void* Bdat_FindColumnEntry(void* bdat, const char* col){
     const char* colArg;
     u16 bucketCount;
     char* hashBase;
@@ -306,7 +306,7 @@ extern "C" u32 Bdat_QueryCell_AD98(void* bdat, const char* col, s32 row, s32 ind
     colArg = col;
     rowArg = row;
     indexArg = index;
-    colEntry = func_8003B4B0(hdr, colArg);
+    colEntry = Bdat_FindColumnEntry(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
@@ -341,7 +341,7 @@ extern "C" u32 Bdat_FindColumn_AFC0(void* bdat, const char* col) {
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);
     colArg = col;
-    colEntry = func_8003B4B0(hdr, colArg);
+    colEntry = Bdat_FindColumnEntry(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
@@ -433,7 +433,7 @@ extern "C" u32 Bdat_FindColumnAlt_B204(void* bdat, const char* col) {
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);
     colArg = col;
-    colEntry = func_8003B4B0(hdr, colArg);
+    colEntry = Bdat_FindColumnEntry(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
@@ -490,12 +490,12 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     if (ok == 0) {
         return 0;
     }
-    col1Entry = func_8003B4B0(hdr, col1Arg);
+    col1Entry = Bdat_FindColumnEntry(hdr, col1Arg);
     if (col1Entry == 0) {
         return 0;
     }
     col2Arg = col2;
-    col2Entry = func_8003B4B0(hdr, col2Arg);
+    col2Entry = Bdat_FindColumnEntry(hdr, col2Arg);
     if (col2Entry == 0) {
         return 0;
     }

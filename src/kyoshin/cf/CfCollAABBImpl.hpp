@@ -13,7 +13,7 @@ extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const ml::CCol4* col)
 extern "C" void setMatrix__7CDrawGXFRCQ22ml6CMat34(void* self, const ml::CMat34* mat);
 extern "C" void renderCube__7CDrawGXFRCQ22ml5CVec3RCQ22ml5CVec3(void* self, const ml::CVec3* min, const ml::CVec3* max);
 extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, int c);
-extern "C" void func_800A5FE8(void* a, void* b, void* c, void* d, void* e);
+extern "C" void VecMath_PushOutBoxMtx(void* a, void* b, void* c, void* d, void* e);
 
 // Debug color / scale constants from .sdata2.
 extern const float lbl_eu_80666910; // 0.0

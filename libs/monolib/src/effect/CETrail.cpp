@@ -94,9 +94,9 @@ void lytBindRefreshPlayer(void* link);
 int lytBindCanResolveTarget(void* link);
 void func_804EE8FC(void* link, u32 index);
 void DbgZeroTriple(void* obj);
-void* func_804D5F54(void* self, s16 count);
+void* EffFxAllocCubicTable(void* self, s16 count);
 void EffFxEmptyStub(void* vtx);
-void func_804D6074(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
+void EffFxBuildTrailSegments(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
 void* scnVlAllocSlot(void* res);
 void scnVlFreeSlot(void* res);
 void func_804C03A0(void* light, u32 mode);
@@ -351,7 +351,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
         t->m_buffer = nullptr;
     }
 
-    t->m_buffer = func_804D5F54(&t->m_buffer, (s16)segCount);
+    t->m_buffer = EffFxAllocCubicTable(&t->m_buffer, (s16)segCount);
 
     u32 need = ((u32)segCount * 0x1C) * (count * 2);
     CETrailVertex* verts;
@@ -583,7 +583,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
         return;
     }
 
-    func_804D6074(&t->m_segCount, t, color, t->m_mode == 2, mode != 0, &t->m_color, &t->m_scale);
+    EffFxBuildTrailSegments(&t->m_segCount, t, color, t->m_mode == 2, mode != 0, &t->m_color, &t->m_scale);
 
     mtl::MemManager::setMemInitFlag(false);
 

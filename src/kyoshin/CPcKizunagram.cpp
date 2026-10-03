@@ -7,7 +7,7 @@
 #include "monolib/util/MemManager.hpp"
 
 // Forward declarations of intra-TU callees.
-void func_8025E0D8(CPcKizunagram* self);
+void KizunagramBuildRowLookup(CPcKizunagram* self);
 void KizunaCurDestroyLayout(CPcKizunaCur* self);
 extern "C" CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcKizunaSlotEntry* p);
 
@@ -17,10 +17,10 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // String base for the affinity-chart layout paths (targets add byte offsets).
 extern char lbl_eu_8050D868[];
 
-// Column-name format base (func_8025EE94 uses +0x06).
+// Column-name format base (KizunagramRebuildSlotList uses +0x06).
 extern char lbl_eu_8050DB18[];
 
-extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry);
+extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry);
 
 // Named float constants in .sdata2 referenced via @sda21 by KizunagramPulseRise/E5A8.
 extern const float lbl_eu_8066887C;
@@ -88,7 +88,7 @@ extern "C" void KizunagramUpdateMainState(CPcKizunagram* self) {
 
 // Destroy the cursor's layout: delete it through its vtable (deleting dtor,
 // slot 2) and null out the pointer. The double null-check is MWCC's `delete`
-// lowering for this class (same shape as func_8025D9C4's mLayout delete).
+// lowering for this class (same shape as KizunagramTerm's mLayout delete).
 extern "C" void __declspec(noinline) KizunaCurDestroyLayout(CPcKizunaCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
@@ -107,7 +107,7 @@ void KizunagramDraw(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-extern "C" void func_8025D9C4(CPcKizunagram* self) {
+extern "C" void KizunagramTerm(CPcKizunagram* self) {
     closeFileHandle(&self->mFileHandle);
     self->mStateByte1 = 0;
     KizunaCurDestroyLayout((CPcKizunaCur*)self->mKizunaCur);
@@ -192,29 +192,29 @@ void KizunagramClose(CPcKizunagram* self) {
 
 void KizunagramCursorUp(CPcKizunagram* self) {
     KizunagramStepRow(self, 1);
-    func_8025E4A4(self);
-    func_8025DCFC(self);
+    KizunagramPlaceCursor(self);
+    KizunagramRefreshRows(self);
     playUISound__FUl(1);
 }
 
 void KizunagramCursorDown(CPcKizunagram* self) {
     KizunagramStepRow(self, 0);
-    func_8025E4A4(self);
-    func_8025DCFC(self);
+    KizunagramPlaceCursor(self);
+    KizunagramRefreshRows(self);
     playUISound__FUl(1);
 }
 
 void KizunagramCursorPageUp(CPcKizunagram* self) {
     KizunagramStepRow(self, 1);
-    func_8025E4A4(self);
-    func_8025DCFC(self);
+    KizunagramPlaceCursor(self);
+    KizunagramRefreshRows(self);
     playUISound__FUl(1);
 }
 
 void KizunagramCursorPageDown(CPcKizunagram* self) {
     KizunagramStepRow(self, 0);
-    func_8025E4A4(self);
-    func_8025DCFC(self);
+    KizunagramPlaceCursor(self);
+    KizunagramRefreshRows(self);
     playUISound__FUl(1);
 }
 
@@ -222,7 +222,7 @@ extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self
     if (advanceAnimTransform(self->mAnimTransform, lbl_eu_8066887C) == 0) return;
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
-    func_8025E4A4(self);
+    KizunagramPlaceCursor(self);
     setPaneVisible(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
                       ->FindPaneByName(lbl_eu_8050D868 + 0x50, true),
                   1);
@@ -260,8 +260,8 @@ extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self
 // These three are large retail functions (0x100/0xc8/0x3dc) not yet
 // implemented here; noinline keeps callers emitting real bl instructions, and
 // extern "C" keeps the unmangled retail symbol names.
-// func_8025DCFC: refresh all 6 affinity rows for the current character.
-extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
+// KizunagramRefreshRows: refresh all 6 affinity rows for the current character.
+extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) {
     void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     u8 count = (u8)Bdat_GetMaxRow_B1EC(table);
     CtrlRemote_TouchBitByArg(0x20);
@@ -287,7 +287,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 u8 lb8;
                 lb9 = 0;
                 lb8 = 0;
-                func_8013AB0C(&lb9, &lb8, rnd);
+                FetchRelatePair(&lb9, &lb8, rnd);
                 int r21 = 0;
                 if (KizunagramCheckMappedRowValid(self, table, lb9) != 0 && KizunagramCheckMappedRowValid(self, table, lb8) != 0) {
                     r21 = 1;
@@ -299,7 +299,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 if (r21 != 0) {
                     u32 tex = (u32)self->mArcRes->GetResource(
                         (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
-                    if (tex != 0) func_80137F88(p, tex);
+                    if (tex != 0) PaneSetTexPalette(p, tex);
                 }
                 char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
@@ -333,12 +333,12 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             }
         }
     }
-    func_8025E0D8(self);
+    KizunagramBuildRowLookup(self);
 }
 
 // Speed-style allocation: retail keeps nine values in nonvolatiles across
 // the BDAT calls (i=r30, count/e8=r29, base=r28, table=r27, k=r26).
-void func_8025E0D8(CPcKizunagram* self) {
+void KizunagramBuildRowLookup(CPcKizunagram* self) {
     // Declaration order drives MWCC's descending nonvolatile coloring
     // (retail: i=r30, count=r29, base=r28, table=r27).
     u8 i;
@@ -380,7 +380,7 @@ void func_8025E0D8(CPcKizunagram* self) {
             s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
-        if (tex1 != 0) func_80137F88(pane, tex1);
+        if (tex1 != 0) PaneSetTexPalette(pane, tex1);
 
         char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         const char* s2;
@@ -394,7 +394,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, s2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-            func_80137F88(pane2, tex2);
+            PaneSetTexPalette(pane2, tex2);
             if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
@@ -468,7 +468,7 @@ extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg) {
 }
 
 // Target a text pane by name, then move the cursor so it sits over the row
-void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
+void __declspec(noinline) KizunagramPlaceCursor(CPcKizunagram* self) {
     char* path =
         (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
     nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(path, true);
@@ -478,7 +478,7 @@ void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
     // Word-wise temp copy: retail moves the 12 bytes as integers (lwz/stw),
     // not through the FP registers.
     u32 tmp[3];
-    func_80137924(&pos, pane1, pane2, self->mLayout->GetRootPane());
+    ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout->GetRootPane());
     tmp[0] = *(u32*)&pos.x;
     tmp[1] = *(u32*)&pos.y;
     tmp[2] = *(u32*)&pos.z;
@@ -490,7 +490,7 @@ extern "C" void __declspec(noinline) KizunagramPulseRise(CPcKizunagram* self) {
     if (self->mFloat48 >= lbl_eu_80668890) {
         self->mByte44 = 1;
         self->mFloat48 = lbl_eu_80668880;
-        func_8025E5E4(self, 1);
+        KizunagramUpdateMoodIcons(self, 1);
     }
 }
 
@@ -499,11 +499,11 @@ extern "C" void __declspec(noinline) KizunagramPulseFall(CPcKizunagram* self) {
     if (self->mFloat48 >= lbl_eu_80668894) {
         self->mByte44 = 0;
         self->mFloat48 = lbl_eu_80668880;
-        func_8025E5E4(self, 0);
+        KizunagramUpdateMoodIcons(self, 0);
     }
 }
 
-extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
+extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
     // Declaration order nudges MWCC's nonvolatile coloring toward retail
     // (base, count, i, k, table ascending); id-before-val flips their pair.
     u8 count;
@@ -549,7 +549,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
             }
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
-        if (tex1 != 0) func_80137F88(pane, tex1);
+        if (tex1 != 0) PaneSetTexPalette(pane, tex1);
 
         // Second panel: build its resource name from a value-dependent format.
         // Each range chooses a distinct format string; the val>=0x2711 range
@@ -574,7 +574,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, buf2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
-            func_80137F88(pane2, tex2);
+            PaneSetTexPalette(pane2, tex2);
             if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
@@ -644,7 +644,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         CDeviceFontVtblView* font =
             (CDeviceFontVtblView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = font->vf7();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
         CUICfManager_getPackedFont9C();
 
         mLayout->SetAnimationEnable(mAnimTransform, true);
@@ -667,7 +667,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
 
         mIsHidden = 1;
         mStateByte1 = 1;
-        func_8025DCFC(this);
+        KizunagramRefreshRows(this);
         mFileHandle = 0;
         mMemRegion.validateHeap();
         return 1;
@@ -717,7 +717,7 @@ extern "C" void KizunagramPackChart(CPcKizunaCompact* dst, CPcKizunagramBig* src
 
 // Invert KizunagramPackChart: rebuild each 0xC4 slot from its compact 0xD form.
 // Retail signature is (src=compact, dst=big) - r3 holds the compact struct.
-extern "C" void func_8025ECE4(CPcKizunaCompact* src, CPcKizunagramBig* dst) {
+extern "C" void KizunagramUnpackChart(CPcKizunaCompact* src, CPcKizunagramBig* dst) {
     dst->field_0x89C = src->field_0xA8;
     dst->field_0x884 = src->field_0x90;
     memcpy(dst->data888, src->data94, 0x14);
@@ -785,11 +785,11 @@ extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self) {
 void KizunagramSetActiveSlot(CPcKizunagramBig* self, int r4) {
     if (self->field_0x89C != r4) {
         self->field_0x89C = r4;
-        func_8025EE94(self);
+        KizunagramRebuildSlotList(self);
     }
 }
 
-extern "C" void func_8025EE94(CPcKizunagramBig* self) {
+extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self) {
     // Hoisted before the outer pass: both stay live across the memset call,
     // forcing them into nonvolatile registers like retail (r28/r27).
     int count = 0xb;
@@ -895,10 +895,10 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
     u16 newid = slot->data00.field04;
     u32* p2 = (u32*)(self->data870 + ((newid >> 3) & 0x1FFFFFF8));
     *p2 |= (1u << (newid & 0x1f));
-    func_8025F114(self, &slot->data00);
+    KizunagramPersistSlotEntry(self, &slot->data00);
 }
 
-// Persist an affinity entry (func_8025F114). If the entry's id is not yet in
+// Persist an affinity entry (KizunagramPersistSlotEntry). If the entry's id is not yet in
 // the persistence bitmap, set its bit and stop. Otherwise, when the entry is
 // flagged for list insertion (byte14 bit 1), link it into the doubly-linked
 // list that shares its id, inserting before the list head.
@@ -911,7 +911,7 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
 #pragma push
 #pragma optimize_for_size off
 
-extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry) {
+extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry) {
     u32 id = entry->field04;
     u32 bit = 1u << (id & 0x1f);
     u32 word = *(u32*)(self->data870 + ((id >> 3) & ~3u));
@@ -1035,7 +1035,7 @@ extern "C" __declspec(noinline) CPcKizunaSlotEntry* KizunaEntryFindListHead(CPcK
 // allocation); disable the unit's size bias for this function.
 #pragma push
 #pragma optimize_for_size off
-extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
+extern "C" void KizunagramStoreChartEntry(CPcKizunaChart* self, int a, int b, int value) {
     u32 off = a * 0xC4;
     u32 sub = b << 5;
     CPcKizunagramBig* big = (CPcKizunagramBig*)self;
@@ -1100,12 +1100,12 @@ searchDone:
     dst->field10 = (float)c4;
     u8 c5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     pos->byte14 |= c5;
-    func_8025F114(big, (CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20));
+    KizunagramPersistSlotEntry(big, (CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20));
 }
 #pragma pop
 
-// func_8025F528: same (re)load as func_8025F2E8 on the total chart.
-extern "C" void func_8025F528(CPcKizunaChart* self, int a, int b, int value) {
+// KizunagramStoreTotalEntry: same (re)load as KizunagramStoreChartEntry on the total chart.
+extern "C" void KizunagramStoreTotalEntry(CPcKizunaChart* self, int a, int b, int value) {
     CPcKizunaSlotEntry* entry = &self->searchSlots[a].data00 + b;
     CPcKizunaSlotEntry* nxt = entry->pField18;
     u16 id = entry->field04;
@@ -1158,16 +1158,16 @@ searchDone:
     entry->field10 = (float)(u8)v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     pos->byte14 |= (u8)v5;
-    func_8025F114((CPcKizunagramBig*)self, entry);
+    KizunagramPersistSlotEntry((CPcKizunagramBig*)self, entry);
 }
 
-// func_8025F768: same (re)load as func_8025F2E8, but on the per-character
+// KizunagramStoreWorkEntry: same (re)load as KizunagramStoreChartEntry, but on the per-character
 // working copy, which sits 0x3D4 bytes past the matching total-chart position
 // (union view). Retail keeps nine values in nonvolatiles across the BDAT
 // calls (speed-style allocation); disable the unit's size bias here too.
 #pragma push
 #pragma optimize_for_size off
-extern "C" void func_8025F768(CPcKizunaChart* self, int a, int b, int value) {
+extern "C" void KizunagramStoreWorkEntry(CPcKizunaChart* self, int a, int b, int value) {
     u32 off = a * 0xC4;
     u32 sub = b << 5;
     CPcKizunagramBig* big = (CPcKizunagramBig*)self;
@@ -1233,7 +1233,7 @@ searchDone:
     ((CPcKizunaWorkEntryPos*)((u8*)big + off + b * 0x20))->entry.field10 = (float)*(u8*)&v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     wq->entry.byte14 |= *(u8*)&v5;
-    func_8025F114(big, (CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4));
+    KizunagramPersistSlotEntry(big, (CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4));
 }
 #pragma pop
 
@@ -1242,7 +1242,7 @@ searchDone:
 // -O4,s stmw/helpers the unit default produces for this function.
 #pragma optimize_for_size off
 #pragma use_lmw_stmw off
-extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b) {
+extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b) {
     // Retail keeps the total-chart position (self + a*0xC4 + b*0x20) as the
     // base register and reads the working-copy entry at +0x3D4 displacements.
     u32 off = a * 0xC4;

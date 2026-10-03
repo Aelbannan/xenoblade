@@ -153,7 +153,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Root-pane font bind (retail reloc is the literal unmangled name).
-extern "C" void func_8013676C(void*, u32);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
 // BDAT field reader (retail reloc is the literal unmangled name).
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 

@@ -95,10 +95,11 @@ extern char lbl_eu_80539E48[];
 // Null pointer-to-member-function constant (3 words, copied into +0x3C..0x53).
 extern u32 __ptmf_null[3];
 
-// Battle-chain resource-name table: region name at +0x00, layout name at
-// +0x11, anim names at +0x2a/+0x46/+0x64/+0x87/+0xaa, pane names at
-// +0xdc..0x133.
-extern char lbl_eu_8051088C[];
+// Battle-chain resource-name strings: the layout region name and the
+// resource-name table (region at +0x00, layout at +0x11, anims at
+// +0x2a/+0x46/+0x64/+0x87/+0xaa, panes at +0xdc..0x133).
+extern const char lbl_eu_80510878[];
+extern const char lbl_eu_8051088C[];
 // Anim-frame reset constant (sdata2 float pool).
 extern const f32 lbl_eu_80668CB0;
 // Anim "finished" threshold passed to advanceAnimTransform / AnimRewindFrame.
@@ -202,7 +203,7 @@ struct CArtsSelectStateView {
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-void func_80137CD4(void*, const char*, int, u32);
+void PaneSetVtxColorPairsByName(void*, const char*, int, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void tickChainCounter(CMenuBattleChain* self);
 void applyChainColorScheme(CMenuBattleChain* self);

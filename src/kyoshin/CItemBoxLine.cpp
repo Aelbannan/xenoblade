@@ -22,22 +22,22 @@
 #include "monolib/work/CEventFile.hpp"
 
 // Tab entry accessors (retail symbols are plain func_XXXX names).
-u8 func_801EF034(const CIBLTabCur* self, unsigned int index);
+u8 ItemBoxGetTab(const CIBLTabCur* self, unsigned int index);
 u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
 extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7);
 u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
 u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
-void func_801F1E64(CItemBoxLine* self, u32 itemData);
-void func_801F20F0(CItemBoxLine* self, u32 itemData);
-void func_801F2298(CItemBoxLine* self, u32 itemData);
-int func_801F2880(u32 unused, u32 key);
+void ItemBoxLine_FormatGemName(CItemBoxLine* self, u32 itemData);
+void ItemBoxLine_ShowPageTabs(CItemBoxLine* self, u32 itemData);
+void ItemBoxLine_FormatKindDName(CItemBoxLine* self, u32 itemData);
+int ItemBoxLine_ProbeAvailability(u32 unused, u32 key);
 
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // ============================================================================
 // ItemBoxLine_GetSelectReady: busy-guard chain - only read the selector byte when every
@@ -81,8 +81,8 @@ void ItemBoxLine_RefreshTabSelect(void* self) {
     *(short*)(p + 0x38c) = -1;
     *(short*)(p + 0x38e) = 0;
     ItemBoxLine_RefreshLineRows(self);
-    func_801F0030(self);
-    func_801F0488(self);
+    ItemBoxLine_RefreshTabPanes(self);
+    ItemBoxLine_RefreshPageList(self);
     CScrollBar_PlaceThumb(p + 0x310, *(unsigned short*)(p + 0x38e));
     playUISound__FUl(2);
 }
@@ -91,7 +91,7 @@ u8 ItemBoxLine_IsReadyFlag(void* self) { return static_cast<CItemBoxLine*>(self)
 
 // ============================================================================
 // ItemBoxLine_CopyTabEntry: copy a 12-byte tab entry. extern "C" + noinline: the retail
-// name is unmangled and func_801EBAD4's calls are external relocs (see the
+// name is unmangled and ItemBoxLine_InitTabFormat's calls are external relocs (see the
 // ItemBoxLine_InitTabEntry stub note).
 // ============================================================================
 extern "C" __declspec(noinline) void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src) {
@@ -102,13 +102,13 @@ extern "C" __declspec(noinline) void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest
 }
 
 // ============================================================================
-// func_801EBC00: (re)build the tab list. Clears the entries, then either probes
+// ItemBoxLine_BuildTabEntries: (re)build the tab list. Clears the entries, then either probes
 // the item-name tables per tab (field93 != 1) or walks the two-slot name tables
 // (field93 == 1), appending each hit as a tab entry with its availability flags
 // (f8 from the page-count overflow, f9 from the kind-owner lookups). The
 // definition inherits C linkage from the header's extern "C" declaration.
 // ============================================================================
-void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
+void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
     ml::FixStr<32> str;
     self->count = 0;
     self->field92 = arg2;
@@ -127,10 +127,10 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
             entry->f0 = result;
-            func_801393CC(result);
+            LookupItemTypeTable(result);
             BdatGetItemType(result);
             BdatGetItemId(result);
-            entry->f4 = func_801EC9E0(self, result);
+            entry->f4 = ItemBoxLine_CalcCountKey(self, result);
             if (entry->f4 > cur) entry->f8 = 1;
             if (arg4 != 0) {
                 if (self->field92 == 0xd) {
@@ -155,7 +155,7 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     if (self->field92 != 2) {
                         u8 v = (u8)BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
                                                  BdatGetItemId(result));
-                        u32 base = (u32)func_8009EC9C(arg4) + 0x3534;
+                        u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (v == 3) {
                             if (Counter_TestBit(base, 0x85) == 0) entry->f9 = 0;
                         } else if (v == 2) {
@@ -196,10 +196,10 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
             entry->f0 = result;
-            func_801393CC(result);
+            LookupItemTypeTable(result);
             BdatGetItemType(result);
             BdatGetItemId(result);
-            entry->f4 = func_801EC9E0(self, result);
+            entry->f4 = ItemBoxLine_CalcCountKey(self, result);
             if (arg4 != 0) {
                 if (self->field92 == 3) {
                     entry->f9 = 1;
@@ -220,7 +220,7 @@ void func_801EBC00(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                     if (self->field92 != 2) {
                         u8 w = (u8)BdatGetU8Direct(lbl_eu_806640F8, &lbl_eu_805071B0[0x26],
                                                  BdatGetItemId(result));
-                        u32 base = (u32)func_8009EC9C(arg4) + 0x3534;
+                        u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (w == 3) {
                             if (Counter_TestBit(base, 0x85) == 0) entry->f9 = 0;
                         } else if (w == 2) {
@@ -265,8 +265,8 @@ u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index) {
 }
 
 // ItemBoxLine_GetTabEntryReady: u8 at +0x9 (default 1)
-// noinline: retail calls this accessor out-of-line from func_801ED864/
-// func_801F0488; -ipa file would otherwise fold it into those callers.
+// noinline: retail calls this accessor out-of-line from ItemBoxLine_OpenLine/
+// ItemBoxLine_RefreshPageList; -ipa file would otherwise fold it into those callers.
 __declspec(noinline) u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f9;
@@ -311,9 +311,9 @@ extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
 #pragma optimize_for_size off
 
 // ============================================================================
-// func_801EF034: byte at this+0xA8, index bounded to a 12-entry table
+// ItemBoxGetTab: byte at this+0xA8, index bounded to a 12-entry table
 // ============================================================================
-u8 func_801EF034(const CIBLTabCur* self, unsigned int index) {
+u8 ItemBoxGetTab(const CIBLTabCur* self, unsigned int index) {
     if (index < 12u) {
         return self->unkA8[index];
     }
@@ -335,24 +335,24 @@ void ItemBoxLine_ResetTabBytes(CItemBoxLine* self) {
 // ============================================================================
 ml::FixStr<32>* ItemBoxLine_FormatTabEntryName(CIBLTabFormat* self, unsigned int index) {
     if (index < self->count) {
-        self->str94.format(&lbl_eu_805071B0[0x57], func_801394D4(self->entries[index].f0));
+        self->str94.format(&lbl_eu_805071B0[0x57], BuildItemNameStr(self->entries[index].f0));
         return &self->str94;
     }
     return 0;
 }
 
 // ============================================================================
-// func_801EC438
+// ItemBoxLine_FormatDisplayName
 // ============================================================================
 // ============================================================================
-// func_801EC438: build the tab entry's display name into the trailing
+// ItemBoxLine_FormatDisplayName: build the tab entry's display name into the trailing
 // FixStr<128> buffer (+0xB8) and return it. Selector 3 composes a base name
 // from the kind-owner tables and then rewrites "$1"/"$2" placeholders in
 // place from per-kind name parts (Shift-JIS aware: lead bytes 0x81-0x9F /
 // 0xE0-0xEF advance by 2); any other selector resolves the display name
 // through the kind-owner tables directly.
 // ============================================================================
-extern "C" __declspec(noinline) char* func_801EC438(CIBLTabFull* self, u16 index) {
+extern "C" __declspec(noinline) char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
     if (index >= self->count) return NULL;
     u16 f0 = self->entries[index].f0;
     if (f0 == 0) return NULL;
@@ -428,10 +428,10 @@ extern "C" __declspec(noinline) char* func_801EC438(CIBLTabFull* self, u16 index
     return &self->strB8.mString[0];
 }
 
-void func_801EC808(CIBLTabFull* self, u32 index, u32 count) {
+void ItemBoxLine_AllocEntryStock(CIBLTabFull* self, u32 index, u32 count) {
     if (index >= self->count) return;
     CIBLTabEntry* entry = &self->entries[index];
-    func_801393CC(entry->f0);
+    LookupItemTypeTable(entry->f0);
     BdatGetItemType(entry->f0);
     BdatGetItemId(entry->f0);
     if (self->field92 != 0xd) {
@@ -445,7 +445,7 @@ void func_801EC808(CIBLTabFull* self, u32 index, u32 count) {
 }
 
 // ============================================================================
-// func_801EC8D8: name-dispatch lookup. Bounds-check the tab entry, then by the
+// ItemBoxLine_ProbeNameSlot: name-dispatch lookup. Bounds-check the tab entry, then by the
 // selector byte search the kind-owner table (lbl_eu_806640F4 for selector 2,
 // lbl_eu_806640F8 otherwise) for the entry's category key: probe slot names
 // "%s%u" until BdatGetU16Direct finds a match (0xFD), exhaust the count (0xFE),
@@ -453,7 +453,7 @@ void func_801EC808(CIBLTabFull* self, u32 index, u32 count) {
 // The goto chain reproduces retail's test ladder: the search body sits in the
 // fall-through after the tests, with both ret-0 tails kept separate.
 // ============================================================================
-int func_801EC8D8(CIBLTabFull* self, u32 index) {
+int ItemBoxLine_ProbeNameSlot(CIBLTabFull* self, u32 index) {
     u16 f0;
     u16 v;
     u8 sel;
@@ -490,8 +490,8 @@ ret0:
 }
 
 // ============================================================================
-// func_801EC9E0: per-item display-count key (same shape as the equip item
-// box's func_80283B60). Category band selects the computation - cat 3 scales
+// ItemBoxLine_CalcCountKey: per-item display-count key (same shape as the equip item
+// box's calcEIBCountKey). Category band selects the computation - cat 3 scales
 // the bdat count by a per-item float record, cats 2-8 accumulate a per-count
 // increment from two sdata2 floats, everything else passes the raw count
 // through. Result is returned *10.
@@ -499,7 +499,7 @@ ret0:
 extern "C" u32 __cvt_fp2unsigned(double);
 extern "C" void NumSel_ShowPaneA_B218(void*);
 extern const float lbl_eu_80668118;
-/* 24-byte float record copied off lbl_eu_8050715C by func_801EC9E0 and read
+/* 24-byte float record copied off lbl_eu_8050715C by ItemBoxLine_CalcCountKey and read
    back indexed by the owner lookup byte (mask allows past the end on
    purpose, same as the equip item box's F32Record idiom). */
 union CIBLF32Rec {
@@ -509,8 +509,8 @@ union CIBLF32Rec {
 extern const CIBLF32Rec lbl_eu_8050715C;
 #pragma push
 #pragma optimize_for_size on
-extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
-    u32 itemId = func_801393CC(itemData);
+extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
+    u32 itemId = LookupItemTypeTable(itemData);
     u32 kind = BdatGetItemType(itemData);
     u16 cat = BdatGetItemId(itemData);
     char* pool = lbl_eu_805071B0;
@@ -538,11 +538,11 @@ extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
 #pragma pop
 
 // ============================================================================
-// func_801ECC10: build the item-box line layout - load the layout arc, bind
+// ItemBoxLine_BuildLineLayout: build the item-box line layout - load the layout arc, bind
 // the two animation transforms, stop all running animations, then run the
 // cursor deactivation tail.
 // ============================================================================
-void func_801ECC10(CItemBoxLine* self) {
+void ItemBoxLine_BuildLineLayout(CItemBoxLine* self) {
     char* pool = lbl_eu_805071B0;
     buildLayout(&self->field08, self->field04, pool + 0x121);
     bindLayoutAnimTransform(self->field08, &self->field0C, self->field04, pool + 0x139);
@@ -708,7 +708,7 @@ void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     ((CBaseCur*)&self->mCur88)->cleanup();
     ((CBaseCur*)&self->mCurA0)->cleanup();
     ((CBaseCur*)&self->mCurB8)->cleanup();
-    func_801E13F8(reinterpret_cast<CItemBoxInfo2*>(&self->mInfo2D0[0]));
+    closeItemBox2(reinterpret_cast<CItemBoxInfo2*>(&self->mInfo2D0[0]));
     NumSel_Teardown_AF9C(&self->mNumSel);
     CScrollBar_Teardown(reinterpret_cast<CScrollBar*>(&self->mScrollBar310[0]));
     sysWinTermLayout(&self->mSysWin);
@@ -731,7 +731,7 @@ u8 ItemBoxLine_IsBusy(CItemBoxLine* self) {
 
 #pragma push
 #pragma optimize_for_size on
-void func_801ED864(CItemBoxLine* self) {
+void ItemBoxLine_OpenLine(CItemBoxLine* self) {
     if (self->field50 != 0) return;
     self->field50 = 1;
     self->field4C = 1;
@@ -743,7 +743,7 @@ void func_801ED864(CItemBoxLine* self) {
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
     int f9 = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
-    func_801E14DC(&self->mInfo2D0[0], (u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, self->field39F, f9);
+    renderItemBox2ByKind(&self->mInfo2D0[0], (u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, self->field39F, f9);
     setItemBox2NamedText(&self->mInfo2D0[0], 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
     ItemBoxLine_SetInfo2Item(self, (u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
@@ -784,13 +784,13 @@ void ItemBoxLine_TabNext(CItemBoxLine* self) {
     }
     self->unk38E = 0;
     ItemBoxLine_RefreshTabLabels((void*)self, 0);
-    func_801EFFC4((void*)self);
+    ItemBoxLine_RefreshLineState((void*)self);
     ItemBoxLine_RefreshLineRows((void*)self);
     playUISound__FUl(0x70);
     CScrollBar_UpdateThumb(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
-void func_801EDB80(CItemBoxLine* self) {
+void ItemBoxLine_TabPrev(CItemBoxLine* self) {
     if (NumSel_GetActiveFlag_B020(&self->mNumSel)) return;
     self->field6D = self->field6D - 1;
     if ((s8)self->field6D < 0) {
@@ -815,14 +815,14 @@ void func_801EDB80(CItemBoxLine* self) {
     }
     self->unk38E = 0;
     ItemBoxLine_RefreshTabLabels((void*)self, 1);
-    func_801EFFC4((void*)self);
+    ItemBoxLine_RefreshLineState((void*)self);
     ItemBoxLine_RefreshLineRows((void*)self);
     playUISound__FUl(0x70);
     CScrollBar_UpdateThumb(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
 // ============================================================================
-// func_801EDC94: tab page-up / cursor-back interaction - the mirror of
+// ItemBoxLine_CursorPageBack: tab page-up / cursor-back interaction - the mirror of
 // ItemBoxLine_CursorPageDown. Syswin overlay open (and nav state 9, active): step the
 // overlay selection byte down (wrapping 0 -> 1) and push the syswin selection
 // buffer through the line cursor's vtable[2]; tab cursor active: scan the
@@ -833,7 +833,7 @@ void func_801EDB80(CItemBoxLine* self) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EDC94(CItemBoxLine* self) {
+void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) {
         if (self->field50 == 9) {
             return;
@@ -869,7 +869,7 @@ void func_801EDC94(CItemBoxLine* self) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
         CIBLTab* tabs = &self->unk3A4;
-        u16 lim = func_801EC284((void*)tabs, idx);
+        u16 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         self->field392 += 1;
         if (!((u16)self->field392 > lim)) self->field392 = 1;
         NumSel_ShowPaneA_B218(&self->mNumSel);
@@ -899,8 +899,8 @@ void func_801EDC94(CItemBoxLine* self) {
             }
         }
         ItemBoxLine_RefreshLineRows(self);
-        func_801F0030(self);
-        func_801F0488(self);
+        ItemBoxLine_RefreshTabPanes(self);
+        ItemBoxLine_RefreshPageList(self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     }
     playUISound__FUl(1);
@@ -953,7 +953,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
         CIBLTab* tabs = &self->unk3A4;
-        s16 lim = (s16)func_801EC284((void*)tabs, idx);
+        s16 lim = (s16)ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         self->field392 -= 1;
         if ((s16)self->field392 < 1) self->field392 = lim;
         NumSel_ShowPaneB_B314(&self->mNumSel);
@@ -987,8 +987,8 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
             }
         }
         ItemBoxLine_RefreshLineRows(self);
-        func_801F0030(self);
-        func_801F0488(self);
+        ItemBoxLine_RefreshTabPanes(self);
+        ItemBoxLine_RefreshPageList(self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     }
     playUISound__FUl(1);
@@ -1026,7 +1026,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
         CIBLTab* tabs = &self->unk3A4;
-        if (func_801EC284((void*)tabs, idx) != 0) {
+        if (ItemBoxLine_ProbePageSlot((void*)tabs, idx) != 0) {
             self->field392 -= 10;
             if (self->field392 < 1) self->field392 = 1;
         }
@@ -1035,7 +1035,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         playUISound__FUl(1);
     } else {
         if (self->unk38C == -1) {
-            func_801EDB80((void*)self);
+            ItemBoxLine_TabPrev((void*)self);
             return;
         }
         if (self->unk3A4.count >= 7) {
@@ -1050,8 +1050,8 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
             self->unk38E = 0;
         }
         ItemBoxLine_RefreshLineRows((void*)self);
-        func_801F0030((void*)self);
-        func_801F0488((void*)self);
+        ItemBoxLine_RefreshTabPanes((void*)self);
+        ItemBoxLine_RefreshPageList((void*)self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
         playUISound__FUl(1);
     }
@@ -1090,7 +1090,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
         CIBLTab* tabs = &self->unk3A4;
-        u8 lim = func_801EC284((void*)tabs, idx);
+        u8 lim = ItemBoxLine_ProbePageSlot((void*)tabs, idx);
         if (lim != 0) {
             self->field392 += 10;
             if ((u32)self->field392 > (u32)lim) self->field392 = (s16)lim;
@@ -1119,8 +1119,8 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         if ((s16)(count - 1) < 0) self->unk38C = 0;
     }
     ItemBoxLine_RefreshLineRows((void*)self);
-    func_801F0030((void*)self);
-    func_801F0488((void*)self);
+    ItemBoxLine_RefreshTabPanes((void*)self);
+    ItemBoxLine_RefreshPageList((void*)self);
     CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     playUISound__FUl(1);
 }
@@ -1161,7 +1161,7 @@ void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801EE788: item-box line input/nav state machine. With the syswin
+// ItemBoxLine_ResolveEntry: item-box line input/nav state machine. With the syswin
 // overlay open: commit the overlay selection once state reaches 9+. Otherwise
 // ignore while no tab is selected (-1) or the cursor hint is armed; when the
 // num-select is confirming (field390==1 + busy + state 7) rebuild the tab list
@@ -1172,7 +1172,7 @@ void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EE788(CItemBoxLine* self) {
+void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
     char* pool = lbl_eu_805071B0;
     if (CSysWin_getUnk34(&self->mSysWin)) {
         if (CSysWin_isActive(&self->mSysWin)) {
@@ -1191,13 +1191,13 @@ void func_801EE788(CItemBoxLine* self) {
         // Num-select confirm: rebuild the tab list for the confirmed entry.
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         if (self->field50 != 7) return;
-        func_801EC808(reinterpret_cast<CIBLTabFull*>(tabs), key, (u8)self->field392);
+        ItemBoxLine_AllocEntryStock(reinterpret_cast<CIBLTabFull*>(tabs), key, (u8)self->field392);
         u32 v = GetCollectedFlagByte(self->field39F);
-        func_801EBC00(tabs, self->tabEntries[(s8)self->field6D], self->field394, (u8)v);
-        func_801EFFC4(self);
+        ItemBoxLine_BuildTabEntries(tabs, self->tabEntries[(s8)self->field6D], self->field394, (u8)v);
+        ItemBoxLine_RefreshLineState(self);
         ItemBoxLine_RebuildTabList(self);
-        func_801F0030(self);
-        func_801F0488(self);
+        ItemBoxLine_RefreshTabPanes(self);
+        ItemBoxLine_RefreshPageList(self);
         NumSel_EnterState3Open_B178(&self->mNumSel);
         self->field50 = 8;
         playUISound__FUl(0x2f);
@@ -1208,7 +1208,7 @@ void func_801EE788(CItemBoxLine* self) {
         playUISound__FUl(5);
         return;
     }
-    if (func_801EC284(reinterpret_cast<CIBLTabFull*>(tabs), key) == 0) {
+    if (ItemBoxLine_ProbePageSlot(reinterpret_cast<CIBLTabFull*>(tabs), key) == 0) {
         // No page data: open the syswin detail pane with kind-range text.
         char* text = NULL;
         u16 f0 = ItemBoxLine_GetTabEntryItem(tabs, key);
@@ -1228,11 +1228,11 @@ void func_801EE788(CItemBoxLine* self) {
         playUISound__FUl(5);
         return;
     }
-    // Armed page: name-format tabs probe availability through func_801F2880,
+    // Armed page: name-format tabs probe availability through ItemBoxLine_ProbeAvailability,
     // other kinds go through the character-data lookups below.
     if (self->tabEntries[(s8)self->field6D] == 0xd) {
         u16 f0d = ItemBoxLine_GetTabEntryItem(tabs, key);
-        func_801F2880((u32)self, f0d);
+        ItemBoxLine_ProbeAvailability((u32)self, f0d);
     }
     int unavailable = 0;
     char* text = NULL;
@@ -1273,13 +1273,13 @@ void func_801EE788(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801F0030: refresh the seven tab-slot panes. Build the twelve RGBA
+// ItemBoxLine_RefreshTabPanes: refresh the seven tab-slot panes. Build the twelve RGBA
 // palette entries, then for each slot: pick the lit/unlit color pair from the
 // palette by slot occupancy, refresh the pane texture/name/visibility, and for
 // named tabs bind the tab name + per-pane animation colors (alpha from the
-// func_80139658 animation vector) to the layout panes.
+// PaneMatGetS16QuadByName animation vector) to the layout panes.
 // ============================================================================
-void func_801F0030(CItemBoxLine* self) {
+void ItemBoxLine_RefreshTabPanes(CItemBoxLine* self) {
     CIBLTab* tabs = &self->unk3A4;
     GXColorS10 colors[12];
     setGXColorS10(&colors[0], 0xff, 0xff, 0xfa, 0);
@@ -1312,8 +1312,8 @@ void func_801F0030(CItemBoxLine* self) {
         ItemBoxLine_DrawTabRowText((void*)self, key, i);
         ItemBoxLine_DrawTabRowIcon((void*)self, key, i);
         u8 vis = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
-        func_801EFDF4((void*)self, i, vis);
-        func_801EF954((void*)self, key, (s8)func_801EC8D8((void*)tabs, idx), i);
+        ItemBoxLine_SetPaneVisible((void*)self, i, vis);
+        func_801EF954((void*)self, key, (s8)ItemBoxLine_ProbeNameSlot((void*)tabs, idx), i);
         if (key == 0) {
             char nameBuf2[0x20];
             sprintf(nameBuf2, pool + 0x39d, i + 1);
@@ -1325,9 +1325,9 @@ void func_801F0030(CItemBoxLine* self) {
             sprintf(nameBuf1, pool + 0x39d, i + 1);
             LayoutSetTextBoxFmtValue(self->field40, nameBuf1,
                           (char*)ItemBoxLine_FormatTabEntryName((void*)tabs, idx), 0);
-            FourShorts fs0 = func_80139658(self->field40, nameBuf1, 0);
+            FourShorts fs0 = PaneMatGetS16QuadByName(self->field40, nameBuf1, 0);
             FourShorts fs1 = fs0;
-            FourShorts fs2 = func_80139658(self->field40, nameBuf1, 1);
+            FourShorts fs2 = PaneMatGetS16QuadByName(self->field40, nameBuf1, 1);
             FourShorts fs3 = fs2;
             colors[8].a = fs1.d;
             colors[9].a = fs2.d;
@@ -1337,10 +1337,10 @@ void func_801F0030(CItemBoxLine* self) {
             char buf3[0x20];
             sprintf(buf3, pool + 0x3bb, count, name);
             sprintf(nameBuf1, pool + 0x3aa, i + 1);
-            func_80136A1C(self->field40, nameBuf1, buf3, 0);
-            FourShorts fs4 = func_80139658(self->field40, nameBuf1, 0);
+            LayoutSetTextBoxText(self->field40, nameBuf1, buf3, 0);
+            FourShorts fs4 = PaneMatGetS16QuadByName(self->field40, nameBuf1, 0);
             FourShorts fs5 = fs4;
-            FourShorts fs6 = func_80139658(self->field40, nameBuf1, 1);
+            FourShorts fs6 = PaneMatGetS16QuadByName(self->field40, nameBuf1, 1);
             FourShorts fs7 = fs6;
             colors[10].a = fs5.d;
             colors[11].a = fs6.d;
@@ -1371,7 +1371,7 @@ void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self) {
     u8 tmp[16];
     calcItemBox2PaneVec(tmp, self->mInfo2D0, self->field39F);
     ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
-    func_801EFFC4(static_cast<void*>(self));
+    ItemBoxLine_RefreshLineState(static_cast<void*>(self));
     playUISound__FUl(0xa);
 }
 
@@ -1391,12 +1391,12 @@ void ItemBoxLine_Info2SelectNext(void* self) {
     unsigned char tmp[16];
     calcItemBox2PaneVec(tmp, p + 0xd0, p[0x39f]);
     ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
-    func_801EFFC4(self);
+    ItemBoxLine_RefreshLineState(self);
     playUISound__FUl(0xa);
 }
 
 // ============================================================================
-// func_801EEDF8: item-box line syswin/tab interaction. When the tab cursor is
+// ItemBoxLine_ShowDetailWin: item-box line syswin/tab interaction. When the tab cursor is
 // active and the syswin overlay is open, advance the syswin; otherwise open
 // the detail window for the current page slot (name via the slot flag: kind-3
 // slots use the item-name provider, others the shared table). When the tab
@@ -1406,7 +1406,7 @@ void ItemBoxLine_Info2SelectNext(void* self) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EEDF8(CItemBoxLine* self) {
+void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
     if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) return;
     if (self->field3A0 != 0) {
         if (CSysWin_getUnk34(&self->mSysWin) != 0) {
@@ -1419,10 +1419,10 @@ void func_801EEDF8(CItemBoxLine* self) {
         u8 idx = (u8)(self->field3A2 + (s8)self->field3A1 * 4);
         u16 v = ArrayGet12(page->pageWords180, idx);
         if (v != 0) {
-            u8 bt = func_801EF034((const u8*)page, idx);
+            u8 bt = ItemBoxGetTab((const u8*)page, idx);
             u32 obj;
             if (bt == 3) {
-                obj = func_801D3C74(page, idx);
+                obj = formatItemBoxName(page, idx);
             } else {
                 obj = (u32)BdatTouchStringCell(&lbl_eu_805071B0[0x1f0], &lbl_eu_805071B0[0x1fa], (u16)v);
             }
@@ -1506,7 +1506,7 @@ void ItemBoxLine_EnterState1(CItemBoxLine* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field48, lbl_eu_80668114) == 0) return;
     self->field50 = 3;
     self->unk59 = 1;
-    func_801F0488(self);
+    ItemBoxLine_RefreshPageList(self);
     Cur_SetVisible(&self->mCur70, 1);
     Cur_SetVisible(&self->mCurB8, 1);
     u8 tmp[16];
@@ -1584,23 +1584,23 @@ void ItemBoxLine_CommitOverlayState(CItemBoxLine* self) {
 #pragma pop
 
 // ============================================================================
-// func_801EF518: refresh the tab list - re-register each tab entry with the
+// ItemBoxLine_CompactTabList: refresh the tab list - re-register each tab entry with the
 // layout, compact empty slots (bubble-shift), recount, re-register, then
 // refresh the line and its slot panes.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801EF518(CItemBoxLine* self) {
+extern "C" __declspec(noinline) void ItemBoxLine_CompactTabList(CItemBoxLine* self) {
     if (self->field40 == 0) return;
     if (self->field3C == 0) return;
     if (lbl_eu_80664648 == 0) return;
     if (lbl_eu_8066464C == 0) return;
     if (lbl_eu_80664650 == 0) return;
-    func_80139198(0);
+    BuildSlotItemLists(0);
     if (self->field390 == 2) self->unk3A4.field93 = 1;
     u8 i = 0;
     while (i < self->tabCount) {
-        func_801EBC00(&self->unk3A4, self->tabEntries[i], self->field394, 0);
+        ItemBoxLine_BuildTabEntries(&self->unk3A4, self->tabEntries[i], self->field394, 0);
         self->unk64[i] = (self->unk3A4.count != 0);
         i++;
     }
@@ -1625,11 +1625,11 @@ extern "C" __declspec(noinline) void func_801EF518(CItemBoxLine* self) {
     }
     i = 0;
     while (i < self->tabCount) {
-        func_801EBC00(&self->unk3A4, self->tabEntries[i], self->field394, 0);
+        ItemBoxLine_BuildTabEntries(&self->unk3A4, self->tabEntries[i], self->field394, 0);
         self->unk64[i] = (self->unk3A4.count != 0);
         i++;
     }
-    func_801EFFC4((void*)self);
+    ItemBoxLine_RefreshLineState((void*)self);
     ItemBoxLine_RebuildTabList((void*)self);
     self->field58 = 1;
 }
@@ -1718,11 +1718,11 @@ void func_801EF954(CItemBoxLine* self, u32 arg4, s8 arg5, u32 arg6) {
 #pragma pop
 
 // ============================================================================
-// func_801EFDF4: format the pane name (skipping the leading marker char of the
+// ItemBoxLine_SetPaneVisible: format the pane name (skipping the leading marker char of the
 // caller's string) into a temp buffer, look the pane up on the layout root,
 // and toggle its visibility from the caller's flag.
 // ============================================================================
-void func_801EFDF4(CItemBoxLine* self, const char* str, bool visible) {
+void ItemBoxLine_SetPaneVisible(CItemBoxLine* self, const char* str, bool visible) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805071B0[0x35d], str + 1);
     nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field40 + 0x10);
@@ -1734,7 +1734,7 @@ void func_801EFDF4(CItemBoxLine* self, const char* str, bool visible) {
 // ItemBoxLine_RebuildTabList: refresh the seven tab-slot panes (same shape as
 // ItemBoxLine_RefreshTabLabels), then, when the slot is unoccupied, bind a texture resource
 // (object A fallback path) onto the slot's pane name; finally dispatch the
-// slot entry through func_801EFB24. r25 keeps tabEntries[i] across the calls.
+// slot entry through ItemBoxLine_BindSlotTexture. r25 keeps tabEntries[i] across the calls.
 // ============================================================================
 void ItemBoxLine_RebuildTabList(CItemBoxLine* self) {
     for (u8 i = 0; i < 7; i++) {
@@ -1762,21 +1762,21 @@ void ItemBoxLine_RebuildTabList(CItemBoxLine* self) {
                 PaneSetTexPaletteByName(self->field40, nameB, tex);
             }
         }
-        func_801EFB24(self, entry, i);
+        ItemBoxLine_BindSlotTexture(self, entry, i);
     }
 }
 
 // ============================================================================
-// func_801EFB24: bind the per-slot tab texture and nameplate colour. Resolve
+// ItemBoxLine_BindSlotTexture: bind the per-slot tab texture and nameplate colour. Resolve
 // the texture name by slot kind (kinds 1..12 format a fixed pool string,
 // kind 0 uses the shared "timeg" fallback name directly), fetch the texture
 // through resource object A (falling back to B), bind it to the pane named
 // "%d"-style by index+1, and - unless the slot's occupancy byte is set -
 // push the default nameplate colour through the pane's colour-source virtual.
-// noinline: retail ItemBoxLine_RebuildTabList calls func_801EFB24 as an EXTERNAL reloc; the
+// noinline: retail ItemBoxLine_RebuildTabList calls ItemBoxLine_BindSlotTexture as an EXTERNAL reloc; the
 // body would otherwise be inlined away, dropping the call from the .o.
 // ============================================================================
-extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, u32 index) {
+extern "C" __declspec(noinline) void ItemBoxLine_BindSlotTexture(CItemBoxLine* self, u8 kind, u32 index) {
     const u32 tag = 0x74696d67;
     char buf[0x20];
     u32 tex;
@@ -1826,40 +1826,40 @@ extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, 
 }
 
 // ============================================================================
-// func_801EFFC4: refresh the item-box line - push the current tab entry (tab
+// ItemBoxLine_RefreshLineState: refresh the item-box line - push the current tab entry (tab
 // type byte, page id, selection cursor) into the tab layout, re-run the
 // focus/page refresh, then poll the info2 overlay state. The tab-buffer,
 // focus and page helpers are external retail symbols (same merged unit,
 // different retail objects), so they are called through their C-linkage
 // declarations to keep the relocs external.
 // ============================================================================
-u32 func_801EFFC4(CItemBoxLine* self) {
+u32 ItemBoxLine_RefreshLineState(CItemBoxLine* self) {
     u32 sel = GetCollectedFlagByte(self->field39F);
-    func_801EBC00(&self->unk3A4, self->tabEntries[(s8)self->field6D],
+    ItemBoxLine_BuildTabEntries(&self->unk3A4, self->tabEntries[(s8)self->field6D],
                   self->field394, (u8)sel);
-    func_801F0030((void*)self);
-    func_801F0488((void*)self);
+    ItemBoxLine_RefreshTabPanes((void*)self);
+    ItemBoxLine_RefreshPageList((void*)self);
     return getItemBox2State__FP13CItemBoxInfo2((unsigned char*)self + 0xd0);
 }
 
 // ============================================================================
-// func_801F0488: refresh the tab-line page list. Set the tab name overlay,
+// ItemBoxLine_RefreshPageList: refresh the tab-line page list. Set the tab name overlay,
 // then (when the info2 overlay is open) push the active tab entry into the
 // info2 state and rebuild the 12 page slots: copy the per-page word, flag and
 // position data from the page tables into the +0x180 page region.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F0488(CItemBoxLine* self) {
+void ItemBoxLine_RefreshPageList(CItemBoxLine* self) {
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
-    char* name = func_801EC438(reinterpret_cast<CIBLTabFull*>(tabs), idx);
+    char* name = ItemBoxLine_FormatDisplayName(reinterpret_cast<CIBLTabFull*>(tabs), idx);
     LayoutSetTextBoxFmtValue(self->field40, &lbl_eu_805071B0[0x3c0], name,
                   reinterpret_cast<u32>(self->field54));
     if (getItemBox2State__FP13CItemBoxInfo2(&self->mInfo2D0[0]) != 0) {
         u8 f9 = ItemBoxLine_GetTabEntryReady(reinterpret_cast<u8*>(tabs), idx);
         u16 f0 = ItemBoxLine_GetTabEntryItem(tabs, idx);
-        func_801E14DC(reinterpret_cast<u8*>(&self->mInfo2D0[0]), f0, 0,
+        renderItemBox2ByKind(reinterpret_cast<u8*>(&self->mInfo2D0[0]), f0, 0,
                       self->field39F, f9);
         char* tabName = reinterpret_cast<char*>(
             ItemBoxLine_FormatTabEntryName(reinterpret_cast<u8*>(tabs), idx));
@@ -1872,7 +1872,7 @@ void func_801F0488(CItemBoxLine* self) {
             u16 v = ArrayGet12(page->pageWords4E0, (u8)i);
             if (v != 0) {
                 page->pageWords180[(u8)i] = v;
-                page->pageFlags228[(u8)i] = func_801EF034(
+                page->pageFlags228[(u8)i] = ItemBoxGetTab(
                     reinterpret_cast<const u8*>(page->pageWords4E0), (u8)i);
                 u8 b594 = 0;
                 if ((u8)i < 12) {
@@ -1937,7 +1937,7 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
         nw4r::lyt::Pane* pane =
             self->field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
-        func_801375A0(&pos, pane);
+        AccumPaneWorldPos(&pos, pane);
         void* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= *(f32*)((u8*)refPane + 68);
@@ -1950,7 +1950,7 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
         nw4r::lyt::Pane* pane =
             self->field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
-        func_801375A0(&pos, pane);
+        AccumPaneWorldPos(&pos, pane);
         void* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= *(f32*)((u8*)refPane + 68);
@@ -2014,11 +2014,11 @@ void ItemBoxLine_ResetPageTables(CItemBoxLine* self, u32 itemData) {
 #pragma pop
 
 // ============================================================================
-// func_801F107C: show the item-slot panes, bind per-kind slot data (counts,
+// ItemBoxLine_ShowSlotCounts: show the item-slot panes, bind per-kind slot data (counts,
 // names, per-slot bytes) into the layout, accumulate a ratio from the slot-
 // entry lookup loop and refresh the pane colors.
 // ============================================================================
-void func_801F107C(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_ShowSlotCounts(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x443], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x44e], true), 1);
@@ -2056,10 +2056,10 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     int v23;
     int v22;
     if (BdatGetU8Direct(table, &lbl_eu_805071B0[0x5c5], kind) & 4) {
-        // retail reuses func_8009EC9C's r3 as the arg to CtrlObjectParam_GetArtsDataWord
-        u16 c1 = CtrlObjectParam_GetArtsDataWord(func_8009EC9C(1));
+        // retail reuses CtrlObjectParam_GetCharEntry's r3 as the arg to CtrlObjectParam_GetArtsDataWord
+        u16 c1 = CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(1));
         v23 = (int)(lbl_eu_8066812C * (float)(a * c1));
-        u16 c2 = CtrlObjectParam_GetArtsDataWord(func_8009EC9C(1));
+        u16 c2 = CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(1));
         v22 = (int)(lbl_eu_80668130 * (float)(b * c2));
         if ((u16)v23 >= 0x3e7) v23 = 0x3e7;
         if ((u16)v22 >= 0x3e7) v22 = 0x3e7;
@@ -2112,18 +2112,18 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x459], lbl_eu_806645D8, lbl_eu_806645E0);
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x47a], lbl_eu_806645E8, lbl_eu_806645F0);
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x485], lbl_eu_806645E8, lbl_eu_806645F0);
-    func_801F2434((void*)self, itemData);
+    ItemBoxLine_BuildPageData((void*)self, itemData);
 }
 
 
 // ============================================================================
-// func_801F183C: show the item-slot panes, bind the per-kind counter text into
+// ItemBoxLine_ShowSlotCounters: show the item-slot panes, bind the per-kind counter text into
 // the three slots, then pick the slot-name format strings via the kind selector
 // (a compare ladder plus a jump-table switch) and refresh the pane colors.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F183C(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_ShowSlotCounters(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x443], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x44e], true), 1);
@@ -2207,7 +2207,7 @@ selDone:
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x459], lbl_eu_806645E8, lbl_eu_806645F0);
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x47a], lbl_eu_806645D8, lbl_eu_806645E0);
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x485], lbl_eu_806645D8, lbl_eu_806645E0);
-    func_801F2434((void*)self, itemData);
+    ItemBoxLine_BuildPageData((void*)self, itemData);
 }
 #pragma pop
 
@@ -2241,35 +2241,35 @@ void ItemBoxLine_SetInfo2Item(CItemBoxLine* self, u32 itemData) {
     }
     switch ((int)(BdatGetItemType(itemData) & 0xff)) {
     case 2:
-        func_801F107C((void*)self, itemData);
+        ItemBoxLine_ShowSlotCounts((void*)self, itemData);
         break;
     case 4:
     case 5:
     case 6:
     case 7:
     case 8:
-        func_801F183C((void*)self, itemData);
+        ItemBoxLine_ShowSlotCounters((void*)self, itemData);
         break;
     case 3:
-        func_801F1E64((void*)self, itemData);
+        ItemBoxLine_FormatGemName((void*)self, itemData);
         break;
     case 0xa:
-        func_801F20F0((void*)self, itemData);
+        ItemBoxLine_ShowPageTabs((void*)self, itemData);
         break;
     case 0xd:
-        func_801F2298((void*)self, itemData);
+        ItemBoxLine_FormatKindDName((void*)self, itemData);
         break;
     }
 }
 #pragma pop
 
 // ============================================================================
-// func_801F20F0: show the page tab panes and fill the active item's name /
+// ItemBoxLine_ShowPageTabs: show the page tab panes and fill the active item's name /
 // category text into the syswin layout panes.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F20F0(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_ShowPageTabs(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x42b], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x561], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x56c], true), 1);
@@ -2292,7 +2292,7 @@ void func_801F20F0(CItemBoxLine* self, u32 itemData) {
 #pragma pop
 
 // ============================================================================
-// func_801F1E64: kind-3 item slot. Shows the five slot panes, resolves the
+// ItemBoxLine_FormatGemName: kind-3 item slot. Shows the five slot panes, resolves the
 // kind-3 display name via the EC owner table (index 30-(v-1)), looks up the
 // gem id (BdatGetU16Direct) and per-gem strings: id==1 pins the fixed "none"
 // string, otherwise the two D8-owner lookups fill the gem name / +21-indexed
@@ -2301,7 +2301,7 @@ void func_801F20F0(CItemBoxLine* self, u32 itemData) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F1E64(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_FormatGemName(CItemBoxLine* self, u32 itemData) {
     char* pool = lbl_eu_805071B0;
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(pool + 0x41f, true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(pool + 0x533, true), 1);
@@ -2331,7 +2331,7 @@ void func_801F1E64(CItemBoxLine* self, u32 itemData) {
     nw4r::lyt::Pane* ref =
         self->field40->GetRootPane()->FindPaneByName(pool2 + 0x3cc, true);
     nw4r::math::VEC3 pos;
-    func_80137924(&pos, anchor, ref, self->field40->GetRootPane());
+    ScalePaneWorldPos(&pos, anchor, ref, self->field40->GetRootPane());
     *(s16*)((u8*)self + 0x4f0) = cat;
     *((u8*)self + 0x590) = 9;
     nw4r::math::VEC3 pos2 = pos;
@@ -2341,7 +2341,7 @@ void func_801F1E64(CItemBoxLine* self, u32 itemData) {
 
 
 // ============================================================================
-// func_801F2298: kind-0xD item slot name. Shows the slot pane, resolves the
+// ItemBoxLine_FormatKindDName: kind-0xD item slot name. Shows the slot pane, resolves the
 // gem/ferron entry via the owner tables (entry = table + 73*kindIndex +
 // 2*nameIndex) and picks the display string: kind 1 requires byte +0xE8 set,
 // kinds 2/3 require bit 6 / bit 5 of byte +0xE9, each falling back to the
@@ -2349,7 +2349,7 @@ void func_801F1E64(CItemBoxLine* self, u32 itemData) {
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F2298(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_FormatKindDName(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x437], true), 1);
     u32 owner = (u32)lbl_eu_80664110;
     BdatGetItemType(itemData);
@@ -2358,7 +2358,7 @@ void func_801F2298(CItemBoxLine* self, u32 itemData) {
     u8 vB = BdatGetU8Direct(owner, &lbl_eu_805071B0[0xe], cat);
     u8 vC = BdatGetU8Direct(owner, &lbl_eu_805071B0[0x622], cat);
     u8 defName = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], vC);
-    void* tbl = func_8009EC9C(vB);
+    void* tbl = CtrlObjectParam_GetCharEntry(vB);
     u8 idx = (u8)CtrlObjectParam_GetCurrentRowKey();
     const u8* entry = (const u8*)tbl + idx * 73 + (defName << 1);
     char* str = BdatTouchStringCell(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 44);
@@ -2384,15 +2384,15 @@ void func_801F2298(CItemBoxLine* self, u32 itemData) {
 #pragma pop
 
 // ============================================================================
-// func_801F2434: build the item-box page data.
+// ItemBoxLine_BuildPageData: build the item-box page data.
 // the pane, resolve the slot entry (itemId+kind via the owner tables) and bind
 // a texture/name; then push the slot's kind/counters/position into the page
 // arrays at index i+8 (guarded to 12) and refresh the pane hierarchy.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F2434(CItemBoxLine* self, u32 itemData) {
-    u32 itemId = func_801393CC(itemData);
+void ItemBoxLine_BuildPageData(CItemBoxLine* self, u32 itemData) {
+    u32 itemId = LookupItemTypeTable(itemData);
     u16 kind = BdatGetItemId(itemData);
     u8 n = BdatGetU8Direct(itemId, &lbl_eu_805071B0[0x106], (u16)kind);
     for (u8 i = 0; i < 3; i++) {
@@ -2429,7 +2429,7 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
                 } else if (sel == 9) {
                     tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x6de], 0);
                 }
-                buf.format(&lbl_eu_805071B0[0x57], func_801394D4(v));
+                buf.format(&lbl_eu_805071B0[0x57], BuildItemNameStr(v));
                 kindV = BdatGetItemId(v);
             } else {
                 tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
@@ -2439,7 +2439,7 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
             sprintf(nameBuf, &lbl_eu_805071B0[0x6f4], i + 1);
             LayoutSetTextBoxFmtValue(self->field40, nameBuf, buf.mString, 0);
             if (tex != 0) {
-                func_80137F88(pane, tex);
+                PaneSetTexPalette(pane, tex);
             }
         } else {
             sprintf(nameBuf, &lbl_eu_805071B0[0x6f4], i + 1);
@@ -2448,7 +2448,7 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
         }
         nw4r::lyt::Pane* find = self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         CIBLVec3 pos;
-        func_80137924((nw4r::math::VEC3*)&pos, pane, find, self->field40->GetRootPane());
+        ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, find, self->field40->GetRootPane());
         u8 idx = (u8)(i + 8);
         CIBLPageData* page = reinterpret_cast<CIBLPageData*>(&self->mInfo2D0[0xB0]);
         if (idx < 12) {
@@ -2475,13 +2475,13 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
 #pragma pop
 
 // ============================================================================
-// func_801F2880: kind/availability probe. Resolve the item's kind via the
+// ItemBoxLine_ProbeAvailability: kind/availability probe. Resolve the item's kind via the
 // owner tables, index into the 0x49-byte character-data rows with the page
 // lookup, and report whether the flagged slot (kind-dependent bit in +0xE8/
 // +0xE9 of the row entry) is set. The first parameter is unused (retail keeps
 // it in r3 and works from r4).
 // ============================================================================
-int func_801F2880(u32 unused, u32 key) {
+int ItemBoxLine_ProbeAvailability(u32 unused, u32 key) {
     u32 table = lbl_eu_80664110;
     BdatGetItemType(key);
     // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
@@ -2491,7 +2491,7 @@ int func_801F2880(u32 unused, u32 key) {
     u8 b = BdatGetU8Direct(table, &lbl_eu_805071B0[0xe], v);
     u8 c = BdatGetU8Direct(table, &lbl_eu_805071B0[0x622], v);
     u8 d = BdatGetU8ByTableKey(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], c);
-    u8* base = (u8*)func_8009EC9C(b);
+    u8* base = (u8*)CtrlObjectParam_GetCharEntry(b);
     u32 f = (u8)CtrlObjectParam_GetCurrentRowKey();
     u32 d2 = (u32)d << 1;
     u32 prod = f * 0x49;
@@ -2548,7 +2548,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
                                                                           this->field40);
-        func_8013676C(root, ((IDeviceFontInfo*)fontObj)->getFont());
+        ApplyFontToTxtPanes(root, ((IDeviceFontInfo*)fontObj)->getFont());
 
         // Seed the seven slot-name textboxes with the line text.
         char* text = CUICfManager_getPackedFont9C();
@@ -2630,10 +2630,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         // the alpha shorts into the paired highlight entries.
         nw4r::lyt::Pane* pane443 = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x443], true);
-        FourShorts c0 = func_801397AC((void*)pane443, 0);
+        FourShorts c0 = PaneMatGetS16Quad((void*)pane443, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645D8[0],
                                             (const GXColorS10*)&c0);
-        FourShorts c1 = func_801397AC((void*)pane443, 1);
+        FourShorts c1 = PaneMatGetS16Quad((void*)pane443, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645E0[0],
                                             (const GXColorS10*)&c1);
         *(s16*)&lbl_eu_806645E8[6] = *(s16*)&lbl_eu_806645D8[6];
@@ -2641,10 +2641,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         nw4r::lyt::Pane* pane4A6 = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x4a6], true);
-        FourShorts c2 = func_801397AC((void*)pane4A6, 0);
+        FourShorts c2 = PaneMatGetS16Quad((void*)pane4A6, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_806645F8[0],
                                             (const GXColorS10*)&c2);
-        FourShorts c3 = func_801397AC((void*)pane4A6, 1);
+        FourShorts c3 = PaneMatGetS16Quad((void*)pane4A6, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664600[0],
                                             (const GXColorS10*)&c3);
         *(s16*)&lbl_eu_80664608[6] = *(s16*)&lbl_eu_806645F8[6];
@@ -2652,10 +2652,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         nw4r::lyt::Pane* pane76B = this->field40->GetRootPane()->
                                        FindPaneByName(&lbl_eu_805071B0[0x76b], true);
-        FourShorts c4 = func_801397AC((void*)pane76B, 0);
+        FourShorts c4 = PaneMatGetS16Quad((void*)pane76B, 0);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664618[0],
                                             (const GXColorS10*)&c4);
-        FourShorts c5 = func_801397AC((void*)pane76B, 1);
+        FourShorts c5 = PaneMatGetS16Quad((void*)pane76B, 1);
         __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&lbl_eu_80664620[0],
                                             (const GXColorS10*)&c5);
         *(s16*)&lbl_eu_80664628[6] = *(s16*)&lbl_eu_80664618[6];
@@ -2689,7 +2689,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         ((CBaseCur*)&this->mCurB8)->initLayout();
 
         Cur_ShowTwoSubPanes(&this->mCurB8, 0);
-        func_801EF518(this);
+        ItemBoxLine_CompactTabList(this);
         this->field24 = 0;
         reinterpret_cast<UnkClass_8045F564*>(&this->field04)->validateHeap();
         return true;
@@ -2705,7 +2705,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             createArcResourceAccessor__10CLibLayoutFv();
         this->field3C = (CItemBoxLineResView*)acc2;
         acc2->Attach(data28, &lbl_eu_805071B0[0x70d]);
-        func_801EF518(this);
+        ItemBoxLine_CompactTabList(this);
         this->field28 = 0;
         reinterpret_cast<UnkClass_8045F564*>(&this->pad_14[0])->validateHeap();
         return true;
@@ -2722,7 +2722,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         lbl_eu_80664648 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
         Bdat_GetTable_AA34();
         lbl_eu_8066464C = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7d9]);
-        func_801EF518(this);
+        ItemBoxLine_CompactTabList(this);
         this->field2C = 0;
         return true;
     }
@@ -2736,7 +2736,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             setBdatEntry__5CBdatFUlPv(5, this->field34);
         }
         lbl_eu_80664650 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
-        func_801EF518(this);
+        ItemBoxLine_CompactTabList(this);
         this->field30 = 0;
         return true;
     }
@@ -2767,7 +2767,7 @@ void sinit_801F32EC() {
     setGXColorS10(&lbl_eu_80664640, 0xff, 0xff, 0xff, 0);
 }
 
-// noinline: retail func_801EBAD4 calls these as EXTERNAL relocs (they live in
+// noinline: retail ItemBoxLine_InitTabFormat calls these as EXTERNAL relocs (they live in
 // a different retail object of this merged unit); without it MWCC -inline auto
 // inlines the same-TU definitions and the call-site relocs disappear.
 extern "C" __declspec(noinline) CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7) {
@@ -2779,12 +2779,12 @@ extern "C" __declspec(noinline) CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEn
 }
 
 // ============================================================================
-// func_801EBAD4: initialise a tab-format object - zero every entry via the
+// ItemBoxLine_InitTabFormat: initialise a tab-format object - zero every entry via the
 // entry writer, clear the count/selector/name/counter fields, then re-copy
 // zero entries over the table through a stack temp (retail keeps the r3
 // reuse from ItemBoxLine_InitTabEntry for the copy source).
 // ============================================================================
-void func_801EBAD4(CIBLTabFull* self) {
+void ItemBoxLine_InitTabFormat(CIBLTabFull* self) {
     CIBLTabEntry* e = self->entries;
     do {
         ItemBoxLine_InitTabEntry(e, 0, 0, 0, 0);
@@ -2804,13 +2804,13 @@ void func_801EBAD4(CIBLTabFull* self) {
     }
 }
 // ============================================================================
-// func_801EC284: page-slot probe on a tab-format entry. Start from 99, then
+// ItemBoxLine_ProbePageSlot: page-slot probe on a tab-format entry. Start from 99, then
 // scan the entry's per-page capacity (f4) for the smallest page whose
 // cumulative total exceeds the current count (CItemBlock_getPtr20E8), returning the
 // page's item offset rounded via the float path; finally clamp against the
 // kind-owner count (field92 == 0xD uses the item-name owner table instead).
 // ============================================================================
-u8 func_801EC284(CIBLTabFull* self, u32 index) {
+u8 ItemBoxLine_ProbePageSlot(CIBLTabFull* self, u32 index) {
     int result = 0x63;
     if (index < self->count) {
         u16 f0 = self->entries[index].f0;

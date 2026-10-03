@@ -248,7 +248,7 @@ body:
     // dispatch its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo);
-    func_80137250((nw4r::lyt::DrawInfo*)drawInfo);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)drawInfo);
     Tutorial_DrawLayoutGated(&mTutorial, (nw4r::lyt::DrawInfo*)drawInfo);
     drawHelp(&mTitleAHelp, (nw4r::lyt::DrawInfo*)drawInfo);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo, -1);

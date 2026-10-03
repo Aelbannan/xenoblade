@@ -238,7 +238,7 @@ void CSimpleEveTalkWin::Init() {
         (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
@@ -283,7 +283,7 @@ void CSimpleEveTalkWin::Init() {
     textPane->SetVisible(true);
     reinterpret_cast<nw4r::lyt::TextBox*>(textPane)->SetTagProcessor(
         reinterpret_cast<nw4r::ut::WideTagProcessor*>(field_88));
-    func_801287BC(field_88, textPane, 0);
+    TagProcBuildOpenText(field_88, textPane, 0);
 
     // Without a talk source the window is a bare frame: pin it to its default
     // position.
@@ -394,7 +394,7 @@ void CSimpleEveTalkWin::cbRenderBefore() {
     // scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -406,7 +406,7 @@ CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* parent, CScn* scene, u32 t
                                  const u8* msgSrc, u8 flag) {
     u8 buf[0x800];
     memset(buf, 0, 0x800);
-    func_80136400((const char*)msgSrc, (u16*)buf, 0x400);
+    Utf8ToWcsCopyFix((const char*)msgSrc, (u16*)buf, 0x400);
 
     if (lbl_eu_80664320 != 0) {
         eveTalkWinSetReuseText(lbl_eu_80664320, text, buf);
@@ -497,7 +497,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
         1, owner->mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     // Start with the cursor animation disabled and the cursor at frame 1.
     owner->mpLayout->SetAnimationEnable(owner->field_8C, 0);
@@ -555,7 +555,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     textPane->SetVisible(true);
     reinterpret_cast<nw4r::lyt::TextBox*>(textPane)->SetTagProcessor(
         reinterpret_cast<nw4r::ut::WideTagProcessor*>(owner->field_88));
-    func_801287BC(owner->field_88, textPane, 0);
+    TagProcBuildOpenText(owner->field_88, textPane, 0);
 
     // Without a talk source the window is a bare frame: pin it to its default
     // position.
@@ -588,9 +588,9 @@ extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
 
     int state;
     if (confirmBtn != 0)
-        state = func_801286E0(self->field_88, pane);
+        state = TagProcPumpSEMessage(self->field_88, pane);
     else
-        state = func_80127FB4(self->field_88, pane);
+        state = TagProcStepSEMessage(self->field_88, pane);
 
     if (state == 4) {
         // Selection accepted: play the confirm voice.

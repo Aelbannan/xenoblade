@@ -187,7 +187,7 @@ int func_8016EFD8(int unused, int index);
 void func_8016FC98(cf::CfMapEffectManager* pSelf, cf::CfObject* target);
 void func_8016FD84(float first, float second);
 int func_8016FA68(int unused, int b, int c, int d); // same-TU definition below
-void func_8006A6D0();
+void CfT_DispatchFrameCounts();
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 }
 

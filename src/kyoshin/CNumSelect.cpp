@@ -168,7 +168,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
 
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
-    func_8013676C(rootPane,
+    ApplyFontToTxtPanes(rootPane,
                   ((IDeviceFontInfo*)fontObj)->getFont());
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)CUICfManager_getPackedFont9C());
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)CUICfManager_getPackedFont9C());
@@ -330,7 +330,7 @@ void CNumSelect::NumSel_FormatPicName_B064(int value) {
     char buf[0x1C];
     char* digits = BdatTouchStringCell(&lbl_eu_80506C14[0x2A], &lbl_eu_80506C14[0x33], 3);
     sprintf(buf, &lbl_eu_80506C14[0x38], value, digits);
-    func_80136A1C(mpLayout, &lbl_eu_80506C14[0x3D], buf, 0);
+    LayoutSetTextBoxText(mpLayout, &lbl_eu_80506C14[0x3D], buf, 0);
 }
 
 /* State step 1: rebind the close animation (anim at 0x20), mark the pane

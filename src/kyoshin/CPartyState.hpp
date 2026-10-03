@@ -44,12 +44,12 @@ public:
     s8 field_0x4D;                              // 0x4D
     u8 field_0x4E;                              // 0x4E
     u8 field_0x4F[0x56 - 0x4F];                 // 0x4F - 7 per-member slot bytes (pane-name index)
-    u8 field_0x56;                              // 0x56 - slot-write counter (func_801FDA7C)
+    u8 field_0x56;                              // 0x56 - slot-write counter (rebuildPartySelect)
     u8 field_0x57;                              // 0x57
 };
 
 // Vtable view of the party-slot stats sub-object embedded at +0x17C of the
-// func_8009EC9C result. Only the dispatch slots used by this TU are reached
+// CtrlObjectParam_GetCharEntry result. Only the dispatch slots used by this TU are reached
 // (0x26/0x42/0x4A/0x4B/0x7A/0x7C); the table is fn-pointer indexed so the
 // call sites reproduce the retail two-step vtable dispatch.
 struct CPartySlotStats;
@@ -62,7 +62,7 @@ struct CPartySlotStats {
     CPartySlotStatsVtbl* mVtbl;   // 0x00
 };
 
-// 0x20-byte slot entry; func_801FE20C probes word at +i*0x20 for i = 1..5.
+// 0x20-byte slot entry; scalePartySlotPane probes word at +i*0x20 for i = 1..5.
 struct CPartySlotEntry {
     u32 word;                    // 0x00
     u8 _pad04[0x20 - 0x04];
@@ -89,7 +89,7 @@ struct CPartySlotArea {
     u32 field_0x3DD0;             // 0x89C (absolute 0x3DD0: level word)
 };
 
-// Character/party-slot object returned by func_8009EC9C. +0x176C holds a
+// Character/party-slot object returned by CtrlObjectParam_GetCharEntry. +0x176C holds a
 // state word that is 1 when the slot's character is busy (cannot be swapped);
 // +0x17C embeds the stats sub-object; +0x3534 the slot-record blob.
 struct CPartyCharData {
@@ -102,7 +102,7 @@ struct CPartyCharData {
 };
 
 // Abstract view of the object returned by CDeviceFont::getFontInfo; the
-// 8th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
+// 8th user virtual (vtable+0x24) yields the u32 bound by ApplyFontToTxtPanes.
 // All-pure, never constructed directly.
 class FontHelper {
 public:
@@ -117,7 +117,7 @@ public:
 };
 
 // 7-byte seed blob copied from .sdata2 constants (word + halfword + byte),
-// mixed into the slot table by func_801FDA7C.
+// mixed into the slot table by rebuildPartySelect.
 union PartyStateSeed {
     u8 bytes[7];
     struct {
@@ -130,7 +130,7 @@ union PartyStateSeed {
 /* Vtable-dispatch view of the embedded cursor. MWCC puts two implicit dtor
    slots at the start of every polymorphic vtable, so checkDeactivate (retail
    cursor slot 3) is declared as the SECOND virtual to land at vtable offset
-   0xC, matching the retail dispatch in func_801FD0F4. All-pure, never
+   0xC, matching the retail dispatch in termPartyState. All-pure, never
    constructed directly; only used to reproduce the retail vtable dispatch. */
 class CPartyStateCur {
 public:
@@ -157,7 +157,7 @@ void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).
-// Cur_SetVisible / func_80139198 are declared in CEquipItemBox.hpp.
+// Cur_SetVisible / BuildSlotItemLists are declared in CEquipItemBox.hpp.
 extern "C" void func_801D2BFC(CBaseCur*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
 
@@ -186,7 +186,7 @@ extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
 // CEquipItemBox.hpp in this TU).
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void setPaneVisible(void*, u32);
 
@@ -218,10 +218,10 @@ extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 extern char* lbl_eu_80662728;
 
 // Unit-local helpers (defined in this TU; unmangled retail symbols).
-extern "C" void func_801FE154(CPartyState*);
-extern "C" void func_801FD848(CPartyState*);
+extern "C" void refreshPartyHeader(CPartyState*);
+extern "C" void finishPartyPanelClose(CPartyState*);
 extern "C" void swapPartyMembers(CPartyState*);
-extern "C" void func_801FE20C(CPartyState*, u32, const char*);
+extern "C" void scalePartySlotPane(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
 extern "C" void func_801D202C(void*);
@@ -232,7 +232,7 @@ extern "C" CBaseCur* __dt__6CCur22Fv(CBaseCur*, int);
 
 // Internal helpers of this unit (unmangled retail symbols).
 extern "C" void refreshPartyCursor(CPartyState*);
-extern "C" void func_801FDA7C(CPartyState*);
+extern "C" void rebuildPartySelect(CPartyState*);
 extern "C" void confirmPartySelect(CPartyState*);
 extern "C" void cancelPartySelect(CPartyState*);
 extern "C" void positionPartyPane(CPartyState*, float, float, u32, u32);
@@ -246,17 +246,17 @@ extern "C" u32 CfT_FrameTimerGet();
 // Text/layout binding helper (code_80135FDC.cpp, retail unmangled; the
 // canonical header code_80135FDC.hpp conflicts with CEquipItemBox.hpp in
 // this TU).
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 
 // Character-data lookup (retail unmangled).
-extern "C" void* func_8009EC9C(u32);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 
 // Cursor pane-position/show helpers (CCur unit, retail unmangled).
 extern "C" void Cur_PlacePaneByIndex(CBaseCur*, const nw4r::math::VEC3*, u8);
 extern "C" void func_801D2CF4(CBaseCur*, u8, u8);
 
 // Pane translate accumulation (code_80135FDC.cpp, retail unmangled).
-extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
+extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 
 // Pane size/position copy helpers (retail unmangled).
 extern "C" void TagCopyVec2f(float*, float*);
@@ -283,7 +283,7 @@ extern const u32 lbl_eu_80668220;
 // an array so MWCC uses full 32-bit (lis/addi) addressing like the retail.
 extern "C" void* lbl_eu_805353C8[];
 
-// Animation target frame for func_801FD76C (.sdata2, retail lbl_eu_80668218).
+// Animation target frame for finishPartyIntroAnim (.sdata2, retail lbl_eu_80668218).
 // const lets MWCC hoist the lfs to the function top (matches the matched
 // CItemBoxInfo/CCollepedia frame-check shapes).
 extern const float lbl_eu_80668218;

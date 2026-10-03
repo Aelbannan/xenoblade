@@ -464,7 +464,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-sdata 0"]),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (func_8007560C/5640/54C0 family)
+            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-sdata 0"]),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (CamEvtBusyChk/5640/54C0 family)
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -484,7 +484,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp", extra_cflags=["-RTTI off"]),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectEne.cpp"),
-            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (isTypeId1to24 range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes teardownGameMgr (0->108), lookupWorkAtAddr (0->20), testObj64bit15 (0->9), isTypeId1to24 (0->4); full sweep .scratch/version_sweep.py shows NO available version satisfies both families - TU split by mw_version is the next angle
+            Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (isTypeId1to24 range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/tickSpeedPass only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes teardownGameMgr (0->108), lookupWorkAtAddr (0->20), testObj64bit15 (0->9), isTypeId1to24 (0->4); full sweep .scratch/version_sweep.py shows NO available version satisfies both families - TU split by mw_version is the next angle
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectMove.cpp"),
@@ -499,7 +499,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
-            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, ctrlActDispatchEntry 98.5%/func_800D4F30 91.5%/func_800D6720 94.8% now pure reg-swap; split PASS 0x2C4 spare
+            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, ctrlActDispatchEntry 98.5%/stepActMotion 91.5%/testHeightGap 94.8% now pure reg-swap; split PASS 0x2C4 spare
             Object(NonMatching, "kyoshin/cf/CBattleManager.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI data in this TU; -RTTI off kills trailing typeinfo/RTTI so .data drop shrinks 0x60→0x2C, .rodata 0x1D6→0xCA, .sdata 0x58→0x0
             Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
@@ -2005,7 +2005,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0xC "CPackItem", .sdata 0x8 pair); -RTTI off kills MWCC duplicate type names + __RTTI__ copies
             Object(NonMatching, "monolib/src/core/CArcItem.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: SchedItem_ReleaseHandle duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for func_804DF4BC path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
+            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: SchedItem_ReleaseHandle duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for SchedRes_ReleaseEntries path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),
             Object(NonMatching, "monolib/src/core/code_804E36DC.cpp"),
             Object(NonMatching, "monolib/src/core/ScheduleList.cpp"),

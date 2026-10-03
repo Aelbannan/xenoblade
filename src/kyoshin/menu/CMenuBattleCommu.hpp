@@ -53,7 +53,7 @@ public:
 };
 
 // Sub-object at actor2+0x04 (CObjectParam family): vtable +0x30 yields a
-// pointer to the actor-id word fed to func_80174C98.
+// pointer to the actor-id word fed to testActorStatus.
 class CBattleCommuActor2Sub {
 public:
     virtual void vf08();              // +0x08

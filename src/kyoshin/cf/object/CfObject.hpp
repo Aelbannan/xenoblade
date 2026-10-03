@@ -182,8 +182,8 @@ namespace cf {
         // spellings for the holder-notification slots used by CBattleManager's
         // list-removal paths. Same arity; MWCC inlines them into the
         // identical virtual dispatch.
-        void CfObject_notifyMemberRemoved() { CfObject_UnkVirtualFunc11(); } //0x7C: post-list-removal holder notify (func_800D9CA0; base tests *(+0x6C) & 1)
-        void CfObject_notifyActiveMember() { CfObject_UnkVirtualFunc44(); } //0x100: 0x4-flagged holder notify (func_800D9978 / func_800E1B5C)
+        void CfObject_notifyMemberRemoved() { CfObject_UnkVirtualFunc11(); } //0x7C: post-list-removal holder notify (unregisterBattleActor; base tests *(+0x6C) & 1)
+        void CfObject_notifyActiveMember() { CfObject_UnkVirtualFunc44(); } //0x100: 0x4-flagged holder notify (registerBattleActor / evalBattleTarget)
         // Wave-40 UnkVirtual mop-up aliases (non-virtual, inline): same-slot
         // forwarders for the ocUnit call sites; Unk Fv bodies stay for
         // hand-built vtables (CfObjectModel / CfCollSphereImpl / CREvtModel).
@@ -192,7 +192,7 @@ namespace cf {
         void* CfObject_findNodeMatrix(const char* name) { return CfObject_UnkVirtualFunc52(name); } //0x120: named node matrix slot (Model impl)
         // Wave-50 caller alias (non-virtual, inline): behavior-derived
         // spelling for the gated sub-object word (+0x128) consumed as a
-        // fallback aim position by the follow camera (func_80074090 sel==0
+        // fallback aim position by the follow camera (cfCam_pickFollowAim sel==0
         // path; Model impl: field_14AC when the 0x40000000 flag is set).
         // Same arity; MWCC inlines it into the identical virtual dispatch.
         u32 CfObject_getSubPosWord() { return CfObject_UnkVirtualFunc54(); } //0x128: sub-object position word (Model impl)

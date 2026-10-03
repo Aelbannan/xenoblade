@@ -96,7 +96,7 @@ public:
 
 // View for the gimmick object name probe in func_802B8D4C: virtual at
 // index 10 lands on vtable offset 0x30 and returns a pointer whose first
-// word is the value compared by func_80174C98.
+// word is the value compared by testActorStatus.
 struct GimmickNameValue {
     u32 name; // +0x00 name word compared against the config key
 };
@@ -119,8 +119,8 @@ public:
 // Voice-config table entry used by func_802B8D4C: {u32 key, s16 idx, s16 id}.
 struct OrderConfigEntry {
     s32 key;      // +0x00 key matched against handle->field_3F28
-    s16 field_4;  // +0x04 index passed to func_802A7A54
-    s16 field_6;  // +0x06 voice id passed to func_802A3D54
+    s16 field_4;  // +0x04 index passed to HpVoice_FindBySubState
+    s16 field_6;  // +0x06 voice id passed to RequestVoicePlayback
 };
 
 // ── Data imports (plain globals: MWCC does not mangle global data names) ──
@@ -133,12 +133,12 @@ extern OrderConfigEntry lbl_eu_8053B840[]; // func_802B8D4C config table
 
 // C-ABI function imports (retail symbols are unmangled C -> extern "C").
 extern "C" {
-    int                 func_802A3E88(CVS_THREAD* self);
-    int                 func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int                 func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    int                 func_802A7870(void* arr, int capacity, void* unused);
-    void*               func_802A7A54(int arg);
-    CVoiceHandle*       func_802A330C(int size, int align);
+    int                 IsThreadVoiceActive(CVS_THREAD* self);
+    int                 TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int                 RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    int                 HpVoice_CollectIdle(void* arr, int capacity, void* unused);
+    void*               HpVoice_FindBySubState(int arg);
+    CVoiceHandle*       CCharVoiceMan_DispatchById(int size, int align);
     void*               CCharVoiceMan_AllocVoiceArena(int size);
     void*               func_8016FE34(void* r3);
     OrderGimmickList*   getReslistB48();

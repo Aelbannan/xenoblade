@@ -12,23 +12,27 @@ static u32 bootThisDol;
 volatile BOOL __OSIsReturnToIdle;
 
 /*
- * Retail .data pools (sized arrays, not bare OS_ERROR literals - those leave
- * size-0 relocs and soft-cap ~98%). Layout targets: file 0xC, hot 0x60,
- * menu+orphans 0x180, obsolete 0x7C. MWCC may 8-align after the 0xC file
- * object (unit data soft-cap); function match uses reloc *sizes*. Big callers
- * use strBase=&lbl_80552AF0 with +0xC/+0x38; thin wrappers / OSRestart use
+ * Retail .data pool as separate small arrays (NOT one big array per pool:
+ * MWCC 8-aligns large .data arrays, which would push the pool to 0x10
+ * instead of retail's 0xC; pieces sized %8==4 pack 4-tight). Layout:
+ * file 0xC, hot 0x2C+0x34, menu 0xA4+0xDC, obsolete 0x7C (total 0x268).
+ * String merging (-str reuse) folds the functions' literals into these
+ * pieces, so only one copy of each exists. Big callers use
+ * strBase=&lbl_80552AF0 with +0xC/+0x38; thin wrappers / OSRestart use
  * distinct objects so MWCC emits two lis pairs.
  */
 #pragma force_active on
-char lbl_80552AF0[0xA] = "OSReset.c";
-char OSReset_hotResetPool[0x60] __attribute__((aligned(4))) =
-    "__OSHotReset(): Falied to reset system.\n\0\0\0\0"
+char lbl_80552AF0[0xC] = "OSReset.c";
+char OSReset_hotResetPool[0x2C] =
+    "__OSHotReset(): Falied to reset system.\n\0\0\0\0";
+char OSReset_hotResetPool_b[0x34] =
     "__OSReturnToMenu(): Falied to boot system menu.\n\0\0\0";
-char OSReset_menuPool[0x180] =
+char OSReset_menuPool[0xA4] =
     "OSReturnToMenu(): Falied to boot system menu.\n\0\0"
     "OSReturnToDataManager(): Falied to boot system menu.\n\0\0\0"
     "Calendar/Calendar_index.html\0\0\0\0"
-    "Display/Display_index.html\0\0"
+    "Display/Display_index.html\0\0";
+char OSReset_menuPool_b[0xDC] =
     "Sound/Sound_index.html\0\0"
     "Parental_Control/Parental_Control_index.html\0\0\0\0"
     "Internet/Internet_index.html\0\0\0\0"

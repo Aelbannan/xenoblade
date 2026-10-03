@@ -156,7 +156,7 @@ public:
 
 // Event object reached via CfObjectImplMoveSubObj::field_0x98 (MoveImplSyncEffectState):
 // vtable slot 0x88 is dispatched with a u32 argument; slot 0x4c (f17) returns
-// a float compared against lbl_eu_80666C88 by func_800CC638.
+// a float compared against lbl_eu_80666C88 by MoveImplDriveRequest.
 class CfMoveEventObj {
 public:
     virtual void* f00();   virtual void* f01();   virtual void* f02();   virtual void* f03();
@@ -257,13 +257,13 @@ struct CfEmbeddedSubObj_3E9C {
 };
 
 // Result of CfActorObj::vf298() (vtable 0x298): +0x4 feeds findObjectById's
-// actor-id lookup (func_800CC638); +0x50 is a battle-state block pointer
+// actor-id lookup (MoveImplDriveRequest); +0x50 is a battle-state block pointer
 // (MoveImplSyncBattleRoster reads its kind/count bytes at +0x43/+0x44).
 struct CfMoveVf298Result {
     u8 _00_03[0x4];               // 0x00-0x03
     u32 field_0x4;                // 0x04 (actor id)
     u8 _08_47[0x48 - 0x08];       // 0x08-0x47
-    u32 field_48;                 // 0x48 (knockback strength, func_800CD5DC)
+    u32 field_48;                 // 0x48 (knockback strength, MoveImplDriveTransition)
     u8 _4C_4F[0x50 - 0x4c];       // 0x4c-0x4f
     void* field_0x50;             // 0x50
 };
@@ -320,7 +320,7 @@ public:
     virtual void e14();           // index 3 -> vtable 0x14
 };
 
-// Request parameter consumed by func_800CC638: mode byte at +0xA, move id at
+// Request parameter consumed by MoveImplDriveRequest: mode byte at +0xA, move id at
 // +0xC, flag/type byte at +0xE (bit 7 = flag, low 7 bits = effect type), and
 // a count byte at +0xF.
 struct CfMoveParam {
@@ -351,7 +351,7 @@ union CfMoveF64Conv {
     f64 d;
 };
 
-// Position object returned by driver vtable slot 0x128 (func_800CC638 reads
+// Position object returned by driver vtable slot 0x128 (MoveImplDriveRequest reads
 // float fields at +0xC, +0x1C, +0x2C).
 struct CfMovePosObj {
     u8 _00_0B[0xc];               // 0x00-0x0b
@@ -372,7 +372,7 @@ struct CfMoveField1CObj {
 };
 
 // Event/effect state block bound at actor +0x3F60 (embedded sub-object's
-// +0xc4 pointer). Fields read by func_800CC020 / func_800CF810.
+// +0xc4 pointer). Fields read by MoveImplRepositionEffect / MoveImplGroundProbeB.
 struct CfMoveEvt60 {
     u8 _00_0B[0xc];               // 0x00-0x0b
     u32 field_0xC;                // 0xc (flag word; bit 30 probed)
@@ -422,7 +422,7 @@ struct CfMoveF139Result {
 };
 
 // Object referenced by the embedded sub-object's +0xc4 pointer
-// (func_800CB454 probes bit 0x2 of its +0x4ec word).
+// (MoveImplDispatchEvent probes bit 0x2 of its +0x4ec word).
 struct CfMoveC4Obj {
     u8 _00_73[0x374];
     u32 field_374;                // 0x374 (compared against 5)
@@ -431,7 +431,7 @@ struct CfMoveC4Obj {
 };
 
 // Event object behind the embedded sub-object's +0x98 registration slot
-// (actor +0x3f34), as dispatched by func_800CEE80: slots 0x40/0x44 manage the
+// (actor +0x3f34), as dispatched by MoveImplPresentEffect: slots 0x40/0x44 manage the
 // cached effect handle, the +0x7a4 flag word gates the query, +0x14ac is a
 // fallback result object, and +0x760..0x768 is a presentation position triple.
 class CfMoveEvt98 {
@@ -453,7 +453,7 @@ public:
     u32 field_0x14AC;                 // 0x14ac (fallback result object)
 };
 
-// Contact parameter block handed to func_800CF810.
+// Contact parameter block handed to MoveImplGroundProbeB.
 struct CfMoveContact {
     u8 _00_09[0xa];
     u8 field_0xA;                 // 0xa (request mode byte)
@@ -488,7 +488,7 @@ public:
 };
 
 // Wide view of the handler object embedded at actor +0x08 (used by
-// func_800CAB30 case bodies): flag word at +0x1528 gates a slot-0x20
+// MoveImplDispatchStart case bodies): flag word at +0x1528 gates a slot-0x20
 // dispatch whose argument is that same word.
 class CfMoveHandlerWide {
 public:
@@ -521,7 +521,7 @@ public:
     virtual void* h30(u32 id);   // index 10 -> vtable 0x30
 };
 
-// Event parameter block handed to func_800CB454 / func_800CAB30:
+// Event parameter block handed to MoveImplDispatchEvent / MoveImplDispatchStart:
 // event id halfword at +0xc, presentation halfword at +0x2e, flag word +0x30.
 struct CfMoveEvtParam {
     u8 _00_0C[0xc];
@@ -532,8 +532,8 @@ struct CfMoveEvtParam {
     u32 field_30;
 };
 
-// 0x20-byte request buffer built on the stack by func_800CB454 and handed to
-// func_8014AC38. Bytes 0x04-0x11 are cleared by one memset, then individual
+// 0x20-byte request buffer built on the stack by MoveImplDispatchEvent and handed to
+// aiRingPrepend. Bytes 0x04-0x11 are cleared by one memset, then individual
 // fields are stored.
 struct CfMoveAcReqBody {
     u8 _04_05[2];                 // 0x04-0x05
@@ -554,7 +554,7 @@ struct CfMoveAcReq {
     u8 _18_1F[8];
 };
 
-// Wide view of the vf29C() item (func_800CB454 clears bit groups of +0x74).
+// Wide view of the vf29C() item (MoveImplDispatchEvent clears bit groups of +0x74).
 struct CfMoveVf29CX74 {
     u8 _00_73[0x74];
     u32 field_74;
@@ -630,7 +630,7 @@ public:
     virtual void* f171(); virtual void* f172(); virtual void* f173();
     virtual void f174();
     virtual void vf2C4(void* a, f32 x, f32 y, f32 z);  // index 175 -> vtable 0x2c4
-    // Fillers up to the slots dispatched by func_800CD5DC's partner tail.
+    // Fillers up to the slots dispatched by MoveImplDriveTransition's partner tail.
     virtual void* f176(); virtual void* f177(); virtual void* f178(); virtual void* f179();
     virtual void* f180(); virtual void* f181(); virtual void* f182(); virtual void* f183();
     virtual void* f184(); virtual void* f185(); virtual void* f186(); virtual void* f187();
@@ -791,13 +791,13 @@ struct CfMoveBMId {
 };
 
 // CBattleManager::CBattleMan_FetchVisionObj result view reading the flag word at +0x824
-// (func_800CD5DC probes bit 11).
+// (MoveImplDriveTransition probes bit 11).
 struct CfMoveBM824 {
     u8 _00_823[0x824];                         // 0x00-0x823
     u32 field_824;                             // 0x824 (flag word; bit 11)
 };
 
-// Result of the embedded sub-object's slot 0x218 (func_800CD5DC knockback
+// Result of the embedded sub-object's slot 0x218 (MoveImplDriveTransition knockback
 // scaling): signed halfword at +0x28.
 struct CfVf218Result {
     u8 _00_27[0x28];                           // 0x00-0x27
@@ -811,13 +811,13 @@ struct CfVf2A048Result {
 };
 
 // Object returned by the embedded sub-object's slot 0x110: its +0x18 is the
-// bound move-driver object swapped by func_800CD5DC's partner tail.
+// bound move-driver object swapped by MoveImplDriveTransition's partner tail.
 struct CfBoundObj {
     u8 _00_17[0x18];                           // 0x00-0x17
     void* field_0x18;                          // 0x18 (bound move object)
 };
 
-// Battle-manager gate view for func_800CC964: battle-intro counter halfword
+// Battle-manager gate view for MoveImplDispatchRequest: battle-intro counter halfword
 // at +0x20c8 suppresses the 0x27 request while non-zero.
 struct CBattleManagerCcGate {
     u8 _00_20C7[0x20c8];
@@ -840,7 +840,7 @@ void* func_8016FE34(void* source);
 void aiActionClearBlockADC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
 void simPushWordToBuf(u32 id, void* source);
 void* CBattleMan_FetchVisionObj(void* bm);
-#include "kyoshin/cf/CfMapItemManager.hpp" // func_80174C98 (owner decl)
+#include "kyoshin/cf/CfMapItemManager.hpp" // testActorStatus (owner decl)
 void* getInstance__Q22cf13CfGameManagerFv();
 void updatePosition(void* self);
 void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c);
@@ -848,7 +848,7 @@ void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
 void startEnumObjects(void* list, u32 type, u32 filter);
-void func_800F6ED0(void* list, void* value); // canonical (void*,void*) form (CAIAction/ImplPc/ImplWalker)
+void sortEntriesByDistance(void* list, void* value); // canonical (void*,void*) form (CAIAction/ImplPc/ImplWalker)
 void* getObjectAt(void* list, u32 idx);
 void* findFirstCleanObjectId(void* list);
 void __dt__80043E88(void* holder, int flags);
@@ -859,7 +859,7 @@ void __dt__80043E88(void* holder, int flags);
 // 1-arg tail calls to the unmangled symbol, so keep C linkage here.
 void __dt__Q22cf16CfObjectImplMoveFv(void* self);
 int func_80148778(void* obj, int id);
-void func_8014AE00(void* buf);   // move-state buffer init (actor +0x3380)
+void aiRingCompact(void* buf);   // move-state buffer init (actor +0x3380)
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void setTargetObj_(void* obj, void* target);
 void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
@@ -867,24 +867,24 @@ void simRemoveWordFromBuf(void* handler, void* source);
 void func_8015BD94(void* effect);
 extern "C" void stopVoiceA(void* self);
 void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (MoveImplTriggerCamShake)
-void func_8007B044(void* shake, int flag);    // camera-shake dispatch (MoveImplTriggerCamShake)
+void CamEvtForwardShakeFlag(void* shake, int flag);    // camera-shake dispatch (MoveImplTriggerCamShake)
 }
 
 // Talk-source getter (cf::CfObjectModel.cpp) and battle-entry helper.
 // Retail symbol is unmangled - keep C linkage.
 extern "C" void MoveImplDispatch204(CfObjectImplMoveObj* self, u32 id);
 
-// Battle-manager helpers dispatched by func_800CD5DC (retail symbols are
+// Battle-manager helpers dispatched by MoveImplDriveTransition (retail symbols are
 // unmangled; owners: CfObjectImplEne.cpp / CBattleManager.cpp).
 extern "C" int CBattleMan_ListHasValue(void* mgr, void* obj);
-extern "C" void func_800D9978(void* mgr, void* obj);
-extern "C" void func_800D9CA0(void* mgr, void* target);
-extern "C" void func_800DA0A4(void* mgr, void* actor, u32 param);
-// Voice-manager hook fired at the end of func_800CD5DC's case 8 body.
+extern "C" void registerBattleActor(void* mgr, void* obj);
+extern "C" void unregisterBattleActor(void* mgr, void* target);
+extern "C" void initBattleActorState(void* mgr, void* actor, u32 param);
+// Voice-manager hook fired at the end of MoveImplDriveTransition's case 8 body.
 extern "C" void CCharVoiceMan_FlushPendingActorVoice(void* actor);
-// Vision-system refresh (code_800F42AC.cpp), called by func_800CD5DC.
+// Vision-system refresh (code_800F42AC.cpp), called by MoveImplDriveTransition.
 extern "C" void func_800F449C(void* obj);
-// Battle-status add helper (CActParamAnimGame.cpp), used by func_800CD5DC.
+// Battle-status add helper (CActParamAnimGame.cpp), used by MoveImplDriveTransition.
 extern "C" void setAnimCount(void* obj, u32 param);
 
 // Event dispatcher defined below in this TU; retail symbol is unmangled, so
@@ -893,7 +893,7 @@ extern "C" void MoveImplGateEventCmd(void* self, u32 id); // canonical void* for
 // (CBattleManager.cpp): retail symbols are unmangled, so keep C linkage
 // (same pattern as the other imports above).
 extern "C" void* func_800BBC0C(void* objParam);
-extern "C" void func_800E1B5C(void* mgr, void* battleObj);
+extern "C" void evalBattleTarget(void* mgr, void* battleObj);
 
 // getInstance__Q22cf14CBattleManagerFv: the one shared declaration lives in
 // kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
@@ -928,14 +928,14 @@ struct CfMoveCd460Pose {
 };
 
 
-// Retail float constants (sdata2 pool) used by func_800CC638.
+// Retail float constants (sdata2 pool) used by MoveImplDriveRequest.
 extern const f32 lbl_eu_80666C88;   // event-object f17() comparison threshold
 extern const f32 lbl_eu_80666C68;   // move-distance base threshold
 // sdata2 int->float magic (2^52 = 0x4330000000000000) for the 0x43300000
 // conversion (CfMapEffectManager.hpp convention).
 extern const f64 lbl_eu_80666C90;
 extern const f32 lbl_eu_80666C64;   // schedSetStepIntervals second argument
-extern const f32 lbl_eu_80666C78;   // func_800CD5DC knockback divisor
+extern const f32 lbl_eu_80666C78;   // MoveImplDriveTransition knockback divisor
 // sdata2 magic paired with the 0x43300000 int->float conversion.
 extern const f64 lbl_eu_80666C80;
 
@@ -954,8 +954,8 @@ extern const f32 lbl_eu_80666CCC;
 extern const f32 lbl_eu_80666CD0;
 extern const f32 lbl_eu_80666CD4;
 extern const f32 lbl_eu_80666C9C;
-extern const f32 lbl_eu_80666CA0;   // func_800CEE80 timer threshold / vec.y seed
-extern const f32 lbl_eu_80666CA4;   // func_800CEE80 final field_0x24 store
+extern const f32 lbl_eu_80666CA0;   // MoveImplPresentEffect timer threshold / vec.y seed
+extern const f32 lbl_eu_80666CA4;   // MoveImplPresentEffect final field_0x24 store
 extern const f32 lbl_eu_80666CAC;
 extern const f32 lbl_eu_80666CB0;
 extern const f32 lbl_eu_80666CB4;
@@ -986,15 +986,15 @@ void Warning(const char* file, int line, const char* fmt, ...);
 // re-mangling the pre-mangled retail name (CPartsChange.hpp convention).
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 
-// Volatile here: func_800CEE80 performs a dead reload of this word (retail
+// Volatile here: MoveImplPresentEffect performs a dead reload of this word (retail
 // keeps the load), so the compiler must not elide it.
 extern volatile u32 lbl_eu_80661D40;
 
 // Presentation / sound / effect helpers used by the move-event dispatchers.
 extern "C" void releaseVisionSlot(void* actor, int param); // canonical (void*,int) form (CfObjectActor.hpp)
-extern "C" void func_80174C24(void* actor, u32 mask);
+extern "C" void requestItemLoad(void* actor, u32 mask);
 // CfCode_GetSubObject: TU-local no-arg view now in CfObjectImplMove.cpp (only caller).
-extern "C" void func_8014AC38(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
+extern "C" void aiRingPrepend(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
 #include <string.h>
 // Scn_QueryUnk80State is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
 // do not redeclare it here.
@@ -1010,7 +1010,7 @@ extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue,
     f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" void* simGetLeafActData(void);
-// func_800CF810 shape: ground/screen probe writing the adjusted position and
+// MoveImplGroundProbeB shape: ground/screen probe writing the adjusted position and
 // taking the source vector plus a float constant.
 // Canonical form (matches CPartsChange.hpp / CtrlMoveBase.hpp / CfCam.cpp).
 // Call sites needing another ABI cast through a local fn-pointer typedef

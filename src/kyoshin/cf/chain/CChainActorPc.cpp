@@ -50,10 +50,10 @@ void CChainActorPc::CChainActor_CleanupVoiceEnd() {}
 void CChainActorPc::CChainActor_ClearTargetRef() {}
 void CChainActorPc::CChainActor_ToggleCancelVoice(int) {}
 void CChainActorPc::CChainActor_ToggleMoveFlag(int) {}
-int CChainActorPc::func_8027A024(int) { return 0; }
-int CChainActorPc::func_8027A338(int) { return 0; }
-int CChainActorPc::func_8027A58C() { return 0; }
-int CChainActorPc::func_8027A8C8() { return 0; }
+int CChainActorPc::CChainActor_CheckReady(int) { return 0; }
+int CChainActorPc::CChainActor_ScanArtsSlots(int) { return 0; }
+int CChainActorPc::CChainActor_CheckFacing() { return 0; }
+int CChainActorPc::CChainActor_CheckVoice() { return 0; }
 void CChainActorPc::CChain_noop_AA0C(int, cf::CChainActor*, int) {}
 void CChainActorPc::CChain_noop_795D0() {}
 void CChainActorPc::CChain_noop_78E00(int, int) {}
@@ -139,9 +139,9 @@ state5_check:
         u8* obj = (u8*)big;
         u8* sub = *(u8**)(obj + 4);
         int v = *(int*)((int(*)(u8*))(*(u8***)sub)[12])(sub);
-        if (func_80174C98(obj, &v, 0xb)) {
+        if (testActorStatus(obj, &v, 0xb)) {
             v = *(int*)((int(*)(u8*))(*(u8***)sub)[12])(sub);
-            if (func_80174C98(obj, &v, 0xb)) {
+            if (testActorStatus(obj, &v, 0xb)) {
                 ((void(*)(u8*, int))(*(u8***)sub)[8])(sub, 0xb);
             }
         }
@@ -167,7 +167,7 @@ store_455a:
         u8* obj = (u8*)big;
         u8* sub = *(u8**)(obj + 4);
         int v = *(int*)((int(*)(u8*))(*(u8***)sub)[12])(sub);
-        if (func_80174C98(obj, &v, 6)) {
+        if (testActorStatus(obj, &v, 6)) {
             big->field_455a = 0xec;
         } else {
             big->field_455a = 0x64;
@@ -189,11 +189,11 @@ extern "C" void clearChainTarget(cf::CChainActorPc* self) {
     CChainActor_ClearTargetRef(self);
 }
 // External declarations specific to func_80281CF0
-extern void* func_8009EC9C(u32 index);
+extern void* CtrlObjectParam_GetCharEntry(u32 index);
 extern int CtrlObjectParam_GetCurrentRowKey(void*);
 extern u32 IdTable_SumValues(u8*, u32);
 extern u8* getListB28();
-extern float func_800D81A8(int, u8*, int);
+extern float calcBattleDamage(int, u8*, int);
 
 // Processes chain actor damage/healing based on arg.
 // Multi-exit guard pattern:
@@ -218,7 +218,7 @@ void func_80281CF0(cf::CChainActorPc* self, int arg) {
     cond = 0;
     goto check_cond;
 state4:
-    cond = (CtrlObjectParam_GetCurrentRowKey(func_8009EC9C(4)) == 1);
+    cond = (CtrlObjectParam_GetCurrentRowKey(CtrlObjectParam_GetCharEntry(4)) == 1);
 check_cond:
     if (cond) {
         u8** vt = *(u8***)big;
@@ -250,7 +250,7 @@ arg0:
                 }
                 if (((int(*)(u8*))(*(u8***)actor)[175])(actor) == 0) {
                     getInstance__Q22cf14CBattleManagerFv();
-                    float f31 = func_800D81A8(0, actor, 0);
+                    float f31 = calcBattleDamage(0, actor, 0);
                     float dmg = f30 * ((float(*)(u8*))(*(u8***)actor)[75])(actor);
                     ((void(*)(u8*, float))(*(u8***)actor)[71])(actor, dmg * f31);
                 }
@@ -311,16 +311,16 @@ struct CChainActorPcV29View : CChainActorPcV70Data {
     virtual int v27() = 0;  // MWCC prefix+27*4 = retail +0x74
 };
 
-// Checks preconditions before calling func_8027A024 to execute chain logic.
+// Checks preconditions before calling CChainActor_CheckReady to execute chain logic.
 // Returns 0 if the actor is inactive (vtable check) or if a battle-manager
-// flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
+// flag 0xf8 is set on the unk0 object; otherwise delegates to CChainActor_CheckReady.
 extern "C" int checkChainActorReady(cf::CChainActorPc* self, void* arg) {
     if (static_cast<CChainActorPcV29View*>(static_cast<void*>(self))->v27() != 0) {
         return 0;
     }
     // Check battle-manager flag 0xf8 on this->unk0 + 8
     if (func_80148778((void*)(self->unk0 + 8), 0xf8) != 0) return 0;
-    return func_8027A024(self, arg);
+    return CChainActor_CheckReady(self, arg);
 }
 // Checks if this actor is the player's current actor.
 // Compares getPlayer(0) against unk0 + 0x3e9c (or 0 if unk0 is null).

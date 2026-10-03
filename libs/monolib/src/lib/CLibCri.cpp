@@ -247,11 +247,11 @@ int CLibCri::dispatchFilePlayback(const char* filename, u32 allocHandle, int fil
         int out1, out2, out3, out4;
         if (func_804DDD54(ext, filename, &out1, &out2, &out3, &out4) != 0) {
             bool hasPrefix = (strstr(filename, lbl_eu_80522FD8) != nullptr);
-            return func_8045B5AC(out1, allocHandle, fileHandle, out2, out3, hasPrefix);
+            return func_8045B5AC__20CLibCriStreamingPlayFv((const char*)out1, allocHandle, fileHandle, out2, out3, hasPrefix);
         }
     }
 
-    return func_8045B5AC((int)filename, allocHandle, fileHandle, -1, -1, false);
+    return func_8045B5AC__20CLibCriStreamingPlayFv(filename, allocHandle, fileHandle, -1, -1, false);
 }
 
 // ============================================================================

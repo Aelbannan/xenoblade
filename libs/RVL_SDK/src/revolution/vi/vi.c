@@ -150,12 +150,9 @@ timing_s timing[11] = {
     { 12, 480, 48, 48, 6, 6, 24, 24, 24, 24, 1038, 1038, 1038, 1038, 1050, 429, 64, 71, 105, 180, 391, 122, 412 },
     { 10, 576, 62, 62, 6, 6, 20, 20, 20, 20, 1240, 1240, 1240, 1240, 1250, 432, 64, 75, 106, 172, 380, 122, 412 },
 };
-/* retail pads the timing table to a 4-byte tail; bytes zeroed and the
- * keeper tail dropped by the vi.o unit rules (12 bytes keeps this out of
- * .sdata) */
-char vi_timing_pad[12] = { 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-u16 taps[26] = {
+// taps is 4-aligned in retail (2 pad bytes follow timing); the attribute
+// reproduces the gap without a filler object.
+__attribute__((aligned(4))) u16 taps[26] = {
     0x1F0, 0x1DC, 0x1AE, 0x174, 0x129, 0x0DB, 0x08E, 0x046, 0x00C, 0x0E2,
     0x0CB, 0x0C0, 0x0C4, 0x0CF, 0x0DE, 0x0EC, 0x0FC, 0x008, 0x00F, 0x013,
     0x013, 0x00F, 0x00C, 0x008, 0x001, 0x000,

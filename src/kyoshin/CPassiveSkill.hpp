@@ -80,7 +80,7 @@ public:
     ~CPassiveSkillCur();
 };
 
-// Opaque 0x18-byte region at CPassiveSkillInfo+0x3C driven by func_802640B8:
+// Opaque 0x18-byte region at CPassiveSkillInfo+0x3C driven by CPassiveSkillRegion_syncSlotPanes:
 // the layout at +0x8 has its root pane searched by the two pane-name
 // pointers (lbl_eu_80668908 / lbl_eu_8066890C).
 struct UI_PassiveSkillRegion3C {
@@ -115,7 +115,7 @@ struct CPSkillBlob {
     CPSkillRecord records2[6];  // +0x3D4..0x86B
 };
 
-// Skill-blob view for func_80266724: the 5+6 records plus the per-row
+// Skill-blob view for CPassiveSkillLine_setCellMessage: the 5+6 records plus the per-row
 // SP-cost table at +0x888 (u32 stride 4, masked to u16 at the read site).
 struct CPSkillBlobCost {
     CPSkillRecord records[5];   // +0x00..0x3D3
@@ -126,7 +126,7 @@ struct CPSkillBlobCost {
 };
 
 // Character-data view for CPassiveSkillLine_refreshSP: the skill blob at +0x3534 of the
-// func_8009EC9C result plus the total-SP word at +0x884 past the blob base.
+// CtrlObjectParam_GetCharEntry result plus the total-SP word at +0x884 past the blob base.
 struct CPSkillBlobTotal {
     CPSkillRecord records[5];   // +0x00..0x3D3 (aliases CPSkillBlob.records)
     CPSkillRecord records2[6];  // +0x3D4..0x86B (aliases CPSkillBlob.records2)
@@ -137,7 +137,7 @@ struct CPSkillBlobTotal {
 // 8-byte skill-grid cell embedded at CPassiveSkillLine+0x20 (the ctor's
 // memset 0xC8 zeroes the whole 5x5 grid; CPassiveSkillLine_teardown deletes each
 // layout through its virtual dtor). The +0x04 slot holds the cell layout's
-// animation transform, whose frame func_80269D20 drives via SetFrame.
+// animation transform, whose frame CPassiveSkillLine_updateSkillTabs drives via SetFrame.
 struct CPSkillGridCell {
     nw4r::lyt::Layout* mpLayout;        // +0x00
     nw4r::lyt::AnimTransform* mpAnimTrans; // +0x04
@@ -174,7 +174,7 @@ public:
     u8 _pad28[0x10];                     // +0x28..0x37
     u8 field_38;                         // +0x38 - draw gate flag
     u8 _pad39[0x3];                      // +0x39..0x3B
-    UI_PassiveSkillRegion3C field_3C;    // +0x3C..0x53 - region driven by func_802640B8
+    UI_PassiveSkillRegion3C field_3C;    // +0x3C..0x53 - region driven by CPassiveSkillRegion_syncSlotPanes
     CSysWin* field_54;                   // +0x54 - syswin pointer
 };
 
@@ -250,7 +250,7 @@ extern "C" void CPassiveSkillCur_releaseLayout(UI::CPassiveSkillCur* self);
 extern "C" void CPassiveSkillLayoutRef_release(UI_PassiveSkillLayoutRef* self);
 extern "C" void CPassiveSkillCur_releaseBoth(UI::CPassiveSkillCur* self);
 
-// Abstract view into the embedded CSysWin's vtable for func_8026D5A8: retail
+// Abstract view into the embedded CSysWin's vtable for CPassiveSkill_loadSkillData: retail
 // dispatches vtable +0x88 (index 34, no args) after the temp-window copy.
 // All-pure so no vtable is emitted (same scheme as COptionSysWinView).
 class UI_CPassiveSkillSysWinView {
@@ -298,7 +298,7 @@ extern "C" void CPassiveSkillInit_stepMode0(UI_PassiveSkillInit* self);
 extern "C" void CPassiveSkillInit_stepMode1(UI_PassiveSkillInit* self);
 // Skill-info pane-animation trigger (retail symbol unmangled); called by
 // CPassiveSkillLine_decCharIdx.
-extern "C" void func_80264470(UI_PassiveSkillInit* self);
+extern "C" void CPassiveSkillInit_triggerPane10(UI_PassiveSkillInit* self);
 
 // Skill-name pane-text setter for the cursor (retail symbol unmangled); called
 // by CPassiveSkillLine_enterState4.
@@ -314,8 +314,8 @@ struct UI_PassiveSkillInit {
     nw4r::lyt::Layout* field_4;      // +0x04 - layout animated via vtbl 0x38 by CPassiveSkillInit_step
     nw4r::lyt::AnimTransform* field_8; // +0x08 - anim transform enabled/frame-set by CPassiveSkillInit_stepMode1
     nw4r::lyt::AnimTransform* field_C; // +0x0C - anim transform whose frame is set
-    nw4r::lyt::Pane* field_10;       // +0x10 - pane toggled by func_80264470
-    nw4r::lyt::Pane* field_14;       // +0x14 - pane toggled by func_8026440C
+    nw4r::lyt::Pane* field_10;       // +0x10 - pane toggled by CPassiveSkillInit_triggerPane10
+    nw4r::lyt::Pane* field_14;       // +0x14 - pane toggled by CPassiveSkillInit_triggerPane14
     u8 field_18;                     // +0x18
     u8 field_19;                     // +0x19 - active flag (init 1)
     u8 field_1A;                     // +0x1A
@@ -376,7 +376,7 @@ extern const float lbl_eu_80668900;
 // CPassiveSkillLine_stepState4 (retail .sdata2 float; value resolved at link time).
 extern const float lbl_eu_80668918;
 
-// Pane-name pointers for the func_802640B8 two-slot toggle (retail .sdata2
+// Pane-name pointers for the CPassiveSkillRegion_syncSlotPanes two-slot toggle (retail .sdata2
 // const data; values resolved at link time).
 extern const char* const lbl_eu_80668908;
 extern const char* const lbl_eu_8066890C;
@@ -468,7 +468,7 @@ extern char lbl_eu_8050DC20[];
 
 // Skill-row table (split .rodata) indexed by (id-1)*8 + grid-entry - 1 by
 // CPassiveSkillLine_isLearned / CPassiveSkillLine_isOccupied; the byte selects the character-data record
-// row (func_8009EC9C result + 0x3534).
+// row (CtrlObjectParam_GetCharEntry result + 0x3534).
 extern u8 lbl_eu_8050DB60[];
 
 // C-library vararg formatter (flat retail symbol; same convention as
@@ -477,7 +477,7 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 pushed onto the root pane by
-// func_8013676C. All-pure so no vtable is emitted (CMapSel.hpp / COption.hpp
+// ApplyFontToTxtPanes. All-pure so no vtable is emitted (CMapSel.hpp / COption.hpp
 // carry the same view under different class names).
 class CDeviceFontView {
 public:
@@ -521,7 +521,7 @@ struct CPSkillTexRes {
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
 extern "C" void Cur_DrawLayout(void*, void*);
 
-// 8-byte animation-colour vector (4 s16 channels) returned by func_80139658
+// 8-byte animation-colour vector (4 s16 channels) returned by PaneMatGetS16QuadByName
 // in r3:r4 (same layout as CItemBoxLine.hpp's FourShorts; the .d channel is
 // the alpha used by the skill-grid color ladder).
 struct CPSkillFourShorts {
@@ -536,7 +536,7 @@ struct CPSkillColorS10 {
 
 // Pane-animation colour fetch (retail symbol unmangled): reads the 4 s16
 // animation vector of a named pane (index 0 = base, 1 = alternate).
-extern "C" CPSkillFourShorts func_80139658(void*, const char*, u32);
+extern "C" CPSkillFourShorts PaneMatGetS16QuadByName(void*, const char*, u32);
 
 // RGB-colour builder (retail symbol unmangled): fills the record with the
 // four s16 channels and returns the record pointer (CTitle.hpp /
@@ -545,14 +545,14 @@ extern "C" CPSkillColorS10* setGXColorS10(CPSkillColorS10* color, s16 r,
                                             s16 g, s16 b, s16 a);
 
 // Bind a texture resource to a pane (retail symbol unmangled).
-extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u32 res);
+extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* pane, u32 res);
 
 // Pane colour setter (retail symbol unmangled): applies the two colours to
 // the pane (CItemBoxLine.hpp convention; PaneMatSetTevColorsByName is the layout form).
 extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* pane, CPSkillColorS10* c1,
                                CPSkillColorS10* c2);
 
-// Pane byte at +0xB8 written by func_8026AAF4's cell update (opaque state).
+// Pane byte at +0xB8 written by CPassiveSkillLine_updateLearnGrid's cell update (opaque state).
 struct CPSkillPaneB8 {
     u8 _pad0[0xB8];   // +0x00..0xB7
     u8 field_B8;      // +0xB8
@@ -564,7 +564,7 @@ struct CPSkillPaneB8 {
 // name (CTitleAHelp.hpp's C++ declaration would mangle it).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
-// Message-table lookup used by func_80266950 (retail symbol unmangled):
+// Message-table lookup used by CPassiveSkillLine_setSlotNamePanes (retail symbol unmangled):
 // returns the u16 id for (table, label, category).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 
@@ -574,7 +574,7 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Character index splitter used by CPassiveSkill_learnAllSkills (retail symbol unmangled;
 // 3-arg form also declared in CPcKizunagram.hpp).
-extern "C" void func_8013AB0C(u8*, u8*, int);
+extern "C" void FetchRelatePair(u8*, u8*, int);
 
 // Shared BDAT character table pointer (.sdata; value resolved at link time).
 extern void* lbl_eu_80664090;
@@ -584,7 +584,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 
 // Skill grid data tables (.sdata pointers; values resolved at link time).
 // lbl_eu_8066488C is passed as the message table to BdatGetU16Direct by
-// func_80266950; func_8026BB60 reads all three (80664880 name lookup,
+// CPassiveSkillLine_setSlotNamePanes; CPassiveSkillLine_refreshLearnGrid reads all three (80664880 name lookup,
 // 80664888 slot-category lookup, 8066488C learned-slot lookup).
 extern void* lbl_eu_8066488C;
 extern void* lbl_eu_80664880;
@@ -593,8 +593,8 @@ extern void* lbl_eu_80664890;
 extern void* lbl_eu_80664884;
 extern void* lbl_eu_80664894;
 
-// Character-data view for func_80269D20: the current-grid-row counter word
-// at +0x3DD0 of the func_8009EC9C result (compared against the loop row).
+// Character-data view for CPassiveSkillLine_updateSkillTabs: the current-grid-row counter word
+// at +0x3DD0 of the CtrlObjectParam_GetCharEntry result (compared against the loop row).
 struct CPSkillCharData3DD0 {
     u8 _pad0[0x3DD0];   // +0x00..0x3DCF
     u32 field_3DD0;     // +0x3DD0
@@ -605,7 +605,7 @@ struct CPSkillCharData3DD0 {
 extern const float lbl_eu_8066891C;
 extern const float lbl_eu_80668920;
 
-// Per-character slot-spacing table read by func_8026BB60 (retail .sdata2
+// Per-character slot-spacing table read by CPassiveSkillLine_refreshLearnGrid (retail .sdata2
 // floats, indexed by (id-1)*2 to reach an 8-byte per-character stride;
 // only the first float of each pair is read).
 extern const f32 lbl_eu_80668930[];
@@ -617,29 +617,29 @@ extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self);
 
 // Pane-position helper (defined in code_80135FDC.cpp; retail symbol
 // unmangled): writes the ancestor-translate sum for a pane into output.
-// Used by func_8026D080 to position the skill-grid cell panes.
-extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node);
+// Used by CPassiveSkillLine_refreshGridPositions to position the skill-grid cell panes.
+extern "C" void AccumPaneWorldPosB(nw4r::math::VEC3* output, nw4r::lyt::Pane* node);
 
 // .sdata2 int->double magic constants (0x4330000000000000 unsigned and
 // 0x4330000080000000 signed-conversion variants) used by the s32/u32->f64
-// conversions in func_80269D20 and the alpha ladder in func_8026D210.
+// conversions in CPassiveSkillLine_updateSkillTabs and the alpha ladder in CPassiveSkillLine_refreshGridAlpha.
 extern const f64 lbl_eu_80668910;
 extern const f64 lbl_eu_80668928;
 extern const f32 lbl_eu_8066893C;
 extern const f32 lbl_eu_80668940;
 
-// .sdata2 category-filter word + trailing byte read by func_8026CE30: the
+// .sdata2 category-filter word + trailing byte read by CPassiveSkillLine_syncEquipState: the
 // loop's category byte for grid index i is bytes[i] of the word and the
 // 5th category comes from the byte.
 extern u32 lbl_eu_80668934;
 extern u8 lbl_eu_80668938;
 
-// 3-word scene-name table (.rodata) copied to the stack by func_8026CE30
+// 3-word scene-name table (.rodata) copied to the stack by CPassiveSkillLine_syncEquipState
 // and indexed by the +0xF3 countdown byte (when < 3).
 extern u32 lbl_eu_8050DBB8[3];
 
-// Character-data view for func_8026CE30: the five s16 equipment ids at
-// +0x1C..+0x24 (categories 4..8) on the func_8009EC9C result.
+// Character-data view for CPassiveSkillLine_syncEquipState: the five s16 equipment ids at
+// +0x1C..+0x24 (categories 4..8) on the CtrlObjectParam_GetCharEntry result.
 struct CPSkillCharData {
     u8 _pad0[0x1C];   // +0x00..0x1B
     s16 equip4;       // +0x1C
@@ -649,9 +649,9 @@ struct CPSkillCharData {
     s16 equip8;       // +0x24
 };
 
-// Equipment lookup helpers for func_8026CE30 (retail symbols unmangled;
+// Equipment lookup helpers for CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // same flat declarations as CItemBoxInfo.hpp / CEquipChange.hpp).
-extern "C" void* func_80157C4C(u32 index, s16 value);
+extern "C" void* CItem_kindPtr(u32 index, s16 value);
 extern "C" u16 BdatGetItemId(u32 value);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
@@ -686,7 +686,7 @@ struct CPSkillEnumListCount {
     u32 count;                 // +0x620
 };
 
-// cf enum-list helpers used by func_8026CE30 (retail symbols unmangled;
+// cf enum-list helpers used by CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // declared with typed holders in this header only - no co-included header
 // re-declares them).
 extern "C" void CTaskGame_enumListCtor(void*);
@@ -697,7 +697,7 @@ extern "C" CPSkillEnumListSlot* getEntryAt(void*, u32);
 extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
 extern "C" void func_800BFDE0(cf::CfObjectMove* move, u32 flag);
 
-// 5-byte category filter copied from the .sdata2 constants by func_8026CE30:
+// 5-byte category filter copied from the .sdata2 constants by CPassiveSkillLine_syncEquipState:
 // the word is stored as a unit (lwz/stw) then the trailing byte (stb), and
 // the loop reads it back as bytes.
 union CPSkillCatFilter {
@@ -708,8 +708,8 @@ union CPSkillCatFilter {
     u8 bytes[5];     // +0x00..0x04
 };
 
-// First word of a func_80157C4C item record: the top 12 bits are the item
-// category (func_8026CE30 reads them via BdatGetItemId).
+// First word of a CItem_kindPtr item record: the top 12 bits are the item
+// category (CPassiveSkillLine_syncEquipState reads them via BdatGetItemId).
 struct CPSkillItem {
     u32 word;    // +0x00
 };

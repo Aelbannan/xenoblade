@@ -68,7 +68,7 @@ extern const void* lbl_eu_80662170; // __dynamic_cast src typeinfo
 extern const void* lbl_eu_80661EC8; // __dynamic_cast dst typeinfo
 }
 
-// Object type reached through the dynamic_cast in func_8013D1E8; only the
+// Object type reached through the dynamic_cast in UIWin_ShowTalkWindow; only the
 // +0xAC show flag is written.
 struct CTaskWindowFlags {
     u8 unk000[0xAC];
@@ -102,8 +102,8 @@ public:
     s32 unk60;               //0x60 - fallback timer when unk5C is null
     bool unk64;              //0x64 - pending removal flag
     bool field_0x65;         //0x65 - pending update-mark flag
-    bool field_0x66;         //0x66 - removal-mark (func_8013D26C)
-    u8 unk67;                //0x67 - pending flag (queried by func_8013EB90)
+    bool field_0x66;         //0x66 - removal-mark (UIWin_SweepQueue)
+    u8 unk67;                //0x67 - pending flag (queried by UIWin_HasPendingUpdate)
     u32 field_0x68;          //0x68 - window id (matched by UIWin_CreateTalkWin)
 };
 
@@ -287,11 +287,11 @@ void CUIWindowManager::Move() {
 extern "C" u32 UIWin_GetInstance() {
     return (u32)lbl_eu_80664088;
 }
-// Window-queue sweep (retail func_8013D26C): walk the secondary queue. With
+// Window-queue sweep (retail UIWin_SweepQueue): walk the secondary queue. With
 // mode == 0 mark each window for removal (mIsRemove + field_0x66) and collect
 // the nodes; with mode != 0 just set the update-mark (field_0x65). Collected
 // nodes are unlinked from the list (MWCC auto-unrolls the unlink loop by 8).
-void func_8013D26C(int mode) {
+void UIWin_SweepQueue(int mode) {
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return;
@@ -328,7 +328,7 @@ extern "C" unsigned short UIWin_GetTimer()
 extern "C" void UIWin_ClearTimer() {
     lbl_eu_8066408C = 0;
 }
-// Bulk window-list control (retail func_8013EC6C). With arg1 set, marks every
+// Bulk window-list control (retail UIWin_ControlWindowLists). With arg1 set, marks every
 // window on both queues with the flag selected by arg2 (0x66 when set, 0x65
 // when clear). With arg1 clear, tears both queues down: each primary-queue
 // window is remove-flagged (SetRemove) and unlinked, then each
@@ -338,7 +338,7 @@ extern "C" void UIWin_ClearTimer() {
 // STATUS: body shape matches retail modulo 2 spilled callee-saved regs
 // (decomp 1108B vs retail 1084B) - same MWCC 8x-unroll unlink Chaitin
 // coloring artifact documented for CUIWindowManager::Move (soft-cap).
-void func_8013EC6C(bool arg1, bool arg2) {
+void UIWin_ControlWindowLists(bool arg1, bool arg2) {
     // NOTE: do not cache the singleton in a local - retail re-reads the
     // global in every loop condition/init (only the null-check load is CSE'd
     // into the first head fetch), and a cached local forces callee-saved
@@ -428,13 +428,13 @@ extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
 // Window-dispatch entry (retail keeps a flat unmangled free-function
 // symbol, so C linkage is required for the call relocs to bind). The first
 // arg is ignored by the retail body.
-extern "C" void func_8013CBB4(u32 arg0, int id = 0, int arg2 = 0, int arg3 = 0);
+extern "C" void UIWin_OpenWindow(u32 arg0, int id = 0, int arg2 = 0, int arg3 = 0);
 
 extern "C" void* UIWin_ThunkCBB4(void* self) {
-    // Retail tail-jumps into func_8013CBB4 and forwards whatever it leaves in
+    // Retail tail-jumps into UIWin_OpenWindow and forwards whatever it leaves in
     // r3; route through a matching prototype so no extra r3 setup is emitted.
     typedef void* (*ThunkFn)(u32);
-    return ((ThunkFn)&func_8013CBB4)((u32)((char*)self - 0x54));
+    return ((ThunkFn)&UIWin_OpenWindow)((u32)((char*)self - 0x54));
 }
 extern "C" void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void UIWin_DtorAdaptor(CUIWindowManager* p) {
@@ -490,7 +490,7 @@ extern "C" void* __dt__CTTask_CUIWindowManager(void* self, s32 flags) {
 // it on the primary window list; the quest path (0x221..0x607) additionally
 // gates on flag-memory resources, the talk-event bit and the player's
 // current target.
-extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
+extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
     // One dedicated memory-resident window-result slot per case (retail
     // keeps four stack locals at +0x8/+0xc/+0x10/+0x14 and reloads them in
     // the queue phase).
@@ -524,7 +524,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
             return;
         }
         if (BdatGetU8Direct(
-                (u32)lbl_eu_80573D18[func_80138138(id - 0x220)],
+                (u32)lbl_eu_80573D18[SearchThresholdIdx(id - 0x220)],
                 lbl_eu_8050097C, id - 0x220) == 2) {
             return;
         }
@@ -747,7 +747,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
         }
         u8 v = BdatGetU8ByTableKey(&lbl_eu_8050097C[0xa],
                              &lbl_eu_8050097C[0x17], id - 0x20c8);
-        func_8013B88C(v);
+        TryRevealMapArea(v);
         break;
     }
     }
@@ -951,7 +951,7 @@ queue_found:
 }
 // Window-list lookup: find the secondary-queue window whose id matches,
 // then dynamic_cast it to the talk-window type and set its +0xAC show flag.
-void func_8013D1E8(u32 id) {
+void UIWin_ShowTalkWindow(u32 id) {
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return;
@@ -1398,7 +1398,7 @@ extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
         return NULL;
     }
     if (first == 1) {
-        int idx = (int)func_80138138(second);
+        int idx = (int)SearchThresholdIdx(second);
         if ((u8)BdatGetU8Direct((u32)lbl_eu_80573D18[idx], lbl_eu_8050097C,
                               second) == 2) {
             return NULL;
@@ -1508,7 +1508,7 @@ queue_found:
 // NOTE: kept duplicated in each creator - a shared helper is not inlined by
 // MWCC here and retail has no such call.
 
-// Retail window creator: create the window from func_801602F4 and queue it
+// Retail window creator: create the window from col6SysCreate and queue it
 // on the primary window list.
 extern "C" IUIWindow* UIWin_Create602F4Win() {
     volatile u32 savedRet;
@@ -1517,7 +1517,7 @@ extern "C" IUIWindow* UIWin_Create602F4Win() {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_801602F4((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)col6SysCreate((CProcess*)inst->unk9C, inst->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -1571,7 +1571,7 @@ extern "C" IUIWindow* UIWin_Create5DCD0Win() {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_8015DCD0((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)col6HintAlloc((CProcess*)inst->unk9C, inst->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -1800,7 +1800,7 @@ extern "C" IUIWindow* UIWin_CreateBEDE0Win(u32 id) {
     }
     {
         u32 tempRet =
-            (u32)func_801BEDE0((CProcess*)inst->unk9C, inst->unk58, id);
+            (u32)ItemEx_Create((CProcess*)inst->unk9C, inst->unk58, id);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -2364,7 +2364,7 @@ queue_found:
 extern "C" int getFadeMenu();
 extern "C" int isFadeActive();
 extern "C" int ItemEx_HasInstance();
-int func_8013EB90() {
+int UIWin_HasPendingUpdate() {
     WindowNode* node;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
@@ -2607,14 +2607,14 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
 
     return 1;
 }
-// Item-availability updater (retail func_8013F6C4): picks which of the two
+// Item-availability updater (retail UIWin_UpdateItemAvail): picks which of the two
 // per-item rows this invocation owns by probing the shared flag buffer, then
 // walks that row's four entries applying per-type updates to the signed byte
 // table (field_0xC4): type 1 counts up toward the row cap, types 3/5 set the
 // deferred state, type 2/6 absorb via CItem_sumFamilyByte6/CItem_consumeFamilyCnt, type 4
 // plain count. Afterwards unblocks the 0xFC/0xFD flag-memory states.
 // Returns 1 when the buffer's flag-memory word changed.
-int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
+int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
     int sel;
     if ((self->field_0x00 & 1) != 0) {
         return 0;
@@ -2629,9 +2629,9 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
         sel = -1;
     } else if (glob->field_0x6E[0].field_0x00 != 0) {
         if (glob->field_0x6E[1].field_0x00 != 0) {
-            if (func_80140854((CItemQuery*)glob, 0, 0) != 0) {
+            if (UIWin_QueryItemAvail((CItemQuery*)glob, 0, 0) != 0) {
                 sel = 0;
-            } else if (func_80140854((CItemQuery*)glob, 1, 0) != 0) {
+            } else if (UIWin_QueryItemAvail((CItemQuery*)glob, 1, 0) != 0) {
                 sel = 1;
             } else {
                 sel = -1;
@@ -2792,11 +2792,11 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                             // first entry just needs a started timer.
                             if (j != 0 || self->field_0x04 >= 1) {
                                 if (j == 0 ||
-                                    (func_80140854((CItemQuery*)self,
+                                    (UIWin_QueryItemAvail((CItemQuery*)self,
                                                    (u32)slot,
                                                    (u32)(j - 1)) != 0 &&
                                      times[j - 1] <= self->field_0x04)) {
-                                    if (func_80140854((CItemQuery*)self,
+                                    if (UIWin_QueryItemAvail((CItemQuery*)self,
                                                       (u32)slot,
                                                       (u32)j) != 0) {
                                         if ((s8)cells[j] == 0) {
@@ -2830,7 +2830,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                             }
                         } else {
                             if (self->field_0x50 == arg4) {
-                                if (func_80140854((CItemQuery*)self,
+                                if (UIWin_QueryItemAvail((CItemQuery*)self,
                                                   (u32)slot, (u32)j) != 0) {
                                     if ((s8)cells[j] == 0) {
                                         cells[j] = 1;
@@ -2856,7 +2856,7 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
                 }
             next:;
                 maskAll = (u8)(maskAll | ((u32)1 << j));
-                if (func_80140854((CItemQuery*)self, (u32)slot, (u32)j) != 0) {
+                if (UIWin_QueryItemAvail((CItemQuery*)self, (u32)slot, (u32)j) != 0) {
                     maskHit = (u8)(maskHit | ((u32)1 << j));
                 }
             }
@@ -2946,15 +2946,15 @@ int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
 }
 // Retail body is unmatched (0x85c); noinline keeps callers emitting the real
 // bl instead of IPA-eliding the empty stub.
-extern "C" __declspec(noinline) void func_8013FFF8(void* flagBuf, void* entry,
+extern "C" __declspec(noinline) void UIWin_SetTableFlag(void* flagBuf, void* entry,
                                                     u32 value){}
-// Item-availability query (retail func_80140854): returns 1 when the item
+// Item-availability query (retail UIWin_QueryItemAvail): returns 1 when the item
 // can be used/shown, 0 otherwise. Reads the per-row entry type at
 // rows[arg1].field_0x02[arg2]; types 2 / 3 / 0x104 / 0x105 gate on the sign
 // of the field_0xC4 byte table and a 4-entry rodata flag table; type 4
 // accepts when the flag-memory read is 0xFE or 0xFF; the default case does a
 // signed range test of the byte-table value against the row byte.
-int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
+int UIWin_QueryItemAvail(CItemQuery* self, u32 arg1, u32 arg2) {
     if (self->field_0x00 & 1) {
         return 0;
     }
@@ -3049,13 +3049,13 @@ int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
 // Flag-buffer build (bdat-column variant): zero the 0xC8-byte flag buffer,
 // mark it active, refresh the per-table entry pointers, then scan every
 // table's rows for a row whose bdat column value matches `target`. On a hit
-// set the flag for that table (func_8013FFF8) and, when the window-open
+// set the flag for that table (UIWin_SetTableFlag) and, when the window-open
 // guard is clear (field_0x09 == 0), accept the buffer when the flag-memory
 // read of the 0x52 slot id is 1, 2, 0xFC or 0xFD; otherwise 0.
 // The 28 base offsets live in a 112-byte block; retail copies it wholesale
 // (backend struct-assign copy loop) once into `work`, and again into a
 // scratch block per row visited.
-u8* func_80140AFC(u32 target) {
+u8* UIWin_BuildFlagBufBySlot(u32 target) {
     // Declared up-front: retail forms both table addresses and zeroes the
     // index/cursors before the first block copy.
     CFlagOffsets tmp;
@@ -3085,7 +3085,7 @@ u8* func_80140AFC(u32 target) {
             u16 col = getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
                                                v);
             if (col == target) {
-                func_8013FFF8(lbl_eu_80573C50, entry, (u32)v);
+                UIWin_SetTableFlag(lbl_eu_80573C50, entry, (u32)v);
                 if (((CFlagBuffer*)lbl_eu_80573C50)->field_0x09 == 0) {
                     int id = -1;
                     if (((CFlagBuffer*)lbl_eu_80573C50)->field_0x52 < 0x3E8) {
@@ -3122,7 +3122,7 @@ u8* func_80140AFC(u32 target) {
 // set the flag for that table and, when the window-open guard is clear
 // (flagBuf[9] == 0 and UIWin_FlagBufCanShow accepts), clear the +4 slot and return
 // the buffer, otherwise 0.
-extern "C" u8* func_80140CA4(u32 target) {
+extern "C" u8* UIWin_BuildFlagBufCanShow(u32 target) {
     u8* flagBuf = lbl_eu_80573C50;
     memset(flagBuf, 0, 0xC8);
     flagBuf[0] |= 1;
@@ -3145,7 +3145,7 @@ extern "C" u8* func_80140CA4(u32 target) {
             u32 v = j + tmp[i];
             if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
                                               (int)v) == target) {
-                func_8013FFF8(flagBuf, entry, v);
+                UIWin_SetTableFlag(flagBuf, entry, v);
                 if (flagBuf[9] == 0 && UIWin_FlagBufCanShow((CFlagBuffer*)flagBuf) != 0) {
                     // Clear the per-table entry slot (retail writes a word).
                     *reinterpret_cast<u32*>(&flagBuf[4]) = 0;
@@ -3156,7 +3156,7 @@ extern "C" u8* func_80140CA4(u32 target) {
     }
     return NULL;
 }
-void func_80140E00(){}
+void UIWin_BuildFlagBufRec(){}
 // Flag-slot availability query: map the page id into the flag-memory index
 // (1000..1543 -> 544..1087) and report whether the slot is not locked to the
 // 0xFE/0xFF pair.
@@ -3174,7 +3174,7 @@ extern "C" int UIWin_QueryPageFlag(s32 page) {
 // Flag-buffer build: zero the 0xC8-byte flag buffer, mark it active, refresh
 // the per-table entry pointers (Bdat_GetTable_AA34), then scan every table's rows
 // for `row + baseOffset[i] == target`; on a hit set the flag for that table
-// (func_8013FFF8) and return the buffer, otherwise 0.
+// (UIWin_SetTableFlag) and return the buffer, otherwise 0.
 // The 28 base offsets live in a 112-byte block; retail copies it wholesale
 // (backend struct-assign copy loop) once into `work`, and again into a
 // scratch block per row visited.
@@ -3204,7 +3204,7 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
             tmp = work;
             int v = j + (int)*off;
             if (v == (int)target) {
-                func_8013FFF8(lbl_eu_80573C50, entry, (u32)v);
+                UIWin_SetTableFlag(lbl_eu_80573C50, entry, (u32)v);
                 return lbl_eu_80573C50;
             }
         }

@@ -49,7 +49,7 @@ struct ScnResDataEx {
 // names - no C++ mangling suffix on the retail reloc targets).
 extern "C" void Coli_RebiasIndices(int* dest, int baseOffset, int* src);
 extern "C" void Coli_InstallDataPtrs_74F0(ScnResData* res, u8* data);
-extern "C" void func_804B7540(ScnResData* res, u8* data, u16 param);
+extern "C" void allocMoverTbl(ScnResData* res, u8* data, u16 param);
 u32* Coli_GetWorkBase_5A70(void);
 
 // Vertex: 12 bytes (3 floats: x, y, z)
@@ -139,7 +139,7 @@ int getScnHandle__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 int func_804BC9F4(void* outStruct, u32 data) {
     *(u32*)outStruct = 0;
-    func_804B7804(&lbl_eu_8065F32C);
+    initColiMover(&lbl_eu_8065F32C);
 
     u8* base = (u8*)data;
     if (base != NULL) {
@@ -215,7 +215,7 @@ int func_804BC9F4(void* outStruct, u32 data) {
                     res->field_0x4C = base + *(u32*)(entryList + off + 4);
                     break;
                 case 0x13:
-                    func_804B7540(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4), *(u16*)(entryList + off + 2));
+                    allocMoverTbl(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4), *(u16*)(entryList + off + 2));
                     break;
                 }
             }
@@ -233,22 +233,22 @@ extern "C" void ScnData_FwdBC9A0() { Coli_CheckFlag(&lbl_eu_8065F32C); }
 
 void resetScnData(void* p) {
     *(u32*)p = 0;
-    func_804B7804(&lbl_eu_8065F32C);
+    initColiMover(&lbl_eu_8065F32C);
 }
 
-extern "C" void ScnData_FwdB7D9C(void* unused, int a) { func_804B7D9C((int)(uintptr_t)&lbl_eu_8065F32C, a); }
+extern "C" void ScnData_FwdB7D9C(void* unused, int a) { clrSeenBitTbl((int)(uintptr_t)&lbl_eu_8065F32C, a); }
 
-extern "C" void ScnData_FwdB7DD4() { func_804B7DD4(&lbl_eu_8065F32C); }
+extern "C" void ScnData_FwdB7DD4() { setSeenBitTbl(&lbl_eu_8065F32C); }
 
-extern "C" void func_804B7E0C(ScnResData* res);
-extern "C" void ScnData_FwdB7E0C() { func_804B7E0C(&lbl_eu_8065F32C); }
+extern "C" void updateMoverSt(ScnResData* res);
+extern "C" void ScnData_FwdB7E0C() { updateMoverSt(&lbl_eu_8065F32C); }
 
 extern "C" void ScnData_FwdB80A4(void* unused, int a) { Coli_GetOutMatrix_80A4(&lbl_eu_8065F32C, a); }
 
 extern "C" void ScnData_FwdB8078(void* unused, int a) { Coli_ClearOutFlag_8078(&lbl_eu_8065F32C, a); }
 
 void ScnData_FwdB80CC() {
-    func_804B80CC(&lbl_eu_8065F32C);
+    getMoverEntry(&lbl_eu_8065F32C);
 }
 
 // Retail saves/restores GPRs via _savegpr_14/_restgpr_14 helpers here while
@@ -549,7 +549,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BD8A0() {
     lbl_eu_80665968[0] = 0;
-    func_804B7804(&lbl_eu_8065F32C);
+    initColiMover(&lbl_eu_8065F32C);
     void* const obj = &lbl_eu_80665968;
     void* const dtor = (void*)&__dt__804BD8E8;
     void* const reg = &lbl_eu_8065F418;
@@ -560,6 +560,10 @@ void sinit_804BD8A0() {
 // [.bss] 0x8065F32C-0x8065F418 (0xEC, align 4): the scene-resource data
 // block and its two tail objects (retail spans 0xC4 / 0xC / 0x1C). The 0xC4
 // block (incl. its anonymous tail) is modeled entirely by ScnResData.
+// NOTE: retail .bss section align is 4 but MWCC emits 8 here even with
+// explicit align(4) on all three objects (probed 2026-10-03: still 2**3),
+// so the align half of this section is currently unreachable from source;
+// cf. kyoshin/cf/CfCam.o, whose retail .bss is likewise align 4.
 ScnResData lbl_eu_8065F32C;
 u8 lbl_eu_8065F3F0[0xC];
 u8 lbl_eu_8065F3FC[0x1C];
@@ -593,5 +597,8 @@ void* lbl_eu_8056F978[4] = {
     NULL,
 };
 char lbl_eu_8056F988[0x20] = "NW4R:Failed assertion IsValid()";
-char lbl_eu_8056F9A8[0xA] = "g3d_fog.h";
+// The 6-byte zero tail after "g3d_fog.h" is folded into the array (NW4R
+// assert filename idiom: cf. CfObjectModel's g3d_resnode_ac.h string, whose
+// 7-byte pad is folded the same way so the tail stays in .data).
+char lbl_eu_8056F9A8[0x10] = "g3d_fog.h";
 // data: retail sections verified via run.py data diff (no bypass)

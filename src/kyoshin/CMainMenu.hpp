@@ -45,7 +45,7 @@ struct CMainMenuSubCurView {
     u8 mVisible;
 };
 // Mirror of the font object returned by CDeviceFont::getFontInfo; vtable
-// slot 9 (offset 0x24) yields the pane bound by func_8013676C.
+// slot 9 (offset 0x24) yields the pane bound by ApplyFontToTxtPanes.
 struct CMainMenuFontView {
     virtual void sf2() = 0;
     virtual void sf3() = 0;
@@ -229,7 +229,7 @@ extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* _this);
 extern "C" int advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" void playUISound__FUl(u32);
 extern "C" void Cur_SetVisible(void* cur, u8 flag);
-extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // Cursor constructors (defined in kyoshin/CCur.cpp)
 extern "C" void __ct__8CBaseCurFv(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
@@ -238,10 +238,10 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
-extern "C" void func_801398A4(nw4r::lyt::Layout* layout, const char* paneName,
+extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout* layout, const char* paneName,
                               const void* src, u32 idx);
 // Menu open/close gate (defined in code_80135FDC.cpp).
-extern "C" void func_80139198(u32 arg);
+extern "C" void BuildSlotItemLists(u32 arg);
 // System-window busy gate (defined in code_80135FDC.cpp).
 extern "C" int IsMenuState621F0();
 // Another menu-open gate (kizuna-talk-list / message-log family).
@@ -358,5 +358,5 @@ extern "C" void CUICfManager_queuePlayAwardMenu();
 extern "C" void CUICfManager_queueSkipTimerMenu();
 extern "C" void CUICfManager_queueTutorialListMenu(u32 value);
 extern "C" void CUICfManager_queueSaveMenu(int a, int b);
-extern "C" void func_80134C34();
+extern "C" void CUICfManager_openSaveMenu();
 extern "C" void CUICfManager_queueOptionMenu(u32 value);

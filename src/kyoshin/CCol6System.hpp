@@ -85,7 +85,7 @@ public:
 };
 
 // CCur18 vtable view for CCol6Hint::Move: the +0x10 slot (virtual index 2)
-// is the position-set virtual invoked with the func_80137924 result.
+// is the position-set virtual invoked with the ScalePaneWorldPos result.
 class CCol6Cur18View {
 public:
     virtual void vf02() = 0;                      // +0x08
@@ -161,7 +161,7 @@ struct CCol6LayoutView {
     nw4r::lyt::Pane* mpRootPane;  // 0x10
 };
 
-// Data body of the embedded CCur18 cursor (0x18 bytes). func_8015DD4C copies
+// Data body of the embedded CCur18 cursor (0x18 bytes). col6HintBuild copies
 // the non-vtable fields (f_04..f_15) from a stack temp into the embedded
 // cursor at +0x124 (same shape as CSysWinSave::Init).
 struct CCol6Cur18Data {
@@ -178,7 +178,7 @@ struct CCol6Cur18Data {
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (virtual index 7, no args) yields the u32 bound into the layout's font pane
-// by func_8013676C. All-pure so no vtable is emitted.
+// by ApplyFontToTxtPanes. All-pure so no vtable is emitted.
 class CCol6FontView {
 public:
     virtual void vf0() = 0; // index 0 -> +0x08
@@ -352,7 +352,7 @@ class CCol6Fade;
 // so MWCC derives the retail mangled name (moved from code_80135FDC.hpp, which
 // this unit no longer includes).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
@@ -418,16 +418,16 @@ u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_8
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
 u32 CUICfManager_getPackedFont9C();                                                    // CUICfManager.cpp (font value)
 s16 BdatGetS16ByTableKey(const void*, const void*, u32);                     // code_80135FDC.cpp (s16-keyed lookup); u32 matches the definition verbatim
-void func_8013676C(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
+void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);                           // code_80135FDC.cpp
 void BdatGetItemType(u16);                                             // CItemBoxInfo.cpp
 void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
-char* func_801394D4(u16);                                            // CItemBoxInfo.cpp
+char* BuildItemNameStr(u16);                                            // CItemBoxInfo.cpp
 void* Bdat_GetTable_AA34();                                               // bdat manager
 void* getFP__FPCc(const char*);                                      // bdat file pointer
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
 void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
 void sysWinSetTwoTextValues(void* syswin, void* a, void* b);                  // CSysWin.cpp
-extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);          // code_80135FDC.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
 void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
@@ -501,7 +501,7 @@ extern "C" const f32 lbl_eu_80667564;
 extern "C" const f32 lbl_eu_80667578;
 extern "C" const f64 lbl_eu_80667580;  // 2^52 magic constant for (f32)(s16) conversions
 // Two 7-byte count-threshold tables (u32 + u16 + u8, read as byte arrays by
-// func_8015DD4C's item-box scan).
+// col6HintBuild's item-box scan).
 extern "C" const u32 lbl_eu_80667568;
 extern "C" const u16 lbl_eu_8066756C;
 extern "C" const u8 lbl_eu_8066756E;

@@ -31,7 +31,7 @@ extern char lbl_eu_80506C14[];
 // Name/label helpers from code_80135FDC (retail unmangled C symbols).
 extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, int);
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, int);
+extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, int);
 
 /* Font-info objects from CDeviceFont::getFontInfo dispatch through
  * IDeviceFontInfo::getFont (+0x24); see monolib/device/CDeviceFont.hpp. */
@@ -67,7 +67,7 @@ void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 
 // Retail-unmangled C-ABI imports used by OnFileEvent.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
+extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" char* CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();

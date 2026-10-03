@@ -213,13 +213,11 @@ u32  port_rfc_send_tx_data(tPORT* p_port);
 /*  String-pool orphans: the retail .data contains the format strings  */
 /*  "port_open_continue" / "port_open_continue no mx channel" even    */
 /*  though their function was eliminated from the retail .text.        */
-/*  Reference them here (in retail pool order) so the .data string     */
-/*  layout matches (pool base lands on "port_open_continue").          */
+/*  Plain char arrays (not pointer tables) so no .sdata2/.sdata entry  */
+/*  is emitted: only the string bytes land in .data, in retail order.  */
 /* ------------------------------------------------------------------ */
-char *const port_rfc_pool_orphan_strings[] = {
-    "port_open_continue",
-    "port_open_continue no mx channel",
-};
+char port_rfc_pool_orphan_0[] = "port_open_continue";
+char port_rfc_pool_orphan_1[] = "port_open_continue no mx channel";
 
 /* ========================================================================
  * PORT_StartCnf

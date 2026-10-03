@@ -4,7 +4,7 @@
 #include <types.h>
 
 // Forward declarations for functions in other TUs
-extern "C" s16 func_804DFA84(void* param0, void* param1, void* param2);
+extern "C" s16 SchedItem_ClaimFree(void* param0, void* param1, void* param2);
 extern "C" void SchedItem_ReleaseHandle(s16 handle);
 extern "C" void* lbl_eu_80570068;
 extern "C" float lbl_eu_8066B2E0;

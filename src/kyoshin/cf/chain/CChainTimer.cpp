@@ -21,7 +21,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::isSceneLoading
 #include "kyoshin/cf/chain/CChainActorList.hpp" // lbl_eu_80538338
-#include "kyoshin/cf/chain/CChain.hpp" // extern-C func_80107C54 (retail-unmangled)
+#include "kyoshin/cf/chain/CChain.hpp" // extern-C checkSlotUsable (retail-unmangled)
 #include <math.h>
 
 // Offset-typed view of cf::CBattleManager for the chain-start gates (the full
@@ -272,12 +272,12 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
 
     cf::CChainBattleObj* o1 = self->field_4;
     u32 id1 = *(u32*)o1->field_04->f30();
-    if (func_80174C98(o1, (int*)&id1, 0x4000) == 0)
-        func_80174B4C(self->field_4, 0x4000);
+    if (testActorStatus(o1, (int*)&id1, 0x4000) == 0)
+        dispatchItemLoad(self->field_4, 0x4000);
     cf::CChainBattleObj* o2 = self->field_8;
     u32 id2 = *(u32*)o2->field_04->f30();
-    if (func_80174C98(o2, (int*)&id2, 0x4000) == 0)
-        func_80174B4C(self->field_8, 0x4000);
+    if (testActorStatus(o2, (int*)&id2, 0x4000) == 0)
+        dispatchItemLoad(self->field_8, 0x4000);
 
     if (self->field_4->field_3F60 != 0)
         self->field_4->field_3F60->field_4EC |= 0x1000;
@@ -325,14 +325,14 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
 }
 
 // Chain on/off switch for both chain members. Re-registers the vision/voice
-// sub-objects (func_801537F0/E0 on +0x3380, vtable calls on the embedded
+// sub-objects (aiRebootAction/E0 on +0x3380, vtable calls on the embedded
 // +0x3E9C voice), refreshes the wave target / arts music table, and toggles
 // the arts-select menu.
 extern "C" void func_8027DB74(cf::CChainState* self, int val) {
     if (self->field_4 != 0) {
         if (val != 0) {
-            func_80174B4C(self->field_4, 0x4000);
-            func_801537F0(&self->field_4->mField3380);
+            dispatchItemLoad(self->field_4, 0x4000);
+            aiRebootAction(&self->field_4->mField3380);
             if (self->field_4->field_3F60 != 0)
                 self->field_4->field_3F60->field_4EC |= 0x1000;
         } else {
@@ -346,10 +346,10 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
             self->field_10 = self->field_8;
             self->field_14 = 0;
             self->field_8->v042();
-            func_80174C24(self->field_8, 0x40);
-            func_80174B4C(self->field_8, 0x4000);
+            requestItemLoad(self->field_8, 0x40);
+            dispatchItemLoad(self->field_8, 0x4000);
             self->field_8->mSub8.s06(0xeb);
-            func_801537F0(&self->field_8->mField3380);
+            aiRebootAction(&self->field_8->mField3380);
 
             // Warn when the voice actor drifts beyond the chain range: the
             // squared distance between the chain target and the voice actor's
@@ -415,7 +415,7 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
         // NOTE (wall class 13): retail keeps the two standalone cmplwi
         // compares (cmplwi 1/blt + cmplwi 0x18/bgt); every Wii/1.1 spelling
         // tried so far folds to addi/rlwinm/cmpli ((u8)(v-1)<=0x17) - see
-        // isTypeId1to24 / func_8007560C notes. Needs the configure.py
+        // isTypeId1to24 / CamEvtBusyChk notes. Needs the configure.py
         // per-unit version split; switching this TU regresses its 5
         // Wii/1.1 FULL_MATCHes.
         // Retail calls the singleton getter once per gate (reload into r3).
@@ -487,19 +487,19 @@ extern "C" int func_8027E018(cf::CChainState* self, cf::CChainBattleObj* obj) {
 }
 
 // Battle-object usability check: chainable (vtable 0x2bc), owns the actor id
-// flags (func_80174C98), and in arts-select mode is not on cooldown
+// flags (testActorStatus), and in arts-select mode is not on cooldown
 // (vtable 0x158/0x15c timers).
 extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj* obj) {
     if (obj->v173() != 0) return 0;
     u32 id1 = *(u32*)obj->field_04->f30();
-    if (func_80174C98(obj, (int*)&id1, 0x803) == 0) return 0;
+    if (testActorStatus(obj, (int*)&id1, 0x803) == 0) return 0;
     u32 id2 = *(u32*)obj->field_04->f30();
-    if (func_80174C98(obj, (int*)&id2, 0x1a) != 0) return 0;
+    if (testActorStatus(obj, (int*)&id2, 0x1a) != 0) return 0;
     if (obj->field_3F28 == 5) {
         if (func_80148778((u8*)obj + 8, 0xf0) != 0) return 0;
         if (func_80148778(&((u8*)obj)[8], 0xf1) != 0) return 0;
         u32 id3 = *(u32*)obj->field_04->f30();
-        if (func_80174C98(obj, (int*)&id3, 0xb) != 0) return 0;
+        if (testActorStatus(obj, (int*)&id3, 0xb) != 0) return 0;
         f32 a = obj->v084();
         f32 b = obj->v085();
         if (b <= a) return 0;
@@ -523,7 +523,7 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
         CMenuArtsSelect* menu = CMenuArtsSelect_getInstance();
         if (menu == 0) return 1;
         for (int i = 0; i <= 8; i++) {
-            if (func_80107C54(menu, i) != 0) continue;
+            if (checkSlotUsable(menu, i) != 0) continue;
             // Init-then-flag form: retail emits li r3,0 + conditional set.
             int menuSkip = 0;
             if (obj->field_3F28 == 5 && i == 8) menuSkip = 1;

@@ -287,7 +287,7 @@ u8 sdata2_pool_CGXCache[4534] = {
 // retail symbols (the in-TU definitions are members / extern free functions
 // with the same C-level names; these just declare them for the initializer).
 class CGXCache;
-extern "C" void func_80449D68__8CGXCacheFv(CGXCache*, u32, void*);
+extern "C" void execGXCmd__8CGXCacheFv(CGXCache*, u32, void*);
 extern "C" void* __dt__CMsgParam_32(void*, int);
 extern "C" void __dt__8CGXCacheFv(void*);
 extern "C" void __dt__11IStateCacheFv(void*);
@@ -341,10 +341,10 @@ class __declspec(novtable) CGXCache : public IStateCache {
 public:
     CGXCache();
     ~CGXCache();
-    void func_80449D68();
-    void func_8044A578();
+    void execGXCmd();
+    void updateCmd2Color();
     void setBlendState(int param1, int param2);
-    void func_8044A7F8();
+    void updateCmd1Words();
     void setZCompareMD(int param1, int param2);
     void setZWriteMode(int param1, int param2);
     void setAlphaBlend();
@@ -352,20 +352,20 @@ public:
     void setTevColorTx(const ml::CCol4& color, int flag);
     void setDirectColA(int param);
     void setDirectColB(int param);
-    void func_8044B298(void* a, void* b, void* c);
+    void cacheScissor(void* a, void* b, void* c);
     bool bindTextureGX(GXTexObj* texObj, u16 w, u16 h);
     void getClearColor();
     void updateOrthoGX();
-    void func_8044B660();
-    void func_8044B8CC(f32 fovy, f32 znear, f32 zfar);
-    void func_8044BB20();
-    s32 func_8044BD74(s32 param);
+    void setOrthoProj();
+    void setPerspProj(f32 fovy, f32 znear, f32 zfar);
+    void makePerspProj();
+    s32 scaleRingWidth(s32 param);
     void getViewRectGX();
     void* getWhiteColor();
     void disableTexGen();
     void resetMtxState();
     void resetTevState();
-    void func_8044C1FC();
+    void resetGXFull();
 
     //0x0: vtable (IStateCache)
     void* vtbl;               //0x0 (vtable pointer)
@@ -390,7 +390,7 @@ public:
     u8 unk519[3];             //0x519..0x51B
 };
 
-// Ring lookup used by getClearColor / getViewRectGX / func_8044BD74. The
+// Ring lookup used by getClearColor / getViewRectGX / scaleRingWidth. The
 // retail symbol is findRingEntry__8CGXCacheFv (zero-param mangling) even
 // though the body reads the message id from r4, so it is written as an
 // extern "C" free function with the exact retail name (same pattern as
@@ -560,7 +560,7 @@ static inline f32 cvtU32Slot(F64Cvt* c, u32 v) {
 }
 
 
-extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
+extern "C" void execGXCmd__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
     GXRenderModeObj* rmo;
     s16* vp = (s16*)data;
     u32* vu = (u32*)data;
@@ -868,9 +868,9 @@ end:
 // Ring command-2 cache update carrying a 16-byte CCol4 payload by pointer.
 // Unless (flag == 0 && the entry's wid..unk10 already equal the color), the
 // entry is re-stamped (unk23 = 0xb, wid..unk10 = color) and command 2 is
-// dispatched. Retail name func_8044A578__8CGXCacheFv is zero-param mangled
+// dispatched. Retail name updateCmd2Color__8CGXCacheFv is zero-param mangled
 // although r4 (color) / r5 (flag) are live register params.
-extern "C" void func_8044A578__8CGXCacheFv(CGXCache* self, ml::CCol4* color, int flag) {
+extern "C" void updateCmd2Color__8CGXCacheFv(CGXCache* self, ml::CCol4* color, int flag) {
     u32 i = ringFindIndex<0x2>(self);
     if (flag != 0) goto update;
     {
@@ -907,8 +907,8 @@ end:
 // The words are spilled to a stack array so memcmp can compare them; unless
 // (flag == 0 && the entry's wid..unk10 already match) the entry is re-stamped
 // (unk23 = 9, wid..unk10 = payload) and command 1 is dispatched. Retail name
-// func_8044A7F8__8CGXCacheFv is zero-param mangled although r4-r8 are live.
-extern "C" void func_8044A7F8__8CGXCacheFv(CGXCache* self, u32 w0, u32 w1, u32 w2, u32 w3, int flag) {
+// updateCmd1Words__8CGXCacheFv is zero-param mangled although r4-r8 are live.
+extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* self, u32 w0, u32 w1, u32 w2, u32 w3, int flag) {
     u32 payload[4] = {w0, w1, w2, w3};
     u32 i = ringFindIndex<0x1>(self);
     if (flag != 0) goto update;
@@ -1054,7 +1054,7 @@ struct C1FCCacheLayout {
 
 // Optional ring pair pointers in r4-r6 update cached scissor rects, then enqueue
 // GX commands for tags 0xB / 0xC via dispatchCmdGX (this+4).
-void CGXCache::func_8044B298(void* a, void* b, void* c) {
+void CGXCache::cacheScissor(void* a, void* b, void* c) {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
     u32* insetPair;
     s16 stack[4];
@@ -1242,7 +1242,7 @@ void CGXCache::updateOrthoGX() {
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
 
-void CGXCache::func_8044B660() {
+void CGXCache::setOrthoProj() {
     if (mAdjustProj) {
         // Letterboxed projection: scale the sub-rect edges (0x510..0x516,
         // given as fractions of the framebuffer) by the scissor deltas, and
@@ -1304,7 +1304,7 @@ void CGXCache::func_8044B660() {
 // multiplier) with CDeviceVI::getWidthScale(). When mAdjustProj is set the
 // matrix is refit to the sub-rect at 0x510..0x516 (frustum translation and
 // scale for a letterboxed viewport).
-void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
+void CGXCache::setPerspProj(f32 fovy, f32 znear, f32 zfar) {
     f32 aspect = lbl_eu_8066A398 * (s32ToF(mScissorDeltaX) / s32ToF(mScissorDeltaY));
     C_MTXPerspective(mProjMtx, fovy, aspect * getWidthScale__9CDeviceVIFv(), znear, zfar);
     if (mAdjustProj) {
@@ -1323,12 +1323,12 @@ void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
 
-// Same projection build as func_8044B8CC but writes into an external matrix
+// Same projection build as setPerspProj but writes into an external matrix
 // (used for camera items) instead of mProjMtx, and does not push the matrix
 // to GX. Retail symbol is Fv-mangled although the body reads
 // (CGXCache*, f32[4][4], f32 fovY, f32 nearZ, f32 farZ) from r3/r4/f1-f3
 // (same pattern as setAlphaBlend / dispatchCmdGX).
-extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 nearZ, f32 farZ) {
+extern "C" void makePerspProj__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 nearZ, f32 farZ) {
     // nearZ/farZ: retail passes float param 2 as C_MTXPerspective's near
     // plane and scales IT by lbl_eu_8066A39C; param 3 is the far plane.
     f32 aspect = lbl_eu_8066A398 * (s32ToF(self->mScissorDeltaX) / s32ToF(self->mScissorDeltaY));
@@ -1357,7 +1357,7 @@ extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f3
 
 // Ring entry 3's payload word is the scissor width; scale it by z depth:
 // (s16)unk500 * param / wid (int->float math, truncated back to int).
-s32 CGXCache::func_8044BD74(s32 param) {
+s32 CGXCache::scaleRingWidth(s32 param) {
     // Retail shape: ring lookup first; the s16 field at 0x500 converts via the
     // signed 2^52+2^31 magic, the width payload word is loaded only after the
     // conversion stores, and both param/width convert via the unsigned 2^52
@@ -1377,11 +1377,11 @@ u8 getAdjustFlag__8CGXCacheFv(void* self) { return *(u8*)((u8*)self + 0x518); }
 
 void* CGXCache::getWhiteColor(void) { return (void*)0xFFFFFF; }
 
-// Retail is a pure tail to func_8044C1FC. Keep callee undefined here so MWCC
+// Retail is a pure tail to resetGXFull. Keep callee undefined here so MWCC
 // cannot inline an empty same-TU stub into a lone blr.
-void func_8044C1FC__8CGXCacheFv(void* self);
+void resetGXFull__8CGXCacheFv(void* self);
 void resetGXStateA__8CGXCacheFv(void* self) {
-    func_8044C1FC__8CGXCacheFv(self);
+    resetGXFull__8CGXCacheFv(self);
 }
 
 void CGXCache::disableTexGen() {
@@ -1474,7 +1474,7 @@ static inline u32 c1fcFindEntry(C1FCCacheLayout* cache) {
     return 0xFFFFFFFF;
 }
 
-void CGXCache::func_8044C1FC() {
+void CGXCache::resetGXFull() {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
     GXColor gxCol;
     GXRenderModeObj* rmo;
@@ -1775,7 +1775,7 @@ extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ringp, u32 id) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CMsgParam<32> ring. Layout mirrors the shared CMsgParam.hpp (vtable at 0x0,
-// entries at 0x4, ring state at 0x484+ for N=32). Only func_80449B94 is
+// entries at 0x4, ring state at 0x484+ for N=32). Only storeMsg1W is
 // instantiated here; the sibling members stay declared-but-undefined.
 template <int N> class CMsgParam {
 public:
@@ -1788,11 +1788,11 @@ public:
     u32 field6;                  //0x14 + N*0x24 (last found index)
     u32 field7;                  //0x18 + N*0x24
 
-    void func_804495C4(unsigned long, u32*);
-    void func_8044972C(unsigned long, u8*);
-    void func_804498A4(unsigned long, u32*);
-    void func_80449A1C(unsigned long, u32*);
-    void func_80449B94(unsigned long, u32*);
+    void storeMsg2W(unsigned long, u32*);
+    void storeMsg4B(unsigned long, u8*);
+    void storeMsg4WB(unsigned long, u32*);
+    void storeMsg4W9(unsigned long, u32*);
+    void storeMsg1W(unsigned long, u32*);
 };
 // (mapped to __ct__80449548 above)
 // (mapped to __ct__80449548 above)
@@ -1824,7 +1824,7 @@ static u32 cmsgFindIndex(CMsgParam<N>* self, u32 msg) {
 // stamped unk23 = 3 and wid = *widSrc (the caller passes a pointer to the
 // wid source, e.g. lbl_eu_8066362x). Retail symbol is FUl-mangled but the
 // body also reads r5, so the declared signature carries the extra u32*.
-template <> void CMsgParam<32>::func_80449B94(unsigned long msg, u32* widSrc) {
+template <> void CMsgParam<32>::storeMsg1W(unsigned long msg, u32* widSrc) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
     field6 = i;
@@ -1873,12 +1873,12 @@ stamp:
 
 // Ring command-0xD cache update carrying an 8-byte payload (two words from
 // r5, e.g. a 4x s16 scissor rect read as words). Same shape as
-// func_80449B94: find the entry whose command is msg; if found field6 = i,
+// storeMsg1W: find the entry whose command is msg; if found field6 = i,
 // otherwise append a new entry at (mFront+mSize)%mCapacity (signed divw,
 // uninitialized stack payload via the volatile entry) with unk23 = 0; either
 // way the entry at field6 is then stamped unk23 = 0xd and wid/unk8 =
 // payload[0..1]. Retail symbol is FUl-mangled but the body also reads r5.
-template <> void CMsgParam<32>::func_804495C4(unsigned long msg, u32* payload) {
+template <> void CMsgParam<32>::storeMsg2W(unsigned long msg, u32* payload) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
     field6 = i;
@@ -1941,8 +1941,8 @@ stamp:
 }
 
 // Ring command-0x5 cache update carrying a 4-byte color payload (byte-wise
-// copy into wid). Same find/append/stamp shape as func_804495C4.
-template <> void CMsgParam<32>::func_8044972C(unsigned long msg, u8* payload) {
+// copy into wid). Same find/append/stamp shape as storeMsg2W.
+template <> void CMsgParam<32>::storeMsg4B(unsigned long msg, u8* payload) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
     field6 = i;
@@ -1995,8 +1995,8 @@ stamp:
 }
 
 // Ring command-0xB cache update carrying a 16-byte payload (four words from
-// r5). Same find/append/stamp shape as func_804495C4.
-template <> void CMsgParam<32>::func_804498A4(unsigned long msg, u32* payload) {
+// r5). Same find/append/stamp shape as storeMsg2W.
+template <> void CMsgParam<32>::storeMsg4WB(unsigned long msg, u32* payload) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
     field6 = i;
@@ -2061,9 +2061,9 @@ stamp:
 }
 
 // Ring command-0x9 cache update carrying a 16-byte payload (four words from
-// r5). Same find/append/stamp shape as func_804495C4. Retail symbol is
+// r5). Same find/append/stamp shape as storeMsg2W. Retail symbol is
 // Fv-mangled although the body reads msg (r4) and payload (r5).
-template <> void CMsgParam<32>::func_80449A1C(unsigned long msg, u32* payload) {
+template <> void CMsgParam<32>::storeMsg4W9(unsigned long msg, u32* payload) {
     u32 i = cmsgFindIndex<32>(this, msg);
     if ((s32)i < 0) goto append;
     field6 = i;
@@ -2130,7 +2130,7 @@ stamp:
 // the retail stb/lwz pack (a shift-based expression would use rlwinm/or).
 // OPEN ITEM: retail sinks stwu sp,-48 below the 9 lead FPU ops (scheduler
 // fingerprint); every source shape tried so far pins it at entry.
-u32 __declspec(noinline) func_80449550(ml::CCol4& c) {
+u32 __declspec(noinline) packColorU32(ml::CCol4& c) {
     const f32 scale = lbl_eu_8066A37C;
     u8 out[4];
     out[0] = (u8)(s32)(scale * c.r);
@@ -2209,40 +2209,40 @@ CGXCache::CGXCache() {
     // Ring command cache entries: cmds 0, 3..9, 0xd carry a wid pointer; 1
     // carries a 16-byte payload; 2 a CCol4; 0xa a packed color; 0xb/0xc the
     // full-screen rect words.
-    ((CMsgParam<32>*)&unk4)->func_80449B94(0, &lbl_eu_80663620);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(0, &lbl_eu_80663620);
 
     ((void (*)(void*))clearStackTmp)(payload);
     payload[0] = 1;
     payload[1] = 4;
     payload[2] = 5;
     payload[3] = 0;
-    ((CMsgParam<32>*)&unk4)->func_80449A1C(1, payload);
+    ((CMsgParam<32>*)&unk4)->storeMsg4W9(1, payload);
 
     // Retail nests the vec4 setter into the ring call: the callee's r3 return
     // is moved to r5 (mr), not recomputed as a fresh stack-temp address.
-    ((CMsgParam<32>*)&unk4)->func_804498A4(2,
+    ((CMsgParam<32>*)&unk4)->storeMsg4WB(2,
         (u32*)CTaskGame_setVec4(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378));
 
-    ((CMsgParam<32>*)&unk4)->func_80449B94(3, &lbl_eu_80663624);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(4, &lbl_eu_80663628);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(5, &lbl_eu_8066362C);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(6, &lbl_eu_80663630);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(7, &lbl_eu_80663634);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(8, &lbl_eu_80663638);
-    ((CMsgParam<32>*)&unk4)->func_80449B94(9, &lbl_eu_8066363C);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(3, &lbl_eu_80663624);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(4, &lbl_eu_80663628);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(5, &lbl_eu_8066362C);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(6, &lbl_eu_80663630);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(7, &lbl_eu_80663634);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(8, &lbl_eu_80663638);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(9, &lbl_eu_8066363C);
 
-    col = func_80449550(ml::CCol4::white);
-    ((CMsgParam<32>*)&unk4)->func_8044972C(0xa, (u8*)&col);
+    col = packColorU32(ml::CCol4::white);
+    ((CMsgParam<32>*)&unk4)->storeMsg4B(0xa, (u8*)&col);
 
     // Retail nests the rect filler: bl __ct__80449534 then mr r5,r3 into the
     // ring call (no fresh stack-temp address).
     subH = getEFBHeight();
-    ((CMsgParam<32>*)&unk4)->func_804495C4(0xb, (u32*)initFullRect(rect, subH));
+    ((CMsgParam<32>*)&unk4)->storeMsg2W(0xb, (u32*)initFullRect(rect, subH));
 
     subH = getEFBHeight();
-    ((CMsgParam<32>*)&unk4)->func_804495C4(0xc, (u32*)initFullRect(rect, subH));
+    ((CMsgParam<32>*)&unk4)->storeMsg2W(0xc, (u32*)initFullRect(rect, subH));
 
-    ((CMsgParam<32>*)&unk4)->func_80449B94(0xd, &lbl_eu_80663640);
+    ((CMsgParam<32>*)&unk4)->storeMsg1W(0xd, &lbl_eu_80663640);
 }
 
 // ---- tiny ctor helpers (defined after __ct__8CGXCacheFv so they are not
@@ -2288,11 +2288,11 @@ extern "C" __declspec(noinline) void __ct__IStateCache(void* self) {
 // Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
 // Jumptable addends dumped from data diff retail: 76,100,124,264,404,448,500,552,564,576,1348,1372,1592,420
 // (verified against CGXCache.s .rel lines). Uses (u32)((char*)&extern+offset) for correct R_PPC_ADDR32 addends.
-// func_80449D68__8CGXCacheFv already declared at top with (CGXCache*,u32,void*) signature; reuse it for jumptable addends.
-// (MWCC now emits the func_80449D68 jumptable itself.)
+// execGXCmd__8CGXCacheFv already declared at top with (CGXCache*,u32,void*) signature; reuse it for jumptable addends.
+// (MWCC now emits the execGXCmd jumptable itself.)
 extern "C" u32 lbl_eu_8056BFC8[4] = {
     (u32)&lbl_eu_80663658, 0x00000000,
-    (u32)&__dt__8CGXCacheFv, (u32)&func_80449D68__8CGXCacheFv,
+    (u32)&__dt__8CGXCacheFv, (u32)&execGXCmd__8CGXCacheFv,
 };
 extern "C" __attribute__((aligned(4))) u32 lbl_eu_8056BFD8[3] = {
     (u32)&lbl_eu_80663668, 0x00000000, 0x00000000,

@@ -28,7 +28,7 @@ using namespace cf;
 extern const double lbl_eu_80667E40 = 4505750238502912.0;
 
 // Constructor: clears the commu state, parks the voice id at -1 (retiring
-// any prior voice via func_802A35B8) and initializes the timer from the
+// any prior voice via CCharVoiceMan_PlayNodeById) and initializes the timer from the
 // sdata2 constant.
 cf::CSuddenCommu::CSuddenCommu() {
     s32 const zero = 0;
@@ -45,7 +45,7 @@ cf::CSuddenCommu::CSuddenCommu() {
     this->field_A = zero;
     this->field_C = zero;
     this->field_E = zero;
-    func_802A35B8(negOne);
+    CCharVoiceMan_PlayNodeById(negOne);
     f32 const v30 = lbl_eu_80667E30;
     this->field_10 = (u32)negOne;
     this->field_18 = v30;
@@ -64,7 +64,7 @@ void SuddenCommuResetPairingState(CSuddenCommu* self) {
     self->field_A = 0;
     self->field_C = 0;
     self->field_E = 0;
-    func_802A35B8(self->field_10);
+    CCharVoiceMan_PlayNodeById(self->field_10);
     f32 const v30 = lbl_eu_80667E30;
     // Volatile accesses chain the retail order: float load, field_10 commit,
     // timer store, flag clear (MWCC otherwise reorders the FP store).
@@ -120,8 +120,8 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
         // Both the A (0xA) and B (0xB) voice probes must be idle before the
         // commu can start; then the current voice action must be in the 7..9
         // window (anything else means the commu is blocked).
-        if (func_80174C98(player, (int*)&vA, 0xA) != 0 ||
-            func_80174C98(player, (int*)&(vB = *player->field_4->vf30()), 0xB) != 0) {
+        if (testActorStatus(player, (int*)&vA, 0xA) != 0 ||
+            testActorStatus(player, (int*)&(vB = *player->field_4->vf30()), 0xB) != 0) {
             // Commu armed: the current voice action must be in the 7..9 window
             // (anything else means the commu is blocked).
             if ((s32)((cf::CActorParam*)player)->CActorParam_getBattleStats()->unk48 >= 7 &&
@@ -185,7 +185,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 if (other == 0) continue;
                 if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
                     getInstance__Q22cf14CBattleManagerFv();
-                    f32 res = func_800D81A8(0, other, 0);
+                    f32 res = calcBattleDamage(0, other, 0);
                     f32 w = res * (prod * ((cf::CActorParam*)other)->CActorParam_getDamageScale()) + scale;
                     // Truncate -> back-to-float -> truncate -> back-to-float;
                     // each u32->f32 step compiles to the shared 0x4330 trick.
@@ -208,7 +208,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
     }
 
     if (self->field_C == 4) {
-        func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
         self->field_14 = 0;
         self->field_4 = -1;
         self->field_6 = -1;
@@ -216,13 +216,13 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         self->field_A = 0;
         self->field_C = 0;
         self->field_E = 0;
-        func_802A35B8(self->field_10);
+        CCharVoiceMan_PlayNodeById(self->field_10);
         self->field_10 = -1;
         self->field_18 = lbl_eu_80667E30;
         self->field_24 = 0;
         if (player0 != 0) {
             u32 v = *(u32*)player0->field_4->vf30();
-            if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
+            if (testActorStatus(player0, (int*)&v, 0x803) != 0) {
                 ((cf::CActorParam*)player0)->CActorParam_resetTensionState(4);
             }
         }
@@ -230,7 +230,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         self->field_14 = 5;
         if (player0 != 0) {
             u32 v = *(u32*)player0->field_4->vf30();
-            if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
+            if (testActorStatus(player0, (int*)&v, 0x803) != 0) {
                 if (self->field_C == 0) {
                     if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 0) {
                         ((cf::CActorParam*)player0)->CActorParam_initStatusCounter();
@@ -260,7 +260,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
             }
         }
     }
-    func_80280BF0();
+    SysWinLog_TickCounter5A();
 }
 
 // Sudden-commu state dispatch (called from SuddenCommuDispatchFlags when no 0x20/0x40
@@ -274,7 +274,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
     if (player != 0) {
         s16 state = self->field_C;
         if (state == 4) {
-            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -282,7 +282,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_A = 0;
             self->field_C = 0;
             self->field_E = 0;
-            func_802A35B8(self->field_10);
+            CCharVoiceMan_PlayNodeById(self->field_10);
             f32 v30 = lbl_eu_80667E30;
             volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
@@ -290,19 +290,19 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_24 = 0;
             // Probe the actor's current voice action; a hit kicks vf314.
             u32 v = *player->field_4->vf30();
-            if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+            if (testActorStatus(player, (int*)&v, 0x803) != 0) {
                 ((cf::CActorParam*)player)->CActorParam_initStatusCounter();
             }
         } else if (state == 0) {
             self->field_14 = 0xB;
             u32 v = *player->field_4->vf30();
-            if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+            if (testActorStatus(player, (int*)&v, 0x803) != 0) {
                 if (((cf::CActorParam*)player)->CActorParam_getStatusCount() == 1) {
                     ((cf::CActorParam*)player)->CActorParam_resetTensionState(0);
                 }
             }
         } else {
-            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -310,7 +310,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_A = 0;
             self->field_C = 0;
             self->field_E = 0;
-            func_802A35B8(self->field_10);
+            CCharVoiceMan_PlayNodeById(self->field_10);
             f32 v30 = lbl_eu_80667E30;
             volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
@@ -318,7 +318,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_24 = 0;
         }
     } else {
-        func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
         self->field_14 = 0;
         self->field_4 = -1;
         self->field_6 = -1;
@@ -326,7 +326,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
         self->field_A = 0;
         self->field_C = 0;
         self->field_E = 0;
-        func_802A35B8(self->field_10);
+        CCharVoiceMan_PlayNodeById(self->field_10);
         f32 v30 = lbl_eu_80667E30;
         volatile f32* p18 = &self->field_18;
         self->field_10 = -1;
@@ -440,12 +440,12 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
             if (spotP != 0) player = (CSuddenCommuActor*)((char*)spotP - 0x3E9C);
             u32 v6, v5, v4, v3, v2, v1;
             int found = 0;
-            if (func_80174C98(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-            else if (func_80174C98(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-            else if (func_80174C98(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-            else if (func_80174C98(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-            else if (func_80174C98(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-            else if (func_80174C98(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+            if (testActorStatus(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+            else if (testActorStatus(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+            else if (testActorStatus(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+            else if (testActorStatus(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+            else if (testActorStatus(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+            else if (testActorStatus(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
             else found = !!player->field_3ED4->field_36C;
             if (found != 0) {
                 if (self->field_18 < lbl_eu_80667E4C) self->field_18 = lbl_eu_80667E4C;
@@ -468,12 +468,12 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (player == 0) continue;
                 u32 w6, w5, w4, w3, w2, w1;
                 int found2 = 0;
-                if (func_80174C98(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found2 = 1;
-                else if (func_80174C98(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found2 = 1;
-                else if (func_80174C98(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found2 = 1;
-                else if (func_80174C98(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found2 = 1;
-                else if (func_80174C98(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found2 = 1;
-                else if (func_80174C98(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found2 = 1;
+                if (testActorStatus(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found2 = 1;
+                else if (testActorStatus(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found2 = 1;
+                else if (testActorStatus(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found2 = 1;
+                else if (testActorStatus(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found2 = 1;
+                else if (testActorStatus(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found2 = 1;
+                else if (testActorStatus(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found2 = 1;
                 else found2 = !!player->field_3ED4->field_36C;
                 if (found2 != 0) flag29 = 0;
                 if (player->field_3F28 == 0xa) goto commu_end;
@@ -496,8 +496,8 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (lbl_eu_806625E4 == pG->field_3F28) {
                     u32 gvA;
                     u32 gvB;
-                    if (func_80174C98(pG, (int*)&(gvA = *pG->field_4->vf30()), 0xa) != 0 ||
-                        func_80174C98(pG, (int*)&(gvB = *pG->field_4->vf30()), 0xb) != 0) {
+                    if (testActorStatus(pG, (int*)&(gvA = *pG->field_4->vf30()), 0xa) != 0 ||
+                        testActorStatus(pG, (int*)&(gvB = *pG->field_4->vf30()), 0xb) != 0) {
                         if ((s32)((cf::CActorParam*)pG)->CActorParam_getBattleStats()->unk48 >= 7 &&
                             (s32)((cf::CActorParam*)pG)->CActorParam_getBattleStats()->unk48 <= 9) goto commu_end;
                     }
@@ -510,7 +510,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                     if (spot2 != 0) player = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                     if (player == 0) continue;
                     u32 av;
-                    if (func_80174C98(player, (int*)&(av = *player->field_4->vf30()), 0x1c) == 0) {
+                    if (testActorStatus(player, (int*)&(av = *player->field_4->vf30()), 0x1c) == 0) {
                         allFound = 0;
                         break;
                     }
@@ -520,7 +520,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                     player = (CSuddenCommuActor*)spotA;
                     if (spotA != 0) player = (CSuddenCommuActor*)((char*)spotA - 0x3E9C);
                     u32 pv;
-                    if (func_80174C98(player, (int*)&(pv = *player->field_4->vf30()), 0x803) != 0) {
+                    if (testActorStatus(player, (int*)&(pv = *player->field_4->vf30()), 0x803) != 0) {
                         self->field_4 = 0;
                         self->field_A = 0;
                         self->field_C = 4;
@@ -594,12 +594,12 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         // cursor places w1 at the lowest offset (retail w1@sp+0xC..w6@sp+0x20).
         u32 w6, w5, w4, w3, w2, w1;
         int busy = 0;
-        if (func_80174C98(p, (int*)&(w1 = *p->field_4->vf30()), 0x1c) != 0) busy = 1;
-        else if (func_80174C98(p, (int*)&(w2 = *p->field_4->vf30()), 0x16) != 0) busy = 1;
-        else if (func_80174C98(p, (int*)&(w3 = *p->field_4->vf30()), 0x17) != 0) busy = 1;
-        else if (func_80174C98(p, (int*)&(w4 = *p->field_4->vf30()), 0x18) != 0) busy = 1;
-        else if (func_80174C98(p, (int*)&(w5 = *p->field_4->vf30()), 0x1a) != 0) busy = 1;
-        else if (func_80174C98(p, (int*)&(w6 = *p->field_4->vf30()), 0x19) != 0) busy = 1;
+        if (testActorStatus(p, (int*)&(w1 = *p->field_4->vf30()), 0x1c) != 0) busy = 1;
+        else if (testActorStatus(p, (int*)&(w2 = *p->field_4->vf30()), 0x16) != 0) busy = 1;
+        else if (testActorStatus(p, (int*)&(w3 = *p->field_4->vf30()), 0x17) != 0) busy = 1;
+        else if (testActorStatus(p, (int*)&(w4 = *p->field_4->vf30()), 0x18) != 0) busy = 1;
+        else if (testActorStatus(p, (int*)&(w5 = *p->field_4->vf30()), 0x1a) != 0) busy = 1;
+        else if (testActorStatus(p, (int*)&(w6 = *p->field_4->vf30()), 0x19) != 0) busy = 1;
         else busy = !!p->field_3ED4->field_36C;
         if (busy != 0) {
             return;
@@ -624,7 +624,7 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         self->field_8 = t;
     }
     u32 v = *player->field_4->vf30();
-    if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+    if (testActorStatus(player, (int*)&v, 0x803) != 0) {
         self->field_14 = 1;
     } else {
         self->field_18 = lbl_eu_80667E50;
@@ -640,8 +640,8 @@ void func_801BB81C(CSuddenCommu* self) {
     CSuddenCommuVoiceCue* cue;
     void* player;
     SuddenCommuMarkCommuVoices(self);
-    func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E54, 0x13);
-    func_802A35B8(self->field_10);
+    refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E54, 0x13);
+    CCharVoiceMan_PlayNodeById(self->field_10);
     self->field_10 = CCharVoiceMan_AllocCommuVoiceId();
     player = cf::CfGameManager::getPlayer(0);
     if (player != 0) player = (char*)player - 0x3E9C;
@@ -677,7 +677,7 @@ void func_801BB81C(CSuddenCommu* self) {
 // set, otherwise the queued partner at +0x06; then advance state (+0x14) to 3
 // (committed even when neither partner id is set).
 void SuddenCommuGatePhaseTo3(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         if (self->field_4 != 0)
             func_801BC6A4(self, 0, 4);
@@ -690,7 +690,7 @@ void SuddenCommuGatePhaseTo3(CSuddenCommu* self) {
 // Voice-node gate: if no voice node is registered for the id at +0x10,
 // record state 4 at +0x14 (flag dispatch in SuddenCommuDispatchFlags picks it up).
 void SuddenCommuGatePhaseTo4(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         self->field_14 = 4;
     }
@@ -720,7 +720,7 @@ void SuddenCommuPlayPartnerCue6(CSuddenCommu* self) {
 // Same voice-node gate as SuddenCommuGatePhaseTo4, but the recorded state depends on
 // +0x0A and bit 2 of the +0x24 flag word (0x4).
 void SuddenCommuBranchGate7or9(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         if (self->field_A == 1 || (self->field_24 & 0x4) == 0) {
             self->field_14 = 9;
@@ -736,7 +736,7 @@ void SuddenCommuPlayPartnerCue8(CSuddenCommu* self) {
 }
 
 void SuddenCommuGatePhase9Plain(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         self->field_14 = 9;
     }
@@ -748,7 +748,7 @@ void SuddenCommuPlayInitiatorCue10(CSuddenCommu* self) {
 }
 
 void SuddenCommuVoiceEndGateA(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         self->field_14 = 0xD;
     }
@@ -760,7 +760,7 @@ void SuddenCommuPlayInitiatorCue12(CSuddenCommu* self) {
 }
 
 void SuddenCommuVoiceEndGateB(CSuddenCommu* self) {
-    bool missing = !func_802A3748(self->field_10);
+    bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         self->field_14 = 0xD;
     }
@@ -770,7 +770,7 @@ void SuddenCommuVoiceEndGateB(CSuddenCommu* self) {
 // battle-manager voice-volume call that retires cue id 0x13.
 void SuddenCommuInitResetState(CSuddenCommu* self) {
     cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
-    func_800EA484(bm, lbl_eu_80667E38, 0x13);
+    refreshBattleActors(bm, lbl_eu_80667E38, 0x13);
     self->field_14 = 0;
     self->field_4 = -1;
     self->field_6 = -1;
@@ -778,7 +778,7 @@ void SuddenCommuInitResetState(CSuddenCommu* self) {
     self->field_A = 0;
     self->field_C = 0;
     self->field_E = 0;
-    func_802A35B8(self->field_10);
+    CCharVoiceMan_PlayNodeById(self->field_10);
     f32 const v30 = lbl_eu_80667E30;
     // Volatile accesses chain the retail order (see SuddenCommuResetPairingState).
     self->field_10 = (u32)-1;
@@ -812,12 +812,12 @@ int func_801BBCBC(CSuddenCommu* self) {
             int found;
             if (self->field_C == 4) {
                 u32 v6, v5, v4, v3, v2, v1;
-                if (func_80174C98(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-                else if (func_80174C98(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-                else if (func_80174C98(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-                else if (func_80174C98(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-                else if (func_80174C98(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-                else if (func_80174C98(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+                if (testActorStatus(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+                else if (testActorStatus(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+                else if (testActorStatus(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+                else if (testActorStatus(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+                else if (testActorStatus(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+                else if (testActorStatus(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
                 else found = !!player->field_3ED4->field_36C;
             } else {
                 found = 0;
@@ -827,12 +827,12 @@ int func_801BBCBC(CSuddenCommu* self) {
                     if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
                     if (player == 0) continue;
                     u32 w6, w5, w4, w3, w2, w1;
-                    if (func_80174C98(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-                    else if (func_80174C98(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-                    else if (func_80174C98(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-                    else if (func_80174C98(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-                    else if (func_80174C98(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-                    else if (func_80174C98(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+                    if (testActorStatus(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+                    else if (testActorStatus(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+                    else if (testActorStatus(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+                    else if (testActorStatus(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+                    else if (testActorStatus(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+                    else if (testActorStatus(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
                     else found = !!player->field_3ED4->field_36C;
                     if (found != 0) break;
                 }
@@ -841,8 +841,8 @@ int func_801BBCBC(CSuddenCommu* self) {
                 // Busy actor: retire the voice, reset the commu state, and
                 // drop out of the camera path for this frame.
                 SuddenCommuClearCommuVoices(self);
-                func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-                func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+                refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+                refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
                 self->field_14 = 0;
                 self->field_4 = -1;
                 self->field_6 = -1;
@@ -850,7 +850,7 @@ int func_801BBCBC(CSuddenCommu* self) {
                 self->field_A = 0;
                 self->field_C = 0;
                 self->field_E = 0;
-                func_802A35B8(self->field_10);
+                CCharVoiceMan_PlayNodeById(self->field_10);
                 f32 const v30 = lbl_eu_80667E30;
                 camRun = 0;
                 self->field_10 = -1;
@@ -868,8 +868,8 @@ int func_801BBCBC(CSuddenCommu* self) {
         if (camPass) {
             // Camera reached the commu target: full reset and mark ended.
             SuddenCommuClearCommuVoices(self);
-            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
-            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
             self->field_14 = 0;
             self->field_4 = -1;
             self->field_6 = -1;
@@ -877,7 +877,7 @@ int func_801BBCBC(CSuddenCommu* self) {
             self->field_A = 0;
             self->field_C = 0;
             self->field_E = 0;
-            func_802A35B8(self->field_10);
+            CCharVoiceMan_PlayNodeById(self->field_10);
             f32 const v30 = lbl_eu_80667E30;
             camRun = 0;
             self->field_10 = -1;
@@ -938,7 +938,7 @@ int func_801BBCBC(CSuddenCommu* self) {
             self->field_24 |= 0x80;
         }
         SuddenCommuClearCommuVoices(self);
-        func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        refreshBattleActors((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
         self->field_24 &= ~0x4;
         return 0;
     }
@@ -1040,7 +1040,7 @@ void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
 }
 
 // Pick the battle-voice id for the commu's current phase and hand it to the
-// voice manager (func_802A3680). `playerIdx` selects the actor whose spot the
+// voice manager (CCharVoiceMan_ForwardNodeCall). `playerIdx` selects the actor whose spot the
 // voice is attached to; `num` selects the phase table: 0 = random companion
 // line, 1 = random entry from the field_E table, 2/3 = fixed ids, 4 =
 // character-specific (matches partner voice ids), 5 = party table.
@@ -1101,7 +1101,7 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
     }
     // Null arm spelled as the pointer itself: MWCC emits mr r4,ptr / beq /
     // addi r4,ptr,0x3E9C instead of a two-sided materialization.
-    func_802A3680(self->field_10,
+    CCharVoiceMan_ForwardNodeCall(self->field_10,
                   player1 != 0 ? (CChainBattleObjTail*)((char*)player1 + 0x3E9C)
                                : (CChainBattleObjTail*)player1,
                   result);

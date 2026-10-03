@@ -230,7 +230,7 @@ extern "C" void TexMan_GetDefaultXf_0A44(cf::CfObjectModelSub98* obj, CfObjectMo
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
-extern "C" void func_80142428();
+extern "C" void lookupExwpTag();
 
 // C-linkage import from libs/monolib/src/scn/CScnItemModel.cpp (retail uses
 // the unmangled name); tail-called by CfModel_SyncVisFlag with the model sub-object.

@@ -23,10 +23,10 @@ extern float lbl_eu_80668C64;
 // ---------------------------------------------------------------
 extern "C" {
     void  Tok_Unpack(u32, float*, u32*, float*, float*);  // packed-token decode
-    s32   func_80189A04(const char*);                        // archive-voice busy check
+    s32   MenuSnd_QuerySlotLive_89A04(const char*);                        // archive-voice busy check
     CVoicePoseBlock* Scn_FindCamItem(CScn*, s32);      // scene pose/xform block lookup
     s32   MenuSnd_TryPlayGated_97A0(const char*, float, s32);            // start archive voice
-    void  func_8018986C(const char*, float);                 // stop archive voice
+    void  MenuSnd_SilenceByName_8986C(const char*, float);                 // stop archive voice
     void  MenuSnd_SetSlotPan_9C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
     CVoiceBattleSndMgr* CfObjectMove_relaySubB0Slot60(CVoiceOwnerIntf*);     // battle sound manager from owner
     s32   CfSoundMan_TouchSlotById(u16);                                // battle sound busy check
@@ -109,7 +109,7 @@ extern "C" void CCharVoice::updatePosition()
     if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle == -1) return;
 
-        if (func_80189A04(mFileName) != 0) {
+        if (MenuSnd_QuerySlotLive_89A04(mFileName) != 0) {
             mVoiceId     = -1;
             mSoundHandle = -1;
             return;
@@ -172,7 +172,7 @@ extern "C" void CCharVoice::stopVoiceA()
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle != -1) {
-            func_8018986C(mFileName, lbl_eu_80668C64);
+            MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
             mVoiceId     = -1;
             mSoundHandle = -1;
         }
@@ -207,7 +207,7 @@ extern "C" bool CCharVoice::playGated(float volume,
 
         if ((flags & 2) || (flags & 0x80000000)) {
             if (mSoundHandle != -1) {
-                func_8018986C(mFileName, lbl_eu_80668C64);
+                MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
                 mVoiceId     = -1;
                 mSoundHandle = -1;
             }
@@ -285,7 +285,7 @@ extern "C" void CCharVoice::stopVoiceB()
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle != -1) {
-            func_8018986C(mFileName, lbl_eu_80668C64);
+            MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
             mVoiceId     = -1;
             mSoundHandle = -1;
         }

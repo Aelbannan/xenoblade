@@ -61,7 +61,7 @@ typedef void* (*VFuncPtr)(void*, const char*, u32);
 // header declaration defeats the inline expansion).
 void* memset(void*, int, unsigned long);
 
-void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
+void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName);
 
 u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
@@ -94,12 +94,12 @@ void FloorMap_RefreshCursorRows(void* self) {
             color = -1;
             if (rec[0x1C] != 0 || CtrlRemote_TouchBitByArg(0x3212) != 0)
                 color = 0xC85050FF;
-            func_80137B44(cur->mData, buf, color);
+            PaneSetVtxColorByName(cur->mData, buf, color);
         }
     }
 }
 
-void func_80245450(void* self) {
+void FloorMap_CursorDown(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     u8 count = *(u8*)((u8*)self + cur->field_09 * 0x30C + 0x318);
     if (count >= 5) {
@@ -131,7 +131,7 @@ void func_80245450(void* self) {
 
     nw4r::lyt::Pane* pane =
         cur->mData->GetRootPane()->FindPaneByName(buf, true);
-    func_801375A0((nw4r::math::VEC3*)&pos, pane);
+    AccumPaneWorldPos((nw4r::math::VEC3*)&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(tbl + 0x136, true);
@@ -153,7 +153,7 @@ void func_80245450(void* self) {
 }
 
 // Retail keeps this helper's symbol unmangled.
-extern "C" void func_802455F0(void* self) {
+extern "C" void FloorMap_CursorPageDown(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     CFloorMapFloorEntry* entries = reinterpret_cast<CFloorMapFloorEntry*>(cur->_0C);
     u8 count = *(u8*)((u8*)self + cur->field_09 * 0x30C + 0x318);
@@ -186,7 +186,7 @@ extern "C" void func_802455F0(void* self) {
     sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
 
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
-    func_801375A0(&pos, pane);
+    AccumPaneWorldPos(&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
@@ -256,7 +256,7 @@ void FloorMap_SetCursorState(void* self, u16 val) {
             sprintf(buf, &tbl[0x14D], (s8)cur->field_0A);
 
             nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
-            func_801375A0(&pos, pane);
+            AccumPaneWorldPos(&pos, pane);
 
             nw4r::lyt::Pane* scalePane =
                 cur->mData->GetRootPane()->FindPaneByName(&tbl[0x136], 1);
@@ -285,7 +285,7 @@ void FloorMap_SetCursorState(void* self, u16 val) {
 // per-floor row panes' visibility/color (found floors use one color set),
 // position the map panes under the current floor, and update the two status
 // panes' flags for the current map.
-void func_80245950(void* self) {
+void FloorMap_RefreshFloorRows(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     u8 count = Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
     cur->field_30D0 = count;
@@ -319,7 +319,7 @@ void func_80245950(void* self) {
         int found = 0;
         u8 floorId = count - (k - 1);
         for (u32 idx = 0; idx < 0x240; idx++) {
-            if (func_8013AC3C(lbl_eu_80664798, floorId, idx + 1)) {
+            if (GetMapItemBitFlag(lbl_eu_80664798, floorId, idx + 1)) {
                 found = 1;
                 break;
             }
@@ -361,7 +361,7 @@ void func_80245950(void* self) {
     sprintf(buf4, &lbl_eu_8050BEA8[0x12A], cur->field_09 + 1);
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf4, 1);
     nw4r::math::VEC3 pos;
-    func_801375A0(&pos, pane);
+    AccumPaneWorldPos(&pos, pane);
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
     pos.x = pos.x * scalePane->GetScale().x;
@@ -381,7 +381,7 @@ void func_80245950(void* self) {
         sprintf(buf5, &lbl_eu_8050BEA8[0x12A], cur->field_09 + 1);
         nw4r::lyt::Pane* pane2 = cur->mData->GetRootPane()->FindPaneByName(buf5, 1);
         nw4r::math::VEC3 pos2;
-        func_801375A0(&pos2, pane2);
+        AccumPaneWorldPos(&pos2, pane2);
         nw4r::lyt::Pane* scalePane2 =
             cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
         pos2.x = pos2.x * scalePane2->GetScale().x;
@@ -413,7 +413,7 @@ void func_80245950(void* self) {
 // file (filtered by map-id/type/region checks), then merge each accepted
 // marker into the highest floor whose height is above the marker, and finally
 // refresh the cursor pane position and scrollbar.
-void func_80245DF8(void* self) {
+void FloorMap_RebuildMarkers(void* self) {
     // Locals in retail frame-slot order; the s16->f32 conversions below use
     // plain casts - MWCC materializes its own stack temps and reuses the
     // TU-defined lbl_eu_80668770 magic for them.
@@ -491,7 +491,7 @@ void func_80245DF8(void* self) {
     sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
 
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
-    func_801375A0(&pos, pane);
+    AccumPaneWorldPos(&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
@@ -559,7 +559,7 @@ void* __dt__802462F0(void* self, int mode) {
 // unless the region gimmick flag is set), projects the player position onto
 // that row's map plane, and lights exactly one of the three status panes
 // based on the measured text height.
-void func_80246330(CFloorMapLayoutBlock* self) {
+void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock* self) {
     char* tbl = lbl_eu_8050BEA8;
 
     // Stack locals declared in reverse of retail frame-slot order
@@ -596,7 +596,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         buildLayout(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
         nw4r::lyt::Layout* lay = self->slots[i].layout;
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
-        func_8013676C(lay->GetRootPane(), (u32)((IDeviceFontInfo*)fontObj)->getFont());
+        ApplyFontToTxtPanes(lay->GetRootPane(), (u32)((IDeviceFontInfo*)fontObj)->getFont());
     }
 
     Bdat_GetTable_AA34();
@@ -629,7 +629,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         // Row world position: y is truncated into the slot, x/z stay live for
         // the projection below.
         nw4r::math::VEC3 pos;
-        func_80141DC4(&pos.x);
+        bdatGetPosXYZ(&pos.x);
         e->posY = (s32)pos.y;
 
         char* name = BdatGetPtrDirect((const void*)fp, tbl + 0x1F, i);
@@ -651,7 +651,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         }
         if (vis || CtrlRemote_TouchBitByArg(0x3212) != 0)
             color = colorHi + 0x50FF;
-        func_80137B44(e->layout, tbl + 0x1D7, color);
+        PaneSetVtxColorByName(e->layout, tbl + 0x1D7, color);
 
         // Project this row's scroll range onto the map plane for the current
         // region.
@@ -683,14 +683,14 @@ void func_80246330(CFloorMapLayoutBlock* self) {
 
         // Convert the marker name to UTF-16 for the text measurement helper.
         sprintf(buf, tbl + 0x223, name);
-        func_80136400(buf, utf16p, 0x20);
+        Utf8ToWcsCopyFix(buf, utf16p, 0x20);
 
         u32 len = 0;
         while (utf16p[len] != 0)
             len++;
 
         nw4r::lyt::Pane* textBox = e->layout->GetRootPane()->FindPaneByName(tbl + 0x1D7, 1);
-        func_80125D00((f32*)&out, textBox, utf16p);
+        TagProcMeasureText((f32*)&out, textBox, utf16p);
 
         // Clear all three status-pane visible bits, then light the one whose
         // height band contains the measured text position.
@@ -720,7 +720,7 @@ void* __dt__802468C8(void* self, int mode) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80246908 - release every marker textbox/picture attached to the map.
+// FloorMap_ReleaseMarkers - release every marker textbox/picture attached to the map.
 // For each named holder pane under slots->pane (the holder is looked up by
 // name only when the string-table entry is non-NULL), detach and delete the
 // matching marker pane found by child-name under the main layout root;
@@ -755,7 +755,7 @@ void* __dt__802468C8(void* self, int mode) {
         }                                                                      \
     } while (0)
 
-void func_80246908(void* self) {
+void FloorMap_ReleaseMarkers(void* self) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
 
     do {
@@ -950,9 +950,9 @@ void func_80246908(void* self) {
 // Release the row-marker panes attached to each of the 12 marker-holder
 // groups (tbl offsets below), then rebuild every per-marker pane flag: for
 // idx 1..0x240 the pane named tbl+0x2DE gets its visible bit set when the
-// map-table lookup func_8013AC3C reports a valid (< 0x10000) result, and
+// map-table lookup GetMapItemBitFlag reports a valid (< 0x10000) result, and
 // finally all placement/refresh passes are re-run.
-void func_80247490(void* self, u8 arg2, u32 arg3, f32 arg4) {
+void FloorMap_ReloadMarkerPanes(void* self, u8 arg2, u32 arg3, f32 arg4) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
     slots->field_0C = arg2;
 
@@ -984,7 +984,7 @@ next12:
     // Rebuild each marker pane's visible bit from the map table lookup.
     // Retail stores bit0 as bit 4 of cntlzw(result), i.e. result < 0x10000.
     for (u32 idx = 1; idx <= 0x240; idx++) {
-        int found = func_8013AC3C(lbl_eu_80664798, slots->field_0C, (u16)idx);
+        int found = GetMapItemBitFlag(lbl_eu_80664798, slots->field_0C, (u16)idx);
         char buf[0x20];
         sprintf(buf, &lbl_eu_8050BEA8[0x2DE], (u16)idx);
         nw4r::lyt::Pane* pane =
@@ -993,15 +993,15 @@ next12:
         pf->mFlag = (pf->mFlag & 0xFE) | ((__cntlzw((u32)found) >> 4) & 1);
     }
 
-    func_8024B234((CFloorMapFull*)self);
-    func_8024AEEC(self);
-    func_8024A748(self);
-    func_8024A448(self);
-    func_80249C1C(slots);
-    func_802497B0(self);
-    func_80249344(slots);
-    func_80248ED8(slots);
-    func_80248A6C(slots);
+    FloorMap_PlacePlayerMarkerScaled((CFloorMapFull*)self);
+    FloorMap_PlacePlayerMarker(self);
+    FloorMap_PlaceWorldMarker(self);
+    FloorMap_PlaceLandmarks(self);
+    FloorMap_PlaceTypedMarkers(slots);
+    FloorMap_PlaceMarkers(self);
+    FloorMap_PlaceMarkersD(slots);
+    FloorMap_PlaceMarkersC(slots);
+    FloorMap_PlaceMarkersB(slots);
 }
 
 // Place a map marker for floor row `idx`: after confirming the row belongs
@@ -1009,7 +1009,7 @@ next12:
 // height is above the row's y (and which is the current map row), project the
 // position onto the map pane coordinates, build a uniquely-named pane from the
 // projected coordinates, create the picture pane and append it to the map root.
-void func_8024808C(CFloorMapFull* self, u32 idx) {
+void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx) {
     // Locals in retail frame-slot order (tmp@0x08, work@0x14, fy/fx@0x20/0x24,
     // pos@0x2C, name buf@0x38, conv slots@0x58/0x60).
     nw4r::math::VEC3 tmp;
@@ -1029,7 +1029,7 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
     if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], idx)) return;
     if (CtrlRemote_TouchBitByArg(idx + 0x20C8) == 0) return;
 
-    func_80141DC4(&tmp.x);
+    bdatGetPosXYZ(&tmp.x);
     pos = tmp;
     f32 py = pos.y;
 
@@ -1063,12 +1063,12 @@ void func_8024808C(CFloorMapFull* self, u32 idx) {
 
     sprintf(buf, &lbl_eu_8050BEA8[0x2EB], fx, work.x);
 
-    void* pic = func_80248920(self, (const char*)0xE, work.x, work.y, (void*)(-1), buf);
+    void* pic = FloorMap_CreateMarkerPicture(self, (const char*)0xE, work.x, work.y, (void*)(-1), buf);
     nw4r::lyt::Pane* pane = self->field_08->FindPaneByName(&lbl_eu_8050BEA8[0x26C], true);
     pane->AppendChild((nw4r::lyt::Pane*)pic);
 }
 
-void func_8024830C(void* self, void* arg2) {
+void FloorMap_ResolveMapPos(void* self, void* arg2) {
     f32* result = (f32*)self;
     u32* slotFlag = (u32*)arg2;
 
@@ -1094,7 +1094,7 @@ void func_8024830C(void* self, void* arg2) {
         u16 idx = lbl_eu_8050B798[lbl_eu_80664798];
         if (idx != 0) {
             f32 buf[3];
-            func_80141DC4(buf);
+            bdatGetPosXYZ(buf);
             result[0] = buf[0];
             result[1] = buf[1];
             result[2] = buf[2];
@@ -1143,7 +1143,7 @@ done:;
 // raw ut::LinkListNode fields), accumulate each marker pane's parent-chain
 // translate up to the layout root, and pick the first pane inside the hit
 // radius. The trailing digits of that pane's name are the row id.
-u32 func_80248558(void* self) {
+u32 FloorMap_PickMarkerRow(void* self) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
 
     // Declared in retail frame-slot order (buf2@0x48, out@0x3c, rec@0x30,
@@ -1210,7 +1210,7 @@ u32 func_80248558(void* self) {
             acc3.x = ggp->GetTranslate().x;
             acc3.y = ggp->GetTranslate().y;
             acc3.z = ggp->GetTranslate().z;
-            func_8024B4CC(&rec, self, ggp->GetParent());
+            FloorMap_AccumPaneTranslate(&rec, self, ggp->GetParent());
             nw4r::math::VEC3Add(&acc3, &acc3, &rec);
         add_acc2:
             nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
@@ -1258,7 +1258,7 @@ u32 func_80248558(void* self) {
     return 0;
 }
 
-void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName) {
+void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, void* arg5, const char* paneName) {
     if (!name) return NULL;
     if (!paneName) return NULL;
 
@@ -1292,10 +1292,10 @@ void* func_80248920(void* self, const char* name, f32 x, f32 y, void* arg5, cons
     return pic;
 }
 
-// Variant of the marker-placement scan (same shape as func_802497B0) for a
+// Variant of the marker-placement scan (same shape as FloorMap_PlaceMarkers) for a
 // different map table section: picture panes keyed by tbl+0x382 names are
 // appended under the tbl+0x275 row pane when every eligibility check passes.
-void func_80248A6C(CFloorMapLayoutSlots* slots) {
+void FloorMap_PlaceMarkersB(CFloorMapLayoutSlots* slots) {
     const char* tbl = lbl_eu_8050BEA8;
 
     // Two s16/u8 -> f32 conversion slots; retail stores their 0x4330 prefix
@@ -1387,17 +1387,17 @@ void func_80248A6C(CFloorMapLayoutSlots* slots) {
         result.x = coords[0] + (result.x / scale) * projScale;
         result.z = zero;
 
-        void* picture = func_80248920(slots, (const char*)0x3, result.x, result.y, (void*)-1, buf);
+        void* picture = FloorMap_CreateMarkerPicture(slots, (const char*)0x3, result.x, result.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x275], 1);
         pane2->AppendChild((nw4r::lyt::Pane*)picture);
     }
 }
 
-// Variant of the marker-placement scan (same shape as func_80248A6C) for a
+// Variant of the marker-placement scan (same shape as FloorMap_PlaceMarkersB) for a
 // third map table section: picture panes keyed by tbl+0x390 names are appended
 // under the tbl+0x281 row pane when every eligibility check passes.
-void func_80248ED8(CFloorMapLayoutSlots* slots) {
+void FloorMap_PlaceMarkersC(CFloorMapLayoutSlots* slots) {
     // Stack locals: MWCC assigns frame slots in reverse declaration order,
     // so declare highest-offset first (conv@0x50/0x58 ... result@0x08).
     const char* tbl = lbl_eu_8050BEA8;
@@ -1495,17 +1495,17 @@ void func_80248ED8(CFloorMapLayoutSlots* slots) {
         result.x = coords[0] + (result.x / scale) * projScale;
         result.z = zero;
 
-        void* picture = func_80248920(slots, (const char*)0x10, result.x, result.y, (void*)-1, buf);
+        void* picture = FloorMap_CreateMarkerPicture(slots, (const char*)0x10, result.x, result.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x281], 1);
         pane2->AppendChild((nw4r::lyt::Pane*)picture);
     }
 }
 
-// Variant of the marker-placement scan (same shape as func_80248A6C) for a
+// Variant of the marker-placement scan (same shape as FloorMap_PlaceMarkersB) for a
 // fourth map table section: picture panes keyed by tbl+0x39B names are
 // appended under the tbl+0x28A row pane when every eligibility check passes.
-void func_80249344(CFloorMapLayoutSlots* slots) {
+void FloorMap_PlaceMarkersD(CFloorMapLayoutSlots* slots) {
     const char* tbl = lbl_eu_8050BEA8;
 
     // Stack locals declared in reverse of retail frame-slot order
@@ -1620,7 +1620,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
         result.x = coords[0] + (result.x / scale) * projScale;
         result.y = coords[1] - zTerm;
 
-        void* picture = func_80248920(slots, (const char*)0xC, result.x, result.y, (void*)-1, buf);
+        void* picture = FloorMap_CreateMarkerPicture(slots, (const char*)0xC, result.x, result.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&tbl[0x28A], 1);
         pane2->AppendChild((nw4r::lyt::Pane*)picture);
@@ -1632,7 +1632,7 @@ void func_80249344(CFloorMapLayoutSlots* slots) {
 // x-range, encounter-count, flag and position checks pass and the marker is
 // not already placed; the picture is appended to the map pane whose name is
 // formatted from the marker index.
-void func_802497B0(void* self) {
+void FloorMap_PlaceMarkers(void* self) {
     CFloorMapLayoutSlots* slots = (CFloorMapLayoutSlots*)self;
 
     // Stack locals declared so MWCC lands each at its retail frame slot
@@ -1737,7 +1737,7 @@ void func_802497B0(void* self) {
         result.x = coords[0] + (result.x / scale) * projScale;
         result.y = coords[1] - zTerm;
 
-        void* picture = func_80248920(self, (const char*)0x18, result.x, result.y, (void*)-1, buf);
+        void* picture = FloorMap_CreateMarkerPicture(self, (const char*)0x18, result.x, result.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(&lbl_eu_8050BEA8[0x293], 1);
         pane2->AppendChild((nw4r::lyt::Pane*)picture);
@@ -1749,7 +1749,7 @@ void func_802497B0(void* self) {
 // and marker label differently, then the position is projected onto the map
 // plane for the current region and the picture appended under the tbl+0x2B4
 // row pane. The tbl+0x2BD highlight pane's visible bit is set while placing.
-void func_80249C1C(CFloorMapLayoutSlots* slots) {
+void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
     // Frame-slot order matters: MWCC allocates locals by declaration order,
     // and retail places the conversion slots at the very top of the local
     // block (0x70/0x78), i.e. last.
@@ -1831,7 +1831,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             if (hide || CtrlRemote_TouchBitByArg(0x3212) != 0) break;
 
             f32 tmp[3];
-            func_80141DC4(tmp, id2);
+            bdatGetPosXYZ(tmp, id2);
             foundPos.x = tmp[0];
             foundPos.y = tmp[1];
             foundPos.z = tmp[2];
@@ -1873,7 +1873,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         case 4: {
             // Current player position.
             f32 tmp[3];
-            func_80141DC4(tmp, rowId);
+            bdatGetPosXYZ(tmp, rowId);
             foundPos.x = tmp[0];
             foundPos.y = tmp[1];
             foundPos.z = tmp[2];
@@ -1913,7 +1913,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
             placed = 1;
             break;
         }
-
+        } // switch (type)
         if (!placed) continue;
 
         // Keep only rows whose floor height sits above the marker y AND that
@@ -1964,7 +1964,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         // Pick the picture kind from the selected row's BDAT entry: kind 1
         // directly, otherwise re-check when the tbl+0x440 column is nonzero.
         u16 sel = BdatGetU16Direct((const void*)fp, &tbl[0x42D], i + 1);
-        u32 entry = (u32)lbl_eu_80573D18[func_80138138(sel)];
+        u32 entry = (u32)lbl_eu_80573D18[SearchThresholdIdx(sel)];
         u8 ok = BdatGetU8Direct(entry, &tbl[0x436], sel) == 1;
         if (!ok) {
             u16 v440 = BdatGetU16Direct((const void*)fp, &tbl[0x440], i + 1);
@@ -1972,7 +1972,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
         }
         if (!ok) continue;
 
-        void* pic = func_80248920(slots, (const char*)0x5, res.x, res.y, (void*)-1, buf);
+        void* pic = FloorMap_CreateMarkerPicture(slots, (const char*)0x5, res.x, res.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* rowPane = slots->pane->FindPaneByName(&tbl[0x2B4], true);
         rowPane->AppendChild((nw4r::lyt::Pane*)pic);
@@ -1986,7 +1986,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
 // entry: each object must pass the pane/flag/kind checks, its floor row (first
 // row whose height exceeds the object's y) must equal the current map row, and
 // the projected position is appended under the formatted marker pane name.
-void func_8024A448(void* self) {
+void FloorMap_PlaceLandmarks(void* self) {
     CFloorMapFull* fm = (CFloorMapFull*)self;
 
     // s16/u8 -> f32 conversion slots (retail stores both 0x4330 prefix words
@@ -2059,7 +2059,7 @@ void func_8024A448(void* self) {
         result.y = fvy - zTerm;
 
         void* picture =
-            func_80248920(self, (const char*)0xF, result.x, result.y, (void*)-1, buf);
+            FloorMap_CreateMarkerPicture(self, (const char*)0xF, result.x, result.y, (void*)-1, buf);
 
         nw4r::lyt::Pane* pane = fm->field_08->FindPaneByName(&lbl_eu_8050BEA8[0x2A0], 1);
         pane->AppendChild((nw4r::lyt::Pane*)picture);
@@ -2070,7 +2070,7 @@ void func_8024A448(void* self) {
 // row from the world table, format its display name by type (enemy lists,
 // landmark table, save points, camps), then check the marker's floor against
 // the current map row and append a positioned picture pane to the map layout.
-void func_8024A748(void* self) {
+void FloorMap_PlaceWorldMarker(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     const char* tbl = lbl_eu_8050BEA8;
 
@@ -2191,7 +2191,7 @@ void func_8024A748(void* self) {
                 if (ok) break;
 
                 f32 tmp[3];
-                func_80141DC4(tmp, (u16)id2);
+                bdatGetPosXYZ(tmp, (u16)id2);
                 vec.x = tmp[0];
                 vec.y = tmp[1];
                 vec.z = tmp[2];
@@ -2239,7 +2239,7 @@ void func_8024A748(void* self) {
                 if (ok) break;
 
                 f32 tmp[3];
-                func_80141DC4(tmp, (u16)id2);
+                bdatGetPosXYZ(tmp, (u16)id2);
                 vec.x = tmp[0];
                 vec.y = tmp[1];
                 vec.z = tmp[2];
@@ -2287,18 +2287,18 @@ void func_8024A748(void* self) {
             work.y = pos.y - (work.z / denom) * lbl_eu_8066877C;
             work.z = lbl_eu_80668764;
 
-            void* pic = func_80248920(p, (const char*)7, work.x, work.y, (void*)-1, tbl + 0x466);
+            void* pic = FloorMap_CreateMarkerPicture(p, (const char*)7, work.x, work.y, (void*)-1, tbl + 0x466);
             nw4r::lyt::Pane* pane = p->field_08->FindPaneByName(tbl + 0x2BD, true);
             pane->AppendChild((nw4r::lyt::Pane*)pic);
         }
     }
 }
-
+} // FloorMap_PlaceWorldMarker
 // Build the current-position marker: find the floor row whose height is
 // above the player's y (and which is the current map row), project the
 // player position onto the map pane coordinates, then allocate a wrapper
 // pane holding the marker picture and append it to the map root pane.
-void func_8024AEEC(void* self) {
+void FloorMap_PlacePlayerMarker(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     // Retail seeds both conversion-slot prefix words before the early-outs
     // and keeps the height-loop bias/count/index in nonvolatile f31/r28/r30.
@@ -2359,7 +2359,7 @@ void func_8024AEEC(void* self) {
     result.y = work.y - (result.z / denom) * lbl_eu_8066877C;
     result.z = lbl_eu_80668764;
 
-    nw4r::lyt::Pane* picPane = (nw4r::lyt::Pane*)func_80248920(
+    nw4r::lyt::Pane* picPane = (nw4r::lyt::Pane*)FloorMap_CreateMarkerPicture(
         self, (const char*)2, lbl_eu_80668764, lbl_eu_80668764, (void*)(-1), &tbl[0x470]);
 
     // Re-apply the picture translate: x cleared and y scaled by the layout
@@ -2403,7 +2403,7 @@ void func_8024AEEC(void* self) {
 // height is above the player's y, project the player position onto the map
 // pane coordinates, build the marker picture pane and append it to the map
 // root; finally scale it by the player object's zoom factor (vtable+0xCC).
-void func_8024B234(CFloorMapFull* self) {
+void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull* self) {
     // Locals declared so MWCC packs them into the retail frame slots
     // (MWCC allocates in reverse declaration order): pre-projection pos
     // @0x08, projected work @0x14, player pos snapshot @0x20, conversion
@@ -2463,7 +2463,7 @@ void func_8024B234(CFloorMapFull* self) {
     work.x = fx + (tmp.x / denom) * lbl_eu_8066877C;
     work.y = fy - (tmp.z / denom) * lbl_eu_8066877C;
 
-    void* pic = func_80248920(self, (const char*)1, work.x, work.y, (void*)-1,
+    void* pic = FloorMap_CreateMarkerPicture(self, (const char*)1, work.x, work.y, (void*)-1,
                               &lbl_eu_8050BEA8[0x478]);
     nw4r::lyt::Pane* root =
         self->field_08->FindPaneByName(&lbl_eu_8050BEA8[0x2cf], true);
@@ -2485,9 +2485,9 @@ void func_8024B234(CFloorMapFull* self) {
 // layout's root pane into `output`. `data` points at a CFloorMap layout slot
 // whose +0x00 holds the Layout* (root pane at layout+0x10); the walk stops at
 // that root (or a NULL parent) and recurses past the fourth level. The callers
-// (func_8024F7CC / func_8024D614 / func_80248558) hand-inline this walk with
+// (FloorMap_MoveToCursorRow / FloorMap_UpdateCursorMove / FloorMap_PickMarkerRow) hand-inline this walk with
 // their own stack arrays; only the recursion stays out-of-line (as in retail).
-void func_8024B4CC(nw4r::math::VEC3* output, void* data, nw4r::lyt::Pane* node) {
+void FloorMap_AccumPaneTranslate(nw4r::math::VEC3* output, void* data, nw4r::lyt::Pane* node) {
     output->x = lbl_eu_80668764;
     output->y = lbl_eu_80668764;
     output->z = lbl_eu_80668764;
@@ -2524,7 +2524,7 @@ void func_8024B4CC(nw4r::math::VEC3* output, void* data, nw4r::lyt::Pane* node) 
             if (((nw4r::lyt::Layout*)*(void**)data)->GetRootPane() != ggp && ggp != NULL) {
                 copyVEC3(&tmp2, &ggp->GetTranslate());
                 nw4r::math::VEC3 recurse;
-                func_8024B4CC(&recurse, data, ggp->GetParent());
+                FloorMap_AccumPaneTranslate(&recurse, data, ggp->GetParent());
                 Vec3AddInto(&tmp2, &recurse);
             }
             nw4r::math::VEC3Add(&temp, &temp, &tmp2);
@@ -2541,7 +2541,7 @@ void* __dt__8024B6B8(void* self, int mode) {
     return self;
 }
 
-void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 arg5) {
+void FloorMap_SetRowTexPalette(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 arg5) {
     if (arg2 == 0)
         return;
     if (self->mData == 0)
@@ -2793,7 +2793,7 @@ CFloorMap::~CFloorMap() {
 extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c);
 extern "C" void __ct__8024507C(void* self);
 
-void func_8024BE1C(CFloorMap* self) {
+void FloorMap_LoadStageLayout(CFloorMap* self) {
     CFloorMapStage stage;
     char path[0x80];
     u32 lang;
@@ -2803,7 +2803,7 @@ void func_8024BE1C(CFloorMap* self) {
     u32 sel;
     const char* msgName;
 
-    lang = func_8024FB78(self);
+    lang = FloorMap_FindFloorRow(self);
     __ct__80244F50(&stage, (int)self->mScrollBar, (int)self->field_34, (u8)lang);
 
     // Install the staged image into the resident cursor at this+0x1FC. The
@@ -2824,7 +2824,7 @@ void func_8024BE1C(CFloorMap* self) {
 
     // Pick the data file name from the message tables based on the unlocked-
     // region / map flags; falls back to a default name when checks fail.
-    lang = func_8024FB78(self);
+    lang = FloorMap_FindFloorRow(self);
     if ((u8)lang == 0) {
         lang = 1;
     }
@@ -2875,7 +2875,7 @@ void func_8024BE1C(CFloorMap* self) {
 // position toward the target and push it into every map layout's pane; then
 // update the sub-widgets, advance every bound layout animation and drive the
 // per-layout animation state machines.
-void func_8024C1FC(void* self) {
+void FloorMap_UpdateFrame(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_40) return;
     if (!p->field_41) return;
@@ -3032,7 +3032,7 @@ void func_8024C1FC(void* self) {
     }
 }
 
-void func_8024C8F8(void* self, void* drawInfo) {
+void FloorMap_Draw(void* self, void* drawInfo) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_40) return;
     if (!p->field_41) return;
@@ -3090,7 +3090,7 @@ void func_8024C8F8(void* self, void* drawInfo) {
 // loads). Frees the three file handles; when the draw flag is set it also
 // releases every layout/resource/widget created for the screen and clears
 // each owning pointer.
-void func_8024CB94(CFloorMapFull* p) {
+void FloorMap_Teardown(CFloorMapFull* p) {
     getEntry__5CBdatFUl(2);
     closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_24));
     closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_28));
@@ -3133,7 +3133,7 @@ void func_8024CB94(CFloorMapFull* p) {
             p->mLayout138 = 0;
         }
 
-        func_80246908(&p->mLayout140);
+        FloorMap_ReleaseMarkers(&p->mLayout140);
 
         for (u32 i = 0; i < 0x14; i++) {
             u32* slot = &p->mLayouts150[i].mPtr;
@@ -3170,7 +3170,7 @@ void func_8024CB94(CFloorMapFull* p) {
     }
 }
 
-u8 func_8024CE1C(void* self) {
+u8 FloorMap_GetField42Gated(void* self) {
     extern int CScrollBar_isVisible(void*);
     if (CScrollBar_isVisible((u8*)self + 0x60)) {
         return *(u8*)((u8*)self + 0x42);
@@ -3185,7 +3185,7 @@ u8 func_8024CE1C(void* self) {
 // NOTE: the per-floor record address is deliberately recomputed at each use
 // (retail never keeps it in a callee-saved register across the calls).
 #define FM_FLOOR(p_) ((CFloorMapFloorBlock*)((u8*)(p_) + (s8)(p_)->field_205 * 0x30C))
-void func_8024CE68(void* self) {
+void FloorMap_UpdateRowPanePos(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
     nw4r::math::VEC3 pos;
@@ -3207,7 +3207,7 @@ void func_8024CE68(void* self) {
     p->field_207 = 0;
     sprintf(nameBuf, &lbl_eu_8050BEA8[0x12A], (s8)p->field_205 + 1);
 
-    func_801375A0(&pos, ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(nameBuf, 1));
+    AccumPaneWorldPos(&pos, ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(nameBuf, 1));
 
     pos.x *= ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1)->GetScale().x;
     if (p->mLayout32D4) {
@@ -3277,7 +3277,7 @@ void func_8024CE68(void* self) {
 // Move the map cursor to the next floor: increment the floor index (wrapping
 // to the first floor), then refresh the floor name panes / scrollbar and
 // (re)load the floor's map file.
-void func_8024D23C(void* self) {
+void FloorMap_CursorNextFloor(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_208) return;
     if (p->field_58) return;
@@ -3303,7 +3303,7 @@ void func_8024D23C(void* self) {
     nw4r::lyt::Pane* pane =
         ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
     nw4r::math::_VEC3 pos;
-    func_801375A0((nw4r::math::VEC3*)&pos, pane);
+    AccumPaneWorldPos((nw4r::math::VEC3*)&pos, pane);
 
     nw4r::lyt::Pane* scalePane =
         ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&tbl[0x136], 1);
@@ -3380,8 +3380,8 @@ void func_8024D23C(void* self) {
 
 // Per-frame map update: when the syswin cursor is active, step the cursor
 // index (wrapping to 1); otherwise move the map view to the row id under the
-// cursor (same position computation as func_8024F7CC).
-void func_8024D614(void* self) {
+// cursor (same position computation as FloorMap_MoveToCursorRow).
+void FloorMap_UpdateCursorMove(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
     // Stack temps mirroring retail's frame layout; pos is declared first
@@ -3423,7 +3423,7 @@ void func_8024D614(void* self) {
     CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + fi * 0x30C);
     if (!floor->field_514) return;
 
-    func_802452C4(&p->mLayout1FC);
+    FloorMap_CursorUp(&p->mLayout1FC);
 
     u16 rowId;
     s8 rowIdx = (s8)p->field_206;
@@ -3483,8 +3483,8 @@ void func_8024D614(void* self) {
                         acc3.y = ggp->GetTranslate().y;
                         acc3.z = ggp->GetTranslate().z;
                         // Deepest level: no null check on the fourth ancestor;
-                        // func_8024B4CC handles it internally.
-                        func_8024B4CC(&rec, slots, ggp->GetParent());
+                        // FloorMap_AccumPaneTranslate handles it internally.
+                        FloorMap_AccumPaneTranslate(&rec, slots, ggp->GetParent());
                         nw4r::math::VEC3Add(&acc3, &acc3, &rec);
                     }
                     goto add_acc2;
@@ -3520,8 +3520,8 @@ divides:
 // Per-frame map update for the world-map view: when the syswin cursor is
 // active, step the cursor index (wrapping to 0); otherwise advance the map
 // rows and move the map view to the row under the cursor (same position
-// computation as func_8024F7CC).
-void func_8024DA0C(void* self) {
+// computation as FloorMap_MoveToCursorRow).
+void FloorMap_UpdateWorldMap(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
     char buf[0x20];
@@ -3548,7 +3548,7 @@ void func_8024DA0C(void* self) {
     CFloorMapFloorBlock* floor = (CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C);
     if (!floor->field_514) return;
 
-    func_80245450(&p->mLayout1FC);
+    FloorMap_CursorDown(&p->mLayout1FC);
 
     u16 rowId = 0;
     if ((s8)p->field_206 >= 0) {
@@ -3612,8 +3612,8 @@ void func_8024DA0C(void* self) {
                         acc3.y = ggp->GetTranslate().y;
                         acc3.z = ggp->GetTranslate().z;
                         // Deepest level: no null check on the fourth
-                        // ancestor; func_8024B4CC handles it internally.
-                        func_8024B4CC(&rec, slots, ggp->GetParent());
+                        // ancestor; FloorMap_AccumPaneTranslate handles it internally.
+                        FloorMap_AccumPaneTranslate(&rec, slots, ggp->GetParent());
                         nw4r::math::VEC3Add(&acc3, &acc3, &rec);
                     }
                     nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
@@ -3641,7 +3641,7 @@ void func_8024DA0C(void* self) {
 // Per-frame map-down handler: when the cursor is not active, step the row
 // index down by one row (wrapping the page), refresh the cursor pane, move
 // the map view to the row under the cursor, and normalize the new position.
-void func_8024DE08(CFloorMapFull* p) {
+void FloorMap_HandleMapDown(CFloorMapFull* p) {
     // Declared in retail frame-slot order (MWCC assigns first-declared the
     // highest address): buf@0x88, buf2@0x68, vec@0x5C, pos@0x50, dest@0x44,
     // acc@0x38, acc2@0x2C, acc3@0x20, rec@0x14, out@0x08.
@@ -3691,7 +3691,7 @@ void func_8024DE08(CFloorMapFull* p) {
 
     nw4r::lyt::Pane* pane =
         ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(buf, 1);
-    func_801375A0((nw4r::math::VEC3*)&pos, pane);
+    AccumPaneWorldPos((nw4r::math::VEC3*)&pos, pane);
     nw4r::lyt::Pane* scalePane =
         ((nw4r::lyt::Layout*)p->mLayout1FC)->GetRootPane()->FindPaneByName(&tbl[0x136], 1);
     pos.x = pos.x * scalePane->GetScale().x;
@@ -3766,7 +3766,7 @@ void func_8024DE08(CFloorMapFull* p) {
         acc3.x = ggp->GetTranslate().x;
         acc3.y = ggp->GetTranslate().y;
         acc3.z = ggp->GetTranslate().z;
-        func_8024B4CC(&rec, slots, ggp->GetParent());
+        FloorMap_AccumPaneTranslate(&rec, slots, ggp->GetParent());
         nw4r::math::VEC3Add(&acc3, &acc3, &rec);
     add_acc2:
         nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
@@ -3795,7 +3795,7 @@ void func_8024DE08(CFloorMapFull* p) {
 // translate (scaled by the map zoom pane) and store the normalized position.
 // The tail normalization always runs; when the pane is missing, pos simply
 // stays at the zero it was seeded with before the name lookup.
-void func_8024E2BC(void* self) {
+void FloorMap_NormalizeMapPos(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (p->field_2C != 0) return;
     if (p->field_208 == 0) return;
@@ -3803,7 +3803,7 @@ void func_8024E2BC(void* self) {
     if (p->field_58 != 0) return;
 
     if (*(u8*)((u8*)p + (s8)p->field_205 * 0x30C + 0x514) == 0) return;
-    func_802455F0(&p->mLayout1FC);
+    FloorMap_CursorPageDown(&p->mLayout1FC);
 
     // Locals in retail frame-slot order (buf@0x50, pos@0x44, acc@0x38,
     // acc2@0x2C, acc3@0x20, rec@0x14, out@0x08).
@@ -3875,7 +3875,7 @@ void func_8024E2BC(void* self) {
                         acc3.x = ggp->GetTranslate().x;
                         acc3.y = ggp->GetTranslate().y;
                         acc3.z = ggp->GetTranslate().z;
-                        func_8024B4CC(&rec, slots, ggp->GetParent());
+                        FloorMap_AccumPaneTranslate(&rec, slots, ggp->GetParent());
                         nw4r::math::VEC3Add(&acc3, &acc3, &rec);
                     }
                     nw4r::math::VEC3Add(&acc2, &acc2, &acc3);
@@ -3903,7 +3903,7 @@ void func_8024E2BC(void* self) {
 
 // Scroll the map view down: step the cursor position toward the lower bound
 // and push the new position into every map layout's target pane.
-void func_8024E650(void* self) {
+void FloorMap_ScrollDown(void* self) {
     CFloorMapFull* fm = (CFloorMapFull*)self;
     if (fm->field_58) return;
     if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
@@ -3924,13 +3924,13 @@ void func_8024E650(void* self) {
         }
     }
 
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)FloorMap_PickMarkerRow(&fm->mLayout140));
     fm->field_5D = 1;
 }
 
 // Scroll the map view up: step the cursor position toward the upper bound
 // and push the new position into every map layout's target pane.
-void func_8024E828(void* self) {
+void FloorMap_ScrollUp(void* self) {
     CFloorMapFull* fm = (CFloorMapFull*)self;
     if (fm->field_58) return;
     if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
@@ -3953,13 +3953,13 @@ void func_8024E828(void* self) {
         }
     }
 
-    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)func_80248558(&fm->mLayout140));
+    FloorMap_SetCursorState(&fm->mLayout1FC, (u16)FloorMap_PickMarkerRow(&fm->mLayout140));
     fm->field_5D = 1;
 }
 
 // Scroll the map view right: step the cursor position toward the right edge
 // of the map and push the new position into every map layout's target pane.
-void func_8024EA00(CFloorMapFull* fm) {
+void FloorMap_ScrollRight(CFloorMapFull* fm) {
     if (fm->field_58) return;
     if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
     if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
@@ -3999,7 +3999,7 @@ void func_8024EA00(CFloorMapFull* fm) {
         }
     }
 
-    u32 v = func_80248558(&fm->mLayout140);
+    u32 v = FloorMap_PickMarkerRow(&fm->mLayout140);
     FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
     fm->field_5D = 1;
 }
@@ -4007,8 +4007,8 @@ void func_8024EA00(CFloorMapFull* fm) {
 
 // Scroll the map view left: step the cursor position toward the left edge
 // of the map and push the new position into every map layout's target pane.
-// Mirrors func_8024EA00 with negated step and an extra B8 scale on the bound.
-void func_8024EC24(CFloorMapFull* fm) {
+// Mirrors FloorMap_ScrollRight with negated step and an extra B8 scale on the bound.
+void FloorMap_ScrollLeft(CFloorMapFull* fm) {
     if (fm->field_58) return;
     if (CSysWin_getUnk34(&fm->mSysWinB8)) return;
     if (CSysWin_getUnk34(&fm->mSysWinF4)) return;
@@ -4038,7 +4038,7 @@ void func_8024EC24(CFloorMapFull* fm) {
         }
     }
 
-    u32 v = func_80248558(&fm->mLayout140);
+    u32 v = FloorMap_PickMarkerRow(&fm->mLayout140);
     FloorMap_SetCursorState(&fm->mLayout1FC, (u16)v);
     fm->field_5D = 1;
 }
@@ -4047,7 +4047,7 @@ void func_8024EC24(CFloorMapFull* fm) {
 // (0xF4) is up, close it once finished; while the cursor window (0xB8) is
 // closing, refresh the row readout; otherwise open either the row-detail
 // window or the map-cursor window for the selected row.
-void func_8024EE50(void* self) {
+void FloorMap_OpenRowWindow(void* self) {
     CFloorMapFull* p = (CFloorMapFull*)self;
     // Retail recomputes the current-floor block address at every access
     // instead of caching it in a register across the UI calls.
@@ -4157,7 +4157,7 @@ void func_8024EE50(void* self) {
 // stride 0x10). Map 18 aliases map 17's string and maps 26-28 alias map 25's,
 // so the last strings are reused; unknown ids clear the pointer. MWCC emits
 // this as a jump table.
-void func_8024F1FC(CFloorMap* self, u8 id) {
+void FloorMap_SetMapTable(CFloorMap* self, u8 id) {
     (void)self;
     lbl_eu_80664798 = id;
     switch (id) {
@@ -4208,7 +4208,7 @@ extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return *(u16*)(self + 0x5A); }
 
 extern "C" u8 FloorMap_GetActiveFlag58(CFloorMapFull* self) { return self->field_58; }
 
-void func_8024F55C(void* self) {
+void FloorMap_ConfirmSelect(void* self) {
     extern int CSysWin_isActive(void*);
     extern void Cur_SetVisible(void*, int);
     extern void sysWinAdvancePhase3(void*);
@@ -4235,7 +4235,7 @@ extern "C" void CScrollBar_loadLayoutArc(void*);
 // rolled mtctr/bdnz + lwzu/stwu form (under -O4,p it unrolls).
 #pragma optimize_for_size on
 #pragma use_lmw_stmw off
-void func_8024C104(void* self) {
+void FloorMap_LoadMapFiles(void* self) {
     u8* p = (u8*)self;
     char* namebuf[28];
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
@@ -4273,7 +4273,7 @@ void func_8024C104(void* self) {
 #pragma optimize_for_size off
 
 
-void func_8024F5C4(void* self, u32 arg2) {
+void FloorMap_SetPaneFlag(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
@@ -4288,7 +4288,7 @@ extern "C" unsigned char FloorMap_GetBdatMaxRow(void) {
     return (unsigned char)Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
 }
 
-void func_8024F658(void* self) {
+void FloorMap_Log2Field208(void* self) {
     u8* p = (u8*)self;
     if (p[0x58]) return;
     if (CSysWin_getUnk34(p + 0xB8)) return;
@@ -4318,14 +4318,14 @@ u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
     return val != 0;
 }
 
-void func_8024F72C(void* self) {
+void FloorMap_Log2Field333C(void* self) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0xB8)) return;
     if (CSysWin_getUnk34(p + 0xF4)) return;
     p[0x333C] = (u32)__cntlzw(p[0x333C]) >> 5;
 }
 
-u32 func_8024F784(void* self) {
+u32 FloorMap_IsSysWinBusy(void* self) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0xB8)) return 1;
     return CSysWin_getUnk34(p + 0xF4);
@@ -4335,7 +4335,7 @@ u32 func_8024F784(void* self) {
 // the row id, accumulate the pane's parent-chain translate up to the layout
 // root, scale by the map zoom pane, add the root offset and store the
 // normalized position back into the map state.
-void func_8024F7CC(void* self) {
+void FloorMap_MoveToCursorRow(void* self) {
     extern int sprintf(char*, const char*, ...);
     CFloorMapFull* p = (CFloorMapFull*)self;
     if (!p->field_5D) return;
@@ -4419,7 +4419,7 @@ void func_8024F7CC(void* self) {
                     acc3.x = ggp->GetTranslate().x;
                     acc3.y = ggp->GetTranslate().y;
                     acc3.z = ggp->GetTranslate().z;
-                    func_8024B4CC(&rec, slots, ggp->GetParent());
+                    FloorMap_AccumPaneTranslate(&rec, slots, ggp->GetParent());
                     nw4r::math::VEC3Add(&acc3, &acc3, &rec);
                 }
                 goto add_acc2;
@@ -4454,7 +4454,7 @@ divides:
 // the floor table against the player's y position; otherwise use the saved
 // landmark position. Returns the 1-based floor row whose height is above the
 // reference point, or 0.
-u32 func_8024FB78(void*) {
+u32 FloorMap_FindFloorRow(void*) {
     u8 curMap = lbl_eu_80664798;
     u32 result = 0;
     // s16 -> f64 conversion slot shared by both branches.
@@ -4482,7 +4482,7 @@ u32 func_8024FB78(void*) {
             u16 rowId = ((u16*)&lbl_eu_8050B798)[curMap];
             if (rowId != 0) {
                 f32 tmp[3];
-                func_80141DC4(tmp, rowId);
+                bdatGetPosXYZ(tmp, rowId);
                 nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)tmp;
                 int count = Bdat_GetMaxRow_B1EC((void*)lbl_eu_8066479C);
                 for (u8 i = 1; i <= count; i++) {
@@ -4619,7 +4619,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         this->layout_count_1F0 = count;
         this->field_1F4 = acc;
         this->field_1F8 = floorId;
-        func_80246330((CFloorMapLayoutBlock*)&this->layouts_150[0]);
+        FloorMap_RefreshLayoutBlock((CFloorMapLayoutBlock*)&this->layouts_150[0]);
 
         // Bind the 0x3334 layout slot and rebuild the embedded cursor from a
         // stack temp (body copied without the vtable pointer).
@@ -4643,9 +4643,9 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         // Reposition every map layout under the current map cursor.
         if (this->field_34 != 0 && this->field_38 != 0 && this->field_30 == 0) {
-            if ((u8)func_8024FB78(this)) {
+            if ((u8)FloorMap_FindFloorRow(this)) {
                 nw4r::math::_VEC3 cur;
-                func_8024830C(&cur, &this->layout_140);
+                FloorMap_ResolveMapPos(&cur, &this->layout_140);
                 this->pos_x_44 -= cur.x;
                 this->pos_y_48 -= cur.y;
             }
@@ -4659,7 +4659,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4702,9 +4702,9 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         // Reposition every map layout under the current map cursor.
         if (this->field_34 != 0 && this->field_38 != 0 && this->field_30 == 0) {
-            if ((u8)func_8024FB78(this)) {
+            if ((u8)FloorMap_FindFloorRow(this)) {
                 nw4r::math::_VEC3 cur;
-                func_8024830C(&cur, &this->layout_140);
+                FloorMap_ResolveMapPos(&cur, &this->layout_140);
                 this->pos_x_44 -= cur.x;
                 this->pos_y_48 -= cur.y;
             }
@@ -4718,7 +4718,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4739,7 +4739,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         CFileHandle* file = (CFileHandle*)this->field_2C;
         this->allocated_buf_3C = (u32)file->getData();
 
-        func_80247490(&this->layout_140,
+        FloorMap_ReloadMarkerPanes(&this->layout_140,
                       ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C,
                       (u32)oldBuf, lbl_eu_80668760);
 
@@ -4761,12 +4761,12 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             } else {
                 rowId = fl->rows[(u8)i].field_00;
             }
-            func_8024808C((CFloorMapFull*)&this->layout_140, rowId);
+            FloorMap_PlaceFloorMarker((CFloorMapFull*)&this->layout_140, rowId);
         }
 
-        FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+        FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
 
-        func_8024B6F8((CFloorMapRowList*)&this->layout_138, (void*)this->allocated_buf_3C,
+        FloorMap_SetRowTexPalette((CFloorMapRowList*)&this->layout_138, (void*)this->allocated_buf_3C,
                       ((CFloorMapFloorBlock*)((u8*)this + (s8)this->field_205 * 0x30C))->field_20C,
                       this->field_32CC, lbl_eu_80664798);
         this->field_2C = 0;
@@ -4783,9 +4783,9 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         this->field_30 = zero;
 
         if (this->field_34 != 0 && this->field_38 != 0 && zero == 0) {
-            if ((u8)func_8024FB78(this)) {
+            if ((u8)FloorMap_FindFloorRow(this)) {
                 nw4r::math::_VEC3 cur;
-                func_8024830C(&cur, &this->layout_140);
+                FloorMap_ResolveMapPos(&cur, &this->layout_140);
                 this->pos_x_44 -= cur.x;
                 this->pos_y_48 -= cur.y;
             }
@@ -4799,7 +4799,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
                     CFloorMapSetPanePos(((CFloorMapLayoutHolder*)this->layouts_150[i].mPtr)->pane, vec);
                 }
             }
-            FloorMap_SetCursorState(&this->layout_1FC, (u16)func_80248558(&this->layout_140));
+            FloorMap_SetCursorState(&this->layout_1FC, (u16)FloorMap_PickMarkerRow(&this->layout_140));
             this->field_42 = 1;
             this->field_40 = 1;
             this->field_41 = 1;
@@ -4889,13 +4889,13 @@ extern "C" void __ct__8024507C(void* self) {
     nw4r::lyt::Pane* rootPane = layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     // Fill the four .sbss colour tables from two layout group queries: table
     // A0 gets the index-0 colours, A8 the index-1 colours, and both B0/B8
     // share their last entry with A0's.
-    s16* c0 = func_80139658(layout, &lbl_eu_8050BEA8[0x120], 0);
-    s16* c1 = func_80139658(layout, &lbl_eu_8050BEA8[0x120], 1);
+    s16* c0 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 0);
+    s16* c1 = PaneMatGetS16QuadByName(layout, &lbl_eu_8050BEA8[0x120], 1);
     lbl_eu_806647A0[0] = c0[0];
     lbl_eu_806647A0[1] = c0[1];
     lbl_eu_806647A0[2] = c0[2];
@@ -4949,8 +4949,8 @@ extern "C" void __ct__8024507C(void* self) {
     wv->widgets[3].Init(&arg);
 
     // Rebuild the derived views.
-    func_80245950(self);
-    func_80245DF8(self);
+    FloorMap_RefreshFloorRows(self);
+    FloorMap_RebuildMarkers(self);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
@@ -4983,7 +4983,7 @@ void FloorMap_BuildLayoutBaseArc(CFloorMapLayoutData0* self) {
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     LayoutSetTextBoxFmtValue(self->layout, &lbl_eu_8050BEA8[0x24],
                   BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 0xB), 0);
@@ -5018,7 +5018,7 @@ void FloorMap_BuildLayoutNo100Pane(void* self) {
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
@@ -5040,7 +5040,7 @@ void FloorMap_BuildLayoutNoE4Pane(void* self) {
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
@@ -5061,7 +5061,7 @@ void FloorMap_BuildLayoutNoCEPane(void* self) {
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
@@ -5081,7 +5081,7 @@ void FloorMap_BuildLayoutNoD9Pane(void* self) {
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
@@ -5092,7 +5092,7 @@ void FloorMap_BuildLayoutNoD9Pane(void* self) {
     obj->layout->Animate(0);
 }
 
-void func_802452C4(void* self) {
+void FloorMap_CursorUp(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
     u8 count = *(u8*)((u8*)self + cur->field_09 * 0x30C + 0x318);
     // Page up by one row; wrap to the previous page once the row index
@@ -5126,7 +5126,7 @@ void func_802452C4(void* self) {
     sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
 
     nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
-    func_801375A0(&apos, pane);
+    AccumPaneWorldPos(&apos, pane);
 
     nw4r::lyt::Pane* scalePane =
         cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);

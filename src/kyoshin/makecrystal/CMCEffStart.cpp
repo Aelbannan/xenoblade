@@ -386,7 +386,7 @@ void CMCEffUpPrm::init() {
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
         bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
-        func_8013676C(rootPane, (u32)CUICfManager_getPackedFont9C());
+        ApplyFontToTxtPanes(rootPane, (u32)CUICfManager_getPackedFont9C());
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
         unkStructure->layout->Animate(0);
     }
@@ -622,7 +622,7 @@ void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // Virtual slot 9 (offset 0x24) on the font object yields the u32 the
     // crystal's font pane is set from.
     u32 result = fontObj->sf9();
-    func_8013676C(rootPane, result);
+    ApplyFontToTxtPanes(rootPane, result);
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);
     bindInAnimTrace();
@@ -744,7 +744,7 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
     char buffer[0x20];
     sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
-    func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
+    LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     void* resource = nullptr;
     u8 result = BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
     switch(result) {
@@ -811,7 +811,7 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
         char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];
         sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
-        func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
+        LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     }
 }
 

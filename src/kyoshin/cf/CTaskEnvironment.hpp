@@ -12,7 +12,7 @@ struct CTaskEnvLgtCtrlAccess {
 
 // World/clock source object reached through CTaskEnvScene +0x78 (and through
 // the scene-process argument of the constructor). Its clamped time fields are
-// copied into CTaskEnvironment at construction and in func_80058844.
+// copied into CTaskEnvironment at construction and in Env_BuildLights.
 struct CTaskEnvWorld {
     u8 field_0x00[0x54];
     f32 field_0x54;   // +0x54
@@ -53,11 +53,11 @@ struct CTaskEnvScene {
     CTaskEnvLgtCtrlAccess* mEnvLgtCtrl;   // +0x7C
 };
 
-// Opaque monolib light-group objects created by func_80058844.
+// Opaque monolib light-group objects created by Env_BuildLights.
 class CTimeLightGrp;
 
 // Monolib virtual light object registered into scene-manager slots. Only the
-// +0x19 byte is known: func_80058844 sets it through the pointer returned by
+// +0x19 byte is known: Env_BuildLights sets it through the pointer returned by
 // the registration helpers (retail stores through r3 after the call).
 class CVirtualLightObj {
 public:
@@ -86,7 +86,7 @@ extern "C" void scnLgtSetBlendBloom(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 
 // Time-of-day record: seconds as float at +0x70, minute/hour/day/month carry
 // chain (+0x6C/+0x68/+0x64/+0x60) and a total counter at +0x5C. Written by
-// func_800599E0 / func_80059A48, read by func_800587F8.
+// Env_SetClock / Env_AdvanceClock, read by Env_DayFraction.
 struct CTaskEnvTime {
     u8 field_0x00[0x5C];
     u32 total;    // +0x5C accumulates month carries
@@ -97,8 +97,8 @@ struct CTaskEnvTime {
     f32 second;   // +0x70
 };
 
-// 3x3 rotation matrix (nine contiguous floats): built by func_80059610,
-// applied to vectors by func_800598A8.
+// 3x3 rotation matrix (nine contiguous floats): built by Env_BuildRotY,
+// applied to vectors by Env_MtxMulVec.
 struct CTaskEnvRotMtx {
     float m00, m01, m02;
     float m10, m11, m12;
@@ -162,7 +162,7 @@ extern "C" void scnVlApplyDir4C(CVirtualLightObj* self, const ml::CVec4* src,
                               f32 value);
 
 // Static-init table filled by sinit_80059D60 (160 bytes of floats) and the
-// ambient-light data tables read by func_80058844.
+// ambient-light data tables read by Env_BuildLights.
 extern float lbl_eu_80570830[0xA0 / sizeof(float)];
 extern const float lbl_eu_80570860[4];
 extern const u8 lbl_eu_805708C0[];
@@ -263,30 +263,30 @@ public:
 };
 
 // Clock helper: hours = minute/60 + second/3600 (c = sdata2 rate constant).
-extern "C" float func_800587F8(CTaskEnvTime* time);
+extern "C" float Env_DayFraction(CTaskEnvTime* time);
 // Matrix * vector (row-major 3x3).
-extern "C" void func_800598A8(ml::CVec3* out, const CTaskEnvRotMtx* m,
+extern "C" void Env_MtxMulVec(ml::CVec3* out, const CTaskEnvRotMtx* m,
                               const ml::CVec3* v);
 // Set clock time; hour clamped to 0 when >= 24, minute to 0 when >= 60,
 // seconds clamped against the sdata2 limit constant.
-extern "C" void func_800599E0(CTaskEnvTime* time, int hour, int minute,
+extern "C" void Env_SetClock(CTaskEnvTime* time, int hour, int minute,
                               int second);
 // Allocate (0xEC bytes from the work-thread heap), construct and register a
 // CTaskEnvironment under 'parent'.
-CTaskEnvironment* func_80059C58(CProcess* parent, CProcess* arg);
+CTaskEnvironment* Env_CreateTask(CProcess* parent, CProcess* arg);
 // Build a Y-axis rotation matrix from 'angle' (scaled into fidx units);
 // returns the matrix pointer.
-extern "C" CTaskEnvRotMtx* func_80059610(CTaskEnvRotMtx* mtx, float angle);
+extern "C" CTaskEnvRotMtx* Env_BuildRotY(CTaskEnvRotMtx* mtx, float angle);
 // Environment-light setup (retail unmangled C-linkage entry point): builds
 // the two CTimeLightGrp groups, creates the ambient/sun/fog light objects from
 // sdata tables and copies the world clock.
-extern "C" void func_80058844(CTaskEnvironment* self);
+extern "C" void Env_BuildLights(CTaskEnvironment* self);
 // Advance the clock record by 'delta' seconds with minute/hour/day/month
 // carries (Euclidean modulo so negative deltas wrap upward).
-extern "C" void func_80059A48(CTaskEnvTime* time, float delta);
+extern "C" void Env_AdvanceClock(CTaskEnvTime* time, float delta);
 // Rotate the three row vectors of 'mtx' about the X axis by 'angle'
 // (fidx units scaled by the FEC constant), writing the product back.
-extern "C" void func_800596B8(CTaskEnvRotMtx* mtx, float angle);
+extern "C" void Env_ApplyRotX(CTaskEnvRotMtx* mtx, float angle);
 
 // Flat-name accessors shared with Move (retail unmangled symbols).
 extern "C" u32 getSubField78(void* self);

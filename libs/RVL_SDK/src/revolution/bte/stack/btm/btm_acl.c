@@ -567,9 +567,10 @@ void btm_read_link_policy_complete(UINT8 *p)
 {
     /* Orphan pool string: the retail .data pool carries a BTM_ReadLinkPolicy
        trace literal between the BTM_SetLinkPolicy strings and BTM_ReadClockOffset
-       (the tracing call was compiled out; the pooled string survived). Keep it
-       at the same pool position so base+immediate trace relocs stay in place. */
-    static const char *const pool_rp = "BTM_ReadLinkPolicy: RemBdAddr: %02x%02x%02x%02x%02x%02x";
+       (the tracing call was compiled out; the pooled string survived). A
+       static array keeps the literal in .data with no code and no sdata2
+       pointer (a const char *const would pool its own pointer entry). */
+    static char pool_rp[] = "BTM_ReadLinkPolicy: RemBdAddr: %02x%02x%02x%02x%02x%02x";
     tBTM_CMPL_CB p_cb;
     tBTM_LNK_POLICY_RESULTS lnk_pol_res;
     tACL_CONN *p_acl = &btm_cb.acl_db[0];
@@ -874,8 +875,8 @@ UINT16 btm_get_max_packet_size(BD_ADDR addr)
 {
     /* Orphan pool string: the retail .data pool carries a BTM_SetQoS trace
        literal between the role-switch and QoS strings; the tracing call was
-       compiled out but the pooled string survived. Keep the pool layout. */
-    static const char *const pool_q = "BTM_SetQoS: BdAddr: %02x%02x%02x%02x%02x%02x";
+       compiled out but the pooled string survived. Static array: see pool_rp. */
+    static char pool_q[] = "BTM_SetQoS: BdAddr: %02x%02x%02x%02x%02x%02x";
     tACL_CONN *p = btm_bda_to_acl_local(addr);
     UINT16 pkt_types = 0;
     UINT16 max_packet_size = 0;

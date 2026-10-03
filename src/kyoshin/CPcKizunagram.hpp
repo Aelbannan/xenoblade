@@ -99,7 +99,7 @@ extern "C" void __declspec(noinline) __ct__CPcKizunaCur(CPcKizunaCur* self,
 // Support types for the free functions in this TU (not part of CPcKizunagram).
 // ---------------------------------------------------------------------------
 
-// Large object KizunagramSetActiveSlot / func_8025EE94 operate on (u32 field at 0x89C).
+// Large object KizunagramSetActiveSlot / KizunagramRebuildSlotList operate on (u32 field at 0x89C).
 // KizunagramClearChart clears an array of 11 slots (stride 0xC4) plus tail fields.
 
 // Per-0x20 block in an affinity slot: only the low byte of word and byte14
@@ -109,10 +109,10 @@ struct CPcKizunaSlotEntry {           // 0x20 bytes
     u32 word;                         // 0x00 (low byte = value)
     u16 field04;                      // 0x04 - per-entry runtime id (BDAT key)
     u8  field06[2];                   // 0x06 .. 0x07
-    u32 field08;                      // 0x08 - runtime word (func_8025EE94)
-    u16 field0C;                      // 0x0C - runtime halfword (func_8025F2E8)
+    u32 field08;                      // 0x08 - runtime word (KizunagramRebuildSlotList)
+    u16 field0C;                      // 0x0C - runtime halfword (KizunagramStoreChartEntry)
     u8  field0E[2];                   // 0x0E .. 0x0F
-    f32 field10;                      // 0x10 - runtime float (func_8025F2E8)
+    f32 field10;                      // 0x10 - runtime float (KizunagramStoreChartEntry)
     u8  byte14;                       // 0x14
     u8  field15[3];                   // 0x15 .. 0x17
     CPcKizunaSlotEntry* pField18;     // 0x18 - runtime linked-list next
@@ -127,7 +127,7 @@ struct CPcKizunaSlot {                // 0xC4 bytes
 };
 
 // Compact per-slot form (stride 0xD) produced by KizunagramPackChart from a
-// CPcKizunagramBig, inverted by func_8025ECE4. Byte order matches the packing
+// CPcKizunagramBig, inverted by KizunagramUnpackChart. Byte order matches the packing
 // loops: [0]=data00.lo, [1]=data00.b14, [2,4,6,8,10]=sub[k].lo,
 // [3,5,7,9,11]=sub[k].b14, [0xC]=byteC0.
 struct CPcKizunaCompactSlot {         // 0xD bytes
@@ -152,7 +152,7 @@ struct CPcKizunagramBig {
     int field_0x89C;                    // 0x89C
 };
 
-// Chart object shared by func_8025F2E8/F528/F768/F9AC (starts at work+0x3534).
+// Chart object shared by KizunagramStoreChartEntry/F528/F768/F9AC (starts at work+0x3534).
 // The per-character working slot array at 0x3D4 overlaps the tail of the total
 // slot array (0x000, searched for duplicate ids) and the persistence bitmap
 // (0x870) in the retail object, so the two views are a union.
@@ -210,17 +210,17 @@ struct CPcKizunaVec3 {
 // ---------------------------------------------------------------------------
 
 // Intra-TU callees defined in CPcKizunagram.cpp (free unmangled functions).
-extern "C" void func_8025DCFC(CPcKizunagram* self);
+extern "C" void KizunagramRefreshRows(CPcKizunagram* self);
 extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg);
-extern "C" void func_8025E4A4(CPcKizunagram* self);
+extern "C" void KizunagramPlaceCursor(CPcKizunagram* self);
 extern "C" void KizunagramFinishOpening(CPcKizunagram* self);
 extern "C" void KizunagramTickPulse(CPcKizunagram* self);
 extern "C" void KizunagramFinishClosing(CPcKizunagram* self);
 extern "C" void KizunagramPulseRise(CPcKizunagram* self);
 extern "C" void KizunagramPulseFall(CPcKizunagram* self);
-extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value);
-extern "C" void func_8025EE94(CPcKizunagramBig* self);
-extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b);
+extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value);
+extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self);
+extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b);
 extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* table, int val);
 extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id);
 extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id);
@@ -233,11 +233,11 @@ extern "C" void playUISound__FUl(u32 arg);
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 
-// BDAT table pointer (loaded via sda21 by func_8025EE94 / func_8025F2E8).
+// BDAT table pointer (loaded via sda21 by KizunagramRebuildSlotList / KizunagramStoreChartEntry).
 extern "C" u32 lbl_eu_8066415C;
 extern "C" u32 lbl_eu_80664158;
 
-// Format-string constants blended into a column-name buffer (func_8025EE94).
+// Format-string constants blended into a column-name buffer (KizunagramRebuildSlotList).
 extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
 
@@ -252,7 +252,7 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void func_8013676C(void*, u32);
+extern "C" void ApplyFontToTxtPanes(void*, u32);
 
 // Scratch region guard (RAII Class_8045F858): explicit buffer + C-ABI ctor/dtor
 // calls so the retail stack slot and the -1 dealloc flag match exactly.
@@ -271,9 +271,9 @@ extern "C" int isPaneVisible(void);
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 CUICfManager_getPackedFont9C(void);
-extern "C" void func_80137F88(void*, u32);
+extern "C" void PaneSetTexPalette(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
-extern "C" void func_8013AB0C(u8*, u8*, int);
+extern "C" void FetchRelatePair(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)
 extern "C" const u32 lbl_eu_8066889C;
@@ -283,7 +283,7 @@ extern "C" const u32 lbl_eu_806688A4;
 // (no low-byte mask at the call site), so this TU saw a u16 parameter.
 // Literal mangled identifier links to the same symbol as setLayoutTextBoxNumber.
 extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 extern "C" void setPaneVisible(void*, u32);
 
 // Cursor destroy helper (external retail symbol, not in this TU).

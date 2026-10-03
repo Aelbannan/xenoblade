@@ -336,6 +336,25 @@ def _eval_tokens(tokens: list[str], variables: dict[str, int], sections: dict[st
     return int(eval(expr, {"__builtins__": {}}, {})) & 0xFFFFFFFF  # noqa: S307 - token whitelist above
 
 
+def ldscript_assigned_names(path: Path) -> set[str]:
+    """Names a linker script assigns (``NAME = EXPR;``), without evaluating.
+
+    Name granularity is what matters when deciding *who* provides a symbol:
+    ``_stack_addr`` and friends are defined by the script at link time, by no
+    object file, so a raw object-level undefined-symbol census must not report
+    them as missing.  :func:`eval_ldscript` computes their values for the
+    comparators.
+    """
+    names: set[str] = set()
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        m = _ASSIGN_RE.match(line)
+        if m:
+            names.add(m.group(1))
+    return names
+
+
 def eval_ldscript(path: Path, sections: dict[str, SectionRange]) -> dict[str, int]:
     """Evaluate the linker-script absolute assignments (``NAME = EXPR;``).
 

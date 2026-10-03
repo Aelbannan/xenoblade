@@ -63,7 +63,7 @@ class CView;
 // random-angle table index / one-time init flag (.sbss bytes)
  extern u8 lbl_eu_80663E90;
  extern s8 lbl_eu_80663E91;
-// capsule-axis constants for the collision probe helper (func_800A7094)
+// capsule-axis constants for the collision probe helper (VecMath_GroundProbeDown)
  extern const float lbl_eu_80666814;
  extern const float lbl_eu_80666818;
  extern const float lbl_eu_8066681C;
@@ -73,7 +73,7 @@ class CView;
 // -1.0f (lbl_eu_80666800) - box face-direction constant
  extern const float lbl_eu_80666800;
 // Box-face offset table {1.0f, 1.7f, 0.1f, 0.0f} (split1 .data) - Y raise
-// offsets probed by the segment-vs-capsule helper func_800A4C48.
+// offsets probed by the segment-vs-capsule helper VecMath_SegSphereProbe.
  extern float lbl_eu_80528178[4];
 // Radius scale applied by renderCylinder in non-capsule mode (lbl_eu_80666810)
  extern const float lbl_eu_80666810;
@@ -91,7 +91,7 @@ struct ColiProbeObj {
 extern ColiProbeObj* lbl_eu_80665958;
 
 // Segment ground-probe helper (monolib scn unit). Declared with five
-// parameters: the retail call site in func_800A7094 only sets r3-r6 and f1
+// parameters: the retail call site in VecMath_GroundProbeDown only sets r3-r6 and f1
 // (r4 = the second pointer argument), and the callee reads only the four GPR
 // arguments (the trailing float is ignored).
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
@@ -101,13 +101,13 @@ extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, CView* c);
 extern "C" void func_804BE4B4(void* dst, int index);
 extern "C" void func_804BE4E0(void* dst, int index);
 // Segment-query walker (monolib coli unit).
-extern "C" int func_804B5088(ColiProbeObj* self, ml::CVec3* a, ml::CVec3* b,
+extern "C" int ColiQuerySegment(ColiProbeObj* self, ml::CVec3* a, ml::CVec3* b,
                              int filter, int isFirst);
 
 // Closest-point-on-segment helper: retail exports this with C linkage
 // (unmangled symbol), so the definition below must be extern "C" too or the
 // call-site reloc name drifts from retail.
-extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
+extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                               const ml::CVec3& c, float* outT, ml::CVec3* out);
 
 namespace cf {
@@ -162,7 +162,7 @@ ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v) {
     return v;
 }
 
-float func_800A3D34(ml::CVec3* v) {
+float VecMath_NormalizeRetMag(ml::CVec3* v) {
     // Normalize v in place; returns the magnitude (0.0f if v is already
     // (near-)zero). Matches ml::CVec3::isZero + PSVECMag + VEC3Scale.
     bool result = false;
@@ -182,7 +182,7 @@ float func_800A3D34(ml::CVec3* v) {
     return mag;
 }
 
-float func_800A3DF8(const ml::CVec3& v) {
+float VecMath_LengthXZ(const ml::CVec3& v) {
     // XZ-plane length sqrt: len2 = x*x + z*z, with the nw4r FSqrt warning path
     // (negative len2) and a 0 return for (near-)zero vectors.
     bool temp = false;
@@ -236,7 +236,7 @@ bool VecMath_IsTurnLeftXZ(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec
     return ab.z * ac.x - ab.x * ac.z > lbl_eu_806667D8;
 }
 
-void func_800A40E8(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float t) {
+void VecMath_LerpVec(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float t) {
     // Linear interpolation: out = a + (b - a) * t.
     // The nw4r VEC3Sub/Scale/Add PS kernels emit the retail psq_l/ps_sub/
     // ps_muls0/ps_add sequences; each result is copied out via set(), and the
@@ -256,7 +256,7 @@ void func_800A40E8(ml::CVec3* out, const ml::CVec3& a, const ml::CVec3& b, float
     *out = res;
 }
 
-void func_800A41BC(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
+void VecMath_CatmullRom(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
                   const ml::CVec3& p2, const ml::CVec3& p3, float t) {
     // Catmull-Rom spline segment evaluation via the Hermite basis:
     // out = p1*b00 + (p2-p0)*h*b10 + (p3-p1)*h*b11 + p2*b01.
@@ -369,12 +369,12 @@ extern "C" void VecMath_BuildFacingMatrix(ml::CMat34* out, const ml::CVec3* src,
     out->m[2][3] = trans->z;
 }
 
-extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
+extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out) {
     // Closest-point-on-segment helper: returns the squared distance from c to
     // the segment ab, writing the closest point and its parameter value.
     // Retail keeps every PS kernel inlined; each sub/scale/add result is
-    // copied out component-wise (cf. func_800A49E4).
+    // copied out component-wise (cf. VecMath_IsNearSegXZ).
     ml::CVec3 ab;
     ml::CVec3 ac;
     ml::CVec3 cb;
@@ -434,7 +434,7 @@ extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
            dot * t;
 }
 
-bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
+bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                   const nw4r::math::VEC3& c, float r2) {
     float dot, len2, t;
     // Project c onto the XZ line through a-b and test whether the closest
@@ -472,7 +472,7 @@ bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
     return nw4r::math::VEC3Dot(&ac, &ac) - dot * t <= r2;
 }
 
-float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
+float VecMath_SegmentParam(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) {
     // Project c onto the line ab: t = dot(a->b, a->c) / |ab|^2, guarded when
     // |ab|^2 is tiny, then clamped to [0, 1]. VEC3Sub/VEC3Dot are the nw4r PS
     // kernels; each sub result is copied out via set(). Declaration order is
@@ -498,14 +498,14 @@ float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) 
     return t;
 }
 
-extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out,
+extern "C" int VecMath_SegSphereProbe(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out,
                   float radius) {
     // Segment-vs-sphere probe: raise the object position's Y by each of three
     // table offsets (1.0/1.7/0.1) and test the closest point on segment ab
     // against the sphere radius; on a hit push the closest point out to the
     // sphere surface and write it to out. Returns whether any offset hit.
     ml::CVec3 d;       // raised center (0x78)
-    ml::CVec3 closest; // closest point on ab from func_800A47C8 (0x6c)
+    ml::CVec3 closest; // closest point on ab from VecMath_ClosestPtSeg (0x6c)
     ml::CVec3 dir;     // d - closest (0x60)
     ml::CVec3 d2;      // pos - mRef (0x54)
     ml::CVec3 d3;      // d2 - closest (0x48)
@@ -523,7 +523,7 @@ extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::C
     float t;
     for (u32 i = 0; i < 3; i++) {
         d.y = baseY + lbl_eu_80528178[i];
-        float dist2 = func_800A47C8(a, b, d, &t, &closest);
+        float dist2 = VecMath_ClosestPtSeg(a, b, d, &t, &closest);
         cond = dist2 <= R2;
         if (cond) break;
     }
@@ -572,7 +572,7 @@ extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::C
     return cond;
 }
 
-bool func_800A5038(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r1, float r2) {
+bool VecMath_CircleOverlapXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r1, float r2) {
     // Circle-vs-circle overlap test on the XZ plane: true when the squared
     // distance between a and b (y treated as 0) is within (r1+r2)^2.
     nw4r::math::VEC3 dv;
@@ -587,7 +587,7 @@ bool func_800A5038(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r
     return dist2 <= (r1 + r2) * (r1 + r2);
 }
 
-extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float radius, ml::CVec3* out) {
+extern "C" int VecMath_PushOutCircleXZ(cf::CfObject* self, nw4r::math::VEC3* point, float radius, ml::CVec3* out) {
     // Radius test against the object's position (raised 1 unit), pushing the
     // point out to the sphere boundary when it is inside and out is given.
     ml::CVec3 d;
@@ -658,7 +658,7 @@ extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float 
     return cond;
 }
 
-bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float r1, float r2) {
+bool VecMath_PushApartCircles(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float r1, float r2) {
     // Sphere-vs-sphere (XZ) push-apart helper. Returns whether the two circles
     // overlap; when they do and out is non-null, out = a pushed to the far
     // side of b along the (normalised) centre-to-centre direction.
@@ -714,11 +714,11 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
     return overlap;
 }
 
-extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius, ml::CVec3* out) {
+extern "C" int VecMath_PushOutSphere(cf::CfObject* self, ml::CVec3* point, float radius, ml::CVec3* out) {
     // Push point out to the surface of the object's collision sphere (center
     // d = pos + (0,1,0), radius 0.25 + radius) when it is inside, writing the
     // pushed position to out. Returns whether the point was inside the sphere.
-    // Full-3D variant of func_800A50AC (no XZ flattening).
+    // Full-3D variant of VecMath_PushOutCircleXZ (no XZ flattening).
     // Declaration order controls MWCC stack-slot allocation (reverse order).
     ml::CVec3 d;
     {
@@ -790,7 +790,7 @@ extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius,
     return cond;
 }
 
-extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVec3* out, float radius,
+extern "C" int VecMath_PushOutCylinder(cf::CfObject* self, const ml::CVec3& point, ml::CVec3* out, float radius,
                   float h) {
     // Cylinder test: true when the raised center (pos + (0,1,0)) is within the
     // horizontal radius of point's XZ position AND point's Y is within h of the
@@ -892,7 +892,7 @@ extern "C" void VecMath_ClampVecAABB(const ml::CVec3* src, const ml::CVec3* min,
     }
 }
 
-extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, const Mtx mat,
+extern "C" int VecMath_PushOutBoxMtx(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, const Mtx mat,
                   ml::CVec3* out) {
     // AABB test: the raised center d = pos + (0,1,0) (optionally transformed by
     // mat) is clamped into the box [a-0.5, b+0.5]; if the clamp moved it, the
@@ -1033,7 +1033,7 @@ void cf::CfDebugDrawManager::renderCylinder() {
     ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 0);
 }
 
-int func_800A7094(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
+int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     // Push b up along the +Y capsule axis until the segment probe against c
     // misses, snapping to the probe object's height reference when it does.
     *b = *a;
@@ -1057,7 +1057,7 @@ int func_800A7094(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
         tmp44.set(lbl_eu_806667D8, -f, lbl_eu_806667D8);
         nw4r::math::VEC3Add(tAdd, *b, tmp44);
         tmp50.set(tAdd);
-        if (func_804B5088(lbl_eu_80665958, b, &tmp50, 1, 0) != 0) {
+        if (ColiQuerySegment(lbl_eu_80665958, b, &tmp50, 1, 0) != 0) {
             tmp5c.set(lbl_eu_80665958->field_0x60, lbl_eu_80665958->field_0x64,
                       lbl_eu_80665958->field_0x68);
             nw4r::math::VEC3Sub(d1, *b, tmp68);
@@ -1080,9 +1080,9 @@ int func_800A7094(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     return 0;
 }
 
-int func_800A72E0(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float f1, float f2) {
+int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float f1, float f2) {
     // Axis-aligned capsule/segment ground probe (X-axis variant of
-    // func_800A7094): raise arg2, probe the scene twice, then pick the closer
+    // VecMath_GroundProbeDown): raise arg2, probe the scene twice, then pick the closer
     // reference height and walk the segment against the probe object.
     *arg2 = *self;
     arg2->y += lbl_eu_8066681C;
@@ -1117,7 +1117,7 @@ int func_800A72E0(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float
         tmp44.set(lbl_eu_806667D8, -f1, lbl_eu_806667D8);
         nw4r::math::VEC3Add(tAdd, *arg2, tmp44);
         tmp50.set(tAdd);
-        if (func_804B5088(lbl_eu_80665958, arg2, &tmp50, 1, 0) != 0) {
+        if (ColiQuerySegment(lbl_eu_80665958, arg2, &tmp50, 1, 0) != 0) {
             tmp5c.set(lbl_eu_80665958->field_0x60, lbl_eu_80665958->field_0x64,
                       lbl_eu_80665958->field_0x68);
             // Both PS subtraction kernels stay adjacent so the scheduler can

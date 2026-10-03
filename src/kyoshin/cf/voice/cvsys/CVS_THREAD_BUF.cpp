@@ -41,20 +41,20 @@ void BufVxAdvanceSlot(CVS_THREAD_BUF* self) {
     if (handle != NULL) {
         vp = &handle->voice;
     }
-    if (func_802A3C44(self, vp, self->slotIds[self->field_0x3c]) == 0) {
+    if (TryRequestVoice(self, vp, self->slotIds[self->field_0x3c]) == 0) {
         goto restart;
     }
     return;
 
 restart:
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802a7794 (BufVxAdvanceIndex)
 // Advance the slot index; when it passes the slot limit, restart the thread,
 // otherwise re-copy the init-state triple into the base fields.
 void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -69,7 +69,7 @@ void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
         head[0] = v0;
         head[2] = *p;
     } else {
-        self->func_802A3B50();
+        self->PlayThreadVoice();
     }
 }
 
@@ -78,7 +78,7 @@ void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
 // then each slot whose biased embedded CCharVoice matches is cleared. Written
 // unrolled -- retail shows three independent check/store sequences.
 void func_802A50E0(CVS_THREAD_BUF* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     for (int i = 0; i < 3; i++) {
         CVoiceHandle* h = self->slotHandles[i];

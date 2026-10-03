@@ -17,16 +17,16 @@
 #define getBdatStringColumnValue getBdatStringColumnValue_caiaction2
 #define getArtsSlotRC getArtsSlotRC_caiaction
 #define getArtsParamRC2 getArtsParamRC2_caiaction
-// Pre-include CAIAction.hpp under the renames so its u16 func_8009EC9C form
+// Pre-include CAIAction.hpp under the renames so its u16 CtrlObjectParam_GetCharEntry form
 // wins; CVision's u32 copy is renamed away inside the CBattleManager span.
 #include "kyoshin/cf/object/CAIAction.hpp"
-#define func_8009EC9C func_8009EC9C_cvision
+#define CtrlObjectParam_GetCharEntry func_8009EC9C_cvision
 #include "kyoshin/cf/CBattleManager.hpp"
 #undef getBdatStringColumnValue
 #undef getArtsSlotRC
 #undef getArtsParamRC2
 #undef IdTable_SumValues
-// func_8009EC9C stays defined until after the code_80135FDC.hpp include below.
+// CtrlObjectParam_GetCharEntry stays defined until after the code_80135FDC.hpp include below.
 #include "kyoshin/cf/CfGameManager.hpp"
 // (findBattleStatusEntry: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
 // declare the identical void*(void*, u32) form - no guard needed.)
@@ -36,12 +36,12 @@
 // const float. This TU uses neither copy.
 // getReloadParam0: CAIAction.hpp's int form is already in; rename
 // code_80135FDC.hpp's u16 copy out of the way (this TU never calls it).
-// func_8009EC9C stays renamed across this span too (CAIAction's u16 form
+// CtrlObjectParam_GetCharEntry stays renamed across this span too (CAIAction's u16 form
 // wins; code_80135FDC.hpp carries another u32 copy).
 #define getReloadParam0 getReloadParam0_u16
 #include "kyoshin/code_80135FDC.hpp"
 #undef getReloadParam0
-#undef func_8009EC9C
+#undef CtrlObjectParam_GetCharEntry
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -340,7 +340,7 @@ draw:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);  // disable Z compare, always pass
     {
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         drawLayout(mLayout, &drawInfo, 0, 1);
     }
 }

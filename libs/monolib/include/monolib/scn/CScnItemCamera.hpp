@@ -54,7 +54,7 @@ public:
     f32 mDepthFarNear;                           // 0x14C
     f32 mDepthFar;                               // 0x150
 
-    // Projection matrix written by CGXCache::func_8044BB20 (0x154-0x1D4)
+    // Projection matrix written by CGXCache::makePerspProj (0x154-0x1D4)
     // 0x40 bytes = 4x4 f32 matrix
     f32 mProjMtx[4][4];                          // 0x154
 

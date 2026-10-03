@@ -300,7 +300,7 @@ body:
     // the dtor; retail calls __ct__/__dt__Q34nw4r3lyt8DrawInfoFv directly.
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
-    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     BgTex_Draw_3D7C(&mBgTex, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     PlayAward_DrawList(&mPlayAwardList, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     drawHelp(&mTitleAHelp, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
@@ -994,7 +994,7 @@ void PlayAward_RefreshCursor(CPlayAwardList* self) {
     Cur_SetVisible(self->mCursor, 1);
     nw4r::lyt::Pane* pane1 = self->mLayout20->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_8050E7C0[0xab], true);
-    func_80137924(&pos, pane1, pane2, self->mLayout20->GetRootPane());
+    ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout20->GetRootPane());
     reinterpret_cast<CCursor18*>(&self->mCursor)->vf4(&pos);
 }
 
@@ -1118,7 +1118,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         CPlayAwardFontObj* fontObj = (CPlayAwardFontObj*)
             getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20);
         u32 fontResult = fontObj->getFontHandle();
-        func_8013676C(rootPane, fontResult);
+        ApplyFontToTxtPanes(rootPane, fontResult);
 
         setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], CUICfManager_getPackedFont9C());
         PlayAward_BindCloseAnims(this);

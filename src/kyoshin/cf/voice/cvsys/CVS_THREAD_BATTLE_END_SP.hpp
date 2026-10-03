@@ -20,7 +20,7 @@ public:
     static const int BUFFER_SIZE = 0x46;
 
     // Bias added to |command param| to obtain the voice ID passed to
-    // func_802A3C44 (retail plays IDs 0xCE4..).
+    // TryRequestVoice (retail plays IDs 0xCE4..).
     enum { VOICE_ID_BIAS = 0xCE4 };
 
     CVoiceHandle* slots[3];  // 0x20: active voice slots
@@ -100,12 +100,12 @@ struct CVoiceManager {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" {
-    int  func_802A3E88(CVS_THREAD* self);
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int  func_802A77E8(CVoiceHandle* handle);
-    int  func_802A8140();
-    CVoiceHandle* func_802A330C(int size, int align);
+    int  IsThreadVoiceActive(CVS_THREAD* self);
+    void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int  TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int  HpVoice_MapSubState(CVoiceHandle* handle);
+    int  HpVoice_SeqBelow94();
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*  CCharVoiceMan_AllocVoiceArena(int size);
     // Zero-arg declaration: the factory keeps the allocator result live in r3
     // so the ctor call needs no argument reload (matches retail).

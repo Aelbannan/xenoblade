@@ -129,7 +129,7 @@ extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -338,7 +338,7 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
                 reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(m);
                 releaseAnimObj(&holder->actParams[i], holder->unk_55C);
             }
-            reinterpret_cast<CActParamAnim*>(&holder->actParams[i])->func_8004B114();
+            reinterpret_cast<CActParamAnim*>(&holder->actParams[i])->initAnimState();
         }
     }
     Scn_IsAnimActiveOrNull(holder->unk_55C);
@@ -352,7 +352,7 @@ extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip* self, CActParamHo
     }
     releaseAnimObj(&holder->actParam, holder->field_0x04);
     releaseAnimObj(&holder->actParam, holder->field_0x08);
-    reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
+    reinterpret_cast<CActParamAnim*>(&holder->actParam)->initAnimState();
     Scn_IsAnimActiveOrNull(holder->field_0x04);
     Scn_IsAnimActiveOrNull(holder->field_0x08);
     Scn_IsAnimActiveOrNull(reinterpret_cast<CModelDispObj*>(holder->field_0x00));
@@ -441,7 +441,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 holder->field_0x04 = initMcaFile(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
                 holder->field_0x08 = initMcaFile(self->somePtr,
                     reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimState()), &lbl_eu_80507FF8[4]);
-                reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
+                reinterpret_cast<CActParamAnim*>(&holder->actParam)->initAnimState();
                 attachAnimObj(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                               holder->field_0x08, reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimState()));
                 pushAnimNode(&holder->actParam, holder->field_0x04, actor->field_3F30);
@@ -555,15 +555,15 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     u8 charId = (u8)GetCollectedFlagByte((u8)self->equipSlot);
     if (charId == 0) return;
 
-    CModelDispCharRecord* rec = (CModelDispCharRecord*)func_8009EC9C(charId);
+    CModelDispCharRecord* rec = (CModelDispCharRecord*)CtrlObjectParam_GetCharEntry(charId);
     self->weaponId = rec->weaponId;
-    ((CActParamHolderTail*)holder)->equipPtrs[1] = func_80141E90(charId, (s16)(u16)rec->field_0x0E, 1, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[2] = func_80141E90(charId, (s16)(u16)rec->field_0x10, 2, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[3] = func_80141E90(charId, (s16)(u16)rec->field_0x12, 3, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[4] = func_80141E90(charId, (s16)(u16)rec->field_0x14, 4, 0);
-    ((CActParamHolderTail*)holder)->equipPtrs[5] = func_80141E90(charId, (s16)(u16)rec->field_0x16, 5, 0);
+    ((CActParamHolderTail*)holder)->equipPtrs[1] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x0E, 1, 0);
+    ((CActParamHolderTail*)holder)->equipPtrs[2] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x10, 2, 0);
+    ((CActParamHolderTail*)holder)->equipPtrs[3] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x12, 3, 0);
+    ((CActParamHolderTail*)holder)->equipPtrs[4] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x14, 4, 0);
+    ((CActParamHolderTail*)holder)->equipPtrs[5] = bdatPcPartsRes(charId, (s16)(u16)rec->field_0x16, 5, 0);
 
-    u32 v6 = func_80141FE0(self->weaponId & 0xFFFF);
+    u32 v6 = bdatResByIndex(self->weaponId & 0xFFFF);
     ((CActParamHolderTail*)holder)->equipPtrs[6] = v6;
     s32 allLoaded = 1;
     // Shared equip files 1-3 (slots 6-8): only start a load when the slot has
@@ -703,7 +703,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
 
     // Name the anim models and attach them to the display model.
     if (holder->animModelPtrs[0] != 0) {
-        u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 0);
+        u8 sub = (u8)bdatBitFromCol(rec->weaponId, &lbl_eu_80507FF8[0x58], 0);
         if (sub != 0) {
             reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[0]),
@@ -711,7 +711,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         }
     }
     if (holder->animModelPtrs[1] != 0) {
-        u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 1);
+        u8 sub = (u8)bdatBitFromCol(rec->weaponId, &lbl_eu_80507FF8[0x58], 1);
         if (sub != 0) {
             reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[1]),
@@ -723,7 +723,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     u32 f6 = (u32)self->fileSlots[6].data;
     holder->field_0x04 = initMcaFile(self->somePtr, f7, &lbl_eu_80507FF8[0]);
     holder->field_0x08 = initMcaFile(self->somePtr, f6, &lbl_eu_80507FF8[4]);
-    reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
+    reinterpret_cast<CActParamAnim*>(&holder->actParam)->initAnimState();
     attachAnimObj(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   holder->field_0x08, f6);
     pushAnimNode(&holder->actParam, holder->field_0x04, f7);
@@ -993,11 +993,11 @@ extern "C" void ModelDispEquip_SwapWeaponEquip(CModelDispEquip* self, u32 unused
         switch (subKind) {
         case 0:
             index = 0;
-            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 0));
+            arg = CfModel_GetBdatString((u8)bdatBitFromCol(self->weaponId, &lbl_eu_80507FF8[0x62], 0));
             break;
         case 1:
             index = 1;
-            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x62], 1));
+            arg = CfModel_GetBdatString((u8)bdatBitFromCol(self->weaponId, &lbl_eu_80507FF8[0x62], 1));
             break;
         }
         if (arg != 0)
@@ -1007,11 +1007,11 @@ extern "C" void ModelDispEquip_SwapWeaponEquip(CModelDispEquip* self, u32 unused
         switch (subKind) {
         case 0:
             index = 0;
-            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 0));
+            arg = CfModel_GetBdatString((u8)bdatBitFromCol(self->weaponId, &lbl_eu_80507FF8[0x58], 0));
             break;
         case 1:
             index = 1;
-            arg = CfModel_GetBdatString((u8)func_8014235C(self->weaponId, &lbl_eu_80507FF8[0x58], 1));
+            arg = CfModel_GetBdatString((u8)bdatBitFromCol(self->weaponId, &lbl_eu_80507FF8[0x58], 1));
             break;
         }
         if (arg != 0)
@@ -1219,7 +1219,7 @@ extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquip* self) {
     self->scale2[1] += lbl_eu_80668280;
     if (self->scale2[1] > lbl_eu_80668288)
         self->scale2[1] = lbl_eu_80668288;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1233,7 +1233,7 @@ extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquip* self) {
     self->scale2[1] -= lbl_eu_80668280;
     if (self->scale2[1] < lbl_eu_80668290)
         self->scale2[1] = lbl_eu_80668290;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1244,7 +1244,7 @@ extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquip* self) {
     self->scale1[2] -= lbl_eu_80668280;
     if (self->scale1[2] < lbl_eu_80668294)
         self->scale1[2] = lbl_eu_80668294;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1255,7 +1255,7 @@ extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquip* self) {
     self->scale1[2] += lbl_eu_80668280;
     if (self->scale1[2] > lbl_eu_80668298)
         self->scale1[2] = lbl_eu_80668298;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1285,7 +1285,7 @@ void ModelDispEquip_ResetColorStep(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1313,7 +1313,7 @@ void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
     *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
-    func_8049EFF8(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
 // ============================================================

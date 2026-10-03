@@ -170,7 +170,7 @@ extern "C" __declspec(noinline) void QstLogInfo_TeardownLayout(CQstLogInfo* self
 void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
-        lbl_eu_80536320[func_80138138(self->mField3A)],
+        lbl_eu_80536320[SearchThresholdIdx(self->mField3A)],
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
     self->mField38 = 0;
 }
@@ -182,7 +182,7 @@ void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
 extern "C" __declspec(noinline) void QstLogInfo_RefreshQuestDisplay(CQstLogInfo* self) {
     QstLogInfo_ClearAllLogPanes(self);
     u8 v = (u8)CtrlRemote_TouchBitByArg(self->mField3A + 0x220);
-    u32 idx = func_80138138(self->mField3A);
+    u32 idx = SearchThresholdIdx(self->mField3A);
     QstLogInfo_UpdateNameIconPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
     QstLogInfo_UpdateClearReasonPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A);
     QstLogInfo_UpdateExpRewardPane(self, (const char*)self->field_0x3C, self->mField3A);
@@ -217,14 +217,14 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* 
         break;
     }
     if (res != 0) {
-        func_80137F88(pane, (const char*)res);
+        PaneSetTexPalette(pane, (const char*)res);
         setPaneVisible(pane, 1);
     }
 }
 
 // Sets the quest-log "txt_clear" pane from the BDAT table `table`: looks up
 // the "purpose" column of row `key` (0x78), pushes it through the UTF-8
-// conversion (func_80138DA4) into the pane, then picks the follow-up text
+// conversion (GetBdatNameByNumId) into the pane, then picks the follow-up text
 // ("cleared"/"uncleared"/level-up variants) by quest state and category and
 // updates the "txt_clear_reason" pane at 0xab.
 #pragma optimize_for_size on
@@ -232,7 +232,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInf
     const char* table, u32 key) {
     u16 v = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x78], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84],
-                  (char*)func_80138DA4(BdatGetPtrDirect(
+                  (char*)GetBdatNameByNumId(BdatGetPtrDirect(
                       (const char*)lbl_eu_80664098, &lbl_eu_8050A0B4[0x7f], v)),
                   0);
     int flag = 0;
@@ -430,7 +430,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
         u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
         void* r28 = UIWin_BuildFlagBuf(key);
         u32 notOdd = !odd;
-        if (func_80140854((CItemQuery*)r28, notOdd, 0) != 0) {
+        if (UIWin_QueryItemAvail((CItemQuery*)r28, notOdd, 0) != 0) {
             setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               &lbl_eu_8050A0B4[0xf2], true), 1);
         }
@@ -465,7 +465,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                         idx++;
                     }
                 } else {
-                    if (func_80140854((CItemQuery*)r28, notOdd, i + 1) != 0) {
+                    if (UIWin_QueryItemAvail((CItemQuery*)r28, notOdd, i + 1) != 0) {
                         sprintf(buf48, &lbl_eu_8050A0B4[0x14b], idx + 1);
                         setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                           buf48, true), 1);
@@ -592,7 +592,7 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 } else {
                     sprintf(buf68, &lbl_eu_8050A0B4[0x29f], str);
                 }
-                func_80136A1C(self->mUnk20, buf48, buf68, 0);
+                LayoutSetTextBoxText(self->mUnk20, buf48, buf68, 0);
             } else if (i == 0) {
                 str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                     &lbl_eu_8050A0B4[0x7f], 0x33);
@@ -691,7 +691,7 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                 } else {
                     sprintf(buf28, &lbl_eu_8050A0B4[0x29f], str);
                 }
-                func_80136A1C(self->mUnk20, buf8, buf28, 0);
+                LayoutSetTextBoxText(self->mUnk20, buf8, buf28, 0);
             } else if (i == 0) {
                 str = BdatTouchStringCell(&lbl_eu_8050A0B4[0x8c],
                                     &lbl_eu_8050A0B4[0x7f], 0x33);
@@ -782,7 +782,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
 
         nw4r::lyt::Pane* rootPane = mUnk20->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
-        func_8013676C(rootPane, ((CQstLogInfoFontView*)font)->sf9());
+        ApplyFontToTxtPanes(rootPane, ((CQstLogInfoFontView*)font)->sf9());
 
         char* questName = CUICfManager_getPackedFont9C();
         if (questName != 0) {
@@ -814,7 +814,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* fileData = field_0x18->getData();
         CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
-        field_0x3C = (u32)getFP__FPCc(lbl_eu_80536398[func_80138138(mField3A)]);
+        field_0x3C = (u32)getFP__FPCc(lbl_eu_80536398[SearchThresholdIdx(mField3A)]);
         QstLogInfo_RefreshQuestDisplay(this);
         mField38 = 1;
         field_0x18 = 0;

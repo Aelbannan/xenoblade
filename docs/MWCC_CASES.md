@@ -191,7 +191,7 @@ case studies of that contract.
   `Colle_HasInstance` etc. are 0x10 (4 instr) only under `-O4,s`.
   **Per-function alternative to a unit flip:** `#pragma optimize_for_size on`
   *forces the `-O4,s` lowering inside a `-O4,p` unit* — verified on
-  `func_801276C8` (kyoshin/CTagProcessor, retail `subf; addic; subfe`
+  `TagProcCompareIds` (kyoshin/CTagProcessor, retail `subf; addic; subfe`
   two-value `!=` idiom): wrapped in the pragma it drops from 28.6% (4
   structural) to 83.3% (0 structural, 1 reg_swap) without touching the
   unit's `extra_cflags` (which would risk regressing the 96 already-100%
@@ -385,7 +385,7 @@ case studies of that contract.
 
 - **`#pragma optimize_for_size on` merges callee-saved saves (stmw r30) and
   flips the r30/r31 copy order:** two-param leaf callers like
-  `func_801FD0A0(self, drawInfo)` (CPartyState) — retail prologue is
+  `drawPartyState(self, drawInfo)` (CPartyState) — retail prologue is
   `stwu; mfspr; stw r0; stmw r30; or r30,r3,r3; or r31,r4,r4`. Under plain
   `-O4,p -use_lmw_stmw on` MWCC emits `or r31,r4,r4` FIRST and two separate
   `stw`s (`stw r31,12(sp); stw r30,8(sp)`) — the reversed store order blocks
@@ -429,7 +429,7 @@ case studies of that contract.
 
 - **(f32)(s32) conversions already contain the xoris sign-flip — do NOT add
 
-  an explicit `^ 0x80000000` (func_8018152C / us-80182934, 96.9% → 100%):
+  an explicit `^ 0x80000000` (MapModel_Update / us-80182934, 96.9% → 100%):
 
   MWCC's s32→f32 double-trick emits `xoris rX, rX, 0x8000` itself (the
 
@@ -3149,7 +3149,7 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   1/2 to hit retail `0xEC`). **`getIdCount`/`getIdTop`:** helpers return **`u32`**
   while still loading `u16` — `u16` return emits caller `clrlwi` and blows the
   `0x4c` leaf size.
-- **`func_eu_8003B720`** (XOR decrypt / string pool walk): exact retail size
+- **`Bdat_DecodeEntries`** (XOR decrypt / string pool walk): exact retail size
   **`0x540`**, objdiff fuzzy **~84%**. Critical MWCC shapes:
   - Retail outer walk: **cached** `count` in `r11` + `cmplw`/`blt` (not CTR).
     Retail **inners** take CTR (`mtctr`/`bdnz` on 16-byte + residual). High-level
@@ -3183,7 +3183,7 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   `getFP__FPCc`, not `CBdat::getFP` (`getFP__5CBdatFPCc`). Do not forward-declare
   inside `extern "C"`. `CBdat::getFP` can inline-delegate to `::getFP`. Binary search
   over `lbl_eu_805705D0[0..6]` with `strcmp` on entry name at `entry + lhz(entry+6)`.
-- **`func_8003B4B0`**: column hash `hash = hash*7 + (s8)c` for up to 8 chars
+- **`Bdat_FindColumnEntry`**: column hash `hash = hash*7 + (s8)c` for up to 8 chars
   (`strlen` capped), `rem = hash % bucketCount` via div/mul/sub, bucket walk with
   `strcmp(col, entry+4)` and `lhz(entry+2)` chain.
 
@@ -3562,7 +3562,7 @@ policy-exception records in `attempts.jsonl` for opcode sets and guards.
 ## CSchedule / monolib small residuals — bounded ceilings (US)
 
 - `CSchedule::~CSchedule()` remains a readable exact-size `0xF4` reconstruction at 98.44% with 15 pure GPR color swaps. Child-loop pointer/helper/declaration variants did not improve it; acceptance is additionally gated by the unaccepted `__dl__FPv`, `SchedItem_ReleaseHandle`, and indirect vtable-call chain. Keep high-level C++.
-- `func_804E3434` remains exact-size `0x1E0` at 94.51% (9 pure swaps and 7 structural initialization-order words). Reordering flag locals, using a `u16` flag, changing the identity-matrix spelling, and splitting the flag expression did not improve it. The remaining semantic certificate chain passes through `func_804DFA84` (`us-804e3f20`), which is not yet accepted.
+- `func_804E3434` remains exact-size `0x1E0` at 94.51% (9 pure swaps and 7 structural initialization-order words). Reordering flag locals, using a `u16` flag, changing the identity-matrix spelling, and splitting the flag expression did not improve it. The remaining semantic certificate chain passes through `SchedItem_ClaimFree` (`us-804e3f20`), which is not yet accepted.
 - `UnkClass_8045F564::~UnkClass_8045F564()` remains exact-size `0x100` at 99.53% with 5 pure swaps. The opaque byte-offset aliasing loop is required to retain the retail per-iteration singleton reload; further declaration-order variants do not improve the result.
 - `CCamUtil::getXYZ2ZXY` remains exact-size `0x280` at 99.09%/34 hexdiff words (23 pure FPR/GPR swaps, 11 structural schedule words). Direct matrix `set` spelling worsened the candidate. Do not alter shared `CMat33.hpp` or use register steering.
 - `MonoReqPollLifecycle` is byte-identical by hexdiff (196/196 bytes, zero mismatches) and split-fit with `-O4,s -func_align 4`; auto cycle remains blocked only by unaccepted `CNReqSaveFormatTempPath` and `CNReqSaveNandCreateDir`. A direct `live-out` proof with opaque relocated-callee contracts is equivalent, but it is not a replacement for the registry's certified-callee auto policy.
@@ -8070,9 +8070,9 @@ independent causes, all fixed:
    MWCC emits individual stw/lwz pairs (+1 instr per register); the retail uses
    `stmw r30`/`lmw r30` (2-reg) and `_savegpr_29`/`_restgpr_29` (3-reg helper
    call, big-frame functions). Wrapping `~CTTask`, the class dtor, `create`,
-   `startMission`, and `func_8004451C` in `#pragma optimize_for_size on/off`
+   `startMission`, and `bootGameWorld` in `#pragma optimize_for_size on/off`
    produced the retail frames: dtor 0x5c→0x54, create 0x7c→0x6c, startMission
-   0x90→0x80, func_8004451C 0x2a0→0x298. Accepted: us-800447cc, us-8004481c,
+   0x90→0x80, bootGameWorld 0x2a0→0x298. Accepted: us-800447cc, us-8004481c,
    us-80044f5c as FULL_MATCH. `startMission` is byte-identical but its retail
    signature mangles `FsT2Q33ml6FixStr<32>_s` (3 params) vs the decomp's
    `FssRQ22ml10FixStr<32>s` (4 params) — symbol pairing needs the signature
@@ -8222,7 +8222,7 @@ never use the inline-empty form (weak-copy budget spread).
   C++ source gets the param suffix appended (`...Fv__FPQ22cf8CfObject`); the
   retail has no param suffix. Fix: `extern "C"` on the definition -> symbol is
   the identifier verbatim -> 100%.
-- `func_8003C6E8`: the retail's u32->float uses the SIGNED 2^52 path (`xoris
+- `setObjYaw`: the retail's u32->float uses the SIGNED 2^52 path (`xoris
   r0, r4, 0x8000` + 0x4330000080000000 constant). Source needs
   `(float)(s32)value`, not `(float)value` (u32) — the u32 path omits the xoris
   and folds 0x8000 into the constant (1 structural).
@@ -8237,23 +8237,23 @@ never use the inline-empty form (weak-copy budget spread).
   unreproducible from any tested shape (soft-cap family).
 
 
-## func_801D8E34 — string-pool UNDEF + HighFrame party@2352 (US, Wii/1.1 -O4,s + optimize_for_size)
+## setupItemBoxDetail — string-pool UNDEF + HighFrame party@2352 (US, Wii/1.1 -O4,s + optimize_for_size)
 - Symptom:   party copy opcode shape (mtctr/lwzu/stwu) vs dual-word addic loop; pane string +0x54 when blob is a packed member; ~7% exact / ~79% fuzzy; frame 2800
 - Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54. (2) Late `listA/B[8]` landed *below* party; retail places them *above* (2400/2496) with party@2352. Standalone `PartyData` copy-init gives retail `li/mtctr/lwzu` but overlays at sp+2144. (3) Soft-cap: `HighFrame.party = *src` / `always_inline` / `inline_max_size(10000)` all outline `__as__12D8EPartySlot` into this ~26KB body; scratch small TUs (even with call pressure) inline the retail loop. CBattleState `*(s+1)/*(s+=2)` gets dest-4+stwu but MWCC reorders loads (lwz 8 before 4) → exact ~3%. (4) Mass SDA `68040/44` in early bars drops exact ~3%; float literals recover ~7%.
 - Fix:       (1) `extern "C" char lbl_eu_805063BC[];`. (2) `struct D8EHighFrame { D8EPartySlot party; CItemBoxInfoEntry listB[8]; listA[8]; }` + explicit 6× dual-word copy; defer list pointers to common tail. (3) Early bars: `volatile s16` + `0.01f`/`100.0f`. Open: force inlined `__as__`/lwzu into `.party` under 26KB `-O4,s`; bar SDA schedule; weapon e_cur@1916 / c_cur@2296.
 - Result:    ~7.0% exact / HIGH_MATCH ~79% fuzzy near-miss; frame 2800; high-band stack slots match retail
 - Confidence: repo_proven (string UNDEF, HighFrame layout, volatile bars, __as__ soft-cap); hypothesis (lwzu into member)
 
-## kyoshin CItemBoxInfo — func_801E43BC / func_801D8E34 sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
+## kyoshin CItemBoxInfo — setupItemBox2Detail / setupItemBoxDetail sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
 
 The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x801DA9A0 size 0x6680 — among the largest functions in the game). Recovered structure (verified against retail disassembly, 2026-08):
 
-- **Signatures:** `func_801E43BC(CItemBoxInfo2*, u16 arg2, void* arg3, u16 arg4, u32 arg5)` — **arg3 (r5) is DEAD** (clobbered by `lis r5, 0x4330` in the prologue; keep the parameter for ABI, never read it). `func_801D8E34(CItemBoxInfo*, u32 arg2, void* arg3, u32 arg4)` — arg2 is a **bitfield**: `& 0xF` = slot index, `(>>16)&0xFF` = party index (→ `GetCollectedFlagByte`), `(>>24)&0xF` = item type (2=weapon, 4..8=armor), overridden by `(arg3->w0>>12)&0xF` when slot==0.
+- **Signatures:** `setupItemBox2Detail(CItemBoxInfo2*, u16 arg2, void* arg3, u16 arg4, u32 arg5)` — **arg3 (r5) is DEAD** (clobbered by `lis r5, 0x4330` in the prologue; keep the parameter for ABI, never read it). `setupItemBoxDetail(CItemBoxInfo*, u32 arg2, void* arg3, u32 arg4)` — arg2 is a **bitfield**: `& 0xF` = slot index, `(>>16)&0xFF` = party index (→ `GetCollectedFlagByte`), `(>>24)&0xF` = item type (2=weapon, 4..8=armor), overridden by `(arg3->w0>>12)&0xF` when slot==0.
 - **Stat objects:** `charObj = func_8009EC9C(member)`; `stats = charObj + 0x17C` (embedded vtable object). vtable slots (word offsets): `0x4A`/`0x4B` = HP floats (fctiwz, clamp 9999), `0x42`/`0x79` = name-string bytes, `0x8A`/`0x83`/`0x8B` = stat blocks (statA: s16 @0x1C/0x1E/0x20/0x2E/0x32/0x38 + f32 @0x10 + byte @0x55; statB: f32 @0x10; statC: s16 @0x06/0x0C/0x0E/0x10/0x18/0x1C/0x22).
-- **Bar formula** (repeated ~20×, reproduces MWCC's xoris/0x4330 s32→double path): `(s16)(s32)(0.01f * ((100.0f + (f32)s16A) * (f32)(s16B + count)))` where count = `func_801E9310(info, member, cat, item)`. The `(f32)(s16A)` and `(f32)(s16B + count)` casts must be written explicitly — MWCC needs the s32→f32 conversion (xoris) which the u32 path omits. Variant: `RoundHalfAway0(0.01f * statB->f10 * (f32)(s16 + count))` (round-to-nearest helper: `s32 RoundHalfAway0(float)`).
+- **Bar formula** (repeated ~20×, reproduces MWCC's xoris/0x4330 s32→double path): `(s16)(s32)(0.01f * ((100.0f + (f32)s16A) * (f32)(s16B + count)))` where count = `getItemBox2Effect(info, member, cat, item)`. The `(f32)(s16A)` and `(f32)(s16B + count)` casts must be written explicitly — MWCC needs the s32→f32 conversion (xoris) which the u32 path omits. Variant: `RoundHalfAway0(0.01f * statB->f10 * (f32)(s16 + count))` (round-to-nearest helper: `s32 RoundHalfAway0(float)`).
 - **Delta-color rows:** per row compute `pb` (4th arg of 9310 = NULL), `nb` (4th arg = arg3), `d = (s16)(nb - pb)`, display `LayoutSetTextBoxInt(pane, nb)`, then 4 local `GXColorS10` quads loaded from `.sbss` (`80664518/20` = q1/q2, `80664558/60` = q3/q4 — note the interleaving), conditional `__as__11_GXColorS10FRC11_GXColorS10` overwrites (d<0 → 80664538/40/78/80, d>0 → 80664528/30/68/70), then `PaneMatSetTevColors(pane, &q3, &q4)` + `PaneMatSetTevColors(pane+4, &q1, &q2)`. The quads MUST be declared as 8-byte local objects copied via `*(CItemBoxQuadColor*)&lbl_eu_806645XX` (memberwise 2×lwz/stw) with the __as__ calls direct.
-- **Call-count inventory** (0x4DA8 body): 120× __as__GXColorS10, 87× PaneMatSetTevColors, 49× func_801E9310, 31× getItemBoxCondStatById, 24× LayoutSetTextBoxInt, 20× func_80136D74, 16× setItemBoxCopy, 13× copyItemBoxCopy.
-- **Helper signatures (retail-verified):** `func_80157C4C(u32 index, s16 value)` (2-arg); `func_801E98E4(void*, u16, void*) -> bool`; `func_801E197C(void* out, void* info, void* item)` / `func_801E1E0C` same (3rd arg is a POINTER, checked `cmpwi r5,0`; entry is 0x34 bytes, callers copy 7 words); `func_801E9310(void*, void*, u32, void*) -> u32`; `LayoutSetTextBoxInt(void*, u32)`; `func_80136D74(void*, const char*, u32)`; `PaneMatSetTevColors(void*, void*, void*)`; `CtrlObjectParam_GetSlotTableBase() -> void*`; `RoundHalfAway0(float) -> s32`.
+- **Call-count inventory** (0x4DA8 body): 120× __as__GXColorS10, 87× PaneMatSetTevColors, 49× getItemBox2Effect, 31× getItemBoxCondStatById, 24× LayoutSetTextBoxInt, 20× SetLayoutSelfText, 16× setItemBoxCopy, 13× copyItemBoxCopy.
+- **Helper signatures (retail-verified):** `CItem_kindPtr(u32 index, s16 value)` (2-arg); `testItemBox2Equip(void*, u16, void*) -> bool`; `buildItemBox2CmpRecord(void* out, void* info, void* item)` / `buildItemBox2SlotFlags` same (3rd arg is a POINTER, checked `cmpwi r5,0`; entry is 0x34 bytes, callers copy 7 words); `getItemBox2Effect(void*, void*, u32, void*) -> u32`; `LayoutSetTextBoxInt(void*, u32)`; `SetLayoutSelfText(void*, const char*, u32)`; `PaneMatSetTevColors(void*, void*, void*)`; `CtrlObjectParam_GetSlotTableBase() -> void*`; `RoundHalfAway0(float) -> s32`.
 - **Open item:** the prologue's 48-byte party-struct copy loop (`li r0,6; mtctr; lwz r4,4(r3); lwzu r0,8(r3); stw r4,4(r5); stwu r0,8(r5); bdnz`) is NOT reproducible from ~12 tested source forms at -O4,p (48-byte struct copy, u64[6], E8[6], memcpy, pointer sentinels all unroll or call). Only a 96-byte struct copy emits this counted-loop shape (`li r0,0xc`). The exact source form remains open — try a larger PartyData struct (≥96B) with the loop covering the first 48, or a pragma'd helper.
 
 ## 2026-08 session: lookAt argNum soft-cap
@@ -8334,11 +8334,11 @@ decoded several reusable MWCC facts:
   conditions (pool consts 0.0/1.0/0.5/100.0/0.7 at 0x806677E4/8, 0x8066782C,
   0x80667818, 0x80667858).
 
-## kyoshin CItemBoxInfo func_801E43BC — two critical codegen fixes (2026-08, Wii/1.1 -O4,p -func_align 16)
+## kyoshin CItemBoxInfo setupItemBox2Detail — two critical codegen fixes (2026-08, Wii/1.1 -O4,p -func_align 16)
 
 After transcribing all ~5000 instructions, two systematic codegen problems blocked matching:
 
-1. **`-ipa file` inlines tiny helper STUBS into the target function.** The unit's `-ipa file` flag inlines not-yet-matched stub bodies (getItemBoxCondStatById/9310/9774/98E4/9190/9224/96F0/197C/1E0C, 0x60-0xDC bytes) into func_801E43BC, exploding size from 0x4D04 to 0x6314 and adding ~90 spurious `func_8009EC9C`/`BdatGetItemId` calls (reloc counts: EC9C 96 vs retail 1). **Fix: wrap the stub DEFINITIONS in `#pragma push / #pragma auto_inline off / #pragma pop`** — reloc counts return to retail parity (EC9C 1, 9310 47 vs 49, 9690 30 vs 31). Without this, any large function calling small unmatched stubs in this TU will bloat.
+1. **`-ipa file` inlines tiny helper STUBS into the target function.** The unit's `-ipa file` flag inlines not-yet-matched stub bodies (getItemBoxCondStatById/9310/9774/98E4/9190/9224/96F0/197C/1E0C, 0x60-0xDC bytes) into setupItemBox2Detail, exploding size from 0x4D04 to 0x6314 and adding ~90 spurious `func_8009EC9C`/`BdatGetItemId` calls (reloc counts: EC9C 96 vs retail 1). **Fix: wrap the stub DEFINITIONS in `#pragma push / #pragma auto_inline off / #pragma pop`** — reloc counts return to retail parity (EC9C 1, 9310 47 vs 49, 9690 30 vs 31). Without this, any large function calling small unmatched stubs in this TU will bloat.
 
 2. **User-constructed quad types make copy-init a ctor call.** `CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;` emits `bl __ct__17CItemBoxQuadColorFRC17CItemBoxQuadColor` (the hpp's type has user ctors). **Fix: TU-local POD `struct E43Quad { s16 r,g,b,a; };`** — copy-init becomes 2×lwz+2×stw (retail's GXColorS10 memberwise copy). Note: with the stub-inlining bug present, the POD change caused register-spill bloat (0x6314); with pragmas fixed it is net-neutral and matches retail's inline quad loads.
 
@@ -8459,8 +8459,8 @@ Both are game-local copies of the RVL-SDK PSVEC pair, with the game's arg order 
 
 `kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp` was 0/20 matched on the Wii/1.1 default. Two functions proved the unit is **GC/3.0a5.2 -O4,s** at retail:
 
-1. **func_802A7850 (0x802A9F84)** — `int result=0; if (iter>=1 && iter<=7) result=1; return result;` is byte-exact under GC/3.0a5.2 (`cmpi r3,1; blt; cmpi r3,7; bgt; li r0,1; or r3,r0,r0`). Wii/1.1 folds the range to `(u32)(x-1)<=6` at every -O level.
-2. **func_802A7870 (0x802A9FA4)** — voice-handle collect loop. Retail keeps the array store as `stwx rD,rOut,rOff; addi rCount,1; addi rOff,4` (base + separate offset index). Two source-shape rules were decisive:
+1. **HpVoice_ValidIter (0x802A9F84)** — `int result=0; if (iter>=1 && iter<=7) result=1; return result;` is byte-exact under GC/3.0a5.2 (`cmpi r3,1; blt; cmpi r3,7; bgt; li r0,1; or r3,r0,r0`). Wii/1.1 folds the range to `(u32)(x-1)<=6` at every -O level.
+2. **HpVoice_CollectIdle (0x802A9FA4)** — voice-handle collect loop. Retail keeps the array store as `stwx rD,rOut,rOff; addi rCount,1; addi rOff,4` (base + separate offset index). Two source-shape rules were decisive:
    - **`out[count++] = handle` keeps base+index separate; a manual byte-offset local (`*(T**)((u8*)out+off)`, `off+=4`) folds to a pointer walk** (`stw rD,0(rOut); addi rOut,4`) — the opposite of intuition, verified under GC/3.0a5.2 -O4,p/-O4,s.
    - **Register colors (count=r27, node=r28) only match when count is initialized in the for-init:** `for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4; node = node->field_0)`. Declaration order alone (`int count=0;` before/after `mgr`) leaves a count↔node Chaitin 2-cycle (82.1%, 7 reg-swaps, witness blocked at abi-boundary); the for-init form reaches 100.0%.
 
@@ -8487,7 +8487,7 @@ Also: psq_l/psq_st W bit — retail offset-0/12 ops are pair loads/stores (W=0),
 ## kyoshin code_800B06A4 mini-patterns (2026-08 session, Wii/1.1)
 
 - **maybeNullThenFlag (us-800b2488, FULL_MATCH):** `if (gflagTestBit6()) self = 0; gflagSetOrClear(8, self);` — retail CALLS gflagTestBit6 (bl, frame, NON-tail gflagSetOrClear call). Same-TU `-inline auto` inlined the tiny getter and tail-called the second call. **Fix: `__declspec(noinline)` on the same-TU getter definition** (its own body is unchanged; the retail evidently doesn't inline it) → the frame + non-tail call fall out naturally, 100%.
-- **tickMineSubobject (us-800b2928, FULL_MATCH):** `if (func_80082900__Q22cf13CfGameManagerFv() && self->field_0xCAC) func_80206BD4((CfMapMineManager*)self->field_0xCAC);` — a member-scoped Fv (no-param) getter is called as an `extern "C"` free function with the mangled name; the u32 field must be cast to the callee's pointer type (MWCC 10248 otherwise).
+- **tickMineSubobject (us-800b2928, FULL_MATCH):** `if (func_80082900__Q22cf13CfGameManagerFv() && self->field_0xCAC) mineScanPoints((CfMapMineManager*)self->field_0xCAC);` — a member-scoped Fv (no-param) getter is called as an `extern "C"` free function with the mangled name; the u32 field must be cast to the callee's pointer type (MWCC 10248 otherwise).
 - **isTypeId1to24 (us-800b70c8, OPEN):** retail `lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr` is EXACTLY GC/3.0a5.2 output of `int result=0; if (val>=1 && val<=24) result=1; return result;` (verified byte-identical in scratch). The unit can't flip to GC (8 accepted FULL_MATCH targets regress via `#pragma noinline` semantics: `#pragma noinline` does NOT carry from a line-16 declaration to its line-730 definition — inlines getInstance into callers). Wii/1.1 folds the range at every -O level and ~20 source shapes.
 - **storeScaleSquare (us-800b0f70, EQUIVALENT_MATCH via witness, 2026-09):** retail `frsp f2,f1` for `float sq` requires the float→double→float round-trip (`double d=(double)a; float sq=(float)d;`); plain `float sq=a` lets MWCC drop it. Residual was a consistent f0↔f2 swap (sq↔c) — **now witness-certified**. Root cause of the old "witness rejected": `fmuls/fmul` are A-form with a RESERVED FB field (LSB bits 15-11; the real frC operand sits at LSB bits 10-6 — same layout as fused ops minus FB). `_register_fields(FMULS)` treated the always-zero reserved FB as a renameable register, so the fmuls slot seeded the rho with `f0→f0` and clashed with the genuine `f0↔f2` swap at the following `stfs` (region [3,9) rejection). **Fix (tooling, sound):** `tools/coop/lib/renaming_witness.py` now returns `(_FD,_FA,_FC)` for FMULS/FMUL in `_register_fields_impl` and `((1,FPR),(3,FPR))` uses in `_use_def` (decoder already enforces fb==0 for FMULS; semantics compute fa*fc). Gate 3 still bit-checks the reserved field (always 0 on both sides). 146 witness tests pass. This is the first accepted f0↔f2-swap class in this unit.
 - **storeScaleSquare semantic pitfall:** retail `fmuls f2,f2,f2` looks like a self-multiply but its third operand field is LSB bits 10-6 (not 15-11) — verify `fmuls`/`fmul` third operands against bits 10-6 of the word before changing multiply sources.
@@ -8500,7 +8500,7 @@ Also: psq_l/psq_st W bit — retail offset-0/12 ops are pair loads/stores (W=0),
 > Moved to `MWCC_PATTERNS.md` (general/reusable knowledge). Search via `mwcc_kb.py`.
 ## kyoshin/realtimeevt CREvtModelMap — lwzu table-copy local declaration order (US, Wii/1.1 -O4,s)
 
-**func_80180E60 (us-8018225c, 100% FULL_MATCH):** the ptmf-triplet table copy
+**MapModel_ProbeSlot (us-8018225c, 100% FULL_MATCH):** the ptmf-triplet table copy
 (`u32* src = (u32*)lbl_eu_80531D38; w0 = *src++; w1 = *src++; store [1],[0]; w2 = *src++; store [2]`)
 was stuck at 5 pure reg_swap (src→r3, w0→r4 vs retail src→r4, w0→r3) because the
 `src` pointer was DECLARED FIRST, so its VR was born first and the scratch
@@ -8518,7 +8518,7 @@ src→r4, byte-identical. Reversible: src-first declaration re-swaps the colors.
 
 ## kyoshin code_80135FDC — sprintf format from message table (US)
 
-**setLayoutTextBoxNumber (us-8013748c, 100% FULL_MATCH):** retail `sprintf` uses the message-table format `lbl_eu_80500664 + 7` (`lis r6 @ha; addi r6; addi r4, r6, 7`), NOT a `"%d"` literal — the literal emits a different rodata reloc and 17 structural mismatches. When a sprintf/format call's format operand is `addi rX, rBase, imm`, the format string lives at a table offset: write `sprintf(buf, &lbl_eu_80500664[7], ...)`. Same table: `func_80139CEC` uses `&lbl_eu_80500664[0x1F9]`.
+**setLayoutTextBoxNumber (us-8013748c, 100% FULL_MATCH):** retail `sprintf` uses the message-table format `lbl_eu_80500664 + 7` (`lis r6 @ha; addi r6; addi r4, r6, 7`), NOT a `"%d"` literal — the literal emits a different rodata reloc and 17 structural mismatches. When a sprintf/format call's format operand is `addi rX, rBase, imm`, the format string lives at a table offset: write `sprintf(buf, &lbl_eu_80500664[7], ...)`. Same table: `InitCol6LodTables` uses `&lbl_eu_80500664[0x1F9]`.
 
 ## LODMemMan func_8046DA64 — declared u8* self local beats CSE-hoist of +0xCC (FULL_MATCH)
 
@@ -8594,7 +8594,7 @@ win the higher scratch register is the one DECLARED/ASSIGNED LAST in source.
 
 4. **Range-check limit compares as raw u8, not s8** (IncListIndex, us-801ccf38, 100%): retail sign-extends only the incremented counter (`extsb`) and compares against the RAW limit byte — `(s8)idx >= p[0x6e]` (no (s8) on the limit). The `(s8)p[0x6e]` cast forced a second extsb (1 extra insn, 16 structural). Same file's decrement sibling already had the correct form.
 
-5. **VM-op/saved-param claim order** (turn us-8003e94c, func_801818BC us-80182cc4 — OPEN): when a function's second param (r4) is saved into a callee-saved register, retail often claims it FIRST (r31) ahead of `this` (r30), while MWCC saves `this` first — the visible→r31/self→r30 vs self→r31/visible→r30 swap is a claim-order invariant across source shapes (3-10 reg_swap + cascading instructions).
+5. **VM-op/saved-param claim order** (turn us-8003e94c, MapModel_ApplyVisible us-80182cc4 — OPEN): when a function's second param (r4) is saved into a callee-saved register, retail often claims it FIRST (r31) ahead of `this` (r30), while MWCC saves `this` first — the visible→r31/self→r30 vs self→r31/visible→r30 swap is a claim-order invariant across source shapes (3-10 reg_swap + cascading instructions).
 
 ## CriWare sfd_mps sfmps_pesfn — volatile on a PAIR of state reads forces retail load-pair order (Wii/1.1, c99, 100% FULL_MATCH)
 
@@ -9214,11 +9214,11 @@ Category-byte duration getter: `(u32)(cat-4)<=4 || cat==2 → 30; cat==11 → 60
 ## Leading-constant expression shape flips scratch regalloc (CPassiveSkill CPassiveSkill_linearizeGridSlot, FULL_MATCH 100%)
 
 > Moved to `MWCC_PATTERNS.md` (general/reusable knowledge). Search via `mwcc_kb.py`.
-## kyoshin CfCamEventManager — uniform N-byte field shift ⇒ missing gap in a mid-struct table type (func_80079DBC layout fix)
+## kyoshin CfCamEventManager — uniform N-byte field shift ⇒ missing gap in a mid-struct table type (CamEvtShkActv layout fix)
 
-A whole TU (kyoshin/cf/CfCamEvent_1) compiled every `CfCamEventManager` field 4 bytes short of retail (`field_0x1DE` → 0x1DA, `shake[0]` → 0x1F0 vs retail 0x1F4). Root cause: `tab0` was declared as a 0x14C-byte `CfCamEventTable` (elems[16]@+0x00, base triplet directly at +0x140) but retail's table is a **full 0x178-byte shake state**: elems + **0x140..0x154 gap** + baseX/Y/Z@+0x154 + tail flags/counts/values@+0x160..+0x178 (`field_0x160` spline, `flag_active`@+0x162, `flag_finish`@+0x164, `count`@+0x166, …). The manager's "tail fields" (0x1DC..0x1F0) are just the state tail. Fix: keep `CfCamEventTable` at 0x160 (elems + gap + base, used by the shake-unit union) and give `tab0` its own 0x178 type with the tail members; the `shake[i].field_0x162` etc. accesses then line up with retail byte-for-byte (verified against retail ctor `stb 0x1DE/0x1E0/0x1E2` + func_80074F4C's `stw 0x154/0x158/0x15C`, `lha 0x166/0x168`, `lfs 0x170/0x174`). **Lesson: when every field in a TU is uniformly N bytes off, don't add N bytes of padding after the table — find the missing gap/tail INSIDE the table type; check sibling functions that view the same memory through another type (`CfCamShakeState` cast) for the true layout.**
+A whole TU (kyoshin/cf/CfCamEvent_1) compiled every `CfCamEventManager` field 4 bytes short of retail (`field_0x1DE` → 0x1DA, `shake[0]` → 0x1F0 vs retail 0x1F4). Root cause: `tab0` was declared as a 0x14C-byte `CfCamEventTable` (elems[16]@+0x00, base triplet directly at +0x140) but retail's table is a **full 0x178-byte shake state**: elems + **0x140..0x154 gap** + baseX/Y/Z@+0x154 + tail flags/counts/values@+0x160..+0x178 (`field_0x160` spline, `flag_active`@+0x162, `flag_finish`@+0x164, `count`@+0x166, …). The manager's "tail fields" (0x1DC..0x1F0) are just the state tail. Fix: keep `CfCamEventTable` at 0x160 (elems + gap + base, used by the shake-unit union) and give `tab0` its own 0x178 type with the tail members; the `shake[i].field_0x162` etc. accesses then line up with retail byte-for-byte (verified against retail ctor `stb 0x1DE/0x1E0/0x1E2` + CamEvtAdvanceShake's `stw 0x154/0x158/0x15C`, `lha 0x166/0x168`, `lfs 0x170/0x174`). **Lesson: when every field in a TU is uniformly N bytes off, don't add N bytes of padding after the table — find the missing gap/tail INSIDE the table type; check sibling functions that view the same memory through another type (`CfCamShakeState` cast) for the true layout.**
 
-## Branchy multi-return flag chain: constant-bounds indexed loop defeats the bool-idiom tail merge (func_80079DBC, 0x48)
+## Branchy multi-return flag chain: constant-bounds indexed loop defeats the bool-idiom tail merge (CamEvtShkActv, 0x48)
 
 `if (a) return true; if (b) return true; if (c) return true; return false;` (bool return) merges the FINAL if-return into the `neg/or/rlwinm` bool idiom in every MWCC (`-O2..-O4,p`, `-O4,s` → `subic/subfe`, Wii/1.1 + GC/3.0a5.2, `-ipa off`) — only the checks with code after them stay branchy. The shape that reproduces the retail's branchy structure (3× `lbz; cmpi; beq; li r3,1; blr` + trailing `li r3,0; blr`) is the **constant-bounds indexed loop**:
 
@@ -9234,7 +9234,7 @@ return false;
 
 ## kyoshin/CtrlObjectParam CtrlObjectParam_ResolveEquipItem — volatile read reproduces retail's reload + regalloc cascade (FULL_MATCH 100%)
 
-`CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx)` (0x54): `if (arr[idx] > -1) return func_80157C4C(idx > 4 ? 2 : idx + 4, arr[idx]); return 0;`. Retail **reloads** arr[idx] for the call arg (`lhax r4,r3,r5`) because the category ternary materializes in r0 (`li r0,2; bgt; addi r0,r4,4; or r3,r0,r0`), clobbering the first read; result stays in r6 and the `rlwinm r5,r4,1,0,30` (idx*2) is born first into r5. Plain C (both `*q` and indexed `arr[idx]` forms, with/without a named `a` local) CSEs the two reads into `lhax; or r4,r0,r0`, colors the ternary directly into r3 and result into r5, and reorders the rlwinm after the result init — 23.8% (12 structural + 4 reg_swap). **The shape that reproduces retail byte-for-byte is `volatile s16* q = &arr[idx];` with both reads via `*q`** — the volatile read cannot be CSE'd, forcing the reload, which cascades the allocator into retail's exact colors (rlwinm→r5 early, result→r6, ternary→r0, copy r0→r3). Consistent with MWCC_CASES instruction-selection: a retail split-form read (base materialized + reload) needs a volatile/walked read; mixed `*q` first / `arr[idx]` second still CSEs (MWCC proves them equal). Indexed-only reads recompute the rlwinm instead of anchoring r5. 0 structural / 0 reg_swap, 0x54/0x54, accepted FULL_MATCH.
+`CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx)` (0x54): `if (arr[idx] > -1) return CItem_kindPtr(idx > 4 ? 2 : idx + 4, arr[idx]); return 0;`. Retail **reloads** arr[idx] for the call arg (`lhax r4,r3,r5`) because the category ternary materializes in r0 (`li r0,2; bgt; addi r0,r4,4; or r3,r0,r0`), clobbering the first read; result stays in r6 and the `rlwinm r5,r4,1,0,30` (idx*2) is born first into r5. Plain C (both `*q` and indexed `arr[idx]` forms, with/without a named `a` local) CSEs the two reads into `lhax; or r4,r0,r0`, colors the ternary directly into r3 and result into r5, and reorders the rlwinm after the result init — 23.8% (12 structural + 4 reg_swap). **The shape that reproduces retail byte-for-byte is `volatile s16* q = &arr[idx];` with both reads via `*q`** — the volatile read cannot be CSE'd, forcing the reload, which cascades the allocator into retail's exact colors (rlwinm→r5 early, result→r6, ternary→r0, copy r0→r3). Consistent with MWCC_CASES instruction-selection: a retail split-form read (base materialized + reload) needs a volatile/walked read; mixed `*q` first / `arr[idx]` second still CSEs (MWCC proves them equal). Indexed-only reads recompute the rlwinm instead of anchoring r5. 0 structural / 0 reg_swap, 0x54/0x54, accepted FULL_MATCH.
 
 ## kyoshin CArrow3D::Term — conditional-reassign idiom splits the subobject-address addi (FULL_MATCH 100%)
 
@@ -9298,7 +9298,7 @@ The `||` chains (`a || a || a`) emit `beq; beq; bne body; b out` (the last disju
 
 `us-8028ce48` (0x98 dispatch). Three levers combined:
 
-1. **`#pragma dont_inline on`** (inside the existing `#pragma push`/`optimize_for_size` block): the `-ipa file` pass inlined the same-TU callees (`resetEIBPageView`, `func_8028BE74`) INTO the dispatch, collapsing it into a 0x13AC mega-function (relocs showed the AA64 loop + BE74 body inside). `__declspec(noinline)` on the callees was NOT enough — the `dont_inline` pragma on the CALLER is what stops the -ipa merge.
+1. **`#pragma dont_inline on`** (inside the existing `#pragma push`/`optimize_for_size` block): the `-ipa file` pass inlined the same-TU callees (`resetEIBPageView`, `rebuildEIBKind3Page`) INTO the dispatch, collapsing it into a 0x13AC mega-function (relocs showed the AA64 loop + BE74 body inside). `__declspec(noinline)` on the callees was NOT enough — the `dont_inline` pragma on the CALLER is what stops the -ipa merge.
 2. **`int v = (u8)func(...)`** (NOT `u8 v = ...`): the u8-typed local makes MWCC fold `v - 4` into `addi r0,r3,252; rlwinm r0,0,24,31` (u8 arithmetic with truncation). The int local keeps the retail's clean `subi r0,r3,4` after the one-time `rlwinm r3,r3,0,24,31` cast.
 3. **`switch (v)` with case order [2, 4..8, 3]**: the source's if-else-if chain and the natural case order [4..8, 2, 3] both place the case blocks in the wrong order (decomp [B7CC, AF98, BE74] vs retail [AF98, B7CC, BE74]). The retail's TEST order ([range-subi+cmpli, v==2, v==3]) is decoupled from the BLOCK order — the switch emits the range test first while the case-BLOCK layout follows the SOURCE case order. Ordering the cases as [2, 4..8, 3] reproduces both.
 
@@ -9314,7 +9314,7 @@ Layout-cursor setup: `buildLayout(&mpLayout, mArcResAcc, str); bindLayoutAnimTra
 `__dt__Q22cf7CVisionFv` (0x98): virtual cleanup vt_34(), guarded zeroing of `unk261C4.field_68/field_64`, `__destroy_arr(unk20D4, __dt__801A36D0, sizeof(CVisionSlot), 8)`, delete-if-flags. Three levers:
 
 1. **Witness reloc gate on the dtor vptr store:** the implicit `__vt__Q22cf7CVision` reloc fails the witness's reloc-name gate against retail `lbl_eu_805332D0`. Fix = the COccCulling pattern: `__declspec(novtable)` on the class (its ctor is unmatched so nothing regresses) + explicit `*(void**)this = (void*)lbl_eu_805332D0;` as the first dtor statement. The virtual dispatch still loads the vptr correctly; the store reloc now names the retail label. (Names don't matter for the FULL_MATCH certificate — only for the WITNESS path.)
-2. **`&this->member != NULL` guarded clears must NOT use a named local for the member address.** A local `UnkClass_801A3728* m = &this->unk261C4; if (m) { m->field_64 = 0; ... }` makes MWCC materialize the FULL address (this+0x261C4) into the base register and store at +0x64/+0x68 (displacement 100/104). Retail splits the address: `addis r3,r30,0x2` (base this+0x20000) + `addic. r0,r3,0x61C4` (test the full address into r0), with the stores using the addis BASE + full offsets (`stw r0,0x6228(r3)`). Write the fields INLINE (`this->unk261C4.field_68 = 0;`) — the addis base is then shared by the test and the stores. (Same family as func_800B2E38's `addic.` address null-check.)
+2. **`&this->member != NULL` guarded clears must NOT use a named local for the member address.** A local `UnkClass_801A3728* m = &this->unk261C4; if (m) { m->field_64 = 0; ... }` makes MWCC materialize the FULL address (this+0x261C4) into the base register and store at +0x64/+0x68 (displacement 100/104). Retail splits the address: `addis r3,r30,0x2` (base this+0x20000) + `addic. r0,r3,0x61C4` (test the full address into r0), with the stores using the addis BASE + full offsets (`stw r0,0x6228(r3)`). Write the fields INLINE (`this->unk261C4.field_68 = 0;`) — the addis base is then shared by the test and the stores. (Same family as poolInsertNode's `addic.` address null-check.)
 3. **Store order:** retail writes field_68 (+0x622C) BEFORE field_64 (+0x6228) — write them in that order in source (the header comment even says "cleared by dtor" for both).
 
 ## kyoshin/menu/CMenuPause dtor — free-function + double-nested guard (FULL_MATCH 100%)
@@ -9367,7 +9367,7 @@ Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8
 - **fp-cast calls reproduce the retail's argc** when a symbol has a different declared
   signature: `((char* (*)(void*, const char*, u16))BdatGetPtrDirect)(...)` — MWCC emits the
   direct `bl` with the plain reloc and exactly the args the cast dictates (2-arg vs 4-arg
-  func_80137924, 2-arg vs 3-arg CtrlRemote_SetSharedBit). C-linkage overloads are illegal, so the
+  ScalePaneWorldPos, 2-arg vs 3-arg CtrlRemote_SetSharedBit). C-linkage overloads are illegal, so the
   cast is the only way to vary argc at one symbol.
 - **Double null-check** (`if (o) { if (o) fn(o, 1); ... }`) reproduces the retail's two
   `beq`'s to different targets (CMenuArtsSet ArtsLayoutPair_release, CTitle CTitleLogo_release): the
@@ -9376,7 +9376,7 @@ Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8
 - **Named SDA2 constants keep lfs relocs pinned in sinits** (code_804A6C60 sinit_804B2524):
   `lbl_eu_8066AE88` instead of `0.0f` avoids the anonymous `@9552` literal reloc.
 - **Phantom first params place the real object in the retail's register** when the retail
-  reads the object from r4 (2-arg convention with the first arg unused): func_801B218C,
+  reads the object from r4 (2-arg convention with the first arg unused): clearPcEffect,
   CfRes_checkEntryReady, TagWriterCode8Target.
 - **Dead reads as call args**: the retail's "unused" loads (func_80208760's m10 and m8->m10)
   are the LAST TWO ARGS of the call — MWCC drops standalone dead/volatile reads, so route
@@ -9488,7 +9488,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Confidence: repo_proven
 
 ## Wii/1.1 flag vocabulary correction + scheduler tie-break walls (CBattleManager near-miss trio)
-- Symptom:   functions with identical instruction sets and identical register assignments differing only in the ORDER of 2-4 independent head/setup instructions (func_800F3970 4 insns, func_800D9218 stfs/stw pair, CBattleMan_ResetTimer lfs/lwz pair): retail interleaves loads with setup; MWCC groups them
+- Symptom:   functions with identical instruction sets and identical register assignments differing only in the ORDER of 2-4 independent head/setup instructions (func_800F3970 4 insns, resetBattleState stfs/stw pair, CBattleMan_ResetTimer lfs/lwz pair): retail interleaves loads with setup; MWCC groups them
 - Cause:     O4,p per-block list-scheduler tie-break on the ready list; the input PCode order (hence the tie-break) is not reachable from any tried src shape. `-aggressive_ls_scheduling off` as listed in docs/scheduling.md does NOT exist in Wii/1.1 (Usage Error); only `-schedule off` exists, which regresses whole units (CBattleManager: fixes 1 fn, breaks 31). GC/3.0a5.2 also ruled out for this TU by whole-unit A/B (31/78 vs 46/78)
 - Fix:       none found from src after exhaustive levers (statement reorder, named locals, volatile barriers, inline globals, decl-order swaps incl. byteVal-first). These are recorded near-misses under the no-SMT policy unless a new angle emerges
 - Result:    recorded near-misses: us-800f4a54 (97.6%), us-800e9d78 (94.9%), us-800eaa64 (60%)
@@ -9498,18 +9498,18 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 ## Local-init placement: late initialization beats top-of-function declaration (CBattleManager DB7F8/D7D24)
 - Symptom:   function head emits the zero-init (`li r25, 0`) immediately after the prologue where retail emits it dozens of instructions later, right before its first conditional use; every subsequent saved-register color shifts
 - Cause:     `s32 flag = 0;` at the top of the function makes the init part of the entry block; MWCC schedules it there. Retail source evidently initialized at (or near) first use
-- Fix:       declare the local without an initializer and assign it in the block where retail first writes it (`flag = 0;` immediately before the branch that reads it). Verified: func_800DB7F8 7.1% -> 16.3% from this single change
+- Fix:       declare the local without an initializer and assign it in the block where retail first writes it (`flag = 0;` immediately before the branch that reads it). Verified: handleBattleMoveEvent 7.1% -> 16.3% from this single change
 - Result:    improvement (16.3%, ongoing)
 - Confidence: repo_proven
 - Applies to/a.k.a.: pairs with register_mapping.md Rule A; same family as "statement/assignment order" lever but for initializers specifically
 
 ## func_804A7834 (monolib/src/coli/code_804A6C60) — sda2 const load pinned first in leaf diagonal-fill; retail emits it last (Wii/1.1, -O4,p, OPEN)
 - Symptom:   0x44 leaf `lfs f0,K24@sda21` + 12 stfs diagonal fill: decomp always schedules the sda21 const load at slot 0 then member lfs asc (k,x,y,z); retail has member loads DESC (z,y,x) then the const load LAST. FPR colors agree on both sides (birth order k,x,y,z -> f0,f1,f2,f3). hexdiff 76.5%, 0 structural, 4 pure reg-swap; witness gate fails on reloc presence (slot 0), so EQUIVALENT_MATCH is blocked by the same root cause as FULL.
-- Cause:     unknown final-scheduling rule. Same fill block inside func_804A763C retail hoists the const into the prologue (first) — only the standalone leaf shows reverse emission.
+- Cause:     unknown final-scheduling rule. Same fill block inside ColiBuildXformRotScale retail hoists the const into the prologue (first) — only the standalone leaf shows reverse emission.
 - Fix:       none found — byte-invariant across 8 source shapes (cached-k decl/assign first or last, inline consts, scoped block, no locals, descending stores preserve statement order, chained assigns) and flag variants (-O4,s, -fp_contract off, -ipa off). `-schedule_factor` is internal-only (not a CLI option).
 - Result:    92.2% instruction / HIGH_MATCH near-miss (open item)
 - Confidence: negative_result
-- Applies to/a.k.a.: probe at .scratch/probe_7834.cpp (+ .dis outputs); any straight-line copy-store block mixing @sda21 loads with D-form member loads in this TU (func_804A70F8/func_804A73A0/func_804A763C preambles). Next angles: reconstruct Scheduler.c ready-list rule; call-barrier/volatile-member-read delay probes.
+- Applies to/a.k.a.: probe at .scratch/probe_7834.cpp (+ .dis outputs); any straight-line copy-store block mixing @sda21 loads with D-form member loads in this TU (ColiBuildXformRotScaleOff/ColiBuildXformRotate/ColiBuildXformRotScale preambles). Next angles: reconstruct Scheduler.c ready-list rule; call-barrier/volatile-member-read delay probes.
 
 ## kyoshin/CItemBoxGrid GetCatLabelMsg — retail `.data` jumptable routing/bound/cookie + commuted add → FULL_MATCH (Wii/1.1, -O4,p)
 - Symptom:   text bytes looked identical at ~99.5% but `code%` was 17% and the witness gate failed with `slot 5: non-register bits differ (0x00000006)`; hexdiff byte-table showed no obvious diff
@@ -9592,7 +9592,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Symptom:   small leaf helpers stuck at 14-85%: (a) stmw/lmw vs individual stw saves; (b) cmpi vs cmpli loop guards; (c) hoisted layout/pointer loads where retail reloads per call; (d) fsub+frsp double-rounding vs retail lone fsubs in the 0x43300000 int->float magic; (e) neg/or/rlwinm bool tail vs addic/subfe setnz
 - Cause:     retail compiled these leaves under size optimization; source-shape details (declaration order of saved locals, named SDA locals, inline nested casts) shift MWCC idiom selection
 - Fix:       (1) wrap with pragma optimize_for_size for stmw/lmw frames AND the addic/subfe bool tail; (2) u32 loop counters for cmpli; (3) remove hoisted pointer locals so each use reloads (retail never CSEs member loads across calls); (4) replace manual 0x43300000 unions with plain (float)(int_expr) builtin cast (single-rounded fsubs); (5) declare pointer locals before counter locals (Rule A birth order), splitting 'T x = init;' into decl+assign when the init store must sink but the color must not
-- Result:    FULL_MATCH 100%: clearItemBoxTripleRows, clearItemBox2TripleRows, testItemBox2BdatFlag, getItemBoxCondStat, func_801D4BDC, setItemBoxNamedText, setItemBox2NamedText, clearItemBox2PairTexts, testItemBoxBdatFlag
+- Result:    FULL_MATCH 100%: clearItemBoxTripleRows, clearItemBox2TripleRows, testItemBox2BdatFlag, getItemBoxCondStat, setItemCounts, setItemBoxNamedText, setItemBox2NamedText, clearItemBox2PairTexts, testItemBoxBdatFlag
 - Confidence: repo_proven
 - Applies to/a.k.a.: any -O4,p TU with size-optimized retail leaves; complements ref:bc80cd6fac (builtin cast) and ref:092060b7a9 (-O4,s setnz) — here achieved per-function via pragma instead of unit flags
 
@@ -9612,7 +9612,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any TU using dont_inline for IPA control (companion to NANDCore ref:d8d20ec1e4); check implicit operator=/ctor bodies when a distant function inexplicably becomes `b .`
 
-## func_804B1AD8 (monolib/src/coli/code_804A6C60) — decomp larger than retail by 0x38 → missing auto_inline off on a same-TU helper (Wii/1.1, -O4,p, FULL_MATCH 100%)
+## ColiCheckMoveGate (monolib/src/coli/code_804A6C60) — decomp larger than retail by 0x38 → missing auto_inline off on a same-TU helper (Wii/1.1, -O4,p, FULL_MATCH 100%)
 - Symptom:   decomp 0x13c vs retail 0x104 (+0x38); hexdiff alignment broke after the containment check; low match percent despite a semantically identical call sequence.
 - Cause:     the called initializer ColiInitPointScalar14 (same TU, no auto_inline off pragma) got INLINED at its call site — its entire body (CColiProc ctor call plus field stores) appeared inline, and the compiler laid out extra stack slots for it. Retail calls it via bl.
 - Fix:       wrap the helper definition in pragma push / pragma auto_inline off / pragma pop. Size delta disappears immediately.
@@ -9632,7 +9632,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 ## ColiInitPointScalar14 (monolib/src/coli/code_804A6C60) — void-vs-return-self declaration shifts all GPR colors (Wii/1.1, -O4,p, FULL_MATCH 100%)
 - Symptom:   after fixing a semantic bug (ctor called on self+0x10 instead of self+0x04) and converting to raw word copies, the residual was a uniform GPR color rotation: retail loads sv[0..2] into r7/r6/r5 and prepares r3 mid-function; ours used r6/r5/r4 and never touched r3.
 - Cause:     retail's initializer RETURNS self (CColiObject pointer), so MWCC reserves r3 for the return value across the whole body and emits an or r3,r30 copy before the epilogue. Declaring it void freed r3 for allocation, shifting every other color down by one.
-- Fix:       declare the function to return CColiObject with return self at the end - matching the sibling ctors (func_804A79B4, func_804A7ACC, ColiInitScaledSpec all return self).
+- Fix:       declare the function to return CColiObject with return self at the end - matching the sibling ctors (ColiInitAngleSpec, ColiInitSegment, ColiInitScaledSpec all return self).
 - Result:    FULL_MATCH (0x88/0x88)
 - Confidence: repo_proven
 - Applies to/a.k.a.: any helper whose retail sibling family returns self; when colors are uniformly shifted and an unexplained self-to-r3 register copy appears mid-body, check the declared return type first. Also fixed here: ctor was called on self+0x04 not self+0x10 (semantic).
@@ -9671,8 +9671,8 @@ WARNING (operational): these rules are SINGLE-application. Running `data diff` o
 - Applies to/a.k.a.: any TU whose owning function has a dense switch: check whether retail's splitter kept the jumptable in the blob (retail .text reloc target name tells you — e.g. jumptable_eu_8056B5C0) before writing drop rules; weak-template emission order does NOT follow FORCEKEEP construction order (flipping it changed nothing); retarget_reloc_to_symbol only rewrites EXISTING relocs (use inject_relocs to create them).
 
 ## main/monolib/src/device/CGXCache data gate — jumptable addend drift on a §17.6 code-residual switch (DATA_MATCH)
-- Symptom:   `data diff` FAIL: `.data` 112 bytes identical but reloc drift on the updateMsg jumptable (`.data+0x00..0x33`, 14 `func_80449D68__8CGXCacheFv +addend` entries). All .rodata/.sdata/.sdata2 slices byte-identical; vtable/RTTI locator slots (0x38..0x6F) name-and-offset identical. (Drift shape at first diagnosis: +4 at entry 3, then +8; later uniformly +4 after concurrent edits to the function body.)
-- Cause:     func_80449D68 is an ACTIVE/HIGH_MATCH code-length residual — from case 3 onward the decomp case blocks sit 4/8 bytes earlier than retail, so the compiler-emitted jumptable's case-label addends drift (+4 at entry 3, +8 for every later entry) even though raw section bytes match.
+- Symptom:   `data diff` FAIL: `.data` 112 bytes identical but reloc drift on the updateMsg jumptable (`.data+0x00..0x33`, 14 `execGXCmd__8CGXCacheFv +addend` entries). All .rodata/.sdata/.sdata2 slices byte-identical; vtable/RTTI locator slots (0x38..0x6F) name-and-offset identical. (Drift shape at first diagnosis: +4 at entry 3, then +8; later uniformly +4 after concurrent edits to the function body.)
+- Cause:     execGXCmd is an ACTIVE/HIGH_MATCH code-length residual — from case 3 onward the decomp case blocks sit 4/8 bytes earlier than retail, so the compiler-emitted jumptable's case-label addends drift (+4 at entry 3, +8 for every later entry) even though raw section bytes match.
 - Fix:       `addend_patches` in the CGXCache.o main UNIT_RULES (postprocess_reloc_names.py): uniform `(.data, off, +4)` for off in 12..52 step 4 — the drift shape tracks the residual function's current layout and must be re-derived from a FRESH RAW build whenever the body changes (see follow-up below). No source change — the addends are a function-layout artifact, not a data-definition error. Do NOT add a second CGXCache.o UnitRules dict entry (shadows the pool rule).
 - Result:    VERDICT: MATCH on all seven sections.
 - Confidence: repo_proven
@@ -9680,7 +9680,7 @@ WARNING (operational): these rules are SINGLE-application. Running `data diff` o
 
 ## main/monolib/src/core/code_804DEDA8 data gate — MWCC-local int->double conversion magics in .sdata2 (DATA_MATCH)
 - Symptom:   `run.py data diff` FAIL: `.sdata2 retail 0x0 != decomp 0x10`, bytes `43300000_00000000` + `43300000_80000000`. All other sections ok.
-- Cause:     the schedule anim helpers (func_804E04D4/E0990/E0B94/E0CF0/E17A4/E2A5C/E30F0) do `(f64)(u32)` / `(f32)(s32)` casts; MWCC materializes its own TU-local conversion magics as anon @ symbols in .sdata2 (@5073 = 2^52 x5 refs, @5075 = 2^52+2^31 x11 refs). Retail instead loads the same 8 bytes from the shared lbl_eu_8066Bxxx pool (retail .rela.text: func_804E04D4 -> B298 + B2A0), so the unit split carries no .sdata2 at all.
+- Cause:     the schedule anim helpers (SchedAnim_FrameRate/E0990/E0B94/E0CF0/E17A4/E2A5C/E30F0) do `(f64)(u32)` / `(f32)(s32)` casts; MWCC materializes its own TU-local conversion magics as anon @ symbols in .sdata2 (@5073 = 2^52 x5 refs, @5075 = 2^52+2^31 x11 refs). Retail instead loads the same 8 bytes from the shared lbl_eu_8066Bxxx pool (retail .rela.text: SchedAnim_FrameRate -> B298 + B2A0), so the unit split carries no .sdata2 at all.
 - Fix:       UNIT_RULES "code_804DEDA8.o" in postprocess_reloc_names.py: pool_patterns ((>II 0x43300000,0x00000000) -> lbl_eu_8066B298, (>II 0x43300000,0x80000000) -> lbl_eu_8066B2A0) + extern_data_sections=(".sdata2",). Template: CPlane.o/CDeviceFont.o/code_804E36DC.o rules. No cpp/source change; code bytes untouched.
 - Result:    VERDICT: MATCH on all seven data sections.
 - Confidence: repo_proven
@@ -9721,7 +9721,7 @@ WARNING (operational): these rules are SINGLE-application. Running `data diff` o
              sibling units; same recipe as ut_ResFontBase.o / CDevice.o rules.
 
 ### Follow-up (same session): CGXCache addend deltas re-derived under concurrent edits — diagnose RAW only
-The func_80449D68 code-length residual kept moving while a concurrent agent
+The execGXCmd code-length residual kept moving while a concurrent agent
 edited CGXCache.cpp: the drift shape changed from (+4 at entry 3, then +8) to a
 uniform +4 from case 3 onward. Two traps hit and cleared:
 
@@ -9850,9 +9850,9 @@ WARNING (operational): these rules are SINGLE-application — re-running postpro
 - Applies to/a.k.a.: monolibdata2-dissolve TUs owning class data; extends the CDesktop/CProcRoot 10322 stand-in pattern — under -RTTI on the retarget step can be skipped entirely; also: char-array .rodata members default-pool at align 1 but an align(8) member reorders/re-pads the section, so keep all string-array members plain and rely on a leading aligned member or set_data_align for section alignment.
 
 ## main/monolib/src/core/code_804F0258 data gate — retail byte-packed .sbss tails + conv-helper magic pool (Wii/1.1, DATA_MATCH)
-- Symptom:   `run.py data diff` FAIL on two sections: `.sdata2 retail 0x0 != decomp 0x10` (anonymous @ pool doubles 43300000_00000000 / 43300000_80000000 from the convU16ToF/convS32ToF union helpers, referenced only by func_804F06C4) and `.sbss retail 0x28 != decomp 0x1C` (retail lbl_eu_80665A80 is an 8-byte align-8 object at +0x18 and lbl_eu_80665A8A a 6-byte flag+pad object at +0x22; decomp had bare u8 flags packing to 0x1C).
+- Symptom:   `run.py data diff` FAIL on two sections: `.sdata2 retail 0x0 != decomp 0x10` (anonymous @ pool doubles 43300000_00000000 / 43300000_80000000 from the convU16ToF/convS32ToF union helpers, referenced only by emitGradQuad) and `.sbss retail 0x28 != decomp 0x1C` (retail lbl_eu_80665A80 is an 8-byte align-8 object at +0x18 and lbl_eu_80665A8A a 6-byte flag+pad object at +0x22; decomp had bare u8 flags packing to 0x1C).
 - Cause:     MWCC packs ONLY true 1-byte scalars contiguously in .sbss under `-align powerpc`: every >=2-byte object (u8[N] arrays, u8-only structs) is forced to 4-byte alignment, and both `__attribute__((aligned(1)))` and `__declspec(align(1))` are ignored on section data — alignment directives can raise, never lower. So the 6-byte A8A object always landed at +0x24 (section 0x2A), never retail's +0x22.
-- Fix:       cpp: `extern "C" u8 lbl_eu_80665A80[8] __attribute__((aligned(8))) = {0}` for the align-8 object (access via `[0]`, identical lbz/stb codegen) and model the A8A tail as separate named 1-byte globals `lbl_eu_80665A8B_pad`..`lbl_eu_80665A8F_pad` kept alive by DECOMP_FORCEACTIVE (CLODCacheManagerS retail-tail recipe). UNIT_RULES "code_804F0258.o" in tools/postprocess_reloc_names.py: pool_patterns mapping the two magic doubles to monolibdata2 aliases lbl_eu_8066B498/lbl_eu_8066B4A0 + extern_data_sections=(".sdata2",). After the sbss edits MWCC stopped materializing the local pool entirely — func_804F06C4 now emits named UNDEF relocs to B498/B4A0 directly — so the raw object data-matches with postprocess skipped; the rule stays as dormant insurance (raw-first gate policy can never regress a matched unit).
+- Fix:       cpp: `extern "C" u8 lbl_eu_80665A80[8] __attribute__((aligned(8))) = {0}` for the align-8 object (access via `[0]`, identical lbz/stb codegen) and model the A8A tail as separate named 1-byte globals `lbl_eu_80665A8B_pad`..`lbl_eu_80665A8F_pad` kept alive by DECOMP_FORCEACTIVE (CLODCacheManagerS retail-tail recipe). UNIT_RULES "code_804F0258.o" in tools/postprocess_reloc_names.py: pool_patterns mapping the two magic doubles to monolibdata2 aliases lbl_eu_8066B498/lbl_eu_8066B4A0 + extern_data_sections=(".sdata2",). After the sbss edits MWCC stopped materializing the local pool entirely — emitGradQuad now emits named UNDEF relocs to B498/B4A0 directly — so the raw object data-matches with postprocess skipped; the rule stays as dormant insurance (raw-first gate policy can never regress a matched unit).
 - Result:    VERDICT: MATCH on all seven data sections (raw object); .sbss exactly 0x28 align 8 with A68..A8F at retail offsets.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any TU whose retail .sbss/.bss slice has byte-granular objects or anonymous gaps after an aligned object; for FILE-BACKED sections fold the gap into the previous array's declared size instead (CDeviceFontLayer recipe); contrast drop_nobits_range which shrinks when MWCC OVER-aligns relative to retail; general pattern recorded in MWCC_PATTERNS.md "Retail byte-packed .sbss tails".
@@ -10077,7 +10077,7 @@ WARNING (operational): these rules are SINGLE-application — re-running postpro
 - Confidence: repo_proven
 - Applies to/a.k.a.: any small same-TU arithmetic/getter helper that retail keeps standalone while MWCC folds it into its (only) caller. Before touching the caller's expression shape, check whether retail's "inline-looking" body is really an auto-inlined helper — if a standalone copy of the helper ALSO exists in retail .text, the fix is noinline on the helper. Contrast MWCC_CASES "monolib __sinit_ functions" where the inline direction is the opposite.
 
-## CGXCache func_80449D68 dispatcher — dead locals flip byref-arg-temp scheduling; u16+`(s16)` cast extsh in clamp compares (-O4,p / -ipa file, near-miss)
+## CGXCache execGXCmd dispatcher — dead locals flip byref-arg-temp scheduling; u16+`(s16)` cast extsh in clamp compares (-O4,p / -ipa file, near-miss)
 - Symptom:   (a) switch-jumptable addends drifted -4/-8 from sel3 onward (copy-clear bodies 4B short each); (b) scissor-case `wmn` clamp emitted `cmpwi rX,0` where retail has `extsh r4,r0; li r5,0; cmpw r5,r4` (+2 insns).
 - Cause:     (a) MWCC defers the outgoing **by-ref aggregate arg-temp address** (`addi r3,sp,N`) until the arg register frees when function-level register pressure is low; retail computed it early into a scratch (`addi r0,sp,N` … `or r3,r0,r0`). Removing UNUSED function-level locals (`f32 vf/scale; GXColor gxCol; s32 r,a,cond;`) raised pressure and flipped MWCC into the early-scratch shape — jumptable addends then matched exactly. Named-local/ternary/helper-boundary variants of the color expression did NOT matter. (b) `(s16)x0 > 0` folds because x0's provenance is a known-extended `lha`; the KB u16-param rule applies locally: `u16 ux0 = (u16)x0; … if (rect[1] < (s16)ux0)` forces the extsh AND the var-vs-var `cmpw` operand order.
 - Fix:       (a) delete dead locals; eager z read + inline wrapper for the two copy-clear cases. (b) `u16 ux0 = (u16)x0; if (self->rect4A0[1] < (s16)ux0) wmn = 0;`
@@ -10120,7 +10120,7 @@ Confidence: repo_proven.
 
 ## monolib coli bounds-expansion family (code_804B2FF0) — final-check load order + three-way pointer-color residual (Wii/1.1, -O4,p, OPEN at 93.9% ×3)
 
-**Targets:** func_804B43B4 (us-804b8510), Coli_ExpandPoint (us-804b8740), func_804B46A8 (us-804b8804). All six-block AABB-expansion functions over `lbl_eu_80665944` (bounds ptr, .sbss) with per-check scoped radius temps.
+**Targets:** ColiExpandSphere (us-804b8510), Coli_ExpandPoint (us-804b8740), ColiExpandPoint (us-804b8804). All six-block AABB-expansion functions over `lbl_eu_80665944` (bounds ptr, .sbss) with per-check scoped radius temps.
 
 **Symptom (B43B4):** 87.8%, final check `if (lbl_eu_80665944->min[2] > p->z - p->radius)` emitted the member loads **z-first** (`lfs f1,12(r3); lfs f0,16(r3); fsubs f0,f1,f0`) where retail loads **radius-first** (`lfs f1,16(r3); lfs f0,12(r3); fsubs f0,f0,f1`) — swapping both FPR colors of the subtraction.
 
@@ -10132,7 +10132,7 @@ Confidence: repo_proven.
 
 - **Working theory:** after each block's last p-relative load our build considers `p` (r3) dead, so lowest-free-scratch hands r3 to the reload; blocks 1–5 can't use r3 because the next block still needs p there. Retail keeps r4 on the final reload — either its liveness keeps r3 occupied or a coalescing preference ties the recurring reload to r4.
 - **Rejected:** inline-radius in the final block (B45E4: 93.9→87.8, also flipped radius/z load order — reverted).
-- **Next:** (a) find an allocation-only way to extend p's live range past the final reload (sizes are equal — no instruction may be added), (b) check whether retail coalesces all six reloads onto one vreg colored at first def, (c) compare with func_804B2FF0's src-color drift (us-804b714c packet) — both are last-use scratch-color phenomena and may share a TU-level driver.
+- **Next:** (a) find an allocation-only way to extend p's live range past the final reload (sizes are equal — no instruction may be added), (b) check whether retail coalesces all six reloads onto one vreg colored at first def, (c) compare with ColiMoverUpdate's src-color drift (us-804b714c packet) — both are last-use scratch-color phenomena and may share a TU-level driver.
 - Confidence: repo_proven (fix), hypothesis (residual theory).
 
 ## monolib LOD code_8046A530 func_8046A5C4 — ctor+copy staging bloat → local init-list mirror struct assigned via reinterpret_cast (Wii/1.1 `-O4,p`, size 0x598→0x514 EXACT, split gate PASS)
@@ -10361,14 +10361,14 @@ referenced by real code/data.
 - Result:    BLOCKED — concrete external/tooling limit (SKILL.md acceptance policy); data gate of the unit is FULL MATCH (raw object), split-size PASS (0x14C0/0x1CB4).
 - Applies to/a.k.a.: any monolib scn/coli function with double-narrowed field math feeding single multiplies; probe harness pattern in `.scratch` (deleted; re-create per attempts.jsonl 2026-08-24 records).
 
-## func_8003B4B0 / ocBdat — commutative mullw operand order + TU-wide s32/int overload break
+## Bdat_FindColumnEntry / ocBdat — commutative mullw operand order + TU-wide s32/int overload break
 - Symptom:   hexdiff shows single `mullw r0,r31,r0` vs retail `mullw r0,r0,r31`; separately, unrelated TUs fail with "(10197) illegal function overloading" pointing at an extern "C" definition.
 - Cause:     (1) manual modulo `x -= (x/n)*n` makes MWCC commute the multiply; retail was compiled from `x %= n`. (2) `s32` is `signed long`, so declaring `f(..., int index)` in a shared header while the defining TU uses `f(..., s32 index)` is an illegal overload of the same C-linkage symbol.
 - Fix:       (1) write `rem %= bucketCount;`. (2) keep shared extern "C" declarations type-verbatim (`s32`, not `int`); never promote `getBdatStringColumnValue` into class scope (NOTE in ocBdat.hpp).
 - Result:    FULL_MATCH (us-8003af48, semantic-certified); ocBdat TU builds again.
 - Confidence: repo_proven
 
-## kyoshin/CItemBoxInfo func_801D5C38 / func_801E27D0 — record-copy loop fully unrolled (size overflow) → pragma wrapper + offset-pair idiom
+## kyoshin/CItemBoxInfo buildItemBoxSlotRec / buildItemBox2SlotRec — record-copy loop fully unrolled (size overflow) → pragma wrapper + offset-pair idiom
 - Symptom:   decomp .text larger than retail for the function (e.g. 0x16c/0x198, 0x158/0x174); the final fixed-size struct copy to the out-param is emitted as fully unrolled lwz/stw runs while retail keeps a compact `li r0,N; mtspr CTR; lwzu r0,8(r4); stwu r0,8(r5); bdnz` 8-byte-pair loop plus a 4-byte tail.
 - Cause:     (1) the owning function lacked `#pragma optimize_for_size on` (+ `dont_inline on`) — under plain `-O4,p` MWCC unrolls small constant-trip copy loops; optimize_for_size keeps them rolled. (2) The source copy shape matters: nested loops or forward `*d++ = *s++` runs unroll differently than the canonical offset-pair form.
 - Fix:       wrap the function in `#pragma push / #pragma optimize_for_size on / #pragma dont_inline on / ... #pragma pop`, and write the copy as:
@@ -10379,7 +10379,7 @@ referenced by real code/data.
              d[1] = s[1];   // tail halfword pair
              ```
              N = (copyBytes - 4) / 8. Also keep any deliberate `if (p != NULL) q = p; else q = NULL;` split — collapsing it to `q = p` removes a branch retail has and craters the match.
-- Result:    func_801D5C38 54.9% -> 70.3% (structural 30 -> 9, size exact); func_801E27D0 49.5% -> 62.8% (structural 25 -> 9, size exact).
+- Result:    buildItemBoxSlotRec 54.9% -> 70.3% (structural 30 -> 9, size exact); buildItemBox2SlotRec 49.5% -> 62.8% (structural 25 -> 9, size exact).
 - Confidence: repo_proven (two independent functions, byte-exact size fit both times)
 - Applies to/a.k.a.: any fixed-size local-record copy to an out pointer (CItemBoxSlotRecord/ItemBoxInfoCopy family); check first when a single function shows decomp-larger size with a fat unrolled store run at the tail.
 
@@ -10500,7 +10500,7 @@ us-80115a2c (r6→r7).
 - Result:    FULL_MATCH ×2 (us-800d9864, us-800d9744)
 - Confidence: repo_proven
 
-## func_804E1C1C / code_804DEDA8 — flag-byte drift (47.5%) → bitfield shapes (+42pts)
+## SchedAnim_AdvanceScale4 / code_804DEDA8 — flag-byte drift (47.5%) → bitfield shapes (+42pts)
 - Symptom:   hexdiff showed pervasive structural diffs around mScaleFlag updates: stores sunk into both branch arms, extra `andi.` mask step, hoisted field load.
 - Cause:     source used direct `|=` / `&=` on the bitfield member plus an unrelated named temp (`zw0`) read between the deviation tests. MWCC lowers 2-bit-bitfield RMW through extract/insert (`rlwinm 27,x,x` + `rlwimi`); mask-clearing a 2-bit field with `& (u8)~2` emits an extra `andi.` because MWCC does not fold the mask against the field width.
 - Fix:       (1) assign a named temp in BOTH if/else arms and store once after the merge (`sf = flag | 1; ... flag = sf;`); (2) read sibling fields (`mField14`) at their use site, not into a temp beforehand; (3) fold `& ~2` to `& 1` manually on a 2-bit field — MWCC emits the single `rlwinm 27,31,31` keep-one-bit form.
@@ -10554,12 +10554,12 @@ us-80115a2c (r6→r7).
 - Confidence: repo_proven
 - Applies to: any TU with manual vtable-call helpers; proxy classes must never be constructed.
 
-## monolib/coli code_804A6C60 func_804A7D1C — missing [frsp], size -4 → declare dot-product result as `double` (Wii/1.1, -O4,p → 81.0%, was 55.6%)
+## monolib/coli code_804A6C60 ColiInitFlatSegment — missing [frsp], size -4 → declare dot-product result as `double` (Wii/1.1, -O4,p → 81.0%, was 55.6%)
 - Symptom:   decomp 4 bytes short; retail tail had stfs f1,776 + extra [frsp] f1,f1 before the compare that decomp lacked
 - Cause:     retail's `sq` was DOUBLE: `self->field_0x308 = sq` folds the double high-word into [stfs]; the rounded single for compare/divide comes from a separate [frsp]. With `f32 sq` MWCC emits only the stfs.
 - Fix:       `double sq = VEC3Dot(...); self->field_0x308 = sq; if ((f32)sq != lbl) { field_0x308 = lbl / (f32)sq; }` — division must stay single-domain via the cast
 - Result:    81.0% near-miss (2 structural: frsp/store order flip; 10 reg_swap GPR rotation on word copies)
-- Confidence: repo_proven (same idiom already proven in func_804A7ACC of the same TU)
+- Confidence: repo_proven (same idiom already proven in ColiInitSegment of the same TU)
 - Applies to/a.k.a.: any VEC3Dot/PSVECMag-style result stored into an f32 field then re-used — check for a missing [frsp] whenever decomp is exactly 4 bytes smaller than retail
 
 ## kyoshin/CtrlObjectParam equip-slot reload idiom (us-800a3bcc CtrlObjectParam_RefreshAllEquipImpls) — volatile element pointer reproduces the double `lha`, but the 0x1C displacement lands in the IV (OPEN at 98.9%)
@@ -10591,7 +10591,7 @@ us-80115a2c (r6→r7).
 - Fix:       commute the second comparison (`if (v < 1) goto end; if (0xb < v) goto end;`) — same semantics, blocks the fusion pattern while keeping unsigned cmpli. Note `(int)` casts give signed cmpi which is WRONG here (overcorrection gives 97% with cmpi/cmpli mismatches)
 - Result:    FULL_MATCH (100%, witness-certified)
 - Confidence: repo_proven
-- Applies to/a.k.a.: any u32 bounds-guard pair branching to a shared exit; complements the func_80156F54 signed-cmpi variant
+- Applies to/a.k.a.: any u32 bounds-guard pair branching to a shared exit; complements the CItem_catSize signed-cmpi variant
 
 ## UPDATE — us-800a3bcc CtrlObjectParam_RefreshAllEquipImpls solved to 99.8% (0 structural, size exact): full working recipe
 
@@ -10622,7 +10622,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       flip the unit to mw_version="Wii/1.1" in configure.py. Net effect strongly positive for this TU.
 - Result:    ctrlActHandleCase4Move / ctrlActState4Handler / CAttackParam_UnkVirtualFunc4 100% immediately; ctrlActDispatchEntry reached 100% after also correcting scaffolded flag constants (retail: base |=0x40000200, kind 0x54 → |0x42000000, kind 0x55 → |0x41000000 — the scaffold's 0x40002000/0x02000000/0x01000000 were Ghidra guesses). All four cycle-certified FULL_MATCH.
 - Confidence: repo_proven
-- Applies to/a.k.a.: gate idioms (`u32 local = *vf30(); func_80174C98(p,&local,N)`), mField54 timer decay pattern, int2flt magic-constant lowering; check net unit --all before keeping a version flip (GC-only schedules elsewhere may regress).
+- Applies to/a.k.a.: gate idioms (`u32 local = *vf30(); testActorStatus(p,&local,N)`), mField54 timer decay pattern, int2flt magic-constant lowering; check net unit --all before keeping a version flip (GC-only schedules elsewhere may regress).
 ## kyoshin code_800B06A4 — tail-call shims: recount the ABI args before redrafting (GC/3.0a5.2 `-O4,p`)
 
 - Symptom:   tiny 6-param wrapper functions at 0.0% with equal size; retail body is a pure `or`-rotation + `li r3,C; b callee` tail call.
@@ -10696,7 +10696,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Cause:     Duplicate `extern "C"` declarations of the same unmangled retail symbol across headers with *textually different* signatures. MWCC requires IDENTICAL parameter types for duplicate extern "C" decls — `u32` vs `int`, `void*` vs `u8*`, 6th-arg `void*` vs `f32` are all distinct types; return type and C-vs-C++ linkage must match too.
 - Fix:       Peel one build error at a time with `hexdiff --all --brief`; for each clash pick ONE winner signature (the one backed by the definition in CfSoundMan.cpp / by FULL_MATCH callers / by retail asm) and edit the outlier header to match exactly. Variant call ABIs survive via local fn-pointer cast typedefs (CfCam `BE398Fn` convention) — verify the variant is genuinely retail-correct first (`hexdiff --asm`: retail passed `r7`=ptr + `f1` float at those sites). Plain-C++ decls of pre-mangled names (e.g. `getPlayer__Q22cf13CfGameManagerFi`) become `extern "C"` so MWCC doesn't re-mangle them.
 - Result:    All three shields removed; CPartsChange/CtrlMoveBase/CActParamData build with zero accepted-target regressions (registry cross-check: every FULL_MATCH target still ✓); consumer TUs (CtrlMoveEne, CtrlRemote, CSaveLoad, CQstLogList, CMenuBattlePlayerState, CTaskGameEff, code_8027513C, CfObjectImplObj) verified building.
-- Applies to/a.k.a.: any `cfgGameMgr9354Unused`/`DeclUnused`-style macro shield; CfSoundMan_PlayActorParam / func_800D9354 / func_801BFC38__ / ScnRes_VertRayForward_E398 / getPlayer__Q22cf13CfGameManagerFi decl families; prefer root-fixing the header over adding another shield.
+- Applies to/a.k.a.: any `cfgGameMgr9354Unused`/`DeclUnused`-style macro shield; CfSoundMan_PlayActorParam / updateBattleManager / func_801BFC38__ / ScnRes_VertRayForward_E398 / getPlayer__Q22cf13CfGameManagerFi decl families; prefer root-fixing the header over adding another shield.
 ## RVL_SDK dvd/dvd_broadway — both DECOMP_FORCEACTIVE emitters retired by restoring the real GC'd functions (US, Wii/1.1 `-O4,p`, FULL_MATCH)
 - Symptom:   unit carried two retail-absent `DECOMP_FORCEACTIVE` fakes kept alive only for compile-time side effects: c155 (`&dvdContexts`) pinned `.bss` first-reference order, c495 (two `(%s) tmd ...` literals + `&coverStatus/&coverRegister`) pooled strings at `.data 0x458` and kept two unused `.bss` symbols; three fake `UnusedStr_*` byte arrays hand-pinned other GC'd functions' literals.
 - Cause:     the retail source defined real functions there (`DVDLowOpenPartitionWithTmdAndTicket`, `DVDLowGetCoverStatus`, `DVDLowGetCoverReg`) that the retail linker GC'd from the image; their literal-pooling/.bss-pin side effects are still visible in the DOL-extracted retail .o. The static early helper `initDvdContexts` references `dvdContexts` but is fully inlined into `DVDLowInit`, so under first-reference bss allocation it pins nothing (diRegValCache/registerBuf from the earlier-outlined `doPrepareCoverRegisterCallback` win slots 0/0x20 and `dvdContexts` drifts to 0x40 → `addi r12,r9,64` vs retail `0`).
@@ -10705,10 +10705,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Confidence: repo_proven
 
 ## CMenuPTGauge remap-clearing — deleting a `#define …Unused` block shifts codegen of UNRELATED functions under `-ipa file` (Wii/1.1, -O4,p) — keep net line count stable
-- Symptom:   Removing a 30-line `#define sym …Unused / #undef` include-guard block (net −18 source lines) from menu/CMenuPTGauge.cpp regressed two functions that call NONE of the renamed symbols: func_80187C90 97.1%→13.5% (decomp .text +8 bytes, float-pool f0/f1 color flip), func_80187B70 100%→98.6%. Re-adding ANY single line before the affected include — the original `#define`, an unrelated `extern "C" void zz_probe(...);` declaration, a plain comment, or a blank line — restored the exact baseline table (16/19).
+- Symptom:   Removing a 30-line `#define sym …Unused / #undef` include-guard block (net −18 source lines) from menu/CMenuPTGauge.cpp regressed two functions that call NONE of the renamed symbols: PTGaugeClsAnm 97.1%→13.5% (decomp .text +8 bytes, float-pool f0/f1 color flip), PTGaugeEntAct 100%→98.6%. Re-adding ANY single line before the affected include — the original `#define`, an unrelated `extern "C" void zz_probe(...);` declaration, a plain comment, or a blank line — restored the exact baseline table (16/19).
 - Cause:     MWCC `-ipa file` output is sensitive to downstream SOURCE LINE NUMBERS in this TU; shrinking the file renumbered every later line and flipped pool/regalloc decisions. Not name-specific and not declaration-count-specific — purely positional.
 - Fix:       When clearing DeclUnused remap blocks, pad with replacement comment lines so NET line count (and ideally the line numbers of everything after the edit region) stays stable; re-run `hexdiff --all` and diff the full table against the pre-edit baseline, not just the target symbol.
-- Result:    All six remaps cleared; hexdiff --all identical to baseline (16/19; pre-existing residuals func_80187858/func_80187A88/func_80187C90 untouched; split +0x60 pre-existing).
+- Result:    All six remaps cleared; hexdiff --all identical to baseline (16/19; pre-existing residuals PTGaugeTickDn/PTGaugeClsAct/PTGaugeClsAnm untouched; split +0x60 pre-existing).
 - Confidence: repo_proven
 - Applies to/a.k.a.: any shield/renames removal that changes file length; pairs with the g3d dcc DECOMP_FORCEACTIVE entry's warning about line-embedded rule names (same root sensitivity class). Header edits get the same treatment: keep edits line-neutral when the consumer TU cannot be re-verified.
 
@@ -10722,13 +10722,13 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 
 ## kyoshin/code_800B06A4 — stale-FULL_MATCH rematch: mw_version conflict proven by cross-version probe (GC/3.0a5.2 vs Wii/1.x), extern "C" identity fixes, DECOMP_DONT_INLINE ineffective (US, GC/3.0a5.2 -O4,p)
 - Symptom:   after the stale-FULL_MATCH sweep, 12 targets demoted to NOT_STARTED; hexdiff showed either wrong-symbol comparisons (mangled-name drift) or genuine scheduling drift (ctor lis/addi pair split + volatile-store sink + r3-offset link stores; dtor cmpi/li swap; wrapper callees inlined).
-- Cause:     three independent causes. (1) Identity: `__ct__reslist_cf_*` / `gmWalkByName` definitions lacked `extern "C"`, so MWCC emitted `__FPv`/`__FPCc`-suffixed symbols and hexdiff compared wrong bytes. (2) Inlining: `DECOMP_DONT_INLINE` does NOT prevent MWCC inlining small helpers into their callers — `#pragma auto_inline off` around the callee definition is the only reliable lever (gflagTestBit6, notifyObjCA0, walkReslistByName, rebuildTboxPool, new getReslistC48). (3) Toolchain: the reslist-ctor family, __dt__800B0AF4 and func_800B66BC only reproduce byte-identical under Wii/1.x compilers; the unit is pinned to GC/3.0a5.2 because teardownGameMgr/B8920/B31F8/B67CC are FULL_MATCH only there (probe: .scratch/reslist_probe7.cpp byte-exact on Wii/1.1/1.3/1.5/1.6/1.7 both -O4,p/-O4,s, fails on all GC/3.0a*; triage .scratch/b06a4_triage_{GC,W11}.json shows Wii/1.1 fixes 2+ ctors but regresses the four accepted functions). Also: Wii/1.1 errors on duplicate extern-"C" declarations with differing signatures (10505) where GC tolerates them.
+- Cause:     three independent causes. (1) Identity: `__ct__reslist_cf_*` / `gmWalkByName` definitions lacked `extern "C"`, so MWCC emitted `__FPv`/`__FPCc`-suffixed symbols and hexdiff compared wrong bytes. (2) Inlining: `DECOMP_DONT_INLINE` does NOT prevent MWCC inlining small helpers into their callers — `#pragma auto_inline off` around the callee definition is the only reliable lever (gflagTestBit6, notifyObjCA0, walkReslistByName, rebuildTboxPool, new getReslistC48). (3) Toolchain: the reslist-ctor family, __dt__800B0AF4 and tickSpeedPass only reproduce byte-identical under Wii/1.x compilers; the unit is pinned to GC/3.0a5.2 because teardownGameMgr/B8920/B31F8/B67CC are FULL_MATCH only there (probe: .scratch/reslist_probe7.cpp byte-exact on Wii/1.1/1.3/1.5/1.6/1.7 both -O4,p/-O4,s, fails on all GC/3.0a*; triage .scratch/b06a4_triage_{GC,W11}.json shows Wii/1.1 fixes 2+ ctors but regresses the four accepted functions). Also: Wii/1.1 errors on duplicate extern-"C" declarations with differing signatures (10505) where GC tolerates them.
 - Fix:       per target: add `extern "C"` to definitions whose retail symbol is unmangled (check with `nm build/us/src/<unit>.o` vs retail `hexdiff --list`); wrap helpers that retail calls out-of-line in `#pragma auto_inline off/on` (never trust DECOMP_DONT_INLINE alone); write missing wrapper definitions exactly (`getReslistC48 = (char*)getInstance() + 0xC48`). Do NOT flip the unit mw_version — verify net effect with a full-unit `hexdiff --all --json` diff first.
 - Result:    8/12 restored to FULL_MATCH in session (us-800b75c0 getReslistC48, us-800b23c0 resetTboxThenMask, us-800b2488 maybeNullThenFlag, us-800b250c gflagGateMask8, us-800b9cec gmNotifyCA0, us-800b9dbc gmWalkByName + identity-only us-800b1368/us-800b15d8 still plateaued); 4 remain packeted (us-800b1368/us-800b15d8 ctors 46.7%, us-800b13c0 dtor 89.5%, us-800b6fb8 97.1% size-exact) blocked on the mw_version split. func_800B6FB8 notes: retail calls isTypeId1to24 OUT-OF-LINE from it — a trailing `#pragma inline` after that helper's definition forced re-inlining; replace with `#pragma auto_inline off` around the definition; and literal float constants that retail pools under a named symbol (lbl_eu_806669D8 = this TU's zero-float) must be spelled as references to that extern or the pool entry emits an unnamed @N reloc.
 - Confidence: repo_proven (cross-version probe + full-unit triage + exhaustive version sweep) for the mw_version conflict and the auto_inline recipe; negative_result (per-function pragma sweep: `optimize_for_size on` and `optimization_level 3` both reproduce the same drifted ctor/dtor schedule under GC/3.0a5.2 - no pragma lever reaches the Wii-family store-sink/lis-addi-pair behavior; probe .scratch/ctor_ofs_probe.cpp)
 - Applies to/a.k.a.: any TU where different functions demand different mw_version families — next angle is a per-TU split (two source files, two Object() entries, one splits.txt unit) after verifying intra-TU-inlining callers; DECOMP_DONT_INLINE is advisory only everywhere it was tested here.
 
-## monolib/coli code_804A6C60 func_804A79B4 — TWO missing [frsp], size -8 → angle parameters were `double` in the original signature (Wii/1.1, -O4,p → 71.4%, was 25.7%)
+## monolib/coli code_804A6C60 ColiInitAngleSpec — TWO missing [frsp], size -8 → angle parameters were `double` in the original signature (Wii/1.1, -O4,p → 71.4%, was 25.7%)
 - Symptom:   decomp exactly 8 bytes short; retail prologue saves params via stfd and emits two early [frsp] of the param registers that decomp lacks
 - Cause:     the two f32 angle parameters were actually passed/used as DOUBLE (callers promote); every single-domain use needs an explicit [frsp] narrowing
 - Fix:       declare params `double f1, double f2`; narrow at arithmetic sites (`field_0x44.y += (f32)f1`, gate `lbl * (f32)f1`, `+ (f32)f2 - (f32)f1`); leave direct field stores raw (`field_0x5c = f1` folds high-word via stfs)
@@ -10766,11 +10766,11 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Confidence: repo_proven
 - Applies to/a.k.a.: extends MWCC_CASES CDeviceGX/LODMemMan 10322 entries and the CDeviceRemotePad `-RTTI off` workaround — prefer local slot decls + namespaced RTTI when the TU must keep -RTTI on.
 
-## func_80197538 / func_80197DE8 — hoist loop-counter decl to function scope to fix volatile scan-trio colors (Wii/1.1 -O4,p)
+## CPartsChange_RemoveBattleEntry / CPartsChange_ReleaseEntryWithDrop — hoist loop-counter decl to function scope to fix volatile scan-trio colors (Wii/1.1 -O4,p)
 - Symptom:   pure reg_swap residual on the {id, walk-ptr, index} volatile trio of a 16-entry table-scan loop; index colored highest instead of matching retail's middle slot
 - Cause:     loop-local `for (u32 i = 0; ...)` births i's vreg late (loop phase), after the strength-reduced base pointer — retail's source declared the counter at function scope
 - Fix:       declare `u32 i;` at function top (before the id local's block) and use `i = 0; for (; i < 16; i++)`. Confirms register_mapping.md's creation-order rule extends to volatiles whose assignment is far from declaration
-- Result:    func_80197538 97.4% -> 98.3% (9 -> 6 swaps); func_80197DE8 79.5% -> 81.5% (41 -> 37 swaps)
+- Result:    CPartsChange_RemoveBattleEntry 97.4% -> 98.3% (9 -> 6 swaps); CPartsChange_ReleaseEntryWithDrop 79.5% -> 81.5% (41 -> 37 swaps)
 - Confidence: repo_proven (two independent functions, one build each)
 - Applies to/a.k.a.: any indexed table-scan loop with id/key + walk-pointer + counter volatile trio; pair with the ABI-boundary witness caveat (swaps touching r4/r5 at call sites still need FULL_MATCH)
 
@@ -10824,7 +10824,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   dynamic_cast typeinfo, not vtable (nothing dispatches past 0x74).
 - Fix:       __declspec(novtable) CfCam (26 decls, pure where the word is 0 with the
   leaf-forced signature) + CfCamFollow (17 overrides + 0x70 cfCam_getActivePad + 0x74
-  func_80074AA4); vtbl() overlay + manual label stores in ctors/dtor; unk164 retyped
+  runCamAction); vtbl() overlay + manual label stores in ctors/dtor; unk164 retyped
   CfObject*; DBD4 converted to the CHelp_Talk CVoiceRec/field_04->vf30() idiom
   (owner header reused, not redeclared); all call sites this->/obj->.
 - Result:    PRIMARY FILES zero pads (rg-verified); scratch TU under Wii/1.1 game flags
@@ -10912,63 +10912,63 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   hand-vtable + symbols.txt us/jp/eu + targets.json id-preserving rename),
   unit holds 44/60 FULL, split PASS.
 
-## func_80277B38 / kyoshin/cf/chain/CChain — case-6 unk0 reloads + scratch store order → local alignment (Wii/1.1 -O4, ~36% near-miss)
+## CChain_TickChain / kyoshin/cf/chain/CChain — case-6 unk0 reloads + scratch store order → local alignment (Wii/1.1 -O4, ~36% near-miss)
 - Symptom:   hexdiff ~29% / 12 bytes short; case 6 `or r4,r27` vs `lwz r4,0(r27)`; scratch `li`/`stb`/`sth`/`stfs` order differed
 - Cause:     caching `battleObj = actor->unk0` killed the actor register so later uses folded the three retail reloads (exactly 12 bytes). Scratch field writes were born in source order (6, 0xe, 0, -1) instead of retail (0xe, -1, 0, 6) with the float hoisted between D and 10
 - Fix:       keep actor live; reload `actor->unk0` at each later call/store; write scratch as D, 12, float, 10, 6
 - Result:    case 5 scratch + case 6 body instruction-match; function still ~36.5% (639 structural) / 0x12bc vs 0x12c8. Residual: case 5 `lbz field_2` vs `lfs` schedule, switch `cmpli 26` vs `25`, member-wrap colors, later cascade
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — empty case 0x1a folds jumptable bound (Wii/1.1 -O4, 38.4% near-miss)
+## CChain_TickChain / kyoshin/cf/chain/CChain — empty case 0x1a folds jumptable bound (Wii/1.1 -O4, 38.4% near-miss)
 - Symptom:   `cmpli r5, 25` vs retail `cmpli r5, 26`; 12 then 8 bytes short; case 5 tail `lfs` before `lbz field_2`
 - Cause:     MWCC drops a trailing empty `case 0x1a: break` (same target as default/epilogue), shrinking the jumptable. Case 5 O4 scheduler hoists `lfs` ahead of the independent `field_2` load. Wrap lookup `extsb` coalesces away when `newIdx` is already s8
 - Fix:       `case 0x1a: return;` keeps the slot (`cmpli 26`) with no extra body bytes. Load `field_2` into a local before timer stores (schedule still hoists `lfs`). `#pragma schedule off` on the whole function regresses ~10pp
 - Result:    38.4% (623 structural / 117 reg_swap) / 0x12c0 vs 0x12c8. Next: serialize case 5 `lbz`/`lfs` without TU-wide schedule off; keep wrap `extsb` + count `lwz`/`extsh` live
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — size-parity wrap; witness dies on case 5 lfs hoist (Wii/1.1 -O4, 40.1% / objdiff 97.5%)
+## CChain_TickChain / kyoshin/cf/chain/CChain — size-parity wrap; witness dies on case 5 lfs hoist (Wii/1.1 -O4, 40.1% / objdiff 97.5%)
 - Symptom:   cycle `witness-gate: mnemonic | slot 358: lbz vs lfs`; hexdiff 40.1% at exact 0x12c8; u8 wrap with both `(u8)(idx±1)` is 56.3% but 1205 vs 1202 insns
 - Cause:     O4 hoists `lfs` of `lbl_eu_80668A44` ahead of `lbz field_2` even when the load is first in source. Size-exact wrap mixes `idx += 1` (no `rlwinm`) with one `(u8)` decrement mask
 - Fix:       keep `case 0x1a: return` (cmpli 26). case 0xc: `idx += 1` / `idx = (u8)(idx-1)`; case 0xd: `idx +=`/`-=`. Do not TU-wide `schedule off`
 - Result:    size PASS; witness runs; fails first at case 5 schedule. Ruled out: volatile field_2, `(&lbl)[state>>8]`, comma f32, inlined schedule-off helper
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — O4 will not un-hoist case 5 lfs via local pragmas (40.1%, size exact)
-- Symptom:   after `bl func_8014B120`, decomp `lfs` then `li 1` then `lbz field_2`; retail `lbz` then `li 1` then `lfs`
+## CChain_TickChain / kyoshin/cf/chain/CChain — O4 will not un-hoist case 5 lfs via local pragmas (40.1%, size exact)
+- Symptom:   after `bl aiAppendToRing`, decomp `lfs` then `li 1` then `lbz field_2`; retail `lbz` then `li 1` then `lfs`
 - Cause:     Wii/1.1 `-schedule`/`-peephole` are positive-only at O4 (`scheduling.md`). Mid-function `scheduling off` / `peephole off` / `optimization_level 3` are ignored. Whole-function `peephole off` regresses to 1.2% / +0x3C
 - Fix:       none this session — keep mixed wrap + `case 0x1a: return` + simple field_2 local then timer stores
 - Result:    still 40.1% / 0x12c8 exact / witness slot 358 `lbz` vs `lfs`
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — case 5 SDA21 lfs is independent; extra next-store un-hoists (Wii/1.1 -O4)
-- Symptom:   retail tail after `bl func_8014B120` is `lbz; li 1; lfs; li 60; addi; stfs; …` (SDA21 `lfs` of `lbl_eu_80668A44`). Checkpoint 40.1% emits `lfs` first
+## CChain_TickChain / kyoshin/cf/chain/CChain — case 5 SDA21 lfs is independent; extra next-store un-hoists (Wii/1.1 -O4)
+- Symptom:   retail tail after `bl aiAppendToRing` is `lbz; li 1; lfs; li 60; addi; stfs; …` (SDA21 `lfs` of `lbl_eu_80668A44`). Checkpoint 40.1% emits `lfs` first
 - Cause:     retail `lfs` is `R_PPC_EMB_SDA21` — no GPR data edge from `field_2`. Folding indexes / `lfsx` change the encoding. Same-value rewrite of `field_2` is DCE'd. Mid-fn `optimize_for_size` is ignored. A second `addi` successor (store `next` to scratch `field_6`) raises `lbz` enough that the scheduler emits the retail prefix through `addi`
 - Fix:       case 0xc decrement `idx -= 1` (buy 4B); after the call `u8 next = state+1; scratchB.mFields.field_6 = next` then timer stores; `case 0x1a: return`
 - Result:    size `0x12c8` exact; hexdiff structural ~756 (wrap buy). Tail: `lbz; li 1; lfs; li 60; addi; stb field_6; stfs; …`. Witness should die at slot 363 `stb` vs `stfs`. Next: issue `stfs` immediately after `addi` without losing the 5-insn prefix (or sink the extra `stb` with no net insn)
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — case 5 lbz/lfs is a scheduler height vs mem-dep tradeoff (Wii/1.1 -O4, 40.0%)
+## CChain_TickChain / kyoshin/cf/chain/CChain — case 5 lbz/lfs is a scheduler height vs mem-dep tradeoff (Wii/1.1 -O4, 40.0%)
 - Symptom:   same 11-insn tail set as retail; decomp `lfs; li 1; lbz; li 60; stfs; addi` vs retail `lbz; li 1; lfs; li 60; addi; stfs`. Witness slot 358 `lbz` vs `lfs`. Size `0x12c8` exact. objdiff ~97.4% / hexdiff 40.0% (634 structural / 87 reg_swap)
 - Cause:     list-scheduler PickCandidate prefers the SDA21 `lfs` chain (higher latency) unless the `lbz`→`addi`→store chain is taller. An escaped `scratchB.field_6 = next` before the timer stores adds a mem-dep `stb → stfs`, so `lbz` wins and the prefix matches — but the extra `stb` sits in the `lfs` delay slot (and shifts the rest of the function unless a later wrap buy pays the 4B). Sinking that store makes `stfs → stb` and `lfs` wins again. `field_2 = next` first aliases `self`, so `stb field_2` precedes `lfs`. `paused = next - state` emits extra `rlwinm`+`subf`. Address-taken `field_2` and `paused`/`hold` locals do not flip the first pick
 - Fix:       none this session — keep mixed wrap (`case 0xc` `idx += 1` / `(u8)(idx-1)`; `case 0xd` `idx +=`/`-=`) + `case 0x1a: return` + simple `next = state+1` then timer then `field_2 = next`
 - Result:    40.0% / 0x12c8 / witness still `lbz` vs `lfs`. Next: register-only `addi` successor (no mem-dep into `stfs`), or a live-in/color change that makes the first pick `lbz`
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — s8 second vreg flips PickCandidate to lbz; leftover extsb (Wii/1.1 -O4)
+## CChain_TickChain / kyoshin/cf/chain/CChain — s8 second vreg flips PickCandidate to lbz; leftover extsb (Wii/1.1 -O4)
 - Symptom:   `u8 raw; s8 state = (s8)raw; next = state+1` emits retail prefix `lbz; li 1; lfs; li 60` then `extsb` where retail has `addi r0,r3,1`. Witness would die at addi vs extsb, not lbz vs lfs
 - Cause:     extra `extsb` raises the `lbz` chain height so PickCandidate prefers it over SDA21 `lfs`. The extra node occupies the `lfs` delay slot (`+0x05a8`). `int state = raw` coalesces (back to `lfs` first). Identity `DECOMP_PPC_RLWINM` on `next` coalesces. `(state, next)` comma and late `raw-raw` fold. `idx -= 1` wrap buy + s8 is size-exact 0x12c8 but 29.0% / 756 structural
 - Fix:       none kept — restored mixed wrap + simple `u8 next = state+1` then timer (40.0%)
 - Result:    checkpoint 40.0% / 0x12c8 / slot 358 still `lbz` vs `lfs`. Next: a second vreg that does not emit `extsb`/`mr` in the delay slot (non-destructive `addi r0,r3,1` only), or sink the extra node after `stfs` while keeping height
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_80277B38 / kyoshin/cf/chain/CChain — late/live-across-call state cannot sink the extra node (Wii/1.1 -O4, 40.4%)
+## CChain_TickChain / kyoshin/cf/chain/CChain — late/live-across-call state cannot sink the extra node (Wii/1.1 -O4, 40.4%)
 - Symptom:   same tail: decomp `lfs; li r3,1; lbz r4; li r0,60; stfs; addi r4,r4,1` vs retail `lbz r3; li r5,1; lfs; li r4,60; addi r0,r3,1; stfs`. Cycle still `witness-gate: slot 358 lbz vs lfs`. Fuzzy 49.6%
-- Cause:     PickCandidate L3 prefers the SDA21 `lfs` height. A predcount-1 extra on `lbz` (s8/`extsb`, pre-stfs `field_6=next`) wins first pick but occupies the `lfs` delay (dead). A sunk extra that aliases `stfs` lengthens the `lfs` chain (`lfs` still wins). Integer stores before `stfs` made first pick `li 1` (39.9%). `state` live across `func_8014B120` is 29.6% / 0x12c4. Capturing the call return for `mPaused` is 30.4% / 0x12c4 (`mr` to a saved reg). Tail local birth order (`t1`/`paused`/`state`) is a no-op. `unsigned int state/next` is a no-op
+- Cause:     PickCandidate L3 prefers the SDA21 `lfs` height. A predcount-1 extra on `lbz` (s8/`extsb`, pre-stfs `field_6=next`) wins first pick but occupies the `lfs` delay (dead). A sunk extra that aliases `stfs` lengthens the `lfs` chain (`lfs` still wins). Integer stores before `stfs` made first pick `li 1` (39.9%). `state` live across `aiAppendToRing` is 29.6% / 0x12c4. Capturing the call return for `mPaused` is 30.4% / 0x12c4 (`mr` to a saved reg). Tail local birth order (`t1`/`paused`/`state`) is a no-op. `unsigned int state/next` is a no-op
 - Fix:       keep mixed wrap + `case 0x1a: return` + `next=state+1` then timer. Declare `int i` before `int runKey` (and `idx` before `actor`) — 87→82 `reg_swap`, hexdiff 40.4%
 - Result:    40.4% / 0x12c8 exact / 634 structural / 82 reg_swap / objdiff 97.47%. Next: extra `lbz` successor with predcount>1 that does **not** alias `stfs` (so it is late and only on the `lbz` chain), or equalize heights so L4 desc-byte picks `lbz`
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_8023D3D8 / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
+## NandApplySave / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
 - Symptom:   hexdiff 9.5% (684 structural / 269 reg_swap); 0x1074 vs retail 0x1070; 0x60
   savegpr frame matches but no `mr r31,r1`; img in r25 not r30; pair trips hoisted to
   r31/r30. Second pair addi is now `0xE4` (retail). Retail epilogue is the FP/backchain
@@ -10986,7 +10986,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   (no extra try slot); then img r30 / ok r26 and `li r0,24/18` in the entry body
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
-## func_8023D3D8 / kyoshin/cf/CfNandManager — FP without extra slot still open (Wii/1.1 -O4,p, 9.5%)
+## NandApplySave / kyoshin/cf/CfNandManager — FP without extra slot still open (Wii/1.1 -O4,p, 9.5%)
 - Symptom:   still 9.5% / 0x1074; retail `or r31,sp` then img r30 / ok r26; decomp has no FP
   so 24/18 hoist to r31/r30. Game TU already has `-Cpp_exceptions on` (cflags_game)
 - Cause:     any extra unwind object or escaped scratch pointer adds a 0x10–0x20 slot
@@ -11000,7 +11000,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   recolor img/ok and in-body `li r0,24/18`
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
-## func_8023D3D8 / kyoshin/cf/CfNandManager — const alloca(0) gives FP (Wii/1.1 -O4,p, 12.5%)
+## NandApplySave / kyoshin/cf/CfNandManager — const alloca(0) gives FP (Wii/1.1 -O4,p, 12.5%)
 - Symptom:   12.5% (660 structural / 266 reg_swap); 0x1088 vs retail 0x1070; 0x60
   savegpr frame + `or r31,sp` + img in r30; extra `lwz r0,0(sp); stwu r0,0(sp)`
   after the FP copy. ok is r25 not r26; 24/18 still hoist to saved regs
@@ -11108,7 +11108,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Evidence:  us-801c1cfc / src/kyoshin/cf/CfSoundMan.cpp
 
 ## CArtsInfo sprintf-family (A148/A210/A398/39EFC/AD5C/A60C/A97C/A2D8/A8CC/AA2C/AADC + 37A0C) — entry mr order + 37A0C i2f slot reuse (US, Wii/1.1 -O4,p, OPEN)
-- Symptom:   Registry CODE_MATCH 99.55–99.6% is stale. Live hexdiff: 11 handlers at 95.5–96.0% with **0 structural / 2 reg_swap**; `func_80237A0C` at 92.1% with 0 structural / 8 reg_swap. The 2-swap is not a color error — dests already match (`self→r27/r25`, `arg2→r29/r26`) — only the two independent post-`stmw` `or` copies are swapped (retail `r4` then `r3`; MWCC ABI order `r3` then `r4`). `func_80237A0C` adds 6 stack-displacement diffs: retail reuses the unsigned i2f home at `sp+72/76` for the first xoris conversion then `80/84` for the second; decomp allocates fresh `80/84` and `88/92`.
+- Symptom:   Registry CODE_MATCH 99.55–99.6% is stale. Live hexdiff: 11 handlers at 95.5–96.0% with **0 structural / 2 reg_swap**; `CArtsInfo_FmtRow00` at 92.1% with 0 structural / 8 reg_swap. The 2-swap is not a color error — dests already match (`self→r27/r25`, `arg2→r29/r26`) — only the two independent post-`stmw` `or` copies are swapped (retail `r4` then `r3`; MWCC ABI order `r3` then `r4`). `CArtsInfo_FmtRow00` adds 6 stack-displacement diffs: retail reuses the unsigned i2f home at `sp+72/76` for the first xoris conversion then `80/84` for the second; decomp allocates fresh `80/84` and `88/92`.
 - Cause:     Post-`stmw` param-save copies are inserted in incoming ABI order and the width-2 ready-list emits that order. Source first-use / shadows / `const` / comma-operator / `#pragma scheduling off` / `#pragma optimization_level 3` / `optimize_for_size` do not flip it (scheduling off keeps r3-first and adds 9 structural). Witness closed (`bl` + abi-boundary `rho r3→r4`). 37A0C slot extra: implicit `(float)s32` temps do not overlay the dead unsigned home.
 - Fix:       None from C++ this pass. Reverted all probes. Next angle is the Wii/1.1 scheduler ready-list tie-break for independent param mrs, not more decl-order experiments.
 - Result:    95.5–96.0% near-miss (11 ids); 92.1% near-miss (`us-8023991c`). No cycle (live << registry; witness-blocked).
@@ -11163,14 +11163,14 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    FULL_MATCH (cycle `equivalence: full_match`)
 - Evidence:  us-80263e48 / src/kyoshin/code_8025FB10.cpp
 
-## func_801E9224 / CItemBoxInfo — packed sdata2_ItemBox #define → extra `li r3,0` / `lfs 56(r3)` (US)
+## calcItemBox2Bonus2 / CItemBoxInfo — packed sdata2_ItemBox #define → extra `li r3,0` / `lfs 56(r3)` (US)
 - Symptom:   Live 47.4% / 16 structural / 0x98 vs 0x94. Scale `lbl_eu_80668040` and 2^52 magic `lbl_eu_80668028` were `#define` aliases into `sdata2_ItemBox` members, so MWCC used a struct base (`li r3,0; lfs 56(r3)`) instead of SDA21 `lfs/lfd 0(r0)`.
 - Cause:     Member access through a packed `.sdata2` blob is not an SDA21 symbol; the extra `li` also steals r3 from the `(s32)prod+0x64` / `mullw` dest (addi r4 / mullw r4 vs retail addi r3 / mullw r0).
-- Fix:       `#undef` the two macros around `func_801E9224` and reference `extern "C"` `lbl_eu_80668028` (header) + `lbl_eu_80668040`. Keep `9310+92B8` expression order so 92B8 is called first (full r27–r30 save set). Restore the `#define`s after the function.
+- Fix:       `#undef` the two macros around `calcItemBox2Bonus2` and reference `extern "C"` `lbl_eu_80668028` (header) + `lbl_eu_80668040`. Keep `9310+92B8` expression order so 92B8 is called first (full r27–r30 save set). Restore the `#define`s after the function.
 - Result:    94.6% / 0 structural / 0x94/0x94. Residual: `or r28,r4` then `or r27,r3` vs reverse (witness FAIL abi-boundary r3→r4). `@N` vs `lbl_eu_80668028` on the builtin `(f32)prod` magic lfd.
 - Evidence:  us-801eae20 / src/kyoshin/CItemBoxInfo.cpp
 
-## func_80118854 / CMiniMap — MiniMapObj extra SI stub put GetPos at +0xB0 (US, Wii/1.1, HIGH_MATCH residual)
+## MiniMapUpdateMapIcons / CMiniMap — MiniMapObj extra SI stub put GetPos at +0xB0 (US, Wii/1.1, HIGH_MATCH residual)
 - Symptom:   Aligned hexdiff ~2.3% with 42× `lwz r12, 176(r12)` vs retail `172`; v160 `356` vs `352`; v228 `556` vs `552`.
 - Cause:     Fake SI view declared `v000..v0A4` then `GetPos`. MWCC's hidden two-slot dtor plus 42 stubs lands GetPos at +0xB0; later virtuals stay +4.
 - Fix:       Drop the extra `v0A4` so the view is 41 stubs (`v000..v0A0`) then `GetPos` (same contract as `MiniMapPlayer` / `MiniMapSubObj`). Delay `f32 zero = lbl_eu_80667090` until after the `m0C`/`getPlayer` early-outs so prologue does not `lfs` before those checks.
@@ -11185,9 +11185,9 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Evidence:  us-801aec38 / src/kyoshin/menu/CMenuVision.cpp
 
 ## TagProcResetPage / CTagProcessor — IPA inlined callee into 0x8c wrapper → noinline (Wii/1.1 -ipa file, FULL_MATCH)
-- Symptom:   live 0.7% size 0x8c/0x490; decomp emitted memset + 2480-byte frame; retail is a small stmw wrapper that `bl func_80127764`
-- Cause:     `-ipa file` inlined `func_80127764` into the caller. Registry 100% was stale from a prior out-of-line build
-- Fix:       `__declspec(noinline)` on `func_80127764` so the wrapper keeps the retail `bl`
+- Symptom:   live 0.7% size 0x8c/0x490; decomp emitted memset + 2480-byte frame; retail is a small stmw wrapper that `bl TagProcRenderPage`
+- Cause:     `-ipa file` inlined `TagProcRenderPage` into the caller. Registry 100% was stale from a prior out-of-line build
+- Fix:       `__declspec(noinline)` on `TagProcRenderPage` so the wrapper keeps the retail `bl`
 - Result:    FULL_MATCH us-80128944 0x8c/0x8c
 
 ## CGXCache .sdata2 anon cast-pool tail — BiasDouble helpers retire drop_data_tail (Wii/1.1 -O4,p, 2026-09-19)
@@ -11227,3 +11227,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       `VoicePlayingIf` with 173 unique filler virtuals + `isPlaying()` (declared #173 → slot 175 = +0x2BC under -RTTI); call `reinterpret_cast<VoicePlayingIf*>(handle)->isPlaying()`
 - Result:    FULL_MATCH us-802a70b0
 - Note:      filler count must use unique names; duplicate pad names under-counted the vtable
+
+## CtrlObjectParam_FindSlotTypeIndex — unsigned == emits cmpl, retail cmp means signed params (US, Wii/1.1, FULL_MATCH)
+- Symptom:   Live 93.5% 2 structural / 0 reg_swap / 0x7c/0x7c; both diffs retail `cmp r4,r0` vs decomp `cmpl r4,r0` on `param_1[i+N] == param_2`
+- Cause:     Decomp declared `(const unsigned int*, unsigned int)`; MWCC picks `cmpl` for unsigned `==` and `cmp` for signed `==` (identical semantics, different opcode). Neighbour `CtrlObjectParam_HasSlotValue(const int*, int)` and the `intArr` fields corroborate a signed original
+- Fix:       `(int)` casts on both operands first (100%, proving the diagnosis), then promoted to the original shape: signature to `(const int* param_1, int param_2)` + all 7 call-site `reinterpret_cast<const int*>`; callers `SwapSlotValues`/`MoveValueToHead` stay FULL, `ApplyArtsRankUp` unchanged
+- Result:    FULL_MATCH (cycle `equivalence: full_match`)
+- Evidence:  us-8009ed1c / src/kyoshin/cf/CtrlObjectParam.cpp

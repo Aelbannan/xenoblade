@@ -23,7 +23,7 @@ public:
     static bool isFlag01Set();
 };
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
-#include "kyoshin/code_80135FDC.hpp"     // IsMenuState621F0 / func_80137250
+#include "kyoshin/code_80135FDC.hpp"     // IsMenuState621F0 / SetWideLocAdjust
 #include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -415,7 +415,7 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     {
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         QstLogList_Draw(&mQstLogList, &drawInfo);
         QstLogInfo_DrawLayoutTail(&mQstLogInfo, &drawInfo);

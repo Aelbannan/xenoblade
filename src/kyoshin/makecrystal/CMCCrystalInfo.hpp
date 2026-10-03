@@ -11,10 +11,10 @@ extern "C" void* lbl_eu_80535CF8[];
 // void keeps MWCC's mangled form (`Pv`) and emitted bytes identical.
 typedef void CMCCItemHandle;
 
-// 4 packed shorts returned in r3:r4 by func_801397AC.
+// 4 packed shorts returned in r3:r4 by PaneMatGetS16Quad.
 struct FourShorts { s16 a, b, c, d; };
 
-// Item/crystal data header read by func_8021A9A8. word0 packs the item code
+// Item/crystal data header read by MCCrystal_ShowItem. word0 packs the item code
 // (bits 20-31) and a type field (bits 12-15); byte 7 holds flags in bits 0-1.
 struct CMCCItemData {
     u32 word0;   // 0x00
@@ -24,8 +24,8 @@ struct CMCCItemData {
     u8 field07;  // 0x07
 };
 
-// Crystal result buffer written by func_8021B188 and consumed by
-// func_8021B2E0. Sized 0x24; the caller copies it wholesale.
+// Crystal result buffer written by MCCrystal_BuildItemBuf and consumed by
+// MCCrystal_ShowSlots. Sized 0x24; the caller copies it wholesale.
 struct CrystalItemBuf {
     u8 count;          // 0x00 number of matching crystal items
     u8 pad00[3];       // 0x01
@@ -74,7 +74,7 @@ public:
 };
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (declared index 7, no args) yields the u32 passed to func_8013676C.
+// (declared index 7, no args) yields the u32 passed to ApplyFontToTxtPanes.
 // All-pure so no vtable is emitted; a genuine virtual call makes MWCC emit
 // the retail lwz r12 dispatch sequence.
 class __declspec(novtable) CMCCrystalInfoFontView {
@@ -127,8 +127,8 @@ extern "C" void MCCrystal_BindIntro(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindMain(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindAnim3(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindAnim4(CMCCrystalInfo* self);
-extern "C" void func_8021B42C(CMCCrystalInfo* self);
-extern "C" void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
+extern "C" void MCCrystal_ClearTexts(CMCCrystalInfo* self);
+extern "C" void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
 extern char lbl_eu_80508DF8[];
 extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
 
@@ -136,7 +136,7 @@ extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata
 // mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) — C linkage keeps the call relocs
 // bound to the retail names.
 extern "C" u32 CUICfManager_getPackedFont9C();
-extern "C" FourShorts func_801397AC(void*, u32);
+extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" void CopyVec4s(short* dst, const short* src);
 // GXColorS10-style shared slot colours (4 s16 channels each); the alpha
 // channel is refreshed from the layout panes during file load.

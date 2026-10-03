@@ -4,12 +4,12 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // LOCAL views of the battle-status helpers for this TU: the constructor call
-// site uses the 5-arg table ABI of func_80174B4C while other TUs use the
+// site uses the 5-arg table ABI of dispatchItemLoad while other TUs use the
 // common 2-arg form (the two extern "C" signatures cannot coexist in one TU -
 // MWCC error 10197), so both helpers are declared here instead of including
 // kyoshin/cf/CfMapItemManager.hpp.
-extern "C" s32 func_80174C98(void* obj, void* outFlags, u32 id);
-extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
+extern "C" s32 testActorStatus(void* obj, void* outFlags, u32 id);
+extern "C" void dispatchItemLoad(void* actor, u32 flags, const void* a, const void* b, const void* c);
 extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(void* self, int val);
 
 // Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
@@ -54,7 +54,7 @@ namespace cf {
         *(void**)((u8*)this + 0x8) = (void*)(grp + 0xC);
         *(void**)((u8*)this + 0x3380) = (void*)(grp + 0x36C);
         *(void**)((u8*)this + 0x3E9C) = (void*)(grp + 0x37C);
-        func_80174B4C(this, 3, grp + 0x36C, grp + 0xC, grp);
+        dispatchItemLoad(this, 3, grp + 0x36C, grp + 0xC, grp);
         aiActionStoreWordB14(reinterpret_cast<u8*>(this) + 0x3380, reinterpret_cast<unsigned int>(this));
         CfActorField45B8* tail = reinterpret_cast<CfActorField45B8*>(this);
         tail->field_0x45B8 = 0;
@@ -281,7 +281,7 @@ extern "C" void CActorParam_setHp__Q22cf13CfObjectActorFv(cf::CfObjectActor* sel
 }
 // Retail symbol is Fv; the real ABI passes (self, delta). Adds a signed
 // delta to the gauge at 0x160C, clamping to [0, 0x160E]. Then, when the
-// actor-id probe (func_80174C98, flag 0x802) succeeds and the gauge sits at
+// actor-id probe (testActorStatus, flag 0x802) succeeds and the gauge sits at
 // its max (vf174 == vf178), decrements it by one via the vf168 slot.
 extern "C" void CActorParam_addGauge__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
     cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
@@ -301,7 +301,7 @@ extern "C" void CActorParam_addGauge__Q22cf13CfObjectActorFv(cf::CfObjectActor* 
             reinterpret_cast<cf::CActorState*>(self)->unk4)
             ->CObjectState_getStateData());
     u32 id = *idPtr;
-    if (func_80174C98(self, (int*)&id, 0x802) != 0) {
+    if (testActorStatus(self, (int*)&id, 0x802) != 0) {
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
         if (self->CActorParam_getGauge() == self->CActorParam_getGaugeMax()) {
             int mx = self->CActorParam_getGaugeMax();
@@ -368,7 +368,7 @@ extern "C" void CActorParam_addSecondGauge__Q22cf13CfObjectActorFv(cf::CfObjectA
             reinterpret_cast<cf::CActorState*>(self)->unk4)
             ->CObjectState_getStateData());
     u32 id = *idPtr;
-    if (func_80174C98(self, (int*)&id, 0x802) != 0) {
+    if (testActorStatus(self, (int*)&id, 0x802) != 0) {
         s16 cur2 = f->field_0x1614;
         s16 max2 = f->field_0x1616;
         int sum2 = cur2 + (s16)delta;
@@ -549,7 +549,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
                     float g = self->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
-                    f *= func_800D81A8(0, self, 0);
+                    f *= calcBattleDamage(0, self, 0);
                     self->CActorParam_addHp(f);
                     static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId(0xFC);
                     PartyGaugeAddClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
@@ -564,7 +564,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
                     float g = self->CActorParam_getDamageScale();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
-                    f *= func_800D81A8(0, self, 0);
+                    f *= calcBattleDamage(0, self, 0);
                     self->CActorParam_addHp(f);
                     static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId(0x100);
                     self->CActorParam_addArtsGauge(lbl_eu_80667768);
@@ -599,7 +599,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
             reinterpret_cast<cf::CActorState*>(self)->unk4)
             ->CObjectState_getStateData());
     u32 id = *idPtr;
-    if (func_80174C98(self, (int*)&id, 0x1c) != 0) {
+    if (testActorStatus(self, (int*)&id, 0x1c) != 0) {
         CfObjectMove_setAnimModeArgs((u8*)self + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
     }
 }

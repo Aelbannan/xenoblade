@@ -11,7 +11,7 @@
 // labels) come from the CfObjectEne.hpp / CfObjectActor.hpp chain.
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-// func_80174B4C / func_80174C98: single unified decls on the owner header.
+// dispatchItemLoad / testActorStatus: single unified decls on the owner header.
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
@@ -20,9 +20,13 @@
 // bare C-linkage name, so declare extern "C" like the ctx snapshot).
 extern "C" void GimUnbindEnemyActor(void* obj, void* actor);
 extern "C" void GimBindEnemyActor(void* obj, void* actor);
-unsigned long SuddenCommuIsStateActive(void* self);
+extern "C" unsigned long SuddenCommuIsStateActive(void* self);
 extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
+// CAIAction.cpp C-ABI imports: the +0x3380 CAIAction subobject helpers
+// (declared in CfObjectPc.hpp for the Pc TU; this TU does not include it).
+extern "C" void aiResetTables(u8* obj);
+extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);
 
 // .sdata2 pool (retail 0x70) as one struct: freezes retail declaration
 // order (MWCC would reorder individual consts by first use) and keeps the
@@ -76,7 +80,7 @@ const Sdata2_Ene sdata2_Ene = {
 namespace cf {
 struct CSuddenCommuGlobal;
 }
-cf::CSuddenCommuGlobal* getUnk80664658(); // getter for the lbl_eu_80664658 holder
+extern "C" cf::CSuddenCommuGlobal* getUnk80664658(); // getter for the lbl_eu_80664658 holder
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650
@@ -236,7 +240,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // CfObject_initEventState (Model UVF2 / slot +0x58), dispatches the subobject
 // vtable slot +0x158 with flag 1, clears two battle-state flag words
 // (CfObjectMove_setModelDisplayFlag / CfObjectMove_setRegionAttached on the subobject with 1), raises three
-// actor flags via func_80174B4C, seeds the +0x44A8 region via ColiSetMoveVec2
+// actor flags via dispatchItemLoad, seeds the +0x44A8 region via ColiSetMoveVec2
 // (two sdata2 floats) and sets its u16 at +0xB2 to 0xC8. Returns 1.
 // KNOWN WALL (allocation-grind; MWCC_PATTERMS 7j negative result): retail
 // recomputes addi r3,r31,0x3e9c per call keeping only r31=self, but MWCC
@@ -257,9 +261,9 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     // +0x3E9C CfObjectMove: slot +0x158 = setPointEnabled.
     ((cf::CfObjectAt3E9C*)self)->setPointEnabled(1);
     CfObjectMove_setModelDisplayFlag(&((cf::CfEneMoveBaseB*)self)->base, 1);
-    func_80174B4C(self, 0x100000);
-    func_80174B4C(self, 0x08000000);
-    func_80174B4C(self, 0x10000000);
+    dispatchItemLoad(self, 0x100000);
+    dispatchItemLoad(self, 0x08000000);
+    dispatchItemLoad(self, 0x10000000);
     CfObjectMove_setRegionAttached(&((cf::CfEneMoveBaseC*)self)->base, 1);
     u8* region = (u8*)self + 0x44A8;
     ColiSetMoveVec2(region, 0, lbl_eu_8066696C, lbl_eu_80666970);
@@ -269,7 +273,7 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 
 // us-800ae4a0: CfObjectEne::updateEnemyBattleState (retail Fv; this in r3). Probes
 // the +0x4 sub-object's actor id (vtable +0x30 first word) against
-// func_80174C98 masks 0x803/0xE; on the clean path runs the +0x8 CBattleState
+// testActorStatus masks 0x803/0xE; on the clean path runs the +0x8 CBattleState
 // subobject slot +0x14 when func_80148778(&+0x8, 0x35) is clear, else runs
 // func_800AF870 and slot +0x20. Then accumulates `scene time * sub8C` into
 // func_801765A4, and when the game-manager bit 0x100 is set applies the
@@ -281,11 +285,11 @@ void cf::CfObjectEne::updateEnemyBattleState() {
         reinterpret_cast<cf::CActorState*>(this)->unk4)
         ->CObjectState_getStateData();
     u32 wordB;
-    if (func_80174C98((void*)this, (int*)&wordA, 0x803) == 0 &&
+    if (testActorStatus((void*)this, (int*)&wordA, 0x803) == 0 &&
         ((wordB = *(u32*)reinterpret_cast<cf::CObjectState*>(
               reinterpret_cast<cf::CActorState*>(this)->unk4)
               ->CObjectState_getStateData()),
-         func_80174C98((void*)this, (int*)&wordB, 0xE)) == 0) {
+         testActorStatus((void*)this, (int*)&wordB, 0xE)) == 0) {
         if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
             // +0x8 CBattleState: slot +0x14 = UnkVirtualFunc4.
             ((cf::CBattleStateAt8*)this)->CBattleState_setBattleParam(0x35);
@@ -316,7 +320,7 @@ void cf::CfObjectEne::updateEnemyBattleState() {
         u32 wordC = *(u32*)reinterpret_cast<cf::CObjectState*>(
             reinterpret_cast<cf::CActorState*>(this)->unk4)
             ->CObjectState_getStateData();
-        if (func_80174C98(this, &wordC, 0x1) != 0)
+        if (testActorStatus(this, &wordC, 0x1) != 0)
             goto defaultPath;
         u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
         if (p != 0)
@@ -582,7 +586,7 @@ extern "C" void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, 
 // +0x3F14 name, row id at +0x3F28), multiplies it by the vtable +0xF0
 // result and the 0x806669B0 scale, feeds the vtable +0xD4 slot, runs the
 // primary vtable +0x288 slot six times and resets the +0x3380 CAIAction
-// subobject (func_8014B7B0 / func_8015396C).
+// subobject (aiResetTables / aiInstallArts).
 void cf::CfObjectEne::initEnemyBdatParams() {
     Bdat_GetTable_AA34();
     // addressable union pins the raw column word to a frame home across the
@@ -599,8 +603,8 @@ void cf::CfObjectEne::initEnemyBdatParams() {
     // Different syntax families (pointer-add vs &subscript) stop MWCC from
     // CSE-ing the subobject address into a callee-saved register - retail
     // re-materializes addi r3, rX, 0x3380 at each call (cf. pluginBtl.cpp).
-    func_8014B7B0((u8*)this + 0x3380);
-    func_8015396C(&((u8*)this)[0x3380], 0, 0);
+    aiResetTables((u8*)this + 0x3380);
+    aiInstallArts(&((u8*)this)[0x3380], 0, 0);
 }
 
 // us-800afd5c: CfObjectEne::CActorParam_UnkVirtualFunc167 (retail Fv; this

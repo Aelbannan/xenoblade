@@ -107,14 +107,14 @@ void* initCamControlInstances() {
     return lbl_eu_80537EC0[index];
 }
 
-void func_802751F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }
-void func_80275238(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit4(reinterpret_cast<int>(self)); }
-void func_80275278(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit5(reinterpret_cast<int>(self)); }
-void func_802752B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld2(reinterpret_cast<int>(self)); }
-void func_802752F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld3(reinterpret_cast<int>(self)); }
-void func_80275338(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld0(reinterpret_cast<int>(self)); }
-void func_80275378(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld1(reinterpret_cast<int>(self)); }
-void func_802753B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isLongHold11(reinterpret_cast<int>(self)); }
+void camPadPress12(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }
+void camPadBit4Reg(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit4(reinterpret_cast<int>(self)); }
+void camPadBit5Reg(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit5(reinterpret_cast<int>(self)); }
+void camPadIsHeld2(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld2(reinterpret_cast<int>(self)); }
+void camPadIsHeld3(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld3(reinterpret_cast<int>(self)); }
+void camPadIsHeld0(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld0(reinterpret_cast<int>(self)); }
+void camPadIsHeld1(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld1(reinterpret_cast<int>(self)); }
+void camPadLngHld11(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isLongHold11(reinterpret_cast<int>(self)); }
 
 
 
@@ -127,7 +127,7 @@ void func_802753B8(void* self) { static_cast<cf::ICamControl*>(initCamControlIns
 
 // State 0 handler: checks target data flags and either spawns a positional
 // effect + sound, or creates a CfObjectEff attached to this controller.
-void func_80275454(UnkCode8027513C* self) {
+void tboxState0Tick(UnkCode8027513C* self) {
     cf::CfObjectMove* obj = self->field_0x14;
     if (obj->mTargetC4 == nullptr) {
         return;
@@ -244,7 +244,7 @@ void func_80275454(UnkCode8027513C* self) {
 // Create and initialize a CfObjectEff attached to this controller.
 // Called as state 1 in the dispatch (field_0x6C == 1).
 // Guards: requires mTargetC4, game manager check, and no existing effect.
-void func_802756F0(UnkCode8027513C* self) {
+void tboxState1Tick(UnkCode8027513C* self) {
     cf::CfObjectMove* obj = self->field_0x14;
     if (obj->mTargetC4 == nullptr) {
         return;
@@ -313,9 +313,9 @@ extern "C" void func_80275824(UnkCode8027513C* self) {
 // State machine: dispatch based on field_0x6C, then sync flag bit 11 between
 // CfObjectMove->mFlags68 and CfObjectEff->mFlags68,
 // and update child effect state via CfGameManager query.
-void func_80275850(UnkCode8027513C* self) {
-    // Dispatch through the state ptmf table (state 0->func_80275454,
-    // 1->func_802756F0); states >= 2 are ignored.
+void tboxUpdateAll(UnkCode8027513C* self) {
+    // Dispatch through the state ptmf table (state 0->tboxState0Tick,
+    // 1->tboxState1Tick); states >= 2 are ignored.
     if (self->field_0x6C < 2) {
         (self->*lbl_eu_80537F98[self->field_0x6C])();
     }
@@ -376,7 +376,7 @@ extern "C" void CfObjectImplTbox_ReleaseLink(void* self, void* other) {
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
 // effect via setChildB59__ and cache the new value
-void func_802753F8(UnkCode8027513C* self, s16 arg) {
+void tboxSyncChild(UnkCode8027513C* self, s16 arg) {
     if (self->field_0x74 != nullptr) {
         if (self->field_0x78 != arg) {
             setChildB59__(self->field_0x74, (s8)arg);

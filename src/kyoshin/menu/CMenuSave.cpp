@@ -85,7 +85,7 @@ void CMenuSave::Init() {
         setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
     if (mField208 == 0) {
-        func_80240360();
+        NandAllocBufs();
     }
 
     // --- Re-initialise the background CBgTex via a temporary ---
@@ -230,7 +230,7 @@ void CMenuSave::Term() {
     lbl_eu_806649E8 = 0;
 
     if (mField208 == 0) {
-        func_80240420();
+        NandTeardown();
     }
     if (mField20A != 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(0);
@@ -279,7 +279,7 @@ void CMenuSave::cbRenderBefore() {
     // (a C++ local would virtual-dispatch its scope-exit destructor).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     BgTex_Draw_3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     CSaveLoad_draw(reinterpret_cast<CSaveLoad*>(mSaveLoad),
                   (nw4r::lyt::DrawInfo*)&drawInfo[0]);

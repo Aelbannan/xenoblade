@@ -1636,7 +1636,7 @@ void bindPadSubobjects(UnkClass_805764CC* self);
 extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* func_8006A6D0();
 extern "C" u8 func_800AF7E4(void* container, const char* name);
-extern "C" int func_801949E0(void* ctx);
+extern "C" int CPartsChange_CheckReloadGate(void* ctx);
 extern "C" int cfCam_queryVoxArts(void* container, u16 flag);
 extern "C" void CfObjectMove_setRegionAttached(void* data, u32 flag);
 extern "C" void orObj68bit6(void* data);

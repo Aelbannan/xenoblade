@@ -189,11 +189,11 @@ void func_8021314C(CMakeCrystalWin* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
             teardownCrystalBox(&self->mCrystalBox);
-            u32 cursor = func_8021625C(&self->mCrystalBox);
+            u32 cursor = rebuildCrystalBoxSelTable(&self->mCrystalBox);
             setCrystalCursor(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), cursor);
             u8 a = getCrystalBoxKindA(&self->mCrystalBox);
             u8 b = getCrystalBoxKindB(&self->mCrystalBox);
-            func_80221B90(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), a, b);
+            MakeCrystal_UnlinkFileSlot(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), a, b);
             if ((u32)a >= 3 || (u32)b >= 3) {
                 CLoadStartFadeInStep(&self->mLoad);
             }
@@ -206,8 +206,8 @@ void func_8021314C(CMakeCrystalWin* self) {
 // Retail 0x80215058: when the model display is ready, show it, advance the
 // loading overlay animation, and set the window state to 9.
 void mkCrystalToState9Ready(CMakeCrystalWin* self) {
-    if (func_8021CA3C(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)) != 0) {
-        func_8021CB20(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea));
+    if (MakeCrystal_CheckReady(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)) != 0) {
+        MakeCrystal_StartCharge(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea));
         CLoadStartRetryStep(&self->mLoad);
         self->field_4360 = 9;
     }
@@ -260,7 +260,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
             __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), self->mScene);
             func_80210E9C(&self->mModelDispArea[0], &dispTemp[0]);
             __dt__21CModelDispMakeCrystalFv(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), -1);
-            func_8021C6E4(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
+            MakeCrystal_InitFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
             func_801C41E8(&self->mTitleAHelp, 0x30);
         } else {
             self->field_4361 = 1;
@@ -283,7 +283,7 @@ void CMakeCrystalWin::cbRenderBefore() {
     // retail direct calls (a C++ local would virtual-dispatch its dtor).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     MakeCrystal_DrawAll(reinterpret_cast<CModelDispMakeCrystal*>(&mModelDispArea[0]), (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawCrystalBox(&mCrystalBox, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     CLoadDrawIfVisible(&mLoad, (nw4r::lyt::DrawInfo*)&drawInfo[0]);

@@ -261,7 +261,7 @@ draw:
     CBattleCommuActor2* actor2 = func_8016FE34(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
-        if (func_80174C98(actor2, &id, 0x803) != 0) {
+        if (testActorStatus(actor2, &id, 0x803) != 0) {
             CBattleCommuBattleObj* battle = reinterpret_cast<CBattleCommuBattleObj*>(
                 __dynamic_cast(player->mSub38, 0, &lbl_eu_80661C60,
                                &lbl_eu_80661BE8, 0));
@@ -274,7 +274,7 @@ draw:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);  // disable Z compare, always pass
     {
         nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
+        SetWideLocAdjust(&drawInfo);
         drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                       &drawInfo, 0, 1);
     }
@@ -354,7 +354,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         return;
     }
     u32 id = *actor2->mSub04->getActorId();
-    if (func_80174C98(actor2, &id, 0x803) == 0) {
+    if (testActorStatus(actor2, &id, 0x803) == 0) {
         return;
     }
 
@@ -373,15 +373,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1b);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x107, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x112, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x11d, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x128, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x133, buf, 0);
         handled = 1;
         break;
@@ -391,15 +391,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1c);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x107, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x112, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x11d, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x128, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x133, buf, 0);
         handled = 1;
         break;
@@ -409,15 +409,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x1d);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x107, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x112, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x11d, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x128, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x133, buf, 0);
         handled = 1;
         break;
@@ -449,15 +449,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
             } else {
                 sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
             }
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x107, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x112, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x11d, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x128, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x133, buf, 0);
         } else {
             char buf[0x40];
@@ -483,15 +483,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
             } else {
                 sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
             }
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x107, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x112, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x11d, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x128, buf, 0);
-            func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+            LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                           lbl_eu_805047FC + 0x133, buf, 0);
         }
         handled = 1;
@@ -502,15 +502,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x25);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x107, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x112, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x11d, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x128, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x133, buf, 0);
         handled = 1;
         break;
@@ -520,15 +520,15 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
                                    count + 0x26);
         sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x107, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x112, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x11d, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x128, buf, 0);
-        func_80136A1C(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
+        LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
                       lbl_eu_805047FC + 0x133, buf, 0);
         handled = 1;
         break;
@@ -567,7 +567,7 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
     CBattleCommuActor2* actor2 = func_8016FE34(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
-        if (func_80174C98(actor2, &id, 0x803) != 0) {
+        if (testActorStatus(actor2, &id, 0x803) != 0) {
             int isSpecial = 0;
             CBattleCommuBattleObj* battle = reinterpret_cast<CBattleCommuBattleObj*>(
                 __dynamic_cast(player->mSub38, 0, &lbl_eu_80661C60,

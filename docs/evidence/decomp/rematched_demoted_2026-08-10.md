@@ -30,8 +30,8 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-8016db34 | kyoshin/cf/CTaskREvtSequence | `EvtSeqDtorThunk54` |
 | us-8016db3c | kyoshin/cf/CTaskREvtSequence | `EvtSeqRenderThunk58` |
 | us-8020acbc | kyoshin/cf/CfGimmick | `CfGimmick_SetGlobalB8Value` |
-| us-80174c98 | kyoshin/cf/CfMapItemManager | `func_8017389C` |
-| us-80174ca0 | kyoshin/cf/CfMapItemManager | `func_801738A4` |
+| us-80174c98 | kyoshin/cf/CfMapItemManager | `getMapItemTable` |
+| us-80174ca0 | kyoshin/cf/CfMapItemManager | `getValueItemTable` |
 | us-802abd34 | kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK | `VisBreak_GetSizeConstF` |
 | us-800cb36c | kyoshin/cfsys/CfObjectImplNpc | `NpcImplDtorThunkC` |
 | us-800cb374 | kyoshin/cfsys/CfObjectImplNpc | `NpcImplDtorThunk10` |

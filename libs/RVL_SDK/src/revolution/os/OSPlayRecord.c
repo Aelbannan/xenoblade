@@ -61,9 +61,9 @@ static u32 RecordCheckSum(const OSPlayRecord* playRec) {
 
 /* Reference PlayRecord first (by value) so the .bss order matches retail
    (PlayRecord at 0x0, ALIGN(32)); kept in .init so no extra .text is emitted. */
-void fake_function(...);
+void OSReport(const char* msg, ...);
 __declspec(section ".init") void FORCEACTIVEOSPlayRecord_keep(void) {
-    fake_function(PlayRecord);
+    OSReport((const char*)&PlayRecord);   // defined callee (fake_function is unavailable)
 }
 
 static void PlayRecordAlarmCallback(OSAlarm* alarm, OSContext* ctx) {

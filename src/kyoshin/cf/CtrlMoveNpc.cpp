@@ -100,12 +100,12 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
 
 // Movement base helpers / npc move helpers (unmangled global symbols).
-void func_80088974(CCtrlMoveNpc* ths, const ml::CVec3* a, const ml::CVec3* b,
+void moveBaseUpdate(CCtrlMoveNpc* ths, const ml::CVec3* a, const ml::CVec3* b,
                    int c, int d);
-void func_80089694(CCtrlMoveNpc* ths, const ml::CVec3* a, f32 f);
-void func_8008962C(CCtrlMoveNpc* ths);
+void setMoveFacing(CCtrlMoveNpc* ths, const ml::CVec3* a, f32 f);
+void moveBaseUnlink(CCtrlMoveNpc* ths);
 void CtrlMoveEne_CommitHeadAngle(cf::CCtrlMoveData* data, f32 f);
-int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
+int  VecMath_CircleOverlapXZ(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
 // cf::CfGameManager::getResourceFromTable is declared non-static void in
@@ -353,9 +353,9 @@ void func_8019F93C(CCtrlMoveNpc* ths) {
         }
 
         v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
-        func_80088974(ths, &v2, &ths->mField58, 1, 0);
-        func_80089694(ths, &v2, speed);
-        if (func_800A5038(pos, &ths->mField58, speed, lbl_eu_80667C60) == 0) {
+        moveBaseUpdate(ths, &v2, &ths->mField58, 1, 0);
+        setMoveFacing(ths, &v2, speed);
+        if (VecMath_CircleOverlapXZ(pos, &ths->mField58, speed, lbl_eu_80667C60) == 0) {
             return;
         }
     }
@@ -367,10 +367,10 @@ void func_8019F93C(CCtrlMoveNpc* ths) {
         CtrlMoveEne_CommitHeadAngle(ths->mBaseData,
                       ths->mField6C * lbl_eu_8066A210);
         ths->mStateFunc = __ptmf_null;
-        func_8008962C(ths);
+        moveBaseUnlink(ths);
     } else {
         ths->mStateFunc = __ptmf_null;
-        func_8008962C(ths);
+        moveBaseUnlink(ths);
     }
 }
 }

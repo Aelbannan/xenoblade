@@ -42,7 +42,7 @@ struct MenuEnemyPanel {
     u32 unk48;                     // +0x48
 };
 
-// 4 packed shorts returned in r3:r4 by func_801397AC.
+// 4 packed shorts returned in r3:r4 by PaneMatGetS16Quad.
 struct FourShorts { s16 a, b, c, d; };
 
 // CPcSelectCursor lives at offset 0x7E4 and is 0x48 bytes.
@@ -193,17 +193,17 @@ extern "C" void* func_8016FE34(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
 extern "C" u32 CUICfManager_getPackedFontD8();
 // 4-short colour pairs read off a pane (unmangled retail symbol).
-extern "C" FourShorts func_801397AC(void*, u32);
+extern "C" FourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" void* __dt__15CMenuEnemyStateFv(CMenuEnemyState* self, int flags);
 extern "C" void* __ct__CMenuEnemyState(void* self, void* scn);
 extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void __dt__8CProcessFv(void* self, int flags);
-extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId);
+extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).
-extern "C" void func_80137B44(nw4r::lyt::Layout* layout, const char* name,
+extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout* layout, const char* name,
                               u32 value);
 // Apply a loaded texture to a pane (retail symbol is unmangled).
-extern "C" void func_80137F88(void* a, void* palette);
+extern "C" void PaneSetTexPalette(void* a, void* palette);
 // Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
 // declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
 // later plain redeclaration inherit it (same signature).
@@ -217,7 +217,7 @@ extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int ScMain_GetSummedInt(void* self);
 extern "C" void func_8049B59C(void* out, void* pose, const void* in);
 extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
-extern "C" char* func_80138DA4(const char* s);
+extern "C" char* GetBdatNameByNumId(const char* s);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
 extern "C" void PaneMatSetTevColors(void* a, void* b, void* c);
 extern "C" void* lookupCA0By45C0(void);
@@ -230,7 +230,7 @@ void* getEffOwner(void* obj);
 extern u32 lbl_eu_80663F50;
 // CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
 // (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
-// String pool base (func_80111B08 pane names at +0xd3/+0xdd/+0x11d).
+// String pool base (EneSt_ScalePaneWidths pane names at +0xd3/+0xdd/+0x11d).
 extern char lbl_eu_804FDBF8[];
 // sdata2 constants used by the panel-highlight helpers.
 extern const f32 lbl_eu_80667008;
@@ -244,9 +244,9 @@ extern const f32 lbl_eu_80667054;
 extern const f32 lbl_eu_80667038;
 // Enemy-data table pointer (sdata) used by the highlight-scan helpers.
 extern u8* lbl_eu_806640E0;
-// Texture-index table for the panel-highlight search (func_801132A8).
+// Texture-index table for the panel-highlight search (EneSt_SearchHighlightTexture).
 extern u32 lbl_eu_804FDBC8[];
-// sdata colour/scale quads + s16 pairs used by func_80110A78's pane setup.
+// sdata colour/scale quads + s16 pairs used by EneSt_RegisterPanel's pane setup.
 // Declared as 4-element s16 arrays so direct element access keeps the retail
 // sda21 addressing (li lbl@sda21 + halfword ops).
 extern s16 lbl_eu_80663F58[];

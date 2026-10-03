@@ -48,7 +48,7 @@ public:
 };
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (slot 9, no args) yields the u32 font handle bound by func_8013676C.
+// (slot 9, no args) yields the u32 font handle bound by ApplyFontToTxtPanes.
 // All-pure so no vtable is emitted.
 class CTitleAHelpFontView {
 public:

@@ -261,28 +261,13 @@ BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_
     return SDP_AddAttribute(handle, 1, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
 }
 
-BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UINT16 *p_uuids) {
-    UINT16 xx;
-    UINT8 buff[SDP_MAX_ATTR_LEN * 2];
-    UINT8 *p = buff;
-    int max_len = SDP_MAX_ATTR_LEN - 3;
-
-    /* First, build the sequence */
-    for (xx = 0; xx < num_uuids; xx++, p_uuids++) {
-        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-        *p++ = (UINT8)(*p_uuids >> 8);
-        *p++ = (UINT8)*p_uuids;
-
-        if ((p - buff) > max_len) {
-            if (sdp_cb.trace_level >= 2) {
-                LogMsg_2(0xa0001, "SDP_AddUuidSequence - too long, add %d uuids of %d", xx, num_uuids);
-            }
-            break;
-        }
-    }
-
-    return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
-}
+// .data log strings in retail pool order (0x98): MWCC pools function-scope
+// literals in reverse definition order, so file-scope tables pin the layout.
+// Array sizes absorb MWCC's 4-padding (AddAttribute 57+3, AddUuid 51+1,
+// Deleting 39+1); the call sites below reference these instead of literals.
+static char s_sdpAddAttrLog[60] = "SDP_AddAttribute: attr_len:%d too long. truncate to (%d)";
+static char s_sdpAddUuidLog[52] = "SDP_AddUuidSequence - too long, add %d uuids of %d";
+static char s_sdpDeletingLog[40] = "Deleting attr_id 0x%04x for handle 0x%x";
 
 BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
                          UINT32 attr_len, UINT8 *p_val) {
@@ -328,7 +313,7 @@ BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
             if (p_rec->attr_data_end + attr_len >= SDP_MAX_PAD_LEN) {
                 if (sdp_cb.trace_level >= 2) {
                     LogMsg_2(0xA0001,
-                             "SDP_AddAttribute: attr_len:%d too long. truncate to (%d)",
+                             s_sdpAddAttrLog,
                              attr_len, SDP_MAX_PAD_LEN - p_rec->attr_data_end);
                 }
                 attr_len = SDP_MAX_PAD_LEN - p_rec->attr_data_end;
@@ -353,6 +338,29 @@ BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
     return FALSE;
 }
 
+BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UINT16 *p_uuids) {
+    UINT16 xx;
+    UINT8 buff[SDP_MAX_ATTR_LEN * 2];
+    UINT8 *p = buff;
+    int max_len = SDP_MAX_ATTR_LEN - 3;
+
+    /* First, build the sequence */
+    for (xx = 0; xx < num_uuids; xx++, p_uuids++) {
+        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
+        *p++ = (UINT8)(*p_uuids >> 8);
+        *p++ = (UINT8)*p_uuids;
+
+        if ((p - buff) > max_len) {
+            if (sdp_cb.trace_level >= 2) {
+                LogMsg_2(0xa0001, s_sdpAddUuidLog, xx, num_uuids);
+            }
+            break;
+        }
+    }
+
+    return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
+}
+
 BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
 {
     UINT16 xx;
@@ -368,7 +376,7 @@ BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
 
             if (sdp_cb.trace_level >= 3)
             {
-                LogMsg_2(0xA0002, "Deleting attr_id 0x%04x for handle 0x%x", attr_id, handle);
+                LogMsg_2(0xA0002, s_sdpDeletingLog, attr_id, handle);
             }
 
             for (xx = 0; xx < p_rec->num_attributes; xx++, p_attr++)

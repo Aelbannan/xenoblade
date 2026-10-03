@@ -175,11 +175,11 @@ extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void __dt__800FED0C(void* self, int flags);
 
 // nw4r DrawInfo C-ABI ct/dt (retail emits the direct calls; a C++ local would
-// virtual-dispatch its scope-exit destructor). func_80137250 keeps its mangled
+// virtual-dispatch its scope-exit destructor). SetWideLocAdjust keeps its mangled
 // nw4r form, so it is declared outside extern "C" for MWCC to re-mangle it.
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
-void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shop-sell singleton flag (.sbss; cleared by Term).
 extern u32 lbl_eu_806642F0;

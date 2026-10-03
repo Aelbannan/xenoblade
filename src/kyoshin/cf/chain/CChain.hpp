@@ -113,7 +113,7 @@ namespace cf {
     };
 
     // Timing-result object returned by the embedded voice sub-object's
-    // vtable slot 0x110 (func_8027A8C8 compares its +0x14 float against
+    // vtable slot 0x110 (CChainActor_CheckVoice compares its +0x14 float against
     // lbl_eu_80668A60).
     class CChainVoiceRes {
     public:
@@ -121,7 +121,7 @@ namespace cf {
         f32 field_14;           // 0x14
     };
 
-    // Holder for func_8027A8C8:
+    // Holder for CChainActor_CheckVoice:
     // loads the battle object through this holder before probing slot
     // 0x110 / the move sub-object / +0x3F60).
     class CChainVoiceHolder {
@@ -137,7 +137,7 @@ namespace cf {
         s8 field_0xD;              // 0xD
     };
 
-    // Gauge sub-object returned by func_8027750C's slot-0x298 dispatch: the
+    // Gauge sub-object returned by CChain_RegisterCombo's slot-0x298 dispatch: the
     // +9 state byte selects the two-round (0x4a/0x4b) or one-round (0x40)
     // gauge update, floats live at +0x58/+0x5c/+0x60 and the +0x74 bit 24
     // disables the integer truncation.
@@ -153,14 +153,14 @@ namespace cf {
         u32 field_74;            //0x74
     };
 
-    // Count byte probed by func_8027750C at +0x44 of the object reached
+    // Count byte probed by CChain_RegisterCombo at +0x44 of the object reached
     // through the arts-holder's +0x50 pointer.
     struct CChainGaugeCnt44 {
         u8 pad[0x44];
         u8 field_0x44;           //0x44
     };
 
-    // Layout mirror of CChain used by func_80279694:
+    // Layout mirror of CChain used by CChain_NotifyStateChange:
     // as a CChainList member so member-array accesses fold the 0x1DC8 offset
     // into the load (a C-style cast of &self->mChainMember would materialize
     // the base into a register first).
@@ -171,7 +171,7 @@ namespace cf {
         u8 unk1EB4[0x1F0C - 0x1EB4];
     };
 
-    // Head-field view of CChain used by func_80277B38's state machine: the
+    // Head-field view of CChain used by CChain_TickChain's state machine: the
     // unk0[0x18] byte region with typed fields (s8 index bytes, u8 state/flag
     // bytes, the u32 arts-index word at +0xC and the f32 gauge at +0x14).
     struct CChainHeadView {
@@ -193,7 +193,7 @@ namespace cf {
         f32 field_14;    //0x14 chain gauge
     };
 
-    // 0x20-byte stack scratch written by func_80277B38 case 5: the 0xe-byte
+    // 0x20-byte stack scratch written by CChain_TickChain case 5: the 0xe-byte
     // memset target at +0x4 (retail 0x1c absolute) overlaps the field bytes
     // written after both memsets (+0x6/+0xD/+0x10 are inside it, +0x12 and
     // +0x14 just past), so the scratch is one local, not two.
@@ -227,7 +227,7 @@ struct CBattleChainMenuState;
 struct CErrMesEntry;
 struct CErrMesOwner;
 
-// func_80276D30 is defined in this TU (C linkage inherited from the extern
+// CChain_PickVoiceId is defined in this TU (C linkage inherited from the extern
 // "C" block below, so both the definition and the call reloc stay unmangled).
 // Its battle-object params use cf::CChainBattleObj (field_3F28 chain type).
 
@@ -240,15 +240,15 @@ extern float lbl_eu_80668A48;
 extern float lbl_eu_80668A50;
 extern float lbl_eu_80668A54;
 extern u8 lbl_eu_80663DA0;
-// Battle-manager mode-flag word (.sbss) probed by func_80277B38's chain-start
+// Battle-manager mode-flag word (.sbss) probed by CChain_TickChain's chain-start
 // gate (bit 22). Same declaration as CBattleManager.hpp's extern "C" row.
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
-// result by func_8027A8C8 (.sdata2 float; const lets MWCC schedule the
+// result by CChainActor_CheckVoice (.sdata2 float; const lets MWCC schedule the
 // pool load at retail's position, cf. MWCC_CASES SDA-pool hoist).
 extern const f32 lbl_eu_80668A60;
 
-// Chain facing-gate constants used by func_8027A58C (.sdata2 floats): the
+// Chain facing-gate constants used by CChainActor_CheckFacing (.sdata2 floats): the
 // Atan2FIdx scale, the +/- normalization window around the gauge angle, and
 // the two factors of the facing tolerance product.
 extern const f32 lbl_eu_80668A58;
@@ -263,7 +263,7 @@ extern const f32 lbl_eu_8066A210;
 // idiom, cf. CfCmd_Fwd16IfItem in code_8018F8D8.cpp).
 extern s32 lbl_eu_80662A20;
 
-// Chain-voice id tables picked by func_80276D30 (.sdata int arrays -> sda21
+// Chain-voice id tables picked by CChain_PickVoiceId (.sdata int arrays -> sda21
 // addressing; lbl_eu_805381C8 is a 3-entry .data table -> lis/addi).
 extern int lbl_eu_80662A24[1];
 extern int lbl_eu_80662A28[2];
@@ -278,7 +278,7 @@ extern int lbl_eu_805381C8[3];
 // CMenuBattleChain.cpp / CUIErrMesWin.cpp.
 
 // Circular gimmick object list consumed by getReslistB48 (layout mirror of
-// the CfGimmick.hpp structs - that header's func_800B3A88 C-import clashes
+// the CfGimmick.hpp structs - that header's removeManagedObject C-import clashes
 // with CChainEffect.hpp's void* variant, so its getReslistB48 C-import and
 // the list structs are mirrored here instead).
 struct CChainGimmickListNode {
@@ -291,7 +291,7 @@ struct CChainGimmickList {
     CChainGimmickListNode* head; //0x04
 };
 
-// Gauge-delta literals consumed by func_8027750C (.sdata float / doubles).
+// Gauge-delta literals consumed by CChain_RegisterCombo (.sdata float / doubles).
 extern float lbl_eu_80668A30;
 extern double lbl_eu_80668A20;
 extern double lbl_eu_80668A28;
@@ -302,18 +302,18 @@ extern u32 lbl_eu_80663E28;
 namespace cf { class CfObjectActor; }
 
 extern "C" {
-    void func_802A1500();
+    void CCharVoiceMan_FlushAll();
     u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-    void func_802A35B8(u32 arg);
-    int func_802A3748(u32 arg);
+    void CCharVoiceMan_PlayNodeById(u32 arg);
+    int CCharVoiceMan_IsNodeActive(u32 arg);
     int CCharVoiceMan_AllocChainVoiceId();
-    int func_802A3680(int a, CChainBattleObjTail* b, int c);
+    int CCharVoiceMan_ForwardNodeCall(int a, CChainBattleObjTail* b, int c);
     extern "C" void func_8027B164(cf::CChainActorList* self);
     extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key);
     void ChainList_Clear(cf::CChainList* self);
     extern "C" void trackChainPlayer(CBattleChainMenuState* self);
     u8* func_802B48A0(CErrMesEntry* self);
-    int func_80276D30(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p2);
+    int CChain_PickVoiceId(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p2);
     // Same-TU voice reset helper (defined in CChain.cpp); C linkage keeps
     // the call reloc from CChain_UpdatePerFrame verbatim.
     void CChain_RetireVoiceId();
@@ -342,21 +342,21 @@ extern "C" {
     void* CBattleMan_FetchVisionObj(void* bm);
     // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail
     // call site, so declared here with C linkage rather than through the
-    // class member (which mangles to func_80107C54__15CMenuArtsSelectFl).
-    int func_80107C54(void* menu, int index);
-    // Arts-menu-up query (CtrlPc.cpp family) used by func_8027A58C.
+    // class member (which mangles to checkSlotUsable__15CMenuArtsSelectFl).
+    int checkSlotUsable(void* menu, int index);
+    // Arts-menu-up query (CtrlPc.cpp family) used by CChainActor_CheckFacing.
     int func_801B202C();
     // Battle-event dispatcher (defined in CBattleManager.cpp): single shared
     // decl on kyoshin/cf/CBattleManagerApi.hpp (extern "C", retail-unmangled
     // symbol); the C++-linkage copy here clashed with it (10197).
-    // Voice-act / chain arts-combo helpers. func_801537F0 lives in
-    // CVision.hpp (same signature, no clash); func_8014AE00 and
+    // Voice-act / chain arts-combo helpers. aiRebootAction lives in
+    // CVision.hpp (same signature, no clash); aiRingCompact and
     // func_80293E24 have no header declaration, so they are declared here.
-    void func_801537F0(void* self);
-    void func_8014AE00(void* self);
+    void aiRebootAction(void* self);
+    void aiRingCompact(void* self);
     void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor);
     // Same-TU helper (defined in CChain.cpp after its first caller).
-    void func_80277B38(cf::CChain* self);
+    void CChain_TickChain(cf::CChain* self);
     // Same-TU chain-voice reset (defined in CChain.cpp); used by the ctor.
     void CChain_DiscardVoiceId(void* self);
     // Chain-menu / err-mes helpers (CMenuBattleChain.cpp / CUIErrMesWin.cpp).
@@ -370,11 +370,11 @@ extern "C" {
     // Battle-chain menu helpers (CMenuBattleChain.cpp).
     void requestAnimReset(CBattleChainMenuState* self);
     extern "C" int func_802AB510(CBattleChainMenuState* self, u8* out);
-    // Chain-state-machine helpers used by func_80277B38 (same-TU or
+    // Chain-state-machine helpers used by CChain_TickChain (same-TU or
     // CChainActorList.cpp / CUIErrMesWin.cpp / CMenuBattleChain.cpp).
     void CChain_ResetVoiceMgr();
     void CChain_AdvanceChainLink(cf::CChain* self);
-    void func_80278F84(cf::CChain* self);
+    void CChain_TryExtend(cf::CChain* self);
     void CChain_DriveChainExtend(cf::CChain* self);
     extern "C" void Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key);
     extern "C" void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list);
@@ -390,6 +390,6 @@ extern "C" {
     void requestArtsRef(CBattleChainMenuState* self);
     extern "C" bool isChainMenuBusy(CBattleChainMenuState* self);
     void ErrWin_ResetRecord_4B84(CErrMesEntry* self);
-    void func_8014B120(u8* self, cf::CChainScratch20* scratch);
+    void aiAppendToRing(u8* self, cf::CChainScratch20* scratch);
     void ChainEne_TouchBattle194_18F8();
 }

@@ -79,7 +79,7 @@ struct CModelRes {
 };
 
 // ---------------------------------------------------------------------------
-// func_804B2FF0: move a collision-source position through a bone matrix twice,
+// ColiMoverUpdate: move a collision-source position through a bone matrix twice,
 // fold the delta into the object's accumulated offset, then add the linear
 // offset component. Both stages end by notifying the target object. The
 // delta/accumulate stages use the nw4r SDK inline ASM helpers so MWCC emits
@@ -102,7 +102,7 @@ struct CColiMover {
     void* target;      //0x48
 };
 
-void func_804B2FF0(CColiMover* self) {
+void ColiMoverUpdate(CColiMover* self) {
     // Null-check the matrix source first; the vertical-offset gate only
     // evaluates when a source exists (short-circuit, matching retail's
     // early beq to the shared tail).
@@ -131,7 +131,7 @@ void func_804B2FF0(CColiMover* self) {
 ;}
 
 // Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
-// index at 0x30 (both written by func_804B31EC).
+// index at 0x30 (both written by ColiFindNodePair).
 struct CDualIndexNode {
     s16 index;      //0x0
     u16 flags;      //0x2
@@ -150,16 +150,16 @@ extern char* lbl_eu_80665940;
 
 // C-linkage spelling for the dispatch-table participants (retail symbol
 // names; the definitions below adopt this linkage).
-extern "C" void func_804B31EC(CDualIndexNode*, const char*, const CModelRes*,
+extern "C" void ColiFindNodePair(CDualIndexNode*, const char*, const CModelRes*,
                               const CNameRef*);
 
 // ---------------------------------------------------------------------------
-// func_804B31EC: scan the model's node table for up to two node names - the
+// ColiFindNodePair: scan the model's node table for up to two node names - the
 // caller's `name` and a second name taken from the shared name table - and
 // record each match's matrix id into self->index / self->index2. Both found
 // (flags == 3) exits early; unmatched indices fall back to 0 / 1.
 // ---------------------------------------------------------------------------
-void func_804B31EC(CDualIndexNode* self, const char* name,
+void ColiFindNodePair(CDualIndexNode* self, const char* name,
                    const CModelRes* model, const CNameRef* ref) {
     const char* name2 = lbl_eu_80665940 + ref->offset;
     int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
@@ -263,7 +263,7 @@ struct CColiWalkStateObj : CColiWalkState {
 
 extern CColiWalkStateObj lbl_eu_8065D138;
 
-// Query scratch filled by func_804B077C/ColiMakeAabbRadius: component-wise min x
+// Query scratch filled by ColiMakeAabbMinMax/ColiMakeAabbRadius: component-wise min x
 // at +0x0 and max x at +0xC (trailing pad keeps the retail 0x18-byte slot).
 struct CColiQuery {
     f32 lo;         //0x0 min x
@@ -377,7 +377,7 @@ int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     return found;
 }
 
-int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
+int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
                   const Vec* b, u32 mask, int arg, int isFirst) {
     // Distinct web for `b`: retail materializes it into a callee-saved
     // register at entry (it must survive the first helper call).
@@ -427,9 +427,9 @@ int func_804B526C(CColiQueryResult* self, CColiQueryNode* owner, const Vec* a,
     char seg[0x318];
     CColiQuery query;
     bv = b;
-    func_804A7ACC(&seg, a, bv, st);
+    ColiInitSegment(&seg, a, bv, st);
     int found = 0;
-    func_804B077C(&query, a, bv);
+    ColiMakeAabbMinMax(&query, a, bv);
 
     // Forward pass along the next chain: nodes whose +0x18 bound is below
     // the query low bound are skipped.
@@ -512,9 +512,9 @@ struct CColiSphere {
 };
 
 // Dispatch-table participants (bounds expansion family).
-extern "C" void func_804B43B4(CColiSphere*);
+extern "C" void ColiExpandSphere(CColiSphere*);
 
-void func_804B43B4(CColiSphere* p) {
+void ColiExpandSphere(CColiSphere* p) {
     // Expand the box's max corner by the sphere's max extent and the
     // min corner by its min extent, per axis. Each check reloads the radius
     // temp first (retail does the same - the bound load reuses the FPR, so
@@ -605,14 +605,16 @@ struct CColiCapsule {
     f32 radius;            //0x28
 };
 
-extern "C" void func_804B453C(CColiCapsule*);
+extern "C" void ColiExpandCapsule(CColiCapsule*);
 
-void func_804B453C(CColiCapsule* p) {
+void ColiExpandCapsule(CColiCapsule* p) {
     for (int i = 0; i < 3; i++) {
         {
+            f32 v;
             f32 r = p->radius;
-            if (lbl_eu_80665944->max[i] < p->endPos[i] + r) {
-                lbl_eu_80665944->max[i] = p->endPos[i] + r;
+            v = p->endPos[i];
+            if (lbl_eu_80665944->max[i] < v + r) {
+                lbl_eu_80665944->max[i] = v + r;
             }
         }
         {
@@ -622,9 +624,11 @@ void func_804B453C(CColiCapsule* p) {
             }
         }
         {
+            f32 v;
             f32 r = p->radius;
-            if (lbl_eu_80665944->max[i] < r + p->endPosB[i]) {
-                lbl_eu_80665944->max[i] = r + p->endPosB[i];
+            v = p->endPosB[i];
+            if (lbl_eu_80665944->max[i] < v + r) {
+                lbl_eu_80665944->max[i] = v + r;
             }
         }
         {
@@ -681,10 +685,10 @@ struct CColiBoundsPoint2 {
     f32 radius;         //0x64
 };
 
-extern "C" void func_804B46A8(CColiBoundsPoint2*);
+extern "C" void ColiExpandPoint(CColiBoundsPoint2*);
 extern "C" void Coli_ExpandGlobalBox();
 
-void func_804B46A8(CColiBoundsPoint2* p) {
+void ColiExpandPoint(CColiBoundsPoint2* p) {
     // Per-sub-block radius temp: retail reloads it at the top of every check
     // (the bound loads reuse the FPR, so the radius is re-fetched per block).
     // NOTE residual: the final block's bounds-pointer reload colors r3 in our
@@ -761,7 +765,7 @@ struct CColiMgr {
     CColiMesh* mesh; //0x147C
 };
 
-// Full node (func_804B3EA8): world matrix, inverse world matrix, a local
+// Full node (ColiXformRigid): world matrix, inverse world matrix, a local
 // vector at +0x64 and a scalar bounds radius at +0x70.
 struct CColiNode {
     CColiHead hd; //0x0
@@ -786,14 +790,14 @@ struct CColiMtxNode {
     f32 radius;      //0x64
 };
 
-// Rigid reference node (func_804B3EA8 'other'): matrix at +0x0, position
+// Rigid reference node (ColiXformRigid 'other'): matrix at +0x0, position
 // vector at +0x30, used for PSMTXConcat.
 struct CColiRigid {
     Mtx mtx;    //0x0
     f32 pos[3]; //0x30
 };
 
-// Sphere-shaped collision object (func_804B3658): position + radius.
+// Sphere-shaped collision object (ColiXformSphere): position + radius.
 struct CColiSphereOb {
     CColiHead hd; //0x0
     f32 pos[3];   //0x4
@@ -802,10 +806,10 @@ struct CColiSphereOb {
 
 // Dispatch-table participants (node lookup + transform/bounds family).
 extern "C" void Coli_FindNodeByName(CColiHead*, const char*, const CModelRes*);
-extern "C" void func_804B34F4(CColiSphereOb*, const CColiMgr*, const Vec*);
-extern "C" void func_804B4020(CColiMtxNode*, const CColiMgr*,
+extern "C" void ColiSetSphereMtx(CColiSphereOb*, const CColiMgr*, const Vec*);
+extern "C" void ColiUpdateMtxNode(CColiMtxNode*, const CColiMgr*,
                               const CColiSphereOb*);
-extern "C" void func_804B3EA8(CColiNode*, const CColiMgr*, const CColiRigid*);
+extern "C" void ColiXformRigid(CColiNode*, const CColiMgr*, const CColiRigid*);
 
 // ---------------------------------------------------------------------------
 // Coli_FindNodeByName: scan the model's node table for the node named `name` and
@@ -836,11 +840,11 @@ void Coli_FindNodeByName(CColiHead* self, const char* name, const CModelRes* mod
 }
 
 // ---------------------------------------------------------------------------
-// func_804B34F4: copy the source matrix's translation column into the
+// ColiSetSphereMtx: copy the source matrix's translation column into the
 // sphere's position, derive the sphere radius from the transformed
 // (x, 0, 0) normal, and expand the global AABB around the new position.
 // ---------------------------------------------------------------------------
-void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
+void ColiSetSphereMtx(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
     // Struct-typed matrix source (vs array-pointer) to steer scheduling.
     const CObjMtx* src;
     if (self->hd.flags & 2) {
@@ -900,7 +904,7 @@ void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
     }
 }
 
-void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
+void ColiUpdateMtxNode(CColiMtxNode* self, const CColiMgr* mgr,
                    const CColiSphereOb* other) {
     // Select the matrix source: the flagged root (identity/bind) matrix, or
     // the per-node bone table entry addressed by the signed bone index.
@@ -953,7 +957,7 @@ void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
         lbl_eu_80665944->min[2] = self->mtxW.m[2][3] - r;
 }
 
-// Ellipsoid-shaped collision object (func_804B37E4 / func_804B3970).
+// Ellipsoid-shaped collision object (ColiSetEllipsoid / ColiXformEllipsoid).
 struct CColiEllipsoidOb {
     CColiHead hd;     //0x0
     f32 pos[3];       //0x4
@@ -963,7 +967,7 @@ struct CColiEllipsoidOb {
 };
 
 // Object carrying both a position Vec (used as the transform source) and a
-// secondary Vec at +0xC (func_804B3970 'other').
+// secondary Vec at +0xC (ColiXformEllipsoid 'other').
 struct CColiPosVec {
     Vec pos; //0x0
     Vec v;   //0xC
@@ -972,8 +976,8 @@ struct CColiPosVec {
 // Dispatch-table participants (ellipsoid family).
 extern "C" void Coli_FindNodeRecord(CColiHead*, const char*, const CModelRes*,
                               const CColiPosVec*);
-extern "C" void func_804B37E4(CColiEllipsoidOb*, const CColiMgr*, const Vec*);
-extern "C" void func_804B3970(CColiEllipsoidOb*, const CColiMgr*,
+extern "C" void ColiSetEllipsoid(CColiEllipsoidOb*, const CColiMgr*, const Vec*);
+extern "C" void ColiXformEllipsoid(CColiEllipsoidOb*, const CColiMgr*,
                               const CColiPosVec*);
 
 // ---------------------------------------------------------------------------
@@ -1027,7 +1031,7 @@ void Coli_ShiftMtxHist(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
     PSMTXInverse(dst->cur.m0.m, dst->cur.m1.m);
 }
 
-// Capsule collision node (func_804B3D1C): two endpoint positions, the
+// Capsule collision node (ColiSetCapsulePos): two endpoint positions, the
 // segment direction, a uniform radius and the squared direction length.
 struct CColiCapsuleNode {
     CColiHead hd;    //0x0 (index + flags)
@@ -1040,21 +1044,21 @@ struct CColiCapsuleNode {
 };
 
 // Dispatch-table participants (capsule family).
-extern "C" void func_804B3B18(CColiCapsuleNode*, const CColiMgr*,
+extern "C" void ColiUpdateCapsule(CColiCapsuleNode*, const CColiMgr*,
                               const CColiRigid*);
-extern "C" void func_804B3D1C(CColiCapsuleNode*, const CColiMgr*, const Vec*);
-extern "C" void func_804B41FC(const CColiNode*, const CColiMgr*,
+extern "C" void ColiSetCapsulePos(CColiCapsuleNode*, const CColiMgr*, const Vec*);
+extern "C" void ColiXformFixed(const CColiNode*, const CColiMgr*,
                               const CColiPosVec*);
 
 // ---------------------------------------------------------------------------
-// func_804B3B18: update a capsule collision node. Concat the source (root or
+// ColiUpdateCapsule: update a capsule collision node. Concat the source (root or
 // bone) matrix with the rigid reference, transform the (0,1,0) axis by the
 // result to get the endpoints A = T + v / B = T - v, derive the segment
 // direction + squared length via the nw4r PS helpers, scale the transformed
 // (1,0,0) axis magnitude into the radius, then expand the global AABB around
 // both endpoints swept by the radius.
 // ---------------------------------------------------------------------------
-void func_804B3B18(CColiCapsuleNode* self, const CColiMgr* mgr,
+void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
                    const CColiRigid* other) {
     const f32 (*src)[4];
     if (self->hd.flags & 2) {
@@ -1127,11 +1131,11 @@ void func_804B3B18(CColiCapsuleNode* self, const CColiMgr* mgr,
 }
 
 // ---------------------------------------------------------------------------
-// func_804B41FC: transform a position by the fixed bone matrix, derive an
+// ColiXformFixed: transform a position by the fixed bone matrix, derive an
 // ellipsoid-ish half-extent into the shared Qx/Hx globals, and fold them
 // into the global AABB.
 // ---------------------------------------------------------------------------
-void func_804B41FC(const CColiNode* unused, const CColiMgr* mgr,
+void ColiXformFixed(const CColiNode* unused, const CColiMgr* mgr,
                    const CColiPosVec* other) {
     const s16 idx = lbl_eu_80665950;
     const f32 (*src)[4] = mgr->mesh->boneTable[idx];
@@ -1187,10 +1191,10 @@ void Coli_ExpandGlobalBox() {
 }
 
 // ---------------------------------------------------------------------------
-// func_804B3EA8: transform a rigid reference node into self space, invert,
+// ColiXformRigid: transform a rigid reference node into self space, invert,
 // then expand the global AABB using the transformed position and magnitude.
 // ---------------------------------------------------------------------------
-void func_804B3EA8(CColiNode* self, const CColiMgr* mgr, const CColiRigid* other) {
+void ColiXformRigid(CColiNode* self, const CColiMgr* mgr, const CColiRigid* other) {
     const f32 (*src)[4];
     if (self->hd.flags & 2) {
         src = mgr->mesh->rootMtx;
@@ -1255,21 +1259,21 @@ void func_804B3EA8(CColiNode* self, const CColiMgr* mgr, const CColiRigid* other
 }
 
 // ---------------------------------------------------------------------------
-// func_804B3658: transform a sphere collision object's center into parent
+// ColiXformSphere: transform a sphere collision object's center into parent
 // space, derive its radius from the transformed (z,0,0) normal, and expand
 // the global AABB.
 // ---------------------------------------------------------------------------
-// Third argument of func_804B3658: the transformed normal seed lives at
+// Third argument of ColiXformSphere: the transformed normal seed lives at
 // offset 0xC (three leading words).
 struct CColiSphereSeed {
     f32 pad[3]; //0x0
     f32 val;    //0xC
 };
 
-extern "C" void func_804B3658(CColiSphereOb*, const CColiMgr*,
+extern "C" void ColiXformSphere(CColiSphereOb*, const CColiMgr*,
                               const CColiSphereSeed*);
 
-void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr,
+void ColiXformSphere(CColiSphereOb* self, const CColiMgr* mgr,
                    const CColiSphereSeed* other) {
     // Two-statement typed copy (void* intermediate): keeps `other` as a
     // distinct local web born before `src`, so locals color r31-down
@@ -1335,11 +1339,11 @@ void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr,
 }
 
 // ---------------------------------------------------------------------------
-// func_804B37E4: read the transform's translation into an ellipsoid object,
+// ColiSetEllipsoid: read the transform's translation into an ellipsoid object,
 // scale an (x/y/z) extent by the (1,0,0)-transformed normal magnitude, and
 // expand the global AABB with horizontal (XZ) and vertical (Y) radii.
 // ---------------------------------------------------------------------------
-void func_804B37E4(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* other) {
+void ColiSetEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* other) {
     const f32 (*src)[4];
     if (self->hd.flags & 2) {
         src = mgr->mesh->rootMtx;
@@ -1388,10 +1392,10 @@ void func_804B37E4(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* other
 }
 
 // ---------------------------------------------------------------------------
-// func_804B3970: transform a position into ellipsoid space, scale an offset
-// into XZ/Y radii, and expand the global AABB (same layout as func_804B37E4).
+// ColiXformEllipsoid: transform a position into ellipsoid space, scale an offset
+// into XZ/Y radii, and expand the global AABB (same layout as ColiSetEllipsoid).
 // ---------------------------------------------------------------------------
-void func_804B3970(CColiEllipsoidOb* self, const CColiMgr* mgr,
+void ColiXformEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr,
                    const CColiPosVec* other) {
     // Distinct-local web for `other` so its local colors the first saved
     // register (r31), matching retail; the matrix source then colors r30.
@@ -1447,7 +1451,7 @@ void func_804B3970(CColiEllipsoidOb* self, const CColiMgr* mgr,
 }
 
 // ---------------------------------------------------------------------------
-// func_804B3D1C: build a capsule from two bone matrices and expand the global
+// ColiSetCapsulePos: build a capsule from two bone matrices and expand the global
 // AABB by both endpoints swept by the (transformed) radius magnitude.
 // ---------------------------------------------------------------------------
 // Bone-table entry for capsule nodes (stride 0x30): positions at
@@ -1461,7 +1465,7 @@ struct CColiBoneEntry {
     f32 p2;         //0x2C
 }; //0x30
 
-void func_804B3D1C(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* other) {
+void ColiSetCapsulePos(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* other) {
     // Seed x-component read first so its load hoists above the table walks.
     const f32 ox = other->x;
     const CColiBoneEntry* srcA =
@@ -1554,7 +1558,7 @@ struct CColiList {
 // ColiSetMoveEnableFlag first. If the node is already present it is left untouched.
 // Newly-linked nodes have their forward link cleared and their swept-distance
 // accumulator (+0xA4) reset to zero.
-void func_804B4BDC(CColiList* self, CColiListItem* node) {
+void ColiListAppend(CColiList* self, CColiListItem* node) {
     ColiSetMoveEnableFlag(node, 1);
     CColiListItem* cur = self->head;
     if (cur != 0) {
@@ -1641,7 +1645,7 @@ extern "C" void sinit_804B598C() {
 
 // Walk the segment query: reject degenerate (equal) vectors, otherwise run
 // the segment build + node query and expand the result AABB.
-int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
+int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec* b,
                    u32 filter, int isFirst) {
     // Materialized boolean: retail keeps the && chain result in a temp
     // (li r0,0 / li r0,1 / cmpwi r0,0) instead of short-circuiting straight
@@ -1689,9 +1693,9 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
 
     char seg[0x318];
     char query[0x18];
-    func_804A7ACC(seg, a, b, st);
+    ColiInitSegment(seg, a, b, st);
     int found = 0;
-    func_804B077C(query, a, b);
+    ColiMakeAabbMinMax(query, a, b);
 
     CColiQueryNode* n = self->head;
     while (n != 0) {
@@ -1763,7 +1767,7 @@ void CTaskColiManager::Term() {
 
 // Walk the collision-node list every tick: condition the nodes (ColiNodeRefreshAxes),
 // fold any node requesting a pass into mFlags bit 1, re-walk for post-pass
-// cleanup (func_804B0DF4), then re-anchor at the front of the list.
+// cleanup (ColiNodeResortKeyed), then re-anchor at the front of the list.
 void CTaskColiManager::Move() {
     CColiMoveNode* node = mHead;
     mFlags &= ~0x2u;
@@ -1777,7 +1781,7 @@ void CTaskColiManager::Move() {
         }
         node = mHead;
         while (node != 0) {
-            func_804B0DF4(node);
+            ColiNodeResortKeyed(node);
             node = node->next;
         }
         CColiMoveNode* front = mHead;
@@ -1901,8 +1905,8 @@ int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
         st->bbMax[1] = zero;
         st->bbMax[2] = big;
         st->f5c = tail;
-    func_804A7ACC(seg, a, b, st);
-    func_804B077C(query, a, b);
+    ColiInitSegment(seg, a, b, st);
+    ColiMakeAabbMinMax(query, a, b);
 
     for (CColiQueryNode* n = self->head; n != 0; n = n->next) {
         if (n->flags & 0x2000) {
@@ -2043,7 +2047,7 @@ extern "C" void Move__16CTaskColiManagerFv();
 extern "C" void Draw__16CTaskColiManagerFv();
 extern "C" void Reset__14CChildListNodeFv();
 extern "C" void Tail__8CProcessFv();
-extern "C" void func_804B59C8();
+extern "C" void gateMoverMove();
 // The retail CTask<CTaskColiManager> vtable slots spell the template
 // specialization members with <> in the mangled names - not legal C++
 // identifiers. Legal stand-ins; the §17.6 UNIT_RULES retarget those three
@@ -2086,18 +2090,18 @@ extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663
 // monolib RTTI hierarchy tables.
 u32 lbl_eu_8056F3FC[9] = {
     (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName,
-    (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&func_804B31EC,
+    (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&ColiFindNodePair,
     (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeByName, (u32)&Coli_FindNodeRecord,
 };
 u32 lbl_eu_8056F420[9] = {
-    (u32)&func_804B34F4, (u32)&func_804B3658, (u32)&func_804B37E4,
-    (u32)&func_804B3970, (u32)&func_804B3B18, (u32)&func_804B3D1C,
-    (u32)&func_804B3EA8, (u32)&func_804B4020, (u32)&func_804B41FC,
+    (u32)&ColiSetSphereMtx, (u32)&ColiXformSphere, (u32)&ColiSetEllipsoid,
+    (u32)&ColiXformEllipsoid, (u32)&ColiUpdateCapsule, (u32)&ColiSetCapsulePos,
+    (u32)&ColiXformRigid, (u32)&ColiUpdateMtxNode, (u32)&ColiXformFixed,
 };
 u32 lbl_eu_8056F444[9] = {
-    (u32)&func_804B43B4, (u32)&func_804B43B4, (u32)&Coli_ExpandEllipsoid,
-    (u32)&Coli_ExpandEllipsoid, (u32)&func_804B453C, (u32)&func_804B453C,
-    (u32)&Coli_ExpandPoint, (u32)&func_804B46A8, (u32)&Coli_ExpandGlobalBox,
+    (u32)&ColiExpandSphere, (u32)&ColiExpandSphere, (u32)&Coli_ExpandEllipsoid,
+    (u32)&Coli_ExpandEllipsoid, (u32)&ColiExpandCapsule, (u32)&ColiExpandCapsule,
+    (u32)&Coli_ExpandPoint, (u32)&ColiExpandPoint, (u32)&Coli_ExpandGlobalBox,
 };
 u32 lbl_eu_8056F468[9] = {
     (u32)&lbl_eu_80663AB0, 0,
@@ -2122,7 +2126,7 @@ u32 lbl_eu_8056F4D4[7] = {
     (u32)&lbl_eu_80661948, 0, 0,
 };
 u32 lbl_eu_8056F4F0[3] = {
-    (u32)&lbl_eu_80663AC0, 0, (u32)&func_804B59C8,
+    (u32)&lbl_eu_80663AC0, 0, (u32)&gateMoverMove,
 };
 u32 lbl_eu_8056F4FC[3] = {
     (u32)&lbl_eu_80661C28, 0, 0,

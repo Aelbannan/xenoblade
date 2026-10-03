@@ -28,9 +28,9 @@ extern "C" __declspec(noinline) CScnFilterListNode* ScnFilterList_getFirst(CScnF
 extern "C" void ScnFilterList_countNodes(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out);
 
 // CGXCache helpers reached by their flat retail symbols (the member decls in
-// CGXCache.hpp are zero-param; func_8044A7F8 actually lives on r4-r8).
+// CGXCache.hpp are zero-param; updateCmd1Words actually lives on r4-r8).
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
-extern "C" void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 w0, u32 w1, u32 w2,
+extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 w0, u32 w1, u32 w2,
                                            u32 w3, int flag);
 extern "C" u32 ScnFilterList_size(CScnFilterReslist* list);
 extern "C" CGXCache* ScnFilterMan_getGXCache(void);
@@ -747,7 +747,7 @@ extern "C" __declspec(noinline) void ScnFilterMan_preRender(CScnFilterMan* self)
         return;
     }
     resetGXStateA__8CGXCacheFv(ScnFilterMan_getGXCache());
-    func_8044A7F8__8CGXCacheFv(ScnFilterMan_getGXCache(), 1, 4, 5, 0, 1);
+    updateCmd1Words__8CGXCacheFv(ScnFilterMan_getGXCache(), 1, 4, 5, 0, 1);
     func_8049D9D0(self);
 
     // Declaration order drives MWCC's reverse slot allocation (retail:

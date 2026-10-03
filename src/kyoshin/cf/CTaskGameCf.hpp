@@ -45,8 +45,8 @@ namespace cf{
         void initContinue();
         void func_800444DC();
         void func_800444FC();
-        void func_8004451C();
-        void func_800447B4();
+        void bootGameWorld();
+        void tickExitCheck();
         void beginExit();
         void waitExit();
         void finishExit();
@@ -65,7 +65,7 @@ namespace cf{
 
 } //namespace cf
 
-// Cross-unit imports used by func_800447B4 (retail unmangled symbols).
+// Cross-unit imports used by tickExitCheck (retail unmangled symbols).
 extern "C" u8* getGlobalSda();
 extern "C" u32 UIWin_GetInstance();
 extern "C" u32 evtGetManagerAddr();
@@ -76,7 +76,7 @@ extern const f32 lbl_eu_80665D8C; // .sdata2 float
 class CScnNw4r;
 class CView;
 
-// Retail-unmangled / Fv-suffixed imports used by func_8004451C (defined in
+// Retail-unmangled / Fv-suffixed imports used by bootGameWorld (defined in
 // other TUs - keep linkage/signatures verbatim so the relocs bind by name).
 // init's third parameter is int-sized in retail (no u16 zero-extension at the
 // call site), so it is redeclared there under its raw retail symbol.
@@ -91,9 +91,9 @@ extern "C" void CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene,
 extern "C" void evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
 extern "C" void CfT_ResetEventState();
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3);
-extern "C" u32 func_8024005C();
+extern "C" u32 NandImageLive();
 extern "C" void func_8007E514__Q22cf13CfGameManagerFv(int arg1, int arg2, const char* str, int arg4, u32 arg5);
-extern "C" void func_80059C58(CProcess* pParent, CScnNw4r* pScene);
+extern "C" void Env_CreateTask(CProcess* pParent, CScnNw4r* pScene);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
 extern "C" void func_8004302C(int a, int b);
 

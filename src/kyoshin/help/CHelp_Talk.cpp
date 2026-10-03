@@ -35,7 +35,7 @@ bool CHelp_Talk::func_802B86F0() {
         u32* ret = voice->field_04->vf30();
         u32 localVal = *ret;
 
-        if (func_80174C98(voice, &localVal, 1) != 0) {
+        if (testActorStatus(voice, &localVal, 1) != 0) {
             voiceActive = true;
         }
     }

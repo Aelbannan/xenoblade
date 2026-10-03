@@ -9,7 +9,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// C-ABI imports used by func_800A18A4 (bdat file lookup / bdat init hook).
+// C-ABI imports used by CtrlObjectParam_ClaimArtsSlotRow (bdat file lookup / bdat init hook).
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* Bdat_GetTable_AA34();
 
@@ -17,9 +17,9 @@ extern "C" void* Bdat_GetTable_AA34();
 extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
 extern u32 lbl_eu_8052E9B0[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
 namespace cf { struct CHelpManager; }
-extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, func_800A18A4 byte flag at +0x16)
+extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, CtrlObjectParam_ClaimArtsSlotRow byte flag at +0x16)
 
-// -- func_800A18A4 view: 8-word offset table (lbl_eu_804FBC90, .rodata) ----
+// -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (lbl_eu_804FBC90, .rodata) ----
 // Copied to a local as a struct so MWCC inlines the 8 lwz/stw pairs
 // (retail copy shape) instead of emitting a memcpy call. Global-scope extern:
 // namespace-scope globals would mangle to lbl_eu_804FBC90__2cf.
@@ -27,47 +27,47 @@ struct CtrlObjectParamOffsetTable {
     u32 words[8];
 };
 extern CtrlObjectParamOffsetTable lbl_eu_804FBC90;
-extern u32 lbl_eu_804FBC70[8];   // arts-learn offset table A (.rodata, func_800A145C)
-extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, func_800A145C)
-extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, func_800A145C)
-extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, func_800A145C)
-extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, func_800A2AF0)
+extern u32 lbl_eu_804FBC70[8];   // arts-learn offset table A (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
+extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
+extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, CtrlObjectParam_ReapplyArtsSet)
 extern u32 lbl_eu_806640F4;    // item/weapon bdat file pointer (.sbss, sda21)
-extern u32 lbl_eu_806640D8;    // arts bdat file pointer (.sbss, sda21, func_800A2DE8)
-extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, func_800A1E3C)
-extern u32 lbl_eu_806640F8;    // armor bdat file pointer (.sbss, sda21, func_8009D7F4)
-extern void* lbl_eu_80664090;  // arts stat bdat file pointer (.sbss, sda21, func_800A0E64)
+extern u32 lbl_eu_806640D8;    // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_WriteArtsSlotIn)
+extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_AdjustPartyArtsLevel)
+extern u32 lbl_eu_806640F8;    // armor bdat file pointer (.sbss, sda21, CtrlObjectParam_RefreshEquipSlotBlock)
+extern void* lbl_eu_80664090;  // arts stat bdat file pointer (.sbss, sda21, CtrlObjectParam_RampArtsStatStep)
 extern char lbl_eu_804FBCB0[]; // bdat column-name string table (.rodata)
 extern const f32 lbl_eu_806667A0;    // arts-set float constant (.sdata2, CtrlObjectParam_SyncParamFromActorEx)
-extern f32 lbl_eu_80666780;    // f32 scale constant (.sdata2, func_800A11A4 field_D4)
-extern f32 lbl_eu_80666784;    // f32 scale constant (.sdata2, func_800A11A4 field_D6)
-extern f64 lbl_eu_80666788;    // 2^52 u32->f64 conversion constant (.sdata2, func_800A11A4)
+extern f32 lbl_eu_80666780;    // f32 scale constant (.sdata2, CtrlObjectParam_RaiseArtsLevelBy field_D4)
+extern f32 lbl_eu_80666784;    // f32 scale constant (.sdata2, CtrlObjectParam_RaiseArtsLevelBy field_D6)
+extern f64 lbl_eu_80666788;    // 2^52 u32->f64 conversion constant (.sdata2, CtrlObjectParam_RaiseArtsLevelBy)
 extern f64 lbl_eu_80666778;    // 2^52 u32->f64 conversion constant (.sdata2, CtrlObjectParam_ActivateCharRow)
-extern f32 lbl_eu_80666770;    // arts-level float scale (.sdata2, func_8009D7F4)
-extern f32 lbl_eu_80666774;    // arts-level float scale (.sdata2, func_8009D7F4)
-extern f32 lbl_eu_806667B8;    // arts-stat float constant (.sdata2, func_800A0E64)
-extern f32 lbl_eu_806667BC;    // arts-stat float constant (.sdata2, func_800A0E64)
-extern f32 lbl_eu_806667C0[2];    // arts-stat float constant pair (.sdata2, func_800A0E64)
-extern f32 lbl_eu_80666790;    // rank*average-level divisor (.sdata2, func_800A1E3C)
-extern f32 lbl_eu_80666794;    // (.sdata2, func_8009EF9C arts-set float)
-extern f32 lbl_eu_80666798;    // (.sdata2, func_8009EF9C scale)
-extern f32 lbl_eu_8066679C;    // (.sdata2, func_8009EF9C scale)
-extern f32 lbl_eu_80663EC8;    // (.sdata2, func_8009EF9C arts-set float)
-extern const f32 lbl_eu_8066A1F8;    // (.sdata2, func_8009EF9C arts-set float)
-extern u32 lbl_eu_806667A8;    // arts column-name prefix word 0 (.sdata2, func_800A03F4)
-extern const u32 lbl_eu_806667AC;    // arts column-name prefix word 1 (.sdata2, func_800A03F4)
-extern f32 lbl_eu_8066A20C;    // arts display scale (.sdata2, func_800A03F4)
-extern char lbl_eu_804FBF58[]; // arts-list sprintf format string (.rodata, func_800A3A6C)
+extern f32 lbl_eu_80666770;    // arts-level float scale (.sdata2, CtrlObjectParam_RefreshEquipSlotBlock)
+extern f32 lbl_eu_80666774;    // arts-level float scale (.sdata2, CtrlObjectParam_RefreshEquipSlotBlock)
+extern f32 lbl_eu_806667B8;    // arts-stat float constant (.sdata2, CtrlObjectParam_RampArtsStatStep)
+extern f32 lbl_eu_806667BC;    // arts-stat float constant (.sdata2, CtrlObjectParam_RampArtsStatStep)
+extern f32 lbl_eu_806667C0[2];    // arts-stat float constant pair (.sdata2, CtrlObjectParam_RampArtsStatStep)
+extern f32 lbl_eu_80666790;    // rank*average-level divisor (.sdata2, CtrlObjectParam_AdjustPartyArtsLevel)
+extern f32 lbl_eu_80666794;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
+extern f32 lbl_eu_80666798;    // (.sdata2, CtrlObjectParam_RefreshCharEntry scale)
+extern f32 lbl_eu_8066679C;    // (.sdata2, CtrlObjectParam_RefreshCharEntry scale)
+extern f32 lbl_eu_80663EC8;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
+extern const f32 lbl_eu_8066A1F8;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
+extern u32 lbl_eu_806667A8;    // arts column-name prefix word 0 (.sdata2, CtrlObjectParam_InitArtsSlotSet)
+extern const u32 lbl_eu_806667AC;    // arts column-name prefix word 1 (.sdata2, CtrlObjectParam_InitArtsSlotSet)
+extern f32 lbl_eu_8066A20C;    // arts display scale (.sdata2, CtrlObjectParam_InitArtsSlotSet)
+extern char lbl_eu_804FBF58[]; // arts-list sprintf format string (.rodata, CtrlObjectParam_ScanArtsListRows)
 extern char lbl_eu_805280E8[];  // vtable-like pointer stored at entry+0x34FC (work-buffer ctor); array type forces lis/addi @ha/@l (retail relocs are ADDR16_HA/LO)
-extern u32 lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, func_800A0E64)
+extern u32 lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, CtrlObjectParam_RampArtsStatStep)
 
 // C-ABI imports for the func_* stubs in CtrlObjectParam.cpp (defining TUs:
 // CfBdat.cpp / CActorParam.cpp / CItemBoxInfo.cpp). extern "C" keeps the
 // call-site relocs at the plain retail names (same convention as the
 // CfResPcImpl.hpp / CAIAction.hpp import blocks).
-extern "C" u32 func_80142074(u32 arg1, u32 arg2, u32 arg3);                     // CfBdat.cpp
+extern "C" u32 bdatResolveItem(u32 arg1, u32 arg2, u32 arg3);                     // CfBdat.cpp
 
-extern "C" u32 func_80141E90(u32 param1, int param2, u32 param3, u32 param4);   // CfBdat.cpp
+extern "C" u32 bdatPcPartsRes(u32 param1, int param2, u32 param3, u32 param4);   // CfBdat.cpp
 
 extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);                              // CActorParam.cpp
 
@@ -78,7 +78,7 @@ extern "C" void func_801765A4(void* actor, f32 value, u32 arg);                 
 
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
 
-extern "C" void* func_80157C4C(u32 index, s16 value);                           // CItemBoxInfo.cpp
+extern "C" void* CItem_kindPtr(u32 index, s16 value);                           // CItemBoxInfo.cpp
 
 extern "C" void* getArtsParamRC2(void* base, int row, int slot);               // CAttackSet.cpp (arts-slot record)
 extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     // CAttackSet.cpp (arts-slot write)
@@ -102,14 +102,14 @@ extern "C" void Counter884_SetClamped(u8* obj, int value);                      
 extern "C" void Counter_AddClamped(u8* obj, u32 value, int flag);                // code_8025FB10.cpp (arts-slot write)
 extern "C" void Counter884_AddClamped(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
 
-// func_800A2AF0 helpers (code_8025F2E8.cpp / code_80280F44.cpp).
+// CtrlObjectParam_ReapplyArtsSet helpers (code_8025F2E8.cpp / code_80280F44.cpp).
 extern "C" void func_eu_80263A24(void* dst, void* artsSet);                  // arts-set copy hook
-extern "C" void func_8025F528(void* artsSet, u32 row, u32 slot, u32 idx);   // slot fill
-extern "C" void func_8025F2E8(void* artsSet, u32 row, u32 slot);            // slot clear
-extern "C" void func_8025EE94(void* artsSet);                               // arts-set rebuild
-extern "C" void func_80280F44();                                            // post-scan tick
+extern "C" void KizunagramStoreTotalEntry(void* artsSet, u32 row, u32 slot, u32 idx);   // slot fill
+extern "C" void KizunagramStoreChartEntry(void* artsSet, u32 row, u32 slot);            // slot clear
+extern "C" void KizunagramRebuildSlotList(void* artsSet);                               // arts-set rebuild
+extern "C" void SysWinLog_SweepSlotPressure();                                            // post-scan tick
 
-extern "C" void func_80174AE8(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
+extern "C" void initItemNotch(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
 extern "C" void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
 
 struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used through a pointer here)
@@ -192,11 +192,11 @@ namespace cf {
     // stubs in this TU compile to the exact retail addi immediates.
     struct CActorParamRetailView {
         u8   pad_0000[0x15F0];          // 0x0000..0x15EF
-        u32  unk15F0;                   // 0x15F0  (func_8009EF9C field_176C)
+        u32  unk15F0;                   // 0x15F0  (CtrlObjectParam_RefreshCharEntry field_176C)
         u8   pad_15F4[0x1604 - 0x15F4]; // 0x15F4..0x1603
         u32  field_1604;                // 0x1604  (getSpentCurrency)
         u8   pad_1608[0x1629 - 0x1608]; // 0x1608..0x1628
-        u8   unk1629;                   // 0x1629  (func_8009EF9C field_17A5)
+        u8   unk1629;                   // 0x1629  (CtrlObjectParam_RefreshCharEntry field_17A5)
         u8   unk162A;                   // 0x162A  (field_17A6)
         u8   unk162B;                   // 0x162B  (field_17A7)
         u8   unk162C;                   // 0x162C  (field_17A8)
@@ -237,7 +237,7 @@ namespace cf {
         ~CtrlObjectParamWorkBuffer() {}
     };
 
-    // -- func_8009DBF4 view: per-slot equip arrays + arts fields ------------
+    // -- CtrlObjectParam_WriteEquipSlotValue view: per-slot equip arrays + arts fields ------------
     // The equip slot at +0x1C (s16), the per-slot u16 pairs at +0x02 and
     // +0x0E (stride 2 per slot), the s16 display fields at +0xD4/+0xD6, the
     // u16 flag at +0xE6 and the embedded CActorParam at +0x17C.
@@ -264,7 +264,7 @@ namespace cf {
         CActorParam mParam;     // +0x17C (vtable)
     };
 
-    // -- func_8009DBF4 view: 0x49-stride arts row (copy source/dest) --------
+    // -- CtrlObjectParam_WriteEquipSlotValue view: 0x49-stride arts row (copy source/dest) --------
     // Eight interleaved (u16 at +0xE8+j*2, u8 at +0x119+j) pairs copied
     // between two rows selected by the bdat column bytes.
     struct CtrlObjectParamArtsRowCopy {
@@ -275,7 +275,7 @@ namespace cf {
     };
 
 
-    // -- func_800A03F4 view: type id + arts key + flags + CActorParam -------
+    // -- CtrlObjectParam_InitArtsSlotSet view: type id + arts key + flags + CActorParam -------
     struct CtrlObjectParamArtsInitView {
         u16 field_00;           // +0x00: type id
         u8  pad_02[0xA];
@@ -286,7 +286,7 @@ namespace cf {
         CActorParam mParam;     // +0x17C (vtable)
     };
 
-    // -- func_800A03F4 view: getArtsSlotIds result -----------------------
+    // -- CtrlObjectParam_InitArtsSlotSet view: getArtsSlotIds result -----------------------
     // Six u16 slots at +0 (written with constant offsets in the type-0 path
     // and indexed stores in the loop paths) and a vtable pointer at +0xC
     // used once for the opening slot-0x8 dispatch.
@@ -296,14 +296,14 @@ namespace cf {
     };
 
 
-    // -- func_800A03F4 view: arts column-name buffer (two prefix words) -----
+    // -- CtrlObjectParam_InitArtsSlotSet view: arts column-name buffer (two prefix words) -----
     // The third byte of the first word is overwritten with the digit char.
     union CtrlObjectParamColName {
         u32 words[2];
         u8  bytes[8];
     };
 
-    // -- func_800A03F4 view: attack-parameter record (getAtkParam result) ---
+    // -- CtrlObjectParam_InitArtsSlotSet view: attack-parameter record (getAtkParam result) ---
     struct CtrlObjectParamAtkView {
         char name[0x20];        // +0x00 (strcpy target)
         u32  field_20;          // +0x20 (strlen result)
@@ -333,7 +333,7 @@ namespace cf {
         u32  field_78;          // +0x78 (flag word)
     };
 
-    // -- func_8009EF9C view: full character entry + param tail -------------
+    // -- CtrlObjectParam_RefreshCharEntry view: full character entry + param tail -------------
     // The retail object is a 0x3DD4-stride character entry. The CActorParam
     // member drives the vtable-slot dispatches at +0x17C; the byte/u32 fields
     // at +0x176C / +0x17A5..0x17A8 sit inside the param (CActorParamRetailView
@@ -348,7 +348,7 @@ namespace cf {
         CActorParam mParam;      // +0x17C (vtable)
     };
 
-    // -- func_8009EF9C view: fields past the declared CActorParam span ------
+    // -- CtrlObjectParam_RefreshCharEntry view: fields past the declared CActorParam span ------
     // Cast of the mParam address: pad covers the CActorParam storage, then the
     // vtable-like word at entry+0x34FC and the u32 at +0x3DA0.
     struct CtrlObjectParamEF9CTail {
@@ -359,7 +359,7 @@ namespace cf {
     };
 
 
-    // -- func_800A145C view: type id + arts row/level keys + CActorParam ----
+    // -- CtrlObjectParam_LearnArtsSlots view: type id + arts row/level keys + CActorParam ----
     struct CtrlObjectParamArtsLearnView {
         u16 field_00;           // +0x00: type id
         u8  pad_02[0x8];
@@ -371,14 +371,14 @@ namespace cf {
         CActorParam mParam;     // +0x17C (vtable)
     };
 
-    // -- func_800A145C view: arts-slot record (getArtsParamRC2 result) -------
+    // -- CtrlObjectParam_LearnArtsSlots view: arts-slot record (getArtsParamRC2 result) -------
     // The row pointer at +0x88 is stamped with the claimed arts-slot pointer.
     struct CtrlObjectParamArtsRecRC2 {
         u8 pad_00[0x88];
         u32 field_88;           // +0x88
     };
 
-    // -- func_800A21F8 view: entry with arts rank/level fields ---------------
+    // -- CtrlObjectParam_ApplyArtsRankUp view: entry with arts rank/level fields ---------------
     // The 0x49-stride arts rows are written through the item impls; the
     // arts-set storage at +0x3534 and the u32 at +0x3DD0 feed the
     // code_8025FB10.cpp helpers.
@@ -398,7 +398,7 @@ namespace cf {
         u32 field_3DD0;         // +0x3DD0
     };
 
-    // -- func_800A2974 / func_800A26A4 / func_800A1E3C / func_800A21F8 view --
+    // -- CtrlObjectParam_WriteArtsCounter / CtrlObjectParam_RunPartyArtsFlow / CtrlObjectParam_AdjustPartyArtsLevel / CtrlObjectParam_ApplyArtsRankUp view --
     // Full character-entry layout: u16 type id at +0, equip slot ids at
     // +0x1C, the s16 display fields at +0xD4/+0xD6, the u16 flag at +0xE6,
     // the embedded CActorParam at +0x17C, and the arts-slot area at +0x3534
@@ -418,7 +418,7 @@ namespace cf {
         u8  big[0x8A0];         // +0x3534..0x3DD3
     };
 
-    // -- func_800A1CA0 view: stride-4 u32 pair array at work+0x1F98 --------
+    // -- CtrlObjectParam_AvgPartyArtsLevel view: stride-4 u32 pair array at work+0x1F98 --------
     // The loop reads base[i].field_04 (cmpw + clrlwi), so the field must be
     // a 32-bit word read as signed for the > 0 test and masked to u16 for
     // the character-row offset.
@@ -427,7 +427,7 @@ namespace cf {
         u32 field_04;           // +0x04 (character row id)
     };
 
-    // -- func_800A1CA0 view: CActorParam at entry base +0x436C -------------
+    // -- CtrlObjectParam_AvgPartyArtsLevel view: CActorParam at entry base +0x436C -------------
     // The loop loads the vtable word at base+0x436C and dispatches vtable
     // slot 0x20C (CActorParam_getArtsDataBlock). Calling through the embedded
     // member reproduces the retail lwzu r12,0x436c / lwz r12,0x20c sequence.
@@ -456,9 +456,9 @@ namespace cf {
     // -- func_8009E120 view: row id + u16 table at +2 ----------------------
     // Retail indexes (u16)(value+1) into a u16 table starting at +0x02 and
     // reads the row id at +0x00 (the object is the arts-data block returned
-    // by func_8009EC9C; CfResPcImpl.hpp declares the param as CfResPcCharData*).
+    // by CtrlObjectParam_GetCharEntry; CfResPcImpl.hpp declares the param as CfResPcCharData*).
     struct CtrlObjectParamRowView {
-        u16 field_00;       // +0x00: row id (arg1 of func_80142074 / func_80141E90)
+        u16 field_00;       // +0x00: row id (arg1 of bdatResolveItem / bdatPcPartsRes)
         u16 field_02[8];    // +0x02: u16 table, indexed by (u16)(value+1)
     };
 
@@ -481,7 +481,7 @@ namespace cf {
         u32 field_04;    // +0x04: count (arts count, shifted left 5)
         u32 prev;        // +0x08: previous row
         CtrlObjectParamArtsListEntry* next;  // +0x0C
-        u32 data[8];     // +0x10..0x2F (0xAAAA row: u32 slots; func_800A39E8 target = &data[4])
+        u32 data[8];     // +0x10..0x2F (0xAAAA row: u32 slots; CtrlObjectParam_WriteArtsListEntry target = &data[4])
     };
 
     // -- CtrlObjectParam_InitArtsListEntry view: arts-slot header written before the entry memset --
@@ -514,9 +514,9 @@ namespace cf {
         int arr2[6];      // +0x10..0x27
     };
 
-    // -- func_800A33C8 view: u32 row-id slot table at work+0x1F9C ----------
-    // Compared signed against the u16 type id in func_800A2974 /
-    // func_800A26A4 (retail cmpw), so declared as plain int.
+    // -- CtrlObjectParam_FindCharByItemInst view: u32 row-id slot table at work+0x1F9C ----------
+    // Compared signed against the u16 type id in CtrlObjectParam_WriteArtsCounter /
+    // CtrlObjectParam_RunPartyArtsFlow (retail cmpw), so declared as plain int.
     struct CtrlObjectParamSlotTable {
         u8  pad_00[0x1F9C];
         union {
@@ -531,7 +531,7 @@ namespace cf {
     // CPcKizunagramBig slot storage at +0x3534 (cleared by KizunagramClearChart).
     struct CtrlObjectParamEntry {
         s16  field_00[7];        // 0x00..0x0D
-        s16  field_0E[6];        // 0x0E..0x19 (equip slot ids, zeroed by func_8009E974)
+        s16  field_0E[6];        // 0x0E..0x19 (equip slot ids, zeroed by CtrlObjectParam_ResetWorkBuffer)
         u8   pad_1A[2];          // 0x1A..0x1B
         s16  shortArr[6];        // 0x1C..0x27 (set to -1 by the work-buffer ctor)
         u8   blob_28[0xC0];      // 0x28..0xE7
@@ -561,7 +561,7 @@ namespace cf {
         s16  field_56;                       // 0x0056
         u8   slots_58[0x3E8][8];             // 0x0058..0x1F97 (1000 x 8-byte item slots)
         u8   field_1F98;                     // 0x1F98 (item-slot area head, CtrlObjectParam_InitItemSlotArea)
-        u32  slotTable[9];                   // 0x1F9C..0x1FBF (row-id slots, func_800A33C8)
+        u32  slotTable[9];                   // 0x1F9C..0x1FBF (row-id slots, CtrlObjectParam_FindCharByItemInst)
         u8   pad_1FC0[0x3C];                 // 0x1FC0..0x1FFB
         u8   bitmap_1FFC[0x186A];            // 0x1FFC..0x3865 (50000-bit bitmap)
         u8   bitmap_3866[0x28];              // 0x3866..0x388D (320-bit bitmap)
@@ -571,8 +571,8 @@ namespace cf {
         u32  field_3A388;                    // 0x3A388..0x3A38B (CtrlObjectParam_SetWorkTailValue / CtrlObjectParam_GetWorkTailValue)
     };  // total 0x3A38C
 
-    // -- Equip-row view (func_800A33C8 / CtrlObjectParam_RefreshAllEquipImpls / func_8009DB28) ----
-    // base = work + row*0x3DD4 + 0x41F0 (func_8009EC9C(row)) - the same base
+    // -- Equip-row view (CtrlObjectParam_FindCharByItemInst / CtrlObjectParam_RefreshAllEquipImpls / CtrlObjectParam_RemoveEquipSlotEntry) ----
+    // base = work + row*0x3DD4 + 0x41F0 (CtrlObjectParam_GetCharEntry(row)) - the same base
     // as CtrlObjectParamEntry; parallel s16 arrays at +0x0E and +0x1C indexed
     // by the 6-slot index.
     struct CtrlObjectParamEquipRow {
@@ -590,7 +590,7 @@ namespace cf {
         s16 entries[6];    // +0x1C..0x27 (same storage as EquipRow::shortArr)
     };
 
-    // -- func_800A3594 view: node header written into the data area --------
+    // -- CtrlObjectParam_AllocArtsListNode view: node header written into the data area --------
     // The split writes the new node's header through the row pointer plus
     // +0x20 displacement (fields at +0x20..0x2F of the 0x1111 row).
     struct CtrlObjectParamArtsNode {
@@ -600,7 +600,7 @@ namespace cf {
         u32 field_24;      // +0x24: count
         u32 field_28;      // +0x28: prev (owning row)
         u32 field_2C;      // +0x2C: next
-        u8  dataArea[0x20]; // +0x30: data area of the split-off node (func_800A3594)
+        u8  dataArea[0x20]; // +0x30: data area of the split-off node (CtrlObjectParam_AllocArtsListNode)
     };
 
     struct CtrlObjectParamArtsList {
@@ -609,14 +609,14 @@ namespace cf {
     };
 
 
-    // -- func_800A11A4 view: s16/u16 fields + CActorParam at +0x17C --------
+    // -- CtrlObjectParam_RaiseArtsLevelBy view: s16/u16 fields + CActorParam at +0x17C --------
     // Reads shortArr[5] at +0x26, the s16 display fields at +0xD4/+0xD6 and
     // the u16 flag at +0xE6, and dispatches getArtsDataBlock through the
     // embedded CActorParam (retail lwzu r12,0x17c / slot 0x20C sequence).
     struct CtrlObjectParamEntry11A4 {
         u8  pad_00[0x1C];
         // Two views of +0x1C..0x27: the equip-slot array and the arts item
-        // slot at +0x26. func_800A11A4 reads the word twice through different
+        // slot at +0x26. CtrlObjectParam_RaiseArtsLevelBy reads the word twice through different
         // members, which is what forces MWCC to emit two lha loads (retail
         // shape) instead of CSE-ing them into one.
         union {
@@ -661,7 +661,7 @@ namespace cf {
         u16 rows[1];
     };
 
-    // -- func_800A18A4 view: CHelpManager byte flag at +0x16 ----------------
+    // -- CtrlObjectParam_ClaimArtsSlotRow view: CHelpManager byte flag at +0x16 ----------------
     // The retail loads the CHelpManager singleton pointer (lbl_eu_80664A10,
     // .sbss) and sets the byte at +0x16 (CHelpManager::mLearnArtsFlag). The
     // extern pointer itself is declared at global scope (see top of header).
@@ -670,7 +670,7 @@ namespace cf {
         u8 field_16;   // +0x16: learn-arts flag
     };
 
-    // -- func_800A0E64 view: arts stat object (getArtsDataBlock result) ----
+    // -- CtrlObjectParam_RampArtsStatStep view: arts stat object (getArtsDataBlock result) ----
     // The 0x78-byte stat record copied to the slot-0x224 result: u32 head,
     // f32s at +4..+0x18, s16s at +0x1C/+0x1E/+0x20, more f32/s16/u8 fields
     // and a u32 tail.
@@ -718,14 +718,14 @@ namespace cf {
         u32  field_74;   // +0x74
     };
 
-    // -- func_800A0E64 view: owner (u16 type id + CActorParam at +0x17C) ----
+    // -- CtrlObjectParam_RampArtsStatStep view: owner (u16 type id + CActorParam at +0x17C) ----
     struct CtrlObjectParamArtsOwner0E64 {
         u16 field_00;             // +0x00
         u8  pad_02[0x17A];        // +0x02..0x17B
         CActorParam mParam;       // +0x17C (vtable)
     };
 
-    // -- func_8009D7F4 view: 0x20-byte arts/equip write block --------------
+    // -- CtrlObjectParam_RefreshEquipSlotBlock view: 0x20-byte arts/equip write block --------------
     // Written at &arr[index*0x20 + 0xC] (the r31 base of the retail). f32
     // fields come from the u32->f64->f32 conversions, s16/u16 from column
     // lookups, bytes from byte columns.
@@ -747,13 +747,13 @@ namespace cf {
         u8   field_1F;   // +0x1F
     };
 
-    // -- func_8009D7F4 view: item instance word (arts id in bits 15..5) -----
+    // -- CtrlObjectParam_RefreshEquipSlotBlock view: item instance word (arts id in bits 15..5) -----
     // The retail extracts (word0 >> 5) & 0x7FF from the first word.
     struct CtrlObjectParamItemWord {
         u32 word0;
     };
 
-    // -- func_800A2DE8 view: 8-slot arts table (self) ----------------------
+    // -- CtrlObjectParam_WriteArtsSlotIn view: 8-slot arts table (self) ----------------------
     // Each slot is 0x10 bytes: u16 id at +0 (0 = empty), byte/level fields at
     // +2/+4/+6/+8/+0xA, u16 level at +0xC, u16 bit flags at +0xE.
     struct CtrlObjectParamArtsSlotItem {
@@ -770,7 +770,7 @@ namespace cf {
         CtrlObjectParamArtsSlotItem slots[8];   // 0x00..0x7F
     };
 
-    // -- func_800A2DE8 view: source row (stride 0x40, 4 slots of 0x10) ------
+    // -- CtrlObjectParam_WriteArtsSlotIn view: source row (stride 0x40, 4 slots of 0x10) ------
     // u32 header at +0 (level + 11-bit signed fields), u16 row id at +4 whose
     // top 12 bits carry the arts type id; slot ids at +0x4/+0x14/+0x24/+0x34
     // and slot flag words at +0xE/+0x1E/+0x2E/+0x3E (bit 15 = compare bit).
@@ -790,10 +790,10 @@ namespace cf {
         u16  field_3E;      // +0x3E: slot3 flags
     };
 
-    // -- func_800A18A4 view: 8-word offset table (lbl_eu_804FBC90) ---------
+    // -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (lbl_eu_804FBC90) ---------
     // The struct/extern live at global scope (see top of header) so the
     // symbol stays unmangled.
-    // -- func_800A18A4 view: arts-slot owner --------------------------------
+    // -- CtrlObjectParam_ClaimArtsSlotRow view: arts-slot owner --------------------------------
     // u16 type id at +0 (fed to findObjB28ById), u16 bdat row key at +0xC, a
     // 0x49-stride byte-row table at +0xE8 (indexed by the +0x58 column
     // value), and the embedded CActorParam at +0x17C (vtable slots 0xA4 /
@@ -834,7 +834,7 @@ namespace cf {
         u32 field_00[0xC];
     };
 
-    // -- func_800A2AF0 view: arts-set groups (at +0x3534, 11 x 0xC4) --------
+    // -- CtrlObjectParam_ReapplyArtsSet view: arts-set groups (at +0x3534, 11 x 0xC4) --------
     // Each group holds a dirty flag at +4 and five 0x20-byte slot records
     // starting at +0x20 (tag word at the record head, u16 flag at +4).
     struct CtrlObjectParamArtsGroupSlot {

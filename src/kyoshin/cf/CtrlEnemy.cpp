@@ -76,7 +76,7 @@ void CtrlEnemy_UnkFunc_8008772C(cf::CtrlEnemy* self) {
 // the drive target, re-selecting an action (sub slot 0x4C / the UnkFunc
 // helpers / v2E8), then the final arts-category + distance wall checks.
 void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
-    // One distinct slot per func_80174C98 probe, declared in retail first-use
+    // One distinct slot per testActorStatus probe, declared in retail first-use
     // order (they land at +0x34, +0x30, ... , +0x08).
     u32 w34;
     u32 w30;
@@ -98,13 +98,13 @@ void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
     if (isGlobalCamFlagSet(0x1000000) != 0) goto fail;
     actor = self->field_0x80;
     w34 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w34, 0x1) != 0) goto fail;
+    if (testActorStatus(actor, &w34, 0x1) != 0) goto fail;
     actor = self->field_0x80;
     w30 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w30, 0x8) != 0) goto fail;
+    if (testActorStatus(actor, &w30, 0x8) != 0) goto fail;
     actor = self->field_0x80;
     w2C = *actor->field_04->b030();
-    if (func_80174C98(actor, &w2C, 0x18) != 0) goto fail;
+    if (testActorStatus(actor, &w2C, 0x18) != 0) goto fail;
     if (func_80148778((u8*)self->field_0x80 + 0x8, 0xf) != 0) goto fail;
     if (func_80148778((u8*)self->field_0x80 + 0x8, 0x10) != 0) goto fail;
     if (func_80148778((u8*)self->field_0x80 + 0x8, 0x9) != 0) goto fail;
@@ -122,14 +122,14 @@ gateOk:
     if (self->field_0x80->mSub.s00C(0x200) == 0) goto L_8839C;
     if (self->field_0x80->field_3F60 == 0) {
         if (self->field_0x80->field_3374 & 0x08000000) {
-            func_800D9CA0(getInstance__Q22cf14CBattleManagerFv(),
+            unregisterBattleActor(getInstance__Q22cf14CBattleManagerFv(),
                           self->field_0x80);
         }
         self->field_0x80->mSub.s050(0);
         self->field_0x80->mSub.s010(0x200);
         self->field_0x80->field_3374 &= ~0x08000000;
         if (self->field_0x80->v2BC() == 0) {
-            func_80174B4C(self->field_0x80, 0x3);
+            dispatchItemLoad(self->field_0x80, 0x3);
         }
     } else {
         self->field_0x04 |= 0x8;
@@ -147,13 +147,13 @@ L_88408:
     if (self->v088() == 0) goto L_88468;
     actor = self->field_0x80;
     w28 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w28, 0x3) != 0) goto end;
-    func_8008A2C8(&self->mSub84);
+    if (testActorStatus(actor, &w28, 0x3) != 0) goto end;
+    CtrlMoveEne_UpdateBattleAI(&self->mSub84);
     goto end;
 L_88468:
     actor = self->field_0x80;
     w24 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w24, 0x3) == 0) goto L_88600;
+    if (testActorStatus(actor, &w24, 0x3) == 0) goto L_88600;
     // Action re-selection: keep the current target while a new one resolves.
     kept = 0;
     if (CtrlMoveEne_ConsumeTargetResolve(&self->mSub84) != 0) {
@@ -192,26 +192,26 @@ L_8854C:
 L_88600:
     actor = self->field_0x80;
     w20 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w20, 0x5) != 0) {
+    if (testActorStatus(actor, &w20, 0x5) != 0) {
         self->field_0x14 = lbl_eu_80666570;
         goto L_886D4;
     }
     actor = self->field_0x80;
     w1C = *actor->field_04->b030();
-    if (func_80174C98(actor, &w1C, 0x19) != 0) {
+    if (testActorStatus(actor, &w1C, 0x19) != 0) {
         self->field_0x14 = lbl_eu_80666578;
         goto L_886D4;
     }
     actor = self->field_0x80;
     w18 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w18, 0x800) != 0) goto L_886D4;
+    if (testActorStatus(actor, &w18, 0x800) != 0) goto L_886D4;
     self->v060();
 L_886D4:
-    func_8008A2C8(&self->mSub84);
+    CtrlMoveEne_UpdateBattleAI(&self->mSub84);
 L_886DC:
     actor = self->field_0x80;
     w14 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w14, 0x4000) != 0) goto L_88744;
+    if (testActorStatus(actor, &w14, 0x4000) != 0) goto L_88744;
     if (func_80148778((u8*)self->field_0x80 + 0x8, 0x6) != 0) goto L_88744;
     if (func_80148778((u8*)self->field_0x80 + 0x8, 0xcd) == 0) goto L_8874C;
 L_88744:
@@ -219,13 +219,13 @@ L_88744:
 L_8874C:
     actor = self->field_0x80;
     w10 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w10, 0x3) != 0) goto L_887F4;
+    if (testActorStatus(actor, &w10, 0x3) != 0) goto L_887F4;
     actor = self->field_0x80;
     w0C = *actor->field_04->b030();
-    if (func_80174C98(actor, &w0C, 0x6) != 0) goto L_887F4;
+    if (testActorStatus(actor, &w0C, 0x6) != 0) goto L_887F4;
     actor = self->field_0x80;
     w08 = *actor->field_04->b030();
-    if (func_80174C98(actor, &w08, 0x806) == 0) goto end;
+    if (testActorStatus(actor, &w08, 0x806) == 0) goto end;
 L_887F4:
     if (self->field_0x80->mSub.s00C(0x4) == 0) goto end;
     if (self->field_0x80->mSub.s140() == lbl_eu_80666570) {
@@ -319,7 +319,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         {
             f32 f270 = *self->field_0x80->v270();
             f32 f268 = *self->field_0x80->v268();
-            func_800FB270(CTaskGame_enumListGet(&holder), sub, f268, f270,
+            rebuildByDistanceCone(CTaskGame_enumListGet(&holder), sub, f268, f270,
                           (f32)powTmp, 0);
         }
         __ct__800FAE3C(CTaskGame_enumListGet(&holder), anchor, 0);
@@ -364,7 +364,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
         sub = (obj != 0) ? (void*)&obj->mSub : obj;
         if (sub != getPlayer__Q22cf13CfGameManagerFi(0)) {
             cmdWord = *(u32*)obj->field_04->b030();
-            if (func_80174C98(obj, &cmdWord, 0x802) != 0) {
+            if (testActorStatus(obj, &cmdWord, 0x802) != 0) {
                 continue;
             }
         }
@@ -463,28 +463,28 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
 
 // Retail CtrlEnemy_UnkFunc_80088800 (0x800891D8): the gate arg (r8) routes
 // to the +0x84 move-controller helpers. With a nonzero gate the out-flag
-// byte is zeroed, the horizontal direction is computed via func_80089398
-// (which receives the flag arg) and 1 is returned; otherwise func_800890A8
+// byte is zeroed, the horizontal direction is computed via aimMoveTarget
+// (which receives the flag arg) and 1 is returned; otherwise moveBaseSeekTo
 // fills the out vector and returns its status.
 int CtrlEnemy_UnkFunc_80088800(cf::CtrlEnemy* self, ml::CVec3* out, u8* outFlag,
                                const ml::CVec3* src, int flag, int gate) {
     if (gate != 0) {
         *outFlag = 0;
-        func_80089398((cf::CCtrlMoveBase*)&self->mSub84, out, src, flag);
+        aimMoveTarget((cf::CCtrlMoveBase*)&self->mSub84, out, src, flag);
         return 1;
     }
-    return func_800890A8((cf::CCtrlMoveBase*)&self->mSub84, out, outFlag, src, flag);
+    return moveBaseSeekTo((cf::CCtrlMoveBase*)&self->mSub84, out, outFlag, src, flag);
 }
 
 extern f32 lbl_eu_80666590;
-extern "C" void func_800899C0(void* a, float f);
-extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { func_800899C0((char*)self + 132, lbl_eu_80666590); }
+extern "C" void cachedMoveReq(void* a, float f);
+extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq((char*)self + 132, lbl_eu_80666590); }
 
-void cf::CtrlEnemy::delegateTo80089B24() { func_80089B24((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway((char*)this + 0x84); }
 
-void cf::CtrlEnemy::delegateTo80089E88() { func_80089E88((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089E88() { moveBaseRoute((char*)this + 0x84); }
 
-void cf::CtrlEnemy::delegateTo80089F68() { func_80089F68((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089F68() { moveBaseScnCmd((char*)this + 0x84); }
 
 int cf::CtrlEnemy::ret0_80088870() { return 0; }
 int cf::CtrlEnemy::ret0_80088878() { return 0; }
@@ -528,9 +528,9 @@ extern "C" int CtrlEnemy_ret0_800888E8() { return 0; }
 extern "C" int CtrlEnemy_ret1_800888F4() { return 1; }
 extern "C" int CtrlEnemy_ret1_800888FC() { return 1; }
 
-extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { func_80089B24((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { func_80089E88((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { func_80089F68((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { moveBaseSway((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { moveBaseRoute((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd((char*)self + 0x84); }
 
 extern "C" int CBattleManager_CheckUnk84Flag(u8* self, u32 mask) {
     return (*(u32*)((char*)self + 0x84) & mask) != 0;

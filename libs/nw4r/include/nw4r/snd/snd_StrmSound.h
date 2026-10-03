@@ -39,7 +39,8 @@ public:
         return mStrmPlayer.IsPrepared();
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    // Non-virtual in retail (no vtable slot; hides BasicSound's).
+    void SetPlayerPriority(int priority);
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 
@@ -55,6 +56,10 @@ public:
                  ut::FileStream* pStream);
     void InitParam();
     void UpdateMoveValue();
+
+    // Overrides of BasicSound virtuals (retail vtable slots).
+    virtual void OnUpdatePlayerPriority();
+    virtual void UpdateParam();
 
     void* GetFileStreamBuffer() {
         return mFileStreamBuffer;

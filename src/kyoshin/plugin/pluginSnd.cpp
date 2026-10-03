@@ -16,12 +16,12 @@ extern "C" {
     extern float lbl_eu_80667DA0;   // voice volume (float)
     extern char lbl_eu_80504148[];  // voice file-name format string
 
-    extern s32 func_80189A04(s32 index);                        // sound-slot busy check
+    extern s32 MenuSnd_QuerySlotLive_89A04(s32 index);                        // sound-slot busy check
     extern s32 MenuSnd_TryPlayGated_97A0(const char* name, float vol, s32 flag);  // play archive voice
     extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
     extern void MenuSnd_StopSlot0Clear_9318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
-    extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
-    extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
+    extern void MenuSnd_SilenceByName_8986C(const char* name, float fadeTime); // stop voice by name
+    extern void MenuSnd_RestartBGM_88D34(const char* name, bool enable, float value, float fadeTime); // play BGM
     extern void queueBdatTextA__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
     extern void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second, float value, u8 enabled); // town BGM state
 }
@@ -42,10 +42,10 @@ struct SndVec3 {
 
 extern "C" {
     extern void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
-    extern void func_801AAC70(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
+    extern void BattleWork_ApplyVolumeStore(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
     extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
     extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
-    extern void func_801AACBC(SndVec3* pos, SndVec3* target);              // set map camera position
+    extern void BattleWork_CopyPairToWork(SndVec3* pos, SndVec3* target);              // set map camera position
 }
 
 extern u8 lbl_eu_8066443A;   // camera-position registered flag (.sbss)
@@ -68,7 +68,7 @@ int playBgm(VMThread* pThread) {
         enable = vmArgBoolGet(4, vmArgPtrGet(pThread, 3));
     }
     float value = (float)fixed / lbl_eu_80667D90;
-    func_80188D34(name, enable != 0, value, lbl_eu_80667D94);
+    MenuSnd_RestartBGM_88D34(name, enable != 0, value, lbl_eu_80667D94);
     return 0;
 }
 
@@ -268,16 +268,16 @@ int stopVoice(VMThread* pThread) {
         } else {
             buf.clear();
         }
-        func_8018986C(buf.mString, lbl_eu_80667DA0);
+        MenuSnd_SilenceByName_8986C(buf.mString, lbl_eu_80667DA0);
     } else {
-        func_8018986C(nullptr, lbl_eu_80667DA0);
+        MenuSnd_SilenceByName_8986C(nullptr, lbl_eu_80667DA0);
     }
     return 0;
 }
 
 // Script command: wait until the currently playing voice has stopped.
 int waitVoice(VMThread* pThread) {
-    if (func_80189A04(0) == 0) {
+    if (MenuSnd_QuerySlotLive_89A04(0) == 0) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -385,7 +385,7 @@ int volSeMap(VMThread* pThread) {
     } else {
         vol = 0;
     }
-    func_801AAC70(id, vol, (float)fadeInt / lbl_eu_80667D90);
+    BattleWork_ApplyVolumeStore(id, vol, (float)fadeInt / lbl_eu_80667D90);
     return 0;
 }
 
@@ -445,7 +445,7 @@ int seCamPos(VMThread* pThread) {
         (float)y / lbl_eu_80667D90,
         (float)z / lbl_eu_80667D90,
     };
-    func_801AACBC(&pos, &target);
+    BattleWork_CopyPairToWork(&pos, &target);
     lbl_eu_8066443A = 1;
     return 0;
 }

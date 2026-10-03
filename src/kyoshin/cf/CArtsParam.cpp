@@ -245,8 +245,8 @@ extern void* lookupBattleStatusEntry(void* self, unsigned int id);
 extern void* appendObjectById(void* list, int index);
 extern int getAnimEff(void* obj);
 extern int CtrlRemote_TouchBitByArg(u32 resource);
-extern void func_800FB270(void* list, void* vec, f32 a, f32 b, f32 c, int d);
-extern void func_800FB5AC(void* list, void* vec, f32 a, f32 b, f32 c, f32 d, f32 e, int f);
+extern void rebuildByDistanceCone(void* list, void* vec, f32 a, f32 b, f32 c, int d);
+extern void rebuildByDualCone(void* list, void* vec, f32 a, f32 b, f32 c, f32 d, f32 e, int f);
 extern void* __ct__800FB044(void* list, f32 a, void* vec, int d);
 extern void* __ct__800FAE3C(void* list, void* vec, int d);
 extern void* __ct__800FBA18(void* list, f32 a, f32 b, f32 c, int d);
@@ -288,7 +288,7 @@ int func_80154280(void* param, void* actor, int flags) {
                 func_80148778((u8*)a + 8, 0xf) == 0 &&
                 func_80148778((u8*)a + 8, 0x10) == 0) {
                 u32 val = *(u32*)a->field_04->f30();
-                if (func_80174C98(a, (int*)&val, 0x18) == 0 && a->v173() != 0) {
+                if (testActorStatus(a, (int*)&val, 0x18) == 0 && a->v173() != 0) {
                     result |= 0x80;
                 }
             } else {
@@ -354,7 +354,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             }
                         }
                         u32 sv2;
-                        if (func_80174C98(obj, (int*)&sv2, 0x806) != 0) {
+                        if (testActorStatus(obj, (int*)&sv2, 0x806) != 0) {
                             f31 *= lbl_eu_80667478;
                         }
                         if (!(p->unk78 & 2)) {
@@ -410,7 +410,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             startEnumObjects(list, r29, 0x1000);
                             f32 f28 = obj->v364();
                             list = CTaskGame_enumListGet(holder);
-                            func_800FB270(list, vec70, f31, f30, f28, r27);
+                            rebuildByDistanceCone(list, vec70, f31, f30, f28, r27);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
@@ -422,7 +422,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             __ct__800FB044(list, f31, vec70, 0);
                             f32 f28 = obj->v364() + lbl_eu_8066A1F8;
                             list = CTaskGame_enumListGet(holder);
-                            func_800FB270(list, vec70, f31, f30, f28, r27);
+                            rebuildByDistanceCone(list, vec70, f31, f30, f28, r27);
                             break;
                         }
                         case 3: {
@@ -432,7 +432,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             f32 f28 = v1 + lbl_eu_8066A1F8 * lbl_eu_8066746C;
                             f32 f29 = v1 - lbl_eu_8066A1F8 * lbl_eu_8066746C;
                             list = CTaskGame_enumListGet(holder);
-                            func_800FB5AC(list, vec70, f31, f30, f28, f30, f29, r27);
+                            rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, r27);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
@@ -636,7 +636,7 @@ int func_80154280(void* param, void* actor, int flags) {
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 7) {
             if (p->unk78 & 1) {
                 u32 sv3;
-                if (func_80174C98(obj, (int*)&sv3, 0xb) != 0) result |= 0x80;
+                if (testActorStatus(obj, (int*)&sv3, 0xb) != 0) result |= 0x80;
                 if (func_801B202C() == 0) result |= 0x80;
             } else if (p->unk78 & 2) {
                 if (p->unk3C == 4) {

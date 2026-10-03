@@ -142,7 +142,7 @@ extern "C" void scnLgtEnterMode20(void* ctrl);
 // nw4r diagnostics / math helpers used by func_804728E8 (retail-named).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
-extern "C" void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(
+extern "C" void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* inst, u8* ptr, u8 byte, u32 count);
 // Layer-draw push (defined below): Fv-annotated but actually receives
 // (self, frame+0x9C, a5, a6, f1) from func_80471FCC.
@@ -279,7 +279,7 @@ void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self,
         func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)a4, (u8*)vf + 0x9C, a5, a6, scale);
         mpfsys::MPFDrawDisplayList* inst = mpfsys::MPFDrawDisplayList::getInstance();
-        func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(
+        paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
             inst, (u8*)a4 + d->field_0x10, s->field_0x2E10, a7);
     }
     s->field_0x2E10 = 0;

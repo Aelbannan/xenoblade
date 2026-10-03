@@ -76,7 +76,7 @@ struct CfGimmickReg {
     CfGimmickObject* field_00;
 };
 
-// Object spawned by func_8020A6B0 via func_800B20B4.  The vtable is used to
+// Object spawned by func_8020A6B0 via spawnMaskedObject.  The vtable is used to
 // invoke slots 0x158 (activate) and 0x9C (set position); field_90 is the
 // spawned/active flag.
 struct CfGimmickObject : public cf::CfObject {
@@ -150,7 +150,7 @@ struct CfPlayerIdView {
 // ---------------------------------------------------------------------------
 
 // Cross-TU callees (resolved via the retail symbol map).
-extern "C" void func_800B3A88(void* self, void* target);
+extern "C" void removeManagedObject(void* self, void* target);
 extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
@@ -231,7 +231,7 @@ extern "C" f32 lbl_eu_806646B0;
 extern "C" const f32 lbl_eu_80668378[2];
 extern "C" void ObjPoint_SetName_13FC(void* obj, const char* name, int arg);
 // Create/attach a gimmick object (C-ABI, unmangled): manager first, then flags.
-extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);
+extern "C" CfGimmickObject* spawnMaskedObject(void* mgr, int a, int b, int c);
 
 // Message-posting helpers (CUICfManager.cpp / CUIWindowManager.cpp).
 extern "C" u32 UIWin_GetInstance();

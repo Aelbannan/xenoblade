@@ -141,7 +141,7 @@ extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
     for (u8 i = 0; i < 2; i++) {
         if (h->animModelPtrs[i] != NULL) {
             // Controller pointer lives in the first word of each act param.
-            reinterpret_cast<CActParamAnim*>(&h->actParams[i])->func_8004B114();
+            reinterpret_cast<CActParamAnim*>(&h->actParams[i])->initAnimState();
         }
     }
     Scn_IsAnimActiveOrNull(h->unk_55C);
@@ -154,7 +154,7 @@ extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
     }
     releaseAnimObj(&h->actParam, h->field_0x04);
     releaseAnimObj(&h->actParam, h->field_0x08);
-    reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
+    reinterpret_cast<CActParamAnim*>(&h->actParam)->initAnimState();
     Scn_IsAnimActiveOrNull(h->field_0x04);
     Scn_IsAnimActiveOrNull(h->field_0x08);
     Scn_IsAnimActiveOrNull((CModelDispObj*)h->field_0x00);
@@ -337,7 +337,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             h->field_0x08 = initMcaFile(
                 (u32)self->mInitParam,
                 reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), nameBase + 4);
-            reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
+            reinterpret_cast<CActParamAnim*>(&h->actParam)->initAnimState();
             attachAnimObj(&h->actParam, (CScnItemModel*)h->field_0x00,
                           h->field_0x08,
                           reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()));
@@ -443,7 +443,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 
 // Retail 0x801FBFD8: fetches the pose block for this display's init param,
 // builds two vec3 temps with writeVec3f, applies them to the pose via
-// func_8049EFF8, then runs the fade-in state (func_801FC3B0).
+// ScnCamPointAt, then runs the fade-in state (func_801FC3B0).
 // optimize_for_size gives the retail _savegpr_29/_restgpr_29 helper frame
 // (-O4,p would emit individual stw/lwz pairs).
 #pragma push
@@ -458,7 +458,7 @@ extern "C" void ModelDispInitPoseSlots(CModelDisp* self) {
     void* pVecB;
     pVecA = writeVec3f(&vecA[0], lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
     pVecB = writeVec3f(&vecB[0], lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
-    func_8049EFF8(pose, lbl_eu_806681EC, pVecB, pVecA);
+    ScnCamPointAt(pose, lbl_eu_806681EC, pVecB, pVecA);
     func_801FC3B0(self);
 }
 #pragma pop

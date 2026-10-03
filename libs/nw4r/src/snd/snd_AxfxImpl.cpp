@@ -10,8 +10,8 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-AxfxImpl* AxfxImpl::mCurrentFx = NULL;
-u32 AxfxImpl::mAllocatedSize = 0;
+// No TU-local definitions for AxfxImpl::mCurrentFx/mAllocatedSize: retail
+// keeps that state in nw4r_data.s (lbl_eu_806654C8/CC), which the bodies use.
 
 bool AxfxImpl::CreateHeap(void* pBuffer, u32 size) {
     if (pBuffer == NULL || size == 0) {

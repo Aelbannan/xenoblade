@@ -6,14 +6,14 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-    int           func_802A3E88(CVS_THREAD* self);
-    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-    int           func_802A77E8(CVoiceHandle* handle);
-    int           func_802A7850(int iter);
-    int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    CVoiceHandle* func_802A330C(int size, int align);
+    int           IsThreadVoiceActive(CVS_THREAD* self);
+    void          DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int           RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+    int           HpVoice_MapSubState(CVoiceHandle* handle);
+    int           HpVoice_ValidIter(int iter);
+    int           HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
 

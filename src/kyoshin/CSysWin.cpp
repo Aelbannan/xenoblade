@@ -110,7 +110,7 @@ extern "C" void sysWinSetTwoTextValues(CSysWin* self, char* a, char* b) {
 
 // us-8022e0ac - format a pane name (idx+1), find two panes in the
 // second window's layout, and compute the second pane's absolute screen
-// position into out (ancestor translate sum via func_80137924). Same shape as
+// position into out (ancestor translate sum via ScalePaneWorldPos). Same shape as
 // getShopWinPanePos / clpCalcCurPos: each GetRootPane() is a fresh load (retail
 // reloads window->mLayout per use). optimize_for_size matches the retail
 // stmw/lmw prologue for the 4 callee-saved regs (r28-r31).
@@ -121,7 +121,7 @@ extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* window, i
     sprintf(buf, &lbl_eu_8050A478[0xde], idx + 1);
     nw4r::lyt::Pane* pane1 = window->mLayout->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = window->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0xeb], true);
-    func_80137924(out, pane1, pane2, window->mLayout->GetRootPane());
+    ScalePaneWorldPos(out, pane1, pane2, window->mLayout->GetRootPane());
 }
 #pragma pop
 
@@ -255,7 +255,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     u8* font = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     typedef u32 (*FontVFn)(void*);
     u32 fontRes = (*reinterpret_cast<FontVFn**>(font))[0x24 / 4](font);
-    func_8013676C(rootPane, fontRes);
+    ApplyFontToTxtPanes(rootPane, fontRes);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
         func_8022C348(this);

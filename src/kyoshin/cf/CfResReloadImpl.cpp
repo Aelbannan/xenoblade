@@ -55,7 +55,7 @@ int checkTypeIsValid(cf::CfResReloadImpl* arg) {
 // match the parent resource (+0x70) and the +0x40 vtable slot of the entry
 // object must be nonzero. Otherwise returns the normalized (field_08 >= 3)
 // flag computed by checkTypeIsValid's expression.
-int func_8016CE5C(const cf::CfResReloadImpl* self) {
+int isReloadInUse(const cf::CfResReloadImpl* self) {
     // Retail hoists the parent load above the LR spill (const self), keeps it
     // in one register for both flag-word tests, then reloads it from self
     // only after the lookup call.
@@ -66,7 +66,7 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
         cf::CfResReloadParent* q = self->field_00;
         if (e->field_04 == q->field_70) {
             // slot +0x40 takes the owning entry as r4 (same convention as
-            // func_8016D688's CfResEntry dispatches)
+            // advanceReload's CfResEntry dispatches)
             if (e->field_2C->isInUse(e) != 0) {
                 return 1;
             }
@@ -86,7 +86,7 @@ extern "C" int getTypeId() { return 12; }
 // +0x34 with (this, 1), and when both that result and CfRes_getResFileSize are
 // nonzero, hashes the value (multiply-high + correction) into field_1F.
 // Returns the byte, or 1 when it is zero.
-int func_8016CF24(cf::CfResReloadImpl* self) {
+int getReloadByte(cf::CfResReloadImpl* self) {
     int v = self->getWorkValue(1);
     if (self->field_1F == 0 && v != 0) {
         unsigned int h = CfRes_getResFileSize(v);
@@ -292,7 +292,7 @@ extern "C" int tryResolveReloadSlot10(cf::CfResReloadImpl* self, int arg2) {
 // All parent accesses go through self->field_00 directly (retail reloads it
 // at every call boundary); the post-instance-check parent copy stays live in
 // a register across the flag tests and the lookup-param selection.
-extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
+extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     CfModel_ReattachTrg((cf::CfObjectModel*)self->field_00);
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
@@ -398,7 +398,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
 // flag gates, timer decrement, resource-object creation (slots +0x18/+0x1C),
 // entry re-install (+0x28) and the object/sound cleanup tail. The `ok` bit
 // (r29) is also reused for the +0x68 flag extracted near the end.
-extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
+extern "C" void advanceReload(cf::CfResReloadImpl* self) {
     // retail signs the index (lha) when passing it straight through
     cf::CfResLookupEntry* entry = CfRes_getEntryPtrCol0((s16)self->field_0A);
     int ok = 1;
@@ -736,9 +736,9 @@ extern "C" void updateReloadFloat(short param_1)
 
 // Refreshes the reload timer globals for a given type: stores the type,
 // seeds the reload counter (either a fixed 1 with a constant timer, or a
-// BDAT-derived value via func_8016E654), then picks the delay float by the
+// BDAT-derived value via calcReloadPrm), then picks the delay float by the
 // same flag/selector logic as getReloadDelay and drives the two sound slots.
-extern "C" void func_8016DF4C(u32 type) {
+extern "C" void seedReloadTmr(u32 type) {
     lbl_eu_80664280 = (u16)type;
     if ((type & 0xFFFF) == 0) {
         lbl_eu_80664278 = 1;
@@ -746,8 +746,8 @@ extern "C" void func_8016DF4C(u32 type) {
     } else {
         u16 v;
         // Cast through the stub so the -ipa inliner cannot fold the call.
-        ((u16(*)(u16, u16, u16, u16*, u16*))func_8016E654)(
-            lbl_eu_80664280, 0x64, (u16)func_8006A6D0(), &v, &lbl_eu_80664278);
+        ((u16(*)(u16, u16, u16, u16*, u16*))calcReloadPrm)(
+            lbl_eu_80664280, 0x64, (u16)CfT_DispatchFrameCounts(), &v, &lbl_eu_80664278);
         // u16 -> float via the 2^52 double-magic trick.
         lbl_eu_80664284 = (f32)v * lbl_eu_80666210;
     }
@@ -869,7 +869,7 @@ struct ReloadPosVec {
 // lfd/fsubs/stfs int->float sequence (the manual 2^52 union form schedules
 // worse here); the cast constants land as TU-local @N pool labels - known
 // §7i residual.
-extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
+extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     f32 vals[3];
@@ -922,7 +922,7 @@ extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
 // values for the type, compares them against the game-manager counter, and
 // reports whether the current flag byte matches the type's expected bit
 // mask (4 for type 1, 0x10 otherwise). Returns 2 on out-of-range.
-extern "C" int func_8016E430(u32 type) {
+extern "C" int isReloadReady(u32 type) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     u16 gm = (u16)cf::CfGameManager::getQueuedFileEventCount();
@@ -959,7 +959,7 @@ extern "C" int func_8016E430(u32 type) {
 // returns whether the low byte's bit pattern matches the given sub-type:
 // bit 0 -> 1, bit pair 1-2 -> sub 1, 3-4 -> sub 2, 5-6 -> sub 3, 7-8 -> sub 4.
 // The column name depends on the type field (2 picks a different column).
-extern "C" int func_8016E578(u32 type, int sub) {
+extern "C" int testReloadSub(u32 type, int sub) {
     char* tbl = lbl_eu_80503140;
     char* col;
     if (type == 2) {
@@ -996,7 +996,7 @@ extern "C" int func_8016E578(u32 type, int sub) {
 // gets a full-word store through a byte buffer (retail stw slot + lbz/lhz
 // reload); the halfword view of slot 3 is re-read per test because the
 // *out1/*out2 pointer stores may alias it, so MWCC cannot cache it.
-extern "C" int func_8016E654(u32 type, u32 arg2, int arg3, u16* out1, u16* out2) {
+extern "C" int calcReloadPrm(u32 type, u32 arg2, int arg3, u16* out1, u16* out2) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     char* c1;
@@ -1084,15 +1084,15 @@ extern "C" int func_8016E654(u32 type, u32 arg2, int arg3, u16* out1, u16* out2)
 
 // Searches up to *counter reload candidates for one whose delay window fits
 // the current state: picks a random offset (mtRand) and queries the reload
-// helper, then validates the candidate against the type check (func_8016E430)
+// helper, then validates the candidate against the type check (isReloadReady)
 // and the 64288-flag state. On success writes the reload info to out1..out3
 // and returns the candidate delay; on exhaustion resets to 0xB4 and returns 1.
-extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter, u16* out2,
+extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter, u16* out2,
                   u16* out3) {
     u16 f0;
     u16 initial = *counter;
     if (lbl_eu_806640A8 != 0) {
-        u16 rnd = (u16)func_8006A6D0();
+        u16 rnd = (u16)CfT_DispatchFrameCounts();
         // Two separate volatile reads: retail keeps both SDA loads back to
         // back (first feeds the odd-bit test, second the even-mask clear).
         u16 f0raw = *(volatile u16*)&lbl_eu_80664288;
@@ -1106,18 +1106,18 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
             u16 mrand2;
             u16 spA;
             u16 spB;
-            if (((int(*)(cf::CfResReloadImpl*, u16, int))func_8016E1AC)(
+            if (((int(*)(cf::CfResReloadImpl*, u16, int))reloadInRange)(
                     self, *counter, 1) == 0) {
                 goto dec;
             }
-            typeRet = func_8016E430(*counter);
+            typeRet = isReloadReady(*counter);
             if (typeRet == 0) {
                 goto dec;
             }
             mrand2 = (u16)ml::math::mtRand(0x64);
             u16 ret;
             ret =
-                ((u16(*)(u16, u16, u16, u16*, u16*))func_8016E654)(
+                ((u16(*)(u16, u16, u16, u16*, u16*))calcReloadPrm)(
                     *counter, mrand, rnd, &spA, &spB);
             u16 spBv = (u16)spB;
             if (spBv == 0) {
@@ -1192,12 +1192,12 @@ extern "C" float getReloadDelay() {
     return delay;
 }
 
-// Main reload driver: when the type check (func_8016E430) reports 1, refresh
+// Main reload driver: when the type check (isReloadReady) reports 1, refresh
 // the reload-count global from the BDAT column for the current type; otherwise
 // tick the timer float and, once it expires, run the candidate search
-// (func_8016E854), convert the result to the timer and drive the sound slots.
-extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
-    int typeRet = func_8016E430(lbl_eu_80664280);
+// (getReloadCand), convert the result to the timer and drive the sound slots.
+extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
+    int typeRet = isReloadReady(lbl_eu_80664280);
     if (typeRet == 1) {
         u16 p = lbl_eu_80664280;
         u16 row = (u16)lbl_eu_80664184;
@@ -1216,7 +1216,7 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
     }
     // Compound -=: ties the subtract to the store so the stfs lands ahead
     // of the compare like retail.
-    lbl_eu_80664284 -= func_80069EE4();
+    lbl_eu_80664284 -= CfT_PlayTimeGet();
     if (lbl_eu_80664284 > lbl_eu_806676C8) {
         u16 p = lbl_eu_80664280;
         if (p == 0) {
@@ -1224,17 +1224,17 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
         }
         // (p + 0x10000 - 1) & 0xFFFF <= 1 lowers to retail's addis/subi pair.
         u32 pw = p + 0x10000;
-        if ((u16)(pw - 1) <= 1 && func_8016E1AC(self, p, 0) == 0) {
+        if ((u16)(pw - 1) <= 1 && reloadInRange(self, p, 0) == 0) {
             lbl_eu_80664284 = lbl_eu_806676C8;
             return;
         }
-        u16 rnd = (u16)func_8006A6D0();
-        u16 r = (u16)func_8016E578(lbl_eu_80664280, rnd);
+        u16 rnd = (u16)CfT_DispatchFrameCounts();
+        u16 r = (u16)testReloadSub(lbl_eu_80664280, rnd);
         if (r == 0 || typeRet == 0) {
             u16 o1;
             u16 o3;
             u16 o2;
-            u16 ret = func_8016E854(self, &o1, &lbl_eu_80664280, &o2, &o3);
+            u16 ret = getReloadCand(self, &o1, &lbl_eu_80664280, &o2, &o3);
             // Volatile accesses keep the two SDA loads of lbl_eu_80663E24
             // unmerged around the count store.
             u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
@@ -1272,9 +1272,9 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self) {
 
 // Refreshes the reload param 1 global (lbl_eu_8066427E) from the BDAT table
 // when a table is loaded: the column is selected by lbl_eu_80664280
-// (0 -> table lbl_eu_80531068 indexed by func_8006A6D0, 1 -> +0xDC string,
-// 2 -> +0xE4 string). Then forwards the object to func_8016EA68.
-void func_8016EC58(cf::CfResReloadImpl* self) {
+// (0 -> table lbl_eu_80531068 indexed by CfT_DispatchFrameCounts, 1 -> +0xDC string,
+// 2 -> +0xE4 string). Then forwards the object to runReloadMain.
+void updateReloadP1(cf::CfResReloadImpl* self) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     if (bdat != 0) {
@@ -1285,7 +1285,7 @@ void func_8016EC58(cf::CfResReloadImpl* self) {
         // shape instead of a folded rlwinm.
         if (p == 0) {
             u32 v = getBdatStringColumnValue(
-                bdat, lbl_eu_80531068[(u16)func_8006A6D0()], row);
+                bdat, lbl_eu_80531068[(u16)CfT_DispatchFrameCounts()], row);
             u8 bytes[4];
             *(u32*)bytes = v;
             lbl_eu_8066427E = bytes[0];
@@ -1301,7 +1301,7 @@ void func_8016EC58(cf::CfResReloadImpl* self) {
             lbl_eu_8066427E = bytes[0];
         }
     }
-    func_8016EA68(self);
+    runReloadMain(self);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

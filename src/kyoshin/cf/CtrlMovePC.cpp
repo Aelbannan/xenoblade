@@ -24,8 +24,8 @@ extern "C" {
 // Base class ctor (CCtrlMoveBase) and helpers.
 void __ct__80088904(CCtrlMovePC* self, void* baseParam);
 void maskMoveBaseFlags(CCtrlMovePC* self);
-void func_8008962C(CCtrlMovePC* self);
-void func_80089694(CCtrlMovePC* self, const Vec* v, f32 f);
+void moveBaseUnlink(CCtrlMovePC* self);
+void setMoveFacing(CCtrlMovePC* self, const Vec* v, f32 f);
 
 // ptmf runtime.
 extern int (CCtrlMovePC::*const __ptmf_null)();
@@ -109,7 +109,7 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
     maskMoveBaseFlags(self);
 
     self->mStateFunc = lbl_eu_80532B60;
-    func_8008962C(self);
+    moveBaseUnlink(self);
 
     self->mFlags4C = 0x80000000u;
     self->mFlags50 = 0;
@@ -163,7 +163,7 @@ extern "C" void movePcReleaseTaskReset(CCtrlMovePC* self) {
         }
         self->mTask = 0;
     }
-    func_8008962C(self);
+    moveBaseUnlink(self);
 }
 
 // ============================================================================
@@ -218,7 +218,7 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
         self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * s);
         f32 c = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
         self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * c);
-        func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+        setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
     } else {
         self->mStateFunc = lbl_eu_80532C98;
         *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
@@ -241,7 +241,7 @@ extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
             f32 b = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * b);
-            func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+            setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
             return 0;
         }
     }
@@ -269,7 +269,7 @@ extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
         return;
     }
 
-    if (func_801999C0(self) == 0) {
+    if (movePcUpdateTop(self) == 0) {
         return;
     }
     if (!self->mStateFunc) {
@@ -308,7 +308,7 @@ extern "C" void movePcCondFullReset(void* selfv, int flag) {
     if (flag != 0) {
         maskMoveBaseFlags(self);
         self->mStateFunc = lbl_eu_80532B78;
-        func_8008962C(self);
+        moveBaseUnlink(self);
         self->mFlags4C = 0x80000000u;
         self->mFlags50 = 0;
         void* task = self->mTask;
@@ -336,7 +336,7 @@ extern "C" void movePcResetAndSetPos(CCtrlMovePC* self, const Vec* pos) {
     if (self->mFlags4C & 0x00800000u) {        // rlwinm. bit 8
         maskMoveBaseFlags(self);
         self->mStateFunc = lbl_eu_80532B84;
-        func_8008962C(self);
+        moveBaseUnlink(self);
         self->mFlags4C = 0x80000000u;
         self->mFlags50 = 0;
         void* task = self->mTask;
@@ -454,19 +454,19 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     {
         u32 q;
         q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
-        int hit10a = func_80174C98(objW, (int*)&q, 0xa);
+        int hit10a = testActorStatus(objW, (int*)&q, 0xa);
         if (hit10a == 0) {
             q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
-            if (func_80174C98(objW, (int*)&q, 0x9) != 0) {
+            if (testActorStatus(objW, (int*)&q, 0x9) != 0) {
                 condC = 0;
             }
         }
         q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
-        if (func_80174C98(objW, (int*)&q, 0x1a) != 0) {
+        if (testActorStatus(objW, (int*)&q, 0x1a) != 0) {
             condA = 0;
         } else {
             q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_getStateData();
-            if (func_80174C98(objW, (int*)&q, 0x19) == 0 && condC != 0) {
+            if (testActorStatus(objW, (int*)&q, 0x19) == 0 && condC != 0) {
                 condB = 1;
             }
         }
@@ -565,7 +565,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     ml::CVec3 tmp = self->mPos;                  // stack +0xa8 source spot
     u32 rnd = (u32)ml::math::mtRand() & 0xffffu;
     CfPartyInfoIn info;                          // stack +0xe8 planner block
-    func_80198710(&info, &tmp, 1, self->mFloat100,
+    InitRecord(&info, &tmp, 1, self->mFloat100,
                   lbl_eu_80667B70, lbl_eu_80667BA8, rnd);
     ml::CVec3 out;                               // stack +0xc0 candidate spot
     int planned = CPartsChange_ProcessPartyInfo(&info, &out);
@@ -577,7 +577,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
             + ml::CVec3(lbl_eu_80667B60, lbl_eu_80667BBC, lbl_eu_80667B60);
         (void)nearPt;
         (void)farPt;
-        if (((int (*)(void*, void*))func_804B526C)(lbl_eu_80665958,
+        if (((int (*)(void*, void*))ColiWalkSegment)(lbl_eu_80665958,
                 (char*)self->mPlayer + 0x44a8) == 0) {
             return;
         }
@@ -648,20 +648,20 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     }
 }
 // ============================================================================
-// func_8019B4F0 - walk-state update (0x2A0 bytes)
+// movePcUpdateWalk - walk-state update (0x2A0 bytes)
 //
 // Two entry modes keyed on flag 0x02000000:
 //  - clear: steering update. If the stored facing is degenerate, reset the
 //    tick counter; otherwise probe a ray from the object forward and either
 //    rotate the stored facing (counter-gated) or steer to a spot beside the
-//    object (func_80089E88).
+//    object (moveBaseRoute).
 //  - set: timed nudge of mVecC0 toward a fixed step with arrival gates,
 //    then a two-iteration candidate-spot search around the object (probe
-//    point + facing offset) committing through func_80089E88.
+//    point + facing offset) committing through moveBaseRoute.
 // Common tail drives the move task contact handling (wall slide) or the
-// steering helper func_80088974.
+// steering helper moveBaseUpdate.
 // ============================================================================
-extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
+extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
     typedef int (*Probe2Fn)(void*, void*);
     ml::CVec3* goalPtr = &self->mVec54;   // r24 alias: vec fed to the tail helpers
     cf::CfObjWrap* plW = (cf::CfObjWrap*)self->mPlayer;
@@ -680,7 +680,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
             tgt.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->z;
             ml::CVec3 dir = self->mVec90 * lbl_eu_80667B70;
             ml::CVec3 sum = tgt + dir;
-            if (func_804B526C(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
+            if (ColiWalkSegment(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
                               &tgt, &sum, 0, 0, lbl_eu_80571810) == 0) {
                 self->mArr124[3] = 0;
             } else {
@@ -698,7 +698,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                     ml::CVec3 spot = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()
                                      + off;
                     self->mVecC0 = spot;
-                    if (func_80089E88(self, &spot, 1) != 0) {
+                    if (moveBaseRoute(self, &spot, 1) != 0) {
                         self->mFlags4C = (self->mFlags4C | 0x60000000u) & ~0x10000u;
                         goalPtr = &self->mVecC0;
                     }
@@ -773,11 +773,11 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                 probe.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->z;
                 ml::CVec3 side = dir * sideScale;
                 ml::CVec3 dest = probe + side;
-                if (func_804B526C(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
+                if (ColiWalkSegment(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
                                   &probe, &dest, 0, 0, lbl_eu_80571810) != 0) {
                     continue;
                 }
-                if (func_80089E88(self, &dest, 1) == 0) {
+                if (moveBaseRoute(self, &dest, 1) == 0) {
                     continue;
                 }
                 // Spot committed: arm the walk-request flags and stop scanning.
@@ -884,11 +884,11 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
 
     if (self->mFlags4C & 0x01000000u) {
         self->mFlags4C &= ~0x01000000u;
-        if (func_80088974((cf::CfObjectMove*)self, &self->mVec90, goalPtr, 0, 0) != 0) {
+        if (moveBaseUpdate((cf::CfObjectMove*)self, &self->mVec90, goalPtr, 0, 0) != 0) {
             return 1;
         }
     } else {
-        if (func_80088974((cf::CfObjectMove*)self, &self->mVec90, goalPtr, 1, 1) != 0) {
+        if (moveBaseUpdate((cf::CfObjectMove*)self, &self->mVec90, goalPtr, 1, 1) != 0) {
             return 1;
         }
     }
@@ -896,7 +896,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
     return 0;
 }
 // ============================================================================
-// func_8019C0D4 - approach-state entry (0x1D8 bytes)
+// movePcEnterApproach - approach-state entry (0x1D8 bytes)
 //
 // If the pair-move flag is set, switch to the paired-walk state and run the
 // reposition step. Otherwise pick a goal position: reuse the stored goal when
@@ -905,7 +905,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
 // manager's node pool and start it toward the goal. Finally advance to the
 // walk-update state.
 // ============================================================================
-extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
+extern "C" int movePcEnterApproach(cf::CCtrlMovePC* self) {
     u32 f50 = self->mFlags50;
     self->mArr124[7] = 0;
     self->mFlags4C &= ~0x10000u;
@@ -913,7 +913,7 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
         // Paired movement: delegate to the reposition state handler.
         self->mStateFunc = lbl_eu_80532C14;
         self->mArr124[15] = 0;
-        func_8019CDA0(self);
+        movePcSteerToGoal(self);
         return 0;
     }
 
@@ -923,7 +923,7 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
     } else {
         ml::CVec3 pos = self->mPos;
         CfPartyInfoIn info;
-        func_80198710(&info, &pos, 6, self->mFloat100, lbl_eu_80667B70,
+        InitRecord(&info, &pos, 6, self->mFloat100, lbl_eu_80667B70,
                       lbl_eu_80667B60, self->mShort120);
         if (CPartsChange_ProcessPartyInfo(&info, &self->mVec54) == 0) {
             // Planner failed: head straight for our own position.
@@ -953,25 +953,25 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
         }
     }
 
-    if (func_8019B4F0(self) == 0 && !(self->mFlags4C & 0x1000u)) {
+    if (movePcUpdateWalk(self) == 0 && !(self->mFlags4C & 0x1000u)) {
         self->mFlags4C |= 1u;
         self->mVec54 = self->mPos;
     }
     self->mFlags4C |= 0x10u;
     self->mStateFunc = lbl_eu_80532C20;
-    func_8019C304(self);
+    movePcUpdateApproach(self);
     self->mFlags4C &= ~0x18u;
     return 0;
 }
 // ============================================================================
-// func_8019C304 - approach-state update (0x9D8 bytes)
+// movePcUpdateApproach - approach-state update (0x9D8 bytes)
 //
 // Counts ticks in the state; on timeout transitions. Depending on the mode
 // flags it either scans the party for a member blocking the path (bail out
-// toward func_8019D9E0) or runs the walk-speed selection, obstacle probe and
-// steering (func_80089694) logic below.
+// toward movePcUpdateFollow) or runs the walk-speed selection, obstacle probe and
+// steering (setMoveFacing) logic below.
 // ============================================================================
-extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
+extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
     typedef int (cf::CCtrlMovePC::*MoveFn)();
 
     s16 cnt = self->mArr124[7];              // 0x132 tick counter
@@ -1009,7 +1009,7 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
             }
             if (bail != 0) {
                 self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xd8);
-                func_8019D9E0(self);
+                movePcUpdateFollow(self);
                 return 0;
             }
         } else {
@@ -1125,7 +1125,7 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
 
         if (spd != lbl_eu_80667B60) {
             if (!(self->mFlags4C & 0x10u)) {
-                func_8019B4F0(self);
+                movePcUpdateWalk(self);
             }
             u32 f50 = self->mFlags50;
             if (f50 & 0x20000u) {
@@ -1219,16 +1219,16 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
                 spd = lbl_eu_80667B60;
             }
 
-            func_80089694(self, (const Vec*)&self->mVec90, spd);
+            setMoveFacing(self, (const Vec*)&self->mVec90, spd);
             return 0;
         }
     } else {
         // Overspeed: just face the movement direction.
         if (self->mFlags50 & 1u) {
-            f32 ang = func_8019EF90(self);
+            f32 ang = movePcProbeGoalAngle(self);
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
-            func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+            setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
             return 0;
         }
         self->mArr124[4] = 0;
@@ -1245,14 +1245,14 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
     return 0;
 }
 // ============================================================================
-// func_801999C0 - top-level movement update for the controlled character (0x9BC)
+// movePcUpdateTop - top-level movement update for the controlled character (0x9BC)
 //
 // One-shot init (state fn, party-index detection), then per-tick: update the
 // goal position / facing from the player object, drive the move-state machine
 // transitions (mode gates + timers) and finally decide the camera-facing
 // side. Returns 1 when the actor is ready to move this tick.
 // ============================================================================
-extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
+extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     typedef int (cf::CCtrlMovePC::*MoveFn)();
     const MoveFn* tbl = &lbl_eu_80532B60;   // ptmf constant table
 
@@ -1497,14 +1497,14 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         }
     }
 
-    func_8019F1E0(self);
+    movePcUpdatePairFollow(self);
 
     cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
     u32 x;
     void* sub = obj->mField04;
     void* r = ((cf::CObjectState*)sub)->CObjectState_getStateData();
     x = *(u32*)r;
-    if (func_80174C98(obj, (int*)&x, 4) != 0) {
+    if (testActorStatus(obj, (int*)&x, 4) != 0) {
         self->mFlags4C |= 0x40000u;
     }
     cf::CfObjWrap* pObj = (cf::CfObjWrap*)self->mPlayer;
@@ -1514,7 +1514,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     void* subP = pObj->mField04;
     void* rP = ((cf::CObjectState*)subP)->CObjectState_getStateData();
     x2 = *(u32*)rP;
-    if (func_80174C98(pObj, (int*)&x2, 4) != 0) {
+    if (testActorStatus(pObj, (int*)&x2, 4) != 0) {
         s16 v = self->mArr124[11];
         self->mArr124[11] = (s16)(v + 1);
         if (v + 1 > 60) {
@@ -1706,7 +1706,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         void* sub3 = obj2->mField04;
         void* r3 = ((cf::CObjectState*)sub3)->CObjectState_getStateData();
         y = *(u32*)r3;
-        if (func_80174C98(obj2, (int*)&y, 8) != 0) {
+        if (testActorStatus(obj2, (int*)&y, 8) != 0) {
             ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
             return 0;
         }
@@ -1721,14 +1721,14 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// func_8019CDA0 - state update: reposition / steer toward the goal (0x63C)
+// movePcSteerToGoal - state update: reposition / steer toward the goal (0x63C)
 //
 // Picks the goal from mVecCC/mPos, computes the delta to the object position,
 // scans the party for the closest member (to bail toward), then applies the
 // distance-gated state transitions and finally steers the facing direction
-// toward the movement vector (func_80089694).
+// toward the movement vector (setMoveFacing).
 // ============================================================================
-extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
+extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
     if ((self->mFlags50 & 0x2u) == 0) {
         self->mStateFunc = lbl_eu_80532CA4;
         self->mArr124[15] = 0;
@@ -1984,7 +1984,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
         }
         self->mVec90.x = right.x * inv2 + self->mVec90.x;
         self->mVec90.z = right.z * inv2 + self->mVec90.z;
-        func_80089694(self, (const Vec*)&self->mVec90, spd);
+        setMoveFacing(self, (const Vec*)&self->mVec90, spd);
         return 0;
     }
 
@@ -1997,11 +1997,11 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
     return 0;
 }
 // ============================================================================
-// func_8019D9E0 - state update: scan the other party members for one inside
+// movePcUpdateFollow - state update: scan the other party members for one inside
 // our personal space (within mDistFC of mPos), aim the goal at it, and run
 // the distance-gated flag transitions / steering helper.
 // ============================================================================
-extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
+extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
     if ((self->mFlags4C & 0x1000u) && !(self->mFlags50 & 0x2u)) {
         ml::CVec3 goal = self->mVec78;
         f32 bestLen = self->mDistFC;
@@ -2057,9 +2057,9 @@ extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
                                     reinterpret_cast<nw4r::math::VEC3*>(op2),
                                     reinterpret_cast<nw4r::math::VEC3*>(&goal));
                 ml::CVec3 out(delta);
-                if (func_80089E88(self, &out, 1) != 0) {
-                    func_800896F4(self, &self->mVec90, &out);
-                    func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+                if (moveBaseRoute(self, &out, 1) != 0) {
+                    moveBaseChase(self, &self->mVec90, &out);
+                    setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
                     return 0;
                 }
             } else if (bestLen < lbl_eu_80667C24) {
@@ -2080,11 +2080,11 @@ extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
     return 0;
 }
 // ============================================================================
-// func_8019DD54 - reposition state update: pick a spot beside the party
+// movePcUpdateReposition - reposition state update: pick a spot beside the party
 // leader (or in front), steer the candidate toward it, and commit the move
 // (0x9BC bytes). Returns 0 on every path.
 // ============================================================================
-extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
+extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     self->mFlags4C |= 0x8;
     ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
 
@@ -2193,7 +2193,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
             self->mFlags4C |= 0x20000;
             ml::CVec3 v0 = self->mPos;
             CfPartyInfoIn p1;
-            func_80198710(&p1, &v0, 6, self->mFloat100, lbl_eu_80667B70,
+            InitRecord(&p1, &v0, 6, self->mFloat100, lbl_eu_80667B70,
                           lbl_eu_80667B60, self->mShort120);
             self->mArr124[9] = 0;
             p1.mField2E = 1;
@@ -2208,7 +2208,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
             ml::CVec3 v0 = self->mPos;
             u32 rnd = ml::math::mtRand();
             CfPartyInfoIn p2;
-            func_80198710(&p2, &v0, 1, self->mFloat100, lbl_eu_80667B70,
+            InitRecord(&p2, &v0, 1, self->mFloat100, lbl_eu_80667B70,
                           lbl_eu_80667BA8, rnd & 0xffff);
             s16 cnt = self->mArr124[9];
             self->mArr124[9] = (s16)(cnt + 1);
@@ -2223,7 +2223,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
                 vHi.y += lbl_eu_80667BBC;
                 ml::CVec3 vLo = self->mPos;
                 vLo.y += lbl_eu_80667B70;
-                if (func_804B526C(lbl_eu_80665958,
+                if (ColiWalkSegment(lbl_eu_80665958,
                     (char*)self->mPlayer + 0x44a8, &vHi, &vLo, 2, 1, 0) == 0) {
                     return 0;
                 }
@@ -2295,14 +2295,14 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
     return 0;
 }
 // ============================================================================
-// func_8019E710 - per-tick movement state update (0x69C bytes)
+// movePcTickState - per-tick movement state update (0x69C bytes)
 //
 // Chooses a new state-fn ptmf from mFlags4C/mFlags50 and the current approach
 // distance; when no transition happened (flag stays 1) it runs the steering
 // logic: turn toward the target, collision-check the goal, and lerp the
-// velocity toward the facing direction (func_800898D4).
+// velocity toward the facing direction (moveBaseLerp).
 // ============================================================================
-extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
+extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
     typedef int (cf::CCtrlMovePC::*MoveFn)();
     const MoveFn* tbl = &lbl_eu_80532B60;   // ptmf constant table
     int flag = 1;
@@ -2350,9 +2350,9 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
                                 if (ScnRes_EntryFlagThunk_E5A4(0x400, 0) != 0) {
                                     ml::CVec3 scaled = *vp * lbl_eu_80667BD0;
                                     *vp = scaled;
-                                    func_800898D4(self, vp);
+                                    moveBaseLerp(self, vp);
                                     self->mVec90 = *vp;
-                                    func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+                                    setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
                                     flag = 0;
                                 }
                             }
@@ -2398,7 +2398,7 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
             ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
             ml::CVec3 delta = *pos - self->mVec78;
             ml::CVec3 deltaArg = delta;
-            func_800896F4(self, &self->mVec90, &deltaArg);
+            moveBaseChase(self, &self->mVec90, &deltaArg);
 
             ml::CVec3 scaled = self->mVec90 * lbl_eu_80667BC4;
             ml::CVec3 scaledCopy = scaled;
@@ -2416,7 +2416,7 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
                 }
             }
             if (blocked != 0) {
-                func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+                setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
                 self->mArr124[13] = 0;
                 self->mFlags4C &= ~0x40u;
                 flag = 0;
@@ -2459,7 +2459,7 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
     }
 }
 // ============================================================================
-// func_8019EF90 - ground-probe angle search around the goal (0x310)
+// movePcProbeGoalAngle - ground-probe angle search around the goal (0x310)
 //
 // From a point just above the stored goal position, cast short rays outward
 // in four directions (starting at the object's facing, stepping pi/2 per
@@ -2467,7 +2467,7 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
 // hit, return the surface normal converted to degrees (negated components
 // on the first pass). If no ray hits anything, return the facing angle.
 // ============================================================================
-extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) {
+extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
     ml::CVec3 goal(self->mVec54.x, self->mVec54.y + lbl_eu_80667B68, self->mVec54.z);
     ml::CVec3 dir;
     ml::CVec3 n;
@@ -2499,17 +2499,17 @@ extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) {
     return ((cf::CfObjectActor*)self->mObject)->CfObjectActor_readFacingAngle();
 }
 // ============================================================================
-// func_8019F1E0 - pair-follow mode update (0x2A8 bytes)
+// movePcUpdatePairFollow - pair-follow mode update (0x2A8 bytes)
 //
-// Runs each tick from func_801999C0. When follow mode (mFlags50 bit 0x4000)
+// Runs each tick from movePcUpdateTop. When follow mode (mFlags50 bit 0x4000)
 // is active it either cancels it (too far / spot occupied but arrived) or
 // re-targets the stored candidate spot. Otherwise it maintains the follow
 // request bits from distance thresholds. Finally, if a reposition is pending,
 // it walks an angle/ring probe grid around the character (index mArr124[16],
 // low 3 bits = direction step, high bits = ring radius), raycasts each
-// candidate, and on a valid free ground spot commits it via func_80089E88.
+// candidate, and on a valid free ground spot commits it via moveBaseRoute.
 // ============================================================================
-extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {
+extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     u32 f50 = self->mFlags50;
 
     if (f50 & 0x4000u) {
@@ -2626,7 +2626,7 @@ extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {
             self->mArr124[16] = h + 1;
             continue;
         }
-        if (func_80089E88(self, &out, 0) == 0) {
+        if (moveBaseRoute(self, &out, 0) == 0) {
             self->mArr124[16] = h + 1;
             continue;
         }

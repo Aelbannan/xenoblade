@@ -44,10 +44,10 @@ namespace cf {
         virtual void CChainActor_ClearTargetRef();
         virtual void CChainActor_ToggleCancelVoice(int val);
         virtual void CChainActor_ToggleMoveFlag(int val);
-        virtual int func_8027A024(int arg);
-        virtual int func_8027A338(int arg);
-        virtual int func_8027A58C();
-        virtual int func_8027A8C8();
+        virtual int CChainActor_CheckReady(int arg);
+        virtual int CChainActor_ScanArtsSlots(int arg);
+        virtual int CChainActor_CheckFacing();
+        virtual int CChainActor_CheckVoice();
         virtual void CChain_noop_AA0C(int p1, cf::CChainActor* p2, int p3);
         virtual void CChain_noop_795D0();
         virtual void CChain_noop_78E00(int a, int b);

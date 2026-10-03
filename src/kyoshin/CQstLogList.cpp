@@ -175,7 +175,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
         nw4r::math::VEC3 pos;
         char* const s = lbl_eu_80509AB4;
         nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
-        func_80137924(&pos, root->FindPaneByName(&s[0x2a], true),
+        ScalePaneWorldPos(&pos, root->FindPaneByName(&s[0x2a], true),
                       root->FindPaneByName(&s[0x33], true), root);
         sortMenuSetLayoutPos(&self->mSortMenuData, &pos);
         QstLogList_FillSortMenu(self);
@@ -267,7 +267,7 @@ extern "C" __declspec(noinline) void QstLogList_DrawRow(CQstLogList* self,
     const char* str = BdatGetPtrDirect(name, &lbl_eu_80509AB4[0x42], questId);
     sprintf(buf, &lbl_eu_80509AB4[0x48], index);
     LayoutSetTextBoxFmtValue(self->mpLayout, buf, (char*)str, 0);
-    func_80137B44(self->mpLayout, buf,
+    PaneSetVtxColorByName(self->mpLayout, buf,
                   a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
     // Detail text: BDAT lookup chain (name -> column A -> column B -> row
@@ -278,7 +278,7 @@ extern "C" __declspec(noinline) void QstLogList_DrawRow(CQstLogList* self,
     const char* str2 = BdatGetPtrDirect(lbl_eu_806640A8, &lbl_eu_80509AB4[0x76], c);
     sprintf(buf, &lbl_eu_80509AB4[0x7b], index);
     LayoutSetTextBoxFmtValue(self->mpLayout, buf, (char*)str2, 0);
-    func_80137B44(self->mpLayout, buf,
+    PaneSetVtxColorByName(self->mpLayout, buf,
                   a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
     sprintf(buf, &lbl_eu_80509AB4[0x87], index);
@@ -299,7 +299,7 @@ modeFE:
         0x74696D67u, &lbl_eu_80509AB4[0xa7], 0);
 iconDone:
     if (str3 != 0) {
-        func_80137F88(pane1, str3);
+        PaneSetTexPalette(pane1, str3);
         setPaneVisible(pane1, 1);
     }
 
@@ -323,7 +323,7 @@ iconDone:
         break;
     }
     if (str4 != 0) {
-        func_80137F88(pane2, str4);
+        PaneSetTexPalette(pane2, str4);
         setPaneVisible(pane2, 1);
     }
 }
@@ -390,7 +390,7 @@ extern "C" __declspec(noinline) void QstLogList_RefreshRows(CQstLogList* self) {
         if (i >= 10) break;
         CQstLogListQstInfo* entry = QstCnt_GetInfoAt_76F4(&self->mQstData.mList[0], (u16)cur);
         questId = entry->f0;
-        u32 idx = func_80138138(questId);
+        u32 idx = SearchThresholdIdx(questId);
         u8 res = (u8)CtrlRemote_TouchBitByArg(questId + 0x220);
         QstLogList_DrawRow(self, (const char*)lbl_eu_80573D18[idx], questId,
                       (u8)(i + 1), res, entry->f5, entry->f6);
@@ -429,7 +429,7 @@ extern "C" __declspec(noinline) void QstLogList_MoveCursor(CQstLogList* self) {
             self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()
                                       ->FindPaneByName(&s[0x33], true);
-        func_80137924(&pos, pane1, pane2, self->mpLayout->GetRootPane());
+        ScalePaneWorldPos(&pos, pane1, pane2, self->mpLayout->GetRootPane());
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&pos);
     }
 }
@@ -455,9 +455,9 @@ __declspec(noinline) void QstLogList_FillSortMenu(CQstLogList* self) {
 #pragma pop
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
-// quest text pane name and loads the entry text (func_80136A1C).
+// quest text pane name and loads the entry text (LayoutSetTextBoxText).
 extern "C" __declspec(noinline) void QstLogList_RefreshHeader(CQstLogList* self) {
-    func_80136A1C(self->mpLayout, &lbl_eu_80509AB4[0x107],
+    LayoutSetTextBoxText(self->mpLayout, &lbl_eu_80509AB4[0x107],
                   &lbl_eu_80576670[(self->field_0x17B + self->field_0x17C) * 0x22] + 2, 0);
 }
 
@@ -534,7 +534,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     void* fontObj =
         getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
-    func_8013676C(rootPane, fontResult);
+    ApplyFontToTxtPanes(rootPane, fontResult);
 
     QstLogList_ShowOpenAnim(this);
     mpLayout->Animate(0);

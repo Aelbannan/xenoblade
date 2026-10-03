@@ -340,18 +340,18 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
         bindLayoutAnimTransform(mLayout, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805054BC[0xb5]);
 
         // Retail loads the root pane (layout + 0x10) before the font call and
-        // keeps it live across func_8013676C.
+        // keeps it live across ApplyFontToTxtPanes.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         u32 fontHandle = static_cast<CTitleAHelpFontView*>(
             CDeviceFont::getFontInfo(1, mLayout))->vf7();
-        func_8013676C(rootPane, fontHandle);
+        ApplyFontToTxtPanes(rootPane, fontHandle);
 
         mLayout->SetAnimationEnable(mAnimTrans24, false);
         mLayout->SetAnimationEnable(mAnimTrans20, true);
         mLayout->Animate(0);
 
         // Hide the caution pane; retail re-reads layout+0x10 here rather than
-        // reusing the root pane held for func_8013676C.
+        // reusing the root pane held for ApplyFontToTxtPanes.
         setPaneVisible(mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805054BC[0x70], true), false);
 
         ::setNameText(this, mName); // global (unmangled retail symbol)

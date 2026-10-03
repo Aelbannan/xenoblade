@@ -58,7 +58,7 @@ public:
     void* field_0x0C; // 0x0C camera vector block
 };
 
-// Vector block read by func_8007BAFC: twelve f32 words at 0x9C..0xC8. The
+// Vector block read by CamEvtCheckAimAngles: twelve f32 words at 0x9C..0xC8. The
 // first two triplets (0x9C / 0xAC) are self-dotted (squared lengths) and
 // validated through acos against a threshold.
 struct CamEventVecBlock {
@@ -78,7 +78,7 @@ struct CamEventVecBlock {
 };
 
 // Typed 12-word region of the same block (three aim triplets starting AT the
-// block base). func_8007BAFC copies this whole struct to the stack before
+// block base). CamEvtCheckAimAngles copies this whole struct to the stack before
 // the slot update call, which reproduces retail's 12-word GPR block copy.
 struct CamEventData {
     ml::CVec3 v0;   // +0x00 (block 0x9C)
@@ -155,7 +155,7 @@ struct CfCamEventShakeUnit {
     f32 field_0x174;   // +0x174 (abs 0x368 / 0x4E0)
 };
 
-// Element region used by func_80079D6C: the retail body treats the element
+// Element region used by CamEvtDeadStp: the retail body treats the element
 // pointer argument as an element base (x4 at +0x04, previous element one stride
 // back at -0x10) and also reads an s16 count through the same pointer at
 // +0x4D2 (the caller passes the manager base, so +0x4D2 aliases
@@ -171,7 +171,7 @@ struct CfCamEventShakeElem {
     s16 count;             // +0x4D2
 };
 
-// Camera-data block read by func_80075674 (source: object from
+// Camera-data block read by CamEvtCopyBlk (source: object from
 // Scn_FindCamItem). Three f32 triplets at 0x10C/0x118/0x138 and an f32 at
 // 0x1E0 are copied into the manager's 0x54..0x78 range (bit patterns, so
 // the triplet members are f32 to keep the lwz/stw copy schedule).
@@ -498,7 +498,7 @@ public:
 };
 
 // Body returned by the source table fn at 0x298; field +0x04 is read by
-// func_80076F88, while func_80076D8C reads the state word at +0x50, the
+// CamEvtSetupFollowCam, while CamEvtPickWeightedRow reads the state word at +0x50, the
 // halfword at +0x5E and the float at +0x60.
 struct CamEventBody {
     void* field_0x00;
@@ -543,7 +543,7 @@ public:
 };
 
 // Voice/aim object region: table at +0x00 and an integer word at +0x74 read
-// by func_80076F88 (copied into the manager's 0x10/0x24 words).
+// by CamEvtSetupFollowCam (copied into the manager's 0x10/0x24 words).
 struct CamEventAimObj {
     void* table;         // 0x00
     u8 _04[0x74 - 0x04];
@@ -551,7 +551,7 @@ struct CamEventAimObj {
 };
 
 // Region of the manager's aim-vector region (offsets 0x0C..0x34) used by
-// func_80076F88. Kept as a separate region so the manager class itself keeps
+// CamEvtSetupFollowCam. Kept as a separate region so the manager class itself keeps
 // its original opaque gaps (MWCC's copy-lowering for the 0x54..0x78 range
 // is sensitive to the struct layout).
 struct CfCamEventAimRegion {
@@ -780,7 +780,7 @@ struct CfCamDataTable {
     f32 f48;
     u32 _pad4C;   // retail .bss 0x50 (struct 0x4C + 4 pad)
 };
-// Integer word region of a shake-table element used by func_80074F4C's
+// Integer word region of a shake-table element used by CamEvtAdvanceShake's
 // base-anchor copy: retail copies the x0/x4/x8 words with lwz/stw (GPR
 // moves, bit patterns), so this element region carries them as u32.
 struct CfCamShakeElemRaw {
@@ -792,9 +792,9 @@ struct CfCamShakeElemRaw {
     u16 d;       // +0x10
 };
 
-// ── WIP scaffolding (func_80074F4C / func_80075934) ───────────────────────
+// ── WIP scaffolding (CamEvtAdvanceShake / CamEvtSolveAimPair) ───────────────────────
 // Shake-table element/state region used by the shake-advance reconstruction.
-// Offsets confirmed from retail func_80074F4C: elems at +0x00 (0x14 stride,
+// Offsets confirmed from retail CamEvtAdvanceShake: elems at +0x00 (0x14 stride,
 // id at +0x0C, waveform kind c at +0x0E), base anchor at +0x154..0x15C
 // (copied as integer words), spline-method word at +0x160 (read with lha),
 // flag_active at +0x162, flag_finish at +0x164, element count (s16) at
@@ -1207,7 +1207,7 @@ struct CfDynMgr {
     u32 m_field04;   // +0x04
 };
 
-// table of the dynamic-cast object used by func_80079E04 (r30): vector
+// table of the dynamic-cast object used by CamEvtUpdateFrame (r30): vector
 // setters at 0x14/0x4C/0x64, a f32 setter at 0x3C, pointer-taking variants
 // at 0x68/0x6C and a vector accessor at 0xAC.
 
@@ -1260,7 +1260,7 @@ public:
     // end
 };
 
-// 9-word float block used by the func_80079E04 rotation recurrence; kept as
+// 9-word float block used by the CamEvtUpdateFrame rotation recurrence; kept as
 // a struct so the composition steps compile to GPR block copies.
 struct CamEventMtx {
     f32 m[9];
@@ -1295,7 +1295,7 @@ extern const f32 lbl_eu_80666484;
 extern const f32 lbl_eu_80666488;
 extern const f32 lbl_eu_8066648C;
 extern const f32 lbl_eu_80666490;
-// 0x28-byte camera-source region read by func_8007990C: two aim vectors at
+// 0x28-byte camera-source region read by CamEvtDispatchState: two aim vectors at
 // +0x00/+0x0C, a third triplet at +0x18, and a scalar at +0x24. The triplets
 // are CVec3 so whole-vector copies keep the retail lwz/stw schedule.
 struct CamEventVecSrc {
@@ -1306,16 +1306,16 @@ struct CamEventVecSrc {
 };
 
 extern f32 lbl_eu_8066A20C;   // sdata2 scale constant (state-9 branch)
-extern "C" void func_80074230(ml::CVec3* v1, ml::CVec3* v2);
+extern "C" void cfCam_xformAimPairInv(ml::CVec3* v1, ml::CVec3* v2);
 
 // Defined in this TU (retail unmangled free functions; the extern "C"
 // declarations keep call relocs unmangled while the .cpp defines them as
 // plain C++ bodies). Forward-declared for the cross-referencing bodies.
-extern "C" void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5,
+extern "C" void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5,
                               ml::CVec3* r6, int p7, int p8, f32 p1);
-extern "C" void func_8007990C(CfCamEventManager* self, u32 a, u32 b,
+extern "C" void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b,
                               CamEventVecSrc* c, u32 d);
-extern "C" int func_80074F4C(CfCamShakeState* self, int mode);
+extern "C" int CamEvtAdvanceShake(CfCamShakeState* self, int mode);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern const void* lbl_eu_80661B00;  // RTTI typeinfo pair used by the cam advance cast
@@ -1354,11 +1354,11 @@ extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
 extern f32   lbl_eu_8066645C;      // sdata2 compare constant
 extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" int   CfRes_getD80Flag();
-extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
-extern "C" int func_8007AA4C(CfCamEventManager* self);
-extern "C" int func_80079E04(CfCamEventManager* self);
-extern "C" int func_800755BC(CfCamEventManager* mgr, u32 idx);
-extern "C" int func_80076D8C(int unused, int type_, CamEventSrc* src,
+extern "C" void  CamEvtCalcAimPoint(ml::CVec3* out, CinemCamSrc* src);
+extern "C" int CamEvtAdvanceBusy(CfCamEventManager* self);
+extern "C" int CamEvtUpdateFrame(CfCamEventManager* self);
+extern "C" int CamEvtClassId(CfCamEventManager* mgr, u32 idx);
+extern "C" int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src,
                              CamEventTargetInfo* other, u32* outRow, u32* outCol);
 extern "C" void CamEvtClearSlotBytes(u8* self);
 // Vector-normalize helper (body provided by this TU).
@@ -1367,7 +1367,7 @@ extern "C" f32 lbl_eu_8066642C;
 extern "C" f32 lbl_eu_80666430;
 extern "C" f32 lbl_eu_80666440;
 extern "C" f32 lbl_eu_80666468;   // acos-range lower bound
-// nw4r debug warning (func_8007BAFC range violations)
+// nw4r debug warning (CamEvtCheckAimAngles range violations)
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 extern char lbl_eu_805262F0[];   // warning file name
 extern char lbl_eu_805262C8[];   // warning format string
@@ -1387,10 +1387,10 @@ extern "C" void notifyCameraManager__Q22cf13CfGameManagerFv(void);
 // GameManager helpers used by the cam-event advance.
 extern "C" void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern "C" void func_8016FD84(f32 a, f32 b);
-extern "C" void func_80240AAC(u32 state);
-extern "C" void func_80240B10(u32 state, void* p);
+extern "C" void MapFxStepAllEntries(u32 state);
+extern "C" void MapFxApplyEntryPositions(u32 state, void* p);
 extern "C" f32 lbl_eu_80666470;
-extern "C" CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
+extern "C" CfCamEventObj* CamEvtCreateSlotObj(u32 first, CfCamEventObj* second,
                                                       CfCamEventObj* third, CfCamEventObj* fourth,
                                                       CfCamEventObj* fifth,
                                                       CfCamDataTable* sixth,
@@ -1402,22 +1402,22 @@ extern "C" void  cfCam_andcUnk04(void* obj, u32 mask);
 extern "C" void  cfCam_setClear04(void* obj, u32 mask, int flag);
 extern "C" void  cfCam_recomputeEyeTarget(void* a, void* b, void* c, f32 f,
                                 void* d, void* e, void* g);
-extern "C" void func_80077F20(void* out, void* a,
+extern "C" void CamEvtBlendSlotVecs(void* out, void* a,
                                                        void* b, u16 c, u16 d,
                                                        void* e);
-extern "C" void* func_800778E4(CfCamEventManager* self, int unk34,
+extern "C" void* CamEvtBuildFollowState(CfCamEventManager* self, int unk34,
                                                       void* srcArg, u32 rowOverride);
 extern "C" int CamEvtMapActionToCampaign(int action, int param);
 extern "C" void* Scn_FindCamItem(void* obj, int index);
-extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
+extern "C" void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
 extern "C" int VecMath_IsTurnLeftXZ(void* dst, void* b, void* c);
-// Pose-solver helper called by func_80075934.
+// Pose-solver helper called by CamEvtSolveAimPair.
 extern "C" void cfCam_applyBasis(void* out, void* in, f32 f, void* vec);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 extern "C" void* Selector_GetInstance(void);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);
-extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
+extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
                                u16 c1, u16 c2, u8 s0, u8 s1);
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
@@ -1426,11 +1426,11 @@ extern "C" void  func_80240878(u8* p);
 extern "C" void  MenuFx_ClearSlotFlags(u8* base);
 extern const f32 lbl_eu_8066A200;
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" void func_800A41BC(f32* out, CfCamEventElem* a, CfCamEventElem* b,
+extern "C" void VecMath_CatmullRom(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               CfCamEventElem* c, CfCamEventElem* d, f32 t);
-extern "C" void func_800A40E8(f32* out, CfCamEventElem* a, CfCamEventElem* b,
+extern "C" void VecMath_LerpVec(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               f32 t);
-extern "C" int func_8024125C(int state, int val);
-extern "C" int func_80241344(int state, int val);
-extern "C" int func_80240C98(int state, int arg0, int arg1);
+extern "C" int MapFxClearSlotFlags(int state, int val);
+extern "C" int MapFxResetEntries(int state, int val);
+extern "C" int MapFxAllocEntry(int state, int arg0, int arg1);
 extern "C" u32 Tok_Pack20(int a, int b, int c);

@@ -23,17 +23,17 @@ extern const float lbl_eu_80668544;
 extern const float lbl_eu_80668548;
 
 // Layout text/pane bind helper (retail 0x80137924).
-void func_80137924(void* out, void* paneA, void* paneB, void* paneC);
+void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
 
-// Pane texture/anim bind helpers used by func_80223004.
+// Pane texture/anim bind helpers used by crystalListUpdateSlot.
 extern "C" void AnimResetToFirst(void* pane, void* animRes);
-extern "C" void func_80137F88(void* pane, void* tex);
+extern "C" void PaneSetTexPalette(void* pane, void* tex);
 
 // Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
 extern char lbl_eu_805092C0[];
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (declared index 7, no args) yields the u32 passed to func_8013676C.
+// (declared index 7, no args) yields the u32 passed to ApplyFontToTxtPanes.
 // All-pure so no vtable is emitted; a genuine virtual call makes MWCC emit
 // the retail lwz r12 dispatch sequence.
 class __declspec(novtable) CMCCrystalListFontView {

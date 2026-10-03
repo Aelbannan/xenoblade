@@ -37,8 +37,8 @@ extern "C" {
 
     // Actor param helpers (C-linkage in retail). Typed as cf::CfObjectActor*
     // to satisfy the no_void_ptr lint rule while keeping C linkage.
-    void* func_8009EC9C(u32 index);
-    void func_800A18A4(cf::CfObjectActor*, int);
+    void* CtrlObjectParam_GetCharEntry(u32 index);
+    void CtrlObjectParam_ClaimArtsSlotRow(cf::CfObjectActor*, int);
     cf::CfObjectActor* findObjB28ById(int);
     cf::CfObjectActor* findObjB48ById(int);
     void CBattleMan_ClearActorStatus(cf::CBattleManager*, cf::CfObjectActor*, int);
@@ -178,7 +178,7 @@ int getEneHpRate(VMThread* pThread) {
 /// Script command: check whether the PC actor with the given id is currently
 /// performing an arts attack matching the given arts type. Returns 1 if the
 /// actor is attacking with the specified arts, 2 otherwise. The check queries
-/// the actor's arts-state sub-object (at offset 4) via func_80174C98 with
+/// the actor's arts-state sub-object (at offset 4) via testActorStatus with
 /// selector 0xa, then compares the matched entry's field_0x77 byte against
 /// the provided arts type.
 int onPcArtsAttack(VMThread* pThread) {
@@ -211,12 +211,12 @@ int onPcArtsAttack(VMThread* pThread) {
     u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
 
     bool matched = false;
-    if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
+    if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
         val = *static_cast<u32*>(subObj->CObjectState_getStateData());
-        if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
+        if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
     }
@@ -331,12 +331,12 @@ int onEneArtsAttack(VMThread* pThread) {
     u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
 
     bool matched = false;
-    if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
+    if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
         val = *static_cast<u32*>(subObj->CObjectState_getStateData());
-        if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
+        if (testActorStatus(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
     }
@@ -493,8 +493,8 @@ extern "C" int synchro(VMThread* pThread) {
 
 // Script command: teach a learnable art to the player. Looks up an art-id
 // mapping in the bdat table ("ac_p" / "u" columns), resolves the actor slot
-// via func_8009EC9C, then dispatches the learn to the actor-param handler
-// func_800A18A4 with the original art id.
+// via CtrlObjectParam_GetCharEntry, then dispatches the learn to the actor-param handler
+// CtrlObjectParam_ClaimArtsSlotRow with the original art id.
 extern "C" int learnArts(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     (void)Bdat_GetTable_AA34();
@@ -506,8 +506,8 @@ extern "C" int learnArts(VMThread* pThread) {
     u8 bytes[4];
     *reinterpret_cast<u32*>(bytes) = val;
     u8 byte = bytes[0];
-    cf::CfObjectActor* actor = (cf::CfObjectActor*)func_8009EC9C(byte);
-    func_800A18A4(actor, id);
+    cf::CfObjectActor* actor = (cf::CfObjectActor*)CtrlObjectParam_GetCharEntry(byte);
+    CtrlObjectParam_ClaimArtsSlotRow(actor, id);
     return 0;
 }
 

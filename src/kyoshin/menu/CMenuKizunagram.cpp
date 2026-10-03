@@ -54,7 +54,7 @@ void CMenuKizunagram::Term() {
 
     teardown(&mTitleAHelp);
     teardownKizuna(&mSub98);
-    func_8025D9C4(&mPcKizunagram);
+    KizunagramTerm(&mPcKizunagram);
     CLoadTeardownLayout(&mLoad);
     CFade_Unload(&mFade);
 
@@ -63,7 +63,7 @@ void CMenuKizunagram::Term() {
     if (code80135FDC_getByte_64080() == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
-    func_801338C8();
+    CUICfManager_createQueuedMenus();
 }
 
 void CMenuKizunagram::Move() {
@@ -143,7 +143,7 @@ body:
     // virtual-dispatch its scope-exit destructor and bloat the body).
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawKizLayouts(&mSub98, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     KizunagramDraw(&mPcKizunagram, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     // Draw the title/help bar once the per-character window is past the

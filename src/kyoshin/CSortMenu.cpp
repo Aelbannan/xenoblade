@@ -196,7 +196,7 @@ extern "C" void sortMenuOpenInit(CSortMenu* _this) {
     nw4r::lyt::Pane* paneTxt1 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x15, true);
     nw4r::lyt::Pane* paneTxt2 = _this->mpLayout->GetRootPane()->FindPaneByName(s + 0x1d, true);
     f32 textBuf[3];
-    func_80137924(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
+    ScalePaneWorldPos(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
 
     CScrollBar_InitRootPane(&_this->mScrollBar, &textBuf);
     CScrollBar_UpdateThumb(&_this->mScrollBar, 5, _this->mCount);
@@ -242,7 +242,7 @@ extern "C" void sortMenuFormatPaneText(u8* textObj, CSortMenu* _this) {
     nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(s + 0x1d, true);
     nw4r::lyt::Pane* pane2 = _this->mpLayout->GetRootPane()->FindPaneByName(buf, true);
 
-    func_80137924(textObj, pane2, pane1, rootPane);
+    ScalePaneWorldPos(textObj, pane2, pane1, rootPane);
 }
 
 // ============================================================================
@@ -556,7 +556,7 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
         // Virtual call through the font object's vtable slot +0x24.
         u32 result = ((CDeviceFontItf*)fontObj)->getResource();
-        func_8013676C(rootPane, result);
+        ApplyFontToTxtPanes(rootPane, result);
 
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
         mpLayout->SetAnimationEnable(mpAnimTrans0, true);

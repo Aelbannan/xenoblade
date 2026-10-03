@@ -2340,8 +2340,8 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
 extern "C" void scnImN4BuildByIdx(void* a, void* b, void* c, void* d, void* e, int f);
 extern "C" void simFwdAnimSetup102(u8* self, void* b, void* c, void* d, void* e) { scnImN4BuildByIdx(self, b, c, d, e, 102); }
 
-extern "C" void func_80489C94(void* self);
-extern "C" void simFwdAnimReset(void* self) { func_80489C94(self); }
+extern "C" void scnImN4CreateModel(void* self);
+extern "C" void simFwdAnimReset(void* self) { scnImN4CreateModel(self); }
 
 // simGetTvFadeConst: return the TV-format dependent float constant.
 float simGetTvFadeConst() {

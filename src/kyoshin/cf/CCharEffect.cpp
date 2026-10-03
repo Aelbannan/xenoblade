@@ -368,13 +368,13 @@ int CharEffIsTime4() {
 }
 
 // CharEffGetBattleActorId: resolve the current actor id from the battle object's
-// sub-object (vtable 0x30) and query its flags via func_80174C98
+// sub-object (vtable 0x30) and query its flags via testActorStatus
 // (selector 0x802). Returns 1 when no battle object is present.
 int CharEffGetBattleActorId(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
         int id = *battleObj->field_04->vf30();
-        return func_80174C98(battleObj, &id, 0x802);
+        return testActorStatus(battleObj, &id, 0x802);
     }
     return 1;
 }
@@ -385,7 +385,7 @@ int CharEffGetActorId803(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
         int id = *battleObj->field_04->vf30();
-        return func_80174C98(battleObj, &id, 0x803);
+        return testActorStatus(battleObj, &id, 0x803);
     }
     return 0;
 }

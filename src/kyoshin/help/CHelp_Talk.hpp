@@ -75,7 +75,7 @@ struct CTalkActor : public CParamSub4C {
 };
 
 // Result of func_8016FE34: sub-object pointer at +0x04 whose vtable slot
-// 0x30 yields the word queried by func_80174C98.
+// 0x30 yields the word queried by testActorStatus.
 struct CVoiceSub30 {
     virtual void* f00();
     virtual void* f01();

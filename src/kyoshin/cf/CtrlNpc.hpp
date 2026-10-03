@@ -140,16 +140,16 @@ namespace cf { class CfObject; }
 // symbol/reloc name unmangled at the call sites).
 namespace cf { class CCtrlMoveNpc; }
 
-// Closest-point-on-segment projection helper (retail func_800A49E4, defined
+// Closest-point-on-segment projection helper (retail VecMath_IsNearSegXZ, defined
 // in code_800A3B24.cpp); signature must match the definition's mangling.
-bool func_800A49E4(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
+bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                    const nw4r::math::VEC3& c, float r2);
 // FSqrt-style sqrt with nw4r assert (retail VecMath_SafeSqrtF).
 extern "C" float VecMath_SafeSqrtF(float x);
 // XZ-plane segment length helper (code_800A3B24.cpp).
-extern "C" f32 func_800A3DF8(const ml::CVec3& v);
+extern "C" f32 VecMath_LengthXZ(const ml::CVec3& v);
 // Ground-probe walk helper (code_800A3B24.cpp); third arg is a packed flag word.
-extern "C" int func_800A72E0(const ml::CVec3* self, ml::CVec3* out, s32 flags,
+extern "C" int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* out, s32 flags,
                              f32 f1, f32 f2);
 // Position-region copy helper (retail ColiSetAxisBlockInverse). Same ABI as
 // CfObjectMove.hpp / CfGimmickLock.hpp (void*, const float*).
@@ -176,7 +176,7 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
-extern "C" void func_8013D1E8(void* self);
+extern "C" void UIWin_ShowTalkWindow(void* self);
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 // C++-linkage decl: MWCC mangles the call to findObjectById__Fi (actor id ->
 // action source object; the result has a position getter at vtable +0xac).
@@ -219,7 +219,7 @@ extern "C" void func_8019F6E8(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 
 extern "C" int NpcMove_DispatchState(cf::CCtrlMoveNpc* self);
 extern "C" void CtrlNpcSetupMoveAction(cf::CtrlNpc* self, const ml::CVec3* vec,
                               f32 scale, f32 paramB);
-extern "C" int func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
+extern "C" int VecMath_CircleOverlapXZ(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 // Same-TU forward decl: keeps the call reloc from CtrlNpcAdvanceBehavior flat.
 extern "C" int func_800964EC(cf::CtrlNpc* self);
 // CfGameManager helpers: the retail symbols keep the Fv suffix but the real

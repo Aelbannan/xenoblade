@@ -8,8 +8,8 @@
 // Completion callback: if the thread is not currently busy, fire the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
 void PartyGage_NotifyDone_8560(CVS_THREAD_PARTY_GAGE* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -17,7 +17,7 @@ void PartyGage_NotifyDone_8560(CVS_THREAD_PARTY_GAGE* self) {
 // Remove a released voice from the two slots (partyMember, gaugeData) by
 // matching the handle's embedded CCharVoice pointer against the freed voice.
 void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slots 0x20/0x24: bias handle to its embedded voice, compare with voicePtr.
     CVoiceHandle* handle = self->partyMember;
@@ -46,13 +46,13 @@ void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePt
 int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 2) == 0) return 0;
     if (((CVoiceVTV*)self)->idle() != 0) return 0;
-    if (func_802A330C(0xc8, 1) == NULL) return 0;
+    if (CCharVoiceMan_DispatchById(0xc8, 1) == NULL) return 0;
 
     CCharVoice* voicePtr = (CCharVoice*)self;
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    func_802A3D54(voicePtr, ml::math::mtRand(2) + 0x385, 0xc8);
+    RequestVoicePlayback(voicePtr, ml::math::mtRand(2) + 0x385, 0xc8);
     return 0;
 }
 
@@ -77,7 +77,7 @@ void PartyGage_AdvanceA_82D4(CVS_THREAD_PARTY_GAGE* self) {
             voiceId = 0x641;
             break;
         case 1:
-            voiceId = 0x641 + (func_802A7DF8(self->partyMember) == 0);
+            voiceId = 0x641 + (HpVoice_CheckHpBase(self->partyMember) == 0);
             break;
         case 2:
             voiceId = lbl_eu_80662D18[ml::math::mtRand(2)];
@@ -90,19 +90,19 @@ void PartyGage_AdvanceA_82D4(CVS_THREAD_PARTY_GAGE* self) {
         if (self->partyMember != NULL) {
             voicePtr = &self->partyMember->voice;
         }
-        if (func_802A3C44(self, voicePtr, voiceId) != 0) return;
+        if (TryRequestVoice(self, voicePtr, voiceId) != 0) return;
     }
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802aab00 (PartyGage_AdvanceB_83CC)
 // Advance/play function.  If the thread is free, copies init data into the
 // base fields, then (when both parties are present and the gauge is idle)
 // selects a threshold-dependent voice ID, applies correction clauses for
-// specific IDs, plays through func_802A3C44, and otherwise fires the
+// specific IDs, plays through TryRequestVoice, and otherwise fires the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
 void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
-    if (func_802A3E88(self) != 0) return;
+    if (IsThreadVoiceActive(self) != 0) return;
 
     // Copy init data -- index 0 first (lwzu pointer-increment) so the retail
     // lis @ha + lwzu @l base-load form is produced.  v0 declared before p so
@@ -129,14 +129,14 @@ void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
 
     // Measure the member's iterator and pick a voice ID by gauge threshold.
     // Retail re-reads self->partyMember from memory (no long-lived cache).
-    iter = func_802A77E8(self->partyMember);
+    iter = HpVoice_MapSubState(self->partyMember);
     voiceId = -1;
     switch ((s32)self->thresholdLevel) {
     case 0:
-        if (func_802A7850(iter) != 0) voiceId = iter + 0x643;
+        if (HpVoice_ValidIter(iter) != 0) voiceId = iter + 0x643;
         break;
     case 1:
-        if (func_802A7850(iter) != 0) voiceId = iter + 0x64a;
+        if (HpVoice_ValidIter(iter) != 0) voiceId = iter + 0x64a;
         break;
     case 2:
         voiceId = ml::math::mtRand(3) + 0x65b;
@@ -145,13 +145,13 @@ void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
 
     // Correction clauses: remap certain voice IDs based on companion state.
     if (voiceId == 0x649) {
-        if (func_802A7B90(self->gaugeData, self->partyMember) != 0) voiceId = 0x65b;
+        if (HpVoice_CheckPair26(self->gaugeData, self->partyMember) != 0) voiceId = 0x65b;
     }
     if (voiceId == 0x657) {
-        if (func_802A7B90(self->gaugeData, self->partyMember) != 0) voiceId = 0x65d;
+        if (HpVoice_CheckPair26(self->gaugeData, self->partyMember) != 0) voiceId = 0x65d;
     }
     if (voiceId == 0x64d) {
-        if (func_802A7CC4(self->gaugeData, self->partyMember) != 0) voiceId = 0x5e8;
+        if (HpVoice_CheckPair13(self->gaugeData, self->partyMember) != 0) voiceId = 0x5e8;
     }
 
     if (voiceId > 0) {
@@ -159,11 +159,11 @@ void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
         CVoiceHandle* g2 = self->gaugeData;
         CCharVoice* vp = (CCharVoice*)g2;
         if (g2 != NULL) vp = &g2->voice;
-        if (func_802A3C44(self, vp, voiceId) != 0) return;
+        if (TryRequestVoice(self, vp, voiceId) != 0) return;
     }
 
 fire:
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // Buffer-size getter recorded in the PARTY_GAGE vtable (the CVS_THREAD::blank2
@@ -193,10 +193,10 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
         return NULL;
     }
 
-    CVoiceHandle* member = func_802A7998((CVoiceHandle*)0);
-    CVoiceHandle* gauge = func_802A7998(member);
+    CVoiceHandle* member = HpVoice_PickIdleVoice((CVoiceHandle*)0);
+    CVoiceHandle* gauge = HpVoice_PickIdleVoice(member);
     if (member == NULL) return NULL;
-    if (func_802A330C(0x8c, 1) == NULL) return NULL;
+    if (CCharVoiceMan_DispatchById(0x8c, 1) == NULL) return NULL;
 
     CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)CCharVoiceMan_AllocVoiceArena(0x2c);
     if (self == NULL) return NULL;

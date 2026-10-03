@@ -49,7 +49,7 @@ extern const float lbl_eu_80667860; // sdata2: 9999.0f (unreferenced; kept by th
 namespace cf {
 
     // Per-actor status/parameter table (the +0x3534 subobject of the
-    // func_8009EC9C character record; CfObjectPc.cpp writes it to +0x15E0).
+    // CtrlObjectParam_GetCharEntry character record; CfObjectPc.cpp writes it to +0x15E0).
     // ID-keyed parameter entries + bitmap/counters, read through the
     // code_8025FB10 accessor family (func_80260264 / Counter_TestBit /
     // func_80260A6C). UnkClass_CActorParam15E0 is kept as a compat alias:
@@ -353,7 +353,7 @@ namespace cf {
     };
 
     // Char-data object passed to CActorParam_applyArtsStats (retail ABI r4)
-    // or returned by func_8009EC9C: arts-stats sub-row at +0x1C fed to
+    // or returned by CtrlObjectParam_GetCharEntry: arts-stats sub-row at +0x1C fed to
     // CtrlObjectParam_GetArtsStatsRow.
     struct CActorParam174Arg {
         u8 _pad1C[0x1C];
@@ -530,7 +530,7 @@ namespace cf {
         virtual float CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
         virtual void CActorParam_setMoveRate(float val);  //0x1BC
-        // Retail func_8003CC0C leaves a booleanized int in r4 into the bctr
+        // Retail setActorStatusSelect leaves a booleanized int in r4 into the bctr
         // (ocUnit.cpp); the CfObjectEne Fv impl ignores it.
         virtual void CActorParam_UnkVirtualFunc75(int flag);  //0x1C0
         virtual void* CActorParam_getMoveRate();  //0x1C4
@@ -706,7 +706,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
     u32* CActorParam_getMarkKindPtr() { return CActorParam_UnkVirtualFunc113(); } //0x258
     bool CActorParam_isMarkVisible() { return CActorParam_UnkVirtualFunc115(); } //0x260
     // Wave-40 UnkVirtual mop-up alias (non-virtual, inline): same-slot
-    // forwarder for the ocUnit func_8003CC0C call site (booleanized flag in
+    // forwarder for the ocUnit setActorStatusSelect call site (booleanized flag in
     // r4, ignored by the Ene impl which returns the +0x1828 status block).
     // The virtual keeps its Unk name (hand-built vtables spell the mangled
     // name). MWCC inlines the identical virtual dispatch.

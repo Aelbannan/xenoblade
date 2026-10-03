@@ -28,7 +28,7 @@ extern void setEffectEnabled(u32 value);
 // this TU takes only these three signatures verbatim.
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
 // 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)
@@ -147,7 +147,7 @@ void CGame::wkRender() {
             CDeviceGX::getCacheInstance()->resetGXStateA();
             GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
             nw4r::lyt::DrawInfo drawInfo;
-            func_80137250(&drawInfo);
+            SetWideLocAdjust(&drawInfo);
             drawLayout(lbl_80666604, &drawInfo, 0, 1);
             CViewRoot::updateViewRoot();
         }

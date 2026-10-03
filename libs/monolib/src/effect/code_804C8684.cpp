@@ -19,7 +19,7 @@ extern "C" void EffCtl_EmptyStub8C(void) {}
 // ---------------------------------------------------------------------------
 
 // EffCtl_StoreFlagAndParams's 12-byte copy block: an 8-byte pair chunk + one word.
-// Sibling matched code (func_804CC808) shows MWCC emits per-pair lwz/stw
+// Sibling matched code (EffFxSetupSceneXforms) shows MWCC emits per-pair lwz/stw
 // chunks (hi-before-lo) for u64 member copies.
 struct CEffectParam {
     u64 pair;          // 0x00

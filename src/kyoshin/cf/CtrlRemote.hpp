@@ -54,9 +54,9 @@ struct CtrlRemoteBuf {
 // retail binary (not decompiled in this TU) - declare only so the call sites
 // emit real `bl` relocs instead of inlining. C linkage keeps the retail
 // unmangled reloc names.
-extern "C" u32 func_8009C9B8(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
+extern "C" u32 CtrlRemote_DecodeLZSS(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
 extern "C" u32 CtrlRemote_RunWithHeapCtx(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
-extern "C" u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
+extern "C" u32 CtrlRemote_DecodeDict(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg);
 
 // Heap alloc/free callbacks installed into the UnkClass_80460C34Ctx below;
 // defined in this TU (C linkage so the address-of relocs match retail).
@@ -65,7 +65,7 @@ extern "C" void CtrlRemote_FreeBuffer(cf::CtrlRemote* self, u8* ptr);
 
 // Object stored in the shared control-data slots (buf + 0x1234 + 4*i);
 // vtable slot 3 (offset 0x0C) receives (index, clamped value, extracted bits)
-// when func_8009D2C8 writes a control-data field.
+// when CtrlRemote_WriteBufBits writes a control-data field.
 class CtrlDataSlotObj {
 public:
     virtual void vf00();
@@ -73,10 +73,10 @@ public:
 };
 
 // Retail bit-setter over the control-data buffer; defined in this TU.
-extern "C" void func_8009D2C8(u32* buffer, u32 index, u32 value);
+extern "C" void CtrlRemote_WriteBufBits(u32* buffer, u32 index, u32 value);
 
 // Control-index -> (word pointer, type, sub-index) mapper; defined in this TU.
-extern "C" u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
+extern "C" u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
 // External data (retail linker symbols)
 extern "C" u32 lbl_eu_80571848[];
@@ -121,7 +121,7 @@ extern u8 lbl_eu_80527F88[];
 extern const f32 lbl_eu_80666730;
 
 // ---------------------------------------------------------------------------
-// Imports / view types used by the func_8009BD14 pad-handler sweep.
+// Imports / view types used by the CtrlRemote_MenuComboSweep pad-handler sweep.
 // ---------------------------------------------------------------------------
 
 // Forward decls (full layouts live in CtrlPc.hpp, included after this header).
@@ -152,7 +152,7 @@ extern "C" void CCharVoiceMan_EnqueueOrderVoice0();
 extern "C" void CCharVoiceMan_EnqueueOrderVoice2();
 extern "C" int battleCommuIsActive();
 
-// CtrlPc view exposing vf38 (vtable slot 0xA0) for func_8009BD14's menu-state
+// CtrlPc view exposing vf38 (vtable slot 0xA0) for CtrlRemote_MenuComboSweep's menu-state
 // word reads (CtrlPc.hpp stops at vf37 = 0x9C). The Nth declared virtual sits
 // at (N+2)*4, so vf38 lands at 0xA0; layout is CtrlPc-compatible.
 class CtrlPcVf38 {
@@ -184,7 +184,7 @@ public:
     CtrlPlayerObj* mField5C;     // 0x5C
 };
 
-// findObjectById result view for func_8009BD14: combo/target id at +0x74.
+// findObjectById result view for CtrlRemote_MenuComboSweep: combo/target id at +0x74.
 struct CtrlVoiceSweepView {
     u8 _00[0x74];
     u32 mField74;               // 0x74
@@ -352,11 +352,11 @@ extern const f32 lbl_eu_8066A20C;
 extern const f32 lbl_eu_80666748;
 
 // ---------------------------------------------------------------------------
-// Imports / views used by func_8009AE80.
+// Imports / views used by CtrlRemote_MenuBattleSweep.
 // ---------------------------------------------------------------------------
 
 // Selector_GetInstance object view covering both the actor-id word (+0x90E4) and the
-// demo/idle state word (+0xC180) probed by func_8009AE80.
+// demo/idle state word (+0xC180) probed by CtrlRemote_MenuBattleSweep.
 struct CfObjAe80 {
     u8 _00[0x90E4];
     u32 mField90E4;                  // 0x90E4
@@ -369,7 +369,7 @@ extern "C" void func_800FE860(void* obj, u32 arg);
 extern "C" unsigned long testFlagBit10(void* obj);
 extern "C" void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 
-// vf37() (vtable slot 0x9C) result view for func_8009AE80: menu-state flag
+// vf37() (vtable slot 0x9C) result view for CtrlRemote_MenuBattleSweep: menu-state flag
 // words at 0x00 / 0x04 / 0x08 / 0x10 / 0x14.
 struct CtrlPcSub37Ae80 {
     u32 mField0;                 // 0x00
@@ -381,7 +381,7 @@ struct CtrlPcSub37Ae80 {
 };
 
 // CtrlPc-compatible view exposing the +0x2C state word and vf37 (slot 0x9C)
-// for func_8009AE80.
+// for CtrlRemote_MenuBattleSweep.
 class CtrlPcVf37State {
 public:
     virtual ~CtrlPcVf37State();  // vtable slot 0x00 (leading dtor slot)
@@ -446,7 +446,7 @@ public:
 // Second global flag word probed by func_80098EF8 (retail sda21 access).
 extern u32 lbl_eu_80663E28;
 
-// CtrlPc-compatible view exposing the virtuals func_80098CB8 pokes (up to
+// CtrlPc-compatible view exposing the virtuals CtrlRemote_FrameUpdate pokes (up to
 // slot 0xB8), the +0x2C state word, the 32-float ring buffer at 0x1DC, and
 // the ring index at 0x25C.
 class CtrlPcVf44 {
@@ -489,7 +489,7 @@ public:
 };
 
 // Per-frame remote-control update (target us-80099690).
-void func_80098CB8(CtrlPcVf44* self);
+void CtrlRemote_FrameUpdate(CtrlPcVf44* self);
 
 // Menu base teardown/recreate (menu/CMenuArtsSelect.cpp; retail exports the
 // unmangled C-ABI name).
@@ -500,7 +500,7 @@ struct CtrlSweepNode {
     CtrlSweepNode* mNext;       // 0x00
 };
 
-// Battle-manager view for func_8009BD14's list sweep: +0x28 circular list head
+// Battle-manager view for CtrlRemote_MenuComboSweep's list sweep: +0x28 circular list head
 // (next link at +0x00), +0x1AA battle-state byte, +0x20C8 signed timer word.
 struct CtrlBmSweepView {
     u8 _00[0x28];
@@ -511,7 +511,7 @@ struct CtrlBmSweepView {
     s16 mField20C8;             // 0x20C8
 };
 
-// func_8016FE34 result view for func_8009BD14's sweep: u16 state word at
+// func_8016FE34 result view for CtrlRemote_MenuComboSweep's sweep: u16 state word at
 // +0x3388 (bit 0x10) and u32 combo word at +0x3E98, with the opaque voice-
 // owner region at +0x3E9C.
 struct CtrlAccSweepView {
@@ -523,13 +523,13 @@ struct CtrlAccSweepView {
 };
 
 // CtrlPlayerObj view exposing the +0x3E9C voice-owner region as a u8 array
-// (func_8009BD14's bindIndexedEffect argument, matching the acc-view shape).
+// (CtrlRemote_MenuComboSweep's bindIndexedEffect argument, matching the acc-view shape).
 struct CtrlPlayerSweepView {
     u8 _00[0x3E9C];
     u8 mOwner3E9C[0x10];       // 0x3E9C voice-owner region (opaque)
 };
 
-// Enum-list view with func_8009BD14's counter word at +0x3030.
+// Enum-list view with CtrlRemote_MenuComboSweep's counter word at +0x3030.
 struct CtrlEnumListSweep {
     u8 _00[0x620];
     u32 count;                  // 0x620
@@ -538,12 +538,12 @@ struct CtrlEnumListSweep {
 };
 
 // ---------------------------------------------------------------------------
-// Imports / views used by func_8009C1BC.
+// Imports / views used by CtrlRemote_ArtsWindowDispatch.
 // ---------------------------------------------------------------------------
 
 extern "C" int func_80190940(void* res, void* actor, int mode, void* filter);
 extern "C" unsigned long SuddenCommuIsStateActive(void* self);
-extern "C" void func_80280ADC();
+extern "C" void SysWinLog_TickCounter29();
 extern "C" void func_8017FEF0(void* obj, int arg);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);
@@ -561,14 +561,14 @@ class CChainBattleObj;
 int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
                   cf::CChainBattleObj* p2, u32 p3);
 
-// Object pointed to by sub3ED4+0x374 in func_8009C1BC; its +0x3F10 word
+// Object pointed to by sub3ED4+0x374 in CtrlRemote_ArtsWindowDispatch; its +0x3F10 word
 // seeds the command block.
 struct CtrlRemoteSub374View {
     u8 _00[0x3F10];
     u32 mField3F10;               // 0x3F10
 };
 
-// Extended player->mSub3ED4 view for func_8009C1BC: slots 0xF0 (vf58) /
+// Extended player->mSub3ED4 view for CtrlRemote_ArtsWindowDispatch: slots 0xF0 (vf58) /
 // 0xF4 (vf59) plus the fields it reads (+0x18 actor ref, +0x368 result
 // record, +0x370/+0x374 words).
 class CtrlSub3ED4Remote {
@@ -644,14 +644,14 @@ public:
 };
 
 // Object reached through CBattleMan_FetchVisionObj whose +0x824 flag word gains bit
-// 0x00080000 in func_8009C1BC.
+// 0x00080000 in CtrlRemote_ArtsWindowDispatch.
 struct CtrlRemoteEaView {
     u8 _00[0x824];
     u32 mField824;                // 0x824
 };
 
-// 0x20-byte voice/battle command block filled by func_8009C1BC and passed
-// to func_8014AC38 (same layout as CVisionFxParam).
+// 0x20-byte voice/battle command block filled by CtrlRemote_ArtsWindowDispatch and passed
+// to aiRingPrepend (same layout as CVisionFxParam).
 struct CtrlRemoteCmd20 {
     u32 w00;                      // 0x00
     u8 _04[2];                    // 0x04

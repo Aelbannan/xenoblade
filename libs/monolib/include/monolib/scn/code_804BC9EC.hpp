@@ -26,9 +26,9 @@ extern ScnResData lbl_eu_8065F32C;
 extern "C" {
 ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
 void Coli_ClearOutFlag_8078(ScnResData* self, int index);
-void func_804B80CC(ScnResData* self);
-void func_804B7804(ScnResData* self);
+void getMoverEntry(ScnResData* self);
+void initColiMover(ScnResData* self);
 void Coli_CheckFlag(ScnResData*);
-void func_804B7D9C(int, int);
-void func_804B7DD4(ScnResData*);
+void clrSeenBitTbl(int, int);
+void setSeenBitTbl(ScnResData*);
 }

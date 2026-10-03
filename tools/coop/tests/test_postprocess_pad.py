@@ -81,7 +81,7 @@ def _build_elf(sections: list[dict]) -> bytes:
 
     for i, s in enumerate(all_secs, start=1):
         h = shoff + i * shentsize
-        typ = {SHT_PROGBITS: 1, SHT_RELA: 4, SHT_NOBITS: 8, SHT_STRTAB: 3}[s["type"]]
+        typ = {SHT_PROGBITS: 1, SHT_SYMTAB: 2, SHT_STRTAB: 3, SHT_RELA: 4, SHT_NOBITS: 8}[s["type"]]
         stored_off = 0 if s["type"] == SHT_NOBITS else offs[s["name"]]
         stored_size = sizes[s["name"]] if s["type"] != SHT_NOBITS else s.get("size", 0)
         struct.pack_into(

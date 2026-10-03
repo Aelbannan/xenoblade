@@ -8,8 +8,8 @@
 // us-802a8540 (downVoiceCompletionKick)
 // Completion callback: if no active voice, call the playback-start virtual.
 void downVoiceCompletionKick(CVS_THREAD_DOWN* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -18,7 +18,7 @@ void downVoiceCompletionKick(CVS_THREAD_DOWN* self) {
 // Each slot stores a CVoiceHandle; the comparison target is the CCharVoice
 // embedded at +0x3E9C inside that handle (or NULL when the slot is empty).
 void downVoiceRemoveByPtr(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20: load handle, bias to its embedded voice if non-null, compare
     CVoiceHandle* handle = self->field_0x20;
@@ -69,8 +69,8 @@ void downVoiceAdvanceSlot1(CVS_THREAD_DOWN* self) {
             if (handle20 != NULL) {
                 embedded = &handle20->voice;
             }
-            if (func_802A3C44(self, embedded, ml::math::mtRand(2) + 0x70C) == 0) {
-                self->func_802A3B50();
+            if (TryRequestVoice(self, embedded, ml::math::mtRand(2) + 0x70C) == 0) {
+                self->PlayThreadVoice();
             }
         }
     }
@@ -82,7 +82,7 @@ void downVoiceAdvanceSlot1(CVS_THREAD_DOWN* self) {
 // checks if the voice is still active, and if inactive, plays a voice ID
 // chosen by mtRand(2): 0x713 when rand==0, otherwise 0x70E.
 void downVoiceAdvanceSlot2(CVS_THREAD_DOWN* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -109,8 +109,8 @@ void downVoiceAdvanceSlot2(CVS_THREAD_DOWN* self) {
             if (handle24 != NULL) {
                 embedded = &handle24->voice;
             }
-            if (func_802A3C44(self, embedded, voiceId) == 0) {
-                self->func_802A3B50();
+            if (TryRequestVoice(self, embedded, voiceId) == 0) {
+                self->PlayThreadVoice();
             }
         }
     }
@@ -128,7 +128,7 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (!(owner2->field_0x3F00 & 2)) return NULL;
 
     // Allocate the (discarded) handle buffer, then the thread object itself.
-    if (func_802A330C(0xF0, 1) == NULL) return NULL;
+    if (CCharVoiceMan_DispatchById(0xF0, 1) == NULL) return NULL;
 
     CVS_THREAD_DOWN* self = (CVS_THREAD_DOWN*)CCharVoiceMan_AllocVoiceArena(0x28);
     if (self == NULL) return NULL;

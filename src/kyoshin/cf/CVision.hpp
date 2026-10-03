@@ -49,7 +49,7 @@ namespace cf{
     };
 
     // Sub-object embedded at CVisionBattleObj+0x8 (its vtable is at +0x8,
-    // slot 0x30 used by func_801A7704). Never instantiated -> no vtable
+    // slot 0x30 used by driveVisionFxUpdates). Never instantiated -> no vtable
     // emitted. With -RTTI on, declared index N lands at vtable offset (N+2)*4.
     class CVisionBattleSub8 {
     public:
@@ -66,7 +66,7 @@ namespace cf{
         virtual void s30(u32 a);   // declared index 10 -> vtable 0x30
     };
 
-    // Enumeration element dispatched by func_801A7D6C through vtable slot
+    // Enumeration element dispatched by teardownVisionFx through vtable slot
     // 0x190 (declared index 98 -> (98+2)*4). Never instantiated -> no
     // vtable emitted.
     class CVisionEnumElem {
@@ -107,7 +107,7 @@ namespace cf{
     };
 
     // CfObjectActor-derived object with the fields touched by
-    // func_801A7704's second enumeration loop.
+    // driveVisionFxUpdates's second enumeration loop.
     class CVisionActorRef {
     public:
         u8 unk0[0x68];
@@ -166,7 +166,7 @@ namespace cf{
     };
 
     // 5-word argument block passed by value to CVisionBattleObj::vf1E8.
-    // Word 4 doubles as an f32 scale in func_801A8244's player loop.
+    // Word 4 doubles as an f32 scale in routeVisionSlotFx's player loop.
     struct CVisionArg5 {
         union {
             u32 w[5];
@@ -438,7 +438,7 @@ namespace cf{
         u32 mDelta;  // 0x08
     };
 
-    // View of the CVision tail block as addressed by retail func_801A39D8:
+    // View of the CVision tail block as addressed by retail driveVisionRingFx:
     // every field is reached through a base pointer anchored at CVision+0x20000
     // (the compiler hoists `self + 0x20000` into a saved GPR).
     class CVisionRingBase {
@@ -468,8 +468,8 @@ namespace cf{
         float f_15E8;   // 0x15E8
         u16 h_15EC;     // 0x15EC
         u16 h_15EE;     // 0x15EE
-        u8 unk15F0[0x78];   // 0x15F0 func_801751DC sub-object
-        u8 unk1668[0x78];   // 0x1668 func_801751DC sub-object
+        u8 unk15F0[0x78];   // 0x15F0 resetMapMarker sub-object
+        u8 unk1668[0x78];   // 0x1668 resetMapMarker sub-object
         u8 unk16E0[0x1520]; // 0x16E0 (memset 0x1520, ends 0x2C00)
         u8 blocks2C00[0xC0];    // 0x2C00 (8 x 0x18 memset loop, ends 0x2CC0)
         u32 w_2CC0;     // 0x2CC0
@@ -497,7 +497,7 @@ namespace cf{
         CVisionInitBlock items[10]; // 0x3FC8 (10 x 0xBC, ends 0x4720)
         CVisionInitBlock block4720; // 0x4720
         u8 unk47DC[0x10];   // 0x47DC
-        u8 unk47EC[0x14];   // 0x47EC func_80174658 sub-object (ends 0x4800)
+        u8 unk47EC[0x14];   // 0x47EC initItemWorkState sub-object (ends 0x4800)
         u32 w_4800;     // 0x4800
         u32 w_4804;     // 0x4804
         float f_4808;   // 0x4808
@@ -553,8 +553,8 @@ extern "C" void __dl__FPv(void* ptr);
 
 // Same-TU siblings (defined in CVision.cpp; C linkage keeps the call relocs
 // and definitions at the unmangled retail names - CSuddenCommu.hpp idiom).
-extern "C" void func_801A897C(cf::CVision* self, int slot, int r28);
-extern "C" void func_801A8244(cf::CVision* self, void* r25, int r26, int r27, int r28);
+extern "C" void manageVisionSlotFx(cf::CVision* self, int slot, int r28);
+extern "C" void routeVisionSlotFx(cf::CVision* self, void* r25, int r26, int r27, int r28);
 
 // Class-spec table (8-byte stride, only low word used) for createVisionEffect.
 struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
@@ -590,7 +590,7 @@ extern "C" void cfCam_pushStateToActive();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
 extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp definition
-extern "C" void func_801537F0(void* obj);
+extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
 extern "C" float ScMain_GetRoundedMetric(void* obj);
 extern "C" void func_800F449C(void* obj);
@@ -600,9 +600,9 @@ extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // sibling TUs declare the same retail symbols with different signatures or
 // define empty stubs; the variants in other TU-local headers are never
 // included together with this one.
-extern "C" bool func_8009E344(int* a, u32 b, int* outA, int* outB);
+extern "C" bool CtrlObjectParam_FindSlotTypeIndex(int* a, u32 b, int* outA, int* outB);
 extern "C" u8 CtrlObjectParam_GetRowColumnByte(void* row);
-extern "C" void* func_8009EC9C(u32 index);
+extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
@@ -610,7 +610,7 @@ extern "C" void CTaskGame_enumListCtor(void* list);
 extern "C" void* CTaskGame_enumListGet(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" u8* getGlobalSda(void);
-extern "C" void func_8006E2FC(int id);
+extern "C" void cfCam_copySavedState(int id);
 extern u8 lbl_eu_80663DA0;
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
@@ -624,17 +624,17 @@ extern "C" void updateBattleEffectState__Q22cf13CfGameManagerFv(u32 a, u32 b);
 extern "C" const void* lbl_eu_806618E8;
 extern "C" const void* lbl_eu_806618F0;
 
-extern "C" void func_8014AC38(void* a, void* b);
+extern "C" void aiRingPrepend(void* a, void* b);
 extern "C" int func_8014B8BC(void* a, void* b);
 extern "C" bool isVisionSlotAnimating(u32 flags);
 extern "C" int ScMain_DecodeFlagPriority(void);
 extern "C" void* ScMain_GetSummedInt(void* self);
 extern "C" int ScMain_IsDistinctFrom(void* a, void* b);
 extern "C" void* CBattleMan_FetchVisionObj(void* self);
-extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
+extern "C" void CtrlObjectParam_RunPartyArtsFlow(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int Counter_TestBit(void* data, u32 mode);
 extern "C" void func_80170AB0(void* self, void* dst);
-extern "C" void func_80174C24(void* obj, u32 flag);
+extern "C" void requestItemLoad(void* obj, u32 flag);
 extern "C" f64 lbl_eu_80667D18;
 extern "C" f64 lbl_eu_80667D20;
 extern "C" f32 lbl_eu_80667CDC;
@@ -643,30 +643,30 @@ extern "C" f32 lbl_eu_80667D50;
 extern "C" f32 lbl_eu_80667D54;
 extern "C" const f64 lbl_eu_80667D58;
 
-// Mode-dispatch helpers used by func_801A8244's per-mode FX setup.
+// Mode-dispatch helpers used by routeVisionSlotFx's per-mode FX setup.
 extern "C" void restartVisionSlots(u32 a);
 extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(u32 a, u32 b, void* c);
 extern "C" void SysWinLog_AdvanceTiers(u32 a);
 
-// Per-slot FX helper used by func_801A897C's loop (func_80174C98 is
+// Per-slot FX helper used by manageVisionSlotFx's loop (testActorStatus is
 // declared by the chain headers; CfCode_GetSubObject is declared inline below).
 extern "C" f32 ScMain_GetRatio(void* a);
 
 // 5-word data table copied into a local and handed to CVisionBattleObj::vf1E8.
 extern "C" u32 lbl_eu_80503F80[5];
 
-// Flag word OR-ed with 0x8 in func_801A8244.
+// Flag word OR-ed with 0x8 in routeVisionSlotFx.
 extern u32 lbl_eu_80663E28;
 
 // Scene handle whose frame-time drives the vision element decay.
 namespace cf { class CScn; }
 
-// Typeinfo name for __dynamic_cast in func_801A7704's second list loop.
+// Typeinfo name for __dynamic_cast in driveVisionFxUpdates's second list loop.
 extern "C" const void* lbl_eu_80661970;
 
 // Callback ptmf tables (12-byte triplets).
-// Callback triplet copied wholesale by func_801A5BA8 / func_801A5E58 /
-// func_801A60B0 (retail emits a 12-byte struct copy: lis @ha / lwzu @l).
+// Callback triplet copied wholesale by gateVisionByFusionParam / forwardVisionShowRequests /
+// runVisionResetWindows (retail emits a 12-byte struct copy: lis @ha / lwzu @l).
 extern "C" cf::CVisionPtmf lbl_eu_805331D0;
 extern "C" u32 lbl_eu_805331F4[3];
 extern "C" u32 lbl_eu_8053320C[3];
@@ -677,7 +677,7 @@ extern "C" u32 lbl_eu_805331CC[3];
 // ptmf-triplet table: entries used at byte offsets 0x114/0x120/0x12c.
 extern "C" u32 lbl_eu_80533128[0x4E];
 // 80533170/80533140/8053314C are 12-byte callback triplets installed in
-// func_801A506C / func_801A4578.
+// checkSecondFusionVision / manageVisionPlayerCallbacks.
 extern "C" cf::CVisionPtmf lbl_eu_80533170;
 extern "C" cf::CVisionPtmf lbl_eu_80533140;
 extern "C" cf::CVisionPtmf lbl_eu_8053314C;
@@ -713,13 +713,13 @@ extern "C" f32 lbl_eu_80667D4C;
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 // Sub-object constructors / vtable data used by the slot constructor
-// (retail __ct__801A33AC). func_801751DC / func_80174658 are C-linkage
+// (retail __ct__801A33AC). resetMapMarker / initItemWorkState are C-linkage
 // constructors defined in CfMapItemManager.cpp; the lbl_eu_8052xxxx symbols
 // are the CArtsSet / CAttackSet / CVisionSlot vtables stored by the slot ctor.
 // They are declared as byte arrays so MWCC takes their addresses with
 // absolute lis/addi (ADDR16_HA/LO) instead of sda21, matching the retail.
-extern "C" void func_801751DC(void* self);
-extern "C" void func_80174658(void* self);
+extern "C" void resetMapMarker(void* self);
+extern "C" void initItemWorkState(void* self);
 // Declared larger than the 8-byte SDA threshold so MWCC takes their addresses
 // with absolute lis/addi (ADDR16_HA/LO) instead of sda21, matching the retail.
 extern "C" u8 lbl_eu_8052813C[0x40];

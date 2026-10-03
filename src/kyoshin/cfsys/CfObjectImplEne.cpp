@@ -66,7 +66,7 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
     if ((flags->field_45CA & 2) == 0) {
         battleObj = (cf::CfImplEneBattleObj*)self->field_18;
         int id = *(int*)battleObj->field_04->bf30();
-        if (func_80174C98(battleObj, &id, 0x803) == 0) r26 = 1;
+        if (testActorStatus(battleObj, &id, 0x803) == 0) r26 = 1;
     }
     if (r26 != 0) {
         cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
@@ -106,8 +106,8 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
 }
 
 // Battle-actor per-frame logic: reacts to the actor's own state id (vtable
-// 0x30 of the +0x4 sub-object) via func_80174C98 flag queries, issues battle-
-// cmd removals (func_80174B4C) and action triggers, and performs the 0x968
+// 0x30 of the +0x4 sub-object) via testActorStatus flag queries, issues battle-
+// cmd removals (dispatchItemLoad) and action triggers, and performs the 0x968
 // death handling by iterating the enum list and refreshing every unit.
 void func_800D02D4(cf::CfObjectImplEneObj* self) {
     MoveImplNoopA(self);
@@ -122,7 +122,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     }
     if (battleObj->bg2C() == lbl_eu_80666CE4) return;
 
-    // Address-taken id slots (func_80174C98 out values); order matters for
+    // Address-taken id slots (testActorStatus out values); order matters for
     // the retail stack layout (0x30 down to 0x10).
     int idA;
     int idB;
@@ -133,7 +133,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     int idG;
     int idH;
     int idI;
-    if (func_80174C98(battleObj, &idA, 0x1e) != 0) {
+    if (testActorStatus(battleObj, &idA, 0x1e) != 0) {
         if (*(float*)battleObj->bh34() > lbl_eu_80666CE4) {
             CfObjectMove_setMoveSpeed(&battleObj->mSub, lbl_eu_80666CE8);
         }
@@ -145,21 +145,21 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         return;
     }
 
-    if (func_80174C98(battleObj, &idB, 0x1c) != 0) {
+    if (testActorStatus(battleObj, &idB, 0x1c) != 0) {
         // Player: drive the actor by its battle-cmd flags.
         if (isGlobalCamFlagSet(0x04000000) != 0) return;
         if (*(float*)battleObj->bh34() > lbl_eu_80666CEC) {
-            if (func_80174C98(battleObj, &idC, 0x20000000) == 0) {
+            if (testActorStatus(battleObj, &idC, 0x20000000) == 0) {
                 if (battleObj->bi44() != 0) {
                     UIWin_CreateItemMulti(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
                 }
-                func_80174B4C(battleObj, 0x20000000);
+                dispatchItemLoad(battleObj, 0x20000000);
             }
         }
         if (*(float*)battleObj->bh34() > lbl_eu_80666CE4) {
-            if (func_80174C98(battleObj, &idD, 0x40000000) == 0) {
-                func_80140E00(1, battleObj->field_3F28, 0);
-                func_80174B4C(battleObj, 0x40000000);
+            if (testActorStatus(battleObj, &idD, 0x40000000) == 0) {
+                UIWin_BuildFlagBuf(1, battleObj->field_3F28, 0);
+                dispatchItemLoad(battleObj, 0x40000000);
             }
         }
         if (battleObj->mSub.sf0C(0x400) == 0) {
@@ -168,11 +168,11 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
                 if (f->g80(0) != 0) {
                     battleObj->bh30();
                     battleObj->mSub.sf08(0x400);
-                    if (func_80174C98(battleObj, &idE, 0x20000000) == 0) {
+                    if (testActorStatus(battleObj, &idE, 0x20000000) == 0) {
                         if (battleObj->bi44() != 0) {
                             UIWin_CreateItemMulti(battleObj->bi44(), 0, 0, 0, 0, 1, 0, 1, 0);
                         }
-                        func_80174B4C(battleObj, 0x20000000);
+                        dispatchItemLoad(battleObj, 0x20000000);
                     }
                 }
             }
@@ -182,28 +182,28 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         // Waiting: interrupt the current command when the timer is up.
         f32 f31 = *(float*)battleObj->bh34();
         if (battleObj->bfE0() == 1) {
-            if (f31 > lbl_eu_80666CE4) func_80174B4C(battleObj, 0x1e);
+            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
         } else if (battleObj->bfE0() == 2) {
-            if (f31 > lbl_eu_80666CE4) func_80174B4C(battleObj, 0x1e);
+            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
         } else {
-            if (f31 > lbl_eu_80666CE4) func_80174B4C(battleObj, 0x1e);
+            if (f31 > lbl_eu_80666CE4) dispatchItemLoad(battleObj, 0x1e);
         }
         return;
     }
 
     // Enemy: nothing is in progress - resolve the 0x968 death sequence.
     if (battleObj->bg28() > lbl_eu_80666CE4) return;
-    if (func_80174C98(battleObj, &idF, 0x1c) != 0) return;
-    if (func_80174C98(battleObj, &idG, 0x1a) != 0) return;
-    if (func_80174C98(battleObj, &idH, 0x19) != 0) return;
-    if (func_80174C98(battleObj, &idI, 0x04000000) != 0) {
+    if (testActorStatus(battleObj, &idF, 0x1c) != 0) return;
+    if (testActorStatus(battleObj, &idG, 0x1a) != 0) return;
+    if (testActorStatus(battleObj, &idH, 0x19) != 0) return;
+    if (testActorStatus(battleObj, &idI, 0x04000000) != 0) {
         CfObjectMove_setAnimModeArgs((u8*)&battleObj->mSub, 5, 0, -1, 1);
-        if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
+        if (battleObj->field_3F60 == 0) dispatchItemLoad(battleObj, 0x1c);
         return;
     }
-    func_80174B4C(battleObj, 0x04000000);
+    dispatchItemLoad(battleObj, 0x04000000);
     CfObjectMove_setAnimModeArgs((u8*)&battleObj->mSub, 5, 0, -1, 1);
-    if (battleObj->field_3F60 == 0) func_80174B4C(battleObj, 0x1c);
+    if (battleObj->field_3F60 == 0) dispatchItemLoad(battleObj, 0x1c);
 
     // If a live vision target matches, run the removal sequence.
     cf::CfImplEneTarget* tgt =
@@ -213,8 +213,8 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         CfObjectMove_setRegionAttached(&battleObj->mSub, 0);
         self->vf100();
         CBattleMan_BumpUnk94Key(cf::CBattleManager::getInstance(), battleObj->field_3F28);
-        func_800E9B54(cf::CBattleManager::getInstance(), battleObj, 0, 0);
-        func_800D9CA0(cf::CBattleManager::getInstance(), battleObj);
+        spreadChainArtsHits(cf::CBattleManager::getInstance(), battleObj, 0, 0);
+        unregisterBattleActor(cf::CBattleManager::getInstance(), battleObj);
         CPartsChange_ResetBattleEntry(battleObj, r31, ((battleObj->field_3374 >> 5) & 1) ^ 1);
     }
 
@@ -236,11 +236,11 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
 int MoveImplEne_RunSharedUpdate0(void* self) { return func_800D0C2C((cf::CfObjectImplEneObj*)self, 0); }
 
 // Plays a sound based on `kind` when the battle object's +0x3F60 id matches.
-// Extra params p4/p5/p6 are live-in from the virtual call site; func_800CD5DC
+// Extra params p4/p5/p6 are live-in from the virtual call site; MoveImplDriveTransition
 // forwards them (all still in their argument registers).
 void MoveImplEne_PlayKindSound(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p5, u32 p6) {
     if (id != ((cf::CfImplEneBattleObj*)self->field_18)->field_3F60) return;
-    func_800CD5DC(self, id, kind, p4, p5, p6);
+    MoveImplDriveTransition(self, id, kind, p4, p5, p6);
     switch (kind) {
     case 7:
     case 0xb:
@@ -281,7 +281,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
             if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)p) != 0) continue;
             if (p->field_3F34 == 0) continue;
             if (p->field_3F60 == 0) continue;
-            func_800D9978(cf::CBattleManager::getInstance(), p);
+            registerBattleActor(cf::CBattleManager::getInstance(), p);
             p->bhC4((int)src, lbl_eu_80666CEC, lbl_eu_80666CE4, lbl_eu_80666CE4);
             count++;
         }

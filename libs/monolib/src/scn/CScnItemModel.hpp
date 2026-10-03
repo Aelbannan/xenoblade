@@ -87,7 +87,7 @@ public:
     virtual void* vfunc3C(const char* name);  // +0x3C Nw4r: scnImN4MtxByName (named node mtx)
     virtual void vfunc40();
     virtual void vfunc44();
-    virtual void vfunc48(float f);  // +0x48 base: simSetAndPropRate / Nw4r: func_8048A588
+    virtual void vfunc48(float f);  // +0x48 base: simSetAndPropRate / Nw4r: scnImN4UpdateMatFade
     virtual float vfunc4C();
     virtual void vfunc50(u32 a);
     virtual int vfunc54();
@@ -105,7 +105,7 @@ public:
     virtual void vfunc84(u32 a);
     virtual void vfunc88(int arg);  // 0x88 - CfRes flag (was void)
     virtual void vfunc8C(u32 a);  // vtable 0x8C (1-arg notify, see simNotifyVfunc8C)
-    virtual int vfunc90(const void* vec, u32 flags);  // +0x90 Nw4r: func_80488C78
+    virtual int vfunc90(const void* vec, u32 flags);  // +0x90 Nw4r: scnImN4CheckMat
     virtual void vfunc94(u32 a);  // vtable 0x94 (1-arg notify, see simNotifyVfunc94)
     virtual void vfunc98();  // +0x98 Nw4r: scnImN4OnMatAct
     virtual void vfunc9C(u32 a, u32 b);  // vtable 0x9C (2-arg notify)

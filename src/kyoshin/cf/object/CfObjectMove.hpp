@@ -46,7 +46,7 @@ extern "C" int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self);
 // CfGameManager unity header). ColiNodeInit is the +0x60C region
 // sub-object ctor called from the CfObjectMove ctor.
 extern "C" void ColiNodeInit(void* region);
-extern "C" void func_804B4BDC(void* manager, void* region);
+extern "C" void ColiListAppend(void* manager, void* region);
 extern "C" void Coli_ListRemoveNode(void* manager, void* region);
 extern void* lbl_eu_80665958;   // region-library manager (sbss)
 // CfObjectMove vtable (data TU; the destructor stores it explicitly, same
@@ -130,7 +130,7 @@ extern "C" f32 Scn_GetFrameDelta(void* scene);
 namespace cf {
 class CfBdat {
 public:
-    static u32 func_801422A8(u32 param1);
+    static u32 resolveWpnTok(u32 param1);
     static const char* getBdatStringEntry(u16 index);
     static void resetMapBdatFileDataPointers();
 };
@@ -185,12 +185,12 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 // Scene/manager queries used by CfObjectMove_testMoveProximity / func_800BC9EC / func_800BCFA0.
 extern "C" int CfRes_getD80Flag();
 extern "C" void* Scn_FindCamItem(void* obj, int index);
-extern "C" int func_8007560C();
+extern "C" int CamEvtBusyChk();
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Camera-block getter (retail getCameraDataBlock__Q22cf13CfGameManagerFv,
 // 0x80082B7C; returns the CfCamEventSlot-family object at CfGameManager+0xB0
-// - see func_800784A0 in CfCamEvent_1.cpp, which returns manager->slots[idx]).
+// - see CamEvtCreateSlotObj in CfCamEvent_1.cpp, which returns manager->slots[idx]).
 // Single winning decl lives in kyoshin/cf/CfGameManagerApi.hpp (included
 // above); the old per-TU func_800821F8 placeholder name was a stale alias
 // for this same symbol (hexdiff reloc drift in CfObjectMove_testMoveProximity).
@@ -211,7 +211,7 @@ extern "C" void startAnimModeC(void* self);
 extern "C" void startAnimModeB(void* self);
 // Region-library helpers used by func_800BC9EC / func_800BCFA0.
 extern "C" void ColiNodeSetWord8Rebuild(void* region);
-extern "C" void func_804B1164(void* region, void* out, const void* vec, void* out2);
+extern "C" void ColiResolveNodeMove(void* region, void* out, const void* vec, void* out2);
 // Collision/position stepper (defined in kyoshin/cf/CActParamAnimGame.cpp,
 // retail unmangled name): 6 int-ish args + 5 float args.
 extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
@@ -250,7 +250,7 @@ extern "C" void __ct__cf_CtrlPad(void* self, void* parent, int arg);
 // unmangled name). Declared here because the canonical CModelDispEquip.hpp
 // declaration conflicts with CfObjectModel.hpp's Scn_IsAnimActiveOrNull (C-linkage
 // overload) and CfBdat.hpp (read-only) does not declare it.
-extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
+extern "C" u32 bdatBitFromCol(u32 param1, const char* column, u32 param3);
 
 // Retail unmangled import used by the CfObjectMove wrappers: voice-request
 // helper (defined in kyoshin/cf/voice/CCharVoice.cpp). The CCharVoice member

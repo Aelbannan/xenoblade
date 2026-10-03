@@ -31,17 +31,17 @@ union F64Conv {
 // retail rlwimi masks (28,0-3), (26,4-5), (24,6-7), (16,8-15).
 struct CtrlActFlags {
     u32 mKind : 4;        // 28-31 action kind (switch in ctrlActSetupActionKind)
-    u32 mPhase : 2;       // 26-27 phase counter (incremented by func_800D3D34)
-    u32 mAngleState : 2;  // 24-25 facing state (func_800D5D68)
+    u32 mPhase : 2;       // 26-27 phase counter (incremented by progressPhase)
+    u32 mAngleState : 2;  // 24-25 facing state (snapFacingAng)
     u32 mParam : 8;       // 16-23 action parameter
     u32 mBit15 : 1;       // 15
-    u32 mBit14 : 1;       // 14 (0x4000, set by func_800D5F98)
-    u32 mBit13 : 1;       // 13 (0x2000, latched by func_800D5F98)
+    u32 mBit14 : 1;       // 14 (0x4000, set by testFacingGap)
+    u32 mBit13 : 1;       // 13 (0x2000, latched by testFacingGap)
     u32 : 13;             // 0-12
 };
 
 // self->mField28 view: vtable slot 0x138 returns a float vector (first
-// float read as the height/timer value by func_800D3D34). Typed virtuals so
+// float read as the height/timer value by progressPhase). Typed virtuals so
 // retail's true C++ dispatch shape (lwzu/lwz/mtctr/bctrl) is reproduced.
 class CtrlActViewSub28 {
 public:
@@ -75,7 +75,7 @@ public:
 };
 
 // Typed view of the +0x3E9C voice-owner interface for the height probe:
-// slot 0x8C returns the actor height float (func_800D34D4 gate).
+// slot 0x8C returns the actor height float (handleActKind gate).
 class CtrlActVoiceHeightIntf {
 public:
     virtual void vf00();  virtual void vf01();  virtual void vf02();
@@ -96,11 +96,11 @@ public:
 // touches: flag word at +0x4EC, timer/height at +0x4F8, threshold at +0x508.
 struct CtrlActTargetView {
     u8 _00[0x4EC];
-    u32 mField4EC;           // 0x4EC (bit 8 test by func_800D6720)
+    u32 mField4EC;           // 0x4EC (bit 8 test by testHeightGap)
     u8 _4F0[0x4F8 - 0x4F0];
-    f32 mField4F8;           // 0x4F8 (active timer gate, func_800D64E8)
+    f32 mField4F8;           // 0x4F8 (active timer gate, isMoveBlocked)
     u8 _4FC[0x508 - 0x4FC];
-    f32 mField508;           // 0x508 (height-delta threshold, func_800D6720)
+    f32 mField508;           // 0x508 (height-delta threshold, testHeightGap)
     u8 _50C[0x510 - 0x50C];
     f32 mField510;           // 0x510
 };
@@ -128,7 +128,7 @@ struct CtrlActSub2A4 {
     u32 mField44;            // 0x44 (opaque words 0x08-0x47, copied verbatim)
     u32 mField48;            // 0x48
     u32 mField4C;            // 0x4C
-    u32 mField50;            // 0x50 (CtrlActAtkParam* in func_800D1F0C)
+    u32 mField50;            // 0x50 (CtrlActAtkParam* in parseActEntry)
     f32 mField54;            // 0x54
     f32 mField58;            // 0x58
     f32 mField5C;            // 0x5C
@@ -144,7 +144,7 @@ struct CtrlActSub2A4 {
     u16 mField80;            // 0x80
     // (0x82-0x83 unnamed alignment padding: skipped by member-wise copies,
     // matching retail)
-    u8 _84[0x34];           // 0x84..0xB7 (bulk-cleared by func_800D1F0C)
+    u8 _84[0x34];           // 0x84..0xB7 (bulk-cleared by parseActEntry)
     u32 mFieldB8;            // 0xB8
 };
 
@@ -525,7 +525,7 @@ struct PlayerTable {
     void* p00[0x30 / 4];
     u32* (*method30)(void* self);              // mField4 sub-object slot 0x30
     void* r34[(0x70 - 0x34) / 4];
-    void (*method70)(void* self, void* arg);   // 0x70 (func_800D1F0C L_3460)
+    void (*method70)(void* self, void* arg);   // 0x70 (parseActEntry L_3460)
     void* r74[(0xF0 - 0x74) / 4];
     f32 (*methodF0)(void* self);               // 0xF0 (returns a height scalar)
     void* rF4[(0x1C0 - 0xF4) / 4];
@@ -535,17 +535,17 @@ struct PlayerTable {
     void* r1D4[(0x23C - 0x1D4) / 4];
     f32 (*method23C)(void* self);              // 0x23C (returns a scalar scale factor)
     void* r240[(0x27C - 0x240) / 4];
-    void* (*method27C)(void* self);            // 0x27C (arts set base, func_800D2D64)
+    void* (*method27C)(void* self);            // 0x27C (arts set base, runArtsAttack)
     void* r280[(0x288 - 0x280) / 4];
     void* (*method288)(void* self);            // 0x288
     void* r28C[(0x2A4 - 0x28C) / 4];
     CtrlActSub2A4* (*method2A4)(void* self);   // 0x2A4
     void* r2A8[(0x2BC - 0x2A8) / 4];
-    int (*method2BC)(void* self);              // 0x2BC (usable gate, func_800D11B0)
+    int (*method2BC)(void* self);              // 0x2BC (usable gate, updateActMain)
     void* r2C0[(0x5B4 - 0x2C0) / 4];
-    f32 (*method5B4)(void* self);              // 0x5B4 (base facing angle, func_800D69D8)
+    f32 (*method5B4)(void* self);              // 0x5B4 (base facing angle, tickTargetAct)
     void* r5B8[(0x5C8 - 0x5B8) / 4];
-    void (*method5C8)(void* self, int flag);   // 0x5C8 (func_800D1F0C)
+    void (*method5C8)(void* self, int flag);   // 0x5C8 (parseActEntry)
 };
 
 // 32-byte battle-list entry (player +0x358C array, indexed modulo 0x3598).
@@ -557,7 +557,7 @@ struct CtrlActBattleEntry {
 };
 struct CtrlActBattleEntryObj {
     u8 _00[0x60];
-    f32 mField60;            // 0x60 (height value read by func_800D11B0)
+    f32 mField60;            // 0x60 (height value read by updateActMain)
 };
 
 struct CtrlActPlayerView {
@@ -567,18 +567,18 @@ struct CtrlActPlayerView {
     u8 _0C[0x1530 - 0x0C];
     u32 mField1530;              // 0x1530
     u8 _1534[0x3374 - 0x1534];
-    u32 mField3374;              // 0x3374 (bit 15 test by func_800D64E8)
+    u32 mField3374;              // 0x3374 (bit 15 test by isMoveBlocked)
     u8 _3378[0x3380 - 0x3378];
     u32 mField3380;              // 0x3380 (status block, aiActionUpdateEntriesDelta/B8BC)
     u8 _3384[0x3388 - 0x3384];
-    u16 mField3388;              // 0x3388 (bit 4 test by func_800D11B0)
+    u16 mField3388;              // 0x3388 (bit 4 test by updateActMain)
     u8 _338A[0x358C - 0x338A];
     CtrlActBattleEntry* mField358C;  // 0x358C (battle-list entry array base)
     u32 mField3590;              // 0x3590 (ring offset)
     u32 mField3594;              // 0x3594 (entry count)
     u32 mField3598;              // 0x3598 (ring modulus)
     u8 _359C[0x3E6C - 0x359C];
-    u16 mField3E6C;              // 0x3E6C (bit 12 test by func_800D2D64)
+    u16 mField3E6C;              // 0x3E6C (bit 12 test by runArtsAttack)
     u8 _3E6E[0x3E9C - 0x3E6E];
     CVoiceOwnerIntfPc mSub3E9C;  // 0x3E9C embedded voice-owner interface
     u8 _3EA0[0x3ED4 - 0x3EA0];
@@ -586,11 +586,11 @@ struct CtrlActPlayerView {
     u8 _3ED8[0x3F00 - 0x3ED8];
     u32 mField3F00;              // 0x3F00 (bit 1 / bit 2 tests)
     u8 _3F04[0x3F10 - 0x3F04];
-    u32 mField3F10;              // 0x3F10 (battle-target actor id, func_800D2D64)
+    u32 mField3F10;              // 0x3F10 (battle-target actor id, runArtsAttack)
     u8 _3F14[0x3F60 - 0x3F14];
     CtrlActTargetView* mField3F60;  // 0x3F60 (voice/battle target)
     u8 _3F64[0x44D8 - 0x3F64];
-    f32 mField44D8;              // 0x44D8 (proximity radius, func_800D755C)
+    f32 mField44D8;              // 0x44D8 (proximity radius, scanPlayerTgt)
 };
 
 // Action-source object (func_8016FE34 result): vtable slots 0x2BC (usable
@@ -605,25 +605,25 @@ struct CtrlActSrc {
     SrcTable* table;        // 0x00
     CtrlPlayerSub4* mField4;     // 0x04
     u8 _08[0x3388 - 0x08];
-    u16 mField3388;              // 0x3388 (bit 3 latch, func_800D1F0C case)
+    u16 mField3388;              // 0x3388 (bit 3 latch, parseActEntry case)
     u8 _338A[0x3E9C - 0x338A];
     CVoiceOwnerIntfPc mOwner3E9C;  // 0x3E9C embedded voice-owner interface
     u8 _3EA0[0x44D8 - 0x3EA0];
-    f32 mField44D8;              // 0x44D8 (probe scale offset, func_800D5308)
+    f32 mField44D8;              // 0x44D8 (probe scale offset, loadActionSrc)
     u8 _44DC[0x455A - 0x44DC];
-    u16 mField455A;              // 0x455A (battle-list lock word, func_800D69D8)
+    u16 mField455A;              // 0x455A (battle-list lock word, tickTargetAct)
 };
 
 // Attack-parameter record returned by getAtkParam (index*0x88 + 0x10).
 struct CtrlActAtkParam {
     u8 _00[0x42];
-    u8 mField42;               // 0x42 (kind gate, func_800D2D64)
+    u8 mField42;               // 0x42 (kind gate, runArtsAttack)
     u8 _43[0x48 - 0x43];
-    u16 mField48;              // 0x48 (arts id, func_800D2D64)
+    u16 mField48;              // 0x48 (arts id, runArtsAttack)
     u8 _4A[0x76 - 0x4A];
     u8 mField76;               // 0x76 (count; +1 written by ctrlActDispatchEntry)
     u8 _77;
-    u32 mField78;              // 0x78 (flag word read by func_800D1F0C)
+    u32 mField78;              // 0x78 (flag word read by parseActEntry)
 };
 
 // Player +0x08 embedded arts container: vtable slot 0x20 takes an id.
@@ -632,10 +632,10 @@ struct ArtsTable {
     void (*method20)(void* self, int id);      // 0x20
 };
 
-// Battle-manager field views used by func_800D2D64.
+// Battle-manager field views used by runArtsAttack.
 struct CtrlActBmView {
     u8 _00[0x1A8];
-    void* mField1A8;           // 0x1A8 chain region (func_80279778, func_800D11B0)
+    void* mField1A8;           // 0x1A8 chain region (CChain_ValidateTarget, updateActMain)
     u8 mField1AA;              // 0x1AA (range gate [1, 0x18])
 };
 struct CtrlActBattleSubView {
@@ -643,10 +643,10 @@ struct CtrlActBattleSubView {
     u8 _4[0x824 - 0x4];
     u32 mField824;             // 0x824 (bit 20 = 0x100000 test)
     u8 _828[0x219C - 0x828];
-    u8 mField219C;             // 0x219C (fed to func_801A6A7C)
+    u8 mField219C;             // 0x219C (fed to installVisionStateCallback)
 };
 
-// Argument view shared by ctrlActDispatchEntry / func_800D2D64: actor id + kind
+// Argument view shared by ctrlActDispatchEntry / runArtsAttack: actor id + kind
 // byte + attack index.
 struct CtrlActAtkArg {
     u32 mField0;               // 0x00 actor id
@@ -676,18 +676,18 @@ public:
     // Retail vtable lbl_eu_8052B080 (36 words, see CBattleManager.cpp): the
     // word at (N+2)*4 holds the named free function, so these virtuals carry
     // the retail names with call-site-exact arity (name-only change).
-    virtual void func_800D1F0C();  // 0x58
-    virtual void func_800D1CFC();  // 0x5C
-    virtual void func_800D11B0();  // 0x60
+    virtual void parseActEntry();  // 0x58
+    virtual void aimVoiceOwner();  // 0x5C
+    virtual void updateActMain();  // 0x60
     virtual int ctrlActComputeAimVec(ml::CVec3* a, f32* b, ml::CVec3* c, int d, int e); // 0x64
     virtual int ctrlActAimAtTarget(ml::CVec3* out, const CVoicePos* pos);             // 0x68
     virtual int ctrlActFaceTargetVec(ml::CVec3* out);                                   // 0x6C
     virtual int ctrlActProbeTargetReset(ml::CVec3* out, int flag);                         // 0x70
     virtual int ctrlActCheckBlockedProbe(ml::CVec3* out);                                   // 0x74
     virtual int ctrlActDispatchEntry(void* entry);  // 0x78 (arts entry)
-    virtual int func_800D2D64(void* entry);  // 0x7C (arts entry)
+    virtual int runArtsAttack(void* entry);  // 0x7C (arts entry)
     virtual int vf30();  virtual int vf31();  // 0x80/0x84 shared ret stubs
-    virtual int func_800D34D4();  // 0x88
+    virtual int handleActKind();  // 0x88
     virtual void vf33();  // 0x8C pure (retail word is 0)
     // NOTE: the retail table ends at +0x8C; there are no vf34+ slots.
 
@@ -707,24 +707,24 @@ public:
     f32 mField40;              // 0x40
     f32 mField44;              // 0x44
     f32 mField48;              // 0x48
-    f32 mField4C;              // 0x4C (facing angle written by func_800D3D34)
+    f32 mField4C;              // 0x4C (facing angle written by progressPhase)
     f32 mField50;              // 0x50
     f32 mField54;              // 0x54 action timer
     CtrlActFlags mFlags58;     // 0x58
     CtrlActPlayerView* mPlayer;// 0x5C player actor object
-    ml::CVec3 mPos60;          // 0x60 position block (func_800D69D8 walks it)
-    f32 mField6C;              // 0x6C (facing reference, func_800D69D8)
-    f32 mField70;              // 0x70 (facing blend value, func_800D11B0)
-    u16 mField74;              // 0x74 (action state bits 1-3, func_800D6720)
-    s16 mField76;              // 0x76 (countdown, func_800D11B0)
-    u8 mField78;               // 0x78 (probe countdown, func_800D755C)
+    ml::CVec3 mPos60;          // 0x60 position block (tickTargetAct walks it)
+    f32 mField6C;              // 0x6C (facing reference, tickTargetAct)
+    f32 mField70;              // 0x70 (facing blend value, updateActMain)
+    u16 mField74;              // 0x74 (action state bits 1-3, testHeightGap)
+    s16 mField76;              // 0x76 (countdown, updateActMain)
+    u8 mField78;               // 0x78 (probe countdown, scanPlayerTgt)
     u8 mField79;               // 0x79
-    u8 mField7A;               // 0x7A (cleared by func_800D34D4 kind 9/10)
-    u8 mField7B;               // 0x7B (probe counter, func_800D755C)
+    u8 mField7A;               // 0x7A (cleared by handleActKind kind 9/10)
+    u8 mField7B;               // 0x7B (probe counter, scanPlayerTgt)
 };
 
 // Extended view of the +0x3E9C voice-owner interface exposing the vtable
-// slot 0x1AC used by func_800D1CFC (the CVoiceOwnerIntfPc view in CtrlPc.hpp
+// slot 0x1AC used by aimVoiceOwner (the CVoiceOwnerIntfPc view in CtrlPc.hpp
 // stops at 0xC4). Index 105 -> vtable 0x1AC.
 class CtrlActVoiceOwnerIntf : public CVoiceOwnerIntfPc {
 public:
@@ -763,7 +763,7 @@ struct CtrlActPosBlock {
 };
 
 
-// Stack frame block built by func_800D3FFC phase 0: the rotated placement
+// Stack frame block built by rotateActPose phase 0: the rotated placement
 // offset followed by a Y-rotation basis (cos/sin columns and the CFC y-scale).
 // Retail writes the whole block but only reads the offset back.
 struct CtrlActRotFrame {
@@ -816,7 +816,7 @@ struct CtrlActFxReq {
 // (case 22 dispatches through the real cf::CAttackParam virtual
 // CAttackParam_getArtsGaugeMax, CArtsSet.hpp; no local pad.)
 
-// Battle-manager view for the virtual slot 0x2C dispatch (func_800D1F0C).
+// Battle-manager view for the virtual slot 0x2C dispatch (parseActEntry).
 struct Bm2Table {
     void* p00[0x2C / 4];
     void (*fn2C)(void* self, void* player, void* sub);
@@ -827,7 +827,7 @@ struct CtrlActBm2 {
 
 
 
-// Chain-object view for the getEffOwner path of func_800D1F0C.
+// Chain-object view for the getEffOwner path of parseActEntry.
 struct CtrlActChainObj {
     u8 _00[0xA0];
     u16 mFieldA0;            // 0xA0 (bit 1 latch)
@@ -838,29 +838,29 @@ struct CtrlActChainObj {
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
-extern "C" long func_80174C98(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
-extern "C" void func_80174C24(void* obj, u32 flag);
+extern "C" long testActorStatus(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
+extern "C" void requestItemLoad(void* obj, u32 flag);
 extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
 extern "C" int getAnimModelId(void* battleObj);  // battle-state page id
 extern "C" int func_80148778(void* obj, int id);
-// func_800D11B0 / func_800D69D8 extra imports (retail C-ABI names).
+// updateActMain / tickTargetAct extra imports (retail C-ABI names).
 extern "C" f32 CfCmd_GetThreshold();                    // battle-list fallback height
 // Chain-start gate (chain/CChain.cpp); retail call site uses the plain name.
-extern "C" int func_80279778(void* a, void* b);
+extern "C" int CChain_ValidateTarget(void* a, void* b);
 // monolib coli segment probes (retail C-ABI names).
 extern "C" int ColiQuerySpecDispatch(void* self, void* src, int a, int b);
 extern "C" int Coli_WalkQuery(void* a, void* b, void* c, int d, int e, int f);
-extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f, int g);
+extern "C" int ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f, int g);
 extern "C" int Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
-// func_800D2D64 imports: arts-param lookups, battle-manager sub-views and the
+// runArtsAttack imports: arts-param lookups, battle-manager sub-views and the
 // arts-id predicate. (getInstance__Q22cf14CBattleManagerFv is declared in
 // kyoshin/cf/CBattleManagerApi.hpp.)
 extern "C" void* getArtsSlotByFlatIdx(void* base, int index);
 extern "C" void* getArtsParamByIdx(void* base, int index);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
-extern "C" int func_801A6A7C(void* a, void* b);
+extern "C" int installVisionStateCallback(void* a, void* b);
 extern "C" int isBattleEventKind3(int val);
-// func_800D1F0C imports: status-block timers, battle-entry fetch, effect
+// parseActEntry imports: status-block timers, battle-entry fetch, effect
 // requests and the chain/battle helpers.
 extern "C" void aiActionUpdateEntriesDelta(void* obj, f32 val);
 extern "C" void aiActionClearBlockADC(void* obj);
@@ -873,7 +873,7 @@ extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b);
 extern "C" void* CPartsChange_GetActorTable(void* p);
 extern "C" void* CPartsChange_FindActorById(void* p, u16 arg);
 // CChain_TryActivateChain is declared in CtrlPc.hpp (C-ABI, (void*, int)).
-// In-TU kind setter used by the func_800D1F0C switch arms.
+// In-TU kind setter used by the parseActEntry switch arms.
 void ctrlActSetupActionKind(CtrlActView* self, u32 kind, int param);
 // Collision-query API: ScnRes_VertRayForward_E398 is declared in CtrlMoveBase.hpp
 // (retail C-ABI name; 6-arg probe passing two FP args after the GPR args).
@@ -886,8 +886,8 @@ extern "C" int ScnRes_EntryFlagThunk_E5A4(int a, int b);
 extern "C" void* getAtkParam(void* base, int index);
 // Enum-list actor-id query (target 5 scan loop).
 // findFirstCleanObjectId is declared in CtrlPc.hpp (extern "C" void* form).
-// In-TU facing helper called by func_800D3D34 (retail plain C name).
-extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src);
+// In-TU facing helper called by progressPhase (retail plain C name).
+extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src);
 
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 void* findObjectById(int id);
@@ -897,21 +897,21 @@ void* findObjectById(int id);
 bool isGlobalCamFlagSet(int mask);
 
 // In-TU action-handler entry points: C linkage so the call relocs carry the
-// retail plain names (func_800D5F98 convention).
-extern "C" int func_800D34D4(CtrlActView* self);
-extern "C" void func_800D3998(CtrlActView* self);
-extern "C" void func_800D3D34(CtrlActView* self);
-extern "C" void func_800D3FFC(CtrlActView* self);
+// retail plain names (testFacingGap convention).
+extern "C" int handleActKind(CtrlActView* self);
+extern "C" void setupActTimer(CtrlActView* self);
+extern "C" void progressPhase(CtrlActView* self);
+extern "C" void rotateActPose(CtrlActView* self);
 extern "C" void ctrlActState4Handler(CtrlActView* self);
-extern "C" void func_800D49F4(CtrlActView* self);
-extern "C" void func_800D4F30(CtrlActView* self);
-extern "C" void func_800D5308(CtrlActView* self);
+extern "C" void testAimWobble(CtrlActView* self);
+extern "C" void stepActMotion(CtrlActView* self);
+extern "C" void loadActionSrc(CtrlActView* self);
 extern "C" void ctrlActHandleCase4Move(CtrlActView* self);
-extern "C" void func_800D5A2C(CtrlActView* self);
-extern "C" void func_800D5D68(CtrlActView* self);
-extern "C" void func_800D755C(CtrlActView* self, ml::CVec3* pos);
-extern "C" int func_800D64E8(CtrlActView* self);
-extern "C" int func_800D6720(CtrlActView* self, int flag);
+extern "C" void aimNearestFoe(CtrlActView* self);
+extern "C" void snapFacingAng(CtrlActView* self);
+extern "C" void scanPlayerTgt(CtrlActView* self, ml::CVec3* pos);
+extern "C" int isMoveBlocked(CtrlActView* self);
+extern "C" int testHeightGap(CtrlActView* self, int flag);
 
 // Scene object pointer fed to Scn_GetFrameDelta (.sbss).
 class CScn;
@@ -1006,5 +1006,5 @@ extern const char lbl_eu_80526300[];
 
 // In-TU action entry points matched to retail (C linkage keeps the plain
 // call reloc names).
-extern "C" void func_800D11B0(CtrlActView* self);
-extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos, CtrlActSrc* src, int flag);
+extern "C" void updateActMain(CtrlActView* self);
+extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos, CtrlActSrc* src, int flag);

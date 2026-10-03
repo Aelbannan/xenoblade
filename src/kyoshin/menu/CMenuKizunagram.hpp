@@ -164,7 +164,7 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // code_80135FDC helpers (retail-unmangled).
 extern "C" u8 DecMenuCounter64080();
 extern "C" u8 code80135FDC_getByte_64080();
-extern "C" void func_801338C8();
+extern "C" void CUICfManager_createQueuedMenus();
 extern "C" int IsMenuState621F0();
 
 // CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
@@ -198,7 +198,7 @@ extern "C" void beginClose(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
 extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
-extern "C" void func_8025D9C4(UnkKizunaMenuPcSub* self);
+extern "C" void KizunagramTerm(UnkKizunaMenuPcSub* self);
 extern "C" void KizunagramDraw(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void KizunagramOpen(UnkKizunaMenuPcSub* self);
 extern "C" void KizunagramClose(UnkKizunaMenuPcSub* self);
@@ -246,8 +246,8 @@ extern "C" void CTaskGame_deleteLoad();
 extern "C" void MiniMapSetActiveFlag();
 
 // C++-linkage helper - retail emits the mangled form
-// func_80137250__FPQ34nw4r3lyt8DrawInfo.
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+// SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 // nw4r DrawInfo pre-mangled ct/dt names (retail emits the direct calls; a
 // C++ local would virtual-dispatch its scope-exit destructor and bloat the
 // body).

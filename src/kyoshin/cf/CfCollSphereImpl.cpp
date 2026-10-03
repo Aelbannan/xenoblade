@@ -13,7 +13,7 @@ extern "C" void CfCollSphere_DebugDrawSimple(void* context, cf::CfObjectColl* sh
 extern "C" void CfCollSphere_DebugDrawXform(void* context, cf::CfObjectColl* shape, void* a, void* b) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    func_800A5738(a, pos, static_cast<float>(uval), b);
+    VecMath_PushOutSphere(a, pos, static_cast<float>(uval), b);
 }
 
 // --- absorb: retail data sections (split1) ---

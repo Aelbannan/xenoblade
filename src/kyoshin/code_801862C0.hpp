@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 void* ArtsSelect_GetContainer(void);
-void* func_801862E0(void* p);
+void* ArtsSelect_Clear(void* p);
 
 // CArtsSelectSlot: one (arts id, source ptr) entry.
 struct CArtsSelectSlot {
@@ -38,14 +38,14 @@ public:
     u32 field_1704;                // cached source pointer
 };
 class MapProxy;
-void* func_801863F4(void* self, void* src);
+void* ArtsSelect_Insert(void* self, void* src);
 void* ArtsSelect_CacheEntry(void* dst, void* src);
-void* func_80186474(void* self, void* src);
-void* func_801864DC(void* pObj, int slot);
-void func_80186664(u8* self);
-void func_801866F0(MapProxy** objects, int row);
-void* func_80186BC8(int p);
-void func_80186C7C(void* p);
+void* ArtsSelect_Remove(void* self, void* src);
+void* ArtsSelect_Lookup(void* pObj, int slot);
+void ArtsSelect_FreeSlots(u8* self);
+void ArtsSelect_SpawnRow(MapProxy** objects, int row);
+void* ArtsSelect_GetEntry(int p);
+void ArtsSelect_NotifyAll(void* p);
 
 // cf::CfGameManager sequence/resource counters (retail mangled symbols).
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
@@ -56,11 +56,11 @@ u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 #endif
 
 // Sync loop (C++ linkage; defined in code_801862C0.cpp).
-void func_80186D20(void* p);
+void ArtsSelect_SyncRows(void* p);
 
 // Arts-availability check (retail keeps the unmangled C symbol even though
 // the 9-argument form spills the last column pointer to the stack).
-extern "C" int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
+extern "C" int ArtsSelect_CheckAvail(void* p, s32 row, const char* c1, const char* c2,
                              const char* c3, const char* c4, const char* c5,
                              const char* c6, const char* c7);
 
@@ -72,7 +72,7 @@ extern "C" void* memset(void*, int, unsigned long);
 // One-time init guard flag in SDA.
 extern s8 lbl_eu_806642C8;
 
-// Game-state flag words (CUICfManager .sbss) read by func_80186D20.
+// Game-state flag words (CUICfManager .sbss) read by ArtsSelect_SyncRows.
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 
@@ -91,7 +91,7 @@ struct Vec3f {
 
 // Map object proxy: real vtable at lbl_eu_8052AC98 (size 0xF0+). Slots at
 // 0xA8/0xAC/0xB8/0xBC/0xDC/0x150/0x154 are the map helpers used by
-// func_801866F0. Dummy slots are named unkXX to avoid pad pattern
+// ArtsSelect_SpawnRow. Dummy slots are named unkXX to avoid pad pattern
 // but the layout matches retail exactly (84 virtuals through 0x154).
 class __declspec(novtable) MapProxy {
 public:
@@ -132,7 +132,7 @@ public:
 
 class CScnItemModel;
 
-// .sdata2 constants used by func_801866F0 (retail .sdata2 pool; see owning absorb/typed defs in the defining TU)
+// .sdata2 constants used by ArtsSelect_SpawnRow (retail .sdata2 pool; see owning absorb/typed defs in the defining TU)
 extern const f32 lbl_eu_806679C0;  // 0.0001 position scale
 extern const f32 lbl_eu_806679C4;  // 0.01 rotation scale
 extern const f32 lbl_eu_806679C8;  // 0.1 scale-column scale

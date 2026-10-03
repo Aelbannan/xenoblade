@@ -20,13 +20,13 @@ public:
     void initElementBuffers();
 
     bool OnFileEvent(CEventFile* evt);
-    void func_8046D264();
-    void func_8046D898();
-    void func_8046DA04();
+    void rebuildFromSharedBuffer();
+    void resetAndReload();
+    void resetFrameFields();
     void clearManagers();
-    void func_8046DAC0();
+    void teardownG3dObjects();
     void updateLodTick();
-    void func_8046DD9C();
+    void updateLodLayersForView();
     void func_8046E1DC();
     void setPauseFlag();
     void attachSceneObjects();

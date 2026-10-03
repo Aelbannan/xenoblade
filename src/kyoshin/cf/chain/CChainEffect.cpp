@@ -71,7 +71,7 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
             setTargetObj_((void*)self->unk4, 0);
             setChildB59__((void*)self->unk4, 1);
         } else {
-            func_800B3A88(getInstance(), (void*)self->unk4);
+            removeManagedObject(getInstance(), (void*)self->unk4);
         }
         self->unk4 = 0;
         self->unk8 = 0;
@@ -141,7 +141,7 @@ scan:
                         goto next_node;
                     }
                 }
-                func_800B3A88(getInstance(), item);
+                removeManagedObject(getInstance(), item);
                 matched = 1;
                 goto check;
             }

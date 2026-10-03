@@ -38,9 +38,9 @@ public:
 
 // --- C-linkage retail helpers ---
 // (Declarations already provided by included headers: CBattleMan_SetPartyFlagReset,
-// CBattleMan_FetchVisionObj, func_800D9978 and the CfMoveEnumHolder/CfMoveEnumList
+// CBattleMan_FetchVisionObj, registerBattleActor and the CfMoveEnumHolder/CfMoveEnumList
 // family live in cfsys/CfObjectImplMove.hpp / cf/CfGameManager.hpp;
-// ArtsSelect_GetContainer/func_801864DC/Bdat_GetTable_AA34/Bdat_GetMaxRow_B1EC in
+// ArtsSelect_GetContainer/ArtsSelect_Lookup/Bdat_GetTable_AA34/Bdat_GetMaxRow_B1EC in
 // kyoshin/code_801862C0.hpp.)
 extern "C" {
     // CBattleManager helpers
@@ -64,19 +64,19 @@ extern "C" {
     void setRequestParams(void* cam, u32 a, u32 b, u32 c);
 
     // Vision
-    void func_801A8244(void* vision, void* visionList, int a, int b, int c);
+    void routeVisionSlotFx(void* vision, void* visionList, int a, int b, int c);
 
     // Voice / action helpers
     void* func_8016FE34(void* source);
-    void func_801537F0(void* self);
+    void aiRebootAction(void* self);
     void aiActionClearBits0006(void* self);
 
     // PTG / tension helpers
     void* ArtsSelect_GetContainer();
-    void* func_801864DC(void* mgr, int slot);
+    void* ArtsSelect_Lookup(void* mgr, int slot);
 
     // Monado arts unlock
-    void* func_8009EC9C(u32 index);
+    void* CtrlObjectParam_GetCharEntry(u32 index);
     void ResTbox_SetCellBit80(void* self, int, int, int);
     void func_801F92B0(void* self, int, int, int);
 
@@ -209,7 +209,7 @@ int attackEne(VMThread* pThread) {
     for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder) + 0x620); i++) {
         void* unit = func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
         if (targetId == *(u16*)((u8*)unit + 0x3F28)) {
-            func_800D9978(cf::CBattleManager::getInstance(), unit);
+            registerBattleActor(cf::CBattleManager::getInstance(), unit);
         }
     }
     __dt__80043E88((CfMoveEnumHolder*)holder, -1);
@@ -226,7 +226,7 @@ int selectTgt(VMThread* pThread) {
     }
     if (ocObj != 0) {
         void* mgr = ArtsSelect_GetContainer();
-        void* slot = func_801864DC(mgr, *(u32*)((u8*)ocObj + 4));
+        void* slot = ArtsSelect_Lookup(mgr, *(u32*)((u8*)ocObj + 4));
         if (slot != 0) {
             void* cam = Selector_GetInstance();
             func_800FE96C(cam, *(void**)((u8*)slot + 0x74));
@@ -241,7 +241,7 @@ int selectTgt(VMThread* pThread) {
         // cf::CfObject::CfObject_getPosVector on the player object.
         void* target = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
         list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
-        func_800F6ED0((CfMoveEnumList*)list, target);
+        sortEntriesByDistance((CfMoveEnumList*)list, target);
         void* cam = Selector_GetInstance();
         setRequestParams(cam, 0x80000003, 0, 0);
         void* val = findFirstCleanObjectId(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
@@ -299,7 +299,7 @@ int isVoiceEvent(VMThread* pThread) {
 }
 
 int unlockMonadoArts(VMThread* pThread) {
-    void* data = func_8009EC9C(1);
+    void* data = CtrlObjectParam_GetCharEntry(1);
     void* ptr = (u8*)data + 0xE8;
     for (int i = 0; i < 8; i++) {
         ResTbox_SetCellBit80(ptr, 0, 1, i);
@@ -382,12 +382,12 @@ int breakVision(VMThread* pThread) {
         // Retail re-fetches the manager here instead of caching it across the
         // intervening calls (keeps the frame small).
         bm = cf::CBattleManager::getInstance();
-        func_801A8244((u8*)bm + 0x219C, visionList, 5, 1, 0);
+        routeVisionSlotFx((u8*)bm + 0x219C, visionList, 5, 1, 0);
         if (voiceAction != 0) {
             // Different syntax families stop MWCC from CSE-ing the address
             // into an in-place update of voiceAction (retail recomputes the
             // addi per call).
-            func_801537F0((u8*)voiceAction + 0x3380);
+            aiRebootAction((u8*)voiceAction + 0x3380);
             aiActionClearBits0006(&((u8*)voiceAction)[0x3380]);
         }
     }

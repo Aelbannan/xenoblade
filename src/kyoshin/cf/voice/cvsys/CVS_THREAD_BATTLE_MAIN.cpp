@@ -10,11 +10,11 @@
 // code_802B8A3C.hpp so the base-ctor import carries its self argument
 // (retail passes r3=self).
 extern "C" {
-    int  func_802A3E88(CVS_THREAD* self);
-    int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int  func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+    int  IsThreadVoiceActive(CVS_THREAD* self);
+    int  TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int  RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
     void __ct__cf_CVS_THREAD(void* self);
-    int  func_802A77E8(CVoiceHandle* handle);
+    int  HpVoice_MapSubState(CVoiceHandle* handle);
     void* CCharVoiceMan_AllocVoiceArena(int size);
     // Runtime rethrow (NMWException.h): noreturn so MWCC elides the
     // __end__catch epilogue of the catch-all handler.
@@ -84,7 +84,7 @@ extern "C" int BmVoice_FindEquip(BattleMainOwnerView* owner);
 extern "C" int BmVoice_FindRatio(BattleMainOwnerView* owner, int arg);
 
 // Import without a declaring header (compile-only scaffolding).
-extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* handle);
+extern "C" CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* handle);
 
 // Word-wise overlay over the base thread's 12-byte handler ptmf (offsets
 // 0x00-0x0B): each variant's init tables write three words that together
@@ -269,7 +269,7 @@ int func_802AF49C(CVoiceHandle* self) {
     // definition keep this call a bl (matches retail); MWCC rejects
     // block-scope extern "C", so no local re-declaration here.
     int voiceId = func_802AEF80((BattleMainOwnerView*)self);
-    func_802A3D54(voicePtr, voiceId, 0xA);
+    RequestVoicePlayback(voicePtr, voiceId, 0xA);
     return 0;
 }
 
@@ -473,7 +473,7 @@ int func_802AF3DC(CVoiceHandle* self) {
         voicePtr = &self->voice;
     }
     int voiceId = BmVoice_FindEquip((BattleMainOwnerView*)self);
-    func_802A3D54(voicePtr, voiceId, 0xA0);
+    RequestVoicePlayback(voicePtr, voiceId, 0xA0);
     return 0;
 }
 
@@ -491,7 +491,7 @@ int func_802AF43C(CVoiceHandle* self) {
         voicePtr = &self->voice;
     }
     int voiceId = BmVoice_FindGated((BattleMainOwnerView*)self);
-    func_802A3D54(voicePtr, voiceId, 0x12C);
+    RequestVoicePlayback(voicePtr, voiceId, 0x12C);
     return 0;
 }
 
@@ -525,7 +525,7 @@ found:
         gated = 0;
         goto endg;
     }
-    if (func_802A77E8((CVoiceHandle*)handle) != 1) {
+    if (HpVoice_MapSubState((CVoiceHandle*)handle) != 1) {
         gated = 0;
         goto endg;
     }
@@ -618,7 +618,7 @@ int BmVoice_PlayReqB4(CVoiceHandle* self, int param) {
     }
     // Retail forwards the request parameter into the selector unchanged.
     int voiceId = BmVoice_FindRatio((BattleMainOwnerView*)self, param);
-    func_802A3D54(voicePtr, voiceId, 0xB4);
+    RequestVoicePlayback(voicePtr, voiceId, 0xB4);
     return 0;
 }
 
@@ -630,7 +630,7 @@ int BmVoice_Play32(CVoiceHandle* self) {
         voicePtr = &self->voice;
     }
     int voiceId = func_802AF2DC((BattleMainOwnerView*)self);
-    func_802A3D54(voicePtr, voiceId, 0x32);
+    RequestVoicePlayback(voicePtr, voiceId, 0x32);
     return 0;
 }
 
@@ -653,7 +653,7 @@ void* __ct__802AF5CC(int arg) {
     // word is the value captured into the frame local.
     u32 captured =
         ((BmHandleSubView*)handle)->field_0x04->getResult()->word0;
-    if (func_80174C98(handle, &captured, 0x803) == 0)
+    if (testActorStatus(handle, &captured, 0x803) == 0)
         return 0;
 
     // Idle check via the handle's vtable slot at 0x2BC.
@@ -661,7 +661,7 @@ void* __ct__802AF5CC(int arg) {
         return 0;
 
     // Scratch allocation (discarded) then the thread object itself.
-    if (func_802A330C(0x10e, 1) == NULL)
+    if (CCharVoiceMan_DispatchById(0x10e, 1) == NULL)
         return 0;
     CVS_THREAD_BATTLE_MAIN* self =
         (CVS_THREAD_BATTLE_MAIN*)(u32)CCharVoiceMan_AllocVoiceArena(0x24);
@@ -712,24 +712,24 @@ void BmVoice_RefreshBase(CVS_THREAD_BATTLE_MAIN* self) {
             if (handle != NULL) {
                 v = &handle->voice;
             }
-            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x51B) == 0)
-                ((CVS_THREAD*)self)->func_802A3B50();
+            if (TryRequestVoice((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x51B) == 0)
+                ((CVS_THREAD*)self)->PlayThreadVoice();
         } else {
             CCharVoice* v = (CCharVoice*)handle;
             if (handle != NULL) {
                 v = &handle->voice;
             }
-            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x519) == 0)
-                ((CVS_THREAD*)self)->func_802A3B50();
+            if (TryRequestVoice((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x519) == 0)
+                ((CVS_THREAD*)self)->PlayThreadVoice();
         }
     }
 }
 
 // ── us-802b22b4 (BmVoice_RefreshRemap) ─────────────────────────────────────────────
 // Same refresh shape as BmVoice_RefreshBase but gated on the thread-blocked check
-// and an extra handle remap through func_802A7998 before the idle probe.
+// and an extra handle remap through HpVoice_PickIdleVoice before the idle probe.
 void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
-    if (func_802A3E88((CVS_THREAD*)self) != 0)
+    if (IsThreadVoiceActive((CVS_THREAD*)self) != 0)
         return;
 
     BmStateTriple* st = (BmStateTriple*)&self->unk0;
@@ -746,22 +746,22 @@ void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
         handle = (CVoiceHandle*)((u8*)voice - 0x3E9C);
     }
     // Remap the handle, requiring both the input and the result non-null.
-    CVoiceHandle* mapped = func_802A7998(handle);
+    CVoiceHandle* mapped = HpVoice_PickIdleVoice(handle);
     if (handle != NULL && mapped != NULL && ((CVoiceVTV*)mapped)->idle() == 0) {
         if (self->field_0x20 != 0) {
             CCharVoice* v = (CCharVoice*)mapped;
             if (mapped != NULL) {
                 v = &mapped->voice;
             }
-            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x523) == 0)
-                ((CVS_THREAD*)self)->func_802A3B50();
+            if (TryRequestVoice((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x523) == 0)
+                ((CVS_THREAD*)self)->PlayThreadVoice();
         } else {
             CCharVoice* v = (CCharVoice*)mapped;
             if (mapped != NULL) {
                 v = &mapped->voice;
             }
-            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x521) == 0)
-                ((CVS_THREAD*)self)->func_802A3B50();
+            if (TryRequestVoice((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x521) == 0)
+                ((CVS_THREAD*)self)->PlayThreadVoice();
         }
     }
 }
@@ -769,9 +769,9 @@ void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
 // When the CVS thread is not blocked, dispatch the vtable+8 slot (the
 // battle-main update virtual) through the +0x1C vtable pointer.
 extern "C" void BmVoice_DispatchUpdate(void* self) {
-    if (func_802A3E88((CVS_THREAD*)self) != 0)
+    if (IsThreadVoiceActive((CVS_THREAD*)self) != 0)
         return;
-    ((CVS_THREAD*)self)->func_802A3B50();
+    ((CVS_THREAD*)self)->PlayThreadVoice();
 }
 
 int BmVoice_Cap270() { return 270; }
@@ -844,12 +844,12 @@ int BmVoice_PlayGated(CVoiceHandle* self, int param, int size) {
         return 0;
     if (((CVoiceVTV*)self)->idle() != 0)
         return 0;
-    if (func_802A330C(size, 1) == NULL)
+    if (CCharVoiceMan_DispatchById(size, 1) == NULL)
         return 0;
     CCharVoice* voicePtr = (CCharVoice*)self;
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    func_802A3D54(voicePtr, param, size);
+    RequestVoicePlayback(voicePtr, param, size);
     return 0;
 }

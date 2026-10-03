@@ -15,7 +15,7 @@
 
 // ---------------------------------------------------------------------------
 // Sin/cos lookup tables: 360 entries of {value, delta} in BSS, built at
-// runtime by func_804DD754. Entry i holds sin/cos(i degrees) and the slope
+// runtime by CEBuildSinCos. Entry i holds sin/cos(i degrees) and the slope
 // to entry i+1, so fractional degrees are linearly interpolated.
 // ---------------------------------------------------------------------------
 struct CESinCosEntry {
@@ -74,7 +74,7 @@ static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
 }
 
 // z-axis idx-first clone: distinct call site text so MWCC schedules the
-// inlined body independently in func_804DCA88's tail.
+// inlined body independently in CERotEulerXYZ's tail.
 static void CERotTrigIdxFirstZ(Mtx m, f32 rad) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
@@ -90,7 +90,7 @@ static void CERotTrigIdxFirstZ(Mtx m, f32 rad) {
 }
 
 // y-axis idx-first clone: distinct call site text so MWCC schedules the
-// inlined body independently in func_804DCD94's tail (cf. CERotTrigIdxFirstZ).
+// inlined body independently in CERotEulerZXY's tail (cf. CERotTrigIdxFirstZ).
 static void CERotTrigIdxFirstY(Mtx m, f32 rad) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
@@ -121,7 +121,7 @@ static void CERotTrigIdxFirstX(Mtx m, f32 rad) {
                  frac * cosE->delta + cosE->value, 'x');
 }
 
-// Third-rotation variants for func_804DB980: commuted multiply (rad first in
+// Third-rotation variants for CERotEulerOrder: commuted multiply (rad first in
 // source, constant fetched last by MWCC's operand evaluator). Retail fetches
 // the sdata2 constants before the angle only in the third rotation of each
 // case; commuting the operands is the lever that reorders the float loads.
@@ -175,7 +175,7 @@ extern "C" {
 
 // Cardinal axis rotation builders: build a 4x4 matrix rotating about the
 // given axis by `rad` radians (table-interpolated sin/cos).
-void func_804DD388(Mtx mtx, f32 rad) {
+void CERotXMatrix(Mtx mtx, f32 rad) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
     int idx = n % 360;
@@ -190,7 +190,7 @@ void func_804DD388(Mtx mtx, f32 rad) {
 }
 
 // Dedicated y-axis helper: MWCC's inliner schedules the body differently
-// than textual source in func_804DD440.
+// than textual source in CERotYMatrix.
 static void CERotTrigY(Mtx m, f32 rad) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
@@ -205,18 +205,18 @@ static void CERotTrigY(Mtx m, f32 rad) {
                  frac * cosE->delta + cosE->value, 'y');
 }
 
-void func_804DD440(Mtx mtx, f32 rad) {
+void CERotYMatrix(Mtx mtx, f32 rad) {
     CERotTrigY(mtx, rad);
 }
 
-void func_804DD4F8(Mtx mtx, f32 rad) {
+void CERotZMatrix(Mtx mtx, f32 rad) {
     // z-axis retail body orders the %360 before the (float)n cast, flipping
     // the mulhw/xoris scratch coloring vs the x/y builders.
     CERotTrigIdxFirst(mtx, rad, 'z');
 }
 
 // mtx = RotY(rad) * mtx
-void func_804DD5B0(ml::CMat34* mtx, f32 rad) {
+void CERotYConcat(ml::CMat34* mtx, f32 rad) {
     ml::CMat34 rot;
     ml::CMat34 result;
     // idx-first variant: retail colors mulhw->r3 / xoris->r0 here.
@@ -234,7 +234,7 @@ void func_804DD5B0(ml::CMat34* mtx, f32 rad) {
 int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
     // NOTE: uses the idx-first trig variant (mulhw r3 / xoris r0 like
     // retail); shared CERotTrig stays frac-first for the cardinal builders.
-    // func_804DCA88/DCD94 use it too.
+    // CERotEulerXYZ/DCD94 use it too.
     f32 mag = PSVECMag(v);
     bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= lbl_eu_8066A208;
     if (nearOne) {
@@ -268,7 +268,7 @@ int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
 // Order X, Y, Z.
 // NOTE: idx-first trig variant — this caller's register context needs
 // mulhw r3 / xoris r0 like retail (see CERot_AxisToMatrix).
-void func_804DCA88(ml::CMat34* mtx, const Vec* ang) {
+void CERotEulerXYZ(ml::CMat34* mtx, const Vec* ang) {
     // Retail frame slots run work(0x98) > rotY(0x68) > work2(0x38) > rotZ(0x8):
     // first-declared local takes the highest slot.
     ml::CMat34 work;
@@ -289,8 +289,8 @@ void func_804DCA88(ml::CMat34* mtx, const Vec* ang) {
 }
 
 // Order Z, X, Y.
-// idx-first trig variant, same reason as func_804DCA88.
-void func_804DCD94(ml::CMat34* mtx, const Vec* ang) {
+// idx-first trig variant, same reason as CERotEulerXYZ.
+void CERotEulerZXY(ml::CMat34* mtx, const Vec* ang) {
     // Retail frame slots run work(0x98) > rotX(0x68) > work2(0x38) > rotY(0x8):
     // first-declared local takes the highest slot. Plain Mtx locals: copying
     // the raw array pairs load/store words in retail's order.
@@ -316,8 +316,8 @@ void func_804DCD94(ml::CMat34* mtx, const Vec* ang) {
 //   0: X,Y,Z   1: X,Z,Y   2: Y,X,Z   3: Y,Z,X   4: Z,X,Y   5: Z,Y-X
 // Retail is a compare-chain dispatch (cmpwi/beq per case); each case builds
 // R3 * (R2 * R1) with the idx-first table trig (mulhw r3 / xoris r0
-// coloring, cf. func_804DCA88).
-void func_804DB980(ml::CMat34* mtx, const Vec* ang, int order) {
+// coloring, cf. CERotEulerXYZ).
+void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
     switch (order) {
     case 0: { // X,Y,Z
         if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
@@ -450,7 +450,7 @@ int CERot_RemapIndex(int val) {
 // integer degree and delta = value[i+1] - value[i] (wrapping 359 -> 0).
 // ---------------------------------------------------------------------------
 
-void func_804DD754(void) {
+void CEBuildSinCos(void) {
     f32 prevSin;
     f32 prevCos;
     int i;

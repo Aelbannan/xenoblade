@@ -11,7 +11,7 @@
 // libs/monolib/src/device/CDeviceFont.hpp). Retail vtable: RTTI @0x0,
 // 0 @0x4, dtor @0x8, then user virtuals in declaration order. Slot +0x24
 // (getFont) yields the font handle bound into layout panes by
-// func_8013676C. novtable: tables live in the data blob; the interface is
+// ApplyFontToTxtPanes. novtable: tables live in the data blob; the interface is
 // used only through pointers, so no TU emits a vtable for it.
 class __declspec(novtable) IDeviceFontInfo {
 public:

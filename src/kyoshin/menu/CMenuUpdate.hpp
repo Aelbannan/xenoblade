@@ -21,7 +21,7 @@ struct Unk_8049603C {
 };
 
 // View of the object returned by CDeviceFont::getFontInfo: vtable slot 9
-// (offset 0x24) yields the handle bound via func_8013676C. Never instantiated,
+// (offset 0x24) yields the handle bound via ApplyFontToTxtPanes. Never instantiated,
 // so no vtable is emitted; the genuine virtual call makes MWCC emit the retail
 // r12 dispatch chain.
 class CMenuUpdateFontView {
@@ -191,12 +191,12 @@ extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
-extern "C" void func_8013676C(void*, void*);
+extern "C" void ApplyFontToTxtPanes(void*, void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" bool advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
 extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
-extern "C" void func_80137B44(void*, const char*, int);
+extern "C" void PaneSetVtxColorByName(void*, const char*, int);
 extern "C" void LayoutSetTextBoxFmtValue(void*, const char*, void*, int);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
 extern "C" u16 BdatGetU16Direct(void*, const char*, int);

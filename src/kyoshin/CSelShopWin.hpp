@@ -35,12 +35,12 @@ void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Fire a per-window sound/effect event by id.
 void playUISound(u32);
 // Sum the translate of a pane and its ancestors into an output VEC3. C-ABI.
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 
 // OnFileEvent imports (retail symbols, unmangled / pre-mangled C-ABI names).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void* func_80138DA4(const char*);
+void* GetBdatNameByNumId(const char*);
 void writePanePos(nw4r::lyt::Pane*, float*);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 void* getPlayer__Q22cf13CfGameManagerFi(int);

@@ -38,14 +38,14 @@ namespace cf {
 class __declspec(novtable) CfCam {
 public:
     virtual ~CfCam();                               // 0x08
-    virtual void func_8006CC68(int arg);            // 0x0C
+    virtual void resetCamEntry(int arg);            // 0x0C
     virtual void* cfCam_getPlus1C();                  // 0x10
     virtual void cfCam_copyToPlus28(void* src);          // 0x14
     virtual void cfCam_updFollowPos(void* arg, float f); // 0x18
     virtual void* cfCam_nestedPlus118();                  // 0x1C
-    virtual void func_8006E884(float f);            // 0x20
+    virtual void frameDriver(float f);            // 0x20
     virtual void cfCam_nopVirt24();                   // 0x24
-    virtual void func_8006BFDC();                   // 0x28
+    virtual void resetCamConsts();                   // 0x28
     virtual void* cfCam_copyToPlus10(void* src);         // 0x2C
     virtual void* cfCam_getPlus10();                  // 0x30
     virtual void* cfCam_getPlus40();                  // 0x34
@@ -245,8 +245,8 @@ extern "C" void CfObject_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove
     self->CfObjectModel_releaseModelSub();  // vtable +0x178
     if (self->mTargetC4 != 0) {
         // C4 target is the +0xD0 CActParamAnimGame: +0xE0 is CActParamAnim::
-        // func_8004B114 (retail table lbl_eu_80526458, method 54).
-        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->func_8004B114();
+        // initAnimState (retail table lbl_eu_80526458, method 54).
+        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->initAnimState();
         self->mTargetC4 = 0;
     }
     if (self->mTarget6C0 != 0) {
@@ -290,7 +290,7 @@ extern "C" void CfObjectModel_UnkVirtualFunc1__Q22cf12CfObjectMoveFv(cf::CfObjec
     ColiNodeReleaseBuffer(self->_60C_region);
     if (self->mTargetC4 != 0) {
         // Same owning-class slot as above (CActParamAnim +0xE0).
-        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->func_8004B114();
+        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->initAnimState();
         self->mTargetC4 = 0;
     }
 }
@@ -404,7 +404,7 @@ extern "C" void CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove
             view->field_A4 = lbl_eu_80666A94;
             ((cf::CfObjectMoveFlags68View*)self)->flags68 &= ~0x2000;
             if (lbl_eu_80665958 != 0) {
-                func_804B4BDC(lbl_eu_80665958, self->_60C_region);
+                ColiListAppend(lbl_eu_80665958, self->_60C_region);
             }
         }
     }
@@ -1248,7 +1248,7 @@ void CfObject_UnkVirtualFunc66__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, in
         // (one cmpwi in cr1 serves both tests, with attach as the
         // fall-through).
         if (flag != 0) {
-            func_804B4BDC(lbl_eu_80665958, self->_60C_region);
+            ColiListAppend(lbl_eu_80665958, self->_60C_region);
         } else {
             Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
         }
@@ -1315,19 +1315,19 @@ void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 // Wave-64: override of CfObject_armAnimSlot0 (+0xEC). Fv keeps Unk linker
 // name. Retail symbols are Fv but the bodies consume r4/r5 (a bdat id and a
 // slot index) - forced-name forms carrying the hidden args (same scheme as
-// CfObject_setMoveReadyFlag). Both look up the id via func_801422A8, record
+// CfObject_setMoveReadyFlag). Both look up the id via resolveWpnTok, record
 // the id and the column-0x7 result in the +0x710/+0x70C u16 arrays, then
 // either clear the slot (vtable +0x1D0 with a 0/1 flag) or arm it (vtable
 // +0x144 with the bdat result) plus the +0xB0 sub-object's vtable +0x3C.
 // func_800BF7A0 uses slot 0 / flags 6,0; func_800BF980 slot 1 / flags 7,1.
 int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
-    int r = (int)cf::CfBdat::func_801422A8(arg1);
+    int r = (int)cf::CfBdat::resolveWpnTok(arg1);
     self->field_710[0] = (u16)arg1;
-    self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
+    self->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
         self->CfObjectMove_releaseSlotById(0);
     } else {
-        self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(arg2);
+        self->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
         self->CfObject_setAnimSlotEntry(6, (u32)r);
         if (self->mSubObj98 != 0) {
             reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
@@ -1341,18 +1341,18 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // (a bdat id and a slot index) - forced-name form carrying the hidden args
 // (same scheme as CfObject_armAnimSlot0/42). Unlike the 39/42 pair the slot
 // index is first converted to a name (CfBdat::getBdatStringEntry) and the arm
-// path feeds that name back through func_80142428. Slot 0 / flags 6,0.
+// path feeds that name back through lookupExwpTag. Slot 0 / flags 6,0.
 int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
     name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
-    r = (int)cf::CfBdat::func_801422A8(arg1);
+    r = (int)cf::CfBdat::resolveWpnTok(arg1);
     self->field_710[0] = (u16)arg1;
-    self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
+    self->field_70C[0] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
         self->CfObjectMove_releaseSlotById(0);
     } else {
-        self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(name);
+        self->field_70C[0] = (u16)((int (*)(u32))lookupExwpTag)(name);
         self->CfObject_setAnimSlotEntry(6, (u32)r);
         if (self->mSubObj98 != 0) {
             reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 0);
@@ -1362,13 +1362,13 @@ int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 }
 
 int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
-    int r = (int)cf::CfBdat::func_801422A8(arg1);
+    int r = (int)cf::CfBdat::resolveWpnTok(arg1);
     self->field_710[1] = (u16)arg1;
-    self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
+    self->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
         self->CfObjectMove_releaseSlotById(1);
     } else {
-        self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(arg2);
+        self->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(arg2);
         self->CfObject_setAnimSlotEntry(7, (u32)r);
         if (self->mSubObj98 != 0) {
             reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
@@ -1387,13 +1387,13 @@ int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
     int r;
     u32 name;
     name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
-    r = (int)cf::CfBdat::func_801422A8(arg1);
+    r = (int)cf::CfBdat::resolveWpnTok(arg1);
     self->field_710[1] = (u16)arg1;
-    self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
+    self->field_70C[1] = (u16)bdatBitFromCol(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
         self->CfObjectMove_releaseSlotById(1);
     } else {
-        self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(name);
+        self->field_70C[1] = (u16)((int (*)(u32))lookupExwpTag)(name);
         self->CfObject_setAnimSlotEntry(7, (u32)r);
         if (self->mSubObj98 != 0) {
             reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_unk3C((u32)r, 1);
@@ -1404,7 +1404,7 @@ int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 
 // Retail symbol is Fv but the body consumes r4 (a bdat name/id) and r5 (a
 // slot index) - forced-name form carrying the hidden args. Look up the id via
-// func_80142428; when positive and the +0x98 sub-object and the indexed
+// lookupExwpTag; when positive and the +0x98 sub-object and the indexed
 // +0x6F8 slot both exist, stop the slot's animation model (vtable +0xC8) and
 // re-arm it with the name (vtable +0xC4, flag 0). Retail re-tests the same
 // two conditions around the first call (MWCC reuses the cr1/cr0 results), and
@@ -1412,7 +1412,7 @@ int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // registers free), so the members are re-read at each use site. The id is
 // finally stored as a u16 in the +0x70C slot array.
 void CfObject_UnkVirtualFunc45__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 value, u32 index) {
-    int result = ((int (*)(u32))func_80142428)(value);
+    int result = ((int (*)(u32))lookupExwpTag)(value);
     if (result > 0) {
         if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
             if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
@@ -1554,7 +1554,7 @@ extern "C" void CfObjectMove_attachMoveRegion(cf::CfObjectMove* self) {
         simSetFlag2OnTree(self->mSubObj98, 1);
     }
     if (lbl_eu_80665958 != 0) {
-        func_804B4BDC(lbl_eu_80665958, self->_60C_region);
+        ColiListAppend(lbl_eu_80665958, self->_60C_region);
     }
 }
 void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
@@ -1617,7 +1617,7 @@ extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
                 result = distSq < lbl_eu_80666A98;
             } else {
                 f32 dist = lbl_eu_80666A9C;
-                if (func_8007560C() != 0) {
+                if (CamEvtBusyChk() != 0) {
                     // Retail calls getCameraDataBlock (0x80082B7C; camera
                     // block at CfGameManager+0xB0). The old func_800821F8
                     // placeholder name was a misattribution: 0x800821F8 is
@@ -1828,7 +1828,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
         const ml::CVec3* base = (const ml::CVec3*)self->CfObject_getPosVector();
         ml::CVec3 tmp;
-        func_804B1164(self->_60C_region, &tmp, base, &step);
+        ColiResolveNodeMove(self->_60C_region, &tmp, base, &step);
         step.x += tmp.x;
         step.y += tmp.y;
         step.z += tmp.z;
@@ -1863,7 +1863,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         // Construct the +0xD0 CActParamAnimGame sub-object as the C4 target.
         self->mTargetC4 = self->_D0;
         // Fresh C4 target is the +0xD0 CActParamAnimGame (see above).
-        ((::CActParamAnim*)self->mTargetC4)->func_8004B114();
+        ((::CActParamAnim*)self->mTargetC4)->initAnimState();
         ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4E8 = self;
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0) {
@@ -2189,13 +2189,13 @@ void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
     }
 }
 // Forward a position region (self+0x60C) to the region-library manager
-// (lbl_eu_80665958); flag selects the attach (func_804B4BDC) vs detach
+// (lbl_eu_80665958); flag selects the attach (ColiListAppend) vs detach
 // (Coli_ListRemoveNode) helper.
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag) {
     cf::CfObjectMove* self = (cf::CfObjectMove*)obj;
     if (lbl_eu_80665958 != 0) {
         if (flag != 0) {
-            func_804B4BDC(lbl_eu_80665958, self->_60C_region);
+            ColiListAppend(lbl_eu_80665958, self->_60C_region);
         } else {
             Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
         }
@@ -2221,24 +2221,24 @@ extern "C" int CfResObj_true68() { return 1; }
 // Look up a bdat column (offset 0x7 into the column-name table) for the
 // given id/flag; tail-calls the shared bdat reader.
 extern "C" u32 CfObjectMove_lookupBdatCol7(u32 id, u32 flag) {
-    return func_8014235C(id, &lbl_eu_804FC550[0x7], flag);
+    return bdatBitFromCol(id, &lbl_eu_804FC550[0x7], flag);
 }
 // Column-name lookup through the bdat reader: index self->field_710[flag],
 // resolve column offset 0x7 of the name table, then map the u16 result to a
 // name string via CfBdat::getBdatStringEntry.
 const char* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* self, u32 flag) {
-    u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x7], flag);
+    u32 result = bdatBitFromCol(self->field_710[flag], &lbl_eu_804FC550[0x7], flag);
     return cf::CfBdat::getBdatStringEntry((u16)result);
 }
 
 // Same as CfObjectMove_getBdatNameCol7 but column offset 0x11.
 const char* CfObjectMove_getBdatNameCol11(cf::CfObjectMove* self, u32 flag) {
-    u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x11], flag);
+    u32 result = bdatBitFromCol(self->field_710[flag], &lbl_eu_804FC550[0x11], flag);
     return cf::CfBdat::getBdatStringEntry((u16)result);
 }
 // Same as CfObjectMove_lookupBdatCol7 but column offset 0x11.
 extern "C" u32 CfObjectMove_lookupBdatCol11(u32 id, u32 flag) {
-    return func_8014235C(id, &lbl_eu_804FC550[0x11], flag);
+    return bdatBitFromCol(id, &lbl_eu_804FC550[0x11], flag);
 }
 extern "C" void CfResObj_noop40() {}
 extern "C" void CfResObj_noop28() {}

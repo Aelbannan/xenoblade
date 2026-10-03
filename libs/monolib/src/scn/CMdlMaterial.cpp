@@ -21,7 +21,7 @@ extern "C" u32 Scn_CallUnk8C_V8(u32 handle);
 extern "C" void func_804E5990(void* self, void* node, void* mtx);
 
 // Virtual-dispatch view of the owner object for the vtable+0x18 getter
-// (CScnItemModelNw4r::v04, func_80489C94) used by the node user-data scan.
+// (CScnItemModelNw4r::v04, scnImN4CreateModel) used by the node user-data scan.
 class __declspec(novtable) MdlMatOwnerVt {
 public:
     virtual ~MdlMatOwnerVt();

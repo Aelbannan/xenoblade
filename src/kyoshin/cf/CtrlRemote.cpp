@@ -49,7 +49,7 @@ static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate);
 // the low byte of +0x2C, run the state virtual sweep, refresh the voice-
 // owner 4-gate and mirror it into the 0x800 flag range, then (outside menu
 // mode) re-aim via vf37 and push one sample into the 32-float ring buffer.
-void func_80098CB8(CtrlPcVf44* self)
+void CtrlRemote_FrameUpdate(CtrlPcVf44* self)
 {
     if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
         return;
@@ -512,14 +512,14 @@ float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *
 // blocking condition, mirror the current menu-state bitmask into self->mField4
 // bit 0 (set when the arts/menu mask is active, clear otherwise).
 // Probe a control-data gate: refresh the player's current control word via the
-// sub-object's vf30 and test it against `gate`. Returns the raw func_80174C98
+// sub-object's vf30 and test it against `gate`. Returns the raw testActorStatus
 // result (nonzero = gate set). Inlined so the player pointer stays in a saved
 // register across the vf30 call, matching retail.
 static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate)
 {
     CtrlPlayerObj* p = self->mField5C;
     *out = *p->mField4->vf30();
-    return func_80174C98(p, out, gate);
+    return testActorStatus(p, out, gate);
 }
 
 // Target us-8009abb4. Pad-handler gate: when the global "demo/idle" state
@@ -827,7 +827,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
 // gates, then combine the vf37 menu-state words with the action-source
 // presence to drive the 0x3ED4 flag ranges (0x400 / 0x4000), the +0x2C aim
 // mirror bits, and the camera shake requests.
-void func_8009AE80(CtrlPcVf37State* self)
+void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
 {
     cf::CfGameManager::getInstance();
     getCameraDataBlock__Q22cf13CfGameManagerFv();
@@ -1117,7 +1117,7 @@ void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
     }
 }
 
-void func_8009BD14(CtrlPcVf38* self)
+void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
 {
     // Declared at function scope: MWCC creates the pseudo early, which pins
     // the counter's register ahead of the list-walk temps (retail r4).
@@ -1128,7 +1128,7 @@ void func_8009BD14(CtrlPcVf38* self)
     }
     CtrlPlayerObj* player = self->mField5C;
     u32 v = *player->mField4->vf30();
-    if (func_80174C98(player, &v, 0x803) == 0) {
+    if (testActorStatus(player, &v, 0x803) == 0) {
         return;
     }
     u32 bs = ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())
@@ -1302,7 +1302,7 @@ void func_8009BD14(CtrlPcVf38* self)
 // then (once the 0xA state gate passes) dispatch one of six voice/battle
 // commands built from the player's +0x3F10 word; case 4 arms the chain
 // timer instead.
-void func_8009C1BC(CtrlPcVf38State* self)
+void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
 {
     // Declaration order drives MWCC's saved-GPR assignment
     // (fd=r26, sub=r27, bmFlag=r28, mode=r29 in retail).
@@ -1348,12 +1348,12 @@ void func_8009C1BC(CtrlPcVf38State* self)
                 return;
             case 1:
                 sub->vf58(0);
-                func_80280ADC();
+                SysWinLog_TickCounter29();
                 func_8017FEF0(fd, 0);
                 return;
             case 2:
                 sub->vf58(1);
-                func_80280ADC();
+                SysWinLog_TickCounter29();
                 func_8017FEF0(fd, 1);
                 return;
             default:
@@ -1373,7 +1373,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
     }
 
     gateVal = *self->mField5C->mField4->vf30();
-    if (func_80174C98(self->mField5C, &gateVal, 0xA) != 0) {
+    if (testActorStatus(self->mField5C, &gateVal, 0xA) != 0) {
         return;
     }
 
@@ -1479,7 +1479,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
     // when a voice id was selected, then notify the voice owner.
     ((CtrlPlayerSub3ED4*)self->mField5C->mSub3ED4)->vf10(0x800, 1);
     if (prm.b0D != 0) {
-        func_8014AC38(&self->mField5C->mField3380, &prm);
+        aiRingPrepend(&self->mField5C->mField3380, &prm);
     }
     self->mField5C->mSub3E9C.v00(0x800);
     battleCommuDisableAnims();
@@ -1588,7 +1588,7 @@ void CtrlRemote_FreeBuffer(cf::CtrlRemote* self, u8* ptr)
 // token - 12-bit back-distance ((b1 & 0xF0) << 8 | b0), 0 terminates the
 // stream - and a run length of (b1 & 0xF) + 3 bytes copied from out-dist.
 // Returns the total number of bytes written.
-u32 func_8009C9B8(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
+u32 CtrlRemote_DecodeLZSS(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 {
     u8* out = (u8*)self;
     u8* in = buf->mData;
@@ -1668,7 +1668,7 @@ u32 CtrlRemote_RunWithHeapCtx(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 // tblSub[byte] and tblMain[byte] onto a small LIFO queue that is drained
 // before further input is consumed.
 // Returns the number of output bytes produced.
-u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
+u32 CtrlRemote_DecodeDict(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 {
     // Declared so MWCC's stack layout matches retail:
     // initTbl@0x228, tblMain@0x128, tblSub@0x28, queue@0x08.
@@ -1750,13 +1750,13 @@ u32 func_8009CB80(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
 u32 CtrlRemote_DispatchBufOp(cf::CtrlRemote* self, CtrlRemoteBuf* src, s32 type, u32 arg)
 {
     if (type == 1) {
-        return func_8009C9B8(self, src, arg);
+        return CtrlRemote_DecodeLZSS(self, src, arg);
     }
     if (type == 2) {
         return CtrlRemote_RunWithHeapCtx(self, src, arg);
     }
     if (type == 3) {
-        return func_8009CB80(self, src, arg);
+        return CtrlRemote_DecodeDict(self, src, arg);
     }
     memcpy(self, src->mData, src->mSize);
     return src->mSize;
@@ -1790,7 +1790,7 @@ u32* CtrlRemote_GetSharedBufPtr()
 
 int CtrlRemote_GetFixedSize1214(void* self) { return 4628; }
 
-u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
+u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
 extern "C" void CtrlRemote_TouchBitByArg(void* arg)
 {
@@ -1815,7 +1815,7 @@ void CtrlRemote_SetSharedBit(u32 destination, u32 value)
         memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
         lbl_eu_80663E80 = 1;
     }
-    func_8009D2C8(lbl_eu_80571848, destination, value);
+    CtrlRemote_WriteBufBits(lbl_eu_80571848, destination, value);
 }
 
 // Return a pointer to the shared control-data buffer, initializing it once.
@@ -1836,7 +1836,7 @@ u32* CtrlRemote_FetchSharedBufPtr()
 // buffer; each entry's sub-index and element size select the word and mask.
 // Locals are ordered so MWCC keeps the scaled offset live in r4/r0 exactly as
 // retail does.
-u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut)
+u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut)
 {
 	s32 v;
 
@@ -1877,7 +1877,7 @@ u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut)
 // object with (index, clamped value, extracted old bits). The switch has no
 // default: on an out-of-range type the mask/shift keep their entry values and
 // the word write still happens (matching retail).
-void func_8009D2C8(u32* buffer, u32 index, u32 value)
+void CtrlRemote_WriteBufBits(u32* buffer, u32 index, u32 value)
 {
     s32 type;
     s32 idx;
@@ -1889,7 +1889,7 @@ void func_8009D2C8(u32* buffer, u32 index, u32 value)
     s32 i;
     u32 newBits;
 
-    ptr = func_8009D12C(buffer, index, &type, &idx);
+    ptr = CtrlRemote_MapDataIndex(buffer, index, &type, &idx);
     if (ptr != NULL) {
         switch (type) {
         case 4:
@@ -1944,7 +1944,7 @@ extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index)
 	u32* ptr;
 
 	shift = 0;
-	ptr = func_8009D12C(buffer, index, &type, &idx);
+	ptr = CtrlRemote_MapDataIndex(buffer, index, &type, &idx);
 	if (ptr == NULL) {
 		return 0;
 	}
@@ -2039,4 +2039,4 @@ void CtrlRemote_ResetSlotArrayByIndex(u32 index)
 // Live file-event IDs pointer: retail is a bare 0x8 global getter
 // (lwz r3, lbl_eu_80663E88@sda21; blr). Callers (CfGameManager,
 // CfNandManager, CfResPcImpl) treat the word as the file-event IDs view.
-extern "C" u32 CtrlRemote_GetFileEventIds() { return lbl_eu_80663E88; }
+extern "C" CfFileEventIdsView* CtrlRemote_GetFileEventIds() { return (CfFileEventIdsView*)lbl_eu_80663E88; }

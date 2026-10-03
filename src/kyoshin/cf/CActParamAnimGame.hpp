@@ -6,12 +6,12 @@
 // void*-first declarations get renamed (this TU never calls any of them).
 #include "kyoshin/action/CActParamData.hpp"
 #define updateParamFloats updateParamFloats_animsig
-#define func_80053B24 func_80053B24_animsig
-#define func_80055B88 func_80055B88_animsig
+#define initActParamData initActParamData_animsig
+#define lookupParamByKey lookupParamByKey_animsig
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef updateParamFloats
-#undef func_80053B24
-#undef func_80055B88
+#undef initActParamData
+#undef lookupParamByKey
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
@@ -24,7 +24,7 @@ struct CActParamAnimGameLink {
     u8 _00[0x64];
     u32 f64;                       // +0x64 (func_8005EEB4 flag)
     u8 _68[0x60C - 0x68];
-    u8 f60C[0x6BE - 0x60C];        // +0x60C func_804B1164 sub-object
+    u8 f60C[0x6BE - 0x60C];        // +0x60C ColiResolveNodeMove sub-object
     u16 f6BE;                      // +0x6BE (func_8005EEB4 save/restore)
     u8 _6C0[0x714 - 0x6C0];
     u8 active;                     // +0x714
@@ -50,20 +50,20 @@ public:
     CActParamAnimGame();
     virtual ~CActParamAnimGame();
     void resetAnimGame();
-    void func_8005D2C4();
+    void dispatchState();
     bool isActionReady(u32 type);
     bool checkHeightThreshold();
     bool checkHeightBelow();
     bool clearFlag80000();
-    bool func_8005D76C(u32 type, u32 state);
+    bool startMoveGate(u32 type, u32 state);
     bool func_8005D84C(u32 type, u32 state);
     bool tryGroundStep(u32 type, u32 state);
-    bool func_8005DA44(u32 type);
-    bool func_8005DB1C(u32 type);
+    bool dashStartGate(u32 type);
+    bool scanActorList(u32 type);
     bool func_8005DC30(u32 type);
-    void func_8005DCA8();
-    int func_8005EEB4(ml::CVec3* pos, ml::CVec3* move);
-    void func_80060110();
+    void snapFacingYaw();
+    int steerForObsts(ml::CVec3* pos, ml::CVec3* move);
+    void aimAtActorPos();
     void syncYawToLink();
     void checkNotFalling();
     void checkFlag40000();
@@ -73,23 +73,23 @@ public:
     u8 _04[0x0C - 0x04];                  // 0x04-0x0B base-class payload
     volatile u32 field_0C;                // +0x0C flags (volatile: retail reloads it in func_8005D2C4's fall branch)
     u8 _10[0x270 - 0x10];                 // 0x10-0x26F base-class payload
-    u32 field_270;                        // +0x270 base-class flags (func_8005A5B0)
+    u32 field_270;                        // +0x270 base-class flags (trackGroundAt)
     u8 _274[0x374 - 0x274];               // 0x274-0x373 base-class payload
     int field_374;                        // +0x374 (signed: retail compares it with cmpwi)
     u8 _378[0x390 - 0x378];               // 0x378-0x38F base-class payload
-    f32 field_390;                        // +0x390 speed scale (func_8005A5B0)
+    f32 field_390;                        // +0x390 speed scale (trackGroundAt)
     f32 field_394;                        // +0x394
     f32 field_398;                        // +0x398
     u8 _39C[0x3A0 - 0x39C];               // 0x39C-0x39F base-class payload
     void* field_3A0;                      // +0x3A0
     u8 _3A4[0x3A8 - 0x3A4];               // 0x3A4-0x3A7 base-class payload
     ml::CVec3 field_3A8;                  // +0x3A8 position
-    ml::CVec3 field_3B4;                  // +0x3B4 ground-probe ref (func_8005A5B0)
-    ml::CVec3 field_3C0;                  // +0x3C0 velocity (func_8005A5B0)
-    ml::CVec3 field_3CC;                  // +0x3CC facing dir (func_8005A5B0)
-    ml::CVec3 field_3D8;                  // +0x3D8 hit pos (func_8005A5B0)
-    ml::CVec3 field_3E4;                  // +0x3E4 target pos (func_8005A5B0)
-    ml::CVec3 field_3F0;                  // +0x3F0 move vec (func_8005A5B0)
+    ml::CVec3 field_3B4;                  // +0x3B4 ground-probe ref (trackGroundAt)
+    ml::CVec3 field_3C0;                  // +0x3C0 velocity (trackGroundAt)
+    ml::CVec3 field_3CC;                  // +0x3CC facing dir (trackGroundAt)
+    ml::CVec3 field_3D8;                  // +0x3D8 hit pos (trackGroundAt)
+    ml::CVec3 field_3E4;                  // +0x3E4 target pos (trackGroundAt)
+    ml::CVec3 field_3F0;                  // +0x3F0 move vec (trackGroundAt)
     f32 field_3FC;                        // +0x3FC (func_8005EEB4 normal x)
     f32 field_400;                        // +0x400 (func_8005EEB4 normal y)
     f32 field_404;                        // +0x404 (func_8005EEB4 normal z)
@@ -108,7 +108,7 @@ public:
     u8 _498[0x4A8 - 0x498];               // 0x498-0x4A7 base-class payload
     u32 field_4A8;                        // +0x4A8 filter
     s32 field_4AC;                        // +0x4AC
-    u32 field_4B0;                        // +0x4B0 (func_8005A5B0)
+    u32 field_4B0;                        // +0x4B0 (trackGroundAt)
     u8 _4B4[0x4E8 - 0x4B4];               // 0x4B4-0x4E7 base-class payload
     CActParamAnimGameLink* field_4E8;     // +0x4E8 region/link pointer
     u32 field_4EC;                         // +0x4EC flags
@@ -124,7 +124,7 @@ public:
     f32 field_514;                         // +0x514
     f32 field_518;                         // +0x518
     f32 field_51C;                         // +0x51C
-    ml::CVec3 field_520;                  // +0x520 (func_8005A5B0 step vec)
+    ml::CVec3 field_520;                  // +0x520 (trackGroundAt step vec)
     int field_52C;                         // +0x52C
     volatile u16 field_530;                // +0x530 (volatile: retail reloads it across the flag-check branch in func_8005D84C)
     u16 field_532;                         // +0x532
@@ -222,44 +222,44 @@ struct CActParamAnimGameListNode {
 extern const float lbl_eu_80666040;   // sdata2: 0.0f (field_4F8 initializer)
 extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 initializer)
 extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer
-extern const float lbl_eu_8066604C;   // sdata2: field_47C initializer (func_8005A5B0)
+extern const float lbl_eu_8066604C;   // sdata2: field_47C initializer (trackGroundAt)
 extern const float lbl_eu_80666050;   // sdata2: ground-probe threshold (func_8005E60C)
-extern const float lbl_eu_80666054;   // sdata2: ScnRes_Notify5Ptr_E470 probe arg (func_8005A5B0)
-extern const float lbl_eu_80666058;   // sdata2: height-diff threshold (func_8005A5B0)
-extern const float lbl_eu_8066605C;   // sdata2: move-vec scale (func_8005A5B0)
-extern const float lbl_eu_80666060;   // sdata2: step vec / probe arg (func_8005A5B0)
-extern const float lbl_eu_80666064;   // sdata2: step vec (func_8005A5B0)
+extern const float lbl_eu_80666054;   // sdata2: ScnRes_Notify5Ptr_E470 probe arg (trackGroundAt)
+extern const float lbl_eu_80666058;   // sdata2: height-diff threshold (trackGroundAt)
+extern const float lbl_eu_8066605C;   // sdata2: move-vec scale (trackGroundAt)
+extern const float lbl_eu_80666060;   // sdata2: step vec / probe arg (trackGroundAt)
+extern const float lbl_eu_80666064;   // sdata2: step vec (trackGroundAt)
 extern const float lbl_eu_80666068;   // sdata2: sin/cos offset scale (func_8005D2C4)
-extern const float lbl_eu_8066606C;   // sdata2: loop bound (func_8005A5B0)
-extern const float lbl_eu_80666070;   // sdata2: loop bound (func_8005A5B0)
-extern const float lbl_eu_80666074;   // sdata2: loop bound (func_8005A5B0)
-extern const float lbl_eu_80666078;   // sdata2: loop bound (func_8005A5B0)
-extern const float lbl_eu_8066607C;   // sdata2: loop bound (func_8005A5B0)
-extern const float lbl_eu_80666084;   // sdata2: probe scale (func_8005A5B0)
-extern const float lbl_eu_80666088;   // sdata2: len threshold (func_8005A5B0)
-extern const float lbl_eu_8066608C;   // sdata2: normalize scale (func_8005A5B0)
-extern const float lbl_eu_80666090;   // sdata2: pos.y threshold (func_8005A5B0)
-extern const float lbl_eu_80666094;   // sdata2: -1.0f (func_8005A5B0)
-extern const float lbl_eu_80666098;   // sdata2: dot scale (func_8005A5B0)
-extern const float lbl_eu_8066609C;   // sdata2: move-vec scale (func_8005A5B0)
-extern const float lbl_eu_806660A0;   // sdata2: len threshold (func_8005A5B0)
-extern const float lbl_eu_80666080;   // sdata2: ground-probe threshold (func_8005E7C4)
-extern const float lbl_eu_806660B0;   // sdata2: fall scale x (func_8005B820)
-extern const float lbl_eu_806660B4;   // sdata2: fall scale z (func_8005B820)
+extern const float lbl_eu_8066606C;   // sdata2: loop bound (trackGroundAt)
+extern const float lbl_eu_80666070;   // sdata2: loop bound (trackGroundAt)
+extern const float lbl_eu_80666074;   // sdata2: loop bound (trackGroundAt)
+extern const float lbl_eu_80666078;   // sdata2: loop bound (trackGroundAt)
+extern const float lbl_eu_8066607C;   // sdata2: loop bound (trackGroundAt)
+extern const float lbl_eu_80666084;   // sdata2: probe scale (trackGroundAt)
+extern const float lbl_eu_80666088;   // sdata2: len threshold (trackGroundAt)
+extern const float lbl_eu_8066608C;   // sdata2: normalize scale (trackGroundAt)
+extern const float lbl_eu_80666090;   // sdata2: pos.y threshold (trackGroundAt)
+extern const float lbl_eu_80666094;   // sdata2: -1.0f (trackGroundAt)
+extern const float lbl_eu_80666098;   // sdata2: dot scale (trackGroundAt)
+extern const float lbl_eu_8066609C;   // sdata2: move-vec scale (trackGroundAt)
+extern const float lbl_eu_806660A0;   // sdata2: len threshold (trackGroundAt)
+extern const float lbl_eu_80666080;   // sdata2: ground-probe threshold (snapActorDown)
+extern const float lbl_eu_806660B0;   // sdata2: fall scale x (applyFallMove)
+extern const float lbl_eu_806660B4;   // sdata2: fall scale z (applyFallMove)
 extern const float lbl_eu_806660BC;   // sdata2: pos.y offset / probe arg (func_8005E60C)
-extern const float lbl_eu_806660B8;   // sdata2: fall-penalty scale (func_8005B820)
-extern const float lbl_eu_806660C0;   // sdata2: fall-penalty cap (func_8005B820)
+extern const float lbl_eu_806660B8;   // sdata2: fall-penalty scale (applyFallMove)
+extern const float lbl_eu_806660C0;   // sdata2: fall-penalty cap (applyFallMove)
 extern const float lbl_eu_806660CC;   // sdata2: sin/cos fidx multiplier (40.743663f)
-extern const float lbl_eu_806619FC;   // sdata2: normal-refine scale (func_8005E28C)
-extern const float lbl_eu_806619F8;   // sdata2: step-contact radius (func_8005DE68)
-extern const float lbl_eu_80666120;   // sdata2: landing radius squared (func_8005E28C)
-extern const float lbl_eu_806660D4;   // sdata2: lateral offset (func_8005E7C4)
-extern const float lbl_eu_806660D8;   // sdata2: probe arg (func_8005E7C4)
+extern const float lbl_eu_806619FC;   // sdata2: normal-refine scale (refineHitNorm)
+extern const float lbl_eu_806619F8;   // sdata2: step-contact radius (probeGroundAt)
+extern const float lbl_eu_80666120;   // sdata2: landing radius squared (refineHitNorm)
+extern const float lbl_eu_806660D4;   // sdata2: lateral offset (snapActorDown)
+extern const float lbl_eu_806660D8;   // sdata2: probe arg (snapActorDown)
 extern const float lbl_eu_806660E0;   // sdata2: angle scale (func_80060110)
 extern const float lbl_eu_806660C4;   // sdata2: f3D8.y bound (func_8005EEB4)
 extern const float lbl_eu_806660C8;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_80666104;   // sdata2: dir scale (func_8005DCA8)
-extern const float lbl_eu_80666100;   // sdata2: commit scale (func_8005E990)
+extern const float lbl_eu_80666100;   // sdata2: commit scale (probeWallPair)
 extern const float lbl_eu_80666128;   // sdata2: 3C0.y bound (func_8005EEB4)
 extern const float lbl_eu_8066612C;   // sdata2: B840 scale (func_8005EEB4)
 extern const float lbl_eu_80666130;   // sdata2: probe arg (func_8005EEB4)

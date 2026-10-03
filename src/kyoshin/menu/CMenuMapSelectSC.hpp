@@ -84,34 +84,34 @@ extern "C" void CFade_FadeIn(CFade* self);
 extern "C" void CFade_FadeOut(CFade* self);
 extern "C" void CFade_StartLoad(CFade* self);
 extern "C" void CFade_Update(CFade* self);
-extern "C" void func_8024CB94(CFloorMap* self);
+extern "C" void FloorMap_Teardown(CFloorMap* self);
 extern "C" u16 FloorMap_GetU16Field5A(CFloorMap* self);
-extern "C" int func_8024CE1C(CFloorMap* self);
-extern "C" void func_8024BE1C(CFloorMap* self);
-extern "C" void func_8024C1FC(CFloorMap* self);
+extern "C" int FloorMap_GetField42Gated(CFloorMap* self);
+extern "C" void FloorMap_LoadStageLayout(CFloorMap* self);
+extern "C" void FloorMap_UpdateFrame(CFloorMap* self);
 extern "C" int FloorMap_ClassifyByte41(CFloorMap* self);
 extern "C" int FloorMap_CheckRowVisited(CFloorMap* self);
 extern "C" u8 FloorMap_GetBdatMaxRow(CFloorMap* self);
 extern "C" u8 FloorMap_GetField208Plain(CFloorMap* self);
-extern "C" void func_8024F5C4(CFloorMap* self, u32 arg);
+extern "C" void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
 extern "C" u8 FloorMap_GetField208Gated(CFloorMap* self);
-extern "C" int func_8024F784(CFloorMap* self);
-extern "C" void func_8024CE68(CFloorMap* self);
-extern "C" void func_8024D23C(CFloorMap* self);
-extern "C" void func_8024EE50(CFloorMap* self);
+extern "C" int FloorMap_IsSysWinBusy(CFloorMap* self);
+extern "C" void FloorMap_UpdateRowPanePos(CFloorMap* self);
+extern "C" void FloorMap_CursorNextFloor(CFloorMap* self);
+extern "C" void FloorMap_OpenRowWindow(CFloorMap* self);
 extern "C" u8 FloorMap_GetActiveFlag58(CFloorMap* self);
-extern "C" void func_8024F55C(CFloorMap* self);
-extern "C" void func_8024D614(CFloorMap* self);
-extern "C" void func_8024DA0C(CFloorMap* self);
-extern "C" void func_8024DE08(CFloorMap* self);
-extern "C" void func_8024E2BC(CFloorMap* self);
-extern "C" void func_8024F658(CFloorMap* self);
-extern "C" void func_8024F72C(CFloorMap* self);
-extern "C" void func_8024E650(CFloorMap* self);
-extern "C" void func_8024E828(CFloorMap* self);
-extern "C" void func_8024EA00(CFloorMap* self);
-extern "C" void func_8024EC24(CFloorMap* self);
-extern "C" void func_8024F7CC(CFloorMap* self);
+extern "C" void FloorMap_ConfirmSelect(CFloorMap* self);
+extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
+extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);
+extern "C" void FloorMap_HandleMapDown(CFloorMap* self);
+extern "C" void FloorMap_NormalizeMapPos(CFloorMap* self);
+extern "C" void FloorMap_Log2Field208(CFloorMap* self);
+extern "C" void FloorMap_Log2Field333C(CFloorMap* self);
+extern "C" void FloorMap_ScrollDown(CFloorMap* self);
+extern "C" void FloorMap_ScrollUp(CFloorMap* self);
+extern "C" void FloorMap_ScrollRight(CFloorMap* self);
+extern "C" void FloorMap_ScrollLeft(CFloorMap* self);
+extern "C" void FloorMap_MoveToCursorRow(CFloorMap* self);
 
 // Retail symbol keeps its mangled form (CfGameManager static member); the
 // call site passes (u16 value, 0) even though the name says Fv.
@@ -145,16 +145,16 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self);
 // of the 1-line body, keeping the retail `bl Scn_SetPauseFlag` call site.
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 // CFloorMap helpers (retail unmangles these member helpers).
-extern "C" void func_8024F1FC(CFloorMap* self, u8 mapIdx);
-extern "C" void func_8024C104(CFloorMap* self);
-extern "C" void func_8024C8F8(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void FloorMap_SetMapTable(CFloorMap* self, u8 mapIdx);
+extern "C" void FloorMap_LoadMapFiles(CFloorMap* self);
+extern "C" void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp / CFade draw + reset helpers.
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CFade_Unload(CFade* self);
 // UI/sound + scene-active helpers.
-extern "C" void func_8013EC6C(u32 a, u32 b);
+extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
 extern "C" int IsMenuState621F0();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // Retail constructor (unmangled global, ctor with explicit arg).
@@ -178,9 +178,9 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
 extern "C" void __dt__800FED0C(CProcess* _this, int flags);
 
 // C++-linkage helpers - retail emits the mangled forms
-// playUISound__FUl / func_80137250__FPQ34nw4r3lyt8DrawInfo.
+// playUISound__FUl / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
 void playUISound(unsigned long op);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 // nw4r DrawInfo pre-mangled ct/dt names (retail emits the direct calls; a C++
 // local would virtual-dispatch its scope-exit destructor and bloat the body).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);

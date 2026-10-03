@@ -25,10 +25,10 @@ extern "C" int getEhpBufferSize() {
 
 // us-802a8e4c (func_802A6718)
 // Completion callback: if no active voice is playing, invoke the
-// playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 0).
+// playback-start virtual (CVS_THREAD::PlayThreadVoice, vtable slot 0).
 void func_802A6718(CVS_THREAD_EHP* self) {
-    if (func_802A3E88(self) == 0) {
-        self->func_802A3B50();
+    if (IsThreadVoiceActive(self) == 0) {
+        self->PlayThreadVoice();
     }
 }
 
@@ -37,7 +37,7 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 // A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
 extern "C" void removeEhpVoice(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
-    func_802A3BEC(self, voicePtr);
+    DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20
     CVoiceHandle* handle = self->field_0x20;
@@ -82,7 +82,7 @@ extern "C" void removeEhpVoice(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
 // index lands on the stop index (field_0x40), the playback-start virtual is
 // invoked; otherwise the slot-state triple is reloaded from lbl_eu_80539B14.
 extern "C" void advanceEhpSlotIndex(CVS_THREAD_EHP* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -111,7 +111,7 @@ extern "C" void advanceEhpSlotIndex(CVS_THREAD_EHP* self) {
         (*(CVSlotState*)self).field_0 = v0;
         (*(CVSlotState*)self).callback = *p;
     } else {
-        self->func_802A3B50();
+        self->PlayThreadVoice();
     }
 }
 
@@ -121,7 +121,7 @@ extern "C" void advanceEhpSlotIndex(CVS_THREAD_EHP* self) {
 // is inactive plays a random voice ID (mtRand(2) + 0x51D). On any failure the
 // playback-start virtual is invoked as a fallback.
 extern "C" void playEhpSlot2(CVS_THREAD_EHP* self) {
-    if (func_802A3E88(self) != 0) {
+    if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
@@ -135,7 +135,7 @@ extern "C" void playEhpSlot2(CVS_THREAD_EHP* self) {
     (*(CVSlotState*)self).field_0 = v0;
     (*(CVSlotState*)self).callback = *p;
 
-    handle = func_802A7998(handle);
+    handle = HpVoice_PickIdleVoice(handle);
     if (handle != NULL) {
         if (((CVoiceChainVTV*)handle)->isActive() == 0) {
             // Voice is not active -- play a random voice ID. Bias the handle
@@ -146,14 +146,14 @@ extern "C" void playEhpSlot2(CVS_THREAD_EHP* self) {
                 voicePtr = &handle->voice;
             }
             int voiceId = ml::math::mtRand(2);
-            if (func_802A3C44(self, voicePtr, voiceId + 0x51D) != 0) {
+            if (TryRequestVoice(self, voicePtr, voiceId + 0x51D) != 0) {
                 return;
             }
         }
     }
 
     // Fallback: invoke the playback-start virtual.
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802a8f54 (selectEhpVoicePair)
@@ -165,17 +165,17 @@ extern "C" int selectEhpVoicePair(int a, int b) {
         return 0;
     }
 
-    CVoiceHandle* handle = func_802A7998(NULL);
+    CVoiceHandle* handle = HpVoice_PickIdleVoice(NULL);
     if (handle == NULL || ((CVoiceChainVTV*)handle)->isActive() != 0) {
         // Handle unusable (free-list miss or voice still active).
         return 0;
     }
 
     // Call the sub-object's virtual (slot 12 @ 0x30); it returns a pointer to
-    // the category value used by the func_80174C98 gate.
+    // the category value used by the testActorStatus gate.
     CVSubObj* subobj = (CVSubObj*)handle->unk4;
     u32 value = *((CVSubChainVTV*)subobj)->getRef();
-    if (func_80174C98(handle, &value, 0x803) == 0) {
+    if (testActorStatus(handle, &value, 0x803) == 0) {
         return 0;
     }
 
@@ -189,7 +189,7 @@ extern "C" int selectEhpVoicePair(int a, int b) {
     }
 
     // Allocate the 0xAA-byte playback buffer.
-    if (func_802A330C(0xAA, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0xAA, 1) == NULL) {
         return 0;
     }
 
@@ -198,7 +198,7 @@ extern "C" int selectEhpVoicePair(int a, int b) {
     if (handle != NULL) {
         voicePtr = &handle->voice;
     }
-    func_802A3D54(voicePtr, b, 0xAA);
+    RequestVoicePlayback(voicePtr, b, 0xAA);
     return 0;
 }
 
@@ -257,7 +257,7 @@ CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 h
     }
 
     // Allocate the handle buffer (0xB4 bytes, discarded) and the object.
-    if (func_802A330C(0xB4, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0xB4, 1) == NULL) {
         return NULL;
     }
     self = (CVS_THREAD_EHP*)CCharVoiceMan_AllocVoiceArena(0x48);
@@ -330,7 +330,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
             (*(CVSlotState*)self).field_0 = v0;
             (*(CVSlotState*)self).callback = *p;
 
-            int count = func_802A7870(self->field_0x2c, 3, exclude);
+            int count = HpVoice_CollectIdle(self->field_0x2c, 3, exclude);
             self->field_0x3c = count;
             if (count > 0) {
                 int idx = ml::math::mtRand(count);
@@ -364,7 +364,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
                     voicePtr = &handle->voice;
                 }
                 int rand = ml::math::mtRand(2);
-                if (func_802A3C44(self, voicePtr, rand + 0x517) != 0) {
+                if (TryRequestVoice(self, voicePtr, rand + 0x517) != 0) {
                     return;
                 }
             }
@@ -372,7 +372,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
     }
 
     // Fallback: fire the playback-start virtual (vtable offset 8).
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802a8b3c (startEhpVoice)
@@ -394,7 +394,7 @@ extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
     if (owner != NULL && ((CVoiceChainVTV*)owner)->isActive() == 0) {
         CVoiceHandle* rot = self->field_0x2c[self->field_0x38];
         if (rot != NULL && ((CVoiceChainVTV*)rot)->isActive() == 0) {
-            switch (func_802A77E8(self->field_0x24)) {
+            switch (HpVoice_MapSubState(self->field_0x24)) {
             case 0:
                 voiceId = 0xAF1;
                 break;
@@ -416,7 +416,7 @@ extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
                 // (cmpli 10) with only one pair-check block.
                 // Ternary arm order matters: retail emits li 0x450; bne; li 0xAF6.
                 voiceId =
-                    (func_802A7B90(self->field_0x2c[self->field_0x38], self->field_0x24) == 0) ? 0xAF6 : 0x450;
+                    (HpVoice_CheckPair26(self->field_0x2c[self->field_0x38], self->field_0x24) == 0) ? 0xAF6 : 0x450;
                 break;
             case 6:
                 voiceId = 0xAF7;
@@ -443,7 +443,7 @@ extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
                 if (handle != NULL) {
                     voicePtr = &handle->voice;
                 }
-                if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+                if (TryRequestVoice(self, voicePtr, voiceId) != 0) {
                     return;
                 }
             }
@@ -451,14 +451,14 @@ extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
     }
 
     // Fallback: invoke the playback-start virtual.
-    self->func_802A3B50();
+    self->PlayThreadVoice();
 }
 
 // us-802a908c (playEhpStartVoice)
 // EHP thread start request. Gated on manager flag bit 15 (word at handle
 // +0x3F08) and on the handle itself being inactive. Scans the global voice
 // handle list for any active handle whose category passes the
-// func_80174C98 gate; if none qualifies nothing plays. Otherwise allocates
+// testActorStatus gate; if none qualifies nothing plays. Otherwise allocates
 // the 0x28-byte playback buffer and plays voice 0xA8D on this handle's
 // embedded CCharVoice. Returns 0 in all paths.
 extern "C" int playEhpStartVoice(CVoiceHandle* self) {
@@ -489,7 +489,7 @@ extern "C" int playEhpStartVoice(CVoiceHandle* self) {
             // handle+0x04 (virtual slot 12 @ 0x30).
             CVSubObj* subobj = (CVSubObj*)handle->unk4;
             u32 value = *((CVSubChainVTV*)subobj)->getRef();
-            if (func_80174C98(handle, &value, 0x803) != 0) {
+            if (testActorStatus(handle, &value, 0x803) != 0) {
                 played = 1;
                 break;
             }
@@ -500,10 +500,10 @@ extern "C" int playEhpStartVoice(CVoiceHandle* self) {
         return 0;
     }
     // Allocate the 0x28-byte playback buffer.
-    if (func_802A330C(0x28, 1) == NULL) {
+    if (CCharVoiceMan_DispatchById(0x28, 1) == NULL) {
         return 0;
     }
-    if (func_802A7FE4(self) != 0) {
+    if (HpVoice_CheckIdleGate(self) != 0) {
         return 0;
     }
     // Bias self to its embedded CCharVoice and play.
@@ -511,6 +511,6 @@ extern "C" int playEhpStartVoice(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    func_802A3D54(voicePtr, 0xA8D, 0x28);
+    RequestVoicePlayback(voicePtr, 0xA8D, 0x28);
     return 0;
 }

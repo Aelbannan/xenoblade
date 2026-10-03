@@ -99,7 +99,7 @@ extern "C" {
     // ---- scene / resource helpers ----
     void Scn_IsAnimActiveOrNull(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
-    void* func_804C1BA0(void* mgr, const void* name, int flag);
+    void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
     void scnLgtRemoveLgtItem(void* mgr, void* resource);
     void scnLgtPushLgtValue(void* mgr, u16 value, float amount);
     void Scn_SetTimeScale(CScn* scene, float value);
@@ -110,7 +110,7 @@ extern "C" {
 
     // ---- CfRes helpers ----
     u32 CfRes_getNameRecCount();
-    void* func_800621F4(void* r3, s16 r4, void* r5, void* r6, void* r7);
+    void* CfRes_extType(void* r3, s16 r4, void* r5, void* r6, void* r7);
     void* CfRes_tryResolveLink(u32 a, u32 b, u32 c);
     void CfRes_tryResolveSlotF4(u32 a, u32 b, u32 c);
     u32 CfRes_tryResolveSlot130(u32 a, u32 b, u32 c, u32 d);

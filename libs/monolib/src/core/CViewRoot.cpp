@@ -459,7 +459,7 @@ void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
     }
     root->mPool2.mUsed = root->mPool2.mUsed + 1;
 
-    func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), a, b, c);
+    cacheScissor__8CGXCacheFv(CDeviceGX::getCacheInstance(), a, b, c);
 }
 
 static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
@@ -515,7 +515,7 @@ void CViewRoot::func_80442C68() {
     sum2 = *(u32*)&root->mPool2.mList + root->mPool2.mUsed;
     slot2 = (sum2 - 1) % (s32)root->mPool2.mCapacity;
 
-    func_8044B298__8CGXCacheFv(
+    cacheScissor__8CGXCacheFv(
         CDeviceGX::getCacheInstance(),
         &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[slot0],
         &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[slot1],
@@ -548,7 +548,7 @@ void CViewRoot::updateViewRoot() {
     sum2 = *(u32*)&root->mPool2.mList + root->mPool2.mUsed;
     slot2 = (sum2 - 1) % (s32)root->mPool2.mCapacity;
 
-    func_8044B298__8CGXCacheFv(
+    cacheScissor__8CGXCacheFv(
         CDeviceGX::getCacheInstance(),
         &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[slot0],
         &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[slot1],
@@ -1098,7 +1098,7 @@ bool CViewRoot::wkStandbyLogin() {
         dst[0].w1 = w1;
         root->mPool2.mUsed = root->mPool2.mUsed + 1;
 
-        func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), &rect1, &rect1, &rect2);
+        cacheScissor__8CGXCacheFv(CDeviceGX::getCacheInstance(), &rect1, &rect1, &rect2);
     }
 
     return CWorkThread::wkStandbyLogin();
@@ -1136,7 +1136,7 @@ bool CViewRoot::wkStandbyLogout() {
 
             // Ring-slot addresses of the newest entry in each pool
             // ((list + used - 1) % capacity), computed inline in the call.
-            func_8044B298__8CGXCacheFv(
+            cacheScissor__8CGXCacheFv(
                 CDeviceGX::getCacheInstance(),
                 &reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr)[(*(s32*)&root->mPool0.mList + (s32)root->mPool0.mUsed - 1) % (s32)root->mPool0.mCapacity],
                 &reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr)[(*(s32*)&root->mPool1.mList + (s32)root->mPool1.mUsed - 1) % (s32)root->mPool1.mCapacity],

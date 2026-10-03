@@ -151,7 +151,7 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
 // (a bool (p1<=p2) materialized in r0 with the test branch folded). Every
 // high-level shape folds the block away (MWCC DCEs empty nested ifs and
 // simplifies `p1<p2 && p1<=p2` to `p1<p2`). The clamp body `if (p1<p2)
-// {p1=p2;}` DOES keep the p2 addi + cmpl + branch (used by LOD func_801C17CC
+// {p1=p2;}` DOES keep the p2 addi + cmpl + branch (used by LOD CfSoundMan_ApplySlotGain
 // sibling family) but changes r4 on the p1<p2 path, diverging from retail
 // (retail passes p1 on both paths), so it is not an honest reconstruction.
 // ---------------------------------------------------------------------------

@@ -194,7 +194,7 @@ extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 // in clpGetCelIcon); narrowing here would emit an extra rlwinm after the call.
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" char* lbl_eu_806647DC;
 extern "C" void* lbl_eu_806647D8;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
@@ -234,7 +234,7 @@ extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
 extern "C" void __ct__CCur18(void* self, void* param);   // CCur18 ctor (+0x84)
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
 
-// Imports used by OnFileEvent / func_80253B3C
+// Imports used by OnFileEvent / clpBuildPages
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);                     // bdat row count
 extern "C" u32 BdatGetItemType(u16);                       // item kind lookup
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);                       // unlock-flag lookup

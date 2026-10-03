@@ -105,7 +105,7 @@ union F64Conv {
 
 // Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
 // slot 0x24 (index 9, no args) yields the u32 bound into the layout's font
-// pane via func_8013676C. Never instantiated, so no vtable is emitted; a
+// pane via ApplyFontToTxtPanes. Never instantiated, so no vtable is emitted; a
 // genuine virtual call makes MWCC emit retail's r12 dispatch sequence
 // (CMenuQstCntFont / CMenuPTGaugeFont scheme).
 class CMenuKeyAssignFont {
@@ -202,11 +202,11 @@ extern "C" int GetSysStateFlag20();
 // must sit under extern "C" to emit the retail reloc names).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void func_80137F88(void* pane, void* tex);
+void PaneSetTexPalette(void* pane, void* tex);
 u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 char* BdatTouchStringCell(const void*, const void*, int);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-void func_8013676C(void*, u32);
+void ApplyFontToTxtPanes(void*, u32);
 // Scratch-region ctor (retail emits the direct C-ABI call with a plain addi;
 // a C++ placement new would add a null-check branch the retail does not have).
 void __ct__17UnkClass_8045F564Fv(u8* self);

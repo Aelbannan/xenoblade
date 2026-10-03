@@ -14,7 +14,7 @@ extern "C" void dummy() {}
 // via the global symbol map). The four CTTask<cf::CfNandManager> template
 // slots spell '<' and are not expressible in C++; they stay zero with the
 // retail target in comments. The 0x90 switch jumptable targets local case
-// labels of func_8023EABC (not in this stub TU), so it stays a named zero
+// labels of NandResolveOp (not in this stub TU), so it stays a named zero
 // table. The trailing zero word is split off so MWCC's 8-alignment of
 // size%8==0 .data objects cannot pad the section (retail packs at 4).
 extern "C" {
@@ -535,19 +535,19 @@ struct CfNandWorkBuf {
     CfNandWorkEntryDst entry[14];
 };
 
-extern "C" int func_8023CD9C(void* block);
+extern "C" int NandCheckSave(void* block);
 extern "C" u32 CtrlRemote_GetFixedSize1214();
 extern "C" u8* CtrlRemote_GetSharedBufPtr();
 extern "C" u8* CtrlRemote_GetFileEventIds();
-extern "C" void func_8009EF9C(void* data, u32 value);
-extern "C" void func_8025ECE4(void* src, void* dst);
+extern "C" void CtrlObjectParam_RefreshCharEntry(void* data, u32 value);
+extern "C" void KizunagramUnpackChart(void* src, void* dst);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void CfT_FrameTimerSet(u32* self);
 extern "C" void CfT_PlayClockReset(f32 v);
 extern "C" void cfCam_storeFollowD(void* v, f32 f);
 extern "C" void loadReloadInfo(void* p);
 extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
-extern "C" void func_80207D2C(u8* rec);
+extern "C" void mineLoadFromSave(u8* rec);
 extern "C" void rebuildTboxPool();
 extern "C" CfNandNameRoot* getReslistC48();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
@@ -673,7 +673,7 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
     u8 flag = dst->f2C0 != 0;
     lbl_eu_80663E5D = flag;
     lbl_eu_8066476D = flag;
-    func_8025ECE4(dst->kizuna, src->kizunaSrc);
+    KizunagramUnpackChart(dst->kizuna, src->kizunaSrc);
 }
 
 inline static void restoreNameTable(CfNandSaveNameTable* names) {
@@ -719,7 +719,7 @@ inline static void restoreNameTable(CfNandSaveNameTable* names) {
 }
 
 // Apply a NAND save image back into live game state (load/teardown path).
-extern "C" int func_8023D3D8(CfNandSaveImage* img) {
+extern "C" int NandApplySave(CfNandSaveImage* img) {
     (void)__alloca(0);
     CfNandSaveImage* image = img;
     int ok = 1;
@@ -728,7 +728,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     CfNandWorkEntryDst* dst;
     u32 ver = image->version - 0x70001;
     if (ver <= 1) {
-        int valid = func_8023CD9C(image);
+        int valid = NandCheckSave(image);
         if (valid == 0) {
             return 0;
         }
@@ -741,7 +741,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         dst = &image->workEntry[1];
         for (u32 i = 1; i < 14; i++) {
             expandWorkEntry(src, dst);
-            func_8009EF9C(src, 0);
+            CtrlObjectParam_RefreshCharEntry(src, 0);
             src++;
             dst++;
         }
@@ -768,7 +768,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
         loadReloadInfo(&image->wthrBlock);
         fadeOutGameEffects__Q22cf13CfGameManagerFv();
-        func_80207D2C(image->mineRegion);
+        mineLoadFromSave(image->mineRegion);
         restoreNameTable(&image->names);
         if (valid != 0) {
             updateConfig__FPUc(image->optdBlob, 1);
@@ -887,7 +887,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     setMasterVolume__Fff(v1->sndArea.f00, lbl_eu_806686E0);
     MenuSnd_SetSeVolPush_95F4(v1->sndArea.f04);
     MenuSnd_SetMasterAndPush_9510(v1->sndArea.f08);
-    func_80207D2C(v1->mineRegion);
+    mineLoadFromSave(v1->mineRegion);
     restoreNameTable(&v1->names);
     if (ok != 0) {
         updateConfig__FPUc(v1->optdBlob, 1);
@@ -897,7 +897,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
 
 extern "C" void __dl__FPv(void*);
 
-// Retail US 0x8024058C: apply the +0x5C save image (func_8023D3D8), then
+// Retail US 0x8024058C: apply the +0x5C save image (NandApplySave), then
 // operator-delete it. The in-progress flag at lbl_eu_80664772 is armed
 // around the apply so CSysWinScenarioLog can poll the teardown.
 extern "C" int __dt__8023E448() {
@@ -911,7 +911,7 @@ extern "C" int __dt__8023E448() {
     }
     u16 clear = 0;
     lbl_eu_80664772 = 1;
-    int result = func_8023D3D8((CfNandSaveImage*)img);
+    int result = NandApplySave((CfNandSaveImage*)img);
     lbl_eu_80664772 = clear;
     u8* still = *(u8**)(lbl_eu_80664768 + 0x5C);
     if (still != 0) {
@@ -966,31 +966,31 @@ extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8023e2e4
-extern "C" void func_8023C1B4() {}
+extern "C" void NandPartySnap() {}
 // LLM-HARNESS-END: us-8023e2e4
 
 // LLM-HARNESS-BEGIN: us-8023e2f0
-extern "C" void func_8023C1C0() {}
+extern "C" void NandQueueBusy() {}
 // LLM-HARNESS-END: us-8023e2f0
 
 // LLM-HARNESS-BEGIN: us-8023e320
-extern "C" void func_8023C1F0() {}
+extern "C" void NandCopyParty() {}
 // LLM-HARNESS-END: us-8023e320
 
 // LLM-HARNESS-BEGIN: us-8023e414
-extern "C" void func_8023C2E4() {}
+extern "C" void NandPackEntry() {}
 // LLM-HARNESS-END: us-8023e414
 
 // LLM-HARNESS-BEGIN: us-8023e7bc
-extern "C" void func_8023C68C() {}
+extern "C" void NandTileDescr() {}
 // LLM-HARNESS-END: us-8023e7bc
 
 // LLM-HARNESS-BEGIN: us-8023e8f4
-extern "C" void func_8023C7C4() {}
+extern "C" void NandSaveBuild() {}
 // LLM-HARNESS-END: us-8023e8f4
 
 // LLM-HARNESS-BEGIN: us-8023ea80
-extern "C" void func_8023C93C() {}
+extern "C" void NandImageMake() {}
 // LLM-HARNESS-END: us-8023ea80
 
 // LLM-HARNESS-BEGIN: us-80240618
@@ -998,7 +998,7 @@ extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv() {}
 // LLM-HARNESS-END: us-80240618
 
 // LLM-HARNESS-BEGIN: us-80240688
-extern "C" void func_8023E544() {}
+extern "C" void NandVerifyBlk() {}
 // LLM-HARNESS-END: us-80240688
 
 // LLM-HARNESS-BEGIN: us-80240780
@@ -1006,59 +1006,59 @@ extern "C" void __dt__8023E63C() {}
 // LLM-HARNESS-END: us-80240780
 
 // LLM-HARNESS-BEGIN: us-80240cbc
-extern "C" void func_8023EB78() {}
+extern "C" void NandFlushEvts() {}
 // LLM-HARNESS-END: us-80240cbc
 
 // LLM-HARNESS-BEGIN: us-80241438
-extern "C" void func_8023F288() {}
+extern "C" void NandFileEvent() {}
 // LLM-HARNESS-END: us-80241438
 
 // LLM-HARNESS-BEGIN: us-802414a4
-extern "C" void func_8023F2F4() {}
+extern "C" void NandQueueChkFc() {}
 // LLM-HARNESS-END: us-802414a4
 
 // LLM-HARNESS-BEGIN: us-80241570
-extern "C" void func_8023F3C0() {}
+extern "C" void NandQueueSaveCk() {}
 // LLM-HARNESS-END: us-80241570
 
 // LLM-HARNESS-BEGIN: us-8024177c
-extern "C" void func_8023F5CC() {}
+extern "C" void NandQueueChk5CC() {}
 // LLM-HARNESS-END: us-8024177c
 
 // LLM-HARNESS-BEGIN: us-80241840
-extern "C" void func_8023F690() {}
+extern "C" void NandQueueChk690() {}
 // LLM-HARNESS-END: us-80241840
 
 // LLM-HARNESS-BEGIN: us-80241a10
-extern "C" void func_8023F860() {}
+extern "C" void NandQueueChk860() {}
 // LLM-HARNESS-END: us-80241a10
 
 // LLM-HARNESS-BEGIN: us-80241c14
-extern "C" void func_8023FA64() {}
+extern "C" void NandRegHeapCb() {}
 // LLM-HARNESS-END: us-80241c14
 
 // LLM-HARNESS-BEGIN: us-80241cd8
-extern "C" void func_8023FB28() {}
+extern "C" void NandQueueLoadCk() {}
 // LLM-HARNESS-END: us-80241cd8
 
 // LLM-HARNESS-BEGIN: us-80241d50
-extern "C" void func_8023FBA0() {}
+extern "C" void NandQueueChkBA0() {}
 // LLM-HARNESS-END: us-80241d50
 
 // LLM-HARNESS-BEGIN: us-80241dc8
-extern "C" void func_8023FC18() {}
+extern "C" void NandQueueReset() {}
 // LLM-HARNESS-END: us-80241dc8
 
 // LLM-HARNESS-BEGIN: us-80241e7c
-extern "C" void func_8023FCCC() {}
+extern "C" void NandQueueChkCCC() {}
 // LLM-HARNESS-END: us-80241e7c
 
 // LLM-HARNESS-BEGIN: us-80241efc
-extern "C" void func_8023FD4C() {}
+extern "C" void NandResetMode() {}
 // LLM-HARNESS-END: us-80241efc
 
 // LLM-HARNESS-BEGIN: us-8024208c
-extern "C" void func_8023FEDC() {}
+extern "C" void NandTitleFile() {}
 // LLM-HARNESS-END: us-8024208c
 
 // LLM-HARNESS-BEGIN: us-80242188
@@ -1066,19 +1066,19 @@ extern "C" void create__Q22cf13CfNandManagerFv() {}
 // LLM-HARNESS-END: us-80242188
 
 // LLM-HARNESS-BEGIN: us-80242214
-extern "C" void func_8024005C() {}
+extern "C" void NandImageLive() {}
 // LLM-HARNESS-END: us-80242214
 
 // LLM-HARNESS-BEGIN: us-8024223c
-extern "C" void func_80240084() {}
+extern "C" void NandDownsample() {}
 // LLM-HARNESS-END: us-8024223c
 
 // LLM-HARNESS-BEGIN: us-80242518
-extern "C" void func_80240360() {}
+extern "C" void NandAllocBufs() {}
 // LLM-HARNESS-END: us-80242518
 
 // LLM-HARNESS-BEGIN: us-802425d8
-extern "C" void func_80240420() {}
+extern "C" void NandTeardown() {}
 // LLM-HARNESS-END: us-802425d8
 
 // LLM-HARNESS-BEGIN: us-802427a8

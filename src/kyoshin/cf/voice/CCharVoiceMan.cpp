@@ -14,8 +14,8 @@ struct VoiceNodePrefix {
 };
 class __declspec(novtable) VoiceNode : public VoiceNodePrefix {
 public:
-    virtual void func_802A3B50();
-    virtual void func_802A3BEC(u32 id);
+    virtual void PlayThreadVoice();
+    virtual void DetachThreadVoice(u32 id);
     virtual int blank1();
     virtual int func_802A1EA0();
     virtual void* func_802A3740(void* a, void* b);
@@ -176,7 +176,7 @@ void CCharVoiceMan_CreateSingleton() {
 }
 // Reset the voice-event list: run each node's level-thread handler (+0x08),
 // then clear the list and all resetable manager fields.
-void func_802A1500() {
+void CCharVoiceMan_FlushAll() {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     m->unk215 = 0;
     cf::CSoundNode* node = m->nodeHead;
@@ -185,7 +185,7 @@ void func_802A1500() {
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
-            ((VoiceNode*)node)->func_802A3B50();
+            ((VoiceNode*)node)->PlayThreadVoice();
         node = node->next;
     }
     m->nodeHead = 0;
@@ -204,14 +204,14 @@ void func_802A1500() {
     lbl_eu_80664A58->unk22C = 0;
     lbl_eu_80664A58->unk230 = 0;
 }
-// Battle-gauge gate check (defined below); forward-declared for func_802A1610.
+// Battle-gauge gate check (defined below); forward-declared for CCharVoiceMan_Tick.
 // Retail references this helper by its bare unmangled symbol (C linkage).
-extern "C" int func_802A38C8(cf::CCharVoiceMan* self);
+extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self);
 
 // Main per-frame character-voice tick. Flush the level-thread list on a
 // presentation pause, then run every gate (battle count, party gauge, field
 // id, per-player flags and random gauges) that can enqueue a voice node.
-void func_802A1610(){
+void CCharVoiceMan_Tick(){
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (m->nodeHead != 0 && (lbl_eu_80663E24 & 0x10000000)) {
         // Presentation pause: run every node's level-thread handler then flush.
@@ -222,7 +222,7 @@ void func_802A1610(){
             if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
                 match = true;
             if (match)
-                ((VoiceNode*)node)->func_802A3B50();
+                ((VoiceNode*)node)->PlayThreadVoice();
             node = node->next;
         }
         m->nodeHead = 0;
@@ -288,7 +288,7 @@ void func_802A1610(){
 
         // Party-gauge rising edge: enqueue a levelled voice node.
         u8 oldGauge = m->unk220;
-        m->unk220 = (u8)func_802A38C8(m);
+        m->unk220 = (u8)CCharVoiceMan_CheckBattleGauge(m);
         if (oldGauge == 0 && m->unk220 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(1);
             if (node != 0) {
@@ -316,7 +316,7 @@ void func_802A1610(){
         if (icount <= 0) {
             iresult = 0;
         } else {
-            int n = func_802A7870(arr2, 3, 0);
+            int n = HpVoice_CollectIdle(arr2, 3, 0);
             if (n <= 1) {
                 iresult = 0;
             } else {
@@ -368,7 +368,7 @@ noFieldFlag:;
 
         // Battle voice auto-talk: resolve the current player and fire.
         if (m->autoTalkPending != 0) {
-            cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)func_802A7A54(1);
+            cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)HpVoice_FindBySubState(1);
             cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0)
                 player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
@@ -377,7 +377,7 @@ noFieldFlag:;
                 u32 sv = *inner->vf30();
                 // Resolution failure keeps the pending flag set to retry next
                 // frame; every other path falls into the single clear store.
-                if (func_80174C98(srcNode, (int*)&sv, 6) == 0)
+                if (testActorStatus(srcNode, (int*)&sv, 6) == 0)
                     goto noAutoTalkClear;
                 if (!(lbl_eu_80663E24 & 0x00400000))
                     BmVoice_PlayGated(player, 0xbb9, 0x14);
@@ -436,7 +436,7 @@ noAutoTalkClear:;
         if (m->nodeHead != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* cur = m->nodeHead;
             while (cur != 0) {
-                func_802A3ACC(cur);
+                RunVoiceNodeHandler(cur);
                 cur = cur->next;
             }
             cf::CSoundNode* head;
@@ -474,7 +474,7 @@ noAutoTalkClear:;
 // state id 1 whose +0x3F60 chain selects a voice id in [0x10, 0x17]. When the
 // source is dead (or luck holds on a 15/100 roll) flag byte 0x223, then always
 // poke the sub-id handler with (voicePtr + 0x3508, 1).
-void func_802A1C68(cf::CVoiceActorState* self) {
+void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (!(self->field_3F00 & 0x2))
         return;
@@ -520,7 +520,7 @@ void CCharVoiceMan_DestroySingleton() {
 }
 // Set the manager's voice-enable byte, then run every matching node's +0x14
 // voice probe; nodes whose probe returns nonzero are handed to releaseThreadVoice.
-void func_802A1DF0(u8 flag) {
+void CCharVoiceMan_ReleaseVoices(u8 flag) {
     lbl_eu_80664A58->unk215 = flag;
     cf::CSoundNode* node = lbl_eu_80664A58->nodeHead;
     while (node != 0) {
@@ -803,7 +803,7 @@ void CCharVoiceMan_ClearPlayerVoiceCount(cf::CVoiceActorBase* actor) {
     }
 }
 // If both actors are flagged and luck holds, enqueue a battle-voice event.
-void func_802A2648(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
+void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if ((self->field_3F00 & 0x2) == 0)
@@ -1081,7 +1081,7 @@ void CCharVoiceMan_FlushPendingActorVoice(void* actor) {
         }
     }
 }
-void func_802A2D84() {
+void CCharVoiceMan_ResetAndAppend() {
     const float reset = lbl_eu_80668C68;
     cf::CCharVoiceMan* m0 = lbl_eu_80664A58;
     m0->unk218 = reset;
@@ -1126,7 +1126,7 @@ void CCharVoiceMan_PlayLevelUpVoice(int id) {
         return;
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = func_802A7744();
+    cf::CSoundNode* node = HpVoice_InitVoiceId();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;
@@ -1142,7 +1142,7 @@ void CCharVoiceMan_PlayLevelUpVoice(int id) {
 void CCharVoiceMan_EnqueueDownedActorVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = func_802A4798();
+    cf::CSoundNode* node = PlayRandomVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;
@@ -1155,12 +1155,12 @@ void CCharVoiceMan_EnqueueDownedActorVoice() {
         m->nodeTail = node;
     }
 }
-// Enqueue a frequency-voice node [func_802A3EF0] and a level-up node
+// Enqueue a frequency-voice node [FindThreadVoiceNode] and a level-up node
 // [func_802AF3DC(self)] onto the manager's event list (unless paused).
 void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = func_802A3EF0();
+    cf::CSoundNode* node = FindThreadVoiceNode();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;
@@ -1313,7 +1313,7 @@ int CCharVoiceMan_AllocCommuVoiceId() {
 // `a`; loop 2 resets the pending hook when a probe equals `a` (b==1 bails;
 // b==0 runs the +0x08 level-thread handler); loop 3 runs +0x08 on nodes whose
 // probe exceeds `a`. Returns 1 on success.
-int func_802A330C(int a, int b) {
+int CCharVoiceMan_DispatchById(int a, int b) {
     if (lbl_eu_80664A58->unk214 == 0)
         return 0;
 
@@ -1341,7 +1341,7 @@ int func_802A330C(int a, int b) {
                 if (b == 1)
                     return 0;
                 if (b == 0)
-                    ((VoiceNode*)node)->func_802A3B50();
+                    ((VoiceNode*)node)->PlayThreadVoice();
             }
         }
         node = node->next;
@@ -1354,7 +1354,7 @@ int func_802A330C(int a, int b) {
             match = true;
         if (match) {
             if (a < ((VoiceNode*)node)->blank1())
-                ((VoiceNode*)node)->func_802A3B50();
+                ((VoiceNode*)node)->PlayThreadVoice();
         }
         node = node->next;
     }
@@ -1383,31 +1383,31 @@ static __inline cf::CSoundNode* FindVoiceNodeById(u32 id) {
 // AND whose +0x18 id matches `arg`, then run its level-thread handler (+0x08).
 // Uses the inline search helper so the id-compare keeps retail's
 // branch-over-branch split (`cmplw; bne latch; b found`).
-void func_802A35B8(u32 arg) {
+void CCharVoiceMan_PlayNodeById(u32 arg) {
     cf::CSoundNode* node;
     if (lbl_eu_80664A58 == 0)
         return;
     node = FindVoiceNodeById(arg);
     if (node != 0)
-        ((VoiceNode*)node)->func_802A3B50();
+        ((VoiceNode*)node)->PlayThreadVoice();
 }
-void* func_802A3680(void* a, void* b, void* c) {
+void* CCharVoiceMan_ForwardNodeCall(void* a, void* b, void* c) {
     cf::CSoundNode* node = FindVoiceNodeById((u32)a);
     if (node == 0)
         return 0;
     return ((VoiceNode*)node)->func_802A3740(b, c);
 }
 // Scan for a node whose type matches the reference pmf and whose +0x18 id is
-// `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf
+// `arg`; if found, hand it to IsThreadVoiceActive (0 if not found). The pmf
 // reference is passed as a direct address-of-global expression so MWCC hoists
 // `lis r31, lbl@ha` before the loop and emits `addi @l` per iteration.
 // Uses the inline search helper so the id-compare keeps retail's
 // branch-over-branch split (`cmplw; bne latch; b found`).
-int func_802A3748(u32 arg) {
+int CCharVoiceMan_IsNodeActive(u32 arg) {
     cf::CSoundNode* node = FindVoiceNodeById(arg);
     if (node == 0)
         return 0;
-    return (int)func_802A3E88(node);
+    return (int)IsThreadVoiceActive(node);
 }
 // Factory tick: if the incoming actor is in an interact/battle state (any of
 // bits 0x2/0x4/0x8 at +0x64), broadcast to every matching type of voice node.
@@ -1421,7 +1421,7 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
-            ((VoiceNode*)node)->func_802A3BEC((u32)actor);
+            ((VoiceNode*)node)->DetachThreadVoice((u32)actor);
         node = node->next;
     }
 }
@@ -1430,7 +1430,7 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
 // 1 when every candidate gauge passes, else 0.
 // Retail references this helper by its bare unmangled symbol (C linkage), so
 // the definition keeps C linkage to emit the exact call-site reloc name.
-extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
+extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self) {
     // Hoisted so MWCC colors this call-crossing local into r31 like retail.
     cf::CVoiceActorState* actor;
     cf::CBattleManagerNodeList* list = (cf::CBattleManagerNodeList*)getInstance__Q22cf14CBattleManagerFv();
@@ -1475,7 +1475,7 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     int i;
     // Same compare-then-copy shape: retail interleaves the count copy
     // between cmpwi r3,1 and bgt.
-    if ((cnt = func_802A7870(arr, 3, 0)) <= 1)
+    if ((cnt = HpVoice_CollectIdle(arr, 3, 0)) <= 1)
         return 0;
     float limit = lbl_eu_80668C70;
     for (it = arr, i = 0; i < cnt; i++) {

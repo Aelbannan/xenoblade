@@ -595,7 +595,7 @@ extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 // isGlobalCamFlagSet__Fi: extern "C" decl from kyoshin/cf/object/CfObjectActor.hpp.
 extern "C" void SysWinLog_LatchOneShot(void*);
 extern "C" void SysWinLog_GateDevice(void*);
-extern "C" void func_80280640(void*);
+extern "C" void SysWinLog_ScanDeviceOwners(void*);
 extern "C" int func_80148778(void*, int);
 // findBattleStatusEntry: extern "C" decl from kyoshin/cf/object/CAIAction.hpp (via CfObjectActor.hpp).
 extern "C" int countBattleStatusEntries(void*, int);
@@ -605,8 +605,8 @@ extern "C" bool isBattleStatusValid(unsigned int);
 extern "C" void* func_8016FE34(void*);
 extern void* findObjectById(int);            // C++ linkage -> findObjectById__Fi
 extern "C" void* matchBattleStatusEntry(void*, u32, u32, u32, u32);
-extern "C" float func_800D81A8(void*, void*, void*);
-extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
+extern "C" float calcBattleDamage(void*, void*, void*);
+extern "C" void broadcastBattleDamage(void*, void*, s32, s32, s32, s32, void*);
 extern "C" void CBattleMan_RunBattleEvent(void*, void*, void*, u32);
 // releaseVisionSlot: extern "C" decl from kyoshin/cf/object/CfObjectActor.hpp.
 extern "C" u32 countPcEffectSlots(u32);
@@ -620,25 +620,25 @@ extern "C" void* __ct__800FB044(void*, void*, int, float);
 extern "C" int func_80260264(void*, int, void*);
 extern "C" int func_80260A6C(void*, int, s32*, s32*); // dual accessor (CUnkObj8025FB10.cpp)
 extern "C" int rand(void);
-extern "C" void func_802808AC(s32 mode);
+extern "C" void SysWinLog_TickCounter2C(s32 mode);
 extern "C" void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c);
-extern "C" void func_801748B8(void*, int); // map-item position update (CfMapItemManager TU)
+extern "C" void stepItemNotch(void*, int); // map-item position update (CfMapItemManager TU)
 
 // Map-item timer advance (CfMapItemManager TU; unmangled global). Its body
 // reads the same lbl_eu_806677EC sdata2 divisor as func_801765A4.
-extern "C" void func_801746B4(u8*, float);
+extern "C" void advanceItemTimer(u8*, float);
 
 // Arts-stats helpers (unmangled globals). CtrlObjectParam_GetArtsStatsRow walks the sub-row at
-// +0x1C of the char-data object returned by func_8009EC9C; getAtkParam and
+// +0x1C of the char-data object returned by CtrlObjectParam_GetCharEntry; getAtkParam and
 // func_8015403C resolve the attack-parameter records.
-// func_8009EC9C: extern "C" decl from kyoshin/cf/CVision.hpp (u32 index; call sites pass u16 ids).
+// CtrlObjectParam_GetCharEntry: extern "C" decl from kyoshin/cf/CVision.hpp (u32 index; call sites pass u16 ids).
 extern "C" void* CtrlObjectParam_GetArtsStatsRow(void* base, u32 idx);
 extern "C" void* getAtkParam(void* base, int index);
 extern "C" int func_8015403C(int x);
 
 // CArtsSet arts-slot helpers (retail: unmangled global symbols defined in
 // CArtsSet.cpp; CChainActorList.hpp declares the same pair but cannot be
-// included here because CChainEffect.hpp re-declares func_800B3A88 with a
+// included here because CChainEffect.hpp re-declares removeManagedObject with a
 // different signature than CfGimmick.hpp).
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
@@ -670,7 +670,7 @@ void func_801765A4(cf::CActorParam* self, int arg, float f1) {
     case 0xE:
     case 5:
         if ((*(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F) != 8) {
-            func_801746B4((u8*)self + 0x3358, f30);
+            advanceItemTimer((u8*)self + 0x3358, f30);
         }
         break;
     default:
@@ -818,7 +818,7 @@ unk28_done:
                 double rate = 0.15 * (double)cl;
                 a = (int)((double)a - (double)a * rate);
                 getInstance__Q22cf14CBattleManagerFv();
-                float f = func_800D81A8(0, self->CActorParam_getActor(), 0);
+                float f = calcBattleDamage(0, self->CActorParam_getActor(), 0);
                 a = (int)((float)a * f);
                 if (a > 0) self->CActorParam_addHp((float)a);
                 break;
@@ -1097,7 +1097,7 @@ unk28_done:
                 if (f15 < 1.0f) f15 = 1.0f;
                 if (func_80148778(reinterpret_cast<cf::CBattleState*>(self), 1)) f15 = 0.0f;
                 self->CActorParam_applyDamage((float)(-(int)f15), 0xA, 0, 0);
-                func_80280640(self);
+                SysWinLog_ScanDeviceOwners(self);
                 if (func_80148778(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
                 break;
             }
@@ -1125,7 +1125,7 @@ unk28_done:
             }
             case 0xC6: {
                 void* r16 = self->CActorParam_getActor();
-                func_800E9FE4(getInstance__Q22cf14CBattleManagerFv(), r16, e->unk10, e->unk14, e->unk16, 0, 0);
+                broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), r16, e->unk10, e->unk14, e->unk16, 0, 0);
                 break;
             }
             default: break;
@@ -1301,7 +1301,7 @@ unk28_done:
 }
 // findObjB28ById: extern "C" decl from kyoshin/cf/object/CAIAction.hpp (via CfObjectActor.hpp; void* return, truthiness only).
 // Counter_TestBit: extern "C" decl from kyoshin/cf/CVision.hpp.
-// func_80174C98: extern "C" decl from kyoshin/cf/object/CAIAction.hpp / CfMapItemManager.hpp.
+// testActorStatus: extern "C" decl from kyoshin/cf/object/CAIAction.hpp / CfMapItemManager.hpp.
 // IdTable_SumValues: extern "C" decl from kyoshin/cf/chain/CChainActorList.hpp (via CChain.hpp).
 
 
@@ -1459,8 +1459,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (combat == 0) combat = ((t & 0x7C0) == 448);
         if (combat == 0) {
             combat = 0;
-            if (func_80174C98(self, &t, 9) || func_80174C98(self, &t, 10) ||
-                func_80174C98(self, &t, 11)) {
+            if (testActorStatus(self, &t, 9) || testActorStatus(self, &t, 10) ||
+                testActorStatus(self, &t, 11)) {
                 combat = 1;
             }
         }
@@ -1469,8 +1469,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (combat == 0) combat = ((t & 0x3F) == 20);
         if (combat == 0) {
             combat = 0;
-            if (func_80174C98(self, &t, 22) || func_80174C98(self, &t, 23) ||
-                func_80174C98(self, &t, 15)) {
+            if (testActorStatus(self, &t, 22) || testActorStatus(self, &t, 23) ||
+                testActorStatus(self, &t, 15)) {
                 combat = 1;
             }
         }
@@ -2176,7 +2176,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             if (self->CActorParam_getActor() != NULL) {
                 if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
                     void* actor = self->CActorParam_getActor();
-                    void* cd = func_8009EC9C(*(u16*)((u8*)actor + 0x3F28));
+                    void* cd = CtrlObjectParam_GetCharEntry(*(u16*)((u8*)actor + 0x3F28));
                     if (cd != NULL) {
                         u8* dst = (u8*)reinterpret_cast<cf::CActorParam*>(
                                          (u8*)cd + 0x17C)
@@ -2386,7 +2386,7 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
         if (self->CActorParam_getActor() == NULL) return;
         if (!(*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2)) return;
         arg = reinterpret_cast<cf::CActorParam174Arg*>(
-            func_8009EC9C(*(u16*)((u8*)self->CActorParam_getActor() + 0x3F28)));
+            CtrlObjectParam_GetCharEntry(*(u16*)((u8*)self->CActorParam_getActor() + 0x3F28)));
     }
     // Absolute field offsets (the 0x17E4 block predates the layout shift and
     // 0x3374/0x3378 are past it; raw addresses keep retail codegen, so every
@@ -2728,7 +2728,7 @@ void CActorParam_applyTargetEvent__Q22cf11CActorParamFv(cf::CActorParam* self, c
 // arg carries a u32 status word at +0x74 (bit 0x100 gate). When the actor
 // state (Func127) is active, the battle-state gate (Func138) is clear and
 // the flag is set: read the arts-slot value (func_80260264 id 0x45), scale
-// it by the battle-rate factor (func_800D81A8 over the actor), the actor
+// it by the battle-rate factor (calcBattleDamage over the actor), the actor
 // gauge (Func38) and an sdata2 constant, round to int, and feed the result
 // back through the gauge setter Func34 (slot 0x11C).
 void CActorParam_applyStatusHeal__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam11Arg* arg) {
@@ -2739,7 +2739,7 @@ void CActorParam_applyStatusHeal__Q22cf11CActorParamFv(cf::CActorParam* self, cf
     if (func_80260264(self->CActorParam_getStatusTable(), 0x45, &val) == 0) return;
     getInstance__Q22cf14CBattleManagerFv();
     void* actor = self->CActorParam_getActor();
-    float a = func_800D81A8(self->CActorParam_getActor(), actor, NULL);
+    float a = calcBattleDamage(self->CActorParam_getActor(), actor, NULL);
     float b = self->CActorParam_getDamageScale();
     float v = a * (lbl_eu_80667830 * ((float)val * b));
     int iv = (int)v;
@@ -2812,9 +2812,9 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                 if (self->CActorParam_getHp() != f31) {
                     s32 unk10 = e->unk10;
                     getInstance__Q22cf14CBattleManagerFv();
-                    float rate = func_800D81A8(0, self->CActorParam_getActor(), 0);
+                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
                     int v = (int)((float)unk10 * rate);
-                    func_800E9FE4(getInstance__Q22cf14CBattleManagerFv(),
+                    broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
                                   self->CActorParam_getActor(),
                                   (int)(lbl_eu_80667868 * (float)v), 0, 0, 1,
                                   (void*)(uintptr_t)*(u32*)((u8*)self->CActorParam_getActor() + 0x3F10));
@@ -2850,7 +2850,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                     if (arg->field_0xA8 % 100 < unk1A) {
                         s32 unk10 = e37->unk10;
                         getInstance__Q22cf14CBattleManagerFv();
-                        float rate = func_800D81A8(0, self->CActorParam_getActor(), 0);
+                        float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
                         int v = (int)((float)unk10 * rate);
                         cs32.w[1] = (u32)v ^ 0x80000000;
                         self->CActorParam_addHp(cs32.d - lbl_eu_806677F8);
@@ -2868,8 +2868,8 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                 if (self->CActorParam_getHp() != f31) {
                     int v = (int)((float)e->unk14 * self->CActorParam_getDamageScale() / lbl_eu_80667818);
                     getInstance__Q22cf14CBattleManagerFv();
-                    float rate = func_800D81A8(0, self->CActorParam_getActor(), 0);
-                    func_800E9FE4(getInstance__Q22cf14CBattleManagerFv(),
+                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
+                    broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(),
                                   self->CActorParam_getActor(),
                                   (int)(lbl_eu_80667868 * (float)v), 0, 0, 1,
                                   (void*)(uintptr_t)*(u32*)((u8*)self->CActorParam_getActor() + 0x3F10));
@@ -2912,7 +2912,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                                     int vv = (int)((float)(cs32.d - lbl_eu_806677F8) *
                                                    (self->CActorParam_getDamageScale() / lbl_eu_80667818));
                                     getInstance__Q22cf14CBattleManagerFv();
-                                    float rate = func_800D81A8(0, self->CActorParam_getActor(), 0);
+                                    float rate = calcBattleDamage(0, self->CActorParam_getActor(), 0);
                                     cs32.w[1] = (u32)vv ^ 0x80000000;
                                     int vv2 = (int)((float)(cs32.d - lbl_eu_806677F8) * rate);
                                     cs32.w[1] = (u32)vv2 ^ 0x80000000;
@@ -3249,9 +3249,9 @@ void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActor
     }
 }
 // us-8017f410: retail symbol is Fv; the real ABI passes (self, arg). Pushes
-// arg through func_801748B8 into the 0x3358 status field, then, unless the
+// arg through stepItemNotch into the 0x3358 status field, then, unless the
 // 0x335A counter is already positive, runs the id-0x73 arts scan: a hit sets
-// the counter to 1 (clamped), notifies func_802808AC and clears 0x3358.
+// the counter to 1 (clamped), notifies SysWinLog_TickCounter2C and clears 0x3358.
 // Finally forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
     // Plain byte-base alias for the absolute status fields (0x3358/0x335A
@@ -3269,7 +3269,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
     }
     s16 orig = *(s16*)(sb + 0x335A);
-    func_801748B8((u16*)(sb + 0x3358), arg);
+    stepItemNotch((u16*)(sb + 0x3358), arg);
     if (*(s16*)(sb + 0x335A) <= 0) {
         if (self->CActorParam_getStatusTable() != NULL) {
             void* obj = self->CActorParam_getActor();
@@ -3290,7 +3290,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
                             } else if (sv > 4) {
                                 *(s16*)(sb + 0x335A) = 4;
                             }
-                            func_802808AC(1);
+                            SysWinLog_TickCounter2C(1);
                             *(u16*)(sb + 0x3358) = 0;
                             __dt__80043E88(&holder, -1);
                             return;
@@ -3366,7 +3366,7 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
     } else if (s > 4) {
         *(s16*)((u8*)self + 0x335A) = 4;
     }
-    func_802808AC(arg);
+    SysWinLog_TickCounter2C(arg);
     *(u16*)((u8*)self + 0x3358) = 0;
     s16 clamped = *(s16*)((u8*)self + 0x335A);
     u8* obj = (u8*)self->CActorParam_getActor();
@@ -3388,7 +3388,7 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
     } else if (sum > 4) {
         *(s16*)((u8*)self + 0x335A) = 4;
     }
-    func_802808AC(delta);
+    SysWinLog_TickCounter2C(delta);
     *(u16*)((u8*)self + 0x3358) = 0;
     s16 clamped = *(s16*)((u8*)self + 0x335A);
     u8* obj = (u8*)self->CActorParam_getActor();
@@ -3400,7 +3400,7 @@ void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // Subtracts (s16)arg from the 0x335A counter, clamps to [0, 4], then
 // recomputes 0x3358 from the 0x335C status table row indexed by the clamped
 // counter scaled by the 0x3368 rate. The id-0x73 arts scan (counter <= 0)
-// sets the counter to 1, notifies func_802808AC and clears 0x3358. Finally
+// sets the counter to 1, notifies SysWinLog_TickCounter2C and clears 0x3358. Finally
 // forwards (actor, clamped, original) to CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
     void* obj = self->CActorParam_getActor();
@@ -3420,7 +3420,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
     } else if (sum > 4) {
         *(s16*)((u8*)self + 0x335A) = 4;
     }
-    func_802808AC(arg);
+    SysWinLog_TickCounter2C(arg);
     s16 idx = *(volatile s16*)((u8*)self + 0x335A); // un-CSE'd third counter read (retail lha at +0xa8)
     *(u16*)((u8*)self + 0x3358) = (u16)(int)(*(float*)((u8*)self + 0x3368) * (float)self->unk335C[idx]);
     if (*(s16*)((u8*)self + 0x335A) <= 0) {
@@ -3443,7 +3443,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
                             } else if (sv > 4) {
                                 *(s16*)((u8*)self + 0x335A) = 4;
                             }
-                            func_802808AC(1);
+                            SysWinLog_TickCounter2C(1);
                             *(u16*)((u8*)self + 0x3358) = 0;
                             __dt__80043E88(&holder, -1);
                             return;

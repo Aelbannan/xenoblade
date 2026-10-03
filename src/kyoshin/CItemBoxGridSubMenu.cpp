@@ -4,7 +4,7 @@
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
-extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
@@ -15,7 +15,7 @@ extern "C" void func_80137924(void*, void*, void*, void*);
 extern void* lbl_eu_80535750[];
 
 // Forward declarations for functions not in included headers
-void func_80136D74(char*, const char*, int);
+void SetLayoutSelfText(char*, const char*, int);
 void TagCopyVec2f(char*, const char*);
 void writePanePos(char*, char*);
 void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
@@ -113,20 +113,20 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 
     mSubState = 1;
 
-    func_80136D74((char*)mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74((char*)mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((char*)mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((char*)mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        func_80136D74((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        SetLayoutSelfText((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        func_80136D74((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        SetLayoutSelfText((char*)mTxtBoxB, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        func_80136D74((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((char*)mTxtBoxA, (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -182,7 +182,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
     u32 fontVal = (u32)((IDeviceFontInfo*)fontObj)->getFont();
-    func_8013676C(root, fontVal);
+    ApplyFontToTxtPanes(root, fontVal);
 
     u32 color = getPackedFont__Fv();
     setLayoutTextBoxFont(self->mLayout, &lbl_eu_805084BC[0x35], color);
@@ -224,14 +224,14 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
 }
 
 // Select one of the three +0x14/+0x18/+0x1C pointers by the sign-extended
-// +0x24 index and forward the pair through func_80137924.
+// +0x24 index and forward the pair through ScalePaneWorldPos.
 extern "C" void func_80208760(void* self, void* src) {
     void* arr[3];
     arr[0] = *(void**)((u8*)src + 0x14);
     arr[1] = *(void**)((u8*)src + 0x18);
     arr[2] = *(void**)((u8*)src + 0x1C);
     void* sel = arr[(s8)*(u8*)((u8*)src + 0x24)];
-    func_80137924(self, sel, *(void**)((u8*)src + 0x10),
+    ScalePaneWorldPos(self, sel, *(void**)((u8*)src + 0x10),
                   *(void**)((u8*)*(void**)((u8*)src + 8) + 0x10));
 }
 

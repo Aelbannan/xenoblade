@@ -45,7 +45,7 @@ extern "C" void* __ct__CTagProcessor(void*);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
+extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void setPaneVisible(void*, u32);
 void closeFileHandle(CFileHandle**);

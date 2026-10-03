@@ -437,8 +437,8 @@ extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
                 b2 = 1;
             }
         }
-        if ((u16)value <= (u16)func_8013A7D0((u8)talk, (u8)talk2)) b3 = 1;
-        u8 cur = (u8)func_8006A6D0();
+        if ((u16)value <= (u16)LookupRelateValue((u8)talk, (u8)talk2)) b3 = 1;
+        u8 cur = (u8)CfT_DispatchFrameCounts();
         if ((u8)rank == 0 || (u8)rank == cur) b4 = 1;
         if (b1 != 0 && b2 != 0 && b3 != 0 && b4 != 0) {
             self->mFieldA4 = 2;
@@ -478,7 +478,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         nw4r::lyt::Pane* rootPane = layout->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
-        func_8013676C(rootPane, fontVal);
+        ApplyFontToTxtPanes(rootPane, fontVal);
 
         u32 charName = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
         u32 charName2 = BdatGetU8Direct((u32)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);

@@ -127,7 +127,7 @@ struct CfObjectEffChild {
 
 // Bank vtable prefix for the mFieldB0 object (owner: the CPcEffect07
 // effect bank, lbl_eu_80664398). Retail table lbl_eu_80533744: RTTI at
-// +0x00, 0 at +0x04, cf::CPcEffect07 dtor at +0x08, func_801B218C at +0x0C.
+// +0x00, 0 at +0x04, cf::CPcEffect07 dtor at +0x08, clearPcEffect at +0x0C.
 // Tiny owner-named iface (same precedent as CfObjectModelSubB0): only the
 // slots this TU dispatches through, with retail arity. The CPcEffect07
 // header cannot be included here (its loose extern "C" imports of this

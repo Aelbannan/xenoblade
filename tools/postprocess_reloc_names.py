@@ -173,6 +173,14 @@ class UnitRules:
     # (e.g. CTaskManager lbl_eu_8056B5A4 = .data+0x48). The .sdata locator's
     # UNDEF reloc then resolves at link; the data gate sees the retail name.
     add_symbols: tuple[tuple[str, str, int, int], ...] = ()
+    # Define labels the TU never references (ABSENT class: no symtab entry
+    # at all, so add_symbols has no UNDEF slot to patch): (symbol, section,
+    # offset, size). Appends a GLOBAL OBJECT entry at the END of .symtab
+    # (sh_info untouched, no r_info renumbering) plus the name at the end of
+    # .strtab. A trailing GLOBAL keeps the locals-first invariant mwldeppc
+    # requires (appended LOCALs past sh_info abort it: ELF_linker.c:11164).
+    # Refuses when the name already exists (add_symbols owns the patch path).
+    define_symbols: tuple[tuple[str, str, int, int], ...] = ()
     # Adjust r_addend on relocs at (section, offset, delta): jumptable/switch
     # case-label addends inside residual functions whose code length differs
     # from retail (wkStandby family; the function is a documented §17.6 code
@@ -4112,8 +4120,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "lyt_resourceAccessor.o#Q34nw4r3lyt": UnitRules(
+        # Vtable lbl_eu_80569CA0 is TU-owned (source defines it retail-named
+        # with retail bytes+relocs); the exact_renames is a no-op and .data
+        # must ship so the definition resolves TU-locally at link.
         exact_renames=(("__vt__Q34nw4r3lyt16ResourceAccessor", "lbl_eu_80569CA0"),),
-        extern_data_sections=(".data",),
     ),
     "lyt_animation.o": UnitRules(
         # MWCC emits the weak inline-virtual base dtor
@@ -5209,12 +5219,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".rodata", ".sdata2"),
     ),
 
-    # g3d_resanmscn: retail split is .text-only; the five ResName pascal-string
-    # lookup keys ("LightSet(NW4R)"/"AmbLights(NW4R)"/"Lights(NW4R)"/
-    # "Fogs(NW4R)"/"Cameras(NW4R)") live in nw4r_data.s
-    # (lbl_eu_805690E0..lbl_eu_80569160). Source strings match retail; rename
-    # the file-static ResNameData symbols to the retail labels and strip .data
-    # so the .text relocs resolve to the retail data object at link.
+    # g3d_resanmscn: the five ResName pascal-string lookup keys
+    # ("LightSet(NW4R)"/"AmbLights(NW4R)"/"Lights(NW4R)"/
+    # "Fogs(NW4R)"/"Cameras(NW4R)", lbl_eu_805690E0..lbl_eu_80569160) are now
+    # owned by this TU (source defines them retail-named with retail bytes,
+    # so the exact_renames below are no-ops); keep .data so the definitions
+    # ship and the .text relocs resolve TU-locally at link.
     "g3d_resanmscn.o": UnitRules(
         exact_renames=(
             (
@@ -5238,7 +5248,6 @@ UNIT_RULES: dict[str, UnitRules] = {
                 "lbl_eu_80569160",
             ),
         ),
-        extern_data_sections=(".data",),
     ),
 
     # g3d_anmtexpat: same shape as g3d_anmclr — retail split is .text-only;
@@ -5443,8 +5452,11 @@ UNIT_RULES: dict[str, UnitRules] = {
     # Rename the section base symbol to the retail label and strip the .data
     # so the .text HA/LO relocs resolve to the shared pool at link.
     "ut_Font.o": UnitRules(
+        # .data now reproduces the retail split byte-for-byte (0x30, four
+        # 12-byte table entries), so the section stays: stripping it turned the
+        # four local table symbols into dangling UNDEFs.  The prefix rename
+        # still gives .text's relocs the retail name.
         exact_renames=(("...data.0", "lbl_eu_8056AE30"),),
-        extern_data_sections=(".data",),
     ),
 
     # snd_RemoteSpeakerManager: the retail split is .text-only; the lazy-
@@ -5997,7 +6009,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
             (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            # lbl_eu_80669A78 is defined by the TU itself (add_symbols moves it
+            # to its retail offset): the 0x43300000_00000000 magic-double pool
+            # slot is a value-equal duplicate, and renaming that slot too
+            # minted a second GLOBAL definition of the name — mwldeppc aborts
+            # with "multiply-defined: lbl_eu_80669A78 in g3d_resmat.reloc.o".
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80669A90"),
             (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
             (struct.pack(">I", 0x3A800000), "lbl_eu_80669A88"),
@@ -6013,6 +6029,72 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_eu_80669A98", ".sdata2", 0x48, 8),
             ("lbl_eu_80669E24", ".sdata2", 0x3D4, 4),
             ("lbl_eu_80669EEC", ".sdata2", 0x49C, 4),
+            # 2026-10-01: the remaining retail .sdata2 labels in this split
+            # (1-byte D0C-D13, 4-mod-8 8-byte A70, header-typed names) that
+            # C++ cannot emit as source objects. raw_off = 0x18 + addr -
+            # 0x80669A68; sizes from config/us/symbols.txt. add_local_symbol
+            # redefines each in place ONLY when the TU provides an UNDEF
+            # slot (real code reference); otherwise the entry skips cleanly.
+            # Live today (own-TU refs): A70, A80. The rest go live once the
+            # TU references them (needs a drop_text_symbols field for the
+            # keep-alive stubs, not added here). .sdata2 bytes untouched.
+            ("lbl_eu_80669A70", ".sdata2", 0x20, 8),
+            ("lbl_eu_80669A80", ".sdata2", 0x30, 4),
+            ("lbl_eu_80669AB0", ".sdata2", 0x60, 4),
+            ("lbl_eu_80669AB4", ".sdata2", 0x64, 4),
+            ("lbl_eu_80669AB8", ".sdata2", 0x68, 4),
+            ("lbl_eu_80669B88", ".sdata2", 0x138, 4),
+            ("lbl_eu_80669B8C", ".sdata2", 0x13C, 4),
+            ("lbl_eu_80669BC8", ".sdata2", 0x178, 4),
+            ("lbl_eu_80669C98", ".sdata2", 0x248, 4),
+            ("lbl_eu_80669CA0", ".sdata2", 0x250, 4),
+            ("lbl_eu_80669CA4", ".sdata2", 0x254, 4),
+            ("lbl_eu_80669CB0", ".sdata2", 0x260, 4),
+            ("lbl_eu_80669CB4", ".sdata2", 0x264, 4),
+            ("lbl_eu_80669CB8", ".sdata2", 0x268, 8),
+            ("lbl_eu_80669CC0", ".sdata2", 0x270, 4),
+            ("lbl_eu_80669CC4", ".sdata2", 0x274, 4),
+            ("lbl_eu_80669CC8", ".sdata2", 0x278, 4),
+            ("lbl_eu_80669CCC", ".sdata2", 0x27C, 4),
+            ("lbl_eu_80669CD0", ".sdata2", 0x280, 8),
+            ("lbl_eu_80669D0C", ".sdata2", 0x2BC, 1),
+            ("lbl_eu_80669D0D", ".sdata2", 0x2BD, 1),
+            ("lbl_eu_80669D0E", ".sdata2", 0x2BE, 1),
+            ("lbl_eu_80669D0F", ".sdata2", 0x2BF, 1),
+            ("lbl_eu_80669D10", ".sdata2", 0x2C0, 1),
+            ("lbl_eu_80669D11", ".sdata2", 0x2C1, 1),
+            ("lbl_eu_80669D12", ".sdata2", 0x2C2, 1),
+            ("lbl_eu_80669D13", ".sdata2", 0x2C3, 1),
+            ("lbl_eu_80669D38", ".sdata2", 0x2E8, 4),
+            ("lbl_eu_80669D3C", ".sdata2", 0x2EC, 4),
+            ("lbl_eu_80669DA0", ".sdata2", 0x350, 4),
+            ("lbl_eu_80669DD0", ".sdata2", 0x380, 4),
+            ("lbl_eu_80669DD4", ".sdata2", 0x384, 4),
+            ("lbl_eu_80669EE8", ".sdata2", 0x498, 4),
+            ("lbl_eu_80669F30", ".sdata2", 0x4E0, 4),
+            ("lbl_eu_80669F34", ".sdata2", 0x4E4, 4),
+            ("lbl_eu_80669F38", ".sdata2", 0x4E8, 4),
+            ("lbl_eu_80669F3C", ".sdata2", 0x4EC, 4),
+            ("lbl_eu_80669F40", ".sdata2", 0x4F0, 4),
+            ("lbl_eu_80669F48", ".sdata2", 0x4F8, 8),
+            ("lbl_eu_80669F50", ".sdata2", 0x500, 4),
+            ("lbl_eu_80669F54", ".sdata2", 0x504, 4),
+            ("lbl_eu_80669F58", ".sdata2", 0x508, 4),
+            ("lbl_eu_80669F5C", ".sdata2", 0x50C, 4),
+            ("lbl_eu_8066A058", ".sdata2", 0x608, 4),
+            ("lbl_eu_8066A05C", ".sdata2", 0x60C, 4),
+            ("lbl_eu_8066A098", ".sdata2", 0x648, 4),
+            ("lbl_eu_8066A09C", ".sdata2", 0x64C, 4),
+            ("lbl_eu_8066A0A8", ".sdata2", 0x658, 4),
+            ("lbl_eu_8066A0B8", ".sdata2", 0x668, 4),
+            ("lbl_eu_8066A0C0", ".sdata2", 0x670, 4),
+            ("lbl_eu_8066A0C4", ".sdata2", 0x674, 4),
+            ("lbl_eu_8066A0C8", ".sdata2", 0x678, 8),
+            ("lbl_eu_8066A0D0", ".sdata2", 0x680, 4),
+            ("lbl_eu_8066A0F0", ".sdata2", 0x6A0, 4),
+            ("lbl_eu_8066A0F4", ".sdata2", 0x6A4, 4),
+            ("lbl_eu_8066A0F8", ".sdata2", 0x6A8, 4),
+            ("lbl_eu_8066A0FC", ".sdata2", 0x6AC, 4),
         ),
         drop_data_range=(
             (".sdata2", 0, 0x18),
@@ -6706,11 +6788,15 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Two switch jumptables map by case-target function: Move ->
         # jumptable_eu_80539E00, func_802AA588 -> jumptable_eu_80539E24.
         # The .sbss statics already carry their retail lbl_eu_80664Axx names.
+        # 2026-10-03 (L1): the TU now defines the full retail .sbss
+        # (lbl_eu_80664A60 singleton + 48 colour records, 0x188, offsets
+        # exact per nm), so the unit provides its own .sbss; .data stays
+        # extern (the 0xC0 vtable block needs a polymorphic rewrite).
         exact_renames=(
             ("@7268", "jumptable_eu_80539E00"),
             ("@7321", "jumptable_eu_80539E24"),
         ),
-        extern_data_sections=(".data", ".sbss"),
+        extern_data_sections=(".data",),
     ),
     "CNandData.o": UnitRules(
         # Singleton sInstance (0x328 bss) -> lbl_eu_80577358 and the 0xc
@@ -7962,6 +8048,50 @@ def _all_symbols(path: Path) -> set[str]:
         if parts:
             names.add(parts[-1])
     return names
+
+
+def duplicate_definitions(path: Path) -> dict[str, list[tuple[int, int, int]]]:
+    """Names carrying more than one STRONG (global) definition in this object.
+
+    ``mwldeppc`` refuses such an object ("multiply-defined: <name> in <obj>"),
+    so a UNIT_RULES entry must never mint a second strong definition of a name
+    an earlier entry already defines. The 2026-10 ``g3d_resmat``
+    ``lbl_eu_80669A78`` bug was exactly this: ``pool_patterns`` renamed a
+    value-equal pool slot to a name the TU already defined, and
+    ``add_local_symbol`` then globalized it.
+
+    ELF allows weaker spellings, so they are not flagged:
+
+    * a LOCAL or WEAK definition next to one strong one (linkers pick the
+      strong; e.g. CDeviceGX.reloc.o keeps the weak ``__RTTI__9CDeviceGX``
+      copy beside the strong ``lbl_eu_80663758``), and
+    * UNDEF entries with the same name (they resolve to the definition).
+
+    Returns ``{name: [(st_value, st_size, st_shndx), ...]}`` for the offenders.
+    """
+    data = path.read_bytes()
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+    sections, by_name = _read_elf_sections(data)
+    symtab_idx = by_name.get(".symtab")
+    strtab_idx = by_name.get(".strtab")
+    if symtab_idx is None or strtab_idx is None:
+        return {}
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == symtab_idx)
+    _, str_off, _, _ = next(s for s in sections if s[0] == strtab_idx)
+    seen: dict[str, list[tuple[int, int, int]]] = {}
+    for so in range(sym_off, sym_off + sym_size, 16):
+        st_name, st_value, st_size, st_info, _other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, so
+        )
+        if st_shndx == 0 or (st_info >> 4) != 1:  # STB_GLOBAL only
+            continue
+        end = data.index(0, str_off + st_name)
+        name = data[str_off + st_name : end].decode("ascii", "replace")
+        if not name:
+            continue
+        seen.setdefault(name, []).append((st_value, st_size, st_shndx))
+    return {name: entries for name, entries in seen.items() if len(entries) > 1}
 
 
 def _reloc_at_pool_symbols(
@@ -9569,15 +9699,29 @@ def add_local_symbol(path: Path, sym_name: str, section: str, offset: int, size:
     # ELF_linker.c:11164 — the appended LOCAL lands past sh_info). Only
     # append when no symbol with the name exists.
     target = sym_name.encode("ascii")
-    found = False
+    first_match: int | None = None
+    defined_match: int | None = None
     for j in range(0, sym_size, 16):
         st_name, = struct.unpack_from(">I", data, sym_off + j)
         end = data.index(0, str_off + st_name)
-        if data[str_off + st_name : end] == target:
-            struct.pack_into(">IIBBH", data, sym_off + j + 4, offset, size, 0x11, 0, sec_idx)
-            found = True
+        if data[str_off + st_name : end] != target:
+            continue
+        if first_match is None:
+            first_match = j
+        st_shndx, = struct.unpack_from(">H", data, sym_off + j + 14)
+        if st_shndx != 0:
+            defined_match = j
             break
-    if found:
+    # Patch the DEFINED entry when one exists (a pool/data pool rename put the
+    # retail name on a content-matching slot, whose position is arbitrary):
+    # the rule's (section, offset, size) is authoritative and moves that
+    # symbol into place. Patching the source's UNDEF slot instead would leave
+    # two definitions of the name in one object, which mwldeppc rejects with
+    # "multiply-defined: <name> in <obj>"; left UNDEF it resolves to the
+    # defined entry by name at link.
+    slot = defined_match if defined_match is not None else first_match
+    if slot is not None:
+        struct.pack_into(">IIBBH", data, sym_off + slot + 4, offset, size, 0x11, 0, sec_idx)
         path.write_bytes(data)
         return True
 
@@ -9590,6 +9734,128 @@ def add_local_symbol(path: Path, sym_name: str, section: str, offset: int, size:
     # (extern + reference); until then, skip cleanly so the data gate can
     # still run (mid-progress CGXCache pool work: 7/972 slots live).
     return False
+
+
+def _splice_bytes_and_shift_headers(
+    data: bytearray, at: int, payload: bytes
+) -> bytearray:
+    """Insert *payload* at file offset *at*, shifting later headers/data.
+
+    Shared file surgery for symbol-table growth: every section whose body
+    starts at or after *at* moves forward, and the section-header table
+    itself moves when it sits at or after *at*. Callers re-read headers
+    afterwards; sh_size/sh_info updates are theirs."""
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError("expected big-endian ELF32")
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    data = data[:at] + payload + data[at:]
+    if e_shoff >= at:
+        e_shoff += len(payload)
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if sh_offset >= at:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + len(payload))
+    return data
+
+
+def define_absent_symbol(path: Path, sym_name: str, section: str, offset: int, size: int) -> bool:
+    """Define a label with no symtab entry at all (ABSENT class) in place.
+
+    Unlike :func:`add_local_symbol` (which patches the source's existing
+    UNDEF/defined slot and skips when no entry names *sym_name*), this
+    appends a new GLOBAL OBJECT entry at the END of .symtab and the name at
+    the end of .strtab. Design notes (see the L5 label-wave report):
+
+    * The entry is GLOBAL (st_info 0x11, like add_local_symbol's patch) so
+      cross-object UNDEF references resolve by name at link; a LOCAL
+      definition would not satisfy other objects' relocs.
+    * Appending (not inserting among locals) keeps every existing symbol
+      index stable: no .rela r_info renumbering, sh_info untouched, and the
+      locals-first invariant mwldeppc enforces is preserved (appended
+      LOCALs past sh_info abort it: ELF_linker.c:11164).
+    * The .strtab name is appended LAST with 4-byte padding (same rule as
+      retarget_reloc_to_symbol), so no existing st_name shifts and later
+      sections stay aligned; repeated calls compose (each append lands
+      after the previous one).
+    * Refuses when any entry already carries the name (patch path belongs
+      to add_local_symbol) and when (offset, size) exceeds the section.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = sym_idx = str_idx = None
+    sec_size = 0
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name, = struct.unpack_from(">I", data, hoff)
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".strtab":
+            str_idx = i
+    if sec_idx is None or sym_idx is None or str_idx is None:
+        return False
+    if offset < 0 or size < 0 or offset + size > sec_size:
+        return False
+
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    str_size = struct.unpack_from(">I", data, str_hoff + 20)[0]
+
+    # The name must be entirely new: a defined twin would be a hard
+    # multiply-defined link error, and an UNDEF twin is add_local_symbol's
+    # patch-in-place path (same rule spelling stays valid under either
+    # field; the caller picks the field, not the name).
+    target = sym_name.encode("ascii")
+    for j in range(0, sym_size, 16):
+        st_name, = struct.unpack_from(">I", data, sym_off + j)
+        end = data.index(0, str_off + st_name)
+        if data[str_off + st_name : end] == target:
+            return False
+
+    # 1. Append the name to .strtab (last, 4-byte padded): no existing
+    # st_name shifts, later sections keep alignment.
+    name_bytes = target + b"\0"
+    name_bytes += b"\0" * ((-len(name_bytes)) % 4)
+    new_st_name = str_size
+    data = _splice_bytes_and_shift_headers(data, str_off + str_size, name_bytes)
+
+    # 2. Re-read headers (the splice may have moved .symtab), then append
+    # the entry at the END of .symtab: no index renumbering anywhere.
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+    entry = struct.pack(">IIIBBH", new_st_name, offset, size, 0x11, 0, sec_idx)
+    data = _splice_bytes_and_shift_headers(data, sym_off + sym_size, entry)
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    struct.pack_into(">I", data, sym_hoff + 20, sym_size + 16)
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_size = struct.unpack_from(">I", data, str_hoff + 20)[0]
+    struct.pack_into(">I", data, str_hoff + 20, str_size + len(name_bytes))
+
+    path.write_bytes(data)
+    return True
 
 
 def inject_reloc_to_symbol(path: Path, section: str, offset: int, sym_name: str) -> bool:
@@ -10390,6 +10656,8 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = inject_reloc_to_symbol(path, sec, off, sym_name) or changed
     for sym_name, sec, off, size in rules.add_symbols:
         changed = add_local_symbol(path, sym_name, sec, off, size) or changed
+    for sym_name, sec, off, size in rules.define_symbols:
+        changed = define_absent_symbol(path, sym_name, sec, off, size) or changed
     for sec, off, tsec, toff in rules.retarget_relocs_local:
         changed = retarget_reloc_to_local(path, sec, off, tsec, toff) or changed
     for sec, start, end in rules.drop_data_range:
@@ -10438,6 +10706,17 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     # (see globalize_local_undefs for why mwldeppc needs this and why it can
     # never change linked bytes).
     for sec, off, tsec, toff in rules.retarget_relocs_local:    changed = globalize_local_undefs(path, rule_produced_symbol_names(rules)) or changed
+    # Strong, cheap invariant: two STRONG definitions of one name in one object
+    # make mwldeppc abort the link. Warn here so the offending rule entry is
+    # named at the step that produced it, instead of only as a raw link error.
+    duplicates = duplicate_definitions(path)
+    if duplicates:
+        print(
+            f"WARNING: {path.name}: duplicate strong definitions "
+            f"(mwldeppc will abort): "
+            + ", ".join(f"{name} x{len(v)}" for name, v in sorted(duplicates.items())),
+            file=sys.stderr,
+        )
     return changed
 
 

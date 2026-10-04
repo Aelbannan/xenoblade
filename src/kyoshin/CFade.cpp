@@ -186,7 +186,6 @@ void CFade::CFade_FadeOut() {
 // Cross-TU vtable slots (flat retail names; CTaskManager vtable idiom).
 extern "C" void __dt__5CFadeFv();
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void WorkEvent3__10IWorkEventFv();
 extern "C" void WorkEvent4__10IWorkEventFv();
 extern "C" void WorkEvent6__10IWorkEventFv();
 extern "C" void WorkEvent7__10IWorkEventFv();
@@ -215,7 +214,6 @@ extern "C" void WorkEvent29__10IWorkEventFv();
 extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" u32 __RTTI__10IWorkEvent;
 extern u32 lbl_eu_806628E8[];  // sdata word pair (defined below).
 
 // [.data] 0x80536EA8-0x80536F30 (136B): CFade vtable (sdata locator,
@@ -227,7 +225,9 @@ void* lbl_eu_80536EA8[34] = {
     // W2 slot (OnFileEvent member address) is zero here: a member-function
     // address is unsourcable in C++ (10247); it needs a rule-side
     // inject_relocs entry like CTaskManager.o's three '<'-unspellable slots.
-    (void*)0, (void*)&WorkEvent3__10IWorkEventFv,
+    // W3 likewise: no object defines the retail Fv spelling yet (CGame.o
+    // carries the FPv arity instead -- signature dispute for its owner).
+    (void*)0, (void*)0,
     (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
     (void*)&WorkEvent6__10IWorkEventFv,
     (void*)&WorkEvent7__10IWorkEventFv,
@@ -258,8 +258,13 @@ void* lbl_eu_80536EA8[34] = {
 };
 
 // [.data] 0x80536F30-0x80536F40 (16B): RTTI word + 12 zero pad bytes.
-u32 lbl_eu_80536F30[4] = {
-    (u32)&__RTTI__10IWorkEvent, 0x00000000, 0x00000000, 0x00000000,
+// Pragma-pinned to .data (plain zeros would bss-ify).
+#pragma section data_type ".data" ".data"
+extern __declspec(section ".data") u32 lbl_eu_80536F30[4] = {
+    // RTTI word is zero here: __RTTI__10IWorkEvent cannot be named in source
+    // (10322 vs the implicit type registration); needs a rule-side
+    // inject_relocs entry like CTaskManager.o's unspellable slots.
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
 // String labels (defined in the .rodata block below).
@@ -305,7 +310,7 @@ u32 lbl_eu_80536F40[28] = {
 // strings + marker-name table. Retail holds one label per string; every
 // start is 8-aligned so the toolchain places them with no padding.
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_8050B5A0[0x48] = {
+char gap_48_8050B5A0_rodata[0x48] = {
     0x6D,0x65,0x6E,0x75,0x2F,0x6A,0x70,0x2F,0x46,0x61,0x64,0x65,0x2E,0x61,0x72,0x63,
     0x00,0x43,0x46,0x61,0x64,0x65,0x00,0x61,0x72,0x63,0x00,0x6D,0x66,0x30,0x30,0x5F,
     0x66,0x61,0x64,0x65,0x2E,0x62,0x72,0x6C,0x79,0x74,0x00,0x6D,0x66,0x30,0x30,0x5F,
@@ -428,6 +433,8 @@ extern __declspec(section ".sdata") u32 lbl_eu_806628E8[2] = { 0x00000000, 0x000
 
 // [.sdata2] 0x80668750-0x80668760 (16B): 1.0f frame target (the "CFade" pool
 // tail carries no label and has no references; only the float rebuilds here).
-#pragma section data_type ".sdata2" ".sdata2"
-__declspec(section ".sdata2") f32 lbl_eu_80668750 = 1.0f;
-#pragma section data_type ".data" ".data"
+// [.sdata2] 1.0f frame target stays UNDEF (rule-side pool naming): defining
+// it in-TU reschedules the StepFadeIn/Out float loads (100% -> 73.7%), and a
+// scalar sdata2 def collides with this declaration (10322); an array def
+// needs [0] reads with the same scheduling cost. The "CFade" pool tail
+// carries no label and has no references.

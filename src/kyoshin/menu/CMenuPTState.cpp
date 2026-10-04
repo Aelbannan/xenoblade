@@ -30,7 +30,7 @@ extern "C" void __dt__12CMenuPTStateFv(CMenuPTState* self);
 extern CMenuPTState* lbl_eu_80664300;    // singleton pointer
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];           // CProcess primary vtable
-extern char lbl_eu_80532A38[];           // CMenuPTState final vtable
+extern u32 lbl_eu_80532A38[14];          // CMenuPTState final vtable
 // sdata2 float pair: timer decay multiplier + emitted zero word (retail
 // section is 0x10; no code reads the second word). Non-const (a const def
 // makes MWCC const-propagate and emit a dead literal pool beside the array,
@@ -64,7 +64,7 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             const PtmfNullWords* ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
             u32 ptmfWord1 = ptmf->w[1];
             u32 ptmfWord0 = ptmf->w[0];
-            char* vtFinal = lbl_eu_80532A38;
+            char* vtFinal = (char*)lbl_eu_80532A38;
 
             shim->callbacks[0] = ptmfWord0;
             char* iscnVtbl = vtFinal + 0x24;
@@ -238,27 +238,36 @@ extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self) {
         }
     }
 }
+
 // Retail tables owned by this unit.
 // .rodata (0x10): "CMenuPTState" class-name string (read by the sdata locator
 // below). [0x10] folds the 3 section-pad bytes inside (splitter says 0xD).
-//TMP3// extern const char lbl_eu_80503BD8[0x10] = "CMenuPTState";
+extern const char lbl_eu_80503BD8[0x10] = "CMenuPTState";
 // .sdata (0x8): locator pair {class-name, vtable-trailer} (retail rela.sdata).
-//TMP3// sdata off
-// .sdata2 (0x8): 1/30 per-frame timer decay multiplier + emitted zero word.
-// (0x3D088889 = 0.033333335f; cf. CfObjectPoint's 5.0f pair.)
-//TMPEXP// extern __declspec(section ".sdata2") f32 lbl_eu_80667AA8[2] = { 0.033333335f, 0.0f };
+extern u32 lbl_eu_80532A70[];
+const void* lbl_eu_806624E0[2] = { lbl_eu_80503BD8, lbl_eu_80532A70 };
 // .data (0x70): CMenuPTState final vtable (14 slots) + lbl_eu_80532A70 trailer
 // (14 slots: 6 RTTI words + zeros). Slot targets come from the retail
 // rela.data (all addends +0). Real references where nameable: the sdata
 // locator, the dtor/cbRender/Init/Term/Move (canonical extern "C" decls merge
 // with the in-scope members, as the existing dtor/cbRender decls above do),
-// and the 6 RTTI sdata words from other units. Zero slots (file bytes are
-// still retail-identical since reloc sites read as zeros; only the linked
-// addresses differ): Reset (inline - referencing it would emit a weak stub
+// and the 6 RTTI sdata words from other units. Literal words: +0x28 is the
+// IScnRender this-adjustor delta (-88) and +0x3C its +88 RTTI base offset
+// (the secondary vtable lives at +0x58: see the hpp thunk comment). Other
+// zero slots (file bytes are still retail-identical since reloc sites read
+// as zeros; only the linked addresses differ): Reset (inline - referencing
+// it would emit a weak stub
 // here and blow the 0-spare .text budget), Draw (template-id unspellable
 // under extern "C"), Tail (no exact-name definition in tree), and the two
 // IScnRender thunks (member addresses are PMFs, not plain addresses, and the
 // retail short names have no definition to resolve to).
+// (.sdata2 lbl_eu_80667AA8 deliberately NOT defined here: this TU's int->float
+// conversion pool (0x10 local @-words, pre-existing - the pristine tree
+// already emits it) sits ahead of any definition, so the label would land
+// MISPLACED at +0x10 and the section would stay 0x18 vs retail 0x8. Landing
+// it needs refreshPtStateAccum's conversion re-spelled with an explicit
+// lbl_eu_80667AA0 load (retail's lfd references that external word); the
+// builtin (f32) cast always pools locally. See residual.)
 extern "C" void Init__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void Term__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void Move__12CMenuPTStateFv(CMenuPTState* self);
@@ -268,5 +277,15 @@ extern u32 lbl_eu_80661950[];
 extern u32 lbl_eu_80661948[];
 extern u32 lbl_eu_80661DE8[];
 extern u32 lbl_eu_80661DE0[];
-//TMP3// vtable+tail off
-
+u32 lbl_eu_80532A38[14] = {
+    (u32)lbl_eu_806624E0, 0, (u32)__dt__12CMenuPTStateFv,
+    0, (u32)Init__12CMenuPTStateFv, (u32)Term__12CMenuPTStateFv,
+    (u32)Move__12CMenuPTStateFv, 0, 0,
+    (u32)lbl_eu_806624E0, -88, 0, 0,
+    (u32)cbRenderBefore__12CMenuPTStateFv,
+};
+u32 lbl_eu_80532A70[14] = {
+    (u32)lbl_eu_80661940, 88, (u32)lbl_eu_80661958, 0,
+    (u32)lbl_eu_80661950, 0, (u32)lbl_eu_80661948, 0,
+    (u32)lbl_eu_80661DE8, 0, (u32)lbl_eu_80661DE0, 0, 0, 0,
+};

@@ -925,3 +925,106 @@ extern "C" void sinit_802AAF24() {
     lbl_eu_80664BE0[1] = 0xff;
     lbl_eu_80664BE0[0] = 0xff;
 }
+
+// Retail tables owned by this unit.
+// .sdata tail (0x60-0x67): locator pair {rodata name, vtable-trailer}
+// (retail rela.sdata). lbl_eu_80662DD0 is read by the vtable below. The
+// trailer word stays zero: it would reference lbl_eu_80539F08, but that
+// object dies with the frozen .data strip (extern_data_sections), so naming
+// it here would open a new link row for a symbol nothing can provide.
+const void* lbl_eu_80662DD0[2] = { lbl_eu_80510878, 0 };
+// .data (0x148): switch-dispatch tables (18 words: 9 Move + 9
+// applyChainColorScheme case addresses), the CMenuBattleChain composite vtable
+// (48 words: label lbl_eu_80539E48), and the lbl_eu_80539F08 RTTI trailer
+// (16 words). Targets come from the retail rela.data.
+// The dispatch words carry into-function addends (Move+0x64...), which MWCC
+// cannot static-init (it dynamic-inits them into .bss+.ctors, measured), so
+// they stay zero here with file bytes retail-identical; the linked addresses
+// differ (residual for whoever reconstructs Init's dispatch).
+// Vtable zero slots (same file-bytes reasoning): dtor (a same-label extern
+// "C" decl is MWCC 10197 against the non-virtual member), Reset (inline -
+// a reference would emit a weak stub here), Draw (template-id unspellable
+// under extern "C"), Tail (no exact-name definition in tree).
+// are the IWorkEvent(+0x6C)/IScnRender(+0x70) this-adjustor deltas; +0x70/+0x6C
+// in the trailer are their RTTI base offsets. dtorAdj6C/70/renderBeforeAdj70
+// use their defined (suffixed) spellings - the retail short names have no
+// definition to resolve to. (Link note: the frozen CMenuBattleChain.o rule
+// carries extern_data_sections=(".data",) - RELOCPOST strips this whole
+// .data, so lbl_eu_80539E48 stays a link row until that entry shrinks.
+// Agents cannot edit the table; the raw object below is byte-identical and
+// lands as soon as the strip goes. The surviving sections reference nothing
+// stripped.)
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void* __RTTI__10IWorkEvent;
+extern u32 lbl_eu_80661940[];
+extern u32 lbl_eu_80661958[];
+extern u32 lbl_eu_80661950[];
+extern u32 lbl_eu_80661948[];
+extern "C" void Init__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void Term__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void Move__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void cbRenderBefore__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern u32 lbl_eu_80661ED0[];
+extern u32 lbl_eu_80661EC8[];
+#pragma section data_type ".data" ".data"
+static __declspec(section ".data") u32 battleChainDispatchTables[18] = { 0 };
+u32 lbl_eu_80539E48[48] = {
+    (u32)lbl_eu_80662DD0, 0, 0,
+    0, (u32)Init__16CMenuBattleChainFv, (u32)Term__16CMenuBattleChainFv,
+    (u32)Move__16CMenuBattleChainFv, 0, 0,
+    (u32)lbl_eu_80662DD0, -108, (u32)CMenuBattleChain_dtorAdj6C,
+    (u32)WorkEvent1__10IWorkEventFPvPCc, (u32)OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)WorkEvent3__10IWorkEventFPv, (u32)WorkEvent4__10IWorkEventFv,
+    (u32)OnPauseTrigger__10IWorkEventFb, (u32)WorkEvent6__10IWorkEventFv,
+    (u32)WorkEvent7__10IWorkEventFv, (u32)WorkEvent8__10IWorkEventFv,
+    (u32)WorkEvent9__10IWorkEventFv, (u32)WorkEvent10__10IWorkEventFv,
+    (u32)WorkEvent11__10IWorkEventFv, (u32)WorkEvent12__10IWorkEventFv,
+    (u32)WorkEvent13__10IWorkEventFv, (u32)WorkEvent14__10IWorkEventFv,
+    (u32)WorkEvent15__10IWorkEventFv, (u32)WorkEvent16__10IWorkEventFv,
+    (u32)WorkEvent17__10IWorkEventFv, (u32)WorkEvent18__10IWorkEventFv,
+    (u32)WorkEvent19__10IWorkEventFv, (u32)WorkEvent20__10IWorkEventFv,
+    (u32)WorkEvent21__10IWorkEventFv, (u32)WorkEvent22__10IWorkEventFv,
+    (u32)WorkEvent23__10IWorkEventFv, (u32)WorkEvent24__10IWorkEventFv,
+    (u32)WorkEvent25__10IWorkEventFv, (u32)WorkEvent26__10IWorkEventFv,
+    (u32)WorkEvent27__10IWorkEventFv, (u32)WorkEvent28__10IWorkEventFv,
+    (u32)WorkEvent29__10IWorkEventFv, (u32)WorkEvent30__10IWorkEventFv,
+    (u32)WorkEvent31__10IWorkEventFv,
+    (u32)lbl_eu_80662DD0, -112, (u32)CMenuBattleChain_dtorAdj70,
+    (u32)CMenuBattleChain_renderBeforeAdj70, (u32)cbRenderBefore__16CMenuBattleChainFv,
+};
+u32 lbl_eu_80539F08[16] = {
+    (u32)lbl_eu_80661940, 0x70, (u32)&__RTTI__10IWorkEvent, 0x6C,
+    (u32)lbl_eu_80661958, 0, (u32)lbl_eu_80661950, 0,
+    (u32)lbl_eu_80661948, 0, (u32)lbl_eu_80661ED0, 0,
+    (u32)lbl_eu_80661EC8, 0, 0, 0,
+};

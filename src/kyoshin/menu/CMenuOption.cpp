@@ -48,7 +48,7 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
 
     CMenuOptionVtblView* vtSlots = reinterpret_cast<CMenuOptionVtblView*>(_this);
     vtSlots->mProcVtable = (u32*)lbl_eu_805392C8;
-    vtSlots->mScnRenderVt = (u32*)(lbl_eu_805392C8 + 0x24);
+    vtSlots->mScnRenderVt = (u32*)(lbl_eu_805392C8 + 9);
     _this->mParentRef = parent;
 
     __ct__CBgTex(&_this->mBgTex, 0);
@@ -235,7 +235,7 @@ void CMenuOption::Term() {
     teardown(&mTitleAHelp);
     COptionTeardown(&mOption);
 
-    lbl_eu_80664A38 = 0;
+    lbl_eu_80664A38[0] = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -278,7 +278,7 @@ void CMenuOption::cbRenderBefore() {
  * already live; otherwise allocates the 0x1C0-byte screen, constructs it,
  * stores it in the shared flag and registers it under `registParent`. */
 CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg) {
-    if (lbl_eu_80664A38 != 0) {
+    if (lbl_eu_80664A38[0] != 0) {
         return NULL;
     }
     CMenuOption* obj = (CMenuOption*)mtl::MemManager::allocate(
@@ -286,9 +286,9 @@ CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg)
     if (obj != NULL) {
         obj = __ct__CMenuOption(obj, parent, arg);
     }
-    lbl_eu_80664A38 = (u32)obj;
+    lbl_eu_80664A38[0] = (u32)obj;
     Regist__8CProcessFP8CProcessb((CProcess*)obj, registParent, false);
-    return (CMenuOption*)lbl_eu_80664A38;
+    return (CMenuOption*)lbl_eu_80664A38[0];
 }
 
 /* Advance the option menu to phase 1 once the background texture, title bar
@@ -429,4 +429,72 @@ void CMenuOption_dtorAdj58(IScnRender* self) {
         reinterpret_cast<CMenuOption*>(reinterpret_cast<char*>(self) - 0x58));
 }
 
-unsigned long hasOptionMenu(void) { return lbl_eu_80664A38 != 0; }
+unsigned long hasOptionMenu(void) { return lbl_eu_80664A38[0] != 0; }
+
+// Retail tables owned by this unit.
+// .rodata (0x158): "CTutorial" head, the tutorial resource pool
+// (lbl_eu_80510290, 17 strings), "CMenuOption" (lbl_eu_805103B8, read by the
+// sdata locator below) and the title pool (lbl_eu_805103C4, used above at
+// +0x144/+0x14D/+0x150). All boundaries are free so no alignment attributes
+// (those flip codegen, cf. CBattery) - the head/Tex sizes absorb their pads.
+// .sbss (0x8): singleton pointer + emitted zero word (retail section is 0x8;
+// no code reads the second word).
+// .sdata (0x10): two locator pairs {rodata-name, vtable-RTTI-slot}.
+// .data (0x108): CTutorial vtable (34 slots: label lbl_eu_80539230),
+// its RTTI trailer (label lbl_eu_805392B8), the CMenuOption vtable (14 slots:
+// label lbl_eu_805392C8) and an anonymous RTTI trailer (14 words, static).
+// Slot targets come from the retail rela.data (all addends +0). Real
+// references where nameable (neither CTutorial nor IWorkEvent is in scope
+// here, so plain extern "C" decls cannot clash; CMenuOption's own virtuals
+// use canonical merging decls). Zero slots: Reset (inline stub danger),
+// Draw (template-id), Tail (suffix mismatch), dtorAdj/renderAdj use their
+// defined suffixed spellings, and CMenuOption's dtor uses its defined
+// suffixed (deleting) spelling.
+extern const char lbl_eu_80510280[0x10] = "CTutorial";
+extern const char lbl_eu_80510290[0x128] = "menu/jp/Tutorial.arc\0" "/common/jp/bdat_menu_ttrl.bin\0" "menu/jp/tpl/c_ttrl_%03d.arc\0" "menu/jp/tpl/r_ttrl_%03d.arc\0" "MNU_ttrl\0" "page\0" "txt_pg00\0" "txt_pg01\0" "cttrl_i%03d_%02d.tpl\0" "rttrl_i%03d_%02d.tpl\0" "pic_cap\0" "CTutorial\0" "arc\0" "mf85_opt01_tut01.brlyt\0" "mf85_opt01_tut01_in.brlan\0" "mf85_opt01_tut01_info_in.brlan\0" "CTutorialTex";
+extern const char lbl_eu_805103B8[0x0C] = "CMenuOption";
+extern __declspec(section ".rodata") char lbl_eu_805103C4[0x14] =
+    "MNU_main\0name\0\0\0\0\0\0";
+u32 lbl_eu_80664A38[2] = { 0, 0 };
+// .sdata (0x10): two locator pairs {rodata-name, vtable-RTTI-slot}.
+extern u32 lbl_eu_805392B8[];
+extern u32 lbl_eu_80539300[];
+extern const char lbl_eu_805103B8[0x0C];
+const void* lbl_eu_80662C50[2] = { lbl_eu_80510280, lbl_eu_805392B8 };
+const void* lbl_eu_80662C58[2] = { lbl_eu_805103B8, lbl_eu_80539300 };
+// .data (0x108): CTutorial vtable (34 slots: label lbl_eu_80539230), its RTTI
+// trailer (label lbl_eu_805392B8), the CMenuOption vtable (14 slots: label
+// lbl_eu_805392C8) and an anonymous RTTI trailer (14 words, static). The
+// CMenuOption dtor uses its defined suffixed (deleting) spelling.
+extern "C" void __dt__9CTutorialFv();
+extern "C" void OnFileEvent__9CTutorialFP10CEventFile();
+extern "C" void Init__11CMenuOptionFv(CMenuOption* self);
+extern "C" void Term__11CMenuOptionFv(CMenuOption* self);
+extern "C" void Move__11CMenuOptionFv(CMenuOption* self);
+extern "C" void cbRenderBefore__11CMenuOptionFv(CMenuOption* self);
+extern u32 lbl_eu_80661940[];
+extern u32 lbl_eu_80661958[];
+extern u32 lbl_eu_80661950[];
+extern u32 lbl_eu_80661948[];
+extern u32 lbl_eu_80661DE8[];
+extern u32 lbl_eu_80661DE0[];
+u32 lbl_eu_80539230[34] = {
+    (u32)lbl_eu_80662C50, 0, (u32)__dt__9CTutorialFv,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+#pragma section data_type ".data" ".data"
+__declspec(section ".data") u32 lbl_eu_805392B8[4] = { 0, 0, 0, 0 };
+extern "C" void __dt__11CMenuOptionFv__FP11CMenuOptioni(CMenuOption* self, int flag);
+u32 lbl_eu_805392C8[14] = {
+    (u32)lbl_eu_80662C58, 0, (u32)__dt__11CMenuOptionFv__FP11CMenuOptioni,
+    0, (u32)Init__11CMenuOptionFv, (u32)Term__11CMenuOptionFv,
+    (u32)Move__11CMenuOptionFv, 0, 0,
+    (u32)lbl_eu_80662C58, -88, (u32)CMenuOption_dtorAdj58, (u32)CMenuOption_renderBeforeAdj58,
+    (u32)cbRenderBefore__11CMenuOptionFv,
+};
+
+u32 lbl_eu_80539300[14] = {
+    (u32)lbl_eu_80661940, 88, (u32)lbl_eu_80661958, 0,
+    (u32)lbl_eu_80661950, 0, (u32)lbl_eu_80661948, 0,
+    (u32)lbl_eu_80661DE8, 0, (u32)lbl_eu_80661DE0, 0, 0, 0,
+};

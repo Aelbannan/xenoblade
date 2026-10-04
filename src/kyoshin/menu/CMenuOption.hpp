@@ -161,11 +161,11 @@ extern "C" void __dt__6CBgTexFv(CBgTex* _this, int flags);
 extern "C" void __dt__800FED0C(CProcess* _this, int flags);
 
 // Shared singleton state flag (cleared by Term).
-extern u32 lbl_eu_80664A38;
+extern u32 lbl_eu_80664A38[2];
 
 // Data imports (MWCC does not mangle global-scope data names).
 extern u8 lbl_eu_8052BF70[];    // CMenuOption temporary vtable (pre-PMF copy)
-extern u8 lbl_eu_805392C8[];    // CMenuOption final vtable; IScnRender vtable at +0x24
+extern u32 lbl_eu_805392C8[14];   // CMenuOption final vtable; IScnRender vtable at +0x24
 extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
 extern char lbl_eu_805103C4[];  // option title/help string table base
 

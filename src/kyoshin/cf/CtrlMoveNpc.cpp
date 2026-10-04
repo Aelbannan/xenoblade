@@ -118,8 +118,9 @@ u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 // Linker-label data imports. MWCC emits global-variable names unmangled.
 
-// CCtrlMoveNpc secondary vtable (address-taken, so declare as an array).
-extern const char lbl_eu_80532DB4[];
+// CCtrlMoveNpc secondary vtable (address-taken word table, so an array
+// of pointers; the retail words are an sdata locator, zero, and a hook).
+extern void* lbl_eu_80532DB4[];
 
 // Warning() file / format rodata strings.
 extern const char lbl_eu_80526324[];
@@ -152,7 +153,7 @@ extern u32 lbl_eu_80663D90;     // global value copied into mField78
 namespace cf {
 CCtrlMoveNpc::CCtrlMoveNpc() {
     __ct__80088904((cf::CCtrlMoveBase*)this);
-    this->mBaseVtable2 = lbl_eu_80532DB4;
+    this->mBaseVtable2 = (const char*)lbl_eu_80532DB4;
     this->mStateFunc = __ptmf_null;
 }
 }
@@ -379,3 +380,63 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
 extern "C" void NpcMove_ClearRowBmp() {
     memset(lbl_eu_805757E0, 0, 0x10);
 }
+// ============================================================================
+// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
+// Defined here at EOF so -ipa codegen for the functions above is unaffected.
+// NOTE (wave DL): the .sdata2 float table (9 labels) stays UNDEF -- consecutive
+// named floats 8-align (odd-offset labels need +0x4) and the WIP fp code that
+// reads them would reschedule (cf. CFade/CREvtMem). All nine need rule-side
+// pool naming (eight f32: 0.1/0.0/0.2/3.6/1.0/~0.04/4.0/0.5 + f64 360.0).
+// The 2DA8 ptmf triple stays UNDEF for the same reason (a member-pointer
+// constant for a free function is unsourcable); its bytes rebuild below.
+// ============================================================================
+
+// Cross-TU data slots (flat retail names).
+extern "C" void emptyMoveBaseHook();
+extern u32 lbl_eu_80661C18;
+extern u32 lbl_eu_80662548[];  // sdata word pair (defined below).
+
+// [.data] 0x80532DA8-0x80532DB4 (12B): ptmf-shaped triple {0, -1, tickNpcMove}.
+// Kept under a gap name: the TU declares 2DA8 as a member-pointer (used by
+// beginNpcMove) which cannot be defined from a free-function address.
+u32 gap_0C_80532DA8_data[3] = {
+    0x00000000, 0xFFFFFFFF, (u32)&cf::tickNpcMove,
+};
+
+// [.data] 0x80532DB4-0x80532DC0 (12B): secondary vtable (sdata locator,
+// zero, base hook); assigned to mBaseVtable2 by the ctor.
+void* lbl_eu_80532DB4[3] = {
+    (void*)&lbl_eu_80662548, (void*)0, (void*)&emptyMoveBaseHook,
+};
+
+// [.data] 0x80532DC0-0x80532DD0 (16B): sdata-referenced word + zero fill.
+u32 lbl_eu_80532DC0[4] = {
+    (u32)&lbl_eu_80661C18, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.bss] 0x805757E0-0x80575918 (312B): movement state storage, five objects
+// in retail order (all starts 16-aligned, so placement is exact).
+u32 lbl_eu_805757E0[4];
+f32 lbl_eu_805757F0[12];
+f32 lbl_eu_80575820[14];
+u32 lbl_eu_80575858[6];
+u32 lbl_eu_80575870[42];
+
+// [.rodata] 0x80503D20-0x80503D70 (80B): class-name string (unreferenced pool
+// bytes, kept under the retail label) + the bdat column-name table.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_80503D20[0x10] = {
+    0x63,0x66,0x3A,0x3A,0x43,0x74,0x72,0x6C,0x4D,0x6F,0x76,0x65,0x4E,0x70,0x63,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char gap_40_80503D30_rodata[0x40] = {
+    0x65,0x72,0x61,0x73,0x65,0x00,0x71,0x75,0x65,0x73,0x74,0x49,0x44,0x00,0x71,0x73,
+    0x74,0x5F,0x73,0x66,0x6C,0x67,0x00,0x71,0x73,0x74,0x5F,0x65,0x66,0x6C,0x67,0x00,
+    0x73,0x66,0x6C,0x67,0x31,0x00,0x65,0x66,0x6C,0x67,0x31,0x00,0x73,0x66,0x6C,0x67,
+    0x32,0x00,0x65,0x66,0x6C,0x67,0x32,0x00,0x6D,0x6F,0x64,0x65,0x6C,0x00,0x00,0x00,
+};
+
+// [.sdata] 0x80662548-0x80662550 (8B): rodata-name + data-tail locator pair.
+#pragma section data_type ".sdata" ".sdata"
+extern __declspec(section ".sdata") u32 lbl_eu_80662548[2] = { (u32)&lbl_eu_80503D20, (u32)&lbl_eu_80532DC0 };
+#pragma section data_type ".data" ".data"

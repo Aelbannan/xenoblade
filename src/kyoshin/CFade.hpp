@@ -12,9 +12,9 @@
 extern void* lbl_eu_80536EA8[];
 // Shared string pool (split1 .rodata): fade layout arc filename.
 extern char lbl_eu_8050B5A0[];
-// SDA float - fade animation frame target (non-const: a const sdata2 def
-// would be folded away from the TU; the float is only ever read).
-extern "C" f32 lbl_eu_80668750;
+// SDA float - fade animation frame target (UNDEF slot kept for rule-side
+// pool naming; see the sdata2 note in CFade.cpp).
+extern const f32 lbl_eu_80668750;
 
 /* Stores mVtbl before UnkClass_8045F564 is constructed (retail ctor order).
 Same pattern as CBatteryVtblBase in CBattery.hpp: an inline base ctor makes

@@ -316,7 +316,7 @@ void CMenuQuestLog::Term() {
     teardown(&mTitleAHelp);
     QstLogList_Teardown(&mQstLogList);
     QstLogInfo_TeardownLayout(&mQstLogInfo);
-    lbl_eu_80663FC0 = 0;
+    lbl_eu_80663FC0[0] = 0;
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
@@ -433,7 +433,7 @@ body:
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool b);
 
 CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
-    if (lbl_eu_80663FC0 != 0) {
+    if (lbl_eu_80663FC0[0] != 0) {
         return 0;
     }
     CMenuQuestLog* obj = (CMenuQuestLog*)mtl::MemManager::allocate(
@@ -441,13 +441,13 @@ CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
     if (obj != 0) {
         obj = __ct__CMenuQuestLog(obj, parent, arg2);
     }
-    lbl_eu_80663FC0 = obj;
+    lbl_eu_80663FC0[0] = obj;
     Regist__8CProcessFP8CProcessb(obj, self, false);
-    return lbl_eu_80663FC0;
+    return lbl_eu_80663FC0[0];
 }
 
 // (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0 != 0; }
+extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0[0] != 0; }
 
 // State-machine step for state 1: once the background layout, title help,
 // list and info widget are all ready, open the title help + list, set state 1
@@ -648,3 +648,122 @@ extern "C" CMenuQuestLog* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
     }
     return self;
 }
+
+// Retail tables owned by this unit.
+// .rodata (0x1E8): "CMenuQuestLog" head, the MNU/name pair (lbl_eu_804FE518),
+// 27 markerlist strings (each [0x10], code_80135FDC minimaplist pattern) and
+// six trailing words (lbl_eu_804FE6D8, const u32 - not clean floats). All
+// boundaries free: single-zero pads ride inside the arrays, no attributes.
+// .sbss (0x8): singleton pointer + emitted zero word.
+// .sdata (0x8): locator pair {rodata-name, vtable-RTTI-slot}.
+// .data (0x140): switch-dispatch table (10 Move case addresses, zeros -
+// into-function addends cannot static-init), the vtable (14 slots: label
+// lbl_eu_8052CC38), its RTTI trailer (label lbl_eu_8052CC70), the markerlist
+// pointer table + tail zeros (label lbl_eu_8052CCA8) and six layout floats
+// (label lbl_eu_8052CD38). Neither CTutorial nor IWorkEvent is in scope, so
+// plain extern "C" decls cannot clash; own virtuals use canonical merges.
+extern const char lbl_eu_804FE508[0x10] = "CMenuQuestLog";
+extern __declspec(section ".rodata") char lbl_eu_804FE518[0x10] = "MNU_quest\0name\0";
+extern const char lbl_eu_804FE528[0x10] = "markerlist0000";
+extern const char lbl_eu_804FE538[0x10] = "markerlist0101";
+extern const char lbl_eu_804FE548[0x10] = "markerlist0201";
+extern const char lbl_eu_804FE558[0x10] = "markerlist0301";
+extern const char lbl_eu_804FE568[0x10] = "markerlist0401";
+extern const char lbl_eu_804FE578[0x10] = "markerlist0402";
+extern const char lbl_eu_804FE588[0x10] = "markerlist0501";
+extern const char lbl_eu_804FE598[0x10] = "markerlist0601";
+extern const char lbl_eu_804FE5A8[0x10] = "markerlist0701";
+extern const char lbl_eu_804FE5B8[0x10] = "markerlist0801";
+extern const char lbl_eu_804FE5C8[0x10] = "markerlist0901";
+extern const char lbl_eu_804FE5D8[0x10] = "markerlist1001";
+extern const char lbl_eu_804FE5E8[0x10] = "markerlist1101";
+extern const char lbl_eu_804FE5F8[0x10] = "markerlist1201";
+extern const char lbl_eu_804FE608[0x10] = "markerlist1202";
+extern const char lbl_eu_804FE618[0x10] = "markerlist1301";
+extern const char lbl_eu_804FE628[0x10] = "markerlist1401";
+extern const char lbl_eu_804FE638[0x10] = "markerlist1501";
+extern const char lbl_eu_804FE648[0x10] = "markerlist1601";
+extern const char lbl_eu_804FE658[0x10] = "markerlist1701";
+extern const char lbl_eu_804FE668[0x10] = "markerlist1801";
+extern const char lbl_eu_804FE678[0x10] = "markerlist1901";
+extern const char lbl_eu_804FE688[0x10] = "markerlist2001";
+extern const char lbl_eu_804FE698[0x10] = "markerlist2101";
+extern const char lbl_eu_804FE6A8[0x10] = "markerlist2201";
+extern const char lbl_eu_804FE6B8[0x10] = "markerlist2301";
+extern const char lbl_eu_804FE6C8[0x10] = "markerlist2401";
+extern const u32 lbl_eu_804FE6D8[6] = {
+    0xBE4CCCCD, 0x3FE7AE14, 0xC3822148, 0xBE3851EC, 0x3FE147AE, 0xC3A92666,
+};
+CMenuQuestLog* lbl_eu_80663FC0[2] = { 0, 0 };
+// .sdata (0x8): locator pair {rodata-name, vtable-RTTI-slot}.
+extern u32 lbl_eu_8052CC70[];
+const void* lbl_eu_80661E70[2] = { lbl_eu_804FE508, lbl_eu_8052CC70 };
+// .data (0x140): switch-dispatch table (10 Move case addresses, zeros),
+// the vtable (14 slots: label lbl_eu_8052CC38), its RTTI trailer (label
+// lbl_eu_8052CC70), the markerlist pointer table + tail zeros (label
+// lbl_eu_8052CCA8) and six layout floats (label lbl_eu_8052CD38).
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void* __RTTI__10IWorkEvent;
+extern u32 lbl_eu_80661940[];
+extern u32 lbl_eu_80661958[];
+extern u32 lbl_eu_80661950[];
+extern u32 lbl_eu_80661948[];
+extern u32 lbl_eu_80661DE8[];
+extern u32 lbl_eu_80661DE0[];
+#pragma section data_type ".data" ".data"
+static __declspec(section ".data") u32 questLogDispatchTable[10] = { 0 };
+u32 lbl_eu_8052CC38[14] = {
+    (u32)lbl_eu_80661E70, 0, 0,
+    0, 0, 0,
+    0, 0, 0,
+    (u32)lbl_eu_80661E70, -88, (u32)fwdQuestLogDtor, (u32)fwdQuestLogCbRender,
+    0,
+};
+u32 lbl_eu_8052CC70[14] = {
+    (u32)lbl_eu_80661940, 88, (u32)&__RTTI__10IWorkEvent, 0,
+    (u32)lbl_eu_80661958, 0, (u32)lbl_eu_80661950, 0,
+    (u32)lbl_eu_80661948, 0, (u32)lbl_eu_80661DE8, 0,
+    (u32)lbl_eu_80661DE0, 0, 0, 0,
+};
+u32 lbl_eu_8052CCA8[36] = {
+    0, 0,
+    (u32)lbl_eu_804FE528, (u32)lbl_eu_804FE538, (u32)lbl_eu_804FE548, (u32)lbl_eu_804FE558,
+    (u32)lbl_eu_804FE568, (u32)lbl_eu_804FE578, (u32)lbl_eu_804FE588, (u32)lbl_eu_804FE598,
+    (u32)lbl_eu_804FE5A8, (u32)lbl_eu_804FE5B8, (u32)lbl_eu_804FE5C8, (u32)lbl_eu_804FE5D8,
+    (u32)lbl_eu_804FE5E8, (u32)lbl_eu_804FE5F8, (u32)lbl_eu_804FE608, (u32)lbl_eu_804FE618,
+    (u32)lbl_eu_804FE628, (u32)lbl_eu_804FE638, (u32)lbl_eu_804FE648, (u32)lbl_eu_804FE648,
+    (u32)lbl_eu_804FE658, (u32)lbl_eu_804FE668, (u32)lbl_eu_804FE678, (u32)lbl_eu_804FE688,
+    (u32)lbl_eu_804FE698, (u32)lbl_eu_804FE6A8, (u32)lbl_eu_804FE6B8, (u32)lbl_eu_804FE6C8,
+    0, 0, 0, 0, 0, 0, 0, 0,
+};
+f32 lbl_eu_8052CD38[6] = { 1.0f, 1.0f, 1.0f, 0.9f, 0.7f, 0.9f };

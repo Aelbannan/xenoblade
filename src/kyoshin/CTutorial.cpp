@@ -72,7 +72,7 @@ void CTutorial::Tutorial_StartIfIdle() {
     }
 }
 
-u8 CTutorial::func_8029AE5C() {
+u8 CTutorial::Tutorial_GetPageState() {
     s8 last = field_51;
     s8 cur = field_50;
     if (cur == last - 1) {
@@ -86,7 +86,7 @@ u8 CTutorial::func_8029AE5C() {
 
 // Advance-anim start: disable anim0 / enable anim1, mark state 2, and re-bind
 // both transforms onto the layout before kicking an animation tick.
-void CTutorial::func_8029AE9C() {
+void CTutorial::Tutorial_StartAdvanceAnim() {
     if (advanceAnimTransform(mpAnimTrans0, lbl_eu_80668C08) != 0) {
         field_45 = 2;
         mpLayout->SetAnimationEnable(mpAnimTrans0, false);
@@ -107,8 +107,8 @@ __declspec(noinline) void CTutorial::Tutorial_FinishAdvanceAnim() {
     }
 }
 
-// Rewind-anim start: mirror of func_8029AE9C with the transforms swapped.
-void CTutorial::func_8029AF7C() {
+// Rewind-anim start: mirror of Tutorial_StartAdvanceAnim with the transforms swapped.
+void CTutorial::Tutorial_StartRewindAnim() {
     if (AnimRewindFrame(mpAnimTrans1, lbl_eu_80668C08) != 0) {
         field_45 = 5;
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
@@ -129,7 +129,7 @@ __declspec(noinline) void CTutorial::Tutorial_FinishRewindAnim() {
  * counters, sprintf the locale-specific texture name, fetch it from the
  * loaded locale archive (mFileHandle1 actually holds an accessor-like object)
  * and bind it onto the layout. */
-void CTutorial::func_8029B124() {
+void CTutorial::Tutorial_RefreshPage() {
     char buf[0x20];
     // Sign-extend before increment: retail computes extsb(field_50)+1.
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
@@ -166,11 +166,11 @@ extern "C" void Tutorial_ReloadTutorialData(CTutorial* self) {
     self->field_50 = 0;
     self->field_51 =
         (s8)BdatGetU8Direct(lbl_eu_80664A30, &lbl_eu_80510290[0x74], self->field_48);
-    self->func_8029B124();}
+    self->Tutorial_RefreshPage();}
 
 // Reset a block of UI flags (0x3340..0x33BE) owned by this tutorial, then set
 // the owner id 0x270 entry to a heap/direct-address classification mask.
-void CTutorial::func_8029B498() {
+void CTutorial::Tutorial_ResetSharedFlags() {
     s16 i = 0x3340;
     while (i < 0x33bf) {
         CtrlRemote_SetSharedBit(i, (u32)this);
@@ -184,14 +184,14 @@ void CTutorial::func_8029B498() {
 
 // Page-counter tick: play the confirm sound while the counter is nonzero,
 // decrement it (u8-domain), clamp negatives to zero, then refresh.
-extern "C" void func_8029ADF8(CTutorial* self) {
+extern "C" void Tutorial_PrevPage(CTutorial* self) {
     if (self->field_50 != 0)
         playUISound(8);
     u8 next = (u8)self->field_50 - 1;
     self->field_50 = (s8)next;
     if ((s8)next < 0)
         self->field_50 = 0;
-    self->func_8029B124();
+    self->Tutorial_RefreshPage();
 }
 
 // Font object returned by CDeviceFont::getFontInfo dispatches through
@@ -333,19 +333,19 @@ void CTutorial::Tutorial_LoadTutorialFiles() {
         reinterpret_cast<IWorkEvent*>(this), 0, 0);
     field_46 = 0;
 }
-extern "C" void func_8029AB28(CTutorial* self) {
+extern "C" void Tutorial_Move(CTutorial* self) {
     if (self->field_44 == 0) {
         return;
     }
     switch (self->field_45) {
     case 1:
-        self->func_8029AE9C();
+        self->Tutorial_StartAdvanceAnim();
         break;
     case 2:
         self->Tutorial_FinishAdvanceAnim();
         break;
     case 4:
-        self->func_8029AF7C();
+        self->Tutorial_StartRewindAnim();
         break;
     case 5:
         self->Tutorial_FinishRewindAnim();
@@ -371,7 +371,7 @@ void CTutorial::Tutorial_AdvanceState3To4() {
 // Page-navigation helper: mark complete when the counter already sits on the
 // last page, else advance it clamped to bound-1, then refresh and play the
 // confirm sound.
-void CTutorial::func_8029AD88() {
+void CTutorial::Tutorial_NextPage() {
     if ((s8)field_50 == (s8)field_51 - 1) {
         field_52 = 1;
         return;
@@ -380,7 +380,7 @@ void CTutorial::func_8029AD88() {
     if ((s8)(u8)(field_50) >= (s8)field_51) {
         field_50 = field_51 - 1;
     }
-    func_8029B124();
+    Tutorial_RefreshPage();
     playUISound(8);
 }
 

@@ -21,8 +21,8 @@ public:
     void createPicture();
     void createTextbox();
     void deleteTextboxOrPicture();
-    void func_8045F438();
-    void func_8045F4E4();
+    void layoutAllocCallback();
+    void layoutFreeCallback();
 
     virtual void wkUpdate() override;  //0x88
     virtual bool wkStandbyLogin();

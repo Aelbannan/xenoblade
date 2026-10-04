@@ -48,7 +48,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     // wrappers below forward their own arguments straight through: the retail
     // call sites only set r3 (the data block) because the args are already in
     // r4-r7, so these full-signature declarations reproduce the call bytes.
-    CNReqtaskLoadVtbl**       func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4); // load sub-task config
+    CNReqtaskLoadVtbl**       NandLoadConfigure(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4); // load sub-task config
     CNReqtaskRemoveVtbl**     NandRmConfigure(u8* data, const char* path, u8 arg);                     // remove sub-task config
     CNReqtaskReaddirVtbl**    Readdir_Init_B0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg); // readdir sub-task config
     char**                    func_eu_804F9E98(MonoRequestState* req, const char* src, u8 flagD, u8 flagE);     // request-record setup
@@ -494,7 +494,7 @@ int CNReqSavePollTask(CNRequest* self, bool* out) {
 #pragma push
 #pragma optimize_for_size on
 int CNReqSaveInitLoad(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag) {
-    CNReqtaskLoadVtbl** v = func_804DAF70((u8*)req->field_0x4, (const char*)a1, a2, a3, flag);
+    CNReqtaskLoadVtbl** v = NandLoadConfigure((u8*)req->field_0x4, (const char*)a1, a2, a3, flag);
     req->field_0x0 = (CNandTask*)v;
     return v != 0;
 }
@@ -716,6 +716,13 @@ extern "C" u32 lbl_eu_8056FD78[4] = {
 
 // [.rodata] 0x805245D4-0x80524610 (60B) -- one block (referenced by .text);
 // the sub-string labels stay extern for the sdata reloc name (lbl_eu_805245F8).
+// NOTE (wave DL): splitting this blob into per-label arrays cannot reproduce
+// the retail 4-packed offsets (E8@0x14 F8@0x24 608@0x34): this toolchain
+// 8-aligns consecutive named pure-constant objects (12/12 probes in
+// .scratch/dlabels/probe/ t1-t12), and const defs additionally fold
+// CNReqSaveBuildSavePath into a base+offset form (100% -> 57.1%).
+// The three labels need rule-side naming (add_symbols for F8/608 over their
+// UNDEF slots, define_symbols for the unreferenced E8) -- frozen, reported.
 extern "C" __declspec(align(4)) const char lbl_eu_805245D4[60] = {
     0x2F,0x73,0x68,0x61,0x72,0x65,0x00,0x25,0x73,0x2F,0x25,0x73,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x43,0x4E,0x52,0x65,0x71,0x75,0x65,0x73,0x74,0x00,0x00,0x00,

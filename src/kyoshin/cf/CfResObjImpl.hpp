@@ -24,7 +24,7 @@ class CScnItemModel; // fwd; real owner of parent+0x98 model (hot header)
 
 namespace cf {
 
-class CfObjectMove;      // fwd; func_800BCFA0 operand (real def in object/CfObjectMove.hpp)
+class CfObjectMove;      // fwd; CfObjectMove_initAnimTarget operand (real def in object/CfObjectMove.hpp)
 class CScn;              // fwd; shared scene (CfObjectMove.hpp declares lbl_eu_80663E14 as CScn*)
 struct CfResObjImpl;     // fwd
 
@@ -196,7 +196,7 @@ extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, in
 extern "C" void CfModel_InstallSub(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
-extern "C" void func_800BCFA0(cf::CfObjectMove* self);
+extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self);
 extern "C" void CfObjectMove_setRegionAttached(cf::CfResObjParent* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);

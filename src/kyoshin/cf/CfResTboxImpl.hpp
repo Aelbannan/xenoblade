@@ -97,8 +97,8 @@ struct CfPmf3 {
 };
 
 typedef void (cf::CfResTboxImpl::*CfResTboxImplPMF)();
-extern CfResTboxImplPMF lbl_eu_805351E0[3];
-extern char lbl_eu_80664660;
+extern CfPmf3 lbl_eu_805351E0[3];
+extern char lbl_eu_80664660[8];
 extern u32 __ptmf_null[3];
 extern cf::CfResTboxImplVtbl lbl_eu_80535204;
 extern float lbl_eu_806681D0;

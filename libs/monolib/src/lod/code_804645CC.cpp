@@ -27,8 +27,8 @@
 
 namespace LOD {
 struct UnkClass_804645CC {
-    void func_804645CC();
-    void func_80464B84();
+    void drawLodRecordExt();
+    void drawLodRecord();
     void updateLodState();
     void refreshLodView();
     void setLodFadeAlpha();
@@ -36,7 +36,7 @@ struct UnkClass_804645CC {
     void scaleLodFadeAlpha();
     void setLodColorFactor();
     void setLodDepthScale();
-    void func_80465BC0();
+    void setupLodTev();
 };
 }
 
@@ -44,9 +44,9 @@ using namespace LOD;
 
 // TODO(us-8046859c / us-80468b54): billboard quad renderers - not yet
 // reconstructed (psq paired-single vertex emission).
-void LOD::UnkClass_804645CC::func_804645CC() {}
+void LOD::UnkClass_804645CC::drawLodRecordExt() {}
 
-void LOD::UnkClass_804645CC::func_80464B84() {}
+void LOD::UnkClass_804645CC::drawLodRecord() {}
 
 // Reset all four TEV swap-mode tables to the identity RGBA mapping.
 void LOD::UnkClass_804645CC::updateLodState() {
@@ -93,11 +93,11 @@ extern const char lbl_eu_8066380C[];
 extern u32 lbl_eu_80658348[];   // tex-mtx work table (0x38 / 0x68 blocks)
 extern u32 lbl_eu_80665780;     // bound ResFile pointer
 
-extern "C" void func_80471484__Q23LOD9LODMemManFv(void* self, int childIdx);
+extern "C" void reloadChildGxLights__Q23LOD9LODMemManFv(void* self, int childIdx);
 extern "C" f32 getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index);
-extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA,
+extern "C" void fetchSampleXY__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
-extern "C" void func_80465BC0__Q23LOD17UnkClass_804645CCFv(void* rec);
+extern "C" void setupLodTev__Q23LOD17UnkClass_804645CCFv(void* rec);
 
 class CScnEnvLgtCtrl;  // scene env-light controller (scnLgtEnterMode20 target)
 extern "C" void* getScnRootSlot10(void* self);
@@ -105,7 +105,7 @@ extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 
 typedef void (*LodCallFn)();  // no-arg dispatch-table entry
 
-// Scene item handed to func_8046513C (r3).
+// Scene item handed to setupLodTexFog (r3).
 struct LodSceneItem {
     u8 pad_00[0x64];
     u32 field_0x64;  // resource-pointer holder
@@ -131,7 +131,7 @@ struct LodRes11xx {
     u32 field_0x11D4;
 };
 
-// Draw object handed to func_8046513C (r4) and to the billboard renderers.
+// Draw object handed to setupLodTexFog (r4) and to the billboard renderers.
 struct LodDrawObj {
     u8 pad_00[0x30];
     f32 field_0x30;
@@ -148,7 +148,7 @@ struct LodDrawObj {
     u32 field_0x928;
 };
 
-// Per-record render-state entry (stride 0x2C) consumed by func_8046534C.
+// Per-record render-state entry (stride 0x2C) consumed by applyLodRecState.
 struct LodStateRec {
     u8 pad_00[0x04];
     u8 field_0x04;   // blend-mode table select
@@ -168,7 +168,7 @@ struct LodStateRec {
     u16 field_0x1E;  // fade-distance cache index
 };
 
-// Texture selector record consumed by func_80465800.
+// Texture selector record consumed by buildLodTexObj.
 struct LodTexSel {
     union {
         struct {
@@ -185,9 +185,9 @@ struct LodTexSel {
 };
 
 // ---------------------------------------------------------------------------
-// us-8046910c  func_8046513C  (frame tex-matrix + fog state setup)
+// us-8046910c  setupLodTexFog  (frame tex-matrix + fog state setup)
 // ---------------------------------------------------------------------------
-extern "C" void func_8046513C__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
+extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
                                                            LodDrawObj* obj) {
     LodRes11xx* res =
         (LodRes11xx*)((LodSceneResPtr*)item->field_0x64)->field_0x08;
@@ -258,9 +258,9 @@ void LOD::UnkClass_804645CC::resetLodFlags() {
 }
 
 // ---------------------------------------------------------------------------
-// us-8046931c  func_8046534C  (per-record render-state apply)
+// us-8046931c  applyLodRecState  (per-record render-state apply)
 // ---------------------------------------------------------------------------
-void func_8046534C__Q23LOD17UnkClass_804645CCFv(s32 value) {
+void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
     u8* tbl = (u8*)lbl_eu_8056D728;
     LodStateRec* rec = (LodStateRec*)(lbl_eu_8066581C + value * 0x2c);
 
@@ -280,7 +280,7 @@ void func_8046534C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     LodCallFn texCoordFn = tblB0[lbl_eu_80665804 + rec->field_0x09];
     texCoordFn();
     int lightIdx = ((int*)(tbl + 0x128))[rec->field_0x0A];
-    func_80471484__Q23LOD9LODMemManFv((void*)lbl_eu_80665810, lightIdx);
+    reloadChildGxLights__Q23LOD9LODMemManFv((void*)lbl_eu_80665810, lightIdx);
 
     if ((lbl_eu_806657E8 & 0xC) != 0) {
         if (lbl_eu_806657D8 == (u32)(value + 0xbb8)) {
@@ -350,7 +350,7 @@ applyState:
     }
     LodCallFn finalFn = ((LodCallFn*)(tbl + 0xE0))[rec->field_0x0A];
     finalFn();
-    func_80465BC0__Q23LOD17UnkClass_804645CCFv(rec);
+    setupLodTev__Q23LOD17UnkClass_804645CCFv(rec);
 
     u16 zFlags = rec->field_0x0C;
     GXSetZMode((GXBool)((zFlags >> 1) & 1), GX_LEQUAL, (GXBool)(zFlags & 1));
@@ -361,9 +361,9 @@ applyState:
 }
 
 // ---------------------------------------------------------------------------
-// us-804697d0  func_80465800  (texture object build + bind)
+// us-804697d0  buildLodTexObj  (texture object build + bind)
 // ---------------------------------------------------------------------------
-extern "C" void func_80465800__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
+extern "C" void buildLodTexObj__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
                                                            GXTexMapID map,
                                                            f32 lodBias) {
     nw4r::g3d::ResTex tex;
@@ -372,7 +372,7 @@ extern "C" void func_80465800__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
 
     if ((sel->field_0x07 & 0x20) != 0) {
         // Indices live in the LOD cache manager's sample area.
-        func_8046339C__Q23LOD17CLODCacheManagerSFv((s32*)&idxA, (s32*)&idxB);
+        fetchSampleXY__Q23LOD17CLODCacheManagerSFv((s32*)&idxA, (s32*)&idxB);
     } else {
         idxA = sel->field_0x00;
         idxB = sel->field_0x02;
@@ -468,7 +468,7 @@ extern "C" void func_80465800__Q23LOD17UnkClass_804645CCFv(LodTexSel* sel,
     GXLoadTexObj(&texObj, map);
 }
 
-void LOD::UnkClass_804645CC::func_80465BC0() {}
+void LOD::UnkClass_804645CC::setupLodTev() {}
 
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker

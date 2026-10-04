@@ -26,10 +26,10 @@ extern int EvtSeqGetCounter104(void);
 extern void ScnEnvLgt_EnableFlag100(void* ptr, int flag);
 extern void* simGetLeafActData(void* model);
 extern void simSetFlag2OnTree(void* model, int flag);
-extern void func_80482DF4(void* model, int flag);
-extern void func_804839D4(void* model, u32 r4, void* r5, u32 r6, u32 r7, u32 r8, u32 r9);
+extern void simMarkTree100000(void* model, int flag);
+extern void simBindChrAnim(void* model, u32 r4, void* r5, u32 r6, u32 r7, u32 r8, u32 r9);
 extern void simSetValue7E8(void* model, int value);
-extern void func_80482B3C(void* model, int flag);
+extern void simMarkTree80000(void* model, int flag);
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);
 extern void* __vc__Q34nw4r3g3d6ResDicCFPCc(void* self, const char* key);
@@ -114,7 +114,7 @@ void* __ct__80172668(void* self, int deallocFlag) {
     return self;
 }
 
-void func_80172768(void* self) {
+void EvtModelReleaseAnims(void* self) {
     reinterpret_cast<CREvtModel*>(self)->vfunc_08();
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) { Scn_IsAnimActiveOrNull(p24); FLD(void*, self, 0x24) = 0; }
@@ -122,7 +122,7 @@ void func_80172768(void* self) {
     if (p20 != 0) { Scn_IsAnimActiveOrNull(p20); FLD(void*, self, 0x20) = 0; }
 }
 
-int func_801726DC(void* self) {
+int EvtModelReleaseAnimsOnce(void* self) {
     u32 flags = FLD(u32, self, 0x18);
     if (flags & 0x80) { return 1; }
     reinterpret_cast<CREvtModel*>(self)->vfunc_08();
@@ -138,7 +138,7 @@ void* evtModelDataPtr(void* self) {
     return (char*)FLD(void*, self, 0x1C) + 0x10;
 }
 
-void func_801727DC(void* self) {
+void EvtModelUpdate(void* self) {
     EvtObj_RunCallback(self);
     s32 counter = FLD(s32, self, 0x34);
     if (counter < 4) {
@@ -170,7 +170,7 @@ void func_801727DC(void* self) {
     }
 }
 
-void func_801728F8(void* self) {
+void EvtModelResetPose(void* self) {
     if (FLD(void*, self, 0x20) != 0) {
         Vec3 pos;
         pos.a[0] = lbl_eu_80667770;
@@ -196,7 +196,7 @@ int isEvtDataFlagSet(void* self) {
     return (FLD(u32, p, 0x58) >> 4) & 1;
 }
 
-void func_801729F0(void* self, void* pData, void* pModelData) {
+void EvtModelSetEventData(void* self, void* pData, void* pModelData) {
     u32 flags = FLD(u32, pModelData, 4);
     reinterpret_cast<CREvtModel*>(self)->onEvent(flags & 1);
     void* model = FLD(void*, self, 0x20);
@@ -205,7 +205,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) {
         reinterpret_cast<CREvtModel*>(self)->vfunc_08();
-        if (REvtCam_GetFieldA5Flag() == 0) { func_80172EA4(self, p24, model, 1); }
+        if (REvtCam_GetFieldA5Flag() == 0) { EvtModelApplyHideParts(self, p24, model, 1); }
         FLD(void*, self, 0x28) = p24;
         FLD(void*, self, 0x24) = 0;
     }
@@ -219,9 +219,9 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
     }
     void* newData = Scn_InitGlobalA(&lbl_eu_80663E14, pData, 0);
     FLD(void*, self, 0x24) = newData;
-    func_80482DF4(model, REvtCam_GetFieldA5Flag() == 0 ? 1 : 0);
-    func_804839D4(model, (u32)newData, 0, 0, 0, 1, -1);
-    func_80172CE4(self, model);
+    simMarkTree100000(model, REvtCam_GetFieldA5Flag() == 0 ? 1 : 0);
+    simBindChrAnim(model, (u32)newData, 0, 0, 0, 1, -1);
+    EvtModelSetupShadow(self, model);
     static_cast<CScnItemModel*>(model)->vfunc84(0);
     simSetValue7E8(model, 1);
     FLD(u32, model, 0x7A4) |= 0x20000000;
@@ -237,23 +237,23 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
         obj2->setVisible((FLD(s32, self, 0x2C) != 2) ? 1 : 0);
     }
     int sv = 0; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0x13], &sv);
-    if (sv >= 1) { func_80482B3C(model, 1); }
+    if (sv >= 1) { simMarkTree80000(model, 1); }
     int sv2 = 1; EvtSeqResolveAnmChr(newData, &lbl_eu_80503344[0x1E], &sv2);
     if (sv2 != 0) { FLD(u32, model, 0x7A0) |= 0x8; }
     else { FLD(u32, model, 0x7A0) &= ~0x8; }
-    if (REvtCam_GetFieldA5Flag() == 0) { func_80172EA4(self, newData, model, 0); }
+    if (REvtCam_GetFieldA5Flag() == 0) { EvtModelApplyHideParts(self, newData, model, 0); }
     int result = EvtSeqCheckRegionStatus(newData);
     static_cast<CScnItemModel*>(model)->vfunc84(result);
 }
 
 void emptyEvtModelHook(void) {}
 
-void func_80172CC4(void* self, int visible) {
+void EvtModelSetVisible(void* self, int visible) {
     CScnItemModel* model = (CScnItemModel*)FLD(void*, self, 0x20);
     if (model != 0) { model->vfuncB4(visible); }
 }
 
-void func_80172CE4(void* self, void* model) {
+void EvtModelSetupShadow(void* self, void* model) {
     const char* strBase = lbl_eu_80503344;
     int stackVal = 0;
     float stackF1 = lbl_eu_80667774;
@@ -277,7 +277,7 @@ void func_80172CE4(void* self, void* model) {
     }
 }
 
-void func_80172EA4(void* self, void* animData, void* model, int flag) {
+void EvtModelApplyHideParts(void* self, void* animData, void* model, int flag) {
     nw4r::g3d::ResFile resFile((void*)((char*)animData + 0xC));
     int numAnmChr = resFile.GetResAnmChrNumEntries();
     for (int i = 0; i < numAnmChr; i++) {
@@ -515,11 +515,11 @@ void* lbl_eu_80531670[3] = {
 // .data 0x44: this TU's dispatch table (own-TU funcs + 3 cross-TU).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8053167C[17] = {
-    (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)func_801728F8, // +0x0
+    (void*)lbl_eu_80662408, 0, (void*)__ct__80172668, (void*)EvtModelResetPose, // +0x0
     (void*)releaseEvtAnim28, (void*)getField20, (void*)isEvtFlagBit4Set, (void*)isEvtFlagBit0Set, // +0x10
-    (void*)CREvtObjIsBusyDefault, (void*)func_801727DC, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
-    (void*)func_80172CC4, (void*)func_801729F0, (void*)emptyEvtModelHook, (void*)func_801726DC, // +0x30
-    (void*)func_80172768, // +0x40
+    (void*)CREvtObjIsBusyDefault, (void*)EvtModelUpdate, (void*)zeroEvtModelHook, (void*)CREvtObjVfunc24Default, // +0x20
+    (void*)EvtModelSetVisible, (void*)EvtModelSetEventData, (void*)emptyEvtModelHook, (void*)EvtModelReleaseAnimsOnce, // +0x30
+    (void*)EvtModelReleaseAnims, // +0x40
 };
 } // extern "C"
 

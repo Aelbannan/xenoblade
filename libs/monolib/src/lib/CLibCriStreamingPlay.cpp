@@ -66,7 +66,7 @@ extern "C" {
     bool isSoundModeMono__9CDeviceSCFv(void);
     
     // Pan calculation: (float a, float b, float* out1, float* out2, in1, in2)
-    void func_8049B834(float a, float b, float* out1, float* out2, const u8* in1, const u8* in2);
+    void CamMan_ComputeViewFalloff(float a, float b, float* out1, float* out2, const u8* in1, const u8* in2);
     
     // Memory management
     u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
@@ -103,7 +103,7 @@ extern "C" {
     extern u32 lbl_eu_806637A8[2];
 
     // CException second-base teardown (free-function call form)
-    extern void func_804591DC__10CExceptionFP10IException(void*);
+    extern void RemoveFromGlobalArray__10CExceptionFP10IException(void*);
 
     // Vtable slot targets: IWorkEvent/CWorkThread defaults
     extern void WorkEvent1__10IWorkEventFPvPCc();
@@ -257,7 +257,7 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
         if (base != nullptr) {
             exc = base + 0x1C4;
         }
-        func_804591DC__10CExceptionFP10IException((CException*)exc);
+        RemoveFromGlobalArray__10CExceptionFP10IException((CException*)exc);
 
         // Free audio buffer
         if (lbl_eu_806656EC) {
@@ -283,7 +283,7 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
 // Returns the stream id, or -1 on failure.
 // The shadow locals are declared in retail's colouring order (first-declared
 // gets the highest callee-saved register): slot=r31 .. forceAhx=r24.
-extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int param2, int loopFlag,
+extern "C" int startStream__20CLibCriStreamingPlayFv(const char* filename, int param2, int loopFlag,
                   int afsId, int afsSubId, bool forceAhx) {
     StreamEntry* slot;
     int subId = afsSubId;
@@ -789,9 +789,10 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
         // or a flow is active (checked twice, matching retail).
         u32 flags = entry->flags;
         int flow = CWorkControl::hasFlow();
+        int bit0 = (int)(flags & 1);
         s32 count = *(s32*)((u8*)lbl_eu_806656E8 + 0x4B0);
-        int pauseArg = (int)(flags & 1) | (int)((flags >> 1) & 1) |
-                       (int)(count != 0) | flow;
+        int bit1 = (int)((flags >> 1) & 1);
+        int pauseArg = (bit0 | (count != 0)) | bit1 | flow;
         ADXT_Pause(entry->adxt, pauseArg);
 
         // Output volume = level * mult1 * mult2, forced to 1.0 during a flow.
@@ -948,7 +949,7 @@ extern "C" void fadeStreamVolume__20CLibCriStreamingPlayFv(int id, int action, f
 
 // setStreamPanVolume - Set pan/volume from a 3D position pair.
 // Retail has no `this`: r3 = stream id, r4/r5 = position pointers,
-// f1/f2/f3 = the pan/volume parameters (see func_8049B834).
+// f1/f2/f3 = the pan/volume parameters (see CamMan_ComputeViewFalloff).
 extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* in2, const u8* in1,
                    float a, float b, float c) {
     // Unrolled match chain (same shape as getStreamPosition): reproduces retail's
@@ -967,7 +968,7 @@ extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* i
     if (slot != NULL) {
         // Compute base volume/pan from the two 3D positions.
         float pan, vol;
-        func_8049B834(a, b, &pan, &vol, in1, in2);
+        CamMan_ComputeViewFalloff(a, b, &pan, &vol, in1, in2);
 
         // Clamp the volume to the caller's minimum level.
         if (vol < c) {

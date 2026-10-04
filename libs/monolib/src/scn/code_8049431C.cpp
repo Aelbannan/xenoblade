@@ -7,7 +7,7 @@
 extern "C" {
     extern void __dl__FPv(void* ptr);
     extern void* getCurrentView__5CViewFv();
-    extern void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
+    extern void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
     extern void setZWriteMode__8CGXCacheFii(void* self, int, int);
     extern void setZCompareMD__8CGXCacheFii(void* self, int, int);
     extern void setAlphaBlend__8CGXCacheFv(void* self);
@@ -39,7 +39,7 @@ extern "C" void* __dt__804943A0(void* self, int deleteFlag) {
     return self;
 }
 
-extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 h, GXBool p3, GXBool p4) {
+extern "C" void TexObj_CopyRect(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 h, GXBool p3, GXBool p4) {
     // Load/copy order below mirrors MWCC's scheduling: x, w, y, h, then fix parity,
     // Load/copy order mirrors MWCC's statement-by-statement emission.
     s16 x = rect->mPos.x;
@@ -76,18 +76,18 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
 }
 
 extern "C" void TexObj_BlitRect(ExtendedTexObj* self, ml::CRect* rect, GXBool p3, GXBool p4) {
-    func_80494540(self, rect, GXGetTexObjWidth((GXTexObj*)self), GXGetTexObjHeight((GXTexObj*)self), p3, p4);
+    TexObj_CopyRect(self, rect, GXGetTexObjWidth((GXTexObj*)self), GXGetTexObjHeight((GXTexObj*)self), p3, p4);
 }
 
 extern "C" void TexObj_BlitViewRect(ExtendedTexObj* self, GXBool p2, GXBool p3) {
     void* view = getCurrentView__5CViewFv();
     if (view != 0) {
         ml::CRect rect;
-        func_8043E928__5CViewFRQ22ml5CRectP5CView(rect, view);
+        insetRectToView__5CViewFRQ22ml5CRectP5CView(rect, view);
         if (rect.mPos.x & 1) { rect.mPos.x++; rect.mSize.x--; }
         if (rect.mPos.y & 1) { rect.mPos.y++; rect.mSize.y--; }
         if (rect.mSize.x & 1) { rect.mSize.x--; }
         if (rect.mSize.y & 1) { rect.mSize.y--; }
-        func_80494540(self, &rect, GXGetTexObjWidth((GXTexObj*)self), GXGetTexObjHeight((GXTexObj*)self), p2, p3);
+        TexObj_CopyRect(self, &rect, GXGetTexObjWidth((GXTexObj*)self), GXGetTexObjHeight((GXTexObj*)self), p2, p3);
     }
 }

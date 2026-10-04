@@ -59,7 +59,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
 
     // Unbounded locks rebuild their geometry immediately.
     if (self->stateIndex != 0 && self->maxVal == 0 && self->minVal == 0) {
-        func_8020CC9C(self);
+        CfGimmickLock_Refresh(self);
     }
 
     // Any populated lock id marks a key lock.
@@ -107,7 +107,7 @@ cf::CfGimmickLock::~CfGimmickLock() {
 
 // Per-frame lock update: eligibility gate, key-lock bookkeeping, geometry
 // refresh, and the timed player probe that opens the lock.
-extern "C" void func_8020C640(cf::CfGimmickLock* self) {
+extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
     int flag = 1;
     if ((lbl_eu_806646BC & 0x4) != 0 && (lbl_eu_80663E24 & 0x10000000) == 0) {
         flag = 0;
@@ -156,14 +156,14 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
             goto cleanup;
         }
 
-        func_8020CC9C(self);
+        CfGimmickLock_Refresh(self);
         if ((self->configFlags & 1) != 0) {
             int hit = jumptable_eu_80535830[self->stateIndex](
                 (cf::CfGimmick*)&self->scale, &lbl_eu_805765A0, &self->position);
             if (hit != 0) {
-                func_8020CFD0(self);
+                CfGimmickLock_Activate(self);
                 if ((self->flags & 0xF00) != 0) {
-                    func_8020D204(self, 0);
+                    CfGimmickLock_MarkSlots(self, 0);
                     self->flags &= ~0x1E0;
                 }
             } else {
@@ -181,7 +181,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                 if ((self->flags & 0x10) != 0 &&
                     ((self->flags & 0x20) == 0 || (self->flags & 0x40) == 0 ||
                      (self->flags & 0x80) == 0 || (self->flags & 0x100) == 0)) {
-                    func_8020D204(self, 1);
+                    CfGimmickLock_MarkSlots(self, 1);
                 }
             }
         }
@@ -205,7 +205,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
                     void* target = getTarget(player);
                     if (ColiCheckMoveRadius(&self->subA, target, 1, 0, lbl_eu_806683B4 + f31) != 0) {
                         if ((self->flags & 0x8) == 0) {
-                            func_8020A484(self->resourceId);
+                            CfGimmick_PostGimmickName(self->resourceId);
                             self->field_1F8 = 0x3c;
                             self->flags |= 0xc;
                         }
@@ -247,7 +247,7 @@ cleanup:
         }
     }
     if ((self->flags & 0xF00) != 0) {
-        func_8020D204(self, 0);
+        CfGimmickLock_MarkSlots(self, 0);
         self->flags &= ~0x1E0;
     }
 }
@@ -273,8 +273,8 @@ void gimmickLockClearBinding(cf::CfGimmickLock* self) {
 // (Re)build the lock geometry: recompute the placement matrix, then place the
 // inner region according to the placement kind (1/2 = door, 3/4 = lift shape)
 // and restart the unlock timer/state.
-void func_8020CB28(cf::CfGimmickLock* self) {
-    func_802089BC(&self->scale, &self->position.x, &self->rotation);
+void CfGimmickLock_Rebuild(cf::CfGimmickLock* self) {
+    CfGimmick_BuildColliderMtx(&self->scale, &self->position.x, &self->rotation);
 
     // Branchy bool so MWCC keeps the retail li/beq shape (not a bit extract).
     int flag = 0;
@@ -317,7 +317,7 @@ void func_8020CB28(cf::CfGimmickLock* self) {
 
 // Rebuild the lock geometry: register the inner region and place it per the
 // placement kind, then run the timed unlock state machine on the outer region.
-extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
+extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
     if ((self->flags & 1) == 0) {
         if (lbl_eu_80665958 != 0) {
             ColiListAppend(lbl_eu_80665958, &self->subA);
@@ -418,7 +418,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
 
 // Activate (or deactivate) the lock's linked game-manager object and its
 // geometry.  The factory id depends on the placement kind.
-extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
+extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
     if ((self->flags & 2) == 0) {
         if (self->stateIndex - 3 <= 1) {
             self->field_78 = createBattleActor__Q22cf13CfGameManagerFv(0x4d, 0);
@@ -481,7 +481,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
 // Mark the lock's four lock-id slots: unused slots get their presence bit in
 // the flags word, then every fight-list player whose id matches a slot is
 // flagged "locked" (or unflagged when the lock is released).
-extern "C" void func_8020D204(cf::CfGimmickLock* self, int flag) {
+extern "C" void CfGimmickLock_MarkSlots(cf::CfGimmickLock* self, int flag) {
     CfGimmickList* list;
     CfGimmickLockPlayer* base;
     u32 id;

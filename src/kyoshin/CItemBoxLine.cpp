@@ -8,11 +8,11 @@
 // decls whose signatures clash with this TU's stale void* forms so the TU
 // decls keep the retail names (identical decls need no guard).
 #define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
-#define func_8022BFC8 func_8022BFC8_csys_dup
+#define sysWinApplyKind sysWinApplyKind_csys_dup
 #define CSysWinFull CSysWinFull_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #undef sysWinSwitchKindPane
-#undef func_8022BFC8
+#undef sysWinApplyKind
 #undef CSysWinFull
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
@@ -632,10 +632,10 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
         ItemBoxLine_CommitOverlayState((void*)self);
     }
     self->field40->Animate(0);
-    func_801D202C(&self->mCur70);
-    func_801D202C(&self->mCur88);
-    func_801D202C(&self->mCurA0);
-    func_801D202C(&self->mCurB8);
+    Cur_Update(&self->mCur70);
+    Cur_Update(&self->mCur88);
+    Cur_Update(&self->mCurA0);
+    Cur_Update(&self->mCurB8);
     updateItemBox2Anims(&self->mInfo2D0[0]);
     NumSel_DispatchState_AED4(&self->mNumSel);
     CScrollBar_UpdateDispatch(&self->mScrollBar310[0]);
@@ -1222,8 +1222,8 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
                        : BdatTouchStringCell(pool + 0x63, pool + 0x6c, 0x11);
         }
         sysWinSwitchKindPane(&self->mSysWin, 0);
-        func_8022B9B4(&self->mSysWin, (u32)text, 0);
-        func_8022BFC8(&self->mSysWin, 1);
+        sysWinSetKindContent(&self->mSysWin, (u32)text, 0);
+        sysWinApplyKind(&self->mSysWin, 1);
         sysWinOpenPhase1(&self->mSysWin);
         playUISound__FUl(5);
         return;
@@ -1264,8 +1264,8 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
         playUISound__FUl(3);
     } else {
         sysWinSwitchKindPane(&self->mSysWin, 0);
-        func_8022B9B4(&self->mSysWin, (u32)text, 0);
-        func_8022BFC8(&self->mSysWin, 1);
+        sysWinSetKindContent(&self->mSysWin, (u32)text, 0);
+        sysWinApplyKind(&self->mSysWin, 1);
         sysWinOpenPhase1(&self->mSysWin);
         playUISound__FUl(5);
     }
@@ -1313,7 +1313,7 @@ void ItemBoxLine_RefreshTabPanes(CItemBoxLine* self) {
         ItemBoxLine_DrawTabRowIcon((void*)self, key, i);
         u8 vis = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
         ItemBoxLine_SetPaneVisible((void*)self, i, vis);
-        func_801EF954((void*)self, key, (s8)ItemBoxLine_ProbeNameSlot((void*)tabs, idx), i);
+        ItemBoxLine_FormatName((void*)self, key, (s8)ItemBoxLine_ProbeNameSlot((void*)tabs, idx), i);
         if (key == 0) {
             char nameBuf2[0x20];
             sprintf(nameBuf2, pool + 0x39d, i + 1);
@@ -1427,8 +1427,8 @@ void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
                 obj = (u32)BdatTouchStringCell(&lbl_eu_805071B0[0x1f0], &lbl_eu_805071B0[0x1fa], (u16)v);
             }
             sysWinSwitchKindPane(&self->mSysWin, 0);
-            func_8022B9B4(&self->mSysWin, (u32)obj, 0);
-            func_8022BFC8(&self->mSysWin, 1);
+            sysWinSetKindContent(&self->mSysWin, (u32)obj, 0);
+            sysWinApplyKind(&self->mSysWin, 1);
             sysWinOpenPhase1(&self->mSysWin);
         }
         return;
@@ -1679,14 +1679,14 @@ void ItemBoxLine_DrawTabRowIcon(CItemBoxLine* self, u32 arg2, u32 arg3) {
 }
 
 // ============================================================================
-// func_801EF954: format the item-slot name into the line. The kind selector
+// ItemBoxLine_FormatName: format the item-slot name into the line. The kind selector
 // (BdatGetItemType) picks the item-name path (kinds 3/9) which resolves the
 // name via the owner table; otherwise a signed hint byte picks one of the
 // fixed strings / name providers.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801EF954(CItemBoxLine* self, u32 arg4, s8 arg5, u32 arg6) {
+void ItemBoxLine_FormatName(CItemBoxLine* self, u32 arg4, s8 arg5, u32 arg6) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805071B0[0x23c], arg6 + 1);
     ml::FixStr<32> str;
@@ -2666,25 +2666,25 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         // Build the four embedded cursors from stack temps (copy + teardown).
         u8 cur70[0x18];
         __ct__CCur18((CBaseCur*)cur70, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC(&this->mCur70, cur70);
+        MenuShopSellCopyCursor(&this->mCur70, cur70);
         __dt__6CCur18Fv((CBaseCur*)cur70, -1);
         ((CBaseCur*)&this->mCur70)->initLayout();
 
         u8 cur88[0x18];
         __ct__CCur18((CBaseCur*)cur88, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC(&this->mCur88, cur88);
+        MenuShopSellCopyCursor(&this->mCur88, cur88);
         __dt__6CCur18Fv((CBaseCur*)cur88, -1);
         ((CBaseCur*)&this->mCur88)->initLayout();
 
         u8 curA0[0x18];
         __ct__CIBLTabCur((CBaseCur*)curA0, this->field38);
-        func_8018B0FC(&this->mCurA0, curA0);
+        MenuShopSellCopyCursor(&this->mCurA0, curA0);
         __dt__8CBaseCurFv((CBaseCur*)curA0, 0);
         ((CBaseCur*)&this->mCurA0)->initLayout();
 
         u8 curB8[0x18];
         __ct__CSubCur((CBaseCur*)curB8, (nw4r::lyt::ArcResourceAccessor*)this->field38);
-        func_8018B0FC(&this->mCurB8, curB8);
+        MenuShopSellCopyCursor(&this->mCurB8, curB8);
         __dt__7CSubCurFv((CBaseCur*)curB8, -1);
         ((CBaseCur*)&this->mCurB8)->initLayout();
 

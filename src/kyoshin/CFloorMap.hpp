@@ -627,7 +627,7 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // at +0x08 matches retail.)
 
 extern "C" void CScrollBar_UpdateDispatch(void* scrollBar);   // CScrollBar per-frame update
-extern "C" void func_801D202C(void* cursor);      // CCur18 per-frame update
+extern "C" void Cur_Update(void* cursor);      // CCur18 per-frame update
 extern "C" void sysWinDispatchPhase(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
 // retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
@@ -769,9 +769,9 @@ extern "C" int atoi(const char*);
 // flat names).
 extern "C" void sysWinAdvancePhase3(void* sysWin);
 extern "C" void Cur_SetVisible(void* cursor, int mode);
-extern "C" void func_8022B9B4(void* sysWin, char* nameA, char* nameB);
+extern "C" void sysWinSetKindContent(void* sysWin, char* nameA, char* nameB);
 extern "C" void sysWinSetTwoTextValues(void* sysWin, char* nameA, char* nameB);
-// (func_8022BFC8 comes from kyoshin/CSysWin.hpp: CSysWin* form.)
+// (sysWinApplyKind comes from kyoshin/CSysWin.hpp: CSysWin* form.)
 extern "C" void sysWinOpenPhase1(void* sysWin);
 
 // .sdata2 floats / .sbss globals for the floor-map update functions.

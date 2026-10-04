@@ -492,7 +492,7 @@ void CfSoundMan_ApplyFxSendAll(int idx, int fxType, float volume) {
 }
 
 // Clears the FX effect on manager FX-slot `index` with the given fade frame
-// count (retail func_801C34B0), guarded on the sound system being initialized
+// count (retail clearFxSlotEffect), guarded on the sound system being initialized
 // and the FX-slot array being present.
 void CfSoundMan_ClearFxEffect(u32 index, u32 frame) {
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
@@ -502,7 +502,7 @@ void CfSoundMan_ClearFxEffect(u32 index, u32 frame) {
     if (slots == 0) {
         return;
     }
-    func_801C34B0(slots, index, frame);
+    clearFxSlotEffect(slots, index, frame);
 }
 
 // Initializes a sound-slot record: clears the playing sound, marks the id
@@ -701,7 +701,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                     CfSndPoseBlock* pose = (CfSndPoseBlock*)Scn_FindCamItem((void*)scn, -1);
                     f32 pan;
                     f32 vol;
-                    func_8049B834(&pan, &vol, pose,
+                    CamMan_ComputeViewFalloff(&pan, &vol, pose,
                                   (CfSoundPos3*)&slot->field_0x08,
                                   lbl_eu_80667EA4,
                                   lbl_eu_80667EA4 + slot->field_0x18);

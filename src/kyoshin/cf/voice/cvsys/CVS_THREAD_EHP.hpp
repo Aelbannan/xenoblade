@@ -157,6 +157,6 @@ extern float lbl_eu_80668C90;  // 0.0
 extern float lbl_eu_80668C94;  // 0.3
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 lbl_eu_80539ADC[3]; // {0, -1, func_802A6718} - EHP start-request slot state
+extern "C" u32 lbl_eu_80539ADC[3]; // {0, -1, EhpVxOnComplete} - EHP start-request slot state
 extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, startEhpVoice}
-extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}
+extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, EhpVxOnComplete}

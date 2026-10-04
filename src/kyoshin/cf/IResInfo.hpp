@@ -44,7 +44,7 @@ public:
     virtual int isInUse(void* entry);                      // vtable +0x40
     virtual int cmpField4Eq(void* entry, u32 val);       // vtable +0x44 - was m17 (field_04 compare)
     virtual int checkFlag48(void* entry);                // vtable +0x48 - was m16 / CfRes_isEntryValid
-    virtual int checkFlag4C(void* entry);                // vtable +0x4C - was isResFlag0 / func_800661A8
+    virtual int checkFlag4C(void* entry);                // vtable +0x4C - was isResFlag0 / CfRes_checkLimit
     virtual void cleanup50(void* entry);                 // vtable +0x50 - was CfRes_abortEntryIO
     // Wrappers keep call sites stable after _v rename
     inline u8* getHandle18(void* e) { return getResHandle18(e); }
@@ -97,7 +97,7 @@ struct ResInfoStorage {
     u8 mOwnsList;                   // 0x1ECC - 0 => slot array is owned
 };
 
-// 0x3C-byte record initialized by func_800676F8 (the tables at 0x2D0,
+// 0x3C-byte record initialized by CfRes_initWork (the tables at 0x2D0,
 // 0x14DC and 0x16BC share this shape).
 struct ResInitEntry {
     u8 _00[0x30];
@@ -108,7 +108,7 @@ struct ResInitEntry {
     u8 _38[4];
 };
 
-// Object layout driven by func_800676F8.
+// Object layout driven by CfRes_initWork.
 struct ResInfoWork {
     u32 flags;                    // 0x00
     u8 _04[0x74];
@@ -227,13 +227,13 @@ extern u32 lbl_eu_80663E30;
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void clearWordFlag(u32* self, u32 mask);
 extern "C" void* CfRes_findGridEntry(void*, u32, u32*, u32*, int, int);
-extern "C" bool func_800686E4(ResInfoContainer*, bool);
+extern "C" bool CfRes_updateGrids(ResInfoContainer*, bool);
 
 extern "C" bool testResInfoFlag(u32 flags);
 
 // Packed-token formatter (kyoshin/code_800AA008.cpp) and sound-manager
 // slot helpers (kyoshin/cf/CfSoundMan.cpp) - retail C symbol names.
-extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" int CfSoundMan_CloseRecord(int);
 extern "C" void CfSoundMan_BindRecordBuffer(int, void*, int, int);
 extern "C" void CfSoundMan_OpenRecordPlayer(int, int, int, int);

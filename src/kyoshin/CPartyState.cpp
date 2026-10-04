@@ -204,10 +204,10 @@ extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
     AccumPaneWorldPos(&tmp, pane);
     if ((s8)self->field_0x4C < 3) {
         Cur_PlacePaneByIndex(&self->mCur22, &tmp, 2);
-        func_801D2BFC(&self->mCur22, 2);
+        Cur_HighlightPane(&self->mCur22, 2);
     } else {
         Cur_PlacePaneByIndex(&self->mCur22, &tmp, 3);
-        func_801D2BFC(&self->mCur22, 3);
+        Cur_HighlightPane(&self->mCur22, 3);
     }
     if ((s8)self->field_0x4D >= 0) {
         sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4D]);
@@ -217,10 +217,10 @@ extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
         tmp = tmp2;
         if ((s8)self->field_0x4D < 3) {
             Cur_PlacePaneByIndex(&self->mCur22, &tmp, 0);
-            func_801D2CF4(&self->mCur22, 0, 1);
+            Cur_ShowPane(&self->mCur22, 0, 1);
         } else {
             Cur_PlacePaneByIndex(&self->mCur22, &tmp, 1);
-            func_801D2CF4(&self->mCur22, 1, 1);
+            Cur_ShowPane(&self->mCur22, 1, 1);
         }
     }
 }
@@ -288,7 +288,7 @@ extern "C" void startPartyPanelClose(CPartyState* self) {
     if (self->field_0x2C == 3) {
         self->field_0x2C = 4;
         self->field_0x31 = 0;
-        func_801D2BFC(&self->mCur22, 0xff);
+        Cur_HighlightPane(&self->mCur22, 0xff);
         if (self->field_0x4E == 0) {
             playUISound(6);
         }
@@ -676,7 +676,7 @@ extern "C" void advancePartyPanel(CPartyState* self) {
             break;
         }
         self->mLayout->Animate(0);
-        func_801D202C(&self->mCur22);
+        Cur_Update(&self->mCur22);
     }
 }
 

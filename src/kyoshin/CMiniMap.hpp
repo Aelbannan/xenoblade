@@ -124,7 +124,7 @@ struct CMMGimmickPos { f32 x; f32 y; f32 z; };
 extern "C" CMMGimmickPos* GimFindPosByRow(CMMGlobalGimmick* mgr, u16 id);
 extern "C" unsigned long CtrlObjectParam_GetWorkField50();
 extern "C" int GetSysStateFlag10();
-extern "C" int func_801AC124();
+extern "C" int isVisionAnimating();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
 extern "C" u32 isMapSelectActive();
 extern "C" bool MapSelectSCIsCreated();

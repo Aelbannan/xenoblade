@@ -191,7 +191,7 @@ void CMenuBattleEnd::Move() {
         return;
     if (!IsMenuState621F0()) return;
     if (mState == 1) {
-        func_8026F95C(this);
+        advanceBattleEndQueue(this);
     }
     mLayout->Animate(0);
 }
@@ -221,7 +221,7 @@ void CMenuBattleEnd::cbRenderBefore() {
 extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode,
                                          u32 param) {
     if (lbl_eu_80664898 != 0) {
-        func_8026FB0C(lbl_eu_80664898, mode, param);
+        queueBattleEndEntry(lbl_eu_80664898, mode, param);
         return 0;
     }
     CMenuBattleEnd* obj = (CMenuBattleEnd*)mtl::MemManager::allocate(
@@ -238,10 +238,10 @@ extern "C" CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8
 }
 
 // ---------------------------------------------------------------------------
-// func_8026F95C - drive the currently-playing animation; once its frame
+// advanceBattleEndQueue - drive the currently-playing animation; once its frame
 // reaches the target, drain the next queued entry (if any) to the screen.
 // ---------------------------------------------------------------------------
-extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
+extern "C" void advanceBattleEndQueue(CMenuBattleEnd* obj) {
     if (advanceAnimTransform(obj->mAnim90, lbl_eu_80668990) == 0) return;
 
     obj->mLayout->Animate(0);
@@ -287,10 +287,10 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8026FB0C - append a {flag,param} entry to the queue, compacting the
+// queueBattleEndEntry - append a {flag,param} entry to the queue, compacting the
 // active entries to the front. If the queue is already full, nothing changes.
 // ---------------------------------------------------------------------------
-extern "C" void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param) {
+extern "C" void queueBattleEndEntry(CMenuBattleEnd* obj, u8 flag, u32 param) {
     UnkBattleEntry packed[4];
     packed[0].flag = 0;
     packed[0].param = 0;

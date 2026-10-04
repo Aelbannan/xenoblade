@@ -79,7 +79,7 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
 // cursors, then copy-constructs the CItemBoxInfo / CEquipItemBox members from
 // fresh stack temporaries (CItemBoxInfo(4,0) and default CEquipItemBox) whose
 // config regions are copied field-by-field through the same helpers as
-// func_801F9CB4 (UnkClass_8011C974 mem regions, scalars load-store
+// PartyStateWin_CopyEquipChange (UnkClass_8011C974 mem regions, scalars load-store
 // interleaved, counted 8-byte pair loops).
 #pragma optimize_for_size on
 /* Retail's symbol is the unmangled free function __ct__CEquipChange (not a
@@ -160,7 +160,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f148 = vLo;
     v->f150 = boxTmp.f150;
     v->f152 = boxTmp.f152;
-    func_8018BE74(&v->f154[0], &boxTmp.f154[0]);
+    ShopBuy_CopyData(&v->f154[0], &boxTmp.f154[0]);
     __dt__12CItemBoxInfoFv(reinterpret_cast<CItemBoxInfo*>(&boxTmp), -1);
 
     // --- copy config out of a fresh default CEquipItemBox temp ---
@@ -181,7 +181,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f2f0[3] = eqTmp.f2f0[3];
     PartyStateWin_CopySlotRec(&v->f2f4[0], &eqTmp.f2f4[0]);
     PartyStateWin_CopySlotRec(&v->f30c[0], &eqTmp.f30c[0]);
-    func_8018B0FC(&v->f324[0], &eqTmp.f324[0]);
+    MenuShopSellCopyCursor(&v->f324[0], &eqTmp.f324[0]);
     __ct__UnkClass_8011C974(&v->f340[0], &eqTmp.f340[0]);
     v->f350[0] = eqTmp.f350[0];
     v->f350[1] = eqTmp.f350[1];
@@ -216,8 +216,8 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f428[0] = eqTmp.f428[0];
     v->f428[1] = eqTmp.f428[1];
     v->f428[2] = eqTmp.f428[2];
-    func_8016742C(&v->f42c[0], &eqTmp.f42c[0]);
-    func_8016742C(&v->f468[0], &eqTmp.f468[0]);
+    InfoCfCopySysWin(&v->f42c[0], &eqTmp.f42c[0]);
+    InfoCfCopySysWin(&v->f468[0], &eqTmp.f468[0]);
     v->f4a4[0] = eqTmp.f4a4[0];
     v->f4a4[1] = eqTmp.f4a4[1];
     v->f4a4[2] = eqTmp.f4a4[2];
@@ -231,7 +231,7 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     v->f4b0 = vLo2;
     v->f4b8 = eqTmp.f4b8;
     v->f4bc = eqTmp.f4bc;
-    func_8018BE74(&v->f4c0[0], &eqTmp.f4c0[0]);
+    ShopBuy_CopyData(&v->f4c0[0], &eqTmp.f4c0[0]);
     v->f61c = eqTmp.f61c;
     v->f620 = eqTmp.f620;
     v->f622[0] = eqTmp.f622[0];
@@ -776,7 +776,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         if (((CEquipEnumList*)CTaskGame_enumListGet(&holder))->field_0x620 >= 1) {
             CEquipEnumListSlot* slot = (CEquipEnumListSlot*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
             if (slot->field_0x4 != 0) {
-                func_800BFDE0(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
+                CfObjectPc_setupFrame(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
             }
         }
         __dt__80043E88(&holder, -1);
@@ -1061,7 +1061,7 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt3(CEquipChange* sel
 // retail bind data and clear the cursor-run flag 0x98.
 // noinline keeps -ipa from folding this into OnFileEvent's two branches
 // (retail emits external bl calls).
-extern "C" __declspec(noinline) void func_802040A0(CEquipChange* self) {
+extern "C" __declspec(noinline) void EquipChange_MaybeRebuild(CEquipChange* self) {
     if (self->field_34 == 0)
         goto end;
     if (self->field_30 != 0)
@@ -1563,22 +1563,22 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         u8 tmp15[0x18];
         u8 tmpSub[0x24];
         __ct__CCur14(tmp14, field_2C);
-        func_8018B0FC(_pad50, tmp14);
+        MenuShopSellCopyCursor(_pad50, tmp14);
         __dt__6CCur14Fv((CBaseCur*)tmp14, -1);
         ((CBaseCur*)_pad50)->initLayout();
 
         __ct__CCur15(tmp15, field_2C);
-        func_8018B0FC(_pad68, tmp15);
+        MenuShopSellCopyCursor(_pad68, tmp15);
         __dt__6CCur15Fv((CBaseCur*)tmp15, -1);
         ((CBaseCur*)_pad68)->initLayout();
 
         __ct__CSubCur(tmpSub, field_2C);
-        func_8018B0FC(field_80, tmpSub);
+        MenuShopSellCopyCursor(field_80, tmpSub);
         __dt__7CSubCurFv((CBaseCur*)tmpSub, -1);
         ((CBaseCur*)field_80)->initLayout();
 
         Cur_ShowTwoSubPanes(field_80, 0);
-        func_802040A0(this);
+        EquipChange_MaybeRebuild(this);
         field_24 = 0;
         validateHeap__17UnkClass_8045F564Fv(&_pad04[0]);
         __dt__14Class_8045F858Fv(host, -1);
@@ -1599,7 +1599,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         acc->Attach(scratch, &base[0x1FA]);
         // Cache the second accessor in the global equip-page flag slot.
         lbl_eu_80664698 = (u32)field_30;
-        func_802040A0(this);
+        EquipChange_MaybeRebuild(this);
         field_28 = 0;
         validateHeap__17UnkClass_8045F564Fv(&_pad14[0]);
         __dt__14Class_8045F858Fv(host, -1);
@@ -1802,7 +1802,7 @@ extern "C" __declspec(noinline) void* EquipChange_ResolveEquipItem(CEquipChange*
     }
     u32 w = res->field_00;
     u16 h = res->field_04;
-    func_80159F6C(&lbl_eu_80576568, row, ((u32)h >> 16) & 0xFFF, (w >> 22) & 7);
+    CItem_initSlot(&lbl_eu_80576568, row, ((u32)h >> 16) & 0xFFF, (w >> 22) & 7);
     CItemImpl* impl2 = CItem_initItemImplInstances((CItemData*)&lbl_eu_80576568);
     impl2->vf94((CItemData*)&lbl_eu_80576568, (s16)((w >> 11) & 0x7FF));
     return &lbl_eu_80576568;
@@ -1876,9 +1876,9 @@ void EquipChange_AdvanceScreen(CEquipChange* self) {
     }
 tail:
     ((nw4r::lyt::Layout*)self->field_34)->Animate(0);
-    func_801D202C((void*)((u8*)self + 0x50));
-    func_801D202C((void*)((u8*)self + 0x68));
-    func_801D202C((void*)self->field_80);
+    Cur_Update((void*)((u8*)self + 0x50));
+    Cur_Update((void*)((u8*)self + 0x68));
+    Cur_Update((void*)self->field_80);
     updateItemBoxAnims((CItemBoxInfo*)((u8*)self + 0xA4));
     updateEIBBox(&self->mEquipItemBox);
 }

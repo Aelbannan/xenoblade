@@ -39,7 +39,7 @@ extern "C" void col6SwitchBox(CCol6System* self);
 extern "C" void col6WinScroll(CCol6System* self);
 extern "C" void Col6_SyncBoxSlot_0EE4(u32 unused, s32 arg);
 extern "C" void col6DoOpenBox(CCol6System* self);
-extern "C" void func_80162C40(CCol6System* self);
+extern "C" void Col6Win2_2C40(CCol6System* self);
 extern "C" void Col6_OpenBox_2DB4(CCol6System* self);
 extern "C" void col6Win2Count(CCol6System* self);
 extern "C" void Col6_Win2CountLadder_3614(CCol6System* self);
@@ -555,7 +555,7 @@ void CCol6Hint::Move() {
 
         // Common tail: per-frame updates.
         mAnimHost->update(0);
-        func_801D202C(&mCur18);
+        Cur_Update(&mCur18);
         CScrollBar_UpdateDispatch(&mScrollBar);
 }
 
@@ -1524,7 +1524,7 @@ body:
         break;
 
     case 0x14:
-        func_80162C40(this);
+        Col6Win2_2C40(this);
         break;
 
     case 0x15:
@@ -1588,7 +1588,7 @@ body:
                                      cnt + 0x6c);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-            func_8022B9B4(&mSysWin2, buf.mString, 0);
+            sysWinSetKindContent(&mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
@@ -1757,7 +1757,7 @@ body:
             mFieldA4 = 0x28;
             char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                      0x80);
-            func_8022B9B4(&mSysWin2, s, 0);
+            sysWinSetKindContent(&mSysWin2, s, 0);
             sysWinOpenPhase1(&mSysWin2);
         }
         break;
@@ -1790,8 +1790,8 @@ body:
 
     // Common tail: per-frame updates.
     reinterpret_cast<CCol6AnimHostView*>(mpLayout)->update(0);
-    func_801D202C(&mCur1);
-    func_801D202C(&mCur2);
+    Cur_Update(&mCur1);
+    Cur_Update(&mCur2);
     sysWinDispatchPhase(&mSysWin1);
     sysWinDispatchPhase(&mSysWin2);
 }
@@ -2441,9 +2441,9 @@ void col6SwitchBox(CCol6System* self) {
                                            &lbl_eu_80502050[0x9], 7);
                 char* str3 = BdatTouchStringCell(lbl_eu_80502050,
                                            &lbl_eu_80502050[0x9], 8);
-                func_8022B9B4(&self->mSysWin1, str1, 0);
+                sysWinSetKindContent(&self->mSysWin1, str1, 0);
                 sysWinSetTwoTextValues(&self->mSysWin1, str2, str3);
-                func_8022BFC8(&self->mSysWin1, 0);
+                sysWinApplyKind(&self->mSysWin1, 0);
                 sysWinOpenPhase1(&self->mSysWin1);
                 Cur_SetVisible(&self->mCur1, 1);
                 self->mFieldA4 = 0xa;
@@ -2455,8 +2455,8 @@ void col6SwitchBox(CCol6System* self) {
             // Box full: show the window-2 message.
             char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
                                       0xc);
-            func_8022B9B4(&self->mSysWin2, str, 0);
-            func_8022BFC8(&self->mSysWin2, 1);
+            sysWinSetKindContent(&self->mSysWin2, str, 0);
+            sysWinApplyKind(&self->mSysWin2, 1);
             sysWinOpenPhase1(&self->mSysWin2);
             self->mFieldA4 = 0x1d;
             playUISound(5);
@@ -2922,10 +2922,10 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     self->mFieldA4 = 0xf;
 }
 
-// func_80162C40 - fill and open window 2 for the current player: resolve the
+// Col6Win2_2C40 - fill and open window 2 for the current player: resolve the
 // count/name strings for the player index at +0xA5, format the banner, set
 // the window text, activate it and play the open sound.
-void func_80162C40(CCol6System* self) {
+void Col6Win2_2C40(CCol6System* self) {
     if (isCameraReady__Q22cf13CfGameManagerFv() != 0) {
         return;
     }
@@ -2947,8 +2947,8 @@ void func_80162C40(CCol6System* self) {
 
     ml::FixStr<256> buf;
     Col6FormatBufferString(buf.mString, &tbl[0x480], str0, str1, str2, a, str3, b);
-    func_8022B9B4(&self->mSysWin2, buf.mString, 0);
-    func_8022BFC8(&self->mSysWin2, 1);
+    sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
+    sysWinApplyKind(&self->mSysWin2, 1);
     sysWinOpenPhase1(&self->mSysWin2);
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3108,7 +3108,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
                                      0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-            func_8022B9B4(&self->mSysWin2, buf.mString, 0);
+            sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&self->mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3223,7 +3223,7 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
             char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
             ml::FixStr<128> buf;
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
-            func_8022B9B4(&self->mSysWin2, buf.mString, 0);
+            sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&self->mSysWin2);
             playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3296,7 +3296,7 @@ void col6Win2PerPl(CCol6System* self) {
         char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
-        func_8022B9B4(&self->mSysWin2, buf.mString, 0);
+        sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
         sysWinOpenPhase1(&self->mSysWin2);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3383,7 +3383,7 @@ void col6JoinCheck(CCol6System* self) {
         char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
         ml::FixStr<128> buf;
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
-        func_8022B9B4(&self->mSysWin2, buf.mString, 0);
+        sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
         sysWinOpenPhase1(&self->mSysWin2);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);

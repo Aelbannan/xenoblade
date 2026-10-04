@@ -37,11 +37,11 @@ public:
     static int getFileSize(const char* pPath, int arg1);
     static void cancelJobsForPath(const char* pPath);
     bool cancel(CFileHandle* pHandle);
-    static void func_8044FC38();
-    bool func_8044FCFC();
-    bool func_80450058();
-    bool func_80450260();
-    bool func_8045042C();
+    static void abortRead();
+    bool beginRead();
+    bool readChunk();
+    bool advanceSector();
+    bool copyTail();
 
     static void setCriFilePathA(const wchar_t* pData);
     static void setCriFilePathB(const wchar_t* pData);

@@ -36,8 +36,8 @@ struct CfCode800F42AC {
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 extern "C" int findObjectById__Fi(int id);
-extern "C" void* func_8016FE34(void* src);
-extern "C" int func_80148778(void* self, int id);
+extern "C" void* MapFx_ResolveOwner(void* src);
+extern "C" int isBattleStatusActive(void* self, int id);
 extern "C" void* findBattleStatusEntry(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
 extern "C" void* UIWin_QueryPageFlag(u32 a);
@@ -72,7 +72,7 @@ struct Sc149154Ret {
     f32 field_20;                // 0x20
 };
 
-// Node reached at p+8; func_80148778 / findBattleStatusEntry operate on &data_08.
+// Node reached at p+8; isBattleStatusActive / findBattleStatusEntry operate on &data_08.
 struct Sc48778 {
     u8 pad_00[0x8];              // 0x00
     u8 data_08[0x8];             // 0x08
@@ -81,7 +81,7 @@ struct Sc48778 {
 
 // ---------------------------------------------------------------------------
 // Object layout shared by ScMain_GetRatio / ScMain_GetSummedInt / ScMain_GetRoundedMetric /
-// func_800F449C / ScMain_IsDistinctFrom (offsets through 0x830).
+// ScMain_Reset / ScMain_IsDistinctFrom (offsets through 0x830).
 // ---------------------------------------------------------------------------
 struct ScMain {
     u32 field_00;                // 0x00 - id/slot value

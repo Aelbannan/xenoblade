@@ -528,6 +528,34 @@
      [
       "__vt__Q22cf9_sArtsSet",
       "lbl_eu_8052F5D8"
+     ],
+     [
+      "setArtsSlotRC__Q22cf8CArtsSetFUsUsUs",
+      "setArtsSlotRC"
+     ],
+     [
+      "getArtsSlotRC__Q22cf8CArtsSetFii",
+      "getArtsSlotRC"
+     ],
+     [
+      "setArtsSlotByIdx__Q22cf8CArtsSetFUsi",
+      "setArtsSlotByIdx"
+     ],
+     [
+      "getArtsSlotAtCnt__Q22cf8CArtsSetFUi",
+      "getArtsSlotAtCnt"
+     ],
+     [
+      "getArtsParamRC__Q22cf8CArtsSetFii",
+      "getArtsParamRC"
+     ],
+     [
+      "getArtsParamRC2__Q22cf8CArtsSetFii",
+      "getArtsParamRC2"
+     ],
+     [
+      "getArtsParamByIdx__Q22cf8CArtsSetFi",
+      "getArtsParamByIdx"
      ]
     ]
    },

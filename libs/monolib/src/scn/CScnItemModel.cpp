@@ -23,12 +23,12 @@ __declspec(noinline) void simToggleWordBits(u8* self, u32 flags, u32 enable);
 }
 
 // Same-TU chain-walk helpers (defined below in this TU); forward-declared
-// so func_80483448 can inline their walk shapes with the depth-5/4 handle
+// so simCoupleModel can inline their walk shapes with the depth-5/4 handle
 // calling the helper (the retail keeps those as real calls).
 extern "C" float simGetLeafDist7B0(void* self);
 extern "C" void simSetLeafDist7B0(CScnItemModel* self, float value);
 extern "C" void simSetLeafFlag4000(CScnItemModel* self, u32 param);
-extern "C" void func_80482B3C(CScnItemModel* self, u32 param);
+extern "C" void simMarkTree80000(CScnItemModel* self, u32 param);
 extern "C" u32 simQueryLeafAnim(CScnItemModel* node);
 
 // __ct__CScnItemModel: CScnItemModel constructor (retail symbol
@@ -115,17 +115,17 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
 extern "C" void scn80496SetNodeIdByName(u8* self);
 extern "C" void simResetAnimAtC(u8* self) { ((void(*)(void*))scn80496SetNodeIdByName)((char*)self + 0xc); }
 
-// func_80482DF4: set/clear the 0x100000 flag at 0x7A4 on self, then walk
-// func_80482DF4: set/clear the 0x100000 flag at 0x7A4 on self, then walk
+// simMarkTree100000: set/clear the 0x100000 flag at 0x7A4 on self, then walk
+// simMarkTree100000: set/clear the 0x100000 flag at 0x7A4 on self, then walk
 // the model tree: for every live model in the 4-slot list, then the linked
 // model, repeat the flag and recurse two levels down the reference list
-// before recursing func_80482DF4 itself on the deepest nodes. The 7C4 chain
+// before recursing simMarkTree100000 itself on the deepest nodes. The 7C4 chain
 // is followed 2 levels at the top (the recursion covers deeper levels).
-// Same shape as func_80482B3C (retail sizes identical, 0x2B8); extern "C"
+// Same shape as simMarkTree80000 (retail sizes identical, 0x2B8); extern "C"
 // keeps the self-recursion reloc name verbatim (reloc-site gate).
 // Flag helper comment retained at site; inline set/clear form matches retail
 // branch-for-branch.
-extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
+extern "C" void simMarkTree100000(CScnItemModel* self, u32 param) {
     u32 i, j, k;
     if (param) {
         self->flags7A4 |= 0x100000;
@@ -151,11 +151,11 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
                     for (k = 0; k < 4; k++) {
                         CScnItemModel* c = b->slots7B4[k];
                         if (c != 0) {
-                            func_80482DF4(c, param);
+                            simMarkTree100000(c, param);
                         }
                     }
                     if (b->field_0x7C4 != 0) {
-                        func_80482DF4(b->field_0x7C4, param);
+                        simMarkTree100000(b->field_0x7C4, param);
                     }
                 }
             }
@@ -169,11 +169,11 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
                 for (k = 0; k < 4; k++) {
                     CScnItemModel* c = b->slots7B4[k];
                     if (c != 0) {
-                        func_80482DF4(c, param);
+                        simMarkTree100000(c, param);
                     }
                 }
                 if (b->field_0x7C4 != 0) {
-                    func_80482DF4(b->field_0x7C4, param);
+                    simMarkTree100000(b->field_0x7C4, param);
                 }
             }
         }
@@ -196,11 +196,11 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
                 for (k = 0; k < 4; k++) {
                     CScnItemModel* d = c->slots7B4[k];
                     if (d != 0) {
-                        func_80482DF4(d, param);
+                        simMarkTree100000(d, param);
                     }
                 }
                 if (c->field_0x7C4 != 0) {
-                    func_80482DF4(c->field_0x7C4, param);
+                    simMarkTree100000(c->field_0x7C4, param);
                 }
             }
         }
@@ -214,11 +214,11 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
             for (k = 0; k < 4; k++) {
                 CScnItemModel* d = c->slots7B4[k];
                 if (d != 0) {
-                    func_80482DF4(d, param);
+                    simMarkTree100000(d, param);
                 }
             }
             if (c->field_0x7C4 != 0) {
-                func_80482DF4(c->field_0x7C4, param);
+                simMarkTree100000(c->field_0x7C4, param);
             }
         }
     }
@@ -275,20 +275,20 @@ extern "C" u8* simGetLeafActData(CScnItemModel* self) {
     return (u8*)self->field_0x1F8;
 }
 
-// func_804831C4: when self has no linked model, fetch the model owned by
+// simAttachModel: when self has no linked model, fetch the model owned by
 // self's scene owner (Scn_SetupAnimDefault), notify via the 1-arg virtual at vtable
-// 0xAC, mark the whole model tree with the 0x80000 flag (func_80482B3C walk
-// shape, recursing func_80482B3C(c, 1) at depth 3), then sync bit 9 of
+// 0xAC, mark the whole model tree with the 0x80000 flag (simMarkTree80000 walk
+// shape, recursing simMarkTree80000(c, 1) at depth 3), then sync bit 9 of
 // self->flags7A4 onto the model (set 0x40 / clear 0x400000), notify via
 // vtable 0x64 and return 1. extern "C" keeps the call reloc names verbatim.
-extern "C" u32 func_804831C4(CScnItemModel* self) {
+extern "C" u32 simAttachModel(CScnItemModel* self) {
     CScnItemModel* model = Scn_SetupAnimDefault(self->field_04);
     if (model == 0) {
         return 0;
     }
     self->vfuncAC(model);
-    // 0x80000 flag tree walk (func_80482B3C shape, always set; recursion
-    // hands the depth-3+ nodes to func_80482B3C with enable = 1).
+    // 0x80000 flag tree walk (simMarkTree80000 shape, always set; recursion
+    // hands the depth-3+ nodes to simMarkTree80000 with enable = 1).
     u32 i, j, k;
     model->flags7A4 |= 0x80000;
     for (i = 0; i < 4; i++) {
@@ -302,11 +302,11 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
                     for (k = 0; k < 4; k++) {
                         CScnItemModel* c = b->slots7B4[k];
                         if (c != 0) {
-                            func_80482B3C(c, 1);
+                            simMarkTree80000(c, 1);
                         }
                     }
                     if (b->field_0x7C4 != 0) {
-                        func_80482B3C(b->field_0x7C4, 1);
+                        simMarkTree80000(b->field_0x7C4, 1);
                     }
                 }
             }
@@ -316,11 +316,11 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
                 for (k = 0; k < 4; k++) {
                     CScnItemModel* c = b->slots7B4[k];
                     if (c != 0) {
-                        func_80482B3C(c, 1);
+                        simMarkTree80000(c, 1);
                     }
                 }
                 if (b->field_0x7C4 != 0) {
-                    func_80482B3C(b->field_0x7C4, 1);
+                    simMarkTree80000(b->field_0x7C4, 1);
                 }
             }
         }
@@ -335,11 +335,11 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
                 for (k = 0; k < 4; k++) {
                     CScnItemModel* d = c->slots7B4[k];
                     if (d != 0) {
-                        func_80482B3C(d, 1);
+                        simMarkTree80000(d, 1);
                     }
                 }
                 if (c->field_0x7C4 != 0) {
-                    func_80482B3C(c->field_0x7C4, 1);
+                    simMarkTree80000(c->field_0x7C4, 1);
                 }
             }
         }
@@ -349,11 +349,11 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
             for (k = 0; k < 4; k++) {
                 CScnItemModel* d = c2->slots7B4[k];
                 if (d != 0) {
-                    func_80482B3C(d, 1);
+                    simMarkTree80000(d, 1);
                 }
             }
             if (c2->field_0x7C4 != 0) {
-                func_80482B3C(c2->field_0x7C4, 1);
+                simMarkTree80000(c2->field_0x7C4, 1);
             }
         }
     }
@@ -367,7 +367,7 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
     return 1;
 }
 
-// func_80483448: model-coupling setup. When self has no linked model, create
+// simCoupleModel: model-coupling setup. When self has no linked model, create
 // one: fetch the model owned by self's scene owner (Scn_SetupAnimDefault), copy
 // self's chain-last 0x7B0 fade distance onto the model's chain-last node
 // (the two 0x7B0 chain walks are inlined - shallow leaves use lfs/stfs,
@@ -375,10 +375,10 @@ extern "C" u32 func_804831C4(CScnItemModel* self) {
 // 1-arg virtual at vtable 0xB0, sync the 0x4000 / 0x400000 flags from self
 // onto the model chain's last node (simSetLeafFlag4000 shape; the 0x4000 param is
 // bit 14 of self->flags7A4), sync the 0x4 flag at 0x7A8, mark the whole
-// model tree with the 0x80000 flag (func_80482B3C walk shape, recursing
-// func_80482B3C(c, 1) at depth 3), then notify via vtable 0x64 and return 1.
+// model tree with the 0x80000 flag (simMarkTree80000 walk shape, recursing
+// simMarkTree80000(c, 1) at depth 3), then notify via vtable 0x64 and return 1.
 // extern "C" keeps the call reloc names verbatim (reloc-site gate).
-extern "C" u32 func_80483448(CScnItemModel* self) {
+extern "C" u32 simCoupleModel(CScnItemModel* self) {
     if (self->field_0x7C4 != 0) {
         return 1;
     }
@@ -500,8 +500,8 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
     } else {
         model->flags7A8 &= ~0x4;
     }
-    // 0x80000 flag tree walk (func_80482B3C shape, always set; recursion
-    // hands the depth-3+ nodes to func_80482B3C with enable = 1).
+    // 0x80000 flag tree walk (simMarkTree80000 shape, always set; recursion
+    // hands the depth-3+ nodes to simMarkTree80000 with enable = 1).
     u32 i, j, k;
     model->flags7A4 |= 0x80000;
     for (i = 0; i < 4; i++) {
@@ -515,11 +515,11 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
                     for (k = 0; k < 4; k++) {
                         CScnItemModel* c = b->slots7B4[k];
                         if (c != 0) {
-                            func_80482B3C(c, 1);
+                            simMarkTree80000(c, 1);
                         }
                     }
                     if (b->field_0x7C4 != 0) {
-                        func_80482B3C(b->field_0x7C4, 1);
+                        simMarkTree80000(b->field_0x7C4, 1);
                     }
                 }
             }
@@ -529,11 +529,11 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
                 for (u32 k = 0; k < 4; k++) {
                     CScnItemModel* c = b->slots7B4[k];
                     if (c != 0) {
-                        func_80482B3C(c, 1);
+                        simMarkTree80000(c, 1);
                     }
                 }
                 if (b->field_0x7C4 != 0) {
-                    func_80482B3C(b->field_0x7C4, 1);
+                    simMarkTree80000(b->field_0x7C4, 1);
                 }
             }
         }
@@ -548,11 +548,11 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
                 for (u32 k = 0; k < 4; k++) {
                     CScnItemModel* d = c->slots7B4[k];
                     if (d != 0) {
-                        func_80482B3C(d, 1);
+                        simMarkTree80000(d, 1);
                     }
                 }
                 if (c->field_0x7C4 != 0) {
-                    func_80482B3C(c->field_0x7C4, 1);
+                    simMarkTree80000(c->field_0x7C4, 1);
                 }
             }
         }
@@ -562,11 +562,11 @@ extern "C" u32 func_80483448(CScnItemModel* self) {
             for (u32 k = 0; k < 4; k++) {
                 CScnItemModel* d = c->slots7B4[k];
                 if (d != 0) {
-                    func_80482B3C(d, 1);
+                    simMarkTree80000(d, 1);
                 }
             }
             if (c->field_0x7C4 != 0) {
-                func_80482B3C(c->field_0x7C4, 1);
+                simMarkTree80000(c->field_0x7C4, 1);
             }
         }
     }
@@ -614,7 +614,7 @@ extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param) {
     }
 }
 
-// func_804839D4: bind the chr animation resource to the model tree. After an
+// simBindChrAnim: bind the chr animation resource to the model tree. After an
 // entry guard on the resFile's chr-entry count vs `index`, walks the 7C4
 // chain re-checking the count at each of the first 3 nodes (a failed check
 // clears the result to 0 but still runs the trailing 0x80 flag on self).
@@ -626,7 +626,7 @@ extern "C" void simSetFlag2OnTree(CScnItemModel* self, u32 param) {
 // / self chain (simQueryLeafAnim shape inlined twice) and self gets the same
 // 0x200 treatment, then self's 0x80 flag is set and the resource result is
 // returned. extern "C" keeps the call reloc names verbatim.
-extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
+extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                              int index, u32 c, s32 f, u32 g, u32 h) {
     if ((int)resFile->resFile.GetResAnmChrNumEntries() <= index || index < 0) {
         return 0;
@@ -644,7 +644,7 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
                 } else {
                     CScnItemModel* n3 = n2->field_0x7C4;
                     if (n3 != 0) {
-                        result = func_804839D4(n3, resFile, index, c, f, g, h);
+                        result = simBindChrAnim(n3, resFile, index, c, f, g, h);
                     } else {
                         u32 leaf = simQueryLeafAnim(n2);
                         result = scn80496BindChrAnmPack(n2->field_0xC, resFile, index, c, f, g, h);
@@ -946,8 +946,8 @@ extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
 // simBindChrAnimChain: walk the field_0x7C4 chain binding the chr animation
 // resource. At each of the first 4 nodes (self..n3) the resFile's entry
 // count must exceed `index` (signed compare), else 0 is returned; the
-// walk's tail calls func_804972E8 on the last node's 0xC sub-object, and
-// chains longer than 4 recurse. Nested form: the four func_804972E8
+// walk's tail calls scn80496CrossfadeStep on the last node's 0xC sub-object, and
+// chains longer than 4 recurse. Nested form: the four scn80496CrossfadeStep
 // return-handlers fall to the bottom of the function (retail order) and
 // the `return 0` blocks stay inline after each count check.
 extern "C" u32 simBindChrAnimChain(CScnItemModel* self, CScnItemAnimResFile* resFile,
@@ -974,13 +974,13 @@ extern "C" u32 simBindChrAnimChain(CScnItemModel* self, CScnItemAnimResFile* res
                 if (n4 != 0) {
                     return simBindChrAnimChain(n4, resFile, index, c, f);
                 }
-                return func_804972E8(n3->field_0xC, resFile, index, c, f);
+                return scn80496CrossfadeStep(n3->field_0xC, resFile, index, c, f);
             }
-            return func_804972E8(n2->field_0xC, resFile, index, c, f);
+            return scn80496CrossfadeStep(n2->field_0xC, resFile, index, c, f);
         }
-        return func_804972E8(n1->field_0xC, resFile, index, c, f);
+        return scn80496CrossfadeStep(n1->field_0xC, resFile, index, c, f);
     }
-    return func_804972E8(self->field_0xC, resFile, index, c, f);
+    return scn80496CrossfadeStep(self->field_0xC, resFile, index, c, f);
 }
 
 // simQueryLeafAnim: depth-first walk of the field_0x7C4 / field_0x7C8 tree,
@@ -2038,13 +2038,13 @@ extern "C" void simSetFlag100Link(u8* self, u32 param) {
 // simPropagateEnvLgt: propagate a light-environment to every live model in both
 // reference lists (0x7B4 / 0x834) and the linked model at 0x7C4. When a
 // non-null env is supplied it is first copied into self's own embedded
-// CScnEnvLgtData at 0x31C (copy-assign via func_804BF774); when null, self's
+// CScnEnvLgtData at 0x31C (copy-assign via ScnEnvLgt_Propagate); when null, self's
 // env is used as the default for the recursion.
 // extern "C" keeps the self-recursion reloc names verbatim (reloc-site
 // gate, same as simSetLeafDist7B0).
 extern "C" void simPropagateEnvLgt(CScnItemModel* self, CScnEnvLgtData* param) {
     if (param != 0) {
-        func_804BF774((CScnEnvLgtData*)&((CScnItemModelActData*)self->field_0x1F8)->envLight, param);
+        ScnEnvLgt_Propagate((CScnEnvLgtData*)&((CScnItemModelActData*)self->field_0x1F8)->envLight, param);
     } else {
         param = (CScnEnvLgtData*)&((CScnItemModelActData*)self->field_0x1F8)->envLight;
     }
@@ -2197,7 +2197,7 @@ extern "C" void simRefreshActDist(CScnItemModel* self) {
     }
     ((CScnItemModelActData*)self->field_0x1F8)->value2E8 =
         self->value7AC * ((CScnItemModelActData*)self->field_0x1F8)->value304;
-    func_80497AA8(self->field_0xC);
+    scn80496UpdateCrossfade(self->field_0xC);
     ((CScnItemModelActData*)self->field_0x1F8)->transform.update();
 }
 
@@ -2433,7 +2433,7 @@ extern "C" void simSetFlag2000Chain(CScnItemModel* self, u32 param) {
         }
     }
 }
-// func_80482918: set/clear bit 0 of +0x7A4 on self, then recurse on every
+// simSetFlag1Tree: set/clear bit 0 of +0x7A4 on self, then recurse on every
 // live model in both 4-slot reference lists (0x7B4, 0x834) and the linked
 // model at 0x7C4. Declared in CScnItemModelNw4r.hpp over the nw4r overlay
 // class; the referenced offsets share CScnItemModel's layout, so the walk
@@ -2447,26 +2447,26 @@ static inline void SetItemEnableBits(u32* word, u32 mask, u32 enable) {
         *word &= ~mask;
     }
 }
-extern "C" void func_80482918(CScnItemModelNw4r* overlay, u32 enable) {
+extern "C" void simSetFlag1Tree(CScnItemModelNw4r* overlay, u32 enable) {
     CScnItemModel* self = (CScnItemModel*)overlay;
     SetItemEnableBits(&self->flags7A4, 1, enable);
     for (u32 i = 0; i < 4; i++) {
         CScnItemModel* item = self->slots7B4[i];
         if (item != 0) {
-            func_80482918((CScnItemModelNw4r*)item, enable);
+            simSetFlag1Tree((CScnItemModelNw4r*)item, enable);
         }
     }
     if (self->field_0x7C4 != 0) {
-        func_80482918((CScnItemModelNw4r*)self->field_0x7C4, enable);
+        simSetFlag1Tree((CScnItemModelNw4r*)self->field_0x7C4, enable);
     }
     for (int j = 0; j < 4; j++) {
         CScnItemModel* item = self->slots834[j];
         if (item != 0) {
-            func_80482918((CScnItemModelNw4r*)item, enable);
+            simSetFlag1Tree((CScnItemModelNw4r*)item, enable);
         }
     }
 }
-// simSetFlag1MTree: like func_80482918, but toggles the 0x1000000 flag at 0x7A4
+// simSetFlag1MTree: like simSetFlag1Tree, but toggles the 0x1000000 flag at 0x7A4
 // and recurses on itself down the model tree.
 extern "C" void simSetFlag1MTree(CScnItemModel* self, u32 enable) {
     if (enable != 0) {
@@ -2506,15 +2506,15 @@ void simRemoveWordFromBuf(CScnItemModel* self, u32 value) {
         }
     }
 }
-// func_80482B3C: set/clear the 0x80000 flag at 0x7A4 on `self`, then walk
+// simMarkTree80000: set/clear the 0x80000 flag at 0x7A4 on `self`, then walk
 // the model tree: for every live model in the 4-slot list, then the linked
 // model, repeat the flag and recurse two levels down the reference list
-// before recursing func_80482B3C itself on the deepest nodes. The 7C4 chain
+// before recursing simMarkTree80000 itself on the deepest nodes. The 7C4 chain
 // is followed 2 levels at the top (the recursion covers deeper levels).
-// func_80482B3C: set/clear the 0x80000 flag at 0x7A4 on `self`, then walk
+// simMarkTree80000: set/clear the 0x80000 flag at 0x7A4 on `self`, then walk
 // the model tree: for every live model in the 4-slot list, then the linked
 // model, repeat the flag and recurse two levels down the reference list
-// before recursing func_80482B3C itself on the deepest nodes. The 7C4 chain
+// before recursing simMarkTree80000 itself on the deepest nodes. The 7C4 chain
 // is followed 2 levels at the top (the recursion covers deeper levels).
 // Flag helper: set/clear the 0x80000 bit at +0x7A4 (inlined at every site).
 static inline void SetFlag80(CScnItemModel* m, u32 en) {
@@ -2525,7 +2525,7 @@ static inline void SetFlag80(CScnItemModel* m, u32 en) {
     }
 }
 
-extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
+extern "C" void simMarkTree80000(CScnItemModel* self, u32 param) {
     CScnItemModel* a;
     u32 i;
     SetFlag80(self, param);
@@ -2540,11 +2540,11 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
                     for (u32 k = 0; k < 4; k++) {
                         CScnItemModel* c = b->slots7B4[k];
                         if (c != 0) {
-                            func_80482B3C(c, param);
+                            simMarkTree80000(c, param);
                         }
                     }
                     if (b->field_0x7C4 != 0) {
-                        func_80482B3C(b->field_0x7C4, param);
+                        simMarkTree80000(b->field_0x7C4, param);
                     }
                 }
             }
@@ -2554,11 +2554,11 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
                 for (u32 k = 0; k < 4; k++) {
                     CScnItemModel* c = b->slots7B4[k];
                     if (c != 0) {
-                        func_80482B3C(c, param);
+                        simMarkTree80000(c, param);
                     }
                 }
                 if (b->field_0x7C4 != 0) {
-                    func_80482B3C(b->field_0x7C4, param);
+                    simMarkTree80000(b->field_0x7C4, param);
                 }
             }
         }
@@ -2573,11 +2573,11 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
                 for (u32 k = 0; k < 4; k++) {
                     CScnItemModel* d = c->slots7B4[k];
                     if (d != 0) {
-                        func_80482B3C(d, param);
+                        simMarkTree80000(d, param);
                     }
                 }
                 if (c->field_0x7C4 != 0) {
-                    func_80482B3C(c->field_0x7C4, param);
+                    simMarkTree80000(c->field_0x7C4, param);
                 }
             }
         }
@@ -2587,11 +2587,11 @@ extern "C" void func_80482B3C(CScnItemModel* self, u32 param) {
             for (u32 k = 0; k < 4; k++) {
                 CScnItemModel* d = c->slots7B4[k];
                 if (d != 0) {
-                    func_80482B3C(d, param);
+                    simMarkTree80000(d, param);
                 }
             }
             if (c->field_0x7C4 != 0) {
-                func_80482B3C(c->field_0x7C4, param);
+                simMarkTree80000(c->field_0x7C4, param);
             }
         }
     }

@@ -67,11 +67,11 @@ void TensUp_TryRunSlotAction(CVS_THREAD_TENSION_UP* self) {
     }
 }
 
-// us-802ab9b0 (func_802A9278)
+// us-802ab9b0 (TensUp_RemoveVoice)
 // Remove a voice by matching its embedded CCharVoice pointer against the
 // single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
 // 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
-void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
+void TensUp_RemoveVoice(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
     DetachThreadVoice(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
@@ -133,12 +133,12 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     return self;
 }
 
-// us-802ab628 (func_802A8EEC)
+// us-802ab628 (TensUp_Update)
 // Update function: reloads the slot-state triple, checks voice state,
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
 // Control flow: a live voice (or a successful play) returns directly;
 // otherwise the playback-start virtual runs as a common tail.
-void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
+void TensUp_Update(CVS_THREAD_TENSION_UP* self) {
     // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
     // First word is loaded before the slot read and kept in a temp so the
     // load/store schedule matches retail (lwzu, then word1/word0/word2 stores).
@@ -209,10 +209,10 @@ tail:
     self->PlayThreadVoice();
 }
 
-// us-802ab784 (func_802A9030)
+// us-802ab784 (TensUp_SelectAndPlay)
 // Voice-select and play function. Reloads slot-state, finds a free handle,
 // selects voice ID based on owner state and flag.
-void func_802A9030(CVS_THREAD_TENSION_UP* self) {
+void TensUp_SelectAndPlay(CVS_THREAD_TENSION_UP* self) {
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }

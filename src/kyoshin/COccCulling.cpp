@@ -264,7 +264,7 @@ bool COccCulling::isOccluded(const ml::CVec3& intersectPoint, float distance){
     return false;
 }
 
-bool COccCulling::func_801A1550(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
+bool COccCulling::isRayOccluded(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
     CVec3 rayDir = rayEndPos - rayStartPos;
     
     //Looks like the normalize inline but isn't? (isZero inlined with retail epsilon label)

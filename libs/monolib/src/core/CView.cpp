@@ -57,20 +57,20 @@ extern "C" void __ct__CViewFrame(CViewFrame* frame);
 extern "C" void __ct__CFontLayer(CFontLayer* layer);
 // Third arg is forwarded from CView::updateViewRect's own r4 (retail keeps
 // the dead mr r5,r4 because the callee prototype has three parameters).
-extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
+extern "C" void getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                           const CViewFrame* frame,
                                                           u32 arg);
 void setViewFrameMode__10CViewFrameFUl(CViewFrame* frame, u32 owner);
 u32 getWhiteColor__8CGXCacheFv();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
-void func_8043E010__5CViewFv(CView* view);
+void sortChildViews__5CViewFv(CView* view);
 CView* getFullScreenView__9CViewRootFv();
 CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
 void updateCmd2Color__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
 void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
 void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
-void func_80442B54__9CViewRootFPvPv(void* viewRect, void* scissorRect, void* insetRect);
-void func_80442C68__9CViewRootFv();
+void pushScissorRects__9CViewRootFPvPv(void* viewRect, void* scissorRect, void* insetRect);
+void popScissorRects__9CViewRootFv();
 void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 void updateViewRoot__9CViewRootFv();
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
@@ -731,7 +731,7 @@ bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
 // us-804409a8: three bubble passes over the child-view list, ordering views
 // whose first attached work resolves to this view's proc root ahead of others,
 // then by root priority (unk1E8), then by the view's own unk460.
-void func_8043E010__5CViewFv(CView* view) {
+void sortChildViews__5CViewFv(CView* view) {
     // Everything is ordered relative to the *current* view's proc root.
     CView* current;
     _reslist_node<WORK_ID>* endNode;
@@ -1533,7 +1533,7 @@ void CView::renderView() {
         return;
     }
 
-    func_8043E010__5CViewFv(this);
+    sortChildViews__5CViewFv(this);
 
     crossRootFlag = 0;
     fullScreenView = getFullScreenView__9CViewRootFv();
@@ -1946,7 +1946,7 @@ renderView_scissor_ready:
     insetRect.mPos.y = mRectData.mScrollY;
     insetRect.mSize.x = mRectData.mBoundsSize.x;
     insetRect.mSize.y = mRectData.mBoundsSize.y;
-    func_80442B54__9CViewRootFPvPv(&accumRect, &scissorOut, &insetRect);
+    pushScissorRects__9CViewRootFPvPv(&accumRect, &scissorOut, &insetRect);
 
 renderView_works_or_children:
     if (crossRootFlag != 0) {
@@ -2309,7 +2309,7 @@ renderView_attach_after_check:
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
     if (crossRootFlag == 0) {
-        func_80442C68__9CViewRootFv();
+        popScissorRects__9CViewRootFv();
     }
 
 renderView_tail:
@@ -2794,7 +2794,7 @@ extern "C" s32 checkSplitActive__5CViewFv(CView* self) {
 }
 
 // us-8043CAFC: like CEAC -- returns whether BOTH split-frame views exist.
-extern "C" s32 func_8043CAFC__5CViewFv(CView* self) {
+extern "C" s32 hasSplitViews__5CViewFv(CView* self) {
     s32 flag2 = 0, flag1 = 0;
     if (self->unk45C != nullptr && getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
         flag1 = 1;
@@ -2814,7 +2814,7 @@ static CView* CView_toView(CWorkThread* thread);
 // offset straight into rect (no tail-offset application, no size stores).
 // Retail computes dy before dx each iteration and re-reads rect.mPos from
 // memory (no cached start locals), so keep those orderings here.
-extern "C" void func_8043E46C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     CView* cur;
     CWorkThread* parentSnap;
@@ -2931,7 +2931,7 @@ extern "C" void sinit_8043FB70() {
 // us-80441420: rect with zero origin and size = other->mRectData view size
 // minus its insets (left/right, top/bottom). Retail has no `this` use -- the
 // member-scoped name is emitted as a free function (rect=r3, other=r4).
-extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     // Best-known shape: both size chains compound, then the zero origin via
     // chained assignment. Byte diff vs retail is exactly one scheduler
@@ -3093,7 +3093,7 @@ extern "C" void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-804412c0: like 8043E7CC but the size is shrunk by the view insets and
 // the origin shifted by the left/top insets.
-extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
@@ -3156,7 +3156,7 @@ extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
         u16 y;
     } modeSize;
     // Retail forwards its own r4 into the callee's third parameter.
-    func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(
+    getFrame2ViewRect__10CViewFrameFR7CRect16PC10CViewFrame(
         (ml::CRect16*)&tmp, &self->mFrame, arg);
 
     if ((self->unk278 & 1) != 0) {

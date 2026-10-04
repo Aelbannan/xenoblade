@@ -190,7 +190,7 @@ extern "C" void MakeCrystal_SpawnCrystalItem(void*, int, u8);
 
 // C-linkage helpers for the cylinder-count finalize (MakeCrystal_FinalizeCylCount):
 // item-step-list setup and scrollbar refresh.
-extern "C" void func_80158300(void* item, int mode);
+extern "C" void CItem_initKind9Rec(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
 extern "C" void* CItem_initItemImplInstances(void* item);
@@ -208,7 +208,7 @@ extern "C" void __ct__CSysWin(void* self, int arg);
 extern "C" void __ct__CMCGetItemBox(void* self);
 extern "C" void __ct__CCur18(void* self, void* arg);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" void func_8016742C(void* dest, void* src);
+extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" size_t strlen(const char* s);
 extern "C" char* strcpy(char* dst, const char* src);
 extern "C" int ItemMenu_IsPresent();   // item-menu active gate (CMainMenu.cpp)

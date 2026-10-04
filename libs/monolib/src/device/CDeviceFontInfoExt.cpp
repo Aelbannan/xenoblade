@@ -56,7 +56,7 @@ struct DeviceFontCharWork {
     char src[3];
     nw4r::ut::Glyph glyph;
 };
-extern "C" const char* func_80453468__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self,
+extern "C" const char* getCharGlyph__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self,
                                                        const char* pStr, u32** ppTexture,
                                                        u32* pCellX, u32* pCellY,
                                                        u32* pGlyphWidth) {
@@ -182,7 +182,7 @@ extern "C" u32 lbl_eu_8056C740[0xF] = {
     (u32)getMode__18CDeviceFontInfoExtFv,
     (u32)getBufferSize__18CDeviceFontInfoExtFv,
     (u32)getLineHeight__18CDeviceFontInfoExtFv,
-    (u32)func_80453468__18CDeviceFontInfoExtFv,
+    (u32)getCharGlyph__18CDeviceFontInfoExtFv,
     (u32)getFont__18CDeviceFontInfoExtFv,
     (u32)getFontConst__18CDeviceFontInfoExtFv,
     (u32)advanceState__18CDeviceFontInfoExtFv,

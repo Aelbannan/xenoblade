@@ -18,12 +18,12 @@ extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
 
 // Defined later in this TU (retail symbol is unmangled); noinline keeps
-// MWCC from inlining the body into func_801BCF48.
-extern "C" void func_801BD630(CMenuKizunaTalk* self);
+// MWCC from inlining the body into kickoffKizunaWindow.
+extern "C" void checkKizunaGate(CMenuKizunaTalk* self);
 
 // ---------------------------------------------------------------------------
 // Constructor (retail symbol is the unmangled __ct__CMenuKizunaTalk, so the
-// body is written as a C-linkage free function; the factory func_801BCEBC
+// body is written as a C-linkage free function; the factory createKizunaTalkSingleton
 // calls it). Runs the CProcess base ctor, stores the composite vtable and the
 // IWorkEvent / IScnRender subobject vtables, then constructs the embedded
 // memory region and cursor; the remaining scalar state gets retail defaults.
@@ -135,7 +135,7 @@ void CMenuKizunaTalk::cbRenderBefore() {}
 // already exists.
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-CMenuKizunaTalk* func_801BCEBC(CProcess* parent, CScn* scene, u32 charId) {
+CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* parent, CScn* scene, u32 charId) {
     if (lbl_eu_80664420 != 0) {
         return 0;
     }
@@ -158,26 +158,26 @@ extern "C" bool isKizunaTalkActive() { return lbl_eu_80664420 != 0; }
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Window-state kickoff (retail func_801BCF48): refresh the availability gate
-// via func_801BD630, then per window state: 0/2 rebuild the CSysWin panel from
+// Window-state kickoff (retail kickoffKizunaWindow): refresh the availability gate
+// via checkKizunaGate, then per window state: 0/2 rebuild the CSysWin panel from
 // a stack temp (directions 0 / 3) and dispatch the layout-build virtual at
 // vtable +0x88; state 2 also seeds the cursor from a CCur18 temp. State 1
 // requests the talk-list file through the IWorkEvent subobject (+0x6C,
 // null-this-safe).
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-void func_801BCF48(CMenuKizunaTalk* self) {
+void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     if (lbl_eu_80664424 == 0) {
         return;
     }
     self->mFieldA0 = 1;
-    func_801BD630(self);
+    checkKizunaGate(self);
     // Shared CSysWin scratch plus a full CCur18-sized cursor scratch.
     KizunaScratch scratch;
     switch (self->mFieldA4) {
     case 0:
         __ct__CSysWin(&scratch.mWin0[0], 0);
-        func_8016742C(&self->mSysWin[0], &scratch.mWin0[0]);
+        InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin0[0]);
         __dt__7CSysWinFv(&scratch.mWin0[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
         break;
@@ -195,7 +195,7 @@ void func_801BCF48(CMenuKizunaTalk* self) {
     }
     case 2: {
         __ct__CSysWin(&scratch.mWin2[0], 3);
-        func_8016742C(&self->mSysWin[0], &scratch.mWin2[0]);
+        InfoCfCopySysWin(&self->mSysWin[0], &scratch.mWin2[0]);
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
 
@@ -213,6 +213,7 @@ void func_801BCF48(CMenuKizunaTalk* self) {
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf02();
         break;
     }
+    }
 }
 #pragma optimize_for_size off
 
@@ -229,9 +230,9 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
         if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
             return;
         }
-        func_8022B9B4(&self->mSysWin[0],
+        sysWinSetKindContent(&self->mSysWin[0],
                       (u32)BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x24), 0);
-        func_8022BFC8(&self->mSysWin[0], 1);
+        sysWinApplyKind(&self->mSysWin[0], 1);
         sysWinOpenPhase1(&self->mSysWin[0]);
         break;
     case 1:
@@ -248,9 +249,9 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
         char* s2 = BdatGetPtrDirect(lbl_eu_80664424, &lbl_eu_80505118[0x43], self->mCharId);
         char* s3 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
         char* s4 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
-        func_8022B9B4(&self->mSysWin[0], (u32)s1, (int)s2);
+        sysWinSetKindContent(&self->mSysWin[0], (u32)s1, (int)s2);
         sysWinSetTwoTextValues(&self->mSysWin[0], (u32)s3, (u32)s4);
-        func_8022BFC8(&self->mSysWin[0], 0);
+        sysWinApplyKind(&self->mSysWin[0], 0);
         sysWinOpenPhase1(&self->mSysWin[0]);
         break;
     }
@@ -259,12 +260,12 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Kizuna talk window advance (retail func_801BD228): state machine on
+// Kizuna talk window advance (retail advanceKizunaWindow): state machine on
 // mFieldA4. State 0/2 wait for the CSysWin panel to become active; state 1
 // waits for the layout animation to reach its target frame. State 2 also
 // feeds the panel's current page into the cursor's selection update.
 // ---------------------------------------------------------------------------
-void func_801BD228(CMenuKizunaTalk* self) {
+void advanceKizunaWindow(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
         if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
@@ -289,14 +290,14 @@ void func_801BD228(CMenuKizunaTalk* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Kizuna talk window-state advance (retail func_801BD2F8): reads the cf pad
+// Kizuna talk window-state advance (retail driveKizunaTalkPad): reads the cf pad
 // and drives the mFieldA4 window state machine. States 0/1 wait for the left/
 // right D-pad bits, state 2 handles cancel/confirm page navigation and the
 // confirm/advance actions. The D-pad bit position differs between player 0
 // (co-op) and the others.
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-void func_801BD2F8(CMenuKizunaTalk* self) {
+void driveKizunaTalkPad(CMenuKizunaTalk* self) {
     KizunaTalkPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     u32 cancel, confirm, left, right;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -410,13 +411,13 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Kizuna talk gating check (retail func_801BD630): reads the character's
+// Kizuna talk gating check (retail checkKizunaGate): reads the character's
 // affinity-talk columns and decides whether the talk screen is available;
 // writes the resulting mFieldA4 gate state.
 // ---------------------------------------------------------------------------
-// Retail symbol is the unmangled func_801BD630.
+// Retail symbol is the unmangled checkKizunaGate.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
+extern "C" __declspec(noinline) void checkKizunaGate(CMenuKizunaTalk* self) {
     u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= CtrlRemote_TouchBitByArg((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
@@ -452,12 +453,12 @@ extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
 #pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
-// Talk list file-event handler (retail func_801BD7D8): when the requested
+// Talk list file-event handler (retail handleKizunaFileEvent): when the requested
 // talk-list archive finishes loading it builds the layout, fills in the
 // character/rank text and loads the character portrait texture; when the
 // shared BDAT archive finishes it reloads the character table pointer.
 // ---------------------------------------------------------------------------
-int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
+int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
     CFileHandle* handle = evt->mFileHandle;
     if (self->mFile1 == handle) {
         void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -587,7 +588,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
     return 0;
 }
 
-void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
+void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))handleKizunaFileEvent)((char*)self - 0x6c); }
 
 extern "C" void fwdKizunaDtor6C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
 

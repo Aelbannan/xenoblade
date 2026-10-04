@@ -181,7 +181,7 @@ void CMenuSkipTimer::Init() {
     *(u8*)((u8*)this + 0x14c)  = *(u8*)(tempSkipTimer + 0x94);
     __dt__10CSkipTimerFv(tempSkipTimer, -1);
 
-    func_8029FBE0(&mTimerData);
+    CSkipTimer_BeginLoad(&mTimerData);
 
     // Register the widget's render-callback subobject as an IScnRender render
     // callback on its parent scene (retail null-checks `this`).
@@ -368,7 +368,7 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
         CSkipTimerPrevKey(&self->mTimerData);
     }
 
-    if (func_8029FF1C(&self->mTimerData) != 0) {
+    if (isSkipActive(&self->mTimerData) != 0) {
         beginClose(&self->mTitleAHelp);
         CSkipTimerLeaveSkip(&self->mTimerData);
         self->mFlag3 = 3;

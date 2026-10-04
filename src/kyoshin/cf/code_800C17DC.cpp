@@ -67,7 +67,7 @@ int CmText_DecodeSjisChar(const char* str, int* type, int* len) {
 /// Read the next whitespace-delimited word out of the cursor at `self->cursor`
 /// into `out`, stopping at a newline or when `maxLen` characters have been
 /// consumed.  Returns 1 if something was consumed, 0 if the cursor is empty.
-int func_800C1A18(CmTextProc* self, char* out, int maxLen) {
+int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
     char* o = out;
     if ((u8)self->cursor[0] == 0) {
         out[0] = 0;
@@ -150,7 +150,7 @@ int func_800C1900(char* str, char** out, int maxLen) {
 }
 
 /// Register a (filename-hash, id, seq) entry into the table set selected by
-/// `key` (0-5). `name` is hashed via func_800AA714; `value` (optional) is an
+/// `key` (0-5). `name` is hashed via Tok_ParseFile; `value` (optional) is an
 /// atoi-able id.  `key==0` writes the single-entry base set.
 ///
 /// Known residual vs retail (us-800c2578, HIGH_MATCH): retail reloads
@@ -158,8 +158,8 @@ int func_800C1900(char* str, char** out, int maxLen) {
 /// hash store into `stwux r31,r3,r5`; our hoisted `tbl` local keeps the size
 /// gate green but leaves that arm as `stwx`+`add`. The correct per-branch
 /// shape costs +4 TU bytes and fails split-size, so the hoisted form stays.
-void func_800C1B30(CmTextProc* self, int key, const char* name, const char* value) {
-    u32 hash = func_800AA714(name);
+void CmText_RegisterEntry(CmTextProc* self, int key, const char* name, const char* value) {
+    u32 hash = Tok_ParseFile(name);
     if (hash == 0) return;
     u16 seq = self->buf->cntAll;
     CmTextTable* tbl = self->buf;
@@ -212,7 +212,7 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
     for (;;) {
         // Token buffer sits high in the frame in retail.
         char token[0x100];
-        if (!func_800C1A18(self, token, 0xff)) return;
+        if (!CmText_ReadWord(self, token, 0xff)) return;
         // Comment markers: '#' starts a comment, as does '//'.
         if ((int)(u8)token[0] == 0x23) continue;
         if ((int)(u8)token[0] == 0x2f && (int)(u8)token[1] == 0x2f) continue;
@@ -229,7 +229,7 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
         }
         if (id == -1) continue;
         if (id != 5) self->buf->cntAll++;
-        func_800C1B30(self, id, names[1], names[2]);
+        CmText_RegisterEntry(self, id, names[1], names[2]);
     }
 }
 
@@ -756,9 +756,9 @@ void applyArtsParam__Q22cf10CfObjectPcFv();
 void dispatchPlayerBranch__Q22cf10CfObjectPcFv();
 void enablePcFlag__Q22cf10CfObjectPcFv();
 void finalizePcCleanup__Q22cf10CfObjectPcFv();
-void func_800BF764__Q22cf11CfObjectNpcFv();
-void func_800C00C0__Q22cf10CfObjectPcFv();
-void func_800C0524__Q22cf10CfObjectPcFv();
+void loadNpcParams__Q22cf11CfObjectNpcFv();
+void refreshArtsData__Q22cf10CfObjectPcFv();
+void updatePc__Q22cf10CfObjectPcFv();
 void getIconType__Q22cf11CfObjectNpcFv();
 void getRltMeet__Q22cf11CfObjectNpcFv();
 void handleMoveState__Q22cf10CfObjectPcFv();
@@ -838,7 +838,7 @@ void* lbl_eu_805298B8[] = {
     (void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv, (void*)CObjectState_clearStateWord4__Q22cf12CObjectStateFv, (void*)CObjectState_applyStateFlags__Q22cf12CObjectStateFv, (void*)CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
     (void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv, (void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv, (void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
     (void*)CObjectState_getStateData__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv, (void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv, (void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
-    (void*)CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv, (void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv, (void*)func_800BF764__Q22cf11CfObjectNpcFv, (void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
+(void*)loadNpcParams__Q22cf11CfObjectNpcFv,
     (void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFv, (void*)__dt__Q22cf11CfObjectNpcFv, (void*)initNpcFlags__Q22cf11CfObjectNpcFv, (void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
     (void*)updateNpcDialog__Q22cf11CfObjectNpcFv, (void*)CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc6__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv,
     (void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv, (void*)CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv, (void*)CfObject_forwardSubObject__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
@@ -1017,8 +1017,8 @@ void* lbl_eu_80529DA0[] = {
     (void*)__dt__Q22cf10CfObjectPcFv, (void*)CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv, (void*)CfObjectActor_clearStatusPair__Q22cf13CfObjectActorFv, (void*)CfObjectActor_flushStatusPair__Q22cf13CfObjectActorFv,
     (void*)CfObjectActor_takeDamageValue__Q22cf13CfObjectActorFv, (void*)CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv, (void*)CfObjectActor_getAdjustedFacing__Q22cf13CfObjectActorFv, (void*)CfObjectActor_readActionScale__Q22cf13CfObjectActorFv,
     (void*)CfObjectActor_sharesMoveFlags__Q22cf13CfObjectActorFv, (void*)CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv, (void*)CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv, (void*)CfObjectActor_getActionSrcId__Q22cf13CfObjectActorFv,
-    (void*)CfObjectActor_clearActionSrcId__Q22cf13CfObjectActorFv, (void*)initialize__Q22cf10CfObjectPcFv, (void*)enablePcFlag__Q22cf10CfObjectPcFv, (void*)func_800C0524__Q22cf10CfObjectPcFv,
-    (void*)syncArtsEntry__Q22cf10CfObjectPcFv, (void*)func_800C00C0__Q22cf10CfObjectPcFv, (void*)scanArtsEntries__Q22cf10CfObjectPcFv, (void*)resetArtsState__Q22cf10CfObjectPcFv,
+    (void*)CfObjectActor_clearActionSrcId__Q22cf13CfObjectActorFv, (void*)initialize__Q22cf10CfObjectPcFv, (void*)enablePcFlag__Q22cf10CfObjectPcFv, (void*)updatePc__Q22cf10CfObjectPcFv,
+    (void*)syncArtsEntry__Q22cf10CfObjectPcFv, (void*)refreshArtsData__Q22cf10CfObjectPcFv, (void*)scanArtsEntries__Q22cf10CfObjectPcFv, (void*)resetArtsState__Q22cf10CfObjectPcFv,
     (void*)applyArtsParam__Q22cf10CfObjectPcFv, (void*)dispatchPlayerBranch__Q22cf10CfObjectPcFv, (void*)resetActionTable__Q22cf10CfObjectPcFv, (void*)setupActionTable__Q22cf10CfObjectPcFv,
     (void*)triggerActionRefreshA__Q22cf10CfObjectPcFv, (void*)triggerActionRefreshB__Q22cf10CfObjectPcFv, (void*)handleMoveState__Q22cf10CfObjectPcFv, 0,
 };

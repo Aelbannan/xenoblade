@@ -130,7 +130,7 @@ struct CActParamAnimView {
     virtual void startOwnerFlag8Anim(); // 0x4C
     virtual void startOwnerFlag2Anim(); // 0x50
     virtual void func_8004E9EC(); // 0x54
-    virtual void func_8004ECF4(); // 0x58
+    virtual void stepAnimState(); // 0x58
     virtual void fireCountGate(); // 0x5C
     virtual void fireWord378Gt(); // 0x60
     virtual void func_8004F884(); // 0x64
@@ -174,7 +174,7 @@ extern "C" void actAnimVt44(void* self) { ((CActParamAnimView*)self)->fireAnimPa
 extern "C" void actAnimVt48(void* self) { ((CActParamAnimView*)self)->__vt_48(); }
 extern "C" void actAnimVt4C(void* self) { ((CActParamAnimView*)self)->startOwnerFlag8Anim(); }
 extern "C" void actAnimVt50(void* self) { ((CActParamAnimView*)self)->startOwnerFlag2Anim(); }
-extern "C" void actAnimVt58(void* self) { ((CActParamAnimView*)self)->func_8004ECF4(); }
+extern "C" void actAnimVt58(void* self) { ((CActParamAnimView*)self)->stepAnimState(); }
 extern "C" void actAnimVt20(void* self) { ((CActParamAnimView*)self)->startFlag2000Anim(); }
 extern "C" void actAnimVt24(void* self) { ((CActParamAnimView*)self)->startFlag0800Anim(); }
 extern "C" void actAnimVt28(void* self) { ((CActParamAnimView*)self)->startFlag0400Anim(); }

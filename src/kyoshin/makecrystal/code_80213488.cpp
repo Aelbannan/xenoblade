@@ -49,9 +49,10 @@ struct CrystalItemImpl {
 // NOTE: defining these two in source makes MWCC const-propagate the literals
 // and emit extra .sdata2 pool words (measured: 0x20 vs retail 0x18).  They must
 // come from the code path that uses them once that is reconstructed.
-extern f32 lbl_eu_80668458; // 30.0f scale
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") f32 lbl_eu_80668458 = 30.0f;  // 30.0f scale
 // lbl_eu_8066845C is the 0.0f used for the fractional-part comparison.
-extern f32 lbl_eu_8066845C;
+extern __declspec(section ".sdata2") f32 lbl_eu_8066845C = 0.0f;
 // NOTE: the two 2^52 (4503599627370496.0) f64 constants the retail references
 // (lbl_eu_80668460 for the u16->float and lbl_eu_80668468 for the int->float
 // conversion) are synthesised internally by MWCC for the (f32)d->count and

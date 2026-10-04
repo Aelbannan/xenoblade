@@ -55,9 +55,9 @@ void __dl__FPv(void* p);
 bool wkStandbyLogin__11CWorkThreadFv(CWorkThread* self);
 bool wkStandbyLogout__11CWorkThreadFv(CWorkThread* self);
 void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CWorkThread* self, int evt);
-// CDeviceFont::func_80452D80 - Fv mangling, but retail caller passes a
+// CDeviceFont::createFontInfo - Fv mangling, but retail caller passes a
 // second (ignored) argument in r4 (the just-claimed file data pointer)
-void func_80452D80__11CDeviceFontFv(u32 self, u8* arg2);
+void createFontInfo__11CDeviceFontFv(u32 self, u8* arg2);
 
 
 
@@ -138,7 +138,7 @@ bool OnFileEvent__17CDeviceFontLoaderFP10CEventFile(CDeviceFontLoader* self, CEv
     if (pEventFile->unk0 == 1) {
         u8* pData = self->mFileHandle->mData;
         self->mFileHandle->mData = nullptr;
-        func_80452D80__11CDeviceFontFv(self->mSomeData, pData);
+        createFontInfo__11CDeviceFontFv(self->mSomeData, pData);
         wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(
             reinterpret_cast<CWorkThread*>(self), CWorkThread::EVT_NONE);
     }

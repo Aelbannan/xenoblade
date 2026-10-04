@@ -1261,10 +1261,10 @@ extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
 extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Window-arm chain used by CMenuArtsSet_armSysWin: build a label string pair then
-// drive the CSysWin sub-object. func_8022BFC8 is already declared in
+// drive the CSysWin sub-object. sysWinApplyKind is already declared in
 // CSysWin.hpp as (CSysWin*, u8).
 extern "C" char* BdatTouchStringCell(char* a, char* b, u32 count);
-extern "C" void func_8022B9B4(CSysWin* self, char* str, u32 flag);
+extern "C" void sysWinSetKindContent(CSysWin* self, char* str, u32 flag);
 extern "C" void sysWinOpenPhase1(CSysWin* self);
 
 // lib/lyt draw (CScrollBar_UpdateDispatch).

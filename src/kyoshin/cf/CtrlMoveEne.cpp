@@ -101,7 +101,7 @@ static cf::CFunc8008E760Vec3W& A2C8PosW(cf::CFunc8008A2C8View* view) {
 // battle-AI driver. It refreshes the controller state, orients the velocity
 // toward the move-sub heading, runs the battle-object busy/HP gate, dispatches
 // CtrlMoveEne_CheckActorState for the actor-word checks, runs the approach/ground-probe
-// chain (actor lookup via findObjectById__Fi / func_8016FE34, the collision
+// chain (actor lookup via findObjectById__Fi / MapFx_ResolveOwner, the collision
 // height-band scan, the +0x192 timer), then the heading / +0x178 / +0x168
 // pursuit gates, the player proximity scan and the mVec144 commit, the
 // +0x8000 / +0x4 / +0x5 flag paths and finally the +0x31 battle event.
@@ -172,7 +172,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                             reinterpret_cast<cf::CObjectParam*>(A2C8Sub(obj))
                                 ->CObjectParam_getSelfObjectId());
                         cf::CFunc8008B580Obj* r26 =
-                            (cf::CFunc8008B580Obj*)func_8016FE34(src);
+                            (cf::CFunc8008B580Obj*)MapFx_ResolveOwner(src);
                         if (r26 != 0) {
                             ml::CVec3* p =
                                 reinterpret_cast<cf::CfObject*>(&r26->mSub2)->CfObject_getPosVector();
@@ -489,9 +489,9 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                     ? (u8*)self->field_0x34->field_0x28 -
                                           0x3E9C
                                     : 0);
-                        if (func_80148778((u8*)obj2 + 8, 6) != 0 ||
-                            func_80148778((u8*)obj2 + 8, 7) != 0 ||
-                            func_80148778((u8*)obj2 + 8, 0xC) != 0) {
+                        if (isBattleStatusActive((u8*)obj2 + 8, 6) != 0 ||
+                            isBattleStatusActive((u8*)obj2 + 8, 7) != 0 ||
+                            isBattleStatusActive((u8*)obj2 + 8, 0xC) != 0) {
                             r27 = 1;
                         }
                         if (r27 == 0) {

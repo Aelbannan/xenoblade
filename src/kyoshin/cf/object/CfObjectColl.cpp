@@ -21,7 +21,7 @@ public:
 
 // Retail callee keeps its flat, unmangled name (reloc-name fix, PLAN.md 17.6).
 extern "C" u32 Tok_Pack08(u32 a, u32 b);
-extern "C" u32 func_800AA714(const char* path);
+extern "C" u32 Tok_ParseFile(const char* path);
 
 // Null-guarded bit-15 flag test on +0x64
 // set (retail keeps r3 = self and tests with r0 via bclr 4,2).
@@ -562,7 +562,7 @@ void CollObjSetNameSlot(cf::CfObjectColl* self, const char* name, int index) {
 // Resolve the resource id for the given path, then format its display name
 // into the embedded FixStr<16> using the suffix of the retail format string.
 void CollObjSetResIdPathName(cf::CfObjectColl* self, const char* name) {
-    self->field_0x9C = func_800AA714(name);
+    self->field_0x9C = Tok_ParseFile(name);
     self->fieldName120.format(lbl_eu_804FC134 + 0xa, name);
 }
 

@@ -29,7 +29,7 @@ struct QstMenuData {
 
 extern void playUISound(u32);
 
-// The quest-info buffer QstCnt_InitRecords_6FAC / func_802270CC maintain.
+// The quest-info buffer QstCnt_InitRecords_6FAC / QstCnt_RefreshRecords maintain.
 struct QstData {
     QstInfo mList[0x400];                       // 0x0000
     u16 field_2000;                             // 0x2000
@@ -45,25 +45,25 @@ void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned ch
 QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src);
 QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src);
 void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
-CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
+CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 int QstCnt_HasInstance_6B94();
 void invalidateQstFlag();
 void QstCnt_SignalReady_6BBC(QstMenuData* self);
 void QstCnt_AdvanceToOpen_6C18(QstMenuData* self);
 void QstCnt_TickToOpened_6C5C(QstMenuData* self);
-void func_80226C88(CMenuQstCnt* self);
-void func_80226E54(CMenuQstCnt* self);
+void QstCnt_FinishAnim(CMenuQstCnt* self);
+void QstCnt_RefreshDisplay(CMenuQstCnt* self);
 QstData* QstCnt_InitRecords_6FAC(QstData* self);
 void* __dt__80227070(QstData* self, int flags);
-void func_802270CC(QstData* self);
-void func_80227260(QstData* self, u32 kind, u32 filter);
+void QstCnt_RefreshRecords(QstData* self);
+void QstCnt_SortRecords(QstData* self, u32 kind, u32 filter);
 // Retail emits the -O3 copy shape (load r0; store r0; per-field, no load
 // hoisting) while the unit is -O4,s. `#pragma scheduling off` reproduces the
 // interleaved single-register copy exactly (verified Wii/1.1 -O4,s); the
 // optimization_level pragma alone cannot (MWCC_CASES §1302).
 #pragma push
 #pragma scheduling off
-void func_80227660(QstInfo* dst, const QstInfo* src) {
+void QstCnt_CopyInfoA(QstInfo* dst, const QstInfo* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;
     dst->f3 = src->f3;
@@ -73,7 +73,7 @@ void func_80227660(QstInfo* dst, const QstInfo* src) {
     dst->f7 = src->f7;
 }
 #pragma pop
-void func_8022769C(QstInfo* dst, const QstInfo* src) {
+void QstCnt_CopyInfoB(QstInfo* dst, const QstInfo* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;
     dst->f3 = src->f3;
@@ -84,7 +84,7 @@ void func_8022769C(QstInfo* dst, const QstInfo* src) {
 }
 unsigned short selectQstIndex(unsigned char* p);
 QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx);
-void func_80227710();
+void QstCnt_FindInfoIndex();
 }
 
 // --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
@@ -250,7 +250,7 @@ void CMenuQstCnt::Init() {
     mLayout->Animate(0);
 
     mField67 = 0;
-    func_80226E54(this);
+    QstCnt_RefreshDisplay(this);
 
     // Retail guards a dead null-check on this before picking the +0x70
     // IScnRender subobject (same shape as Term()).
@@ -314,7 +314,7 @@ void CMenuQstCnt::Move() {
     case 0: QstCnt_SignalReady_6BBC((QstMenuData*)this); break;
     case 1: QstCnt_AdvanceToOpen_6C18((QstMenuData*)this); break;
     case 2: QstCnt_TickToOpened_6C5C((QstMenuData*)this); break;
-    case 3: func_80226C88(this); break;
+    case 3: QstCnt_FinishAnim(this); break;
     }
     // Tail virtual call: Layout::Animate (vtable slot 0x38), option 0.
     mLayout->Animate(0);
@@ -359,7 +359,7 @@ void CMenuQstCnt::cbRenderBefore() {
 // Quest-log menu factory/update. When the singleton already exists and is
 // active, only sync the new selection into it (returning 0); otherwise
 // allocate + construct + register a fresh menu (returning the object).
-CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
+CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
     CMenuQstCnt* g = lbl_eu_80664720;
     if (g != 0 && g->mField64 == 0) {
         int changed = 0;
@@ -370,16 +370,16 @@ CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsi
             switch (g->mState8C) {
             case 0:
                 g->mSelEntry.f4 = c;
-                if (lbl_eu_80664720->mField19C) func_80226E54(lbl_eu_80664720);
+                if (lbl_eu_80664720->mField19C) QstCnt_RefreshDisplay(lbl_eu_80664720);
                 break;
             case 1:
                 g->mSelEntry.f4 = c;
-                func_80226E54(lbl_eu_80664720);
+                QstCnt_RefreshDisplay(lbl_eu_80664720);
                 break;
             case 2:
                 g->mSelEntry.f4 = c;
                 lbl_eu_80664720->mValue90 = lbl_eu_80668568;
-                func_80226E54(lbl_eu_80664720);
+                QstCnt_RefreshDisplay(lbl_eu_80664720);
                 break;
             default:
                 changed = 1;
@@ -452,7 +452,7 @@ void QstCnt_TickToOpened_6C5C(QstMenuData* self) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void func_80226C88(CMenuQstCnt* self) {
+void QstCnt_FinishAnim(CMenuQstCnt* self) {
     if (AnimRewindFrame(self->mAnim88, lbl_eu_8066856C) == 0) return;
     if (self->mEntries[0].f0 == 0) {
         self->mField64 = 1;
@@ -465,7 +465,7 @@ void func_80226C88(CMenuQstCnt* self) {
     QstEntry tmp0;
     setQstEntry(&tmp0, 0, 0, 0, 0, 0);
     copyQstEntry(&self->mEntries[0], &tmp0);
-    func_80226E54(self);
+    QstCnt_RefreshDisplay(self);
 
     QstEntry scratch[32];
     u8 i, j;
@@ -494,7 +494,7 @@ void func_80226C88(CMenuQstCnt* self) {
 }
 #pragma pop
 
-void func_80226E54(CMenuQstCnt* self) {
+void QstCnt_RefreshDisplay(CMenuQstCnt* self) {
     if (self->mSelEntry.f0 == 0) return;
     if (self->mSelEntry.f4 > self->mSelEntry.f5) {
         self->mSelEntry.f4 = self->mSelEntry.f5;
@@ -558,7 +558,7 @@ end:
 // Rebuild the 0x400-entry quest-info table from the game's quest catalog.
 // Categories 1..0x1A (ranges from GetU16PairEntry) each contribute their quests;
 // entries whose kind is 0 / 0xC8 are skipped.
-void func_802270CC(QstData* self) {
+void QstCnt_RefreshRecords(QstData* self) {
     self->field_2000 = 0;
     u16 cat;
     for (cat = 1; cat < 0x1B; cat++) {
@@ -599,7 +599,7 @@ void func_802270CC(QstData* self) {
     }
 }
 
-void func_80227260(QstData* self, u32 kind, u32 filter) {
+void QstCnt_SortRecords(QstData* self, u32 kind, u32 filter) {
     // Select/re-select the sort column. kind==4 uses the quest-level filter
     // (field_2005); otherwise kind is the column (field_2004). If the selection
     // didn't change, there is nothing to re-sort.
@@ -622,10 +622,10 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f0 > pb->f0) {
                 QstInfo t1, t2, t3;
-                func_80227660(&t1, pa);
-                func_80227660(&t2, pb);
+                QstCnt_CopyInfoA(&t1, pa);
+                QstCnt_CopyInfoA(&t2, pb);
                 copyQstInfo(pa, &t2);
-                func_8022769C(&t3, &t1);
+                QstCnt_CopyInfoB(&t3, &t1);
                 copyQstInfo(pb, &t3);
                 changed = false;
             }
@@ -641,10 +641,10 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f7 > pb->f7) {
                 QstInfo t1, t2, t3;
-                func_80227660(&t1, pa);
-                func_80227660(&t2, pb);
+                QstCnt_CopyInfoA(&t1, pa);
+                QstCnt_CopyInfoA(&t2, pb);
                 copyQstInfo(pa, &t2);
-                func_8022769C(&t3, &t1);
+                QstCnt_CopyInfoB(&t3, &t1);
                 copyQstInfo(pb, &t3);
                 changed = false;
             }
@@ -660,10 +660,10 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f5 < pb->f5) {
                 QstInfo t1, t2, t3;
-                func_80227660(&t1, pa);
-                func_80227660(&t2, pb);
+                QstCnt_CopyInfoA(&t1, pa);
+                QstCnt_CopyInfoA(&t2, pb);
                 copyQstInfo(pa, &t2);
-                func_8022769C(&t3, &t1);
+                QstCnt_CopyInfoB(&t3, &t1);
                 copyQstInfo(pb, &t3);
                 changed = false;
             }
@@ -685,10 +685,10 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
                                     : (pb->f2 == kind);
                 if (m1 < m2) {
                     QstInfo t1, t2, t3;
-                    func_80227660(&t1, pa);
-                    func_80227660(&t2, pb);
+                    QstCnt_CopyInfoA(&t1, pa);
+                    QstCnt_CopyInfoA(&t2, pb);
                     copyQstInfo(pa, &t2);
-                    func_8022769C(&t3, &t1);
+                    QstCnt_CopyInfoB(&t3, &t1);
                     copyQstInfo(pb, &t3);
                     changed = false;
                 }
@@ -727,7 +727,7 @@ QstInfo* QstCnt_GetInfoAt_76F4(QstInfo* base, unsigned short idx) {
 // +0x2000 but the table reads are base-relative (retail lhzx r0,r3,r0 with
 // r3 unmodified -- the table starts at offset 0). Returns the matching index
 // or 0 (retail returns 0, not -1).
-u16 func_80227710(void* self, u32 arg) {
+u16 QstCnt_FindInfoIndex(void* self, u32 arg) {
     u16 count = *(u16*)((u8*)self + 0x2000);
     for (u16 i = 0; i < count; i++) {
         if (*(u16*)((u8*)self + i * 8) == arg) return i;

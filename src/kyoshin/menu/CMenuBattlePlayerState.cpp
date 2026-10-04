@@ -7,14 +7,14 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef CTaskGame_enumListCtor
-#undef func_8017FD44
+#undef GetZealObjPtr
 #undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef CTaskGame_enumListGet
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
 #define CTaskGame_enumListCtor menuBpsEnumListCtor5
-#define func_8017FD44 menuBpsFd44Get5
+#define GetZealObjPtr menuBpsFd44Get5
 #define isSceneLoading__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
 #define CTaskGame_enumListGet menuBpsMoveEnumListGet5
 // CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
@@ -23,7 +23,7 @@
 #define zero__Q22ml5CVec3 menuBpsZeroVecDecl5
 #include "kyoshin/code_80135FDC.hpp"
 #undef CTaskGame_enumListCtor
-#undef func_8017FD44
+#undef GetZealObjPtr
 #undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef CTaskGame_enumListGet
 #undef zero__Q22ml5CVec3
@@ -50,7 +50,7 @@ struct CMenuBpsProcessShim {
     u32 callbacks[6]; // +0x3c
 };
 
-void func_8010B324(CMenuBattlePlayerStateSlot*);
+void BpsStateClearSlot(CMenuBattlePlayerStateSlot*);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
 extern "C" void __dl__FPv(void*);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
@@ -74,12 +74,12 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // findObjB28ById is declared (extern "C", s32) by CAIAction.hpp, included
 // transitively via CfObjectActor.hpp -> CBattleManager.hpp.
-void func_8010D1B4(CMenuBattlePlayerState* self,
+void BpsStateUpdateSlotArts(CMenuBattlePlayerState* self,
                    cf::CfObjectActor* actor,
                    CMenuBattlePlayerStateSlot* slot);
-void func_8010D4B0(CMenuBattlePlayerState* self,
+void BpsStateActivateSlot(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot, u32 index);
-void func_8010D8D4(CMenuBattlePlayerState* self,
+void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot);
 // Unmangled retail name (extern "C" in code_80135FDC.hpp).
 extern char lbl_eu_804FD720[];
@@ -290,7 +290,7 @@ void CMenuBattlePlayerState::Init() {
             {
                 // Stage a zeroed slot-tail template on the stack, then block-
                 // assign it over slot+0x74..0x204 (same clear shape as
-                // func_8010B324: 0x60-stride body then 0xC-stride remainder).
+                // BpsStateClearSlot: 0x60-stride body then 0xC-stride remainder).
                 MenuBpsSlotInit init;
                 init.unk74 = CUICfManager::CUICfManager_getArcResourceAccessor();
                 init.unk78 = NULL;
@@ -614,7 +614,7 @@ void CMenuBattlePlayerState::Move() {
 
             // Retail: clrlwi; mulli 0x270; add this; addi +0x74 → &mSlots[i].
             slot = &mSlots[i];
-            func_8010D1B4(this, actor, slot);
+            BpsStateUpdateSlotArts(this, actor, slot);
 
             hp = static_cast<u32>(actor->CActorParam_getHp());
             maxHp = static_cast<u32>(actor->CActorParam_getDamageScale());
@@ -750,7 +750,7 @@ void CMenuBattlePlayerState::Move() {
 
             switch (static_cast<s32>(slot->unk244)) {
             case 0:
-                func_8010D4B0(this, slot, i);
+                BpsStateActivateSlot(this, slot, i);
                 break;
             case 1: {
                 u32 a = advanceAnimTransform(slot->unk04, lbl_eu_80666F90);
@@ -762,7 +762,7 @@ void CMenuBattlePlayerState::Move() {
                 break;
             }
             case 2:
-                func_8010D8D4(this, slot);
+                BpsStateRefreshSlot(this, slot);
                 break;
             case 3: {
                 u32 a = AnimRewindFrame(slot->unk04,
@@ -934,7 +934,7 @@ done:
 // Under stock -O4,p, /0x60 strength-reduces to mulhwu. Size opt keeps
 // retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_CASES.
 #pragma optimize_for_size on
-void func_8010B324(CMenuBattlePlayerStateSlot* slot){
+void BpsStateClearSlot(CMenuBattlePlayerStateSlot* slot){
     u32 z;
     u8* start;
     u8* end;
@@ -1045,11 +1045,11 @@ extern "C" void* BpsStateDtorThunk5C(void* self, int deleteFlag) {
 extern "C" void __destroy_arr(void* ptr, void* dtor, u32 size, u32 count);
 
 // Battle-menu imports (retail unmangled names; see CUIBattleManager.hpp for
-// func_8012FAA8 semantics - pane/material helpers shared by menu TUs).
+// UIBattleReleaseAll semantics - pane/material helpers shared by menu TUs).
 extern "C" void* UIBattleGetTableB8();
-extern "C" void func_8012FAA8();
+extern "C" void UIBattleReleaseAll();
 extern "C" void PaneSetTexPalette(void* pane, u32 value);
-extern "C" void func_8010A940(void* obj, u32 a, u32 b, u32 c);
+extern "C" void BtlDmg_QueueEnqueue(void* obj, u32 a, u32 b, u32 c);
 extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
 
 #pragma optimize_for_size off
@@ -1110,7 +1110,7 @@ extern "C" void* __dt__22CMenuBattlePlayerStateFv(
 // ---------------------------------------------------------------------------
 // Target us-8010dbb0: per-slot animation select. Picks an entry from the
 // shared battle-UI animation table indexed by the slot number, chosen by
-// `mode`; a zero entry (or missing table) resets via func_8012FAA8.
+// `mode`; a zero entry (or missing table) resets via UIBattleReleaseAll.
 // ---------------------------------------------------------------------------
 struct MenuBpsModeEntry {
     u32 unk00;
@@ -1118,7 +1118,7 @@ struct MenuBpsModeEntry {
     u32 unk08;
 };
 
-// Default mode: the func_8010D8D4 caller passes no third argument (retail
+// Default mode: the BpsStateRefreshSlot caller passes no third argument (retail
 // leaves r5 stale from an earlier callee), so the parameter defaults.
 extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
                               CMenuBattlePlayerStateSlot* slot, s32 mode = 0) {
@@ -1147,7 +1147,7 @@ extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
             PaneSetTexPalette(slot->unk64, sel);
             PaneSetTexPalette(slot->unk68, sel);
         } else {
-            func_8012FAA8();
+            UIBattleReleaseAll();
         }
     }
 }
@@ -1158,7 +1158,7 @@ extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
 // id byte at handle+0x8C against the first three party-table words, and
 // forwards to the per-slot updater at (state + i*0x270 + 0xE8).
 // ---------------------------------------------------------------------------
-void func_8010CE50(int id, u32 a, u32 b, u32 c) {
+void BpsStateQueueDamage(int id, u32 a, u32 b, u32 c) {
     CMenuBattlePlayerState* state = lbl_eu_80663F48;
     if (state == NULL) {
         return;
@@ -1180,7 +1180,7 @@ void func_8010CE50(int id, u32 a, u32 b, u32 c) {
     for (u8 i = 0; i < 3; i++) {
         if (idxByte == static_cast<int>(party.w[i])) {
             char* slotView = reinterpret_cast<char*>(state) + static_cast<u32>(i) * 0x270;
-            func_8010A940(slotView + 0xE8, a, b, c);
+            BtlDmg_QueueEnqueue(slotView + 0xE8, a, b, c);
             return;
         }
     }
@@ -1190,7 +1190,7 @@ void func_8010CE50(int id, u32 a, u32 b, u32 c) {
 // Battle-party-slot per-frame update: finds the first free arts slot, derives
 // an HP-gauge width ratio from a BDAT lookup, and writes it into the
 // "N_HpGauge_Max" pane size.
-extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
+extern "C" void BpsStateUpdateHpGauge(CMenuBattlePlayerState* self,
                               CMenuBattlePlayerStateSlot* slot) {
     // state load first: retail keeps it in r5 (result takes r6).
     MenuBpsActorState* state =
@@ -1312,7 +1312,7 @@ struct MenuBpsAnimFrameView {
 // (unk268/unk6C pane), then over a snapshot plus the level icon at index 0x20
 // (unk26C/unk70 pane).
 // ---------------------------------------------------------------------------
-void func_8010D1B4(CMenuBattlePlayerState* self,
+void BpsStateUpdateSlotArts(CMenuBattlePlayerState* self,
                    cf::CfObjectActor* actor,
                    CMenuBattlePlayerStateSlot* slot) {
     MenuBpsPaneFlagsView* starPane;
@@ -1447,7 +1447,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
 // and re-arms the per-slot state machine. `index` nonzero suppresses the
 // playUISound(0x99) jingle on first activation.
 // ---------------------------------------------------------------------------
-void func_8010D4B0(CMenuBattlePlayerState* self,
+void BpsStateActivateSlot(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot, u32 index) {
     u8 gate = slot->unk240;
     slot->unk25C &= ~0x03E00000u;
@@ -1480,7 +1480,7 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
         }
     }
 
-    func_8010CF68(self, slot);
+    BpsStateUpdateHpGauge(self, slot);
 
     if (slot->unk25C & 0x4) {
         slot->unk25C &= ~0x4u;
@@ -1569,7 +1569,7 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
 // jingle, runs the tension state machine (unk250) and party-gauge machine
 // (unk254), and steps the sub-layout (unk78) cursor.
 // ---------------------------------------------------------------------------
-extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
+extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
                               CMenuBattlePlayerStateSlot* slot) {
     u32 flags = slot->unk25C;
     u32 prevStatus = slot->unk20C;
@@ -1605,7 +1605,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         }
     }
 
-    func_8010CF68(self, slot);
+    BpsStateUpdateHpGauge(self, slot);
 
     if (slot->unk25C & 4) {
         slot->unk25C &= ~4u;
@@ -1726,7 +1726,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
             if (slot->unk260 == 0) {
                 void* player = cf::CfGameManager::getPlayer(0);
                 if (player != NULL) {
-            func_8016FE34(player);
+            MapFx_ResolveOwner(player);
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
             // Inline actor-list occupancy count (retail shape: head in r5,
             // counter r4, cursor r3).
@@ -1762,7 +1762,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                         flashB->flagsBB =
                             (flashB->flagsBB & static_cast<u8>(~0x01)) |
                             0x01;
-                        if (!func_8017FD44()) {
+                        if (!GetZealObjPtr()) {
                             playUISound(0x63);
                         }
                     } else if (delta > 0) {
@@ -1778,7 +1778,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                                 slot->unk20->GetRootPane()->FindPaneByName(
                                     tbl + 0x43b, true));
                         flashB->flagsBB &= static_cast<u8>(~0x01);
-                        if (!func_8017FD44()) {
+                        if (!GetZealObjPtr()) {
                             playUISound(0x64);
                         }
                     }

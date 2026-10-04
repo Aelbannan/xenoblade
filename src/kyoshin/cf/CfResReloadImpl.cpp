@@ -7,12 +7,12 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // CfObjectMove_setAnimModeArgs (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // real owner of parent+0x98 (vfunc64/vfunc88)
-// IResInfo's func_800AA33C uses FixStr; this TU needs the u8* form - hide the
+// IResInfo's Tok_FormatStr uses FixStr; this TU needs the u8* form - hide the
 // FixStr decl so the two extern "C" overloads don't collide (10197).
-#define func_800AA33C IResInfo_func_800AA33C
+#define Tok_FormatStr IResInfo_Tok_FormatStr
 #include "kyoshin/cf/IResInfo.hpp"
-#undef func_800AA33C
-extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
+#undef Tok_FormatStr
+extern "C" int Tok_FormatStr(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
 
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -217,7 +217,7 @@ extern "C" int getReloadAttrId(const cf::CfResReloadImpl* self) {
 
 // Iterates the two secondary-interface slots (+0x34 with 0 and 1); when a
 // slot reports a live resource id, searches the device table via
-// func_80068928 and bumps the matching entry's +0x38/+0x3A counters (the
+// CfRes_findIdInRange and bumps the matching entry's +0x38/+0x3A counters (the
 // +0x3A bump only when parent flag bit 0 is set).
 extern "C" void bumpReloadDeviceCounts(cf::CfResReloadImpl* self) {
     void* inst = CfRes_getInstanceField();
@@ -227,7 +227,7 @@ extern "C" void bumpReloadDeviceCounts(cf::CfResReloadImpl* self) {
     for (int i = 0; i < 2; i++) {
         int v = self->getWorkValue(i);
         if (v != 0) {
-            cf::DeviceSearchEntry* e = func_80068928((u8*)inst, (u32)v, 0x59, 0x61);
+            cf::DeviceSearchEntry* e = CfRes_findIdInRange((u8*)inst, (u32)v, 0x59, 0x61);
             if (e != 0) {
                 e->field_38++;
                 if (self->field_00->field_6C & 1) {
@@ -476,7 +476,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
             u8* wp = &work.buf[0];
             wp[0] = 0;
             work.tail = 0;
-            func_800AA33C(wp, entry->field_04, 1, 0);
+            Tok_FormatStr(wp, entry->field_04, 1, 0);
             u8* slot1C = entry->field_2C->getHandle1C(entry);
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
@@ -499,7 +499,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
         CfModel_SyncVisFlag((cf::CfObjectModel*)self->field_00, 0);
 reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8066769C);
     }
-    func_800BCFA0((cf::CfObjectMove*)self->field_00);
+    CfObjectMove_initAnimTarget((cf::CfObjectMove*)self->field_00);
     // volatile on both stores + the parent read pins retail's order:
     // stb 1e / lwz parent / sth 1c
     *(volatile u8*)&self->field_1E = 0;

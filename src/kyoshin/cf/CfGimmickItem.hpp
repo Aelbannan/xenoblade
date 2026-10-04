@@ -93,10 +93,10 @@ void __ct__cf_CfGimmick(cf::CfGimmick* self);
 void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int mode);  // ABI deleting-dtor twin
 void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self);                     // unregister field_7C object
-void func_8020A484(unsigned short id);
+void CfGimmick_PostGimmickName(unsigned short id);
 unsigned int CfGimmick_IsMessageSystemBusy(void);
 void CfGimmick_SetGlobalFlagC0042(void);
-void func_8020A6B0(CfGimmickReg* reg, const CfGimmickVec3* point,
+void CfGimmick_UpdateProximity(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
 void CItem_thunkAllocRecord(unsigned int a, unsigned int b);

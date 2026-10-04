@@ -79,12 +79,12 @@ struct CNReqtaskLoadData {
     u8  mState;      // +0x19
 };
 
-// us-804df22c: func_804DAF70
+// us-804df22c: NandLoadConfigure
 // Configures the CNReqtaskLoad sub-task: records the path/buffer/size/flag and
 // resets the async state to step 0, then returns the task vtable pointer.
 //
 // First arg is the CNReqtaskLoad sub-task block embedded in CNRequest (+4).
-extern "C" CNReqtaskLoadVtbl** func_804DAF70(CNReqtaskLoadData* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
+extern "C" CNReqtaskLoadVtbl** NandLoadConfigure(CNReqtaskLoadData* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
     CNReqtaskLoadData* d = data;
     strcpy(d->path, path);
     d->mBuffer = arg2;

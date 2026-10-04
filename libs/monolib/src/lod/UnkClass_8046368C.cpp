@@ -70,7 +70,7 @@ extern u8 lbl_eu_806581C8[0x180]; // 8 x 0x30 work objects
 // ---------------------------------------------------------------------------
 // Large LOD state object at 0x80657FB0.
 //
-// Layout (from func_80463814 / func_80463C24):
+// Layout (from setupLodFrame / uploadLodMatrix):
 //   0x000  v[10]   basis words: v0 @0x00, v1 @0x0C, translation @0x18
 //                  (the matrix view reads words 0x00..0x28 with the fourth
 //                  column zeroed)
@@ -111,7 +111,7 @@ extern "C" void dispatchLodRecords__Q23LOD17UnkClass_80468434Fv();
 // External LOD helpers (other translation units, retail mangled names).
 // ---------------------------------------------------------------------------
 void initLodTables__Q23LOD17CLODCacheManagerSFv(void*);
-void* func_8046323C__Q23LOD17CLODCacheManagerSFv(void*);
+void* catmullRomBin__Q23LOD17CLODCacheManagerSFv(void*);
 void selectCubicLookup__Q23LOD17UnkClass_8046368CFv(void);
 void selectLinearLookup__Q23LOD17UnkClass_8046368CFv(void);
 void setLodFadeAlpha(s32);
@@ -221,13 +221,13 @@ extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32
 extern "C" void* getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index) {
     u32 entry = lbl_eu_8066574C[index];
     u16 kind = *(const u16*)(lbl_eu_80665750 + entry * 2 + 2);
-    return func_8046323C__Q23LOD17CLODCacheManagerSFv(lbl_eu_80665738 + kind * 0xC);
+    return catmullRomBin__Q23LOD17CLODCacheManagerSFv(lbl_eu_80665738 + kind * 0xC);
 }
 
 // ===========================================================================
-// us-804677e4  func_80463814  (frame setup: matrices, vertex formats, GX)
+// us-804677e4  setupLodFrame  (frame setup: matrices, vertex formats, GX)
 // ===========================================================================
-extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
+extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
     const Mtx* input, void* records78, void* records84, void* texBase70,
     void* clrBase74, void* matsAC, void* records7C, u32 val8C, u32 val88) {
     LodGlobal* g = &lbl_eu_80657FB0;
@@ -328,9 +328,9 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
 }
 
 // ===========================================================================
-// us-80467bf4  func_80463C24  (matrix slot upload with 1-entry cache)
+// us-80467bf4  uploadLodMatrix  (matrix slot upload with 1-entry cache)
 // ===========================================================================
-void func_80463C24(s32 index, s32 offset, const Mtx* mtx) {
+void uploadLodMatrix(s32 index, s32 offset, const Mtx* mtx) {
     LodGlobal* g = &lbl_eu_80657FB0;
 
     s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
@@ -375,9 +375,9 @@ update:
 }
 
 // ===========================================================================
-// us-80467d14  func_80463D44  (per-record draw dispatch)
+// us-80467d14  dispatchLodDraw  (per-record draw dispatch)
 // ===========================================================================
-extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
+extern "C" void dispatchLodDraw__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
     LodRec18* rec = (LodRec18*)(lbl_eu_80665778 + p->f18 * 0x18);
 
     if (lbl_eu_806657B4 != rec->id) {
@@ -411,9 +411,9 @@ extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 }
 
 // ===========================================================================
-// us-80467e80  func_80463EB0  (cache object bind + dispatch)
+// us-80467e80  bindLodCache  (cache object bind + dispatch)
 // ===========================================================================
-extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) {
+extern "C" void bindLodCache__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) {
     u32* rec = (u32*)lbl_eu_80665784 + index * 3;
 
     lbl_eu_806657B0 |= 0x3;
@@ -521,9 +521,9 @@ void bindLodVertexArrays(s32 count) {
 }
 
 // ===========================================================================
-// us-804680f8  func_80464128  (flag-driven fade update, returns "unchanged")
+// us-804680f8  updateLodFade  (flag-driven fade update, returns "unchanged")
 // ===========================================================================
-s32 func_80464128(u32 arg) {
+s32 updateLodFade(u32 arg) {
     if (arg & 0x4) {
         s32 v = lbl_eu_806657A8;
         if (v == 0) {
@@ -586,9 +586,9 @@ s32 func_80464128(u32 arg) {
 }
 
 // ===========================================================================
-// us-8046828c  func_804642BC  (fade ratio by group id)
+// us-8046828c  getLodFadeRatio  (fade ratio by group id)
 // ===========================================================================
-s32 func_804642BC(s32 a, u32 b) {
+s32 getLodFadeRatio(s32 a, u32 b) {
     if (lbl_eu_806657B0 & 0x40) {
         if ((s32)lbl_eu_806657BC == a) {
             if ((s32)lbl_eu_806657C4 >= (s32)b) {
@@ -631,9 +631,9 @@ s32 func_804642BC(s32 a, u32 b) {
 }
 
 // ===========================================================================
-// us-804683a8  func_804643D8  (range fade with entry/exit interpolation)
+// us-804683a8  applyLodRangeFade  (range fade with entry/exit interpolation)
 // ===========================================================================
-s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
+s32 applyLodRangeFade(s32 a, s32 b, s32 da, s32 db) {
     s32 lim = lbl_eu_806657B8;
 
     if (a <= b) {

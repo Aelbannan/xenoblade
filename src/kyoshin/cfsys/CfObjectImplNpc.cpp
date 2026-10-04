@@ -18,7 +18,7 @@ void NpcImplInit(cf::CfObjectImplNpc* self)
         attachOwner(&self->field_28, self->field_14);
     }
     if (self->field_14 != 0) {
-        char* name = func_800AA5C0((void*)self->field_14->field_70);
+        char* name = Tok_FormatRes((void*)self->field_14->field_70);
         for (u32 i = 0; i < 10; i++) {
             if (strstr(name, lbl_eu_8052AA00[i]) != 0) {
                 self->vf30(0x400, 1);

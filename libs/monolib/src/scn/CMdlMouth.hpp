@@ -35,7 +35,7 @@ extern const f32 lbl_eu_8066A1F8; // pi
 // .sdata pointers to the node/material-name strings (loaded via r13, SDA21).
 extern const char* lbl_eu_80663C58; // node name passed to ResMdl::GetResNode
 extern const char* lbl_eu_80663C5C; // material-name needle for strstr
-// Resource/assert strings referenced by func_804E65CC. Sized so MWCC picks the
+// Resource/assert strings referenced by MdlMouthBindModel. Sized so MWCC picks the
 // retail addressing: sda21 for the <=8-byte .sdata args, absolute lis/addi for
 // the .data file/fmt strings.
 extern const char lbl_eu_8056E1C8[0x1D0]; // Panic file (GetResNode assert)

@@ -61,7 +61,7 @@ CMCCrystalSupport::~CMCCrystalSupport() {}
 
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
+extern "C" void CrySupBuildLayout(CMCCrystalSupport* self) {
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mLayout, self->mAccessor, lbl_eu_8050AA3C);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(

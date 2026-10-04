@@ -9,7 +9,7 @@ typedef struct TRKMsgBufs {
 
 TRKMsgBufs gTRKMsgBufs;
 
-static void TRK_SetBufferUsed(MessageBuffer* b, bool state) {
+static inline void TRK_SetBufferUsed(MessageBuffer* b, bool state) {
     b->fInUse = state;
 }
 

@@ -10,8 +10,9 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// No TU-local definitions for AxfxImpl::mCurrentFx/mAllocatedSize: retail
-// keeps that state in nw4r_data.s (lbl_eu_806654C8/CC), which the bodies use.
+// Retail .sbss slots owned by this TU (split 0x806654C8-0x806654D0): current
+// hook target (0xC8) and total allocated size (0xCC). Defined here; the
+// bodies above use them through the header's extern "C" declarations.
 
 bool AxfxImpl::CreateHeap(void* pBuffer, u32 size) {
     if (pBuffer == NULL || size == 0) {
@@ -70,3 +71,8 @@ void AxfxImpl::Free(void* pBlock) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// Retail .sbss storage owned by this TU (split 0x806654C8-0x806654D0).
+// Zero-initialized -> .sbss, matching retail size 0x8.
+extern "C" nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8 = NULL;
+extern "C" u32 lbl_eu_806654CC = 0;

@@ -556,12 +556,12 @@ extern "C" void updateCrystalBoxState(CMCCrystalBox* self) {
     reinterpret_cast<CLytVf38*>(self->subObjPtrs[5])->vf_30(0);
     sortMenuDispatchState((u8*)self + 0xfc);
     MCCrystal_StepState((u8*)self + 0x1ec);
-    func_801D202C((u8*)self + 0x6c);
-    func_801D202C((u8*)self + 0x84);
-    func_801D202C((u8*)self + 0x9c);
-    func_801D202C((u8*)self + 0xb4);
-    func_801D202C((u8*)self + 0xcc);
-    func_801D202C((u8*)self + 0xe4);
+    Cur_Update((u8*)self + 0x6c);
+    Cur_Update((u8*)self + 0x84);
+    Cur_Update((u8*)self + 0x9c);
+    Cur_Update((u8*)self + 0xb4);
+    Cur_Update((u8*)self + 0xcc);
+    Cur_Update((u8*)self + 0xe4);
     CScrollBar_UpdateDispatch((u8*)self + 0x250);
     sysWinDispatchPhase((u8*)self + 0x290);
 }
@@ -576,7 +576,7 @@ void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->unk64 == 0) return;
     drawLayout((nw4r::lyt::Layout*)self->subObjPtrs[5], di, 0, 1);
     MCCrystal_DrawLayout((u8*)self + 0x1ec, di);
-    func_801D31F8((u8*)self + 0xfc, di);
+    sortMenuDraw((u8*)self + 0xfc, di);
     u8 lim = self->data.limit;
     u8 active = lim != 0 ? lim : 1;
     if (active > 1) {
@@ -631,7 +631,7 @@ void teardownCrystalBox(CMCCrystalBox* self) {
 }
 
 u8 isCrystalBoxReady(CMCCrystalBox* self) {
-    if (func_801D32DC((u8*)self + 0xfc) == 0) return 0;
+    if (sortMenuIsScrollbarVisible((u8*)self + 0xfc) == 0) return 0;
     if (func_8021A8EC((u8*)self + 0x1ec) == 0) return 0;
     if (CScrollBar_isVisible((u8*)self + 0x250) == 0) return 0;
     if (CSysWin_isReady((u8*)self + 0x290) != 0) return self->unk68;
@@ -776,7 +776,7 @@ void stepCrystalBoxCursorPrev(CMCCrystalBox* self) {
         // Sort sub-menu active: scroll up one entry and move the cursor.
         // Distinct expression shapes per call keep MWCC from merging the
         // self+0xFC address computations (retail recomputes each one).
-        func_801D3620((u8*)self + 0xfc);
+        sortMenuScrollUp((u8*)self + 0xfc);
         char buf[12];
         sortMenuFormatPaneText(buf, (u8*)&self->pad_6C[0x90]);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
@@ -846,7 +846,7 @@ void stepCrystalBoxCursorNext(CMCCrystalBox* self) {
         playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: scroll down one entry and move the cursor.
-        func_801D3698((u8*)self + 0xfc);
+        sortMenuScrollDown((u8*)self + 0xfc);
         char buf[12];
         // Distinct expression shapes per call keep MWCC from merging the
         // self+offset address computations into callee-saved registers.
@@ -912,7 +912,7 @@ void stepCrystalBoxPageBack(CMCCrystalBox* self) {
         playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: page up one page and move the cursor.
-        func_801D3724((u8*)self + 0xfc);
+        sortMenuPageUpStep((u8*)self + 0xfc);
         char buf[12];
         // Distinct expression shapes per call keep MWCC from merging the
         // self+0xFC address computations into callee-saved registers.
@@ -1143,7 +1143,7 @@ void toggleCrystalSortMenu(CMCCrystalBox* self) {
         ScalePaneWorldPos(local, sub->vf_3C(base + 0x5a, 1),
                       sub->vf_3C(base + 0x63, 1), sub);
         sortMenuSetLayoutPos(&self->sortMenu, local);
-        func_801D353C(&self->sortMenu, (u8)(self->field_1506 + self->field_1507));
+        sortMenuSetPage(&self->sortMenu, (u8)(self->field_1506 + self->field_1507));
         char local2[12];
         sortMenuFormatPaneText(local2, &self->sortMenu);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(local2);
@@ -1746,8 +1746,8 @@ void updateCrystalBoxSysWin(CMCCrystalBox* self) {
             char* msg = BdatGetPtrDirect((const void*)lbl_eu_806646D0,
                                       lbl_eu_8050888C + 0xa4, self->unk1504);
             sysWinSwitchKindPane(&self->sysWin, 0);
-            func_8022B9B4(&self->sysWin, (u32)msg, 0);
-            func_8022BFC8(&self->sysWin, 1);
+            sysWinSetKindContent(&self->sysWin, (u32)msg, 0);
+            sysWinApplyKind(&self->sysWin, 1);
             sysWinOpenPhase1(&self->sysWin);
             Cur_SetVisible((u8*)self + 0xe4, 0);
             return;
@@ -2422,7 +2422,7 @@ void rebuildCrystalSortMenu(CMCCrystalBox* self) {
     char* s1 = (char*)BdatTouchStringCell(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, arr[idx]);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->subObjPtrs[5],
                   lbl_eu_8050888C + 0x1ca, s1, 0);
-    if (func_801D32DC(&self->sortMenu) != 0) {
+    if (sortMenuIsScrollbarVisible(&self->sortMenu) != 0) {
         sortMenuResetCount(&self->sortMenu);
         u8 i = 0;
         while (1) {
@@ -2432,7 +2432,7 @@ void rebuildCrystalSortMenu(CMCCrystalBox* self) {
                                         lbl_eu_8050888C + 0xfd, arr[i]));
             i++;
         }
-        func_801D353C(&self->sortMenu, self->field_1506 + self->field_1507);
+        sortMenuSetPage(&self->sortMenu, self->field_1506 + self->field_1507);
     }
 }
 #pragma optimize_for_size off
@@ -3248,13 +3248,13 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         // shared resource manager), then poke each member's slot-0x08 virtual.
         u8 tmpC0[0x18];
         __ct__CCur07(tmpC0, (void*)subObjPtrs[3]);
-        func_8018B0FC((u8*)this + 0x6c, tmpC0);
+        MenuShopSellCopyCursor((u8*)this + 0x6c, tmpC0);
         __dt__6CCur07Fv(tmpC0, -1);
         ((CCurVf0C*)((u8*)this + 0x6c))->vf_00();
 
         u8 tmpA8[0x18];
         __ct__CCur09(tmpA8, (void*)subObjPtrs[3]);
-        func_8018B0FC((u8*)this + 0x84, tmpA8);
+        MenuShopSellCopyCursor((u8*)this + 0x84, tmpA8);
         __dt__6CCur09Fv(tmpA8, -1);
         ((CCurVf0C*)((u8*)this + 0x84))->vf_00();
 
@@ -3274,25 +3274,25 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         u8 tmp90[0x18];
         __ct__CCur18(tmp90, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC((u8*)this + 0x9c, tmp90);
+        MenuShopSellCopyCursor((u8*)this + 0x9c, tmp90);
         __dt__6CCur18Fv(tmp90, -1);
         ((CCurVf0C*)((u8*)this + 0x9c))->vf_00();
 
         u8 tmp78[0x18];
         __ct__CCur11(tmp78, (void*)subObjPtrs[3]);
-        func_8018B0FC((u8*)this + 0xb4, tmp78);
+        MenuShopSellCopyCursor((u8*)this + 0xb4, tmp78);
         __dt__6CCur11Fv(tmp78, -1);
         ((CCurVf0C*)((u8*)this + 0xb4))->vf_00();
 
         u8 tmp60[0x18];
         __ct__CCur16(tmp60, (void*)subObjPtrs[3]);
-        func_8018B0FC((u8*)this + 0xcc, tmp60);
+        MenuShopSellCopyCursor((u8*)this + 0xcc, tmp60);
         __dt__6CCur16Fv(tmp60, -1);
         ((CCurVf0C*)((u8*)this + 0xcc))->vf_00();
 
         u8 tmp48[0x18];
         __ct__CCur18(tmp48, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC((u8*)this + 0xe4, tmp48);
+        MenuShopSellCopyCursor((u8*)this + 0xe4, tmp48);
         __dt__6CCur18Fv(tmp48, -1);
         ((CCurVf0C*)((u8*)this + 0xe4))->vf_00();
 

@@ -89,25 +89,25 @@ void* getNodeBlock__17UnkClass_8047CD0CFv(void* self);
 // UnkClass_8047E110 -- scene manager methods (retail Fv annotations).
 // Signatures recovered from caller register setup.
 void setWalkBox__17UnkClass_8047E110Fv(void* self, f32 a, f32 b, void* v, f32 c);
-s32 func_8047E6C4__17UnkClass_8047E110Fv(void* self, void* out, void* a, u16 b, u16 c, void* d, f32 f);
+s32 resolveNodeAtPos__17UnkClass_8047E110Fv(void* self, void* out, void* a, u16 b, u16 c, void* d, f32 f);
 s32 findNode__17UnkClass_8047E110Fv(void* self, void* out, void* a, void* b, f32 f);
-void func_8047F214__17UnkClass_8047E110Fv(void* self, void* out, void* pos, u32 a, u16 node);
-s32 func_8047F658__17UnkClass_8047E110Fv(void* self, void* out);
-s32 func_8047FE48__17UnkClass_8047E110Fv(void* self, void* state, u32 a, u32 b, u32 c, u32 d);
-s32 func_8048020C__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
-s32 func_804804DC__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
-s32 func_804808A0__17UnkClass_8047E110Fv(void* self, u32 a, f32 f, void* pos, u32 b, u16 node);
+void computeWalkDirection__17UnkClass_8047E110Fv(void* self, void* out, void* pos, u32 a, u16 node);
+s32 fetchWalkTarget__17UnkClass_8047E110Fv(void* self, void* out);
+s32 queryWalkTable__17UnkClass_8047E110Fv(void* self, void* state, u32 a, u32 b, u32 c, u32 d);
+s32 findPathBfs__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
+s32 findPathBidirectional__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
+s32 testPortalCrossing__17UnkClass_8047E110Fv(void* self, u32 a, f32 f, void* pos, u32 b, u16 node);
 s32 hasNeighbor__17UnkClass_8047E110Fv(void* self, u16 node);
 s32 compareRecords__17UnkClass_8047E110Fv(void* self, u32 a, u16 b, u16 c);
-void func_804814DC__17UnkClass_8047E110Fv(void* self, f32 f, void* a, void* b);
-s32 func_80481790__17UnkClass_8047E110Fv(void* self, u32 a);
+void rebuildWalkBox__17UnkClass_8047E110Fv(void* self, f32 f, void* a, void* b);
+s32 searchWalkGraph__17UnkClass_8047E110Fv(void* self, u32 a);
 void setWalkBoxCenter__17UnkClass_8047E110Fv(void* self, void* a);
 void setWalkBoxBounds__17UnkClass_8047E110Fv(void* self, void* a, void* b);
 s32 isNodeBlocked__17UnkClass_8047E110Fv(void* self, u32 a);
-s32 func_804819C4__17UnkClass_8047E110Fv(void* self, u32 a);
+s32 stepWalker__17UnkClass_8047E110Fv(void* self, u32 a);
 
 // In-TU walker methods (extern "C" -- retail Fv mangling, take registers)
-s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* arg1, void* arg2);
+s32 solveWalkStep__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* arg1, void* arg2);
 
 } // extern "C"
 
@@ -146,8 +146,8 @@ extern "C" void attachScnNode__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u1
 // UnkClass_8047D2AC walker methods
 // ------------------------------------------------------------------
 
-// func_8047DF54 -- advance one step using the E6C4/E62C segment solvers (0x110)
-extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* arg1, void* arg2) {
+// solveWalkStep -- advance one step using the E6C4/E62C segment solvers (0x110)
+extern "C" s32 solveWalkStep__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* arg1, void* arg2) {
     if (!(self->mFlags & 1)) return 0;
     if (!(self->mFlags & 2)) return 0;
 
@@ -157,7 +157,7 @@ extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     s32 result = 0;
     u32 localA;
     if (self->mFlags & 4) {
-        if (func_8047E6C4__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1,
+        if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1,
                                                   self->mField18, self->mField14, arg2,
                                                   lbl_eu_8066A878)) {
             result = 1;
@@ -179,11 +179,11 @@ extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
 // dispatchScnCommand -- thin wrapper: run DF54 into a scratch word (0x28)
 extern "C" s32 dispatchScnCommand__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg) {
     u32 local;
-    return func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg);
+    return solveWalkStep__17UnkClass_8047D2ACFv(self, &local, arg);
 }
 
-// func_8047DE3C -- advance using E6C4/E62C, storing to field16/field1A (0x118)
-extern "C" s32 func_8047DE3C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg) {
+// solveWalkPair -- advance using E6C4/E62C, storing to field16/field1A (0x118)
+extern "C" s32 solveWalkPair__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg) {
     if (!(self->mFlags & 1)) return 0;
     if (!(self->mFlags & 2)) return 0;
 
@@ -193,7 +193,7 @@ extern "C" s32 func_8047DE3C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     s32 result = 0;
     u32 localB, localA;
     if (self->mFlags & 4) {
-        if (func_8047E6C4__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
+        if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
                                                   self->mField18, self->mField14, arg,
                                                   lbl_eu_8066A878)) {
             result = 1;
@@ -212,15 +212,15 @@ extern "C" s32 func_8047DE3C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     return result;
 }
 
-// func_8047DC8C -- solve + query scene manager, copy result vector (0xC0)
-extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* out,
+// findWalkRoute -- solve + query scene manager, copy result vector (0xC0)
+extern "C" s32 findWalkRoute__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* out,
                                                      void* arg3, void* arg4,
                                                      f32 fx, f32 fy, f32 fz) {
     u32 local;
-    if (!func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg3)) return 0;
+    if (!solveWalkStep__17UnkClass_8047D2ACFv(self, &local, arg3)) return 0;
 
-    func_804814DC__17UnkClass_8047E110Fv(lbl_eu_80658560, fx, arg3, arg4);
-    if (!func_80481790__17UnkClass_8047E110Fv(lbl_eu_80658560, local)) return 0;
+    rebuildWalkBox__17UnkClass_8047E110Fv(lbl_eu_80658560, fx, arg3, arg4);
+    if (!searchWalkGraph__17UnkClass_8047E110Fv(lbl_eu_80658560, local)) return 0;
 
     u32* manager = (u32*)lbl_eu_80658560;
     out[0] = manager[0x6c / 4];
@@ -233,7 +233,7 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
 extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
-    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+    if (solveWalkStep__17UnkClass_8047D2ACFv(self, &local, arg1)) {
         void* manager = lbl_eu_80658560;
 
         if (isNodeBlocked__17UnkClass_8047E110Fv(manager, local)) {
@@ -242,11 +242,11 @@ extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
 
         if (arg3) {
             setWalkBoxBounds__17UnkClass_8047E110Fv(manager, arg1, arg2);
-            return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+            return stepWalker__17UnkClass_8047E110Fv(manager, local);
         }
 
         setWalkBoxCenter__17UnkClass_8047E110Fv(manager, arg2);
-        return func_80481790__17UnkClass_8047E110Fv(manager, local);
+        return searchWalkGraph__17UnkClass_8047E110Fv(manager, local);
     }
 
     return 0;
@@ -255,23 +255,23 @@ extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
 extern "C" s32 updateWalker__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
-    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+    if (solveWalkStep__17UnkClass_8047D2ACFv(self, &local, arg1)) {
         void* manager = lbl_eu_80658560;
         if (isNodeBlocked__17UnkClass_8047E110Fv(manager, local)) {
             return 0;
         }
         if (arg3) {
             setWalkBoxBounds__17UnkClass_8047E110Fv(manager, arg1, arg2);
-            return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+            return stepWalker__17UnkClass_8047E110Fv(manager, local);
         }
         setWalkBoxCenter__17UnkClass_8047E110Fv(manager, arg2);
-        return func_80481790__17UnkClass_8047E110Fv(manager, local);
+        return searchWalkGraph__17UnkClass_8047E110Fv(manager, local);
     }
     return 0;
 }
 
-// func_8047D2AC -- full walker tick (0x9E0)
-extern "C" s32 func_8047D2AC__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* outDir,
+// runWalkerTick -- full walker tick (0x9E0)
+extern "C" s32 runWalkerTick__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* outDir,
                                                      void* posA, void* posB) {
     u16 flags = self->mFlags;
     if ((flags & 1) == 0 || (flags & 2) == 0) {
@@ -285,7 +285,7 @@ extern "C" s32 func_8047D2AC__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     if (self->mFlags & 4) {
         u32 localA;
         u32 localB;
-        if (func_8047E6C4__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
+        if (resolveNodeAtPos__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
                                                   self->mField18, self->mField14, posA,
                                                   lbl_eu_8066A878)) {
             self->mField18 = (u16)localA;

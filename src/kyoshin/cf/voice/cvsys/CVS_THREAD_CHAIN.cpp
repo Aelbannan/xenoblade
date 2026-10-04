@@ -162,3 +162,53 @@ int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
     return 0;
 }
 
+// us-802a81dc (chainVoiceAlwaysOne)
+// Always-one voice predicate (retail 0x8 bytes: li r3,1; blr). Flat C
+// linkage keeps the emitted symbol unmangled like retail (FAINT's
+// FaintVoice_GetBufSize precedent); referenced from the thread vtable
+// (lbl_eu_80539A3C slot 4). The same-named inline member in the header
+// still satisfies the class interface.
+extern "C" int chainVoiceAlwaysOne() {
+    return 1;
+}
+
+// Retail .data reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_CHAIN.txt): the init-state triple the
+// factory copies into the base words 0x00-0x08 ({0, -1, callback}), the
+// 7-word thread vtable ({typeinfo, 0, play, remove, alwaysOne, alwaysTrue,
+// playById}), and the trailing typeinfo-base word plus padding. Global-
+// scope data symbols: MWCC does not mangle them, so these definitions
+// carry the retail linker names.
+//
+// External words (out-of-unit retail labels, referenced not defined):
+// lbl_eu_80662CE8 is the CHAIN typeinfo object defined by DOWN's .sdata,
+// lbl_eu_80662CC0 is the base typeinfo word in CCharVoiceMan's .sdata.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CE8[2];
+extern u32 lbl_eu_80662CC0[2];
+
+u32 lbl_eu_80539A30[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)chainVoiceClearIdleSlot,
+};
+
+u32 lbl_eu_80539A3C[7] = {
+    (u32)lbl_eu_80662CE8,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)chainVoiceRemoveByPtr,
+    (u32)chainVoiceAlwaysOne,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)chainVoicePlayById,
+};
+
+u32 lbl_eu_80539A58[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+

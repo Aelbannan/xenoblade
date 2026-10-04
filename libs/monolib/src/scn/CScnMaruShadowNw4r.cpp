@@ -16,7 +16,7 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/math/math_triangular.h>
 
-void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk);
+void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk);
 
 // MaruShadowSetupTexturePipe support: static-data loader + nw4r g3d texture accessors.
 extern "C" int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
@@ -163,9 +163,9 @@ int MaruShadowSetupTexturePipe(void* self) {
 }
 
 
-// us-80491574: func_8048D500 (0x658 bytes)
+// us-80491574: MaruShadowUpdate (0x658 bytes)
 // Per-frame maru-shadow update/draw driver.
-void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
+void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     u16 flags = self->field_0x28;
     if ((flags & 1) == 0 || (flags & 0x40) != 0) {
         return;
@@ -287,7 +287,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
         for (int j = 0; j < n; j++) {
             double raw = (double)e[j].scaleQ;
             float s = lbl_eu_8066A9B8 * (float)(baseScale * (raw));
-            func_8048DD18(self, ctx, s, fscale, e[j].nodeId);
+            MaruShadowDrawQuad(self, ctx, s, fscale, e[j].nodeId);
         }
         return;
     }
@@ -300,19 +300,19 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
-            func_8048DD18(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
+            MaruShadowDrawQuad(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
         }
         node = GetResNode__Q34nw4r3g3d6ResMdlCFPCc(mdl, names[6]);
         if (node.ptr == NULL) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
-            func_8048DD18(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
+            MaruShadowDrawQuad(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
         }
         return;
     }
     if (self->field_0x2a == 1 && (self->field_0x28 & 4) != 0) {
-        func_8048E2F8(self, ctx, baseScale * lbl_eu_80523F78[0]);
+        MaruShadowDrawBillboard(self, ctx, baseScale * lbl_eu_80523F78[0]);
         return;
     }
     int n = (self->field_0x2a == 1) ? 1 : 7;
@@ -322,7 +322,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
-            func_8048DD18(self, ctx, baseScale * lbl_eu_80523F78[i], fscale,
+            MaruShadowDrawQuad(self, ctx, baseScale * lbl_eu_80523F78[i], fscale,
                           *(u32*)((char*)node.ptr + 0x10));
         }
     }
@@ -334,7 +334,7 @@ extern "C" void MaruShadowSetFlag40Store(u8* self, const void* other) {
     *(float*)((u8*)self + 0x14) = *(float*)((u8*)other + 4);
 }
 
-// us-80491be4: func_8048DB70 (0x1A8 bytes)
+// us-80491be4: MaruShadowStreamVerts (0x1A8 bytes)
 // Collision-callback vertex streamer (registered via ScnRes_Notify4Word_E3E0): the
 // collision query pass invokes this with scene-head extent words, a vertex
 // entry count and a centre offset. It opens a GX triangle batch and streams
@@ -342,7 +342,7 @@ extern "C" void MaruShadowSetFlag40Store(u8* self, const void* other) {
 // loop at 12 bytes - projecting each through lbl_eu_80658638 bounds and
 // lbl_eu_806658E0 depth scale into the GX FIFO (paired-single extent check
 // in the prologue lowers to psq_l/ps_cmpo0).
-void func_8048DB70(void* entries, const float* head, u32 count, float offs) {
+void MaruShadowStreamVerts(void* entries, const float* head, u32 count, float offs) {
     // Centre-offset copies: retail spills these to stack homes.
     f32 t[4];
     t[0] = offs; t[1] = offs; t[2] = offs; t[3] = offs;
@@ -392,10 +392,10 @@ void func_8048DB70(void* entries, const float* head, u32 count, float offs) {
     }
 }
 
-// us-80491d8c: func_8048DD18 (0x5E0 bytes)
+// us-80491d8c: MaruShadowDrawQuad (0x5E0 bytes)
 // Draws one maru-shadow quad: either the projected shadow-map path or the
 // billboard path depending on self->field_0x28 bit 0x10.
-void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk) {
+void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk) {
     u32 flags = self->field_0x28;
     float shadowScale = lbl_eu_80663964;
     u8* recBase = *(u8**)((char*)ctx->field_0x147C + 0xEC);
@@ -428,7 +428,7 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
         smtx[0][0] = k; smtx[0][1] = zero; smtx[0][2] = zero;
         smtx[1][0] = zero; smtx[1][1] = k; smtx[1][2] = zero;
         smtx[2][0] = zero; smtx[2][1] = zero; smtx[2][2] = k;
-        ScnRes_Notify4Word_E3E0(&func_8048DB70, smtx, 0x00044A05, 0);
+        ScnRes_Notify4Word_E3E0(&MaruShadowStreamVerts, smtx, 0x00044A05, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, (GXCompType)0, 0);
         return;
     }
@@ -453,11 +453,11 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
         if (!ScnRes_VertRayForward_E398(&vv, -f1, lbl_eu_8066A948, 0, 0)) {
             return;
         }
-        func_804BE4E0(&up, 0);
+        ScnRes_CopyEntryMid(&up, 0);
         if (((flags & 0x8000) != 0) && !(up.y >= self->field_0x24)) {
             return;
         }
-        func_804BE4B4(&dir, 0);
+        ScnRes_CopyEntryHead(&dir, 0);
         dir.x = v1[0];
     }
 
@@ -514,10 +514,10 @@ void func_8048DD18(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2,
     GXPosition3f32(-f1, -f1, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(1);
 }
 
-// us-8049236c: func_8048E2F8 (0x384 bytes)
-void func_8048E2F8(){}
+// us-8049236c: MaruShadowDrawBillboard (0x384 bytes)
+void MaruShadowDrawBillboard(){}
 
-// us-8049236c: func_8048E2F8 (0x384 bytes)
+// us-8049236c: MaruShadowDrawBillboard (0x384 bytes)
 // Flat upright billboard path (field_0x2a==1 && flags&4): builds pitch/yaw
 // rotations from the anchor direction vector, concatenates them in place,
 // stamps the anchor world position into the combined matrix's translation
@@ -526,7 +526,7 @@ struct ShadowMtx {
     float m[3][4];
 };
 
-void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale) {
+void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale) {
     // Frame layout (scalars reverse-per-class ascending, aggregates forward):
     // posX@8 posY@12 posZ@16 angPitch@20 angYaw@24 pitch@28,
     // concatOut@32 rotTilt@80 rotYaw@128 copyDst@176 rotPitch@224.
@@ -613,11 +613,11 @@ void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale) {
     GXPosition3f32(-scale, -scale, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(1);
 }
 
-// us-804926f0: func_8048E67C (0x20 bytes)
+// us-804926f0: MaruShadowPickScale (0x20 bytes)
 extern const float lbl_eu_8066A994;  // foreign .sdata2
 extern const float lbl_eu_8066A9CC;  // foreign .sdata2
 
-void func_8048E67C(void* obj, int condition) {
+void MaruShadowPickScale(void* obj, int condition) {
     if (condition != 0) {
         *(float*)((char*)obj + 0x1c) = lbl_eu_8066A994;
         return;
@@ -625,11 +625,11 @@ void func_8048E67C(void* obj, int condition) {
     *(float*)((char*)obj + 0x1c) = lbl_eu_8066A9CC;
 }
 
-// us-80492710: func_8048E69C (0x39C bytes)
+// us-80492710: MaruShadowBuildScaleTable (0x39C bytes)
 // Walks every ResNode of the model, reads each node's user-data dictionary
 // and fills the per-node shadow scale table (up to 8 entries) plus the
 // shadow flag accumulator.
-void func_8048E69C(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowCtx* ctx) {
+void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowCtx* ctx) {
     int count = 0;
     *flagAcc = 0;
     nw4r::g3d::ResMdl mdl = ctx->resMdl;
@@ -781,9 +781,9 @@ extern "C" void sinit_8048EAA4() {}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace MSBlob {
-extern "C" void func_8048E67C();
+extern "C" void MaruShadowPickScale();
 extern "C" void MaruShadowStubTrue();
-extern "C" void func_8048D500();
+extern "C" void MaruShadowUpdate();
 extern "C" void MaruShadowSetFlag40Store();
 extern "C" void MaruShadowSetFlag100();
 extern "C" void MaruShadowSetFlag80Store();
@@ -793,9 +793,9 @@ extern "C" u32 lbl_eu_806623F8;   // foreign .sdata
 // [.data] 0x8056E598-0x8056E5B8 (32B): CScnMaruShadowNw4r vtable
 extern "C" u32 lbl_eu_8056E598[8] = {
     (u32)&lbl_eu_806623F8, 0x00000000,
-    (u32)&MSBlob::func_8048E67C,
+    (u32)&MSBlob::MaruShadowPickScale,
     (u32)&MSBlob::MaruShadowStubTrue,
-    (u32)&MSBlob::func_8048D500,
+    (u32)&MSBlob::MaruShadowUpdate,
     (u32)&MSBlob::MaruShadowSetFlag40Store,
     (u32)&MSBlob::MaruShadowSetFlag100,
     (u32)&MSBlob::MaruShadowSetFlag80Store,

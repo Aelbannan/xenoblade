@@ -2916,7 +2916,7 @@ void FloorMap_UpdateFrame(void* self) {
     }
 
     CScrollBar_UpdateDispatch(&p->mScrollBar);
-    func_801D202C(&p->mCursor);
+    Cur_Update(&p->mCursor);
     sysWinDispatchPhase(&p->mSysWinB8);
     sysWinDispatchPhase(&p->mSysWinF4);
 
@@ -4116,8 +4116,8 @@ void FloorMap_OpenRowWindow(void* self) {
 
 
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
-        func_8022B9B4(&p->mSysWinF4, name, 0);
-        func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
+        sysWinSetKindContent(&p->mSysWinF4, name, 0);
+        sysWinApplyKind((CSysWin*)&p->mSysWinF4, 1);
         sysWinOpenPhase1(&p->mSysWinF4);
         playUISound(5);
         return;
@@ -4126,8 +4126,8 @@ void FloorMap_OpenRowWindow(void* self) {
     if (CtrlRemote_TouchBitByArg(0x3212)) {
         // Unvisited but already-seen marker id: show the "no data" text.
         char* name = BdatTouchStringCell(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
-        func_8022B9B4(&p->mSysWinF4, name, 0);
-        func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
+        sysWinSetKindContent(&p->mSysWinF4, name, 0);
+        sysWinApplyKind((CSysWin*)&p->mSysWinF4, 1);
         sysWinOpenPhase1(&p->mSysWinF4);
         playUISound(5);
         return;
@@ -4139,9 +4139,9 @@ void FloorMap_OpenRowWindow(void* self) {
     char* nCap1 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 7);
     char* nCap2 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 8);
     char* nCap3 = BdatTouchStringCell(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
-    func_8022B9B4(&p->mSysWinB8, nCap1, nRow);
+    sysWinSetKindContent(&p->mSysWinB8, nCap1, nRow);
     sysWinSetTwoTextValues(&p->mSysWinB8, nCap2, nCap3);
-    func_8022BFC8((CSysWin*)&p->mSysWinB8, 0);
+    sysWinApplyKind((CSysWin*)&p->mSysWinB8, 0);
     sysWinOpenPhase1(&p->mSysWinB8);
     p->field_5C = 0;
     nw4r::math::VEC3 pos;

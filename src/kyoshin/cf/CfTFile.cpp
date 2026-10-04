@@ -62,7 +62,7 @@ void CfTFile_CopyPayload(CfTFile* dst, CfTFile* src) {
 
 // Load a file-event archive identified by the packed token `param`. Cancels
 // any in-flight read, rebuilds the file name (either through the packed-token
-// formatter func_800AA33C when the token's low 10 bits are non-zero, or from
+// formatter Tok_FormatStr when the token's low 10 bits are non-zero, or from
 // the static format string otherwise), then opens the common archive through
 // the device layer. Returns 1 on success (token recorded in mField830), 0 on
 // failure (flag word gets its bit 2 set).
@@ -86,7 +86,7 @@ int CfTFile_LoadEventArchive(CfTFile* self, u32 param) {
 
     ml::FixStr<64> buf(true);
     if ((param & 0x3FF) != 0) {
-        func_800AA33C(buf, param, 1, 1);
+        Tok_FormatStr(buf, param, 1, 1);
     } else {
         buf.format(lbl_eu_804FB40C, field1, field2);
     }

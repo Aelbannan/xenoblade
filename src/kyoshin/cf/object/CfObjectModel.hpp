@@ -60,10 +60,10 @@ public:
     virtual void EffectActNw4rCallMgrV16();                        // +0x20 manager v16 query
     virtual u8* EffectActNw4rGetLeafActData();                         // +0x24 manager act-data base
     virtual void EffectActNw4rStoreMgrScalePos(const void* other);       // +0x28 copy position triplet
-    virtual u8* func_8049BF0C() const;                   // +0x2C act slot +0x48
-    virtual u8* func_8049BF34() const;                   // +0x30 act slot +0x78
-    virtual u8* func_8049BF5C() const;                   // +0x34 act slot +0xb8
-    virtual u8* func_8049BF84() const;                   // +0x38 act slot +0xc4
+    virtual u8* EffectActNw4rGetAct48() const;                   // +0x2C act slot +0x48
+    virtual u8* EffectActNw4rGetAct78() const;                   // +0x30 act slot +0x78
+    virtual u8* EffectActNw4rGetActB8() const;                   // +0x34 act slot +0xb8
+    virtual u8* EffectActNw4rGetActC4() const;                   // +0x38 act slot +0xc4
     virtual CScnEffectAct* EffectActNw4rFindActGated(u32 idx) const; // +0x3C act lookup (flag-gated)
     // +0x40 pin: the slot holds free-function EffectActNw4rGetActPosOut whose retail
     // convention is (out, self, idx), not thiscall; this shape only

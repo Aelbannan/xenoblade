@@ -33,7 +33,7 @@ long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
 // Engine helpers.
-void* func_8016FE34(void* obj);
+void* MapFx_ResolveOwner(void* obj);
 void  releaseNode__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
 void* allocFreeNode__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
 int   dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
@@ -142,7 +142,7 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
     self->mArr124[1]  = 0;
     self->mArr124[0]  = 0;
 
-    self->mObject = func_8016FE34(obj);
+    self->mObject = MapFx_ResolveOwner(obj);
     self->mShort120 = 1;
     self->mShort122 = 1;
     self->mTask = 0;
@@ -413,7 +413,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
                 self->mFlags4C |= 0x80u;
             } else {
                 int id = (int)((cf::CObjectParam*)((char*)self->mPlayer + 0x3e9c))->CObjectParam_getSelfObjectId();
-                void* ent = func_8016FE34(findObjectById__Fi(id));
+                void* ent = MapFx_ResolveOwner(findObjectById__Fi(id));
                 if (ent == 0) {
                     self->mFlags4C |= 0x80u;
                 } else {
@@ -2173,13 +2173,13 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             return 0;
         }
 
-        func_804BE4E0(&v, 0);
+        ScnRes_CopyEntryMid(&v, 0);
         if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80667B60) {
             v = ml::CVec3::zero;
         } else {
             PSVECNormalize((const Vec*)&v, (Vec*)&v);
         }
-        func_804BE4B4(&goal, 0);
+        ScnRes_CopyEntryHead(&goal, 0);
         goal.x += v.x * lbl_eu_80667BF0;
         goal.y += v.y * lbl_eu_80667BF0;
         goal.z += v.z * lbl_eu_80667BF0;
@@ -2486,7 +2486,7 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
             start = diff;
             end = sum;
             if (ScnRes_SegQueryForward_E348(&start, &end, 0, 0x2000, 0) != 0) {
-                func_804BE4E0(&n, 0);
+                ScnRes_CopyEntryMid(&n, 0);
                 if (i == 0) {
                     return lbl_eu_80667BD8 * Atan2FIdx__Q24nw4r4mathFff(-n.x, -n.z);
                 }
@@ -2619,7 +2619,7 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
             self->mArr124[16] = h + 1;
             continue;
         }
-        func_804BE4B4(&out, 0);
+        ScnRes_CopyEntryHead(&out, 0);
         const ml::CVec3& d = self->mPos - out;
         f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
         if (d2 > maxReach * maxReach) {

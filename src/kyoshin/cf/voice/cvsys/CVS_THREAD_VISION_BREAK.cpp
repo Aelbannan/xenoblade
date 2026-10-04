@@ -10,12 +10,12 @@
 
 // All sibling-voice imports (IsThreadVoiceActive, DetachThreadVoice, TryRequestVoice,
 // RequestVoicePlayback, CCharVoiceMan_DispatchById, CCharVoiceMan_AllocVoiceArena, HpVoice_FindBySubState,
-// func_8016FE34, CfObjectMove_releaseVoiceHandle), the base constructor __ct__cf_CVS_THREAD,
+// MapFx_ResolveOwner, CfObjectMove_releaseVoiceHandle), the base constructor __ct__cf_CVS_THREAD,
 // and getListB28 are declared in CVS_THREAD_VISION_BREAK.hpp.
 
 // Sibling-voice imports (IsThreadVoiceActive, DetachThreadVoice, TryRequestVoice,
 // RequestVoicePlayback, CCharVoiceMan_DispatchById, CCharVoiceMan_AllocVoiceArena, HpVoice_FindBySubState,
-// func_8016FE34, CfObjectMove_releaseVoiceHandle) and the base constructor
+// MapFx_ResolveOwner, CfObjectMove_releaseVoiceHandle) and the base constructor
 // __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
 // us-802abc94 (VisBreak_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the playback
@@ -147,12 +147,12 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     return obj;
 }
 
-// us-802abb34 (func_802A93FC)
+// us-802abb34 (VisBreak_DispatchPlayback)
 // Playback/iteration dispatcher. Resets the state triple, checks if the
 // handle is inactive, iterates the global object list to process active
 // voice handles, then selects a voice ID from one of two tables (based on
 // field_0x24 threshold) and plays it. Falls back to vtable[2] if play fails.
-void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
+void VisBreak_DispatchPlayback(CVS_THREAD_VISION_BREAK* self) {
     // Declared first so MWCC colours the object-list walk into r31/r30,
     // leaving r29 for `self` (retail's allocation).
     reslist<cf::CfObject*>* list;
@@ -183,8 +183,8 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     list = getListB28();
     for (reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); ++it) {
         cf::CfObject* obj = *it;
-        // func_8016FE34 returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.
-        CVoiceHandle* resultHandle = (CVoiceHandle*)func_8016FE34(obj);
+        // MapFx_ResolveOwner returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.
+        CVoiceHandle* resultHandle = (CVoiceHandle*)MapFx_ResolveOwner(obj);
         if (resultHandle != NULL) {
             CfObjectMove_releaseVoiceHandle(&resultHandle->voice);
         }
@@ -227,3 +227,68 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
 // Buffer-size getter recorded under the flat retail map name VisBreak_GetSizeConstF:
 // returns 0xF (the thread's buffer size). Retail body: li r3,0xF; blr.
 u32 VisBreak_GetSizeConstF(CVS_THREAD_VISION_BREAK* self) { return 0xF; }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_VISION_BREAK.txt): the .rodata typeinfo
+// name (sized to absorb the retail pad), two .data init-state triples
+// ({0, -1, callback}), the 7-word thread vtable ({typeinfo, 0, play,
+// remove, sizeConstF, alwaysTrue, nullDispatch}), the trailing
+// typeinfo-base word plus padding, and three .sdata objects: two voice-ID
+// quads the code reads via @sda21 and the typeinfo object ({name,
+// trailing}). Global-scope data symbols: MWCC does not mangle them.
+// lbl_eu_80662CC0 lives in the CCharVoiceMan range and is referenced, not
+// defined, here.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662D50[2];
+
+extern const char lbl_eu_80510838[0x20] = "cf::CVS_THREAD_VISION_BREAK";
+
+u32 lbl_eu_80539D70[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)VisBreak_DispatchPlayback,
+};
+
+u32 lbl_eu_80539D7C[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)VisBreak_TryRunSlotAction,
+};
+
+u32 lbl_eu_80539D88[7] = {
+    (u32)lbl_eu_80662D50,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)VisBreak_RemoveVoiceSlot,
+    (u32)VisBreak_GetSizeConstF,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_80539DA4[3] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern s16 lbl_eu_80662D40[4] = {
+    0x192,
+    0x195,
+    0x196,
+    0,
+};
+
+__declspec(section ".sdata") extern s16 lbl_eu_80662D48[4] = {
+    0x191,
+    0x193,
+    0x194,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D50[2] = {
+    (u32)lbl_eu_80510838,
+    (u32)lbl_eu_80539DA4,
+};

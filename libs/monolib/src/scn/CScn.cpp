@@ -213,9 +213,9 @@ void CScn::removeRenderCB(IScnRender* cb) {
 void CScn::Init() {}
 
 void CScn::Draw() {
-    if (func_8049AF80(mCamWork) != 0) {
+    if (CamMan_SyncCameraToView(mCamWork) != 0) {
         UnkScn68* cam = mCamWork;
-        CView* view = func_8049B0A0(cam, (s16)cam->unk34);
+        CView* view = CamMan_GetViewThread(cam, (s16)cam->unk34);
         if (view == CView::getCurrentView()) {
             if (unk_3E4 == 0) {
                 lbl_eu_80665908 = this;
@@ -293,7 +293,7 @@ extern "C" void Scn_CallUnk8C_V8(u8* self) {
     obj->v8();
 }
 extern "C" void Scn_ReleaseUnk80(void* p) {
-    func_8049C72C(*(int*)((u8*)p + 0x80));
+    startFade(*(int*)((u8*)p + 0x80));
 }
 extern "C" void* Scn_GetUnk80Handle(void* _this) {
     return isFadeIdle(*(void**)((char*)_this + 0x80));
@@ -415,12 +415,12 @@ extern "C" int Scn_FindCamItem(void* _this) {
     return CamMan_FindItemA_B158(*(int*)((char*)_this + 0x68));
 }
 extern "C" bool Scn_HasCamItem(void* _this) {
-    return func_8049B240(*(int*)((char*)_this + 0x68));
+    return CamMan_FindViewItemA(*(int*)((char*)_this + 0x68));
 }
 extern "C" void* Scn_GetCamList(void* _this) {
-    return func_8049B2C4(*(void**)((char*)_this + 0x68));
+    return CamMan_FindViewItemB(*(void**)((char*)_this + 0x68));
 }
-extern "C" void Scn_SetCamIndex(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
+extern "C" void Scn_SetCamIndex(u8* self, int arg) { CamMan_GetViewThread(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
 float Scn_GetFrameDelta(void* self_) {
     u8* self = (u8*)self_;
@@ -583,7 +583,7 @@ public:
 // Flat declarations so the emitted relocations carry the retail names.
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                               bool top);
-extern "C" void func_804962B0__4CScnFUlUlPvUl(CScn* self, u32 a, u32 b,
+extern "C" void initSubsystems__4CScnFUlUlPvUl(CScn* self, u32 a, u32 b,
                                               void* str, u32 d);
 extern "C" void* __ct__CScnNw4r(void* self);
 
@@ -606,7 +606,7 @@ extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
     }
 
     Regist__8CProcessFP8CProcessb((CProcess*)scn, parent, false);
-    func_804962B0__4CScnFUlUlPvUl((CScn*)scn, handle, arg, &str, (u32)param);
+    initSubsystems__4CScnFUlUlPvUl((CScn*)scn, handle, arg, &str, (u32)param);
     return scn;
 }
 

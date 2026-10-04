@@ -227,7 +227,7 @@ extern "C" void __declspec(noinline) updateMapSel(CMapSel* self) {
         }
         self->mLayout->Animate(0);
         CScrollBar_UpdateDispatch(self->mScrollBar);
-        func_801D202C(self->mCursor);
+        Cur_Update(self->mCursor);
     }
 }
 

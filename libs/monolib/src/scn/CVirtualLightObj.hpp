@@ -10,22 +10,22 @@
 extern char lbl_eu_8056E8B8[];     // CVirtualLightObj vtable
 extern const f32 lbl_eu_8066AA88;  // default light color components
 extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in getVirtualLightSentinel
-extern const f32 lbl_eu_8066AA90;  // color scale for quad verts (func_80494D84)
-extern const f32 lbl_eu_8066AA98;  // slot color alpha default (func_80495644)
-extern const f32 lbl_eu_8066AA9C;  // color -> u8 scale (func_804952C4)
+extern const f32 lbl_eu_8066AA90;  // color scale for quad verts (drawFlatQuad)
+extern const f32 lbl_eu_8066AA98;  // slot color alpha default (selectLightSlot)
+extern const f32 lbl_eu_8066AA9C;  // color -> u8 scale (blendSlotAmbient)
 extern double lbl_eu_8066AAA0;     // 0x4330000000000000 int->double bias
-extern const f32 lbl_eu_8066AAA8;  // slot color rgb default (func_80495644)
+extern const f32 lbl_eu_8066AAA8;  // slot color rgb default (selectLightSlot)
 extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (bindAttenuatedLight/804958B8)
 
 // Cross-TU catalog imports (CLight.cpp). The retail symbols are unmangled
 // free functions, so extern "C" keeps the emitted reloc names byte-identical.
-extern "C" void func_804C03A0(u8* self, int value);
+extern "C" void LightCtlSetAttnMode(u8* self, int value);
 extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
-extern "C" void func_804C0454(u8* self, int value);
-extern "C" void func_804C0484(CLight* self, const f32* dir);
-extern "C" void func_804C07F0(u8* self, int value);
-extern "C" void func_804C0928(CLight* self, f32 intensity);
-extern "C" void func_804C0570(CLight* self, f32 angleX, f32 angleY);
+extern "C" void LightCtlSetPos(u8* self, int value);
+extern "C" void LightCtlSetDir(CLight* self, const f32* dir);
+extern "C" void LightCtlSetColor(u8* self, int value);
+extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
+extern "C" void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY);
 extern "C" void LightCtlSetEnable(CLight* self, int enable);
 extern "C" void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn);
 extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c);

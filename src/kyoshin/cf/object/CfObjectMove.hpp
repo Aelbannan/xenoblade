@@ -34,9 +34,9 @@ extern "C" void CtrlNpcStoreTargetActivate(cf::CtrlNpc* self);
 extern "C" void func_80094E44(cf::CtrlNpc* self);
 extern "C" void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self);
 extern "C" void CtrlNpcSetFlagActivate(cf::CtrlNpc* self);
-// NPC movement-target action setter (CtrlNpc.cpp, retail func_8009377C):
+// NPC movement-target action setter (CtrlNpc.cpp, retail CtrlNpcSetAction):
 // CfObject_forwardNpcAction tail-dispatches the incoming action id.
-extern "C" void func_8009377C(cf::CtrlNpc* self, u32 param);
+extern "C" void CtrlNpcSetAction(cf::CtrlNpc* self, u32 param);
 // Action-advance query on the NPC movement target (CtrlNpc.cpp, retail
 // CtrlNpcCanAdvanceAction / US 0x800956F4): whether the NPC may advance.
 extern "C" int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self);
@@ -68,7 +68,7 @@ extern "C" void* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first, u32 va
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (CfObjectMove_lookupBdatCol7 / CfObjectMove_lookupBdatCol11)
 extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the CfObjectMove_detachMoveRegion flag clear
-// Global flag word (bits 25/9) gating func_800BC8D8's flag block. Non-volatile
+// Global flag word (bits 25/9) gating CfObjectMove_tickSpeed's flag block. Non-volatile
 // extern so the type agrees with CSystemWindow.hpp and the .sbss definition in
 // CUICfManager.cpp; reads that must stay separate use explicit volatile casts
 // in CfObjectMove.cpp (retail loads it twice there - see the double-lwz note).
@@ -108,15 +108,15 @@ extern const float lbl_eu_80666AA0;
 // CfObject_UnkVirtualFunc4 movement-threshold constant (compared against the
 // +0x98 sub-object's vtable +0x4C result).
 extern const float lbl_eu_80666A8C;
-// func_800BC9EC movement constants: lbl_eu_80666AB8/ABC are the scale/angle
+// CfObjectMove_resetMoveTarget movement constants: lbl_eu_80666AB8/ABC are the scale/angle
 // factors for the Sin/Cos sweep, lbl_eu_80666AC0 the fallback factor, and
-// lbl_eu_80666AC4/AF20 the func_804BD94C tail factors.
+// lbl_eu_80666AC4/AF20 the ScnRes_ResolveGroundHeight tail factors.
 extern const float lbl_eu_80666AB8;
 extern const float lbl_eu_80666ABC;
 extern const float lbl_eu_80666AC0;
 extern const float lbl_eu_80666AC4;
 extern f32 lbl_eu_8066AF20; // f32 form: must match CtrlMoveBase.hpp (10197/10505 on mixed spellings)
-// func_800BCFA0 approach-rate constants (selected by mFlags68 bit 1).
+// CfObjectMove_initAnimTarget approach-rate constants (selected by mFlags68 bit 1).
 extern const float lbl_eu_80666AC8;
 extern const float lbl_eu_80666ACC;
 
@@ -135,7 +135,7 @@ public:
     static void resetMapBdatFileDataPointers();
 };
 }  // namespace cf
-// Retail sbss bdat globals used by func_800BCFA0.
+// Retail sbss bdat globals used by CfObjectMove_initAnimTarget.
 extern void* lbl_eu_806640A8;   // spFldMapListFileData
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 // One-arg call form of the CActParamAnim translation helper (defined 2-arg
@@ -172,17 +172,17 @@ extern "C" void CfModel_SyncVisFlag(cf::CfObjectModel* self, u32 flag);
 // Movement-position update (defined in this TU below; forward-declared here
 // because CfObject_UnkVirtualFunc5 calls it). extern "C" keeps the call-site
 // reloc at the unmangled retail name.
-extern "C" void func_800BC8D8(cf::CfObjectMove* self);
+extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self);
 // Movement-speed helper (defined in this TU below) and the status query used
-// by func_800BC8D8. extern "C" keeps the call-site relocs unmangled.
+// by CfObjectMove_tickSpeed. extern "C" keeps the call-site relocs unmangled.
 extern "C" void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg);
 extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self);
 // Same-TU movement/position helpers (defined in CfObjectMove.cpp below;
-// CfObject_UnkVirtualFunc4 dispatches func_800BCD04).
-extern "C" void func_800BCD04(cf::CfObjectMove* self);
-extern "C" void func_800BC9EC(cf::CfObjectMove* self);
-extern "C" void func_800BCFA0(cf::CfObjectMove* self);
-// Scene/manager queries used by CfObjectMove_testMoveProximity / func_800BC9EC / func_800BCFA0.
+// CfObject_UnkVirtualFunc4 dispatches CfObjectMove_refreshPosition).
+extern "C" void CfObjectMove_refreshPosition(cf::CfObjectMove* self);
+extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self);
+extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self);
+// Scene/manager queries used by CfObjectMove_testMoveProximity / CfObjectMove_resetMoveTarget / CfObjectMove_initAnimTarget.
 extern "C" int CfRes_getD80Flag();
 extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" int CamEvtBusyChk();
@@ -202,36 +202,36 @@ extern "C" u32 CfModel_GetFlag7A8(cf::CfObjectModel* self);
 // CActParamAnim helpers (defined in kyoshin/cf/CActParamAnimGame.cpp,
 // retail unmangled names). tickAnimFrame releases a +0xC8 target;
 // pushAnimNode / attachAnimObj attach model lists to the +0xC4 target;
-// startAnimModeA family drives the +0xC4 target's page state (func_800BCFA0).
+// startAnimModeA family drives the +0xC4 target's page state (CfObjectMove_initAnimTarget).
 extern "C" void tickAnimFrame(void* self);
 extern "C" void pushAnimNode(void* self, void* a, void* b);
 extern "C" void startAnimModeA(void* self);
 extern "C" void startAnimModeA2(void* self);
 extern "C" void startAnimModeC(void* self);
 extern "C" void startAnimModeB(void* self);
-// Region-library helpers used by func_800BC9EC / func_800BCFA0.
+// Region-library helpers used by CfObjectMove_resetMoveTarget / CfObjectMove_initAnimTarget.
 extern "C" void ColiNodeSetWord8Rebuild(void* region);
 extern "C" void ColiResolveNodeMove(void* region, void* out, const void* vec, void* out2);
 // Collision/position stepper (defined in kyoshin/cf/CActParamAnimGame.cpp,
 // retail unmangled name): 6 int-ish args + 5 float args.
-extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
+extern "C" u32 ScnRes_ResolveGroundHeight(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 // Model sub-object flag setter (defined in realtimeevt/CREvtModel.cpp) used
-// by func_800BCFA0's bdat-flag tail.
+// by CfObjectMove_initAnimTarget's bdat-flag tail.
 extern "C" void ScnEnvLgt_EnableFlag100(void* self, int flag);
-// Region position sync + model sub-object helpers used by func_800BCD04 /
-// func_800BC9EC (ColiSetAxisBlockInverse) and func_800BCFA0 (simSetLeafDist7B0).
+// Region position sync + model sub-object helpers used by CfObjectMove_refreshPosition /
+// CfObjectMove_resetMoveTarget (ColiSetAxisBlockInverse) and CfObjectMove_initAnimTarget (simSetLeafDist7B0).
 extern "C" void ColiSetAxisBlockInverse(void* region, const float* vec);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
-// nw4r math sweep functions used by func_800BC9EC (retail names keep the
+// nw4r math sweep functions used by CfObjectMove_resetMoveTarget (retail names keep the
 // call relocs unmangled).
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 // Enemy-state query (mangled global C++ symbol func_800AD860__FPv; defined
-// outside this repo's src tree) used by func_800BC9EC.
+// outside this repo's src tree) used by CfObjectMove_resetMoveTarget.
 void* getEffOwner(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
-// global C++ functions) used by func_800BCFA0's dispatch tail. extern "C":
+// global C++ functions) used by CfObjectMove_initAnimTarget's dispatch tail. extern "C":
 // the retail symbols are the unmangled names.
 extern "C" u32 CfObj_KindBit1(cf::CfObject* obj);
 extern "C" u32 CfObj_KindBit3(cf::CfObject* obj);
@@ -272,7 +272,7 @@ extern "C" void scnImN4DynStart(cf::CfObjectModelSub98* sub);
 // EU-named camera-time helper (retail CfObject_UnkVirtualFunc70 calls it
 // with the +0x38 sub-object's vtable +0xE4 query result in r3 and a float
 // in f1); the US build keeps the EU name for this reloc.
-extern "C" void func_eu_8015D258(void* self, float value);
+extern "C" void CharEffSetSlotFloat(void* self, float value);
 // No-arg call form of the CCharEffect slot-release helper (defined in
 // kyoshin/cf/CCharEffect.cpp with a self param). Retail
 // CfObjectMove_flushEffectSlots calls it with the vtable query result
@@ -284,22 +284,22 @@ extern "C" void CharEffReleaseSlots0A10();
 // +0xE4 query result leftover in r3 and the incoming r4 as the index; C
 // linkage keeps the call relocs at the unmangled retail names (same scheme
 // as the CharEffReleaseSlots0A10 no-arg form).
-extern "C" void func_8015C074(void* self, u32 idx);
+extern "C" void CharEffSetSlotBit(void* self, u32 idx);
 extern "C" void CharEffMoveBit(void* self, u32 idx);
-extern "C" void func_8015BD24(void* self, u32 param);
+extern "C" void CharEffSetPointEnabled(void* self, u32 param);
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp). CharEffRemoveByPtr removes a pointer from the
-// effect slot lists; func_8015C294 returns whether a slot is occupied.
+// effect slot lists; CharEffIsSlotOccupied returns whether a slot is occupied.
 // Retail CfObjectModel_UnkVirtualFunc18 / CfObjectMove_isEffectSlotUsed
 // forward the +0x38 sub-object's vtable +0xE4 query result leftover in r3
-// plus the incoming r4 (same scheme as the func_8015C074 family above).
+// plus the incoming r4 (same scheme as the CharEffSetSlotBit family above).
 extern "C" void CharEffRemoveByPtr(void* self, void* p);
-extern "C" bool func_8015C294(unsigned int* param1, int param2);
+extern "C" bool CharEffIsSlotOccupied(unsigned int* param1, int param2);
 // CCharEffect slot-detach helper (defined in kyoshin/cf/CCharEffect.cpp
 // with (CCharEffect*, CCharEffectvtable*); CCharEffect.hpp is not
 // included here, so the canonical typed form is not visible). C linkage
 // keeps the call-site reloc at the plain retail name (same scheme as the
-// func_8015C074 family above).
+// CharEffSetSlotBit family above).
 extern "C" void CharEffDetachBySubId(void* self, void* manager);
 // Six-arg call form of the CCharEffect slot-register helper (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32, CCharEffectSlot*,
@@ -339,7 +339,7 @@ extern "C" void __ct__8005A3FC(void* self, void* parent);
 // Model sub-object helper used by CfObjectMove_ensureAnimTargets's tail (defined in the
 // monolib scene library, same family as simSetFlag2OnTree in
 // CfObjectModel.hpp).
-extern "C" void func_80482918(cf::CfObjectModelSub98* model, int flag);
+extern "C" void simSetFlag1Tree(cf::CfObjectModelSub98* model, int flag);
 // CModelDisp release helper (defined in kyoshin/makecrystal/
 // CModelDispMakeCrystal.cpp, retail unmangled name). Called by
 // CfObjectMove_detachModelList for each +0xC8/+0xCC target while the
@@ -543,15 +543,15 @@ namespace cf {
         float field_38C;        // 0x38C (CfObject_readRefreshValue read / 16 write)
         u8 _pad390[0x3A8 - 0x390];  // 0x390-0x3A7
         float field_3A8;        // 0x3A8 (CfObject_getPosVector returns &field_3A8)
-        float field_3AC;        // 0x3AC (func_800BCD04 position copy)
-        float field_3B0;        // 0x3B0 (func_800BCD04 position copy)
+        float field_3AC;        // 0x3AC (CfObjectMove_refreshPosition position copy)
+        float field_3B0;        // 0x3B0 (CfObjectMove_refreshPosition position copy)
         u8 _pad3B4[0x430 - 0x3B4];  // 0x3B4-0x42F
         float field_430;        // 0x430 (CfObject_UnkVirtualFunc57)
         float field_434;        // 0x434 (CfObject_UnkVirtualFunc4)
         float field_438;        // 0x438 (CfObject_UnkVirtualFunc57)
         float field_43C;        // 0x43C (CfObject_UnkVirtualFunc57)
         u8 _pad440[0x444 - 0x440];  // 0x440-0x443
-        float field_444;        // 0x444 (func_800BCD04 writes to mField4C)
+        float field_444;        // 0x444 (CfObjectMove_refreshPosition writes to mField4C)
     };
     // View of the CtrlNpc movement-target fields CfObject_forwardNpcAction
     // reads (the +0xC0 action-id word). CtrlNpc.hpp is not included here:
@@ -601,7 +601,7 @@ namespace cf {
     };
     // View of the CfObjectMove +0xA4/+0xA8/+0xAC floats (inside
     // CfObjectModel's opaque 0xA4-0xAF pad): CfObjectMove_updateSpeedA8 reads/writes
-    // field_A8 as a movement speed; func_800BC8D8 and
+    // field_A8 as a movement speed; CfObjectMove_tickSpeed and
     // CfObject_UnkVirtualFunc5 use all three as approach-rate terms.
     struct CfObjectMoveA8View {
         u8 _pad[0xA4];
@@ -654,7 +654,7 @@ namespace cf {
         u32 flags68;  // 0x68
     };
     // vtable proxy for the +0x98 sub-object's slot +0x48 with an explicit
-    // float arg (retail func_800BC8D8 forwards the movement value to the
+    // float arg (retail CfObjectMove_tickSpeed forwards the movement value to the
     // slot; the CObjectParam base header declares it no-arg). Dummy slots
     // pin the offset (same scheme as CfObjectMoveSub98vt64).
     // vtable proxy for the +0x98 sub-object's slot +0x50 with an explicit
@@ -675,7 +675,7 @@ namespace cf {
     // query): retail CfObjectMove_flushEffectSlots calls it, tests the
     // result, then re-calls it. CfObject +0xAC getPosVector; former Sub38 pad deleted
     // slots pin the range up to +0xE4.
-    // View of the +0xD0 CActParamAnimGame sub-object fields func_800BCFA0
+    // View of the +0xD0 CActParamAnimGame sub-object fields CfObjectMove_initAnimTarget
     // touches: owner at +0x4E8, flag word at +0x4EC, speeds at +0x504/+0x50C,
     // and the u16 at +0x530.
     struct CfObjectMoveD0View {
@@ -689,7 +689,7 @@ namespace cf {
         u8 _pad510[0x530 - 0x510];  // 0x510-0x52F
         u16 field_530;          // 0x530
     };
-    // View of the +0x6C0 movement-target object's float fields func_800BC9EC
+    // View of the +0x6C0 movement-target object's float fields CfObjectMove_resetMoveTarget
     // reads/writes (+0xC angle, +0x14 speed).
     struct CfObjectMove6C0View {
         u8 _pad[0xC];           // 0x00-0x0B
@@ -725,7 +725,7 @@ namespace cf {
         u32 field_B4;           // 0xB4
         u32 field_B8;           // 0xB8
     };
-    // View of the CfObjectModel +0x94/+0x9C words (func_800BCFA0 forwards them
+    // View of the CfObjectModel +0x94/+0x9C words (CfObjectMove_initAnimTarget forwards them
     // to the CActParamAnim helpers; CfObjectModel declares both opaque).
     struct CfObjectMove94View {
         u8 _pad[0x94];          // 0x00-0x93
@@ -733,8 +733,8 @@ namespace cf {
         u8 _pad98[0x9C - 0x98]; // 0x98-0x9B
         u32 field_9C;           // 0x9C
     };
-    // View of the CfObjectMove +0x54 diff-vector area (func_800BCD04 /
-    // func_800BC9EC store a position difference there as integer words;
+    // View of the CfObjectMove +0x54 diff-vector area (CfObjectMove_refreshPosition /
+    // CfObjectMove_resetMoveTarget store a position difference there as integer words;
     // CfObjectModel declares 0x54 as CfObjectSub54).
     struct CfObjectMove54View {
         u8 _pad[0x54];          // 0x00-0x53
@@ -742,14 +742,14 @@ namespace cf {
         u32 field_58;           // 0x58
         u32 field_5C;           // 0x5C
     };
-    // View of the getEffOwner result's +0x45CA u16 (func_800BC9EC tests its
+    // View of the getEffOwner result's +0x45CA u16 (CfObjectMove_resetMoveTarget tests its
     // bit 0).
     struct CfObjectMoveAD86View {
         u8 _pad[0x45CA];        // 0x00-0x45C9
         u16 field_45CA;         // 0x45CA
     };
     // Views of the +0x98 sub-object's +0x7A0/+0x7EC words and the object behind
-    // +0x7EC (func_800BCFA0 clears a bit at +0x7A0, writes a byte at +0x2A of
+    // +0x7EC (CfObjectMove_initAnimTarget clears a bit at +0x7A0, writes a byte at +0x2A of
     // the +0x7EC target and calls its vtable +0x1C).
     struct CfObjectMoveSub98View7A0 {
         u8 _pad[0x7A0];         // 0x00-0x79F

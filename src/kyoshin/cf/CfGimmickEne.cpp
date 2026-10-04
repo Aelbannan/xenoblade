@@ -79,10 +79,10 @@ extern "C" {
 void __dt__Q22UI17CPassiveSkillLineFv();
 void __dt__Q22UI17CPassiveSkillInfoFv();
 void __dt__Q22UI16CPassiveSkillCurFv();
-void func_8026EA20();
-void func_8026EBA8();
+void gimmickEneGateSetup();
+void gimmickEneArtsSetup();
 void gimmickEneDispatchRow2Handler();
-void func_8026ECEC();
+void gimmickEneUpdateLOD();
 void gimmickEneDispatchRow4Handler();
 void gimmickEneNoopDispatch5();
 }
@@ -112,13 +112,13 @@ const EneDataRow lbl_eu_80537A14 = {
     lbl_eu_806629A8, 0, (const void*)__dt__Q22UI16CPassiveSkillCurFv,
 };
 __declspec(section ".data") __attribute__((used))
-const EneDataRow lbl_eu_80537A20 = { 0, 0xFFFFFFFFu, (const void*)func_8026EA20 };
+const EneDataRow lbl_eu_80537A20 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneGateSetup };
 __declspec(section ".data") __attribute__((used))
-static const EneDataRow s_dispatchRow1 = { 0, 0xFFFFFFFFu, (const void*)func_8026EBA8 };
+static const EneDataRow s_dispatchRow1 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneArtsSetup };
 __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow2 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneDispatchRow2Handler };
 __declspec(section ".data") __attribute__((used))
-static const EneDataRow s_dispatchRow3 = { 0, 0xFFFFFFFFu, (const void*)func_8026ECEC };
+static const EneDataRow s_dispatchRow3 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneUpdateLOD };
 __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow4 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneDispatchRow4Handler };
 __declspec(section ".data") __attribute__((used))

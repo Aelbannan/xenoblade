@@ -15,7 +15,7 @@
 #define CCur18View CCur18ViewFloorMap
 #define CCur18Data CCur18DataFloorMap
 #define CScrollBar_UpdateDispatch CScrollBar_UpdateDispatchFloorMap
-#define func_801D202C func_801D202CFloorMap
+#define Cur_Update Cur_UpdateFloorMap
 #define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
 #define CScrollBar_PlaceThumb CScrollBar_PlaceThumbFloorMap
 #define ApplyFontToTxtPanes ApplyFontToTxtPanesFloorMap
@@ -30,7 +30,7 @@
 #undef CCur18View
 #undef CCur18Data
 #undef CScrollBar_UpdateDispatch
-#undef func_801D202C
+#undef Cur_Update
 #undef sysWinDispatchPhase
 #undef CScrollBar_PlaceThumb
 #undef ApplyFontToTxtPanes
@@ -65,9 +65,9 @@ void ArtsInfo_SetReadyFlag();
 // Static-member helper on cf::CfGameManager (retail keeps the mangled name);
 // called with the map index and a zero second argument.
 void func_8008413C__Q22cf13CfGameManagerFv(u32, u32);
-void func_80242368(class CMenuMapSelect* self);     // world map input handler
-void func_80242524(class CMenuMapSelect* self);     // world map phase 2 setup
-void func_80242A28(class CMenuMapSelect* self);     // floor map input handler
+void handleWorldMapInput(class CMenuMapSelect* self);     // world map input handler
+void setupFloorMapPhase(class CMenuMapSelect* self);     // world map phase 2 setup
+void handleFloorMapInput(class CMenuMapSelect* self);     // floor map input handler
 void updateMapSel(class CMapSel* self);
 int getMapSelVisibleFlag(class CMapSel* self);
 int getMapSelInitFlag(class CMapSel* self);

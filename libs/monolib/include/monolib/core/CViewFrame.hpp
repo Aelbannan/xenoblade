@@ -23,7 +23,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
-    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
+    void drawFrameBorder(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4

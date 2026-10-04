@@ -74,7 +74,7 @@ public:
     bool update(ml::CFrustum* r4);
     void func_801A1188(CCullFrustum* r4);
     bool isOccluded(const ml::CVec3& vec, float distance);
-    bool func_801A1550(const ml::CVec3& rayStartPos, const ml::CVec3& rayEndPos, UNKWORD r6);
+    bool isRayOccluded(const ml::CVec3& rayStartPos, const ml::CVec3& rayEndPos, UNKWORD r6);
 
     //0x0: vtable
     resvector<CCullFrustum*> mFrustumList1; //0x4

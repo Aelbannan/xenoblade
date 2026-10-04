@@ -13,6 +13,26 @@ struct OcThreadListHdr {
     u32 count;
 };
 
+/* Full retail BSS storage for the message/thread rings. Each derives from
+ * OcThreadListHdr (base at offset 0, so derived-to-base conversion is
+ * address-preserving and sinit/getOcMsgList/getOcLogList codegen is
+ * unchanged), followed by ring slots and mirrored values (cf.
+ * OcMsgTwoValueObj/OcMsgThreeValueObj in ocMsg.hpp). Sizes match the retail
+ * .bss exactly (0x70/0x98); the message ring's trailing word is unobserved
+ * by code and exists only to reach the retail size. */
+struct OcThreadMsgStorage : OcThreadListHdr {
+    u8 slots[0x50]; /* +0x14 ring slots (mirrors OcMsgTwoValueObj layout) */
+    u32 value0;     /* +0x64 */
+    u32 value1;     /* +0x68 */
+    u32 _sizePad;   /* +0x6C: filler to retail 0x70 */
+};
+struct OcThreadLogStorage : OcThreadListHdr {
+    u8 slots[0x78]; /* +0x14 ring slots (mirrors OcMsgThreeValueObj layout) */
+    u32 value0;     /* +0x8C */
+    u32 value1;     /* +0x90 */
+    u32 value2;     /* +0x94 */
+}; /* total 0x98, no pad needed */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,5 +60,5 @@ void sinit_8003A4F8();
 #endif
 
 extern OCData lbl_eu_80524C60;
-extern OcThreadListHdr lbl_eu_805704C8;
-extern OcThreadListHdr lbl_eu_80570538;
+extern OcThreadMsgStorage lbl_eu_805704C8;
+extern OcThreadLogStorage lbl_eu_80570538;

@@ -395,8 +395,8 @@ void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32
 UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
 extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
-void func_8022B9B4(void* syswin, const char* msg, int flag);          // CSysWin.cpp
-void func_8022BFC8(void* syswin, int flag);                           // CSysWin.cpp
+void sysWinSetKindContent(void* syswin, const char* msg, int flag);          // CSysWin.cpp
+void sysWinApplyKind(void* syswin, int flag);                           // CSysWin.cpp
 void sysWinOpenPhase1(void* syswin);                                     // CSysWin.cpp
 void sysWinDispatchPhase(void* syswin);                                     // CSysWin.cpp (per-frame update)
 char* BdatGetPtrDirect(const void*, const void*, int);                   // code_80135FDC.cpp
@@ -411,7 +411,7 @@ extern "C" void CScrollBar_UpdateDispatch(void* scrollbar);                     
 extern "C" void CScrollBar_requestScrollOut(void* scrollbar);                                 // CScrollBar.cpp (layout rebuild)
 extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
-void func_801D202C(void* cursor);                                     // CCur.cpp
+void Cur_Update(void* cursor);                                     // CCur.cpp
 void* CUICfManager_getArcResourceAccessor();                                                // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
 u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_80135FDC.cpp

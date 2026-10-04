@@ -179,11 +179,11 @@ extern "C" u32 isMapSelectActive() {
 }
 
 // ---------------------------------------------------------------------------
-// us-80244520 -- func_80242368: world map input handler (phase gate).
+// us-80244520 -- handleWorldMapInput: world map input handler (phase gate).
 // Reads turbo-press flags plus one controller-dependent trigger bit triple,
 // then dispatches cursor movement / cancel / help / confirm actions.
 // ---------------------------------------------------------------------------
-void CMenuMapSelect::func_80242368() {
+void CMenuMapSelect::handleWorldMapInput() {
     CfPadDataView* padData = (CfPadDataView*)cf::CfGameManager::getCfPadData();
 
     // Trigger bits and masked-button booleans are extracted identically for
@@ -257,12 +257,12 @@ void CMenuMapSelect::func_80242368() {
 }
 
 // ---------------------------------------------------------------------------
-// us-802446dc -- func_80242524: world map phase 2 -> floor map setup.
+// us-802446dc -- setupFloorMapPhase: world map phase 2 -> floor map setup.
 // Once the fade reports ready, build a fresh CFloorMap in a stack temporary,
 // assign it over the member (implicit operator= skips the vptr), select the
 // current map and advance to phase 5.
 // ---------------------------------------------------------------------------
-void func_80242524(CMenuMapSelect* self) {
+void setupFloorMapPhase(CMenuMapSelect* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         self->mFloorMap = CFloorMap();
 
@@ -274,11 +274,11 @@ void func_80242524(CMenuMapSelect* self) {
 }
 
 // ---------------------------------------------------------------------------
-// us-80244be0 -- func_80242A28: floor map input handler (phase 5).
+// us-80244be0 -- handleFloorMapInput: floor map input handler (phase 5).
 // Advances the animation timer, refreshes the help bar text, then dispatches
 // zoom / cursor / selection actions based on the active controller layout.
 // ---------------------------------------------------------------------------
-void func_80242A28(CMenuMapSelect* self) {
+void handleFloorMapInput(CMenuMapSelect* self) {
     if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
         return;
     }

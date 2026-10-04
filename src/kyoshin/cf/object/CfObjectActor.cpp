@@ -121,8 +121,8 @@ extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObj
 // bodies are CVision logic awaiting that wave's decomp. extern "C" + real
 // arity per CVision.hpp so this TU provides the retail symbols (C++
 // linkage would mangle them __Fv and leave CVision.o's refs dangling).
-extern "C" void func_8016FF14(void* obj, void* dst) { (void)obj; (void)dst; }
-extern "C" void func_80170AB0(void* self, void* dst) { (void)self; (void)dst; }
+extern "C" void Vision_CopyEngageActor(void* obj, void* dst) { (void)obj; (void)dst; }
+extern "C" void Vision_CopyFxActor(void* self, void* dst) { (void)self; (void)dst; }
 void cf::CfObjectActor::CfObjectActor_clearStatusPair() {
     // Two virtual calls on the CBattleState subobject vtable (this+0x8),
     // slot +0x20 (CBattleState_clearStatusId; retail fake-Fv ABI passes
@@ -432,14 +432,14 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             BtlDmg_SetByte777(0);
         }
     }
-    if (f < lbl_eu_80667738 && func_80148778((u8*)self + 8, 1) != 0) {
+    if (f < lbl_eu_80667738 && isBattleStatusActive((u8*)self + 8, 1) != 0) {
         f = lbl_eu_80667738;
     }
     // Status 0x33: adjust the gauge value inside the status entry. `ep` is
     // one register reused across every status block (retail keeps the entry
     // pointers in a single callee-saved register).
     cf::CfStatusEntry* ep = 0;
-    if (func_80148778((u8*)self + 8, 0x33) != 0) {
+    if (isBattleStatusActive((u8*)self + 8, 0x33) != 0) {
         if ((c & 0x90000000) == 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x33);
             if (ep != 0) {
@@ -468,7 +468,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             }
         }
     }
-    if (f > lbl_eu_80667738 && func_80148778((u8*)self + 8, 0x120) != 0) return;
+    if (f > lbl_eu_80667738 && isBattleStatusActive((u8*)self + 8, 0x120) != 0) return;
     // Round the gauge to the nearest int (half away from zero), then clamp.
     float v = reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 + f;
     reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = v;
@@ -499,7 +499,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
     }
     if (f <= lbl_eu_80667738) {
         // Status 0xC3: scale a ratio from the entry value.
-        if (func_80148778((u8*)self + 8, 0xC3) != 0) {
+        if (isBattleStatusActive((u8*)self + 8, 0xC3) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xC3);
             if (ep != 0) {
                 f = lbl_eu_80667740;
@@ -513,7 +513,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             }
         }
         // Status 0x92: party-list length gated proc.
-        if (func_80148778((u8*)self + 8, 0x92) != 0) {
+        if (isBattleStatusActive((u8*)self + 8, 0x92) != 0) {
             void* bm = getInstance__Q22cf14CBattleManagerFv();
             u8* base = *(u8**)((u8*)bm + 8);
             u8* node = *(u8**)base;
@@ -524,7 +524,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             }
             if (count != 0) {
                 int v27b = 0;
-                if (func_80148778((u8*)self + 8, 0xA1) != 0) {
+                if (isBattleStatusActive((u8*)self + 8, 0xA1) != 0) {
                     v27b = ((cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xA1))->field_0x10;
                 }
                 ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x92);
@@ -542,7 +542,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             }
         }
         // Status 0xFC: gauge drain block.
-        if (func_80148778((u8*)self + 8, 0xFC) != 0) {
+        if (isBattleStatusActive((u8*)self + 8, 0xFC) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0xFC);
             if (ep != 0) {
                 if (self->CActorParam_getHp() < lbl_eu_80667740) {
@@ -557,7 +557,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
             }
         }
         // Status 0x100: same drain block plus a decay add and flag.
-        if (func_80148778((u8*)self + 8, 0x100) != 0) {
+        if (isBattleStatusActive((u8*)self + 8, 0x100) != 0) {
             ep = (cf::CfStatusEntry*)findBattleStatusEntry((u8*)self + 8, 0x100);
             if (ep != 0) {
                 if (self->CActorParam_getHp() < lbl_eu_80667740) {
@@ -609,7 +609,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObject
 // lbl_eu_80531080 is the CfMapEffectManager vtable whose bytes live in this
 // split range (cf. CfMapEffectManager.hpp:101 decl); its dtor/RTTI owners
 // are not decompiled yet, so those slots extern-ref their retail symbols.
-void func_8016FC98();
+void MapFx_ReleaseObject();
 void func_801A4194();
 extern "C" void __dt__Q22cf18CfMapEffectManagerFv(void* self);
 extern u8 lbl_eu_806623F0[];
@@ -617,7 +617,7 @@ __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_80531080[4] = {
     lbl_eu_806623F0, 0,
     (const void*)__dt__Q22cf18CfMapEffectManagerFv,
-    (const void*)func_8016FC98
+    (const void*)MapFx_ReleaseObject
 };
 __declspec(section ".data") __attribute__((used))
 const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)func_801A4194 };

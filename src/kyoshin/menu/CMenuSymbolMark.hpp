@@ -354,7 +354,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 extern "C" {
 u32 BdatGetU16Direct(const void* table, const char* str, u32 index);
 int CheckEntryConditions(const void* table, u32 index);
-void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
+void CamMan_ProjectToScreen(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);
 void* Bdat_GetTable_AA34(void);
 u32 Bdat_GetMaxRow_B1EC(u8* bdat);

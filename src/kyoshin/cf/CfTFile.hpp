@@ -67,7 +67,7 @@ using ::CfTFile;
 extern "C" {
 __declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b);
 int CfT_GetClockTimeByMode(int mode);
-int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1);
 void* Bdat_GetTable_AA34();

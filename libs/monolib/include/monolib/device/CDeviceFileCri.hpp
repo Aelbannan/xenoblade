@@ -40,11 +40,11 @@ public:
     static int getFileSize(const char* pPath, int arg1);
     static void cancelJobsForPath(const char* pPath);
     static bool cancel(CFileHandle* pHandle);
-    static void func_8044FC38();
-    bool func_8044FCFC();
-    bool func_80450058();
-    bool func_80450260();
-    bool func_8045042C();
+    static void abortRead();
+    bool beginRead();
+    bool readChunk();
+    bool advanceSector();
+    bool copyTail();
 
     static void setCriFilePathA(const wchar_t*);
     static void setCriFilePathB(const wchar_t*);
@@ -74,7 +74,7 @@ private:
 extern "C" {
     int DevFile_GetByteA9();
     int DevFile_SubstLangPath(const char*);
-    int func_804DDCD4(const char*, const char*);
+    int findPackFileId(const char*, const char*);
     extern u32 lbl_eu_806636C8[1];
     extern u32 lbl_eu_806636CC[1];
     extern u32 lbl_eu_806636D0[2];
@@ -84,10 +84,10 @@ extern "C" {
 
 extern "C" {
     void AddToGlobalArray__10CExceptionFP10IException(CException* self, IException* pException);
-    void func_804591DC__10CExceptionFP10IException(CException* self);
+    void RemoveFromGlobalArray__10CExceptionFP10IException(CException* self);
     void logExceptionMessage__10CExceptionFv(const char* msg);
     void setGlobalMessage__10CExceptionFv(CException* self);
-    CException* func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
+    CException* createException__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
     void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);
 }
 

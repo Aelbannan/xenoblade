@@ -143,7 +143,7 @@ cf::CtrlNpc* __ct__CtrlNpc(cf::CtrlNpc* self, cf::CfObject* param) {
 // 0x80094154: set the action id. When switching away from a movement action
 // (4/5), report the current target/position offset to the character object
 // and (on success) bump the page counter / set the done flags.
-void func_8009377C(cf::CtrlNpc* self, u32 param) {
+void CtrlNpcSetAction(cf::CtrlNpc* self, u32 param) {
     reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getParamPtr();
     u16 c0 = self->field_C0;
     self->field_DC = 0;
@@ -212,7 +212,7 @@ extern "C" void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self);
 // the shared search-helper progress check (inlined per action, as in retail);
 // finally, if the character reports a heading update is due, re-feeds
 // field_0C into it.
-void func_8009398C(cf::CtrlNpc* self) {
+void CtrlNpcUpdateAction(cf::CtrlNpc* self) {
     u16 act;
     // Singleton fetched but unused at this site (retail discards the result).
     getInstance__Q22cf13CfGameManagerFv();
@@ -395,7 +395,7 @@ struct NpcMsgBuf {
     u32 len;            // 0x100
 };
 
-void func_80093F28(cf::CtrlNpc* self) {
+void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
     // Frame homes mirror retail (top-down by first use): message buffer,
     // name buffer, heading-diff vectors, then the column slots (first-used
     // highest). Column unions stay memory-resident like retail.
@@ -744,7 +744,7 @@ void CtrlNpcSetupAction(cf::CtrlNpc* self, const ml::CVec3* vec, int val, f32 sc
     if (val != 0)
         CtrlNpcSetupMoveAction(self, vec, scale, paramB);
     else
-        func_8019F6E8((cf::CCtrlMoveNpc*)self->_sub30, vec, scale, paramB);
+        beginNpcMove((cf::CCtrlMoveNpc*)self->_sub30, vec, scale, paramB);
 }
 
 // 0x800956F4: action-advance query - whether the NPC may advance from its
@@ -915,7 +915,7 @@ void CtrlNpcSyncTargetFromPos(cf::CtrlNpc* self) {
 // close enough). The heading is stored into field_0C; when far away it aims at
 // the target with a random jitter, otherwise it picks a random turn (continuing
 // the previous turn while the wander timer field_BC is still running).
-void func_80095224(cf::CtrlNpc* self) {
+void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_checkStateFlags8(0x1000) != 0)
         return;
@@ -1037,14 +1037,14 @@ void CtrlNpcTickTimer(char* p) {
 // retail arg shape and C linkage (from the header declaration) so
 // CtrlNpcRestartTimerGated's call reloc matches retail. noinline so the call stays a bl.
 // Same-TU forward decl (defined below).
-void func_80095F44(cf::CtrlNpc* self);
+void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self);
 
 // 0x8009565C: movement-timer restart. Validates the current event window
 // ([field_160, field_164)), rebuilds waypoint segment lengths, converts the
 // game-clock delta into normalized travel progress, then either snaps to the
 // final waypoint or interpolates along the containing segment, steering /
 // teleporting the character accordingly.
-void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
+void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     if (self->field_15C == 0 || self->field_168 == 0)
         return;
 
@@ -1236,7 +1236,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveYaw(self->field_0C);
         }
         self->field_BE += 1;
-        func_80095F44(self);
+        CtrlNpcAdvanceWaypoint(self);
         if (flag20)
             self->field_D4 = lbl_eu_80666698;
         self->field_BE = 2;
@@ -1256,13 +1256,13 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
 // and advances the busy state. The elapsed-frame count from the game manager
 // scales the arrival radius; close-range slowdown blends the character's
 // movement progress into the turn speed.
-void func_80095F44(cf::CtrlNpc* self) {
+void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
     u32 idx = self->field_C4;
     ml::CVec3* curTgt =
         reinterpret_cast<ml::CVec3*>(&self->field_E0[idx]);
     const ml::CVec3* posf =
         reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
-    // Kernel diff + component copy (same shape as func_80093F28).
+    // Kernel diff + component copy (same shape as CtrlNpcUpdateTalk).
     ml::CVec3 diff = *curTgt - *posf;
     f32 distSq = diff.x * diff.x + diff.z * diff.z;
 
@@ -1393,7 +1393,7 @@ void CtrlNpcRestartTimerGated(cf::CtrlNpc* self) {
     clearControllerState__Q22cf13CfGameManagerFv();
     if (id < self->field_160 || id >= self->field_164) {
         self->field_BE = 0;
-        func_8009565C(self);
+        CtrlNpcRestartMoveTimer(self);
     }
 }
 
@@ -1401,7 +1401,7 @@ void CtrlNpcRestartTimerGated(cf::CtrlNpc* self) {
 // movement target is large enough, steer the heading toward it and drive the
 // move helper; otherwise decay the remaining-duration timer and advance the
 // action state.
-int func_800964EC(cf::CtrlNpc* self) {
+int CtrlNpcApproachTarget(cf::CtrlNpc* self) {
     ml::CVec3* posf = reinterpret_cast<ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     ml::CVec3* tgt = reinterpret_cast<ml::CVec3*>(&self->field_E0[1]);
     // operator- emits the paired-single diff kernel matching retail.
@@ -1460,7 +1460,7 @@ void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self) {
     if (self->field_BE == 1) {
         int armed;
         if (((self->field_C6 >> 8) & 0xFF) != 0)
-            armed = func_800964EC(self);
+            armed = CtrlNpcApproachTarget(self);
         else
             armed = NpcMove_DispatchState((cf::CCtrlMoveNpc*)self->_sub30);
         if (armed != 0) {
@@ -1537,13 +1537,13 @@ __declspec(section ".data") const void* lbl_eu_80527AB8[] = {
 };
 __declspec(section ".data") const void* lbl_eu_80527AE0[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcSyncTargetFromPos,
-    (void*)0, (void*)-1, (void*)func_80095224,
+    (void*)0, (void*)-1, (void*)CtrlNpcTurnToTarget,
     (void*)0, (void*)-1, (void*)CtrlNpcUpdateMovement,
     (void*)0, (void*)-1, (void*)CtrlNpcTickTimer
 };
 __declspec(section ".data") const void* lbl_eu_80527B10[] = {
-    (void*)0, (void*)-1, (void*)func_8009565C,
-    (void*)0, (void*)-1, (void*)func_80095F44,
+    (void*)0, (void*)-1, (void*)CtrlNpcRestartMoveTimer,
+    (void*)0, (void*)-1, (void*)CtrlNpcAdvanceWaypoint,
     (void*)0, (void*)-1, (void*)CtrlNpcRestartTimerGated,
     (void*)0
 };

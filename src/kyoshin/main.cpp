@@ -207,7 +207,7 @@ int main(){
     char* dataBase = reinterpret_cast<char*>(&sGameMainIcon);
     lbl_eu_8065FD00[0x125] = 0;
     CBdat::clearEntries();
-    func_eu_802B12DC();
+    loadErrMesTable();
     NandData_SetupBanner_11C0();
     func_eu_804520B0(getErrMesLangTable0());
     func_eu_804520B0(getErrMesLangTable1());

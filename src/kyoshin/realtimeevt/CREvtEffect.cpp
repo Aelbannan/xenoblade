@@ -149,11 +149,11 @@ extern "C" void EvtFx_FreeAnim(CREvtEffect* self) {
 
 // ============================================================================
 // EvtFx_StepAnims (0x8018619C)
-// Calls EvtFx_RefreshChrAnim then func_8018515C
+// Calls EvtFx_RefreshChrAnim then EvtFx_UpdateEffects
 // ============================================================================
 extern "C" void EvtFx_StepAnims(CREvtEffect* self) {
     EvtFx_RefreshChrAnim(self);
-    func_8018515C(self);
+    EvtFx_UpdateEffects(self);
 }
 
 // ============================================================================
@@ -210,17 +210,17 @@ extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self) {
             if (Scn_GetFrameDelta(lbl_eu_80663E14) >= lbl_eu_8066794C ||
                 (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
                  self->mFlag134 == 0)) {
-                func_80184F90(self);
+                EvtFx_SpawnEffect(self);
             }
         }
     }
 }
 
 // ============================================================================
-// func_80184F90 (0x801863D0)
+// EvtFx_SpawnEffect (0x801863D0)
 // Spawns an effect
 // ============================================================================
-extern "C" bool func_80184F90(CREvtEffect* self) {
+extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self) {
     // Max 32 concurrent effects
     if (self->mEffectCount >= 32) {
         return 0;
@@ -243,7 +243,7 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
     }
 
     // Create the effect instance and register it in the slot array
-    CEffectInst* effect = (CEffectInst*)func_804CC1F4(
+    CEffectInst* effect = (CEffectInst*)EffRoot_AddSchedReq(
         &lbl_eu_8065FC18, self->mBdatData, lbl_eu_80663E14, 0, 1, 0);
     if (effect == 0) {
         return 0;
@@ -316,10 +316,10 @@ extern "C" bool func_80184F90(CREvtEffect* self) {
 }
 
 // ============================================================================
-// func_8018515C (0x801865E4)
+// EvtFx_UpdateEffects (0x801865E4)
 // Updates all effects
 // ============================================================================
-extern "C" void func_8018515C(CREvtEffect* self) {
+extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
     if (self->mBdatEntry != 0) {
         // Resolve the entry's name object; used for parent binding below.
         void* nameObj = 0;
@@ -394,11 +394,11 @@ extern "C" void func_8018515C(CREvtEffect* self) {
 }
 
 // ============================================================================
-// func_80185378 (0x80186800)
+// EvtFx_InitModel (0x80186800)
 // Initializes with model and bdat data
 // r3 = this, r4 = src, r5 = bdatEntry
 // ============================================================================
-extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
+extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* bdatEntry) {
     if (self->mMaterial != 0) {
         // Release the previous animation resource (virtual, vtable[4]).
         ((void (*)(CREvtEffect*))(*(void***)self)[4])(self);
@@ -452,7 +452,7 @@ extern "C" void func_80185378(CREvtEffect* self, void* src, void* bdatEntry) {
         void* material = Scn_InitGlobalA(lbl_eu_80663E14, src, 0);
         self->mMaterial = material;
         if (material != 0) {
-            func_804839D4(self->mModel, material, 0, 0, 0, 1, -1);
+            simBindChrAnim(self->mModel, material, 0, 0, 0, 1, -1);
 
             // Read the duration/type properties from the entry (retail reloads
             // mMaterial for each call rather than keeping a local alive).

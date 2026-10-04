@@ -24,7 +24,7 @@ public:
     int blank1() override;
 };
 
-// Scheduler queue descriptor filled by func_802A5174 during construction.
+// Scheduler queue descriptor filled by BufVxFillSchedDesc during construction.
 // 0x0/0x4 are the destination arrays (handles and IDs), 0x8 the running count.
 struct CVSPlayQueue {
     CVoiceHandle** handleArr;  // 0x0
@@ -44,7 +44,7 @@ extern "C" {
     int    HpVoice_MapSubState(CVoiceHandle* handle);
     CVoiceHandle* HpVoice_FindBySubState(int a);
     void*  findObjectById__Fi(int id);
-    void*  func_8016FE34(void* src);
+    void*  MapFx_ResolveOwner(void* src);
 }
 
 // Phantom vtable view over a CVoiceHandle vtable (vtable pointer at +0x00) so

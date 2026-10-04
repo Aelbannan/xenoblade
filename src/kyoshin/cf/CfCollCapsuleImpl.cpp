@@ -16,7 +16,7 @@ extern "C" void VecMath_SegSphereProbe(void* query, const ml::CVec3* start,
 
 // Render the capsule for debug visualization.
 // r3 is unused (this of CfDebugDrawManager).
-void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
+void CollCapsule_DrawDebugShape(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
     cf::CfDebugCol col;
     col.f[0] = lbl_eu_80666910;
     col.f[1] = lbl_eu_80666930;

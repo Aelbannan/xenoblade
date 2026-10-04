@@ -83,7 +83,7 @@ extern ActionEntry lbl_eu_80531D74[];
 extern const char lbl_eu_8050372C[];
 extern const char lbl_eu_80503718[];
 
-void func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* ev);
 void EvtSeqInsertRtEvent(CREvtModelMap* self);
 bool EvtSeqProbeEvtSlot(void* self, s32* pId);
@@ -111,18 +111,18 @@ void* getGlobalSda();
 void __dt__80185754(CREvtModelMap* self);
 void __ct__80172668(CREvtModelMap* self, int dealloc);
 void getField20();
-void func_801729F0();
-void func_80172768(CREvtModelMap* self, int r4);
-void func_801727DC();
-void func_801728F8();
+void EvtModelSetEventData();
+void EvtModelReleaseAnims(CREvtModelMap* self, int r4);
+void EvtModelUpdate();
+void EvtModelResetPose();
 void releaseEvtAnim28();
 void CREvtObjVfunc24Default();
 void isEvtFlagBit4Set();
 void isEvtFlagBit0Set();
 void zeroEvtModelHook();
 void emptyEvtModelHook();
-void func_80172CC4();
-void func_801726DC(CREvtModelMap* self);
+void EvtModelSetVisible();
+void EvtModelReleaseAnimsOnce(CREvtModelMap* self);
 void func_80172668();
 void MapModel_ThunkCtor38(void* self, int dealloc);
 extern CREvtModelMap* lbl_eu_806642B0;
@@ -285,7 +285,7 @@ bool func_80180CBC(CREvtModelMap* self)
     if (self->mFlags & 0x80) {
         return 0;
     }
-    func_801726DC(self);
+    EvtModelReleaseAnimsOnce(self);
     if (self->mEmoteModel) {
         Scn_IsAnimActiveOrNull(self->mEmoteModel);
         self->mEmoteModel = nullptr;
@@ -383,7 +383,7 @@ void MapModel_LoadFiles(CREvtModelMap* self)
         self->mCallback[2] = w2;
         self->mFlags = flags;
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-        func_800AA33C(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
+        Tok_FormatStr(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
         s32 len = strlen(&lbl_eu_8050372C[0]);
         strcat(self->mBasePath, &lbl_eu_8050372C[0]);
         self->mBasePathLen += len;

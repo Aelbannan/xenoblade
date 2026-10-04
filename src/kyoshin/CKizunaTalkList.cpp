@@ -172,7 +172,7 @@ void updateTalkList(CKizunaTalkList* self) {
 
         // Layout virtual slot 0x38/4: disable animation.
         ((void (*)(void*, int))(*(void***)self->mpLayout20)[0x38 / 4])(self->mpLayout20, 0);
-        func_801D202C(&self->mCursor);
+        Cur_Update(&self->mCursor);
         CScrollBar_UpdateDispatch(&self->mScrollBar);
     }
 }

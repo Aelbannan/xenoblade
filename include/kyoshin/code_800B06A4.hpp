@@ -600,7 +600,7 @@ extern "C" void* firstReslistB68();
 extern "C" void* firstReslistB88();
 extern "C" void* firstReslistBC8();
 extern "C" void* firstReslistC08();
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
 #include "monolib/util/FixStr.hpp"
 template <typename T>
@@ -975,10 +975,10 @@ struct SortEntryF {
 };
 
 // --- batch targets: introsort family / ring buffer (us-800b58a8 etc.) ---
-extern "C" void func_800B535C(void** first, void** last, void** cmp);
-extern "C" void func_800B587C(void** first, void** last, void** cmp);
-extern "C" void func_800B570C(void** a, void** b, void** c, void** cmp);
-extern "C" s32 func_800B3D64(UnkClass_800B0AD8* self, cf::CfObject** itemPtr);
+extern "C" void qsortEntriesIndirect(void** first, void** last, void** cmp);
+extern "C" void selectSortEntries(void** first, void** last, void** cmp);
+extern "C" void insertSortTriple(void** a, void** b, void** c, void** cmp);
+extern "C" s32 removeRingEntry(UnkClass_800B0AD8* self, cf::CfObject** itemPtr);
 
 // Pivot-jitter statics rotated by the sort drivers (retail .data).
 extern int lbl_eu_80661CD8;
@@ -1211,7 +1211,7 @@ extern "C" void* __ct__cf_CfObjectEne(void* self);
 extern "C" void* __ct__Q22cf12CfObjectTboxFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectEffFv(void* self);
 extern "C" void ObjObj_ReleaseModels_FAB0(void* obj, u32 w04, u32 w00);
-extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 mask,
+extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
                                 const B20B4Payload* payload, u32 arg);
 
 // Slot 21 (+0x54): failure teardown hook used when a spawned npc/pc cannot
@@ -1609,12 +1609,12 @@ extern "C" void __dla__FPv(void*);
 extern "C" void* copyIterFrom(void* a, void* b);
 extern "C" void unlinkListNode(void* a, void* b, void* c);
 extern "C" void __dt__8047BDA8(void*);
-extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, s32 count);
+extern "C" void allocNodePool(UnkClass_805764CC* self, unsigned long handle, s32 count);
 extern "C" void walkReslistByMask(void* object, u32 arg);
 extern "C" void walkReslistByType(void* object, u32 arg);
 extern "C" unsigned long factoryPoolCount(void* self);
-extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
-extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 arg1,
+extern "C" void allocEventPool(void* self, unsigned long handle, unsigned long count);
+extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 arg1,
                                 const B20B4Payload* arg2, u32 arg3);
 // CfRes.cpp import (retail exports the unmangled name).
 extern "C" u32 CfRes_extractBits27_5(void* self);
@@ -1657,13 +1657,14 @@ extern "C" void unlinkMatchingNode(void* list, void* obj);
 // --- imports for func_800B83AC (us-800b8cc8) ---
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" void* CtrlObjectParam_GetSlotTableBase();
+extern "C" void* CtrlObjectParam_GetCharEntry(u16 index);
 extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();
 // Scn_GetFrameDelta is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
 extern "C" void Scn_GetFrameDelta();
-extern "C" void func_801765A4(void* obj, int arg);
+extern "C" void CActorParam_updateTick(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
 extern "C" void setObj6Cmask(void* obj, unsigned long mask, int flag);
@@ -1858,7 +1859,7 @@ extern "C" void clearField380(void* it);
 extern "C" u32* sortBufAt(void* it, u32 index);
 extern "C" u32 sortBufCount(void* it);
 extern "C" int cmpFloatAt4(const void* a, const void* b);
-extern "C" void func_800B4FAC(void** first, void** last, int (*cmp)(const void*, const void*));
+extern "C" void qsortEntries(void** first, void** last, int (*cmp)(const void*, const void*));
 extern "C" void* getUnk80664658();
 extern "C" void* testCamBit15(void* p);
 extern "C" unsigned short getGlobalU16_4314();
@@ -2406,7 +2407,7 @@ bool isGlobalCamFlagSet(int mask);
 extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float cfCam_xzLength(void* p);
-extern "C" void func_800B6AF4(void* self);
+extern "C" void refreshCamItems(void* self);
 extern "C" void Scn_FindCamItem(int arg, int val);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
@@ -2414,7 +2415,7 @@ extern "C" void* func_800BBC0C(void* data);
 extern "C" void CfObjectMove_setMoveSpeed(void* obj, float val);
 extern "C" void func_8004CF00();
 extern "C" void* firstReslistBA8();
-extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
+extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, class IB7Arg* arg);
 extern "C" void func_800B9C14(void* obj);
 extern "C" void func_80068358(void* obj);
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
@@ -2435,14 +2436,14 @@ extern "C" void func_80197BA4(void* container, int a, int b);
 extern "C" u32* storeIterWord(void* iter, int arg);
 extern "C" void* copyIterWord(void* dst, void* src);
 extern "C" void copyIterWord2(void* dst, void* src);
-extern "C" void func_800B3A88(UnkClass_805764CC* self, void* obj);
-extern "C" void func_800B8524(UnkClass_805764CC* self, void* arg, void* other);
-extern "C" void func_800B68A8(UnkClass_805764CC* self, void* partner,
+extern "C" void removeManagedObject(UnkClass_805764CC* self, void* obj);
+extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other);
+extern "C" void applyProximitySpeed(UnkClass_805764CC* self, void* partner,
                               const void* listv, int flag, float limit);
-extern "C" u32 func_800B47A8(int modeScale, float scale, const B47Vec3* posA,
+extern "C" u32 checkAudibleDistance(int modeScale, float scale, const B47Vec3* posA,
                              const B47Vec3* posB, int modeFade, int modeNear,
                              float* outDist, u8* outHit);
-extern "C" u32 func_800B2ED0(UnkClass_805764CC* self, cf::CfObject* obj);
+extern "C" u32 fileObjectIntoPools(UnkClass_805764CC* self, cf::CfObject* obj);
 
 // Spawned object interface used by scanTboxByXY.
 class IDispB7410 {
@@ -2612,7 +2613,7 @@ public:
 };
 
 // --- imports for func_800B5994 dispatch (retail symbol names) ---
-extern "C" void func_800B6520(const F8C0ListSource* src, void* rec);
+extern "C" void emitSpeedEvent(const F8C0ListSource* src, void* rec);
 extern "C" float cfCam_absFloat();
 extern "C" B5994Obj* getObjField98(void* obj);
 extern "C" u32 getObjU16_45C0(void* ctrl);

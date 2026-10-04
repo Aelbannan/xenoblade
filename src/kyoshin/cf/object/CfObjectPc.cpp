@@ -114,7 +114,7 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
 // also resets the screen. For arts row 4, copies four bdat string bytes into
 // +0x1629..+0x162C using the row from CtrlObjectParam_GetCurrentRowKey (the column getter
 // returns a string pointer; only its first byte is consumed).
-void func_800BFDE0(cf::CfObjectPc* obj) {
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)obj;
     CfResPcImpl_loadPcState(f->mPtr3F4C);
     obj->resetArtsState();
@@ -125,7 +125,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
         moveSub = (u8*)obj + 0x3E9C;
     }
     if (moveSub == (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
-        func_8012FAA8();
+        UIBattleReleaseAll();
     }
     if (f->field_0x3F28 == 4) {
         // Declared in this order for MWCC register coloring
@@ -161,7 +161,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
     }
 }
 
-// vf2 override: reset-style init (see CfObjectEne's func_800ADB2C for the
+// vf2 override: reset-style init (see CfObjectEne's initEnemyBattleState for the
 // sibling shape). All accesses go through the local `self` so MWCC keeps it
 // in the saved this-copy register and reassigns it to the +0x44A8 region
 // (retail reuses the same callee-saved register for both).
@@ -201,7 +201,7 @@ void cf::CfObjectPc::syncArtsEntry() {
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
     CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
-    func_80175A50(reinterpret_cast<cf::CActorParam*>(&artsData->field_0x17C),
+    CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&artsData->field_0x17C),
 reinterpret_cast<cf::CActorParam*>(CActorParam_getCopyParam()));
 }
 
@@ -219,7 +219,7 @@ extern "C" void enablePcFlag__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // NOTE: defined as the extern "C" wrapper (not as a member): the adjuster
 // thunks reference the global identifier, and the wrapper also satisfies the
 // vtable slot for the virtual member (same pattern as enablePcFlag).
-extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+extern "C" void refreshArtsData__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     CfObjectPcArtsData* data = (CfObjectPcArtsData*)CtrlObjectParam_GetCharEntry(
         ((CfObjectPcSubFields*)self)->field_0x3F28);
     // Recomputed lookup: retail keeps both results live (the first feeds
@@ -277,8 +277,8 @@ void cf::CfObjectPc::scanArtsEntries() {
 // Applies arts entry itemId when it matches the row index at +0x3F28:
 // constructs the payload (dest), fills the entry object embedded at
 // artsData+0x17C through its vtable slot 0x20C, feeds the result to this
-// object's slot 0x21C, then runs slot 0x28C and stores via func_80175A50.
-void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
+// object's slot 0x21C, then runs slot 0x28C and stores via CActorParam_copyAll.
+void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* dest, s32 itemId) {
     if ((u32)itemId == (u32)((CfObjectPcSubFields*)self)->field_0x3F28) {
         __ct__8009ED08(dest, itemId);
         CfObjectPcArtsData* data =
@@ -287,7 +287,7 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
             reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         // Copies the arts entry INTO this object's CActorParam (opposite
         // direction of syncArtsEntry).
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(self->CActorParam_getCopyParam()),
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(self->CActorParam_getCopyParam()),
             reinterpret_cast<cf::CActorParam*>(&data->field_0x17C));
     }
 }
@@ -368,12 +368,12 @@ void cf::CfObjectPc::setupActionTable() {
 // (Class_-qualified CfObjectMove::UnkVirtualFunc4 for a direct bl).
 
 // Retail helper defined below (stub): gate check feeding the cancel path.
-extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag);
+extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag);
 
 // Retail symbol is the arg-less Fv member; defined as a free function with
 // C linkage so the first gate probe reads the state pointer straight off
 // the incoming parameter register like retail (lwz r3, 0x4(r3)).
-extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+extern "C" void updatePc__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
     // Two gate probes against the +0x4 sub-object state getter, written as
     // single expressions (CSuddenCommu idiom): the state word is copied into
@@ -387,9 +387,9 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     int chk2 = testActorStatus(self, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
 
     int any = (chk1 | chk2) != 0;
-    int dd = func_800C0DD4(self, any);
+    int dd = CfObjectPc_refreshGauge(self, any);
     if ((any | dd) != 0) {
-        if (func_80148778((u8*)self + 8, 0x35)) {
+        if (isBattleStatusActive((u8*)self + 8, 0x35)) {
             reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
         }
     } else {
@@ -403,20 +403,20 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         }
         // Busy with any listed action -> clear action 0x35; idle -> install it.
         if (count != 0 ||
-            func_80148778((u8*)self + 8, 0x65) ||
-            func_80148778((u8*)self + 8, 0x66) ||
-            func_80148778((u8*)self + 8, 0x67) ||
-            func_80148778((u8*)self + 8, 0x67) ||
-            func_80148778((u8*)self + 8, 0x69) ||
-            func_80148778((u8*)self + 8, 0x6a) ||
-            func_80148778((u8*)self + 8, 0x6b) ||
-            func_80148778((u8*)self + 8, 0x6c) ||
-            func_80148778((u8*)self + 8, 0x6d)) {
-            if (func_80148778((u8*)self + 8, 0x35)) {
+            isBattleStatusActive((u8*)self + 8, 0x65) ||
+            isBattleStatusActive((u8*)self + 8, 0x66) ||
+            isBattleStatusActive((u8*)self + 8, 0x67) ||
+            isBattleStatusActive((u8*)self + 8, 0x67) ||
+            isBattleStatusActive((u8*)self + 8, 0x69) ||
+            isBattleStatusActive((u8*)self + 8, 0x6a) ||
+            isBattleStatusActive((u8*)self + 8, 0x6b) ||
+            isBattleStatusActive((u8*)self + 8, 0x6c) ||
+            isBattleStatusActive((u8*)self + 8, 0x6d)) {
+            if (isBattleStatusActive((u8*)self + 8, 0x35)) {
                 reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
             }
         } else {
-            if (!func_80148778((u8*)self + 8, 0x35)) {
+            if (!isBattleStatusActive((u8*)self + 8, 0x35)) {
                 reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_setBattleParam(0x35);
             }
         }
@@ -425,7 +425,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     // Gauge scale: slot 0x8C value times the global scale factor.
     float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_getMoveSpeedRate();
     float scaled = Scn_GetFrameDelta(lbl_eu_80663E14) * gauge;
-    func_801765A4(self, scaled, 1);
+    CActorParam_updateTick(self, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
     int chkFlag = testActorStatus(self, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
@@ -546,7 +546,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         acted = 1;
         CtrlObjectParam_BumpArtsCounter((u8*)arts, 1);
     }
-    func_8010CE50(f->field_0x3F10, arg1, arg2, arg3);
+    BpsStateQueueDamage(f->field_0x3F10, arg1, arg2, arg3);
     if (arg3 != 0 && CtrlObjectParam_ReapplyArtsSet((u8*)arts) != 0) {
         fireLvUpMode4(f->field_0x3F10);
     }
@@ -605,14 +605,14 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     return 0;
 }
 
-// Retail func_800C0DD4: per-frame gauge/damage refresh gate.
+// Retail CfObjectPc_refreshGauge: per-frame gauge/damage refresh gate.
 // 1) global gate word, 2) resource flags bits 11/23 drive cancel-style
 // dispatches, 3) battle-manager state gates, 4) scans bdat rows for the
 // entry matching (level byte, key halfword), then applies the scaled
 // damage to the gauge (+0x45C0) with sound feedback. Returns 1 when the
 // matched row was applied.
-// C linkage: retail's symbol is the unmangled func_800C0DD4.
-extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
+// C linkage: retail's symbol is the unmangled CfObjectPc_refreshGauge.
+extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
     if ((lbl_eu_80663E24 & 0xAFA40000u) != 0) {
         return 0;
     }
@@ -670,7 +670,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             double base = (double)(int)(vD & 0xFF) - lbl_eu_80666B40;
             float dmg = lbl_eu_80666B38 *
                 (base * self->CActorParam_getDamageScale());
-            if (func_80148778((u8*)self + 8, 0xE9)) {
+            if (isBattleStatusActive((u8*)self + 8, 0xE9)) {
                 Res10View* e = (Res10View*)findBattleStatusEntry((u8*)self + 8, 0xE9);
                 double dT = (double)(int)e->field_0x10;
                 dmg = dmg * (lbl_eu_80666B24 -
@@ -703,8 +703,8 @@ resetGauge:
 }
 
 // this-adjust thunk: retarget to the +0x3E9C subobject and tail-branch into
-// func_800C00C0.
-void CObjectParam_callPcFunc800C0__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+// refreshArtsData.
+void CObjectParam_callPcFunc800C0__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))refreshArtsData__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void CfObject_syncEnableState__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))enablePcFlag__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
@@ -718,7 +718,7 @@ extern "C" void CfObjectMove_attachEffectSlot__Q22cf10CfObjectPcFv(void* self) {
 }
 
 
-void CfObject_pcRunMoveUpdate__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_pcRunMoveUpdate__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))updatePc__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void finalizePcCleanup__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 

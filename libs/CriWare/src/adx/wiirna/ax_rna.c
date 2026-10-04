@@ -1060,8 +1060,8 @@ void criware_8039A8E0(void* self, u32 flags) {
     u8* p;
     u32 b4;
     u32 b0;
-    u32 b2;
     u32 b1;
+    u32 b2;
     u32 b3;
     u32 msk;
     s32 i;
@@ -1081,8 +1081,8 @@ void criware_8039A8E0(void* self, u32 flags) {
     i = 0;
     b4 = flags & 0x10;
     b0 = flags & 1;
-    b2 = flags & 4;
     b1 = flags & 2;
+    b2 = flags & 4;
     b3 = flags & 8;
     msk = flags & 0xf;
     vol = -0x3c0;
@@ -1096,9 +1096,9 @@ void criware_8039A8E0(void* self, u32 flags) {
             }
             if (b0)
                 fader0 = *(s32*)((u8*)self + 0xd0);
-            if (b2)
-                fader1 = *(s32*)((u8*)self + 0xd4);
             if (b1)
+                fader1 = *(s32*)((u8*)self + 0xd4);
+            if (b2)
                 fader2 = *(s32*)((u8*)self + 0xd8);
             if (b3)
                 fader3 = *(s32*)((u8*)self + 0xdc);

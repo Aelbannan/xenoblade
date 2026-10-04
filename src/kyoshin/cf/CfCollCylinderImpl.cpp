@@ -4,7 +4,7 @@
 
 // Debug-render a collision cylinder from its impl, colouring it by collision kind.
 // Colour chosen per collision kind (see retail .sdata2 constants).
-extern "C" void func_800AB010(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
+extern "C" void CollCylinder_DrawDebugShape(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
     ml::CCol4 col;
 
     // Case 1 is a standalone `if` (not part of the else-chain below): retail
@@ -75,7 +75,7 @@ extern "C" void func_800AB010(void* /*unused*/, cf::CfCollCylinderImpl* impl) {
 // against the collision object and write the pushed-out point to out. When f1
 // is near zero the whole cylinder is submitted; otherwise a truncated segment
 // starting below mStart is drawn.
-extern "C" void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, void* query, void* out, float f1) {
+extern "C" void collCylinderQueryOffset(void* /*unused*/, cf::CfCollCylinderImpl* impl, void* query, void* out, float f1) {
     // Axis height span, used to clamp the probe point along Y.
     float heightDiff = impl->mEnd.y - impl->mStart.y;
 
@@ -94,3 +94,16 @@ extern "C" void func_800AB248(void* /*unused*/, cf::CfCollCylinderImpl* impl, vo
         VecMath_PushOutCylinder(query, &pos, out, impl->mRadius + f1, heightDiff + (f1 - adj));
     }
 }
+
+// Retail .sdata2 constants owned by this unit (splits 0x8066692C-0x80666948).
+// Code reads them as colour factors (DrawDebugShape) and the query threshold /
+// truncation factor (collCylinderQueryOffset); types match the extern decls in
+// CfCollCylinderImpl.hpp. Defined here in ascending address order.
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") const float lbl_eu_8066692C = 0.1f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666930 = 0.5f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666934 = 0.15f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666938 = 0.7f;
+extern __declspec(section ".sdata2") const float lbl_eu_8066693C = 0.2f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666940 = 0.01f;
+extern __declspec(section ".sdata2") float lbl_eu_80666944 = 0.4f;

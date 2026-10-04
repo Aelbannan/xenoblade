@@ -182,13 +182,76 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
-// Buffer-size getter for the blank1 vtable slot (retail func_802A6DEC,
+// Buffer-size getter for the blank1 vtable slot (retail FaintVoice_GetBufSize,
 // 0x8 bytes: li r3,0xF0; blr). Defined with C linkage under the retail
 // spelling (CVS_THREAD_HP precedent: HpVoice_GetBufSize); the blank1()
 // member decl in the header still satisfies the class interface, and since
 // no virtual is defined in this TU MWCC emits no vtable here (the thread
 // vtable is the retail lbl_eu_80539B7C data). Returns 0xF0 (240).
-extern "C" int func_802A6DEC() {
+extern "C" int FaintVoice_GetBufSize() {
     return CVS_THREAD_FAINT::BUFFER_SIZE;
 }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_FAINT.txt): the .rodata typeinfo name
+// (sized to absorb the retail pad), three .data init-state triples
+// ({0, -1, callback}), the 7-word thread vtable ({typeinfo, 0, play,
+// remove, bufsize, alwaysTrue, nullDispatch}), the trailing typeinfo-base
+// word plus padding, and the .sdata typeinfo object ({name, trailing}).
+// Global-scope data symbols: MWCC does not mangle them.
+//
+// NOTE (frozen-rule residual): this TU carries a UNIT_RULES
+// extern_data_sections=(".data", ".rodata", ".sdata") entry that
+// zeroes these sections in the link-time reloc.o. The retail split object
+// genuinely carries them (0x50/0x18/0x8, reconstructed byte-identical
+// below), so that rule entry is stale and should be removed; until then
+// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the CCharVoiceMan range and is referenced, not defined, here.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662D00[2];
+
+extern const char lbl_eu_80510780[0x18] = "cf::CVS_THREAD_FAINT";
+
+u32 lbl_eu_80539B58[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)advanceFaintSlot1,
+};
+
+u32 lbl_eu_80539B64[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)advanceFaintSlot2,
+};
+
+u32 lbl_eu_80539B70[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)triggerFaintPlayback,
+};
+
+u32 lbl_eu_80539B7C[7] = {
+    (u32)lbl_eu_80662D00,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)removeFaintVoice,
+    (u32)FaintVoice_GetBufSize,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_80539B98[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D00[2] = {
+    (u32)lbl_eu_80510780,
+    (u32)lbl_eu_80539B98,
+};
 

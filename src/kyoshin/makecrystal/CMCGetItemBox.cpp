@@ -36,9 +36,9 @@ void Cur_SetVisible(void*, int);
 u32 CSysWin_getUnk34(CMCGetItemBoxSysWin*);
 int  CSysWin_isActive(CMCGetItemBoxSysWin*);
 void sysWinAdvancePhase3(CMCGetItemBoxSysWin*);
-void func_8022B9B4(CMCGetItemBoxSysWin*, void*, int);
+void sysWinSetKindContent(CMCGetItemBoxSysWin*, void*, int);
 void sysWinOpenPhase1(CMCGetItemBoxSysWin*);
-// sysWinSwitchKindPane / func_8022BFC8 come from kyoshin/CSysWin.hpp (CSysWin* forms).
+// sysWinSwitchKindPane / sysWinApplyKind come from kyoshin/CSysWin.hpp (CSysWin* forms).
 }
 // C++-linkage (mangled) retail symbols.
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
@@ -54,7 +54,7 @@ extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void renderItemBox(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void updateItemBoxAnims(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void func_801D202C(CMCItemBoxSubObj*);
+extern "C" void Cur_Update(CMCItemBoxSubObj*);
 extern "C" void Cur_DrawLayout(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDrawLayout(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDispatchPhase(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
@@ -75,7 +75,7 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 // refillMCItemSubTable's extra params carry defaults so initMCGetItemBoxList's 1-arg call
 // (retail passes garbage r4/r5/r6 there) still compiles.
 extern "C" void refillMCItemSubTable(CMCItemBoxSub*, u8 = 0, CMCItemBoxEntry* = 0, u8 = 0);
-extern "C" void func_8029967C(CMCGetItemBox*);
+extern "C" void refreshMCGetItemBoxSlots(CMCGetItemBox*);
 extern "C" void refreshMCGetItemBoxTexts(CMCGetItemBox*);
 // Same-unit helper functions (retail relocs are unmangled -> C linkage).
 extern "C" void openMCGetItemBoxPhase1(CMCGetItemBox*);
@@ -99,7 +99,7 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 #pragma optimize_for_size on
 // noinline: retail keeps this init helper out-of-line (bl from __ct__CMCGetItemBox).
 // C linkage: retail symbol is the plain name (reloc-site gate).
-extern "C" __declspec(noinline) void func_80296B44(CMCItemBoxSub* x) {
+extern "C" __declspec(noinline) void initMCItemSub(CMCItemBoxSub* x) {
     // Retail walks a pointer over the table (cmplw loop); the inline bound is
     // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
     // retail emits the hoisted addi before the param copy; every tested shape
@@ -193,7 +193,7 @@ __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
     return 0;
 }
 
-// auto_inline off: retail keeps the single-call-site bl from func_8029967C
+// auto_inline off: retail keeps the single-call-site bl from refreshMCGetItemBoxSlots
 // (MWCC otherwise folds this small helper in despite noinline).
 #pragma auto_inline off
 __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
@@ -217,7 +217,7 @@ __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
 // -O4,s keeps the retail stmw r28 frame.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
+__declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     // Declared in this order so MWCC colors callee-saved regs like retail
     // (sub-copy -> r31, string-table base -> r30, entry ptr -> r29).
     CMCItemBoxSub* x = sub;
@@ -260,7 +260,7 @@ __declspec(noinline) char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
 // -O4,s keeps the retail stmw r18 frame.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
+__declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
     CMCItemBoxEntry* base = sub->listBase;
     if (base == 0) return 0;
     // Retail sign-extends the page counter, scales by 30 and folds the u16
@@ -419,7 +419,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     self->mField303 = 0;
     self->field_304 = 0;
     self->field_305 = 0;
-    func_80296B44(&self->sub_314);
+    initMCItemSub(&self->sub_314);
 
     // --- default item-box temp -> embedded info: one member-wise struct
     //     assignment (dest = src + 0xf4); word-array members lower to the
@@ -446,7 +446,7 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
     lbl_eu_80664A20 = 0;
     {
         u8 subTmp[0x1d8];
-        func_80296B44((CMCItemBoxSub*)subTmp);
+        initMCItemSub((CMCItemBoxSub*)subTmp);
         *(CMCSubTableCopy*)self->sub_314.table = *(CMCSubTableCopy*)subTmp;
         // FixStr operator= inlines to the retail strlen/strcpy pair.
         CMCItemBoxSub* t = (CMCItemBoxSub*)subTmp;
@@ -517,10 +517,10 @@ void updateMCGetItemBox(CMCGetItemBox* self) {
         case 5: closeMCGetItemBoxPhase2(self);
     }
     self->layout40->Animate(0);
-    func_801D202C(&self->subObj_58);
-    func_801D202C(&self->subObj_70);
-    func_801D202C(&self->subObj_88);
-    func_801D202C(&self->subObj_A0);
+    Cur_Update(&self->subObj_58);
+    Cur_Update(&self->subObj_70);
+    Cur_Update(&self->subObj_88);
+    Cur_Update(&self->subObj_A0);
     updateItemBoxAnims((CItemBoxInfo*)self->itemBox);
     sysWinDispatchPhase(&self->sysWin_B8);
 }
@@ -548,7 +548,7 @@ void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_80297B68(CMCGetItemBox* self) {
+void teardownMCGetItemBox(CMCGetItemBox* self) {
     getEntry__5CBdatFUl(2);
     getEntry__5CBdatFUl(5);
     closeFileHandle__FPP11CFileHandle(&self->fileHandle1);
@@ -625,7 +625,7 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     entry = getMCItemSubEntry(sub, idx);
     u32 iconId = getMCItemSubItemId(sub, idx);   // held in a reg temp in retail
     renderItemBoxByKind((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
-    setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, idx));
+    setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, getMCItemSubName(sub, idx));
 }
 #pragma pop
 
@@ -802,7 +802,7 @@ void moveMCGetItemBoxDown(CMCGetItemBox* self) {
 extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     nextMCItemSubPage(x);
-    func_8029967C(self);
+    refreshMCGetItemBoxSlots(self);
     refreshMCGetItemBoxTexts(self);
     // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
     // select); splitting the select across blocks makes MWCC forget the byte
@@ -821,7 +821,7 @@ extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
 extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     prevMCItemSubPage(x);
-    func_8029967C(self);
+    refreshMCGetItemBoxSlots(self);
     refreshMCGetItemBoxTexts(self);
     // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
     // select); the u8-local select makes MWCC forget the byte load was
@@ -907,7 +907,7 @@ extern "C" void forwardMCSubObj88(void* self) { ((void(*)(void*))Cur_SetVisible)
 // callee-saved regs live across calls: self, cursor-table base, index).
 #pragma push
 #pragma optimize_for_size on
-void func_80298614(CMCGetItemBox* self) {
+void advanceMCGetItemBox(CMCGetItemBox* self) {
     if (self->mField303 != 0) {
         if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
             if (CSysWin_isActive(&self->sysWin_B8) != 0) {
@@ -928,8 +928,8 @@ void func_80298614(CMCGetItemBox* self) {
                                         &lbl_eu_8050FF8C[0x123], r);
                 }
                 sysWinSwitchKindPane((CSysWin*)&self->sysWin_B8, 0);
-                func_8022B9B4(&self->sysWin_B8, res, 0);
-                func_8022BFC8((CSysWin*)&self->sysWin_B8, 1);
+                sysWinSetKindContent(&self->sysWin_B8, res, 0);
+                sysWinApplyKind((CSysWin*)&self->sysWin_B8, 1);
                 sysWinOpenPhase1(&self->sysWin_B8);
                 Cur_SetVisible(&self->subObj_A0, 0);
             }
@@ -1045,7 +1045,7 @@ void activateMCGetItemBox(CMCGetItemBox* self) {
 // icon database (BdatGetU8Direct) and the 0x144-0x149 icon-name chain for both
 // the gem (type 3) and item (type 9) paths, plus a %d pane-name format at
 // &lbl[0x14e].
-// noinline: retail keeps the bl to this symbol from func_8029967C.
+// noinline: retail keeps the bl to this symbol from refreshMCGetItemBoxSlots.
 extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
@@ -1129,7 +1129,7 @@ extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 i
 // -O4,s keeps the retail stmw r27 frame.
 #pragma push
 #pragma optimize_for_size on
-// noinline: retail keeps the bl to this symbol from func_8029967C (its body
+// noinline: retail keeps the bl to this symbol from refreshMCGetItemBoxSlots (its body
 // otherwise folds in, surfacing as a stray CItem_initItemImplInstances call).
 __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
@@ -1214,7 +1214,7 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItem
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-// noinline + C linkage: called out-of-line from func_8029967C in retail
+// noinline + C linkage: called out-of-line from refreshMCGetItemBoxSlots in retail
 // (unmangled reloc).
 __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int r4, u32 r5) {
     char buf1[0x20];   // sp+0x28
@@ -1264,7 +1264,7 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
         setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x184], true), 1);
         setPaneVisible((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 0);
     }
-    func_8029967C(self);
+    refreshMCGetItemBoxSlots(self);
     refreshMCGetItemBoxTexts(self);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         hideItemBoxPanes((void*)self->itemBox, arg);
@@ -1279,7 +1279,7 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
 // -O4,s keeps the retail _savegpr_27 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Branchy select: retail defaults r0 to 1 and overwrites with the limit.
     u8 count = sub->limit != 0 ? sub->limit : 1;
@@ -1348,13 +1348,13 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* sel
     CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
     CMCItemBoxSub* sub = &self_->sub_314;
-    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1c7], func_80296E98(sub, (u16)idx), 0);
-    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1d0], func_80296FC0(sub, (u16)idx), (u32)self->objAt50);
+    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1c7], getMCItemSubName(sub, (u16)idx), 0);
+    LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1d0], getMCItemSubText(sub, (u16)idx), (u32)self->objAt50);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         CMCItemBoxEntry* entry = getMCItemSubEntry(sub, (u16)idx);
         u32 iconId = getMCItemSubItemId(sub, (u16)idx);   // held in a reg temp in retail
         renderItemBoxByKind((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
-        setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, func_80296E98(sub, (u16)idx));
+        setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, getMCItemSubName(sub, (u16)idx));
     }
 }
 #pragma pop
@@ -1473,13 +1473,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // embedded cursor's slot-2 virtual (update).
         u8 cur07Buf[0x18];
         __ct__CCur07(cur07Buf, this->arcAcc1);
-        func_8018B0FC(&this->subObj_58, cur07Buf);
+        MenuShopSellCopyCursor(&this->subObj_58, cur07Buf);
         __dt__6CCur07Fv(cur07Buf, -1);
         ((CBaseCur*)&this->subObj_58)->initLayout();
 
         u8 cur09Buf[0x18];
         __ct__CCur09(cur09Buf, this->arcAcc1);
-        func_8018B0FC(&this->subObj_70, cur09Buf);
+        MenuShopSellCopyCursor(&this->subObj_70, cur09Buf);
         __dt__6CCur09Fv(cur09Buf, -1);
         ((CBaseCur*)&this->subObj_70)->initLayout();
 
@@ -1496,13 +1496,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
 
         u8 cur16Buf[0x18];
         __ct__CCur16(cur16Buf, this->arcAcc1);
-        func_8018B0FC(&this->subObj_88, cur16Buf);
+        MenuShopSellCopyCursor(&this->subObj_88, cur16Buf);
         __dt__6CCur16Fv(cur16Buf, -1);
         ((CBaseCur*)&this->subObj_88)->initLayout();
 
         u8 cur18Buf[0x18];
         __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC(&this->subObj_A0, cur18Buf);
+        MenuShopSellCopyCursor(&this->subObj_A0, cur18Buf);
         __dt__6CCur18Fv(cur18Buf, -1);
         ((CBaseCur*)&this->subObj_A0)->initLayout();
 

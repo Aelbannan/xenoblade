@@ -27,7 +27,7 @@ struct CScnItemModelOwner {
     CScnItemPool* pool; // 0x60
 };
 
-// Animation-resource wrapper passed to simBindChrAnimChain / func_804972E8
+// Animation-resource wrapper passed to simBindChrAnimChain / scn80496CrossfadeStep
 // (retail C-ABI). The embedded nw4r ResFile handle lives at +0xC, matching
 // the CScnItemAnim layout; simBindChrAnimChain queries its entry count.
 struct CScnItemAnimResFile {
@@ -94,7 +94,7 @@ public:
     virtual void vfunc58();
     virtual void vfunc5C();
     virtual void vfunc60();
-    virtual void vfunc64(u32 a);  // vtable 0x64 (1-arg notify, see func_804831C4)
+    virtual void vfunc64(u32 a);  // vtable 0x64 (1-arg notify, see simAttachModel)
     virtual void vfunc68();
     virtual void vfunc6C(u32 param);  // +0x6C Nw4r: scnImN4LookBind
     virtual void vfunc70();
@@ -112,8 +112,8 @@ public:
     virtual void vfuncA0();  // +0xA0 Nw4r: scnImN4ResetAnims (post-attach notify)
     virtual void vfuncA4(u32 a);  // vtable 0xA4 (1-arg notify, see simSetFlag2OnTree)
     virtual u32 vfuncA8();  // +0xA8 Nw4r: scnImN4GetEffAct (effect-act owner word)
-    virtual void vfuncAC(CScnItemModel* node);  // vtable 0xAC (1-arg notify, see func_804831C4)
-    virtual void vfuncB0(CScnItemModel* node);  // vtable 0xB0 (1-arg notify, see func_80483448)
+    virtual void vfuncAC(CScnItemModel* node);  // vtable 0xAC (1-arg notify, see simAttachModel)
+    virtual void vfuncB0(CScnItemModel* node);  // vtable 0xB0 (1-arg notify, see simCoupleModel)
     virtual void vfuncB4(u32 a);  // vtable 0xB4 (1-arg notify, see simNotifyVfuncB4)
     virtual void vfuncB8();
     virtual void vfuncBC();
@@ -192,15 +192,15 @@ extern "C" u32 scn80496IsNodeFlagBit(u8* self);
 extern "C" void scn80496CallChild1V5(u8* self, float value);
 extern "C" void scn80496RefreshBlendTag(u8* self, u32 tag);
 extern "C" void scn80496SetFloat178(u8* self, float val);
-extern "C" void func_80497AA8(u8* self);
-extern "C" u32 func_804972E8(u8* self, CScnItemAnimResFile* anim, int index,
+extern "C" void scn80496UpdateCrossfade(u8* self);
+extern "C" u32 scn80496CrossfadeStep(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f);
 extern "C" u32 scn80496BindChrAnmPack(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f, u32 g, u32 h);
 extern "C" u32 scn80496HasChild1Node(u8* self);
 
 // Cross-TU query: returns the model owned by the given scene owner's pool
-// (called by func_804831C4; defined in CScn_80496B0C.cpp).
+// (called by simAttachModel; defined in CScn_80496B0C.cpp).
 extern "C" CScnItemModel* Scn_SetupAnimDefault(CScnItemModelOwner* owner);
 
 // Fragment-anchored destructors of sub-objects destroyed by the

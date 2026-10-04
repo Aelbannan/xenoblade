@@ -64,16 +64,16 @@ public:
 // Move() state-machine handlers (states 0-9). US retail strips the member
 // mangling, so declare them with C linkage so calls bind the literal retail
 // symbols; definitions live in CMenuQuestLog.cpp.
-extern "C" void func_8011CDF4(CMenuQuestLog* self);
+extern "C" void gateQuestLogList(CMenuQuestLog* self);
 extern "C" void openQuestLogMenu(CMenuQuestLog* self);
 extern "C" void handleQuestLogInput(CMenuQuestLog* self);
-extern "C" void func_8011D03C(CMenuQuestLog* self);
+extern "C" void flagQuestLogReady(CMenuQuestLog* self);
 extern "C" void selectQuestLogEntry(CMenuQuestLog* self);
-extern "C" void func_8011D0FC(CMenuQuestLog* self);
-extern "C" void func_8011D158(CMenuQuestLog* self);
+extern "C" void startQuestLogInfo(CMenuQuestLog* self);
+extern "C" void finishQuestLogInfo(CMenuQuestLog* self);
 extern "C" void closeQuestLogMenu(CMenuQuestLog* self);
 extern "C" void resortQuestLogList(CMenuQuestLog* self);
-extern "C" void func_8011D298(CMenuQuestLog* self);
+extern "C" void reopenQuestLogList(CMenuQuestLog* self);
 
 class UnkClass_8011C974 {
 public:
@@ -105,12 +105,12 @@ struct CQuestLogPadData {
     u8 _08[0x104 - 0x8];
     u32 mTurboPressButtonFlags; // +0x104
 };
-extern "C" void func_802296E0(CQstLogInfo* self);
+extern "C" void QstLogInfo_Start(CQstLogInfo* self);
 extern "C" void QstLogList_BeginSortOpen(CQstLogList* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void reopenFromClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
-extern "C" void func_80229724(CQstLogInfo* self);
+extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 
 // Init() imports (retail unmangled names).
 extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
@@ -126,7 +126,7 @@ extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_80227BD8(CQstLogList* self);
+extern "C" void QstLogList_Teardown(CQstLogList* self);
 extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 
 // Term tail helpers.
@@ -160,7 +160,7 @@ extern "C" void QstLogInfo_LoadCommonArchive(void*);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" int func_80227C70(CQstLogList* self);
+extern "C" int QstLogList_ScrollFlag(CQstLogList* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);

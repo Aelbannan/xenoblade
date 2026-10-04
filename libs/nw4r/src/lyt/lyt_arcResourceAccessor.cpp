@@ -121,7 +121,7 @@ namespace lyt {
  ******************************************************************************/
 namespace detail {
 
-ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) {
+inline ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) { // inline: sole caller inlines it; no retail out-of-line copy in this split
     NW4R_UT_LINKLIST_FOREACH (it, *pFontList, {
         if (std::strcmp(pName, it->GetFontName()) == 0) {
             return it->GetFont();

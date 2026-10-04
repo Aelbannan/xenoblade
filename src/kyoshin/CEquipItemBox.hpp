@@ -524,7 +524,7 @@ struct CEquipItemBoxEnumList {
 extern "C" void __dl__FPv(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, int);
-extern "C" u32 func_801D32DC(u8*);
+extern "C" u32 sortMenuIsScrollbarVisible(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void BuildSlotItemLists(void*);
 extern "C" void playUISound__FUl(u32);
@@ -666,15 +666,15 @@ extern "C" void* getEIBItemObj(CEquipItemGrid* grid, u16 idx);
 extern "C" char* fmtEIBItemName(CEquipItemGrid* grid, u32 param);
 extern "C" void dispatchEIBKind(CEquipItemBox* self, int a, int b);
 extern "C" void sortMenuOpenInit(void*);
-extern "C" void func_801D3620(void*);
+extern "C" void sortMenuScrollUp(void*);
 extern "C" void sortMenuToState4Page(void*);
 extern "C" void sortMenuSetLayoutPos(void*, const nw4r::math::VEC3*);
 extern "C" void sortMenuFormatPaneText(void*, void*);
-extern "C" void func_801D353C(void*, u8);
+extern "C" void sortMenuSetPage(void*, u8);
 // Sort-menu page-list helpers (CSortMenu TU, retail plain names).
-// func_801D3818(menu, page, &outCount, &outRemain): writes CItemBlock_getFlag120EC(page)
+// sortMenuValueToPage(menu, page, &outCount, &outRemain): writes CItemBlock_getFlag120EC(page)
 // (clamped to >= 4) into outCount and (0 or count-4) into outRemain.
-extern "C" void func_801D3818(void*, u8, u8*, u8*);
+extern "C" void sortMenuValueToPage(void*, u8, u8*, u8*);
 extern "C" void sortMenuResetCount(void*);
 extern "C" void func_801D3518(void*, void*);
 extern "C" u16 CItemBlock_getFlag120EC(int);
@@ -683,11 +683,11 @@ extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" void sortMenuInitFileRead(void*);
 extern "C" int KyoshinHeap_GetField44(void);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void sortMenuDispatchState(void*);
 extern "C" void sysWinDispatchPhase(void*);
 // Sub-window / cursor / sort-menu draw helpers (retail plain names).
-extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
+extern "C" void sortMenuDraw(void*, nw4r::lyt::DrawInfo*);
 extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void Cur_DrawLayout(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (refreshEIBSortTabs);
@@ -745,13 +745,13 @@ extern u16 lbl_eu_80668B40;
 // 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
 extern u8 lbl_eu_8050EF84;
 // Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
-extern "C" void func_801D3698(void*);
-extern "C" void func_801D3724(void*);
+extern "C" void sortMenuScrollDown(void*);
+extern "C" void sortMenuPageUpStep(void*);
 // SysWin sub-window text setters used by handleEIBNamePane's name-pane confirm.
 extern "C" void sysWinSwitchKindPane(void*, u32);
-extern "C" void func_8022B9B4(void*, void*, u32);
+extern "C" void sysWinSetKindContent(void*, void*, u32);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
-extern "C" void func_8022BFC8(void*, u32);
+extern "C" void sysWinApplyKind(void*, u32);
 extern "C" void sysWinOpenPhase1(void*);
 // Per-slot detail-text builder (handleEIBNamePane's ==3 lookup path).
 extern "C" void* formatItemBoxName(void*, u32);
@@ -800,7 +800,7 @@ extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
-extern "C" void func_800BFDE0(void* obj, u32 arg);
+extern "C" void CfObjectPc_setupFrame(void* obj, u32 arg);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 extern "C" void __dt__80043E88(void*, int);
 
@@ -852,7 +852,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-extern "C" void func_8016742C(void* dst, void* src);
+extern "C" void InfoCfCopySysWin(void* dst, void* src);
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);
 extern "C" void ItemBlockSetDefaultFlags();
 

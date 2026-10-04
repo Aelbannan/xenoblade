@@ -31,7 +31,7 @@ struct CfObjectPcArtsData {
     u8 _E[0x1C - 0xE];
     u8 mEntries;      // +0x1C: start of the entry table
     u8 _1D[0x17C - 0x1D];
-    u8 field_0x17C;   // +0x17C: write target of func_80175A50 (syncArtsEntry)
+    u8 field_0x17C;   // +0x17C: write target of CActorParam_copyAll (syncArtsEntry)
 };
 
 // Return layout of CtrlObjectParam_GetArtsStatsRow (indexed entry within the arts data object):
@@ -63,9 +63,9 @@ extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectPa
 extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 // NOTE: retail keeps the virtual-call result in r3 across the second arg's
 // address computation, so the value is the FIRST declared parameter.
-// NOTE: the real definition is func_80175A50(CActorParam* dst, CActorParam*
+// NOTE: the real definition is CActorParam_copyAll(CActorParam* dst, CActorParam*
 // src) - the write target comes FIRST.
-extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);       // CActorParam.cpp
+extern "C" void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src);       // CActorParam.cpp
 extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
@@ -76,13 +76,13 @@ extern "C" void CtrlObjectParam_RaiseArtsLevelBy(u8* obj, int flag);         // 
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void CfResPcImpl_loadPcState(u8* obj);                   // CfResPcImpl.cpp
-extern "C" void func_8012FAA8();                          // camera/screen reset
-extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp
+extern "C" void UIBattleReleaseAll();                          // camera/screen reset
+extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg); // CActorParam.cpp
 extern "C" int UIWin_HasPendingUpdate(int flag);                   // CfObjectImplWalker.cpp
 extern const float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc4)
 extern const float lbl_eu_80666B28;
 extern const double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
-extern "C" void func_8010CE50(u8* obj, int a, int b, int c);
+extern "C" void BpsStateQueueDamage(u8* obj, int a, int b, int c);
 extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void CtrlObjectParam_BumpArtsCounter(u8* obj, int flag);
 extern "C" int CtrlObjectParam_ReapplyArtsSet(u8* obj);
@@ -122,7 +122,7 @@ struct Res10View {
     u32 field_0x10;
 };
 
-// Imports used by func_800C0DD4.
+// Imports used by CfObjectPc_refreshGauge.
 extern u16 lbl_eu_80663E42;
 extern u16 lbl_eu_80663E44;
 extern void* lbl_eu_806640D4;
@@ -166,7 +166,7 @@ struct BattleMgrListView {
     BmListNode mListHead;
 };
 
-// Range/state bytes of the battle manager checked by func_800C0524 /
+// Range/state bytes of the battle manager checked by updatePc /
 // CActorParam_UnkVirtualFunc88.
 struct BattleMgrRangeView {
     u8 _0[0x1AA];
@@ -180,13 +180,13 @@ struct BattleMgrRangeView {
 // CActorParam_UnkVirtualFunc166/167 / resetArtsState family.
 struct CfObjectPcSubFields {
     u8 _0[0x15E0];
-    u32 field_0x15E0;  // 0x15E0: sub-object pointer word (set by func_800C00C0)
+    u32 field_0x15E0;  // 0x15E0: sub-object pointer word (set by refreshArtsData)
     u8 _15E4[0x1C];    // 0x15E4-0x15FF
     u32 field_0x1600;  // 0x1600: accumulated currency (clamped 99,999,999)
     u32 field_0x1604;  // 0x1604: spent counter (negated store)
     u32 field_0x1608;  // 0x1608: second accumulated counter (word-accessed)
     u8 _160C[0x1D];    // 0x160C-0x1628
-    u8 field_0x1629;   // 0x1629-0x162C: bdat string bytes (func_800BFDE0)
+    u8 field_0x1629;   // 0x1629-0x162C: bdat string bytes (CfObjectPc_setupFrame)
     u8 field_0x162A;
     u8 field_0x162B;
     u8 field_0x162C;
@@ -251,9 +251,9 @@ namespace cf {
         virtual ~CfObjectPc();
         __attribute__((never_inline)) virtual int initialize(); //0x5D4
         virtual void enablePcFlag(); //0x5D8
-        virtual void func_800C0524(); //0x5DC
+        virtual void updatePc(); //0x5DC
         __attribute__((never_inline)) virtual void syncArtsEntry(); //0x5E0
-        virtual void func_800C00C0(); //0x5E4
+        virtual void refreshArtsData(); //0x5E4
         virtual void scanArtsEntries(); //0x5E8
         virtual void resetArtsState(); //0x5EC
         virtual void applyArtsParam(); //0x5F0

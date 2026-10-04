@@ -106,18 +106,18 @@ body:
     case 1: func_80257360(this); break;
     case 2: KizunagramConfirmChartAdvance(this); break;
     case 3: KizunagramOpenCharWindow(this); break;
-    case 4: func_80257498(this); break;
+    case 4: KizunagramDriveChart(this); break;
     case 5: KizunagramSetPhaseFlag54(this); break;
     case 6: KizunagramAdvanceToPcWin(this); break;
     case 7: KizunagramAdvanceToState9(this); break;
-    case 8: func_80257840(this); break;
+    case 8: KizunagramHandleCharInput(this); break;
     case 9: KizunagramAdvanceToState7(this); break;
     case 10: KizunagramReopenCharWindow(this); break;
     }
     updateHelp(&mTitleAHelp);
     tickKizMain(&mSub98);
     KizunagramUpdateMainState(&mPcKizunagram);
-    func_802AE560(&mLoad);
+    CLoadUpdateLayout(&mLoad);
     CFade_Update(&mFade);
 }
 
@@ -287,13 +287,13 @@ void KizunagramOpenCharWindow(CMenuKizunagram* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80257498 (us-802596d4) - chart open state: poll classic/wiimote input
+// KizunagramDriveChart (us-802596d4) - chart open state: poll classic/wiimote input
 // and drive the kizuna-chart window transitions (state 5/6), the help-bar
 // visibility toggle, and the per-direction cursor helpers. Then, when the
 // chart is not busy, run the turbo-button cursor helpers (or the default
 // chart refresh when none fired).
 // ---------------------------------------------------------------------------
-void func_80257498(CMenuKizunagram* self) {
+void KizunagramDriveChart(CMenuKizunagram* self) {
     if (kizChartOpen(&self->mSub98) == 0) {
         return;
     }
@@ -427,13 +427,13 @@ void KizunagramAdvanceToState9(CMenuKizunagram* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80257840 (us-80259a7c) - react to confirm/cancel input while the
+// KizunagramHandleCharInput (us-80259a7c) - react to confirm/cancel input while the
 // per-character window is open: the classic controller's B/A buttons map to
 // bits 10/9 of mPressedButtonFlags, the Wii Remote's to bits 27/26. Turbo
 // presses on the classic shoulder/C buttons trigger per-direction cursor
 // helpers on the PC window.
 // ---------------------------------------------------------------------------
-void func_80257840(CMenuKizunagram* self) {
+void KizunagramHandleCharInput(CMenuKizunagram* self) {
     if (KizunagramIsOpen(&self->mPcKizunagram) == 0) {
         return;
     }

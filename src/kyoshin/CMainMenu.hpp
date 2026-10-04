@@ -77,7 +77,7 @@ public:
     void cbRenderBefore();
     int isAnyMenuOpen();
     inline int isMenuOpen() { return isAnyMenuOpen(); }
-    void func_800FEB14(float* pos);
+    void setParamPaneTranslate(float* pos);
 
     // CProcess layout (inherited, 0x00-0x3C):
     //   +0x00: vtable (CProcess)
@@ -106,7 +106,7 @@ public:
     //   +0xE0: s32 state
 
     u8 _04[0x08 - 0x04];                      // 0x04
-    nw4r::lyt::Layout* field_0x08;             // 0x08 - layout holder read by func_800FEB14
+    nw4r::lyt::Layout* field_0x08;             // 0x08 - layout holder read by setParamPaneTranslate
     u8 _0C[0x10 - 0x0C];                      // 0x0C
     // +0x10: CProcess vtable slot set by the constructor (temp, then composite)
     void* mVtable;                             // 0x10
@@ -166,8 +166,8 @@ extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self);
 // referencing reloc carries the exact retail (unmangled) symbol.
 extern "C" void CMainMenu_RefreshFlags(CMainMenu* self);
 extern "C" void CMainMenu_DispatchState(CMainMenu* self);
-extern "C" void func_801010B8(CMainMenu* self);
-extern "C" void func_80100E14(CMainMenu* self);
+extern "C" void CMainMenu_HandleSubInput(CMainMenu* self);
+extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self);
 extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self);
 extern "C" void CMainMenu_Update(CMainMenu* self);
 
@@ -280,7 +280,7 @@ public:
     static bool isFlag01Set();
 };
 // Cursor per-frame update helper (defined in CCur.cpp).
-extern "C" void func_801D202C(void* cur);
+extern "C" void Cur_Update(void* cur);
 // Pane-config finish gate (defined in CUICfManager.cpp).
 extern "C" void UIWin_CreateExtraWin();
 

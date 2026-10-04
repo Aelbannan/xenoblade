@@ -15,6 +15,27 @@ extern void incrementEventCounter(u32);
 // (that would double-mangle).
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
+// Retail data slices owned by this TU (splits: .rodata 80509210-805092B0,
+// .data 80535F48-80535F58, .sdata 806627F0-806627F8). The class is novtable
+// so the vtable + RTTI are hand-built exactly like the sibling CMCEffStart
+// prefix (const void* tables, (u32)&label static inits carry ADDR32 relocs).
+// .rodata head is the RTTI class-name string; the layout-name strings stay
+// compiler-pooled after it (retail +0x14), so .text relocs only renumber.
+extern "C" void __dt__16CMCCylinderGaugeFv(); // member dtor defined below
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_80509210[0x11] = "CMCCylinderGauge";
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_806627F0[2] = { lbl_eu_80509210, nullptr };
+extern "C" {
+__declspec(section ".data") __attribute__((aligned(8), used))
+u32 lbl_eu_80535F48[4] = {
+    (u32)&lbl_eu_806627F0,
+    0,
+    (u32)&__dt__16CMCCylinderGaugeFv,
+    0,
+};
+} // extern "C"
+
 CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
     *(u32**)this = lbl_eu_80535F48;
     mArcResourceAccessor = arg;

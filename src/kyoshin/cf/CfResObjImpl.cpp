@@ -113,7 +113,7 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         ((ml::FixStr<64>*)buf64)->mLength = 0;
         if (self->field_00->field_9C == 0) {
             u32 handle0 = self->ResObj_GetWork_CCBC(0);
-            func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
+            Tok_FormatStr(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
             u32 handle1 = self->ResObj_GetWork_CCBC(0);
             self->field_00->field_94 = CfRes_findEntryById(entry, handle1);
             self->field_00->field_9C = (u8*)initMcaFile(
@@ -121,7 +121,7 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         }
     }
     mtl::MemManager::setMemInitFlag(true);
-    func_800BCFA0((cf::CfObjectMove*)self->field_00);
+    CfObjectMove_initAnimTarget((cf::CfObjectMove*)self->field_00);
     u32 handle = self->ResObj_GetWork_CCBC(1);
     u8* obj = CfRes_findEntryById(entry, (handle & 0x07FFFFFF) | 0xF0000000);
     if (obj != 0) {

@@ -132,7 +132,7 @@ extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 extern "C" void driveShopWinAnim(CSelShopWin*);
 extern "C" void loadShopWinArc(CSelShopWin*);
 extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);

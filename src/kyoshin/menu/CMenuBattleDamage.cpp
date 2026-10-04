@@ -30,7 +30,7 @@
 extern "C" void* __dt__17CMenuBattleDamageFv(void*, int);
 
 // Defined below in this TU (damage-slot enqueue; also called by BtlDmg_NotifyDamage).
-extern "C" void func_801098B0(CMenuBattleDamage* self, int actorId,
+extern "C" void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId,
                               int value, u32 flags);
 
 // Unmangled retail ctor symbol; takes the owning scene (stored at +0x60).
@@ -282,7 +282,7 @@ void CMenuBattleDamage::Move() {
             }
 
             CMenuBattleDamagePose* pose = Scn_FindCamItem(mScn, -1);
-            func_8049B59C(&screen, pose, &world);
+            CamMan_ProjectToScreen(&screen, pose, &world);
 
             screen.z = zero;
             screen.y = (screen.y - yoff) * yscale;
@@ -493,7 +493,7 @@ CMenuBattleDamage* BtlDmg_Create(CProcess* parent, CScn* scene) {
 extern "C" void BtlDmg_NotifyDamage(int actorId, int value) {
     CMenuBattleDamage* g = lbl_eu_80663F28;
     if (g) {
-        func_801098B0(g, actorId, value, 0);
+        BtlDmg_SpawnPopup(g, actorId, value, 0);
     }
 }
 extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x774) = val; }
@@ -516,12 +516,12 @@ extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
         }
     } else if ((flags & 1) != 0 || (flags & 2) != 0 ||
                (flags & 0x20) != 0 || (flags & 4) != 0) {
-        const char* s = func_80145AA8(value);
+        const char* s = getTelopString(value);
         if (strcmp(s, lbl_eu_804FD524 + 0xc9) == 0) {
             return;
         }
     }
-    func_801098B0(lbl_eu_80663F28, actorId, value, flags);
+    BtlDmg_SpawnPopup(lbl_eu_80663F28, actorId, value, flags);
 }
 
 // Cursor state machine: state 2 -> 3 (damage-up animation), enabling the
@@ -574,7 +574,7 @@ u8 BtlDmg_CursorGetFlag(CPcSelectCursor01* self) {
     return self->field_0x28;
 }
 
-void func_8010A848(CPcSelectCursor01* self, u8 value) {
+void BtlDmg_CursorSetFlag(CPcSelectCursor01* self, u8 value) {
     self->field_0x29 = value;
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         lbl_eu_804FD720 + 0x95, true);
@@ -594,7 +594,7 @@ extern "C" void BtlDmg_CursorReset(CPcSelectCursor01* self) {
 // Damage-number enqueue: compact the non-empty digit slots of the queue to
 // the front (via a stack buffer), then append the new digit triple and mark
 // the queue filled.
-void func_8010A940(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
+void BtlDmg_QueueEnqueue(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
     CMenuBattleDamageSlot stack[0x20] = {};
     u8 dst = 0;
     for (u8 i = 0; i < 0x20; i++) {
@@ -654,7 +654,7 @@ extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
 // either the big damage layout (flags == 0) or the small label layout
 // (flags != 0), chaining the animation start frame to a previous entry of
 // the same actor so popups don't overlap.
-void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
+void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
                     u32 flags) {
     s8 found = -1;
     for (u8 i = 0; i < 8; i++) {
@@ -722,7 +722,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
         }
 
         CMenuBattleDamagePose* pose = Scn_FindCamItem(self->mScn, -1);
-        func_8049B59C(&screen, pose, &world);
+        CamMan_ProjectToScreen(&screen, pose, &world);
 
         screen.y = (screen.y - lbl_eu_80666F74) * lbl_eu_80666F78;
         screen.z = lbl_eu_80666F68;
@@ -908,7 +908,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
         pane->SetTranslate(screen);
 
         // Pick the label text for the small layout by flag bits.
-        const char* text = func_80145AA8(value);
+        const char* text = getTelopString(value);
         if (flags & 0x8) {
             text = BdatGetPtrDirect(
                 reinterpret_cast<const void*>(lbl_eu_806640E0),

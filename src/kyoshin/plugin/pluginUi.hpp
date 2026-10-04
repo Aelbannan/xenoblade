@@ -177,7 +177,7 @@ int gameClear(VMThread* pThread);
 // the id and record its ordinal.
 int setLastTalkNpc(VMThread* pThread);
 int isSETalkVoiceWait(VMThread* pThread);
-int func_eu_80046DA0(VMThread* pThread);
+int uiSetSETalkVoiceWait(VMThread* pThread);
 int uiClearSETalkVoiceWait(VMThread* pThread);
 
 // Open a system select window from three strings.

@@ -99,7 +99,7 @@ static CScnCameraItem* findCamByViewId(CScnCameraMan* cam, CView* view) {
 }
 
 // Records the camera item matching the current view as the current camera.
-bool func_8049AF80(CScnCameraMan* cam) {
+bool CamMan_SyncCameraToView(CScnCameraMan* cam) {
     CView* view = CView::getCurrentView();
     CScnCameraItem* item = findCamByViewId(cam, view);
     if (item == NULL) {
@@ -141,7 +141,7 @@ static CScnCameraItem* findCamById2(s32 id, CScnCameraList* list) {
 
 // Looks up the camera item whose camera id equals the current camera id and
 // refreshes it through its vtable+0x14 slot.
-void func_8049B024(CScnCameraMan* cam) {
+void CamMan_RefreshCurrentCamera(CScnCameraMan* cam) {
     s32 id = cam->mCamId;
     if (id < 0) {
         id = cam->mCamId;
@@ -166,7 +166,7 @@ void func_8049B024(CScnCameraMan* cam) {
 // NOTE (byte-matching): the second comparison must be COMMUTED (constant on
 // the left); writing `type < THREAD_CVIEW_MAX` lets MWCC fuse the pair into
 // subi/cmpli, which retail does not do.
-CWorkThread* func_8049B0A0(CScnCameraMan* cam, s32 id) {
+CWorkThread* CamMan_GetViewThread(CScnCameraMan* cam, s32 id) {
     if (id < 0) {
         id = (s16)cam->mCamId;
     }
@@ -246,7 +246,7 @@ CScnCameraItem* CamMan_FindItemB_B1CC(CScnCameraMan* cam, s32 id) {
 // table read must be a named local compared against param->mViewId in that
 // order, and sentinel must be declared before node, or sentinel/node land in
 // r6/r7 instead of the retail r5/r6.
-CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
+CScnCameraItem* CamMan_FindViewItemA(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     u8* pool = p->mPool;
     CScnCameraNode* sentinel = CScnItemPool_lookupSubPool(pool, 4)->sentinel;
@@ -262,13 +262,13 @@ CScnCameraItem* func_8049B240(CScnCameraMan* cam, CScnCameraParam* param) {
     return NULL;
 }
 
-// Same view-id camera lookup as func_8049B240.
+// Same view-id camera lookup as CamMan_FindViewItemA.
 // NOTE (byte-matching): residual vs retail is purely MWCC register coloring:
 // retail colors node=r5/sentinel=r6 with the mParam load hoisted ahead of the
 // callee-saves; every tried declaration/body shape yields either
 // sentinel=r5/node=r6 (this form, fewest mismatches) or sentinel=r6/node=r7.
 // Instruction sequence, control flow, size and relocs match exactly.
-CScnCameraItem* func_8049B2C4(CScnCameraMan* cam, CScnCameraParam* param) {
+CScnCameraItem* CamMan_FindViewItemB(CScnCameraMan* cam, CScnCameraParam* param) {
     CScnCameraParam* p = cam->mParam;
     CScnCameraList* list = CScnItemPool_lookupSubPool(p->mPool, 4);
     CScnCameraNode* node = list->sentinel->next;
@@ -299,7 +299,7 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
 
         CScnCameraItem* item = findCamById2(camId, CScnItemPool_lookupSubPool(mParam->mPool, 4));
         if (item != NULL) {
-            func_8043A1DC__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
+            parseLines__11CScriptCodeFv(this, (u8*)ev->pData, ev->dataSize);
             return true;
         }
     }
@@ -384,16 +384,16 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
 }
 
 extern u32 lbl_eu_80663A08;
-extern "C" void func_8043A70C__11CScriptCodeFv(void* a, void* b);
-extern "C" void CamMan_EvalScript0_B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
+extern "C" void registerCmd__11CScriptCodeFv(void* a, void* b);
+extern "C" void CamMan_EvalScript0_B3FC() { registerCmd__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
 // Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000; owned by
 // CGXCache.cpp's pool range). Plain (f32) casts below expand to the same
 // xoris/lfd/fsubs idiom; the cast constant pools anonymously (@6139).
 extern const double lbl_eu_8066AB60;
 
-extern "C" void func_8043A57C__11CScriptCodeFv(void* self);
-extern "C" void CamMan_EvalScript_B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
+extern "C" void unregisterCmd__11CScriptCodeFv(void* self);
+extern "C" void CamMan_EvalScript_B408() { unregisterCmd__11CScriptCodeFv((void*)lbl_eu_80663A08); }
 
 // MWCC's built-in (f32)(s16) cast pools the 0x4330000080000000 magic constant
 // anonymously; assembling the double by hand keeps the retail reference to
@@ -406,7 +406,7 @@ extern "C" void CamMan_EvalScript_B408() { func_8043A57C__11CScriptCodeFv((void*
 // using the aspect ratio, the VI width scale, and the s16 screen offsets.
 // NOTE (byte-matching): locals are declared so MWCC's reverse-declaration
 // slot assignment yields the retail stack layout (v lowest, conversions last).
-bool func_8049B59C(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
+bool CamMan_ProjectToScreen(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) {
     // s16 -> f32 through the 0x43300000/xoris double trick; hand-assembled so
     // the magic constant keeps its retail reference to lbl_eu_8066AB60.
     union {
@@ -471,7 +471,7 @@ bool func_8049B59C(ml::CVec3* out, CScnItemCameraProject* item, ml::CVec3* pos) 
 // Builds the camera item's perspective projection matrix from its fov / near /
 // far planes. The horizontal fov is widened for 16:9 by scaling the aspect
 // (scissor-rect ratio x fixed multiplier) with CDeviceVI::getWidthScale().
-void func_8049B764(Mtx44 mtx, CScnItemCamera* item) {
+void CamMan_BuildPerspective(Mtx44 mtx, CScnItemCamera* item) {
     // Volatile reads pin the depth loads at the top of the function (retail
     // parks them in f31/f30 across the width-scale call).
     const CScnItemCameraFrustumVt* vt = (const CScnItemCameraFrustumVt*)item;
@@ -489,7 +489,7 @@ void func_8049B764(Mtx44 mtx, CScnItemCamera* item) {
 // (1 at <= fMin, linearly down to 0 at >= fMax) into *outFall, and the x
 // component of the view-space direction to `pos` (normalized, zero-safe) into
 // *outDirX.
-void func_8049B834(f32* outDirX, f32* outFall, CScnCameraItem* item,
+void CamMan_ComputeViewFalloff(f32* outDirX, f32* outFall, CScnCameraItem* item,
                    ml::CVec3* pos, f32 fMin, f32 fMax) {
     // Difference between the target point and the camera position; magnitude
     // is sign-independent. operator- keeps its temp and the named copy in

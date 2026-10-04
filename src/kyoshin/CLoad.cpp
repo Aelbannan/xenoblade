@@ -117,7 +117,7 @@ void CLoadBeginFileRequest(CLoad* self) {
 
 // Per-frame state-driven layout update: advances the animation state
 // machine, then ticks the layout once.
-__attribute__((noinline)) void func_802AE560(CLoad* self) {
+__attribute__((noinline)) void CLoadUpdateLayout(CLoad* self) {
     if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
         switch (self->mAnimStep) {
         case 1:
@@ -201,3 +201,25 @@ __attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
         self->field_2C = 1;
     }
 }
+
+// ----- Retail data sections defined by this TU (subset) -----
+// .rodata archive/layout name pool (single 0x98 blob; code indexes into it
+// at the retail offsets) + .sdata2 anim-frame floats + "CLoad" tag string.
+// Appended here so no code line numbers shift (-ipa file sensitivity).
+// NOT defined here: .data vtables (80525E98/80525EF8 analogues 8053A2A8/
+// 8053A340) + .sdata descriptors — those reference locally-defined functions
+// (CLoad dtor/OnFileEvent) whose .text offsets do not match retail (code
+// 12/15, +0xAC over), so their relocs cannot gate-match; see residual.
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
+    "menu/jp/Load.arc\0"
+    "CLoad\0"
+    "arc\0"
+    "mf00_load01.brlyt\0"
+    "mf00_load00.brlyt\0"
+    "mf00_load01_in.brlan\0"
+    "mf00_load00_in.brlan\0"
+    "mf00_load01_roop.brlan\0"
+    "mf00_load00_roop.brlan\0";
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80668DF8[8] = "CLoad";

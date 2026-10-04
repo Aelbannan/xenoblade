@@ -18,7 +18,7 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" CMenuPassiveSkill* __dt__17CMenuPassiveSkillFv(CMenuPassiveSkill* self, int flags);
 extern "C" CMenuPassiveSkill* createPassiveSkillMenu(CProcess* parent, u32 arg);
 extern "C" unsigned long hasPassiveSkillMenu();
-extern "C" void func_80263954(CMenuPassiveSkill* self);
+extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self);
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self);
 extern "C" void dispatchPassiveSkillInput(CMenuPassiveSkill* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
@@ -83,7 +83,7 @@ public:
     /* UI::CPassiveSkill sub-object at 0xB8 (opaque here; its full layout lives
      * in kyoshin/CPassiveSkill.hpp whose tail padding would swallow 0x2AC). */
     u8 mPassiveSkill[0x1F4];  // 0xB8..0x2AB
-    u8 field_2AC;             // 0x2AC - widgets-ready flag set by func_80263954
+    u8 field_2AC;             // 0x2AC - widgets-ready flag set by pollPassiveSkillReady
     u8 _pad2AD[3];            // 0x2AD..0x2AF
     f32 field_2B0;            // 0x2B0 - float constant seeded from lbl_eu_806688F0
 };

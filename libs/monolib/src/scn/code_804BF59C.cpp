@@ -64,7 +64,7 @@ extern "C" void* __dt__804BF6F4(void* self, int deleting) {
     return self;
 }
 
-void func_804BF774(){}
+void ScnEnvLgt_Propagate(){}
 
 // ---------------------------------------------------------------------------
 // Clears all 8 nw4r::g3d::LightObj subobjects in mLightObjs and resets the
@@ -120,13 +120,13 @@ extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self) {
 // ---------------------------------------------------------------------------
 void ScnEnvLgt_noopF940(void) {}
 
-void func_804BF944(){}
+void ScnEnvLgt_ApplyLightRig(){}
 
-void func_804BFA70(){}
+void scnVlUpdateShape(){}
 
-void func_804BFEB4(){}
+void scnVlUpdateColor(){}
 
-void func_804BFFB8(){}
+void ScnEnvLgt_ApplyFalloff(){}
 
 // Sets bit 0x80 of mFlags when 'enable' is non-zero, and clears bit 0x100
 // either way.

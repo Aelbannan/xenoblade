@@ -6,8 +6,8 @@ namespace LOD {
 
 /**
  * LOD cache record.  Retail stride is 0xC bytes.  Shared with the
- * distance-table lookup functions (func_80463118 / func_8046323C /
- * func_8046339C / func_80463590).
+ * distance-table lookup functions (lerpDistEntry / catmullRomBin /
+ * fetchSampleXY / findCutBinIdx).
  */
 class CLODCacheManagerS {
 public:
@@ -18,9 +18,9 @@ public:
     u32 field_0x8;   // 0x08 table index
 
     void initLodTables();
-    s32 func_80463590();
-    f32 func_80463118();
-    f32 func_8046323C();
+    s32 findCutBinIdx();
+    f32 lerpDistEntry();
+    f32 catmullRomBin();
 };
 
 /**

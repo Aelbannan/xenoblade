@@ -105,7 +105,7 @@ void CItemBoxGridSubMenu::GridSubMenu_MoveSelectionNext() {
     }
 }
 
-void CItemBoxGridSubMenu::func_802084D4(int arg) {
+void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
     mSubState = 0;
     if (mAnimState != 0) {
         return;
@@ -173,7 +173,7 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 }
 
 // Initialization function: loads layout, resources, finds panes
-void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor) {
+void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mAccessor = accessor;
 
     buildLayout(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
@@ -225,7 +225,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
 
 // Select one of the three +0x14/+0x18/+0x1C pointers by the sign-extended
 // +0x24 index and forward the pair through ScalePaneWorldPos.
-extern "C" void func_80208760(void* self, void* src) {
+extern "C" void GridSubMenu_GetCursorPos(void* self, void* src) {
     void* arr[3];
     arr[0] = *(void**)((u8*)src + 0x14);
     arr[1] = *(void**)((u8*)src + 0x18);
@@ -235,13 +235,13 @@ extern "C" void func_80208760(void* self, void* src) {
                   *(void**)((u8*)*(void**)((u8*)src + 8) + 0x10));
 }
 
-void func_802087B8(){}
+void GridSubMenu_GetOptionCount(){}
 
 void GridSubMenu_ClearSelection(CItemBoxGridSubMenu* self) {
     self->mSelectedIdx = -1;
 }
 
-void func_80208844(CItemBoxGridSubMenu* self) {
+void GridSubMenu_FinishOpenAnim(CItemBoxGridSubMenu* self) {
     if (advanceAnimTransform(self->mAnimDefault, 1.0f) != 0) {
         self->mAnimState = 2;
         self->mIsOpened = 1;
@@ -250,7 +250,7 @@ void func_80208844(CItemBoxGridSubMenu* self) {
 
 // When the +0xC sub-object is visible (AnimRewindFrame with the constant),
 // reset the selection bytes (descending store order matches the retail).
-extern "C" void func_80208890(void* self) {
+extern "C" void GridSubMenu_RewindSelection(void* self) {
     extern const f32 lbl_eu_8066831C;
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066831C)) {
         *((u8*)self + 0x22) = 0;

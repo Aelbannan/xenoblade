@@ -37,7 +37,7 @@ public:
     virtual void UpdateBuffer(int, void**, u32, int, f32, int) {} // vtable +0x14
     virtual bool AssignWorkBuffer(void*, u32) { return true; }    // vtable +0x18
     // Retail slot +0x1C is invoked with (memSize, size) when an effect is
-    // applied to a slot (func_801C30BC).  Exact upstream name unknown.
+    // applied to a slot (applyFxSlotEffect).  Exact upstream name unknown.
     virtual void StartUp(u32, u32) {}      // vtable +0x1C
     virtual void ReleaseWorkBuffer() {}    // vtable +0x20  <-- dtor second call
 };
@@ -185,7 +185,7 @@ struct FxSoundSlot {
 namespace {
 
 // Shared "clear effect on a slot" helper used by the slot & pair dtors and by
-// func_801C34B0. Inlined at every call site to reproduce the retail inline
+// clearFxSlotEffect. Inlined at every call site to reproduce the retail inline
 // expansion (ClearEffect + by-type ReleaseWorkBuffer + deactivate).
 inline void ClearSlotEffect(FxSoundSlot* slot) {
     if (!slot->mActive)
@@ -203,11 +203,11 @@ inline void ClearSlotEffect(FxSoundSlot* slot) {
 
 } // namespace
 
-// Element constructor (retail func_801C2C14).  Writes the default param block,
+// Element constructor (retail initFxSoundSlot).  Writes the default param block,
 // constructs the three FX sub-objects (out-of-line nw4r ctors), clears the
 // active/type header, then overwrites the params with the final values.
 // C-linkage so the __construct_array address relocs match retail.
-extern "C" void func_801C2C14(FxSoundSlot* self) {
+extern "C" void initFxSoundSlot(FxSoundSlot* self) {
     // Wave 1: default params (retail store order, ascending).
     self->mReverbParam.preDelayTime = lbl_eu_80667EC0;
     self->mReverbParam.fusedTime = lbl_eu_80667EC4;
@@ -291,7 +291,7 @@ extern "C" void* __dt__801C2F2C(FxSoundSlot* this_, int flag) {
     return this_;
 }
 
-// Applies an FX effect to one slot object (retail func_801C30BC).
+// Applies an FX effect to one slot object (retail applyFxSlotEffect).
 //
 // 1. If the slot already has an active effect, clears it (ClearEffect plus the
 //    matching DPL2 sub-object's ReleaseWorkBuffer) and deactivates the slot.
@@ -299,7 +299,7 @@ extern "C" void* __dt__801C2F2C(FxSoundSlot* this_, int flag) {
 //    (IsFinished() false) - the retail returns 0 in that case.
 // 3. Pushes the stored parameter block into the chosen DPL2 sub-object, then
 //    starts it with (memSize, size) and appends it to the bus effect chain.
-extern "C" bool func_801C30BC(FxSoundSlot* self, u32 fxType, u32 memSize, u32 size) {
+extern "C" bool applyFxSlotEffect(FxSoundSlot* self, u32 fxType, u32 memSize, u32 size) {
     // The retail builds a {&mReverb, &mChorus, &mDelay} address array on the
     // stack and indexes it by fxType (lwzx); kept as an explicit local array
     // to reproduce that shape.  `pFx` is the pointer handed to AppendEffect.
@@ -363,10 +363,10 @@ struct FxSoundPair {
 };
 
 // Two-slot holder constructor (retail FxPair_Init): constructs the slot
-// array via __construct_array(func_801C2C14, __dt__801C2F2C, 0x4FC, 2), then
+// array via __construct_array(initFxSoundSlot, __dt__801C2F2C, 0x4FC, 2), then
 // assigns the two bus ids (0 and 1).  Returns this (retail mr r3, r31).
 FxSoundPair* FxPair_Init(FxSoundPair* self) {
-    __construct_array(self, (void*)func_801C2C14, (void*)__dt__801C2F2C, 0x4FC, 2);
+    __construct_array(self, (void*)initFxSoundSlot, (void*)__dt__801C2F2C, 0x4FC, 2);
     self->mSlot[0].mBusId = 0;
     self->mSlot[1].mBusId = 1;
     return self;
@@ -387,7 +387,7 @@ void* __dt__801C3340(FxSoundPair* this_, int flag) {
 }
 
 // Clears the effect on slots[index]; returns whether the slot was active.
-int func_801C34B0(FxSoundSlot* slots, int index, int frame) {
+int clearFxSlotEffect(FxSoundSlot* slots, int index, int frame) {
     FxSoundSlot* slot = &slots[index];
     // Best alloc shape so far: flat bool-to-int conversion, single defs.
     int result = (slot->mActive != 0);
@@ -407,7 +407,7 @@ int func_801C34B0(FxSoundSlot* slots, int index, int frame) {
     return result;
 }
 
-// Forwards the "apply effect" request for slots[index] to func_801C30BC.
+// Forwards the "apply effect" request for slots[index] to applyFxSlotEffect.
 void func_801C358C(FxSoundSlot* slots, int idx, int fxType, u32 memSize, u32 size) {
-    func_801C30BC(&slots[idx], fxType, memSize, size);
+    applyFxSlotEffect(&slots[idx], fxType, memSize, size);
 }

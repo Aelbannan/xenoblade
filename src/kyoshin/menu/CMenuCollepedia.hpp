@@ -91,11 +91,11 @@ extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
-extern "C" void func_8018B0FC(void* dst, void* src);
+extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
 extern "C" void clpStartLoads(CCollepedia* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
-// func_80252DD8 callees (retail-unmangled func_ names).
+// Colle_HandleInput callees (retail-unmangled func_ names).
 extern "C" int clpCanClaim(CCollepedia* self);
 extern "C" void clpPrevCatPg(CCollepedia* self);
 extern "C" void clpNextCatPg(CCollepedia* self);
@@ -108,7 +108,7 @@ extern "C" void clpCursorDown(CCollepedia* self);
 // (the no-arg member wrapper drops it), so call through the C name directly.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
-// Flat pad-data view exposing only the flag words func_80252DD8 reads:
+// Flat pad-data view exposing only the flag words Colle_HandleInput reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
 // +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
 struct MenuCollepediaPadData {

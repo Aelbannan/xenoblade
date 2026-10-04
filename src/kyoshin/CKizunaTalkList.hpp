@@ -118,7 +118,7 @@ extern "C" void CScrollBar_UpdateThumb(void*, int, int);
 extern "C" void CScrollBar_UpdateDispatch(void*);
 extern "C" void CScrollBar_PlaceThumb(void*, u16);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void playUISound__FUl(u32);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);

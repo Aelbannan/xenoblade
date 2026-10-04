@@ -39,7 +39,7 @@ extern "C" void* scnLgtCreateEnvController(void* mgr, const void* name, int flag
 extern "C" u32   REvtCam_IsTaskListEmpty(void);
 
 // Own vtable and math constants / helpers.
-extern "C" void* lbl_eu_80533D90[];
+extern "C" u32 lbl_eu_80533D90[];
 extern "C" void  __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
 extern "C" void  __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
 extern "C" void  __dt__80185754(void* ptr);
@@ -236,3 +236,42 @@ int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
     }
     return 1;
 }
+// ============================================================================
+// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
+// Defined here at EOF so -ipa codegen for the functions above is unaffected.
+// NOTE (wave DL): the .sdata2 float/double trio (F08/F0C/F10) stays UNDEF:
+// consecutive named pure-constant objects are 8-aligned by this toolchain
+// (F0C needs +0x4), and F10's 8-byte slot cannot be spelled as the f32 the
+// code reads without rescheduling AngleState. All three need rule-side pool
+// naming (two f32 + one f64, as in CScnFogMan.o's sdata2 pool_patterns).
+// ============================================================================
+
+// Cross-TU vtable slots (flat retail names).
+extern "C" void CREvtObjVfunc08Default();
+extern "C" void EvtObj_ConstFalse();
+extern "C" void CREvtObjVfunc10Default();
+extern "C" void REvtCam_AlwaysTrue1();
+extern "C" void CREvtObjIsBusyDefault();
+extern u32 lbl_eu_80662648[];  // sdata word pair (defined below).
+
+// [.data] 0x80533D90-0x80533DB8 (40B): CREvtLight vtable (sdata locator,
+// null word, dtor, and 7 virtual slots; retail lays one label over all 10).
+u32 lbl_eu_80533D90[10] = {
+    (u32)&lbl_eu_80662648, 0x00000000,
+    (u32)&__ct__801C3604, (u32)&CREvtLight_noop7C8,
+    (u32)&CREvtObjVfunc08Default, (u32)&EvtObj_ConstFalse,
+    (u32)&CREvtObjVfunc10Default, (u32)&REvtCam_AlwaysTrue1,
+    (u32)&CREvtObjIsBusyDefault, (u32)&CREvtLight_noop7C4,
+};
+
+// [.rodata] 0x80505360-0x80505370 (16B): class-name string (unreferenced pool
+// bytes, kept under the retail label; sized [0x10] to carry the trailing pad).
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
+char lbl_eu_80505360[0x10] = {
+    0x63,0x66,0x3A,0x3A,0x43,0x52,0x45,0x76,0x74,0x4C,0x69,0x67,0x68,0x74,0x00,0x00,
+};
+
+// [.sdata] 0x80662648-0x80662650 (8B): null word pair referenced by vtable[0].
+#pragma section data_type ".sdata" ".sdata"
+extern __declspec(section ".sdata") u32 lbl_eu_80662648[2] = { 0x00000000, 0x00000000 };
+#pragma section data_type ".data" ".data"

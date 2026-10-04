@@ -66,7 +66,7 @@ public:
 };
 
 // Singleton factory (retail unmangled symbol).
-extern "C" CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg);
+extern "C" CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg);
 // hasOptionMenu (live-instance check) is declared by kyoshin/CTaskGame.hpp.
 // Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
 CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
@@ -82,7 +82,7 @@ void CMenuOption_dtorAdj58(IScnRender* self);
 extern "C" void advanceOptionPhase2(CMenuOption* self);
 extern "C" void flagOptionPhase1(CMenuOption* self);
 extern "C" void advanceOptionPhase1(CMenuOption* self);
-extern "C" void func_8029BC78(CMenuOption* self);
+extern "C" void handleOptionInput(CMenuOption* self);
 
 // Move()/cbRenderBefore() callees.
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
@@ -170,7 +170,7 @@ extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
 extern char lbl_eu_805103C4[];  // option title/help string table base
 
 /*
- * CfPadData overlay for the option-menu input handler (retail func_8029BC78).
+ * CfPadData overlay for the option-menu input handler (retail handleOptionInput).
  * Retail reads the current-pad pressed flags at +0x04 and the turbo-press
  * flags at +0x104 (the latter lives past CPad, in CfPadData's own flags
  * region; cf. CMenuMapSelect's CfPadDataLocal).

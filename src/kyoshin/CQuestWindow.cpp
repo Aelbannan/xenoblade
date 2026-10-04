@@ -8,7 +8,7 @@
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
 // Implicit-r3 form: retail call sites that do NOT set r3 (the def in
 // ocBdat.cpp takes no args); header decl is the 1-arg caller-tuned form.
-extern "C" void* Bdat_GetTable_AA34(void);
+extern "C" void* Bdat_GetTable_AA34(void); extern "C" void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32);
 #include "monolib/device/CDeviceFile.hpp"         // readFile / readCommonArchiveFile
 #include "monolib/device/CDeviceFont.hpp"         // CDeviceFont::getFontInfo
 #include "monolib/device/CDeviceVI.hpp"          // waitForDrawDone
@@ -37,7 +37,7 @@ int CTaskGame_hasLoadScreen() {
 }
 
 extern u32 lbl_eu_80663FD0;
-void func_80122460(){ lbl_eu_80663FD0 = 0; }
+void resetQuestWindow(){ lbl_eu_80663FD0 = 0; }
 
 // Install the retail Move-hook ptmf (+0x3C) only while no party / other menu
 // is active (PTNotice_IsActive_3C10, menuPTStateIsActive) and the window's own idle gates
@@ -61,20 +61,20 @@ void updateWindow(QuestWinObj* self) {
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
         self->field_0xBC = 1;
         Cur_SetVisible(&self->mCursor, 0);
-        func_8012435C(self);
+        placeQuestCursor(self);
         break;
     case 1:
         completeWindowOpen(self);
         break;
     case 2:
-        func_80122C08(self);
+        handleQuestInput(self);
         break;
     case 3:
-        func_80122EF8(self);
+        closeQuestWindow(self);
         break;
     }
     self->mpLayout->Animate(0);
-    func_801D202C(&self->mCursor);
+    Cur_Update(&self->mCursor);
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ void updateWindow(QuestWinObj* self) {
 // the branch: the window arc (field_0x88) builds the whole layout - scratch
 // region (RAII Class_8045F858 guard), tag processor, resource accessor,
 // layout + both anim transforms, font bind, tag-processor pane links, cursor
-// rebuild - then refreshes the content (func_801231C4). The common archive
+// rebuild - then refreshes the content (refreshQuestContent). The common archive
 // (field_0x8C) attaches the quest-name file pointer to +0xD0 and refreshes
 // too. Both branches clear the consumed handle; unmatched events return false.
 // ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         __dt__6CCur18Fv(tmpCur, -1);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf02();
 
-        func_801231C4(self);
+        refreshQuestContent(self);
         self->field_0x88 = 0;
         self->mMemRegion.validateHeap();
         __dt__14Class_8045F858Fv(regionBuf, -1);
@@ -181,7 +181,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         Bdat_GetTable_AA34();
         self->field_0xD0 =
             (u32)getFP__FPCc(lbl_eu_8052CFF4[SearchThresholdIdx(self->field_B8)]);
-        func_801231C4(self);
+        refreshQuestContent(self);
         self->field_0x8C = 0;
         return true;
     }
@@ -321,14 +321,14 @@ void completeWindowOpen(QuestWinObj* self) {
 
 // Empty stubs must stay noinline: their bodies are visible in this TU and
 // MWCC would otherwise inline them into updateWindow's switch, collapsing
-// the case-2/3 dispatch and the func_8012435C call (retail keeps the calls).
+// the case-2/3 dispatch and the placeQuestCursor call (retail keeps the calls).
 // ---------------------------------------------------------------------------
-// func_80122C08 (us-801236e4): quest-window input handling for the open
+// handleQuestInput (us-801236e4): quest-window input handling for the open
 // window. Confirm button closes it; the turbo/edge flags on the cf pad move
 // the cursor selection (field_0xC0, clamped per state byte). Always advances
 // anim B at the tail.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
+__attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
     if (self->field_0xC8 != 0) {
         CPadView* pad = (CPadView*)getCurrentPad__Q22cf13CfGameManagerFv();
         int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
@@ -369,12 +369,12 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
         } else if (dLeft != 0) {
             self->field_0xC0 = self->field_0xC0 - 1;
             if (self->field_0xC0 < 0) self->field_0xC0 = 0;
-            func_8012435C(self);
+            placeQuestCursor(self);
             playUISound__FUl(1);
         } else if (dRight != 0) {
             self->field_0xC0 = self->field_0xC0 + 1;
             if (self->field_0xC0 > 0) self->field_0xC0 = 0;
-            func_8012435C(self);
+            placeQuestCursor(self);
             playUISound__FUl(1);
         }
     } else {
@@ -408,12 +408,12 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
         } else if (dLeft != 0) {
             self->field_0xC0 = self->field_0xC0 - 1;
             if (self->field_0xC0 < 1) self->field_0xC0 = 1;
-            func_8012435C(self);
+            placeQuestCursor(self);
             playUISound__FUl(1);
         } else if (dRight != 0) {
             self->field_0xC0 = self->field_0xC0 + 1;
             if (self->field_0xC0 > 1) self->field_0xC0 = 0;
-            func_8012435C(self);
+            placeQuestCursor(self);
             playUISound__FUl(1);
         }
     }
@@ -421,12 +421,12 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80122EF8 (us-801239d4): quest-window close transition. Waits for the
+// closeQuestWindow (us-801239d4): quest-window close transition. Waits for the
 // open animation, releases the party member slot, runs the per-member sound
 // loop (indexed by field_0xDC), then plays the quest-complete jingle and the
 // close-sequence sounds for the window's quest id.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
+__attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
     if (AnimRewindFrame(self->mAnimA, lbl_eu_80667140) == 0) return;
     if (self->field_0xCC > 0) {
         bindIndexedEffect(self->field_0xCC, getPlayer__Q22cf13CfGameManagerFi(0));
@@ -501,7 +501,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_801231C4 (us-80123ca0): quest-window content refresh. Reads the quest
+// refreshQuestContent (us-80123ca0): quest-window content refresh. Reads the quest
 // row (lbl_eu_80573D18) for the pane values, toggles pane visibility from the
 // quest-type byte, binds the shared 'timg' resource to the cursor panes, runs
 // the per-slot name loops (C8==0 / C8!=0 variants with jump-table switches on
@@ -512,7 +512,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
 // register, so the inline &lbl_eu_804FEC84[x] form reproduces that. C linkage
 // comes from the header's extern "C" block (retail name unmangled).
 #define base (lbl_eu_804FEC84)
-void func_801231C4(CQuestWindow* self) {
+void refreshQuestContent(CQuestWindow* self) {
     if (self->field_0x94 == 0 || self->field_0xD0 == 0) return;
     u32 questId = self->field_B8;
     u32 questRow = lbl_eu_80573D18[SearchThresholdIdx(questId)];
@@ -843,12 +843,12 @@ extern "C" void enableAnimB(QuestWinObj* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8012435C (us-80124e38): position the quest-window cursor over the
+// placeQuestCursor (us-80124e38): position the quest-window cursor over the
 // selected pane. Reads two pane names per cursor slot from the float tables
 // (their 4 bytes spell the name), resolves them via FindPaneByName, derives a
 // point with ScalePaneWorldPos and moves the cursor there.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void func_8012435C(QuestWinObj* self) {
+__attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
     if (self->field_0xC0 < 0) return;
     if (self->field_0xC8 == 0) {
         if (self->field_0xC4 == 0) {

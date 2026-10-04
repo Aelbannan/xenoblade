@@ -23,7 +23,7 @@ void* findObjectById(int id);
 // Layout for handle returned by findObjectById
 struct Func800B708C_Ret {
     u8 pad_00[0x64];
-    u32 unk64;    // +0x64: bit flags read by Move()/func_8010CE50
+    u32 unk64;    // +0x64: bit flags read by Move()/BpsStateQueueDamage
     u8 pad_68[0x8C - 0x68];
     u16 unk8C;    // +0x8C: low byte = party id matched against the party table
 };
@@ -35,13 +35,13 @@ struct MenuBpsPartyEntry {
     u8 pad_04[0x20 - 0x04];
 };
 struct MenuBpsPartyRow {
-    MenuBpsPartyEntry entries[6]; // stride 0x20; func_8010CF68 scans [1..5]
+    MenuBpsPartyEntry entries[6]; // stride 0x20; BpsStateUpdateHpGauge scans [1..5]
     u8 pad_C0[0xC4 - 0xC0];       // row stride 0xC4
 };
 struct MenuBpsActorState {
     MenuBpsPartyRow rows[4]; // +0x00: rows[idx], stride 0xC4
     u8 pad_310[0x888 - 0x310];
-    s32 unk888[4];        // +0x888: per-index values (read as s32 in func_8010CF68)
+    s32 unk888[4];        // +0x888: per-index values (read as s32 in BpsStateUpdateHpGauge)
     u8 pad_898[0x89C - 0x898];
     u32 unk89C;           // +0x89C: low byte is the row index / party count
 };
@@ -176,7 +176,7 @@ extern const double lbl_eu_80666FB8; // unsigned-int -> double bias
 // Per-level HP-gauge width table indexed by the quantized gauge value.
 extern f32 lbl_eu_804FD6E0[5];
 
-// Tension state-machine thresholds (func_8010D8D4 switch arms).
+// Tension state-machine thresholds (BpsStateRefreshSlot switch arms).
 extern const f32 lbl_eu_80666FE0;
 extern const f32 lbl_eu_80666FE4;
 

@@ -7,7 +7,7 @@
 
 void __ct__802A4E48(){}
 
-void func_802A5174(){}
+void BufVxFillSchedDesc(){}
 
 // us-802a76d8 (BufVxAdvanceSlot)
 // Advance the current voice slot: restore the base state triple, then if the
@@ -73,11 +73,11 @@ void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
     }
 }
 
-// us-802a7814 (func_802A50E0)
+// us-802a7814 (BufVxRemoveVoice)
 // Remove a released voice from the three slots: the base handler runs first,
 // then each slot whose biased embedded CCharVoice matches is cleared. Written
 // unrolled -- retail shows three independent check/store sequences.
-void func_802A50E0(CVS_THREAD_BUF* self, CCharVoice* voicePtr) {
+void BufVxRemoveVoice(CVS_THREAD_BUF* self, CCharVoice* voicePtr) {
     DetachThreadVoice(self, voicePtr);
 
     for (int i = 0; i < 3; i++) {

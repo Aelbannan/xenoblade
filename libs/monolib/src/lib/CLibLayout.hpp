@@ -68,12 +68,12 @@ public:
 // TU trips MWCC 10322 (illegal name overloading) at the definition site.
 extern MEMAllocator* lbl_eu_80665478;
 
-// func_8045F438/func_8045F4E4 are the CLibLayout allocator callbacks. Their
+// layoutAllocCallback/layoutFreeCallback are the CLibLayout allocator callbacks. Their
 // retail symbols use synthetic "Fv" names even though the callbacks genuinely
 // take (MEMAllocator*, size) args, so they are declared extern "C" to emit the
 // exact retail linker symbols instead of C++-mangled member names.
-extern "C" void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size);
-extern "C" void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block);
+extern "C" void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size);
+extern "C" void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block);
 
 // Import: nw4r::lyt::TextBox(unsigned short) ctor (retail member symbol
 // __ct__Q34nw4r3lyt7TextBoxFUs, omitted from lyt_textBox.h). C linkage emits

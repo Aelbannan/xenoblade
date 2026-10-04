@@ -304,7 +304,7 @@ struct CUICfInitTemplates {
     CUICfInitTail tail;
 };
 
-// 0xC-byte pool node for func_80133324's event queue - same layout as
+// 0xC-byte pool node for eventDispatch's event queue - same layout as
 // `_reslist_node<u32>` (mNext@0, mPrev@4, mItem@8). Empty slots have mNext==0.
 struct CUICfListNode {
     CUICfListNode* next; // 0x0
@@ -344,7 +344,7 @@ struct CUICfManagerCreateView {
     u8 field_0xC92[0xC94 - 0xC92];
 };
 
-// 27-entry, 0-terminated id table copied onto the stack by func_80133324
+// 27-entry, 0-terminated id table copied onto the stack by eventDispatch
 // (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
 struct CUICfIdTable {
     u16 ids[27];
@@ -361,7 +361,7 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, class CScnNw4r* pScene,
 // extern "C" here (before the class, so the in-class friend declaration
 // below binds to this same linkage) so its ABI is r3=<unused self>, r4=id,
 // r5=a1, r6=a2. Named with the retail mangling (`Fiii`).
-extern "C" void func_80133324__12CUICfManagerFiii(CUICfManager* self, int id, int a1, int a2);
+extern "C" void eventDispatch__12CUICfManagerFiii(CUICfManager* self, int id, int a1, int a2);
 
 // Same hidden-arg ABI: the retail OnFileEvent symbol is a no-arg member
 // (`Fv`) but the body reads r4 as the CEventFile* from the IWorkEvent
@@ -517,11 +517,11 @@ private:
     void onFileEventThunk();
     void dtorThunk54();
     // Retail symbol mangles `Fv` but the vtable thunk passes its three hidden
-    // args (r4/r5/r6) through to func_80133324 after adjusting `this`; body
+    // args (r4/r5/r6) through to eventDispatch after adjusting `this`; body
     // is emitted under the extern "C" flat name (see .cpp).
     void eventDispatchThunk();
     void dtorThunk58();
-    void func_80133324(int id, int a1, int a2);
+    void eventDispatch(int id, int a1, int a2);
     IWorkEvent* cfWorkEvent();
 
     // The retail OnFileEvent body is emitted under this extern "C" free

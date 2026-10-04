@@ -23,7 +23,7 @@ using namespace cf;
 
 // Named .sdata2 signed int->float conversion magic (bit pattern
 // 0x4330000080000000, i.e. 2^52 + 2^31): defining it lets MWCC's constant
-// pool reuse the retail symbol for the (f32) int casts inside func_801BA490
+// pool reuse the retail symbol for the (f32) int casts inside SuddenCommuTallyParty
 // instead of emitting a TU-local @N label (CVision / CfResReloadImpl idiom).
 extern const double lbl_eu_80667E40 = 4505750238502912.0;
 
@@ -79,7 +79,7 @@ extern "C" void SuddenCommuClearCueSlot(void* self) { *(u32*)((u8*)self + 0x20) 
 
 // Sudden-commu per-frame driver: only runs while the CfGameManager singleton
 // is absent (getInstance() == 0); otherwise just re-arms (SuddenCommuRearmTimer) and
-// ticks (func_801BBCBC), then dispatches the handler selected by field_14
+// ticks (SuddenCommuTickActive), then dispatches the handler selected by field_14
 // through the retail PMF table (12-byte ptmf stride). The const-reference
 // binding keeps MWCC from materializing a stack local - it passes the table
 // entry address straight to __ptmf_scall in r12.
@@ -87,7 +87,7 @@ typedef void (CSuddenCommu::*CSuddenCommuStateFn)();
 void SuddenCommuDriveFrame(CSuddenCommu* self) {
     if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
     SuddenCommuRearmTimer(self);
-    if (func_801BBCBC(self) != 0) return;
+    if (SuddenCommuTickActive(self) != 0) return;
     CSuddenCommuStateFn const& pmf =
         *(CSuddenCommuStateFn const*)((u8*)&lbl_eu_80575870[self->field_14 * 3]);
     (self->*pmf)();
@@ -110,7 +110,7 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
     if ((self->field_24 & 1) == 0) return 0;
     CSuddenCommuGlobal* global = getUnk80664658();
     if (global->field_214 & 2) return 0;
-    if (func_8017FD44() != 0) return 0;
+    if (GetZealObjPtr() != 0) return 0;
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(0);
     if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
     if (player == 0) return 0;
@@ -139,7 +139,7 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
 // truncated result. Then commit the count to the party gauge and either reset
 // the commu state (field_C == 4) or re-arm the partner pairing.
 //
-__declspec(noinline) void func_801BA490(CSuddenCommu* self) {
+__declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
     u32 total = lbl_eu_806625E0;
     f32 scale = lbl_eu_80667E34;
 
@@ -170,11 +170,11 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
             }
         }
 
-        if (func_80260264(obj, 0x61, &stat) != 0) {
+        if (IdTable_GetSum(obj, 0x61, &stat) != 0) {
             total += stat;
         }
 
-        if (func_80260264(obj, 0x47, &stat) != 0) {
+        if (IdTable_GetSum(obj, 0x47, &stat) != 0) {
             // Plain (f32) casts: MWCC emits the 0x4330/xoris stack-double
             // trick natively, pooling the magic into lbl_eu_80667E40 above.
             f32 prod = scale * (f32)stat;
@@ -339,10 +339,10 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
 // (+0x3F00 bit 0x2) and the partner-state helper, then scan the three player
 // slots for the actor matching the attacker. Depending on the target's HP
 // (vtable slot 0x128) against lbl_eu_80667E48 and the move flag words,
-// dispatch the commu (func_801BB464) with mode 3 / 1 / 0.
+// dispatch the commu (SuddenCommuTryStart) with mode 3 / 1 / 0.
 //
 // OPEN RESIDUAL (us-801bc48c): retail ends the mode-0 arm with a DUPLICATED
-// exit branch (`bl func_801BB464; b <epi>; b <epi>`) right before the loop
+// exit branch (`bl SuddenCommuTryStart; b <epi>; b <epi>`) right before the loop
 // latch; every dispatch path here exits the FUNCTION (retail `ble <epi>` on
 // count<=1, not the latch). All high-level spellings tried (plain return,
 // break, goto-shared-exit with multi-pred block, do{}while(0), else-return,
@@ -350,7 +350,7 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
 // byte-identical output with a single merged exit - MWCC threads them all.
 // The missing 4B accounts for the whole remaining diff (10 shifted tail
 // slots, 10 branch-displacement words, both restgpr reloc sites).
-void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
+void SuddenCommuDispatchAttacker(CSuddenCommu* self, CSuddenCommuActor* attacker,
                    CSuddenCommuActor* target, CSuddenCommuMoveData* move) {
     if (!(attacker->flags3F00 & 0x2)) return;
     if (SuddenCommuCanStart(self) == 0) return;
@@ -373,19 +373,19 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
             if (count <= 1) return;
             int arg5 = 0;
             if (!(move->field_78 & 0x200)) arg5 = 0x19;
-            func_801BB464(self, i, 3, player, arg5);
+            SuddenCommuTryStart(self, i, 3, player, arg5);
             return;
         } else {
             u32 flags = move->field_74;
             if (flags & 0x100) {
-                func_801BB464(self, i, 1, player, 0);
+                SuddenCommuTryStart(self, i, 1, player, 0);
                 return;
             }
             if (!(flags & 0x40)) return;
             for (;;) {
                 if ((s32)((cf::CActorParam*)target)->CActorParam_getActorType() == 1 ||
                     (s32)((cf::CActorParam*)target)->CActorParam_getActorType() == 2) {
-                    func_801BB464(self, i, 0, player, 0);
+                    SuddenCommuTryStart(self, i, 0, player, 0);
                 }
                 break;
             }
@@ -414,7 +414,7 @@ void SuddenCommuDispatchPartner(CSuddenCommu* self, CSuddenCommuActor* attacker,
         if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
         if (player == 0) continue;
         if (player != match) continue;
-        func_801BB464(self, i, mode, player, 0);
+        SuddenCommuTryStart(self, i, mode, player, 0);
         break;
     }
 }
@@ -551,8 +551,8 @@ commu_end:
 // every high-level spelling (plain if-return, &&, nested if, goto gate,
 // else-return, switch(found) case-0/default, cached s16 local) compiles to
 // a single merged exit - MWCC threads them all. Same class as the
-// documented us-801bc48c duplicated-exit wall in func_801BAB94.
-__declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
+// documented us-801bc48c duplicated-exit wall in SuddenCommuDispatchAttacker.
+__declspec(noinline) void SuddenCommuTryStart(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x04000000) != 0) return;
     // Mutate the parameter: merging the arg5/chance webs lets MWCC reuse
@@ -574,7 +574,7 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         void* obj = player->field_15E0;
         if (obj != 0) {
             u32 v;
-            if (func_80260264(obj, 0x6a, &v) != 0) thresh += v;
+            if (IdTable_GetSum(obj, 0x6a, &v) != 0) thresh += v;
         }
     }
     if (type == 3) {
@@ -635,8 +635,8 @@ void SuddenCommuIdleNop() {}
 
 // Battle-state entry (mode 2/3): refresh the actor enum lists, fade the BGM,
 // retire the old voice id and pick the next one, attach a voice-cue object to
-// player 0, then arm the commu via func_801BC6A4.
-void func_801BB81C(CSuddenCommu* self) {
+// player 0, then arm the commu via SuddenCommuPlayCue.
+void SuddenCommuEnterBattle(CSuddenCommu* self) {
     CSuddenCommuVoiceCue* cue;
     void* player;
     SuddenCommuMarkCommuVoices(self);
@@ -665,7 +665,7 @@ void func_801BB81C(CSuddenCommu* self) {
     u32 flags = self->field_24 | 0x10;
     self->field_1C = lbl_eu_80667E48;
     self->field_24 = flags;
-    func_801BC6A4(self, self->field_4, 0);
+    SuddenCommuPlayCue(self, self->field_4, 0);
     if (self->field_C != 4)
         self->field_14 = 2;
     else
@@ -673,16 +673,16 @@ void func_801BB81C(CSuddenCommu* self) {
 }
 
 // Voice-node gate (state 1 handler): once the voice id at +0x10 is retired,
-// re-arm via func_801BC6A4 using the initiator slot constant 0 when +0x04 is
+// re-arm via SuddenCommuPlayCue using the initiator slot constant 0 when +0x04 is
 // set, otherwise the queued partner at +0x06; then advance state (+0x14) to 3
 // (committed even when neither partner id is set).
 void SuddenCommuGatePhaseTo3(CSuddenCommu* self) {
     bool missing = !CCharVoiceMan_IsNodeActive(self->field_10);
     if (missing) {
         if (self->field_4 != 0)
-            func_801BC6A4(self, 0, 4);
+            SuddenCommuPlayCue(self, 0, 4);
         else if (self->field_6 != 0)
-            func_801BC6A4(self, self->field_6, 4);
+            SuddenCommuPlayCue(self, self->field_6, 4);
         self->field_14 = 3;
     }
 }
@@ -698,22 +698,22 @@ void SuddenCommuGatePhaseTo4(CSuddenCommu* self) {
 
 // Flag dispatch: reads the flag word at +0x24. If any of bits 5/6/7
 // (0xE0) are set, dispatch on bit 5 (0x20) -> set flag 0x4 and call
-// func_801BA490, else bit 6 (0x40) -> func_801BA490, else SuddenCommuResolvePhaseState.
+// SuddenCommuTallyParty, else bit 6 (0x40) -> SuddenCommuTallyParty, else SuddenCommuResolvePhaseState.
 void SuddenCommuDispatchFlags(CSuddenCommu* self) {
     u32 flags = self->field_24;
     if ((flags & 0xE0) == 0) return;
     if (flags & 0x20) {
         self->field_24 |= 0x4;
-        func_801BA490(self);
+        SuddenCommuTallyParty(self);
     } else if (flags & 0x40) {
-        func_801BA490(self);
+        SuddenCommuTallyParty(self);
     } else {
         SuddenCommuResolvePhaseState(self);
     }
 }
 
 void SuddenCommuPlayPartnerCue6(CSuddenCommu* self) {
-    func_801BC6A4(self, self->field_6, 1);
+    SuddenCommuPlayCue(self, self->field_6, 1);
     self->field_14 = 6;
 }
 
@@ -731,7 +731,7 @@ void SuddenCommuBranchGate7or9(CSuddenCommu* self) {
 }
 
 void SuddenCommuPlayPartnerCue8(CSuddenCommu* self) {
-    func_801BC6A4(self, self->field_8, 3);
+    SuddenCommuPlayCue(self, self->field_8, 3);
     self->field_14 = 8;
 }
 
@@ -743,7 +743,7 @@ void SuddenCommuGatePhase9Plain(CSuddenCommu* self) {
 }
 
 void SuddenCommuPlayInitiatorCue10(CSuddenCommu* self) {
-    func_801BC6A4(self, self->field_4, 5);
+    SuddenCommuPlayCue(self, self->field_4, 5);
     self->field_14 = 10;
 }
 
@@ -755,7 +755,7 @@ void SuddenCommuVoiceEndGateA(CSuddenCommu* self) {
 }
 
 void SuddenCommuPlayInitiatorCue12(CSuddenCommu* self) {
-    func_801BC6A4(self, self->field_4, 2);
+    SuddenCommuPlayCue(self, self->field_4, 2);
     self->field_14 = 12;
 }
 
@@ -796,7 +796,7 @@ void SuddenCommuInitResetState(CSuddenCommu* self) {
 // the pad dispatch advances the voice-cue on bit 0x8 or reads pad input on
 // bit 0x10. When the tick ends with no dispatch, the live cue object is
 // released (via clearPlayerEffect when the commu just ended, else setChildB59__).
-int func_801BBCBC(CSuddenCommu* self) {
+int SuddenCommuTickActive(CSuddenCommu* self) {
     // camRun mirrors retail r31 (camera/pad path taken), ended retail r30.
     int camRun;
     int ended;
@@ -907,7 +907,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         // raise the flag word for the chosen follow-up move.
         int padBit = 0;
         int moveSel = 0;
-        int winState = func_8017FD44();
+        int winState = GetZealObjPtr();
         if (winState != 0) {
             CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
             if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -916,7 +916,7 @@ int func_801BBCBC(CSuddenCommu* self) {
                 padBit = (pad->field_00 >> 26) & 1;
             }
             if (padBit == 0) return 0;
-            moveSel = func_8017FD4C(winState);
+            moveSel = GetZealResult(winState);
         }
         if (self->field_20p != 0) {
             self->field_20p->field_B0 = 0;
@@ -927,10 +927,10 @@ int func_801BBCBC(CSuddenCommu* self) {
         if (padBit != 0) {
             if (moveSel == 2) {
                 self->field_24 |= 0x24;
-                func_8017FEF0((void*)winState, 1);
+                AddZealEffect((void*)winState, 1);
             } else if (moveSel == 1) {
                 self->field_24 |= 0x40;
-                func_8017FEF0((void*)winState, 0);
+                AddZealEffect((void*)winState, 0);
             } else {
                 self->field_24 |= 0x80;
             }
@@ -958,7 +958,7 @@ int func_801BBCBC(CSuddenCommu* self) {
     }
     // Idle commu: clamp the timer while the window system is open, then
     // retire any attached cue.
-    if (func_8017FD44() != 0) {
+    if (GetZealObjPtr() != 0) {
         if (self->field_18 < lbl_eu_80667E64) self->field_18 = lbl_eu_80667E64;
     }
     if (self->field_20p != 0) {
@@ -1045,7 +1045,7 @@ void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
 // line, 1 = random entry from the field_E table, 2/3 = fixed ids, 4 =
 // character-specific (matches partner voice ids), 5 = party table.
 // Written as an if/else chain (retail emits a compare chain, not a jumptable).
-__declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int num) {
+__declspec(noinline) void SuddenCommuPlayCue(CSuddenCommu* self, int playerIdx, int num) {
     const u8* tbl = lbl_eu_805050B0;
     CSuddenCommuActor* player1 = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(playerIdx);
     if (player1 != 0) player1 = (CSuddenCommuActor*)((char*)player1 - 0x3E9C);

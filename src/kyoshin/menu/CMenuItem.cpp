@@ -16,7 +16,7 @@ unsigned long ItemMenu_IsPresent(void) { return *(unsigned long*)(&lbl_eu_806642
  * decodes the pad: turbo/pressed masks for cancel/page-turn/decide, and
  * pressed-bit positions that depend on the game-manager controller mode
  * (classic vs. others). Dispatches one grid action in priority order. */
-void func_80167A2C(CMenuItem* self) {
+void CMenuItem_HandleInput(CMenuItem* self) {
     // Help bar follows the grid's current mode.
     u8 mode = GetPromptState(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->mTitleAHelp[0]), mode);
@@ -61,17 +61,17 @@ void func_80167A2C(CMenuItem* self) {
             self->mState = 3;
         }
     } else if (turboCancel != 0) {
-        func_801CB5F0(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        GridMoveCursorLeft(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (pageTurn != 0) {
-        func_801CBA04(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        GridMoveCursorRight(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (cancel != 0) {
-        func_801CBDE8(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        GridMoveCursorDown(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (decide != 0) {
-        func_801CC0EC(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        GridMoveCursorUp(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (leftTrigger != 0) {
         OpenSortMenu(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (xHeld != 0) {
-        func_801CDC40(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
+        TickItemBoxGrid(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     } else if (yHeld != 0) {
         SelectCatRow(reinterpret_cast<CItemBoxGrid*>(&self->mItemBoxGrid[0]));
     }

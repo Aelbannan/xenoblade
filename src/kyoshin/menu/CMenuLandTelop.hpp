@@ -18,7 +18,7 @@ class Pane;
 }
 class CScn;
 
-// 4-byte land-telop entry record (array at +0x9A, scanned in func_801453B8).
+// 4-byte land-telop entry record (array at +0x9A, scanned in consumeTelopEntry).
 struct CLandTelopEntry {
     u16 f0;   // 0x00
     u8  f2;   // 0x02
@@ -118,7 +118,7 @@ public:
 };
 
 // cf::CBattleManager battle-list view (only the +0x8 list head is touched by
-// func_80144EE4's non-empty check).
+// createLandTelop's non-empty check).
 struct CBattleListNode {
     CBattleListNode* next;   // 0x0
 };
@@ -138,9 +138,9 @@ class CBattleManager;  // forward decl only (list head at +0x8 via CBattleListHe
 extern "C" {
 CMenuLandTelop* __ct__CMenuLandTelop(CMenuLandTelop* self, CScn* scene,
                                      u16 opt, u8 param);
-CMenuLandTelop* func_80144EE4(CProcess* parent, CScn* scene, u16 opt, u8 param);
-int func_801453B8(CMenuLandTelop* self);
-void func_8014504C(CLandTelopGlobal* obj, u32 opt, u32 param);
+CMenuLandTelop* createLandTelop(CProcess* parent, CScn* scene, u16 opt, u8 param);
+int consumeTelopEntry(CMenuLandTelop* self);
+void retargetLandTelop(CLandTelopGlobal* obj, u32 opt, u32 param);
 void __ct__17UnkClass_8045F564Fv(void* _this);
 void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
 void __ct__8CProcessFv(CProcess* _this);
@@ -156,11 +156,11 @@ int isLandTelopActive();
 int isLandTelopIdle();
 void requestLandTelop();
 unsigned char getLandTelopE0(void);
-void func_8014548C(CMenuLandTelop* self);
+void buildTelopLayout(CMenuLandTelop* self);
 void CMenuLandTelop_dtorAdj6C(void* _this);
 void CMenuLandTelop_renderBeforeAdj70(void* _this);
 void CMenuLandTelop_dtorAdj70(void* _this);
-const char* func_80145AA8(int index);
+const char* getTelopString(int index);
 }
 
 // C++-linkage helpers (retail symbols are their mangled forms).
@@ -179,7 +179,7 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
 // owner in monolib/device/CDeviceFont.hpp); no TU-local view is kept.
 
 // Land-telop string/layout-name table plus the anim timing constants used by
-// Move / func_8014548C.
+// Move / buildTelopLayout.
 extern char lbl_eu_80501720[];
 extern f32 lbl_eu_806673CC;       // banner/frame step delta
 extern f32 lbl_eu_806673D0;       // banner timer limit
@@ -200,7 +200,7 @@ unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();
 f32 MenuSnd_GetMasterVol_95EC();                      // scene BGM volume
 u32 Scn_CallUnk8C_V9(CScn* scene);           // scene audio handle
-void func_80043738(u32, const char*, u32, u32, u32, u32, f32);
+void CTaskGame_openStream(u32, const char*, u32, u32, u32, u32, f32);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);

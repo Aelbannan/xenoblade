@@ -885,8 +885,8 @@ extern "C" int rand(void);
 // CtrlMoveEne_UpdateBattleAI call sites: battle-object helpers, the CfGameManager /
 // CBattleManager singletons and the parts/actor lookups (retail names).
 extern "C" int findObjectById__Fi(int id);
-extern "C" void* func_8016FE34(void* src);
-extern "C" int func_80148778(void* self, int id);
+extern "C" void* MapFx_ResolveOwner(void* src);
+extern "C" int isBattleStatusActive(void* self, int id);
 extern "C" int CPartsChange_GetEnemySlotAt(void* self, int index);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 // NOTE: deliberately no extern "C" - matches the plain-C++-linkage form

@@ -83,6 +83,6 @@ public:
 
 // State-machine tick: optional range gate on the game-manager counter, then
 // dispatch through the state jump table, then act on mType.
-void func_802ABCB4(CfGimmickSaveOff* self);
+void CfGimmickSaveOff_Update(CfGimmickSaveOff* self);
 
 } // namespace cf

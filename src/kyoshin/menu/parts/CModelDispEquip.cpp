@@ -432,7 +432,7 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
                 for (u8 idx = 2; idx <= 5; idx++) {
 if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 0) {
                         CResLookup* obj = param[idx].field_2C;
-                        func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+                        simAttachModel(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                                       reinterpret_cast<CModelDispNameParam*>(obj->getResourceBase(&param[idx], actor->field_3F28)));
                         holder->equipPtrs[idx] =
 ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) >> 10) & 0x3FF;
@@ -639,7 +639,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         if (modelId == 0) continue;
         buf.mString[0] = '\0';
         buf.mLength = 0;
-        if (func_800AA33C(buf, modelId, 1, 1) == 0) continue;
+        if (Tok_FormatStr(buf, modelId, 1, 1) == 0) continue;
         FileSlot* fs = &self->fileSlots[i - 1];
         if (fs->data != 0) continue;
         allLoaded = 0;
@@ -669,15 +669,15 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     holder->field_0x00 = Scn_SetupAnim(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
     reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
     simSetLeafFlag4000(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
-    func_80482DF4(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
+    simMarkTree100000(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
     if (holder->field_0x00 == 0) return;
-    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+    simAttachModel(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[1].data));
-    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+    simAttachModel(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[2].data));
-    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+    simAttachModel(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[3].data));
-    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+    simAttachModel(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[4].data));
 
     // Pick the anim-model set for the weapon type (2 = off-hand only,
@@ -800,7 +800,7 @@ extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param) {
         // retail: slwi(param,20) + oris 0x7800, then rlwimi(h rot22 into bits
         // 15..21). Keeping the insert inside the arg expression makes MWCC
         // copy the manager handle out of r3 (mr r6) before taking &buf.
-        func_800AA33C(buf,
+        Tok_FormatStr(buf,
                       __rlwimi(((u32)param << 20) | 0x78000000, (u32)h, 22, 15, 21),
                       1, 1);
         int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
@@ -1093,7 +1093,7 @@ extern "C" void ModelDispEquip_HandleSlotCmd(CModelDispEquip* self, u32 unused,
             if (holder->animModelPtrs[i] != 0 &&
                 ((CActParamHolderTail*)holder)->animPtrs[i] == 0) {
                 CModelDispEffectView* effect =
-                    func_804CC1F4(lbl_eu_8065FC18, self->modelData, self->somePtr,
+                    EffRoot_AddSchedReq(lbl_eu_8065FC18, self->modelData, self->somePtr,
                                   val - 1, 1, 0);
                 ((CActParamHolderTail*)holder)->animPtrs[i] = effect;
                 if (effect != 0) {

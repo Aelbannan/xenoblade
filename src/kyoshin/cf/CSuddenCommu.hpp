@@ -34,7 +34,7 @@ namespace cf{
         /* 0x1C */ float field_1C;
         /* 0x20 */ union {
             u32 field_20;
-            // Typed-pointer view used by func_801BB81C: accessing the cue
+            // Typed-pointer view used by SuddenCommuEnterBattle: accessing the cue
             // through the real CSuddenCommuVoiceCue* type lets MWCC's alias
             // analysis prove the field_B0 store cannot touch the sdata2
             // float pool, which reproduces the retail issue order.
@@ -64,7 +64,7 @@ struct CSuddenCommuSub4 {
     virtual u32* vf30() = 0;   // slot 0x30 (index 12, incl. MWCC vtable prefix)
 };
 
-// Object behind actor+0x3ED4: u32 at +0x36C (non-zero test in func_801BB464).
+// Object behind actor+0x3ED4: u32 at +0x36C (non-zero test in SuddenCommuTryStart).
 struct CSuddenCommuBody36C {
     u8 pad_00[0x36C];
     u32 field_36C;                        // 0x36C
@@ -186,16 +186,16 @@ class CBattleManagerView;
 // global func_* names - the declarations below give the definitions C linkage
 // so the object emits the exact retail symbol names).
 extern "C" {
-    void func_801BA490(cf::CSuddenCommu* self);
+    void SuddenCommuTallyParty(cf::CSuddenCommu* self);
     void SuddenCommuResolvePhaseState(cf::CSuddenCommu* self);
-    void func_801BC6A4(cf::CSuddenCommu* self, int val, int num);
+    void SuddenCommuPlayCue(cf::CSuddenCommu* self, int val, int num);
     // Imported voice-node lookup (defined in voice/CCharVoiceMan.cpp): returns
     // 0 when no voice node is registered for the given voice id.
     int CCharVoiceMan_IsNodeActive(u32 arg);
     // Same-TU siblings (defined in CSuddenCommu.cpp; C linkage so the call
     // relocs and definitions keep the unmangled retail names).
     int SuddenCommuCanStart(cf::CSuddenCommu* self);
-    void func_801BB464(cf::CSuddenCommu* self, int playerIdx, int mode, CSuddenCommuActor* player, int arg5);
+    void SuddenCommuTryStart(cf::CSuddenCommu* self, int playerIdx, int mode, CSuddenCommuActor* player, int arg5);
     void SuddenCommuMarkCommuVoices(cf::CSuddenCommu* self);
     void SuddenCommuClearCommuVoices(cf::CSuddenCommu* self);
     // Same-TU init/reset (clears the commu state and retires any voice id).
@@ -216,7 +216,7 @@ extern "C" {
     u32 CtrlRemote_TouchBitByArg(u32 resourceId);
     // No-arg form: retail callers never materialize r3 before this call
     // (stale-r3 pattern - the callee ignores any incoming argument).
-    int func_8017FD44(void);
+    int GetZealObjPtr(void);
     CSuddenCommuGlobal* getUnk80664658();
 }
 
@@ -258,7 +258,7 @@ extern u32 lbl_eu_806625E0;
 extern "C" {
     // Battle-object stat / event-flag probes (code_8025FB10.cpp).
     int IdTable_QuerySumFloat(void* self, int id, u32* outVal, f32* outF);
-    int func_80260264(void* self, int id, void* outVal);
+    int IdTable_GetSum(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
     void CBattleMan_FireActorEvent918(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
     float calcBattleDamage(void* obj, void* target, void* source);
@@ -276,8 +276,8 @@ extern "C" {
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
-    int func_8017FD4C(int);
-    void func_8017FEF0(void* obj, int arg);
+    int GetZealResult(int);
+    void AddZealEffect(void* obj, int arg);
 }
 
 // Commu camera/trigger globals (.sdata). E14's CScn* matches CfObjectMove.hpp
@@ -295,7 +295,7 @@ struct CSuddenCommuCamView {
     f32 field_C;    // 0xC
 };
 
-// Voice-id / voice-act tables (@sda21 in func_801BC6A4 / func_801BB464).
+// Voice-id / voice-act tables (@sda21 in SuddenCommuPlayCue / SuddenCommuTryStart).
 // Declared as leading-element scalars so MWCC emits the retail `li rX,
 // lbl@sda21 / lbzx` indexed form instead of lis/addi HA/LO addressing.
 extern int lbl_eu_806625E4;
@@ -314,4 +314,4 @@ extern "C" void aiActionClearBits0006(void* voiceAct);   // voice-act reset (CVi
 // name; CSuddenCommu's driver calls that alias.
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(); // canonical bool form (CfObjectMove.hpp owner)
 extern "C" void SuddenCommuRearmTimer(cf::CSuddenCommu* self);   // re-arm scan (plain retail symbol)
-extern "C" int func_801BBCBC(cf::CSuddenCommu* self);    // per-frame tick (plain retail symbol)
+extern "C" int SuddenCommuTickActive(cf::CSuddenCommu* self);    // per-frame tick (plain retail symbol)

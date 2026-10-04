@@ -169,3 +169,123 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
+// us-802a8600 (downVoiceFixed240)
+// Fixed buffer-size getter (retail 0x8 bytes: li r3,0xF0; blr). Flat C
+// linkage keeps the emitted symbol unmangled like retail (FAINT's
+// FaintVoice_GetBufSize precedent); referenced from the DOWN vtable
+// (lbl_eu_80539A8C slot 4).
+extern "C" int downVoiceFixed240() {
+    return 240;
+}
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_DOWN.txt): three .rodata typeinfo names
+// (CHAIN/DOWN/EHP, each NUL-terminated and sized to absorb the retail pad),
+// the DOWN init-state triples, the 7-word DOWN vtable ({typeinfo, 0, play,
+// remove, fixed240, alwaysTrue, nullDispatch}), the trailing typeinfo-base
+// word, four EHP init-state triples that share this address range, and the
+// three .sdata typeinfo objects ({name, trailing}). Global-scope data
+// symbols: MWCC does not mangle them, so these carry retail linker names.
+//
+// The EHP callbacks are defined extern "C" in CVS_THREAD_EHP.cpp; the
+// protos below mirror those definitions (incomplete struct keeps the EHP
+// header, and its inline bodies, out of this TU). lbl_eu_80539A58 /
+// lbl_eu_80539B48 / lbl_eu_80662CC0 live in the CHAIN / EHP /
+// CCharVoiceMan ranges and are referenced, not defined, here.
+struct CVS_THREAD_EHP;
+extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self);
+extern "C" void startEhpVoice(CVS_THREAD_EHP* self);
+extern "C" void playEhpSlot2(CVS_THREAD_EHP* self);
+extern "C" void advanceEhpSlotIndex(CVS_THREAD_EHP* self);
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80539A58[4];
+extern u32 lbl_eu_80539B48[4];
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80539AB8[3];
+extern u32 lbl_eu_80539AC4[3];
+extern u32 lbl_eu_80539AD0[3];
+extern "C" u32 lbl_eu_80539ADC[3];
+extern u32 lbl_eu_80662CE8[2];
+extern u32 lbl_eu_80662CF0[2];
+extern u32 lbl_eu_80662CF8[2];
+
+extern const char lbl_eu_80510738[0x18] = "cf::CVS_THREAD_CHAIN";
+extern const char lbl_eu_80510750[0x18] = "cf::CVS_THREAD_DOWN";
+extern const char lbl_eu_80510768[0x18] = "cf::CVS_THREAD_EHP";
+
+u32 lbl_eu_80539A68[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)downVoiceAdvanceSlot1,
+};
+
+u32 lbl_eu_80539A74[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)downVoiceAdvanceSlot2,
+};
+
+u32 lbl_eu_80539A80[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)downVoiceCompletionKick,
+};
+
+u32 lbl_eu_80539A8C[7] = {
+    (u32)lbl_eu_80662CF0,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)downVoiceRemoveByPtr,
+    (u32)downVoiceFixed240,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_80539AA8[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+
+u32 lbl_eu_80539AB8[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)selectEhpVoiceByHp,
+};
+
+u32 lbl_eu_80539AC4[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)startEhpVoice,
+};
+
+u32 lbl_eu_80539AD0[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)playEhpSlot2,
+};
+
+extern "C" u32 lbl_eu_80539ADC[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)advanceEhpSlotIndex,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CE8[2] = {
+    (u32)lbl_eu_80510738,
+    (u32)lbl_eu_80539A58,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CF0[2] = {
+    (u32)lbl_eu_80510750,
+    (u32)lbl_eu_80539AA8,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CF8[2] = {
+    (u32)lbl_eu_80510768,
+    (u32)lbl_eu_80539B48,
+};
+

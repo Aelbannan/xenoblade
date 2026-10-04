@@ -117,7 +117,7 @@ public:
     // +0x58: second 3x4 matrix (MTX34)
     f32 mMatrix58[3][4];
 
-    // +0x88: event-file descriptor pointer (set in func_80180664)
+    // +0x88: event-file descriptor pointer (set in REvtCam_SetupEvent)
     CREvtCamFile* mField88;
     // +0x8C: float (default from lbl_eu_806678A4, updated from game manager)
     f32 mField8C;
@@ -133,7 +133,7 @@ public:
     u32 mFieldA0;
     // +0xA4: byte flag (set to 0/1)
     u8 mFieldA4;
-    // +0xA5: byte flag (set in func_80180664)
+    // +0xA5: byte flag (set in REvtCam_SetupEvent)
     u8 mFieldA5;
 
     // +0xA6: array of short task IDs (count at mTaskCount2A8)
@@ -187,6 +187,6 @@ extern f32 lbl_eu_806678A4;
 extern f32 lbl_eu_806678A8;
 extern f32 lbl_eu_806678AC;
 extern f32 lbl_eu_806678B0;
-// Double constant used by the manual u32->f64 bit trick in func_801804CC
+// Double constant used by the manual u32->f64 bit trick in REvtCam_UpdateFromAnim
 // (0x4330000080000000).
 extern f64 lbl_eu_806678B8;

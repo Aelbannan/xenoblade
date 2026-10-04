@@ -17,14 +17,14 @@ struct CtrlNpcVec3W {
 };
 
 // Name-index search helper reached through CCtrlNpcChar::field_98 (vtable
-// +0x44 query consumed by func_80093F28; returns -1 when the name is not
+// +0x44 query consumed by CtrlNpcUpdateTalk; returns -1 when the name is not
 // found). Never instantiated here, so no vtable is emitted.
 class CCtrlNpcSearch {
 public:
     virtual int findNameIndex(const char* name);   // +0x44 retail slot
 
     u8 _pad00[0x7A0];
-    u32 field_7A4;   // flags word (bit 0x00010000 tested by func_8009398C)
+    u32 field_7A4;   // flags word (bit 0x00010000 tested by CtrlNpcUpdateAction)
 };
 
 // Object referenced by CCtrlNpcChar::field_C4 (the NPC's C4 status object;
@@ -170,7 +170,7 @@ union CtrlNpcCvtDbl {
 
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 
-// Talk/page controller update helpers (func_80093F28).
+// Talk/page controller update helpers (CtrlNpcUpdateTalk).
 extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void* getFP__FPCc(const char* name);
@@ -182,7 +182,7 @@ extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 // action source object; the result has a position getter at vtable +0xac).
 void* findObjectById(int id);
 
-// Addressable raw-column holder for func_80093F28: full-word store of the
+// Addressable raw-column holder for CtrlNpcUpdateTalk: full-word store of the
 // getBdatStringColumnValue result, punned u8/u16 read on reload (retail's
 // stw-then-lbz/lhz pairs around the column calls; same convention as
 // CfEneColNarrow in CfObjectEne.hpp).
@@ -192,7 +192,7 @@ union NpcColNarrow {
     u8 b;
 };
 
-// bdat tables / strings used by func_80093F28.
+// bdat tables / strings used by CtrlNpcUpdateTalk.
 // The page-hint halfwords sprintf'd into the bdat file name.
 extern u16 lbl_eu_80663E42;
 extern u32 lbl_eu_80663E28;   // global flags word (sbss)
@@ -215,13 +215,13 @@ extern "C" void __ct__cf_CtrlMoveNpc(cf::CCtrlMoveNpc* self, cf::CtrlNpc* parent
 // page id (unsigned compare at the call site).
 extern "C" u32 getAnimModelId(void* arg);
 
-extern "C" void func_8019F6E8(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB);
+extern "C" void beginNpcMove(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB);
 extern "C" int NpcMove_DispatchState(cf::CCtrlMoveNpc* self);
 extern "C" void CtrlNpcSetupMoveAction(cf::CtrlNpc* self, const ml::CVec3* vec,
                               f32 scale, f32 paramB);
 extern "C" int VecMath_CircleOverlapXZ(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 // Same-TU forward decl: keeps the call reloc from CtrlNpcAdvanceBehavior flat.
-extern "C" int func_800964EC(cf::CtrlNpc* self);
+extern "C" int CtrlNpcApproachTarget(cf::CtrlNpc* self);
 // CfGameManager helpers: the retail symbols keep the Fv suffix but the real
 // call sites pass arguments / read the return (same scheme as CTaskREvent.hpp),
 // so C linkage emits the literal retail names at the call sites.
@@ -232,7 +232,7 @@ extern "C" u32 clearControllerState__Q22cf13CfGameManagerFv();
 extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv();
 // Movement-timer helper defined in this TU (retail name unmangled); C linkage
 // keeps the call reloc from CtrlNpcRestartTimerGated matching retail.
-extern "C" void func_8009565C(cf::CtrlNpc* self);
+extern "C" void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self);
 
 // Retail float constants (sdata2) referenced by the CtrlNpc unit.
 extern const f32 lbl_eu_80666698;
@@ -277,7 +277,7 @@ extern u32 lbl_eu_80663E28;
 extern const u32 lbl_eu_80527BB0[];
 extern const u32 lbl_eu_80527B38[];
 
-// Member-function-pointer dispatch tables used by func_8009398C's per-action
+// Member-function-pointer dispatch tables used by CtrlNpcUpdateAction's per-action
 // state handlers ((self->*tbl[field_BE])() -> __ptmf_scall in retail).
 typedef void (cf::CtrlNpc::*CtrlNpcActionMfp)();
 extern const CtrlNpcActionMfp lbl_eu_80527AE0[4];   // actions 1..2 handlers

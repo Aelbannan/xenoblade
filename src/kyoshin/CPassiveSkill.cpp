@@ -1197,7 +1197,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_update(u8* selfRaw) {
     if (self->mInfo.field_54 != 0) {
         sysWinDispatchPhase(self->mInfo.field_54);
     }
-    func_801D202C(&self->mCur);
+    Cur_Update(&self->mCur);
 done:;
 }
 
@@ -1800,7 +1800,7 @@ extern "C" void KizunagramSetActiveSlot(void* self, int slot);
 extern "C" void KizunagramClearChartEntry(void* self);
 extern "C" void KizunagramStoreWorkEntry(void* self, int a, int b, int value);
 extern "C" void SysWinLog_ScanSegmentSlots(u8* self);
-extern "C" void func_8022B9B4(void*, const char*, int);
+extern "C" void sysWinSetKindContent(void*, const char*, int);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinOpenPhase1(void*);
 
@@ -1946,9 +1946,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                                            &lbl_eu_8050DC20[0x207], 0x1c);
                 char* msgC = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
                                            &lbl_eu_8050DC20[0x207], 0x1d);
-                func_8022B9B4(self->mInfo.field_54, msgA, 0);
+                sysWinSetKindContent(self->mInfo.field_54, msgA, 0);
                 sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
-                func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
+                sysWinApplyKind(static_cast<CSysWin*>(self->mInfo.field_54), 0);
                 sysWinOpenPhase1(self->mInfo.field_54);
                 Cur_SetVisible(&self->mCur, 0);
                 playUISound(3);
@@ -2002,7 +2002,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_learnedClose(u8* selfRaw)
 
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
-extern "C" void func_8022B9B4(void*, const char*, int);
+extern "C" void sysWinSetKindContent(void*, const char*, int);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
@@ -2018,7 +2018,7 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 // flag, run the state-15 helper, play the sounds and run the update tail.
 // Callee declarations (retail names; also declared in CCol6System.hpp /
 // CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
-extern "C" void func_8022B9B4(void*, const char*, int);
+extern "C" void sysWinSetKindContent(void*, const char*, int);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinOpenPhase1(void*);
 u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
@@ -2098,9 +2098,9 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_confirmAcquire(void* self
             self->field_11F = 0;
             break;
         }
-        func_8022B9B4(self->mInfo.field_54, msgA, 0);
+        sysWinSetKindContent(self->mInfo.field_54, msgA, 0);
         sysWinSetTwoTextValues(self->mInfo.field_54, msgB, msgC);
-        func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
+        sysWinApplyKind(static_cast<CSysWin*>(self->mInfo.field_54), 0);
         sysWinOpenPhase1(self->mInfo.field_54);
         Cur_SetVisible(&self->mCur, 0);
         break;
@@ -3431,7 +3431,7 @@ __declspec(noinline) void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine
             if (move != 0) {
                 cf::CfObjectMove* m = getCfObjectPc__FPQ22cf12CfObjectMove(move);
                 if (m != 0) {
-                    func_800BFDE0(m, 0);
+                    CfObjectPc_setupFrame(m, 0);
                 }
             }
         }

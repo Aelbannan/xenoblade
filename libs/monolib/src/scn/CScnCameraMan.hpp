@@ -26,7 +26,7 @@ struct CScnCameraItem {
     virtual void vf0() = 0;   // vtable slot 0 (+0x04)
     virtual void vf1() = 0;   // vtable slot 1 (+0x0C)
     virtual void vf2() = 0;   // vtable slot 2 (+0x10)
-    virtual void vf3() = 0;   // vtable slot 3 (+0x14) - invoked by func_8049B024
+    virtual void vf3() = 0;   // vtable slot 3 (+0x14) - invoked by CamMan_RefreshCurrentCamera
 
     u32 mParent;   // +0x04
     u16 mType;     // +0x08
@@ -190,7 +190,7 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int idx);
 // Retail CScriptCode line parser. The retail symbol is the Fv (no-arg) mangled
 // name but the function takes (self, pData, dataSize) - CScriptCode.cpp defines
 // it with C linkage and the exact name, so the call site must too.
-extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSize);
+extern "C" void parseLines__11CScriptCodeFv(void* self, u8* pData, u32 dataSize);
 // Retail CScnCameraMan vtable data symbol (stored manually - class is novtable).
 extern "C" u32 lbl_eu_8056EA40[];
 
@@ -222,7 +222,7 @@ struct CGXCacheTail {
 };
 
 // Overlay of the CScnItemCamera fields used by the screen-projection helper
-// func_8049B59C: view matrix at +0xCC, a 13-float coefficient block at +0x150
+// CamMan_ProjectToScreen: view matrix at +0xCC, a 13-float coefficient block at +0x150
 // (three plane rows plus one trailing float), s16 screen offsets at +0x1D8,
 // and the aspect/near-plane tail.
 struct CScnItemCameraProject {
@@ -239,7 +239,7 @@ struct CScnItemCameraProject {
 };
 
 // Volatile view of the CScnItemCamera frustum tail: volatile reads pin the
-// depth loads at their program position (top of func_8049B764) so MWCC parks
+// depth loads at their program position (top of CamMan_BuildPerspective) so MWCC parks
 // them in f31/f30 across the width-scale call, like retail's prologue. The
 // load encoding (lfs off(rN)) is identical to a plain read.
 struct CScnItemCameraFrustumVt {

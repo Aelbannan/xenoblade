@@ -8,7 +8,7 @@ struct CTaskGame_setVec4_tmp {
 };
 extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
 
-void func_8004302C(int, int);
+void CTaskGame_setLoadScreen(int, int);
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 // Unmangled retail symbol (not CtrlObjectParam_GetSlotTableBase__Fv).
 extern "C" int* CtrlObjectParam_GetSlotTableBase();

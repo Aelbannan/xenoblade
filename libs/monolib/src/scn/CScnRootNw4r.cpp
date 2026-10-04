@@ -353,7 +353,7 @@ extern "C" void RootNw4r_DrawFrame(CScnRootNw4r* self) {
         return;
     }
 
-    func_8049B024(self->field_0x4->mCamWork);
+    CamMan_RefreshCurrentCamera(self->field_0x4->mCamWork);
 
     // Scissor validity gate: computed into a flag local, matching retail's
     // li/set-branch sequence.
@@ -436,13 +436,13 @@ extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag) {
 
         if (pending != 0) {
             // Full redraw: re-render the bloom source and both passes.
-            func_8049A128(self->field_0x14);
+            CScnBloom_RenderFullRes(self->field_0x14);
             nw4r::g3d::G3dReset();
             self->mScnRoot->DrawOpa();
             self->mScnRoot->DrawXlu();
-            func_8049A318(self->field_0x14);
+            CScnBloom_RenderCached(self->field_0x14);
         } else if (self->field_0x14->mFlags & 4) {
-            func_8049AA74(self->field_0x14);
+            CScnBloom_RenderHalfRes(self->field_0x14);
         }
 
         // Clear the per-item request flags.

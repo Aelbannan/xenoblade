@@ -18,8 +18,8 @@ public:
 
 extern "C" void cbRenderBefore__11CMenuGCItemFv(void*);
 
-// Phase-2 helper defined below (retail keeps the bare func_ name).
-extern "C" void func_802B0D24(CMenuGCItem* self);
+// Phase-2 helper defined below (phase-2 input dispatch; advances mState to 3).
+extern "C" void CMenuGCItem_HandlePhase2(CMenuGCItem* self);
 
 /*
  * Retail constructor symbol (unmangled global). Combines the factory and the
@@ -136,7 +136,7 @@ void CMenuGCItem::Move() {
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
             IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
-            func_801CB28C(&mItemBoxGrid);
+            InitItemDisplay(&mItemBoxGrid);
             mState = 1;
             playUISound__FUl(0x6d);
         }
@@ -148,7 +148,7 @@ void CMenuGCItem::Move() {
         }
         break;
     case 2:
-        func_802B0D24(this);
+        CMenuGCItem_HandlePhase2(this);
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
@@ -210,4 +210,4 @@ extern "C" int CMenuGCItem_IsActive() {
     return lbl_eu_80664C00 != 0;
 }
 
-extern "C" void func_802B0D24(CMenuGCItem* self) {}
+extern "C" void CMenuGCItem_HandlePhase2(CMenuGCItem* self) {}

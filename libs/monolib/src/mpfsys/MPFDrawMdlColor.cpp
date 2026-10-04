@@ -91,7 +91,7 @@ void setupGfxMode3__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void setupGfxMode4__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group, s32 tevStage, f32 scale, u8 mtxSelect);
+void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group, s32 tevStage, f32 scale, u8 mtxSelect);
 void loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
 void applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
@@ -199,7 +199,7 @@ extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMd
 
     slot = list->groups;
     for (i = 1; i < list->count; slot++, i++) {
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
+        loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
         applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         poly = polys;
@@ -252,7 +252,7 @@ extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawM
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
         setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
+        loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
         applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         poly = polys;
@@ -308,7 +308,7 @@ extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMd
 
     slot = list->groups;
     for (i = 1; i < list->count; slot++, i++) {
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
+        loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
         applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         poly = polys;
@@ -362,7 +362,7 @@ extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawM
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
         setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
+        loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
         applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         poly = polys;

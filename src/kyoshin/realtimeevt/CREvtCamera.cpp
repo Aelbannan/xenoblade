@@ -34,7 +34,7 @@ extern "C" {
     void EvtSeqResolveAnmChr(void* obj, const char* name, u32* out);
     int EvtSeqFindResAddr(void* obj, const char* name, void* out);
     int EvtSeqResolveAnmChr2(void* obj, const char* name, void* out1, void* out2);
-    void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e);
+    void simBindChrAnim(void* obj, void* param, int a, int b, int c, int d, int e);
     float simGetLeafAnimDist2(void* obj);
     void* getGlobalSda();
     void Env_SetClock(void* sda, u32 a, u32 b, u32 c);
@@ -244,13 +244,13 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
 }
 
 // ============================================================================
-// func_80180210 (0x8018160C, size 0x184)
+// REvtCam_ActivateTasks (0x8018160C, size 0x184)
 // Registers/activates tasks from the task-data camera into the global
 // camera, or (when taskData == 0) syncs the registered tasks' activity.
 // All reads go through the global singleton (lbl_eu_806642A8) since the
 // CTaskLOD calls may modify it.
 // ============================================================================
-extern "C" void func_80180210(CREvtCamera* taskData) {
+extern "C" void REvtCam_ActivateTasks(CREvtCamera* taskData) {
     extern unsigned long lbl_eu_806642A8;
     if (!lbl_eu_806642A8) return;
 
@@ -324,12 +324,12 @@ static f32 ConvU32ToTime(u32 v) {
 }
 
 // ============================================================================
-// func_801804CC (0x801818C8, size 0x154)
+// REvtCam_UpdateFromAnim (0x801818C8, size 0x154)
 // Updates the camera from the scene model's animation results: samples the
 // "Cam" matrices at the current time, mirrors the camera position into the
 // game manager, and applies the result to the active camera object.
 // ============================================================================
-extern "C" void func_801804CC(CREvtCamera* self) {
+extern "C" void REvtCam_UpdateFromAnim(CREvtCamera* self) {
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
         cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 1);
     }
@@ -360,9 +360,9 @@ extern "C" void func_801804CC(CREvtCamera* self) {
 }
 
 // ============================================================================
-// func_80180664 (0x80181A60, size 0x2DC)
+// REvtCam_SetupEvent (0x80181A60, size 0x2DC)
 // ============================================================================
-extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* someParam) {
+extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* someParam) {
     // Mirror the event-file descriptor's flag word into mFieldA5.
     if (self->mField88) {
         self->mFieldA5 = self->mField88->field_04 != 0;
@@ -385,7 +385,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
         if (eventData) {
             void* taskObj = Scn_InitGlobalA((void*)lbl_eu_80663E14, eventData, 0);
             self->mField20 = (u32)taskObj;
-            func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
+            simBindChrAnim((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
             self->mField43C = (s32)(u32)simGetLeafAnimDist2((void*)self->mField1C);
             EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
             EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);

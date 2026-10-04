@@ -142,7 +142,7 @@ const void* lbl_eu_80525D68[76] = {
     (const void*)lbl_eu_804FAB84, (const void*)gameClear,
     (const void*)lbl_eu_804FAB90, (const void*)setLastTalkNpc,
     (const void*)lbl_eu_804FABA0, (const void*)isSETalkVoiceWait,
-    (const void*)lbl_eu_804FABB4, (const void*)func_eu_80046DA0,
+    (const void*)lbl_eu_804FABB4, (const void*)uiSetSETalkVoiceWait,
     (const void*)lbl_eu_804FABC8, (const void*)uiClearSETalkVoiceWait,
     (const void*)0, (const void*)0
 };
@@ -604,7 +604,7 @@ int isSETalkVoiceWait(VMThread* pThread) {
     vmRetValSet(pThread, &arg);
     return 1;
 }
-extern "C" int func_eu_80046DA0(VMThread* pThread) {
+extern "C" int uiSetSETalkVoiceWait(VMThread* pThread) {
     extern void func_eu_8013C8DC();
     func_eu_8013C8DC();
     return 0;

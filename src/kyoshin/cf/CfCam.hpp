@@ -37,8 +37,8 @@ extern "C" float lbl_eu_80570A38[3];  // .bss vec3 (retail 0x80570A38)
 extern "C" float lbl_eu_80570A44[3];
 extern "C" float lbl_eu_80570A50[3];  // .bss vec3 (retail 0x80570A50)
 extern "C" float lbl_eu_80570A5C[6];  // .bss 6 floats (retail 0x80570A5C, size 0x18)
-extern "C" void func_804BE4B4(void*, int);
-extern "C" void* func_804BE4E0(void*, int);
+extern "C" void ScnRes_CopyEntryHead(void*, int);
+extern "C" void* ScnRes_CopyEntryMid(void*, int);
 extern "C" float scaleByGlobal(float val);
 extern "C" u32 CfRes_getHeapHandle();                          // mtl heap handle for cf allocations
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
@@ -52,7 +52,7 @@ extern "C" int camPadIsHeld3(void* self);
 extern "C" int CfRes_getE24Bit22();
 extern "C" int cfCam_getE28Bit24();
 extern "C" int battleCommuIsActive();
-extern "C" int func_8017FD44();
+extern "C" int GetZealObjPtr();
 extern "C" int camPadPress12(void* self);
 extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" int cfCam_maskUnk1D4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
@@ -122,8 +122,8 @@ struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 class CfObject;     // active camera-state object (cfCam_getActiveObj return)
 // Owner view for cfCam_queryVoxArts's +0x04 sub-object (slot 0x30 -> query word).
 // Owned by kyoshin/help/CHelp_Talk.hpp (CVoiceRec/CVoiceSub30: result of
-// func_8016FE34) - repeated here so this TU stays self-contained;
-// same shape as CHelp_Talk::func_802B86F0 (voice->field_04->vf30()).
+// MapFx_ResolveOwner) - repeated here so this TU stays self-contained;
+// same shape as CHelp_Talk::isTalkHelpReady (voice->field_04->vf30()).
 struct CVoiceSub30 {
     virtual void* f00();
     virtual void* f01();
@@ -452,7 +452,7 @@ float cfCam_getFloat508(void* x);
 int cfCam_getBit13_4EC(void* x);
 int testAnimMoveBit(void* x);               // vec helper probe
 void noopAnimQuat(void* v);              // vec helper
-void* func_8016FE34(void* source);        // object state getter
+void* MapFx_ResolveOwner(void* source);        // object state getter
 float lbl_eu_80570A2C[3];                 // .bss vec3 (retail 0x80570A2C)
 u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
 // In-TU definitions (CfCam.cpp) whose differing signatures keep the bl at

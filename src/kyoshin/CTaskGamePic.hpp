@@ -62,7 +62,7 @@ extern const f32 lbl_eu_80668BB4;
 extern const f32 lbl_eu_80668BB8;
 extern const f64 lbl_eu_80668BC0;
 
-// cbRenderBefore imports: CView::func_8043EA88's retail symbol is the
+// cbRenderBefore imports: CView::fitRectToView's retail symbol is the
 // pre-mangled global name (member `this` unused in the body, rect in r3 /
 // view in r4 - see monolib/src/core/CView.cpp); the C++ member declaration
 // in CView.hpp passes this in r3 (wrong call shape), and a plain global
@@ -72,7 +72,7 @@ class CView;
 namespace ml {
 struct CRect;
 }
-extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
+extern "C" void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
 
 // Texture/palette file data header read by cbRenderBefore: the loaded TPL
 // palette (field_68) carries the texture's height/width at 0x14/0x16.

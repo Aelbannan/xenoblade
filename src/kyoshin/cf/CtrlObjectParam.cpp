@@ -72,7 +72,7 @@ extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 // findObjB28ById (actor lookup): declared locally - CAIAction.hpp conflicts
 // with CfGameManager.hpp's getInstance__Q22cf14CBattleManagerFv return type.
 extern "C" void* findObjB28ById(s32);
-extern "C" int func_80148778(void* obj, int id);   // battle-state status probe
+extern "C" int isBattleStatusActive(void* obj, int id);   // battle-state status probe
 extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state status value
 #include "monolib/util/MemManager.hpp"       // mtl::MemManager (work-buffer alloc)
 
@@ -832,7 +832,7 @@ extern "C" void CtrlObjectParam_ResetWorkBuffer(cf::CtrlObjectParamWork* work) {
     work->field_52 = 0;
     work->field_54 = 1;
     work->field_56 = 1;
-    func_8016455C(reinterpret_cast<CEventDataTable*>(&work->eventTable));
+    evtInitDataTable(reinterpret_cast<CEventDataTable*>(&work->eventTable));
 }
 
 extern "C" void CtrlObjectParam_ClearItemSlotsBitmap() {
@@ -946,7 +946,7 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
 // Character-row copy: resolve the row entries for the two u16 row indices
 // (work + idx*0x3DD4), init entryA via CtrlObjectParam_RampEntryArtsLevel, snapshot entryB's
 // param sub-region (blocks at +0x188/+0x16AC/+0x1730) to stack locals, copy
-// entryB's CActorParam into entryA's via func_80175A50, then restore the
+// entryB's CActorParam into entryA's via CActorParam_copyAll, then restore the
 // snapshots. The dead lbl_eu_8052E9B0 address store is kept by retail.
 void __ct__8009ED08(u32 rowA, u32 rowB) {
     const char* strBase = lbl_eu_804FBCB0;   // materialized early (retail lis/addi)
@@ -967,7 +967,7 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
         reinterpret_cast<u8*>(entryB) + 0x16AC);
     cf::CtrlObjectParamCopyBlock3 t3 = *reinterpret_cast<cf::CtrlObjectParamCopyBlock3*>(
         reinterpret_cast<u8*>(entryB) + 0x1730);
-    func_80175A50(reinterpret_cast<cf::CActorParam*>(&entryB->param_17C[0]), reinterpret_cast<cf::CActorParam*>(&entryA->param_17C[0]));
+    CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&entryB->param_17C[0]), reinterpret_cast<cf::CActorParam*>(&entryA->param_17C[0]));
     *reinterpret_cast<cf::CtrlObjectParamCopyBlock1*>(
         reinterpret_cast<u8*>(entryB) + 0x188) = t1;
     *reinterpret_cast<cf::CtrlObjectParamCopyBlock2*>(
@@ -1111,7 +1111,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
         void* a3 = findObjB28ById(self->field_00);
         if (a3 != 0) {
             void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_getCopyParam();
-            func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+            CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
     }
 }
@@ -1156,7 +1156,7 @@ extern "C" void CtrlObjectParam_ActivateCharRow(void* selfV) {
     // Character-row activation: run the 0xAC/0xB0/0xB8 init chain on the
     // actor (or the embedded CActorParam when no actor exists), refresh the
     // param via the 0x28C label hook, then pass the halved (level * byte)
-    // value into vtable slot 0x2FC. Note the first func_80175A50 call passes
+    // value into vtable slot 0x2FC. Note the first CActorParam_copyAll call passes
     // (&mParam, value) while the tail passes (value, &mParam) - retail order.
     void* actor2;
     void* actor;
@@ -1173,9 +1173,9 @@ extern "C" void CtrlObjectParam_ActivateCharRow(void* selfV) {
     }
     actor2 = findObjB28ById(self->field_00);
     if (actor2 != 0) {
-        func_801765A4(actor2, lbl_eu_806667A0, 1);
+        CActorParam_updateTick(actor2, lbl_eu_806667A0, 1);
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getCopyParam();
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         self->mParam.CActorParam_resetArtsStatus(self);
     }
@@ -1191,7 +1191,7 @@ extern "C" void CtrlObjectParam_ActivateCharRow(void* selfV) {
         void* a3 = findObjB28ById(self->field_00);
         if (a3 != 0) {
             void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_getCopyParam();
-            func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+            CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
     }
 }
@@ -1315,7 +1315,7 @@ extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView*
             void* actor2 = findObjB28ById(self->field_00);
             if (actor2 != 0) {
                 void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getCopyParam();
-                func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+                CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
             }
         }
     }
@@ -1377,9 +1377,9 @@ extern "C" void __declspec(noinline) CtrlObjectParam_RampEntryArtsLevel(void* se
     if (actor != 0) {
         void* actor2 = findObjB28ById(self->field_00[0]);
         if (actor2 != 0) {
-            func_801765A4(actor2, lbl_eu_806667A0, 0);
+            CActorParam_updateTick(actor2, lbl_eu_806667A0, 0);
             void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getCopyParam();
-            func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
+            CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
         } else {
             self->mParam.CActorParam_resetArtsStatus(self);
         }
@@ -1421,7 +1421,7 @@ extern "C" void __declspec(noinline) CtrlObjectParam_RampEntryArtsLevel(void* se
             void* a3 = findObjB28ById(self->field_00[0]);
             if (a3 != 0) {
                 void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_getCopyParam();
-                func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+                CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
             }
         }
         count++;
@@ -1600,26 +1600,26 @@ void CtrlObjectParam_RaiseArtsLevelBy(cf::CtrlObjectParamEntry11A4* self, int am
 extern "C" void CtrlObjectParam_SyncParamFromActor(cf::CtrlObjectParamArtsView* self) {
     // Resolve the actor for this arts type id, then hand the vtable-0x28C
     // result (a pointer) plus the arts-data write target at +0x17C to
-    // func_80175A50(reinterpret_cast<cf::CActorParam*>(retail arg order: value in r3), reinterpret_cast<cf::CActorParam*>(obj in r4)).
+    // CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(retail arg order: value in r3), reinterpret_cast<cf::CActorParam*>(obj in r4)).
     u8* obj = reinterpret_cast<u8*>(findObjB28ById(self->field_00));
     if (obj != 0) {
         void* value = reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_getCopyParam();
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->field_17C));
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->field_17C));
     }
 }
 
 extern "C" void CActorParam_getCopyParam__Q22cf11CActorParamFv() {}
 
 // Resolve the actor for this arts type id, then hand the vtable-0x28C result
-// (a pointer) plus the arts-data write target at +0x17C to func_80175A50
+// (a pointer) plus the arts-data write target at +0x17C to CActorParam_copyAll
 // (retail arg order: value in r3, obj in r4). When no actor exists, activate
 // the embedded CActorParam at +0x17C through its vtable-0xA4 slot instead.
 void CtrlObjectParam_SyncParamFromActorEx(cf::CtrlObjectParamArtsView* self, u32 arg2) {
     void* actor = findObjB28ById(self->field_00);
     if (actor != 0) {
-        func_801765A4(actor, lbl_eu_806667A0, arg2);
+        CActorParam_updateTick(actor, lbl_eu_806667A0, arg2);
         void* value = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getCopyParam();
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->field_17C), reinterpret_cast<cf::CActorParam*>(value));
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&self->field_17C), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         reinterpret_cast<cf::CActorParam*>(&reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self)->mParam)->CActorParam_resetArtsStatus(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
     }
@@ -1642,9 +1642,9 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* s
     void* actor1 = findObjB28ById(self->field_00);
     void* actor2 = findObjB28ById(self->field_00);
     if (actor2 != 0) {
-        func_801765A4(actor2, lbl_eu_806667A0, 0);
+        CActorParam_updateTick(actor2, lbl_eu_806667A0, 0);
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getCopyParam();
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
     } else {
         self->mParam.CActorParam_resetArtsStatus(self);
     }
@@ -1768,7 +1768,7 @@ extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
 
 // ── CtrlObjectParam_ClaimArtsSlotRow (us-800a227c) ───────────────────────────────────────────
 // Arts-slot update: resolve the actor for the type id, refresh the embedded
-// CActorParam (via func_80175A50 or the 0xA4 slot), then claim an arts-slot
+// CActorParam (via CActorParam_copyAll or the 0xA4 slot), then claim an arts-slot
 // row in the 0x49-stride table at +0xE8: the bdat columns +0x58/+0x253/+0x109
 // select the row and the (offset-table) slot index; an empty slot (byte at
 // base+elem*8+flag*8+0x31 == 0) is stamped with arg2, else a 0x76 fallback
@@ -1780,9 +1780,9 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
     void* actor = findObjB28ById(self->field_00);
     void* actor2 = findObjB28ById(self->field_00);
     if (actor2 != 0) {
-        func_801765A4(actor2, lbl_eu_806667A0, 0);
+        CActorParam_updateTick(actor2, lbl_eu_806667A0, 0);
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getCopyParam();
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
+        CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         self->mParam.CActorParam_resetArtsStatus(self);
     }
@@ -1830,7 +1830,7 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
         void* a3 = findObjB28ById(self->field_00);
         if (a3 != 0) {
             void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_getCopyParam();
-            func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
+            CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_rearmArtsList();
     }
@@ -2066,12 +2066,12 @@ extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int*
         *outA += IdTable_SumValues(lookup, 0x88);
     }
     u8* entryBase = reinterpret_cast<u8*>(lbl_eu_80663E88 + rowOff);
-    if (func_80148778(entryBase + 0x4374, 0xB7)) {
+    if (isBattleStatusActive(entryBase + 0x4374, 0xB7)) {
         cf::CBattleStateEntry* entry = reinterpret_cast<cf::CBattleStateEntry*>(
             findBattleStatusEntry(entryBase + 0x4374, 0xB7));
         *outA += entry->unk10;
     }
-    if (func_80148778(entryBase + 0x4374, 0xB8)) {
+    if (isBattleStatusActive(entryBase + 0x4374, 0xB8)) {
         cf::CBattleStateEntry* entry = reinterpret_cast<cf::CBattleStateEntry*>(
             findBattleStatusEntry(entryBase + 0x4374, 0xB8));
         *outB += entry->unk10;
@@ -2370,12 +2370,12 @@ extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* selfV
     }
     if (view->field_00 == 3) {
         u8* p = reinterpret_cast<u8*>(lbl_eu_80663E88) + 0x265C4;
-        func_eu_80263A24(p, reinterpret_cast<u8*>(view) + 0x3534);
+        IdTable_DeepCopy(p, reinterpret_cast<u8*>(view) + 0x3534);
         *reinterpret_cast<u32*>(p + 0x6E30) = 8;
     }
     if (view->field_00 == 8) {
         u8* p = reinterpret_cast<u8*>(lbl_eu_80663E88) + 0x130A0;
-        func_eu_80263A24(p, reinterpret_cast<u8*>(view) + 0x3534);
+        IdTable_DeepCopy(p, reinterpret_cast<u8*>(view) + 0x3534);
         *reinterpret_cast<u32*>(p + 0x390C) = 3;
     }
     SysWinLog_SweepSlotPressure();
@@ -2929,7 +2929,7 @@ ret0:
 // Walk the arts list: 0x1111 rows get their data[0] slot cleared, 0xAAAA rows
 // sprintf their data[1] name into a local buffer; any other tag aborts the
 // walk. Rows with a non-zero data[0] after handling get it formatted via
-// func_800AA33C.
+// Tok_FormatStr.
 extern "C" void CtrlObjectParam_ScanArtsListRows(cf::CtrlObjectParamArtsList* list) {
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
@@ -2947,7 +2947,7 @@ extern "C" void CtrlObjectParam_ScanArtsListRows(cf::CtrlObjectParamArtsList* li
         }
         if (e->data[0] != 0) {
             ml::FixStr<64> str(true);
-            func_800AA33C(str, e->data[0], 0, 0);
+            Tok_FormatStr(str, e->data[0], 0, 0);
         }
         e = e->next;
     }

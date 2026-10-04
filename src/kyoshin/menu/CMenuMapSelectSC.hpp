@@ -134,8 +134,8 @@ extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self);
 extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self);
 extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self);
 extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self);
-extern "C" void func_80251628(CMenuMapSelectSC* self);
-extern "C" void func_802516DC(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self);
+extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self);
 
 // ---------------------------------------------------------------------------
 // Additional retail-unmangled callee names for the world-map (SC) screen.
@@ -165,7 +165,7 @@ extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CFade(CFade* self);
 extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" void func_8016742C(void* dest, void* src);
+extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" char* BdatTouchStringCell(char* a, char* b, u32 id);
 // D2-form subobject/base destructor helpers (explicit delete flags), used by

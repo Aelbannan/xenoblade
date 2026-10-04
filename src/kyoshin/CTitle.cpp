@@ -23,10 +23,10 @@
 extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleMenu_bindAnim1(CTitleMenu* self);
-extern "C" void __declspec(noinline) func_802B71C4(CTitleLogo* self);
+extern "C" void __declspec(noinline) CTitleMenu_bindAnim4(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self);
-void __declspec(noinline) func_802B71C4(CTitleMenu* self);
+void __declspec(noinline) CTitleMenu_bindAnim4(CTitleMenu* self);
 extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self);
 extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self);
 
@@ -352,7 +352,7 @@ extern "C" __declspec(noinline) void CTitleMenu_stepState4(CTitleMenu* self) {
         self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
         self->field_0x26 = 5;
-        func_802B71C4(self);
+        CTitleMenu_bindAnim4(self);
         self->field_0x25 = 1;
     }
 }
@@ -384,7 +384,7 @@ extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
 extern "C" void CTitleMenu_onAnim3Done(void* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
         *((u8*)self + 0x26) = 5;
-        func_802B71C4((CTitleLogo*)self);
+        CTitleMenu_bindAnim4((CTitleLogo*)self);
         *((u8*)self + 0x25) = 1;
     }
 }
@@ -444,7 +444,7 @@ extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu* self) {
 
 // Menu phase 5: unbind animation 3, bind animation 4, enable it, park it on
 // its start frame, and advance the layout once.
-void __declspec(noinline) func_802B71C4(CTitleMenu* self) {
+void __declspec(noinline) CTitleMenu_bindAnim4(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans3);
     self->mLayout->BindAnimation(self->mAnimTrans4);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, true);
@@ -520,7 +520,7 @@ extern "C" void CTitle_update(CTitle* self) {
     (self->*lbl_eu_8053B274[self->field_0x24])();
     CTitleLogo_update(&self->mLogo);
     CTitleMenu_update(&self->mMenu);
-    func_801D202C(reinterpret_cast<CBaseCur*>(&self->mCur[0]));
+    Cur_Update(reinterpret_cast<CBaseCur*>(&self->mCur[0]));
 }
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.

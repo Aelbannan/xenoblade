@@ -25,7 +25,7 @@ public:
     f32 tickAccum;    // +0x04: accumulated scaled frame time until next tick
 };
 
-// --- linked-list / battle-object types used by func_8018C610 ---
+// --- linked-list / battle-object types used by PartyGaugeTickDecay ---
 
 struct CMB_CfObjEnt_8018C5FC; // fwd
 
@@ -83,7 +83,7 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {
 // Timer-based counter decrement: decreases the party gauge over time.
 // When the timer elapses and there are no active battles, the counter
 // decrements by 1 (if a qualifying party member is present) or by 2.
-void func_8018C610(UnkClass_8018C5FC* _this) {
+void PartyGaugeTickDecay(UnkClass_8018C5FC* _this) {
     u32 cf8cVal = CtrlRemote_TouchBitByArg(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return;

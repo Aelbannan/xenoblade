@@ -96,7 +96,7 @@ extern "C" void setMapVisibility__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u3
 extern "C" void* checkMpfFlags__17UnkClass_8047BB54Fv(void*, void*);
 // When the +0x6C bit-15 flag is set, refresh the region pairing through the
 // shared scene-view globals and re-bind the +0xF0 sub-object's +0x9C offset.
-extern "C" void func_800B9C14(void* self) {
+extern "C" void CfObjectMap_refreshRegion(void* self) {
     if (*(u32*)((u8*)self + 0x6C) & 0x8000) {
         extern void* Scn_HasCamItem(void*, void*);
         void* r = Scn_HasCamItem((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
@@ -110,7 +110,7 @@ void clearStatus__Q22cf11CfObjectMapFv(void* self) {
 
 extern "C" void noopMapStub() {}
 
-extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
+extern "C" int CfObjectMap_resolveResource(cf::CfObjectMap* self, u32 a, u32 b) {
     self->CfObjectModel_releaseModelSub();
     if (self->field_0xEC != 0) {
         Scn_IsAnimActiveOrNull(self->field_0xEC);
@@ -130,7 +130,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         buf[0] = 0;
         int field1 = (packed >> 20) & 0x7F;
         int field2 = (packed >> 10) & 0x3FF;
-        func_800AA33C(reinterpret_cast<ml::FixStr<64>&>(buf), packed, 1, 0);
+        Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(buf), packed, 1, 0);
         len += strlen(lbl_eu_804FC538);
         strcat(buf, lbl_eu_804FC538);
         int size = getFileSize__11CDeviceFileFPCc(buf, 1);
@@ -162,10 +162,10 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
 // body consumes r4, so keep the retail name via extern "C" (see func_800BA650).
 extern "C" void setMapId__Q22cf11CfObjectMapFv(cf::CfObjectMap* self,
                                                     unsigned long v) {
-    func_800B9C74(self, (v >> 20) & 0x7F, (v >> 10) & 0x3FF);
+    CfObjectMap_resolveResource(self, (v >> 20) & 0x7F, (v >> 10) & 0x3FF);
 }
 
-extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
+extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
     UnkRes866A0* resA = CfRes_getInstPtrBC();
     UnkRes866A0* resB = CfRes_getInstPtr80();
     UnkRes866A0* resC = CfRes_getInstPtrF8();
@@ -243,7 +243,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         u32 len = 0;
         self->field_0x8E += 1;
         buf[0] = 0;
-        func_800AA33C(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
+        Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
         *reinterpret_cast<void**>(self->field_0x90) = CfRes_getLazyField10(resB->field_0x2C, resB);
         self->field_0xDC = CfRes_getLazyField20(resC->field_0x2C, resC);
         void* r3 = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
@@ -253,7 +253,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
             self->field_0xEC = Scn_InitGlobalB(lbl_eu_80663E14, self->field_0xDC, buf);
             initNodePool__17UnkClass_8047CD0CFv(&self->field_0x2F2C,
                                                  getHandleMEM1__Q23mtl10MemManagerFv(), 0xB0000, 0x32);
-            func_8047CD0C__17UnkClass_8047CD0CFv(&self->field_0x2F2C, self->field_0xDC);
+            initFromConfig__17UnkClass_8047CD0CFv(&self->field_0x2F2C, self->field_0xDC);
         }
         if (self->field_0xE0 != 0) {
             if (initMpfSystem__17UnkClass_8047BB54Fv(&self->field_0xF0, self->field_0xE0,
@@ -306,7 +306,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         }
     }
     self->field_0x2F44 = 10;
-    func_801A2CAC__Q22cf12CTaskCullingFv();
+    reloadOccFrustums__Q22cf12CTaskCullingFv();
     if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666A50) {
         Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666A3C);
     }
@@ -316,7 +316,7 @@ done:
     ;
 }
 
-extern "C" void func_800BA440(cf::CfObjectMap* self) {
+extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     float scale = Scn_GetFrameDelta(lbl_eu_80663E14);
     float value = self->field_0x2F48 * scale;
     if (lbl_eu_80663E24 & 0x04000000) {

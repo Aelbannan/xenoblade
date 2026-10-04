@@ -183,13 +183,13 @@ extern u32 __ptmf_null[3];
 extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // C-linkage imports used by the environment-light setup (retail symbols).
-extern "C" void func_804923F8(CTaskEnvScnMgr* mgr, int flag);
+extern "C" void scnVlResetMgr(CTaskEnvScnMgr* mgr, int flag);
 extern "C" void* Scn_CallUnk8C_V10(void* scene);
 extern "C" CTimeLightGrp* __ct__CTimeLightGrp(CTimeLightGrp* self,
                                                void* parent);
 extern "C" CVirtualLightObj* scnVlCreateAmb(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color);
-extern "C" CVirtualLightObj* func_804933AC(CTaskEnvScnMgr* mgr, const u8* slot,
+extern "C" CVirtualLightObj* scnVlDirFromVec(CTaskEnvScnMgr* mgr, const u8* slot,
                                            const void* color, const void* dir);
 extern "C" void TimeLightPushBack(CTimeLightGrp* grp, CVirtualLightObj* obj);
 

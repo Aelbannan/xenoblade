@@ -508,7 +508,7 @@ register-operand `ASM()` blocks. Findings that transfer to any PS target:
 
 ### Route-scene GQR5 setup remains a compiler artifact
 
-`UnkClass_8047D2AC::{func_8047DF54,func_8047DE3C}` use retail `mtspr GQR5` with `0x03070307` before the signed-fixed-point scene-manager calls and `0x00070007` afterward. The normal high-level candidate preserves the solver calls and state updates, but no source-level `OSSetGQR*` or scalar initialization reproduced the orphaned GQR writes; the bounded candidates stayed at 69.2%/76.1% and split-size PASS. Keep the candidate readable and do not add inline assembly or register tricks; revisit after the `UnkClass_8047E110` solver callee frontier is accepted.
+`UnkClass_8047D2AC::{solveWalkStep,solveWalkPair}` use retail `mtspr GQR5` with `0x03070307` before the signed-fixed-point scene-manager calls and `0x00070007` afterward. The normal high-level candidate preserves the solver calls and state updates, but no source-level `OSSetGQR*` or scalar initialization reproduced the orphaned GQR writes; the bounded candidates stayed at 69.2%/76.1% and split-size PASS. Keep the candidate readable and do not add inline assembly or register tricks; revisit after the `UnkClass_8047E110` solver callee frontier is accepted.
 
 ### Scene rectangle-walk reconstruction (`us-80484870`)
 
@@ -548,7 +548,7 @@ Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structura
 | `unk64`-style flag test: retail `rlwinm. r0,r0,0,28,28` but decomp `rlwinm.,0,27,27` (or branch direction inverted) | **PPC bit numbering is MSB-first**: `rlwinm mb=m,me=m` masks PPC bit `m` whose *value* is `0x80000000>>m` (PPC bit 0 = MSB/0x80000000, PPC bit 31 = LSB/0x1). A C source `(x & 0x8)` maps to PPC bit 28, while `(x >> 30)&1` extracts C-bit 30 = PPC bit 1 (value 0x40000000). Decomp agents repeatedly confused the two (wrote `>> 30` for the value-0x2 flag). Bit-test polarity also flips: retail `beq skip` (continue when bit set) vs `bne skip` (continue when clear) means the ternary is `(flag) ? 1 : 2` not `? 2 : 1` | Translate `extrwi rD,rS,1,b` → `(x >> (31-b)) & 1`; `rlwinm. rD,rS,0,m,m` (test) → `x & (0x80000000>>m)`. Match the exact `beq`/`bne` skip direction (it encodes true/false polarity). `isPC`/`isNPC`/`isENE` (`ocUnit.cpp`): retail `extrwi r0,r0,1,30; neg r5,r0; addi r0,r5,2` ↔ source `retVal.type = ((obj->unk64 >> 1) & 1) ? 1 : 2` (bit-extract cond → MWCC keeps the branchless `neg/addi` idiom) |
 | VM plugin funcs call `ArtsSelect_GetContainer` with a stale `r3`; decomp's `ArtsSelect_GetContainer(pThread)` emits an extra `mr r3,r30` → +4 bytes structural | `ArtsSelect_GetContainer` (`us-80187748`, FULL_MATCH) **ignores r3**; callers never need to set it. When a `vmArg*` precedes the call, retail leaves r3 stale while decomp reloads `mr r3,r30` | **RESOLVED**: `ArtsSelect_GetContainer` is now `void* ArtsSelect_GetContainer(void)` in `code_801862C0.hpp`+`.cpp`; all ~61 callsites in `ocUnit`/`pluginCfs`/`pluginCam`/`pluginBtl`/`CfObjectPoint` call `ArtsSelect_GetContainer()`. C-linkage symbol unchanged → impl FULL_MATCH preserved; ~40 ocUnit VM funcs jumped 50%→90%+. (Note: `pluginBtl`/`pluginCfs` have *pre-existing* unrelated compile errors — `cf::CfGameManager::getInstance` / `CtrlObjectParam_ResolveEquipItem` overloading — not caused by this change.) |
 | `__dynamic_cast` RTTI args: decomp passes the global's **value** `(void*)lbl_eu_806618D8` → MWCC dereferences (`lwz`) | retail passes the **address** (`li r5, lbl_eu_806618D8@sda21`) | Pass `&lbl_eu_806618D8` (address-of), matching `CBattleManager.cpp`/`CVision.cpp`. Fixed across ocUnit.cpp |
-| Same RTTI address (0x806618D8) has **two reloc names** across functions | retail uses `__RTTI__Q22cf13CfObjectActor` in `invin`/`lookAt`/`func_8003E974` but `lbl_eu_806618D8` in `setColi`/`delBuff` — **per-function** | Match the exact name each function uses (check `hexdiff --symbol X --brief` “Reloc drift”); declare `extern "C" void* __RTTI__Q22cf13CfObjectActor;` (from `CVision.hpp`) where needed |
+| Same RTTI address (0x806618D8) has **two reloc names** across functions | retail uses `__RTTI__Q22cf13CfObjectActor` in `invin`/`lookAt`/`sendBattleEvent` but `lbl_eu_806618D8` in `setColi`/`delBuff` — **per-function** | Match the exact name each function uses (check `hexdiff --symbol X --brief` “Reloc drift”); declare `extern "C" void* __RTTI__Q22cf13CfObjectActor;` (from `CVision.hpp`) where needed |
 | CfObject talk sub-object: source used `obj->mSubObj38` (offset 0x38) | retail reads `obj+0x74` for the `UIWin_CreateTalkWin`/`UIWin_CreateEveTalkWin`/vtable[0x50] sub-object arg | `mSubObj38` (header offset 0x38) is a **different** field used by other TUs — don't retarget the header. In ocUnit.cpp use `*(void**)((u8*)obj + 0x74)` for the talk sub-object (winTalk/talkMsg/sendNotify/getPartyHandle) |
 | SDA vs far addressing | Different insn (`lwz@sda21` vs `lis`/`addi`) | Correct section/size via linker script |
 | Wrong callee-save depth | `_savegpr_29` vs `_savegpr_28` | Shrink live ranges across large functions |
@@ -1019,7 +1019,7 @@ and inventing a differently-named virtual that appends instead of overriding.
   size; residual is post-`bl` lha/sth interleave + overlap/clip Chaitin. Dead-result
   `getFrame2ViewOffset` required.
 
-**`func_8043CAFC` / `func_8043FD10` / `func_8043E58C`:** CAFC is the dual-view
+**`hasSplitViews` / `func_8043FD10` / `func_8043E58C`:** CAFC is the dual-view
   probe shared with `getSplitLine`/`setSplitLine` (return hasView2); high-level C
   soft-caps on the same prologue interleave. The former `getSplitLine`
   whole-function asm was removed 2026-09-17 (not sanctioned by PLAN.md §17.6);
@@ -1031,7 +1031,7 @@ and inventing a differently-named virtual that appends instead of overriding.
   for size (~87% schedule); avoid long `cycle` SMT on it.
 
 **`getSplitFrameFlag` / frame draw / GX scissor ring:** CE90 is `lbz` of
-  `unk45C[8]` (FULL via high-level `extern "C"` C++). `func_804409D0` draws border
+  `unk45C[8]` (FULL via high-level `extern "C"` C++). `drawFrameBorder` draws border
   quads (`begin(9,1)`/`add`/`end`) with `mFrameColor`×`lbl_eu_8066A318` then
   ×`lbl_eu_8066A2F4` (~54% first pass). `cacheScissor` copies optional
   `{u32,u32}` pairs into cache+0x4A8/0x4B0 (fix `C1FCCacheLayout` pad so
@@ -1083,7 +1083,7 @@ ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 
 **CUIWindowManager::Move (~84.96%):** peak keeps dual-cursor mark + store-then-SetRemove + poison scalar unlink; function size now `0x4DC` PASS (unit split spare). Residual: retail 8× `mtctr` unlink Chaitin. SMT times out under `ppc-eabi`. Ruled out: IPA `unlinkWindowNode` (~83.9%); CUICfManager goto 8× with dual-cursor (~40%); high-level `while`/`for` 8× threshold (~49%); SetRemove-first + `stwx` byteOff collect (~83.6%); iterator-mark + goto 8× (~40%); empty-guard poison (~83.9%); volatile pending w/o poison (~83.6%). Soft-cap park under high-level C++.
 
-**CUIBattleManager::Move soft-cap (~95.57%):** unit size PASS; function `0xB2C` vs retail `0xB00`. Peak keeps indirect `func_8012F5F8` call (same-TU empty stub is IPA'd away on direct `bl`), pad0C chain, capacity-first slot loads, `framePad[8]`. Residual: decomp `-0x210`/`stmw r24` vs retail `-0x220`/`stmw r25` because `battleWorkEvent` `this+0x54` is CSE'd into an NV across the asset `readFile` loop (4th NV). Volatile `this` reload restores `stmw r25`/`-0x220` but fuzzy drops to ~94.4%. Slot `r8`/`r7` order and pathBuf homes (`0x178`/`0xF8` vs `0x158`/`0xD8`) ride the frame skew. `EQUIVALENT` blocked by unresolved indirect + unvalidated callees. Keep high-level C++; no `asm void`.
+**CUIBattleManager::Move soft-cap (~95.57%):** unit size PASS; function `0xB2C` vs retail `0xB00`. Peak keeps indirect `UIBattleCreatePlayerState` call (same-TU empty stub is IPA'd away on direct `bl`), pad0C chain, capacity-first slot loads, `framePad[8]`. Residual: decomp `-0x210`/`stmw r24` vs retail `-0x220`/`stmw r25` because `battleWorkEvent` `this+0x54` is CSE'd into an NV across the asset `readFile` loop (4th NV). Volatile `this` reload restores `stmw r25`/`-0x220` but fuzzy drops to ~94.4%. Slot `r8`/`r7` order and pathBuf homes (`0x178`/`0xF8` vs `0x158`/`0xD8`) ride the frame skew. `EQUIVALENT` blocked by unresolved indirect + unvalidated callees. Keep high-level C++; no `asm void`.
 
 `CHelp_Pg::isThresholdMet` int→float uses retail `lbl_eu_80669000@sda21`; MWCC pools `@N` with the signed magic double — rename via `CHelp_Pg.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669000` once `.text` already matches.
 
@@ -1215,7 +1215,7 @@ Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-
 
 **Fv-with-hidden-params:** retail symbols ending `Fv` may still take args in r4/r5/r6/f1 (e.g. `func_8047CAA8__17UnkClass_8047CA88Fv(self, param)`). Implement with `extern "C"` + the exact mangled name and explicit params — the `bl` reloc name stays correct and MWCC passes the extra args normally.
 
-**Billboard layered-renderer application:** `MPFDrawBillLayTex`'s billboard quad paths use the NW4R `VEC3Add` high-level helper to reproduce retail paired-single `psq_l`/`ps_add`/`psq_st` sequences. Scalar `Vec.x/y/z` additions compiled to separate `lfs`/`fadds` instructions and reduced `func_8047A330` to 22.9% fuzzy; replacing only the four corner sums with `nw4r::math::VEC3Add` raised it to 59.3% and kept the split within budget. Use the SDK/NW4R vector helper for PS-heavy geometry rather than scalar C++ arithmetic.
+**Billboard layered-renderer application:** `MPFDrawBillLayTex`'s billboard quad paths use the NW4R `VEC3Add` high-level helper to reproduce retail paired-single `psq_l`/`ps_add`/`psq_st` sequences. Scalar `Vec.x/y/z` additions compiled to separate `lfs`/`fadds` instructions and reduced `drawBillIndexed` to 22.9% fuzzy; replacing only the four corner sums with `nw4r::math::VEC3Add` raised it to 59.3% and kept the split within budget. Use the SDK/NW4R vector helper for PS-heavy geometry rather than scalar C++ arithmetic.
 
 **MPFDrawDisplayList triangle-walker (us-80479384, 0x8C4):** a 2D map-grid height/color walker with s16 fast-cast height planes and NW4R PS color interpolation. Reusable findings:
 - **s16→f32 via GQR5:** retail uses `psq_l fr, d(rA), 1, qr5` (the SDK `__OSs16tof32` / `OSs16tof32` fast cast from `revolution/os/OSFastCast.h`); scalar casts do not reproduce it. Include `<revolution/os/OSFastCast.h>` and call `__OSs16tof32(&t->h0)` directly.
@@ -1643,9 +1643,9 @@ struct pointer local and using **field accesses** (`e->cb` / `e->param` /
 
 ### 7j. CSchedule runtime TU — PS vector subtraction and same-TU inlining
 
-For `monolib/src/core/code_804E36DC.cpp`, `ml::CVec3` subtraction through its high-level `operator-`/`CVec3::sub` path reproduces retail's paired-single `psq_l`/`ps_sub` sequence and the temporary-to-result copy before `PSVECMag`. Scalar component arithmetic does not. The retail `func_804E3B6C` distance helper also uses a same-TU `func_804E424C` call; marking that helper `DECOMP_DONT_INLINE` keeps the TU within its exact `0xC58` split budget. The residual distance-function mismatch is external virtual/callee register scheduling, not a semantic difference.
+For `monolib/src/core/code_804E36DC.cpp`, `ml::CVec3` subtraction through its high-level `operator-`/`CVec3::sub` path reproduces retail's paired-single `psq_l`/`ps_sub` sequence and the temporary-to-result copy before `PSVECMag`. Scalar component arithmetic does not. The retail `schedFeedTargetDist` distance helper also uses a same-TU `schedFeedDistance` call; marking that helper `DECOMP_DONT_INLINE` keeps the TU within its exact `0xC58` split budget. The residual distance-function mismatch is external virtual/callee register scheduling, not a semantic difference.
 
-`schedClearFlag15Update`/`func_804E39E8` clear a `u16` flag with the retail wrap mask `rlwinm ...,17,15`; ordinary `u16 &= ~0x8000` emits the semantically equivalent `rlwinm ...,17,31`. Use the approved `DECOMP_PPC_RLWINM` intrinsic only when exact opcode selection is required, and log the policy exception.
+`schedClearFlag15Update`/`schedStepEntries` clear a `u16` flag with the retail wrap mask `rlwinm ...,17,15`; ordinary `u16 &= ~0x8000` emits the semantically equivalent `rlwinm ...,17,31`. Use the approved `DECOMP_PPC_RLWINM` intrinsic only when exact opcode selection is required, and log the policy exception.
 
 ### 8. Dead return half / Chaitin rotation — `EQUIVALENT_MATCH` workflow
 
@@ -2326,7 +2326,7 @@ Members (all recorded open items, witness-gate rho):
   inline) invariantly bases in r4 across decl-order, word-indexed,
   inline-offset, struct-typed, 5 MWCC versions. 100% byte-identical,
   semantic-certified, no witness needed.
-- `func_8018B130` (us-8018c6e4, CMenuShopSell): 0x800-byte struct-copy loop;
+- `MenuShopSellCopyData` (us-8018c6e4, CMenuShopSell): 0x800-byte struct-copy loop;
   retail saves `or r6=src` before `or r7=dst`, MWCC reverses. Invariant:
   local/order variants, memcpy form (emits a call).
   **2026-08 sweep (~55 shapes total):** src-first moves ARE reachable, but
@@ -2485,7 +2485,7 @@ the loop, forcing the loop word into r4 (retail's allocation). Needs
 `optimize_for_size` to suppress the -O4,p unroll.
 
 ### `#pragma scheduling off` reproduces -O3 interleaved copy shapes
-func_80227660 (CMenuQstCnt): retail emits the -O3 "load r0; store r0"
+QstCnt_CopyInfoA (CMenuQstCnt): retail emits the -O3 "load r0; store r0"
 interleaved per-field copy under an -O4,s unit. Per-function
 `optimization_level` cannot downgrade codegen (MWCC_CASES 1302), but
 `#pragma scheduling off` around the function reproduces the interleaved
@@ -2508,7 +2508,7 @@ single-register copy byte-for-byte under -O4,s (verified Wii/1.1).
   IntervalAlarmHandler, 0x70, FULL_MATCH):** `RemoteSpeaker* p = (RemoteSpeaker*)
   OSGetAlarmUserData(pAlarm);` allocates pAlarm→r31/old→r30; the two-statement
   `void* ud = OSGetAlarmUserData(pAlarm); p = (RemoteSpeaker*)ud;` flips it to the retail's
-  r30/r31 and byte-identity. (Contrast: the same trick does NOT move func_80145AA8's
+  r30/r31 and byte-identity. (Contrast: the same trick does NOT move getTelopString's
   base/s roles.)
 
 - **`__declspec(noinline)` on a trivial ctor (CMenuVision createVisionMenu, 0x7C,
@@ -3563,7 +3563,7 @@ hiding time/input-dependent logic are common in this codebase.
 ## Duplicate extern "C" wrappers shadow member bodies under the same mangled name (repo_proven, CLibCriMoviePlay)
 - Symptom:   a function whose retail symbol equals a member's mangled name (e.g. wkUpdate__16CLibCriMoviePlayFv) compiles to a 0x10-byte tail-call instead of the full body; hexdiff shows size 0x10/0x1C8.
 - Cause:     defining BOTH the member `void wkUpdate()` AND `extern "C" void wkUpdate__16CLibCriMoviePlayFv(CLibCriMoviePlay*)` in one TU collides on the linker symbol; MWCC keeps ONE definition (the wrapper), silently discarding the member body.
-- Fix:       keep only ONE provider. For members whose mangled name IS the retail symbol: delete the extern "C" wrapper and add a plain declaration for &-references in vtables. For retail names that are NOT member manglings (func_8045A260 etc.): move the body into the extern "C" free function and delete the member (update internal call sites).
+- Fix:       keep only ONE provider. For members whose mangled name IS the retail symbol: delete the extern "C" wrapper and add a plain declaration for &-references in vtables. For retail names that are NOT member manglings (startMovie etc.): move the body into the extern "C" free function and delete the member (update internal call sites).
 - Result:    wkUpdate/wkStandbyLogout went 0% -> 22.8%/12.2% from deletion alone; bodies land under retail names directly.
 - Confidence: repo_proven
 - Applies to/a.k.a.: novtable classes with hand-spelled vtables; also applies to statics referenced from free functions (call as Class::member()).
@@ -4114,11 +4114,11 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Confidence: repo_proven
 - Applies to/a.k.a.: any never-called helper with param-register color residuals; saves hours of declaration-order experiments
 
-## Negative sentinel stores to u8 fields: assign through a signed lvalue to get retail's `li rN,-N` (CItemBoxGrid func_801CBA04, Wii/1.1 -O4,p + optimize_for_size)
+## Negative sentinel stores to u8 fields: assign through a signed lvalue to get retail's `li rN,-N` (CItemBoxGrid GridMoveCursorRight, Wii/1.1 -O4,p + optimize_for_size)
 - Symptom:   `p[0x525] = -2;` / `(u8)-2` both emit `li r0,254` where retail has `li r0,-2` (0x3800FFFE vs 0x380000FE); same for -1/255
 - Cause:     storing through a `u8*` lvalue makes MWCC canonicalize the constant to the unsigned domain before materializing; retail's source evidently used a signed char lvalue so the wraparound kept the negative form
 - Fix:       store through a signed view of the field: `*(s8*)&p[0x525] = -2;` — MWCC then emits the negative `li`. Plain casts and index arithmetic (`lbl+2`-style) do NOT fold; the lvalue type is the lever
-- Result:    func_801CBA04 88.4% -> 89.2% (reg_swap 11 -> 9, both li mismatches cleared)
+- Result:    GridMoveCursorRight 88.4% -> 89.2% (reg_swap 11 -> 9, both li mismatches cleared)
 - Confidence: repo_proven
 
 ## `const T*` pointer params let `-str reuse,readonly` CSE away retail's reloads — drop const when retail re-reads (regSeenListCb/setSeenBitLst fix, Wii/1.1 -O4,p)
@@ -4229,7 +4229,7 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Symptom:   decomp object exports `func_XXXX__Fv`-style mangled symbols while retail relocs (and sibling wrappers) reference plain `func_XXXX`; nm shows `U func_XXXX` + `T func_XXXX__Fv` in the same object.
 - Cause:     auto-scaffold declared stubs without extern "C"; MWCC then treats a later mismatching declaration as a distinct entity instead of erroring.
 - Fix:       declare `extern "C" <real signature> func_XXXX(<params>);` above the definition (the definition inherits C linkage, no keyword needed). Wrappers that must stay byte-exact bare `b func_XXXX` tail-calls but now face a prototyped callee compile as `((ret (*)())&func_XXXX)();` — zero args materialized, direct branch preserved.
-- Result:    func_804BE62C/func_804BEEF8 plain-name exports fixed; ScnRes_ProjThunk_E538/BE5A4/BE5A8/BE628 stayed 100%.
+- Result:    ScnRes_ProjectTracked/ScnRes_ValidateCrossing plain-name exports fixed; ScnRes_ProjThunk_E538/BE5A4/BE5A8/BE628 stayed 100%.
 - Confidence: repo_proven
 - Applies to/a.k.a.: catalog TUs with mixed scaffolding; check nm on build/us/src/**/*.o when cycle reports unresolved/plain-symbol drift.
 
@@ -4758,3 +4758,11 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Confidence: repo_proven
 - Applies to/a.k.a.: `.sbss`/`.bss` label groups whose retail offsets are 8-aligned but
              whose access width is 1; works without touching the flag's 14 call sites.
+
+### Chained `a = b = c = 0` stores emit right-to-left; split for ascending slot order (MWSFCRE_SetSupplySj, Wii/1.1 `-O4,p`)
+- Symptom:   arg-struct fill `arg.a = 2; arg.b = sj; arg.c = arg.d = arg.e = 0; arg.f = 0;` at 95.3% (0 structural, 4 reg_swap): the three chained zero-stores emit `stw 24(sp); stw 20(sp); stw 16(sp)` (descending) where retail emits `stw 16/20/24(sp)` (ascending); the `a`/`b` stores already match.
+- Cause:     chained assignment evaluates right-to-left (`e = 0` first), and MWCC preserves that store order into emission; retail's ascending order means its source used separate statements.
+- Fix:       split the chain into separate statements (`arg.c = 0; arg.d = 0; arg.e = 0;`) — 95.3% to 97.7%, zero new instructions. Statement-order swaps of the `a`/`b` pair are no-ops (frontend normalizes), and the remaining `stw 8(sp)`/`stw 12(sp)` emission-order pair is a scheduler tie-break, not an IR-order effect.
+- Result:    MWSFCRE_SetSupplySj 95.3% to 97.7% (residual: one store-order pair, witness-gated by CODE_MATCH callee)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any `x = y = C` zero-fill chain to adjacent struct slots; pairs with the sinit descending-stores note (same mechanism, opposite direction).

@@ -18,7 +18,7 @@ public:
     static void setFlag4(bool state);
     static bool checkFlag4();
     static bool checkFlag2();
-    static bool func_804482DC();
+    static bool isRunningNoFlag2();
     static void setFlag0(bool state);
     static bool checkFlag0();
 

@@ -63,7 +63,7 @@ public:
 
 namespace cf {
 
-// Abstract vtable view of the battle actor polled by func_80192C2C: only the
+// Abstract vtable view of the battle actor polled by refreshPtStateAccum: only the
 // state getter at vtable slot 0x308 (index 192) is used.
 class CMenuPtStateActor {
 public:

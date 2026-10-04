@@ -73,7 +73,7 @@ CVirtualLightDir::~CVirtualLightDir() {}
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace VLBlob {
 extern "C" void __dt__16CVirtualLightDirFv();
-extern "C" void func_804947EC();
+extern "C" void getVirtualLightColor();
 extern "C" void getVirtualLightSentinel();
 }
 extern "C" u32 lbl_eu_806639D8;   // .sdata (foreign)
@@ -83,7 +83,7 @@ extern "C" u32 lbl_eu_806639D0;   // .sdata (foreign)
 extern "C" u32 lbl_eu_8056E898[8] = {
     (u32)&lbl_eu_806639D8, 0x00000000,
     (u32)&VLBlob::__dt__16CVirtualLightDirFv,
-    (u32)&VLBlob::func_804947EC,
+    (u32)&VLBlob::getVirtualLightColor,
     (u32)&VLBlob::getVirtualLightSentinel,
     (u32)&lbl_eu_806639D0, 0x00000000, 0x00000000,
 };

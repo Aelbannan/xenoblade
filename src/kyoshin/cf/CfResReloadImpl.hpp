@@ -154,7 +154,7 @@ struct CfResEneObj {
     /* 0x45CA */ u16 field_45CA;
 };
 
-// Entry returned by func_80068928 (device search); bumpReloadDeviceCounts increments
+// Entry returned by CfRes_findIdInRange (device search); bumpReloadDeviceCounts increments
 // the s16 counters at +0x38/+0x3A.
 struct DeviceSearchEntry {
     u8 field_00[0x38];
@@ -239,11 +239,11 @@ extern "C" void CfModel_ReattachTrg(cf::CfObjectModel* self);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void CfModel_InstallSub(cf::CfResReloadParent* parent, u8* handle);
-// func_800AA33C is declared in IResInfo.hpp (ml::FixStr version)
+// Tok_FormatStr is declared in IResInfo.hpp (ml::FixStr version)
 extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
-// CfModel_SyncVisFlag/func_800BCFA0 are owned by kyoshin/cf/object/CfObjectMove.hpp
+// CfModel_SyncVisFlag/CfObjectMove_initAnimTarget are owned by kyoshin/cf/object/CfObjectMove.hpp
 // (single extern "C" decl; overloading C-ABI functions is illegal).
 extern "C" void CfObjectMove_setRegionAttached(cf::CfResReloadParent* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
@@ -267,7 +267,7 @@ extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_getResFileSize(int a);
 extern "C" int BattleWork_CheckEffectTableReady(int a);
 // More C-ABI imports used by this unit's functions.
-extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
+extern "C" cf::DeviceSearchEntry* CfRes_findIdInRange(u8* self, u32 id, int start, int end);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" u16 CfT_DispatchFrameCounts();

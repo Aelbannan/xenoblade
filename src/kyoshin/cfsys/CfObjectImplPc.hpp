@@ -805,7 +805,7 @@ public:
     virtual void v5AC() = 0;         // 223 -> 0x5AC
 
     CfObjectImplPcBattle4* field_04; // 0x04
-    CfObjectImplPc8 mArts;           // 0x08 arts container (func_80148778 operates on &+0x8)
+    CfObjectImplPc8 mArts;           // 0x08 arts container (isBattleStatusActive operates on &+0x8)
     u8 _pad0C[0x3374 - 0x0C];        // 0x0C-0x3373
     u32 field_3374;                  // 0x3374 flags
     u8 _pad3378[0x3380 - 0x3378];    // 0x3378-0x337F
@@ -972,15 +972,15 @@ extern "C" {
 void MoveImplResetFull(void* self);
 void MoveImplRunEffectVirtuals(void* self, u32 param);
 void MoveImplStartDispatch(void* self);
-int func_80148778(void* obj, int id);
+int isBattleStatusActive(void* obj, int id);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void); // canonical u32 form
 void MoveImplInitFields(u8* self);
-void func_8015BB3C(u8* a, u8* b, u8* c);
+void CharEffInit(u8* a, u8* b, u8* c);
 extern "C" void attachOwner(u8* self, u8* owner);
 u32 CfRes_getHeapHandle();
 char* CfObjectMove_getBdatNameCol11(u8* move, int index);
 char* CfObjectMove_getBdatNameCol7(u8* move, int index);
-void* func_8016FE34(void* src); // canonical void* form (CAIAction/CtrlPc owners)
+void* MapFx_ResolveOwner(void* src); // canonical void* form (CAIAction/CtrlPc owners)
 // Enum-list helper family: single canonical extern "C" void* forms
 // (CVision.hpp owner) so TUs including several of these headers see one
 // declaration per retail name (MWCC 10197). Opaque pointers - ABI unchanged.
@@ -997,7 +997,7 @@ u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
 int isBattleEventKind1(int id);
 int isBattleEventKind3(int val);
 bool CChain_HasMemberEntry(void* chain, void* obj);
-bool func_80260264(void* obj, s32 idx, s32* out);
+bool IdTable_GetSum(void* obj, s32 idx, s32* out);
 void CfObjectMove_relaySubB0Slot54(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
 void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
 // CfObjectMove_setAnimModeArgs is TU-local in CfObjectImplPc.cpp (same (void*,u32,u32,s32,u32)

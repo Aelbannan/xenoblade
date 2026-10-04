@@ -144,7 +144,7 @@ struct CTalkAnimFrame {
     f32 mFrame;      // 0x10
 };
 
-// Minimal pad-data view for func_8012DA6C (only the pressed-flag word at +0x4
+// Minimal pad-data view for driveTalkMessage (only the pressed-flag word at +0x4
 // is read; see CSysPadData in CSysWinSave.hpp).
 struct CTalkPadView {
     u8  _00[0x4];
@@ -163,7 +163,7 @@ struct CTalkWinPosObj {
     f32 field_0x2C; // +0x2C
 };
 
-// findObjectById(id) result (talk-source actor) for Init / func_8012CD38.
+// findObjectById(id) result (talk-source actor) for Init / updateTalkWindow.
 // The actor is a cf::CfObject: its virtuals carry the dispatched slots -
 // 0x40 talk text (CObjectParam_getParamPtr), 0xAC position fallback
 // (CfObject_getPosVector), 0x120 named-position lookup
@@ -250,7 +250,7 @@ public:
     virtual u32 getFontHandle();       // 0x24
 };
 
-// Opaque Scn_FindCamItem(scene, -1) pose block passed to func_8049B59C.
+// Opaque Scn_FindCamItem(scene, -1) pose block passed to CamMan_ProjectToScreen.
 struct CTalkWinPose;
 
 // C-ABI function imports: these retail symbols are unmangled (or carry a
@@ -265,10 +265,10 @@ void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 int IsMenuState621F0();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
-void func_8012CD38(CTalkWindow* self);
-void func_8012D8C0(CTalkWindow* self);
-void func_8012DA6C(CTalkWindow* self);
-void func_8012D3D8(CTalkWindow* self);
+void updateTalkWindow(CTalkWindow* self);
+void driveTalkIntro(CTalkWindow* self);
+void driveTalkMessage(CTalkWindow* self);
+void layoutTalkPanes(CTalkWindow* self);
 int code80135FDC_getByte_64058();
 int code80135FDC_getByte_64059();
 int GetSysStateFlag31();
@@ -306,7 +306,7 @@ void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ
     nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 CTalkWinPose* Scn_FindCamItem(CScn* scene, int index);
-void func_8049B59C(nw4r::math::VEC3* out, CTalkWinPose* pose,
+void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CTalkWinPose* pose,
                    const nw4r::math::VEC3* in);
 }
 
@@ -367,4 +367,4 @@ extern "C" unsigned char __sbss_blob[];
 #define lbl_eu_80573A70 ((f32*)&__bss_blob[0x00])
 #define lbl_eu_80664040 (*((u8*)&__sbss_blob[0x00]))
 #define lbl_eu_80664044 (*((u32*)&__sbss_blob[0x04]))
-// func_8012CD38 projection / clamp constants.
+// updateTalkWindow projection / clamp constants.

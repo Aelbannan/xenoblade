@@ -86,7 +86,7 @@ extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);
-extern "C" void func_801CB28C(CItemBoxGrid* self);
+extern "C" void InitItemDisplay(CItemBoxGrid* self);
 extern "C" void UpdateItemBox(CItemBoxGrid* self);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void UnloadItemBox(CItemBoxGrid* self);

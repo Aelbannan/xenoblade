@@ -114,7 +114,7 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
 }
 
 // Member destructor: the compiler restores both vptrs up front, runs the
-// body (second-base teardown via func_804591DC, singleton clear, buffer free),
+// body (second-base teardown via RemoveFromGlobalArray, singleton clear, buffer free),
 // then the CWorkThread base dtor and the deleting-dtor `delete this` tail.
 CDeviceFileCri::~CDeviceFileCri() {
     // novtable: restore both retail vptrs by hand (primary + second base).
@@ -126,7 +126,7 @@ CDeviceFileCri::~CDeviceFileCri() {
     if (pException != nullptr) {
         pException = (IException*)((u8*)pException + 0x1C4);
     }
-    func_804591DC__10CExceptionFP10IException((CException*)pException);
+    RemoveFromGlobalArray__10CExceptionFP10IException((CException*)pException);
     lbl_eu_80665668 = nullptr;
     if (mBuffer != nullptr) {
         mtl::MemManager::deallocate(mBuffer);
@@ -183,17 +183,17 @@ bool CDeviceFileCri::checkDriveStatus() {
         // busy. The message pointers are static pointer VARIABLES (.sdata) -
         // retail loads their CONTENTS (lwz @sda21), not their addresses.
         if (!criIsException(this)) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
         }
         return false;
     } else if (status == 11) {
         if (!criIsException(this)) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636CC[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636CC[0], 4);
         }
         return false;
     } else if (status == 4) {
         if (!criIsException(this)) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
         }
         return false;
     }
@@ -282,7 +282,7 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
         name.nameLen = i;
     }
 
-    int ret = func_804DDCD4(name.nameBuf, pPath);
+    int ret = findPackFileId(name.nameBuf, pPath);
     if (ret > -1) return ret;
 
     int entrynum = DVDConvertPathToEntrynum(path.pathBuf);
@@ -352,7 +352,7 @@ bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
     return false;
 }
 
-void CDeviceFileCri::func_8044FC38() {
+void CDeviceFileCri::abortRead() {
     // Count children by walking the intrusive node chain directly, with the
     // loop check at the bottom (retail branches straight into the cmplw).
     // Declarations left uninitialized and ordered so MWCC's allocator maps
@@ -390,7 +390,7 @@ void CDeviceFileCri::func_8044FC38() {
     lbl_eu_80665668->mState = 0;
 }
 
-bool CDeviceFileCri::func_8044FCFC() {
+bool CDeviceFileCri::beginRead() {
     // Inline getFirstCDeviceFileJobReadDvd (seed-then-null shape).
     CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)mChildren.front();
     if (job == nullptr) {
@@ -505,7 +505,7 @@ bool CDeviceFileCri::func_8044FCFC() {
     return false;
 }
 
-bool CDeviceFileCri::func_80450058() {
+bool CDeviceFileCri::readChunk() {
     // Seed-then-null shape (retail): extract straight into job.
     CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)mChildren.front();
     if (job == nullptr) {
@@ -580,7 +580,7 @@ notComplete:
     return true;
 }
 
-bool CDeviceFileCri::func_80450260() {
+bool CDeviceFileCri::advanceSector() {
     CWorkThread* child = mChildren.front();
     // Seed-then-null shape (retail): keeps job's web identical to child's.
     CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
@@ -652,7 +652,7 @@ state7:
     return true;
 }
 
-bool CDeviceFileCri::func_8045042C() {    // Seed-then-null shape (retail): keeps job's web identical to child's.
+bool CDeviceFileCri::copyTail() {    // Seed-then-null shape (retail): keeps job's web identical to child's.
     CWorkThread* child = mChildren.front();
     CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
     if (child == nullptr) {
@@ -785,7 +785,7 @@ void CDeviceFileCri::wkUpdate() {
     }
 
     case 1:
-        if (!func_8044FCFC()) break;
+        if (!beginRead()) break;
 
         if (--mTimeoutCounter <= 0) {
             CWorkThread* child = mChildren.front();
@@ -816,7 +816,7 @@ void CDeviceFileCri::wkUpdate() {
         // fallthrough
 
     case 2:
-        if (!func_80450058()) break;
+        if (!readChunk()) break;
         if (--mTimeoutCounter > 0) break;
 
         {
@@ -841,15 +841,15 @@ void CDeviceFileCri::wkUpdate() {
         break;
 
     case 3:
-        func_80450058();
+        readChunk();
         break;
 
     case 4:
-        func_8045042C();
+        copyTail();
         break;
 
     case 5:
-        func_80450260();
+        advanceSector();
         break;
 
     case 6: {
@@ -900,7 +900,7 @@ void CDeviceFileCri::wkUpdate() {
     }
 
     case 8:
-        func_8045042C();
+        copyTail();
         break;
     }
 }

@@ -14,7 +14,7 @@
 class CScn;
 
 // Minimal CScn view (same guarded declaration as CQuestWindow.hpp /
-// CTaskGameEff.hpp). Needed here for removeRenderCB in func_8021299C.
+// CTaskGameEff.hpp). Needed here for removeRenderCB in mkCrystalTeardown.
 #ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
 #define KYOSHIN_MINIMAL_CSCN_DECLARED
 class CScn {
@@ -25,7 +25,7 @@ public:
 #endif
 
 // Byte flags written on the owning scene during window teardown
-// (func_8021299C). The kyoshin minimal CScn (guarded decl in the task
+// (mkCrystalTeardown). The kyoshin minimal CScn (guarded decl in the task
 // headers) has no fields, so access goes through this layout view.
 struct CScnFlagView {
     u8 _00[0x39];
@@ -35,7 +35,7 @@ struct CScnFlagView {
 };
 
 // Minimal CTaskGame view: the static gate helpers used by cbRenderBefore and
-// the +0x6C sub-process slot read by func_8021299C. The real CTaskGame.hpp
+// the +0x6C sub-process slot read by mkCrystalTeardown. The real CTaskGame.hpp
 // pulls broken monolib umbrella headers (same scheme as CSystemWindow.hpp).
 class CTaskGame {
 public:
@@ -86,7 +86,7 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 a, u8 b);
 void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
 void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
 void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
-void func_80210E9C(u8* dst, const u8* src);
+void MakeCrystalCopyDispArea(u8* dst, const u8* src);
 int MenuTutorialIsCreated();
 int getCrystalBoxSysWin(CMCCrystalBox* self);
 int isCrystalBoxReady(CMCCrystalBox* self);
@@ -96,7 +96,7 @@ void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* drawInfo);
 int rebuildCrystalBoxSelTable(CMCCrystalBox* self);
 u8 getCrystalBoxKindA(CMCCrystalBox* self);
 u8 getCrystalBoxKindB(CMCCrystalBox* self);
-void func_80211CEC(CMCCrystalBox* self, const CMCCrystalBox* src);
+void MakeCrystalCopyBox(CMCCrystalBox* self, const CMCCrystalBox* src);
 void initCrystalBoxResources(CMCCrystalBox* self);
 int isInitialized(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);

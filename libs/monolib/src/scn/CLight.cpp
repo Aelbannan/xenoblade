@@ -34,18 +34,18 @@ CLight::CLight(){
     *(float*)(self + 0x3C) = lbl_eu_8066AFB4;
 }
 
-void func_804C02E4(u8* self, int value){
+void LightCtlCopyObj(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 void LightCtlSetObj(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
-void func_804C03A0(u8* self, int value){
+void LightCtlSetAttnMode(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Set the light position: copy the vector as raw u32 words (retail lwz/stw),
 // then forward to the LightObj (tail call).
-extern "C" void func_804C0454(CLight* self, const ml::CVec3* v) {
+extern "C" void LightCtlSetPos(CLight* self, const ml::CVec3* v) {
     u32* dst = (u32*)&self->unk4;
     const u32* s = (const u32*)v;
     dst[0] = s[0];
@@ -53,7 +53,7 @@ extern "C" void func_804C0454(CLight* self, const ml::CVec3* v) {
     dst[2] = s[2];
     self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
 }
-void func_804C0484(u8* self, int value){
+void LightCtlSetDir(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Computes a light direction by building the XYZ Euler rotation matrix for
@@ -61,7 +61,7 @@ void func_804C0484(u8* self, int value){
 // vector. Input angles are in degrees (radians via lbl_eu_8066A210); the
 // matrix math looks up nw4r trig from the radian values (index via
 // lbl_eu_8066AFBC).
-void func_804C0570(CLight* self, f32 angleX, f32 angleY) {
+void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY) {
     // Euler angles in radians; angle.x gets the angleY contribution (X-axis
     // rotation) computed first so it spills to the frame like retail.
     ml::CVec3 angle(
@@ -113,7 +113,7 @@ void func_804C0570(CLight* self, f32 angleX, f32 angleY) {
         break;
     }
 }
-void func_804C07F0(u8* self, int value){
+void LightCtlSetColor(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Toggles a light-enable flag (bit 16 of unk30) and propagates it
@@ -132,10 +132,10 @@ void LightCtlSetEnable(CLight* self, int enable) {
 void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
-void func_804C0928(){}
+void LightCtlScaleColor(){}
 extern "C" void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
 // retail: lwz r3,0x2c(r3); b InitLightDistAttn__... (args pass through)
 extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c) {
     InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), a, b, c);
 }
-void func_804C09E8(){}
+void LightCtlInitGXLight(){}

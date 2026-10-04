@@ -6,10 +6,10 @@
 
 namespace cf {
 
-// Interface mirrors for the battle-object actor passed to func_80154280
+// Interface mirrors for the battle-object actor passed to checkArtsFull
 // (arts usability check). kyoshin builds with -RTTI on, so declared virtual
 // index N sits at vtable byte offset (N+2)*4 - the named slots below land on
-// the exact retail offsets read by func_80154280. The virtuals are declared
+// the exact retail offsets read by checkArtsFull. The virtuals are declared
 // without bodies (like CChainVoiceSub in CChainTimer.hpp): the mirrors are
 // never instantiated, so no vtable is emitted and the bodies are never
 // needed.
@@ -57,7 +57,7 @@ public:
     virtual void* s73(); // index 73 -> vtable offset 0x12c
 };
 
-// Battle-object / arts-set actor (both the r4 argument of func_80154280 and
+// Battle-object / arts-set actor (both the r4 argument of checkArtsFull and
 // the object returned by its vtable+0xa0 slot).
 class CArtsParamActor {
 public:

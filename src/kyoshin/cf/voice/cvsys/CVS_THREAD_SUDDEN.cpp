@@ -113,3 +113,54 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() {
 // Virtual override of blank1() (retail func_802A8DE0): returns 1 for SUDDEN
 // thread (minimal buffer flag).
 int CVS_THREAD_SUDDEN::SuddenVx_GetBufferSizeValue() { return 1; }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_SUDDEN.txt): the .rodata typeinfo name,
+// the .data init-state triple ({0, -1, callback}), the 7-word thread
+// vtable ({typeinfo, 0, play, remove, bufsize, alwaysTrue, playVoice}), the
+// trailing typeinfo-base word plus padding, and the .sdata typeinfo object
+// ({name, trailing}). Global-scope data symbols: MWCC does not mangle them.
+//
+// NOTE: retail spells the bufsize vtable slot
+// SuddenVx_GetBufferSizeValue__18CVS_THREAD_SUDDENFv (18-char class name);
+// decomp's class is 17 chars, so the slot references decomp's own __17
+// spelling (same .text offset 0x1DC, same linked bytes). The literal-name
+// extern "C" decl below addresses that in-TU definition.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern "C" int SuddenVx_GetBufferSizeValue__17CVS_THREAD_SUDDENFv();
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662D30[2];
+
+// Sized to the retail section extent (0x18): the NUL-terminated name plus
+// zero padding. The auditor keys on offset, and the gate on section bytes.
+extern const char lbl_eu_80510800[0x18] = "cf::CVS_THREAD_SUDDEN";
+
+u32 lbl_eu_80539CE8[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)SuddenVxClearIdleSlot,
+};
+
+u32 lbl_eu_80539CF4[7] = {
+    (u32)lbl_eu_80662D30,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)SuddenVxRemoveVoice,
+    (u32)SuddenVx_GetBufferSizeValue__17CVS_THREAD_SUDDENFv,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)SuddenVxPlayVoice,
+};
+
+u32 lbl_eu_80539D10[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D30[2] = {
+    (u32)lbl_eu_80510800,
+    (u32)lbl_eu_80539D10,
+};

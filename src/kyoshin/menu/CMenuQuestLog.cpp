@@ -314,7 +314,7 @@ void CMenuQuestLog::Term() {
     reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleAHelp);
-    func_80227BD8(&mQstLogList);
+    QstLogList_Teardown(&mQstLogList);
     QstLogInfo_TeardownLayout(&mQstLogInfo);
     lbl_eu_80663FC0 = 0;
     DecMenuCounter64080();
@@ -361,22 +361,22 @@ body:
         openQuestLogMenu(this);
         break;
     case 1:
-        func_8011CDF4(this);
+        gateQuestLogList(this);
         break;
     case 2:
         handleQuestLogInput(this);
         break;
     case 3:
-        func_8011D03C(this);
+        flagQuestLogReady(this);
         break;
     case 4:
         selectQuestLogEntry(this);
         break;
     case 5:
-        func_8011D0FC(this);
+        startQuestLogInfo(this);
         break;
     case 6:
-        func_8011D158(this);
+        finishQuestLogInfo(this);
         break;
     case 7:
         closeQuestLogMenu(this);
@@ -385,7 +385,7 @@ body:
         resortQuestLogList(this);
         break;
     case 9:
-        func_8011D298(this);
+        reopenQuestLogList(this);
         break;
     }
 
@@ -455,7 +455,7 @@ extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0 != 0; }
 extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex)) {
         if (isInitialized(&self->mTitleAHelp)) {
-            if (func_80227C70(&self->mQstLogList)) {
+            if (QstLogList_ScrollFlag(&self->mQstLogList)) {
                 if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
                     func_801C412C(&self->mTitleAHelp);
                     QstLogList_BeginSortOpen(&self->mQstLogList);
@@ -469,7 +469,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
 
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
-extern "C" void func_8011CDF4(CMenuQuestLog* self) {
+extern "C" void gateQuestLogList(CMenuQuestLog* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mState = 2;
 }
@@ -538,8 +538,8 @@ extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
     }
 }
 
-// Same gate as func_8011CDF4 but toggles the +0x54 byte to 1.
-extern "C" void func_8011D03C(CMenuQuestLog* self) {
+// Same gate as gateQuestLogList but toggles the +0x54 byte to 1.
+extern "C" void flagQuestLogReady(CMenuQuestLog* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mField54 = 1;
 }
@@ -556,25 +556,25 @@ extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011D0FC (us-8011dbd8) ------------------------------------------
+// ---- startQuestLogInfo (us-8011dbd8) ------------------------------------------
 // When the quest log info is done, set the title-help mode to 0x3d, close the
 // title help, finish the log info and advance to state 6.
 // ---------------------------------------------------------------------------
-extern "C" void func_8011D0FC(CMenuQuestLog* self) {
+extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
     if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3d);
         reopenFromClose(&self->mTitleAHelp);
-        func_802296E0(&self->mQstLogInfo);
+        QstLogInfo_Start(&self->mQstLogInfo);
         self->mState = 6;
     }
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011D158 (us-8011dc34) ------------------------------------------
+// ---- finishQuestLogInfo (us-8011dc34) ------------------------------------------
 // When the title help is idle and the quest log info is done, advance to
 // state 7.
 // ---------------------------------------------------------------------------
-extern "C" void func_8011D158(CMenuQuestLog* self) {
+extern "C" void finishQuestLogInfo(CMenuQuestLog* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         self->mState = 7;
     }
@@ -597,7 +597,7 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
     }
     if (close) {
         markReplayClose(&self->mTitleAHelp);
-        func_80229724(&self->mQstLogInfo);
+        QstLogInfo_Resume(&self->mQstLogInfo);
         self->mState = 8;
     }
 }
@@ -618,10 +618,10 @@ extern "C" void resortQuestLogList(CMenuQuestLog* self) {
 }
 
 // ---------------------------------------------------------------------------
-// ---- func_8011D298 (us-8011dd74) ------------------------------------------
+// ---- reopenQuestLogList (us-8011dd74) ------------------------------------------
 // When the title help is idle and sorting is enabled, advance to state 2.
 // ---------------------------------------------------------------------------
-extern "C" void func_8011D298(CMenuQuestLog* self) {
+extern "C" void reopenQuestLogList(CMenuQuestLog* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList)) {
         self->mState = 2;
     }

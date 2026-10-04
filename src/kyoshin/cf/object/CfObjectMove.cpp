@@ -32,7 +32,7 @@
 
 // Novtable dispatch view of cf::CfCam through slot +0x60 (cfCam_loadUnk164).
 // Full CfCam.hpp cannot be included in this TU: its extern "C" imports clash
-// with CActParamAnim.hpp (copyVec3Words / func_804BE4E0 return types). Slot
+// with CActParamAnim.hpp (copyVec3Words / ScnRes_CopyEntryMid return types). Slot
 // names and arity match the owning class; never constructed here.
 namespace cf {
 class __declspec(novtable) CfCam {
@@ -152,7 +152,7 @@ cf::CfObjectMove::~CfObjectMove() {
 // form keeps the Unk linker name that hand-built tables reference.
 extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     // Per-frame movement update: run the base position/state pair, then (when
-    // no menu/battle state is active) refresh the movement (func_800BCD04) and
+    // no menu/battle state is active) refresh the movement (CfObjectMove_refreshPosition) and
     // release the two +0xC8/+0xCC targets. With a model sub-object present the
     // +0x1AC slot forwards the +0xB4/+0xB8 words, and the +0x38 sub-object
     // receives the mode-dependent advance notification before the movement
@@ -160,7 +160,7 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
     self->CfObject_refreshSubB0();
     self->CfObject_updateMoveRate();
     if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
-        func_800BCD04(self);
+        CfObjectMove_refreshPosition(self);
         // Pointer-induction release walk (retail steps the slot pointer by 4
         // with a separate counter).
         void** slot;
@@ -215,7 +215,7 @@ if (cond == 0 && self->CfObject_checkSubReady() != 0 && r28 != 0 && r27 == 0) {
                     r30 = 1;
                 }
                 int q = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-                func_8015BD24((void*)q, r30);
+                CharEffSetPointEnabled((void*)q, r30);
             }
         }
     }
@@ -432,7 +432,7 @@ extern "C" void CfObject_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove
                 self->mFlags68 &= ~0x400;
             }
         }
-        func_800BC8D8(self);
+        CfObjectMove_tickSpeed(self);
     }
 }
 
@@ -538,24 +538,24 @@ extern "C" void CfObject_createMoveTarget__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // the NPC movement target's action setter) - forced-name form carrying the
 // hidden arg. When a 6C0 target exists, record the target's +0xC0 action id
 // and the incoming id in the +0x6CF/+0x6CE bytes, then dispatch the id to
-// func_8009377C (ids 1,2,3,5,4 map to themselves; anything else maps to 0).
+// CtrlNpcSetAction (ids 1,2,3,5,4 map to themselves; anything else maps to 0).
 void CfObject_forwardNpcAction__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
     cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
     if (target != 0) {
         self->field_6CF = (u8)((cf::CfObjectMoveNpcView*)target)->field_C0;
         self->field_6CE = (u8)arg;
         if (arg == 1) {
-            func_8009377C(target, 1);
+            CtrlNpcSetAction(target, 1);
         } else if (arg == 2) {
-            func_8009377C(target, 2);
+            CtrlNpcSetAction(target, 2);
         } else if (arg == 3) {
-            func_8009377C(target, 3);
+            CtrlNpcSetAction(target, 3);
         } else if (arg == 5) {
-            func_8009377C(target, 5);
+            CtrlNpcSetAction(target, 5);
         } else if (arg == 4) {
-            func_8009377C(target, 4);
+            CtrlNpcSetAction(target, 4);
         } else {
-            func_8009377C(target, 0);
+            CtrlNpcSetAction(target, 0);
         }
     }
 }
@@ -990,7 +990,7 @@ void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
             int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            func_8015C074((void*)r, arg);
+            CharEffSetSlotBit((void*)r, arg);
         }
     }
 }
@@ -1053,7 +1053,7 @@ bool CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
             int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            return func_8015C294((unsigned int*)r, arg);
+            return CharEffIsSlotOccupied((unsigned int*)r, arg);
         }
     }
     return 0;
@@ -1064,7 +1064,7 @@ void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
             int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            func_8015BD24((void*)r, arg);
+            CharEffSetPointEnabled((void*)r, arg);
         }
     }
 }
@@ -1488,7 +1488,7 @@ void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, fl
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
             int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            func_eu_8015D258((void*)r, lbl_eu_80666A94 - value);
+            CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - value);
         }
     }
 }
@@ -1576,7 +1576,7 @@ void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
     }
 }
 extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
-    // Distance/state check for the movement update (called by func_800BC8D8):
+    // Distance/state check for the movement update (called by CfObjectMove_tickSpeed):
     // resolves the scene object, then depending on the mFlags68 bits either
     // attaches the position region to the scene's target vector (bit 2), or
     // compares the squared distance between the position-query result and the
@@ -1677,7 +1677,7 @@ void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
         }
     }
 }
-extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
         return;
     }
@@ -1708,14 +1708,14 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
     if (sub != 0) {
         if (sub->CfObject_getCharEffect() != 0) {
             int r = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-            func_eu_8015D258((void*)r, lbl_eu_80666A94 - v);
+            CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - v);
         }
     }
 }
-extern "C" void func_800BCD04(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_refreshPosition(cf::CfObjectMove* self) {
     // Position/state refresh. With a model sub-object, a +0x9C word and the
     // busy bit (bit 2) present, snapshot the C4 target's position; then either
-    // reset the movement state (bit 3 path: func_800BC9EC + region attach) or
+    // reset the movement state (bit 3 path: CfObjectMove_resetMoveTarget + region attach) or
     // re-sync the position region against the model sub-object's movement
     // query. Without the model sub-object the +0x6C0 movement target drives
     // the position difference instead.
@@ -1732,7 +1732,7 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
         if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0) {
             if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (*(volatile u32*)&lbl_eu_80663E24 & 0x01040000) == 0) {
                 if (self->CObjectState_checkStateFlags8(0x1000) == 0) {
-                    func_800BC9EC(self);
+                    CfObjectMove_resetMoveTarget(self);
                     ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
                     goto done_flags;
                 }
@@ -1752,7 +1752,7 @@ if (self->CfObject_checkSubReady() != 0) {
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
             self->mField4C = ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_444;
         } else {
-            func_800BC9EC(self);
+            CfObjectMove_resetMoveTarget(self);
             ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
         }
 done_flags:
@@ -1774,7 +1774,7 @@ done_flags:
             saved.x = self->mPos3C;
             saved.y = self->mPos40;
             saved.z = self->mPos44;
-            func_800BC9EC(self);
+            CfObjectMove_resetMoveTarget(self);
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - saved;
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
             self->mField4C = ((cf::CfObjectMove6C0View*)self->mTarget6C0)->field_C;
@@ -1786,7 +1786,7 @@ done_flags:
     }
 }
 
-extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
     if (self->mTarget6C0 == 0) {
         return;
     }
@@ -1842,7 +1842,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
             id = 0x44A11;
         }
         float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
-        func_804BD94C(&self->mPos3C, &step, id, 0, 0, 0,
+        ScnRes_ResolveGroundHeight(&self->mPos3C, &step, id, 0, 0, 0,
                       lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, lbl_eu_80666AC4);
     }
     // Store the position difference against the snapshot into the +0x54 area.
@@ -1853,7 +1853,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
 }
 
-extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
+extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
         return;
     }
@@ -2079,7 +2079,7 @@ void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
         }
     }
     if (self->mSubObj98 != 0) {
-        func_80482918(self->mSubObj98, 1);
+        simSetFlag1Tree(self->mSubObj98, 1);
     }
 }
 

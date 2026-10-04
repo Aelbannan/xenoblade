@@ -169,7 +169,7 @@ public:
     void setChildF50__();
     void setEffPosVec_();
     void callVirt19___();
-    void func_800ACCE4();
+    void snapEffTarget();
     void callVirt25___();
     void moveEffOfs___();
     void setEffRotVec_();

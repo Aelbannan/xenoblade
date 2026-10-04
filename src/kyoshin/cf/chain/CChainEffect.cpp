@@ -7,7 +7,11 @@
 namespace cf {}
 
 cf::CChainEffect::CChainEffect() : unk4(0), unk8(0) {}
-cf::CChainEffect::~CChainEffect() {}
+// NOTE: no out-of-line ~CChainEffect here. CBattleManager owns the
+// link-winning definition (and the vtable/RTTI this split does not keep);
+// defining it here would duplicate both and add .text retail does not have.
+// This TU never destroys CChainEffect out-of-line, so no local copy is
+// needed (the header declaration covers the implicit uses).
 
 // Look up an effect linkage object by (class-id, member pointer). The member
 // pointer stores the object offset as a run-time pointer; when non-null it is

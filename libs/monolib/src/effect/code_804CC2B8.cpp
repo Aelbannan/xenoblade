@@ -30,11 +30,11 @@ extern f32 lbl_eu_8066B134;
 extern "C" u32 lytBindCanResolveTarget(void* link);
 extern "C" void* SchedNode_FetchSlotPtr(s32 arg);
 extern "C" void SchedTexLoadCached(void* res, s32 index, s32 cacheIndex, s32 wrap);
-extern "C" void func_804BE4E0(void* dst, int index);
+extern "C" void ScnRes_CopyEntryMid(void* dst, int index);
 extern "C" void SysCacheStoreIdentityMat(ml::CMat34* out);
 extern "C" void cerandRotateX90Wrapper(Mtx mtx);
 extern "C" void cerandTransposeObjCC(Mtx mtx, const void* obj);
-extern "C" void func_804D928C(Mtx mtx, const u8* obj);
+extern "C" void cerandAimMatrix(Mtx mtx, const u8* obj);
 #include "monolib/math/FloatUtils.hpp"
 extern f32 lbl_eu_8066B0FC;
 extern f32 lbl_eu_8066B12C;
@@ -311,14 +311,14 @@ struct Vend {
 // (or a shared header) when scope allows.
 struct CETrailLight;
 struct CETrailLightParam;
-extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode,
+extern "C" void TrailLight_Drive(CETrailLight* self, void* arg, s32 mode,
                               const CETrailLightParam* p, f32 f1, f32 f2);
 
 // Trail driver imports (defined in CETrail.cpp).
 struct CETrail;
 extern "C" void Trail_ReleaseLinks(CETrail* t);
-extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color);
-extern "C" void func_804D77E4(CETrail* t, const Mtx* M, f32 f,
+extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color);
+extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, f32 f,
                               const ml::CVec4* scale, const ml::CVec4* out);
 
 // Target 3: position/transform layout.
@@ -345,7 +345,7 @@ struct Node2Control {
 extern "C" s32 EffFxSegmentRegionTest(void* self, Vec* a, Vec* b, Vec* c);
 
 // Per-node quad emit used by the type-0xc walker (matrix/color payload draw).
-extern "C" void func_804EEB40(void* matId, Vec* a, void* color, Vec* b, s32 flagA,
+extern "C" void drawScreenMarker(void* matId, Vec* a, void* color, Vec* b, s32 flagA,
                                s32 flagB, TexMtxSrc* src, f32 f2, f32 f3);
 
 extern "C" void EffFxAccumNodeWeight(EffectStruct* self) DECOMP_DONT_INLINE;
@@ -669,8 +669,8 @@ extern "C" void __attribute__((never_inline)) EffFxAccumSubObjDir(EffectScene* s
     lytBindRefreshPlayer(&self->field_0xdc);
     if ((r & 0xFF) != 0) {
         node = SchedNode_FetchByIndex((s16)self->field_0x04);
-        if (r & 2) func_804EE658(&self->field_0xdc, node);
-        if (r & 1) func_804EE8FC(&self->field_0xdc, node);
+        if (r & 2) lytBindRefreshMatrix(&self->field_0xdc, node);
+        if (r & 1) lytBindRefreshTrans(&self->field_0xdc, node);
     }
     f32 f31 = self->field_0x234 * self->field_0x18;
     if (f31 == lbl_eu_8066B0DC) return;
@@ -1265,7 +1265,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
                     (sub->field_0x110 != 0) ? *(f32*)((u8*)sub->field_0x110 - 0x18) : lbl_eu_8066B0D8;
                 if (ScnRes_VertRayForward_E398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
                     Vec v8;
-                    func_804BE4E0(&v8, 0);
+                    ScnRes_CopyEntryMid(&v8, 0);
                     Vec ang;
                     ang.y = atan2(v8.x, v8.z);
                     // Angle vector fills as y, z, x (z cleared before the pitch lands).
@@ -1286,7 +1286,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
         mtxFlag = 1;
     } else if (tp == 1 || tp == 7) {
         void* obj = Scn_FindCamItem(*(void**)((u8*)self->field_0x08 + 0x10), -1);
-        func_804D928C(mtx1a0, (const u8*)obj);
+        cerandAimMatrix(mtx1a0, (const u8*)obj);
         mtxFlag = 1;
     }
     s32 keep = 1;
@@ -1655,7 +1655,7 @@ extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj
 // type-punned floats; 0x2a4 is truncated to an int mode.
 extern "C" void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p) {
     if (self->field_0x330 != 0 && self->field_0x0c->field_0x110 != 0) {
-        func_804D8160((CETrailLight*)self->field_0x330, p,
+        TrailLight_Drive((CETrailLight*)self->field_0x330, p,
                       (s32)*(f32*)&self->field_0x2a4,
                       (const CETrailLightParam*)&self->field_0x1cc,
                       *(f32*)&self->field_0x29c, *(f32*)&self->field_0x2a0);
@@ -2487,7 +2487,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType8Trail(EffectNode* 
         cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 1) : 1;
         v.w = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
         Trail_ReleaseLinks((CETrail*)self->field_0x328);
-        func_804D77E4((CETrail*)self->field_0x328, (const Mtx*)&self->field_0x19c,
+        Trail_UpdateGeom((CETrail*)self->field_0x328, (const Mtx*)&self->field_0x19c,
                       *(f32*)&self->field_0x29c,
                       (const ml::CVec4*)&self->field_0x268, &v);
         ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
@@ -2641,7 +2641,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType8Trail(EffectNode* 
     }
 
     RenderNode* node2 = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
-    func_804D7434((CETrail*)self->field_0x328, texgens, &node2->b0);
+    Trail_DrawStrip((CETrail*)self->field_0x328, texgens, &node2->b0);
 }
 extern "C" void __attribute__((never_inline)) EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
@@ -2773,7 +2773,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderTypeCWalk(EffectNode* n
     // Scenes without the local-scale bit inherit the parent transform.
     bool inheritScale = ((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 11) & 1) != 0;
     MatFlags* mat = (MatFlags*)self->field_0x08;
-    func_804EEB40(mat->field_0x10, &drawPos, (void*)&self->field_0x1cc,
+    drawScreenMarker(mat->field_0x10, &drawPos, (void*)&self->field_0x1cc,
                   &angBase, !inheritScale, zflag ? 1 : 0, &src, self->field_0x2a4,
                   self->field_0x2d8);
 }

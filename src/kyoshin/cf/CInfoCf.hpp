@@ -215,7 +215,7 @@ struct CInfoCfObjD4 {
     CInfoCfCopyD4 body; // 0x04
 };
 
-// CSysWin body copied by func_8016742C (0x04..0x39). The 0x29-0x2B gap is
+// CSysWin body copied by InfoCfCopySysWin (0x04..0x39). The 0x29-0x2B gap is
 // compiler-inserted alignment padding between field_28 (u8) and field_2C
 // (u32), which MWCC struct assignment does not copy - matching retail.
 struct CInfoCfSysWinBody {
@@ -308,7 +308,7 @@ struct CInfoCfObjE48 {
 };
 
 /*
- * Body-copy view for func_80166F80 (0x04..0x208). The retail copy is two
+ * Body-copy view for InfoCfCopyObjF80 (0x04..0x208). The retail copy is two
  * aggregate statements: a field-by-field head (0x04..0xC4, 35 streamed words +
  * bytes + five 8-byte pair chunks) and a middle block (0xC8..0x208) that
  * starts with the 18-entry u64 counted loop, continues with paired words and
@@ -318,7 +318,7 @@ struct CInfoCfObjE48 {
  * prologue is hoisted into the 0x158 pair - a single-statement copy hoists
  * both, which does not match.
  */
-// 8-byte chunk type for the paired word regions in func_80166F80's blob.
+// 8-byte chunk type for the paired word regions in InfoCfCopyObjF80's blob.
 // Retail copies each 8-byte run as a 2-load/2-reverse-store pair (lwz r5 / lwz r0
 // / stw r0 / stw r5); a 4-aligned 8-byte struct reproduces both the offset and
 // the r5-first allocation (u64 allocates r0-first; u8[8] is 1-aligned).
@@ -327,7 +327,7 @@ struct CInfoCfPair {
     u32 hi;
 };
 
-// Tail u64 table of func_80166F80's blob: retail packs it at the odd +0x189
+// Tail u64 table of InfoCfCopyObjF80's blob: retail packs it at the odd +0x189
 // (loop base +0x185), so the type must be 1-aligned. Declared at file scope
 // (MWCC ignores #pragma pack inside a struct body) and used as a member so the
 // struct assignment still copies it with the counted lwzu/stwu loop.
@@ -413,7 +413,7 @@ struct CInfoCfObjF80 {
 };
 
 /*
- * Body-copy view for func_80167368 (0x04..0x42). The two words at +0x39 /
+ * Body-copy view for InfoCfCopyObj368 (0x04..0x42). The two words at +0x39 /
  * +0x3D are packed at odd offsets (retail reads them with plain lwz), so the
  * aligned head is a normal struct and the packed tail is a raw byte slice on
  * the object (copied with word casts by the helper, not by struct assignment).
@@ -447,11 +447,11 @@ struct CInfoCfObj368 {
 };
 
 /*
- * Raw body view for func_801674D0 (0x00..0x44C0, vtable slot included).
+ * Raw body view for InfoCfCopyObj4D0 (0x00..0x44C0, vtable slot included).
  * The object is a packed blob: aligned u64 tables start at +0x00, +0x2825,
  * +0x28A5, +0x2CAC, +0x34B4, +0x3CBC (the last three are 4-mod-8, so no
  * natural struct can express them) with packed string/data runs in between.
- * func_801674D0 copies it region-by-region with counted lwzu/stwu loops.
+ * InfoCfCopyObj4D0 copies it region-by-region with counted lwzu/stwu loops.
  */
 struct CInfoCfObj4D0 {
     void* vtable;       // 0x00 (copied by the bulk loop in this helper)
@@ -540,21 +540,21 @@ struct CItemBoxGridBodyView {
     CItemBoxGridHead head;        // 0x04..0x6F (inline)
     u8 _70[0xE8 - 0x70];          // 0x70..0xE7 (not copied directly)
     CInfoCfObjE48 objE8;          // 0xE8  InfoCfCopyObjE48
-    CInfoCfObjF80 obj1D8;         // 0x1D8 func_80166F80
+    CInfoCfObjF80 obj1D8;         // 0x1D8 InfoCfCopyObjF80
     CInfoCfObjD4 obj3E4;          // 0x3E4 InfoCfCopyObjD4
     CInfoCfObj60 obj418;          // 0x418 InfoCfCopyObj60
     CInfoCfObjE4 obj440;          // 0x440 InfoCfCopyObjE4
-    CInfoCfObj368 obj468;         // 0x468 func_80167368
-    CInfoCfObjSysWin obj4AC;      // 0x4AC func_8016742C
-    CInfoCfObjSysWin obj4E8;      // 0x4E8 func_8016742C
+    CInfoCfObj368 obj468;         // 0x468 InfoCfCopyObj368
+    CInfoCfObjSysWin obj4AC;      // 0x4AC InfoCfCopySysWin
+    CInfoCfObjSysWin obj4E8;      // 0x4E8 InfoCfCopySysWin
     CItemBoxGridTail524 tail524;  // 0x524..0x549 (inline)
     u8 _54A[0x54C - 0x54A];       // 0x54A..0x54B
-    CInfoCfObj4D0 obj54C;         // 0x54C func_801674D0 (0x44C0 bytes)
+    CInfoCfObj4D0 obj54C;         // 0x54C InfoCfCopyObj4D0 (0x44C0 bytes)
 };
 
 // Same-unit import: pad-input/advance helper called from CMenuItem::Move
 // case 2 (body lives in kyoshin/menu/CMenuItem.cpp).
-extern "C" void func_80167A2C(CMenuItem* self);
+extern "C" void CMenuItem_HandleInput(CMenuItem* self);
 
 // CItemBoxGrid C-ABI helper (body lives in kyoshin/CItemBoxGrid.cpp); no
 // header declares the retail-unmangled name, so declare it here.

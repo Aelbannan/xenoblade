@@ -48,7 +48,7 @@ public:
  *   0x58/0x5C IWorkEvent / IScnRender subobject vtable slots
  *   0x60  CScn* mScn (owning scene, removeRenderCB target)
  *   0x64/0x78/0x8C nw4r::lyt::Layout* (drawn in cbRenderBefore)
- *   0x9C  f32 (position constant written by func_8017FEF0)
+ *   0x9C  f32 (position constant written by AddZealEffect)
  *   0xA0/0xA1 flags (0xA0 gates the 0x8C layout draw)
  *   0xA4  UnkClass_8045F564 scratch region (0x10 bytes)
  *   0xBD/0xBE/0xBF flags (0xBD gates the whole draw; 0xBF set by the
@@ -110,7 +110,7 @@ public:
 extern CMenuZeal* lbl_eu_806642A0;
 // cbRenderBefore gate flag (bit 21 skips the draw).
 extern u32 lbl_eu_80663E28;
-// func_8017FEF0 positioning constant (sdata2 float pool).
+// AddZealEffect positioning constant (sdata2 float pool).
 extern const f32 lbl_eu_80667890;
 
 // Temporary (CProcess) vtable, pre-PMF copy; composite vtable afterwards.

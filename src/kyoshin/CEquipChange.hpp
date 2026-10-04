@@ -156,9 +156,9 @@ extern "C" void __ct__CSubCur(void* self, nw4r::lyt::ArcResourceAccessor* arc);
 extern "C" void __ct__CItemBoxInfo(void* self, int a, int b);
 extern "C" void __ct__CEquipItemBox(void* self);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
-extern "C" void func_8018BE74(void* dst, void* src);
-extern "C" void func_8018B0FC(void* dst, void* src);
-extern "C" void func_8016742C(void* dst, void* src);
+extern "C" void ShopBuy_CopyData(void* dst, void* src);
+extern "C" void MenuShopSellCopyCursor(void* dst, void* src);
+extern "C" void InfoCfCopySysWin(void* dst, void* src);
 
 // Manual vtable for the ctor store (retail lis/addi lbl_eu_80535688).
 extern char lbl_eu_80535688[];
@@ -269,7 +269,7 @@ struct CEqChBoxTemp {
     u16 f150;              // 0xac
     u8 f152;               // 0xae
     u8 _pad153;
-    u8 f154[0x160];        // 0xb0..0x210 (func_8018BE74)
+    u8 f154[0x160];        // 0xb0..0x210 (ShopBuy_CopyData)
 };
 
 struct CEqChEquipTemp {
@@ -280,7 +280,7 @@ struct CEqChEquipTemp {
     u8 f2f0[4];            // 0x40
     u8 f2f4[0x18];         // 0x44 (PartyStateWin_CopySlotRec)
     u8 f30c[0x18];         // 0x5c (PartyStateWin_CopySlotRec)
-    u8 f324[0x1c];         // 0x74 (func_8018B0FC)
+    u8 f324[0x1c];         // 0x74 (MenuShopSellCopyCursor)
     u8 f340[0x10];         // 0x90 (__ct__UnkClass_8011C974)
     u32 f350[5];           // 0xa0..0xb4
     u8 f364[4];            // 0xb4..0xb8
@@ -294,8 +294,8 @@ struct CEqChEquipTemp {
     u8 pairs16[0x80];      // 0xf8..0x177 (16 x 8-byte records)
     u8 f428[3];            // 0x178..0x17b
     u8 _pad42b;
-    u8 f42c[0x3c];         // 0x17c (func_8016742C)
-    u8 f468[0x3c];         // 0x1b8 (func_8016742C)
+    u8 f42c[0x3c];         // 0x17c (InfoCfCopySysWin)
+    u8 f468[0x3c];         // 0x1b8 (InfoCfCopySysWin)
     u8 f4a4[3];            // 0x1f4..0x1f7
     u8 _pad4a7;
     u16 f4a8;              // 0x1f8
@@ -307,7 +307,7 @@ struct CEqChEquipTemp {
     u32 f4b4;              // 0x204
     u32 f4b8;              // 0x208
     u32 f4bc;              // 0x20c
-    u8 f4c0[0x15c];        // 0x210..0x36c (func_8018BE74)
+    u8 f4c0[0x15c];        // 0x210..0x36c (ShopBuy_CopyData)
     u32 f61c;              // 0x36c
     u16 f620;              // 0x370
     u8 f622[0xe];          // 0x372..0x380 (&f622[8] is the loop base at 0x37a)
@@ -362,7 +362,7 @@ extern s8 lbl_eu_8066469C;
 
 // bdat helpers used by EquipChange_ResolveEquipItem's rebuild path.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
-extern "C" void func_80159F6C(void* self, u32 family, u32 row, u16 kind);
+extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -374,7 +374,7 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 startItemBoxOpen(CItemBoxInfo* info);
 extern "C" u32 hideItemBoxPanes(CItemBoxInfo* info, u8 arg2);
 extern "C" void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
-extern "C" void func_801D202C(void* cur);
+extern "C" void Cur_Update(void* cur);
 extern "C" void updateItemBoxAnims(CItemBoxInfo* info);
 extern "C" void closeItemBox1(CItemBoxInfo* info);
 
@@ -454,7 +454,7 @@ extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
-extern "C" void func_800BFDE0(void* obj, u32 flag);
+extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" int stepEIBSysWin2(CEquipItemBox* box);
 extern "C" int isEIBSelectBlocked(CEquipItemBox* box);

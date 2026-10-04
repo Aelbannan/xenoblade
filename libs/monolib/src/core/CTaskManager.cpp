@@ -35,26 +35,26 @@ extern "C" u32 lbl_eu_80663570[2];
 // .data 0x8056B55C-0x8056B5E0 (132B): CRootProc vtable array (RTTI chain +
 // CTTask<CRootProc> segment + secondary chain) + CView::updateMsg jumptable.
 // The three CTTask<...> slots (+0x2C/+0x3C/+0x40, '<'-unspellable) are zero
-// here and injected by UNIT_RULES["CTaskManager.o"] inject_relocs.
-extern "C" u32 lbl_eu_8056B55C[33] = {
+// here and injected by UNIT_RULES["CTaskManager.o"] inject_relocs. Retail
+// holds one label per sub-table: B55C/B580 head, B5A4 base-list tail (+0x48,
+// the sdata locator target), and the local updateMsg jumptable (+0x64).
+extern "C" u32 lbl_eu_8056B55C[18] = {
     (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0,
     (u32)&lbl_eu_80663570, 0, 0, (u32)&lbl_eu_80663570, 0,
-    0,                                      /* +0x2C __dt__48CTTask<...>Fv (injected) */
-    (u32)&Reset__14CChildListNodeFv,        /* +0x30 */
-    0, 0,
-    0,                                      /* +0x3C Move__48CTTask<...>Fv (injected) */
-    0,                                      /* +0x40 Draw__48CTTask<...>Fv (injected) */
-    (u32)&Tail__8CProcessFv,                /* +0x44 */
+    0, (u32)&Reset__14CChildListNodeFv, 0, 0, 0, 0, (u32)&Tail__8CProcessFv,
+};
+// Base-list tail (+0x48, 7 words: the sdata locator target) fused with the
+// local updateMsg jumptable (+0x64, 8 words). A standalone jumptable object
+// is 8-aligned to +0x68 by this toolchain (3 probes: plain/static/used),
+// breaking the retail layout; fused here the bytes, offsets and relocs are
+// exact and .data keeps its 0x84 + MWCC-vtable shape for the UNIT_RULES drop.
+extern "C" u32 lbl_eu_8056B5A4[15] = {
     (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0, 0,
     (u32)&updateMsg__5CViewFv, (u32)&updateMsg__5CViewFv,
     (u32)&updateMsg__5CViewFv, (u32)&updateMsg__5CViewFv,
     (u32)&updateMsg__5CViewFv, (u32)&updateMsg__5CViewFv,
     (u32)&updateMsg__5CViewFv, (u32)&updateMsg__5CViewFv,
 };
-// .data + 0x48: CTTask<CRootProc> base-list label (defined by
-// UNIT_RULES["CTaskManager.o"] add_symbols at offset 0x48; UNDEF here so the
-// .sdata locator below relocates to the retail symbol).
-extern "C" u32 lbl_eu_8056B5A4[];
 extern "C" u32 lbl_eu_80663568[2] = { (u32)&lbl_eu_80522588, (u32)&lbl_eu_8056B55C };
 extern "C" u32 lbl_eu_80663570[2] = { (u32)&lbl_eu_805225B0, (u32)&lbl_eu_8056B5A4 };
 

@@ -131,7 +131,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
             return 1;
         }
 
-        int r = func_8047D2AC__17UnkClass_8047D2ACFv(
+        int r = runWalkerTick__17UnkClass_8047D2ACFv(
             self->mpSomePtr, out, getPos(self),
             lbl_eu_806665A0, self->mFloatParam1, src);
         if (r == 0) {
@@ -166,12 +166,12 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                         return 1;
                     }
                     ml::CVec3 probeHi;
-                    func_804BE4E0(&probeHi, 0);
+                    ScnRes_CopyEntryMid(&probeHi, 0);
                     if (probeHi.y > lbl_eu_8066AF20) {
                         *out = dir;
                     } else {
                         ml::CVec3 probeLo;
-                        func_804BE4B4(&probeLo, 0);
+                        ScnRes_CopyEntryHead(&probeLo, 0);
                         if (probeLo.y >= getPos(self)->y) {
                             *out = dir;
                         } else {
@@ -531,7 +531,7 @@ haveOk:
     }
     {
         ml::CVec3* pos = getPos(self);
-        if (func_8047DC8C__17UnkClass_8047D2ACFv(self->mpSomePtr,
+        if (findWalkRoute__17UnkClass_8047D2ACFv(self->mpSomePtr,
                                                  &self->field_0x24, pos, val,
                                                  lbl_eu_806665A0,
                                                  lbl_eu_806665A0,
@@ -777,7 +777,7 @@ okTrue:
     ok = 1;
 haveOk:
     if (ok != 0) {
-        return func_8047DE3C__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
+        return solveWalkPair__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
                                                      lbl_eu_806665A0, lbl_eu_806665A0);
     }
     return 0;

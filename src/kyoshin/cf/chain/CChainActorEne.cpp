@@ -18,7 +18,7 @@ extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" void* CPartsChange_FindActorByObj(void* list, void* obj);
 extern "C" void* CPartsChange_FindActorById(void* list, u32 id);
 extern "C" void* getReslistB48(void);
-extern "C" void* func_8016FE34(void* src);
+extern "C" void* MapFx_ResolveOwner(void* src);
 void* getEffOwner__(void* obj);
 extern void* findObjectById(int);
 
@@ -76,7 +76,7 @@ extern "C" void ChainEne_Teardown_133C(cf::CChainActorEne* self) {
 extern "C" int ChainEne_ValidateCand_1384(cf::CChainActorEne* self, int arg) {
     if (arg == 0) return 0;
     void* handle = findObjectById(arg);
-    void* obj = func_8016FE34(handle);
+    void* obj = MapFx_ResolveOwner(handle);
     if (obj == 0) return 0;
     void* sub = *(void**)((u8*)obj + 4);
     int v = *(int*)static_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
@@ -136,7 +136,7 @@ extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
 // chain types (0x96b/0x96c) it first scans the gimmick object list for the
 // 0x96b timeline and uses that id; otherwise it falls back to the actor's own
 // timeline object.
-extern "C" int func_802815B8(cf::CChainActorEne* self) {
+extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
     u32 a0 = self->unk0;
     if (a0 != 0) a0 += 0x3e9c;
     EneChainObj* o0 = (EneChainObj*)getEffOwner__((void*)a0);
@@ -177,7 +177,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
 // Clears the "rework" (break/chain-related) bit on the enemy actor found
 // through the timeline object of this chain actor, for both the special
 // enemy chain case and the plain self case.
-extern "C" void func_802816FC(cf::CChainActorEne* self) {
+extern "C" void ChainEne_ClearReworkFlag_16FC(cf::CChainActorEne* self) {
     u32 a1 = self->unk0;
     if (a1 != 0) a1 += 0x3e9c;
     EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)a1);

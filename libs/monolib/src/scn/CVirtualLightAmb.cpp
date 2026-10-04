@@ -27,13 +27,18 @@ CVirtualLightAmb::~CVirtualLightAmb() {
 extern "C" u32 lbl_eu_806639C8;
 extern "C" u32 lbl_eu_806639D0;
 extern "C" void __dt__16CVirtualLightAmbFv();
-extern "C" void func_804947EC();
+extern "C" void getVirtualLightColor();
 extern "C" void getVirtualLightSentinel();
-extern "C" u32 lbl_eu_8056E878[8] = {
+extern "C" u32 lbl_eu_8056E878[5] = {
     (u32)&lbl_eu_806639C8, 0x00000000,
     (u32)&__dt__16CVirtualLightAmbFv,
-    (u32)&func_804947EC,
+    (u32)&getVirtualLightColor,
     (u32)&getVirtualLightSentinel,
+};
+// [.data] 0x8056E88C-0x8056E898 (12B): vtable tail (base label + 2 zero
+// slots); retail holds this tail under its own label (referenced by
+// CScnItemCamera). Split point 0x14: u32+reloc tails pack at 4 (CScnMem).
+extern "C" u32 lbl_eu_8056E88C[3] = {
     (u32)&lbl_eu_806639D0,
     0x00000000, 0x00000000,
 };

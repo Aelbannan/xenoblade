@@ -350,7 +350,7 @@ void* CfRes_lookupStrTable(char* self, int index, void** out) {
         int same = strcmp(lbl_eu_80661A20, self) == 0;
         if (same) {
             CfResStrTableRec* rec = (CfResStrTableRec*)(self + index * 16);
-            *out = (void*)(uintptr_t)func_800AA600(rec->str);
+            *out = (void*)(uintptr_t)Tok_GetPrefix(rec->str);
             result = self + rec->field_10;
         }
     }
@@ -492,7 +492,7 @@ run:
     KyoshinHeap_HasActive54();
     CfRes_callFunc_67E78();
     CfRes_callFunc_67FE0();
-    func_800A9134();
+    KyoshinHeap_GetField54();
 }
 
 extern "C" __declspec(noinline) int CfRes_checkFlags_48000() {
@@ -941,7 +941,7 @@ extern "C" void CfRes_initTblEntries(u32 arg);
 // MWCC inlines this body into __ct__Q22cf5CfResFv and the call relocs shift.
 __declspec(noinline) void CfRes_initArchiveTables(u8* self, int arg) {
     lbl_eu_80663D80 = arg;
-    func_800676F8(self + 4);
+    CfRes_initWork(self + 4);
     CfRes_initResEntries(-1);
     CfRes_initTblEntries(-1);
 }
@@ -1256,7 +1256,7 @@ template <> FixStr<64>::FixStr();
 int __declspec(noinline) CfRes_getResFileSize(u8* res) {
     int ret = -1;
     ml::FixStr<64> str;
-    if (func_800AA33C(str, (u32)(uintptr_t)res, 1, 1) != 0) {
+    if (Tok_FormatStr(str, (u32)(uintptr_t)res, 1, 1) != 0) {
         ret = CfRes_getDeviceFileSize(CfRes_stub_63ACC(&str));
     }
     return ret;
@@ -1414,7 +1414,7 @@ int __declspec(noinline) CfRes_dispatchArchiveRead(void* a, void* b, u32 c, void
 int __declspec(noinline) CfRes_buildPathAndRead(u8* a, u8* b, u32 c, u8* d, int e) {
     int ret = 0;
     ml::FixStr<64> str;
-    if (func_800AA33C(str, c, 1, 1) != 0) {
+    if (Tok_FormatStr(str, c, 1, 1) != 0) {
         ret = CfRes_dispatchArchiveRead(a, b, c, CfRes_stub_63ACC(&str), d, e);
     }
     return ret;
@@ -1700,7 +1700,7 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
             if (bits == 4 || bits == 3 || bits == 0x16) {
                 size += 0x3800;
             }
-            check = func_800A8E6C(-((size + 0x7ff) & ~0x7FF), 1) == NULL;
+            check = KyoshinHeap_AllocNode(-((size + 0x7ff) & ~0x7FF), 1) == NULL;
         }
     }
 
@@ -1770,7 +1770,7 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
             entry->field_0x24 = CfRes_getE30();
             kind = 4;
         } else {
-            buf = func_800A8E6C(-(int)rounded, 0);
+            buf = KyoshinHeap_AllocNode(-(int)rounded, 0);
             kind = 4;
         }
     } else {
@@ -1904,7 +1904,7 @@ extern "C" int __declspec(noinline) CfRes_resolveGridToken(int inst, int a, int 
     void* vc = CfRes_vcall02(entry, (int)CfRes_extractBits20_7((void*)(uintptr_t)b));
     if (vc == 0) {
         ml::FixStr<64> str;
-        func_800AA33C(str, (u32)(uintptr_t)b, 0, 0);
+        Tok_FormatStr(str, (u32)(uintptr_t)b, 0, 0);
         return 0;
     }
     int result = CfRes_buildPathAndRead((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)b, (u8*)entry, e);
@@ -2117,7 +2117,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlotF4(int inst, int a, int b, 
     CfRes_delegateCleanup(slot);
     void* vc = CfRes_vcall02(slot, 0);
     ml::FixStr<64> str;
-    if (func_800AA33C(str, packed, 1, 1) != 0) {
+    if (Tok_FormatStr(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
         CfRes_stripExtension(path, CfRes_stub_63ACC(&str)->mString);
         CfRes_strcatAppend((char*)&path, lbl_eu_804FB214 + 0x1a);
@@ -2142,7 +2142,7 @@ extern "C" int __declspec(noinline) CfRes_resolveSlot130(int inst, int a, int b,
     }
     CfRes_delegateCleanup(slot);
     ml::FixStr<64> str;
-    if (func_800AA33C(str, packed, 1, 1) != 0) {
+    if (Tok_FormatStr(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
         CfRes_stripExtension(path, CfRes_stub_63ACC(&str)->mString);
         CfRes_strcatAppend((char*)&path, lbl_eu_804FB214 + 0x1e);
@@ -2213,7 +2213,7 @@ extern "C" __declspec(noinline) void CfRes_vcall38(void* self) {
 // game-manager fields and store them into the slot.
 void __declspec(noinline) CfRes_updateSlot16C(int inst, u8* arg) {
     u8* p = (u8*)CfRes_ptrPlus16C((u8*)(inst + 4));
-    func_80066788(p, 0, 0, 0);
+    CfRes_updateEntry(p, 0, 0, 0);
     void* vc = CfRes_vcall02(p, 0);
     if (vc != 0) {
         u16 first;
@@ -2353,7 +2353,7 @@ int __declspec(noinline) CfRes_lookupNameByType(int a, int type, int* out) {
         char name[0x20];
         strncpy(name, e->name, 8);
         name[8] = '\0';
-        u32 bits = CfRes_extractBits27_5((void*)(uintptr_t)func_800AA714(name));
+        u32 bits = CfRes_extractBits27_5((void*)(uintptr_t)Tok_ParseFile(name));
         if (type == 0) {
             if (bits >= 2 && bits <= 6) {
                 u32 rel = baseEntry[idx].field_00;

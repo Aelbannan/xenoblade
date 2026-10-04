@@ -103,7 +103,7 @@ public:
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
-    u8 func_8029FF1C() { return mActive; }
+    u8 isSkipActive() { return mActive; }
 
     // --- member fields ---
     /* 0x00 */ void* mVtbl;                       // vtable pointer, set at construction
@@ -180,10 +180,10 @@ extern "C" void CSkipTimer2MarkActive(u8* self);
 // Retail strips mangling for these func_ names in US, hence extern "C".
 extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg);
 extern "C" void func_8029F6EC(CSkipTimer2* self);
-extern "C" void func_8029F73C(CSkipTimer2* self);
-// func_8029FBE0: System.arc load kickoff (retail strips mangling on US func_
+extern "C" void CSkipTimer2OnAdvanceEnd(CSkipTimer2* self);
+// CSkipTimer_BeginLoad: System.arc load kickoff (retail strips mangling on US func_
 // names), so the definition binds to the literal retail symbol.
-extern "C" void func_8029FBE0(CSkipTimer* self);
+extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
 // CSkipTimer2RebuildLayout: post-build hook on the sub-controller (body lives in retail).
 extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self);
 extern "C" int CSkipTimerMapKeyToAction(CSkipTimer* self);
@@ -199,7 +199,7 @@ extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
 // sites to the literal (un)mangled retail names.
 extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self);
 extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self);
-extern "C" void func_802A041C(CSkipTimer* self);
+extern "C" void CSkipTimer_UpdateSlotFrame(CSkipTimer* self);
 extern "C" void CSkipTimerBindAnim24(CSkipTimer* self);
 extern "C" void CSkipTimerBindAnim20(CSkipTimer* self);
 extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
@@ -213,5 +213,5 @@ extern "C" void sysWinDispatchPhase(CSysWin* sysWin);
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
 
 // Window content setters from CSysWin.cpp (retail-unmangled names).
-extern "C" void func_8022B9B4(void* syswin, void* str1, void* str2);
+extern "C" void sysWinSetKindContent(void* syswin, void* str1, void* str2);
 extern "C" void sysWinOpenPhase1(void* syswin);

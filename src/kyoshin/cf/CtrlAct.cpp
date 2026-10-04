@@ -36,7 +36,7 @@
 
 // Target us-800d1bc4. CtrlActView-family base constructor: clear the state
 // words, run the two vtable writes (base then derived, novtable convention),
-// resolve the sub-object via func_800BBC0C and the player via func_8016FE34,
+// resolve the sub-object via func_800BBC0C and the player via MapFx_ResolveOwner,
 // zero the 0x2C position block and the tail bytes.
 // Retail signature has a third (unused) argument; it affects MWCC's
 // saved-register coloring (see CtrlPc.hpp declaration).
@@ -57,7 +57,7 @@ CtrlActView* __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
     self->mField2C = 0;
     *(void**)self = (void*)lbl_eu_8052B080;   // derived vtable
     memset(&self->mPos30, 0, 0x2c);
-    self->mPlayer = (CtrlActPlayerView*)func_8016FE34(posObj);
+    self->mPlayer = (CtrlActPlayerView*)MapFx_ResolveOwner(posObj);
     self->mField78 = 0;
     self->mField79 = 0;
     self->mField74 = 0;
@@ -111,13 +111,13 @@ extern "C" void updateActMain(CtrlActView* self) {
             src = (CtrlActSrc*)p;
             r30 = 0;
         } else {
-            src = (CtrlActSrc*)func_8016FE34(
+            src = (CtrlActSrc*)MapFx_ResolveOwner(
                 findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
             self->mField7A = 0;
             self->mField74 &= ~0x10;
         }
     } else {
-        src = (CtrlActSrc*)func_8016FE34(
+        src = (CtrlActSrc*)MapFx_ResolveOwner(
             findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     }
     if (src == 0) {
@@ -138,9 +138,9 @@ extern "C" void updateActMain(CtrlActView* self) {
             u32 local14 = *player2->mField4->vf30();
             if (testActorStatus(player2, &local14, 0xa) != 0) {
                 r29 = 1;
-            } else if (func_80148778(&self->mPlayer->mField8, 6) != 0) {
+            } else if (isBattleStatusActive(&self->mPlayer->mField8, 6) != 0) {
                 r29 = 1;
-            } else if (func_80148778(&self->mPlayer->mField8, 0xcd) != 0) {
+            } else if (isBattleStatusActive(&self->mPlayer->mField8, 0xcd) != 0) {
                 r29 = 1;
             }
         }
@@ -496,7 +496,7 @@ void aimVoiceOwner(CtrlActView* self) {
 // action-container id probes 15/9 and the 0x805 command gate feeding the
 // voice-height probe into aiActionUpdateEntriesDelta. Then a cascade of testActorStatus
 // command gates - any match (or a non-empty battle ring) runs the body. The
-// body fetches a 0x20-byte action entry via func_8014B8BC and either rebuilds
+// body fetches a 0x20-byte action entry via aiFetchAction and either rebuilds
 // the +0x2A4 action-state block or dispatches the entry's kind byte through a
 // 25-way switch; the no-entry path re-checks the current state instead.
 void parseActEntry(CtrlActView* self) {
@@ -509,8 +509,8 @@ void parseActEntry(CtrlActView* self) {
         return;
     }
 
-    if (func_80148778(&self->mPlayer->mField8, 0xf) == 0 &&
-        func_80148778(&self->mPlayer->mField8, 9) == 0) {
+    if (isBattleStatusActive(&self->mPlayer->mField8, 0xf) == 0 &&
+        isBattleStatusActive(&self->mPlayer->mField8, 9) == 0) {
         u32 cmd805 = *self->mPlayer->mField4->vf30();
         if (testActorStatus(self->mPlayer, &cmd805, 0x805) == 0) {
             f32 h = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
@@ -567,7 +567,7 @@ void parseActEntry(CtrlActView* self) {
     memset(&entry, 0, sizeof(entry));
     memset(buf34, 0, sizeof(buf34));
 
-    if (func_8014B8BC(&self->mPlayer->mField3380, &entry) == 0) {
+    if (aiFetchAction(&self->mPlayer->mField3380, &entry) == 0) {
         // No fresh entry: re-validate the current action state.
         if (!(entry.mFlags10 & 0x20)) {
             // L_3460: compare the owner's id probe against the stale entry.
@@ -591,7 +591,7 @@ void parseActEntry(CtrlActView* self) {
             // L_33B8: restart via command gates 0x806/0x10/0x18.
             u32 c1 = *self->mPlayer->mField4->vf30();
             if (testActorStatus(self->mPlayer, &c1, 0x806) == 0 &&
-                func_80148778(&self->mPlayer->mField8, 0x10) == 0) {
+                isBattleStatusActive(&self->mPlayer->mField8, 0x10) == 0) {
                 u32 c2 = *self->mPlayer->mField4->vf30();
                 if (testActorStatus(self->mPlayer, &c2, 0x18) == 0) {
                     CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x11, 0, -1, 1);
@@ -679,23 +679,23 @@ void parseActEntry(CtrlActView* self) {
         self->runArtsAttack(&entry);
         break;
     case 4:
-        func_8016FE34(findObjectById((int)entry.mField0));
+        MapFx_ResolveOwner(findObjectById((int)entry.mField0));
         CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
         break;
     case 5: {
-        void* src = func_8016FE34(findObjectById((int)entry.mField0));
+        void* src = MapFx_ResolveOwner(findObjectById((int)entry.mField0));
         CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
         CCharVoiceMan_EnqueueCtrlActVoiceA(self->mPlayer, src);
         break;
     }
     case 6: {
-        void* src = func_8016FE34(findObjectById((int)entry.mField0));
+        void* src = MapFx_ResolveOwner(findObjectById((int)entry.mField0));
         CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
         CCharVoiceMan_EnqueueCtrlActVoiceB(self->mPlayer, src);
         break;
     }
     case 7: {
-        void* src = func_8016FE34(findObjectById((int)entry.mField0));
+        void* src = MapFx_ResolveOwner(findObjectById((int)entry.mField0));
         CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
         CCharVoiceMan_EnqueueCtrlActVoiceC(self->mPlayer, src);
         break;
@@ -722,7 +722,7 @@ void parseActEntry(CtrlActView* self) {
         break;
     case 13:
         dispatchItemLoad(self->mPlayer, 0x1c0);
-        if (func_80148778(&self->mPlayer->mField8, 0xb) != 0) {
+        if (isBattleStatusActive(&self->mPlayer->mField8, 0xb) != 0) {
             ctrlActSetupActionKind(self, 0xa, 0);
         } else {
             ctrlActSetupActionKind(self, 4, 0);
@@ -749,7 +749,7 @@ void parseActEntry(CtrlActView* self) {
         ctrlActSetupActionKind(self, 9, 0);
         break;
     case 19: {
-        void* t = func_8016FE34(findObjectById((int)entry.mField0));
+        void* t = MapFx_ResolveOwner(findObjectById((int)entry.mField0));
         if (t != NULL) {
             ((CtrlActSrc*)t)->mField3388 |= 8;
         }
@@ -862,7 +862,7 @@ int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
         }
     }
     CtrlActSrcReal* src =
-        (CtrlActSrcReal*)func_8016FE34(findObjectById((int)arg->mField0));
+        (CtrlActSrcReal*)MapFx_ResolveOwner(findObjectById((int)arg->mField0));
     if (src == NULL) {
         return 0;
     }
@@ -934,7 +934,7 @@ int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
 // virtuals run before the block is committed.
 extern "C" int runArtsAttack(CtrlActView* self, CtrlActAtkArg* arg) {
     s16 atkIndex = arg->mField12;
-    CtrlActSrc* src = (CtrlActSrc*)func_8016FE34(findObjectById((int)arg->mField0));
+    CtrlActSrc* src = (CtrlActSrc*)MapFx_ResolveOwner(findObjectById((int)arg->mField0));
     // Each arts-set lookup reloads self->mPlayer fresh (scoped locals):
     // retail issues two separate lwz 0x5c(r29) + slot-0x27C dispatches here,
     // so the player load must not be CSE'd across the two statements.
@@ -1061,7 +1061,7 @@ extern "C" int runArtsAttack(CtrlActView* self, CtrlActAtkArg* arg) {
     snapshot.mField8 = sub->mField8;
     snapshot.mField4 = sub->mField4;
     snapshot.mField0 = sub->mField0;
-    if (func_80148778(&self->mPlayer->mField8, 0xeb) != 0) {
+    if (isBattleStatusActive(&self->mPlayer->mField8, 0xeb) != 0) {
         ((ArtsTable*)self->mPlayer->mField8)
             ->method20(&self->mPlayer->mField8, 0xeb);
         return 1;
@@ -1272,8 +1272,8 @@ extern "C" int handleActKind(CtrlActView* self) {
     {
         u32 local = *self->mPlayer->mField4->vf30();
         if (testActorStatus(self->mPlayer, &local, 0x4000) == 0
-            && func_80148778(&self->mPlayer->mField8, 6) == 0
-            && func_80148778(&self->mPlayer->mField8, 0xcd) == 0) {
+            && isBattleStatusActive(&self->mPlayer->mField8, 6) == 0
+            && isBattleStatusActive(&self->mPlayer->mField8, 0xcd) == 0) {
             // arts container clear
         } else {
             self->mField14 = lbl_eu_80666CF8;
@@ -1299,7 +1299,7 @@ extern "C" void setupActTimer(CtrlActView* self) {
         requestItemLoad(s->mPlayer, 0x40);
         return;
     }
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)s->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;
@@ -1402,7 +1402,7 @@ extern "C" void progressPhase(CtrlActView* self) {
         return;
     }
     CtrlActSrc* src;
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;
@@ -1478,7 +1478,7 @@ extern "C" void rotateActPose(CtrlActView* self) {
         return;
     }
     // Voice/battle-list resolve of this actor's action source.
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
@@ -1653,7 +1653,7 @@ extern "C" void ctrlActState4Handler(CtrlActView* self) {
             return;
         }
     }
-    void* t = func_8016FE34(findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+    void* t = MapFx_ResolveOwner(findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     void* other;
     if (t != 0) {
         other = t;
@@ -1711,7 +1711,7 @@ extern "C" void testAimWobble(CtrlActView* self) {
             return;
         }
     }
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
@@ -1849,7 +1849,7 @@ extern "C" void stepActMotion(CtrlActView* self) {
             return;
         }
     }
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
@@ -1956,7 +1956,7 @@ void loadActionSrc(CtrlActView* self) {
             return;
         }
     }
-    void* t = func_8016FE34(
+    void* t = MapFx_ResolveOwner(
         findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;

@@ -10,9 +10,9 @@ public:
     CLight();
     ~CLight(){}
 
-    void func_804C0484(const float* dir);
-    void func_804C07F0(const f32* color);
-    void func_804C09E8(GXLightObj* outLight, const Mtx matrix);
+    void LightCtlSetDir(const float* dir);
+    void LightCtlSetColor(const f32* color);
+    void LightCtlInitGXLight(GXLightObj* outLight, const Mtx matrix);
 
     u32 mFlags;                         // 0x00
     ml::CVec3 unk4;                     // 0x04 - position

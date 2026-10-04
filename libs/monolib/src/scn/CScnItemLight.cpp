@@ -11,7 +11,7 @@ extern "C" {
     void* Scn_CallUnk8C_V8(void* r3);
     void constructLightEnv(u8* self, void* r4);
     void __dt__80495200(u8* self, int deleting);
-    void func_804936AC(void* a, void* b, void* c);
+    void scnVlPushFrame(void* a, void* b, void* c);
 }
 
 // VTable for CScnItemLight (manually-managed data pointer at +0x00).
@@ -28,9 +28,9 @@ extern "C" void constructItemLightNw4r(u8* self, int val) {
 
 // forwardItemLightEnv: tail-call which forwards the owning CScnItemLightNw4r's
 // light-environment handle (+0x5C), this light item's env (+0x14) and the
-// owner into func_804936AC.
+// owner into scnVlPushFrame.
 extern "C" void forwardItemLightEnv(CScnItemLight* self) {
-    func_804936AC(self->mpNw4r->field_0x5c, self->mEnv, self->mpNw4r);
+    scnVlPushFrame(self->mpNw4r->field_0x5c, self->mEnv, self->mpNw4r);
 }
 
 // importItemLightSetting: push this light item's nw4r g3d LightSetting (+0x944) into

@@ -962,12 +962,12 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     }
 
     this_->field_38->Animate(0);
-    func_801D202C(&this_->field_54);
+    Cur_Update(&this_->field_54);
     clpCurAnimate(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18])); // +0x6c
     sysWinDispatchPhase(&this_->field_9C);
     // Retail calls the second page's state machine with the +0x28EC sub-object
     clpUpdPgState(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
-    func_801D202C(&this_->field_54[0x30]); // +0x84
+    Cur_Update(&this_->field_54[0x30]); // +0x84
 }
 
 #pragma push
@@ -1460,13 +1460,13 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
     this_->field_49 = 9;
 
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x12);
-    func_8022B9B4(&this_->field_9C, str, 0);
-    func_8022BFC8((CSysWin*)&this_->field_9C, 1);
+    sysWinSetKindContent(&this_->field_9C, str, 0);
+    sysWinApplyKind((CSysWin*)&this_->field_9C, 1);
     sysWinOpenPhase1(&this_->field_9C);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     MenuSnd_GetMasterVol_95EC();
-    func_80043738(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
+    CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
 }
 #pragma pop
 
@@ -1509,8 +1509,8 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
     this_->field_49 = 0xD;
 
     char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13);
-    func_8022B9B4(&this_->field_9C, str, 0);
-    func_8022BFC8((CSysWin*)&this_->field_9C, 1);
+    sysWinSetKindContent(&this_->field_9C, str, 0);
+    sysWinApplyKind((CSysWin*)&this_->field_9C, 1);
     sysWinOpenPhase1(&this_->field_9C);
 
     incrementEventCounter__FUl(0x85);
@@ -1518,7 +1518,7 @@ __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     MenuSnd_GetMasterVol_95EC();
-    func_80043738(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
+    CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
 }
 #pragma pop
 
@@ -1855,14 +1855,14 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         // +0x84 cursor (CCur18): stack-build, copy, refresh.
         u8 tmpCur18[0x18];
         __ct__CCur18(tmpCur18, CUICfManager_getArcResourceAccessor());
-        func_8018B0FC(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
+        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
         __dt__6CCur18Fv(tmpCur18, -1);
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x84))->initLayout();
 
         // +0x54 cursor (CCur07): same pattern.
         u8 tmpCur07[0x18];
         __ct__CCur07(tmpCur07, field_30);
-        func_8018B0FC(reinterpret_cast<u8*>(this) + 0x54, tmpCur07);
+        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x54, tmpCur07);
         __dt__6CCur07Fv(tmpCur07, -1);
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x54))->initLayout();
 

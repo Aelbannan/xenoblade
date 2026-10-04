@@ -320,8 +320,8 @@ extern "C" void pushParamNode(void* data);
 extern "C" void* Scn_FindCamItem(void* obj, s32 id);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
 extern "C" int ScnRes_VertRayForward_E398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
-extern "C" void func_804BE4B4(void* out, int a);
-extern "C" void func_804BE4E0(void* out, int a);
+extern "C" void ScnRes_CopyEntryHead(void* out, int a);
+extern "C" void ScnRes_CopyEntryMid(void* out, int a);
 
 // Deleted fake views folded onto owning class virtuals (see CActParamAnimForeign split)
 
@@ -336,7 +336,7 @@ extern "C" void func_804BE4E0(void* out, int a);
 // from the anim TUs.
 class CActParam7ECTarget {
 public:
-    // Widened: CfObjectMove::func_800BCFA0 passes (1, lbl_eu_8066AF20).
+    // Widened: CfObjectMove::CfObjectMove_initAnimTarget passes (1, lbl_eu_8066AF20).
     // AnimGame fall-notify forwards f4F8 so f1 stays live from the compare
     // (retail: no second lfs before +0x08 bctrl).
     virtual void func08(u32 arg, float f); // +0x08 fall-state / scale gate
@@ -370,7 +370,7 @@ public:
     virtual void startOwnerFlag8Anim();
     virtual void startOwnerFlag2Anim();
     virtual void func_8004E9EC();
-    virtual void func_8004ECF4() const;
+    virtual void stepAnimState() const;
     virtual void fireCountGate();
     virtual void fireWord378Gt();
     virtual void func_8004F884();
@@ -466,10 +466,10 @@ extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
 extern "C" void simRefreshFlag8(void* obj, f32 value);
 extern "C" void simBindChrAnimChain(void* obj, u32 resId, u32 animIdx, u16 frame, s16 half);
-extern "C" void func_804839D4(void* obj, u32 resId, u32 animIdx, u16 frame, u32 gateBit, u32 flag,
+extern "C" void simBindChrAnim(void* obj, u32 resId, u32 animIdx, u16 frame, u32 gateBit, u32 flag,
                               s16 half);
 extern "C" int scn80496ChildIdsDiffer(u8* obj);
-extern "C" int func_80497914(u8* obj);
+extern "C" int scn80496IsComplete(u8* obj);
 extern "C" void walkParamBlkB(void* data);
 extern "C" void* getSubObjPlus14(void* param);
 extern "C" void resetParamSubB(void* data);
@@ -477,7 +477,7 @@ extern "C" void flushParamPair(void* data, u32 flag);
 extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
 extern "C" void switchSubAnim(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void updateLeafDist(CActParamAnim* self);
-extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
+extern "C" u32 ScnRes_ResolveGroundHeight(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 extern "C" {
 extern float lbl_eu_80665ECC;
@@ -515,17 +515,17 @@ extern const float lbl_eu_80665F38; // (func_800504DC clamp bound)
 extern const float lbl_eu_80665F40; // (func_800504DC clamp bound)
 extern const float lbl_eu_80665F44; // (func_800504DC clamp scale)
 extern const float lbl_eu_80665F48; // (func_800504DC clamp bound)
-extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / func_8004ECF4 gate)
-extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / func_8004ECF4 gate)
+extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / stepAnimState gate)
+extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / stepAnimState gate)
 extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, fireBlendCust/FCE0)
 extern const float lbl_eu_80665EF4; // (func_8004E9EC direction-length gate)
-extern const float lbl_eu_80665F08; // (func_8004ECF4 anim clamp bound)
+extern const float lbl_eu_80665F08; // (stepAnimState anim clamp bound)
 extern const float lbl_eu_80665F10; // (solveHeadRate anim angle bound)
-extern const float lbl_eu_80665F0C; // (func_8004ECF4/FFBC speed limit scale)
-extern float lbl_eu_80663D48; // (sdata anim gate, sinit_800539E0 + func_8004ECF4)
+extern const float lbl_eu_80665F0C; // (stepAnimState/FFBC speed limit scale)
+extern float lbl_eu_80663D48; // (sdata anim gate, sinit_800539E0 + stepAnimState)
 extern const float lbl_eu_80665EC4; // (updateLeafDist)
 extern const float lbl_eu_80665EC8; // (updateLeafDist)
-extern const float lbl_eu_80665EDC; // (func_8004ECF4/FFBC speed limit scale)
+extern const float lbl_eu_80665EDC; // (stepAnimState/FFBC speed limit scale)
 extern const float lbl_eu_80665EE0; // (updateLeafDist: anim blend threshold)
 extern float lbl_eu_80665F3C;
 extern float lbl_eu_80665F4C;

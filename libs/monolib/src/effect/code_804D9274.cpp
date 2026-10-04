@@ -3,12 +3,12 @@
 // system:
 //   cerandRotateX90Wrapper - tail-call wrapper: rotate a matrix +90 deg about X
 //   cerandTransposeObjCC - transpose the matrix embedded at obj+0xCC
-//   func_804D928C - build an orientation matrix from a direction vector
-//   func_804D9364 - random direction (yaw/pitch angle ranges) scaled by a
+//   cerandAimMatrix - build an orientation matrix from a direction vector
+//   cerandRandDir - random direction (yaw/pitch angle ranges) scaled by a
 //                   rejection-sampled radius
-//   func_804D9A10 - random box vector with inner-box rejection
-//   func_804D9B70 - random cylinder vector
-//   func_804D9F00 - random arc vector
+//   cerandRandBox - random box vector with inner-box rejection
+//   cerandRandCylinder - random cylinder vector
+//   cerandRandArc - random arc vector
 
 #include <harness_catalog.h>
 #include <revolution/MTX.h>
@@ -89,9 +89,9 @@ void cerandTransposeObjCC(Mtx mtx, const void* obj) {
     PSMTXTranspose((const f32(*)[4])((const u8*)obj + 0xCC), mtx);
 }
 
-// func_804D928C: build an orientation matrix whose Z axis points along
+// cerandAimMatrix: build an orientation matrix whose Z axis points along
 // (obj[0xEC], 0, obj[0xF4]), then transpose it.
-void func_804D928C(Mtx mtx, const u8* obj) {
+void cerandAimMatrix(Mtx mtx, const u8* obj) {
     *(ml::CMat34*)mtx = ml::CMat34::identity;
     mtx[2][0] = *(const f32*)(obj + 0xEC);
     mtx[2][1] = 0.0f;
@@ -103,10 +103,10 @@ void func_804D928C(Mtx mtx, const u8* obj) {
     PSMTXTranspose(mtx, mtx);
 }
 
-// func_804D9364: build a random unit direction from yaw/pitch angle ranges
+// cerandRandDir: build a random unit direction from yaw/pitch angle ranges
 // (scale->y and scale->z, negated, in degrees; 0 means full range), then
 // scale it by a rejection-sampled length along scale->x * dir->x.
-void func_804D9364(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
+void cerandRandDir(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
     f32 sx = scale->x * dir->x;
     f32 sy = scale->y;
     f32 sz = scale->z;
@@ -147,11 +147,11 @@ void func_804D9364(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
     *out = *out * len;
 }
 
-// func_804D9A10: random unit box vector (CERand::randVec), re-rolled until at
+// cerandRandBox: random unit box vector (CERand::randVec), re-rolled until at
 // least one component escapes the inner |radius/2| box; for radius <= 0 a
 // single random axis is pinned to +/-0.5 instead. The result is scaled
 // component-wise by scale * dir.
-void func_804D9A10(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
+void cerandRandBox(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
     f32 mx = scale->x * dir->x;
     f32 my = scale->y * dir->y;
     f32 mz = scale->z * dir->z;
@@ -175,10 +175,10 @@ void func_804D9A10(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
     out->z *= mz;
 }
 
-// func_804D9B70: random cylinder vector: angle around Y from the full
+// cerandRandCylinder: random cylinder vector: angle around Y from the full
 // (int)(-scale->z) degree range, height jittered by scale->y * dir->y, radial
 // length rejection-sampled against scale->x * dir->x.
-void func_804D9B70(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
+void cerandRandCylinder(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir, f32 radius) {
     f32 mx = scale->x * dir->x;
     f32 my = scale->y * dir->y;
 
@@ -202,9 +202,9 @@ void func_804D9B70(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
     out->z = len * sinTbl(angle);
 }
 
-// func_804D9F00: random arc vector in the X/Z plane over (int)(-scale->y)
+// cerandRandArc: random arc vector in the X/Z plane over (int)(-scale->y)
 // degrees, scaled by scale->x * dir->x.
-void func_804D9F00(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir) {
+void cerandRandArc(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir) {
     ml::CVec3 temp(scale->x * dir->x, scale->y, 0.0f);
 
     int range = (int)(-temp.y);

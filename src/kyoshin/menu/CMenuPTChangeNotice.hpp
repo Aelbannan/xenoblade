@@ -96,7 +96,7 @@ CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotice* obj, int
 CMenuPTChangeNotice* PTNotice_Create_3B9C(CProcess* parent, void* arg);
 void PTNotice_Advance_3C20(CMenuPTChangeNotice* obj);
 void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* obj);
-int func_8029348C(CMenuPTChangeNotice* obj, CEventFile* evt);
+int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* obj, CEventFile* evt);
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).

@@ -266,7 +266,7 @@ void CCharVoiceMan_Tick(){
                 cf::CfObjectImplPcED4* edge = (cf::CfObjectImplPcED4*)br->field_3ED4;
                 if (edge != 0 && edge->vf40(0x800) == 0) {
                     if (m->unk230 != 0) {
-                        void* src = func_8016FE34(findObjectById((BOOL)m->unk230));
+                        void* src = MapFx_ResolveOwner(findObjectById((BOOL)m->unk230));
                         if (src != 0) {
                             cf::CSoundNode* node = BtlBeg_PlayLine_0344(src);
                             if (node != 0) {
@@ -545,11 +545,11 @@ int CCharVoiceMan_TryPlayCharVoice(cf::CVoiceActorState* self) {
     if (self->field_3F28 != 1)
         return 0;
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
-    if (func_80148778(&self->unk4[4], 0xcf) == 0 && func_80148778(&self->unk4[4], 0xd0) == 0)
+    if (isBattleStatusActive(&self->unk4[4], 0xcf) == 0 && isBattleStatusActive(&self->unk4[4], 0xd0) == 0)
         return 0;
     cf::CfObjectImplPcSub3E9C* move = (cf::CfObjectImplPcSub3E9C*)((u8*)self + 0x3E9C);
     u32 moveRes = move->sf4C();
-    void* r = func_8016FE34(findObjectById((BOOL)moveRes));
+    void* r = MapFx_ResolveOwner(findObjectById((BOOL)moveRes));
     if (r == 0)
         return 0;
     if (((cf::CVoiceActorState*)r)->field_3F28 != 0x10c)
@@ -594,7 +594,7 @@ void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* c) {
     if (b == 0) {
         u32 pending = lbl_eu_80664A58->unk22C;
         if (pending != 0)
-            b = (void*)func_8016FE34((void*)findObjectById((BOOL)pending));
+            b = (void*)MapFx_ResolveOwner((void*)findObjectById((BOOL)pending));
     }
     if (b != 0) {
         cf::CSoundNode* node = __ct__802A92D8(b, a);
@@ -657,7 +657,7 @@ void CCharVoiceMan_LatchPendingVoiceId(cf::CVoiceActorInfo* self) {
     }
 }
 // Enqueue a break-freq node [chainVoiceLifetimeHandler(a,c)] and a party-gauge node
-// [func_802AF43C(a,b,c)] onto the listener list (unless paused).
+// [BmVoice_Play12C(a,b,c)] onto the listener list (unless paused).
 void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void* a, void* b, void* c) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
@@ -673,7 +673,7 @@ void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void* a, void* b, void* c) {
         }
         m->nodeTail = node;
     }
-    node = func_802AF43C(a, b, c);
+    node = BmVoice_Play12C(a, b, c);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m2->nodeTail;
@@ -710,7 +710,7 @@ void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* self) {
             m->nodeTail = node;
         }
     } else {
-        cf::CSoundNode* node = func_802AF49C(self);
+        cf::CSoundNode* node = BmVoice_Play0A(self);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->nodeTail;
@@ -1088,7 +1088,7 @@ void CCharVoiceMan_ResetAndAppend() {
     lbl_eu_80664A58->unk224 = 0;
     lbl_eu_80664A58->unk228 = 0;
     lbl_eu_80664A58->unk22A = 0;
-    cf::CSoundNode* node = func_802B8D4C();
+    cf::CSoundNode* node = requestOrderConfigVoice();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;
@@ -1122,7 +1122,7 @@ extern void* findObjectById(BOOL id);
 void CCharVoiceMan_PlayLevelUpVoice(int id) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    if (func_8016FE34(findObjectById(id)) == 0)
+    if (MapFx_ResolveOwner(findObjectById(id)) == 0)
         return;
     if (lbl_eu_80663E24 & 0x00400000)
         return;
@@ -1156,7 +1156,7 @@ void CCharVoiceMan_EnqueueDownedActorVoice() {
     }
 }
 // Enqueue a frequency-voice node [FindThreadVoiceNode] and a level-up node
-// [func_802AF3DC(self)] onto the manager's event list (unless paused).
+// [BmVoice_PlayA0(self)] onto the manager's event list (unless paused).
 void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
@@ -1172,7 +1172,7 @@ void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
         }
         m->nodeTail = node;
     }
-    node = func_802AF3DC(self);
+    node = BmVoice_PlayA0(self);
     cf::CCharVoiceMan* m2 = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m2->nodeTail;
@@ -1252,7 +1252,7 @@ void CCharVoiceMan_EnqueueItemVoice() {
 void CCharVoiceMan_EnqueueRebindVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = func_802B5970();
+    cf::CSoundNode* node = ErrWin_PlayBattleVoice_5970();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->nodeTail;

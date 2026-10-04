@@ -35,7 +35,7 @@ public:
 
 extern u32 getPackedFont();
 
-void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
+void tickVisionExpiry(CMenuVision*, CMenuVisionEntry*);
 extern "C" f32 ScMain_GetRatio(void*);
 
 // Read-only view of the current frame stored at AnimTransform+0x10.
@@ -366,7 +366,7 @@ extern "C" bool isVisionSlotAnimating(u32 flags) {
 }
 
 // Returns true while any vision slot is still animating.
-extern "C" bool func_801AC124() {
+extern "C" bool isVisionAnimating() {
     CMenuVision* menu = lbl_eu_80664388;
     if (menu != 0) {
         for (u8 i = 0; i < 6; i++) {
@@ -607,7 +607,7 @@ extern "C" void restartVisionSlots(int flags) {
     }
 }
 
-extern "C" void func_801AD504(int flags) {
+extern "C" void driveVisionUpdate(int flags) {
     if (lbl_eu_80664388 == 0) {
         return;
     }
@@ -1098,7 +1098,7 @@ extern "C" void func_801AD504(int flags) {
 // Reset every active vision slot to state 4 (bar-sustain anim): disable
 // anims 1-3 and 5-8, enable anim4 and rewind it to frame 0. When `sel` is
 // non-zero only the matching slot index is reset.
-void func_801AF934(int sel) {
+void resetVisionSlots(int sel) {
     if (lbl_eu_80664388 == 0) {
         return;
     }
@@ -1275,7 +1275,7 @@ L_continue:
             break;
 
         case 5:
-            func_801AFAD0(this, e);
+            tickVisionExpiry(this, e);
             break;
         }
 
@@ -1380,7 +1380,7 @@ void CMenuVision::Init() {
 // the damage anim (mAnim7) is still running below its end frame, picks the
 // first visible status pane, records the matching effect id, and latches the
 // slot's field_0x28 so the update runs only once.
-void func_801AFAD0(CMenuVision*, CMenuVisionEntry* entry) {
+void tickVisionExpiry(CMenuVision*, CMenuVisionEntry* entry) {
     entry->mTimer -= lbl_eu_80667DC4;
     if (entry->mTimer >= lbl_eu_80667DC0) {
         return;

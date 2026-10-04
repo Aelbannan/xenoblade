@@ -306,7 +306,7 @@ L3360:
         sortEntriesByDistance(CTaskGame_enumListGet(&holder), selector);
         if (((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
             void* item = getObjectIdAt(CTaskGame_enumListGet(&holder), 0);
-            if (func_800FE6A4(Selector_GetInstance(), 0x80000003, 0,
+            if (Selector_IssueRequest(Selector_GetInstance(), 0x80000003, 0,
                               (u32)(uintptr_t)item) != 0) {
                 self->vf70(Selector_GetInstance()->field_90E4);
             } else {
@@ -335,7 +335,7 @@ L34E4:
         if (Selector_GetInstance()->field_90E4 == 0) goto L3600;
         u32 gid2 = Selector_GetInstance()->field_90E4;
         if (gid2 == self->field_18->mSub.m4C()) goto end;
-        if (func_80148778(&self->field_18->_pad08[0], 0x11) != 0) goto end;
+        if (isBattleStatusActive(&self->field_18->_pad08[0], 0x11) != 0) goto end;
         if (((cf::CfWalkField3ED4*)self->field_18->mSub.field_38)->vf40() == 0) {
             goto L35D8;
         }
@@ -355,7 +355,7 @@ L3600:
     if (lbl_eu_80663E24 & 0x1000000) goto end;
     {
         u32 m = self->field_18->mSub.m4C();
-        if (func_800FE6A4(Selector_GetInstance(), 0x80000003, 0, m) != 0) {
+        if (Selector_IssueRequest(Selector_GetInstance(), 0x80000003, 0, m) != 0) {
             if (((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->vf28(1) != 0) {
                 self->vf80();
             }
@@ -385,16 +385,16 @@ void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self) {
             setTargetFlag08(Selector_GetInstance());
         }
         if (sub->vf20() != 0) {
-            func_800FE7D8(Selector_GetInstance());
+            Selector_FetchResult(Selector_GetInstance());
             self->vf70(0);
         }
         if (sub->vf18() != 0) {
             Selector_GetInstance();
-            func_800FE738();
+            Selector_ReissueRequest();
         }
         if (sub->vf1C() != 0) {
             Selector_GetInstance();
-            func_800FE738();
+            Selector_ReissueRequest();
         }
         sub->vf30();
         sub->vf34();
@@ -485,7 +485,7 @@ void Walker_UpdatePartyBattle(cf::CfObjectImplWalker* self) {
         void* obj = findObjectById((int)(uintptr_t)getObjectIdAt(
             CTaskGame_enumListGet(&holder), i));
         if (obj != getPlayer__Q22cf13CfGameManagerFi(0)) {
-            ((cf::CfWalkPlayerRec*)func_8016FE34(obj))->mSub.m08(0x100);
+            ((cf::CfWalkPlayerRec*)MapFx_ResolveOwner(obj))->mSub.m08(0x100);
         }
     }
     // With no battle running, arm the walker's battle-exit notification.
@@ -722,7 +722,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
     __ct__800FB044(CTaskGame_enumListGet(&holder), lbl_eu_80666BA0, mAC, 1);
     __ct__800FA9B4(CTaskGame_enumListGet(&holder), lbl_eu_80663E14, 1);
     cf::CfWalkRect4 rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(
         &rect, Scn_SetCamIndex(lbl_eu_80663E14, -1));
     // No user float locals here: retail hoists the int->float bias double
     // (lbl_eu_80666BA8) and the two comparison constants (B84, B8C) straight
@@ -1291,7 +1291,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
     CTaskGame_enumListCtor(&holderA);
     startEnumObjects(CTaskGame_enumListGet(&holderA), 0x20, 0);
     for (u32 i = 0; i < ((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holderA))->field_620; i++) {
-        cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)func_8016FE34(
+        cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
             getObjectAt(CTaskGame_enumListGet(&holderA), (int)i));
         if (rec->f192() == 0) {
             rec->f191(1);
@@ -1319,7 +1319,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
     const u16 effB = 0x45;
     const u16 effC = 0x2;
     for (u32 i = 0; i < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
-        cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)func_8016FE34(
+        cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
             getObjectAt(CTaskGame_enumListGet(&holder), (int)i));
         if (rec->f162() == 0) continue;
 
@@ -1342,7 +1342,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_10 = val10;
             spawn.field_20 = val8;
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
-                void* item = func_8016FE34(
+                void* item = MapFx_ResolveOwner(
                     getObjectAt(CTaskGame_enumListGet(&holder), (int)j));
                 CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x20, 0);
@@ -1357,7 +1357,7 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_10 = val10;
             spawn.field_20 = val8;
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
-                void* item = func_8016FE34(
+                void* item = MapFx_ResolveOwner(
                     getObjectAt(CTaskGame_enumListGet(&holder), (int)j));
                 CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x21, 0);
@@ -1370,16 +1370,16 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             spawn.field_10 = val10;
             spawn.field_20 = val8;
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
-                void* item = func_8016FE34(
+                void* item = MapFx_ResolveOwner(
                     getObjectAt(CTaskGame_enumListGet(&holder), (int)j));
                 CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x33, 0);
             }
         }
         sub = rec->f162();
-        if (func_80260264((void*)(uintptr_t)sub, 0x36, &val10) != 0) {
+        if (IdTable_GetSum((void*)(uintptr_t)sub, 0x36, &val10) != 0) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
-                cf::CfWalkPlayerRec* item = (cf::CfWalkPlayerRec*)func_8016FE34(
+                cf::CfWalkPlayerRec* item = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
                     getObjectAt(CTaskGame_enumListGet(&holder), (int)j));
                 item->f188(val10);
             }
@@ -1435,7 +1435,7 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
     if (count != 0) return;
     if (lbl_eu_80663E24 & 0xD2C8004) return;
     if (UIWin_HasPendingUpdate(1) != 0) return;
-    cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)func_8016FE34(
+    cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
         getPlayer__Q22cf13CfGameManagerFi(0));
     if (rec != 0) {
         if (rec->field_3F60 != 0 &&
@@ -1477,7 +1477,7 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
     if (!(obj->field_64 & 0x100)) return;
     // Validate that the player really is out of battle before leaving.
     u32 ok = 1;
-    cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)func_8016FE34(
+    cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
         getPlayer__Q22cf13CfGameManagerFi(0));
     if (rec == nullptr) {
         ok = 0;

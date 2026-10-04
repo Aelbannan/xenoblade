@@ -8,6 +8,17 @@
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
+// Retail .rodata owned by this TU (splits: 804FC5B8-804FC5EC): the RTTI
+// class-name strings plus the trailing u16 table. Nothing in this TU's
+// .text reads them (novtable scheme); they are referenced cross-unit.
+// The 7 pad bytes after the first string are retail section bytes.
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FC5B8[0x18] = "cf::CfObjectTbox";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FC5D0[0x10] = "cf::CfObjectObj";
+__declspec(section ".rodata") __attribute__((used))
+const u16 lbl_eu_804FC5E0[6] = { 0x14, 0x0A, 0x00, 0x0A, 0x14, 0x00 };
+
 // Local overlay: base CfObjectModel keeps mSubObjB0 as void*; this TU owns a
 // CfResObjImpl at +0xB0 (same scheme as CfObjectPoint typing mSubObj38).
 struct ObjB0View {

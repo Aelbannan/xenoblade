@@ -19,14 +19,14 @@ public:
     virtual ~CException();
     
     bool isFadedIn();
-    static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
+    static CException* createException(CWorkThread* pThread, const wchar_t* message, u32 r5);
     CException* validateExceptionType();
     void* getMessageQueueSlot(u32 r4);
     virtual void wkRender();
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
     void AddToGlobalArray(IException* pException);
-    void func_804591DC(IException* pException);
+    void RemoveFromGlobalArray(IException* pException);
     void setGlobalMessage();
 
     static CException* convertToException(CWorkThread* pThread){

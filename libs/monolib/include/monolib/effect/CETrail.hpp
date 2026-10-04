@@ -12,6 +12,6 @@ struct CVec4;
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_804D70A0(CETrailNode* node);
-extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
+extern "C" void TrailNode_Init(CETrailNode* node);
+extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
                               const ml::CVec4* color, const ml::CVec4* scale);

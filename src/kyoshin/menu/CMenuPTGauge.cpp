@@ -1,4 +1,4 @@
-// func_8004302C must be declared extern "C" before any include chain pulls
+// CTaskGame_setLoadScreen must be declared extern "C" before any include chain pulls
 // in functions.hpp's plain C++ copy (MWCC rejects the reverse redeclaration),
 // so this header goes first.
 #include "kyoshin/CTaskGame.hpp"

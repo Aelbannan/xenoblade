@@ -292,7 +292,7 @@ void SysWinLog_PollBattleEnd() {
             }
             // Player voice/action range check: both sides call the same virtual.
             bool inRange;
-            cf::CfObject* obj = (cf::CfObject*)func_8016FE34(cf::CfGameManager::getPlayer(0));
+            cf::CfObject* obj = (cf::CfObject*)MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0));
             if (obj != 0) {
                 inRange = false;
                 if (lbl_eu_80668AE0 < obj->CfObject_getHeightDiff() &&

@@ -2,10 +2,16 @@
 #include "monolib/device/CDeviceVI.hpp"
 
 extern "C" {
-    // Plugin name string ("wait") in .rodata
-    extern char lbl_eu_804FA438[];
-    // Function registration table: maps "wait_frame" script name to our handler
-    extern PluginFuncData lbl_eu_80524BB8[];
+    // Retail data sections (all defined by this TU):
+    // .rodata "wait" (plugin name) + .sdata2 "frame" (entry name) +
+    // .data PluginFuncData table {name, func} terminated by {NULL, NULL}.
+    // Sizes include retail zero padding (rodata/sdata2 0x8 each).
+    __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FA438[0x8] = "wait";
+    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665B88[0x8] = "frame";
+    __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_80524BB8[2] = {
+        { lbl_eu_80665B88, wait_frame },
+        { 0, 0 },
+    };
 }
 
 /**

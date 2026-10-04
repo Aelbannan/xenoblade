@@ -237,10 +237,10 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
         self->field_0xE0 = 2;
         break;
     case 5:
-        func_80100E14(self);
+        CMainMenu_AdvanceIdle(self);
         break;
     case 6:
-        func_801010B8(self);
+        CMainMenu_HandleSubInput(self);
         break;
     case 7:
         // Cursor-exit: like case 1 but driven by the exit animation.
@@ -273,8 +273,8 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
 
     // Epilogue: animate the layout and advance both cursors.
     self->field_0x7C->Animate(0);
-    func_801D202C(&self->_90[0]);
-    func_801D202C(&self->subCur);
+    Cur_Update(&self->_90[0]);
+    Cur_Update(&self->subCur);
 }
 
 // File-event handler (retail symbol __ct__800FF300): fires when the menu
@@ -501,7 +501,7 @@ void CMainMenu::cbRenderBefore() {
 
 // Finds the "Param" pane in the layout's root pane and sets its translate
 // to the given position (3 floats: x, y, z).
-void CMainMenu::func_800FEB14(float* pos) {
+void CMainMenu::setParamPaneTranslate(float* pos) {
     nw4r::lyt::Pane* pane =
         field_0x08->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
     if (pane != NULL) {
@@ -913,7 +913,7 @@ done:
     ;
 }
 
-extern "C" void func_80100E14(CMainMenu* self) {
+extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
     // the current (state, sub-state) pair, then park the state at 6 (idle).
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x88, lbl_eu_80666F18) == 0) {
@@ -983,7 +983,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
     self->field_0xE0 = 6;
 }
 
-extern "C" void func_801010B8(CMainMenu* self) {
+extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
     // Cursor-select sub-menu input: gate on the global input lock, then
     // handle sub-cursor movement / confirmation / cancel.
 
@@ -1160,7 +1160,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
 
 tail:
     // Common tail: pick the sub-cursor index for the selected menu and set
-    // its text panes (free-roam gate identical to func_80100E14).
+    // its text panes (free-roam gate identical to CMainMenu_AdvanceIdle).
     int idx = 0;
     switch (self->field_0xC0) {
     case 1: idx = self->field_0xC4 + 0x8; break;
@@ -1347,7 +1347,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     self->field_0xD8 = 0;
     self->field_0xD9 = 0;
 
-    // Free-roam gate (same expression shape as func_80100E14).
+    // Free-roam gate (same expression shape as CMainMenu_AdvanceIdle).
     int cond;
     if (getUnk80664658() != 0 && (getUnk80664658()->field_214 & 0x8)) {
         cond = 1;

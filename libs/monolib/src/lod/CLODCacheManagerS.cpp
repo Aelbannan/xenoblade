@@ -12,8 +12,8 @@ namespace LOD {
 
 /**
  * LOD cache record.  Retail stride is 0xC bytes.  Shared with the
- * distance-table lookup functions (func_80463118 / func_8046323C /
- * func_8046339C / func_80463590).
+ * distance-table lookup functions (lerpDistEntry / catmullRomBin /
+ * fetchSampleXY / findCutBinIdx).
  */
 struct CLODCacheManagerS {
     u16 field_0x0;   // 0x00 near distance
@@ -22,9 +22,9 @@ struct CLODCacheManagerS {
     u16 field_0x6;   // 0x06 entry count
     u32 field_0x8;   // 0x08 table index
 
-    s32 func_80463590();
-    f32 func_80463118();
-    f32 func_8046323C();
+    s32 findCutBinIdx();
+    f32 lerpDistEntry();
+    f32 catmullRomBin();
 };
 
 /**
@@ -151,8 +151,8 @@ using namespace LOD;
 
 // Forward declarations of the two record-lookup functions whose addresses are
 // stored into lbl_eu_80665760 (defined later in this TU).
-extern "C" f32 func_8046323C__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
-extern "C" f32 func_80463118__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
+extern "C" f32 catmullRomBin__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
+extern "C" f32 lerpDistEntry__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
 
 // ===========================================================================
 // us-80467504  initLodTables  (bind LOD tables into the sbss bases)
@@ -190,7 +190,7 @@ extern "C" void initLodTables__Q23LOD17CLODCacheManagerSFv(void* self)
 // ===========================================================================
 extern "C" void selectCubicLookup__Q23LOD17UnkClass_8046368CFv()
 {
-    lbl_eu_80665760 = func_8046323C__Q23LOD17CLODCacheManagerSFv;
+    lbl_eu_80665760 = catmullRomBin__Q23LOD17CLODCacheManagerSFv;
 }
 
 // ===========================================================================
@@ -198,7 +198,7 @@ extern "C" void selectCubicLookup__Q23LOD17UnkClass_8046368CFv()
 // ===========================================================================
 extern "C" void selectLinearLookup__Q23LOD17UnkClass_8046368CFv()
 {
-    lbl_eu_80665760 = func_80463118__Q23LOD17CLODCacheManagerSFv;
+    lbl_eu_80665760 = lerpDistEntry__Q23LOD17CLODCacheManagerSFv;
 }
 
 // ===========================================================================
@@ -241,13 +241,13 @@ extern "C" void dispatchLodPair__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* 
 }
 
 // ===========================================================================
-// us-80467560  func_80463590  (distance-bin lookup: which index cuts?)
+// us-80467560  findCutBinIdx  (distance-bin lookup: which index cuts?)
 //
 // Returns nonzero when the index element preceding the first bin whose far
 // cutoff exceeds the per-entry key lies inside the given near/far sweep.
 // Byte-identical FULL_MATCH target (fixed u16->f32 float-conv codegen).
 // ===========================================================================
-s32 CLODCacheManagerS::func_80463590()
+s32 CLODCacheManagerS::findCutBinIdx()
 {
     // Sweep up to the near distance: report the first element's near state.
     if (lbl_eu_80665754 <= (f32)(u32)field_0x0) {
@@ -273,13 +273,13 @@ s32 CLODCacheManagerS::func_80463590()
 }
 
 // ===========================================================================
-// us-804670e8  func_80463118  (linear distance lookup)
+// us-804670e8  lerpDistEntry  (linear distance lookup)
 //
 // Return the base level distance when it precedes the sweep, the last bin
 // distance when it follows, otherwise linearly interpolate the two bins
 // that straddle the current LOD threshold key.
 // ===========================================================================
-f32 CLODCacheManagerS::func_80463118()
+f32 CLODCacheManagerS::lerpDistEntry()
 {
     // Plain builtin u16/s32 -> f32 casts: MWCC emits the 0x43300000 stack
     // scratch / xoris / fsubs-of-2^52-magic sequence per conversion, reusing
@@ -327,9 +327,9 @@ union F64ConvScratch {
 };
 
 // ===========================================================================
-// us-8046720c  func_8046323C  (cubic catmull-rom distance lookup)
+// us-8046720c  catmullRomBin  (cubic catmull-rom distance lookup)
 //
-// Same sweep as func_80463118, but the straddling pair is interpolated with a
+// Same sweep as lerpDistEntry, but the straddling pair is interpolated with a
 // catmull-rom cubic over four consecutive level samples.  Basis constants
 // lbl_eu_8066A5D8 / _DC / _E0.
 //
@@ -339,7 +339,7 @@ union F64ConvScratch {
 // unsigned previous-bin cutoff B.  Modelling them as two union locals makes
 // MWCC allocate the identical frame (sp-0x20) and reuse the high words.
 // ===========================================================================
-f32 CLODCacheManagerS::func_8046323C()
+f32 CLODCacheManagerS::catmullRomBin()
 {
     F64ConvScratch cvtB;   // sp+0x10 (MWCC allocates locals in reverse order)
     F64ConvScratch cvtA;   // sp+0x08
@@ -391,7 +391,7 @@ f32 CLODCacheManagerS::func_8046323C()
 }
 
 // ===========================================================================
-// us-8046736c  func_8046339C  (2D distance -> integer sample lookup)
+// us-8046736c  fetchSampleXY  (2D distance -> integer sample lookup)
 //
 // Looks up a cache record by the pair table, then over each straddling bin
 // rounds `offset + (1-t)*prev + t*cur` to an integer and emits the bin's
@@ -401,9 +401,9 @@ f32 CLODCacheManagerS::func_8046323C()
 // Plain builtin u16/s32 -> f32 casts throughout: MWCC emits the 0x43300000
 // stack-scratch / fsubs-of-2^52-magic sequence per conversion, reusing two
 // scratch slots (sp+0x08 signed, sp+0x10 unsigned) across the whole function
-// (same shape as func_80463118).
+// (same shape as lerpDistEntry).
 // ===========================================================================
-extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
+extern "C" void fetchSampleXY__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
                                                            u32 index)
 {
     u16 kind = ((u16*)lbl_eu_80665750)[lbl_eu_8066574C[index] + 1];
@@ -454,16 +454,16 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
 // [.data] 0x8056D700-0x8056D71C (28B): LOD dispatch table. 8046374C/8046375C
 // are this TU's; the rest live in the sibling LOD TUs.
 extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv();
-extern "C" void func_804645CC__Q23LOD17UnkClass_804645CCFv();
-extern "C" void func_80468434__Q23LOD17UnkClass_80468434Fv();
-extern "C" void func_80464B84__Q23LOD17UnkClass_804645CCFv();
+extern "C" void drawLodRecordExt__Q23LOD17UnkClass_804645CCFv();
+extern "C" void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv();
+extern "C" void drawLodRecord__Q23LOD17UnkClass_804645CCFv();
 typedef void (*LODDispFn)(LOD::UnkClass_8046368C*);
 void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*) = {
     (LODDispFn)&getCacheEntry__Q23LOD17UnkClass_8046368CFv,
     (LODDispFn)&getCacheCount__Q23LOD17UnkClass_8046368CFv,
     (LODDispFn)&setLodRotation__Q23LOD17UnkClass_8046368CFv,
     (LODDispFn)0,
-    (LODDispFn)&func_804645CC__Q23LOD17UnkClass_804645CCFv,
-    (LODDispFn)&func_80468434__Q23LOD17UnkClass_80468434Fv,
-    (LODDispFn)&func_80464B84__Q23LOD17UnkClass_804645CCFv,
+    (LODDispFn)&drawLodRecordExt__Q23LOD17UnkClass_804645CCFv,
+    (LODDispFn)&dispatchLodRecord__Q23LOD17UnkClass_80468434Fv,
+    (LODDispFn)&drawLodRecord__Q23LOD17UnkClass_804645CCFv,
 };

@@ -270,7 +270,7 @@ namespace cf{
         virtual void* vfAC();       // index 41 -> vtable 0xAC
     };
 
-    // Typed view of the func_8016FE34 fusion object used by func_801A6BCC:
+    // Typed view of the MapFx_ResolveOwner fusion object used by func_801A6BCC:
     // f32-returning HP accessors at vtable 0x128/0x12C (indices 72/73).
     class CVisionFusionV {
     public:
@@ -303,7 +303,7 @@ namespace cf{
         CVisionHpRef* field_3F60;   // 0x3F60
     };
 
-    // Large per-model battle object (func_8016FE34 result). Never
+    // Large per-model battle object (MapFx_ResolveOwner result). Never
     // instantiated, so no vtable is emitted; filler virtuals keep the named
     // slots at their retail vtable offsets (declared index N -> (N+2)*4).
     class CVisionBattleObj {
@@ -547,7 +547,7 @@ namespace cf{
 // Keep `extern "C"` and the exact symbol names -- they ARE the retail names.
 // ---------------------------------------------------------------------------
 extern "C" void setChildF50G_(void* self, float v);
-extern "C" void func_804E36DC(CSchedule* self, f32 dt);
+extern "C" void schedUpdate(CSchedule* self, f32 dt);
 extern "C" void* bindIndexedEffect(u32 cls, int param);
 extern "C" void __dl__FPv(void* ptr);
 
@@ -593,7 +593,7 @@ extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp 
 extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
 extern "C" float ScMain_GetRoundedMetric(void* obj);
-extern "C" void func_800F449C(void* obj);
+extern "C" void ScMain_Reset(void* obj);
 extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's
 // movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
@@ -625,7 +625,7 @@ extern "C" const void* lbl_eu_806618E8;
 extern "C" const void* lbl_eu_806618F0;
 
 extern "C" void aiRingPrepend(void* a, void* b);
-extern "C" int func_8014B8BC(void* a, void* b);
+extern "C" int aiFetchAction(void* a, void* b);
 extern "C" bool isVisionSlotAnimating(u32 flags);
 extern "C" int ScMain_DecodeFlagPriority(void);
 extern "C" void* ScMain_GetSummedInt(void* self);
@@ -633,7 +633,7 @@ extern "C" int ScMain_IsDistinctFrom(void* a, void* b);
 extern "C" void* CBattleMan_FetchVisionObj(void* self);
 extern "C" void CtrlObjectParam_RunPartyArtsFlow(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int Counter_TestBit(void* data, u32 mode);
-extern "C" void func_80170AB0(void* self, void* dst);
+extern "C" void Vision_CopyFxActor(void* self, void* dst);
 extern "C" void requestItemLoad(void* obj, u32 flag);
 extern "C" f64 lbl_eu_80667D18;
 extern "C" f64 lbl_eu_80667D20;
@@ -696,7 +696,7 @@ extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
 // rejects the redeclaration when both headers are included in one TU.
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
-extern "C" void func_8016FF14(void* obj, void* dst);
+extern "C" void Vision_CopyEngageActor(void* obj, void* dst);
 extern "C" void CfSoundMan_ApplyFxSendAll(u32 a, u32 b, f32 c);
 extern "C" void CfSoundMan_ClearFxEffect(u32 a, u32 b);
 

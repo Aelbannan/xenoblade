@@ -10,7 +10,7 @@
 // Minimal local view of cf::CBattleManager. The full CBattleManager.hpp pulls
 // in the chain sub-object headers (CChain.hpp etc.), which are currently
 // mid-refactor and do not parse in this TU. Only the members used by
-// func_80154280 are declared; offsets match the full header layout
+// checkArtsFull are declared; offsets match the full header layout
 // (vtable at +0, unk20C8 at +0x20C8). getInstance() resolves to the real
 // mangled symbol getInstance__Q22cf14CBattleManagerFv at link time.
 namespace cf {
@@ -25,17 +25,17 @@ public:
 // Free-function imports previously supplied by the trimmed chain headers
 // (CChainTimer.hpp / CfObjectImplEne.hpp / CBattleManager.hpp). extern "C"
 // keeps the call-site relocs at the retail unmangled names.
-extern "C" int func_80154280(void* param, void* actor, int flags);
-extern "C" int func_80148778(void* obj, int id);
+extern "C" int checkArtsFull(void* param, void* actor, int flags);
+extern "C" int isBattleStatusActive(void* obj, int id);
 extern "C" void CTaskGame_enumListCtor(void* holder);
 extern "C" void* CTaskGame_enumListGet(void* holder);
 extern "C" void __dt__80043E88(void* holder, int tags);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
 extern "C" void* getObjectAt(void* list, u32 idx);
-extern "C" void* func_8016FE34(void* src);
+extern "C" void* MapFx_ResolveOwner(void* src);
 
 // float constants (retail .sdata2 pool) used by the effect-dispatch paths
-extern const float lbl_eu_805019A8[6];  // arts-speed table (func_801540C0)
+extern const float lbl_eu_805019A8[6];  // arts-speed table (getArtsScaledSpeed)
 extern const float lbl_eu_80667460;
 extern const float lbl_eu_80667464;
 extern const float lbl_eu_80667468;
@@ -136,7 +136,7 @@ u8 cf::CArtsParam::CArtsParam_getArtsFlagByte(){
 }
 }
 
-extern "C" int func_8015403C(int x) {
+extern "C" int getArtsTier(int x) {
     // Returns 2 when (unsigned)(x-4) <= 5, else 1.
     // Retail shape: subi/cmplwi/ble with two separate li/blr blocks; a
     // dense-case switch is the only form that survives MWCC's branchless
@@ -151,7 +151,7 @@ extern "C" int func_8015403C(int x) {
     return ret;
 }
 extern "C" float getArtsFacing(const u8* this_) { unsigned short raw = *(const unsigned short*)(this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
-void func_8015408C(){}
+void getArtsClampedRate(){}
 extern const float lbl_eu_805019C0[];
 extern "C" float getArtsGaugeRate(const u8* self) {
     int index = *reinterpret_cast<const unsigned short*>(self + 0x5a);
@@ -166,10 +166,10 @@ extern "C" bool hasArtsGauge(u8* self) {
     return *(unsigned short*)(self + 0x5C) == 11;
 }
 
-// func_801540C0: per-frame-scaled entry of the arts-speed table @0x805019A8.
+// getArtsScaledSpeed: per-frame-scaled entry of the arts-speed table @0x805019A8.
 // The scale chain is applied before the index clamp so MWCC keeps the
 // constant loads/multiplies ahead of the branch (matching retail order).
-float func_801540C0(const u8* self) {
+float getArtsScaledSpeed(const u8* self) {
     int idx = *(const unsigned short*)(self + 0x5a);
     float scale = CDeviceVI::getSecPerFrame() * lbl_eu_80667468;
     scale *= lbl_eu_8066746C;
@@ -182,9 +182,9 @@ float func_801540C0(const u8* self) {
     return lbl_eu_805019A8[idx] * scale;
 }
 
-// func_8015408C: clamp the u16 at +0x5a to [0,5] (retail keeps the dead
+// getArtsClampedRate: clamp the u16 at +0x5a to [0,5] (retail keeps the dead
 // signed <0 test: lhz + cmpi/bge), then index the arts table.
-extern "C" float func_8015408C(const u8* self) {
+extern "C" float getArtsClampedRate(const u8* self) {
     int value = *(const u16*)(self + 0x5a);
     if (value < 0) {
         value = 0;
@@ -197,11 +197,11 @@ extern "C" float func_8015408C(const u8* self) {
 
 // ---------------------------------------------------------------------------
 // canAIUseArts - arts usability gate.
-// Runs the full arts check (func_80154280) and rejects the arts unless the
+// Runs the full arts check (checkArtsFull) and rejects the arts unless the
 // caller explicitly allowed every modifier flag the check may have set.
 // ---------------------------------------------------------------------------
 extern "C" int canAIUseArts(void* param, void* actor, int flags) {
-    int result = func_80154280(param, actor, flags);
+    int result = checkArtsFull(param, actor, flags);
     if (result & 1) return 0;
     if (!(flags & 0x200) && (result & 0x80)) return 0;
     if (!(flags & 0x20) && (result & 0x20)) return 0;
@@ -212,15 +212,15 @@ extern "C" int canAIUseArts(void* param, void* actor, int flags) {
     return 1;
 }
 
-// func_801554DC - inverted-flags arts gate: mask to 0xFFF bits, invert, run
+// ArtsGateClear - inverted-flags arts gate: mask to 0xFFF bits, invert, run
 // the full arts check, and return 1 only when the check returned 0.
-extern "C" int func_801554DC(void* param, void* actor, int flags) {
-    int result = func_80154280(param, actor, ~(flags & 0xFFF));
+extern "C" int ArtsGateClear(void* param, void* actor, int flags) {
+    int result = checkArtsFull(param, actor, ~(flags & 0xFFF));
     return result == 0;
 }
 
 // ---------------------------------------------------------------------------
-// Data imports for func_80154280 (global scope: MWCC does not mangle these).
+// Data imports for checkArtsFull (global scope: MWCC does not mangle these).
 // ---------------------------------------------------------------------------
 extern const u64 lbl_eu_805019D8[12];     // arts-select battle table (0x60 B)
 extern const char lbl_eu_80526324[];      // warning file name
@@ -236,11 +236,11 @@ extern u16 lbl_eu_80663E42;               // current area id
 // C-linkage-less imports (retail symbols are unmangled but no header declares
 // them with C linkage; declared here with C++ linkage for compilation - reloc
 // names at these call sites drift until the headers are updated).
-extern int func_801B202C();
-extern int func_801B1D4C();
-extern int func_801B1FA4();
+extern int hasAnyActiveSlot();
+extern int findActiveEntryID();
+extern int getFirstFreeSlot();
 extern int getEffectBankByte();
-extern int func_80260264(void* self, int id, void* out);
+extern int IdTable_GetSum(void* self, int id, void* out);
 extern void* lookupBattleStatusEntry(void* self, unsigned int id);
 extern void* appendObjectById(void* list, int index);
 extern int getAnimEff(void* obj);
@@ -253,12 +253,12 @@ extern void* __ct__800FBA18(void* list, f32 a, f32 b, f32 c, int d);
 extern int ColiQuerySpecDispatch(void* self, void* src, int a, int b);
 
 // ---------------------------------------------------------------------------
-// func_80154280 - arts usability check. Accumulates a flag word describing
+// checkArtsFull - arts usability check. Accumulates a flag word describing
 // which gates the arts fails (bit 1 = out of range, 2 = ?, 8 = ?, 0x10 = ?,
 // 0x20 = no valid target, 0x40 = ?, 0x80 = ?, 0x100 = ?). Returns the raw
-// flag word; callers (canAIUseArts / func_801554DC) interpret it.
+// flag word; callers (canAIUseArts / ArtsGateClear) interpret it.
 // ---------------------------------------------------------------------------
-int func_80154280(void* param, void* actor, int flags) {
+int checkArtsFull(void* param, void* actor, int flags) {
     cf::CArtsParam* p = (cf::CArtsParam*)param;            // r24
     cf::CArtsParamActor* a = (cf::CArtsParamActor*)actor;  // r25
     cf::CArtsParamActor* obj = (cf::CArtsParamActor*)a->v38();                   // r30
@@ -270,8 +270,8 @@ int func_80154280(void* param, void* actor, int flags) {
     if (!(flags & 0x40)) {
         if (p->unk78 & 2) {
             if (((p->unk78 & 0x4000) != 0 || (p->unk78 & ~1u) != 0) ||
-                func_80148778((u8*)a + 8, 0xc) == 0) {
-                if (func_80148778((u8*)a + 8, 9) != 0 || func_80148778((u8*)a + 8, 0xb) != 0) {
+                isBattleStatusActive((u8*)a + 8, 0xc) == 0) {
+                if (isBattleStatusActive((u8*)a + 8, 9) != 0 || isBattleStatusActive((u8*)a + 8, 0xb) != 0) {
                     result |= 0x40;
                 }
             } else {
@@ -283,10 +283,10 @@ int func_80154280(void* param, void* actor, int flags) {
     // Gate: arts-hold flag (0x80) - attack type / voice-action checks.
     if (!(flags & 0x80)) {
         if (p->unk78 & 2) {
-            if (func_80148778((u8*)a + 8, 0xcb) == 0 &&
-                func_80148778((u8*)a + 8, 0xf8) == 0 &&
-                func_80148778((u8*)a + 8, 0xf) == 0 &&
-                func_80148778((u8*)a + 8, 0x10) == 0) {
+            if (isBattleStatusActive((u8*)a + 8, 0xcb) == 0 &&
+                isBattleStatusActive((u8*)a + 8, 0xf8) == 0 &&
+                isBattleStatusActive((u8*)a + 8, 0xf) == 0 &&
+                isBattleStatusActive((u8*)a + 8, 0x10) == 0) {
                 u32 val = *(u32*)a->field_04->f30();
                 if (testActorStatus(a, (int*)&val, 0x18) == 0 && a->v173() != 0) {
                     result |= 0x80;
@@ -302,17 +302,17 @@ int func_80154280(void* param, void* actor, int flags) {
         if (obj->field_3F00 & 2) {
             if (obj->field_3F28 == 7) {
                 if ((p->unk78 & 1) && p->unk77 == 0x10) {
-                    if (func_801B202C() == 0) {
+                    if (hasAnyActiveSlot() == 0) {
                         result |= 0x80;
                     } else {
-                        int chain = func_801B1D4C();
+                        int chain = findActiveEntryID();
                         if (chain == -1) {
                             result |= 0x20;
                         } else {
                             for (int i = 1; i < 8; i++) {
                                 u8* rec = (u8*)obj->v156() + 0x8f8 + i * 0x8c;
                                 if (chain == *(u16*)(rec + 0x40)) {
-                                    result |= func_80154280(rec, obj, -0x21);
+                                    result |= checkArtsFull(rec, obj, -0x21);
                                     break;
                                 }
                             }
@@ -337,7 +337,7 @@ int func_80154280(void* param, void* actor, int flags) {
                         int r29 = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
                         if (obj->v163() != 0) {
                             int sv;
-                            if (func_80260264(obj->v163(), 0x77, &sv) != 0) {
+                            if (IdTable_GetSum(obj->v163(), 0x77, &sv) != 0) {
                                 if (p->unk78 & 2) {
                                     if (f31 <= lbl_eu_80667470) {
                                         f31 += (f32)(s32)sv;
@@ -508,7 +508,7 @@ int func_80154280(void* param, void* actor, int flags) {
                         while (r22 < *(u32*)((u8*)list + 0x620)) {
                             void* list2 = CTaskGame_enumListGet(holder);
                             void* target = getObjectAt(list2, r22);
-                            if (target != 0 && func_8016FE34(target) != 0) {
+                            if (target != 0 && MapFx_ResolveOwner(target) != 0) {
                                 if (!(p->unk78 & 2)) {
                                     f32 f27b = nw4r::math::Atan2FIdx(
                                         *(f32*)((u8*)target + 0x3e9c + 0x28 + 0x4) - ((f32*)obj->mSub.s41())[4],
@@ -561,13 +561,13 @@ int func_80154280(void* param, void* actor, int flags) {
     }
     // Gate: range flag (0x8).
     if (!(flags & 0x8)) {
-        if (func_80148778((u8*)a + 8, 0x30) == 0 && lbl_eu_80667460 > a->v78()) {
+        if (isBattleStatusActive((u8*)a + 8, 0x30) == 0 && lbl_eu_80667460 > a->v78()) {
             result |= 0x8;
         }
     }
     // Gate: range flag (0x10).
     if (!(flags & 0x10)) {
-        if (func_80148778((u8*)a + 8, 0x31) == 0) {
+        if (isBattleStatusActive((u8*)a + 8, 0x31) == 0) {
             int dmg = (int)(s16)p->unk34;
             if (dmg > 0 && (f32)dmg > a->v84()) {
                 result |= 0x10;
@@ -612,7 +612,7 @@ int func_80154280(void* param, void* actor, int flags) {
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 2) {
             if (p->unk48 == 0xff && *(u32*)((u8*)obj + 0x1530) == 0) result |= 0x80;
-            if (func_80148778((u8*)obj + 8, 0xeb) != 0 && p->unk48 != 0xeb) result |= 0x80;
+            if (isBattleStatusActive((u8*)obj + 8, 0xeb) != 0 && p->unk48 != 0xeb) result |= 0x80;
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 5) {
             int st = obj->field_3F60 ? *(u32*)((u8*)obj->field_3F60 + 0x374) : 0;
@@ -637,16 +637,16 @@ int func_80154280(void* param, void* actor, int flags) {
             if (p->unk78 & 1) {
                 u32 sv3;
                 if (testActorStatus(obj, (int*)&sv3, 0xb) != 0) result |= 0x80;
-                if (func_801B202C() == 0) result |= 0x80;
+                if (hasAnyActiveSlot() == 0) result |= 0x80;
             } else if (p->unk78 & 2) {
                 if (p->unk3C == 4) {
-                    if (func_801B1FA4() == -1) result |= 0x80;
+                    if (getFirstFreeSlot() == -1) result |= 0x80;
                 } else if (p->unk77 == 0xb) {
                     if (a->v74() <= lbl_eu_8066748C) result |= 0x80;
                 } else if (p->unk77 >= 0xe && p->unk77 <= 0xf) {
-                    if (func_80148778((u8*)obj + 8, 0x10a) == 0) result |= 0x80;
+                    if (isBattleStatusActive((u8*)obj + 8, 0x10a) == 0) result |= 0x80;
                 } else if (p->unk77 == 6) {
-                    if (getEffectBankByte() == 0 || func_801B1FA4() == -1) {
+                    if (getEffectBankByte() == 0 || getFirstFreeSlot() == -1) {
                         result |= 0x80;
                     } else {
                         int chain2 = getEffectBankByte();

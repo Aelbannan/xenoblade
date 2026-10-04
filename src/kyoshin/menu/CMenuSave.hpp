@@ -54,7 +54,7 @@ public:
     u8 mState;                    // 0x20B
 };
 
-// Flat view of cf::CfPadData exposing only the flag words func_8028E530 reads:
+// Flat view of cf::CfPadData exposing only the flag words handleSaveMenuInput reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
 // +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
 struct MenuSavePadData {
@@ -105,7 +105,7 @@ extern "C" void playUISound__FUl(u32 op);
 extern "C" int IsMenuState621F0();
 extern "C" void openSaveMenu(CMenuSave* self);
 extern "C" void advanceSaveMenuPhase(CMenuSave* self);
-extern "C" void func_8028E530(CMenuSave* self);
+extern "C" void handleSaveMenuInput(CMenuSave* self);
 extern "C" void flagSaveMenuReady(CMenuSave* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
@@ -137,7 +137,7 @@ extern "C" void __ct__CSaveLoad(void* self, u8 argA, u8 argB);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void NandAllocBufs();
 extern "C" char* BdatTouchStringCell(char* a, char* b, int id);
-extern "C" void func_8016742C(void* dest, void* src);
+extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,

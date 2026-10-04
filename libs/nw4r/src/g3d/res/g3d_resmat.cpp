@@ -1827,20 +1827,11 @@ const unsigned char lbl_eu_80669AA8[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_048[4] = {
-    0x3F, 0x80, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669AB0 = 1.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_04C[4] = {
-    0x40, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669AB4 = 2.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_050[4] = {
-    0x40, 0x40, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669AB8 = 3.0f;
 
 extern __declspec(section ".sdata2")
 const unsigned char lbl_eu_80669ABC[4] = {
@@ -2027,15 +2018,9 @@ const unsigned char lbl_eu_80669B80[8] = {
     0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_120[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669B88 = 0.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_124[4] = {
-    0x3F, 0x80, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669B8C = 1.0f;
 
 extern __declspec(section ".sdata2")
 const unsigned char lbl_eu_80669B90[4] = {
@@ -2087,10 +2072,7 @@ const unsigned char lbl_eu_80669BC0[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_160[4] = {
-    0x00, 0x02, 0x01, 0x03,
-};
+extern "C" const float lbl_eu_80669BC8 = 1.8403392861824255e-40f;
 
 extern __declspec(section ".sdata2")
 const unsigned char lbl_eu_80669BCC[4] = {
@@ -2308,19 +2290,19 @@ const unsigned char lbl_eu_80669C90[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_230[4] = {
+const unsigned char lbl_eu_80669C98[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
 extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80669C9C = 1f;
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_238[4] = {
+const unsigned char lbl_eu_80669CA0[4] = {
     0x3F, 0x36, 0x0B, 0x61,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_23C[4] = {
+const unsigned char lbl_eu_80669CA4[4] = {
     0x3F, 0x00, 0x00, 0x00,
 };
 
@@ -2329,50 +2311,26 @@ const unsigned char lbl_eu_80669CA8[8] = {
     0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_248[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CB0 = 0.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_24C[4] = {
-    0x3F, 0x80, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CB4 = 1.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_250[4] = {
-    0x3F, 0x36, 0x0B, 0x61,
-};
+extern "C" const float lbl_eu_80669CB8 = 0.7111111283302307f;
 
 extern __declspec(section ".sdata2")
 const unsigned char sdata2_pool_g3d_resmat_gap_254[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_258[4] = {
-    0x00, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CC0 = 0.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_25C[4] = {
-    0x3F, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CC4 = 0.5f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_260[4] = {
-    0x3F, 0x80, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CC8 = 1.0f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_264[4] = {
-    0x3F, 0x36, 0x0B, 0x61,
-};
+extern "C" const float lbl_eu_80669CCC = 0.7111111283302307f;
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_268[4] = {
-    0xBF, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_80669CD0 = -0.5f;
 
 extern __declspec(section ".sdata2")
 const unsigned char sdata2_pool_g3d_resmat_gap_26C[4] = {
@@ -2470,12 +2428,12 @@ const unsigned char lbl_eu_80669D30[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_2D0[4] = {
+const unsigned char lbl_eu_80669D38[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_2D4[4] = {
+const unsigned char lbl_eu_80669D3C[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
@@ -2570,7 +2528,7 @@ const unsigned char lbl_eu_80669D9C[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_338[4] = {
+const unsigned char lbl_eu_80669DA0[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
@@ -2615,12 +2573,12 @@ const unsigned char lbl_eu_80669DC8[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_368[4] = {
+const unsigned char lbl_eu_80669DD0[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_36C[4] = {
+const unsigned char lbl_eu_80669DD4[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
@@ -2912,7 +2870,7 @@ const unsigned char lbl_eu_80669EE4[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_480[4] = {
+const unsigned char lbl_eu_80669EE8[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
@@ -2971,27 +2929,27 @@ const unsigned char lbl_eu_80669F28[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4C8[4] = {
+const unsigned char lbl_eu_80669F30[4] = {
     0xC2, 0xB4, 0xCC, 0xCD,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4CC[4] = {
+const unsigned char lbl_eu_80669F34[4] = {
     0x47, 0x7F, 0xFF, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4D0[4] = {
+const unsigned char lbl_eu_80669F38[4] = {
     0x41, 0x20, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4D4[4] = {
+const unsigned char lbl_eu_80669F3C[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4D8[4] = {
+const unsigned char lbl_eu_80669F40[4] = {
     0xBD, 0x00, 0x00, 0x00,
 };
 
@@ -3000,33 +2958,25 @@ const unsigned char sdata2_pool_g3d_resmat_gap_4DC[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4E0[4] = {
-    0x43, 0x30, 0x00, 0x00,
-};
+extern "C" const f64 lbl_eu_80669F48 = 4503601774854144.0;
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4E4[4] = {
-    0x80, 0x00, 0x00, 0x00,
-};
-
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4E8[4] = {
+const unsigned char lbl_eu_80669F50[4] = {
     0x41, 0xC0, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4EC[4] = {
+const unsigned char lbl_eu_80669F54[4] = {
     0x3C, 0x00, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4F0[4] = {
+const unsigned char lbl_eu_80669F58[4] = {
     0x40, 0xA0, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_4F4[4] = {
+const unsigned char lbl_eu_80669F5C[4] = {
     0x42, 0x70, 0x00, 0x00,
 };
 
@@ -3296,12 +3246,12 @@ const unsigned char lbl_eu_8066A050[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_5F0[4] = {
+const unsigned char lbl_eu_8066A058[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_5F4[4] = {
+const unsigned char lbl_eu_8066A05C[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
@@ -3356,12 +3306,12 @@ const unsigned char lbl_eu_8066A090[8] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_630[4] = {
+const unsigned char lbl_eu_8066A098[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_634[4] = {
+const unsigned char lbl_eu_8066A09C[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
@@ -3376,7 +3326,7 @@ const unsigned char lbl_eu_8066A0A4[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_640[4] = {
+const unsigned char lbl_eu_8066A0A8[4] = {
     0x3F, 0x00, 0x00, 0x00,
 };
 
@@ -3396,7 +3346,7 @@ const unsigned char lbl_eu_8066A0B4[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_650[4] = {
+const unsigned char lbl_eu_8066A0B8[4] = {
     0x40, 0x00, 0x00, 0x00,
 };
 
@@ -3406,19 +3356,16 @@ const unsigned char lbl_eu_8066A0BC[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_658[4] = {
+const unsigned char lbl_eu_8066A0C0[4] = {
     0xBF, 0x80, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_65C[4] = {
+const unsigned char lbl_eu_8066A0C4[4] = {
     0xC0, 0x40, 0x00, 0x00,
 };
 
-extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_660[4] = {
-    0x47, 0x00, 0x00, 0x00,
-};
+extern "C" const float lbl_eu_8066A0C8 = 32768.0f;
 
 extern __declspec(section ".sdata2")
 const unsigned char sdata2_pool_g3d_resmat_gap_664[4] = {
@@ -3426,7 +3373,7 @@ const unsigned char sdata2_pool_g3d_resmat_gap_664[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_668[4] = {
+const unsigned char lbl_eu_8066A0D0[4] = {
     0x3F, 0x80, 0x00, 0x00,
 };
 
@@ -3466,22 +3413,22 @@ const unsigned char lbl_eu_8066A0EC[4] = {
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_688[4] = {
+const unsigned char lbl_eu_8066A0F0[4] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_68C[4] = {
+const unsigned char lbl_eu_8066A0F4[4] = {
     0x3E, 0x0A, 0xDE, 0x7F,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_690[4] = {
+const unsigned char lbl_eu_8066A0F8[4] = {
     0x3F, 0x66, 0x66, 0x66,
 };
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_694[4] = {
+const unsigned char lbl_eu_8066A0FC[4] = {
     0x3D, 0x08, 0x88, 0x89,
 };
 

@@ -240,7 +240,7 @@ body:
     if (state == 3) goto case3;
     goto tick;
 case0:
-    func_80263954(this);
+    pollPassiveSkillReady(this);
     goto tick;
 case1:
     updatePassiveSkillMenu(this);
@@ -388,7 +388,7 @@ extern "C" CMenuPassiveSkill* __dt__17CMenuPassiveSkillFv(CMenuPassiveSkill* sel
 // and push the cursor state byte from the passive-skill sub-object into the
 // title/help widget.
 // ---------------------------------------------------------------------------
-extern "C" void func_80263954(CMenuPassiveSkill* self) {
+extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
         CPassiveSkill_getVisibleIfReady(self->mPassiveSkill) != 0) {
         func_801C412C(&self->mTitleAHelp);

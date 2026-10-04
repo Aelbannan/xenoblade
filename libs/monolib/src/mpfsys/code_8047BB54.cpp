@@ -61,7 +61,7 @@ struct MPFDrawSingletonTable {
 extern MPFDrawSingletonTable lbl_eu_806584E8;
 
 // Global scratch draw context returned by getMpfStatus (retail .bss
-// 0x80658500, 0x18 bytes). func_8047C588 / func_8047C904 fill it from the
+// 0x80658500, 0x18 bytes). mpfDrawLayerOpa / mpfDrawLayerXlu fill it from the
 // map descriptor before issuing the per-layer draw calls.
 
 // One 0x34-byte entry in the layer array (obj->field_0x10). field_0x0 is the
@@ -111,7 +111,7 @@ struct UnkDesc8047BB54 {
 };
 
 // The u32 slot reached through desc->field_0x24 holds another relative offset
-// (-> obj->field_0xC) plus a float at +0x10 (used by func_8047C588).
+// (-> obj->field_0xC) plus a float at +0x10 (used by mpfDrawLayerOpa).
 struct UnkDescSlot24 {
     u32 field_0x0;        // +0x00 second-level relative offset
     u8 pad_0x4[0x10 - 0x4];
@@ -154,10 +154,10 @@ class CView;
 extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB);
 extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
     nw4r::g3d::ScnProc* proc, bool opa);
-extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
+extern "C" void mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
     UnkDrawObj* obj, UnkDesc8047BB54* desc, void* a5, void* a6, void* a7,
     void* a8, void* a9, u32 a10, f32 f1);
-extern "C" void func_8047C904__17UnkClass_8047BB54Fv(
+extern "C" void mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
     UnkDrawObj* obj, UnkDesc8047BB54* desc, void* a5, void* a6, void* a7,
     void* a8, void* a9, u32 a10, f32 f1);
 
@@ -170,11 +170,11 @@ extern "C" int tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
 extern "C" void* submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
-extern "C" void func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(
+extern "C" void buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, u32 a6);
 extern "C" void setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, f32 f1);
-extern "C" void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
+extern "C" void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     void* self, void* a4, void* a5, void* a6, void* a7, u32 a8);
 extern "C" void resetTevSwap__Q26mpfsys17UnkClass_80471EC8Fv();
 extern "C" void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
@@ -183,7 +183,7 @@ extern "C" void setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
 extern "C" void* getScnRoot45C(CScn* self);
 extern "C" u32 getScnRootPtr(CScn* self);
-extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
+extern "C" void mpfRunDescQuery__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr,
     nw4r::math::VEC3* vec, f32 scale);
 extern "C" CView* getCurrentView__5CViewFv();
@@ -194,7 +194,7 @@ extern "C" void* Scn_HasCamItem(void* camera, CView* view);
 extern const f32 lbl_eu_8066A858;
 // Embedded subobject pointer cache (this+0x24) written by initMpfDrawBuffer.
 extern void* lbl_eu_80665838;
-// Draw-description VEC3 buffers handed to func_8047CC4C (retail .bss).
+// Draw-description VEC3 buffers handed to mpfRunDescQuery (retail .bss).
 extern f32 lbl_eu_80658410[3];
 extern f32 lbl_eu_8065841C[3];
 
@@ -302,7 +302,7 @@ extern u8 lbl_eu_80658500[];
 void* UnkClass_8047BB54::getMpfStatus(void) { return lbl_eu_80658500; }
 
 // ---------------------------------------------------------------------------
-// func_8047C040 helpers (retail keeps the Fv mangling but the function
+// mpfCullMarkLayers helpers (retail keeps the Fv mangling but the function
 // actually receives view/count in r4/r5, so it is emitted with C linkage and
 // the exact mangled name - same pattern as the other Fv-with-hidden-params
 // functions in this TU).
@@ -317,7 +317,7 @@ struct UnkLayerView {
 };
 
 // Tail of the embedded UnkClass_80471EC8 subobject (self+0x24) holding the
-// two per-frame culling constants read by func_8047C040.
+// two per-frame culling constants read by mpfCullMarkLayers.
 struct EmbeddedCullParams {
     u8 pad_0x0[0x2DFC];
     f32 field_0x2DFC;   // +0x2DFC
@@ -353,7 +353,7 @@ extern const char lbl_eu_80526300[];
 // draw-object virtual (slot 0 for the near branch, slot 1 otherwise) flushes
 // it. The object's first 0x14 bytes are the UnkDrawObj layout. Signature
 // matches the canonical declaration in monolib/mpfsys/code_8047CA88.hpp.
-extern "C" void func_8047C040__17UnkClass_8047BB54Fv(void* self, void* ptr,
+extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                                          u32 count) {
     UnkDrawObj* obj = (UnkDrawObj*)self;
     UnkLayerView* view = (UnkLayerView*)ptr;
@@ -547,7 +547,7 @@ extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
         layout->field_0x1C = (u8*)layout->field_0x14 + (sizeA - headerSize);
         ((UnkBuf8047BB54*)layout->field_0x1C)->field_0x0 = 0x80;
         layout->field_0x18 = (u8*)layout->field_0x14 + sizeA;
-        func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(
+        buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, layout->field_0xC,
             (u8*)layout->field_0x14 + sizeA, sizeB);
     }
@@ -555,8 +555,8 @@ extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
 
 // --- Target 3: us-8047fe5c ---------------------------------------------------
 // ScnProc draw callback: gate on the ResFile/active flag bits and the scene
-// gate byte, then forward into the per-layer draws (func_8047C588 for opa,
-// func_8047C904 for xlu).
+// gate byte, then forward into the per-layer draws (mpfDrawLayerOpa for opa,
+// mpfDrawLayerXlu for xlu).
 extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
     nw4r::g3d::ScnProc* proc, bool opa) {
     CView* view;
@@ -576,14 +576,14 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
             self->field_0x14, self->field_0x18, (self->field_0x10 >> 4) & 1);
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
         void* obj = getMpfStatus__17UnkClass_8047BB54Fv(frame);
-        func_8047C588__17UnkClass_8047BB54Fv(
+        mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
             ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     } else {
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
         void* obj = getMpfStatus__17UnkClass_8047BB54Fv(vf);
-        func_8047C904__17UnkClass_8047BB54Fv(
+        mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
             ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
@@ -594,14 +594,14 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
 // Layer dispatch for the xlu pass: resolve the descriptor pointers into the
 // scratch draw context, then walk the marked layers and invoke the draw
 // table's second virtual slot for each live entry.
-extern "C" void func_8047C904__17UnkClass_8047BB54Fv(
+extern "C" void mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
     UnkDrawObj* obj, UnkDesc8047BB54* desc, void* a5, void* a6, void* a7,
     void* a8, void* a9, u32 a10, f32 f1) {
     obj->field_0x0 = (u32)desc;
     obj->field_0x10 = (UnkDrawEntry*)((u8*)desc + desc->field_0x8);
     obj->field_0xC = (u8*)desc + *(u32*)((u8*)desc + desc->field_0x24);
     obj->field_0x14 = (u8*)desc + *(u32*)((u8*)desc + desc->field_0x1C);
-    func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
+    drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         desc, a8, a9, a5, a6, a10);
     if (desc->field_0x28) {
         int count = (int)desc->field_0xC;
@@ -622,10 +622,10 @@ extern "C" void func_8047C904__17UnkClass_8047BB54Fv(
 }
 
 // --- Target 5: us-80480558 ---------------------------------------------------
-// Layer dispatch for the opa pass: like func_8047C904 but also marks the
+// Layer dispatch for the opa pass: like mpfDrawLayerXlu but also marks the
 // per-element array, forwards the scale to the UnkClass_8047CA88 singleton,
 // and splits the layers by the entry flag bit.
-extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
+extern "C" void mpfDrawLayerOpa__17UnkClass_8047BB54Fv(
     UnkDrawObj* obj, UnkDesc8047BB54* desc, void* a5, void* a6, void* a7,
     void* a8, void* a9, u32 a10, f32 f1) {
     obj->field_0x0 = (u32)desc;
@@ -633,7 +633,7 @@ extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
     UnkDescSlot24* slot = (UnkDescSlot24*)((u8*)desc + desc->field_0x24);
     obj->field_0xC = (u8*)desc + slot->field_0x0;
     obj->field_0x14 = (u8*)desc + *(u32*)((u8*)desc + desc->field_0x1C);
-    func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
+    drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         desc, a8, a9, a5, a6, a10);
     if (desc->field_0x28) {
         obj->field_0x4 = (u32*)a7;
@@ -643,7 +643,7 @@ extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
             obj->field_0x4[obj->field_0x4[0] * i + 1] = 1;
         }
     }
-    func_8047CC4C__17UnkClass_8047CA88Fv(
+    mpfRunDescQuery__17UnkClass_8047CA88Fv(
         UnkClass_8047CA88::getInstance(), (void*)obj->field_0x0,
         lbl_eu_80658410, (nw4r::math::VEC3*)lbl_eu_8065841C, slot->field_0x10);
     if (desc->field_0x10) {

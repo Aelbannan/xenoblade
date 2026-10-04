@@ -14,11 +14,11 @@ s32 isLodRangeStraddlesLimit(s32 a, s32 b);
 // LOD render-state helpers defined in sibling LOD TUs.  The retail symbol map
 // keeps their C++ mangled names, so plain global-scope declarations with the
 // matching signatures resolve to the retail symbols.
-s32 func_80464128(u32 arg);
-s32 func_804642BC(s32 a, u32 b);
-s32 func_804643D8(s32 a, s32 b, s32 da, s32 db);
+s32 updateLodFade(u32 arg);
+s32 getLodFadeRatio(s32 a, u32 b);
+s32 applyLodRangeFade(s32 a, s32 b, s32 da, s32 db);
 void selectLodTexCoord(s32 value);
-void func_80463C24(s32 index, s32 offset, const f32 (*mtx)[3][4]);
+void uploadLodMatrix(s32 index, s32 offset, const f32 (*mtx)[3][4]);
 void bindLodVertexArrays(s32 count);
 
 // Scene-resource current-data getter (monolib/src/scn/code_804BC9EC.cpp).
@@ -30,7 +30,7 @@ extern "C" void* getScnHandle__Fv(void);
 // ABI values in r3, per the "Fv ABI note" - model them as explicit args).
 extern "C" {
 void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
-void func_8046534C__Q23LOD17UnkClass_804645CCFv(s32 value);
+void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value);
 void setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(s32 value);
 }
 
@@ -71,12 +71,12 @@ extern const f32 lbl_eu_8066A64C;    // 0.0f
 extern const f32 lbl_eu_8066A648;    // 1.0f
 }
 
-// Per-record draw dispatch table (target func_80469138): entry index is the
+// Per-record draw dispatch table (target drawLodBillView1C): entry index is the
 // record's field_0x29; called with (r3, r4, r5, r6).
 typedef void (*LodD9B0Fn)(void*, void*, void*, u32);
 extern "C" LodD9B0Fn lbl_eu_8056D9B0[];
 
-// Record-draw dispatch table (target func_80468434): called with the byte-
+// Record-draw dispatch table (target dispatchLodRecord): called with the byte-
 // stream pointer in r3; the callee advances the stream in place.
 typedef void (*LodD980Fn)(void*);
 extern "C" LodD980Fn lbl_eu_8056D980[];
@@ -88,7 +88,7 @@ void ColiLodBuildRecordMatrix(void* mtx, void* record);
 void ScnData_FwdB7E0C(void* res, void* viewData, void* renderParams);
 }
 
-// Object + records used by func_8046A3B4 (stride-0x68 record array selected
+// Object + records used by submitLodBillMtx (stride-0x68 record array selected
 // through the per-type pointer tables).
 struct LodObj1 {
     u8  pad_00[0x4];
@@ -104,7 +104,7 @@ struct LodRec1 {      // stride 0x68
     u8  pad_06[0x68 - 0x06];
 };
 
-// Object-header view used by func_80468434 (u32 offsets at +0x10/0x14/0x18).
+// Object-header view used by dispatchLodRecord (u32 offsets at +0x10/0x14/0x18).
 struct LodHeader34 {
     u16 field_0x0;    // 0x00
     u16 field_0x2;    // 0x02
@@ -117,8 +117,8 @@ struct LodHeader34 {
     u32 field_0x28;   // 0x28
 };
 
-// Object-header view used by the record-draw helpers func_80469138 /
-// func_80469620 / func_80469B5C.  Reads the header bytes with the widths
+// Object-header view used by the record-draw helpers drawLodBillView1C /
+// drawLodBillNorm / drawLodBillView48.  Reads the header bytes with the widths
 // those helpers use; aliases records[0] of UnkClass_80468434.
 struct LodDrawHeader {
     u8  field_0x0;    // 0x00
@@ -211,7 +211,7 @@ class UnkClass_80468434 {
 public:
     LodRenderRecord records[8];  // record array; header fields alias record[0]
 
-    u16* func_80468BDC();
+    u16* drawLodBillDual();
 };
 
 // Retail entry points for the LOD cull-check helpers.  The DOL is stripped,
@@ -237,13 +237,13 @@ void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self,
 
 // The Fv-named record-draw entry points carry their real ABI values in the
 // argument registers (MWCC_CASES "Fv ABI note"); the record index lives
-// in r3 (u32) for func_8046A3B4, and the object pointer in r3 for the rest.
-void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
+// in r3 (u32) for submitLodBillMtx, and the object pointer in r3 for the rest.
+void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
                                                 u8* arg2);
-void func_80468434__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
+void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
                                                 u8* arg2);
-u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
-u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
-u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
+u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
+u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
+u16* drawLodBillView48__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
 }
 } // namespace LOD

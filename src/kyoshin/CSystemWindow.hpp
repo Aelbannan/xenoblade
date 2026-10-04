@@ -98,8 +98,8 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 // CSysWin / system-window helper imports (C-linkage retail symbols).
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
-void func_8022B9B4(void* syswin, void* str1, void* str2);
-void func_8022BFC8(void* syswin, int kind);
+void sysWinSetKindContent(void* syswin, void* str1, void* str2);
+void sysWinApplyKind(void* syswin, int kind);
 void sysWinOpenPhase1(void* syswin);
 void sysWinAdvancePhase3(void* syswin);
 void sysWinDispatchPhase(void* syswin);

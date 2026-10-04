@@ -295,7 +295,7 @@ extern "C" int CSLCur_isReady(CSLCur* cur);
 extern "C" int CSLCur_getSlot(CSLCur* cur, u8 index);
 extern "C" void CSaveLoad_enAnimB(CSaveLoad* p);
 extern "C" void CSaveLoad_refresh(CSaveLoad* p);
-extern "C" void func_80290994(CSaveLoad* p);
+extern "C" void CSaveLoad_renderSlots(CSaveLoad* p);
 extern "C" void CSaveLoad_enAnimA(CSaveLoad* p);
 extern "C" void CSaveLoad_bestSlot(CSaveLoad* p);
 extern "C" void CSLSub_tickIn(CSLCur* cur);
@@ -329,7 +329,7 @@ extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, i
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void CScrollBar_UpdateDispatch(void*);   // CScrollBar per-frame update
 extern "C" void sysWinDispatchPhase(void*);   // CSysWin per-frame update
-extern "C" void func_801D202C(void*);   // CCur per-frame update
+extern "C" void Cur_Update(void*);   // CCur per-frame update
 extern "C" void CScrollBar_draw(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
@@ -370,9 +370,9 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r:
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void func_8022B9B4(void*, u32, int);
+extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
-extern "C" void func_8022BFC8(void*, int);
+extern "C" void sysWinApplyKind(void*, int);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" int isCollepediaId(int v);
 extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));

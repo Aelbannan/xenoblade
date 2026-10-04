@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-// Layer-view descriptor consumed by func_8047C040: one 8-byte record per
+// Layer-view descriptor consumed by mpfCullMarkLayers: one 8-byte record per
 // outer-loop iteration (retail advances the pointer by 8 each iteration).
 struct UnkLayerView {
     u16 field_0x0;   // +0x00 layer entry index into obj->field_0x10
@@ -11,7 +11,7 @@ struct UnkLayerView {
 };
 
 // Tail of the embedded UnkClass_80471EC8 subobject (this+0x24) holding the
-// two per-frame culling constants read by func_8047C040.
+// two per-frame culling constants read by mpfCullMarkLayers.
 struct EmbeddedCullParams {
     u8 pad_0x0[0x2DFC];
     f32 field_0x2DFC;   // +0x2DFC
@@ -29,7 +29,7 @@ struct MPFDrawVtC_2 {
 };
 
 // .sdata2 constants / bitmask-table pointer / warning strings referenced by
-// func_8047C040 (retail names kept so the relocs match).
+// mpfCullMarkLayers (retail names kept so the relocs match).
 extern const f32 lbl_eu_8066A860;
 extern const f32 lbl_eu_8066A864;
 extern const f32 lbl_eu_8066A868;
@@ -47,9 +47,9 @@ public:
     void resetMpfInstance();
     void initMpfDrawBuffer();
     void getMpfStatus();
-    void func_8047C040();
-    void func_8047C588();
-    void func_8047C904();
+    void mpfCullMarkLayers();
+    void mpfDrawLayerOpa();
+    void mpfDrawLayerXlu();
 
     // TODO: add fields
     void setMpfFloatParam();

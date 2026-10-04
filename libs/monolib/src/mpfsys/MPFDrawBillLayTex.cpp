@@ -70,7 +70,7 @@ extern "C" {
 
     MPFDrawBillLayer* getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(void*, u8);
     void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(s16, f32);
-    void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s16, f32);
+    void setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(s16, f32);
     void setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -98,7 +98,7 @@ MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance() {
 // Computes the 4 corner positions of a billboard (plus layered copies) by
 // transforming local-space offsets through the view matrix (and per-layer
 // matrices for depth-layered billboards).
-extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
+extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
     f32 height = billboard->halfHeight;
     if (billboard->flags & 4) {
         height = -height;
@@ -214,7 +214,7 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
     }
 }
 
-extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillIndexList* list) {
+extern "C" void drawBillIndexed(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillIndexList* list) {
     s32 mask = -1;
     if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
         mask = 0;
@@ -255,7 +255,7 @@ extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDra
     }
 }
 
-extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillPairList* list) {
+extern "C" void drawBillPaired(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillPairList* list) {
     s32 mask = -1;
     if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
         mask = 0;
@@ -302,7 +302,7 @@ extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillbo
     if (lbl_eu_80665860 != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
-        func_80479F54(billboard, positions);
+        calcBillCorners(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
     if (billboard->flags & 1) {
@@ -317,7 +317,7 @@ extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillbo
     } else {
         resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_8047A330(billboard, positions, list);
+    drawBillIndexed(billboard, positions, list);
 }
 
 extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
@@ -325,7 +325,7 @@ extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboa
     if (lbl_eu_80665860 != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
-        func_80479F54(billboard, positions);
+        calcBillCorners(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
@@ -336,11 +336,11 @@ extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboa
     }
     enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
     enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_8047A570(billboard, positions, list);
+    drawBillPaired(billboard, positions, list);
     loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
-extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions) {
+extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions) {
     bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
     setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
 
@@ -477,10 +477,10 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     }
 }
 
-extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
+extern "C" void submitBillIndexed(void* self, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_8047A918(self, billboard, positions);
+        setupBillDraw(self, billboard, positions);
         lbl_eu_80665860 = billboard;
     }
 
@@ -560,10 +560,10 @@ extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBil
     }
 }
 
-extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
+extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_8047A918(self, billboard, positions);
+        setupBillDraw(self, billboard, positions);
         lbl_eu_80665860 = billboard;
     }
 
@@ -645,8 +645,8 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
 extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
-        func_80479F54(billboard, positions);
+        setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
+        calcBillCorners(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
     if (billboard->flags & 1) {
@@ -661,7 +661,7 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
     } else {
         resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_8047A330(billboard, positions, list);
+    drawBillIndexed(billboard, positions, list);
     enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
     enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)1, (GXLogicOp)5);
@@ -669,7 +669,7 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xC, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)1, (GXTevRegID)0);
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(0);
-    func_8047A330(billboard, positions, list);
+    drawBillIndexed(billboard, positions, list);
     disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
@@ -679,8 +679,8 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
 extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
-        func_80479F54(billboard, positions);
+        setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
+        calcBillCorners(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
@@ -691,13 +691,13 @@ extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLa
     }
     enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
     enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_8047A570(billboard, positions, list);
+    drawBillPaired(billboard, positions, list);
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)1, (GXLogicOp)5);
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)1, (GXChannelID)4);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xC, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)1, (GXTevRegID)0);
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(0);
-    func_8047A570(billboard, positions, list);
+    drawBillPaired(billboard, positions, list);
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)5, (GXLogicOp)0);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
@@ -733,7 +733,7 @@ extern "C" u32 lbl_eu_8056DC10[6] = {
 };
 extern "C" u32 lbl_eu_8056DC28[4] = {
     (u32)&lbl_eu_80663890, 0x00000000,
-    (u32)&func_8047B1E8, (u32)&func_8047B528,
+    (u32)&submitBillIndexed, (u32)&submitBillPaired,
 };
 extern "C" u32 lbl_eu_8056DC38[4] = {
     (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,

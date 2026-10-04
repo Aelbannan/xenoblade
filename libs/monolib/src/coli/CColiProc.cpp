@@ -25,7 +25,7 @@ struct CColiProc {
     u32 field_0x4C;              // 0x4C
 };
 
-// Context/link struct passed to func_804B2AA4; only 0x3C is referenced here.
+// Context/link struct passed to ColiProc_ProcessSegments; only 0x3C is referenced here.
 struct CColiLinkObj {
     u8 field_0x0[0x3C];
     CColiProc* field_0x3C;
@@ -36,7 +36,7 @@ struct CColiLinkObj {
 extern "C" u8 lbl_eu_8065D0E8[0x50];
 extern "C" u8 lbl_eu_8056F3A8[0xC];
 extern "C" const f32 lbl_eu_8066AEA8;
-extern "C" void func_804B2AA4();
+extern "C" void ColiProc_ProcessSegments();
 extern "C" void __ct__CColiProc(CColiProc* self);
 
 extern "C" void ColiProc_InitTriple(CColiProc* self, CColiProcTarget* r4, u32 r5) {
@@ -66,7 +66,7 @@ extern "C" bool ColiProc_TestBit18State(CColiProc* self) {
     return ((self->field_0xC >> 18) & 1) != 0;
 }
 
-// --- func_804B25BC dependencies ---
+// --- ColiProc_ClassifyEntries dependencies ---
 
 // Table header stored at the object's field_0x0: entries begin at +field_0x8
 // (a byte offset from the table base) and there are field_0xC of them.
@@ -119,7 +119,7 @@ extern CColiAllocOwner* lbl_eu_80665958;
 // Compute the packed buffer size for every entry, allocate it, then fill it
 // by dispatching each entry's data through lbl_eu_8056F3FC[type]. Returns an
 // index/count code: 0 when no selection was made yet, else 2 (0 selected) or 1.
-extern "C" int func_804B25BC(CColiWork* work, u16* outIndex, void** outBuf,
+extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** outBuf,
                              u32 arg4) {
     CColiTable* table = work->field_0x0;
     lbl_eu_80665940 = (u32)table;
@@ -186,7 +186,7 @@ extern "C" int func_804B25BC(CColiWork* work, u16* outIndex, void** outBuf,
     return (sign >> 31) + 2;
 }
 
-extern "C" void func_804B27EC(){}
+extern "C" void ColiProc_RefreshAxes(){}
 // Prepare the shared CColiProc instance against a work object, pass it to the
 // generic position update, then (on success) add the instance's offet vector.
 extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
@@ -211,7 +211,7 @@ extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
     }
 
     typedef int (*F2AA4)(CColiProc*, CColiLinkObj*);
-    if (((F2AA4)func_804B2AA4)(self, pLink) != 0) {
+    if (((F2AA4)ColiProc_ProcessSegments)(self, pLink) != 0) {
         nw4r::math::VEC3* pG =
             &((CColiProc*)lbl_eu_8065D0E8)->field_0x38;
         nw4r::math::VEC3Add(pVec, pVec, pG);
@@ -219,9 +219,9 @@ extern "C" u32 ColiProc_RunCollideScan(CColiProc* self, nw4r::math::VEC3* pVec,
     }
     return 0;
 }
-extern "C" void func_804B2AA4(){}
-extern "C" void func_804B2CBC(){}
-extern "C" void func_804B2E3C(){}
+extern "C" void ColiProc_ProcessSegments(){}
+extern "C" void ColiProc_CheckEntries(){}
+extern "C" void ColiProc_DispatchSpec(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 

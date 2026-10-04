@@ -266,10 +266,10 @@ extern "C" void HandleCancelBtn(CItemBoxGrid* self, int arg);
 extern "C" int GetExchFlag52C(CItemBoxGrid* self);
 extern "C" int IsSubWinActive(CItemBoxGrid* self);
 extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void func_801CB5F0(CItemBoxGrid* self);
-extern "C" void func_801CBA04(CItemBoxGrid* self);
-extern "C" void func_801CBDE8(CItemBoxGrid* self);
-extern "C" void func_801CC0EC(CItemBoxGrid* self);
+extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
+extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
+extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
+extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
 extern "C" void OpenSortMenu(CItemBoxGrid* self);
 extern "C" void SelectCatRow(CItemBoxGrid* self);
 extern "C" u8 GetPromptState(CItemBoxGrid* self);
@@ -283,9 +283,9 @@ extern "C" void UpdateItemBox(CItemBoxGrid* self);    // grid per-frame update
 extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);     // grid ready query (phase 4)
 extern "C" void SetInfoMsgId(CItemBoxGrid* self, u16 arg); // grid page apply
-extern "C" void func_801CB28C(CItemBoxGrid* self);    // grid refresh
-extern "C" void func_8018B0FC(void*, void*);          // CBaseCur body copy
-extern "C" void func_8018BE74(void*, void*);          // page-table copy helper
+extern "C" void InitItemDisplay(CItemBoxGrid* self);    // grid refresh
+extern "C" void MenuShopSellCopyCursor(void*, void*);          // CBaseCur body copy
+extern "C" void ShopBuy_CopyData(void*, void*);          // page-table copy helper
 extern "C" void InfoCfCopyObjD4(void*, void*);          // CNumSelectFull copy
 extern "C" void copyScrollBarData(void*, void*);          // scroll-bar copy
 

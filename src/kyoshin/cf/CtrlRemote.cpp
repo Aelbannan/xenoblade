@@ -161,7 +161,7 @@ void func_80098EF8(CtrlPcVf38* self)
     p1aHold = (u32)probe1a;
 
     // Player-state probe 0xb: re-aim the facing angle from the vf25 vector.
-    if (func_80148778(&self->mField5C->mField8, 0xb) != 0) {
+    if (isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0) {
         float vec[3];
         if (self->vf25(vec) != 0 && (lbl_eu_80663E24 & 0x4000000) == 0) {
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(vec[0], vec[2]);
@@ -182,10 +182,10 @@ void func_80098EF8(CtrlPcVf38* self)
         probePlayerCtrl((cf::CtrlPc*)self, &v8, 8) != 0 ||
         probePlayerCtrl((cf::CtrlPc*)self, &v1000, 0x1000) != 0 ||
         probePlayerCtrl((cf::CtrlPc*)self, &v4000, 0x4000) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0x9) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xa) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xb) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0x9) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xa) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0 ||
         (getUnk80664658()->mField214 & 2) != 0 ||
         SkipTimer_IsActiveFlag() != 0 ||
         (lbl_eu_80663E24 & 0x8429A000) != 0 ||
@@ -206,11 +206,11 @@ void func_80098EF8(CtrlPcVf38* self)
         // is active.
         if (vf14res == 0 || self->mField14 > lbl_eu_80666730) {
             self->mField5C->mSub3ED4->vf10(0x800, 1);
-            if (func_80148778(&self->mField5C->mField8, 0xb) == 0) {
+            if (isBattleStatusActive(&self->mField5C->mField8, 0xb) == 0) {
                 self->mField14 = lbl_eu_80666730;
             }
             if (probePlayerCtrl((cf::CtrlPc*)self, &v8b, 8) != 0 ||
-                func_80148778(&self->mField5C->mField8, 0xf) != 0) {
+                isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0) {
                 self->mField8 = lbl_eu_80666730;
                 if (self->mField5C->mField3F60 != NULL) {
                     self->mField5C->mField3F60->mFieldC |= 0x400;
@@ -423,8 +423,8 @@ void func_80098EF8(CtrlPcVf38* self)
         }
         self->mField14 = dist;
 
-        if (func_80148778(&self->mField5C->mField8, 0xcd) == 0 &&
-            func_80148778(&self->mField5C->mField8, 0x6) == 0 &&
+        if (isBattleStatusActive(&self->mField5C->mField8, 0xcd) == 0 &&
+            isBattleStatusActive(&self->mField5C->mField8, 0x6) == 0 &&
             probePlayerCtrl((cf::CtrlPc*)self, &v4000b, 0x4000) == 0) {
             // keep the computed stick distance
         } else {
@@ -458,7 +458,7 @@ a89c:
         probePlayerCtrl((cf::CtrlPc*)self, &v806, 0x806) == 0) {
         // battle-target re-aim below
     } else if (self->mField5C->mSub3E9C.v01(4) != 0) {
-        void* other = func_8016FE34(findObjectById((s32)self->mField5C->mSub3E9C.v17()));
+        void* other = MapFx_ResolveOwner(findObjectById((s32)self->mField5C->mSub3E9C.v17()));
         if (other != 0) {
             const nw4r::math::VEC3* pSelf =
                 reinterpret_cast<const nw4r::math::VEC3*>(
@@ -485,7 +485,7 @@ a89c:
         probePlayerCtrl((cf::CtrlPc*)self, &v801b, 0x801) != 0) {
         CtrlPlayerSub298Vf4* sub298 =
             (CtrlPlayerSub298Vf4*)self->mField5C->vf164();
-        void* t = func_8016FE34(findObjectById((s32)sub298->mField4));
+        void* t = MapFx_ResolveOwner(findObjectById((s32)sub298->mField4));
         if (t != 0 && t != self->mField5C) {
             const nw4r::math::VEC3* pSelf =
                 reinterpret_cast<const nw4r::math::VEC3*>(
@@ -533,8 +533,8 @@ void CtrlRemote_PollPadLatchBit(cf::CtrlPc* self)
     if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
-    if (func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0x6) != 0) {
+    if (isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0x6) != 0) {
         flag = false;
     }
     u32 v1;
@@ -906,7 +906,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
                 if ((self->vf37()->mField4 & PAD_MASK(1)) != 0) {
                     u32 v3;
                     if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) != 0 &&
-                        func_80148778(&self->mField5C->mField8, 0x11) == 0) {
+                        isBattleStatusActive(&self->mField5C->mField8, 0x11) == 0) {
                         if ((self->vf37()->mField0 & PAD_MASK(16)) == 0) {
                             flag30 = 1;
                         }
@@ -915,7 +915,7 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
             } else {
                 // State probe 0x11 either sets flag30 or clears the 0x4000
                 // range.
-                if (func_80148778(&self->mField5C->mField8, 0x11) == 0) {
+                if (isBattleStatusActive(&self->mField5C->mField8, 0x11) == 0) {
                     u32 v3;
                     if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 3) != 0) {
                         flag30 = 1;
@@ -962,9 +962,9 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
     }
     u32 v805;
     if (probePlayerCtrl((cf::CtrlPc*)self, &v805, 0x805) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0x11) != 0) {
-        func_800FE860(Selector_GetInstance(), 1);
+        isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0x11) != 0) {
+        Selector_SetActive(Selector_GetInstance(), 1);
     }
     if ((((CfObjAe80*)Selector_GetInstance())->mFieldC180 & 2) == 0) {
         return;
@@ -1033,7 +1033,7 @@ void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
             // its cutscene bit is clear, and the handle resolves.
             CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
             if (sub3f60 != NULL && (sub3f60->mField4EC & 0x2) == 0) {
-                if (func_8016FE34(handle) != 0) {
+                if (MapFx_ResolveOwner(handle) != 0) {
                     CfEnumListHolder holder;
                     CTaskGame_enumListCtor(&holder);
                     startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 1);
@@ -1081,7 +1081,7 @@ void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
         if (self->mField5C->mSub3ED4->vf14(0x40000) != 0) {
             return;
         }
-        if (func_8016FE34(handle) == 0) {
+        if (MapFx_ResolveOwner(handle) == 0) {
             return;
         }
         self->mField5C->mSub3E9C.v00(0x100);
@@ -1175,7 +1175,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
         if (battleCommuIsActive() != 0) {
             return;
         }
-        if (func_8017FD44() != 0) {
+        if (GetZealObjPtr() != 0) {
             return;
         }
         u32 mask1 = isClassicController__Q22cf13CfGameManagerFv(-1)
@@ -1199,7 +1199,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                          ->count;
                  i++) {
                 CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                    func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
+                    MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder1), i)));
                 if (acc->mField3E98 != 0 || (acc->mField3388 & 0x10) != 0) {
                     flag = true;
                 }
@@ -1232,7 +1232,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                              ->count;
                      i++) {
                     CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                        func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
+                        MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder2), i)));
                     // Retail reloads the voice handle id from the handle each
                     // iteration (lwz r4, 0x74(r31) inside the loop body).
                     u32 hv = reinterpret_cast<CtrlVoiceSweepView*>(handle)->mField74;
@@ -1246,7 +1246,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                     CCharVoiceMan_EnqueueOrderVoice0();
                     // Conditional addi on the same register (null stays null),
                     // matching retail's cmpwi/beq/addi/mr sequence.
-                    u8* arg = reinterpret_cast<u8*>(func_8016FE34(handle));
+                    u8* arg = reinterpret_cast<u8*>(MapFx_ResolveOwner(handle));
                     if (arg != NULL) {
                         arg = reinterpret_cast<CtrlAccSweepView*>(arg)->mOwner3E9C;
                     }
@@ -1275,7 +1275,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
                                  ->count;
                          i++) {
                         CtrlAccSweepView* acc = reinterpret_cast<CtrlAccSweepView*>(
-                            func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
+                            MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet(&holder3), i)));
                         acc->mField3E98 = 0;
                         flag3 = true;
                         acc->mField3388 |= 0x10;
@@ -1318,7 +1318,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
     CtrlRemoteCmd20 prm;
 
     sub = reinterpret_cast<CtrlSub3ED4Remote*>(self->mField5C->mSub3ED4);
-    mode = func_80190940(&sub->mResult368, sub->mActor18, 0, 0);
+    mode = CfCmd_PickChain(&sub->mResult368, sub->mActor18, 0, 0);
     bmFlag = sub->mField370;
 
     if (SuddenCommuIsStateActive((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x216c) !=
@@ -1334,7 +1334,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         return;
     }
 
-    fd = func_8017FD44();
+    fd = GetZealObjPtr();
     if (fd != NULL) {
         // Arts-select window-state dispatch: window value 1 drives the
         // select-state machine (slot 0xF4 closed / slots 0xF0 with the new
@@ -1342,19 +1342,19 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         // once the select state sits in pages 1/2.
         u32 sel = fd->mFieldB8;
         if (sel == 1) {
-            switch (func_8017FD4C(fd)) {
+            switch (GetZealResult(fd)) {
             case 0:
                 sub->vf59();
                 return;
             case 1:
                 sub->vf58(0);
                 SysWinLog_TickCounter29();
-                func_8017FEF0(fd, 0);
+                AddZealEffect(fd, 0);
                 return;
             case 2:
                 sub->vf58(1);
                 SysWinLog_TickCounter29();
-                func_8017FEF0(fd, 1);
+                AddZealEffect(fd, 1);
                 return;
             default:
                 return;
@@ -1364,7 +1364,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
             ea =
                 (CtrlRemoteEaView*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
             if (ea != NULL) {
-                page = func_8017FD4C(fd);
+                page = GetZealResult(fd);
                 if ((u32)(page - 1) <= 1) {
                     ea->mField824 |= 0x00080000;
                 }
@@ -1459,7 +1459,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
             cf::CChainState* chain =
                 (cf::CChainState*)((u8*)getInstance__Q22cf14CBattleManagerFv() +
                                    0x20c8);
-            if (func_8027DE44(chain,
+            if (ChainTmr_Start_DE44(chain,
                               (cf::CChainBattleObj*)self->mField5C,
                               (cf::CChainBattleObj*)obj374,
                               chainId) != 0) {
@@ -1642,7 +1642,7 @@ u32 CtrlRemote_RunWithHeapCtx(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
     if (isStateReady__17UnkClass_80460C34Fv(&ctx, lbl_eu_804FBC20, 0x38) != 0) {
         return 0;
     }
-    s32 v = func_80460F58__17UnkClass_80460C34Fv(&ctx, 4);
+    s32 v = inflate__17UnkClass_80460C34Fv(&ctx, 4);
     if (v != 1) {
         cleanupState__17UnkClass_80460C34Fv(&ctx);
         if (v != 0) {

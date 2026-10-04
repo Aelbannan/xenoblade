@@ -101,11 +101,11 @@ CSchedule::~CSchedule() {
     }
 }
 
-// us-804e78d0: CSchedule::func_804E3434()
+// us-804e78d0: CSchedule::Sched_Init()
 // Full initialization: sets up all fields and resolves schedule entries.
 // Parameters: p4=entries, p5=field_0x08, p6=field_0x0c,
 //             flags_a=packed flags from r7, flags_b=packed flags from r8, p9=field_0x10
-extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, u32 flags_a, u32 flags_b, u8* field_0x10_ptr) {
+extern "C" int Sched_Init(CSchedule* self, ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, u32 flags_a, u32 flags_b, u8* field_0x10_ptr) {
     float zero;
     float one;
     u32 flags;

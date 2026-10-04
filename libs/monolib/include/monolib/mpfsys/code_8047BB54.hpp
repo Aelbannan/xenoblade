@@ -9,9 +9,9 @@ public:
     void resetMpfInstance();
     void initMpfDrawBuffer();
     void* getMpfStatus();
-    void func_8047C040();
-    void func_8047C588();
-    void func_8047C904();
+    void mpfCullMarkLayers();
+    void mpfDrawLayerOpa();
+    void mpfDrawLayerXlu();
 
     // TODO: add fields
     void setMpfFloatParam();

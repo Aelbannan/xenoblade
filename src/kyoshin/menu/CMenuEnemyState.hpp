@@ -189,7 +189,7 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CPcSelectCursor(void* self);
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
 extern "C" u32 CUICfManager_getPackedFontD8();
 // 4-short colour pairs read off a pane (unmangled retail symbol).
@@ -215,7 +215,7 @@ extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int ScMain_GetSummedInt(void* self);
-extern "C" void func_8049B59C(void* out, void* pose, const void* in);
+extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
 extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);
 extern "C" char* GetBdatNameByNumId(const char* s);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);

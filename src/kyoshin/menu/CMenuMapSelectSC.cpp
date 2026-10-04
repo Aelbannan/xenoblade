@@ -184,7 +184,7 @@ void CMenuMapSelectSC::Init() {
     *(u8*)((u8*)this + 0x174) = *(u8*)(tempFloor + 0xb4);
     *(u8*)((u8*)this + 0x175) = *(u8*)(tempFloor + 0xb5);
 
-    func_8016742C((u8*)this + 0x178, tempFloor + 0xb8);
+    InfoCfCopySysWin((u8*)this + 0x178, tempFloor + 0xb8);
 
     // Layout pointer array (member 0x130-0x14C) + 20 8-byte entries.
     *(u32*)((u8*)this + 0x1f0) = *(u32*)(tempFloor + 0x130);
@@ -295,7 +295,7 @@ body:
         MapSelectSCPrepFloorMap(this);
         break;
     case 2:
-        func_80251628(this);
+        MapSelectSCShowMapText(this);
         break;
     case 3:
         if (CFade_IsVisible(&mFade) != 0) {
@@ -303,7 +303,7 @@ body:
         }
         break;
     case 4:
-        func_802516DC(this);
+        MapSelectSCHandleInput(this);
         break;
     case 5:
         MapSelectSCResetFloorMapIdle(this);
@@ -353,7 +353,7 @@ body:
 // Create the world-map (SC) singleton: returns 0 when it already exists,
 // otherwise allocates the object (0x3410 bytes), constructs it, stores the
 // singleton and registers it as a CProcess child of `parent`.
-CMenuMapSelectSC* func_802514D4(CProcess* parent, CProcess* arg) {
+CMenuMapSelectSC* MapSelectSCCreate(CProcess* parent, CProcess* arg) {
     if (lbl_eu_806647C0 != 0) {
         return 0;
     }
@@ -398,7 +398,7 @@ extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
 
 // World-map phase 2: once the scrollbar is visible, populate the title/help
 // bar text for the current map, start its animation and advance to phase 3.
-extern "C" void func_80251628(CMenuMapSelectSC* self) {
+extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
     if (FloorMap_GetField42Gated(&self->mFloorMap) != 0) {
         func_801C4654(&self->mTitleAHelp, 0);
         char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
@@ -419,7 +419,7 @@ extern "C" void func_80251628(CMenuMapSelectSC* self) {
 // then dispatches the current pad state to the cursor/selection helpers. The
 // pad layout differs between Classic (bits 21-23/25-26) and Wiimote/Nunchuk
 // (bits 4-5/10/12) controllers.
-extern "C" void func_802516DC(CMenuMapSelectSC* self) {
+extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
     if (FloorMap_ClassifyByte41(&self->mFloorMap) != 0) {
         return;
     }

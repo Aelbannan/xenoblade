@@ -237,10 +237,10 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     }
     dest->field6D = src->field6D;
 
-    func_8018B0FC(&dest->cur70[0], &src->cur70[0]);
-    func_8018B0FC(&dest->cur88[0], &src->cur88[0]);
-    func_8018B0FC(&dest->curA0[0], &src->curA0[0]);
-    func_8018B0FC(&dest->curB8[0], &src->curB8[0]);
+    MenuShopSellCopyCursor(&dest->cur70[0], &src->cur70[0]);
+    MenuShopSellCopyCursor(&dest->cur88[0], &src->cur88[0]);
+    MenuShopSellCopyCursor(&dest->curA0[0], &src->curA0[0]);
+    MenuShopSellCopyCursor(&dest->curB8[0], &src->curB8[0]);
 
     // Item-box-info2 state region: two typed sub-regions + raw body.
     __ct__UnkClass_8011C974(&dest->info2D0[0x4], &src->info2D0[0x4]);
@@ -248,11 +248,11 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     for (int i = 0x24; i < 0xB0; i++) {
         dest->info2D0[i] = src->info2D0[i];
     }
-    func_8018BE74(&dest->info2D0[0xB0], &src->info2D0[0xB0]);
+    ShopBuy_CopyData(&dest->info2D0[0xB0], &src->info2D0[0xB0]);
 
     InfoCfCopyObjD4(&dest->numSel2DC[0], &src->numSel2DC[0]);
     copyScrollBarData(&dest->scrollBar310[0], &src->scrollBar310[0]);
-    func_8016742C(&dest->sysWin350[0], &src->sysWin350[0]);
+    InfoCfCopySysWin(&dest->sysWin350[0], &src->sysWin350[0]);
 
     // Tab-page state block.
     dest->unk38C = src->unk38C;
@@ -281,7 +281,7 @@ extern "C" __declspec(noinline) void ItemEx_CopyLine(CItemBoxLine* destArg, CIte
     dest->str438 = src->str438;
     dest->str45C = src->str45C;
 
-    func_8018BE74(&dest->pageWords4E0[0], &src->pageWords4E0[0]);
+    ShopBuy_CopyData(&dest->pageWords4E0[0], &src->pageWords4E0[0]);
 }
 
 extern "C" __declspec(noinline) void ItemEx_CopyGrid(CItemBoxGrid* dest, CItemBoxGrid* src) {
@@ -466,7 +466,7 @@ __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
             SetInfoMsgId(&self->mItemBoxGrid,
                           ItemBoxLine_TouchTabEntryItem(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)));
             reopenFromClose(&self->mTitleAHelp);
-            func_801CB28C(&self->mItemBoxGrid);
+            InitItemDisplay(&self->mItemBoxGrid);
             self->field_5118 = 5;
             playUISound__FUl(0x6d);
         }
@@ -516,13 +516,13 @@ __declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
             self->field_5118 = 7;
         }
     } else if (turboCancel != 0) {
-        func_801CB5F0(&self->mItemBoxGrid);
+        GridMoveCursorLeft(&self->mItemBoxGrid);
     } else if (pageTurn != 0) {
-        func_801CBA04(&self->mItemBoxGrid);
+        GridMoveCursorRight(&self->mItemBoxGrid);
     } else if (cancel != 0) {
-        func_801CBDE8(&self->mItemBoxGrid);
+        GridMoveCursorDown(&self->mItemBoxGrid);
     } else if (decide != 0) {
-        func_801CC0EC(&self->mItemBoxGrid);
+        GridMoveCursorUp(&self->mItemBoxGrid);
     } else if (leftTrigger != 0) {
         OpenSortMenu(&self->mItemBoxGrid);
     } else if (yHeld != 0) {

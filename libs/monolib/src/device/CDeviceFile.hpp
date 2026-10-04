@@ -16,7 +16,7 @@ public:
     void func_8044F0E4();
     void cancel() const;
     void tryUpdateJobPriority() const;
-    void func_8044F1B8() const;
+    void updateJobPriority() const;
     void func_8044F400() const;
     void setHandleFlag1() const;
     void setHandleFlag2() const;

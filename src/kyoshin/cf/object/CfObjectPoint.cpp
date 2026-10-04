@@ -12,6 +12,12 @@
 // cf/object/CfObjectPc.hpp declares the same prototype).
 extern "C" int UIWin_HasPendingUpdate(int flag);
 
+// C-ABI import from the SCN resource helpers (retail .text:0x804C2610,
+// unmangled; not yet defined in this tree).
+extern "C" void* ScnRes_CopyEntryHead(void* dst, int flag);
+extern "C" void ScnRes_CopyEntryMid(void* out, int a);
+
+
 
 
 namespace cf {
@@ -392,9 +398,9 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
         u8* source = *(u8**)((u8*)lbl_eu_80663E14 + 0x74);
         if (func_8049E51C(source) != 0) {
             if (ScnRes_VertRayForward_E398(pos, 0, 0, 0,
-                              lbl_eu_80666B50, lbl_eu_80666B48) != nullptr) {
-                func_804BE4B4(first, 0);
-                func_804BE4E0(second, 0);
+                              lbl_eu_80666B50[0], lbl_eu_80666B48) != nullptr) {
+                ScnRes_CopyEntryHead(first, 0);
+                ScnRes_CopyEntryMid(second, 0);
                 ((u32*)pos)[0] = ((u32*)first)[0];
                 ((u32*)pos)[1] = ((u32*)first)[1];
                 ((u32*)pos)[2] = ((u32*)first)[2];
@@ -409,3 +415,16 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     *(u32*)&ths->mPos3C = p0;
     *(u32*)&ths->mPos44 = *(u32*)&pos[2];
 }
+
+// Retail tables owned by this unit.
+// .rodata: BDAT column-name table ("name" +5 "icon_type"); the +5 address-of
+// reference in loadPointData lands on the second string.
+// .sdata2: 0.0f frame-delta floor (updatePointState), -1.0f default height
+// (setPointPosition), 5.0f vertical-ray length (setPointPosition). The retail
+// section is 0x10: the trailing word past the 5.0f is section alignment
+// padding (no code reads it). Types match include/kyoshin/cf/object/CfObjectPoint.hpp.
+extern const char lbl_eu_804FC648[0x10] = "name\0icon_type\0";
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") const float lbl_eu_80666B48 = 0.0f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666B4C = -1.0f;
+extern __declspec(section ".sdata2") const float lbl_eu_80666B50[2] = { 5.0f, 0.0f };

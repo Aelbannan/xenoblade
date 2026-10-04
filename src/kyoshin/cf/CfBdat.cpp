@@ -226,7 +226,7 @@ void* lbl_eu_80664124;
 
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 extern "C" u32 Bdat_GetRowBase_B41C(void* bdat);
-extern "C" u32 func_800AA714(const char* path);
+extern "C" u32 Tok_ParseFile(const char* path);
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
 extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
@@ -249,7 +249,7 @@ extern "C" u32 bdatResolveItem(u32 owner, u32 itemId, u32 flags) {
     u16 index;
     CItem_resolveFamilyBdat(itemId, &category, &index);
     if (category == 2) {
-        return func_800AA714((const char*)getBdatStringColumnValue(
+        return Tok_ParseFile((const char*)getBdatStringColumnValue(
             lbl_eu_806640F4, &lbl_eu_80500FA4[0x34f], (s32)index));
     }
     u32 slot = 0;
@@ -281,7 +281,7 @@ u32 cf::CfBdat::resolveWpnTok(u32 param1) {
             data = lbl_eu_806640F4;
             int total = (int)(Bdat_GetMaxRow_B1EC(data) + Bdat_GetRowBase_B41C(data));
             if ((u16)param1 < total) {
-                result = func_800AA714((const char*)getBdatStringColumnValue(
+                result = Tok_ParseFile((const char*)getBdatStringColumnValue(
                     data, &lbl_eu_80500FA4[0x34f], (u16)param1));
             }
         }

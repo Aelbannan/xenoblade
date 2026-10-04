@@ -6,7 +6,7 @@ class CDeviceFontInfoExt {
 public:
     CDeviceFontInfoExt();
     virtual ~CDeviceFontInfoExt();
-    void func_80453468();
+    void getCharGlyph();
     void create();
     void advanceState();
     void initState();

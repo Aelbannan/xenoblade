@@ -2,10 +2,19 @@
 #include "monolib/math.hpp"
 
 extern "C" {
-    /// Plugin name string (const data).
-    extern const char lbl_eu_804FB050[];
-    /// Plugin function table, terminated by {NULL, NULL}.
-    extern PluginFuncData lbl_eu_805261B8[];
+    // Retail data sections (all defined by this TU):
+    // .rodata "math" (plugin name) + .sdata2 "random" (entry name) +
+    // trailing sdata2 float (retail 0x411CCCCD) + .data PluginFuncData
+    // table {name, func} terminated by {NULL, NULL}. The float is not read
+    // by this TU's code; it rides in this TU's sdata2 pool (retail layout)
+    // and is referenced from another unit (see link frontier).
+    __declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FB050[0x8] = "math";
+    __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80665E90[0x8] = "random";
+    __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80665E98 = 9.8f;
+    __declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_805261B8[2] = {
+        { lbl_eu_80665E90, math_random },
+        { 0, 0 },
+    };
 }
 
 /// Generates a random integer in [min, max] and returns it to the YGG script.

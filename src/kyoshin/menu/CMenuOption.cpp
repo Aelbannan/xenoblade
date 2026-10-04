@@ -186,8 +186,8 @@ void CMenuOption::Init() {
     reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mDirection = *(u8*)(tempOption + 0x74);
 
     // CBaseCur sub-cursors @ +0x78 / +0x90.
-    func_8018B0FC((u8*)&mOption + 0x78, tempOption + 0x78);
-    func_8018B0FC((u8*)&mOption + 0x90, tempOption + 0x90);
+    MenuShopSellCopyCursor((u8*)&mOption + 0x78, tempOption + 0x78);
+    MenuShopSellCopyCursor((u8*)&mOption + 0x90, tempOption + 0x90);
 
     // CSysWin @ +0xA8 (mem region at +4); remaining fields still option-relative.
     __ct__UnkClass_8011C974((u8*)&mOption + 0xac, tempOption + 0xac);
@@ -206,7 +206,7 @@ void CMenuOption::Init() {
     *(u8*)((u8*)&mOption + 0xe0) = *(u8*)(tempOption + 0xe0);
     *(u8*)((u8*)&mOption + 0xe1) = *(u8*)(tempOption + 0xe1);
 
-    func_8018B0FC((u8*)&mOption + 0xe4, tempOption + 0xe4);
+    MenuShopSellCopyCursor((u8*)&mOption + 0xe4, tempOption + 0xe4);
     *(u32*)((u8*)&mOption + 0xfc) = *(u32*)(tempOption + 0xfc);
     *(u32*)((u8*)&mOption + 0x100) = *(u32*)(tempOption + 0x100);
     __dt__7COptionFv(reinterpret_cast<COption*>(tempOption), -1);
@@ -246,7 +246,7 @@ void CMenuOption::Move() {
     switch (mState) {
     case 0: advanceOptionPhase1(this); break;
     case 1: advanceOptionPhase2(this); break;
-    case 2: func_8029BC78(this); break;
+    case 2: handleOptionInput(this); break;
     case 3: flagOptionPhase1(this); break;
     }
 
@@ -277,7 +277,7 @@ void CMenuOption::cbRenderBefore() {
 /* Singleton factory (retail unmangled symbol). Returns 0 if an instance is
  * already live; otherwise allocates the 0x1C0-byte screen, constructs it,
  * stores it in the shared flag and registers it under `registParent`. */
-CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
+CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg) {
     if (lbl_eu_80664A38 != 0) {
         return NULL;
     }
@@ -312,12 +312,12 @@ void advanceOptionPhase2(CMenuOption* self) {
     }
 }
 
-/* Option-menu input handler (retail func_8029BC78). Reads the current pad
+/* Option-menu input handler (retail handleOptionInput). Reads the current pad
  * state and dispatches to the embedded COption's directional/confirm handlers
  * depending on which control the player pressed this frame, then repaints the
  * title/help bar with the option's current index and advances the phase state
  * machine (mState / mField54). */
-void func_8029BC78(CMenuOption* self) {
+void handleOptionInput(CMenuOption* self) {
     if (COptionIsWindowReady(&self->mOption) == 0) {
         return;
     }

@@ -1,7 +1,7 @@
 // CScnBloom - Bloom post-processing effect.
 // The bloom object is created by CScnRoot (0x94 bytes): base params at 0x00
-// (init by func_80499718 via func_804996E8), view pointer at 0x48, then
-// per-frame render state (func_80499FD0 is the second-stage constructor).
+// (init by CScnBloom_InitParams via CScnBloom_InitBase), view pointer at 0x48, then
+// per-frame render state (CScnBloom_InitWithView is the second-stage constructor).
 
 #include "libs/monolib/src/scn/CScnBloom.hpp"
 #include "monolib/scn/CScnFilter.hpp"
@@ -26,19 +26,19 @@ extern "C" __declspec(noinline) void* __dt__804997D0(void* self, int mode) {
     }
     return self;
 }
-void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
+void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void TexMan_SnapCursor_0314(CTexWorkObj* obj);
 GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
 void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
 void TexObj_BlitViewRect(GXTexObj* tex, int p2, int p3);
 void __dt__10CScnFilterFv(CScnFilter* self, s32 flags);
 void TexObj_BlitRect(GXTexObj* tex, ml::CRect* rect, u8 p3, u8 p4);
-u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
+u32 CScnBloom_ExtractBright(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                   int maxBufs, ml::CRect* rect, u32 flag);
 void setupLightTevColor(int a, int b, int c);
 void setupLightTevAlpha(int a, int b, int c);
 void setupLightVtxFormat(int a, int b);
-void func_80494F10(ml::CRect* rect, ml::CCol4* p2, ml::CCol4* p3);
+void drawTexturedQuad(ml::CRect* rect, ml::CCol4* p2, ml::CCol4* p3);
 void updateCmd2Color__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
 void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b, u32 c, u32 d, u32 e);
 void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
@@ -47,13 +47,13 @@ void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
 
 // Extern declarations for functions not yet decompiled
 extern "C" {
-void func_8049928C(CScnBloom* self, u32 param);
+void CScnBloom_RenderFiltered(CScnBloom* self, u32 param);
 void* __dt__9CScnBloomFv(CScnBloom* self, s32 flags);
-CScnBloom* func_804996E8(CScnBloom* self);
-void func_80499718(CScnBloom* self);
-void func_8049A128(CScnBloom* self);
-void func_8049A850(CScnBloom* self, GXTexObj* tex, ml::CRect* rect);
-void func_8049AA74(CScnBloom* self);
+CScnBloom* CScnBloom_InitBase(CScnBloom* self);
+void CScnBloom_InitParams(CScnBloom* self);
+void CScnBloom_RenderFullRes(CScnBloom* self);
+void CScnBloom_DrawBlurPass(CScnBloom* self, GXTexObj* tex, ml::CRect* rect);
+void CScnBloom_RenderHalfRes(CScnBloom* self);
 }
 
 // Retail data labels referenced by the bloom vtable/params (foreign pool).
@@ -61,7 +61,7 @@ extern "C" u32 lbl_eu_806639F8;
 extern "C" u32 lbl_eu_806639F0;
 extern "C" u32 lbl_eu_80663A00;
 // Foreign function referenced by the dispatch table.
-extern "C" void func_8049C868();
+extern "C" void FilterUpdateIntensity();
 // Forward declarations for in-TU extern "C" functions referenced below.
 extern "C" void CScnBloom_destroyAdj48(CScnBloom* self, s32 flags);
 extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param);
@@ -70,8 +70,8 @@ extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param);
 // CScnBloom dispatch table (36B): typeinfo locators + virtual thunks.
 extern "C" u32 lbl_eu_8056EA08[9] = {
     (u32)&lbl_eu_806639F8, 0x00000000, (u32)&lbl_eu_806639F8, 0xFFFFFFB8,
-    (u32)&CScnBloom_destroyAdj48, (u32)&func_8049C868, (u32)&CScnBloom_renderBloomAdj48,
-    (u32)&__dt__9CScnBloomFv, (u32)&func_8049928C,
+    (u32)&CScnBloom_destroyAdj48, (u32)&FilterUpdateIntensity, (u32)&CScnBloom_renderBloomAdj48,
+    (u32)&__dt__9CScnBloomFv, (u32)&CScnBloom_RenderFiltered,
 };
 // Bloom param block (20B).
 extern "C" u32 lbl_eu_8056EA2C[5] = {
@@ -84,7 +84,7 @@ extern "C" u32 lbl_eu_8056EA2C[5] = {
 // When called through the CScnFilter vtable, 'this' points to the
 // CScnFilter subobject at offset 0x48 from the CScnBloom base.
 // This thunk adjusts 'this' back to the CScnBloom base and tail-calls
-// the implementation (func_8049928C).
+// the implementation (CScnBloom_RenderFiltered).
 // ============================================================================
 extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param) {
     // Adjust this from CScnFilter subobject (+0x48) to CScnBloom base
@@ -93,7 +93,7 @@ extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param) {
     );
     // Tail-call to implementation
     typedef void (*RenderFn)(CScnBloom*, u32);
-    RenderFn render = reinterpret_cast<RenderFn>(&func_8049928C);
+    RenderFn render = reinterpret_cast<RenderFn>(&CScnBloom_RenderFiltered);
     render(base, param);
 }
 
@@ -117,25 +117,25 @@ extern "C" void CScnBloom_destroyAdj48(CScnBloom* self, s32 flags) {
 }
 
 // ============================================================================
-// func_804996E8 (0x8049D7CC) - base-object initializer wrapper.
-// Calls func_80499718 to fill the CScnBloomBase params (0x00-0x47) and returns
+// CScnBloom_InitBase (0x8049D7CC) - base-object initializer wrapper.
+// Calls CScnBloom_InitParams to fill the CScnBloomBase params (0x00-0x47) and returns
 // the object (r3 is preserved across the call, so the result is self).
-// dont_inline: retail callers (__ct__CScnBloom, func_80499FD0) issue a real
-// `bl func_804996E8`; -inline auto would fold this wrapper into the call site.
+// dont_inline: retail callers (__ct__CScnBloom, CScnBloom_InitWithView) issue a real
+// `bl CScnBloom_InitBase`; -inline auto would fold this wrapper into the call site.
 // ============================================================================
 #pragma dont_inline on
-extern "C" CScnBloom* func_804996E8(CScnBloom* self) {
-    func_80499718(self);
+extern "C" CScnBloom* CScnBloom_InitBase(CScnBloom* self) {
+    CScnBloom_InitParams(self);
     return self;
 }
 #pragma dont_inline off
 
 // ============================================================================
-// func_80499718 (0x8049D7FC) - initialize the CScnBloomBase params.
+// CScnBloom_InitParams (0x8049D7FC) - initialize the CScnBloomBase params.
 // Fills the color (1.0, 1.0, 1.0, 0.5), blend/filter modes, pass count, blur
 // samples and viewport divisors at 0x00-0x47.
 // ============================================================================
-extern "C" void func_80499718(CScnBloom* self) {
+extern "C" void CScnBloom_InitParams(CScnBloom* self) {
     ml::CCol4 color(lbl_eu_8066AB00, lbl_eu_8066AB00, lbl_eu_8066AB00, lbl_eu_8066AB04);
     self->mColor = color;
     self->mBlendMode = 0x10;
@@ -157,12 +157,12 @@ extern "C" void func_80499718(CScnBloom* self) {
 }
 
 // ============================================================================
-// func_80499FD0 (0x8049E0B4) - second-stage bloom constructor (CScnRoot).
+// CScnBloom_InitWithView (0x8049E0B4) - second-stage bloom constructor (CScnRoot).
 // Inits the base params, stores the owning view, default blur colors/scales
 // and viewport, then overrides the color with CCol4::white. Returns the object.
 // ============================================================================
-extern "C" CScnBloom* func_80499FD0(CScnBloom* self, CView* view) {
-    func_804996E8(self);
+extern "C" CScnBloom* CScnBloom_InitWithView(CScnBloom* self, CView* view) {
+    CScnBloom_InitBase(self);
     self->mView = view;
     self->mTexture = 0;
     self->mUnk50 = 1;
@@ -180,13 +180,13 @@ extern "C" CScnBloom* func_80499FD0(CScnBloom* self, CView* view) {
 }
 
 // ============================================================================
-// func_8049A128 (0x8049E20C) - bloom render at full screen-res texture.
+// CScnBloom_RenderFullRes (0x8049E20C) - bloom render at full screen-res texture.
 // Clamps the current view rect, creates the screen texture (format from
 // mTexFormat), copies the cache clear color and pushes the texture.
 // ============================================================================
-extern "C" void func_8049A128(CScnBloom* self) {
+extern "C" void CScnBloom_RenderFullRes(CScnBloom* self) {
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
     GXRenderModeObj* rm = CDeviceVI::getRenderModeObj();
     s16 x = rect.mPos.x;
@@ -237,12 +237,12 @@ extern "C" void func_8049A128(CScnBloom* self) {
 }
 
 // ============================================================================
-// func_8049A850 (0x8049E934) - configure TEV stages and draw the bloom quad.
+// CScnBloom_DrawBlurPass (0x8049E934) - configure TEV stages and draw the bloom quad.
 // The mUnk34==3 path uses two TEV stages (gaussian), otherwise a single
 // constant-color stage. The blur scale (mBlurScale, negated * 255) feeds the
-// TEV color; the blur tint color is passed to func_80494F10.
+// TEV color; the blur tint color is passed to drawTexturedQuad.
 // ============================================================================
-extern "C" void func_8049A850(CScnBloom* self, GXTexObj* tex, ml::CRect* rect) {
+extern "C" void CScnBloom_DrawBlurPass(CScnBloom* self, GXTexObj* tex, ml::CRect* rect) {
     CGXCache* cache = CDeviceGX::getCacheInstance();
     updateCmd1Words__8CGXCacheFv(cache, self->mViewportX, self->mViewportY, self->mViewportW, self->mViewportH, 0);
     GXSetNumTexGens(1);
@@ -270,17 +270,17 @@ extern "C" void func_8049A850(CScnBloom* self, GXTexObj* tex, ml::CRect* rect) {
     GXInitTexObjFilter(tex, GX_LINEAR, GX_LINEAR);
     GXLoadTexObj(tex, GX_TEXMAP0);
     ml::CCol4 blendColor(lbl_eu_8066AB30, lbl_eu_8066AB30, lbl_eu_8066AB28, lbl_eu_8066AB28);
-    func_80494F10(rect, &self->mBlurColor, &blendColor);
+    drawTexturedQuad(rect, &self->mBlurColor, &blendColor);
 }
 
 // ============================================================================
-// func_8049AA74 (0x8049EB58) - bloom render at half screen-res texture.
-// Same rect clamp as func_8049A128 but halves the texture size, resets the
-// GX cache state, loads the identity matrix and draws via func_8049A850.
+// CScnBloom_RenderHalfRes (0x8049EB58) - bloom render at half screen-res texture.
+// Same rect clamp as CScnBloom_RenderFullRes but halves the texture size, resets the
+// GX cache state, loads the identity matrix and draws via CScnBloom_DrawBlurPass.
 // ============================================================================
-extern "C" void func_8049AA74(CScnBloom* self) {
+extern "C" void CScnBloom_RenderHalfRes(CScnBloom* self) {
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
     GXRenderModeObj* rm = CDeviceVI::getRenderModeObj();
     s16 x = rect.mPos.x;
@@ -334,7 +334,7 @@ extern "C" void func_8049AA74(CScnBloom* self) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
         setupLightVtxFormat(0, 1);
-        func_8049A850(self, tex, &rect);
+        CScnBloom_DrawBlurPass(self, tex, &rect);
         TexMan_ReleaseArg_02D8(texWork, tex);
     }
 }
@@ -370,19 +370,19 @@ extern "C" void* __dt__8049A0D0(void* self, int flag) {
 }
 
 // ============================================================================
-// func_8049A318 (0x8049A318) - bloom render using the cached screen texture
+// CScnBloom_RenderCached (0x8049A318) - bloom render using the cached screen texture
 // (mTexture). Clamps/halves the view rect, re-renders it into tiles, extracts
-// bright-pass textures via func_80499810, blurs them back, then clears the
+// bright-pass textures via CScnBloom_ExtractBright, blurs them back, then clears the
 // cached texture and restores the cache background color.
 // ============================================================================
-extern "C" void func_8049A318(CScnBloom* self) {
+extern "C" void CScnBloom_RenderCached(CScnBloom* self) {
     CView* view = CView::getCurrentView();
     if (self->mTexture == NULL)
         return;
     CDeviceGX::getCacheInstance()->resetGXStateA();
 
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, view);
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, view);
 
     GXRenderModeObj* rm = CDeviceVI::getRenderModeObj();
     s16 x = rect.mPos.x;
@@ -425,7 +425,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     ml::CCol4 col2(lbl_eu_8066AB28, lbl_eu_8066AB28, lbl_eu_8066AB28, lbl_eu_8066AB28);
     ml::CCol4 col3(lbl_eu_8066AB30, lbl_eu_8066AB30, lbl_eu_8066AB28, lbl_eu_8066AB28);
 
-    // Tile counts: viewport / mUnk44 rounded up to even, as in func_8049928C.
+    // Tile counts: viewport / mUnk44 rounded up to even, as in CScnBloom_RenderFiltered.
     s32 div = self->mUnk44;
     u16 tileW = rect.mSize.x / div;
     if (tileW & 1)
@@ -466,7 +466,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     rect2.mPos = rect.mPos;
     rect2.mSize.x = tileW;
     rect2.mSize.y = tileH;
-    func_80494F10(&rect2, &col2, &col3);
+    drawTexturedQuad(&rect2, &col2, &col3);
     GXPixModeSync();
     TexMan_ReleaseArg_02D8(texWork, tex);
 
@@ -476,7 +476,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     rc.mPos = rect.mPos;
     rc.mSize.x = tileW;
     rc.mSize.y = tileH;
-    u32 count = func_80499810(self, texWork, bufs, 10, &rc, 0);
+    u32 count = CScnBloom_ExtractBright(self, texWork, bufs, 10, &rc, 0);
 
     setupLightVtxFormat(0, 1);
     GXSetNumTevStages(1);
@@ -485,7 +485,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     updateCmd1Words__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
     GXInitTexObjFilter(self->mTexture, (GXTexFilter)1, (GXTexFilter)1);
     GXLoadTexObj(self->mTexture, GX_TEXMAP0);
-    func_80494F10(&rect, &col2, &col3);
+    drawTexturedQuad(&rect, &col2, &col3);
     updateCmd1Words__8CGXCacheFv(cache, self->mUnk34, self->mUnk38, self->mUnk3C,
                                self->mUnk40, 0);
 
@@ -498,10 +498,10 @@ extern "C" void func_8049A318(CScnBloom* self) {
     for (u32 i = 0; i < count; i++) {
         GXInitTexObjFilter(bufs[i], (GXTexFilter)self->mUnk2C, (GXTexFilter)self->mUnk30);
         GXLoadTexObj(bufs[i], GX_TEXMAP0);
-        func_80494F10(&rect, &col, &col3);
+        drawTexturedQuad(&rect, &col, &col3);
     }
     if (self->mFlags & 4) {
-        func_8049A850(self, self->mTexture, &rect);
+        CScnBloom_DrawBlurPass(self, self->mTexture, &rect);
     }
     for (u32 i = 0; i < count; i++) {
         TexMan_ReleaseArg_02D8(texWork, bufs[i]);
@@ -513,13 +513,13 @@ extern "C" void func_8049A318(CScnBloom* self) {
 }
 
 // ============================================================================
-// func_80499810 (0x8049D8F4) - bright-pass extraction over halving tiles.
+// CScnBloom_ExtractBright (0x8049D8F4) - bright-pass extraction over halving tiles.
 // Renders the screen texture into successively halved tiles, capturing up to
 // 'maxBufs' bright-pass textures. Each tile is sampled with per-axis step
 // sizes mThreshold / (size - 0.5); when mEnabled is set, four diagonal taps
 // are drawn per tile instead of a single offset tap. Returns the count.
 // ============================================================================
-u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
+u32 CScnBloom_ExtractBright(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                   int maxBufs, ml::CRect* rect, u32 flag) {
     ml::CRect rc;
     s16 x = rect->mPos.x;
@@ -576,7 +576,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                    lbl_eu_8066AB00);
     ml::CCol4 colB(lbl_eu_8066AB00, lbl_eu_8066AB00, lbl_eu_8066AB00,
                    lbl_eu_8066AB00);
-    func_80494F10(&rc, &colA, &colB);
+    drawTexturedQuad(&rc, &colA, &colB);
 
     setupLightVtxFormat(0, 1);
     GXSetNumTevStages(1);
@@ -608,7 +608,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
             GXInitTexObjFilter(*pBuf, (GXTexFilter)self->mUnk2C,
                                (GXTexFilter)self->mUnk30);
             GXLoadTexObj(*pBuf, GX_TEXMAP0);
-            func_80494F10(&rc, &ml::CCol4(zero, zero, one, one),
+            drawTexturedQuad(&rc, &ml::CCol4(zero, zero, one, one),
                           &ml::CCol4(one, one, one, scale));
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
         } else {
@@ -618,7 +618,7 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
             GXInitTexObjFilter(pBuf[-1], (GXTexFilter)self->mUnk2C,
                                (GXTexFilter)self->mUnk30);
             GXLoadTexObj(pBuf[-1], GX_TEXMAP0);
-            func_80494F10(&rc, &ml::CCol4(zero, zero, one, one),
+            drawTexturedQuad(&rc, &ml::CCol4(zero, zero, one, one),
                           &ml::CCol4(one, one, one, scale));
         }
 
@@ -627,29 +627,29 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                            (GXTexFilter)self->mUnk30);
         GXLoadTexObj(*pBuf, GX_TEXMAP0);
         if (self->mEnabled == 0) {
-            func_80494F10(&rc, &ml::CCol4(sx, sy, one - sx, one - sy),
+            drawTexturedQuad(&rc, &ml::CCol4(sx, sy, one - sx, one - sy),
                           &ml::CCol4(one, one, one, scale));
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
         } else {
             // Center tap plus four diagonal taps around it.
             ml::CCol4 cb2(one, one, one, scale);
-            func_80494F10(&rc, &ml::CCol4(-sx, -sy, one - sx, one - sy), &cb2);
+            drawTexturedQuad(&rc, &ml::CCol4(-sx, -sy, one - sx, one - sy), &cb2);
             TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c1(sx, -sy, one + sx, one - sy);
-            func_80494F10(&rc, &c1, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
+            drawTexturedQuad(&rc, &c1, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c2(-sx, sy, one - sx, one + sy);
-            func_80494F10(&rc, &c2, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
+            drawTexturedQuad(&rc, &c2, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
 
             updateCmd1Words__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 4, 1,
                                        0, 0);
             ml::CCol4 c3(sx, sy, one + sx, one + sy);
-            func_80494F10(&rc, &c3, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
+            drawTexturedQuad(&rc, &c3, &cb2);            TexObj_BlitRect(*pBuf, &rc, 0, 0);
         }
 
         // Halve the tile size each pass, rounding up to keep sizes even.
@@ -672,15 +672,15 @@ u32 func_80499810(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
 }
 
 // ============================================================================
-// func_8049928C (0x8049928C) - bloom render through the CScnFilter vtable.
+// CScnBloom_RenderFiltered (0x8049928C) - bloom render through the CScnFilter vtable.
 // Skips when the base color alpha matches the pool constant, otherwise renders
 // the view into tiles, extracts up to 10 bright-pass textures via
-// func_80499810 and blurs them back over the scene.
+// CScnBloom_ExtractBright and blurs them back over the scene.
 // ============================================================================
-extern "C" void func_8049928C(CScnBloom* self, u32 param) {
+extern "C" void CScnBloom_RenderFiltered(CScnBloom* self, u32 param) {
     CView* view = CView::getCurrentView();
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, view);
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, view);
 
     if (self->mColor.a != lbl_eu_8066AAF0) {
         // 'param' is the owning scene-view object; its +0x6C holds the texture
@@ -727,7 +727,7 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
             rect2.mPos = rect.mPos;
             rect2.mSize.x = tileW;
             rect2.mSize.y = tileH;
-            func_80494F10(&rect2, &col2, &col3);
+            drawTexturedQuad(&rect2, &col2, &col3);
 
             GXTexObj* bufs[10];
             memset(bufs, 0, sizeof(bufs));
@@ -735,11 +735,11 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
             rc.mPos = rect.mPos;
             rc.mSize.x = tileW;
             rc.mSize.y = tileH;
-            u32 count = func_80499810(self, texWork, bufs, 10, &rc, 1);
+            u32 count = CScnBloom_ExtractBright(self, texWork, bufs, 10, &rc, 1);
 
             updateCmd1Words__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
             GXLoadTexObj(tex, GX_TEXMAP0);
-            func_80494F10(&rect, &col2, &col3);
+            drawTexturedQuad(&rect, &col2, &col3);
             updateCmd1Words__8CGXCacheFv(cache, self->mUnk34, self->mUnk38,
                                        self->mUnk3C, self->mUnk40, 0);
 
@@ -770,7 +770,7 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
                 GXInitTexObjFilter(bufs[i], (GXTexFilter)self->mUnk2C,
                                    (GXTexFilter)self->mUnk30);
                 GXLoadTexObj(bufs[i], GX_TEXMAP0);
-                func_80494F10(&rect, &col, &col3);
+                drawTexturedQuad(&rect, &col, &col3);
             }
             for (u32 i = 0; i < count; i++) {
                 TexMan_ReleaseArg_02D8(texWork, bufs[i]);
@@ -787,9 +787,9 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
 // Retail __ct__CScnBloom (flat name): runs the base-object initializer, then
 // constructs the CScnFilter sub-object at +0x48 and installs both vtables
 // (main at +0x80, i.e. over the blur-scale z slot which is written later by
-// func_80499FD0; the derived CScnFilter entry (+8) goes to +0x48).
+// CScnBloom_InitWithView; the derived CScnFilter entry (+8) goes to +0x48).
 extern "C" CScnBloom* __ct__CScnBloom(CScnBloom* self) {
-    func_804996E8(self);
+    CScnBloom_InitBase(self);
     __ct__CScnFilter((void*)&self->mView);
     void* vtbl = (void*)lbl_eu_8056EA08;
     *(void**)&self->mBlurScale.z = vtbl;

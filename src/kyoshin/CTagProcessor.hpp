@@ -937,7 +937,7 @@ u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f
 // -ipa from folding it into the call sites).
 void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src);
 // Color-name tag writer: map the uppercased string to a packed RGB value.
-u16* func_8012AAA4(void* unused, u16* out, wchar_t* str);
+u16* TagParseColor(void* unused, u16* out, wchar_t* str);
 // Color-tag writer: apply the source color to the CharWriter (alpha kept).
 u32 TagWriterApplyColor(void* unused, void* ret, TagColorArg* arg);
 // Tag-writer: print a marker into a scratch writer and advance the cursor.

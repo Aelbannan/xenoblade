@@ -34,12 +34,12 @@ public:
     // IWorkEvent subobject + derived fields
     /* 0x38 */ void* vtableIWork;     // IWorkEvent vtable (primary + 0x44)
 
-    void func_80183A3C();
+    void EvtModelPc_Reset();
     void EvtModelPc_InitCounter();
-    void func_80183C90();
-    void func_801845F0();
+    void EvtModelPc_LoadFiles();
+    void EvtModelPc_CheckLoaded();
     void EvtModelPc_UpdatePos();
-    void func_80184730();
+    void EvtModelPc_CreateModel();
     void EvtModelPc_Dispatch(int r4, int r5);
     bool EvtModelPc_IsFileLoaded();
 

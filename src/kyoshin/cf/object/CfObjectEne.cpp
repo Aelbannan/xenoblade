@@ -29,10 +29,16 @@ extern "C" void aiResetTables(u8* obj);
 extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);
 
 // .sdata2 pool (retail 0x70) as one struct: freezes retail declaration
-// order (MWCC would reorder individual consts by first use) and keeps the
-// three code-orphaned slots (ene1Lv tag, trailing 180.0f, trailing 2^52)
-// live without a touch function. Code uses labels via the defines below;
-// the hpp extern decls stay (parsed before the defines, never referenced).
+// order and keeps the code-orphaned slots live without a touch function.
+// Code uses labels via the defines below; the hpp extern decls stay
+// (parsed before the defines, never referenced).
+// Tail f13/d4 are real
+// retail-named objects below (both orphans: .text + relocs verified
+// byte-identical with and without that split; the literal pool tail the
+// rule trims past 0x70 is unaffected). 974 stays inside tag: carving it
+// out forces the float block off its retail offset (aggregates align to
+// 8) and index/global access reschedules two functions, so that row
+// needs a rule-side define_symbols entry (frozen table) -- see report.
 struct Sdata2_Ene {
     float f0, f1, f2;
     char tag[8];
@@ -40,8 +46,6 @@ struct Sdata2_Ene {
     double d0, d1;
     float f11, f12;
     double d2, d3;
-    float f13;
-    double d4;
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 const Sdata2_Ene sdata2_Ene = {
@@ -50,10 +54,12 @@ const Sdata2_Ene sdata2_Ene = {
     10.0f, 1.0f, 4.0f, 2.0f, 3.0f, 180.0f, 100.0f, 0.1f,
     4503599627370496.0, 4503601774854144.0,
     0.01f, 10000.0f,
-    0.5, -0.5,
-    180.0f,
-    4503599627370496.0
+    0.5, -0.5
 };
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float lbl_eu_806669C8 = 180.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+extern const double lbl_eu_806669D0 = 4503599627370496.0;
 #define lbl_eu_80666968 sdata2_Ene.f0
 #define lbl_eu_8066696C sdata2_Ene.f1
 #define lbl_eu_80666970 sdata2_Ene.f2
@@ -252,7 +258,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // sibling dtor __dt__Q22cf11CfObjectEneFv matches only because it has a
 // single explicit expression (its other use is the folded virtual-dispatch
 // adjustment, which GVN does not model).
-int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
+int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     // Free-function bl to Model UVF2 (CfObject_initEventState slot +0x58).
     // Member alias form inlines to bctrl and grows the frame (reverted).
     // Keep Class_/Unk Fv linker name: retail uses bl, not vdispatch.
@@ -274,9 +280,9 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 // us-800ae4a0: CfObjectEne::updateEnemyBattleState (retail Fv; this in r3). Probes
 // the +0x4 sub-object's actor id (vtable +0x30 first word) against
 // testActorStatus masks 0x803/0xE; on the clean path runs the +0x8 CBattleState
-// subobject slot +0x14 when func_80148778(&+0x8, 0x35) is clear, else runs
-// func_800AF870 and slot +0x20. Then accumulates `scene time * sub8C` into
-// func_801765A4, and when the game-manager bit 0x100 is set applies the
+// subobject slot +0x14 when isBattleStatusActive(&+0x8, 0x35) is clear, else runs
+// applyEnemyReward and slot +0x20. Then accumulates `scene time * sub8C` into
+// CActorParam_updateTick, and when the game-manager bit 0x100 is set applies the
 // +0x3F34 target's bit-0x80000000 flag + subobject slots +0x80/+0x64, else
 // runs the CfObjectMove subobject's CfObject_runMoveUpdate (UVF4 / +0x60).
 void cf::CfObjectEne::updateEnemyBattleState() {
@@ -290,13 +296,13 @@ void cf::CfObjectEne::updateEnemyBattleState() {
               reinterpret_cast<cf::CActorState*>(this)->unk4)
               ->CObjectState_getStateData()),
          testActorStatus((void*)this, (int*)&wordB, 0xE)) == 0) {
-        if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
+        if (isBattleStatusActive(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
             // +0x8 CBattleState: slot +0x14 = UnkVirtualFunc4.
             ((cf::CBattleStateAt8*)this)->CBattleState_setBattleParam(0x35);
         }
     } else {
-        func_800AF870(this);
-        if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) != 0) {
+        applyEnemyReward(this);
+        if (isBattleStatusActive(&((cf::CfEneB8View*)this)->field_0x8, 0x35) != 0) {
             // +0x8 CBattleState: slot +0x20 = UnkVirtualFunc7.
             ((cf::CBattleStateAt8*)this)->CBattleState_clearStatusId(0x35);
         }
@@ -310,7 +316,7 @@ void cf::CfObjectEne::updateEnemyBattleState() {
     // retail multiplies as time * sub (fmuls f1,f1,f31 with f31=sub)
     f32 t = Scn_GetFrameDelta(sceneTimeSrc);
     f32 f = t * sub;
-    func_801765A4((u8*)this, f, 1);
+    CActorParam_updateTick((u8*)this, f, 1);
     getInstance__Q22cf13CfGameManagerFv();
     // retail flattens the nested guards into two branches on one shared
     // else label (the CfObject_runMoveUpdate / UVF4 call); goto pins that shape
@@ -338,11 +344,11 @@ defaultPath:
 done:;
 }
 
-// us-800ae674: CfObjectEne::func_800ADDA8 (retail Fv; this in r3). Full
+// us-800ae674: CfObjectEne::loadEnemyParams (retail Fv; this in r3). Full
 // enemy-parameter setup from two bdat tables. The row id (+0x3F28) is
 // RE-LOADED before every column read (the bdat calls may modify it - retail
 // emits one lhz per call), so it is never cached in a local.
-void cf::CfObjectEne::func_800ADDA8() {
+void cf::CfObjectEne::loadEnemyParams() {
     cf::CfEneLookupView* v = (cf::CfEneLookupView*)this;
     cf::CfEneParamsView* p = (cf::CfEneParamsView*)this;
     // Union-typed locals stay in memory (MWCC), reproducing retail's
@@ -821,7 +827,7 @@ extern "C" u32 getEneBdatByIndex(u32 unused, const char* col, u32 index) {
 // against the reward threshold (`reward * 30`) and applies the scaled count
 // through the primary vtable +0x11C slot before clearing field_0x45CC and
 // returning on the first hit.
-void func_800AF870(cf::CfObjectEne* self) {
+void applyEnemyReward(cf::CfObjectEne* self) {
     if ((((cf::CfActorParamFields*)self)->field_0x3374 & 0x100000) != 0) return;
     if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
     if (((cf::CfActorField3F60*)self)->field_0x3F60 == NULL) return;
@@ -1411,7 +1417,7 @@ extern "C" void CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor*
 
 extern "C" void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-extern "C" void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { func_800ADDA8__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
+extern "C" void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { loadEnemyParams__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 
 extern "C" void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
     reinterpret_cast<cf::CfObjectActor*>((char*)self - 0x3e9c)->cf::CfObjectActor::CfObjectActor_readFacingAngle();
@@ -1426,7 +1432,7 @@ extern "C" void CfObjectMove_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObje
 
 extern "C" void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+extern "C" void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))initEnemyBattleState__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
 extern "C" void CfObject_updateEnemyState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { updateEnemyBattleState__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 

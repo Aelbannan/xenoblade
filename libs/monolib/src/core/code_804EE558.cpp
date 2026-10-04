@@ -260,9 +260,9 @@ extern "C" void lytBindRefreshPlayer(CLytBind* self) {
     }
 }
 
-// func_804EE658: rebuild the world matrix from the bound source,
+// lytBindRefreshMatrix: rebuild the world matrix from the bound source,
 // preserving the current translation.
-extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
+extern "C" void lytBindRefreshMatrix(CLytBind* self, CBindSource* src) {
     ml::CVec3 translation(self->mMtx.m[0][3], self->mMtx.m[1][3], self->mMtx.m[2][3]);
 
     self->mMtx = ml::CMat34::identity;
@@ -321,8 +321,8 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
     self->mMtx.replaceTranslation(translation);
 }
 
-// func_804EE8FC: rebuild the translation from the bound source.
-extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
+// lytBindRefreshTrans: rebuild the translation from the bound source.
+extern "C" void lytBindRefreshTrans(CLytBind* self, CBindSource* src) {
     ml::CVec3 pos(self->mMtx.m[0][3], self->mMtx.m[1][3], self->mMtx.m[2][3]);
 
     u32 mt = self->mType;
@@ -390,8 +390,8 @@ extern "C" u32 lytBindCanResolveTarget(CLytBind* self) {
     return self->mPane != NULL ? 1 : 0;
 }
 
-// func_804EF830: build the 10-vertex octagon fan (center + ring + close).
-extern "C" void func_804EF830(ml::CVec3* verts) {
+// buildMarkerFan: build the 10-vertex octagon fan (center + ring + close).
+extern "C" void buildMarkerFan(ml::CVec3* verts) {
     for (s16 i = 0; i < 10; i++) {
         if (i == 0) {
             verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
@@ -408,10 +408,10 @@ extern "C" void func_804EF830(ml::CVec3* verts) {
     }
 }
 
-// func_804EF9B8: scale/rotate the fan vertices and offset them to pos.
+// placeMarkerFan: scale/rotate the fan vertices and offset them to pos.
 // NOTE: size must be passed by reference - retail holds it as a single
 // pointer register (r29) and loads components with lfs.
-extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos,
+extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos,
                               const ml::CVec3& size, float angle) {
     Mtx rotMtx;
     if (angle != lbl_eu_8066B408) {
@@ -446,8 +446,8 @@ extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos,
     }
 }
 
-// func_804EFB38: clamp the fan to the screen; returns the scale factor.
-extern "C" __declspec(noinline) float func_804EFB38(ml::CVec3* verts) {
+// clampMarkerFan: clamp the fan to the screen; returns the scale factor.
+extern "C" __declspec(noinline) float clampMarkerFan(ml::CVec3* verts) {
     float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
     float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 
@@ -489,8 +489,8 @@ extern "C" __declspec(noinline) float func_804EFB38(ml::CVec3* verts) {
     return scale;
 }
 
-// func_804EFD78: clamp positions to the screen and drag texcoords/colors along.
-extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors) {
+// clampMarkerFanAttrs: clamp positions to the screen and drag texcoords/colors along.
+extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors) {
     float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
     float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 
@@ -577,8 +577,8 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* color
     }
 }
 
-// func_804EECB0: GX renderer for the marker fan.
-extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
+// drawScreenMarkerFan: GX renderer for the marker fan.
+extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
                              const float* color, const ml::CVec3* size, void* clampInfo,
                              s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
                              float vertRot) {
@@ -594,7 +594,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
 
     ml::CVec3 verts[10];
     if (flag < 0) {
-        func_804EF830(verts);
+        buildMarkerFan(verts);
     } else {
         verts[0] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
         verts[1] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
@@ -609,10 +609,10 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     }
 
     ml::CVec3 scaledSize = *size * lbl_eu_8066B414;
-    func_804EF9B8(verts, pos, scaledSize, vertRot);
+    placeMarkerFan(verts, pos, scaledSize, vertRot);
 
     if (clampInfo != NULL) {
-        alpha *= func_804EFB38(verts);
+        alpha *= clampMarkerFan(verts);
     }
 
     ml::CVec3 tex[10];
@@ -632,7 +632,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     memcpy(colors, lbl_eu_80661748, 0x78);
 
     if (clampInfo == NULL) {
-        func_804EFD78(verts, tex, (ml::CVec3*)colors);
+        clampMarkerFanAttrs(verts, tex, (ml::CVec3*)colors);
     }
 
     if (alpha > lbl_eu_8066B408) {
@@ -773,8 +773,8 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     return 1;
 }
 
-// func_804EEB40: high-level marker draw entry point.
-extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* color,
+// drawScreenMarker: high-level marker draw entry point.
+extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const float* color,
                               const ml::CVec3* size, void* clampInfo, void* material,
                               CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha, float vertRot) {
     if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
@@ -787,14 +787,14 @@ extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* 
     if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             blitEffectViewRect(&draw, 0, 0);
-            func_804EECB0(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
+            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
                           vertRot);
         } else {
             blitEffectViewRect(&draw, 0, 0);
             if (mtxSrc->mTex != NULL) {
                 SchedTexLoadCached(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
             }
-            func_804EECB0(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
+            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
                           vertRot);
         }
         releaseEffectDrawTex(&draw);
@@ -838,25 +838,25 @@ extern "C" void sinit_804F01C8() {
 }
 
 // ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
-// [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch
-// jumptable (case lbl_eu_8066B40Cffsets relative tlbl_eu_8066B40C func_804EE8FC, retail slbl_eu_8066B414ape).
+// [.data] 0x805702B8-0x80570328 (0x70 = 112B): lytBindRefreshTrans's switch
+// jumptable (case lbl_eu_8066B40Cffsets relative tlbl_eu_8066B40C lytBindRefreshTrans, retail slbl_eu_8066B414ape).
 extern "C" u32 jumptable_eu_805702B8[28] = {
-    (u32)((char*)&func_804EE8FC + 80),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 136),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 196), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 80),
-    (u32)((char*)&func_804EE8FC + 80), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 240), (u32)((char*)&func_804EE8FC + 300),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
-    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 360),
-    (u32)((char*)&func_804EE8FC + 392),
+    (u32)((char*)&lytBindRefreshTrans + 80),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 136),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 196), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 80),
+    (u32)((char*)&lytBindRefreshTrans + 80), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 240), (u32)((char*)&lytBindRefreshTrans + 300),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
+    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 360),
+    (u32)((char*)&lytBindRefreshTrans + 392),
 };
 
 // ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
-// [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch
+// [.data] 0x805702B8-0x80570328 (0x70 = 112B): lytBindRefreshTrans's switch

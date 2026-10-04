@@ -1,5 +1,5 @@
 // monolib/src/scn/CMdlAnmEye - eye-blink animation state machine for a
-// material pair (two eyes). func_804E75B8 registers the eye materials by
+// material pair (two eyes). EyeAnm_RegisterMats registers the eye materials by
 // name prefix; EyeAnm_TickBlink advances the blink state machine and pushes a
 // texture-SRT effect matrix per registered eye every frame.
 #include <harness_catalog.h>
@@ -38,7 +38,7 @@ extern "C" u32 lbl_eu_805701D0[];
 
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
-void func_804E75B8(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
+void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
     self->field_04 = model;
     u32 num = nw4r::g3d::ResMdl(model->field_0x146C)
                   .GetResMatNumEntries();

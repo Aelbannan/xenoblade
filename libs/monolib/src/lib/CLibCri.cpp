@@ -39,7 +39,7 @@ extern "C" {
 
 // CWorkSystemPack stubs
 extern "C" {
-    int func_804DE010(const char* ext);
+    int hasPackFile(const char* ext);
     bool func_804DDD54(const char* ext, const char* filename,
                        int* out1, int* out2, int* out3, int* out4);
 }
@@ -129,25 +129,25 @@ extern "C" {
     void isStreamActive__20CLibCriStreamingPlayFv();
     void stopStream__20CLibCriStreamingPlayFv();
     void stopAllStreams__20CLibCriStreamingPlayFv();
-    void func_8045BC4C__20CLibCriStreamingPlayFv();
-    void func_8045CA4C__20CLibCriStreamingPlayFv();
+    void setStreamPause__20CLibCriStreamingPlayFv();
+    void fadeStreamVolume__20CLibCriStreamingPlayFv();
     void getStreamVolume__20CLibCriStreamingPlayFv();
     void func_8045C700__20CLibCriStreamingPlayFv();
-    void func_8045C8B0__20CLibCriStreamingPlayFv();
+    void setStreamVolume__20CLibCriStreamingPlayFv();
     void getStreamPosition__20CLibCriStreamingPlayFv();
-    void func_8045CCFC__20CLibCriStreamingPlayFv();
-    void func_8045CFDC__20CLibCriStreamingPlayFv();
-    void func_8045D03C__20CLibCriStreamingPlayFv();
+    void setStreamPanVolume__20CLibCriStreamingPlayFv();
+    void calcStreamBufferSize__20CLibCriStreamingPlayFv();
+    void isStreamPaused__20CLibCriStreamingPlayFv();
 }
 
 // Forwarding stubs to CLibCriMoviePlay
 extern "C" {
-    void func_8045A260__16CLibCriMoviePlayFv();
-    void func_8045A48C__16CLibCriMoviePlayFv();
-    void func_8045B310__16CLibCriMoviePlayFv(int, int);
+    void startMovie__16CLibCriMoviePlayFv();
+    void stopMovie__16CLibCriMoviePlayFv();
+    void setMoviePause__16CLibCriMoviePlayFv(int, int);
     void clearMovieGlobalPause__16CLibCriMoviePlayFv();
     void isMovieGlobalPaused__16CLibCriMoviePlayFv();
-    void func_8045A644__16CLibCriMoviePlayFv();
+    void isMoviePlaying__16CLibCriMoviePlayFv();
     void renderMovie__16CLibCriMoviePlayFv();
     void getMovieWorkSize__16CLibCriMoviePlayFv();
 }
@@ -243,15 +243,15 @@ int CLibCri::dispatchFilePlayback(const char* filename, u32 allocHandle, int fil
         return -1;
     }
 
-    if (func_804DE010(ext) != 0) {
+    if (hasPackFile(ext) != 0) {
         int out1, out2, out3, out4;
         if (func_804DDD54(ext, filename, &out1, &out2, &out3, &out4) != 0) {
             bool hasPrefix = (strstr(filename, lbl_eu_80522FD8) != nullptr);
-            return func_8045B5AC__20CLibCriStreamingPlayFv((const char*)out1, allocHandle, fileHandle, out2, out3, hasPrefix);
+            return startStream__20CLibCriStreamingPlayFv((const char*)out1, allocHandle, fileHandle, out2, out3, hasPrefix);
         }
     }
 
-    return func_8045B5AC__20CLibCriStreamingPlayFv(filename, allocHandle, fileHandle, -1, -1, false);
+    return startStream__20CLibCriStreamingPlayFv(filename, allocHandle, fileHandle, -1, -1, false);
 }
 
 // ============================================================================
@@ -260,24 +260,24 @@ int CLibCri::dispatchFilePlayback(const char* filename, u32 allocHandle, int fil
 void CLibCri::isStreamActive() { isStreamActive__20CLibCriStreamingPlayFv(); }
 void CLibCri::stopStream() { stopStream__20CLibCriStreamingPlayFv(); }
 void CLibCri::stopAllStreams() { stopAllStreams__20CLibCriStreamingPlayFv(); }
-void CLibCri::setStreamPause() { func_8045BC4C__20CLibCriStreamingPlayFv(); }
-void CLibCri::fadeStreamVolume() { func_8045CA4C__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamPause() { setStreamPause__20CLibCriStreamingPlayFv(); }
+void CLibCri::fadeStreamVolume() { fadeStreamVolume__20CLibCriStreamingPlayFv(); }
 void CLibCri::getStreamVolume() { getStreamVolume__20CLibCriStreamingPlayFv(); }
 void CLibCri::setStreamVolume() { func_8045C700__20CLibCriStreamingPlayFv(); }
-void CLibCri::setStreamVolumeScale() { func_8045C8B0__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamVolumeScale() { setStreamVolume__20CLibCriStreamingPlayFv(); }
 void CLibCri::getStreamPosition() { getStreamPosition__20CLibCriStreamingPlayFv(); }
-void CLibCri::setStreamPanVolume() { func_8045CCFC__20CLibCriStreamingPlayFv(); }
-void CLibCri::calcStreamBufferSize() { func_8045CFDC__20CLibCriStreamingPlayFv(); }
-void CLibCri::isStreamPaused() { func_8045D03C__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamPanVolume() { setStreamPanVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::calcStreamBufferSize() { calcStreamBufferSize__20CLibCriStreamingPlayFv(); }
+void CLibCri::isStreamPaused() { isStreamPaused__20CLibCriStreamingPlayFv(); }
 
 // ============================================================================
 // Forwarding stubs to CLibCriMoviePlay
 // ============================================================================
-void CLibCri::startMovie() { func_8045A260__16CLibCriMoviePlayFv(); }
-void CLibCri::stopMovie() { func_8045A48C__16CLibCriMoviePlayFv(); }
+void CLibCri::startMovie() { startMovie__16CLibCriMoviePlayFv(); }
+void CLibCri::stopMovie() { stopMovie__16CLibCriMoviePlayFv(); }
 void CLibCri::clearMoviePause() { clearMovieGlobalPause__16CLibCriMoviePlayFv(); }
 void CLibCri::isMovieGlobalPaused() { isMovieGlobalPaused__16CLibCriMoviePlayFv(); }
-void CLibCri::isMoviePlaying() { func_8045A644__16CLibCriMoviePlayFv(); }
+void CLibCri::isMoviePlaying() { isMoviePlaying__16CLibCriMoviePlayFv(); }
 void CLibCri::renderMovie() { renderMovie__16CLibCriMoviePlayFv(); }
 void CLibCri::getMovieWorkSize() { getMovieWorkSize__16CLibCriMoviePlayFv(); }
 
@@ -285,7 +285,7 @@ void CLibCri::getMovieWorkSize() { getMovieWorkSize__16CLibCriMoviePlayFv(); }
 // incoming register args before tail-calling, which a no-arg member cannot
 // spell). Incoming r3=a, r4=b are forwarded as f(b, a).
 extern "C" void setMoviePause__7CLibCriFv(int a, int b) {
-    func_8045B310__16CLibCriMoviePlayFv(b, a);
+    setMoviePause__16CLibCriMoviePlayFv(b, a);
 }
 
 // Empty virtual override (extern "C" free-function form: no auto vtable).

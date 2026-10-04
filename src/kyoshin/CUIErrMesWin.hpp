@@ -24,21 +24,21 @@ extern "C" void CTitle_update(void*);
 extern "C" void sysWinDispatchPhase(void*);
 
 // CSysWin content setters / advance-close helpers (retail unmangled names,
-// defined in CSysWin.cpp). func_8022BFC8 is declared by CSysWin.hpp.
-extern "C" void func_8022B9B4(void* syswin, const char* msg, int flag);
+// defined in CSysWin.cpp). sysWinApplyKind is declared by CSysWin.hpp.
+extern "C" void sysWinSetKindContent(void* syswin, const char* msg, int flag);
 extern "C" void sysWinOpenPhase1(void* syswin);
 extern "C" void sysWinAdvancePhase3(void* syswin);
 
 // Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
 extern "C" char* BdatTouchStringCell(char* fmt, char* base, u32 id);
 
-// String pool used by func_802B4F40's error message.
+// String pool used by ErrWin_LoadText_4F40's error message.
 extern char lbl_eu_805135E0[];
 
 // cf::CfGameManager current-pad accessor (retail pre-mangled static).
 void* getCurrentPad__Q22cf13CfGameManagerFv();
 
-// Pad view for func_802B4FE8: button word at +4.
+// Pad view for ErrWin_OnConfirm_4FE8: button word at +4.
 struct CErrMesPad {
     u8 _00[4];
     u32 field_0x4;
@@ -61,7 +61,7 @@ extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(int, int, int);
 // the call site binds to the retail symbol (same pattern as lookupEffectForResource).
 extern "C" void createBattleEffect__Q22cf13CfGameManagerFv(u32, u8*);
 
-// Capsule geometry types used by func_802B5254. nw4r defines these in
+// Capsule geometry types used by ErrWin_PlayVoice_5254. nw4r defines these in
 // math_geometry.cpp (not in the shipped headers); identical layout here so the
 // IntersectionCapsule call binds to the retail mangled symbol.
 namespace nw4r {
@@ -78,7 +78,7 @@ bool IntersectionCapsule(const CAPSULE* pCapsule0, const CAPSULE* pCapsule1);
 }  // namespace math
 }  // namespace nw4r
 
-// Capsule parameters used by func_802B5254's three sweeps (.sdata floats).
+// Capsule parameters used by ErrWin_PlayVoice_5254's three sweeps (.sdata floats).
 extern f32 lbl_eu_80668FB8;
 extern f32 lbl_eu_80668FBC;
 extern f32 lbl_eu_80668FC0;
@@ -177,7 +177,7 @@ struct CErrMesOwner {
     u32 field_0x3F10;           // 0x3F10 - comparison word
 };
 
-// CfObjectMove-like view (func_8016FE34 result / error-message owner): the
+// CfObjectMove-like view (MapFx_ResolveOwner result / error-message owner): the
 // embedded CObjectParam sub-object sits at +0x3E9C and its +0x4C virtual
 // (CObjectParam_getSelfObjectId) returns the actor/action id fed to
 // findObjectById.
@@ -186,8 +186,8 @@ struct CErrMesObjView {
     cf::CObjectParam objectParam;  // +0x3E9C
 };
 
-// Voice/actor record base (func_8016FE34 result, e.g. func_802B5970's actor
-// sources and func_802B5254's candidate): vtable at +0 is the real actor
+// Voice/actor record base (MapFx_ResolveOwner result, e.g. ErrWin_PlayBattleVoice_5970's actor
+// sources and ErrWin_PlayVoice_5254's candidate): vtable at +0 is the real actor
 // table (cf::CActorParam lineage; the voice-idle check is slot 138 at 0x2BC
 // via CActorParam_isBattleLocked, same as CVS_THREAD_HAGE / CBattleManager),
 // +0x4 is the actor-state sub-object (slot 0x30 via cf::CHelpBattleSub4::vf30
@@ -208,7 +208,7 @@ struct CErrMesD80 {
     f32 field_0x114;  // +0x114 z
 };
 
-// Voice-list record (func_802B5254 sweep 1): the list item points at the
+// Voice-list record (ErrWin_PlayVoice_5254 sweep 1): the list item points at the
 // embedded +0x3E9C sub-object, so the record base is item - 0x3E9C; the
 // active flag lives at +0x4590.
 struct CErrMesVoiceRecord {
@@ -218,7 +218,7 @@ struct CErrMesVoiceRecord {
     u8 field_0x4590;             // +0x4590 active flag
 };
 
-// Gimmick-record sub-object (func_802B5254 sweep 2): the +0x3E9C sub-object
+// Gimmick-record sub-object (ErrWin_PlayVoice_5254 sweep 2): the +0x3E9C sub-object
 // carries per-record capsule parameters at +0x63C / +0x640.
 struct CErrMesGimmickSub : CVoiceOwnerIntf {
     u8 _04[0x63C - 0x04];
@@ -226,7 +226,7 @@ struct CErrMesGimmickSub : CVoiceOwnerIntf {
     f32 field_0x640;  // +0x640 capsule offset-y
 };
 
-// Gimmick record (func_802B5254 sweep 2): same embedding as the voice
+// Gimmick record (ErrWin_PlayVoice_5254 sweep 2): same embedding as the voice
 // record; item points at the +0x3E9C sub-object.
 struct CErrMesGimmickRecord {
     u8 _00[0x3E9C];
@@ -235,7 +235,7 @@ struct CErrMesGimmickRecord {
     u8 field_0x4590;             // +0x4590 active flag
 };
 
-// Enemy record (func_802B5254 sweep 3): the list item points at the record
+// Enemy record (ErrWin_PlayVoice_5254 sweep 3): the list item points at the record
 // base; vtable at +0 (getPosition at 0xAC); active flag at +0x6F4.
 struct CErrMesEnemyRec {
     CVoiceOwnerIntf sub;     // +0x00
@@ -243,7 +243,7 @@ struct CErrMesEnemyRec {
     u8 field_0x6F4;          // +0x6F4 active flag
 };
 
-// Actor-source view (func_8016FE34(findObjectById(...)) result): signed word
+// Actor-source view (MapFx_ResolveOwner(findObjectById(...)) result): signed word
 // at +0x15E4 (battle-state counter compared against 4).
 struct CErrMesActor15E4 {
     u8 _00[0x15E4];
@@ -274,7 +274,7 @@ struct CErrMesWinCtorView {
 extern "C" {
 int CfRes_getD80Flag();
 void* Scn_FindCamItem(void* scene, int index);
-void* func_8016FE34(void* source);
+void* MapFx_ResolveOwner(void* source);
 int HpVoice_MapSubState(void* handle);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);

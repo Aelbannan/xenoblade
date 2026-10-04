@@ -14,8 +14,8 @@ public:
     virtual ~CViewRoot();
     void isInitialized();
     void invalidCurrent();
-    void func_80442B54();
-    void func_80442C68();
+    void pushScissorRects();
+    void popScissorRects();
     void updateViewRoot();
     void getRootView();
     void wkStandbyLogin();

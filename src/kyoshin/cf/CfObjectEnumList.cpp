@@ -12,7 +12,7 @@
 #include <revolution/mtx/vec.h>   // PSVECAdd
 
 // Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
-// TU's extern "C" declarations of func_8016FE34/func_800BBC0C).
+// TU's extern "C" declarations of MapFx_ResolveOwner/func_800BBC0C).
 namespace cf { class CfCamFollow; }
 
 namespace cf {
@@ -188,11 +188,11 @@ void appendEnumEntries(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
 
 // Forward decl: defined later in this TU.  Retail symbol is C-linkage
 // (unmangled), so the definition below is extern "C" to match reloc names.
-extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options);
+extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options);
 
 // startEnumObjects: reset the list counts, then normalize the flags/options pair
 // (param - 0x80000000 selects one of five presets) and hand off to the main
-// enumerator func_800F4B5C as a tail call.  An unset param (0) just clears the
+// enumerator runEnumObjects as a tail call.  An unset param (0) just clears the
 // lists.  The default case passes the raw (param, param2) pair through.
 void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
     self->mPtrCount = 0;
@@ -226,7 +226,7 @@ void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
         self->field_3038 = param2;
         break;
     }
-    func_800F4B5C(self, self->field_3034, self->field_3038);
+    runEnumObjects(self, self->field_3034, self->field_3038);
 }
 
 #define ENUM_DUMMY_VIRTUAL(n_) virtual void v##n_() = 0
@@ -408,9 +408,9 @@ CfEnumObject* firstReslistBC8();
 CfEnumObject* insertReslistBC8(CfEnumObject*);
 CfEnumObject* firstReslistC08();
 CfEnumObject* insertReslistC08(CfEnumObject*);
-CfEnumActor* func_8016FE34(CfEnumObject*);
+CfEnumActor* MapFx_ResolveOwner(CfEnumObject*);
 CfEnumActor* func_800BBC0C(CfEnumObject*);
-int func_80148778(void*, int);
+int isBattleStatusActive(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
 int CtrlRemote_TouchBitByArg(int);
 CfEnumKind* CollObjHasFlag64Bit15(CfEnumObject*);
@@ -423,12 +423,12 @@ CfEnumObject* getPlayer__Q22cf13CfGameManagerFi(int);
 extern const float lbl_eu_80666EB8;
 extern const float lbl_eu_80666EBC;
 // In-TU definition later (list-rebuild partner check); C-linkage so the
-// retail unmangled reloc name matches (same convention as func_800F4B5C).
+// retail unmangled reloc name matches (same convention as runEnumObjects).
 extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot);
 void* Scn_FindCamItem(void* scene, int index);   // scene pose/xform block
 void* Scn_SetCamIndex(void* scene, int flag);    // scene view frame
-int func_8049B59C(void* out, void* pose, void* pos); // view-space transform
+int CamMan_ProjectToScreen(void* out, void* pose, void* pos); // view-space transform
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     void* rect, const void* frame);
 int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vecs)
@@ -490,11 +490,11 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
         ENUM_ACTOR_CORE_FILTERS(                                              \
             rejected_, object_, actor_, options_, zero_, one_);              \
         if (!(rejected_) && ((options_) & 0x100) &&                           \
-            func_80148778(&(actor_)->tagState, 0xE5)) {                       \
+            isBattleStatusActive(&(actor_)->tagState, 0xE5)) {                       \
             (rejected_) = true;                                               \
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x200)) {                           \
-            if (func_80148778(&(actor_)->tagState, 0xE6)) {                   \
+            if (isBattleStatusActive(&(actor_)->tagState, 0xE6)) {                   \
                 (rejected_) = true;                                           \
             } else if ((actor_)->actorAux == 0 ||                            \
                        !isSpeedAbove((actor_)->actorAux)) {                  \
@@ -505,7 +505,7 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
             if ((actor_)->filter()) {                           \
                 (rejected_) = true;                                           \
             }                                                                 \
-            if (func_80148778(&(actor_)->tagState, 0xF8)) {                   \
+            if (isBattleStatusActive(&(actor_)->tagState, 0xF8)) {                   \
                 (rejected_) = true;                                           \
             }                                                                 \
         }                                                                     \
@@ -520,7 +520,7 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
         }                                                                     \
     } while (false)
 
-extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
+extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options) {
     cf::CfObjEnumList::sObjInfo info0;
     cf::CfObjEnumList::sObjInfo info1;
     cf::CfObjEnumList::sObjInfo info2;
@@ -593,9 +593,9 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         }
         flags &= ~0x10u;
     } else if (flags & 0x40000) {
-        func_800F4B5C(self, 4, options);
+        runEnumObjects(self, 4, options);
         if (self->mPtrCount == 0) {
-            func_800F4B5C(self, 0x10, options);
+            runEnumObjects(self, 0x10, options);
         }
         flags &= ~0x40000u;
     } else if (flags & 0x20) {
@@ -605,17 +605,17 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
             ENUM_ACTOR_CORE_FILTERS(rejected, object, actor, options, zero, one);
             if (!rejected && (options & 0x100) &&
-                func_80148778(&actor->tagState, 0xE5)) {
+                isBattleStatusActive(&actor->tagState, 0xE5)) {
                 rejected = true;
             }
             if (!rejected && (options & 0x200)) {
-                if (func_80148778(&actor->tagState, 0xE6)) {
+                if (isBattleStatusActive(&actor->tagState, 0xE6)) {
                     rejected = true;
                 } else if (actor->actorAux == 0 ||
                            !isSpeedAbove(actor->actorAux)) {
@@ -626,7 +626,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 if (actor->filter()) {
                     rejected = true;
                 }
-                if (func_80148778(&actor->tagState, 0xF8)) {
+                if (isBattleStatusActive(&actor->tagState, 0xF8)) {
                     rejected = true;
                 }
             }
@@ -681,7 +681,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float one = lbl_eu_80666EBC;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -700,11 +700,11 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x100) &&
-                func_80148778(&actor->tagState, 0xE5)) {
+                isBattleStatusActive(&actor->tagState, 0xE5)) {
                 rejected = true;
             }
             if (!rejected && (options & 0x200)) {
-                if (func_80148778(&actor->tagState, 0xE6)) {
+                if (isBattleStatusActive(&actor->tagState, 0xE6)) {
                     rejected = true;
                 } else if (actor->actorAux == 0 ||
                            !isSpeedAbove(actor->actorAux)) {
@@ -715,7 +715,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 if (actor->filter()) {
                     rejected = true;
                 }
-                if (func_80148778(&actor->tagState, 0xF8)) {
+                if (isBattleStatusActive(&actor->tagState, 0xF8)) {
                     rejected = true;
                 }
             }
@@ -743,7 +743,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float one = lbl_eu_80666EBC;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -831,7 +831,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float secondZero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -939,7 +939,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
@@ -961,7 +961,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
@@ -986,7 +986,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         float one = lbl_eu_80666EBC;
         while (object != 0) {
             rejected = false;
-            actor = func_8016FE34(object);
+            actor = MapFx_ResolveOwner(object);
             if (object->flags64 & 4) {
                 rejected = true;
             }
@@ -1032,7 +1032,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         return;
     }
 
-    func_800F4B5C(self, flags, options);
+    runEnumObjects(self, flags, options);
 }
 
 #undef ENUM_ACTOR_FILTERS
@@ -1159,7 +1159,7 @@ extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
 // resortByActorValue: refresh each entry's sort value via the actor's vtable
-// 0x128 float accessor (reached through func_8016FE34), then quicksort the
+// 0x128 float accessor (reached through MapFx_ResolveOwner), then quicksort the
 // embedded sortable list at +0x624 over [0, count-1].  Needs at least two
 // entries to do anything.
 void resortByActorValue(cf::CfObjEnumList* self) {
@@ -1168,7 +1168,7 @@ void resortByActorValue(cf::CfObjEnumList* self) {
     }
     for (u32 i = 0; i < self->mPtrCount; i++) {
         cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
-        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor != NULL) {
             p->field_14 = reinterpret_cast<CfEnumActorValueView*>(actor)->value128();
         }
@@ -1256,7 +1256,7 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
             tmp.y = src->y;
             tmp.z = src->z;
         }
-        func_8049B59C(&p->field_08, pose, &tmp);
+        CamMan_ProjectToScreen(&p->field_08, pose, &tmp);
         p->field_18 |= 1;
     }
 
@@ -1322,7 +1322,7 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
 
 // __ct__800FA9B4: rebuild the list by projecting every object position through
 // the scene's view transform: Scn_FindCamItem/Scn_SetCamIndex fetch the pose block
-// and view frame, func_8049B59C writes the view-space position into info+8 for
+// and view frame, CamMan_ProjectToScreen writes the view-space position into info+8 for
 // two probe slots, then a screen-rect gate (getFrame2ViewOffset), the coli
 // probe ScnRes_SegQueryForward_E348 on t[k]+border-offset, and the global ColiQuerySegment
 // probe decide acceptance.  Accepted entries get the 0x10 mark bit; every
@@ -1399,7 +1399,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
         bool keep = false;
         for (int k = 0; k < 2; k++) {
             // View-space transform lands in p->field_08/0C/10.
-            int ret = func_8049B59C(&p->field_08, pose, &t[k]);
+            int ret = CamMan_ProjectToScreen(&p->field_08, pose, &t[k]);
             p->field_18 |= 1;
             keep = ret != 0;
             if (keep) {
@@ -2003,7 +2003,7 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
 }
 
 // __ct__800FBF08: rebuild the object list filtering entries through the
-// arts-state gate: func_8016FE34(object) then func_80148778(actor+8, tag).
+// arts-state gate: MapFx_ResolveOwner(object) then isBattleStatusActive(actor+8, tag).
 // flags bit 1 inverts the accept decision; accepted entries get the 0x70
 // mark and are only re-appended when flags bit 0 is set.
 void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
@@ -2037,11 +2037,11 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     for (u32 i = 0; i < n; ++it, i++) {
         cf::CfObjEnumList::sObjInfo* p = *it;
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
-        int hit = func_80148778(reinterpret_cast<u8*>(actor) + 8, tag);
+        int hit = isBattleStatusActive(reinterpret_cast<u8*>(actor) + 8, tag);
         bool ok = hit == 0;
         if (invert) {
             ok = !ok;
@@ -2059,7 +2059,7 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
 }
 
 // __ct__800FC040: rebuild the object list keeping only entries whose actor
-// fails BOTH tag probes (func_80148778 with tag1 and tag2).  options bit 1
+// fails BOTH tag probes (isBattleStatusActive with tag1 and tag2).  options bit 1
 // inverts the keep decision; rejected entries get the 0x70 mark and are only
 // re-appended when options bit 0 is set.
 void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
@@ -2092,13 +2092,13 @@ void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
         bool rejected = false;
-        if (func_80148778(&actor->tagState, tag1) == 0 &&
-            func_80148778(&actor->tagState, tag2) == 0) {
+        if (isBattleStatusActive(&actor->tagState, tag1) == 0 &&
+            isBattleStatusActive(&actor->tagState, tag2) == 0) {
             rejected = true;
         }
         if (options & 2) {
@@ -2145,7 +2145,7 @@ void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2199,7 +2199,7 @@ void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2256,7 +2256,7 @@ void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2312,7 +2312,7 @@ void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float threshold) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2359,7 +2359,7 @@ void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float threshold) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2406,7 +2406,7 @@ void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2455,7 +2455,7 @@ void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2514,7 +2514,7 @@ void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2575,7 +2575,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2592,7 +2592,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         }
         CfEnumObject* cur = reinterpret_cast<CfEnumObject*>(t);
         while (cur != 0) {
-            CfEnumActor* cand = func_8016FE34(cur);
+            CfEnumActor* cand = MapFx_ResolveOwner(cur);
             if (cand == 0 || cand == actor) {
                 CfEnumActor* t2 = CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
@@ -2669,7 +2669,7 @@ void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2730,7 +2730,7 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }

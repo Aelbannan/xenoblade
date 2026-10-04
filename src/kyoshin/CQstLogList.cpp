@@ -37,13 +37,13 @@ extern "C" __declspec(noinline) CQstLogListEntry* QstLogList_CopyEntry(CQstLogLi
 u8 CQstLogList::QstLogList_IsSortDescending() { return mSortDescending; }
 
 // Returns the quest-list's own "layout loaded" byte only when the scroll bar
-// AND the sort menu are both visible (mirrors CSortMenu::func_801D32DC's
+// AND the sort menu are both visible (mirrors CSortMenu::sortMenuIsScrollbarVisible's
 // scrollbar-gate pattern).
-u8 func_80227C70(CQstLogList* self) {
+u8 QstLogList_ScrollFlag(CQstLogList* self) {
     if (CScrollBar_isVisible(&self->mScrollBar) == 0) {
         return 0;
     }
-    if (func_801D32DC(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
+    if (sortMenuIsScrollbarVisible(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
         return 0;
     }
     return self->field_0x178;
@@ -56,7 +56,7 @@ u8 func_80227C70(CQstLogList* self) {
 // (lbl_eu_8066472C).
 void QstLogList_ScrollDown(CQstLogList* self) {
     if (self->mSortDescending != 0) {
-        func_801D3698(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
+        sortMenuScrollDown(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
         QstLogList_MoveCursor(self);
     } else {
         if (lbl_eu_8066472C >= 10) {
@@ -90,7 +90,7 @@ void QstLogList_ScrollDown(CQstLogList* self) {
 // otherwise step the scroll position (field_0x17E) back by a page of 10.
 void QstLogList_PageUp(CQstLogList* self) {
     if (self->mSortDescending != 0) {
-        func_801D3724(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
+        sortMenuPageUpStep(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
         QstLogList_MoveCursor(self);
     } else {
         if (lbl_eu_8066472C >= 10) {
@@ -379,7 +379,7 @@ extern "C" __declspec(noinline) void QstLogList_RefreshRows(CQstLogList* self) {
     e1 = row[1];
     QstLogList_ClearRows(self);
     lbl_eu_8066472C = 0;
-    func_80227260(&self->mQstData.mList[0], e1, (u8)e0);
+    QstCnt_SortRecords(&self->mQstData.mList[0], e1, (u8)e0);
 
     // Rebuild the visible rows from the quest-info buffer, starting at the
     // current scroll position; stop after ten rows or the list end.
@@ -442,14 +442,14 @@ extern "C" __declspec(noinline) void QstLogList_MoveCursor(CQstLogList* self) {
 #pragma push
 #pragma optimize_for_size on
 __declspec(noinline) void QstLogList_FillSortMenu(CQstLogList* self) {
-    if (func_801D32DC(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
+    if (sortMenuIsScrollbarVisible(reinterpret_cast<CSortMenu*>(&self->mSortMenuData)) == 0) {
         return;
     }
     sortMenuResetCount(&self->mSortMenuData);
     for (u8 i = 0; i < (int)lbl_eu_80664728; i++) {
         func_801D3518(&self->mSortMenuData, &lbl_eu_80576670[i * 0x22] + 2);
     }
-    func_801D353C(&self->mSortMenuData,
+    sortMenuSetPage(&self->mSortMenuData,
                   (u8)(self->field_0x17B + self->field_0x17C));
 }
 #pragma pop
@@ -677,11 +677,11 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
                           ->FindPaneByName(&s[0x1b1], true)
                           ->GetVtxColor(0);
 
-    func_802270CC(&mQstData.mList[0]);
+    QstCnt_RefreshRecords(&mQstData.mList[0]);
     QstLogList_RefreshRows(this);
 
     // Position the selection on the quest-log's own list entry.
-    u16 listIdx = func_80227710(&mQstData.mList[0], field_0x180);
+    u16 listIdx = QstCnt_FindInfoIndex(&mQstData.mList[0], field_0x180);
     if (listIdx < 10) {
         field_0x17D = (s8)listIdx;
         field_0x17E = 0;
@@ -710,7 +710,7 @@ extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo
     if (self->field_0x170 != 0) {
         drawLayout(self->mpLayout, drawInfo, 0, 1);
         CScrollBar_draw(&self->mScrollBar, drawInfo);
-        func_801D31F8(&self->mSortMenuData, drawInfo);
+        sortMenuDraw(&self->mSortMenuData, drawInfo);
         Cur_DrawLayout(&self->mCur18[0], drawInfo);
     }
 }
@@ -718,7 +718,7 @@ extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo
 
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
-extern "C" void func_80227BD8(CQstLogList* self) {
+extern "C" void QstLogList_Teardown(CQstLogList* self) {
     closeFileHandle(&self->mFileHandle);
     self->field_0x170 = 0;
     if (self->mpLayout != 0) {
@@ -791,7 +791,7 @@ extern "C" void QstLogList_FrameUpdate(CQstLogList* self) {
             break;
         }
         self->mpLayout->Animate(0);
-        func_801D202C(&self->mCur18[0]);
+        Cur_Update(&self->mCur18[0]);
         CScrollBar_UpdateDispatch(&self->mScrollBar);
         sortMenuDispatchState(&self->mSortMenuData);
     }
@@ -821,7 +821,7 @@ void QstLogList_EndSortMode(CQstLogList* self, int flag) {
 // the scroll position (field_0x17E) against the shared boundary.
 void QstLogList_ScrollUp(CQstLogList* self) {
     if (self->mSortDescending != 0) {
-        func_801D3620(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
+        sortMenuScrollUp(reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
         QstLogList_MoveCursor(self);
     } else {
         u8 d = self->field_0x17D - 1;

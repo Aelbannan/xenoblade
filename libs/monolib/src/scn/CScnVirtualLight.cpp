@@ -117,7 +117,7 @@ extern "C" __declspec(noinline) void scnVlDtorList(CScnVirtualLightReslist* self
     __dt__804923A0(self);
 }
 
-// Destroy the scene light manager: reset via func_804923F8, destroyList the
+// Destroy the scene light manager: reset via scnVlResetMgr, destroyList the
 // four reslists (scnVlDtorList), free the CLight/LightObj arrays and the
 // extra allocation, erase the resource id, then run each reslist's explicit
 // dtor (retail __dt__reslist_CVirtualLightObj, flat-name import) in reverse
@@ -126,7 +126,7 @@ extern "C" __declspec(noinline) void scnVlDtorList(CScnVirtualLightReslist* self
 // epilogue (flag > 0 -> __dl__FPv).
 CScnVirtualLight::~CScnVirtualLight() {
     *(void**)this = (void*)lbl_eu_8056E868;
-    func_804923F8(this, 0);
+    scnVlResetMgr(this, 0);
     scnVlDtorList(&res_0C);
     scnVlDtorList(&res_4C);
     scnVlDtorList(&res_2C);
@@ -234,7 +234,7 @@ extern "C" __declspec(noinline) void scnVlStoreWord(int* dst, int* src){
     *dst = *src;
 }
 
-// Retail scnVlInitLights: reset the manager (func_804923F8), then build the
+// Retail scnVlInitLights: reset the manager (scnVlResetMgr), then build the
 // light slots. Each slot is a pair of vector builders - a vec3 direction
 // (writeVec3f) and a vec4 color (CTaskGame_setVec4) - feeding
 // scnVlMakeAmb0C (ambient) / scnVlMakeDir0C (directional); the +0x4C/+0x2C/
@@ -264,7 +264,7 @@ extern "C" void scnVlInitLights(CScnVirtualLight* self) {
     ml::CVec3* p_78;
     ml::CVec3* p_58;
     ml::CVec3* p_38;
-    func_804923F8(self, 0);
+    scnVlResetMgr(self, 0);
     scnVlMakeAmb0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v_d8, lbl_eu_8066AA14, lbl_eu_8066AA14,
                                 lbl_eu_8066AA14, lbl_eu_8066AA18),
@@ -341,7 +341,7 @@ extern "C" __declspec(noinline) CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLigh
 // The direction-vector -> angle conversion keeps the sqrt(x^2+z^2) call even
 // though its result is unused (extern call, may warn) - retail computes it
 // into the dead f2 slot.
-extern "C" __declspec(noinline) void func_804933AC(CScnVirtualLightData* self, u8* field,
+extern "C" __declspec(noinline) void scnVlDirFromVec(CScnVirtualLightData* self, u8* field,
                               const CTaskGame_setVec4_tmp* data, const CTaskGame_setVec4_tmp* val,
                               f32 value) {
     // Direction-vector -> dir-light angles. The sqrt result is unused by the
@@ -366,11 +366,11 @@ __declspec(noinline) void scnVlMakeAmb0C(CScnVirtualLightData* self, const CTask
     scnVlCreateAmb(self, &self->_0C[0], arg, val);
 }
 
-// func_804933AC variant: also passes a 3-float `val` (direction) in r6, and an
-// f32 scalar in f1 (see func_804933AC's own body for how it consumes them).
+// scnVlDirFromVec variant: also passes a 3-float `val` (direction) in r6, and an
+// f32 scalar in f1 (see scnVlDirFromVec's own body for how it consumes them).
 __declspec(noinline) void scnVlMakeDir0C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
                    const CTaskGame_setVec4_tmp* val, f32 value) {
-    func_804933AC(self, &self->_0C[0], arg, val, value);
+    scnVlDirFromVec(self, &self->_0C[0], arg, val, value);
 }
 
 __declspec(noinline) void scnVlMakeAmb4C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
@@ -383,7 +383,7 @@ __declspec(noinline) void scnVlMakeAmb2C(CScnVirtualLightData* self, const CTask
 
 __declspec(noinline) void scnVlMakeDir2C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg,
                    const CTaskGame_setVec4_tmp* val, f32 value) {
-    func_804933AC(self, (u8*)&self->value2C, arg, val, value);
+    scnVlDirFromVec(self, (u8*)&self->value2C, arg, val, value);
 }
 
 __declspec(noinline) void scnVlMakeAmb6C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg, f32 val) {
@@ -420,7 +420,7 @@ extern "C" void scnVlInitLights2(CScnVirtualLight* self) {
     // call temp it gets its own callee-saved register (r31), leaving r30 for
     // the lbl_eu_80658648 address constant, matching retail.
 
-    func_804923F8(self, 0);
+    scnVlResetMgr(self, 0);
     scnVlMakeAmb0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v100, lbl_eu_8066AA14, lbl_eu_8066AA14,
                                 lbl_eu_8066AA14, lbl_eu_8066AA18),
@@ -566,7 +566,7 @@ extern "C" __declspec(noinline) CScnVirtualLightNode* scnVlFindFree(CScnVirtualL
 // from `data` (4 words), `val1` and the two direction floats, returning the
 // new light. Sibling of scnVlCreateAmb (amb variant); the if/else phi shape
 // pins the store to the merge point like retail. noinline keeps the bl from
-// func_804933AC out-of-line (retail calls it).
+// scnVlDirFromVec out-of-line (retail calls it).
 __declspec(noinline) CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field, const CTaskGame_setVec4_tmp* data,
                    f32 val1, f32 val2, f32 val3) {
     CVirtualLightDir* ptr;
@@ -649,15 +649,15 @@ void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
     copyWord4((u32*)&self->field_0x9C, (const u32*)&v18);
 }
 
-// Retail func_804936AC: per-frame environment push. When the pool's flag bit
+// Retail scnVlPushFrame: per-frame environment push. When the pool's flag bit
 // is set, forwards (sub, env) to scnLgtDispatchEnv. Otherwise re-selects each of
-// the four light slots (func_80495644) and re-dispatches every node of the
-// reslists into the env (func_80493F08); then - when the manager is armed
+// the four light slots (selectLightSlot) and re-dispatches every node of the
+// reslists into the env (scnVlDispatchNode); then - when the manager is armed
 // (valueCC) - walks the 128-slot light pool and copies nearby lights into the
 // env's per-slot CLight banks (mSlotPtrs/mSlotCounts/mSlotFields). The local
 // declaration order mirrors the retail stack layout (slot banks at sp+0x68..
 // sp+0x38, then the four reslist-walk value/copy/end triples descending).
-void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
+void scnVlPushFrame(CScnVirtualLight* self, CLightEnv* env) {
     u32 slotFields[4];   // env mSlotFields (sp+0x68)
     u32 slotCounts[4];   // env mSlotCounts (sp+0x58)
     u32 slotPtrs[4];     // env mSlotPtrs (sp+0x48)
@@ -673,11 +673,11 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
         scnLgtDispatchEnv(getSubField7C(self->mSub), env);
     } else {
-        func_80495644(env, 0);
+        selectLightSlot(env, 0);
         scnVlLoadValue((CScnVirtualLightData*)&v34, (CScnVirtualLightValueSrc*)&self->res_0C);
         goto check1;
     body1:
-        func_80493F08(self, env,
+        scnVlDispatchNode(self, env,
                       (CScnVirtualLightNode*)scnVlCopyWord((int*)&v24, (int*)&v34));
         scnVlAdvance(&v34);
     check1:
@@ -686,11 +686,11 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
             goto body1;
         }
         resetLightSlotIndex(env);
-        func_80495644(env, 1);
+        selectLightSlot(env, 1);
         scnVlLoadValue((CScnVirtualLightData*)&v30, (CScnVirtualLightValueSrc*)&self->res_4C);
         goto check2;
     body2:
-        func_80493F08(self, env,
+        scnVlDispatchNode(self, env,
                       (CScnVirtualLightNode*)scnVlCopyWord((int*)&v1c, (int*)&v30));
         scnVlAdvance(&v30);
     check2:
@@ -699,11 +699,11 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
             goto body2;
         }
         resetLightSlotIndex(env);
-        func_80495644(env, 2);
+        selectLightSlot(env, 2);
         scnVlLoadValue((CScnVirtualLightData*)&v2c, (CScnVirtualLightValueSrc*)&self->res_2C);
         goto check3;
     body3:
-        func_80493F08(self, env,
+        scnVlDispatchNode(self, env,
                       (CScnVirtualLightNode*)scnVlCopyWord((int*)&v14, (int*)&v2c));
         scnVlAdvance(&v2c);
     check3:
@@ -712,11 +712,11 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
             goto body3;
         }
         resetLightSlotIndex(env);
-        func_80495644(env, 3);
+        selectLightSlot(env, 3);
         scnVlLoadValue((CScnVirtualLightData*)&v28, (CScnVirtualLightValueSrc*)&self->res_6C);
         goto check4;
     body4:
-        func_80493F08(self, env,
+        scnVlDispatchNode(self, env,
                       (CScnVirtualLightNode*)scnVlCopyWord((int*)&vc, (int*)&v28));
         scnVlAdvance(&v28);
     check4:
@@ -765,17 +765,17 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
                                 f32 dist2 = cfCam_vecLenSq(&v38);
                                 range = scnVlGetRange((void*)self->mExtraAlloc[j]);
                                 if (range * range >= dist2) {
-                                    func_804C02E4(
+                                    LightCtlCopyObj(
                                         (CLight*)(*p48 + *p68 * 64),
                                         self->mExtraAlloc[j]);
                                     f32 scaled = range * aa74;
                                     if (scaled * scaled < dist2) {
-                                        func_804C0928(
+                                        LightCtlScaleColor(
                                             (CLight*)(*p48 + *p68 * 64),
                                             (range - safeFSqrt(dist2)) /
                                                 (range - scaled));
                                     } else {
-                                        func_804C0928(
+                                        LightCtlScaleColor(
                                             (CLight*)(*p48 + *p68 * 64),
                                             lbl_eu_8066AA18);
                                     }
@@ -801,8 +801,8 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
     }
 }
 
-// Item-destroy helper family used by func_804936AC / scnVlUpdate. noinline
-// keeps the retail `bl` at the func_804936AC call sites out-of-line (the
+// Item-destroy helper family used by scnVlPushFrame / scnVlUpdate. noinline
+// keeps the retail `bl` at the scnVlPushFrame call sites out-of-line (the
 // trivial load bodies would otherwise be inlined, dropping the retail call
 // relocs).
 __declspec(noinline) int scnVlGetCamId(CScnCameraMan* cam) {
@@ -857,7 +857,7 @@ extern "C" __declspec(noinline) void scnVlSetSlotFld(void* self, u32 val, u32 id
 // Retail scnVlUpdate: per-frame virtual-light update. Applies the pooled
 // light data (`data`) with the given position/fade inputs, then - when the
 // pool's flag is clear - pushes the environment's slots into the scene data
-// (func_80495AF4). Finally walks the 128 light-handle slots (mExtraAlloc):
+// (exportSlotLights). Finally walks the 128 light-handle slots (mExtraAlloc):
 // every armed slot within range of `vec` gets a CLight record from the
 // data's light array (0x40 stride, at most 8), with distance-based intensity
 // falloff toward AA74 * range.
@@ -867,7 +867,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
     ml::CVec3 v8;
     u32 enabled = scnVlGetEnabled((void*)self);
     CLight* dst;
-    func_804BFA70(data, vec, mode, enabled, f1 + scnVlGetFade((void*)self));
+    scnVlUpdateShape(data, vec, mode, enabled, f1 + scnVlGetFade((void*)self));
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
         scnLgtGatherLights(getSubField7C(self->mSub), f1, data, vec);
     } else {
@@ -875,9 +875,9 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
         CScnVirtualLightData* p = (CScnVirtualLightData*)scnVlPtrVal14(
             (void*)scnVlGetHandle((void*)scnVlGetVal64((void*)self->mSub)));
         if (scnVlTestBit0((CScnVirtualLightData*)data) != 0) {
-            func_80495AF4((CLightEnv*)p, data, 3);
+            exportSlotLights((CLightEnv*)p, data, 3);
         } else {
-            func_80495AF4((CLightEnv*)p, data, 0);
+            exportSlotLights((CLightEnv*)p, data, 0);
         }
     }
     if (self->valueCC != 0) {
@@ -915,13 +915,13 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
                     f32 range = f1 + scnVlGetRange(
                                          (void*)((u32*)self->mExtraAlloc)[j]);
                     if (range * range >= dist2) {
-                        func_804C02E4(dst, ((u32*)self->mExtraAlloc)[j]);
+                        LightCtlCopyObj(dst, ((u32*)self->mExtraAlloc)[j]);
                         f32 scaled = f31v * range;
                         if (scaled * scaled < dist2) {
-                            func_804C0928(dst, (range - safeFSqrt(dist2)) /
+                            LightCtlScaleColor(dst, (range - safeFSqrt(dist2)) /
                                                    (range - scaled));
                         } else {
-                            func_804C0928(dst, lbl_eu_8066AA18);
+                            LightCtlScaleColor(dst, lbl_eu_8066AA18);
                         }
                         dst = (CLight*)((u8*)dst + 0x40);
                         count++;
@@ -934,7 +934,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
             if (j >= 0x80) break;
         }
     }
-    func_804BFEB4(data);
+    scnVlUpdateColor(data);
 }
 
 __declspec(noinline) float scnVlGetFade(void* self) { return ((CScnVirtualLightData*)self)->valueD4; }
@@ -957,17 +957,17 @@ __declspec(noinline) u32 scnVlGetCount(void* self) { return ((CScnVirtualLightDa
 
 extern "C" __declspec(noinline) void* scnVlSlotAt(void* self, u32 idx){ return (void*)((char*)self + idx * 64); }
 
-// Retail func_80493F08: dispatch a light-environment slot setup on the type
+// Retail scnVlDispatchNode: dispatch a light-environment slot setup on the type
 // of the light object at *scnVlNodeItem(node) (+0x2C). The light's position
 // comes from the vtable+0x0C virtual (ml::CVec3 by value); each type arms the
 // slot's next light through the matching CVirtualLightObj.cpp helper:
-// 1 = ambient (func_804952C4), 2 = directional with Euler angles
+// 1 = ambient (blendSlotAmbient), 2 = directional with Euler angles
 // (bindOrientedLight), 3 = directional with a direction pointer (bindAttenuatedLight),
 // 4 = spot with full params (bindSpotLight). The first parameter is unused
 // (retail keeps r3 untouched). The dispatch is an if/else-if compare chain in
 // retail (not a jump-table switch), and each case re-fetches the object via
 // scnVlNodeItem like retail (the call result is never cached).
-extern "C" void func_80493F08(void* unused, CLightEnv* env,
+extern "C" void scnVlDispatchNode(void* unused, CLightEnv* env,
                               CScnVirtualLightNode* node) {
     ml::CVec3 v38;   // sp+0x38 (case 1 position)
     ml::CVec3 v28;   // sp+0x28 (case 2 position)
@@ -986,7 +986,7 @@ extern "C" void func_80493F08(void* unused, CLightEnv* env,
     if (type == 1) {
         obj = (CScnVirtualLightData*)*scnVlNodeItem(node);
         v38 = ((CVirtualLightDispatch*)(void*)obj)->GetPosition();
-        func_804952C4(env, &v38);
+        blendSlotAmbient(env, &v38);
     } else if (type == 2) {
         obj = (CScnVirtualLightData*)*scnVlNodeItem(node);
         angleY = scnVlGetAngleY((void*)obj);
@@ -1047,13 +1047,13 @@ void* scnVlAllocSlot(CScnVirtualLightPool* self) {
 }
 
 // Free a pool slot: find the handle that points at `slot`, reset the light
-// (func_804C03A0), clear the handle and decrement the slot count, clamped at
+// (LightCtlSetAttnMode), clear the handle and decrement the slot count, clamped at
 // 0. The mHandles base reload every iteration mirrors the retail aliasing
 // loads around the bl (retail scnVlFreeSlot).
 void scnVlFreeSlot(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
     for (int i = 0; i < 128; i++) {
         if (self->mHandles[i] == slot) {
-            func_804C03A0((u8*)slot, 0);
+            LightCtlSetAttnMode((u8*)slot, 0);
             self->mHandles[i] = 0;
             u32 count = self->mCount - 1;
             self->mCount = count;
@@ -1148,7 +1148,7 @@ extern "C" void scnVlAllocNodes(CScnVirtualLightReslist* self, u32 handle, int c
     self->mCapacity = capacity;
 }
 #pragma pop
-// Retail func_804923F8: scene-light reset. arg == 0 destroys every light
+// Retail scnVlResetMgr: scene-light reset. arg == 0 destroys every light
 // object held by the four reslists (virtual deleting-dtor dispatch at vtable
 // +0x8), clears each ring, zeroes the pool bound count and the 128-slot
 // handle array. arg != 0 instead removes the single node whose item equals
@@ -1156,7 +1156,7 @@ extern "C" void scnVlAllocNodes(CScnVirtualLightReslist* self, u32 handle, int c
 // scnVlUnlinkNode. Frame slots mirror retail (first-declared -> higher
 // offset); the destroy sequence re-calls scnVlNodeItem at every step like
 // retail (the call result is never cached).
-extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {
+extern "C" void scnVlResetMgr(CScnVirtualLight* self, int arg) {
     u32 it0;     // 0x88
     u32 it1;     // 0x84
     u32 it2;     // 0x80

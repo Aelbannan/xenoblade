@@ -15,19 +15,19 @@ public:
     void enqueueContextMsg();
     void CView_UnkVirtualFunc4();
     void updateViewState();
-    void func_8043E46C();
-    void func_8043E46C();
+    void accumRectToView();
+    void accumRectToView();
     void clipRectToView();
     void adjustRectForView();
     void applyRectToView();
-    void func_8043E928();
-    void func_8043EA88();
+    void insetRectToView();
+    void fitRectToView();
     void wkStandbyLogin();
     void wkStandbyLogout();
 
     // TODO: add fields
     void setDefaultFrameColor(const ml::CCol4& color);
-    void func_8043CAFC();
+    void hasSplitViews();
     void setDisp(bool r4, bool r5);
     void getSplitFrameFlag();
     void getSplitLine();

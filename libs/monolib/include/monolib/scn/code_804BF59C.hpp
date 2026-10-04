@@ -80,7 +80,7 @@ extern "C" void ScnEnvLgt_noopF59C(void);
 // 'this', then compacts enabled CLight entries from 'rhs' into 'this' (up
 // to mActiveLightCount). Copies ambient color/mul, lerp speed, and flags
 // from rhs, then calls the post-update hook.
-extern "C" void func_804BF774(CScnEnvLgtData* self, const CScnEnvLgtData* rhs);
+extern "C" void ScnEnvLgt_Propagate(CScnEnvLgtData* self, const CScnEnvLgtData* rhs);
 
 // ---------------------------------------------------------------------------
 // Post-light-update hook called after modifying light parameters.
@@ -96,8 +96,8 @@ extern "C" void ScnEnvLgt_noopF940(void);
 // CLight slots. For each enabled slot, samples the curve at
 // mAmbMul[i] * 2 and multiplies it by the per-slot unk10 color scaled by
 // mDirColorA. Clamps the result components to >= 0 and forwards the
-// vec3 to func_804C07F0 for the per-slot light update.
-extern "C" void func_804BFFB8(CScnEnvLgtData* self);
+// vec3 to LightCtlSetColor for the per-slot light update.
+extern "C" void ScnEnvLgt_ApplyFalloff(CScnEnvLgtData* self);
 
 // Top-level state update: selects between full reset, soft reset, or
 // interpolation paths based on mFlags bits 3..6 plus the supplied
@@ -106,7 +106,7 @@ extern "C" void func_804BFFB8(CScnEnvLgtData* self);
 // the relevant control bits. The interpolation path lerps mAmbMul
 // toward mDirColorMul at rate mLerpSpeed, updating mLerpT. 'vec' is a
 // directional color sample consumed when bit 6 of mFlags is set.
-extern "C" void func_804BFA70(CScnEnvLgtData* self, const ml::CVec3* vec, int mode, int reset);
+extern "C" void scnVlUpdateShape(CScnEnvLgtData* self, const ml::CVec3* vec, int mode, int reset);
 
 
 // Sets bit 0x80 of mFlags when 'enable' is non-zero, and clears bit 0x100

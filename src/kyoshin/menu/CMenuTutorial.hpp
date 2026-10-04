@@ -94,17 +94,17 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CTutorial widget callees (retail-unmangled func_ names).
 extern "C" void Tutorial_DrawLayoutGated(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_8029AB28(CTutorial* self);
+extern "C" void Tutorial_Move(CTutorial* self);
 extern "C" void Tutorial_TeardownTutorial(CTutorial* self);
 extern "C" void Tutorial_LoadTutorialFiles(CTutorial* self);
 extern "C" void Tutorial_StartIfIdle(CTutorial* self);
-extern "C" u8 func_8029AE5C(CTutorial* self);
+extern "C" u8 Tutorial_GetPageState(CTutorial* self);
 extern "C" int Tutorial_GetField46Mark(CTutorial* self);
 extern "C" int Tutorial_GetField47Mark(CTutorial* self);
 extern "C" int Tutorial_GetField52Mark(CTutorial* self);
-extern "C" void func_8029AD88(CTutorial* self);
+extern "C" void Tutorial_NextPage(CTutorial* self);
 extern "C" void Tutorial_AdvanceState3To4(CTutorial* self);
-extern "C" void func_8029ADF8(CTutorial* self);
+extern "C" void Tutorial_PrevPage(CTutorial* self);
 
 // CF / ui helpers (retail-unmangled names).
 extern "C" int IsMenuState621F0();

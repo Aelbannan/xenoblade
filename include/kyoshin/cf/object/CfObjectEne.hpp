@@ -18,9 +18,9 @@ namespace cf {
 class CfObjectEne : public CfObjectActor {
 public:
     virtual ~CfObjectEne();
-    virtual void func_800ADB2C();
+    virtual void initEnemyBattleState();
     virtual void updateEnemyBattleState();
-    virtual void func_800ADDA8();
+    virtual void loadEnemyParams();
     virtual void initEnemyBdatParams();
     void CActorParam_UnkVirtualFunc166();
     void CActorParam_UnkVirtualFunc167();
@@ -197,7 +197,7 @@ struct CActorParam17ECView {
         f32 field_0x45CC;
     };
 
-    // +0x44A8 sub-object touched at the end of func_800ADB2C (the u16 at
+    // +0x44A8 sub-object touched at the end of initEnemyBattleState (the u16 at
     // +0xB2 receives 0xC8).
     struct CfEneReloadArea {
         u8 _pad[0xB2];
@@ -213,7 +213,7 @@ struct CActorParam17ECView {
     };
 
     // Distinct absolute-offset views of the +0x3E9C CfObjectMove subobject
-    // base, one per plain (non-virtual) call site in func_800ADB2C so MWCC
+    // base, one per plain (non-virtual) call site in initEnemyBattleState so MWCC
     // re-materializes `addi r3, r31, 0x3e9c` per call instead of CSE-ing the
     // address into a callee-saved register (which would grow the frame).
     struct CfEneMoveBaseA {
@@ -233,7 +233,7 @@ struct CActorParam17ECView {
         u8 base; // 0x3E9C
     };
     // NOTE: distinct view types do NOT stop MWCC from CSE-ing these
-    // addresses across calls in func_800ADB2C (value numbering ignores
+    // addresses across calls in initEnemyBattleState (value numbering ignores
     // types); they only keep the source sites self-documenting.
 
     // Base of the +0x8 CBattleState subobject (func_80148778 arg and the
@@ -269,7 +269,7 @@ struct CActorParam17ECView {
         u32 field_0x7A4; // 0x7A4
     };
 
-    // Object behind CfObjectActor's +0x3F60 pointer (func_800AF870): the
+    // Object behind CfObjectActor's +0x3F60 pointer (applyEnemyReward): the
     // model-id word at +0x4B0 and the +0x4EC flag word (bit 8 gates).
     struct CfEneMoveTgtView {
         u8 _pad[0x4B0];
@@ -278,7 +278,7 @@ struct CActorParam17ECView {
         u32 field_0x4EC;           // 0x4EC flags (bit 8)
     };
 
-    // CBattleManager fields read by func_800AF870: party-count byte at
+    // CBattleManager fields read by applyEnemyReward: party-count byte at
     // +0x1AA, mode s16 at +0x20C8 and the +0x216C func_801BA2C8 buffer.
     struct CfEneBmView {
         u8 _pad[0x1AA];
@@ -305,7 +305,7 @@ struct CActorParam17ECView {
         u8 b;
     };
 
-    // func_800ADDA8 / initEnemyBdatParams dispatch through the owning-class
+    // loadEnemyParams / initEnemyBdatParams dispatch through the owning-class
     // CActorParam aliases (setEnemyType / setStatScale / getArtsSlotIds / ...);
     // no TU-local proxy remains.
 
@@ -562,10 +562,10 @@ struct CActorParam17ECView {
     // vptr at +0x84; proven CArtsSet.cpp attack-record pattern). No TU-local
     // record iface remains.
 
-    // --- func_800ADDA8 views ---
+    // --- loadEnemyParams views ---
 
     // Battle-gauge/rates region behind the primary vtable slots +0x1C4
-    // (float at +0x0) and +0x20C (floats at +0x44/+0x48; the func_800ADDA8
+    // (float at +0x0) and +0x20C (floats at +0x44/+0x48; the loadEnemyParams
     // rates record stores through the whole range below).
     struct CfEneMoveRateView {
         f32 field_0x0;   // 0x00 (slot +0x1C4 result)
@@ -598,7 +598,7 @@ struct CActorParam17ECView {
         u8 field_0x73;   // 0x73
     };
 
-    // Primary param-region fields written by func_800ADDA8: the u32 at
+    // Primary param-region fields written by loadEnemyParams: the u32 at
     // +0x15F0, the mode bytes +0x1629..0x162C, the u16 -accumulated words
     // +0x1648/+0x164A/+0x164C and the tail u32s +0x3370/+0x3374/+0x3F00/
     // +0x3F04/+0x3F10.
@@ -632,7 +632,7 @@ struct CActorParam17ECView {
         u32 field_0x3F10;           // 0x3F10
     };
 
-    // 0x34-byte stack buffer built by func_800ADDA8 and passed to the +0x8
+    // 0x34-byte stack buffer built by loadEnemyParams and passed to the +0x8
     // CBattleState subobject vtable slot +0x18 (same shape as CfActor179Buf;
     // the retail writes the +0x08 word with a full 32-bit store).
     struct CfEneSetupBuf {
@@ -650,7 +650,7 @@ struct CActorParam17ECView {
         u32 field_0x30;  // 0x30 (= 1)
     };
 
-    // func_800ADDA8 slot map (all dispatched through the owning-class
+    // loadEnemyParams slot map (all dispatched through the owning-class
     // CActorParam aliases; no TU-local proxy remains): +0xDC/+0xE4 (u8 arg),
     // +0xE8/+0x198/+0x1A4/+0x1BC/+0x334 (float arg), +0x170/+0x188/+0x25C
     // (int arg), +0x21C (ptr arg), +0x254 (u32 arg), +0x1C4/+0x20C (rates),
@@ -666,17 +666,17 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(void* self
 extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
 extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
-extern "C" void func_800ADDA8__Q22cf11CfObjectEneFv(void* self);
+extern "C" void loadEnemyParams__Q22cf11CfObjectEneFv(void* self);
 // Verbatim `__`-named free function (the retail class is not a polymorphic
 // MI hierarchy per the headers; see the CfObjectActor dtor note in
 // CfObjectEne.cpp). Plain C++ declaration keeps the verbatim name.
-int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
+int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
 extern "C" void CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);
 extern "C" void updateEnemyBattleState__Q22cf11CfObjectEneFv(void* self);
 // Verbatim `__`-named free deleting dtor (same rationale as
-// func_800ADB2C__Q22cf11CfObjectEneFv above).
+// initEnemyBattleState__Q22cf11CfObjectEneFv above).
 extern "C" cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFlag);
 
 // C-ABI free-function import: retail CfGameManager "party count" getter
@@ -711,7 +711,7 @@ extern "C" cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* se
                                                           cf::CfResReloadParent* parent);
 
 // C-ABI imports used by the CfObjectEne ctor (func_80061FFC + MemManager),
-// func_800ADB2C and the dtor (retail symbols are unmangled).
+// initEnemyBattleState and the dtor (retail symbols are unmangled).
 extern "C" unsigned long func_80061FFC();
 extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
@@ -723,7 +723,7 @@ extern "C" void func_801F4D50(void* obj, void* actor);
 // getUnk80664658: single typed view lives on CSuddenCommu.hpp (extern "C"
 // block); this tail must not redeclare it with a divergent return type.
 
-// C-ABI imports used by initEnemyBdatParams / updateEnemyBattleState / func_800AF870
+// C-ABI imports used by initEnemyBdatParams / updateEnemyBattleState / applyEnemyReward
 // (retail symbols are unmangled).
 // Bdat_GetRowBase_B41C / Bdat_GetMaxRow_B1EC: canonical form per ocBdat.cpp definitions
 // (u32(void*)); CfObjectPc.hpp's block uses the same spelling.
@@ -733,7 +733,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // bdat row count (must match 
 extern "C" void func_8014B7B0(u8* obj);
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
 // func_80174C98 / func_80174B4C are owned by kyoshin/cf/CfMapItemManager.hpp.
-extern "C" void func_801765A4(void* actor, f32 value, u32 arg);
+extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);
 extern "C" unsigned long func_801BA2C8(void* self);
 // func_80148778 and getInstance__Q22cf14CBattleManagerFv are declared in
 // CAIAction.hpp / kyoshin/cf/CBattleManagerApi.hpp (reachable via
@@ -746,8 +746,8 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 
 // Verbatim-name free function (defined in CfObjectEne.cpp; updateEnemyBattleState
 // tail-dispatches the bdat-match path through it). extern "C" keeps the
-// call-site reloc at the unmangled retail name func_800AF870.
-extern "C" void func_800AF870(cf::CfObjectEne* self);
+// call-site reloc at the unmangled retail name applyEnemyReward.
+extern "C" void applyEnemyReward(cf::CfObjectEne* self);
 
 // C-ABI imports used by the CfObjectEne arts/attack loaders
 // (CActorParam_UnkVirtualFunc166/167; defined in CArtsSet.cpp and
@@ -768,44 +768,44 @@ extern float lbl_eu_80666980;
 extern const double lbl_eu_806669B8;
 extern const double lbl_eu_806669C0;
 
-// initEnemyBdatParams / func_800AF870 constants (.sdata2): 2^52 u16->f32 magic,
+// initEnemyBdatParams / applyEnemyReward constants (.sdata2): 2^52 u16->f32 magic,
 // 2^52+2^31 s32->f32 magic and the scale constant.
 extern const double lbl_eu_806669A0;
 extern const double lbl_eu_806669A8;
 extern const float lbl_eu_806669B0;
 
-// func_800AF870 bdat file pointer (.sdata2) and drop-channel tables (.sbss):
+// applyEnemyReward bdat file pointer (.sdata2) and drop-channel tables (.sbss):
 // u16 mode word at 0x80663E42 and the per-mode channel halfword table whose
 // entries are addressed at byte offset mode*100 from 0x80663E44.
 extern u16 lbl_eu_80663E42;
 extern u16 lbl_eu_80663E44;
 
-// func_800AF870 bdat file pointer (.sdata2) and column-name string table
+// applyEnemyReward bdat file pointer (.sdata2) and column-name string table
 // (.rodata entries at +0x19A / +0x2C3 / +0x2CA / +0x2CE / +0x2D7).
 extern void* lbl_eu_806640D4;   // unified pointer form (was u8*)
 extern char lbl_eu_804FC168[];
 
-// func_800ADB2C func_804B0AD4 float args (.sdata2).
+// initEnemyBattleState func_804B0AD4 float args (.sdata2).
 extern float lbl_eu_8066696C;
 extern float lbl_eu_80666970;
 
 // .sdata2 constants used by the CfObjectEne arts/attack loaders
-// (CActorParam_UnkVirtualFunc166/167) and the func_800ADDA8 setup.
-extern float lbl_eu_8066697C;   // u8/u16 -> f32 divisor (166/167, func_800ADDA8)
-extern float lbl_eu_80666984;   // func_800ADDA8 vf198/vf1A4 arg
-extern float lbl_eu_80666988;   // func_800ADDA8 vf1BC scale
-extern float lbl_eu_8066698C;   // func_800ADDA8 vf1BC divisor
-extern float lbl_eu_80666990;   // func_800ADDA8 vf334 ratio divisor
-extern float lbl_eu_80666994;   // 166 and func_800ADDA8 f32 divisor
-extern float lbl_eu_80666998;   // func_800ADDA8 scaled-vfE8 multiplier
+// (CActorParam_UnkVirtualFunc166/167) and the loadEnemyParams setup.
+extern float lbl_eu_8066697C;   // u8/u16 -> f32 divisor (166/167, loadEnemyParams)
+extern float lbl_eu_80666984;   // loadEnemyParams vf198/vf1A4 arg
+extern float lbl_eu_80666988;   // loadEnemyParams vf1BC scale
+extern float lbl_eu_8066698C;   // loadEnemyParams vf1BC divisor
+extern float lbl_eu_80666990;   // loadEnemyParams vf334 ratio divisor
+extern float lbl_eu_80666994;   // 166 and loadEnemyParams f32 divisor
+extern float lbl_eu_80666998;   // loadEnemyParams scaled-vfE8 multiplier
 extern float lbl_eu_806669B4;   // 166 0xFF arts-gauge fallback
-extern const float lbl_eu_8066A1F8;   // max gauge value (166 / func_800ADDA8); const form aligned with CChain.hpp / CBattleManager TU decls
+extern const float lbl_eu_8066A1F8;   // max gauge value (166 / loadEnemyParams); const form aligned with CChain.hpp / CBattleManager TU decls
 
 // lbl_eu_8066A20C / lbl_eu_8066A210 are already declared `const float` in
 // CfObjectModel.hpp (in the CfObjectActor.hpp chain) - reuse those.
 
 // .sbss/.sdata bdat table pointers and the two level-name letter buffers
-// used by func_800ADDA8 (byte written at pointer+3).
+// used by loadEnemyParams (byte written at pointer+3).
 extern u8* lbl_eu_80664094;
 extern u8* lbl_eu_8066409C;
 extern u8* lbl_eu_80661CB8;

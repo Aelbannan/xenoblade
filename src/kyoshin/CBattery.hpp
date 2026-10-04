@@ -10,7 +10,7 @@
 
 // Shared string pool in split1 .rodata: "/menu/jp/Battery.arc", "pic_%02d"...
 // lbl_* names at global (non-namespace) scope do not get mangled by C++.
-extern char lbl_eu_8051399C[];
+extern const char lbl_eu_8051399C[];
 
 // IWorkEvent vtable for CBattery (split1 .data on US/EU; __vt__8CBattery on JP).
 // 32-bit function-pointer slots (defined in the split1 unit that owns .data).

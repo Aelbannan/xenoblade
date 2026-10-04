@@ -44,7 +44,7 @@ extern "C" char* CfRes_getInstPtrBC();
 extern "C" u32 CfRes_isField4Zero(u8* res);
 extern "C" void CfRes_initStruct_64994(u8* res);
 extern "C" bool CfRes_findHighEntryById(int instField, u32 packed, u32* out10, u32* outC);
-extern "C" void* func_800A8E6C(int size, int checkOnly);
+extern "C" void* KyoshinHeap_AllocNode(int size, int checkOnly);
 extern "C" u8* KyoshinHeap_Alloc38(u32 size);
 extern "C" void CfRes_orBits_649B4(u8* self, u32 bits);
 extern "C" void CfRes_orBits_649CC(u8* self, u32 bits);
@@ -99,7 +99,7 @@ struct CfResSlot {
 // 0x10-byte name-keyed table record walked by CfRes_lookupNameByType: the +0x00 word
 // is a relative offset from the table base (the result pointer), +0x04 is
 // the value written to *out, and +0x08 is the 8-byte name string hashed by
-// func_800AA714 (bits 27-31 of the hash select the record).
+// Tok_ParseFile (bits 27-31 of the hash select the record).
 struct CfResNameEntry {
     u32 field_00;   // 0x00 - relative offset
     u32 field_04;   // 0x04 - value
@@ -201,7 +201,7 @@ struct CfResNameRec {
 
 // 16-byte records of the name-keyed table walked by CfRes_lookupStrTable: the +0x10
 // word is a relative offset from the table base, the +0x18 string resolves
-// through func_800AA600.
+// through Tok_GetPrefix.
 struct CfResStrTableRec {
     u8 _00[0x10];
     u32 field_10;   // 0x10 - relative offset
@@ -254,8 +254,8 @@ extern "C" int CfRes_reloadLoadedEntries(int);
 extern "C" int CfRes_updateFlaggedGrid(int);
 extern "C" int CfSoundMan_CloseRecord(int);
 extern "C" int KyoshinHeap_HasActive54();
-extern "C" int func_800A9134();
-extern "C" void func_800676F8(u8* self);
+extern "C" int KyoshinHeap_GetField54();
+extern "C" void CfRes_initWork(u8* self);
 // Same-TU archive-registration helper (defined in CfRes.cpp; C linkage so
 // the call reloc from __ct__Q22cf5CfResFv carries the retail name).
 extern "C" void CfRes_initArchiveTables(u8* self, int arg);
@@ -302,7 +302,7 @@ extern "C" void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16* first, u16* se
 
 // Main per-entry update step (defined in kyoshin/cf/IResInfo.cpp); C linkage
 // so the call reloc carries the retail unmangled name.
-extern "C" bool func_80066788(void* self, bool r4, bool r5, bool r6);
+extern "C" bool CfRes_updateEntry(void* self, bool r4, bool r5, bool r6);
 
 // Same-TU helpers (defined in CfRes.cpp; forward-declared so earlier callers
 // in the file can reference them). CfRes_resolveSlot130 is C linkage so the call
@@ -357,7 +357,7 @@ extern "C" unsigned long CfRes_packShift27(unsigned long a, unsigned long b);
 
 // Packed-name hash (kyoshin/code_800AA008.cpp - retail C symbol name; the
 // plain C++ declaration in code_800AA008.hpp would mangle the call reloc).
-extern "C" u32 func_800AA714(const char* path);
+extern "C" u32 Tok_ParseFile(const char* path);
 
 // Same-TU resource resolvers called by the func_80062xxx wrappers. C linkage
 // so the call relocs carry the retail unmangled names (same rule as the
@@ -424,7 +424,7 @@ extern "C" void CfRes_resetState2(u8* self);
 extern "C" char* CfRes_strcatAppend(char* buffer, const char* suffix);
 
 // Packed-token formatter (kyoshin/code_800AA008.cpp) - retail C symbol name.
-extern "C" u32 func_800AA600(const char* str);
+extern "C" u32 Tok_GetPrefix(const char* str);
 
 struct CFileHandle; // full definition in monolib/device/CFileHandle.hpp
 

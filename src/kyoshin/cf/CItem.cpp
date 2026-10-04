@@ -11,7 +11,7 @@ struct CItemData;
 struct CItemParam;
 struct CItemExt;
 
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+extern "C" u32 CtrlRemote_TouchBitByArg(u32); extern "C" void* CtrlObjectParam_GetCharEntry(u32); extern "C" void CtrlObjectParam_WriteEquipSlotValue(void*, unsigned long, void*); extern "C" u32 CtrlObjectParam_FindCharByItemInst(void*); extern "C" void CtrlObjectParam_RecollectArtsRows(void*); // zero-line fix: decls w/o shifting -ipa line numbers
 extern "C" void UIWin_CreateB4790Win(void* box, int flags);
 
 // Sum the party inventory counts for two item kinds, read six BDAT
@@ -383,7 +383,7 @@ const char* CItemRec_getNameIfKind2(u32 unused, CItemRec* rec) {
 
 // Build the sort scratch buffer for self: lazily zero the shared buffer,
 // then collect the per-category impl counts (vtable slots 0x4C/0x80/0x78/
-// 0x08) plus the packed field_07 bits and hand them to func_80159D74.
+// 0x08) plus the packed field_07 bits and hand them to CItem_buildSortName.
 CItemSortBuf* CItem_sortBuf(u32 unused, CItemData* self) {
     if (!lbl_eu_806641FC) {
         lbl_eu_80573FC0.field_00 = 0;
@@ -395,7 +395,7 @@ CItemSortBuf* CItem_sortBuf(u32 unused, CItemData* self) {
     u32 v27 = (self->field_07 >> 24) & 0x3F;
     u32 v3 = CItem_initItemImplInstances(self)->vf78(self);
     u32 v4 = CItem_initItemImplInstances(self)->vf08(self);
-    func_80159D74(&lbl_eu_80573FC0, self->field_07 & 3, (u16)v4, (u16)v3, v27, (u16)v2, (u16)v1);
+    CItem_buildSortName(&lbl_eu_80573FC0, self->field_07 & 3, (u16)v4, (u16)v3, v27, (u16)v2, (u16)v1);
     return &lbl_eu_80573FC0;
 }
 
@@ -413,7 +413,7 @@ extern "C" void CItemImpl_thunkVf20(CItemImpl* self, CItemData* p) { self->vf20(
 
 // Lazy-init the shared sort scratch buffer, then collect the per-category
 // impl counts (vtable slots 0x4C/0x80/0x78/0x08) plus the packed field_07
-// bits and hand them to func_80159D74. Same shape as CItem_sortBuf but with
+// bits and hand them to CItem_buildSortName. Same shape as CItem_sortBuf but with
 // its own guard/buffer pair.
 CItemSortBuf* CItemData_fillSortBufA(u32 unused, CItemData* self) {
     if (!lbl_eu_806641FD) {
@@ -425,7 +425,7 @@ CItemSortBuf* CItemData_fillSortBufA(u32 unused, CItemData* self) {
     u32 v2 = CItem_initItemImplInstances(self)->vf80(self);
     u32 v27 = (self->field_07 >> 2) & 0x3F;
     u32 v3 = CItem_initItemImplInstances(self)->vf78(self);
-    func_80159D74(&lbl_eu_80574004, self->field_07 & 3,
+    CItem_buildSortName(&lbl_eu_80574004, self->field_07 & 3,
                   (u16)CItem_initItemImplInstances(self)->vf08(self),
                   (u16)v3, v27, (u16)v2, (u16)v1);
     return &lbl_eu_80574004;
@@ -445,7 +445,7 @@ CItemSortBuf* CItemData_fillSortBufB(u32 unused, CItemData* self) {
     u32 v3 = CItem_initItemImplInstances(self)->vf78(self);
     // Inlining the last vf call in the argument list fuses its (u16)
     // truncation into the arg move (rlwinm r5,r3 instead of or+rlwinm).
-    func_80159D74(&lbl_eu_80574048, self->field_07 & 3,
+    CItem_buildSortName(&lbl_eu_80574048, self->field_07 & 3,
                   (u16)CItem_initItemImplInstances(self)->vf08(self),
                   (u16)v3, v27, (u16)v2, (u16)v1);
     return &lbl_eu_80574048;
@@ -482,7 +482,7 @@ const char* CItemRec_twin8Cb(u32 unused, CItemRec* rec) {
 // (kind 2 / 4..8), re-derive the item-name byte, and rebuild the 8-byte
 // records at field_08 from the +0x4A/+0x51 columns ('1'.. suffixed name
 // column).
-void func_80156350(u32 unused, CItemExt* self) {
+void CItem_RebuildEntries(u32 unused, CItemExt* self) {
     u32 w1 = self->field_00;
     self->mEntries[0] = -1;
     self->mEntries[1] = -1;
@@ -1611,7 +1611,7 @@ void CItem_noop3() {}
 // Initialize a kind-9 item record: clear a size-9 record, pack the family/
 // kind/row ids plus the byte-7 low flags, then refresh the impl state via
 // the vtable methods at 0x58 and 0x0C and set the byte-7 rank bits to 4.
-void func_80158300(CItemData* self, u32 id) {
+void CItem_initKind9Rec(CItemData* self, u32 id) {
     s32 size = CItem_catSize(9);
     if (self != 0 && size != 0) {
         memset(self, 0, (u32)size);
@@ -1642,7 +1642,7 @@ void CItemData_enableFamFlag(CItemData* self, u32 a) {
 // amount (*pOut2) and the record's per-kind rank fields are bumped, the
 // record is (re)initialized via CItemData_initFromFamily, and kind-3 records get their
 // +0x42 name byte re-derived through the impl vtable. Returns the record.
-extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b, u32* pOut2) {
+extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut1, u32 b, u32* pOut2) {
     *pOut1 = -1;
     *pOut2 = 0;
     if (a == 0) return 0;
@@ -1740,11 +1740,11 @@ void CItem_noop5() {}
 
 void CItem_noop6() {}
 
-// Thunk: forwards to func_80158420 with two stack out-params.
+// Thunk: forwards to CItem_findOrCreateRec with two stack out-params.
 void CItem_thunkAllocRecord(u32 a, u32 b) {
     s16 local1;
     u32 local2;
-    func_80158420(a, &local1, b, &local2);
+    CItem_findOrCreateRec(a, &local1, b, &local2);
 }
 
 // Find the first free (zero first-word) record in the item-block list for
@@ -1796,7 +1796,7 @@ CItemExt* CItem_findRecByFamily(u32 family) {
 // every non-empty record forward, record the destination index of each
 // copied slot in out (all other out entries stay -1), then copy the
 // compacted list back over the original.
-int func_80158894(u16 arg, u16* out, s32 capacity) {
+int CItem_compactRecList(u16 arg, u16* out, s32 capacity) {
     s32 count;
     s32 stride;
     u8* list = (u8*)CItemBlock_getKindList(arg, &count, &stride);
@@ -1851,7 +1851,7 @@ extern "C" s32 __dt__801589BC(u32 arg) {
     } else if (n >= 2) {
         CItemFamilyRec** pBase = buf->mRecs;
         CItemFamilyRec** pEnd = pBase + n;
-        func_80158AF4((u32*)pBase, (u32*)pEnd, (int (*)(u32*, u32*))CItemFamily_cmpId);
+        CItem_introSort((u32*)pBase, (u32*)pEnd, (int (*)(u32*, u32*))CItemFamily_cmpId);
         CItemFamilyRec** p = buf->mRecs;
         s32 i = 0;
         while (i < buf->mCount) {
@@ -1870,10 +1870,10 @@ extern "C" s32 __dt__801589BC(u32 arg) {
 // elements) are selection-sorted; larger ranges pick a median-of-3 pivot
 // (two depth-jittered sample points plus the last element, sorted via
 // CItem_sortMedian3), Hoare-partition around the last element, recurse on the
-// smaller half through func_80158E74 and keep looping on the larger half.
+// smaller half through CItem_introSortHalf and keep looping on the larger half.
 // The depth counter (lbl_eu_8066229C) jitters the sample points to avoid
 // quadratic behavior on sorted input.
-extern "C" void func_80158AF4(u32* base, u32* end, int (*cmp)(u32*, u32*)) {
+extern "C" void CItem_introSort(u32* base, u32* end, int (*cmp)(u32*, u32*)) {
     // The comparator receives element slot addresses, not the elements:
     // callers pass a record-typed callback whose first field aliases the
     // stored pointer (see CItemFamily_cmpId).
@@ -1982,24 +1982,24 @@ extern "C" void func_80158AF4(u32* base, u32* end, int (*cmp)(u32*, u32*)) {
             s32 left = i - base;
             s32 right = end - i;
             if (left < right) {
-                func_80158E74(base, i, &cmp);
+                CItem_introSortHalf(base, i, &cmp);
                 base = i;
             } else {
-                func_80158E74(i, end, &cmp);
+                CItem_introSortHalf(i, end, &cmp);
                 end = i;
             }
         }
     }
 }
 
-// Recursive half-sort helper (twin of func_80158AF4): introsort over the
+// Recursive half-sort helper (twin of CItem_introSort): introsort over the
 // pointer range [base, end). Small ranges (<= 20 elements) are selection-
 // sorted; larger ranges pick a median-of-3 pivot (two depth-jittered sample
 // points plus the last element, sorted via CItem_sortMedian3), Hoare-partition
 // around the last element, recurse on the smaller half and keep looping on
 // the larger half. Uses its own depth counter (lbl_eu_806622A0) and its
 // own recursion target (itself).
-extern "C" void __declspec(noinline) func_80158E74(u32* base, u32* end,
+extern "C" void __declspec(noinline) CItem_introSortHalf(u32* base, u32* end,
                                         int (**cmp)(u32*, u32*)) {
     while (true) {
         s32 count = end - base;
@@ -2108,10 +2108,10 @@ extern "C" void __declspec(noinline) func_80158E74(u32* base, u32* end,
             s32 left = i - base;
             s32 right = end - i;
             if (left < right) {
-                func_80158E74(base, i, cmp);
+                CItem_introSortHalf(base, i, cmp);
                 base = i;
             } else {
-                func_80158E74(i, end, cmp);
+                CItem_introSortHalf(i, end, cmp);
                 end = i;
             }
         }
@@ -2230,11 +2230,11 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
 
 // Rebuild the item-box tables: refresh the per-kind impl state for every
 // non-empty record of kinds 2,4,5,6,7,8 (vf48), compact each kind's record
-// list into the scratch buffer via func_80158894 (kinds 3 and 9..13 into
+// list into the scratch buffer via CItem_compactRecList (kinds 3 and 9..13 into
 // the stack table), then for each character re-sync the six equip slots
 // against the compacted indices and the party slot arrays (mArr1/mArr2/
 // mArr3), handing each (amount, item id) pair to the kind-impl vf44.
-extern "C" s32 func_80159524() {
+extern "C" s32 CItem_rebuildBoxTables() {
     syncItemGroups__Q22cf13CfGameManagerFv();
     s16* buf = (s16*)mtl::MemManager::allocate_head(
         mtl::MemManager::getHandleMEM2(), 0x960, 4);
@@ -2305,15 +2305,15 @@ extern "C" s32 func_80159524() {
     }
     // Compact each kind's record list into the scratch buffer (the third
     // argument is the out-table capacity; the callee ignores it).
-    func_80158894(3, (u16*)buf, 0x12c);
-    func_80158894(2, (u16*)buf + 0x258 / 2, 0x96);
-    func_80158894(4, (u16*)buf + 0x384 / 2, 0x96);
-    func_80158894(5, (u16*)buf + 0x4b0 / 2, 0x96);
-    func_80158894(6, (u16*)buf + 0x5dc / 2, 0x96);
-    func_80158894(7, (u16*)buf + 0x708 / 2, 0x96);
-    func_80158894(8, (u16*)buf + 0x834 / 2, 0x96);
+    CItem_compactRecList(3, (u16*)buf, 0x12c);
+    CItem_compactRecList(2, (u16*)buf + 0x258 / 2, 0x96);
+    CItem_compactRecList(4, (u16*)buf + 0x384 / 2, 0x96);
+    CItem_compactRecList(5, (u16*)buf + 0x4b0 / 2, 0x96);
+    CItem_compactRecList(6, (u16*)buf + 0x5dc / 2, 0x96);
+    CItem_compactRecList(7, (u16*)buf + 0x708 / 2, 0x96);
+    CItem_compactRecList(8, (u16*)buf + 0x834 / 2, 0x96);
     for (s32 k = 9; k < 14; k++) {
-        func_80158894((u16)k, out9, 0x12c);
+        CItem_compactRecList((u16)k, out9, 0x12c);
     }
     // Re-sync every character's equip slots against the compacted tables.
     for (s32 id = 1; id <= 13; id++) {
@@ -2359,7 +2359,7 @@ extern "C" s32 func_80159524() {
 
 // Look up an item record for the family/row in self: when the BDAT name
 // column (string column +0xBD) is in [0x0A, 0x0D] the record is created
-// directly via func_80158420; otherwise a free record is found via
+// directly via CItem_findOrCreateRec; otherwise a free record is found via
 // CItemData_findFreeRec, every family-kind record's rank field is bumped, and the
 // record is copied into the slot. *pOut receives the slot index (or -1 when
 // no record exists); the created record pointer is returned.
@@ -2389,7 +2389,7 @@ extern "C" CItemExt* CItemData_lookupOrAlloc(CItemData* self, s16* pOut) {
     s32 kind;    // outer loop counter
     CItemExt* r;
     if (flag) {
-        r = func_80158420(self->field_00 >> 20, &out1, self->field_06, &out2);
+        r = CItem_findOrCreateRec(self->field_00 >> 20, &out1, self->field_06, &out2);
         if (pOut != 0) *pOut = out1;
     } else {
         r = CItemData_findFreeRec(self, &stride, &out1);
@@ -2501,7 +2501,7 @@ found:
 // console-language-specific order (some languages weave the prefix in
 // between the parts). The running lengths are tracked per stage and the
 // final length is written to buf->field_40.
-extern "C" __declspec(noinline) void func_80159D74(CItemSortBuf* buf, u32 a,
+extern "C" __declspec(noinline) void CItem_buildSortName(CItemSortBuf* buf, u32 a,
                                                     u32 b, u32 c, u32 d,
                                                     u32 e, u32 f) {
     CItemNameBuf s1;      // 0x628
@@ -2667,7 +2667,7 @@ extern "C" __declspec(noinline) void func_80159D74(CItemSortBuf* buf, u32 a,
 // CItem_catSize(3) when the slot is non-null, then pack the family/kind/
 // row ids into the slot word (bits 20-31 / 16-19 / 5-15 / 2-4) and refresh
 // the per-category impl state via the vtable method at 0x1C.
-void func_80159F6C(CItemData* self, u32 family, u32 row, u16 kind) {
+void CItem_initSlot(CItemData* self, u32 family, u32 row, u16 kind) {
     kind = kind < 1 ? 1 : (kind > 6 ? 6 : kind);
     s32 size = CItem_catSize(3);
     if (self != 0 && size != 0) {
@@ -2689,7 +2689,7 @@ void func_80159F6C(CItemData* self, u32 family, u32 row, u16 kind) {
 // strings with the iteration digit, roll against the percent column, and on
 // success build a kind-9 scratch record, refresh it via the impl vtable,
 // append it to self's record array and copy it out. Returns 1 on success.
-s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e) {
+s32 CItem_rollTwoColPick(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e) {
     CItemScratch local;
     local.field_04 = 0;
     local.field_00 = 0;
@@ -2764,7 +2764,7 @@ void CItem_noop8() {}
 // percent columns, and on a successful roll initialise the 52-byte scratch
 // record, refresh the kind-impl state (vf1C/vf34), append it to self's
 // record array and copy the record out. Returns 1 on success.
-extern "C" s32 func_8015A238(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
+extern "C" s32 CItem_rollThreeCol(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
     CItemScratch local;
     local.field_04 = 0;
     local.field_00 = 0;
@@ -2822,7 +2822,7 @@ extern "C" s32 func_8015A238(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
 // percent columns, and on a successful roll initialise the 52-byte scratch
 // record, refresh the kind-impl state (vf1C/vf34), append it to self's
 // record array and copy the record out. Returns 1 on success.
-s32 func_8015A51C(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
+s32 CItem_rollThreeColAlt(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
     CItemScratch local;
     local.field_04 = 0;
     local.field_00 = 0;
@@ -2879,7 +2879,7 @@ s32 func_8015A51C(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
 // with the iteration digit, read the BDAT name columns for the family/row,
 // and on a successful roll initialise the 52-byte scratch record, append it
 // to self's record array and copy the record out. Returns 1 on success.
-extern "C" s32 func_8015A3CC(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
+extern "C" s32 CItem_rollTwoCol(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
     CItemScratch local;
     local.field_04 = 0;
     local.field_00 = 0;
@@ -2922,10 +2922,10 @@ extern "C" s32 func_8015A3CC(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
     return 0;
 }
 
-// Same item-roll helper as func_8015A3CC but operating on the
+// Same item-roll helper as CItem_rollTwoCol but operating on the
 // lbl_eu_806622D0/lbl_eu_806622D4 column strings and the
 // lbl_eu_80664220/lbl_eu_80664224 cache pair.
-extern "C" s32 func_8015A6AC(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
+extern "C" s32 CItem_rollTwoColAlt(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
     CItemScratch local;
     local.field_04 = 0;
     local.field_00 = 0;
@@ -2969,13 +2969,13 @@ extern "C" s32 func_8015A6AC(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
 }
 
 // Roll up to maxCount items for the shared four-record block (body not yet
-// recovered; noinline keeps the retail `bl` at the func_8015ACAC call site).
+// recovered; noinline keeps the retail `bl` at the CItem_rollWeighted4B call site).
 // Try each of the eight numbered sub-columns for one item roll: mutate the
 // two column-name strings' last character with the iteration digit, read the
 // BDAT name/percent columns, and on a passing roll build a 52-byte item
 // record (CItemData_initFromFamily + vf1C), tag its low flag bits, append it to self's
 // record array, and stop. Returns 1 when a record was appended.
-extern "C" __declspec(noinline) s32 func_8015A7FC(CItemFour* self, u32 item,
+extern "C" __declspec(noinline) s32 CItem_rollSubColumns(CItemFour* self, u32 item,
                                                   u32 count, void* handle, u32 x) {
     CItemScratch local;   // 0x10
     union {
@@ -3021,7 +3021,7 @@ extern "C" __declspec(noinline) s32 func_8015A7FC(CItemFour* self, u32 item,
 // BDAT name/percent columns, and on a passing roll build a 52-byte item
 // record (CItemData_initFromFamily + vf1C) and append it to self's record array.
 // forceA/forceB and the second-iteration guarantee force a 100% roll.
-extern "C" void func_8015A930(CItemFour* self, u32 row, s32 maxCount,
+extern "C" void CItem_rollForced(CItemFour* self, u32 row, s32 maxCount,
                               u32 forceA, u32 randomize, u32 forceB) {
     void* handle = lbl_eu_8066414C;
     s32 len = strlen(lbl_eu_806622E0) - 1;
@@ -3071,9 +3071,9 @@ extern "C" void func_8015A930(CItemFour* self, u32 row, s32 maxCount,
 // per-item probability columns: read the four u8 percent weights (columns
 // +0xF9/+0x103/+0x10B/+0x117), then repeatedly pick a column by weighted
 // roll (retrying up to 100 times), roll the matching kind's record
-// (func_8015A51C / func_8015A238 / func_8015A054 / func_8015A7FC), and
+// (CItem_rollThreeColAlt / CItem_rollThreeCol / CItem_rollTwoColPick / CItem_rollSubColumns), and
 // dedupe the last two records when they share the same family id.
-extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u32 count, u32 row) {
+extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 item, u32 count, u32 row) {
     void* handle = lbl_eu_80664150;
     union {
         u32 v;
@@ -3126,13 +3126,13 @@ extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u3
         pick = 0;
     roll:
         if (pick == 0) {
-            added += func_8015A51C(self, item, count, handle, 1);
+            added += CItem_rollThreeColAlt(self, item, count, handle, 1);
         } else if (pick == 1) {
-            added += func_8015A238(self, item, count, handle, 1);
+            added += CItem_rollThreeCol(self, item, count, handle, 1);
         } else if (pick == 2) {
-            added += func_8015A054(self, item, count, handle, 1, row);
+            added += CItem_rollTwoColPick(self, item, count, handle, 1, row);
         } else if (pick == 3) {
-            added += func_8015A7FC(self, item, count, handle, 1);
+            added += CItem_rollSubColumns(self, item, count, handle, 1);
         }
         if ((s32)count > 1 && added > 1) {
             s32 last = (s32)*(volatile u32*)&self->mCount - 1;
@@ -3153,7 +3153,7 @@ extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u3
 // per-item probability columns: pick a column by weighted roll (retrying up
 // to 100 times), roll the matching kind's record, and dedupe the last two
 // records when they share the same family id.
-extern "C" void func_8015ACAC(CItemFour* self, u32 item, u32 count) {
+extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
     const char* base = lbl_eu_80501C58;
     void* handle = lbl_eu_80664154;
     u16 probs[4];
@@ -3196,13 +3196,13 @@ extern "C" void func_8015ACAC(CItemFour* self, u32 item, u32 count) {
         pick = 0;
     roll:
         if (pick == 0) {
-            added += func_8015A7FC(self, item, count, handle, 2);
+            added += CItem_rollSubColumns(self, item, count, handle, 2);
         } else if (pick == 1) {
-            added += func_8015A238(self, item, count, handle, 2);
+            added += CItem_rollThreeCol(self, item, count, handle, 2);
         } else if (pick == 2) {
-            added += func_8015A3CC(self, item, count, handle, 2);
+            added += CItem_rollTwoCol(self, item, count, handle, 2);
         } else if (pick == 3) {
-            added += func_8015A6AC(self, item, count, handle, 2);
+            added += CItem_rollTwoColAlt(self, item, count, handle, 2);
         }
         if ((s32)count > 1 && added > 1) {
             s32 last = (s32)self->mCount - 1;
@@ -3219,7 +3219,7 @@ extern "C" void func_8015ACAC(CItemFour* self, u32 item, u32 count) {
 // Refresh every item in the four-record list: records whose packed kind
 // (field_00 bits 12-15) is 9, or whose field_07 low bits are 2, get the
 // 4-iteration vf4C refresh; others get the count-driven vf2C/vf30 refresh.
-extern "C" void func_8015AE9C(CItemFour* self) {
+extern "C" void CItem_refreshFourRec(CItemFour* self) {
     u32 off = 0;
     for (u32 i = 0; i < self->mCount; i++) {
         u32 word = *(u32*)((char*)self + off);
@@ -3267,14 +3267,14 @@ extern "C" void CItem_openAreaEventBox(s32 kind, u32 row) {
     // reuses it in both the kind==2 and kind==3 branches.
     u32 flag = (mode == 2);
     if (kind == 1) {
-        func_8015A930(block, item1, 2, 0, 0, 0);
+        CItem_rollForced(block, item1, 2, 0, 0, 0);
     } else if (kind == 2) {
-        func_8015A930(block, item1, 1, 1, 0, (u16)flag != 0);
-        func_8015AAB4(block, item2, 2, row);
+        CItem_rollForced(block, item1, 1, 1, 0, (u16)flag != 0);
+        CItem_rollWeighted4(block, item2, 2, row);
     } else if (kind == 3) {
-        func_8015A930(block, item1, 1, 1, 0, (u16)flag != 0);
-        func_8015AAB4(block, item2, 1, row);
-        func_8015ACAC(block, item3, 2);
+        CItem_rollForced(block, item1, 1, 1, 0, (u16)flag != 0);
+        CItem_rollWeighted4(block, item2, 1, row);
+        CItem_rollWeighted4B(block, item3, 2);
     }
 }
 
@@ -3282,11 +3282,11 @@ void CItem_clearSharedBox() {
     lbl_eu_80573EEC.mCount = 0;
 }
 
-// Roll one item-box entry (type 1: fixed pick via func_8015A930, type 2:
-// weighted dispatch via func_8015AAB4, type 3: random via func_8015ACAC)
+// Roll one item-box entry (type 1: fixed pick via CItem_rollForced, type 2:
+// weighted dispatch via CItem_rollWeighted4, type 3: random via CItem_rollWeighted4B)
 // into the shared four-record block, gated on three non-zero BDAT columns
 // and a free slot. Returns whether the block's record count changed.
-s32 func_8015B130(s32 type, u32 row) {
+s32 CItem_rollBoxEntry(s32 type, u32 row) {
     CItemFour* blk = &lbl_eu_80573EEC;
     u32 oldCount = blk->mCount;
     if (oldCount >= 4) return 0;
@@ -3303,11 +3303,11 @@ s32 func_8015B130(s32 type, u32 row) {
     u8 c = t2.b[0];
     if (a == 0 || b == 0 || c == 0) return 0;
     if (type == 1) {
-        func_8015A930(blk, a, 1, 0, 1, 0);
+        CItem_rollForced(blk, a, 1, 0, 1, 0);
     } else if (type == 2) {
-        func_8015AAB4(blk, b, 1, row);
+        CItem_rollWeighted4(blk, b, 1, row);
     } else if (type == 3) {
-        func_8015ACAC(blk, c, 1);
+        CItem_rollWeighted4B(blk, c, 1);
     }
     return blk->mCount != oldCount;
 }
@@ -3361,7 +3361,7 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
             // Tail re-materialises the block address from the global (retail
             // emits lis/addi pairs instead of reusing the cached pointer).
             CItemFour* box = &lbl_eu_80573E18;
-            func_8015AE9C(box);
+            CItem_refreshFourRec(box);
             UIWin_CreateB4790Win(box, 0);
             return block->mCount != 0;
         }
@@ -3490,7 +3490,7 @@ u32 CItemData_getInvByte6_dup2(u32, CItemData* obj) { return 1 - *(u8*)((char*)o
 // Clear used item sub-records: for every entry whose index is below the
 // live count, reset the matching 8-byte record at 0x08 and, when the slot
 // still resolves to a character, refresh its equipment state.
-void func_8015B6B4(u32 unused, CItemExt* obj) {
+void CItem_clearUsedSubs(u32 unused, CItemExt* obj) {
     for (s32 i = 0; i < obj->mCount; i++) {
         // Volatile re-read: retail reloads the count (lbz) for the bounds
         // check instead of reusing the loop-condition load.

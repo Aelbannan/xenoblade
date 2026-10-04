@@ -279,13 +279,13 @@ namespace cf {
 // ---------------------------------------------------------------------------
 extern "C" {
 int lookupWorkAtAddr(void* addr);
-int func_80148778(void*, int);
-void* func_8016FE34(void* source);
+int isBattleStatusActive(void*, int);
+void* MapFx_ResolveOwner(void* source);
 unsigned long SuddenCommuIsStateActive(void* self);
 void CfModel_GetSpeedRate(void* obj, f32* vec);
 void* getArtsParamAtCnt(void* self, unsigned int index);
 void* getArtsParamRC(const void* arts, int index, int subindex);
-int func_80154280(void* param, void* actor, int flags);
+int checkArtsFull(void* param, void* actor, int flags);
 void resetBattleGauge__Q22cf13CfGameManagerFv();
 void syncBattleState__Q22cf13CfGameManagerFv(void* object);
 void processFieldEffects__Q22cf13CfGameManagerFv();

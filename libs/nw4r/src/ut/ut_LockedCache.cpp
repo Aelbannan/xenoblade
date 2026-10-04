@@ -24,6 +24,14 @@ public:
         OSInitMutex(&mMutex);
     }
 
+    // NOTE: the Lock_ guard inlines to plain OSLock/OSUnlockMutex pairs
+    // (Enable/Disable match retail byte-for-byte), but MWCC also emits a
+    // TU-local deleting-dtor copy for the guard class that the retail split
+    // does not keep (retail linker GC'd it; a drop_text_symbols rule covers
+    // the post-link object). The guard stays: spelling the calls directly
+    // perturbs the allocator (mutex address rematerialized instead of kept
+    // live in r31) and regresses both functions, so the copy is irreducible
+    // in source shape.
     void Enable() {
         Lock_ lock(*this);
 
@@ -74,16 +82,9 @@ struct LCImplPadded : LCImpl {
 extern "C" {
 LCImplPadded lbl_eu_80653E88 __attribute__((aligned(8)));
 }
-
-// The retail split keeps the auto-static-init for the (retail-owned) LCImpl
-// object as a standalone 0x18 function in this TU (mIsEnabled = false, then
-// the OSMutex ctor tail call); reproduce it by hand without defining the
-// object (the blob's copy is already initialized). Renamed to the retail
-// backslash form via the postprocess exact_renames rule for this object.
-extern "C" void __sinit_ut_LockedCache_cpp() {
-    lbl_eu_80653E88.mIsEnabled = false;
-    OSInitMutex(&lbl_eu_80653E88.mMutex);
-}
+// NOTE: the compiler-generated __sinit_ for this TU already reproduces the
+// retail static-init (mIsEnabled = false + OSInitMutex tail call); no
+// hand-written sinit is needed (it would only duplicate .text).
 
 namespace LC {
 

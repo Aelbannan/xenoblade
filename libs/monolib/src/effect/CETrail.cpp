@@ -92,16 +92,16 @@ extern "C" {
 void lytBindSetupForPane(void* link, void* arg, u32 type, void* data, void* unk);
 void lytBindRefreshPlayer(void* link);
 int lytBindCanResolveTarget(void* link);
-void func_804EE8FC(void* link, u32 index);
+void lytBindRefreshTrans(void* link, u32 index);
 void DbgZeroTriple(void* obj);
 void* EffFxAllocCubicTable(void* self, s16 count);
 void EffFxEmptyStub(void* vtx);
 void EffFxBuildTrailSegments(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
 void* scnVlAllocSlot(void* res);
 void scnVlFreeSlot(void* res);
-void func_804C03A0(void* light, u32 mode);
-void func_804C0454(void* light, void* arg);
-void func_804C07F0(void* light, const void* color);
+void LightCtlSetAttnMode(void* light, u32 mode);
+void LightCtlSetPos(void* light, void* arg);
+void LightCtlSetColor(void* light, const void* color);
 void LightCtlSetEnable(void* light, u32 mode);
 void LightCtlInitDistAttn(void* light, s32 mode, f32 a, f32 b);
 // Scene-root accessor (see CScnMem.cpp); single-argument signature keeps
@@ -200,7 +200,7 @@ struct CETrail {
     void* m_vtable2;          // 0x184
 };
 
-// Light wrapper used by TrailLight_Init/__dt__804D80F0/func_804D8160
+// Light wrapper used by TrailLight_Init/__dt__804D80F0/TrailLight_Drive
 struct CLight {
     u8 m_pad00[0x30];
     u32 m_flags; // 0x30
@@ -312,7 +312,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 
     // MemManager handle is re-read from the global at every use (never cached).
     void* block = mtl::MemManager::allocate_array(count * 0x24 + 0x10, *(u32*)&lbl_eu_8065FC18[1]);
-    t->m_list = (CETrailNode*)__construct_new_array(block, (void (*)(void*))func_804D70A0, nullptr, 0x24, count);
+    t->m_list = (CETrailNode*)__construct_new_array(block, (void (*)(void*))TrailNode_Init, nullptr, 0x24, count);
 
     for (u32 i = 0; i < count; i++) {
         t->m_list[i].m_next = nullptr;
@@ -406,11 +406,11 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 }
 
 // ---------------------------------------------------------------------------
-// func_804D70A0: POINT node constructor
+// TrailNode_Init: POINT node constructor
 // ---------------------------------------------------------------------------
 // POINT node ctor: build a zero position via the copy ctor (per-component
 // float stores), assign it to m_posB, then repeat for m_posA, then the age.
-extern "C" void func_804D70A0(CETrailNode* node) {
+extern "C" void TrailNode_Init(CETrailNode* node) {
     ml::CVec3 posA, posB;
     posB.set(ml::CVec3::zero);
     posA.set(ml::CVec3::zero);
@@ -541,7 +541,7 @@ extern "C" void Trail_ReleaseLinks(CETrail* t) {
 }
 
 // ---------------------------------------------------------------------------
-// func_804D7434: draw the trail strip
+// Trail_DrawStrip: draw the trail strip
 // ---------------------------------------------------------------------------
 // Builds the integer->double bit pattern (0x43300000 exponent slot) directly,
 // so the only fsubs is the explicit lbl_eu_8066B180 offset like retail.
@@ -550,7 +550,7 @@ union IntToF64 {
     u32 u[2];
 };
 
-extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
+extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
     // Two persistent int->double bit-cast slots; retail pre-stores both
     // 0x43300000 headers once in the prologue and only rewrites the low word.
     IntToF64 convShade;
@@ -645,9 +645,9 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
 }
 
 // ---------------------------------------------------------------------------
-// func_804D77E4: update trail geometry from link matrices
+// Trail_UpdateGeom: update trail geometry from link matrices
 // ---------------------------------------------------------------------------
-extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, const ml::CVec4* scale, f32 f) {
+extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, const ml::CVec4* color, const ml::CVec4* scale, f32 f) {
     if (lytBindCanResolveTarget(&t->m_link0) == 0) {
         return;
     }
@@ -671,21 +671,21 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
         ml::CVec3 raw2;
         PSMTXMultVec(*M, off, raw2);
         ml::CVec3 v2 = raw2;
-        func_804D7B28(t, &v2, &v1, color, scale);
+        Trail_AppendPoint(t, &v2, &v1, color, scale);
         break;
     }
     case 1: {
-        func_804EE8FC(&t->m_link0, t->m_15C);
+        lytBindRefreshTrans(&t->m_link0, t->m_15C);
         ml::CVec3 pos0;
         pos0.x = t->m_link0.m_mtx00;
         pos0.y = t->m_link0.m_mtx10;
         pos0.z = t->m_link0.m_mtx20;
-        func_804EE8FC(&t->m_link1, t->m_15C);
+        lytBindRefreshTrans(&t->m_link1, t->m_15C);
         ml::CVec3 pos1;
         pos1.x = t->m_link1.m_mtx00;
         pos1.y = t->m_link1.m_mtx10;
         pos1.z = t->m_link1.m_mtx20;
-        func_804D7B28(t, &pos0, &pos1, color, scale);
+        Trail_AppendPoint(t, &pos0, &pos1, color, scale);
         break;
     }
     case 2: {
@@ -699,12 +699,12 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
             off.y = lbl_eu_8066B15C;
             off.z = lbl_eu_8066B15C;
         }
-        func_804EE8FC(&t->m_link0, t->m_15C);
+        lytBindRefreshTrans(&t->m_link0, t->m_15C);
         ml::CVec3 pos0;
         pos0.x = t->m_link0.m_mtx00;
         pos0.y = t->m_link0.m_mtx10;
         pos0.z = t->m_link0.m_mtx20;
-        func_804EE8FC(&t->m_link1, t->m_15C);
+        lytBindRefreshTrans(&t->m_link1, t->m_15C);
         ml::CVec3 pos1;
         pos1.x = t->m_link1.m_mtx00;
         pos1.y = t->m_link1.m_mtx10;
@@ -714,18 +714,18 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
         // VEC3Add/VEC3Sub kernels, then copies the temp into the named local.
         ml::CVec3 sum0 = pos0 + off;
         ml::CVec3 diff0 = pos0 - off;
-        func_804D7B28(t, &sum0, &diff0, color, scale);
+        Trail_AppendPoint(t, &sum0, &diff0, color, scale);
 
         ml::CVec3 sum1 = pos1 + off;
         ml::CVec3 diff1 = pos1 - off;
-        func_804D7B28(t, &sum1, &diff1, color, scale);
+        Trail_AppendPoint(t, &sum1, &diff1, color, scale);
         break;
     }
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_804D7B28: append a trail point (reslist<POINT> method shapes)
+// Trail_AppendPoint: append a trail point (reslist<POINT> method shapes)
 // ---------------------------------------------------------------------------
 // CETrail embeds a reslist<CETrail::POINT>-shaped header, and the retail body
 // is built from inlined reslist method templates. Each helper below mirrors
@@ -807,7 +807,7 @@ static void trailPushBack(CETrailNode* head, CETrail* t, const CETrailPoint& ite
     head->m_prev = temp;
 }
 
-extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
+extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
                               const ml::CVec4* color, const ml::CVec4* scale) {
     // Distance between posA and the list's first point (front(), like retail)
     f32 dist;
@@ -891,7 +891,7 @@ extern "C" CETrailLight* TrailLight_Init(CETrailLight* self, CResHolder* parent)
     if (self->m_light == nullptr) {
         return self;
     }
-    func_804C03A0(self->m_light, 3);
+    LightCtlSetAttnMode(self->m_light, 3);
     self->m_light->m_flags = (self->m_light->m_flags & ~0xFu) | 0xFu;
     LightCtlSetEnable(self->m_light, 0);
     return self;
@@ -922,14 +922,14 @@ extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting
 }
 
 // ---------------------------------------------------------------------------
-// func_804D8160: drive the attached light
+// TrailLight_Drive: drive the attached light
 // ---------------------------------------------------------------------------
-// Light color payload built on the stack for func_804C07F0
+// Light color payload built on the stack for LightCtlSetColor
 struct LightColor {
     f32 r, g, b, a;
 };
 
-void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2) {
+void TrailLight_Drive(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2) {
     // NOTE: self->m_light is re-read for every call (never cached in a local)
     // so MWCC keeps it in a volatile register like retail.
     if (self->m_light == nullptr) {
@@ -962,7 +962,7 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p
     s32 m = (s32)fm;
 
     LightCtlSetEnable(self->m_light, 1);
-    func_804C0454(self->m_light, arg);
+    LightCtlSetPos(self->m_light, arg);
     LightCtlInitDistAttn(self->m_light, m, f1, f2);
 
     LightColor out;
@@ -971,14 +971,14 @@ void func_804D8160(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p
     out.g = p->m_g * p->m_intensity;
     out.r = p->m_r * p->m_intensity;
     out.a = lbl_eu_8066B1A4;
-    func_804C07F0(self->m_light, &out);
+    LightCtlSetColor(self->m_light, &out);
 }
 
 // ---------------------------------------------------------------------------
-// func_804D82DC: snapshot the scene fog state
+// Trail_SnapFog: snapshot the scene fog state
 // ---------------------------------------------------------------------------
-// func_804D82DC: snapshot the scene fog state
-void func_804D82DC(CScnRootEnv* scene) {
+// Trail_SnapFog: snapshot the scene fog state
+void Trail_SnapFog(CScnRootEnv* scene) {
     // -1 stays live in a register across both lookups; 0 is rematerialized.
     s32 invalid = -1;
     lbl_eu_806659B8 = scene;

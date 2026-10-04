@@ -125,7 +125,7 @@ struct IUnkVt110 {
 
 // State machine tick: optional range gate on the game-manager counter,
 // then dispatch through the state jump table, then act on mType.
-extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
+extern "C" void CfGimmickSaveOff_Update(cf::CfGimmickSaveOff* self) {
     if (self->mMaxVal != 0) {
         u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (self->mMinVal > count || count > self->mMaxVal) {
@@ -162,3 +162,17 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
         CfGimmick_SetGlobalFlag8();
     }
 }
+
+// [.rodata] 0x80510B10-0x80510B30 (32B): class-name string + column-name
+// string. Retail holds one label per string (B10 0x15 bytes, B28 "naviOff"
+// 0x8 at +0x18); B10's 3 pad bytes fall out of B28's 8-alignment. B10 has no
+// code references (unreferenced pool bytes), B28 is the bdat column key.
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
+u8 lbl_eu_80510B10[0x15] = {
+    0x63,0x66,0x3A,0x3A,0x43,0x66,0x47,0x69,0x6D,0x6D,0x69,0x63,0x6B,0x53,0x61,0x76,
+    0x65,0x4F,0x66,0x66,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+u8 lbl_eu_80510B28[0x8] = {
+    0x6E,0x61,0x76,0x69,0x4F,0x66,0x66,0x00,
+};

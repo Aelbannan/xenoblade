@@ -94,7 +94,7 @@ void CfCamEvt_DispatchSetLookat(CfCamEvent* self, ml::CVec3* lookat) {
 }
 
 // Set the direction vector's x component, then forward it to setDir.
-void func_8006AAEC(CfCamEvent* self, f32 value) {
+void CfCamEvt_SetDirX(CfCamEvent* self, f32 value) {
     ml::CVec3* dir = &self->unk25C;
     dir->x = value;
     CfCamDispatch* intf = CfCamEvent_initCamIntfInstances(self);
@@ -102,7 +102,7 @@ void func_8006AAEC(CfCamEvent* self, f32 value) {
 }
 
 // Set the direction vector's y component, then forward it to setDir.
-void func_8006AB40(CfCamEvent* self, f32 value) {
+void CfCamEvt_SetDirY(CfCamEvent* self, f32 value) {
     ml::CVec3* dir = &self->unk25C;
     dir->y = value;
     CfCamDispatch* intf = CfCamEvent_initCamIntfInstances(self);
@@ -183,7 +183,7 @@ extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
 // Per-frame camera event update: refresh the aim/position vectors, run the
 // follow hook, recompute the lookat from the source block, and gate a node
 // flush on the angle trigger countdown.
-void func_8006ACC0(CfCamEvent* self) {
+void CfCamEvt_Update(CfCamEvent* self) {
     // All locals declared at function top: MWCC's allocation order for this
     // function matches the original TU's C-style declaration layout.
     ml::CVec3 aim;
@@ -252,7 +252,7 @@ void func_8006ACC0(CfCamEvent* self) {
             // follow hook.
             if (ScnRes_VertRayForward_E398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
                               lbl_eu_80666268) != 0) {
-                func_804BE4B4(&probe1, 0);
+                ScnRes_CopyEntryHead(&probe1, 0);
                 if (pos.y < probe1.y + lbl_eu_80661B58) {
                     pos.y = probe1.y + lbl_eu_80661B58;
                 }
@@ -260,7 +260,7 @@ void func_8006ACC0(CfCamEvent* self) {
             ml::CVec3 probe2_unused;
             if (ScnRes_VertRayForward_E398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
                               lbl_eu_80666268) != 0) {
-                func_804BE4B4(&probe2, 0);
+                ScnRes_CopyEntryHead(&probe2, 0);
                 if (aim.y < lbl_eu_80666274 + probe2.y) {
                     aim.y = lbl_eu_80666274 + probe2.y;
                 }

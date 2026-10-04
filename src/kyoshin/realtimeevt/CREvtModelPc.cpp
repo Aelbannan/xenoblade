@@ -43,12 +43,12 @@ extern "C" {
     extern void __dt__80185754(void* ptr);
 
     // CREvtModel helpers
-    extern void func_801726DC(void* self);
-    extern void func_80172768(void* self);
-    extern void func_801729F0(void* self, int r4, int r5);
+    extern void EvtModelReleaseAnimsOnce(void* self);
+    extern void EvtModelReleaseAnims(void* self);
+    extern void EvtModelSetEventData(void* self, int r4, int r5);
 
     // Memory
-    extern void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
+    extern void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
 
     // Task helpers
     extern int EvtSeqGetWalkIndex();
@@ -59,7 +59,7 @@ extern "C" {
     extern void EvtSeqCheckEventRunGuard(void* self);
     extern int EvtSeqGetStateBit14();
     extern int EvtSeqGetStateBit12();
-    extern void* func_80164724(void* parent, u32 type, int slot);
+    extern void* evtLookupCmdWord(void* parent, u32 type, int slot);
 
     // CfGameManager
     extern void* getGimmickListHead__Q22cf13CfGameManagerFv();
@@ -70,12 +70,12 @@ extern "C" {
     extern void* CfRes_tryResolveToken(void* handle, u32* outType);
     extern void KyoshinHeap_Free78(void* p, int type);
     // Packed-token helpers (retail C-symbol names)
-    extern char* func_800AA5C0(void* handle);
+    extern char* Tok_FormatRes(void* handle);
     extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-    extern int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+    extern int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     extern u32 Tok_Pack10(u32 a, u32 b, u32 c);
     // Archive
-    extern int func_800A8E6C(u32 value, int enable);
+    extern int KyoshinHeap_AllocNode(u32 value, int enable);
 
     // Model helpers
     extern void* Scn_SetupAnim(void* a, void* b, int c, int d);
@@ -83,8 +83,8 @@ extern "C" {
     extern void simSetLeafDist7B0(void* model, f32 val);
     extern void simSetFlag2000Chain(void* model, int flag);
     extern void simSetLeafFlag4000(void* model, int flag);
-    extern void func_804831C4(void* model, void* texName);
-    extern void func_80483448(void* model, void* texName);
+    extern void simAttachModel(void* model, void* texName);
+    extern void simCoupleModel(void* model, void* texName);
     extern void simRefreshFlag8(void* model, f32 val);
 
     // __ptmf intrinsics
@@ -211,7 +211,7 @@ extern "C" int EvtModelPc_Cancel(void* self) {
         return 0;
     }
 
-    func_801726DC(self);
+    EvtModelReleaseAnimsOnce(self);
 
     u32 i;
     char* base = s;  // walks per-slot via each slot's status word
@@ -247,9 +247,9 @@ extern "C" int EvtModelPc_Cancel(void* self) {
 }
 
 // ============================================================================
-// func_80183A3C (us-80184e58) - Reset / reinitialize
+// EvtModelPc_Reset (us-80184e58) - Reset / reinitialize
 // ============================================================================
-void func_80183A3C(void* self) {
+void EvtModelPc_Reset(void* self) {
     CREvtModelPc& pc = *(CREvtModelPc*)self;
 
     // Parent scene counter check: retail tests (u32)(mField30 + 0x10000)
@@ -285,7 +285,7 @@ void func_80183A3C(void* self) {
     if (pc.mFlags & 0x100) return;
     pc.mFlags |= 0x100;
 
-    func_80172768(self);
+    EvtModelReleaseAnims(self);
 
     // Free any loaded/archived slot data. Status 3 = loaded into MEM2 via
     // MemManager, status 2 = archived. Retail carries a duplicated null
@@ -356,9 +356,9 @@ extern "C" void EvtModelPc_InitCounter(void* self) {
 }
 
 // ============================================================================
-// func_80183C90 (us-801850ac) - Main file loading function
+// EvtModelPc_LoadFiles (us-801850ac) - Main file loading function
 // ============================================================================
-extern "C" void func_80183C90(void* self) {
+extern "C" void EvtModelPc_LoadFiles(void* self) {
     CREvtModelPc& pc = *(CREvtModelPc*)self;
     char* s = (char*)self;
 
@@ -450,7 +450,7 @@ handles_done:
     parent = FLD(void*, s, 0x1C);
     if (FLD(s8, parent, 0x48) != 0 && !EvtSeqGetStateBit12()) {
         for (i = 1; i <= 5; i++) {
-            handle = (u32)func_80164724((char*)parent + 0x48, decB, i);
+            handle = (u32)evtLookupCmdWord((char*)parent + 0x48, decB, i);
             FLD(u32, s, 0x38 + i * 4) = handle;
         }
         if (FLD(u32, s, 0x3C) != 0 && FLD(u32, s, 0x40) != 0 &&
@@ -516,7 +516,7 @@ handles_done:
             handle = FLD(u32, walk, 0x3C);
             if (handle == 0) continue;
 
-            pathName = func_800AA5C0((void*)handle);
+            pathName = Tok_FormatRes((void*)handle);
             nameLen = strlen(pathName);
             strcpy(nameBuf, pathName);
             CfRes_tryResolveToken((void*)handle, (u32*)&typeOut);
@@ -528,15 +528,15 @@ handles_done:
             // Build the file path, then try MEM1 -> archive -> streamed MEM2.
             FLD(u8, fix1, 0x00) = 0;
             FLD(u32, fix1, 0x40) = 0;
-            func_800AA33C(*(ml::FixStr<64>*)fix1, handle, 1, 1);
+            Tok_FormatStr(*(ml::FixStr<64>*)fix1, handle, 1, 1);
             fileSize = CDeviceFile::getFileSize(fix1);
-            alloc = func_80167F6C((void*)fileSize, 0x20, 0);
+            alloc = allocEvtMemAligned((void*)fileSize, 0x20, 0);
             if (alloc != 0) {
                 FLD(u32, walk, 0x84) = status1;
                 ok = (int)alloc;
             } else {
-                if (func_800A8E6C(fileSize, 1) != 0) {
-                    ok = func_800A8E6C(fileSize, 0);
+                if (KyoshinHeap_AllocNode(fileSize, 1) != 0) {
+                    ok = KyoshinHeap_AllocNode(fileSize, 0);
                 } else {
                     ok = 0;
                 }
@@ -585,14 +585,14 @@ handles_done:
         FLD(u32, s, 0x50) = handle;
         FLD(u8, fix3, 0x00) = 0;
         FLD(u32, fix3, 0x40) = 0;
-        func_800AA33C(*(ml::FixStr<64>*)fix3, handle, 1, 1);
+        Tok_FormatStr(*(ml::FixStr<64>*)fix3, handle, 1, 1);
         fileSize = CDeviceFile::getFileSize(fix3);
-        alloc = func_80167F6C((void*)fileSize, 0x20, 0);
+        alloc = allocEvtMemAligned((void*)fileSize, 0x20, 0);
         if (alloc != 0) {
             FLD(u32, s, 0x98) = 1;
             ok = (int)alloc;
         } else {
-            ok = func_800A8E6C(fileSize, 0);
+            ok = KyoshinHeap_AllocNode(fileSize, 0);
             if (ok != 0) {
                 FLD(u32, s, 0x98) = 2;
             }
@@ -642,9 +642,9 @@ set_ptmf:
 }
 
 // ============================================================================
-// func_801845F0 (us-80185a18) - Check if all slots loaded
+// EvtModelPc_CheckLoaded (us-80185a18) - Check if all slots loaded
 // ============================================================================
-extern "C" void func_801845F0(void* self) {
+extern "C" void EvtModelPc_CheckLoaded(void* self) {
     char* s = (char*)self;
     u32 tmp;
 
@@ -712,9 +712,9 @@ extern "C" void EvtModelPc_UpdatePos(void* self) {
 // u32 EvtModelPc_GetModel(void* self) { return FLD(u32, self, 0x20); }
 
 // ============================================================================
-// func_80184730 (us-80185b64) - Create model from loaded data
+// EvtModelPc_CreateModel (us-80185b64) - Create model from loaded data
 // ============================================================================
-extern "C" void func_80184730(void* self) {
+extern "C" void EvtModelPc_CreateModel(void* self) {
     char* s = (char*)self;
     int i;
 
@@ -770,9 +770,9 @@ extern "C" void func_80184730(void* self) {
         }
 
         if (i == 5) {
-            func_80483448(model, texData);
+            simCoupleModel(model, texData);
         } else {
-            func_804831C4(model, texData);
+            simAttachModel(model, texData);
         }
     }
 
@@ -799,11 +799,11 @@ extern "C" void EvtModelPc_Dispatch(void* self, int r4, int r5) {
     if (FLD(void*, s, 0x3C) == 0) return;
 
     if (r4 != 0 && FLD(u8, s, 0xAC) == 0) {
-        func_80184730(self);
+        EvtModelPc_CreateModel(self);
     }
 
     if (FLD(u8, s, 0xAC) != 0) {
-        func_801729F0(self, r4, r5);
+        EvtModelSetEventData(self, r4, r5);
     }
 }
 
@@ -837,10 +837,10 @@ extern "C" int EvtModelPc_IsFileLoaded(void* self) {
 }
 
 // ============================================================================
-// func_80184A24 (us-80185e64) - OnFileEvent handler
+// EvtModelPc_OnFileEvent (us-80185e64) - OnFileEvent handler
 // this(r3), event(r4)
 // ============================================================================
-extern "C" int func_80184A24(void* self, CEventFile* ev) {
+extern "C" int EvtModelPc_OnFileEvent(void* self, CEventFile* ev) {
     CREvtModelPc* m = (CREvtModelPc*)self;
 
     // For each of the 6 file slots, if the completed request matches the
@@ -863,7 +863,7 @@ extern "C" int func_80184A24(void* self, CEventFile* ev) {
 // OnFileEvent__12CREvtModelPcFP10CEventFile - IWorkEvent override
 // ============================================================================
 extern "C" void OnFileEvent__12CREvtModelPcFP10CEventFile(void* self) {
-    ((void(*)(void*))func_80184A24)((char*)self - 0x38);
+    ((void(*)(void*))EvtModelPc_OnFileEvent)((char*)self - 0x38);
 }
 
 // ============================================================================
@@ -873,11 +873,11 @@ extern "C" void EvtModelPc_CtorThunk38(void* self, int flags) {
     __ct__8018385C((char*)self - 0x38, flags);
 }
 // ============================================================================
-// func_80184AE4 (us-80185f24) - true when mFlags (+0x18) has both the active
+// EvtModelPc_IsActive (us-80185f24) - true when mFlags (+0x18) has both the active
 // bit (0x1) and the ready bit (0x40) set. Same idiom as EvtObj_CheckFlags140
 // in CREvtModelObj.cpp (retail: lwz / li / clrlwi.-beqlr / rlwinm.-beqlr / li).
 // ============================================================================
-extern "C" int func_80184AE4(CREvtModelPc* self) {
+extern "C" int EvtModelPc_IsActive(CREvtModelPc* self) {
     u32 flags = self->mFlags;
     int result = 0;
     if (flags & 1) {

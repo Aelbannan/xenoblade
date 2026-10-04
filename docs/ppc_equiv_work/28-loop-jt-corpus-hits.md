@@ -95,7 +95,7 @@ These are prime follow-up targets once CTR materialization rules widen.
 
 | Unit | Symbol | `bctr` PC | Bound | Base reg | Feature |
 |---|---|---:|---:|---|---|
-| `kyoshin` | `func_8022A904` (`CQstLogInfo.s`) | `0x8022C8B8` | 13 | `r3` | readonly table image + indirect closure |
+| `kyoshin` | `QstLogInfo_UpdateTypeObjectives` (`CQstLogInfo.s`) | `0x8022C8B8` | 13 | `r3` | readonly table image + indirect closure |
 | `kyoshin` | `__ct__CMapSel` | `0x80245444` | 28 | `r3` | same |
 | `kyoshin` | `clpBuildPages` (`CCollepedia.s`) | `0x80255EA4` | 25 | `r3` | same |
 | `RVL_SDK` | `DVDCancel` | `0x803119E8` | 38 | `r3` | SDK dispatch |

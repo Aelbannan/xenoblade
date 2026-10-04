@@ -346,7 +346,7 @@ extern "C" void EvtSeqBootSequence(cf::CTaskREvtSequence* self) {
     // Sequence boot: gate on the sequence system + UI state, publish the id
     // halfwords, install the +0x3C move-callback table, and arm the
     // event-sequence flag bits (2, then 40) once the event manager is up.
-    if (func_8012E6DC() != 0) {
+    if (UIBattleHasPendingLoads() != 0) {
         return;
     }
     if (CfRes_isGridLoadIdle() == 0) {
@@ -402,12 +402,12 @@ extern "C" void EvtSeqLoadSeqFile(cf::CTaskREvtSequence* self) {
     UnkFileHeader* hdr = reinterpret_cast<UnkFileHeader*>(self->field_0xC0);
     u32 size = hdr->field_0x18;
     u16 flags = hdr->field_0x46;
-    self->field_0x128 = func_80167D40(flags << 11, size);
+    self->field_0x128 = initEvtMemArena(flags << 11, size);
     if (self->field_0xC0 != 0) {
         mtl::MemManager::deallocate(reinterpret_cast<void*>(self->field_0xC0));
         self->field_0xC0 = 0;
     }
-    self->field_0xC4 = (u32)func_80167F6C(reinterpret_cast<void*>(size), 0x20, 0);
+    self->field_0xC4 = (u32)allocEvtMemAligned(reinterpret_cast<void*>(size), 0x20, 0);
     IWorkEvent* evt = reinterpret_cast<EvtSeqWithEvt*>(self);
     self->field_0xBC = (u32)CDeviceFile::readCommonArchiveFile(
         self->field_0xC4, self->mPath, evt, 0, (int)size);
@@ -807,7 +807,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
                reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xC4)->field_0x48) {
         UnkEvtListEntry* e = *reinterpret_cast<UnkEvtListEntry**>(
             reinterpret_cast<u8*>(self->field_0xA4) + scaled);
-        func_80294980(reinterpret_cast<CREvtMovie*>(e));
+        EvtMovie_StartPlayback_4980(reinterpret_cast<CREvtMovie*>(e));
         i++;
         scaled += 4;
     }
@@ -1027,7 +1027,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM2());
         }
         f32 vol = evtCalcStreamVolume() * lbl_eu_80667660;
-        func_80043738(1, buf, handle, 1, 0, 0, vol);
+        CTaskGame_openStream(1, buf, handle, 1, 0, 0, vol);
     }
     // Publish the scene fade value, then the id halfword pair (only when
     // both are non-negative; the second consumer re-reads the buffer).
@@ -1150,7 +1150,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
             scaled += 4;
         }
     }
-    func_80180210(1);
+    REvtCam_ActivateTasks(1);
     REvtCam_ActivateLodTasks();
     // Select the move-callback table by whether the walk continues past this
     // sequence step, tint the scene window to the BGM volume, mark the scene
@@ -1339,7 +1339,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
         }
     }
     if (cond != 0) {
-        func_80180210(1);
+        REvtCam_ActivateTasks(1);
     }
     if (cond != 0 || self->field_0x109 != 0) {
         EvtSeqRefreshEventLod(self);
@@ -1627,7 +1627,7 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
         }
         UnkEvtListEntry* e =
             *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k);
-        func_80180664(reinterpret_cast<CREvtCamera*>(e), (void*)arg,
+        REvtCam_SetupEvent(reinterpret_cast<CREvtCamera*>(e), (void*)arg,
                       (void*)((u8*)self->field_0x244 + off));
         if ((u32)entry->field_0xC == 0xFFFFFFFF) {
             entry->field_0xC = reinterpret_cast<EvtSeqObj43C*>(
@@ -1690,7 +1690,7 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + k3);
             n++;
             k3 += 4;
-            func_80185378(reinterpret_cast<CREvtEffect*>(e), (void*)arg,
+            EvtFx_InitModel(reinterpret_cast<CREvtEffect*>(e), (void*)arg,
                           (void*)((u8*)self->field_0x240 + off3));
             off3 += 0xC;
             i3++;
@@ -1736,7 +1736,7 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
         UnkEvtListEntry* e =
             *(UnkEvtListEntry**)((u8*)self->field_0xA4 + i);
         i += 4;
-        func_80294BA4(reinterpret_cast<CREvtMovie*>(e));
+        EvtMovie_TogglePlayback_4BA4(reinterpret_cast<CREvtMovie*>(e));
         n++;
     }
 
@@ -1982,7 +1982,7 @@ void EvtSeqStopSequence(void* selfv) {
                 }
             }
         } while (removed);
-        func_80180210(0);
+        REvtCam_ActivateTasks(0);
         // Final sweep: release whatever remains.
         for (i = 0, off = 0; i < self->field_0xA8; i++, off += 4) {
             UnkEvtListEntry* e =
@@ -2149,7 +2149,7 @@ void EvtSeqStopSequence(void* selfv) {
     }
     if ((self->field_0x5C & 0x00040000) != 0) {
         if (isVisionMenuActive() == 0) {
-            func_8012F750(0);
+            UIBattleCreateVisionMenu(0);
         }
         if (EneSt_GetSingleton() == 0) {
             CUICfManager_queueEventMenu();
@@ -2617,7 +2617,7 @@ void EvtSeqUpdateEvtTable(cf::CTaskREvtSequence* self) {
             self->field_0x124 += 0x2000;
         }
     }
-    func_80261960(self->field_0x104);
+    IdTable_SeekIndex(self->field_0x104);
     if (self->field_0xE8 == 0) {
         return;
     }
@@ -2994,7 +2994,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
         }
         UnkObj4594* obj = container->field_0x4594;
         if (obj != 0) {
-            u32 packed = func_800AA714(obj->vf_0x18());
+            u32 packed = Tok_ParseFile(obj->vf_0x18());
             Tok_Unpack(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
                 return packed;
@@ -3002,7 +3002,7 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
         }
         obj = container->field_0x4598;
         if (obj != 0) {
-            u32 packed = func_800AA714(obj->vf_0x18());
+            u32 packed = Tok_ParseFile(obj->vf_0x18());
             Tok_Unpack(packed, &b0, &b1, &b2, &b3);
             if (b1 / 10 == a1 / 10) {
                 return packed;

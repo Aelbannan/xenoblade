@@ -8,7 +8,7 @@ extern "C" {
 // CErrMes helpers (defined in src/kyoshin/CErrMes.cpp - declared
 // without C linkage there, but the retail TU exports the plain linker name;
 // this C linkage in the importing TU preserves the plain-symbol reloc).
-void func_eu_802B12DC();
+void loadErrMesTable();
 void NandData_SetupBanner_11C0();
 const char* getErrMesLangTable0();
 const char* getErrMesLangTable1();

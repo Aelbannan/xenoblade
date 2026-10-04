@@ -352,8 +352,70 @@ int isVisionEvent(VMThread* pThread) {
 }
 
 // Command-table name/data labels for the "eve" plugin (retail data symbols).
+// .rodata entry names below (unsized, 4-packed) + "eve" plugin name.
 extern char lbl_eu_804FACF0[];
 extern PluginFuncData lbl_eu_80525EF8[];
+
+// ----- Retail data sections defined by this TU (subset) -----
+// .rodata long entry names (unsized, 4-packed) + "eve" plugin name + .data
+// type-ref block (80525E98). NOT defined here: .sdata2 strings/floats and
+// the PluginFuncData table (80525EF8) — this TU's frozen UNIT_RULE carries
+// extern_data_sections=(".sdata2",), so postprocess strips any .sdata2
+// content from the link object; defining it would orphan the table's
+// relocs into new missing rows. The table + sdata2 need a rule change
+// (frozen for agents) or an external provider; see residual.
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC20[] = "getAwardFlagF16";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC30[] = "addAwardFlagF16";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC40[] = "setAwardFlagF1";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC50[] = "realtimeEventStart";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC64[] = "realtimeEventPlay";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC78[] = "realtimeEventEnd";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAC8C[] = "waitRealtimeEvent";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACA0[] = "checkEvent";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACAC[] = "clearEventSkip";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACBC[] = "isTalkEvent";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACC8[] = "isVisionEvent";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACD8[] = "onTalkEnd";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FACE4[] = "fadeWait";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FACF0[8] = "eve";
+// Type-reference block (80525E98, frontier label): 10 external typeinfo
+// pointers (ocUnit's .sdata, another unit defines them) + the CfObjectActor
+// RTTI, each paired with a subobject offset (mostly 0x3E9C, the embedded
+// CfObjectMove offset; a few differ), ending with a null pair. This is a
+// dynamic-cast dispatch table (type -> subobject offset). RESIDUAL: exact
+// source shape unknown; reproduced byte-faithfully.
+extern u32 lbl_eu_806618B8[];
+extern u32 lbl_eu_806618C0[];
+extern u32 lbl_eu_806618C8[];
+extern u32 lbl_eu_806618D0[];
+extern u32 lbl_eu_806618E0[];
+extern u32 lbl_eu_806618F8[];
+extern u32 lbl_eu_80661900[];
+struct EveTypeRef { const void* type; u32 subobjOff; };
+__declspec(section ".data") __attribute__((used)) EveTypeRef lbl_eu_80525E98[12] = {
+    { lbl_eu_80661900, 0x3E9C }, { lbl_eu_806618F8, 0x3E9C },
+    { &lbl_eu_806618F0, 0x3E9C }, { &lbl_eu_806618E8, 0x3E9C },
+    { &lbl_eu_806618D8, 0x3E9C }, { lbl_eu_806618E0, 0x3380 },
+    { lbl_eu_806618C0, 0x15DC }, { lbl_eu_806618D0, 0x08 },
+    { lbl_eu_806618C8, 0 }, { lbl_eu_806618B8, 0 },
+    { &__RTTI__Q22cf13CfObjectActor, 0 }, { 0, 0 },
+};
+// Note: the eve function table (80525EF8) uses the external region-name
+// string scRegionNameMEM1__Q23mtl10MemManager as its "fadeOut" entry name;
+// both land once the sdata2 rule block above is resolved.
 
 extern "C" void pluginEveRegist() {
     vmPluginRegist(lbl_eu_804FACF0, lbl_eu_80525EF8);

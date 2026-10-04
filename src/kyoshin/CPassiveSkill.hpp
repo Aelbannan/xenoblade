@@ -447,7 +447,7 @@ extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3* out, CSysWin* syswin, i
 extern "C" void Cur_SetVisible(CCur18* cursor, u8 flag);
 
 // Cursor per-frame update (CCur.cpp; retail symbol unmangled).
-extern "C" void func_801D202C(void* cursor);
+extern "C" void Cur_Update(void* cursor);
 
 // CSysWin window advance/close helper (CSysWin.cpp). Retail symbol unmangled.
 extern "C" void sysWinAdvancePhase3(CSysWin* syswin);
@@ -695,7 +695,7 @@ extern "C" void __dt__80043E88(void*, int);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" CPSkillEnumListSlot* getEntryAt(void*, u32);
 extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
-extern "C" void func_800BFDE0(cf::CfObjectMove* move, u32 flag);
+extern "C" void CfObjectPc_setupFrame(cf::CfObjectMove* move, u32 flag);
 
 // 5-byte category filter copied from the .sdata2 constants by CPassiveSkillLine_syncEquipState:
 // the word is stored as a unit (lwz/stw) then the trailing byte (stb), and

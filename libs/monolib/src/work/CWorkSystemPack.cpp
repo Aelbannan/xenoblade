@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 // CPackItem (monolib/core/CPackItem.hpp): load-state field at 0x78, base name
 // at 0x4, and the member calls used below (isNotLoaded / update / lookupFile /
-// the vtable+8 virtual used by func_eu_804E2340). The class is only ever used
+// the vtable+8 virtual used by removePackFile). The class is only ever used
 // through pointers in this TU, so no vtable is emitted here.
 // ---------------------------------------------------------------------------
 class CPackItem {
@@ -225,7 +225,7 @@ void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
 #pragma pop
 
 // DevFile_SubstLangPath is extern "C" in CDeviceFileCri.hpp, but including that
-// header would clash with this TU's C++ definition of func_804DDCD4.
+// header would clash with this TU's C++ definition of findPackFileId.
 int DevFile_SubstLangPath(const char*);
 
 // Register one static arc filename: normalize the path through DevFile_SubstLangPath,
@@ -233,7 +233,7 @@ int DevFile_SubstLangPath(const char*);
 // arc list (first free slot of the node array). The setItem try/catch shape
 // reproduces the retail frame marker (stw r1, 0x1c) from the reslist template.
 #pragma optimize_for_size on
-__attribute__((never_inline)) void func_804DDF00(const char* pPath) {
+__attribute__((never_inline)) void registerArcFile(const char* pPath) {
     ml::FixStr<0x100> str = pPath;
     DevFile_SubstLangPath(str.mString);
 
@@ -281,7 +281,7 @@ __attribute__((never_inline)) void func_804DDF00(const char* pPath) {
 extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, int idx, int partition);
 
 #pragma optimize_for_size on
-__attribute__((never_inline)) void func_804DDE3C(const char* pName, int pPartitionId) {
+__attribute__((never_inline)) void registerPackFile(const char* pName, int pPartitionId) {
     // No local singleton copy: retail reloads lbl_eu_80665A10 (SDA) at each
     // use site, keeping only pName/pPartitionId/i/newItem in callee-saved regs.
     int i = 0;
@@ -399,14 +399,14 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
     if (p != 0) {
         const char* const* it = p - 1;
         while (*++it != 0) {
-            func_804DDF00(*it);
+            registerArcFile(*it);
         }
     }
     const char* const* q = lbl_eu_80665A14;
     if (q != 0) {
         const char* const* jt = q - 1;
         while (*++jt != 0) {
-            func_804DDE3C(*jt, -1);
+            registerPackFile(*jt, -1);
         }
     }
 }
@@ -472,7 +472,7 @@ extern "C" bool findFileEntry(void* item, const char* pPath, void** pOutStartAdd
 
 #pragma push
 #pragma optimize_for_size on
-s32 func_804DDCD4(const char* pName, const char* pPath) {
+s32 findPackFileId(const char* pName, const char* pPath) {
     // Declared last-to-first: MWCC assigns stack slots in reverse declaration
     // order, so this yields retail's 0x8/0xc/0x10/0x14/0x18 slot layout.
     u32 v18;  // 0x18
@@ -495,7 +495,7 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
 // item's findFileEntry when the list is non-empty.
 // __declspec(noinline) keeps retail's out-of-line bl - without it -inline auto
-// folds this small helper into func_804DDCD4 below.
+// folds this small helper into findPackFileId below.
 __declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     u8* head = *(u8**)((u8*)sys + 0x1E8);
@@ -614,7 +614,7 @@ void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* 
 // Search the pack list for an item whose base name matches pName.
 #pragma push
 #pragma optimize_for_size on
-int func_804DE010(const char* pName) {
+int hasPackFile(const char* pName) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     PackItemListNode* sentinel;
     PackItemListNode* node;
@@ -638,7 +638,7 @@ int func_804DE010(const char* pName) {
 // addic.-1/subfe setnz strcmp tail.
 #pragma push
 #pragma optimize_for_size on
-void func_eu_804E2340(const char* pName) {
+void removePackFile(const char* pName) {
     // Don't cache the singleton in a local: retail only keeps 3 values live
     // (pName, sentinel, node) and saves r29-r31.
     PackItemListNode* sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;

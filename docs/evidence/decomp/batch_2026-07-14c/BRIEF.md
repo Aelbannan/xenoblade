@@ -26,7 +26,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CScn::Draw` (`asm_Draw_CScn.s`)
 - Frame `-0x20`; saves r29=this, r30/r31
-- Gate: `func_8049AF80(*(this+0x68))`; then `func_8049B0A0` with `extsh(*(work+0x34))`; must equal `CView::getCurrentView()`
+- Gate: `CamMan_SyncCameraToView(*(this+0x68))`; then `CamMan_GetViewThread` with `extsh(*(work+0x34))`; must equal `CView::getCurrentView()`
 - Early-out if `unk_3E4` (byte@0x3E4) nonzero
 - Store `this` to **`lbl_eu_80665908@sda21`** before CB walk; clear it after
 - Optional dual-flag path `@0x3E5`/`@0x3E6` → virtual call `*(this+0x8C)` vtable+0x18

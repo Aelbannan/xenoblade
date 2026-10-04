@@ -11,9 +11,9 @@ extern "C" {
     extern CScnIdPoolSlot* CScnItemPool_lookupSubPool(void* r3, int r4);
     extern void* Scn_FindCamItem(void* r3, u32 r4);
     extern void* Scn_GetCamItem9C(void* r3, u32 r4);
-    extern void func_8049B764(void* r3, void* r4);
+    extern void CamMan_BuildPerspective(void* r3, void* r4);
     extern void* getScnHandle__Fv();
-    extern void func_804BCC78(void* r3, void* r4, void* r5);
+    extern void Coli_RenderChunks(void* r3, void* r4, void* r5);
 }
 
 extern "C" CScnIdMan* __ct__CScnIdMan(CScnIdMan* self, void* param) {
@@ -52,9 +52,9 @@ void CScnIdMan::cbRenderBefore() {
     if (mFlag) {
         void* a = Scn_FindCamItem(mParam, -1);
         u8 stackbuf[0x38];
-        func_8049B764(stackbuf, a);
+        CamMan_BuildPerspective(stackbuf, a);
         void* b = Scn_GetCamItem9C(mParam, -1);
-        func_804BCC78(getScnHandle__Fv(), b, stackbuf);
+        Coli_RenderChunks(getScnHandle__Fv(), b, stackbuf);
     }
 }
 

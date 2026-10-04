@@ -573,7 +573,7 @@ struct CamEventTargetInfo {
     u32 field_0x15E4;   // +0x15E4
 };
 
-// Source object returned by func_8016FE34. Has a table, a field at
+// Source object returned by MapFx_ResolveOwner. Has a table, a field at
 // 0x3F10, and an embedded voice sub-object at 0x3E9C.
 
 class CamEventSrc {
@@ -1325,7 +1325,7 @@ extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" CfCamDataTable lbl_eu_80570C90;
 extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void* findObjectById__Fi(int id);
 extern "C" void* func_800BBC0C(void* obj);
@@ -1386,7 +1386,7 @@ extern "C" void notifyCameraManager__Q22cf13CfGameManagerFv(void);
 
 // GameManager helpers used by the cam-event advance.
 extern "C" void cleanupMapEffects__Q22cf13CfGameManagerFv();
-extern "C" void func_8016FD84(f32 a, f32 b);
+extern "C" void MapFx_PushFlash(f32 a, f32 b);
 extern "C" void MapFxStepAllEntries(u32 state);
 extern "C" void MapFxApplyEntryPositions(u32 state, void* p);
 extern "C" f32 lbl_eu_80666470;

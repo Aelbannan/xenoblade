@@ -75,7 +75,7 @@ namespace cf {
         u8 mFlag;                   //0xE4
     };
 
-    // Mirror of CChainChance with signed 16-bit fields: func_8027C0B0 reads the
+    // Mirror of CChainChance with signed 16-bit fields: Chain_TickChanceCount reads the
     // 0x0/0x8/0xA fields sign-extended (lha), while CChainChance.hpp declares
     // them u16. Layout-twin (same offsets/sizes) so the free function's param
     // can force signed loads without touching CChainChance.hpp.
@@ -136,14 +136,14 @@ extern "C" float lbl_eu_8050EDE0[4];
 // Retail .sdata2 object (8 bytes); defined in another TU.
 extern float lbl_eu_80668A80;
 
-// Tuning-pool constants used by func_8027C1A8 plus its u16 id table.
+// Tuning-pool constants used by Chain_CheckChanceRoll plus its u16 id table.
 extern unsigned short lbl_eu_8050EDD0[0x40];
 extern const float lbl_eu_80668A68;
 extern const float lbl_eu_80668A6C;
 extern const float lbl_eu_80668A70;
 extern const double lbl_eu_80668A78;
 extern "C" int lookupWorkAtAddr(void* addr);
-extern "C" int func_80148778(void*, int);
+extern "C" int isBattleStatusActive(void*, int);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // CfGameManager pair-value query (retail Fv-form symbol; call sites pass
 // two ids even though the suffix does not reflect them) and the tuning-value
@@ -153,23 +153,23 @@ extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 namespace cf { class CChainBattleObj; }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
 extern "C" int IdTable_SumValues(void* data, u32 flag);
-extern "C" int func_8017FD44(void);
-extern "C" int func_8017FD4C(int);
+extern "C" int GetZealObjPtr(void);
+extern "C" int GetZealResult(int);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void SysWinLog_QueueEvent(int);
 extern "C" u32 SysWinLog_BumpEventValue(int, int);
 // Chain-activation dice roll (defined in this TU). Retail callers emit a
-// real bl to the unmangled label func_8027C1A8 (MWCC_CASES CBattleMan_OnActorsEmpty
+// real bl to the unmangled label Chain_CheckChanceRoll (MWCC_CASES CBattleMan_OnActorsEmpty
 // record), so it keeps C linkage here like the other imports above; the
 // definition in the .cpp inherits it from this declaration.
-extern "C" int func_8027C1A8(cf::CChainChanceS* self,
+extern "C" int Chain_CheckChanceRoll(cf::CChainChanceS* self,
                              cf::CChainBattleObj* objA,
                              cf::CChainBattleObj* objB);
 extern "C" __declspec(noinline) void ScnLog_ClearStateWords(cf::CChainActorList* self);
 extern "C" cf::CChainActor* SysWinLog_AllocFreeSlot(cf::CChainActorList* self);
-extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
+extern "C" void Chain_InsertOrdered(cf::CChainActorList* self, cf::CChainActor* actor);
 extern "C" u32 getAnimModelId(void* battleObj);
 
 // Tail view of the battle object (shared with CChain.cpp / CSuddenCommu):

@@ -47,24 +47,24 @@ void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout dr
 void BgTex_Tick_3D54(void* self);                            // CBgTex animate
 int  mkCrystalGetFlag4361(void* self);                            // CMakeCrystalWin query
 int  mkCrystalIsBusyState(void* self);                            // CMakeCrystalWin query
-void func_80212A68(void* self);                            // CMakeCrystalWin tick
+void mkCrystalTick(void* self);                            // CMakeCrystalWin tick
 int  CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 void __ct__CBgTex(void* self, int arg);
 void __ct__UnkClass_8011C974(void* self, const void* src);
 void Scn_SetPauseFlag(void*, int);
 void BgTex_Release_3D9C(void*);
-void func_8021299C(void*);
+void mkCrystalTeardown(void*);
 void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Unmangled local helper (bound literally).
-extern "C" void func_802124AC(void* self);
+extern "C" void MakeCrystalInitWin(void* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
-void func_80210E9C(void* dst, const void* src);            // big state copy
-void func_80211CEC(void* dst, const void* src);            // big state copy
+void MakeCrystalCopyDispArea(void* dst, const void* src);            // big state copy
+void MakeCrystalCopyBox(void* dst, const void* src);            // big state copy
 void ItemEx_CopyTitle(void* dst, void* src);                  // win data post-ctor
-void func_80212158(void* dst, const void* src);            // state record copy
+void MakeCrystalCopyStateRecord(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
 int  CtrlRemote_TouchBitByArg(int id);
 void MiniMapSetActiveFlag();
@@ -87,7 +87,7 @@ public:
 
 // UI sound effect (playUISound__FUl).
 void playUISound(u32 op);
-// func_802124AC helper: init the CBgTex sub-object and arm the state byte.
+// MakeCrystalInitWin helper: init the CBgTex sub-object and arm the state byte.
 // (declared extern "C" above — retail symbol is unmangled)
 
 // ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ void playUISound(u32 op);
 // 0x43E8-byte object from work memory, constructs it, registers it and
 // returns the stored singleton (reloaded from the global after Regist).
 // ---------------------------------------------------------------------------
-CMenuMakeCrystal* func_8021240C(CProcess* parent, void* arg) {
+CMenuMakeCrystal* MakeCrystalCreate(CProcess* parent, void* arg) {
     if (lbl_eu_806646C8 != 0) {
         return 0;
     }
@@ -217,9 +217,9 @@ void CMenuMakeCrystal::Init() {
     } bufs;
 
     ItemEx_CopyTitle(reinterpret_cast<u8*>(this) + 0x98, win.tail);
-    func_80210E9C(reinterpret_cast<u8*>(this) + 0xD0, bufs.mid);
-    func_80211CEC(reinterpret_cast<u8*>(this) + 0x2EA8, bufs.upper);
-    func_80212158(reinterpret_cast<u8*>(this) + 0x43B0, bufs.rec);
+    MakeCrystalCopyDispArea(reinterpret_cast<u8*>(this) + 0xD0, bufs.mid);
+    MakeCrystalCopyBox(reinterpret_cast<u8*>(this) + 0x2EA8, bufs.upper);
+    MakeCrystalCopyStateRecord(reinterpret_cast<u8*>(this) + 0x43B0, bufs.rec);
     reinterpret_cast<MCTailState*>(this)->ready0 = bufs.rec[0x30];
     reinterpret_cast<MCTailState*>(this)->ready1 = bufs.rec[0x31];
     __dt__15CMakeCrystalWinFv(&win, -1);
@@ -240,7 +240,7 @@ void CMenuMakeCrystal::Init() {
     MiniMapSetActiveFlag();
 }
 
-void func_80210E9C(){}
+void MakeCrystalCopyDispArea(){}
 
 void func_802116D4(){}
 
@@ -254,7 +254,7 @@ void MakeCrystalCopyParamBlock(CMakeCrystalCopyBlock* dst, const CMakeCrystalCop
     dst->field_0x14 = src->field_0x14;
 }
 
-void func_80211CEC(){}
+void MakeCrystalCopyBox(){}
 
 // Copy-construct the window-state record: run the UnkClass_8011C974 base
 // copy-ctor at +0x04, then clone the five words (+0x14..+0x24) and six
@@ -281,7 +281,7 @@ struct MCStateRecord {
     MCStateBytes6 bytes;   // 0x28-0x2D
 };
 
-MCStateRecord* func_80212158(MCStateRecord* dst, volatile MCStateRecord* src) {
+MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRecord* src) {
     __ct__UnkClass_8011C974(dst->base, (const void*)src->base);
     dst->words.w0 = src->words.w0;
     dst->words.w1 = src->words.w1;
@@ -314,7 +314,7 @@ void CMenuMakeCrystal::Term() {
     if (this) render = (u8*)this + 0x58;
     ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB((IScnRender*)render);
     BgTex_Release_3D9C((u8*)this + 0x60);
-    func_8021299C((u8*)this + 0x80);
+    mkCrystalTeardown((u8*)this + 0x80);
     lbl_eu_806646C8 = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
@@ -359,7 +359,7 @@ void CMenuMakeCrystal::Move() {
 
     switch (st->state) {
     case 0:
-        func_802124AC(this);
+        MakeCrystalInitWin(this);
         break;
     case 1:
         st->state = 2;
@@ -375,7 +375,7 @@ void CMenuMakeCrystal::Move() {
     }
 
     BgTex_Tick_3D54(self + 0x60);
-    func_80212A68(self + 0x80);
+    mkCrystalTick(self + 0x80);
 }
 
 void CMenuMakeCrystal::cbRenderBefore() {
@@ -441,7 +441,7 @@ bool MakeCrystalIsCreated() { return lbl_eu_806646C8 != 0; }
 void* lbl_eu_806646C8;
 void* mkCrystalGetWord10(void*);
 
-void* func_80212490() {
+void* MakeCrystalGetWinData() {
     unsigned char* p = static_cast<unsigned char*>(lbl_eu_806646C8);
     if (p != 0) {
         return mkCrystalGetWord10(p + 0x80);
@@ -450,12 +450,12 @@ void* func_80212490() {
 }
 
 extern "C" int BgTex_IsLoaded_3E34(void*);
-extern "C" void func_8021260C(void*);
+extern "C" void mkCrystalBuildWin(void*);
 
 // Init the +0x60 sub-object when it reports active, then set the +0x43E4 flag.
-extern "C" void func_802124AC(void* self) {
+extern "C" void MakeCrystalInitWin(void* self) {
     if (BgTex_IsLoaded_3E34((u8*)self + 0x60) != 0) {
-        func_8021260C((u8*)self + 0x80);
+        mkCrystalBuildWin((u8*)self + 0x80);
         *(u8*)((u8*)self + 0x43E4) = 1;
     }
 }

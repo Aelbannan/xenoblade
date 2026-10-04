@@ -260,8 +260,8 @@ extern "C" void renderItemBoxByKind(void*, u32, u32, u32);
 extern "C" void setItemBoxNamedText(void*, int, void*);
 extern "C" u32 startItemBoxOpen(void*);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" char* func_80296FC0(CMCItemBoxSub*, u16);
-extern "C" char* func_80296E98(CMCItemBoxSub*, u16);
+extern "C" char* getMCItemSubText(CMCItemBoxSub*, u16);
+extern "C" char* getMCItemSubName(CMCItemBoxSub*, u16);
 extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 extern "C" void sysWinTermLayout(void*);
@@ -308,9 +308,9 @@ extern "C" void __dt__12CItemBoxInfoFv(void* info, int flags);
 extern "C" void __dt__7CSysWinFv(void* syswin, int flags);
 
 // ---------------------------------------------------------------------------
-// OnFileEvent / func_80296FC0 imports (retail symbol names verbatim)
+// OnFileEvent / getMCItemSubText imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void func_8018B0FC(void*, void*);
+extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void* __ct__CCur07(void*, void*);
 extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);
@@ -335,7 +335,7 @@ extern "C" void* getFP__FPCc(const char*);
 // C++-linkage (Itanium-mangled retail symbol getPackedFont__Fv).
 u32 getPackedFont();
 
-/* 28-byte message-format helper table read by func_80296FC0's '%2' handler
+/* 28-byte message-format helper table read by getMCItemSubText's '%2' handler
    (indexed by the item's kind byte). */
 struct CMCItemMsgTbl { u32 v[7]; };
 extern "C" CMCItemMsgTbl lbl_eu_8050FF60;

@@ -189,11 +189,11 @@ static void __DVDShowDeviceErrorMessage(void) {
     const char* const* messageList;
     GXColor bg = { 0, 0, 0, 0 };
     GXColor fg;
-    // .sdata2 is 8 bytes in retail: the fg color word then 4 zero pad bytes
-    // (gap_11_80669794_sdata2) aligning the next unit's .sdata2. The [2]
-    // array is load-bearing: a plain const scalar folds to an immediate and
-    // the retail .sdata2 slot disappears (codegen differs).
-    static const u32 fgColor[2] = { 0xFFFFFF00, 0 };
+    // Retail .sdata2 is just the 4-byte 0xFFFFFF00 word (@850) with an
+    // sda21 lwz; the [2] array's trailing zero is decomp invention (the
+    // second element is never read). Single-element array keeps the
+    // pool+load shape (a scalar/literal folds to an immediate).
+    static const u32 fgColor[1] = { 0xFFFFFF00 };
     *(u32*)&fg = fgColor[0];
 
     if (SCGetLanguage() == 0) {

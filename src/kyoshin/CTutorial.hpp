@@ -56,7 +56,7 @@ public:
     // Idempotent start: mark state 1 and fire the 0x8 UI event once.
     void Tutorial_StartIfIdle();
     // Current tutorial phase (0-3) derived from the page counters at 0x50/0x51.
-    u8 func_8029AE5C();
+    u8 Tutorial_GetPageState();
     // Advance-animation completion: state 3, visible.
     void Tutorial_FinishAdvanceAnim();
     // Rewind-animation completion: state 0, visible.
@@ -70,17 +70,17 @@ public:
     // Tutorial_TeardownTutorial).
     void Tutorial_LoadTutorialFiles();
     void Tutorial_TeardownTutorial();
-    void func_8029B124();
-    // Page-navigation tick (retail func_8029AD88).
-    void func_8029AD88();
-    // Advance-anim start handler (retail func_8029AE9C).
-    void func_8029AE9C();
-    // Rewind-anim start handler (retail func_8029AF7C).
-    void func_8029AF7C();
+    void Tutorial_RefreshPage();
+    // Page-navigation tick (retail Tutorial_NextPage).
+    void Tutorial_NextPage();
+    // Advance-anim start handler (retail Tutorial_StartAdvanceAnim).
+    void Tutorial_StartAdvanceAnim();
+    // Rewind-anim start handler (retail Tutorial_StartRewindAnim).
+    void Tutorial_StartRewindAnim();
     // Advance-anim fully finished (retail Tutorial_AdvanceState3To4).
     void Tutorial_AdvanceState3To4();
-    // Reset the 0x3340..0x33BE UI flag block (retail func_8029B498).
-    void func_8029B498();
+    // Reset the 0x3340..0x33BE UI flag block (retail Tutorial_ResetSharedFlags).
+    void Tutorial_ResetSharedFlags();
 
     // IWorkEvent-compatible vtable (+0x00), then the widget data:
     UnkClass_8045F564 mRegion0;         // 0x04 - layout build region (0x1800)

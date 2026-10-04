@@ -11,7 +11,7 @@ extern "C" CScnLightList* CScnItemPool_lookupSubPool(u8* pool, int kind);  // sc
 extern "C" void setLightEnvEnable(u8* ths, int val);
 extern "C" void uploadLightEnv(u8* ths, int val);
 // Retail references this helper under its unmangled C name.
-extern "C" void func_804BF944(u8* ths);
+extern "C" void ScnEnvLgt_ApplyLightRig(u8* ths);
 
 // Selects the active light: if the current pool light is armed, deactivate
 // its param block (uploadLightEnv) and clear the arm flag.
@@ -54,7 +54,7 @@ CScnLightMan::~CScnLightMan() {}
 // Arms the selected light item: runs the helper on arg2, then sets the arm
 // flag (+0x121c) of the item pointer held at +0x8 of arg1.
 extern "C" void LightManArmSelectedLight(CScnLightMan* ths, u8* arg2) {
-    func_804BF944(arg2);
+    ScnEnvLgt_ApplyLightRig(arg2);
     ths->mLight->flag121C = 1;
 }
 
@@ -91,9 +91,13 @@ extern "C" u32 lbl_eu_8066A970;
 extern "C" u32 lbl_eu_8066A978;
 extern "C" u32 lbl_eu_8066A980;
 extern "C" u32 lbl_eu_8066A988;
-extern "C" u32 lbl_eu_8056E568[12] = {
+extern "C" u32 lbl_eu_8056E568[4] = {
     (u32)&lbl_eu_80663950, 0x00000000,
     (u32)&__dt__12CScnLightManFv, 0x00000000,
+};
+// [.data] 0x8056E578-0x8056E598 (32B): foreign slot targets; retail holds
+// this tail under its own label (referenced by CScnMaruShadowNw4r).
+extern "C" u32 lbl_eu_8056E578[8] = {
     (u32)&lbl_eu_8066A958,
     (u32)&lbl_eu_8066A960,
     (u32)&lbl_eu_8066A968,

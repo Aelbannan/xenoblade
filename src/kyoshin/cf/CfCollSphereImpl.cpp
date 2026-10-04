@@ -132,11 +132,11 @@ extern void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
-extern void func_800AB2E4();
+extern void CollCapsule_DrawDebugShape();
 extern void collCapsuleQueryOffset();
-extern void func_800AB010();
-extern void func_800AB248();
-extern void func_800AAE24();
+extern void CollCylinder_DrawDebugShape();
+extern void collCylinderQueryOffset();
+extern void CollAABB_DrawDebugShape();
 extern void CollAABB_RenderQuery();
 }
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data_CfCollSphereImpl[136] = {
@@ -237,11 +237,11 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &lbl_eu_806618F8, (void*)0,
     &lbl_eu_806618F0, (void*)0,
     &lbl_eu_80661CB0, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C80, (void*)0, &func_800AB2E4, &collCapsuleQueryOffset,
+    &lbl_eu_80661C80, (void*)0, &CollCapsule_DrawDebugShape, &collCapsuleQueryOffset,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C88, (void*)0, &func_800AB010, &func_800AB248,
+    &lbl_eu_80661C88, (void*)0, &CollCylinder_DrawDebugShape, &collCylinderQueryOffset,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
-    &lbl_eu_80661C90, (void*)0, &func_800AAE24, &CollAABB_RenderQuery,
+    &lbl_eu_80661C90, (void*)0, &CollAABB_DrawDebugShape, &CollAABB_RenderQuery,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
     &lbl_eu_80661C98, (void*)0, &CfCollSphere_DebugDrawSimple, &CfCollSphere_DebugDrawXform,
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,

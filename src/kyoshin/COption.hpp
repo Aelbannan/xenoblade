@@ -241,12 +241,12 @@ extern u32 lbl_eu_80663E28;   // .sbss mode flag; bit 0x01000000 gates the confi
 extern u8 lbl_eu_80664A40[8];
 // .data option text tables (size 0x154): u16 enable table at +0x00, u16 name
 // table at +0x2C, 12-byte-row u16 value table at +0x58, u8 label table at
-// +0x16C - read by func_8029D420.
+// +0x16C - read by COptionRefreshRows.
 extern u8 lbl_eu_80539338[];
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CCur18(void* self, void* accessor);
-extern "C" void func_8018B0FC(void* dest, void* src);
+extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
@@ -301,19 +301,19 @@ extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void Cur_SetActive(CBaseCur*);
 extern "C" void Cur_DeactivateTail(void*);
 extern "C" void COptionRefreshCursorPanes(COption*);
-extern "C" int func_8029E3F8(COption*);
+extern "C" int COptionIsConfigDirty(COption*);
 extern "C" void COptionSetupSubAnim24(COption*);
 extern "C" void COptionSetupSubAnim20(COption*);
-extern "C" void func_8029D420(COption*);
+extern "C" void COptionRefreshRows(COption*);
 extern "C" u8 COptionReadConfigCell(COption*, u8);
 extern "C" u8 COptionReadCurrentConfigCell(COption* self);
-extern "C" void func_8029DD6C(COption* self);
+extern "C" void COptionApplyConfig(COption* self);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinDispatchPhase(void*);
-extern "C" void func_8022B9B4(void*, void*, void*);
+extern "C" void sysWinSetKindContent(void*, void*, void*);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
 extern "C" void sysWinOpenPhase1(void*);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" void initInstance__FP14Class_80296898(void*);
 

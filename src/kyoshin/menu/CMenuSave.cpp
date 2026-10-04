@@ -166,8 +166,8 @@ void CMenuSave::Init() {
     *(u8*)((u8*)this + 0x14c)  = *(u8*)(tempSave + 0x94);
 
     // Two embedded CSysWin-like regions are copied via their copy helper.
-    func_8016742C((u8*)this + 0x150, tempSave + 0x98);
-    func_8016742C((u8*)this + 0x18c, tempSave + 0xd4);
+    InfoCfCopySysWin((u8*)this + 0x150, tempSave + 0x98);
+    InfoCfCopySysWin((u8*)this + 0x18c, tempSave + 0xd4);
 
     // Tail state region (scrollbar/cursor/slot state).
     *(u32*)((u8*)this + 0x1c8) = *(u32*)(tempSave + 0x110);
@@ -253,7 +253,7 @@ void CMenuSave::Move() {
         advanceSaveMenuPhase(this);
         break;
     case 2:
-        func_8028E530(this);
+        handleSaveMenuInput(this);
         break;
     case 3:
         flagSaveMenuReady(this);
@@ -318,13 +318,13 @@ extern "C" void advanceSaveMenuPhase(CMenuSave* self) {
 }
 
 /*
- * func_8028E530 - save/load panel input handling (state 2). Reads the current
+ * handleSaveMenuInput - save/load panel input handling (state 2). Reads the current
  * cf pad data; depending on the co-op/single-player controller layout,
  * different pressed-button bits map to the same actions. The button tests use
  * the (inverted) == 0 form for the turbo-flag masks, matching retail's
  * subic/subfe bool idiom.
  */
-extern "C" void func_8028E530(CMenuSave* self) {
+extern "C" void handleSaveMenuInput(CMenuSave* self) {
     if (CSaveLoad_isReady(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) == 0) {
         return;
     }

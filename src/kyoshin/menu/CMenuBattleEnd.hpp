@@ -89,15 +89,15 @@ struct CMenuBattleEnd {
 
 // The retail symbols for this class's own lifecycle functions are the
 // unmangled C-linkage names below (the ctor/dtor/task entry take an explicit
-// receiver; func_8026F95C / func_8026FB0C are the CProcess run-time hooks and
+// receiver; advanceBattleEndQueue / queueBattleEndEntry are the CProcess run-time hooks and
 // the queue writer). Definitions live in CMenuBattleEnd.cpp.
 extern "C" {
 CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* obj, CScn* scene, u8 mode,
                                      u32 param);
 CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj, int flags);
 CMenuBattleEnd* createBattleEndMenu(CProcess* parent, CScn* scene, u8 mode, u32 param);
-void func_8026F95C(CMenuBattleEnd* obj);
-void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param);
+void advanceBattleEndQueue(CMenuBattleEnd* obj);
+void queueBattleEndEntry(CMenuBattleEnd* obj, u8 flag, u32 param);
 void cbRenderBefore__14CMenuBattleEndFv(void* sub);
 }
 

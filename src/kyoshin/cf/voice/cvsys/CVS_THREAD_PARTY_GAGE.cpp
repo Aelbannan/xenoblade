@@ -227,3 +227,66 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     raw->state2 = base[2];
     return self;
 }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_PARTY_GAGE.txt): the .rodata typeinfo name
+// (sized to absorb the retail pad), three .data init-state triples
+// ({0, -1, callback}), the 7-word thread vtable ({typeinfo, 0, play,
+// remove, bufsize, alwaysTrue, nullDispatch}), the trailing typeinfo-base
+// word plus padding, and two .sdata objects: the voice-ID pair the code
+// reads via @sda21 ({0x659, 0x65A}) and the typeinfo object ({name,
+// trailing}). Global-scope data symbols: MWCC does not mangle them.
+// lbl_eu_80662CC0 lives in the CCharVoiceMan range and is referenced, not
+// defined, here.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662D20[2];
+
+extern const char lbl_eu_805107C8[0x20] = "cf::CVS_THREAD_PARTY_GAGE";
+
+u32 lbl_eu_80539C48[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)PartyGage_AdvanceA_82D4,
+};
+
+u32 lbl_eu_80539C54[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)PartyGage_AdvanceB_83CC,
+};
+
+u32 lbl_eu_80539C60[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)PartyGage_NotifyDone_8560,
+};
+
+u32 lbl_eu_80539C6C[7] = {
+    (u32)lbl_eu_80662D20,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)PartyGage_RemoveVoice_85A8,
+    (u32)PartyGage_GetBufSize_8620,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_80539C88[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D18[2] = {
+    0x659,
+    0x65A,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D20[2] = {
+    (u32)lbl_eu_805107C8,
+    (u32)lbl_eu_80539C88,
+};

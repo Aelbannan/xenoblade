@@ -10,23 +10,23 @@
 
 extern "C" void __dt__Q22cf15CfObjectImplEneFv();
 
-extern "C" int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag);
+extern "C" int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag);
 extern "C" int MoveImplEne_RunSharedUpdate0(void* self);
 extern "C" void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg);
 
 // Runs the per-frame update: prepares via MoveImplInitFields, dispatches vtable
-// slot 0xe4, feeds the result + sub-fields into func_8015BB3C, pushes the
+// slot 0xe4, feeds the result + sub-fields into CharEffInit, pushes the
 // +0x28 sub-object into attachOwner, and finally triggers vtable slot 0x30
 // when the +0x14 object's +0x70 token formats to the lbl_eu_80661D48 name.
 void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
     MoveImplInitFields(self);
-    func_8015BB3C(self->vfE4(), self->field_14, self->field_18);
+    CharEffInit(self->vfE4(), self->field_14, self->field_18);
     attachOwner(self->field_28, self->field_14);
 
     cf::CfObjectImplEneToken* p = (cf::CfObjectImplEneToken*)self->field_14;
     if (p != 0) {
         ml::FixStr<64> buf(true);
-        if (func_800AA33C(buf, p->field_70, 0, 0) != 0) {
+        if (Tok_FormatStr(buf, p->field_70, 0, 0) != 0) {
             if (strstr(buf.mString, lbl_eu_80661D48) != 0) {
                 self->vf30(0x400, 1);
             }
@@ -51,7 +51,7 @@ void MoveImplEne_ReleaseTokenReset(cf::CfObjectImplEneObj* self) {
 // walks a 4-step guard chain (actor id / enemy state / sub-object / battle
 // flag) into a "sync" flag passed to MoveImplSyncEffectState. Manages the effect token
 // at +0x36C, mirrors the enemy angle into field_C4->+0x50C, dispatches the
-// self vtable slots 0xe4/0x40, and finally runs the shared func_800D0C2C
+// self vtable slots 0xe4/0x40, and finally runs the shared MoveImplEne_SyncTargetArrow
 // update with the player-controlled flag set.
 void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
     MoveImplUpdateState(self);
@@ -102,14 +102,14 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
                 lbl_eu_80666CE0);
         }
     }
-    func_800D0C2C(self, 1);
+    MoveImplEne_SyncTargetArrow(self, 1);
 }
 
 // Battle-actor per-frame logic: reacts to the actor's own state id (vtable
 // 0x30 of the +0x4 sub-object) via testActorStatus flag queries, issues battle-
 // cmd removals (dispatchItemLoad) and action triggers, and performs the 0x968
 // death handling by iterating the enum list and refreshing every unit.
-void func_800D02D4(cf::CfObjectImplEneObj* self) {
+void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
     MoveImplNoopA(self);
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
 
@@ -224,7 +224,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         CTaskGame_enumListCtor(holder);
         startEnumObjects(CTaskGame_enumListGet(holder), 0x80000000, 0);
         for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
-            void* obj = func_8016FE34(getObjectAt(CTaskGame_enumListGet(holder), i));
+            void* obj = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(holder), i));
             if (obj != 0) {
                 ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
             }
@@ -233,7 +233,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     }
 }
 
-int MoveImplEne_RunSharedUpdate0(void* self) { return func_800D0C2C((cf::CfObjectImplEneObj*)self, 0); }
+int MoveImplEne_RunSharedUpdate0(void* self) { return MoveImplEne_SyncTargetArrow((cf::CfObjectImplEneObj*)self, 0); }
 
 // Plays a sound based on `kind` when the battle object's +0x3F60 id matches.
 // Extra params p4/p5/p6 are live-in from the virtual call site; MoveImplDriveTransition
@@ -272,7 +272,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
     int count = 0;
     if (actor != 0 && (actor->field_A0 & 1) != 0) {
         void* v = ((cf::CfImplEneBattleObj*)self->field_18)->mSub.sf4C();
-        void* src = func_8016FE34(findObjectById((int)v));
+        void* src = MapFx_ResolveOwner(findObjectById((int)v));
         for (int i = 0; i < 0x10; i++) {
             cf::CfImplEneBattleObj* p =
                 (cf::CfImplEneBattleObj*)getEffOwner____FPv((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
@@ -293,7 +293,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
 // manager state and the enemy sub-object, builds a horizontal direction
 // toward the current target, and spawns/updates an arrow effect token at
 // +0x36C. Returns 1 while engaged, 0 when the guard chain fails.
-int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
+int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666CE4) return 0;
 
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
@@ -301,7 +301,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     if (battleObj->field_3374 & 0x800) goto fail;
     if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)battleObj) == 0) goto fail;
 
-    cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)func_8016FE34(
+    cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)MapFx_ResolveOwner(
         findObjectById((int)battleObj->mSub.sf4C()));
     if (enemy == 0) goto fail;
     if (enemy->field_3F34 == 0) goto fail;
@@ -345,7 +345,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
 
     // Create the direction-arrow effect once per engagement.
     if (self->field_36C == 0 && flag != 0 && self14->field_C4 != 0) {
-        void* effect = func_804CC1F4(lbl_eu_8065FC18,
+        void* effect = EffRoot_AddSchedReq(lbl_eu_8065FC18,
                                      CfRes_findEntryById(CfRes_getInstPtr224(), 0x70100000),
                                      lbl_eu_80663E14, 0xa5, 0, 0);
         self->field_36C = (u32)effect;
@@ -369,7 +369,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
         effect->mRotScaled[1] = *(s32*)&rotScaled[1];
         effect->mRotScaled[2] = *(s32*)&rotScaled[2];
         f32 dt = simGetLeafDist7B0((void*)battleObj->field_3F34);
-        func_804E36DC((CSchedule*)effect, dt);
+        schedUpdate((CSchedule*)effect, dt);
         schedReleaseAllItems(effect);
     }
     return 1;

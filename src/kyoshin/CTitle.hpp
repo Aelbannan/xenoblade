@@ -132,7 +132,7 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 extern "C" CBaseCur* __ct__CCur18(CBaseCur* self, nw4r::lyt::ArcResourceAccessor* arcResAcc);
 extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void Cur_SetVisible(void* pCur, u8 val);
-extern "C" void func_801D202C(CBaseCur* pCur);
+extern "C" void Cur_Update(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).

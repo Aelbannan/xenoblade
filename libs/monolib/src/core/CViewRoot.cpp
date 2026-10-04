@@ -401,7 +401,7 @@ struct PoolPair { u32 w0; u32 w1; };
 // Three inline signed ring pushes (divw/mullw/subf shape); fields are always
 // re-read through the freshly loaded instance so each used++ reads the
 // reloaded instance, matching retail.
-void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
+void pushScissorRects__9CViewRootFPvPv(void* a, void* b, void* c) {
     CViewRoot* root;
     s32 sum;
     s32 q;
@@ -468,7 +468,7 @@ static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
     return &base[slot];
 }
 
-void CViewRoot::func_80442C68() {
+void CViewRoot::popScissorRects() {
     s32 sum0;
     s32 slot0;
     s32 sum1;

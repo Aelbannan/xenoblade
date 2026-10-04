@@ -43,15 +43,14 @@ bool AnmObj::TestAnmFlag(AnmFlag flag) const {
 } // namespace g3d
 } // namespace nw4r
 
-// Absorbed retail sdata (play-policy dispatch + floats)
+// NOTE: intentionally non-const. A const float pair unreferenced in-TU is
+// dead-stripped by MWCC; the old static-keeper struct kept it alive but
+// emitted __sinit_ into .text (split budget). Mutable storage is always
+// emitted, with identical bytes, and no code.
 extern "C" {
 __declspec(section ".sdata") __attribute__((aligned(8))) const void* lbl_eu_80663458[2] = {
     (const void*)nw4r::g3d::PlayPolicy_Onetime,
     (const void*)nw4r::g3d::PlayPolicy_Loop,
 };
-__declspec(section ".sdata") __attribute__((aligned(8))) const float lbl_eu_80663460[2] = {1.0f, 0.0f};
-}
-// Keep sdata live (referenced via FrameCtrl policy table)
-namespace {
-struct KeepAnmObjSdata { KeepAnmObjSdata(){ (void)lbl_eu_80663458; (void)lbl_eu_80663460; } } keepAnmObjSdata;
+__declspec(section ".sdata") __attribute__((aligned(8))) float lbl_eu_80663460[2] = {1.0f, 0.0f};
 }

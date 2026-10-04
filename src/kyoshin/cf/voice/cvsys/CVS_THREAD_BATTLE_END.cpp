@@ -428,3 +428,117 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
 int EndVoice_AllocSize() {
     return 70;
 }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_BATTLE_END.txt): two .rodata typeinfo
+// names (BATTLE_END and BUF, each sized to absorb the retail pad), four
+// .data init-state triples ({0, -1, callback}), two voice-ID tables, the
+// 7-word thread vtable ({typeinfo, 0, play, remove, allocSize, alwaysTrue,
+// nullDispatch}), the trailing typeinfo-base word, a further triple that
+// references the BUF advance function, and four .sdata objects (two
+// voice-ID pairs read via @sda21, two typeinfo objects). Global-scope data
+// symbols: MWCC does not mangle them.
+//
+// lbl_eu_805399E0 is declared (as extern) in CVS_THREAD_BUF.hpp but its
+// bytes live in this unit's range, so it is defined here. BufVxAdvanceSlot
+// is defined in CVS_THREAD_BUF.cpp; the proto below mirrors that
+// definition (incomplete struct keeps the BUF header out of this TU).
+// lbl_eu_80539A20 / lbl_eu_80662CC0 live in the BUF / CCharVoiceMan ranges
+// and are referenced, not defined, here.
+struct CVS_THREAD_BUF;
+extern "C" void BufVxAdvanceSlot(CVS_THREAD_BUF* self);
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_805399E0[3];
+extern u32 lbl_eu_80539A20[4];
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662CD8[2];
+extern u32 lbl_eu_80662CE0[2];
+
+extern const char lbl_eu_80510700[0x20] = "cf::CVS_THREAD_BATTLE_END";
+extern const char lbl_eu_80510720[0x18] = "cf::CVS_THREAD_BUF";
+
+u32 lbl_eu_80539958[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)func_802A497C,
+};
+
+u32 lbl_eu_80539964[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)func_802A4A78,
+};
+
+u32 lbl_eu_80539970[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)EndVoice_AdvanceSlot,
+};
+
+u32 lbl_eu_8053997C[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)func_802A4A78,
+};
+
+u32 lbl_eu_80539988[8] = {
+    0xB55,
+    0xB56,
+    0xB61,
+    0xB62,
+    0xB63,
+    0xB59,
+    0xB5A,
+    0,
+};
+
+u32 lbl_eu_805399A8[4] = {
+    0xB5B,
+    0xB5C,
+    0xB5F,
+    0xB60,
+};
+
+u32 lbl_eu_805399B8[7] = {
+    (u32)lbl_eu_80662CD8,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)EndVoice_RemoveVoice,
+    (u32)EndVoice_AllocSize,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_805399D4[3] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+};
+
+u32 lbl_eu_805399E0[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)BufVxAdvanceSlot,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CC8[2] = {
+    0xB57,
+    0xB58,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CD0[2] = {
+    0xB5D,
+    0xB5E,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CD8[2] = {
+    (u32)lbl_eu_80510700,
+    (u32)lbl_eu_805399D4,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662CE0[2] = {
+    (u32)lbl_eu_80510720,
+    (u32)lbl_eu_80539A20,
+};

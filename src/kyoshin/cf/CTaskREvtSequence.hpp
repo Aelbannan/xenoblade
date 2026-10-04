@@ -33,7 +33,7 @@ extern "C" void MenuSnd_StopSlot1_9424(float vol);
 // Imports for EvtSeqBootSequence (event-sequence boot): sequence-system / UI gates
 // (C-linkage, retail unmangled names), CfGameManager helpers, the id getter
 // and the sound-system flag arm.
-extern "C" bool func_8012E6DC();
+extern "C" bool UIBattleHasPendingLoads();
 extern "C" int CfRes_isGridLoadIdle();
 extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
@@ -50,8 +50,8 @@ extern "C" void* evtModelDataPtr(void* self);
 class CProcess;
 extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
 // Realtime-event arena allocator (CREvtMem.cpp): returns the chunk size.
-extern "C" u32 func_80167D40(u32 a, u32 b);
-extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
+extern "C" u32 initEvtMemArena(u32 a, u32 b);
+extern "C" void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
 
 // .sbss presentation/mode flag (co-op secondary mode bitfield)
 extern u32 lbl_eu_80663E28;
@@ -118,8 +118,8 @@ extern "C" u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value);
 // (canonical UnkClass_800821F8* view); this TU's call sites cast to the
 // local CfEvtCamManager view below.
 #include "kyoshin/cf/CfGameManagerApi.hpp"
-// func_800AA714: path -> packed id (code_800AA008.cpp; flat retail name).
-extern "C" u32 func_800AA714(const char* path);
+// Tok_ParseFile: path -> packed id (code_800AA008.cpp; flat retail name).
+extern "C" u32 Tok_ParseFile(const char* path);
 // ScnCamDepthUp: player/event-object refresh (CfCam.hpp declares the same
 // symbol with a void* shape).
 extern "C" bool ScnCamDepthUp(UnkEvtPlayer* obj);
@@ -134,12 +134,12 @@ struct CREvtLight;
 struct CREvtMovie;
 struct CREvtMovieScript;
 struct CREvtParam;
-extern "C" void func_80180664(CREvtCamera* self, void* eventData,
+extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData,
                               void* elemAddr);
-extern "C" void func_80185378(CREvtEffect* self, void* src, void* elemAddr);
+extern "C" void EvtFx_InitModel(CREvtEffect* self, void* src, void* elemAddr);
 extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName,
                               u32 elemAddr);
-extern "C" void func_80294BA4(CREvtMovie* self);
+extern "C" void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 // Imports for EvtSeqSetupObjLists (event-sequence setup): realtime-event arena
 // allocator + object ctors (kyoshin/realtimeevt/*.cpp), the name-matching
 // helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
@@ -156,7 +156,7 @@ extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
 extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv();
 extern "C" u32 isVisionMenuActive();
 extern "C" void activateVisionMenu();
-extern "C" void func_80294980(CREvtMovie* self);
+extern "C" void EvtMovie_StartPlayback_4980(CREvtMovie* self);
 
 // Imports for EvtSeqOnFileEvent (async file-event handler): scene dim helper
 // (CfObjectImplWalker.cpp) and the menu tag-processor (re)init pair
@@ -308,7 +308,7 @@ struct UnkSeq120 {
 };
 
 // Object behind the container +0x4594/+0x4598 pointers (EvtSeqResolvePackedResId): the
-// vtable+0x18 slot (user 4) returns a name string fed to func_800AA714.
+// vtable+0x18 slot (user 4) returns a name string fed to Tok_ParseFile.
 class UnkObj4594 {
 public:
     virtual void vf_0x08();
@@ -810,7 +810,7 @@ public:
     u32 field_0x11C;  // 0x11C (getEvtMemSlot arena pointer)
     UnkSeq120* field_0x120;    // 0x120 (walk cursor advanced by EvtSeqAdvanceSequence)
     u32 field_0x124;  // 0x124 (CX stream position written by EvtSeqOnFileEvent)
-    u32 field_0x128;  // 0x128 (arena chunk size from func_80167D40)
+    u32 field_0x128;  // 0x128 (arena chunk size from initEvtMemArena)
     f32 field_0x12C;  // 0x12C (Init stores MaruShadowLoadGlobalFloat() here)
     u32 field_0x130;  // 0x130 (zero-check by EvtSeqAdvanceSequence)
     u16 field_0x134;  // 0x134 (sequence id halfword from getReloadParam2)
@@ -886,7 +886,7 @@ extern "C" void EvtSeqXorSeqBuffer(const char* path, EvtC450Buf* buf, s32 limit)
 // and the menu BGM/voice helpers (code_80187F14.cpp / code_801A929C.cpp).
 extern "C" s32 MiniMapHasGlobalData();
 extern "C" void MiniMapSetActiveFlag();
-extern "C" void func_80261960(int index);
+extern "C" void IdTable_SeekIndex(int index);
 extern "C" void MenuSnd_SetBGM_89034(const char* name, int flag, float f1, float f2);
 extern "C" void MenuSnd_RestartBGM_88D34(const char* name, int flag, float f1, float f2);
 extern "C" void MenuSnd_PushSlotVolume_896C(int index, u32 type, float f1, float f2);
@@ -906,7 +906,7 @@ extern u32 lbl_eu_80530AE8[3];
 
 // Realtime-event camera task helpers (CREvtCamera.cpp) called by
 // EvtSeqUpdateSeqAlt's tail.
-extern "C" void func_80180210(int flag);
+extern "C" void REvtCam_ActivateTasks(int flag);
 extern "C" void REvtCam_ActivateLodTasks();
 
 // ---- Imports for EvtSeqStartSequence (event-sequence start) ----
@@ -916,7 +916,7 @@ extern "C" const char* evtGetBaseNameAddr();
 // Scene alloc-handle getter (CTaskGame.cpp).
 extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
 // BGM stream starter (CTaskGame.cpp): volume arrives in f1.
-extern "C" void func_80043738(u32 a1, const char* path, u32 handle, u32 a4,
+extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 handle, u32 a4,
                               u32 a5, u32 a6, float volume);
 // Fade-volume scale source (CTaskREvent.cpp): returns a float in f1.
 extern "C" f32 evtCalcStreamVolume();
@@ -1160,7 +1160,7 @@ extern "C" void freeEvtMemAll();
 extern "C" void finalizeGameState__Q22cf13CfGameManagerFv();
 extern "C" void CUICfManager_createQueuedMenus();
 extern "C" void CUICfManager_queueEventMenu();
-extern "C" void func_8012F750(u32 arg);
+extern "C" void UIBattleCreateVisionMenu(u32 arg);
 extern "C" void updateScnCounter__FUl(u32 arg);
 
 // Event-task object behind evtGetManagerAddr(): teardown-arm word at +0x1B8.

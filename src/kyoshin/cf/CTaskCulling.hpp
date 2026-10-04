@@ -31,7 +31,7 @@ namespace cf{
         static void setOccDisabled(u32 r3);
         static UNKTYPE* getOccBuffer();
         static void clearOccFrustums();
-        static void func_801A2CAC();
+        static void reloadOccFrustums();
 
 
         //0x0: vtable (CTTask)

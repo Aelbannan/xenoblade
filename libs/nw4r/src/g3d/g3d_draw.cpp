@@ -764,6 +764,11 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
     u32 viewMtxNum = mdl.GetResMdlInfo().GetNumViewMtx();
     detail::workmem::MdlZ* pMdlZArray = detail::workmem::GetMdlZTemporary();
 
+    // Retail zeroes Z when the node matrix is outside the view range (the
+    // hoisted lfs feeds f31 from the shared 0.0f blob lbl_eu_80669C48, not
+    // a TU-local 1.0f pool); materialize once so the load stays hoisted.
+    const f32 cZeroZ = lbl_eu_80669C48;
+
     for (; (c = *pByteCode) != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {
 
@@ -792,7 +797,7 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
         if (mtxID < viewMtxNum) {
             rMdlZ.Z = pViewPosMtxArray[mtxID]._23;
         } else {
-            rMdlZ.Z = 1.0f;
+            rMdlZ.Z = cZeroZ;
         }
 
         rMdlZ.priority = pDrawCmd->priority;

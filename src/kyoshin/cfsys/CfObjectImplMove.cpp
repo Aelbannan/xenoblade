@@ -64,7 +64,7 @@ void MoveImplResetFull(CfObjectImplMoveObj* self) {
         simRemoveWordFromBuf(actor->sub.field_98, src);
     }
     if (self->vfE4() != 0) {
-        func_8015BD94(self->vfE4());
+        CharEffDetachAllSlots(self->vfE4());
     }
     stopVoiceA(&self->field_0x28[0]);
     if (self->field_0x1C != 0) {
@@ -110,11 +110,11 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     case 0x10:
         // Release embedded handler objects 0xef/0xf0/0xf1, then request
         // move state 0xb.
-        if (func_80148778(self->field_0x18->field_08, 0xef) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xef) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
-        if (func_80148778(self->field_0x18->field_08, 0xf0) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf0) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
-        if (func_80148778(self->field_0x18->field_08, 0xf1) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf1) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
         CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0xb, 0, -1, 1);
         break;
@@ -155,19 +155,19 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
             }
         }
         // Release handlers 0xee..0x112.
-        if (func_80148778(self->field_0x18->field_08, 0xee) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xee) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xee);
-        if (func_80148778(self->field_0x18->field_08, 0xf4) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf4) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf4);
-        if (func_80148778(self->field_0x18->field_08, 0xef) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xef) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
-        if (func_80148778(self->field_0x18->field_08, 0xf0) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf0) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
-        if (func_80148778(self->field_0x18->field_08, 0xf1) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf1) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
-        if (func_80148778(self->field_0x18->field_08, 0x111) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0x111) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x111);
-        if (func_80148778(self->field_0x18->field_08, 0x112) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0x112) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0x112);
         // Gate word at +0x1528 feeds both the test and the dispatch argument.
         if (((CfMoveHandlerWide*)self->field_0x18->field_08)->field_0x1528 != 0)
@@ -216,19 +216,19 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 CfObjectMove_setAnimModeArgs((u8*)&self->field_0x18->sub, 0x31, 0, -1, 1);
         }
         // Release handlers 0xee..0xf8.
-        if (func_80148778(self->field_0x18->field_08, 0xee) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xee) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xee);
-        if (func_80148778(self->field_0x18->field_08, 0xf4) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf4) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf4);
-        if (func_80148778(self->field_0x18->field_08, 0xef) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xef) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xef);
-        if (func_80148778(self->field_0x18->field_08, 0xf0) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf0) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf0);
-        if (func_80148778(self->field_0x18->field_08, 0xf1) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf1) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf1);
-        if (func_80148778(self->field_0x18->field_08, 0xeb) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xeb) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xeb);
-        if (func_80148778(self->field_0x18->field_08, 0xf8) != 0)
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xf8) != 0)
             ((CfMoveHandler8*)self->field_0x18->field_08)->h20(0xf8);
         break;
     }
@@ -419,7 +419,7 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
 // Presentation event gate: the embedded handler at actor +0x08 must accept
 // the id before the vf8C presentation virtual is dispatched.
 void MoveImplGatePresent(CfObjectImplMoveObj* self, u32 id) {
-    if (func_80148778(self->field_0x18->field_08, id) == 0) {
+    if (isBattleStatusActive(self->field_0x18->field_08, id) == 0) {
         self->vf94(id);
     }
 }
@@ -449,7 +449,7 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
     case 0xce:
         // Event 0xce is gated on the +0x8 sub-object's handler accepting it;
         // only then issue command 0x1c.
-        if (func_80148778((u8*)self->field_0x18 + 8, 0xce) == 0) {
+        if (isBattleStatusActive((u8*)self->field_0x18 + 8, 0xce) == 0) {
             self->field_0x18->sub.vfn20C(0x1c);
         }
         break;
@@ -495,10 +495,10 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
                 dispatchItemLoad(self->field_0x18, 0x80000);
             }
         } else {
-            CfActorObj* found = (CfActorObj*)func_8016FE34(
+            CfActorObj* found = (CfActorObj*)MapFx_ResolveOwner(
                 findObjectById((int)self->field_0x18->sub.vfn13()));
             if (found == nullptr || found->f173() != 0 ||
-                func_80148778(found->field_08, 0xf8) != 0) {
+                isBattleStatusActive(found->field_08, 0xf8) != 0) {
                 self->vf70(nullptr);
                 dispatchItemLoad(self->field_0x18, 0x80000);
             }
@@ -548,7 +548,7 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
             act->f138();
             int count = ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620;
             for (int i = 0; i < count; i++) {
-                func_8016FE34(
+                MapFx_ResolveOwner(
                     getObjectAt(CTaskGame_enumListGet(&holder), i));
             }
         }
@@ -1132,14 +1132,14 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) != nullptr &&
             ((CfMoveBMId*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                     ->field_0 == ac1->sub.field_74 &&
-            func_80148778(ac1->field_08, 0xf) == 0 &&
-            func_80148778(ac1->field_08, 9) == 0 &&
-            func_80148778(ac1->field_08, 0xc) == 0 &&
-            func_80148778(ac1->field_08, 0xb) == 0 &&
+            isBattleStatusActive(ac1->field_08, 0xf) == 0 &&
+            isBattleStatusActive(ac1->field_08, 9) == 0 &&
+            isBattleStatusActive(ac1->field_08, 0xc) == 0 &&
+            isBattleStatusActive(ac1->field_08, 0xb) == 0 &&
             (((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                  ->field_824 &
                 0x800) == 0) {
-            func_800F449C(CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
+            ScMain_Reset(CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
         }
         CfActorObj* ac2 = self->field_0x18;
         CfMoveC4Obj* evt = (CfMoveC4Obj*)ac2->sub.field_C4;
@@ -1393,7 +1393,7 @@ tail:
         CfActorObj* aT2 = self->field_0x18;
         if (aT2->sub.field_71C != 0) {
             CfActorObj* other =
-                (CfActorObj*)func_8016FE34(findObjectById((int)aT2->sub.field_71C));
+                (CfActorObj*)MapFx_ResolveOwner(findObjectById((int)aT2->sub.field_71C));
             if (other != nullptr && other->sub.field_C4 != 0) {
                 void* moved = aT2->sub.vfn110()->field_0x18;
                 other->sub.vfn110()->field_0x18 = moved;
@@ -1428,7 +1428,7 @@ void MoveImplSweepReposition(CfObjectImplMoveObj* self) {
     if (((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620 != 0) {
         for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
             void* entry =
-                func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
             self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
                 lbl_eu_80666C60);
         }
@@ -1486,8 +1486,8 @@ void MoveImplResetStateDriver(CfObjectImplMoveObj* self) {
 void MoveImplResolveActorRef(CfObjectImplMoveObj* self) {
     // Virtual dispatch on the sub-object embedded at +0x3e9c of the actor
     // object (vtable slot 0x4c), then chain the result through
-    // findObjectById (actor id lookup) into func_8016FE34.
-    func_8016FE34(findObjectById(
+    // findObjectById (actor id lookup) into MapFx_ResolveOwner.
+    MapFx_ResolveOwner(findObjectById(
         (int)self->field_0x18->sub.vfn13()));
 }
 
@@ -1536,7 +1536,7 @@ void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
     if (bmRes == nullptr) {
         return;
     }
-    void* found = func_8016FE34(findObjectById((int)((CfMoveBMId*)bmRes)->field_0));
+    void* found = MapFx_ResolveOwner(findObjectById((int)((CfMoveBMId*)bmRes)->field_0));
     if (found != (void*)self->field_0x18) {
         return;
     }
@@ -1754,7 +1754,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     PSMTXMultVec((const f32(*)[4])mtx, (Vec*)&param->field_10[0], &world);
 
     // Lift by the constant Y offset, run the screen probe on a copy of the
-    // lifted point; the normal buffer is filled by func_804BE4E0.
+    // lifted point; the normal buffer is filled by ScnRes_CopyEntryMid.
     nw4r::math::VEC3 lift;
     lift.x = lbl_eu_80666C60;
     lift.y = lbl_eu_80666CA8;
@@ -1767,9 +1767,9 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
         return;
     }
-    func_804BE4B4(&world, 0);
+    ScnRes_CopyEntryHead(&world, 0);
     CfMoveVec3f nrm;
-    func_804BE4E0(&nrm, 0);
+    ScnRes_CopyEntryMid(&nrm, 0);
 
     // Only assigned on the early path; the orientation block below reads the
     // stack slot stale on the tier-selection path (matches retail).
@@ -2017,9 +2017,9 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     probe.z = wpos.z;
     if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
         return;
-    func_804BE4B4(&world, 0);
+    ScnRes_CopyEntryHead(&world, 0);
     CfMoveVec3f nrm;
-    func_804BE4E0(&nrm, 0);
+    ScnRes_CopyEntryMid(&nrm, 0);
 
     f32 scale =
         ((CfMoveEvt60*)self->mSubObj->field_0x98)->field_2E8;   // f26

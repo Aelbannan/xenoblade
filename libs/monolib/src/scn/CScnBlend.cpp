@@ -16,22 +16,22 @@ void operator delete(void* p) throw();
 extern const f32 lbl_eu_8066AAE0;
 extern const f32 lbl_eu_8066AAE4;
 extern const f32 lbl_eu_8066AAE8;
-extern "C" void func_8049C868();   // CScnBloom (foreign TU)
+extern "C" void FilterUpdateIntensity();   // CScnBloom (foreign TU)
 
 // Opaque render-work object (CScnTexWorkMan instance), only forwarded.
 struct CTexWorkObj;
 extern "C" GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
 extern "C" void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
-extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect,
+extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect,
                                                            CView* view);
 extern "C" void setupLightVtxFormat(int fmt, int mode);
 extern "C" void setupLightTevColor(int a, int b, int c);
 extern "C" void setupLightTevAlpha(int a, int b, int c);
 extern "C" void TexObj_BlitViewRect(GXTexObj* tex, int p2, int p3);
 struct RectRegion;
-extern "C" void func_80494F10(ml::CRect* rect, RectRegion* region,
+extern "C" void drawTexturedQuad(ml::CRect* rect, RectRegion* region,
                               ml::CCol4* col);
-extern "C" void func_80494D84(ml::CRect* rect, RectRegion* region);
+extern "C" void drawFlatQuad(ml::CRect* rect, RectRegion* region);
 extern "C" void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
                                            u32 c, u32 d, u32 e);
@@ -88,7 +88,7 @@ extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined b
 // RTTI locators lbl_eu_806639E8/lbl_eu_806639F0 live in the CScnItemCamera TU).
 u32 lbl_eu_8056E9E8[5] = {
     (u32)&lbl_eu_806639E8, 0x00000000, (u32)&__dt__9CScnBlendFv,
-    (u32)&func_8049C868, (u32)&Blend_DrawFilter,
+    (u32)&FilterUpdateIntensity, (u32)&Blend_DrawFilter,
 };
 u32 lbl_eu_8056E9FC[3] = {
     (u32)&lbl_eu_806639F0, 0x00000000, 0x00000000,
@@ -170,7 +170,7 @@ extern "C" void Blend_SetFlag2(CScnBlend* ths, u32 enable) {
 // ============================================================================
 extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
     if (ths->mRect.h != lbl_eu_8066AAE8) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
@@ -198,7 +198,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
                 setupLightTevColor(0, 3, 0);
                 setupLightTevAlpha(0, 0, 0);
             }
-            func_80494D84(&rect, &ths->mRect);
+            drawFlatQuad(&rect, &ths->mRect);
         } else {
             // Texture path: render the view into a work texture first.
             CTexWorkObj* texWork = param->mTexWork;
@@ -260,7 +260,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
             GXLoadTexObj(tex, GX_TEXMAP0);
             ml::CCol4 blendColor(lbl_eu_8066AAE8, lbl_eu_8066AAE8,
                                  lbl_eu_8066AAE0, lbl_eu_8066AAE0);
-            func_80494F10(&rect, &ths->mRect, &blendColor);
+            drawTexturedQuad(&rect, &ths->mRect, &blendColor);
             TexMan_ReleaseArg_02D8(texWork, tex);
         }
 

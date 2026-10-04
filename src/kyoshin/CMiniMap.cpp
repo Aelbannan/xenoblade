@@ -2340,7 +2340,7 @@ void CMenuMiniMap2::Move() {
 
     MiniMapUpdateSubobject(&mMiniMap);
     if (lbl_eu_80663E24 & 0xBFE40000) return;
-    if (func_801AC124()) return;
+    if (isVisionAnimating()) return;
     // Active state: Classic/Wiimote A dismisses the minimap.
     if (mField8D4 == 2) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
@@ -2369,7 +2369,7 @@ void CMenuMiniMap2::cbRenderBefore() {
     if (!GetSysStateFlag10()) return;
     if (getUnk80664658()->field_214 & 0x100000) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
-    if (func_801AC124()) return;
+    if (isVisionAnimating()) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;

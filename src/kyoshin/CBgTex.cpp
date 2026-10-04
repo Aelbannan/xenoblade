@@ -172,3 +172,113 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
+
+// ----- retail data (wave DL) -----
+// .rodata string pool (0x140, lbl_eu_80505370): layout/region/arc names.
+// Every lbl_eu_80505370+N site in SetupRegion/Acquire/OnFileEvent lands on
+// a string start (0x00 CBgTexLyt .. 0x136 arc); short init zero-fills the
+// 6 tail bytes to 0x140. Non-const + declspec holds it in .rodata.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_80505370[0x140] =
+    "CBgTexLyt\0"
+    "mf00_reg_bg06.brlyt\0"
+    "mf00_reg_bg07.brlyt\0"
+    "mf00_reg_bg01.brlyt\0"
+    "mf00_reg_bg02.brlyt\0"
+    "mf00_reg_bg03.brlyt\0"
+    "mf00_reg_bg04.brlyt\0"
+    "mf00_reg_bg05.brlyt\0"
+    "pic_ptm00\0"
+    "pic_ptm01\0"
+    "menu/jp/BgTex06.arc\0"
+    "menu/jp/BgTex07.arc\0"
+    "menu/jp/BgTex01.arc\0"
+    "menu/jp/BgTex02.arc\0"
+    "menu/jp/BgTex03.arc\0"
+    "menu/jp/BgTex04.arc\0"
+    "menu/jp/BgTex05.arc\0"
+    "arc\0";
+// .data vtable block (retail rela.data order): DB8 head {extern,0,0,0},
+// DC8 IWorkEvent vtable {sdata-locator, 0, dtor, 31 handlers}, E50 RTTI
+// trailer {RTTI,0,0,0}. Plain defs stay in .data (every slot nonzero via
+// reloc or literal). Handler decls mirror data_vtables.hpp spellings but
+// stay TU-local (that header is intentionally not included here).
+extern u32 lbl_eu_80662410[];
+extern u32 lbl_eu_80662650[];
+extern "C" {
+void __dt__6CBgTexFv();
+void OnFileEvent__6CBgTexFP10CEventFile();
+void WorkEvent1__10IWorkEventFPvPCc();
+void WorkEvent3__10IWorkEventFPv();
+void WorkEvent4__10IWorkEventFv();
+void OnPauseTrigger__10IWorkEventFb();
+void WorkEvent6__10IWorkEventFv();
+void WorkEvent7__10IWorkEventFv();
+void WorkEvent8__10IWorkEventFv();
+void WorkEvent9__10IWorkEventFv();
+void WorkEvent10__10IWorkEventFv();
+void WorkEvent11__10IWorkEventFv();
+void WorkEvent12__10IWorkEventFv();
+void WorkEvent13__10IWorkEventFv();
+void WorkEvent14__10IWorkEventFv();
+void WorkEvent15__10IWorkEventFv();
+void WorkEvent16__10IWorkEventFv();
+void WorkEvent17__10IWorkEventFv();
+void WorkEvent18__10IWorkEventFv();
+void WorkEvent19__10IWorkEventFv();
+void WorkEvent20__10IWorkEventFv();
+void WorkEvent21__10IWorkEventFv();
+void WorkEvent22__10IWorkEventFv();
+void WorkEvent23__10IWorkEventFv();
+void WorkEvent24__10IWorkEventFv();
+void WorkEvent25__10IWorkEventFv();
+void WorkEvent26__10IWorkEventFv();
+void WorkEvent27__10IWorkEventFv();
+void WorkEvent28__10IWorkEventFv();
+void WorkEvent29__10IWorkEventFv();
+void WorkEvent30__10IWorkEventFv();
+void WorkEvent31__10IWorkEventFv();
+// __RTTI__10IWorkEvent cannot be spelled directly (MWCC 10322 under -RTTI
+// on, deferred to the last declaration); stand-in unifies natively.
+extern u32 rtti_10IWorkEvent[];
+}
+__declspec(section ".data") __attribute__((used, aligned(4)))
+u32 lbl_eu_80533DB8[4] = { (u32)lbl_eu_80662410, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used, aligned(4)))
+u32 lbl_eu_80533DC8[0x22] = {
+    (u32)lbl_eu_80662650, 0, (u32)__dt__6CBgTexFv,
+    (u32)WorkEvent1__10IWorkEventFPvPCc, (u32)OnFileEvent__6CBgTexFP10CEventFile,
+    (u32)WorkEvent3__10IWorkEventFPv, (u32)WorkEvent4__10IWorkEventFv,
+    (u32)OnPauseTrigger__10IWorkEventFb, (u32)WorkEvent6__10IWorkEventFv,
+    (u32)WorkEvent7__10IWorkEventFv, (u32)WorkEvent8__10IWorkEventFv,
+    (u32)WorkEvent9__10IWorkEventFv, (u32)WorkEvent10__10IWorkEventFv,
+    (u32)WorkEvent11__10IWorkEventFv, (u32)WorkEvent12__10IWorkEventFv,
+    (u32)WorkEvent13__10IWorkEventFv, (u32)WorkEvent14__10IWorkEventFv,
+    (u32)WorkEvent15__10IWorkEventFv, (u32)WorkEvent16__10IWorkEventFv,
+    (u32)WorkEvent17__10IWorkEventFv, (u32)WorkEvent18__10IWorkEventFv,
+    (u32)WorkEvent19__10IWorkEventFv, (u32)WorkEvent20__10IWorkEventFv,
+    (u32)WorkEvent21__10IWorkEventFv, (u32)WorkEvent22__10IWorkEventFv,
+    (u32)WorkEvent23__10IWorkEventFv, (u32)WorkEvent24__10IWorkEventFv,
+    (u32)WorkEvent25__10IWorkEventFv, (u32)WorkEvent26__10IWorkEventFv,
+    (u32)WorkEvent27__10IWorkEventFv, (u32)WorkEvent28__10IWorkEventFv,
+    (u32)WorkEvent29__10IWorkEventFv, (u32)WorkEvent30__10IWorkEventFv,
+    (u32)WorkEvent31__10IWorkEventFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(4)))
+u32 lbl_eu_80533E50[4] = { (u32)&rtti_10IWorkEvent, 0, 0, 0 };
+// .sdata2: class-name tag + two conversion doubles (both code orphans).
+__declspec(section ".sdata2") __attribute__((used, aligned(1)))
+char lbl_eu_80667F18[8] = "CBgTex";
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+extern const double lbl_eu_80667F20 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+extern const double lbl_eu_80667F28 = 1.0;
+// .sdata locator pair {class-name, vtable-RTTI-slot} (retail rela.sdata).
+// Plain def: nonzero small data lands in .sdata on its own (a declspec
+// def here would overload against the tentative decl above).
+u32 lbl_eu_80662650[2] = { (u32)lbl_eu_80667F18, (u32)lbl_eu_80533E50 };
+// .sbss pair (retail NOBITS 0x8): definitions match the header decls
+// exactly (s32 counter, accessor pointer); zero-init keeps them in .sbss.
+s32 lbl_eu_80664460 = 0;
+nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464 = 0;
+// ----- end retail data -----

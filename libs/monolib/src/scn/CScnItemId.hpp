@@ -15,9 +15,9 @@ extern "C" void* getScnHandle__Fv(void);
 
 // Scene-resource helpers (scn/code_804BC9EC.cpp). Declared as C++ global
 // functions so MWCC mangles them to the retail forms resetScnData__FPv and
-// func_804BC9F4__FPvUl.
+// Coli_ParseChunks__FPvUl.
 void resetScnData(void* p);
-int func_804BC9F4(void* outStruct, u32 data);
+int Coli_ParseChunks(void* outStruct, u32 data);
 
 // Host scene-object accessors (unmangled C-linkage retail names).
 extern "C" u32 Scn_CallUnk8C_V8(void* self);            // scene allocation handle

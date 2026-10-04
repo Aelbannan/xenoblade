@@ -51,8 +51,8 @@ extern "C" void setPaneVisible(void*, u32);
 void closeFileHandle(CFileHandle**);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 
-// C-linkage helper imports for the window content setters (func_8022B9B4 /
-// func_8022C348). Retail emits the unmangled names at the call sites.
+// C-linkage helper imports for the window content setters (sysWinSetKindContent /
+// sysWinSetupAfterLoad). Retail emits the unmangled names at the call sites.
 // TagProcCalcPageLayout is declared by CTagProcessor.hpp with its retail signature
 // (void*, CTagMsgView*, CTagOutView*) - cast panes at the call sites.
 extern "C" void TagCopyVec2f(float* dst, float* src);  // copy 2 floats (VEC2)
@@ -63,7 +63,7 @@ extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane* pane,
 // CScrollBar.cpp).
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 
-// .sdata2 floats for the label-pane placement ladder in func_8022B9B4
+// .sdata2 floats for the label-pane placement ladder in sysWinSetKindContent
 // (thresholds + icon positions).
 extern const f32 lbl_eu_80668598;
 extern const f32 lbl_eu_8066859C;
@@ -83,7 +83,7 @@ extern const f32 lbl_eu_806685D0;
 extern const f32 lbl_eu_806685D4;
 extern const f32 lbl_eu_806685D8;
 
-// .sdata2 globals used by func_8022BFC8: the 5-entry window-label index table
+// .sdata2 globals used by sysWinApplyKind: the 5-entry window-label index table
 // (4-byte word at 806685DC + 5th byte at 806685E0) and the int->float
 // conversion magic double (0x4330000000000000) at 806685E8.
 extern u32 lbl_eu_806685DC;
@@ -98,10 +98,10 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 class CSysWin;
 
-// func_8022BFC8 (us-8022dec0) - window-kind advance helper, called by
+// sysWinApplyKind (us-8022dec0) - window-kind advance helper, called by
 // sysWinSyncKindAdvance. C-linkage so the call site binds to the retail symbol; the
 // definition lives in CSysWin.cpp (not yet matched).
-extern "C" void func_8022BFC8(CSysWin* self, u8 kind);
+extern "C" void sysWinApplyKind(CSysWin* self, u8 kind);
 
 /*
  * CSysWin - system message window widget.
@@ -142,10 +142,10 @@ public:
     u8 field_39;                      // +0x39
 };
 
-// func_8022C348 (us-8022e240) - layout/kind setup after a file load; called by
+// sysWinSetupAfterLoad (us-8022e240) - layout/kind setup after a file load; called by
 // OnFileEvent. Defined as a stub in CSysWin.cpp (not yet matched).
-extern "C" void func_8022C348(CSysWin* self);
+extern "C" void sysWinSetupAfterLoad(CSysWin* self);
 
 // sysWinSwitchKindPane (us-8022d744) - switch the visible pane for a window kind.
-// Defined in CSysWin.cpp; declared here so func_8022C348 can call it.
+// Defined in CSysWin.cpp; declared here so sysWinSetupAfterLoad can call it.
 extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind);

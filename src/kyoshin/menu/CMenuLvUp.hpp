@@ -199,18 +199,18 @@ public:
 
 // Retail-symbol imports. Data keeps its plain name; functions need C linkage
 // so MWCC emits the unmangled retail names (same scheme as CMenuBattleEnd.hpp
-// / CMenuCollepedia.hpp). teardownLvUpEntry / placeLvUpEntry / func_802764A0 are
+// / CMenuCollepedia.hpp). teardownLvUpEntry / placeLvUpEntry / driveLvUpEntryState are
 // the per-entry helpers driven by Move; __ct__CMenuLvUp is the allocating
 // factory (retail unmangled, takes the parent process + scene).
 extern CMenuLvUp* lbl_eu_80664900;
 extern "C" {
-void func_80276200(CMenuLvUp* a, CMenuLvUp* b, int c);
+void registerLvUpAction(CMenuLvUp* a, CMenuLvUp* b, int c);
 void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
 void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
-void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry);
+void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry);
 CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene);
 MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
-void func_8049B59C(nw4r::math::VEC3* out, MenuLvUpPose* pose,
+void CamMan_ProjectToScreen(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
 int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
                   const nw4r::math::VEC3* c);

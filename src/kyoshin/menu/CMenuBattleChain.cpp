@@ -286,7 +286,7 @@ body:
  * the work heap, construct the menu and register it under the parent process.
  */
 extern "C" void switchChainType(CMenuBattleChain* self, u8 arg);
-extern "C" CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
+extern "C" CMenuBattleChain* createBattleChainMenu(CProcess* parent, CScn* scene, u8 chainType) {
     if (lbl_eu_80664A60 != NULL) {
         switchChainType(lbl_eu_80664A60, chainType);
         return NULL;
@@ -580,7 +580,7 @@ extern "C" void updateChainPlayer(CBattleChainMenuState* self) {
  * set *outFlag when the current selection is "chain ready" (state 0 with
  * substate 5). A missing state or a -1 substate means "not usable".
  */
-extern "C" bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
+extern "C" bool isChainReady(CBattleChainMenuState* self, u8* outFlag) {
     // Retail keeps the two flag stores in separate branches (no store merge).
     CArtsSelectStateView* sel = CMenuArtsSelect_getSelectState();
     if (sel == NULL)

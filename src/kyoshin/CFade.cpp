@@ -175,3 +175,259 @@ void CFade::CFade_FadeOut() {
         mVisible = 0;
     }
 }
+// ============================================================================
+// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
+// Defined here at EOF so -ipa codegen for the functions above is unaffected.
+// NOTE (wave DL): the sdata2 tail ("CFade" pool + zeros after the 1.0f)
+// stays out: only lbl_eu_80668750 carries a label and the section has no
+// other references. sdata2 therefore rebuilds as 4/16 bytes (gate notes it).
+// ============================================================================
+
+// Cross-TU vtable slots (flat retail names; CTaskManager vtable idiom).
+extern "C" void __dt__5CFadeFv();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void WorkEvent3__10IWorkEventFv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" u32 __RTTI__10IWorkEvent;
+extern u32 lbl_eu_806628E8[];  // sdata word pair (defined below).
+
+// [.data] 0x80536EA8-0x80536F30 (136B): CFade vtable (sdata locator,
+// null word, dtor, W1 + OnFileEvent + W3-W31; retail lays one label over
+// the 34 words; the RTTI word at +0x88 carries its own label, below).
+void* lbl_eu_80536EA8[34] = {
+    (void*)&lbl_eu_806628E8, (void*)0,
+    (void*)&__dt__5CFadeFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
+    // W2 slot (OnFileEvent member address) is zero here: a member-function
+    // address is unsourcable in C++ (10247); it needs a rule-side
+    // inject_relocs entry like CTaskManager.o's three '<'-unspellable slots.
+    (void*)0, (void*)&WorkEvent3__10IWorkEventFv,
+    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
+    (void*)&WorkEvent6__10IWorkEventFv,
+    (void*)&WorkEvent7__10IWorkEventFv,
+    (void*)&WorkEvent8__10IWorkEventFv,
+    (void*)&WorkEvent9__10IWorkEventFv,
+    (void*)&WorkEvent10__10IWorkEventFv,
+    (void*)&WorkEvent11__10IWorkEventFv,
+    (void*)&WorkEvent12__10IWorkEventFv,
+    (void*)&WorkEvent13__10IWorkEventFv,
+    (void*)&WorkEvent14__10IWorkEventFv,
+    (void*)&WorkEvent15__10IWorkEventFv,
+    (void*)&WorkEvent16__10IWorkEventFv,
+    (void*)&WorkEvent17__10IWorkEventFv,
+    (void*)&WorkEvent18__10IWorkEventFv,
+    (void*)&WorkEvent19__10IWorkEventFv,
+    (void*)&WorkEvent20__10IWorkEventFv,
+    (void*)&WorkEvent21__10IWorkEventFv,
+    (void*)&WorkEvent22__10IWorkEventFv,
+    (void*)&WorkEvent23__10IWorkEventFv,
+    (void*)&WorkEvent24__10IWorkEventFv,
+    (void*)&WorkEvent25__10IWorkEventFv,
+    (void*)&WorkEvent26__10IWorkEventFv,
+    (void*)&WorkEvent27__10IWorkEventFv,
+    (void*)&WorkEvent28__10IWorkEventFv,
+    (void*)&WorkEvent29__10IWorkEventFv,
+    (void*)&WorkEvent30__10IWorkEventFv,
+    (void*)&WorkEvent31__10IWorkEventFv,
+};
+
+// [.data] 0x80536F30-0x80536F40 (16B): RTTI word + 12 zero pad bytes.
+u32 lbl_eu_80536F30[4] = {
+    (u32)&__RTTI__10IWorkEvent, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// String labels (defined in the .rodata block below).
+extern char lbl_eu_8050B5E8[], lbl_eu_8050B5F8[], lbl_eu_8050B608[], lbl_eu_8050B618[];
+extern char lbl_eu_8050B628[], lbl_eu_8050B638[], lbl_eu_8050B648[], lbl_eu_8050B658[];
+extern char lbl_eu_8050B668[], lbl_eu_8050B678[], lbl_eu_8050B688[], lbl_eu_8050B698[];
+extern char lbl_eu_8050B6A8[], lbl_eu_8050B6B8[], lbl_eu_8050B6C8[], lbl_eu_8050B6D8[];
+extern char lbl_eu_8050B6E8[], lbl_eu_8050B6F8[], lbl_eu_8050B708[], lbl_eu_8050B718[];
+extern char lbl_eu_8050B728[], lbl_eu_8050B738[], lbl_eu_8050B748[], lbl_eu_8050B758[];
+extern char lbl_eu_8050B768[], lbl_eu_8050B778[], lbl_eu_8050B788[];
+// (rodata labels defined below; B708 is shared by two slots).
+u32 lbl_eu_80536F40[28] = {
+    (u32)&lbl_eu_8050B5E8,
+    (u32)&lbl_eu_8050B5F8,
+    (u32)&lbl_eu_8050B608,
+    (u32)&lbl_eu_8050B618,
+    (u32)&lbl_eu_8050B628,
+    (u32)&lbl_eu_8050B638,
+    (u32)&lbl_eu_8050B648,
+    (u32)&lbl_eu_8050B658,
+    (u32)&lbl_eu_8050B668,
+    (u32)&lbl_eu_8050B678,
+    (u32)&lbl_eu_8050B688,
+    (u32)&lbl_eu_8050B698,
+    (u32)&lbl_eu_8050B6A8,
+    (u32)&lbl_eu_8050B6B8,
+    (u32)&lbl_eu_8050B6C8,
+    (u32)&lbl_eu_8050B6D8,
+    (u32)&lbl_eu_8050B6E8,
+    (u32)&lbl_eu_8050B6F8,
+    (u32)&lbl_eu_8050B708,
+    (u32)&lbl_eu_8050B708,
+    (u32)&lbl_eu_8050B718,
+    (u32)&lbl_eu_8050B728,
+    (u32)&lbl_eu_8050B738,
+    (u32)&lbl_eu_8050B748,
+    (u32)&lbl_eu_8050B758,
+    (u32)&lbl_eu_8050B768,
+    (u32)&lbl_eu_8050B778,
+    (u32)&lbl_eu_8050B788,
+};
+// [.rodata] 0x8050B5A0-0x8050B798 (0x1F8): fade layout arc/branch/anim
+// strings + marker-name table. Retail holds one label per string; every
+// start is 8-aligned so the toolchain places them with no padding.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B5A0[0x48] = {
+    0x6D,0x65,0x6E,0x75,0x2F,0x6A,0x70,0x2F,0x46,0x61,0x64,0x65,0x2E,0x61,0x72,0x63,
+    0x00,0x43,0x46,0x61,0x64,0x65,0x00,0x61,0x72,0x63,0x00,0x6D,0x66,0x30,0x30,0x5F,
+    0x66,0x61,0x64,0x65,0x2E,0x62,0x72,0x6C,0x79,0x74,0x00,0x6D,0x66,0x30,0x30,0x5F,
+    0x66,0x61,0x64,0x65,0x5F,0x66,0x61,0x64,0x65,0x5F,0x69,0x6E,0x2E,0x62,0x72,0x6C,
+    0x61,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B5E8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x30,0x30,0x30,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B5F8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x31,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B608[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x32,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B618[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x33,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B628[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x34,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B638[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x34,0x30,0x32,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B648[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x35,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B658[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x36,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B668[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x37,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B678[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x38,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B688[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x30,0x39,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B698[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x30,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6A8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x31,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6B8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x32,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6C8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x32,0x30,0x32,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6D8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x33,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6E8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x34,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B6F8[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x35,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B708[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x36,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B718[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x37,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B728[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x38,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B738[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x31,0x39,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B748[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x30,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B758[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x31,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B768[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x32,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B778[0xF] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x33,0x30,0x31,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050B788[0x10] = {
+    0x6D,0x61,0x72,0x6B,0x65,0x72,0x6C,0x69,0x73,0x74,0x32,0x34,0x30,0x31,0x00,0x00,
+};
+
+// [.sdata] 0x806628E8-0x806628F0 (8B): null word pair referenced by vtable[0].
+#pragma section data_type ".sdata" ".sdata"
+extern __declspec(section ".sdata") u32 lbl_eu_806628E8[2] = { 0x00000000, 0x00000000 };
+#pragma section data_type ".data" ".data"
+
+// [.sdata2] 0x80668750-0x80668760 (16B): 1.0f frame target (the "CFade" pool
+// tail carries no label and has no references; only the float rebuilds here).
+#pragma section data_type ".sdata2" ".sdata2"
+__declspec(section ".sdata2") f32 lbl_eu_80668750 = 1.0f;
+#pragma section data_type ".data" ".data"

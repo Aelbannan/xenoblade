@@ -72,7 +72,7 @@ struct UnkR31_8019E88 {
 // (Fake actor/pos vtable proxies removed: slots now dispatch through real
 // cf::CObjectState (0x30), cf::CActorParam (0x158/0x18C/0x190/0x2BC/0x308)
 // and cf::CfObject (0x84/0xAC) virtuals. See code_8018F8D8.cpp.)
-// Actor reference used by func_80190940 (both the queried actor and the
+// Actor reference used by CfCmd_PickChain (both the queried actor and the
 // enum-list candidates share this layout prefix).
 struct FuncActorRef {
     u8 _00[0x4];
@@ -90,7 +90,7 @@ struct FuncActorRef {
     float field_44d8;                 // +0x44D8 distance bias
 };
 
-// Result record written by func_80190940 (first argument).
+// Result record written by CfCmd_PickChain (first argument).
 struct FuncResultRef {
     u8 _00[0x4];
     volatile u32 field_0004;                  // +0x04 result code
@@ -98,7 +98,7 @@ struct FuncResultRef {
     FuncActorRef* field_000c;         // +0x0C chosen actor
 };
 
-// Battle-manager view for func_80190940.
+// Battle-manager view for CfCmd_PickChain.
 struct BmView90940 {
     u8 _0[0x194];
     volatile u32 field_0x194;                 // +0x194 progress counter
@@ -122,7 +122,7 @@ struct Sub3F60View {
     volatile u32 field_0x374;
 };
 
-// Enum-list holder/list used by func_80190940's candidate sweep.
+// Enum-list holder/list used by CfCmd_PickChain's candidate sweep.
 struct CfEnumListHolder90940 {
     u8 _0[8];
 };
@@ -131,14 +131,14 @@ struct CfEnumList90940 {
     volatile u32 count;               // +0x620 element count
 };
 
-// 8-byte element copied by the state-blob copy functions func_80191C88 /
-// func_80192268 (two u32 words per iteration).
+// 8-byte element copied by the state-blob copy functions CopyPTSubBlob /
+// CopyPTStateBlob (two u32 words per iteration).
 struct SCopyPair {
     u32 lo;
     u32 hi;
 };
 
-// func_80192268's third/fourth pair runs start at misaligned offsets 0x2e9
+// CopyPTStateBlob's third/fourth pair runs start at misaligned offsets 0x2e9
 // and 0x37e in the retail blob (retail emits misaligned lwz/stw for them).
 // Wrap them in 1-packed containers so they can land there (same scheme as
 // CPartyStateWin.hpp's packed tail).
@@ -161,13 +161,13 @@ typedef volatile s16 vs16;
 typedef volatile u16 vu16;
 typedef volatile u32 vu32;
 
-// Volatile variant used by func_80191C88's rolled pair runs (see above).
+// Volatile variant used by CopyPTSubBlob's rolled pair runs (see above).
 struct SCopyPairV {
     vu32 lo;
     vu32 hi;
 };
 
-// Layout backing func_80191C88's memberwise copy. Field types mirror the
+// Layout backing CopyPTSubBlob's memberwise copy. Field types mirror the
 // retail access opcodes exactly: lwz/stw fields are vu32, lfs/stfs fields are
 // vf32, lha/sth fields are vs16 (sign-extending loads), and the lone lhz at
 // 0x530 is vu16. EVERY field is volatile so each copy stays an immediate
@@ -220,7 +220,7 @@ struct SCopy_80191C88 {
     vs16 h_532, h_534, h_536, h_538;
 };
 
-// Layout backing func_80192268's memberwise copy, reconstructed against the
+// Layout backing CopyPTStateBlob's memberwise copy, reconstructed against the
 // retail access pattern (uncopied gaps are explicit pad arrays so every
 // copied field lands at its retail offset). Only 0xe0-0xf0 are real floats
 // in retail codegen (lfs/stfs); every other word-sized field is moved with
@@ -288,12 +288,12 @@ struct SCopy_80192268 {
     vu32 f_27a4;
 };
 
-// Opaque blob copied by func_80166F80 inside Init()'s window-state copy
+// Opaque blob copied by InfoCfCopyObjF80 inside Init()'s window-state copy
 // (0x41F4..0x4400 region of the CPartyStateWin overlay).
 struct CMenuPTBlob41F4 {
     u8 data[0x20c];
 };
-extern "C" void func_80166F80(CMenuPTBlob41F4* dst, const CMenuPTBlob41F4* src);
+extern "C" void InfoCfCopyObjF80(CMenuPTBlob41F4* dst, const CMenuPTBlob41F4* src);
 
 // CBgTex layout-load query called by Init (retail unmangled free-function
 // form; same convention as BgTex_Tick_3D54 below).
@@ -417,7 +417,7 @@ struct CMenuPTWinCopyView {
     u8 v004c, v004d, v004e, v004f;
     u32 pad0050;
     u32 v0054, v0058, v005c, v0060;
-    SCopy_80191C88 blob0064;   // 0x064..0x5A0 (func_80191C88)
+    SCopy_80191C88 blob0064;   // 0x064..0x5A0 (CopyPTSubBlob)
     u8 pad05a0[8];
     SCopy_80191C88 blob05a8;   // 0x5A8..0xAE4
     SCopy_80191C88 blob0ae4;   // 0xAE4..0x1020
@@ -491,8 +491,8 @@ struct CMenuPTWinCopyView {
     u8 pad41e6[2];
     CMenuPTOPack opack41e8;    // 0x41E8..0x41F2
     u8 pad41f2[2];
-    CMenuPTBlob41F4 f41f4;     // 0x41F4..0x4400 (func_80166F80)
-    SCopy_80192268 blob4400;   // 0x4400..0x6BA8 (func_80192268)
+    CMenuPTBlob41F4 f41f4;     // 0x41F4..0x4400 (InfoCfCopyObjF80)
+    SCopy_80192268 blob4400;   // 0x4400..0x6BA8 (CopyPTStateBlob)
     // Tail run 0x6BA8..0x6BEC.
     u8 pad6ba8[4];
     u32 v6bac, v6bb0, v6bb4, v6bb8, v6bbc, v6bc0, v6bc4, v6bc8, v6bcc;
@@ -511,7 +511,7 @@ extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 
 // --- imports used by the Move / dispatcher functions ---------------------
 
-// Colour-unpack scale/magic pair (func_801901A4's u8->float ladder).
+// Colour-unpack scale/magic pair (CfCmd_FadeColor's u8->float ladder).
 extern const float lbl_eu_80667A78;
 extern const f64 lbl_eu_80667A80;
 
@@ -530,7 +530,7 @@ extern const float lbl_eu_80667A8C;
 extern u16 lbl_eu_80663E48[2];
 extern u16 lbl_eu_80663E4C[2];
 
-// Object id looked up by func_8018FA2C through func_8007FF6C (.sdata halfword).
+// Object id looked up by CfCmd_PartyRebuild through func_8007FF6C (.sdata halfword).
 extern const u16 lbl_eu_80663E40;
 
 // CPartyStateWin sub-object drivers used by CMenuPTState::Move (defined in
@@ -571,7 +571,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u3
 // See code_8018F8D8.cpp.)
 
 // Slot list returned by CtrlObjectParam_GetSlotTableBase (arr1[3] + arr2[6] packed at +4;
-// func_8018FA2C walks nine u32 slots).
+// CfCmd_PartyRebuild walks nine u32 slots).
 struct PartySlotList {
     u8 _0[4];
     u32 slots[9];
@@ -585,7 +585,7 @@ typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32, u32*, u32);
 // 0x29-entry handler table indexed by the popped command byte (lbl_eu_80532838).
 extern MenuCmdHandler lbl_eu_80532838[];
 
-// CfRes ring-buffer pump used by func_801901A4-era dispatchers (defined in
+// CfRes ring-buffer pump used by CfCmd_FadeColor-era dispatchers (defined in
 // CfRes.cpp); this TU uses a minimal layout view of the ring object.
 struct MenuCmdRingView {
     u8 ring[0x400];
@@ -595,7 +595,7 @@ struct MenuCmdRingView {
 extern "C" int CfResBuf_popRecord(MenuCmdRingView* buffer, u32* headerOut,
                              u32* dataOut);
 
-// Party-slot character-data lookups used by func_8018FA2C.
+// Party-slot character-data lookups used by CfCmd_PartyRebuild.
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);  // matches CAIAction.hpp declaration
 extern "C" void CtrlObjectParam_RecollectArtsRows(void* data);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void* data);

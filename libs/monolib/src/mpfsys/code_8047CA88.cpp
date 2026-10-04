@@ -36,7 +36,7 @@ struct UnkParam_8047CA88 {
     f32 field_10;
 };
 
-extern "C" void func_8047CAA8__17UnkClass_8047CA88Fv(
+extern "C" void mpfQueryRadiusNodes__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, UnkParam_8047CA88* param)
 {
     nw4r::math::VEC3 tmp;
@@ -65,18 +65,18 @@ extern "C" void func_8047CAA8__17UnkClass_8047CA88Fv(
             u32 count = param->count;
             for (u32 i = 0; i < count; i++) {
                 u16 idx = idxList[i];
-                func_8047CAA8__17UnkClass_8047CA88Fv(
+                mpfQueryRadiusNodes__17UnkClass_8047CA88Fv(
                     self, (UnkParam_8047CA88*)((u8*)self->field_1C + idx * 0x14));
             }
         } else {
-            func_8047C040__17UnkClass_8047BB54Fv(
+            mpfCullMarkLayers__17UnkClass_8047BB54Fv(
                 getMpfStatus__17UnkClass_8047BB54Fv(self),
                 (u8*)self->field_20 + param->index * 8, param->count);
         }
     }
 }
 
-extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
+extern "C" void mpfRunDescQuery__17UnkClass_8047CA88Fv(
     UnkClass_8047CA88* self, void* desc, void* dataPtr, nw4r::math::VEC3* vec, f32 scale)
 {
     f32 inv = lbl_eu_8066A874;
@@ -106,6 +106,6 @@ extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     self->field_18 = scale;
     self->field_1C = base + 0x20;
 
-    func_8047CAA8__17UnkClass_8047CA88Fv(
+    mpfQueryRadiusNodes__17UnkClass_8047CA88Fv(
         self, (UnkParam_8047CA88*)((u8*)base + 0x20));
 }

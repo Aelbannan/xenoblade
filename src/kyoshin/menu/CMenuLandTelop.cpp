@@ -1,6 +1,6 @@
 // kyoshin/menu/CMenuLandTelop - land-telop (area-name popup) screen process.
 //
-// Matching session: Term / cbRenderBefore / func_801453B8 / func_80144EE4 /
+// Matching session: Term / cbRenderBefore / consumeTelopEntry / createLandTelop /
 // constructor (the retail ctor is the unmangled global __ct__CMenuLandTelop).
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
@@ -114,8 +114,8 @@ CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags) {
     return _this;
 }
 
-void CMenuLandTelop::Init() {
-    func_8014548C(this);
+extern "C" void CtrlObjectParam_ApplyArtsRankUp(void*, u32, u32, u32); void CMenuLandTelop::Init() {
+    buildTelopLayout(this);
     field_E0 = QstCnt_HasInstance_6B94();
     field_67 = 0;
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -224,7 +224,7 @@ void CMenuLandTelop::Move() {
                         (reset < frac) ? lbl_eu_806673D8 : lbl_eu_806673E0;
                     // Retail re-converts the SAME (msgId*weight) product here
                     // (second stw-pair + magic-subtract block), not a literal
-                    // 100.0 — a pooled {100.0} double would have no blob home.
+                    // 100.0 - a pooled {100.0} double would have no blob home.
                     s32 frames =
                         (s32)(((f64)(u32)(msgId * weight) - bias) * scale + limit);
                     switch (kind) {
@@ -244,17 +244,17 @@ void CMenuLandTelop::Move() {
             // Area-entry cue; volume comes from the scene BGM level.
             switch (kind) {
             case 0:
-                func_80043738(0, &lbl_eu_80501720[0x29],
+                CTaskGame_openStream(0, &lbl_eu_80501720[0x29],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 1:
-                func_80043738(0, &lbl_eu_80501720[0x39],
+                CTaskGame_openStream(0, &lbl_eu_80501720[0x39],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0x5a,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 2:
-                func_80043738(0, &lbl_eu_80501720[0x49],
+                CTaskGame_openStream(0, &lbl_eu_80501720[0x49],
                               Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
                               lbl_eu_806673EC * MenuSnd_GetMasterVol_95EC());
                 break;
@@ -265,7 +265,7 @@ void CMenuLandTelop::Move() {
         case 3:
             // Banner finished animating in: consume the next queued entry.
             if (advanceAnimTransform(field_88, lbl_eu_806673CC)) {
-                if (func_801453B8(this) != 0) return;
+                if (consumeTelopEntry(this) != 0) return;
                 field_64 = 1;
             }
             break;
@@ -292,7 +292,7 @@ void CMenuLandTelop::Move() {
             break;
         case 3:
             if (AnimRewindFrame(field_88, lbl_eu_806673CC)) {
-                if (func_801453B8(this) != 0) return;
+                if (consumeTelopEntry(this) != 0) return;
                 field_64 = 1;
             }
             break;
@@ -326,9 +326,9 @@ void CMenuLandTelop::cbRenderBefore() {
 
 // Create the land-telop singleton under `parent`. While a battle is active
 // (param == 1) the battle manager's battle list must be empty; if the
-// singleton already exists, func_8014504C re-targets it instead. Returns the
+// singleton already exists, retargetLandTelop re-targets it instead. Returns the
 // singleton (0 on failure).
-CMenuLandTelop* func_80144EE4(CProcess* parent, CScn* scene, u16 opt,
+CMenuLandTelop* createLandTelop(CProcess* parent, CScn* scene, u16 opt,
                               u8 param) {
     if (param == 1) {
         CBattleListNode* p;
@@ -342,7 +342,7 @@ CMenuLandTelop* func_80144EE4(CProcess* parent, CScn* scene, u16 opt,
         if (count != 0) return 0;
     }
     if (lbl_eu_806641A0 != 0) {
-        func_8014504C(lbl_eu_806641A0, opt, param);
+        retargetLandTelop(lbl_eu_806641A0, opt, param);
         return 0;
     }
     mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
@@ -391,18 +391,18 @@ unsigned char getLandTelopE0(void) {
 }
 
 // Empty stub: guard so MWCC -inline auto does not fold the call in
-// func_80144EE4 away (MWCC_CASES sec 834: empty same-TU stubs inline to
+// createLandTelop away (MWCC_CASES sec 834: empty same-TU stubs inline to
 // nothing).
 #pragma push
 #pragma auto_inline off
-void func_8014504C(CLandTelopGlobal* obj, u32 opt, u32 param) {}
+void retargetLandTelop(CLandTelopGlobal* obj, u32 opt, u32 param) {}
 #pragma pop
 
 // Scan the entry table for the first pending entry (nonzero f0): move it to
 // the display fields, reset the slot, then reset the layout/animation state
 // and rebuild the screen via the Init helper. Returns 1 when an entry was
 // consumed, 0 otherwise.
-int func_801453B8(CMenuLandTelop* self) {
+int consumeTelopEntry(CMenuLandTelop* self) {
     int found = 0;
     for (u8 i = 0; i < 16; i++) {
         u16 v = self->mEntries[i].f0;
@@ -426,7 +426,7 @@ int func_801453B8(CMenuLandTelop* self) {
     UnkClass_8045F564* mem = &self->mMemRegion;
     self->field_94 = v;
     mem->deleteRegion();
-    func_8014548C(self);
+    buildTelopLayout(self);
     return 1;
 }
 
@@ -435,7 +435,7 @@ int func_801453B8(CMenuLandTelop* self) {
 // wire up the message panes and font, then reset the anim frame.
 #pragma push
 #pragma auto_inline off
-void func_8014548C(CMenuLandTelop* self) {
+void buildTelopLayout(CMenuLandTelop* self) {
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x3000,
                                   &lbl_eu_80501720[0x59], 0);
     // Scratch-region guard: everything allocated below lives in the embedded
@@ -615,7 +615,7 @@ void CMenuLandTelop_dtorAdj70(void* self) { ((void(*)(void*))__dt__14CMenuLandTe
 // Resolve the bdat string for the given row: read the column named by the
 // string at lbl_eu_805018A8[9]; when it is missing or identical to the
 // fallback name at [0xE], return the fallback name.
-const char* func_80145AA8(int index) {
+const char* getTelopString(int index) {
     const char* s =
         (const char*)getBdatStringColumnValue(lbl_eu_806640E0,
                                               lbl_eu_805018A8 + 9, index);

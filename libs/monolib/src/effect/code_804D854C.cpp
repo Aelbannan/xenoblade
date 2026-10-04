@@ -8,7 +8,7 @@
 #include <monolib/math.hpp>
 #include <monolib/core/CViewFrame.hpp>
 
-// Shared BSS fog descriptor: written by func_804D854C, read by pushEffectFog.
+// Shared BSS fog descriptor: written by resolveEffectFog, read by pushEffectFog.
 struct FogDesc {
     u32 type;   // 0x00 GXFogType
     f32 f4;     // 0x04 start
@@ -29,11 +29,11 @@ typedef void (*GXSetFogPtr)(GXFogType, const GXColor*, f32, f32, f32, f32);
 extern "C" {
 void TexMan_ReleaseArg_02D8(const void* p, s32 handle);
 void* TexMan_AllocBuffer_0208(void* p, s32 w, s32 h, s32 n);
-void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
+void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
 void TexObj_BlitRect(GXTexObj* self, ml::CRect* rect, u8 p3, u8 p4);
 }
 
-// Fog fade globals shared with CETrail.cpp (func_804D82DC / Trail_RestoreFog).
+// Fog fade globals shared with CETrail.cpp (Trail_SnapFog / Trail_RestoreFog).
 extern s32 lbl_eu_806659BC;   // frames remaining in the fog fade
 extern u8  lbl_eu_806659C0[8]; // override fog color used while a fog is disabled
 struct CScnRootEnv;
@@ -159,7 +159,7 @@ int setupEffectDrawCtx(CDrawCtx* draw, TexSrc* desktop, void* material) {
     ScnObj* obj = Scn_FindCamItem(desktop, -1);
     void* view = Scn_SetCamIndex(desktop, (s32)obj->field_0x0c);
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(rect, view);
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(rect, view);
     draw->field_0x00 = (TexSrc*)desktop;
     draw->field_0x08 = (u8)(u32)material;
     if (material == 0) {
@@ -182,7 +182,7 @@ extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec
     ScnObj* obj = Scn_FindCamItem(draw->field_0x00, -1);
     void* view = Scn_SetCamIndex(draw->field_0x00, (s32)obj->field_0x0c);
     ml::CRect rect;
-    func_8043E928__5CViewFRQ22ml5CRectP5CView(rect, view);
+    insetRectToView__5CViewFRQ22ml5CRectP5CView(rect, view);
     s32 w = rect.mSize.x;
     s32 h = rect.mSize.y;
     if (p3 != 0) {
@@ -200,10 +200,10 @@ extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec
     TexObj_BlitRect((GXTexObj*)draw->field_0x04, &local, (u8)draw->field_0x08, 0);
 }
 
-// func_804D854C: resolve the active fog into lbl_eu_8065FCD0. While a fade is
+// resolveEffectFog: resolve the active fog into lbl_eu_8065FCD0. While a fade is
 // running (lbl_eu_806659BC > 0) the saved fog (lbl_eu_8065FCA0) is blended
 // toward the scene fog by the remaining-frame ratio.
-void func_804D854C() {
+void resolveEffectFog() {
     if (lbl_eu_806659BC <= 0) {
         nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
         *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(lbl_eu_80663B38);

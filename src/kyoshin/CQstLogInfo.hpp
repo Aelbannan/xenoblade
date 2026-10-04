@@ -103,9 +103,9 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInf
     const char* table, u32 key);
 extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self,
     const char* table, u32 key);
-extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
 extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self);
 

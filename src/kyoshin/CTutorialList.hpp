@@ -45,17 +45,17 @@ extern char lbl_eu_80510B78[];       // string pool base
 class CTutorialList;
 
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
-extern "C" u32 func_801D32DC(void*);
+extern "C" u32 sortMenuIsScrollbarVisible(void*);
 extern "C" int sortMenuIsVisible28(void*);
 extern "C" int sortMenuGetFlag2B(void*);
 extern "C" void sortMenuInitFileRead(void*);
 extern "C" void sortMenuDispatchState(void*);
 extern "C" void sortMenuToState4Page(void*);
-extern "C" void func_801D202C(void*);
-extern "C" void func_801D3724(void*);                     // CSortMenu page up
-extern "C" void func_801D3620(void*);                     // CSortMenu page down
+extern "C" void Cur_Update(void*);
+extern "C" void sortMenuPageUpStep(void*);                     // CSortMenu page up
+extern "C" void sortMenuScrollUp(void*);                     // CSortMenu page down
 extern "C" void sortMenuPageDownStep(void*);                     // CSortMenu page down (alt)
-extern "C" void func_801D3698(void*);                     // CSortMenu page up (alt)
+extern "C" void sortMenuScrollDown(void*);                     // CSortMenu page up (alt)
 extern "C" void sortMenuSetLayoutPos(void*, void*);              // set sort-menu anchor pos
 extern "C" void sortMenuOpenInit(void*);                     // rebuild sort menu
 extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3*, void*);  // copy cursor target
@@ -73,7 +73,7 @@ void playUISound(u32);
 extern "C" u32 sortMenuGetPageIdx(void*);
 extern "C" void sortMenuResetCount(void*);
 extern "C" void func_801D3518(void*, void*);
-extern "C" void func_801D353C(void*, u8);
+extern "C" void sortMenuSetPage(void*, u8);
 extern "C" void sortMenuTermCleanup(void*);
 // CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
 extern "C" void getEntry__5CBdatFUl(u32);
@@ -182,11 +182,11 @@ extern "C" void TutorialList_OnCloseAnimRewind(CTutorialList*);
 extern "C" void TutorialList_OnShutdownAnimRewind(CTutorialList*);
 extern "C" void TutorialList_EnableOpenAnims(CTutorialList*);
 extern "C" void TutorialList_EnableCloseAnims(CTutorialList*);
-extern "C" void func_802ADCE8(CTutorialList*);
+extern "C" void TutorialList_UpdateRowTexts(CTutorialList*);
 extern "C" void TutorialList_UpdateTitleText(CTutorialList*);
 extern "C" void TutorialList_MoveCursorToRow(CTutorialList*);
 extern "C" void TutorialList_RebuildSortEntries(CTutorialList*);
-extern "C" void func_802ACC30(u8*, u16, int);
+extern "C" void TutorialList_RebuildIdTable(u8*, u16, int);
 
 class CTutorialList {
 public:
@@ -221,7 +221,7 @@ public:
     u16 mField17C;                        // 0x17C: count/limit (halfword)
     s8 mField17E;                         // 0x17E: sign-extended counter base
     u8 mPad17F;                           // 0x17F: padding (retail sub-object at 0x180)
-    u8 mSubObj180[0x100];                 // 0x180: opaque sub-object (func_802ACC30)
+    u8 mSubObj180[0x100];                 // 0x180: opaque sub-object (TutorialList_RebuildIdTable)
     u16 mField280;                        // 0x280: content size (halfword)
     s16 mField282;                        // 0x282: sign-extended row id
     s16 mField284;                        // 0x284: sign-extended selection id

@@ -250,7 +250,7 @@ struct Sub3F34Layout {
     u32 bits7A4;          // +0x7A4  bitfield (bit 26 checked)
 };
 
-// Actor2 from func_8016FE34 - has a sub-object pointer at +0x04 and
+// Actor2 from MapFx_ResolveOwner - has a sub-object pointer at +0x04 and
 // a larger sub-object pointer at +0x3F34. +0x08 holds a sub-object with
 // its own vtable (panel-highlight slot dispatch in EneSt_SearchHighlightTexture).
 struct Actor2Sub8 {
@@ -639,7 +639,7 @@ extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 extern const f32 lbl_eu_8066702C; // indicator pane y reset value
 extern const f64 lbl_eu_80667030; // damage-text double bias
 
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);
 // sdata2 member aliases (after the last local decl, before later uses).
 #define lbl_eu_80666FE8 (sdata2_MESPool.fE8)
 #define lbl_eu_80666FEC (sdata2_MESPool.fEC)
@@ -996,8 +996,8 @@ void CMenuEnemyState::Move() {
             continue;
         }
 
-        // r24 in retail's loop = result of func_8016FE34 (not the early target).
-        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(NULL));
+        // r24 in retail's loop = result of MapFx_ResolveOwner (not the early target).
+        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(NULL));
         int skipDist = 0;
         int hasSub = 0;
         if (actor2 != NULL) {
@@ -1542,7 +1542,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
 
     if (panel->unk1F != 0) return;
 
-    Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+    Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
     if (actor2 == NULL) return;
 
     int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
@@ -1719,7 +1719,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
 
         if (panel->unk1F == 0) {
-            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
             if (actor2 != NULL) {
                 int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(testActorStatus(actor2, &v, 0x802));
@@ -1881,7 +1881,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
 
         if (panel->unk1F == 0) {
-            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
             if (actor2 != NULL) {
                 int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(testActorStatus(actor2, &v2, 0x802));
@@ -2012,7 +2012,7 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
 
         PoseLayout* pose = static_cast<PoseLayout*>(
             Scn_FindCamItem(reinterpret_cast<void*>(self->field04), -1));
-        func_8049B59C(&out, pose, &pos);
+        CamMan_ProjectToScreen(&out, pose, &pos);
 
         arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
         // Highlight stays lit only while the projected X sits left of the
@@ -2030,13 +2030,13 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
         out.y = (out.y - lbl_eu_80666FF4) * lbl_eu_80666FF8;
         out.z = lbl_eu_80666FEC;
         out.x = out.x - lbl_eu_80666FF0;
-        // Retail retains this copy: &pos escaped into func_8049B59C above, so
+        // Retail retains this copy: &pos escaped into CamMan_ProjectToScreen above, so
         // MWCC cannot prove pos dead and emits the word-wise copy block.
         pos = out;
         if (out.y > lbl_eu_80666FFC) {
             out.y = lbl_eu_80666FFC;
             ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector();
-            func_8049B59C(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
+            CamMan_ProjectToScreen(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
             f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
             if (sel > out.y) {
@@ -2240,7 +2240,7 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
     } else if (panel->unk1D != 0) {
         reinterpret_cast<ObjBBFlag*>(self->field80)->flagBB =
             (reinterpret_cast<ObjBBFlag*>(self->field80)->flagBB & 0xFE) | 1;
-        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
         u32 special = 0;
         if ((obj->word64 & (1 << 2)) != 0) {
             // int local so the 0x96b/0x9c9 compares emit signed cmpwi.
@@ -2335,7 +2335,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
     nw4r::math::VEC3* pa = static_cast<nw4r::math::VEC3*>(posA);
     nw4r::math::VEC3* pb = static_cast<nw4r::math::VEC3*>(posB);
     nw4r::math::VEC3 v;
-    func_8049B59C(&v, pose, pa);
+    CamMan_ProjectToScreen(&v, pose, pa);
     panel->animMarker = v.z;
 
     // Retail refetches the root panes for every single flag/store access
@@ -2359,7 +2359,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
         // stack homes (elementwise copy between them).
         nw4r::math::VEC3 sum = *pa + t;
         nw4r::math::VEC3 out;
-        func_8049B59C(&out, pose, &sum);
+        CamMan_ProjectToScreen(&out, pose, &sum);
         f32 scaleX = lbl_eu_80666FE8 / fabsf(v.x - t.x);
         f32 scaleY = lbl_eu_80666FE8 / fabsf(v.y - t.y);
         if (!CDeviceVI::isWideAspectRatio()) {
@@ -2418,7 +2418,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
             vy = lbl_eu_80667020;
             v.y = vy;
             nw4r::math::VEC3 tmp;
-            func_8049B59C(&tmp, pose, pb);
+            CamMan_ProjectToScreen(&tmp, pose, pb);
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667024;
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);
@@ -2430,7 +2430,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
             vy = lbl_eu_80666FFC;
             v.y = vy;
             nw4r::math::VEC3 tmp;
-            func_8049B59C(&tmp, pose, pb);
+            CamMan_ProjectToScreen(&tmp, pose, pb);
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);
@@ -2442,7 +2442,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
             vy = lbl_eu_80667020;
             v.y = vy;
             nw4r::math::VEC3 tmp;
-            func_8049B59C(&tmp, pose, pb);
+            CamMan_ProjectToScreen(&tmp, pose, pb);
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667024;
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);

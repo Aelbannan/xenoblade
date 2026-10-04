@@ -70,7 +70,7 @@ struct GimmickHandleData {
     u16 field_3F28;        // +0x3F28 voice-id selector
 };
 
-// View for the player-voice selector probe in func_802B8D4C: virtual at
+// View for the player-voice selector probe in requestOrderConfigVoice: virtual at
 // index 17 lands on vtable offset 0x4c.
 class CVoiceSelView {
 public:
@@ -94,7 +94,7 @@ public:
     virtual int mAt4C() = 0; // index 17 -> vtable 0x4c
 };
 
-// View for the gimmick object name probe in func_802B8D4C: virtual at
+// View for the gimmick object name probe in requestOrderConfigVoice: virtual at
 // index 10 lands on vtable offset 0x30 and returns a pointer whose first
 // word is the value compared by testActorStatus.
 struct GimmickNameValue {
@@ -116,7 +116,7 @@ public:
     virtual GimmickNameValue* mAt30() = 0; // index 10 -> vtable 0x30
 };
 
-// Voice-config table entry used by func_802B8D4C: {u32 key, s16 idx, s16 id}.
+// Voice-config table entry used by requestOrderConfigVoice: {u32 key, s16 idx, s16 id}.
 struct OrderConfigEntry {
     s32 key;      // +0x00 key matched against handle->field_3F28
     s16 field_4;  // +0x04 index passed to HpVoice_FindBySubState
@@ -129,7 +129,7 @@ extern s32 lbl_eu_8053B7F4[];    // startOrderThreadPlayback voice-ID table
 extern u32 lbl_eu_8053B800[3];   // startOrderThreadPlayback init-state triple
 extern u32 lbl_eu_8053B80C[3];   // dispatchOrderThreadPlayback init-state triple
 extern u32 lbl_eu_8053B818[];    // CVS_THREAD_ORDER vtable
-extern OrderConfigEntry lbl_eu_8053B840[]; // func_802B8D4C config table
+extern OrderConfigEntry lbl_eu_8053B840[]; // requestOrderConfigVoice config table
 
 // C-ABI function imports (retail symbols are unmangled C -> extern "C").
 extern "C" {
@@ -140,7 +140,7 @@ extern "C" {
     void*               HpVoice_FindBySubState(int arg);
     CVoiceHandle*       CCharVoiceMan_DispatchById(int size, int align);
     void*               CCharVoiceMan_AllocVoiceArena(int size);
-    void*               func_8016FE34(void* r3);
+    void*               MapFx_ResolveOwner(void* r3);
     OrderGimmickList*   getReslistB48();
     void                __ct__cf_CVS_THREAD();
 

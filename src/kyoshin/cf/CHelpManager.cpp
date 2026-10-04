@@ -47,7 +47,7 @@ void destroyHelpManager() {
 
 cf::CHelpManager::~CHelpManager() {}
 
-void func_802959AC(cf::CHelpManager* self) {
+void resetHelpManager(cf::CHelpManager* self) {
     self->mField10 = -1;
     self->mLearnArtsFlag = 0;
     self->mField17 = 0;
@@ -66,7 +66,7 @@ void func_802959AC(cf::CHelpManager* self) {
     bindHelpListItems(&self->mListA, NULL, 0);
 }
 
-void func_80295A88(cf::CHelpManager* self) {
+void updateHelpManager(cf::CHelpManager* self) {
     if (lbl_eu_80663E28 & 0x1000000) return;
     // Re-sync the list when the scenario sequence moved on.
     if (self->mField10 != (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv()) {
@@ -83,7 +83,7 @@ void func_80295A88(cf::CHelpManager* self) {
 done:
     clearHelpList(&self->mListA);
     clearHelpList(&self->mListB);
-    // Refresh the "learned arts" popup state (mirrors func_80295D30).
+    // Refresh the "learned arts" popup state (mirrors isHelpPopupReady).
     self->mField14 = 0;
     self->mField15 = 0;
     int cond;
@@ -107,7 +107,7 @@ void fireArtsLearnedHint() {
     }
 }
 
-void func_80295BF4(cf::CHelpManager* self) {
+void dispatchScenarioHelp(cf::CHelpManager* self) {
     // Base hoisted into a callee-saved register (retail holds it in r31).
     cf::CHelpManagerTbl* tbl = &lbl_eu_80576D08;
     if (self->mField10 == 3) {
@@ -129,7 +129,7 @@ void func_80295BF4(cf::CHelpManager* self) {
     }
 }
 
-void func_80295CC8(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
+void updateBattleHelpState(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
     // During battle: record whether the actor list is non-empty.
     if (obj->mField3F08 & 0x10000) {
         // During battle: record whether the actor list (mActorList3) is
@@ -138,7 +138,7 @@ void func_80295CC8(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
     }
 }
 
-int func_80295D30(cf::CHelpManager* self) {
+int isHelpPopupReady(cf::CHelpManager* self) {
     // Two separate early-return guards, matching retail's branch-per-guard
     // shape (volatile read keeps MWCC from if-converting the guards).
     if (self->mField17 == 0)
@@ -193,7 +193,7 @@ extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, 
 
 // DECOMP_DONT_INLINE: retail calls this through real `bl`s from
 // DECOMP_DONT_INLINE: retail calls this through real `bl`s from
-// func_80295A88 / the sinit; MWCC would otherwise inline the body.
+// updateHelpManager / the sinit; MWCC would otherwise inline the body.
 extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self) {
     if (self->mItems == NULL) return;
     if (CHelp_ForwardPartyNotice() != 0) return;

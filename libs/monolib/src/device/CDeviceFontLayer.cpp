@@ -1,8 +1,8 @@
 // CDeviceFontLayer - font layer work object.
 //
 // Holds a queue of text draw commands (reslist at 0x1c8) that are replayed
-// into an embedded CDrawGX at 0x220. func_80453D78 measures the widest line
-// of a string; func_804546C8 renders a string as a glyph grid; func_80454B70
+// into an embedded CDrawGX at 0x220. measureTextWidth measures the widest line
+// of a string; drawTextGrid renders a string as a glyph grid; replayQueue
 // replays the queued commands.
 //
 // NOTE: the retail symbol-map entries for the three functions below have
@@ -486,7 +486,7 @@ CDeviceFontLayer::~CDeviceFontLayer() {
 }
 
 // ---------------------------------------------------------------------------
-// func_80453D78 (0x80457E48) - measure the widest line of a string.
+// measureTextWidth (0x80457E48) - measure the widest line of a string.
 //
 // Walks the string line by line, measuring each line's accumulated glyph
 // width (glyph width scaled by `scale`, plus 2px per glyph when fontId is
@@ -497,7 +497,7 @@ CDeviceFontLayer::~CDeviceFontLayer() {
 // retail 0x43300000/xoris magic-double sequence with its own frame-top
 // temporaries and the shared .sdata2 bias constant.
 // ---------------------------------------------------------------------------
-extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
+extern "C" u32 measureTextWidth__16CDeviceFontLayerFv(const char* str,
                                                    u32 fontId, f32 scale) {
     char buf[0x400];
     u32 maxWidth = 0;
@@ -558,7 +558,7 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
 
 // Queue a text-draw command (cmd 0) with an inline string payload.
 // No return value (retail leaves r3 untouched at the blr).
-void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
+void queueText__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
                                          const char* str) {
     if (self->mQueList.mCapacity == 0)
         self->mQueList.reserve(self->mAllocHandle);
@@ -769,13 +769,13 @@ void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
 }
 
 // ---------------------------------------------------------------------------
-// func_80454508 (0x80458604) - queue a draw command.
+// queueLineMode (0x80458604) - queue a draw command.
 //
 // Lazily reserves the 0x180-node slot array (8-byte command records in the
 // shared scratch buffer), then appends an {cmd=6, size=8, arg} record to the
 // scratch cursor and links a queue node pointing at it (push_back).
 // ---------------------------------------------------------------------------
-extern "C" void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* self,
+extern "C" void queueLineMode__16CDeviceFontLayerFv(CDeviceFontLayer* self,
                                                     u32 arg) {
     // Lazily allocate the slot array via the shared reserve() helper.
     FONT_LAYER_RESERVE_SLOTS(self);
@@ -796,14 +796,14 @@ extern "C" void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
 
 // ---------------------------------------------------------------------------
-// func_804546C8 (0x804587C4) - render a string as a glyph grid.
+// drawTextGrid (0x804587C4) - render a string as a glyph grid.
 //
 // Draws the string at (x, y) with the given scales. When `col` is given and
 // its alpha is not fully opaque, a measurement rect is drawn first. The text
 // is rendered one line at a time (1 or 2 lines depending on `flag`), each
 // glyph as a textured quad via the font-info provider.
 // ---------------------------------------------------------------------------
-extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
+extern "C" void drawTextGrid__16CDeviceFontLayerFP7CDrawGX(
     CDrawGX* draw, u32 fontId, const char* str, s16 x, s16 y, f32 scaleX,
     f32 scaleY, const ml::CCol4* col, u8 flag) {
     IDeviceFontInfo* info =
@@ -820,7 +820,7 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
         if (lbl_eu_8066A40C != col->a) {
             // Semi-transparent text: draw a background rect sized by the
             // measured text width and the scaled line height.
-            u32 w = func_80453D78__16CDeviceFontLayerFv(str, fontId, scaleX);
+            u32 w = measureTextWidth__16CDeviceFontLayerFv(str, fontId, scaleX);
             IDeviceFontInfo* info2 =
                 getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
             u32 h;
@@ -906,13 +906,13 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
 }
 
 // ---------------------------------------------------------------------------
-// func_80454B70 (0x80458C60) - replay the queued draw commands.
+// replayQueue (0x80458C60) - replay the queued draw commands.
 //
 // Walks the command list (from the current node when dirty), dispatching each
 // command into the draw GX. When `flag` is nonzero the command list is
 // cleared and the state reset afterward.
 // ---------------------------------------------------------------------------
-extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
+extern "C" void replayQueue__16CDeviceFontLayerFv(CDeviceFontLayer* self,
                                                     u32 flag) {
     if (self->mQueList.mCapacity == 0) {
         return;
@@ -946,7 +946,7 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
             break;
         case 0: {
             CDeviceFontLayerCmdData* d = node->mData;
-            func_804546C8__16CDeviceFontLayerFP7CDrawGX(
+            drawTextGrid__16CDeviceFontLayerFP7CDrawGX(
                 self->drawGX(), self->mFontId,
                 (const char*)&d->mArg1,
                 ((TextQue*)d)->mX,

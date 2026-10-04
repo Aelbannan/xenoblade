@@ -42,7 +42,7 @@ extern "C" void* __dt__9CMdlAnmUVFv(CMdlAnmUV* self, int flag) {
     return self;
 }
 
-// Owner-model views for func_804E72D0: the ScnMdl pointer (+0x147C) and the
+// Owner-model views for UVAnm_PushPairSRT: the ScnMdl pointer (+0x147C) and the
 // two vtable slots it calls (0x60, 0x68; declared virtual N lands at 8+4*N).
 struct CMdlAnmUVModelVt {
     virtual void v00() = 0;
@@ -81,7 +81,7 @@ struct CMdlAnmUVModel {
 // id matches, fetch the node translation and push a flip/scale effect matrix
 // (diag lbl_eu_8066B350 / off-diag lbl_eu_8066B354, negated translation) into
 // the material's texture SRT. Returns whether any pair was processed.
-extern "C" bool func_804E72D0(CMdlAnmUV* self, u32 nodeId,
+extern "C" bool UVAnm_PushPairSRT(CMdlAnmUV* self, u32 nodeId,
                               const nw4r::g3d::ChrAnmResult* result) {
     s32 count = 0;
     nw4r::g3d::ResTexSrt texSrt(NULL);
@@ -163,7 +163,7 @@ struct CMdlAnmUVResModel {
     nw4r::g3d::ResMdlData* field_0x146C;
 };
 
-void func_804E6C80(CMdlAnmUV* self, CMdlAnmUVResModel* model) {
+void UVAnm_RegisterPairs(CMdlAnmUV* self, CMdlAnmUVResModel* model) {
     self->field_04 = model;
     const char* modelName = ((CMdlAnmUVRegVt*)model)->v06();
     u32 len = strlen(modelName);

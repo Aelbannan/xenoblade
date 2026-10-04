@@ -130,7 +130,7 @@ bool SysCacheFetchIndexedEntry(int index, u32* outField3C, u8** outField4Addr, u
 }
 
 // Unlink the front node of the list (sentinel) and write the new front to out.
-void func_804D903C(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
+void SysCacheUnlinkFront(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
     (void)unk;
     CacheListNode* front = sentinel->mNext;
     CacheListNode* frontNext = front->mNext;
@@ -206,7 +206,9 @@ void CWorkSystemCache::wkUpdate() {
     // Walk the singleton's resource list; logged-in items get released and
     // unlinked. The unlink helper takes &node and advances past the removed
     // entry, so the caller just resumes from the saved 'next' pointer.
-    const int zero = 0;
+    // NOTE: keep non-const: const materializes a dead WEAK @LOCAL@..@zero
+    // word in .sdata2 (retail has none); the use already folds to li.
+    int zero = 0;
     CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
@@ -221,7 +223,7 @@ void CWorkSystemCache::wkUpdate() {
             }
             CacheListNode* out;
             CacheListNode* unlink = node;
-            func_804D903C(&out, (u32)&lbl_eu_806659C8->mCache, (CacheListNode*)&unlink);
+            SysCacheUnlinkFront(&out, (u32)&lbl_eu_806659C8->mCache, (CacheListNode*)&unlink);
         }
         node = next;
     }

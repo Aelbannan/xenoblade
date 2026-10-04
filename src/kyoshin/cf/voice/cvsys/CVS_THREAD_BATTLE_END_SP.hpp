@@ -129,5 +129,7 @@ extern u32 lbl_eu_8053A194[];   // final init-state triple
 extern u32 lbl_eu_8053A1A0[3];  // reset init-state triple (CVSBattleEndSPResetAndSweep)
 extern u32 lbl_eu_8053A1AC[3];  // init-state triple (CVSBattleEndSPResetState)
 extern u32 lbl_eu_8053A100[];   // command-list table for the constructor
-extern char lbl_eu_8053A1B8[];   // CVS_THREAD_BATTLE_END_SP vtable
-extern u8 lbl_eu_80668DB0;       // sentinel command string
+// Retail vtable is 0x1C (7 words: typeinfo + 6 slots, all pointer words).
+extern u32 lbl_eu_8053A1B8[7];   // CVS_THREAD_BATTLE_END_SP vtable
+// Retail size 0x8 (sentinel command-string bytes, see the .cpp table).
+extern const u8 lbl_eu_80668DB0[8]; // sentinel command string

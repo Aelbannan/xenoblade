@@ -6,6 +6,9 @@ extern const f32 __HBMSYNn128[];
 extern const s32 __HBMSYNAttackAttnTable[];
 
 // .rodata constant pool referenced by the envelope tick computations.
+// Retail emits it as a file-local (static) 0x20-byte pool entry; defined here
+// with the exact retail values (pow base 2.0, divisors, ms scale 1000.0,
+// s32->f64 bias 2^52+2^31).
 typedef struct HBMSYNEnvConsts {
     f64 powBase;   // 0x00 - pow() base
     f32 divA;      // 0x08
@@ -14,7 +17,9 @@ typedef struct HBMSYNEnvConsts {
     f32 pad14;
     f64 convBias;  // 0x18 - s32->f64 conversion bias
 } HBMSYNEnvConsts;
-extern HBMSYNEnvConsts const lbl_80518B58;
+static HBMSYNEnvConsts const lbl_80518B58 = {
+    2.0, 78643200.0f, 1000.0f, 78642000.0f, 0.0f, 4503601774854144.0,
+};
 
 // s32 -> f64 the way MWCC lowers it: 0x4330-prefixed double of the sign-flipped
 // word minus the rodata bias constant.

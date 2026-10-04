@@ -1453,7 +1453,7 @@ void cfCam_getFollowSrc(ml::CVec3* out, cf::CfCamFollow* self) {
     local_8.y += lbl_eu_806662F8;
     if (ScnRes_SegQueryForward_E348(self->unk164->CfObject_getPosVector(), &local_8, 0,
                       0x40000, 0) != 0) {
-        func_804BE4B4(&local_20, 0);
+        ScnRes_CopyEntryHead(&local_20, 0);
         f32 h = lbl_eu_8066631C + local_20.y;
         if (local_2c.y < h) {
             local_2c.y = h;
@@ -1469,7 +1469,7 @@ void cfCam_getFollowSrc(ml::CVec3* out, cf::CfCamFollow* self) {
             local_8.y += lbl_eu_80666320;
             if (ScnRes_SegQueryForward_E348(self->unk164->CfObject_getPosVector(), &local_8,
                               0, 0x40000, 0) != 0) {
-                func_804BE4B4(&local_20, 0);
+                ScnRes_CopyEntryHead(&local_20, 0);
                 f32 h = lbl_eu_8066631C + local_20.y;
                 if (local_2c.y <= h) {
                     local_2c.y = h;
@@ -1890,7 +1890,7 @@ __declspec(noinline) void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg) {
     int flag;
     void* x;
     int magFlag;
-    void* a = func_8016FE34(obj);
+    void* a = MapFx_ResolveOwner(obj);
     if (a != 0) {
         flag = cfCam_queryVoxArts(static_cast<cf::CVoiceRec*>(a), 4);
     } else {
@@ -1947,17 +1947,17 @@ __declspec(noinline) void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg) {
 }
 // cfCam_queryVoxArts: query the +0x4 sub-object's slot-0x30 state word (owner view:
 // CVoiceSub30/CVoiceRec in kyoshin/help/CHelp_Talk.hpp - same shape as
-// CHelp_Talk::func_802B86F0) and feed it to the testActorStatus arts-state
+// CHelp_Talk::isTalkHelpReady) and feed it to the testActorStatus arts-state
 // gate. noinline keeps the retail `bl cfCam_queryVoxArts` at call sites.
 extern "C" __declspec(noinline) int cfCam_queryVoxArts(cf::CVoiceRec* self, int flags) {
     u32 val = *self->field_04->vf30();
     return testActorStatus(self, &val, flags);
 }
 // cfCam_artsGateClr: follow-target arts-state gate. Resolves the actor state via
-// func_8016FE34, requires the CfGameManager gate, and returns true only when
+// MapFx_ResolveOwner, requires the CfGameManager gate, and returns true only when
 // NONE of the 3/4/1 state flags and ALL... i.e. the 8 flag probe reports clear.
 extern "C" __declspec(noinline) int cfCam_artsGateClr(void* obj) {
-    cf::CVoiceRec* a = static_cast<cf::CVoiceRec*>(func_8016FE34(obj));
+    cf::CVoiceRec* a = static_cast<cf::CVoiceRec*>(MapFx_ResolveOwner(obj));
     if (a == 0) {
         return 0;
     }
@@ -2011,7 +2011,7 @@ __declspec(noinline) void cfCam_updateFollowCam(cf::CfCamFollow* self, void* arg
                 int flag = 1;
                 noopAnimVec3(&tmp2c);
                 cfCam_zeroVec3(&tmp2c);
-                void* actor = func_8016FE34(reinterpret_cast<void*>(sel));
+                void* actor = MapFx_ResolveOwner(reinterpret_cast<void*>(sel));
                 if (actor != 0) {
                     switch (CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(actor)) {
                     case 3:
@@ -2745,7 +2745,7 @@ int cfCam_selectCamTarget(cf::CfCamFollow* self, void* arg, float* out1, float* 
     int flags = CfRes_getE24Bit22() | (int)cfCam_testGlobalE24() |
                 (int)cfCam_getE28Bit24();
     int r31 = 1;
-    if (battleCommuIsActive() == 0 && func_8017FD44() == 0) {
+    if (battleCommuIsActive() == 0 && GetZealObjPtr() == 0) {
         r31 = 0;
     }
     if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x400) == 0 && flags == 0 &&
@@ -3189,8 +3189,8 @@ int cfCam_aimOnCollide(cf::CfCamFollow* arg1, float* arg2, float* arg3) {
     return hit;
 }
 __declspec(noinline) void cfCam_seedProbeVec(ml::CVec3* a, ml::CVec3* b) {
-    func_804BE4B4(a, 0);
-    func_804BE4E0(b, 0);
+    ScnRes_CopyEntryHead(a, 0);
+    ScnRes_CopyEntryMid(b, 0);
 }
 __declspec(noinline) void cfCam_nop07C0(void* self, void* a, void* b){}
 // cfCam_tuneZoomDist: decay/accumulate the camera's +0x23C heading value. When the
@@ -3925,8 +3925,8 @@ int cfCam_correctCamGround(cf::CfCamFollow* self, ml::CVec3* arg2, ml::CVec3* ou
         if (ScnRes_RegPassSelect_E2E8(out, 0x404a03, 0, 1) != 0) {
             noopAnimVec3(&snapA4);
             noopAnimVec3(&snap98);
-            func_804BE4B4(&snapA4, 0);
-            func_804BE4E0(&snap98, 0);
+            ScnRes_CopyEntryHead(&snapA4, 0);
+            ScnRes_CopyEntryMid(&snap98, 0);
             int ok = 1;
             if (cfCam_maskUnk1D4(reinterpret_cast<int>(self), 0x40) == 0) {
                 if (gt != 0) {
@@ -3959,8 +3959,8 @@ int cfCam_correctCamGround(cf::CfCamFollow* self, ml::CVec3* arg2, ml::CVec3* ou
     if (ScnRes_VertRayForward_E398(out, 0x404a03, 0, 0, -lift, lbl_eu_8066AF20) != 0) {
         noopAnimVec3(&clamp8C);
         noopAnimVec3(&clamp80);
-        func_804BE4B4(&clamp8C, 0);
-        func_804BE4E0(&clamp80, 0);
+        ScnRes_CopyEntryHead(&clamp8C, 0);
+        ScnRes_CopyEntryMid(&clamp80, 0);
         if (clamp80.y > lbl_eu_80666318 && clamp80.z + lift > out->y) {
             out->y = clamp80.z + lift;
         }

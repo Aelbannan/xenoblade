@@ -15,12 +15,12 @@ public:
 };
 
 // Static CView helpers needed by cbRenderBefore. getCurrentView is declared in
-// monotlib/include/monolib/core/CView.hpp; func_8043EA88 is not, so both are
+// monotlib/include/monolib/core/CView.hpp; fitRectToView is not, so both are
 // surfaced here as a minimal definition (this TU never fully includes CView.hpp).
 class CView {
 public:
     static CView* getCurrentView();
-    static void func_8043EA88(ml::CRect& rect, CView* view);
+    static void fitRectToView(ml::CRect& rect, CView* view);
 };
 
 // Non-virtual reconstruction of CScnFadeMan. Retail CScnFadeMan inherits

@@ -6370,7 +6370,23 @@ UNIT_RULES: dict[str, UnitRules] = {
         # slot-1 dispatch reference the compiler-generated __vt__ name as an
         # UNDEF while retail names the shared label. Pure symbol rename; no
         # codegen or data-section impact (hexdiff 15/15 byte-identical).
-        exact_renames=(("__vt__Q22cf9_sArtsSet", "lbl_eu_8052F5D8"),),
+        # 2026-10-03 (wave4-n1): the seven C-linkage helpers retail defines
+        # as globals (get/setArts* at 0x8015468C-0x801548BC, same sizes and
+        # split offsets) are emitted here as CArtsSet members under mangled
+        # names, referenced by those C names from CfGimmickEne/CtrlAct/
+        # CAIAction/CChain/CBattleManager/etc. Rename the definitions onto
+        # the retail names (internal REL24 relocs follow the symtab index;
+        # no external referrer uses the mangled spellings).
+        exact_renames=(
+            ("__vt__Q22cf9_sArtsSet", "lbl_eu_8052F5D8"),
+            ("setArtsSlotRC__Q22cf8CArtsSetFUsUsUs", "setArtsSlotRC"),
+            ("getArtsSlotRC__Q22cf8CArtsSetFii", "getArtsSlotRC"),
+            ("setArtsSlotByIdx__Q22cf8CArtsSetFUsi", "setArtsSlotByIdx"),
+            ("getArtsSlotAtCnt__Q22cf8CArtsSetFUi", "getArtsSlotAtCnt"),
+            ("getArtsParamRC__Q22cf8CArtsSetFii", "getArtsParamRC"),
+            ("getArtsParamRC2__Q22cf8CArtsSetFii", "getArtsParamRC2"),
+            ("getArtsParamByIdx__Q22cf8CArtsSetFi", "getArtsParamByIdx"),
+        ),
     ),
     "CMenuUpdate.o": UnitRules(
         # Phantom .sdata2 pool {128.0f, 0.0f} loaded via 3 live SDA21 relocs;

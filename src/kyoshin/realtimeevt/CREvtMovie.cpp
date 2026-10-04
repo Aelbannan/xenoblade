@@ -57,7 +57,7 @@ void EvtMovie_MaybeAdvance_493C(CREvtMovie* self) {
 }
 
 // ============================================================================
-// func_80294980: Build SFD path and start playback
+// EvtMovie_StartPlayback_4980: Build SFD path and start playback
 // If scriptData->counter == currentTick and not already playing,
 // builds "/ev/realtime/" + scriptName + ".sfd" and starts playback
 // opt_propagation off keeps `dir` as an opaque held base pointer (retail
@@ -65,7 +65,7 @@ void EvtMovie_MaybeAdvance_493C(CREvtMovie* self) {
 // ============================================================================
 #pragma push
 #pragma opt_propagation off
-void func_80294980(CREvtMovie* self) {
+void EvtMovie_StartPlayback_4980(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // Check if already playing or finished
@@ -96,14 +96,14 @@ void func_80294980(CREvtMovie* self) {
 #pragma pop
 
 // ============================================================================
-// func_80294A70: Build SFD path and start playback (with timing checks)
+// EvtMovie_PreloadMovie_4A70: Build SFD path and start playback (with timing checks)
 // Checks counter (currentTick + 1), timing, and memory availability
-// Same held-base pattern as func_80294980: opt_propagation off keeps `dir`
+// Same held-base pattern as EvtMovie_StartPlayback_4980: opt_propagation off keeps `dir`
 // materialized once in a callee-saved register; ext reuses the dead name reg.
 // ============================================================================
 #pragma push
 #pragma opt_propagation off
-void func_80294A70(CREvtMovie* self) {
+void EvtMovie_PreloadMovie_4A70(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex() + 1) return;
 
     // Check if already playing or finished
@@ -143,14 +143,14 @@ void func_80294A70(CREvtMovie* self) {
 #pragma pop
 
 // ============================================================================
-// func_80294BA4: Build SFD path and start/stop playback
+// EvtMovie_TogglePlayback_4BA4: Build SFD path and start/stop playback
 // If playing, stops. Otherwise, starts with flag 0.
-// Same held-base pattern as func_80294980: opt_propagation off keeps `dir`
+// Same held-base pattern as EvtMovie_StartPlayback_4980: opt_propagation off keeps `dir`
 // materialized once in a callee-saved register; ext is runtime dir + 14.
 // ============================================================================
 #pragma push
 #pragma opt_propagation off
-void func_80294BA4(CREvtMovie* self) {
+void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self) {
     if (self->mScriptData->mCounter != EvtSeqGetWalkIndex()) return;
 
     // If currently playing, stop
@@ -187,3 +187,43 @@ void func_80294BA4(CREvtMovie* self) {
 // EvtMovie_Noop_4CB0: Empty virtual function override (blr)
 // ============================================================================
 void EvtMovie_Noop_4CB0(void) {}
+
+// ============================================================================
+// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
+// Defined here at EOF so -ipa codegen for the functions above is unaffected.
+// ============================================================================
+
+// Cross-TU vtable slots (flat retail names).
+extern "C" void EvtObj_ConstFalse();
+extern "C" void CREvtObjVfunc10Default();
+extern "C" void REvtCam_AlwaysTrue1();
+extern "C" void CREvtObjIsBusyDefault();
+extern u32 lbl_eu_80662B18[];  // sdata locator word (defined below).
+
+// [.data] 0x80538AA0-0x80538AC8 (40B): CREvtMovie vtable (sdata locator,
+// null word, dtor, and 7 virtual slots; retail lays one label over all 10).
+u32 lbl_eu_80538AA0[10] = {
+    (u32)&lbl_eu_80662B18, 0x00000000,
+    (u32)&__ct__802948D0, (u32)&EvtMovie_Noop_4CB0,
+    (u32)&EvtMovie_MaybeAdvance_493C, (u32)&EvtObj_ConstFalse,
+    (u32)&CREvtObjVfunc10Default, (u32)&REvtCam_AlwaysTrue1,
+    (u32)&CREvtObjIsBusyDefault, (u32)&EvtMovie_PreloadMovie_4A70,
+};
+
+// [.rodata] 0x8050FD88-0x8050FDB0 (40B): class-name string (unreferenced pool
+// bytes, kept under the retail label) + the "/ev/realtime/" + ".sfd" pair
+// the playback builders index as dir / dir+14.
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
+char lbl_eu_8050FD88[0xF] = {
+    0x63,0x66,0x3A,0x3A,0x43,0x52,0x45,0x76,0x74,0x4D,0x6F,0x76,0x69,0x65,0x00,
+};
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_8050FD98[0x18] = {
+    0x2F,0x65,0x76,0x2F,0x72,0x65,0x61,0x6C,0x74,0x69,0x6D,0x65,0x2F,0x00,
+    0x2E,0x73,0x66,0x64,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+// [.sdata] 0x80662B18-0x80662B20 (8B): null word pair referenced by vtable[0].
+#pragma section data_type ".sdata" ".sdata"
+extern __declspec(section ".sdata") u32 lbl_eu_80662B18[2] = { 0x00000000, 0x00000000 };
+#pragma section data_type ".data" ".data"

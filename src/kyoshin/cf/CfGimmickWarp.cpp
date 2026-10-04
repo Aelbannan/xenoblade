@@ -91,13 +91,13 @@ void __ct__cf_CfGimmick(WarpData*);
 void CfGimmick_LoadBdatAreaPosIndexed(WarpData*, WarpVec3*, void*, u32*, int);
 void CfGimmick_LoadBdatAreaRotationIndexed(WarpData*, WarpVec3*, void*, u32*, int);
 void CfGimmick_LoadBdatAreaExtentsIndexed(WarpData*, WarpVec3*, void*, u32*, int);
-void func_802089BC(WarpVec3*, const WarpVec3*, const WarpVec3*);
+void CfGimmick_BuildColliderMtx(WarpVec3*, const WarpVec3*, const WarpVec3*);
 void CfGimmick_ClearManagerBinding(WarpData*);
 void CfGimmick_UnregisterSpawnedObject(WarpObject*);
-void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
+void CfGimmick_UpdateProximity(WarpObject**, WarpVec3*, u16, f32, int, int);
 int CfGimmick_IsMessageSystemBusy(WarpData*);
 int CfGimmick_CheckPartyIdLoaded(WarpData*, WarpObject*);
-void func_8020A484(u16);
+void CfGimmick_PostGimmickName(u16);
 int CfGimmick_CheckStateFlag2CC8(int);
 int CfGimmick_CheckTriggerGated(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
@@ -111,7 +111,7 @@ extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused
 void cfCam_syncFollowD();
 void setChildB59__(WarpObject*, int);
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
-extern "C" void func_804BE4B4(void* out, int a);
+extern "C" void ScnRes_CopyEntryHead(void* out, int a);
 u16 CfGimmick_PlaySoundAtPos(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void InitRecord(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
@@ -236,11 +236,11 @@ extern "C" void CfGimmickWarp_UpdateState(WarpData* self) {
     (self->*lbl_eu_80535938[self->state])();
     if ((self->flags & 0x10) != 0) {
         if ((self->configFlags & 1) != 0) {
-            func_8020A6B0(&self->object7cState, &self->position,
+            CfGimmick_UpdateProximity(&self->object7cState, &self->position,
                           self->resourceId, lbl_eu_806683CC, 0, 0);
         }
         if ((self->flagE6 & 1) != 0) {
-            func_8020A6B0(&self->object108, &self->destination,
+            CfGimmick_UpdateProximity(&self->object108, &self->destination,
                           self->resourceId, lbl_eu_806683CC, 0, 0);
         }
         self->flags &= ~0x10u;
@@ -259,8 +259,8 @@ extern "C" void CfGimmickWarp_ClearState(WarpData* self) {
 }
 
 extern "C" void CfGimmickWarp_RefreshMatrices(WarpData* self) {
-    func_802089BC(&self->scale, &self->position, &self->rotation);
-    func_802089BC(&self->destination3, &self->destination, &self->destination2);
+    CfGimmick_BuildColliderMtx(&self->scale, &self->position, &self->rotation);
+    CfGimmick_BuildColliderMtx(&self->destination3, &self->destination, &self->destination2);
 }
 
 extern "C" void CfGimmickWarp_TryFire(WarpData* self) {
@@ -284,7 +284,7 @@ extern "C" void CfGimmickWarp_TryFire(WarpData* self) {
             allReady = (allReady | CfGimmick_CheckPartyIdLoaded(self, self->object108)) != 0;
         }
         if (allReady != 0) {
-            func_8020A484(self->resourceId);
+            CfGimmick_PostGimmickName(self->resourceId);
             self->flags |= 0x20;
             return;
         }
@@ -311,7 +311,7 @@ extern "C" void CfGimmickWarp_TryFire(WarpData* self) {
     }
 }
 
-extern "C" void func_8020D998(WarpData* self) {
+extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
     self->flags |= 0x10;
     if ((self->flags & 0x40) != 0 &&
         CfGimmick_CheckTriggerGated(self->configFlags, &self->scale, &self->position,
@@ -477,7 +477,7 @@ extern "C" void func_8020D998(WarpData* self) {
     }
 }
 
-extern "C" void func_8020DF04(WarpData* self) {
+extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
     bool valid;
     u8 phase = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->phase;
     if (phase >= 1 && phase <= 0x18) {
@@ -584,7 +584,7 @@ extern "C" void func_8020DF04(WarpData* self) {
     CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
 }
 
-extern "C" void func_8020E27C(WarpData* self) {
+extern "C" void CfGimmickWarp_CheckLaunch(WarpData* self) {
     int ready = 0;
     if (self->phase != 0) {
         if (jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
@@ -616,7 +616,7 @@ extern "C" void func_8020E27C(WarpData* self) {
     self->flags = flags & ~1u;
 }
 
-extern "C" void func_8020E3F0(WarpData* self) {
+extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
     bool allReady = true;
     for (int i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
@@ -706,7 +706,7 @@ extern "C" void CfGimmickWarp_EnterState6(WarpData* self) {
     }
 }
 
-extern "C" void func_8020E704(WarpData* self) {
+extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
     CfGimmick_SetGlobalFlagC0002();
     CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 2) != 0) {
@@ -738,7 +738,7 @@ extern "C" void func_8020E704(WarpData* self) {
         sum.z = centre.z + adjusted.z;
         WarpVec3 effectPos = sum;
         if (ScnRes_VertRayForward_E398(&effectPos, 0, 0, 0, lbl_eu_806683E0, lbl_eu_8066AF20)) {
-            func_804BE4B4(&centre, 0);
+            ScnRes_CopyEntryHead(&centre, 0);
         }
 
         if (first != 0) {
@@ -784,7 +784,7 @@ extern "C" void func_8020E704(WarpData* self) {
     }
 }
 
-extern "C" void func_8020EA2C(WarpData* self) {
+extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
     CfGimmick_SetGlobalFlagC0002();
     CfGimmick_SetGlobalFlagD0000();
 

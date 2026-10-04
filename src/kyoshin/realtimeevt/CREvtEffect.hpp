@@ -24,7 +24,7 @@
 // declared; the rest of each object is unknown).
 // ---------------------------------------------------------------------------
 
-// Effect instance created by func_804CC1F4. The rotation/scale params at
+// Effect instance created by EffRoot_AddSchedReq. The rotation/scale params at
 // 0x1C-0x4C are raw 32-bit word copies of the CREvtEffect anim fields
 // (retail copies them with lwz/stw, so they are declared s32 here).
 struct CEffectInst {
@@ -136,7 +136,7 @@ extern "C" void EvtSeqResolveAnmChr(void* obj, const char* name, s32* out);
 // Effect system
 extern "C" void EffSched_LookupA(void* mgr, void* data);
 extern "C" void EffSched_LookupB(void* mgr, void* data);
-extern "C" void* func_804CC1F4(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
+extern "C" void* EffRoot_AddSchedReq(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
 extern "C" void schedClearFlag15Update(void* effect);
 extern "C" void schedAttachChildSlot(void* effect, void* parent);
 extern "C" void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
@@ -147,7 +147,7 @@ extern "C" nw4r::g3d::ChrAnmResult* scnImN4AnimFn(void* model, const char* animN
 extern "C" void* scnImN4BuildByIdx(void* global, void* handle, int, int, int, int);
 extern "C" void simSetLeafDist7B0(void* model, f32 val);
 extern "C" void simSetFlag2000Chain(void* model, int val);
-extern "C" void func_804839D4(void* model, void* animData, int, int, int, int, int);
+extern "C" void simBindChrAnim(void* model, void* animData, int, int, int, int, int);
 
 // Memory
 extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
@@ -183,5 +183,5 @@ extern "C" {
 // Same-TU forward declarations (functions defined in CREvtEffect.cpp; extern
 // "C" keeps callers emitting real unmangled bl branches to the retail symbols)
 extern "C" void EvtFx_RefreshChrAnim(CREvtEffect* self);
-extern "C" bool func_80184F90(CREvtEffect* self);
-extern "C" void func_8018515C(CREvtEffect* self);
+extern "C" bool EvtFx_SpawnEffect(CREvtEffect* self);
+extern "C" void EvtFx_UpdateEffects(CREvtEffect* self);

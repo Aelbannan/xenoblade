@@ -564,7 +564,7 @@ extern "C" void func_80141C6C(void*, void*);
 extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
 extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 value);
 extern "C" void func_8009EF9C(void* data, u32 value);
-extern "C" void func_80158420(u32 value, void* result, s32 mode, void* other);
+extern "C" void CItem_findOrCreateRec(u32 value, void* result, s32 mode, void* other);
 // func_8007DCB8 bdat-table scratch globals (.sbss /.data).
 extern s8 lbl_eu_80663E78;
 extern void* lbl_eu_80664090;
@@ -722,7 +722,7 @@ extern "C" void func_802A1610();
 extern "C" void func_8006A75C();
 extern "C" void func_8016F140(u32 object);
 extern "C" void func_8016F144(u32 object);
-extern "C" void func_800FE104();
+extern "C" void Selector_FrameUpdate();
 extern "C" void func_8019FD2C();
 extern "C" void func_80069F2C();
 extern "C" void func_80462CD8__8CTaskLODFv(u16 first, u16 second, u16 third);

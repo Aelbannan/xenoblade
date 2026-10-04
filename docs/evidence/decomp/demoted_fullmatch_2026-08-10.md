@@ -187,10 +187,10 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-8018cc64 | kyoshin/menu/CMenuShopSell | `MenuShopSellDtorThunk58` | MenuShopSellDtorThunk58 | 0x8018CC64 |
 | us-80144f94 | kyoshin/menu/CMenuUpdate | `dtorThunk_6c` | dtorThunk_6c | 0x80144F94 |
 | us-80144fa4 | kyoshin/menu/CMenuUpdate | `dtorThunk_70` | dtorThunk_70 | 0x80144FA4 |
-| us-80181140 | kyoshin/menu/CMenuZeal | `func_8017FD44` | func_8017FD44 | 0x80181140 |
-| us-8018135c | kyoshin/menu/CMenuZeal | `func_8017FF60` | func_8017FF60 | 0x8018135C |
-| us-80181364 | kyoshin/menu/CMenuZeal | `func_8017FF68` | func_8017FF68 | 0x80181364 |
-| us-8018136c | kyoshin/menu/CMenuZeal | `func_8017FF70` | func_8017FF70 | 0x8018136C |
+| us-80181140 | kyoshin/menu/CMenuZeal | `GetZealObjPtr` | GetZealObjPtr | 0x80181140 |
+| us-8018135c | kyoshin/menu/CMenuZeal | `zealDtorThunk58` | zealDtorThunk58 | 0x8018135C |
+| us-80181364 | kyoshin/menu/CMenuZeal | `zealRenderBeforeThunk` | zealRenderBeforeThunk | 0x80181364 |
+| us-8018136c | kyoshin/menu/CMenuZeal | `zealDtorThunk5C` | zealDtorThunk5C | 0x8018136C |
 | us-8018dbb0 | kyoshin/menu/code_8018C5FC | `__ct__Q22cf17UnkClass_8018C5FCFv` | cf::UnkClass_8018C5FC::UnkClass_8018C5FC() | 0x8018DBB0 |
 | us-8020373c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkReplayAnims` | ModelDispEquip_ThunkReplayAnims | 0x8020373C |
 | us-8020374c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkSlotCmd` | ModelDispEquip_ThunkSlotCmd | 0x8020374C |

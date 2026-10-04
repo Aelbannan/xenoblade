@@ -52,22 +52,22 @@ extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const voi
 // Manager's effect-act getter, act slot at +0x48.
 // const self: MWCC hoists the mpMgr load above the LR-save store (retail
 // prologue order lwz r3,4(r3) BEFORE stw r0,20(sp)); non-const emits stw-first.
-extern "C" u8* func_8049BF0C(const CScnEffectActNw4r* self) {
+extern "C" u8* EffectActNw4rGetAct48(const CScnEffectActNw4r* self) {
     return simGetLeafActData(self->mpMgr) + 0x48;
 }
 
 // Manager's effect-act getter, act slot at +0x78.
-extern "C" u8* func_8049BF34(const CScnEffectActNw4r* self) {
+extern "C" u8* EffectActNw4rGetAct78(const CScnEffectActNw4r* self) {
     return simGetLeafActData(self->mpMgr) + 0x78;
 }
 
 // Manager's effect-act getter, act slot at +0xb8.
-extern "C" u8* func_8049BF5C(const CScnEffectActNw4r* self) {
+extern "C" u8* EffectActNw4rGetActB8(const CScnEffectActNw4r* self) {
     return simGetLeafActData(self->mpMgr) + 0xb8;
 }
 
 // Manager's effect-act getter, act slot at +0xc4.
-extern "C" u8* func_8049BF84(const CScnEffectActNw4r* self) {
+extern "C" u8* EffectActNw4rGetActC4(const CScnEffectActNw4r* self) {
     return simGetLeafActData(self->mpMgr) + 0xc4;
 }
 
@@ -189,7 +189,7 @@ void EffectActNw4rPushXform(CScnEffectActNw4r* self) {
 // Effect-range gate: the act is usable while the manager's range value sits
 // inside [AB74 - A208, AB74 + A208], unless the manager's act flag disables
 // the whole check (then always usable). Returns 1 usable / 0 outside range.
-u32 func_8049C3AC(CScnEffectActNw4r* self) {
+u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
     u32 result;
     u32 ok;
     CScnEffectActMgr* mgr;
@@ -227,9 +227,9 @@ extern "C" void EffectActNw4rCallMgrV16(CScnEffectActNw4r* self) { self->mpMgr->
 // parse into the u16 id stored next to the act pointer. Then descend into the
 // node's child and next sibling.
 // C linkage: the retail symbol (and the recursive self-calls) carry the plain
-// unmangled name func_8049BA58.
-extern "C" void func_8049BA58(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node);
-void func_8049BA58(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node) {
+// unmangled name EffectActNw4rRegisterNodes.
+extern "C" void EffectActNw4rRegisterNodes(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node);
+void EffectActNw4rRegisterNodes(CScnEffectActNw4r* self, nw4r::g3d::ResNode* node) {
     if (node->ptr() == NULL) {
         return;
     }
@@ -316,7 +316,7 @@ end:
         lp = NULL;
     }
     nw4r::g3d::ResNode child(lp);
-    func_8049BA58(self, &child);
+    EffectActNw4rRegisterNodes(self, &child);
     if (!node->IsValid()) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                         lbl_eu_80663910, lbl_eu_80663A30);
@@ -330,17 +330,17 @@ end:
         lp = NULL;
     }
     nw4r::g3d::ResNode next(lp);
-    func_8049BA58(self, &next);
+    EffectActNw4rRegisterNodes(self, &next);
 }
 
 // Scene-model init: stashes the manager, clears the act table, then binds the
-// model's root node into the act-manager (func_8049BA58).
-void func_8049B9EC(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
+// model's root node into the act-manager (EffectActNw4rRegisterNodes).
+void EffectActNw4rInitModel(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
     self->mpMgr = mgr;
     self->mCount = 0;
     nw4r::g3d::ResMdl resMdl(mgr->field_0x146c);
     nw4r::g3d::ResNode node = resMdl.GetResNode(0);
-    func_8049BA58(self, &node);
+    EffectActNw4rRegisterNodes(self, &node);
 }
 
 // ===== [.data] 0x8056EAD8-0x8056EB50: CScnEffectActNw4r vtable + sub-view =====
@@ -358,12 +358,12 @@ extern "C" u32 lbl_eu_8056EAD8[26] = {
     (u32)&__dt__17CScnEffectActNw4rFv,
     (u32)&EffectActNw4rProbeAnimActive, (u32)&EffectActNw4rMgrCallV04, (u32)&EffectActNw4rSetLeafDist,
     (u32)&EffectActNw4rSetTreeFlag2, (u32)&EffectActNw4rCallMgrV43, (u32)&EffectActNw4rCallMgrV16,
-    (u32)&EffectActNw4rGetLeafActData, (u32)&EffectActNw4rStoreMgrScalePos, (u32)&func_8049BF0C,
-    (u32)&func_8049BF34, (u32)&func_8049BF5C, (u32)&func_8049BF84,
+    (u32)&EffectActNw4rGetLeafActData, (u32)&EffectActNw4rStoreMgrScalePos, (u32)&EffectActNw4rGetAct48,
+    (u32)&EffectActNw4rGetAct78, (u32)&EffectActNw4rGetActB8, (u32)&EffectActNw4rGetActC4,
     (u32)&EffectActNw4rFindActGated, (u32)&EffectActNw4rGetActPosOut, (u32)&EffectActNw4rFindActById,
     (u32)&EffectActNw4rGetActPosById, (u32)&EffectActNw4rGetActCount, (u32)&EffectActNw4rFindActIndexed,
     (u32)&EffectActNw4rPushWordBuf, (u32)&EffectActNw4rRemoveWordBuf, (u32)&EffectActNw4rPushXform,
-    (u32)&func_8049C3AC, (u32)&EffectActNw4rHasDirectAct,
+    (u32)&EffectActNw4rCheckRange, (u32)&EffectActNw4rHasDirectAct,
 };
 extern "C" u32 lbl_eu_8056EB40[4] = {
     (u32)&lbl_eu_80663A28, 0x00000000, 0x00000000, 0x00000000,

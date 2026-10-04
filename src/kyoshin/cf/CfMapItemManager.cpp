@@ -149,7 +149,7 @@ u32 Bdat_GetMaxRow_B1EC(void* p);
 u32 CtrlRemote_TouchBitByArg(u32 v);
 void CtrlRemote_SetSharedBit(u32 v, u32 w);
 u32 getReloadParam0();
-void* func_8016FE34(void* p);
+void* MapFx_ResolveOwner(void* p);
 int CMainMenu_CheckOpenState();
 int MapSelectSCIsCreated();
 int func_80083118__Q22cf13CfGameManagerFv(int v);
@@ -874,7 +874,7 @@ void tryPickupMapItem(CfMapItemManager* self) {
     idx = updateMapItems(self, &pos);
     if (idx == 0) return;
     if (!func_80083118__Q22cf13CfGameManagerFv(0)) return;
-    u8* loader = (u8*)func_8016FE34((void*)pv);
+    u8* loader = (u8*)MapFx_ResolveOwner((void*)pv);
     if (loader == 0) return;
     if (CMainMenu_CheckOpenState() != 0) return;
     if (MapSelectSCIsCreated() != 0) return;

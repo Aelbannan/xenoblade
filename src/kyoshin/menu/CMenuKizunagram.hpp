@@ -12,7 +12,7 @@
 // extern "C" so call relocs carry the retail UNMANGLED symbol names
 // (identical plain decls emit mangled __FP5CLoad refs). MWCC 10505.
 #define CLoadBeginFileRequest CLoadBeginFileRequest_CLoadHdr
-#define func_802AE560 func_802AE560_CLoadHdr
+#define CLoadUpdateLayout CLoadUpdateLayout_CLoadHdr
 #define CLoadDrawIfVisible CLoadDrawIfVisible_CLoadHdr
 #define CLoadTeardownLayout CLoadTeardownLayout_CLoadHdr
 #define CLoadIsLoadReady CLoadIsLoadReady_CLoadHdr
@@ -24,7 +24,7 @@
 #define CLoadFinishRetryIdle CLoadFinishRetryIdle_CLoadHdr
 #include "kyoshin/CLoad.hpp"
 #undef CLoadBeginFileRequest
-#undef func_802AE560
+#undef CLoadUpdateLayout
 #undef CLoadDrawIfVisible
 #undef CLoadTeardownLayout
 #undef CLoadIsLoadReady
@@ -214,11 +214,11 @@ extern "C" void KizunagramBeginFadeIn(CMenuKizunagram* self);
 extern "C" void func_80257360(CMenuKizunagram* self);
 extern "C" void KizunagramConfirmChartAdvance(CMenuKizunagram* self);
 extern "C" void KizunagramOpenCharWindow(CMenuKizunagram* self);
-extern "C" void func_80257498(CMenuKizunagram* self);
+extern "C" void KizunagramDriveChart(CMenuKizunagram* self);
 extern "C" void KizunagramSetPhaseFlag54(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToPcWin(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToState9(CMenuKizunagram* self);
-extern "C" void func_80257840(CMenuKizunagram* self);
+extern "C" void KizunagramHandleCharInput(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToState7(CMenuKizunagram* self);
 extern "C" void KizunagramReopenCharWindow(CMenuKizunagram* self);
 
@@ -226,7 +226,7 @@ extern "C" void KizunagramReopenCharWindow(CMenuKizunagram* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
 extern "C" void KizunagramUpdateMainState(UnkKizunaMenuPcSub* self);
-extern "C" void func_802AE560(CLoad* self);
+extern "C" void CLoadUpdateLayout(CLoad* self);
 extern "C" void CFade_Update(CFade* self);
 
 // Sound helpers used by Move() (retail-unmangled).
@@ -254,7 +254,7 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* pDrawInfo);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 
-// Flat pad-data view exposing only the flag words func_80257840 reads:
+// Flat pad-data view exposing only the flag words KizunagramHandleCharInput reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at
 // +0x104 (see kyoshin/cf/CfPadData.hpp for the full layout).
 struct KizunaPadData {

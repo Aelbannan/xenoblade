@@ -2004,7 +2004,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/effect/code_804DB938.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0xC "CPackItem", .sdata 0x8 pair); -RTTI off kills MWCC duplicate type names + __RTTI__ copies
-            Object(NonMatching, "monolib/src/core/CArcItem.cpp", extra_cflags=["-func_align 16"]),
+Object(NonMatching, "monolib/src/core/CArcItem.cpp"),
             Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: SchedItem_ReleaseHandle duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for SchedRes_ReleaseEntries path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),
             Object(NonMatching, "monolib/src/core/code_804E36DC.cpp"),

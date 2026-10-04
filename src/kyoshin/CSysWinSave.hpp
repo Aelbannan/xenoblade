@@ -91,7 +91,7 @@ class CCur18View {
 public:
     virtual void vf02() = 0;       // index 0 -> +0x08
     virtual void vf03(void*) = 0;  // index 1 -> +0x0C (unused here)
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, func_80294638
+    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, SysWinSaveHandleInput
 };
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
@@ -134,7 +134,7 @@ public:
     virtual void v20() = 0;  // index 32 -> +0x88 - Init
 };
 
-// Minimal view of cf::CfPadData for func_80294638 (offsets match retail).
+// Minimal view of cf::CfPadData for SysWinSaveHandleInput (offsets match retail).
 struct CSysPadData {
     u8  _00[0x4];
     u32 field_04;      // +0x4 CPad::mPressedButtonFlags
@@ -216,7 +216,7 @@ void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 
-// Additional C-ABI imports used by Init/Move/func_80294638 (retail symbols
+// Additional C-ABI imports used by Init/Move/SysWinSaveHandleInput (retail symbols
 // are unmangled / non-namespace, so C linkage is required).
 void* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
@@ -224,15 +224,15 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void playUISound__FUl(u32 op);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
-void func_8022B9B4(void* syswin, void* str1, void* str2);
+void sysWinSetKindContent(void* syswin, void* str1, void* str2);
 void sysWinSetTwoTextValues(void* syswin, void* a, void* b);
-void func_8022BFC8(void* syswin, int kind);
+void sysWinApplyKind(void* syswin, int kind);
 void sysWinOpenPhase1(void* syswin);
 void sysWinAdvancePhase3(void* syswin);
 void sysWinDispatchPhase(void* syswin);
 void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 void Cur_SetVisible(void* cur, int val);
-void func_801D202C(void* cur);
+void Cur_Update(void* cur);
 char* BdatTouchStringCell(const void* a, const void* b, int id);
 void CUICfManager_queueSaveMenu(int a, int b);
 }

@@ -178,8 +178,8 @@ extern "C" {
 int  InitRecord(void* out, void* src, int a, f32 b, f32 c, f32 d, int e);
 int  CPartsChange_ProcessPartyInfo(void* a, void* b);
 int  ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
-void func_804BE4B4(void* out, int a);
-void func_804BE4E0(void* out, int a);
+void ScnRes_CopyEntryHead(void* out, int a);
+void ScnRes_CopyEntryMid(void* out, int a);
 int  ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f, void* g);
 int  Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
 void* findObjectById__Fi(int id);

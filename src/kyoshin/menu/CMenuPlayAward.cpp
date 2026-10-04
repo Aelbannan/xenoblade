@@ -266,7 +266,7 @@ body:
         PlayAward_Phase1_Advance(this);
         break;
     case 2:
-        func_80270454(this);
+        PlayAward_Phase2_HandleInput(this);
         break;
     case 3:
         PlayAward_Phase3_RequestClose(this);
@@ -347,7 +347,7 @@ void PlayAward_Phase1_Advance(CMenuPlayAward* self) {
     }
 }
 
-void func_80270454(CMenuPlayAward* self) {
+void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
     self->mField115C += lbl_eu_8066899C;
     if (self->mField115C > lbl_eu_806689A0) {
         self->mField115C = lbl_eu_806689A0;
@@ -395,7 +395,7 @@ void func_80270454(CMenuPlayAward* self) {
     } else if (up) {
         PlayAward_MoveCursorUp(&self->mPlayAwardList);
     } else if (down) {
-        func_80271190(&self->mPlayAwardList);
+        PlayAward_MoveCursorDown(&self->mPlayAwardList);
     } else if (pageUp) {
         PlayAward_ScrollPageUp(&self->mPlayAwardList);
     } else if (pageDown) {
@@ -465,7 +465,7 @@ void* __dt__80270714(CPlayAwardEntryArray* self, int mode) {
 // present award types, sort their indices by sort key, then append each
 // award's text binding to the page indexed by its type key. Skips entirely
 // when the array was already built (field_1000 nonzero).
-void func_80270770(CPlayAwardEntryArray* self) {
+void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
     if (self->field_1000 != 0) {
         return;
     }
@@ -674,7 +674,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
             break;
         }
         self->mLayout20->Animate(0);
-        func_801D202C(self->mCursor);
+        Cur_Update(self->mCursor);
         CScrollBar_UpdateDispatch(self->mScrollBar);
     }
 }
@@ -804,7 +804,7 @@ void PlayAward_MoveCursorUp(CPlayAwardList* self) {
 
 // Award-list cursor down: advance the scroll position, wrapping through the
 // 9-entry page / 8-entry remainder pages. Refresh the list + scroll bar.
-void func_80271190(CPlayAwardList* self) {
+void PlayAward_MoveCursorDown(CPlayAwardList* self) {
     u8 count = self->mEntryArray.field_1008[self->mEntryArray.mPageIndex];
     s16 off;
     int delta;
@@ -1047,7 +1047,7 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
 // Award-list load handler: when the layout arc accessor is ready and the
 // common archive has finished loading, build the entry array on the stack and
 // copy it into the embedded region, then refresh the list.
-void func_802719F8(CPlayAwardList* self) {
+void PlayAward_LoadEntries(CPlayAwardList* self) {
     if (self->mArcAccessor1C != 0 && self->mFileHandle2 == 0) {
         goto body;
     }
@@ -1071,7 +1071,7 @@ body:
     self->mEntryArray.field_100C = tmp.field_100C;
     self->mEntryArray.field_100E = tmp.field_100E;
     __destroy_arr(tmp.mEntries, (void*)&__dt__802706D4, 8, 0x200);
-    func_80270770(&self->mEntryArray);
+    PlayAward_BuildEntries(&self->mEntryArray);
     PlayAward_RefreshPageTitles(self);
     PlayAward_RefreshEntryPanes(self);
 }
@@ -1156,7 +1156,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         reinterpret_cast<CCursor18*>(&mCursor)->vf2();
 
         // Refresh the list, release the file handle and the scratch region.
-        func_802719F8(this);
+        PlayAward_LoadEntries(this);
         mFileHandle = 0;
         mMemRegion.validateHeap();
         __dt__14Class_8045F858Fv(regionBuf, -1);
@@ -1169,7 +1169,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         Bdat_GetTable_AA34();
         lbl_eu_806648A8 = getFP__FPCc(&lbl_eu_8050E7C0[0x183]);
         mFileHandle2 = 0;
-        func_802719F8(this);
+        PlayAward_LoadEntries(this);
         return 1;
     }
     return 0;

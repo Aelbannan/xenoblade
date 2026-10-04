@@ -277,7 +277,7 @@ struct CUnkItem8025FB10 {
     CUnkItem8025FB10* mNext;        // +0x1C
 };
 
-// Entry (0x60) of the func_eu_80263A24 copy object; six self-relative
+// Entry (0x60) of the IdTable_DeepCopy copy object; six self-relative
 // pointers get rebased after the bulk copy. Rows are 0xC4 (two entries +
 // pad).
 struct CUnkCopyEntry8025FB10 {
@@ -616,7 +616,7 @@ MMAX:
 
 // us-802623b0 - like IdTable_SumValues but stores the sum through the
 // third argument and returns whether the sum is non-zero.
-bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
+bool IdTable_GetSum(CUnkObj8025FB10* obj, int index, s32* outSum) {
     s32 sum = 0;
     if (obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F))) {
         CUnkItem8025FB10* rec;
@@ -910,7 +910,7 @@ FSTORE:
 // us-80262bb8 - dual accessor.  Stores the +0x08 sum chain total for
 // the ID through out1, and (only when that sum is non-zero) the +0x0C
 // halfword max through out2; returns whether the second total is non-zero.
-bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
+bool IdTable_GetSumMax(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
     s32 sum = 0;
     if (obj->mBitmap[(u32)index >> 5] & (1 << (index & 0x1F))) {
         CUnkItem8025FB10* rec;
@@ -1440,7 +1440,7 @@ void Counter884_SetClamped(u8* obj, int value) {
 
 // us-80263a24 - deep-copy the coop object from src to dst, rebasing
 // the internal self-relative pointers by the instance delta.
-void func_eu_80263A24(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
+void IdTable_DeepCopy(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
     dst->mBulk = src->mBulk;
     s32 delta = (u8*)dst - (u8*)src;
     dst->mField86C = src->mField86C;
@@ -1525,7 +1525,7 @@ public:
 
 } // namespace
 
-void func_80261960(int idx) {
+void IdTable_SeekIndex(int idx) {
     if (lbl_eu_80664864 == 0) {
         return;
     }

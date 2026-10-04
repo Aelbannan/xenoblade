@@ -38,8 +38,8 @@ public:
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);
-    void func_80442B54(void* a, void* b, void* c);
-    void func_80442C68();
+    void pushScissorRects(void* a, void* b, void* c);
+    void popScissorRects();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();

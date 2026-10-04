@@ -355,7 +355,7 @@ extern const u32 lbl_eu_80662738[2];
 // MWCC from C++-mangling the call relocs (plain decls emit tickAnimFrame__FP..).
 extern "C" void tickAnimFrame(CActParamAnimView* self);
 extern "C" bool setAnimSubPos(CActParamAnimView* self, const f32* value);
-extern "C" CModelDispEffectView* func_804CC1F4(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
+extern "C" CModelDispEffectView* EffRoot_AddSchedReq(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
 extern "C" void schedAttachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
 extern "C" s32 getInstance__Q22ml6MTRandFv();
 extern "C" u32 rand31__Q22ml6MTRandFv();
@@ -372,7 +372,7 @@ extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
 // ---- Cross-TU imports (retail C/verbatim-mangled symbol names) ----
 extern "C" int CfModel_UpdateBdat(void* arg);
 extern "C" void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
-extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" void PartyStateWin_InitMemCounters(CModelDispFileCtx* ctx);
 extern "C" u32 PartyStateWin_PickAllocHandle(CModelDispFileCtx* ctx, u32 size);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
@@ -405,7 +405,7 @@ extern "C" int CfRes_isGridLoadIdle();
 extern "C" void* CfRes_tryResolveToken(u32 id, u32* outType);
 extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries);
 extern "C" void simSetLeafFlag4000(void* model, int flag);
-extern "C" void func_80482DF4(void* model, int flag);
+extern "C" void simMarkTree100000(void* model, int flag);
 extern "C" CModelDispObj* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" CScnItemModel* Scn_SetupAnim(u32 global, u32 id, int a, int b);
 extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 global, CModelDispNameParam* param);
@@ -420,7 +420,7 @@ extern "C" void pushAnimNode(CActParamAnimView* self, CModelDispObj* obj, u32 pa
 extern "C" void attachAnimObj(CActParamAnimView* self, CScnItemModel* model, CModelDispObj* anim, u32 param);
 extern "C" CModelDispObj* getAnimModelId(CActParamAnimView* self);
 extern "C" void AnimGame_SetStateFlags(CActParamAnimView* self);
-extern "C" void func_804831C4(CScnItemModel* model, CModelDispNameParam* param);
+extern "C" void simAttachModel(CScnItemModel* model, CModelDispNameParam* param);
 extern "C" void __ct__CMcaFile(CModelDispMca* self, u32 anim);
 extern "C" void __construct_array(void*, void*, void*, int, int);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);

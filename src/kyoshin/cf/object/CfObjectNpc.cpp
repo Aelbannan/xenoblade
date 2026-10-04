@@ -144,7 +144,7 @@ void CfObjectNpc::updateNpcDialog() {
 // the model through a series of virtual setters. Columns come from the shared
 // BDAT column-name table; numeric columns are converted with the classic
 // 0x4330 integer-to-double bias constant.
-void CfObjectNpc::func_800BF764() {
+void CfObjectNpc::loadNpcParams() {
     Bdat_GetTable_AA34();
     void* fp = getFP__FPCc((const char*)this + 0x78);
 
@@ -179,7 +179,7 @@ void CfObjectNpc::func_800BF764() {
     // Retail leaves a stale word in r4 here (leftover column-key pointer);
     // the slot ignores it when mField6DC/mField6E0 are NULL. Pass 0: any
     // explicit arg costs one li vs retail, so this stays a known +1-insn
-    // residual on this non-matching function (see hexdiff func_800BF764).
+    // residual on this non-matching function (see hexdiff loadNpcParams).
     static_cast<cf::CfObjectMove*>(this)->CfObjectMove_loadResourceById(0);
 }
 

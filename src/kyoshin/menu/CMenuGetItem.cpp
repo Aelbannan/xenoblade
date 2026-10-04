@@ -26,9 +26,9 @@ extern "C" void cbRenderBefore__12CMenuGetItemFv(void*);
 // Already-open get-item handlers (stubs below; the factories call them). The
 // noinline keeps the retail `bl` at the call sites (empty bodies would be
 // inlined away by MWCC); extern "C" keeps the call relocs unmangled.
-extern "C" __declspec(noinline) void func_8014A2E8(CMenuGetItem* self, u32 arg);
-extern "C" __declspec(noinline) void func_8014A430(CMenuGetItem* self, u32 arg);
-extern "C" __declspec(noinline) void func_8014A570(CMenuGetItem* self, int arg0, int arg1);
+extern "C" __declspec(noinline) void CMenuGetItem_RefreshSingle(CMenuGetItem* self, u32 arg);
+extern "C" __declspec(noinline) void CMenuGetItem_RefreshVariant(CMenuGetItem* self, u32 arg);
+extern "C" __declspec(noinline) void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1);
 
 /*
  * Single get-item screen constructor (retail symbol keeps its unmangled
@@ -349,7 +349,7 @@ void CMenuGetItem::cbRenderBefore() {
 /*
  * Single get-item factory (CMenuGetItem_CreateSingle). If an instance already exists and
  * is not marked for removal, clear its +0x54 flag, forward the arg to
- * func_8014A2E8 and return 0; otherwise allocate a 0x2B4 block from work
+ * CMenuGetItem_RefreshSingle and return 0; otherwise allocate a 0x2B4 block from work
  * memory, construct it, store it in the singleton and register it under
  * `registParent`, returning the stored instance.
  */
@@ -359,7 +359,7 @@ CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u3
         if (inst->mField_54 != 0) {
             inst->mField_54 = 0;
         }
-        func_8014A2E8(lbl_eu_806641A8, arg);
+        CMenuGetItem_RefreshSingle(lbl_eu_806641A8, arg);
         return 0;
     }
 
@@ -378,7 +378,7 @@ CMenuGetItem* CMenuGetItem_CreateSingle(CProcess* registParent, CScn* parent, u3
 /*
  * Second get-item variant factory (CMenuGetItem_CreateVariant) - same shape as
  * CMenuGetItem_CreateSingle but constructs via __ct__80149878 and forwards to
- * func_8014A430.
+ * CMenuGetItem_RefreshVariant.
  */
 CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u32 arg) {
     CMenuGetItem* inst = lbl_eu_806641A8;
@@ -386,7 +386,7 @@ CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u
         if (inst->mField_54 != 0) {
             inst->mField_54 = 0;
         }
-        func_8014A430(lbl_eu_806641A8, arg);
+        CMenuGetItem_RefreshVariant(lbl_eu_806641A8, arg);
         return 0;
     }
 
@@ -402,7 +402,7 @@ CMenuGetItem* CMenuGetItem_CreateVariant(CProcess* registParent, CScn* parent, u
 
 /*
  * Multi get-item variant factory (CMenuGetItem_CreateMulti) - same shape with one extra
- * arg; constructs via __ct__80149970 and forwards both args to func_8014A570.
+ * arg; constructs via __ct__80149970 and forwards both args to CMenuGetItem_AppendEntry.
  */
 CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32 arg0,
                             u32 arg1) {
@@ -411,7 +411,7 @@ CMenuGetItem* CMenuGetItem_CreateMulti(CProcess* registParent, CScn* parent, u32
         if (inst->mField_54 != 0) {
             inst->mField_54 = 0;
         }
-        func_8014A570(lbl_eu_806641A8, arg0, arg1);
+        CMenuGetItem_AppendEntry(lbl_eu_806641A8, arg0, arg1);
         return 0;
     }
 
@@ -440,11 +440,11 @@ void CMenuGetItem_SetField54() {
     }
 }
 
-extern "C" void func_8014A2E8(CMenuGetItem* self, u32 arg) {}
+extern "C" void CMenuGetItem_RefreshSingle(CMenuGetItem* self, u32 arg) {}
 
-extern "C" void func_8014A430(CMenuGetItem* self, u32 arg) {}
+extern "C" void CMenuGetItem_RefreshVariant(CMenuGetItem* self, u32 arg) {}
 
-extern "C" void func_8014A570(CMenuGetItem* self, int arg0, int arg1) {
+extern "C" void CMenuGetItem_AppendEntry(CMenuGetItem* self, int arg0, int arg1) {
     // Stage the non-empty entries into a local buffer, then write them back
     // and append the new entry. The buffer caps at 8 entries (the mItems
     // array is 8 * 0x42 bytes); when full the append is dropped entirely.
@@ -496,7 +496,7 @@ extern "C" void func_8014A570(CMenuGetItem* self, int arg0, int arg1) {
     }
 }
 
-void func_8014A6F8(){}
+void CMenuGetItem_TickDisplay(){}
 
 void CMenuGetItem_DtorThunk58(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 

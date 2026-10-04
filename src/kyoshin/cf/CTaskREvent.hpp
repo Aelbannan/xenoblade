@@ -66,7 +66,7 @@ struct CEventMgr {
     CLibCri* mCri;           // +0x1E0 CRI movie-play controller, or (CLibCri*)-1
 };
 
-// 32-slot event data table filled by func_8016455C: byte slots at +0x00
+// 32-slot event data table filled by evtInitDataTable: byte slots at +0x00
 // (0x28 each, 20-byte sub-slots set to 1) and word slots at +0x500 (0x20
 // each, 16-byte sub-slots zeroed), plus per-slot u8/u16 flags.
 struct CEventDataTable {
@@ -82,7 +82,7 @@ struct CEventDataTable {
     u16 mIds920[32];         // +0x920
 };
 
-// Event-file view consumed by func_801663A8 / the OnFileEvent thunk. The
+// Event-file view consumed by evtOnFileEvent / the OnFileEvent thunk. The
 // shared monolib CEventFile only declares the head/tail; this TU reads the
 // mid fields (type, handle, packed word, data buffer).
 struct CTaskREventFileEvent {
@@ -93,7 +93,7 @@ struct CTaskREventFileEvent {
     u32 field_10;           // +0x10 loaded-data buffer pointer
 };
 
-// Loaded event-data buffer walked by func_801663A8: entries start at +0x08
+// Loaded event-data buffer walked by evtOnFileEvent: entries start at +0x08
 // (an offset into the buffer), count at +0x20.
 struct CTaskREventDataBuf {
     u8 field_0x00[0x8];
@@ -165,7 +165,7 @@ struct CTaskREventVtblView {
 
 // The retail OnFileEvent symbol is a global-namespace CTaskREvent member
 // (the IWorkEvent dispatch thunk on the cf::CTaskREvent +0x60 subobject):
-// subtract the subobject offset and tail-call func_801663A8.
+// subtract the subobject offset and tail-call evtOnFileEvent.
 class CTaskREvent {
 public:
     void OnFileEvent(CEventFile* ev);
@@ -236,10 +236,10 @@ extern u32 lbl_eu_80662384;
 extern f32 lbl_eu_8066762C;
 extern f32 lbl_eu_80667628; // ctor float initializer (field_0x1E4/0x1E8)
 extern f64 lbl_eu_80667630; // u32->float conversion constant (2^52+2^31)
-extern f32 lbl_eu_80667644; // func_80165DF4 camera-position write value (x)
-extern f32 lbl_eu_80667648; // func_80165DF4 camera-position write value (y)
-extern u16 lbl_eu_80663E42; // func_801663A8 expected event-id halfword
-extern u16 lbl_eu_80663E44; // func_801663A8 expected event-id halfword
+extern f32 lbl_eu_80667644; // evtUpdateBusyDimming camera-position write value (x)
+extern f32 lbl_eu_80667648; // evtUpdateBusyDimming camera-position write value (y)
+extern u16 lbl_eu_80663E42; // evtOnFileEvent expected event-id halfword
+extern u16 lbl_eu_80663E44; // evtOnFileEvent expected event-id halfword
 // Event-name table blob (retail .data:0x80530300): byte table at +0x130
 // indexes the pointer table at +0x98; the +0x158 pointer table is indexed
 // directly by the event id.
@@ -253,7 +253,7 @@ extern s16 lbl_eu_80502F90[]; // event-id table walked by evtFillCharRange (32 e
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
 extern const char* lbl_eu_80530458[];
-// Event-name suffix table walked by func_80164838 (32 const char* entries).
+// Event-name suffix table walked by evtLookupEntryWord (32 const char* entries).
 extern const char* lbl_eu_80530710[];
 // 0x26-byte array shuffled by evtBeginShuffledSeq (retail .data:0x80530430).
 extern u8 lbl_eu_80530430[];
@@ -281,9 +281,9 @@ extern "C" {
     // explicit value signature.
     u32 isMovieGlobalPaused__7CLibCriFv(CLibCri* self);
     void evtStopMoviePlayback();
-    void func_80165DF4(cf::CTaskREvent* self, int arg);
+    void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg);
     void evtSyncBusyDimming(cf::CTaskREvent* self, int arg);
-    void func_8016462C(u32 index);
+    void evtFillCharEntry(u32 index);
     // CRI movie-player setup: retail evtStartMoviePlayback passes 4 extra words even
     // though the retail symbol is Fv; declared here with the caller's shape.
     CLibCri* startMovie__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
@@ -292,8 +292,8 @@ extern "C" {
     void evtStartMoviePlayback(const char* path, int flag, u8* handle);
     int evtIsFullyIdle();
     void evtTeardownActive();
-    void func_8016455C(CEventDataTable* self);
-    u32 func_80164724(const char* key, u32 type, u32 slot);
+    void evtInitDataTable(CEventDataTable* self);
+    u32 evtLookupCmdWord(const char* key, u32 type, u32 slot);
     // Retail ctor symbol is the pre-mangled name __ct__cf_CTaskREvent (a
     // global function, not a cf::CTaskREvent member); declared here so the
     // definition in the .cpp keeps C linkage and emits the plain name.
@@ -304,20 +304,20 @@ extern "C" {
     void evtUpdateSequenceKick();
     void evtFillCharRange(cf::CTaskREvent* self, int type, int upper, int lower);
     cf::CTaskREvent* evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
-    int func_80164838(const char* key, int slot);
+    int evtLookupEntryWord(const char* key, int slot);
     void evtThrottleTaskUpdates(cf::CTaskREvent* self);
     int evtBeginShuffledSeq();
-    // Targets defined in this TU: func_80164A50 (event-file load kick) and
-    // func_801663A8 (async OnFileEvent handler) emit the retail unmangled
+    // Targets defined in this TU: evtStartSeqFromPath (event-file load kick) and
+    // evtOnFileEvent (async OnFileEvent handler) emit the retail unmangled
     // symbols through these C-linkage declarations.
-    int func_80164A50(const char* path, int arg1, int arg2);
-    int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev);
+    int evtStartSeqFromPath(const char* path, int arg1, int arg2);
+    int evtOnFileEvent(cf::CTaskREvent* self, CTaskREventFileEvent* ev);
     // Imports for evtUpdateSequenceKick
     void EvtSeqSetBgmGateFlag(int arg);
     void CTaskGame_resetStream();
     // Imports for cf::CTaskREvent::cbRenderBefore
     CView* getCurrentView__5CViewFv();
-    void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
+    void fitRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
     void renderMovie__7CLibCriFv(CLibCri* self, ml::CRect& rect);
     // CfGameManager helpers: retail symbols are Fv but the call sites pass
     // real arguments / read the return (declared here with the caller shape,
@@ -350,7 +350,7 @@ extern "C" {
     // IFlagEvent registration helper (mirror of CtrlRemote_ResetSlotArrayByIndex used by the
     // dtor; retail C-ABI name).
     cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent* p);
-    // Imports for func_80164A50
+    // Imports for evtStartSeqFromPath
     void InfoCfRefreshSettings(cf::CInfoCf* self);
     void InfoCfNoopVirt(cf::CInfoCf* p);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flag);
@@ -358,10 +358,10 @@ extern "C" {
     // its gate object (same signature as CTaskREvtSequence.hpp).
     CEventMgrB0* EvtSeqCreateTask(CProcess* parent, const char* name);
     void EvtSeqSetStateBit9();
-    // Imports for func_801663A8
+    // Imports for evtOnFileEvent
     void EvtSeqXorSeqBuffer(u32 a, u32 b, u32 c);
     void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-    // Imports for func_80165DF4
+    // Imports for evtUpdateBusyDimming
     s32 isMoveFuncActive__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();
     bool TalkWin_IsActive_CD24();

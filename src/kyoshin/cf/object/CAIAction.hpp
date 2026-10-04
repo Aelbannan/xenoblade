@@ -222,9 +222,9 @@ extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index 
 extern "C" void* CPartsChange_FindActorById(void* table, u32 id);
 void* getEffOwner(void* obj);   // C++ linkage -> getEffOwner____FPv
 extern "C" void* CPartsChange_GetActorTable(void);
-extern "C" int func_80260264(void* self, int id, void* out);
+extern "C" int IdTable_GetSum(void* self, int id, void* out);
 extern "C" int isBattleEventKind3(int id);   // canonical int param (CBattleState.cpp definition)
-extern "C" int func_801554DC(void* param, void* actor, u32 flags);
+extern "C" int ArtsGateClear(void* param, void* actor, u32 flags);
 // (getArtsSlotRC / getArtsParamRC2 moved to their single owner decl on
 // kyoshin/cf/chain/CChainActorList.hpp - int/const void* forms matching the
 // CActorParam.cpp definitions; this header's u16/void* copies are gone.)
@@ -244,7 +244,7 @@ struct CAIQueryTarget {
     u16 unk5C;                // 0x5C dispatch selector (1/2/3)
 };
 
-// 0x20-byte query struct passed to func_80150828 / aiTargetQuery.
+// 0x20-byte query struct passed to aiQueryHandle / aiTargetQuery.
 struct CAIActionQuery {
     u32 unk00;                // 0x00
     u8 unk04;                 // 0x04
@@ -278,7 +278,7 @@ struct CAIActionEnumHolder {
 // "C" type lists for one symbol break every TU whose include chain pulls two
 // of them together with "illegal function overloading" 10197).
 
-extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
+extern "C" void* MapFx_ResolveOwner(void*);          // -> MapFx_ResolveOwner
 // NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were
 // changed from CAIActionEnumHolder* to void* to match the identical extern
 // "C" declarations already in CVision.hpp (included alongside this header
@@ -287,10 +287,10 @@ extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // includes both headers. ABI is unchanged (opaque pointer).
 extern "C" void CTaskGame_enumListCtor(void*);
 extern "C" void __dt__80043E88(void*, int);
-extern "C" void* func_80150828(cf::CAIAction*, CAIActionQuery*);
+extern "C" void* aiQueryHandle(cf::CAIAction*, CAIActionQuery*);
 extern "C" void* aiTargetQuery(cf::CAIAction*, CAIActionQuery*);
-extern "C" int func_8014B8BC(void* a, void* b);
-extern "C" void* func_801522C4(cf::CAIAction*, const void*);
+extern "C" int aiFetchAction(void* a, void* b);
+extern "C" void* aiDispatchAct(cf::CAIAction*, const void*);
 extern "C" int aiJudgeAction(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
 void aiRingConsume(cf::CAIAction*, u32);
 
@@ -319,7 +319,7 @@ extern "C" void* firstReslistB28(void*);
 extern "C" void* nextReslistB28(void*, void*);
 extern "C" void* findObjB28ById(s32);
 extern void* getInstance();   // C++ linkage -> getInstance__Fv
-extern "C" int func_80148778(void*, int);
+extern "C" int isBattleStatusActive(void*, int);
 extern "C" void* findBattleStatusEntry(void*, u32);
 extern "C" void* CBattleMan_FetchVisionObj_CAIAction(void*);
 #define CBattleMan_FetchVisionObj CBattleMan_FetchVisionObj_CAIAction

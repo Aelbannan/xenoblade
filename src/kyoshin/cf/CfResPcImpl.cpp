@@ -79,11 +79,11 @@ int CfResPcImpl_isHandlerActive(void* p)
 
 int CfResPcImpl_getHandlerLimit() { return 2; }
 
-// func_8018CB3C - PC resource teardown: dispatches the parent's vtable slots
+// CfResPcImpl_teardown - PC resource teardown: dispatches the parent's vtable slots
 // +0x1CC/+0x17C/+0x178 around CfModel_ReattachTrg, zeroes the parent's
 // +0x90/+0x94/+0x704 words, runs CfObjectMove_resetAnimModeArgs, then invalidates the three
 // state halfwords (+0x38/+0x3A/+0x3C) and clears the +0x34 slot.
-void func_8018CB3C(cf::CfResPcImpl* self) {
+void CfResPcImpl_teardown(cf::CfResPcImpl* self) {
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     CfModel_ReattachTrg(self->field_00);
@@ -110,7 +110,7 @@ void CfResPcImpl_euReregisterOnFlag(cf::CfResPcImpl* self) {
             s16 state = self->field_38;
             if (inst != 0 && state > 0) {
                 CfRes_tryReregisterSlot(state, (u8*)res);
-                (self)->func_8018CB3C();
+                (self)->CfResPcImpl_teardown();
             }
         }
     }
@@ -131,7 +131,7 @@ u32 CfResPcImpl_getSlotTableEntry(cf::CfResPcImpl* self, int idx)
 // The +0x30 slot index order (0,1,2,4,3,5,6) matches retail.
 void CfResPcImpl_loadPcState(cf::CfResPcImpl* self, u16 arg2) {
     cf::CfResPcLoadBuffer buf;
-    (self)->func_8018CB3C();
+    (self)->CfResPcImpl_teardown();
     func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, 0, 1);
     self->field_40 = arg2;
     if (arg2 == 0) {
@@ -505,14 +505,14 @@ void CfResPcImpl_setResourceOpen(cf::CfResPcImpl* self, int arg2) {
     }
 }
 
-// func_8018D79C - PC reload driver: dispatches the parent teardown slots,
+// CfResPcImpl_reload - PC reload driver: dispatches the parent teardown slots,
 // clears the three state halfwords, then - when the game-manager state flag
 // and the parent +0x68 flag bit 20 allow - either decrements the field_3E
 // counter or performs a full reload: query the two table slots (+0x34 with 0
 // and 6), find/install the resource entries, run the slot-0xB area handling,
 // refresh the character-slot ids and finally dispatch the +0x50 slot (or
 // install the +0x34 slot result via CfRes_findMidEntry / findResEntry).
-void func_8018D79C(cf::CfResPcImpl* self) {
+void CfResPcImpl_reload(cf::CfResPcImpl* self) {
     reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
     reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     CfModel_ReattachTrg(self->field_00);
@@ -698,16 +698,16 @@ void func_8018D79C(cf::CfResPcImpl* self) {
     }
 }
 
-void func_8018E7E4(cf::CfResPcImpl* self);
+void CfResPcImpl_open(cf::CfResPcImpl* self);
 
-// func_8018DE8C - PC resource advance driver: validates the resource entries
+// CfResPcImpl_advance - PC resource advance driver: validates the resource entries
 // (in-use checks on the +0x40 slots), builds the model/sound handles into
 // the parent slots (+0x90/+0x94/+0x98/+0x9C/+0x708/+0x6D4), folds the +0x6C
 // flag word, refreshes the player state and finally hands off to
-// func_8018E7E4. When the player is the current character and the event-flag
+// CfResPcImpl_open. When the player is the current character and the event-flag
 // bit is set, a positioning block moves the player model (VEC3Add ps math)
 // and notifies the +0xB8 vtable slot.
-void func_8018DE8C(cf::CfResPcImpl* self) {
+void CfResPcImpl_advance(cf::CfResPcImpl* self) {
     s16 state = self->field_0A;
     if (state < 0) {
         return;
@@ -732,7 +732,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         msg->clear();
         int v1 = (self)->CfResPcImpl_getSlotTableEntry(0);
         int v2 = (self)->CfResPcImpl_getSlotTableEntry(0);
-        msg->format(lbl_eu_80503BC4, (const char*)func_800AA5C0((void*)v2), v1);
+        msg->format(lbl_eu_80503BC4, (const char*)Tok_FormatRes((void*)v2), v1);
         return;
     }
     if (self->field_00->field_6C & 0x2) {
@@ -761,7 +761,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         zero.x = lbl_eu_80667A40;
         zero.y = lbl_eu_80667A40;
         zero.z = lbl_eu_80667A40;
-        func_804BD94C(&pos, &zero, 0x44A05, 0, 0, 0, lbl_eu_80667A4C,
+        ScnRes_ResolveGroundHeight(&pos, &zero, 0x44A05, 0, 0, 0, lbl_eu_80667A4C,
                       lbl_eu_80667A50, lbl_eu_80667A54, lbl_eu_8066AF20,
                       lbl_eu_80667A58);
         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&pos), lbl_eu_80667A5C);
@@ -833,7 +833,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
             if (v2 != 0) {
                 u8* res = (u8*)(a[i].field_2C)->getResourceBase((cf::CfResPcLookupEntry*)&a[i], slot);
                 if (*(u32*)res != 0) {
-                    func_804831C4(self->field_00->field_98, res);
+                    simAttachModel(self->field_00->field_98, res);
                 }
             }
         }
@@ -846,7 +846,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         name.mString[0] = 0;
         name.mLength = 0;
         if (self->field_00->field_9C == 0) {
-            func_800AA33C(name, (u32)b->field_04, 1, 0);
+            Tok_FormatStr(name, (u32)b->field_04, 1, 0);
             self->field_00->field_94 = (u32)(b->field_2C)->getResourceBase(b, slot);
             self->field_00->field_9C = (u32)initMcaFile(CfRes_getD80Flag(),
                                                          (u32)self->field_00->field_94,
@@ -854,7 +854,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         }
         if (self->field_00->field_6C & 0x10000) {
             if (self->field_00->field_6D4 == 0) {
-                func_800AA33C(name, (u32)f->field_04, 1, 0);
+                Tok_FormatStr(name, (u32)f->field_04, 1, 0);
                 self->field_00->field_708 = (u32)(f->field_2C)->getResourceBase(f, slot);
                 self->field_00->field_6D4 = (u32)initMcaFile(CfRes_getD80Flag(),
                                                               (u32)self->field_00->field_708,
@@ -880,7 +880,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
     if ((cf::CfObjectMove*)self->field_00 != cf::CfGameManager::getPlayer(0)) {
         self->field_00->field_6CC = 1;
     }
-    func_800BCFA0((cf::CfObjectMove*)self->field_00);
+    CfObjectMove_initAnimTarget((cf::CfObjectMove*)self->field_00);
     if (b20 != 0) {
         self->field_00->field_68 |= 0x100000;
     }
@@ -896,7 +896,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
             }
         }
     }
-    func_8018E7E4(self);
+    CfResPcImpl_open(self);
 }
 
 // CfResPcImpl_detachResources - PC resource detach: looks up six resource-table entries
@@ -936,14 +936,14 @@ void CfResPcImpl_detachResources(cf::CfResPcImpl* self) {
     self->field_08 = 0;
 }
 
-// func_8018E7E4 - PC resource open: looks up three table entries by the
+// CfResPcImpl_open - PC resource open: looks up three table entries by the
 // state, validates the parent in-use flags through the entry objects' +0x40
 // slots, then builds the model objects (+0x6F8 and +0x6FC from entry_d's
 // +0x08 slot), installs the bdat ids into the model objects, loads the
 // CMcaFile handle and finally cleans up the slot handles. All parent
 // accesses go through self->field_00 directly (retail reloads it at every
 // site; the model object at +0x98 is held in one register across the block).
-void func_8018E7E4(cf::CfResPcImpl* self) {
+void CfResPcImpl_open(cf::CfResPcImpl* self) {
     // Declared to steer MWCC onto the retail register map:
     // slot=r31, entry_c=r30, entry_d=r29, entry_e=r28, ok/state=r27.
     u16 slot;
@@ -1047,7 +1047,7 @@ u32 bdat2 = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[1]);
         }
         if ((self->field_00->field_6C & 0x20000) && self->field_00->field_6D8 == 0) {
             ml::FixStr<64> buf;
-            func_800AA33C(buf, (u32)entry_e->field_04, 1, 0);
+            Tok_FormatStr(buf, (u32)entry_e->field_04, 1, 0);
             self->field_00->field_704 = (u32)(entry_e->field_2C)->getResourceBase(entry_e, slot);
             CfResPcMca mca;
             __ct__CMcaFile((CMcaFile*)&mca, (void*)self->field_00->field_704);
@@ -1236,7 +1236,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     if (MenuSnd_IsSlotLive_892C(1) != 0) {
         resetGameFlags__Q22cf13CfGameManagerFv(1);
     }
-    func_8004302C(1, 0);
+    CTaskGame_setLoadScreen(1, 0);
     return 1;
 }
 
@@ -1424,7 +1424,7 @@ CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 
 // build/us/asm/kyoshin/cf/CfResPcImpl.s. Reloc sites are zero bytes in the
 // .o, so typed pointer tables match byte-for-byte; reloc names are ignored
 // by the data gate when bytes match.
-// .rodata 0x50: position table copied by func_8018E7E4 (10 float pairs).
+// .rodata 0x50: position table copied by CfResPcImpl_open (10 float pairs).
 __declspec(section ".rodata") __attribute__((aligned(8), used))
 cf::CfResPcPosTable lbl_eu_80503B30 = { {
     {0.1f, 0.9f}, {0.04f, 0.9f}, {0.19f, 0.9f}, {0.07f, 0.9f}, {0.1f, 0.9f},
@@ -1448,9 +1448,9 @@ char lbl_eu_80503BC4[0x14] = "%s(%x)\0JUspA";
 // expressible as PMFs, so init via the raw-word view like CfResObjImpl).
 __declspec(section ".data") __attribute__((aligned(8), used))
 CfResPcImplPmfEntry lbl_eu_80532730[4] = {
-    { 0, 0xFFFFFFFFu, (u32)func_8018D79C },
-    { 0, 0xFFFFFFFFu, (u32)func_8018DE8C },
-    { 0, 0xFFFFFFFFu, (u32)func_8018E7E4 },
+    { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_reload },
+    { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_advance },
+    { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_open },
     { 0, 0xFFFFFFFFu, (u32)CfResPcImpl_reloadStateMachine },
 };
 // .data 0x14: RTTI descriptor pairs.
@@ -1469,7 +1469,7 @@ void* lbl_eu_80532774[27] = {
     (void*)ResObj_Noop_CD64,
     (void*)CfResPcImpl_getHandlerLimit,
     (void*)CfResPcImpl_detachResources,
-    (void*)func_8018CB3C,
+    (void*)CfResPcImpl_teardown,
     (void*)CfResPcImpl_euReregisterOnFlag,
     (void*)CfResPcImpl_setSlotTableEntry,
     (void*)CfResPcImpl_getSlotTableEntry,

@@ -140,7 +140,7 @@ extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void CScrollBar_requestScrollOut(void*);
 extern "C" void CScrollBar_UpdateDispatch(u8*);                    // scrollbar per-frame update
 // Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
-extern "C" void func_801D202C(u8*);                    // cursor per-frame update
+extern "C" void Cur_Update(u8*);                    // cursor per-frame update
 extern "C" void CScrollBar_InitRootPane(u8*, const float*);      // scrollbar init (3-float vec)
 extern "C" void CScrollBar_UpdateThumb(u8*, int, int);          // scrollbar range setup
 extern "C" void CScrollBar_PlaceThumb(u8*, u16);                // scrollbar thumb position

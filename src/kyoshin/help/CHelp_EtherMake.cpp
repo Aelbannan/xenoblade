@@ -4,7 +4,7 @@ namespace cf {
 bool CHelp_EtherMake::isEtherReady() {
     u32 result = 0;
     if (MakeCrystalIsCreated() != 0) {
-        if (func_80212490() != 0) {
+        if (MakeCrystalGetWinData() != 0) {
             result = 1;
         }
     }
@@ -12,6 +12,6 @@ bool CHelp_EtherMake::isEtherReady() {
 }
 
 void CHelp_EtherMake::notifyEther() {
-    func_80212490();
+    MakeCrystalGetWinData();
 }
 } // namespace cf

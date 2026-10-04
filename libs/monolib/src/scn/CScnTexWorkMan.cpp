@@ -82,7 +82,7 @@ public:
 };
 
 // Cross-TU / self-recursive helpers with retail unmangled reloc names.
-extern "C" void func_804903B8(CScnTexWorkMan* self,
+extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self,
                               const nw4r::g3d::ResNode* pNode,
                               ml::CVec3* pos, ml::CVec3* scale);
 extern "C" void* TexObj_InitExt(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
@@ -158,7 +158,7 @@ extern "C" int TexMan_GetDefaultXf_0A44(CScnTexWorkMan* self, ml::CVec3* pos,
     scale->z = lbl_eu_8066AA08;
     CScnTexWorkMan* work = self->field_0x147c;
     nw4r::g3d::ResNode node = mdl.GetResNode(0);
-    func_804903B8(work, &node, pos, scale);
+    TexMan_ClampBoxes(work, &node, pos, scale);
     return 1;
 }
 
@@ -209,7 +209,7 @@ static void clampVecMin(f32* v, const CScnTexWorkManEntry* entry) {
 }
 
 // Walk the node tree from pNode, clamping pos/scale into every entry box.
-extern "C" void func_804903B8(CScnTexWorkMan* self,
+extern "C" void TexMan_ClampBoxes(CScnTexWorkMan* self,
                               const nw4r::g3d::ResNode* pNode,
                               ml::CVec3* pos, ml::CVec3* scale) {
     nw4r::g3d::ResNode node1;
@@ -281,7 +281,7 @@ extern "C" void func_804903B8(CScnTexWorkMan* self,
         } else {
             node2 = nw4r::g3d::ResNode(NULL);
         }
-        func_804903B8(self, &node2, pos, scale);
+        TexMan_ClampBoxes(self, &node2, pos, scale);
         if (pNode->IsValid() == false) {
             nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                             lbl_eu_80663910, lbl_eu_806639B8);
@@ -297,7 +297,7 @@ extern "C" void func_804903B8(CScnTexWorkMan* self,
         } else {
             node3 = nw4r::g3d::ResNode(NULL);
         }
-        func_804903B8(self, &node3, pos, scale);
+        TexMan_ClampBoxes(self, &node3, pos, scale);
     }
 }
 
@@ -385,7 +385,7 @@ nw4r::g3d::ResNode TexMan_NodeFromNode_090C(nw4r::g3d::ResNode pNode) {
 // then the node's next sibling subtree and its child subtree. Each component
 // check re-dereferences pNode (retail reloads 0x0(r30) each time), guarded by
 // the retail node-null assert.
-void func_80490B20(nw4r::g3d::ResNode* pNode, int* pCounter) {
+void TexMan_CountSubtreeNodes(nw4r::g3d::ResNode* pNode, int* pCounter) {
     // Retail keeps the whole walk inside a single outer validity branch
     // (one beq to the shared epilogue, then bne over the assert).
     if (pNode->ptr() != NULL) {
@@ -470,9 +470,9 @@ L_countSib:
         (*pCounter)++;
 L_okSib:
         nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        func_80490B20(&sib2, pCounter);
+        TexMan_CountSubtreeNodes(&sib2, pCounter);
         nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        func_80490B20(&sib3, pCounter);
+        TexMan_CountSubtreeNodes(&sib3, pCounter);
     }
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
@@ -522,17 +522,17 @@ L_countChild:
         (*pCounter)++;
 L_okChild:
         nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        func_80490B20(&child2, pCounter);
+        TexMan_CountSubtreeNodes(&child2, pCounter);
         nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        func_80490B20(&child3, pCounter);
+        TexMan_CountSubtreeNodes(&child3, pCounter);
     }
     }
 }
 
-// Same tree walk as func_80490B20, but keeps the count in a local and returns
+// Same tree walk as TexMan_CountSubtreeNodes, but keeps the count in a local and returns
 // it: used for the model root node. Retail caches the node-data pointer once
 // (single 0x0(r3) load up front).
-int func_80491158(nw4r::g3d::ResNode* pNode) {
+int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode) {
     int counter = 0;
     const nw4r::g3d::ResNodeData* node = pNode->ptr();
     if (node != NULL) {
@@ -617,9 +617,9 @@ L_countSib:
         counter++;
 L_okSib:
         nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        func_80490B20(&sib2, &counter);
+        TexMan_CountSubtreeNodes(&sib2, &counter);
         nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        func_80490B20(&sib3, &counter);
+        TexMan_CountSubtreeNodes(&sib3, &counter);
     }
     if (node == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
@@ -669,17 +669,17 @@ L_countChild:
         counter++;
 L_okChild:
         nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        func_80490B20(&child2, &counter);
+        TexMan_CountSubtreeNodes(&child2, &counter);
         nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        func_80490B20(&child3, &counter);
+        TexMan_CountSubtreeNodes(&child3, &counter);
     }
     }
     return counter;
 }
 
-// Same tree walk as func_80490B20, but non-degenerate nodes are collected by
+// Same tree walk as TexMan_CountSubtreeNodes, but non-degenerate nodes are collected by
 // id (node->id at 0xc, or 0 for a null node) into pList instead of counted.
-void func_80491764(nw4r::g3d::ResNode* pNode, CScnTexWorkManNodeIdList* pList) {
+void TexMan_CollectNodeIds(nw4r::g3d::ResNode* pNode, CScnTexWorkManNodeIdList* pList) {
     // Retail keeps the whole walk inside a single outer validity branch.
     if (pNode->ptr() != NULL) {
     if (pNode->ptr() == NULL) {
@@ -777,9 +777,9 @@ L_pushSib:
         }
 L_okSib:
         nw4r::g3d::ResNode sib2 = TexMan_NodeFromNode_090C(sib);
-        func_80491764(&sib2, pList);
+        TexMan_CollectNodeIds(&sib2, pList);
         nw4r::g3d::ResNode sib3 = TexMan_NodeFromMdl_09A8(sib);
-        func_80491764(&sib3, pList);
+        TexMan_CollectNodeIds(&sib3, pList);
     }
     if (pNode->ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
@@ -836,9 +836,9 @@ L_pushChild:
         }
 L_okChild:
         nw4r::g3d::ResNode child2 = TexMan_NodeFromNode_090C(child);
-        func_80491764(&child2, pList);
+        TexMan_CollectNodeIds(&child2, pList);
         nw4r::g3d::ResNode child3 = TexMan_NodeFromMdl_09A8(child);
-        func_80491764(&child3, pList);
+        TexMan_CollectNodeIds(&child3, pList);
     }
     }
 }

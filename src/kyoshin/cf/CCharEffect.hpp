@@ -15,7 +15,7 @@ extern "C" u32 hasParamByteVal(u8* p, u32 v);
 extern "C" void simGetLeafDist7B0(u8* ptr);
 extern "C" void setChildF50G_(u8* self);
 
-// Retail C-ABI imports used by func_8015BB3C / func_8015C404 (retail symbols
+// Retail C-ABI imports used by CharEffInit / CharEffUpdateSlot (retail symbols
 // are unmangled C; getGimmickList is called as a static __Fv even though the
 // shared CfGameManager header declares it as a member - same pattern as
 // CTaskGameEff.hpp's createNpcActor__Q22cf13CfGameManagerFv).
@@ -64,7 +64,7 @@ struct CCharEffectBattleObj {
 };
 
 // Real class tree for CCharEffect family (retail __vt__ dump from US split1.s):
-// lbl_eu_8052FDB8 (CCharEffect, 0x20): RTTI 80662330, 0, __dt__Q22cf11CCharEffectFv, CharEffRemoveSlot, func_8015C9A0, MoveImplNoopC, 0, CharEffApplyToTarget
+// lbl_eu_8052FDB8 (CCharEffect, 0x20): RTTI 80662330, 0, __dt__Q22cf11CCharEffectFv, CharEffRemoveSlot, CharEffUpdateAll, MoveImplNoopC, 0, CharEffApplyToTarget
 // lbl_eu_8052FDD8 (CCharEffectEne, 0x20): same but +0x18 = ChEff_LoadNpcA_CD04
 // lbl_eu_8052FE08 (Npc, 0x20): +0x18 = ChEff_LoadRes_CD9C
 // lbl_eu_8052FE38 (Obj, 0x20): +0x18 = ChEff_LoadActorA_CE44
@@ -76,7 +76,7 @@ class __declspec(novtable) CCharEffect {
 public:
     virtual ~CCharEffect(); // vtable 0x08
     virtual void CharEffRemoveSlot(::CCharEffectSlot* p); // 0x0C
-    virtual void func_8015C9A0(); // 0x10
+    virtual void CharEffUpdateAll(); // 0x10
     virtual void MoveImplNoopC(); // 0x14
     virtual void* getObj(u32 idx, s32 mode) = 0; // 0x18 pure in base
     virtual void applyEffect(void* target, u32 type, u32 flags); // 0x1C
@@ -182,10 +182,10 @@ struct CCharEffect {
     u32 mField2FC;           // 0x2FC
 };
 
-// External data referenced by func_8015C9A0 / func_8015C404 (MWCC does not
+// External data referenced by CharEffUpdateAll / CharEffUpdateSlot (MWCC does not
 // mangle global data names).
-extern f32 lbl_eu_80667534;          // sdata2 float constant (func_8015C404)
-extern f64 lbl_eu_80667538;          // sdata2 double constant 0x4330000080000000 (func_8015C404)
-extern s8 lbl_eu_80501DCC[];         // per-type keep/release table (func_8015C404)
-extern s8 lbl_eu_80501DA0[];         // per-type keep/release table (func_8015C404)
+extern f32 lbl_eu_80667534;          // sdata2 float constant (CharEffUpdateSlot)
+extern f64 lbl_eu_80667538;          // sdata2 double constant 0x4330000080000000 (CharEffUpdateSlot)
+extern s8 lbl_eu_80501DCC[];         // per-type keep/release table (CharEffUpdateSlot)
+extern s8 lbl_eu_80501DA0[];         // per-type keep/release table (CharEffUpdateSlot)
 extern CCharEffectSlot* (*lbl_eu_8052FD08[])(CCharEffect*); // per-type handler table

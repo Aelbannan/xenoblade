@@ -542,7 +542,7 @@ struct Unk866A0Data {
     Unk866A0Data* field_0x2C;
 };
 
-// Dispatch-only shim for the voice-action object returned by func_8016FE34;
+// Dispatch-only shim for the voice-action object returned by MapFx_ResolveOwner;
 // setVoiceActive is virtual at vtable +0xA8 (index 40).
 struct VoiceAction {
     virtual void vf_00() = 0;
@@ -1527,14 +1527,14 @@ extern "C" Unk80EE4Data* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* 
     return data;
 }
 
-extern "C" UnkClass_800AA714* func_800AA714(u32 value);
+extern "C" UnkClass_800AA714* Tok_ParseFile(u32 value);
 extern "C" Unk80EE4Data* spawnFromRecord(UnkClass_800AA714* first,
                                           UnkClass_800AA714* second, u32 value);
 #pragma dont_inline on
 extern "C" Unk80EE4Data* isObjectFlagSet__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 value) {
-    UnkClass_800AA714* firstObject = func_800AA714(first);
-    UnkClass_800AA714* secondObject = func_800AA714(second);
+    UnkClass_800AA714* firstObject = Tok_ParseFile(first);
+    UnkClass_800AA714* secondObject = Tok_ParseFile(second);
     return spawnFromRecord(firstObject, secondObject, value);
 }
 #pragma dont_inline reset
@@ -1676,7 +1676,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     CfRes_setE28Mask(0x400);
 }
 extern "C" ItemListManager* getListB28__Fv();
-extern "C" void func_800C01D4(ItemListObject* object, void* destination,
+extern "C" void CfObjectPc_applyArtsEntry(ItemListObject* object, void* destination,
                                 u16 itemId);
 extern "C" void __ct__8009ED08(void* destination, u16 itemId);
 extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
@@ -1687,7 +1687,7 @@ extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
     while (node != sentinel) {
         ItemListObject* object = static_cast<ItemListObject*>(node->object);
         if (itemId == object->itemId_0x3F28) {
-            func_800C01D4(object, destination, itemId);
+            CfObjectPc_applyArtsEntry(object, destination, itemId);
             return;
         }
         node = node->next;
@@ -2153,7 +2153,7 @@ extern "C" bool isFlag010000Set__Q22cf13CfGameManagerFv();
 class UnkClass_80113E1C;
 extern "C" UnkClass_80113E1C* getFadeMenu();
 extern "C" void triggerFadeMenu(UnkClass_80113E1C* object);
-extern "C" void func_80164A50(ml::FixStr<64>* text, u32 second, u32 third);
+extern "C" void evtStartSeqFromPath(ml::FixStr<64>* text, u32 second, u32 third);
 extern "C" void gmWalkByName(u32 value);
 extern "C" void storeScaleSquare(float amount);
 extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
@@ -2228,7 +2228,7 @@ extern "C" void handleAreaChange__Q22cf13CfGameManagerFv(const char* name) {
         ml::FixStr<64> text(false);
         text.clear();
         text.format(&lbl_eu_804FB824[0xE9], name);
-        func_80164A50(&text, 0, 0);
+        evtStartSeqFromPath(&text, 0, 0);
     }
 }
 
@@ -2244,7 +2244,7 @@ extern "C" void notifyFieldChange__Q22cf13CfGameManagerFv(const char* text) {
 
 extern "C" UnkRes866A0* CfRes_getInstPtrBC();
 extern "C" void CfRes_cancelPendingRead(void* child, void* parent);
-extern "C" void func_800A8E6C(u32 value, bool enable);
+extern "C" void KyoshinHeap_AllocNode(u32 value, bool enable);
 extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E24 |= 0x400;
     UnkRes866A0* data = CfRes_getInstPtrBC();
@@ -2255,7 +2255,7 @@ extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv() {
     data->field_0x0 = 0;
     data->field_0x24 = 0;
     data->field_0x20 = 0;
-    func_800A8E6C(0x10, true);
+    KyoshinHeap_AllocNode(0x10, true);
 }
 
 extern "C" void CfRes_rolloverResFields();
@@ -2345,7 +2345,7 @@ extern "C" bool processBattleQueue__Q22cf13CfGameManagerFv(u32 mode) {
 }
 
 extern "C" VoiceList* getGameMgr();
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask) {
     VoiceList* list = getGameMgr();
     VoiceListNode* node = list->end->next;
@@ -2353,7 +2353,7 @@ extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask) {
         VoiceSource* source = node->value;
         u32 flags = source->flags_0x64;
         if ((flags & 0x18E) != 0 && (mask & flags) != 0) {
-            VoiceAction* action = (VoiceAction*)func_8016FE34(source);
+            VoiceAction* action = (VoiceAction*)MapFx_ResolveOwner(source);
             if (action != nullptr) {
                 action->setVoiceActive(true);
             }
@@ -2609,16 +2609,16 @@ extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv() {
 #pragma dont_inline reset
 
 extern "C" bool BpsStateSingletonToInt();
-extern "C" bool func_8012E6DC();
-extern "C" void func_8012FAA8();
+extern "C" bool UIBattleHasPendingLoads();
+extern "C" void UIBattleReleaseAll();
 extern "C" void updateVisionState__Q22cf13CfGameManagerFv(cf::CfGameManager* manager) {
-    if (!BpsStateSingletonToInt() && !func_8012E6DC() &&
+    if (!BpsStateSingletonToInt() && !UIBattleHasPendingLoads() &&
         (lbl_eu_80663E28 & 0x01000000) == 0) {
         u32 flags = lbl_eu_80663E24;
         if ((flags & 0x31880) == 0x31880 && (flags & 0xAFA40704) == 0) {
             ++manager->unk8C;
             if (manager->unk8C >= 60) {
-                func_8012FAA8();
+                UIBattleReleaseAll();
                 manager->unk8C = 0;
             }
         } else {

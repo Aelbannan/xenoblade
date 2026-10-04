@@ -258,7 +258,7 @@ draw:
 
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = func_8016FE34(player);
+    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
         if (testActorStatus(actor2, &id, 0x803) != 0) {
@@ -346,10 +346,10 @@ bool battleCommuIsActive() {
 // the actor id and write the language-dependent tag text into the five info
 // panes, then enable the entry animation and move to state 1.
 // ---------------------------------------------------------------------------
-void func_801B0FB0(CMenuBattleCommu* self) {
+void showBattleCommu(CMenuBattleCommu* self) {
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = func_8016FE34(player);
+    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
     if (actor2 == 0) {
         return;
     }
@@ -564,7 +564,7 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
 
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = func_8016FE34(player);
+    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
         if (testActorStatus(actor2, &id, 0x803) != 0) {

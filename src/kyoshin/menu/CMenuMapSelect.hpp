@@ -73,7 +73,7 @@ public:
     void fwdMapSelectDtor();
 
     CMenuMapSelect();
-    void func_80242368();
+    void handleWorldMapInput();
 
     // Fields
     u32 mCallbacks[6];                           // 0x3C-0x53 -- PTMF callback slots (__ptmf_null)

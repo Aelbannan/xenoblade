@@ -225,7 +225,7 @@ extern "C" u16 BdatGetItemId(u32);
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 // (CItem_kindPtr is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void Cur_SetVisible(void*, int);
 extern "C" int sprintf(char*, const char*, ...);
@@ -314,7 +314,7 @@ extern "C" void setPaneVisible(void*, u32);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" void func_8023B430(CArtsInfo* self);
+extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
 extern "C" CArtsColorPair PaneMatGetS16Quad(void* pane, int idx);
 extern "C" void CopyVec4s(CArtsQuadColor* dst, const CArtsColorPair* src);
 

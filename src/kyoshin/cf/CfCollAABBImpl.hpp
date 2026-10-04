@@ -28,7 +28,7 @@ namespace cf {
 
 // Collision AABB shape implementation.
 // Retail __vt__ is lbl_eu_805287E0 (US) / __vt__Q22cf14CfCollAABBImpl (JP)
-//   0x10 bytes: RTTI lbl_eu_80661C90 "cf::CfCollAABBImpl", 0, func_800AAE24, CollAABB_RenderQuery
+//   0x10 bytes: RTTI lbl_eu_80661C90 "cf::CfCollAABBImpl", 0, CollAABB_DrawDebugShape, CollAABB_RenderQuery
 //   Two virtuals at +0x08/+0x0C (CfCollImpl base). TU has no .data
 //   (build/us/asm/kyoshin/cf/CfCollAABBImpl.s), so no compiler __vt__ is emitted.
 //   The world-position getter at +0xAC is cf::CfObject::GetPosition

@@ -691,7 +691,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
             }
         }
         s32 frameS = static_cast<s32>(blendFrames);
-        func_804839D4(view->object3A0, resId, param,
+        simBindChrAnim(view->object3A0, resId, param,
                       static_cast<u16>(frameS),
                       (view->field270 >> 6) & 1,
                       ((view->field4BD != 0) || ((view->field270 & 0x800) == 0)) ? 1 : 0,
@@ -803,7 +803,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         if (scn80496ChildIdsDiffer(view->object3A0 + 0xC) == 0)
             flushParamPair(view->mChildData10, 0);
     } else {
-        if (func_80497914(view->object3A0 + 0xC) == 0)
+        if (scn80496IsComplete(view->object3A0 + 0xC) == 0)
             flushParamPair(view->mChildData10, 1);
     }
     view->field4C4 = 0;
@@ -2048,14 +2048,14 @@ extern "C" __declspec(noinline) f32 safeFSqrt(f32 value) {
                                       : value * nw4r::math::FrSqrt(value);
 }
 
-void CActParamAnim::func_8004ECF4() const {}
+void CActParamAnim::stepAnimState() const {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Per-frame
 // anim update: gates on the active/playing flags, starts the requested anim
 // (param) through the data dispatcher, then advances the anim axis state and
 // writes the per-frame delta to +0x48C.
-int func_8004ECF4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimInitView* view = reinterpret_cast<CActParamAnimInitView*>(self);
     CActParamAnimStateView* sview = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 flags = sview->field0C;
@@ -4211,10 +4211,10 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
 }
 
 // Retail symbol is Fv but the body reads r4/r5: two extra args forwarded to
-// func_804BD94C's (a, b) slots (forced-name global, same scheme as
+// ScnRes_ResolveGroundHeight's (a, b) slots (forced-name global, same scheme as
 // CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv).
 void initAnimBlendVectors__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
-    func_804BD94C(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
+    ScnRes_ResolveGroundHeight(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
                   lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,
                   lbl_eu_80665F70, lbl_eu_80665EA0);
 }
@@ -4260,8 +4260,8 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
                           lbl_eu_80665EA0) != 0) {
             ml::CVec3 a;
             ml::CVec3 b;
-            func_804BE4B4(&a, 0);
-            func_804BE4E0(&b, 0);
+            ScnRes_CopyEntryHead(&a, 0);
+            ScnRes_CopyEntryMid(&b, 0);
             dir = &b;
         } else {
             dir = &ml::CVec3::unitY;

@@ -10,7 +10,7 @@ extern "C" u32 CfRes_getHeapHandle();
 // actor object + 0x8 state region, arg2 a probe id).
 // NOTE: declared with void* to match CfObjectImplMove.hpp (both headers are
 // included together in some TUs; extern "C" funcs cannot be overloaded).
-extern "C" int func_80148778(void* obj, int id);
+extern "C" int isBattleStatusActive(void* obj, int id);
 
 // Global flag-bit probe on the game-manager state word. Retail symbol is the
 // C++-mangled isGlobalCamFlagSet__Fi, so this is a plain global C++ declaration
@@ -106,7 +106,7 @@ struct UnkClass_80460C34Ctx {
 // Retail UnkClass_80460C34 stream methods (retail binary only - declared so
 // the call sites emit real `bl` relocs; C linkage keeps the retail names).
 extern "C" int isStateReady__17UnkClass_80460C34Fv(void* self, const void* a, int b);
-extern "C" int func_80460F58__17UnkClass_80460C34Fv(void* self, int a);
+extern "C" int inflate__17UnkClass_80460C34Fv(void* self, int a);
 extern "C" int cleanupState__17UnkClass_80460C34Fv(void* self);
 
 // Data pointer passed as the second arg of isStateReady (retail .data).
@@ -135,11 +135,11 @@ void* findObjectById(int id);
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
 // Signature matches CfObjectImplMove.hpp (both headers appear together).
 extern "C" void* getObjectAt(CfMoveEnumList* list, u32 idx);
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);
 class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
 // matches the CtrlPc.hpp declaration.
-extern "C" Fd44State* func_8017FD44();
+extern "C" Fd44State* GetZealObjPtr();
 extern "C" void* bindIndexedEffect(u32 cls, void* param);
 
 // Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
@@ -365,7 +365,7 @@ struct CfObjAe80 {
 };
 
 // Selector-system helpers (retail C-ABI names; CfObjectSelectorObj.cpp).
-extern "C" void func_800FE860(void* obj, u32 arg);
+extern "C" void Selector_SetActive(void* obj, u32 arg);
 extern "C" unsigned long testFlagBit10(void* obj);
 extern "C" void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 
@@ -511,7 +511,7 @@ struct CtrlBmSweepView {
     s16 mField20C8;             // 0x20C8
 };
 
-// func_8016FE34 result view for CtrlRemote_MenuComboSweep's sweep: u16 state word at
+// MapFx_ResolveOwner result view for CtrlRemote_MenuComboSweep's sweep: u16 state word at
 // +0x3388 (bit 0x10) and u32 combo word at +0x3E98, with the opaque voice-
 // owner region at +0x3E9C.
 struct CtrlAccSweepView {
@@ -541,10 +541,10 @@ struct CtrlEnumListSweep {
 // Imports / views used by CtrlRemote_ArtsWindowDispatch.
 // ---------------------------------------------------------------------------
 
-extern "C" int func_80190940(void* res, void* actor, int mode, void* filter);
+extern "C" int CfCmd_PickChain(void* res, void* actor, int mode, void* filter);
 extern "C" unsigned long SuddenCommuIsStateActive(void* self);
 extern "C" void SysWinLog_TickCounter29();
-extern "C" void func_8017FEF0(void* obj, int arg);
+extern "C" void AddZealEffect(void* obj, int arg);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
@@ -558,7 +558,7 @@ class CChainBattleObj;
 }  // namespace cf
 
 // Chain start (chain/CChainTimer.cpp; C++ linkage - keep the mangling).
-int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
+int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
                   cf::CChainBattleObj* p2, u32 p3);
 
 // Object pointed to by sub3ED4+0x374 in CtrlRemote_ArtsWindowDispatch; its +0x3F10 word
@@ -635,9 +635,9 @@ public:
     virtual void vf59();          // vtable slot 0xF4
 
     u8 _04[0x14];
-    void* mActor18;               // 0x18 actor ref handed to func_80190940
+    void* mActor18;               // 0x18 actor ref handed to CfCmd_PickChain
     u8 _1C[0x368 - 0x1C];
-    u32 mResult368;               // 0x368 func_80190940 result record base
+    u32 mResult368;               // 0x368 CfCmd_PickChain result record base
     u32 mField36C;                // 0x36C
     u32 mField370;                // 0x370
     CtrlRemoteSub374View* mField374;  // 0x374

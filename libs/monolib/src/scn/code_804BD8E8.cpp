@@ -54,7 +54,7 @@ void scanVertQuery(void* state, void* a1, void* a2, void* a3, void* a4,
 extern u8 lbl_eu_8066597F;
 
 // Defined below; plain C symbol so cross-TU relocs match retail.
-extern "C" s32 func_804BE62C(ml::CVec3* out);
+extern "C" s32 ScnRes_ProjectTracked(ml::CVec3* out);
 void operator delete(void* ptr) throw();
 
 extern char lbl_eu_8065F32C[];
@@ -93,7 +93,7 @@ extern u8 lbl_eu_8066597E;
 extern u32 lbl_eu_80665984;
 
 // Defined later in this TU.
-s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale);
+s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale);
 void ScnRes_DispatchCrossCb_EEEC();
 
 // nw4r math/db helpers (retail plain symbols; C linkage keeps them unmangled).
@@ -132,13 +132,13 @@ void* __dt__804BD8E8(ScnRmObj* obj, s32 flags) {
 // Begin a registration pass over the scene resources.
 //
 // Sets up the shared crossing state (anchor position, thresholds, flags),
-// quantizes the movement vector via func_804BF3EC, then walks every enabled
+// quantizes the movement vector via ScnRes_QuantizeVecSteps, then walks every enabled
 // resource entry (push pass + resolve pass), recording height crossings into
 // the history table and finally re-resolving the ground height against the
 // recorded data.
 // NOTE: partial reconstruction - the tail of retail is not fully visible in
 // the reference listing; control flow here follows the visible structure.
-s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
+s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
                   f32 t4, f32 t5, s32 a8, void* a9, s32 a10) {
     // Local layout views (the shared structs are declared further down the TU).
     struct EntL {
@@ -179,7 +179,7 @@ s32 func_804BD94C(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2, f32 t3,
 
     // Quantize the step length of the working vector.
     f32 stepLen;
-    s32 steps = func_804BF3EC(&cur.x, &stepLen, a10 != 0 ? 1 : 0, t5);
+    s32 steps = ScnRes_QuantizeVecSteps(&cur.x, &stepLen, a10 != 0 ? 1 : 0, t5);
     (void)steps;
 
     f32 dy = t1 * t1;
@@ -343,10 +343,10 @@ void ScnRes_Notify4Word_E3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
 
 // Run the mover ray pass variant, then project the tracked position when
 // any resource entry is active.
-s32 func_804BE408(void* a1) {
+s32 ScnRes_MoverRayProject(void* a1) {
     updownRayFlag(lbl_eu_8065F32C);
     if (lbl_eu_80665988 != 0) {
-        return func_804BE62C((ml::CVec3*)a1);
+        return ScnRes_ProjectTracked((ml::CVec3*)a1);
     }
     return 0;
 }
@@ -410,7 +410,7 @@ u32 ScnRes_GetEntryCount_E4AC(void) {
 }
 
 // Copy the 12-byte header of resource entry [index] into dst.
-void func_804BE4B4(ScnResHead* dst, int index) {
+void ScnRes_CopyEntryHead(ScnResHead* dst, int index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32 head0 = entries[index].head.field_0x00;
@@ -420,7 +420,7 @@ void func_804BE4B4(ScnResHead* dst, int index) {
 }
 
 // Copy the 12-byte secondary header of resource entry [index] into dst.
-void func_804BE4E0(ScnResHead* dst, int index) {
+void ScnRes_CopyEntryMid(ScnResHead* dst, int index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
     u32 mid0 = entries[index].mid.field_0x00;
@@ -437,8 +437,8 @@ void* ScnRes_GetEntryHead2_E520(int index) {
     return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
 }
 
-extern "C" s32 func_804BE62C(ml::CVec3* out);
-extern "C" void ScnRes_ProjThunk_E538(void) { ((s32 (*)())&func_804BE62C)(); }
+extern "C" s32 ScnRes_ProjectTracked(ml::CVec3* out);
+extern "C" void ScnRes_ProjThunk_E538(void) { ((s32 (*)())&ScnRes_ProjectTracked)(); }
 
 // Fetch the scale/pair table row referenced by resource entry [index].
 s32 ScnRes_FetchScaleRow_E53C(f32* dst, s32 index) {
@@ -532,7 +532,7 @@ void PSMTXMultVec(const f32* m, const f32* src, f32* dst);
 // Project the tracked height position onto the triangle of resource entry 0,
 // resolving the closest point across the three edge pairs. Returns 1 when a
 // projected position was written to out, 0 when no data is active.
-s32 func_804BE62C(ml::CVec3* out) {
+s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     if (lbl_eu_80665988 == 0) {
         return 0;
     }
@@ -736,7 +736,7 @@ extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
 }
 #pragma pop
 
-// Dissolved monolibdata2 sdata slot: word 0 is the func_804BF274 pointer
+// Dissolved monolibdata2 sdata slot: word 0 is the ScnRes_RecordCrossing pointer
 // called by ScnRes_DispatchCrossCb_EEEC (retail loads the data word, not the address).
 extern "C" u32 lbl_eu_80663AD8[2];
 extern "C" u32 lbl_eu_80663AE0[2];
@@ -749,8 +749,8 @@ void ScnRes_DispatchCrossCb_EEEC() {
 // normalized offset between the tracked position and the entry position, run
 // the threshold ladder, project onto the crossing-history table and flag the
 // ground/anchor crossings.
-extern "C" s32 func_804BEEF8(s32 idx);
-s32 func_804BEEF8(s32 idx) {
+extern "C" s32 ScnRes_ValidateCrossing(s32 idx);
+s32 ScnRes_ValidateCrossing(s32 idx) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
     ml::CVec3* ref;
     s32 crossing;
@@ -859,7 +859,7 @@ s32 func_804BEEF8(s32 idx) {
 // Record a height crossing for resource entry [index] into the history
 // table and project it against previously recorded positions. Returns 1
 // when the projected position dips below the active threshold.
-s32 func_804BF274(s32 index) {
+s32 ScnRes_RecordCrossing(s32 index) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
     const f32 thrMin = lbl_eu_8066AF60;
     ScnEntryF* e = (ScnEntryF*)(lbl_eu_8065F428 + index * 0x24);
@@ -907,14 +907,14 @@ s32 func_804BF274(s32 index) {
 
 #pragma push
 #pragma auto_inline off
-// Install the active crossing-record callback (func_804BEEF8 when enabled,
-// func_804BF274 otherwise) and its enabled flag.
+// Install the active crossing-record callback (ScnRes_ValidateCrossing when enabled,
+// ScnRes_RecordCrossing otherwise) and its enabled flag.
 extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
     if (flag != 0) {
-        lbl_eu_80663AD8[0] = (u32)&func_804BEEF8;
+        lbl_eu_80663AD8[0] = (u32)&ScnRes_ValidateCrossing;
         lbl_eu_8066597F = 1;
     } else {
-        lbl_eu_80663AD8[0] = (u32)&func_804BF274;
+        lbl_eu_80663AD8[0] = (u32)&ScnRes_RecordCrossing;
         lbl_eu_8066597F = 0;
     }
 }
@@ -923,7 +923,7 @@ extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
 // Quantize the vector length: snap v onto a grid derived from 'scale' and
 // report the step count through the return value (1 = zero vector, 2 =
 // sub-step clamped, else the quantized step count).
-s32 func_804BF3EC(f32* v, f32* outLen, s32 flag, f32 scale) {
+s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
     s32 result = 1;
     outLen[0] = lbl_eu_8066AF4C;
     if (v[0] == lbl_eu_8066AF44 && v[1] == lbl_eu_8066AF44 && v[2] == lbl_eu_8066AF44) {
@@ -966,11 +966,11 @@ void sinit_804BF540() {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// func_804BF274 is defined in this TU above (plain C++ linkage, unmangled name)
+// ScnRes_RecordCrossing is defined in this TU above (plain C++ linkage, unmangled name)
 extern "C" u32 lbl_eu_8066AFC4;   // .sdata2 string
 
 // [.sdata] 0x80663AD8-0x80663AE8 (16B)
-extern "C" u32 lbl_eu_80663AD8[2] = { (u32)&func_804BF274, 0x00000000 };
+extern "C" u32 lbl_eu_80663AD8[2] = { (u32)&ScnRes_RecordCrossing, 0x00000000 };
 extern "C" u32 lbl_eu_80663AE0[2] = { (u32)&lbl_eu_8066AFC4, 0x00000000 };
 
 // [.bss] 0x8065F418-0x8065FA40 (0x628 = 1576B) zero-fill

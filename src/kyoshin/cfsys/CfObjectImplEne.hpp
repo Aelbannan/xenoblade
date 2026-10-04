@@ -259,7 +259,7 @@ struct CfImplEnePos {
     float field_2C;                          // 0x2C (z)
 };
 
-// battleObj->field_3F34 target: word at +0x7A4 (bit 27 read by func_800D0C2C).
+// battleObj->field_3F34 target: word at +0x7A4 (bit 27 read by MoveImplEne_SyncTargetArrow).
 struct CfImplEneField3F34 {
     u8 _pad00[0x7A4];                        // 0x00-0x7A3
     u32 field_7A4;                           // 0x7A4
@@ -713,13 +713,13 @@ extern "C" {
 void MoveImplInitFields(void* self);
 void MoveImplResetFull(void* self);
 void MoveImplDriveTransition(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
-void func_8015BB3C(void* a, void* b, void* c);
+void CharEffInit(void* a, void* b, void* c);
 void attachOwner(void* self, void* owner);
 void* lookupCA0By45C0(void* self);
-void* func_8016FE34(void* src);
+void* MapFx_ResolveOwner(void* src);
 void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
 void registerBattleActor(void* mgr, void* obj);
-int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void schedClearFlag15Update(void* effect);
 void schedAttachChildSlot(void* effect, void* parent);
@@ -731,7 +731,7 @@ void updatePosition(void* self);
 void* CfRes_getInstPtr224();
 void* CfRes_findEntryById(void* self, u32 id);
 extern u32 lbl_eu_8065FC18[];
-extern "C" void* func_804CC1F4(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
+extern "C" void* EffRoot_AddSchedReq(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
 void schedReleaseAllItems(void* effect);
 
 // TU-local view of CREvtEffect.hpp's CEffectInst (only fields touched here).

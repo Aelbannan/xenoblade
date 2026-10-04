@@ -5,7 +5,7 @@
 #include <nw4r/math.h>
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "libs/monolib/src/scn/CMdlAnmEye.hpp"
-#include "monolib/scn/code_804BF59C.hpp"  // CScnEnvLgtData + func_804BFFB8 (env-light update)
+#include "monolib/scn/code_804BF59C.hpp"  // CScnEnvLgtData + ScnEnvLgt_ApplyFalloff (env-light update)
 
 class CScnVirtualLight;  // full definition in CScnVirtualLight.hpp (scnVlUpdate arg)
 
@@ -214,7 +214,7 @@ struct CScnItemModelNw4rRootHandle {
     virtual u32 v09() = 0;   // vtable 0x2C (MemManager handle)
 };
 
-// Node-id collection list passed to func_80491764 (mirrors
+// Node-id collection list passed to TexMan_CollectNodeIds (mirrors
 // CScnTexWorkManNodeIdList: array at +0x0, count at +0x4).
 struct CScnItemModelNw4rNodeIdList {
     u32* array;   // +0x0
@@ -223,7 +223,7 @@ struct CScnItemModelNw4rNodeIdList {
 
 // Minimal view of the anim sub-object at CScnItemModelNw4r+0xC (the retail
 // CScn80496B0C from CScn_80496B0C.cpp; only the +0x0 owner pointer is
-// checked by scnImN4PoseHook before passing the object to func_804979A4).
+// checked by scnImN4PoseHook before passing the object to scn80496RefreshTRS).
 struct CScnItemModelNw4rAnimC {
     void* field_0x0;   // +0x00 owner (CScn*)
 };
@@ -454,21 +454,21 @@ public:
 
 // Cross-TU C-linkage placeholders (retail symbols are unmangled func_* names
 // until symbol recovery renames them; keep the C linkage to match relocs).
-extern "C" void func_804E8220(s32 v);
+extern "C" void setMdlLookTarget(s32 v);
 extern "C" void setMdlLookAngles(s32 v);
 extern "C" void simSetFlag8000000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simNotifyReadyTree(CScnItemModelNw4r* self);
 extern "C" void simNotifyVfunc8C(CScnItemModelNw4r* self, u32 param);
 extern "C" void simNotifyVfunc94(CScnItemModelNw4r* self);
-extern "C" int func_804E6358(CScnItemModelNw4rSub16C8* sub);
-extern "C" int func_804E5FD4(CScnItemModelNw4rSub16C8* sub);
+extern "C" int applyAmbientArray(CScnItemModelNw4rSub16C8* sub);
+extern "C" int applyAmbientAll(CScnItemModelNw4rSub16C8* sub);
 
 // scnImN4CheckMat / scnImN4LinkGrpA cross-TU imports (defined in CMdlMaterial.cpp
 // / CScnItemModel.cpp). extern "C" keeps the retail func_* names verbatim
 // (MWCC mangles class-typed params). scnImN4SyncMatCol passes a zero-color vec
 // and a mode flag as the trailing args (defaulted so the 1-arg call site in
 // scnImN4CheckMat keeps its bytes).
-extern "C" int func_804E6158(CScnItemModelNw4rSub16C8* sub, ml::CVec3* vec = 0,
+extern "C" int applyAmbientByLight(CScnItemModelNw4rSub16C8* sub, ml::CVec3* vec = 0,
                              u32 param = 0);
 extern "C" int simProbeModelVec(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" int simLinkSlot7B4(CScnItemModelNw4r* self, CScnItemModelNw4r* node);
@@ -478,10 +478,10 @@ extern "C" int simLinkModel7C4(CScnItemModelNw4r* self, CScnItemModelNw4r* node)
 // Chain-wide 1-arg query (defined in CScnItemModel.cpp; vtable-0x34 on the
 // reference-list models).
 extern "C" int simProbeVfunc34(CScnItemModelNw4r* self, u32 param);
-extern "C" void func_80482918(CScnItemModelNw4r* self, u32 param);
+extern "C" void simSetFlag1Tree(CScnItemModelNw4r* self, u32 param);
 // CMdlLook handle feed (defined in CMdlLook.cpp): (handle, model, frame,
 // param).
-extern "C" void func_804E8290(s32 handle, CScnItemModelNw4r* self, u32 frame,
+extern "C" void syncMdlLookSlots(s32 handle, CScnItemModelNw4r* self, u32 frame,
                               u32 param);
 extern "C" void simSetFlag1MTree(CScnItemModelNw4r* self, u32 param);
 
@@ -490,7 +490,7 @@ extern "C" void simSetFlag1MTree(CScnItemModelNw4r* self, u32 param);
 // CScnItemModel.cpp), material sub-object notify (defined in CMdlMaterial.cpp).
 extern "C" bool Scn_IsAnimActiveOrNull(CScnItemModel* self);
 extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b);
-extern "C" void func_804E64B0(CScnItemModelNw4rSub16C8* sub, u32 param,
+extern "C" void notifyGroupChain(CScnItemModelNw4rSub16C8* sub, u32 param,
                               CScnItemModelNw4r* obj);
 
 // Act-data base getter (walks the chain-last node, returns node+0x1F8;
@@ -501,7 +501,7 @@ extern "C" ml::CAttrTransform* simGetLeafActData(CScnItemModelNw4r* self);
 extern "C" void simPropagateEnvLgt(CScnItemModel* self, CScnEnvLgtData* param);
 // Per-frame virtual-light update (defined in CScnVirtualLight.cpp). Declared
 // here with the 5-arg retail shape (like CScnVirtualLight.hpp re-declares
-// func_804BFA70 over the code_804BF59C.hpp 4-arg stub; the two headers
+// scnVlUpdateShape over the code_804BF59C.hpp 4-arg stub; the two headers
 // cannot both be included because of that conflict).
 extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
                               const ml::CVec3* vec, int mode, f32 f1);
@@ -577,9 +577,9 @@ extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b);
 
 // Anim sub-object helpers used by scnImN4PoseHook (defined in
 // CScn_80496B0C.cpp / CMdlAnmUV.cpp / CMdlMouth.cpp).
-extern "C" void func_804979A4(void* self, ml::CVec3* outA, ml::CVec3* outB,
+extern "C" void scn80496RefreshTRS(void* self, ml::CVec3* outA, ml::CVec3* outB,
                               ml::CVec3* outC, u32 nodeIdx);
-extern "C" int func_804E72D0(void* self, u32 arg2, void* res);
+extern "C" int UVAnm_PushPairSRT(void* self, u32 arg2, void* res);
 extern "C" int MdlMouthPollAnim(void* self, u32 arg2, void* res);
 
 // scnImN4UpdateVis per-frame anim helpers (defined in CMdlAnmEye.cpp /
@@ -779,25 +779,25 @@ extern "C" void* getScnRootSel46C(CScn* self);
 extern "C" u32 getScnRootPtr(CScn* self);
 
 // Sub-object init hooks (retail unmangled fragment names): CMdlDynamics
-// (MdlDyn_BuildLists), CMdlMaterial (func_804E54B8 / func_804E5990), CMdlMouth
-// (func_804E65CC), CMdlAnmUV (func_804E6C80), CMdlAnmEye (func_804E75B8),
-// CMdlLook (func_804E7B38), CScnMaruShadowNw4r (func_8048E69C),
-// CScnEffectActNw4r (func_8049B9EC), anim sub-object (func_80496F14).
+// (MdlDyn_BuildLists), CMdlMaterial (setupFromModel / scanNodeUserData), CMdlMouth
+// (MdlMouthBindModel), CMdlAnmUV (UVAnm_RegisterPairs), CMdlAnmEye (EyeAnm_RegisterMats),
+// CMdlLook (buildMdlLookMatrices), CScnMaruShadowNw4r (MaruShadowBuildScaleTable),
+// CScnEffectActNw4r (EffectActNw4rInitModel), anim sub-object (scn80496SetupChildren).
 extern "C" void MdlDyn_BuildLists(void* self, void* model);
-extern "C" void func_804E54B8(void* self, void* model);
-extern "C" void func_804E5990(void* self, void* node, void* mtx);
-extern "C" void func_804E65CC(void* self, void* model);
-extern "C" void func_804E6C80(void* self, void* model);
-extern "C" void func_804E75B8(void* self, void* model);
-extern "C" void func_804E7B38(void* self, void* model);
-extern "C" void func_8048E69C(void* self, u32* out, void* model);
-extern "C" void func_8049B9EC(void* self, void* mgr);
-extern "C" void func_80496F14(void* self, CScn* scn, void* model, u16 slot);
+extern "C" void setupFromModel(void* self, void* model);
+extern "C" void scanNodeUserData(void* self, void* node, void* mtx);
+extern "C" void MdlMouthBindModel(void* self, void* model);
+extern "C" void UVAnm_RegisterPairs(void* self, void* model);
+extern "C" void EyeAnm_RegisterMats(void* self, void* model);
+extern "C" void buildMdlLookMatrices(void* self, void* model);
+extern "C" void MaruShadowBuildScaleTable(void* self, u32* out, void* model);
+extern "C" void EffectActNw4rInitModel(void* self, void* mgr);
+extern "C" void scn80496SetupChildren(void* self, CScn* scn, void* model, u16 slot);
 
 // Node-table helpers (defined in CScnTexWorkMan.cpp): count the non-degenerate
 // nodes under a ResNode and collect their ids into a node-id list.
-extern "C" int func_80491158(nw4r::g3d::ResNode* pNode);
-extern "C" void func_80491764(nw4r::g3d::ResNode* pNode,
+extern "C" int TexMan_CountRootNodes(nw4r::g3d::ResNode* pNode);
+extern "C" void TexMan_CollectNodeIds(nw4r::g3d::ResNode* pNode,
                               CScnItemModelNw4rNodeIdList* pList);
 
 // Fog-manager param push (defined in CScnFogMan.cpp): (fogMan, fogType, color

@@ -80,7 +80,7 @@ extern "C" void* Bdat_FindColumnEntry(void* bdat, const char* col);
 // two are distinct types and extern "C" names cannot be overloaded.
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 extern "C" u32 Bdat_QueryCell_AD98(void* bdat, const char* col, s32 row, s32 index);
-extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
+extern "C" u32 Bdat_GetFlagValue(void* bdat, const char* col1, s32 row, const char* col2);
 extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index);
 extern "C" void Bdat_WriteVmArg_B800(VMArg* out, void* data, u32 type);
 extern "C" int getVal(VMThread* t, void* bdat);

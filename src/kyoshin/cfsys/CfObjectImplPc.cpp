@@ -184,7 +184,7 @@ public:
 } // namespace cf
 
 // Player init/refresh: prepares via MoveImplInitFields, dispatches vtable slot
-// 0xE4 and feeds its result + sub-fields into func_8015BB3C, binds the +0x28
+// 0xE4 and feeds its result + sub-fields into CharEffInit, binds the +0x28
 // holder to the battle object's +0x3E9C sub-object, and when the +0x70 token
 // formats with entry id 7, allocates + constructs a CPcEffect07 whose +4
 // pointer becomes field_378. Finally resets the battle object's idle flag
@@ -193,7 +193,7 @@ public:
 void ObjPc_InitLink_5998(cf::CfObjectImplPc* self)
 {
     MoveImplInitFields((u8*)self);
-    func_8015BB3C(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
+    CharEffInit(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
     u8* owner = (u8*)self->field_18;
     if (owner != 0) {
         owner += 0x3e9c;
@@ -286,7 +286,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
     if (mode == 1) {
         // Battle start: replay arts 0xea while the state word (slot 0x160)
         // is still below the idle threshold.
-        if (func_80148778(&obj->mArts, 0xea)) {
+        if (isBattleStatusActive(&obj->mArts, 0xea)) {
             if (obj->v160() < lbl_eu_80666BC8) {
                 obj->mArts.vf20(0xea);
             }
@@ -316,7 +316,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         if (n != 0) {
             goto L_tail;
         }
-        if (func_80148778(&obj->mArts, 0xeb)) {
+        if (isBattleStatusActive(&obj->mArts, 0xeb)) {
             obj->mArts.vf20(0xeb);
         }
         goto L_tail;
@@ -325,7 +325,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         // the arts-0xf1 status record, gate the lists, replay arts 0xef,
         // then run the shared setup-effect table below.
         if (obj->v160() >= lbl_eu_80666BC8) {
-            if (func_80148778(&obj->mArts, 0xf1) == 0) {
+            if (isBattleStatusActive(&obj->mArts, 0xf1) == 0) {
                 u32 id = *obj->field_04->vf30();
                 if (testActorStatus(obj, &id, 6) != 0) {
                     CfObjectImplPcRec90 rec;
@@ -363,7 +363,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
                 goto L_tail;
             }
         }
-        if (func_80148778(&obj->mArts, 0xef)) {
+        if (isBattleStatusActive(&obj->mArts, 0xef)) {
             obj->mArts.vf20(0xef);
         }
         goto L_table;
@@ -375,7 +375,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         if (obj->v160() >= lbl_eu_80666BC8) {
             u32 id = *obj->field_04->vf30();
             if (testActorStatus(obj, &id, 6) != 0 &&
-                func_80148778(&obj->mArts, 0x10a) == 0) {
+                isBattleStatusActive(&obj->mArts, 0x10a) == 0) {
                 if (reinterpret_cast<CfObjectImplPcArtsData*>(&obj->mArts)
                         ->field_1528
                     != 0) {
@@ -388,7 +388,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
             }
         }
         if (obj->v160() < lbl_eu_80666BC8) {
-            if (func_80148778(&obj->mArts, 0x10a)) {
+            if (isBattleStatusActive(&obj->mArts, 0x10a)) {
                 CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), obj, 0x10a);
             }
         }
@@ -421,7 +421,7 @@ L_table:
     }
     for (u32 j = 0; j < 6; j++) {
         if (counts[j] == 0) {
-            if (func_80148778(&self->field_18->mArts, (int)ids[j])) {
+            if (isBattleStatusActive(&self->field_18->mArts, (int)ids[j])) {
                 CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), self->field_18,
                               (s32)ids[j]);
             }
@@ -451,7 +451,7 @@ L_tail:
                         func_80084654__Q22cf13CfGameManagerFv(0);
                         for (u32 i = 0; i < 3; i++) {
                             cf::CfObjectImplPc18* pl =
-                                reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34(
+                                reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
                                     (u8*)cf::CfGameManager::getPlayer(i)));
                             if (pl != 0) {
                                 u32 pid = *pl->field_04->vf30();
@@ -497,7 +497,7 @@ L_tail:
                 goto L_end;
             }
             cf::CfObjectImplPc18* act = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)cf::CfGameManager::getPlayer(0)));
+                MapFx_ResolveOwner((u8*)cf::CfGameManager::getPlayer(0)));
             u32 aid = *act->field_04->vf30();
             if (testActorStatus(act, &aid, 0x802) == 0) {
                 u32 aid2 = *act->field_04->vf30();
@@ -576,7 +576,7 @@ L_tail:
             cf::CfEnumList* list = (cf::CfEnumList*)CTaskGame_enumListGet(h48);
             for (u32 i = 0; i < list->field_620; i++) {
                 cf::CfObjectImplPc18* o2 = reinterpret_cast<cf::CfObjectImplPc18*>(
-                    func_8016FE34(
+                    MapFx_ResolveOwner(
                         getObjectAt((u8*)CTaskGame_enumListGet(h48), i)));
                 if (o2 != self->field_18 && o2->vf308() == 4) {
                     o2->vf304(1);
@@ -614,13 +614,13 @@ L_tail:
                 if (q != 0) {
                     q = ob->vf290();
                     if (q != 0) {
-                        if (func_80260264(q, 0x48, (s32*)&w38)) {
+                        if (IdTable_GetSum(q, 0x48, (s32*)&w38)) {
                             cf::CfEnumList* list2 =
                                 (cf::CfEnumList*)CTaskGame_enumListGet(h40);
                             for (u32 i = 0; i < list2->field_620; i++) {
                                 cf::CfObjectImplPc18* o2 =
                                     reinterpret_cast<cf::CfObjectImplPc18*>(
-                                        func_8016FE34(getObjectAt(
+                                        MapFx_ResolveOwner(getObjectAt(
                                             (u8*)CTaskGame_enumListGet(h40), i)));
                                 calcBattleDamage(0, o2, 0);
                                 // Rebase the stored gauge off the magic
@@ -636,7 +636,7 @@ L_tail:
                      i < ((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620;
                      i++) {
                     cf::CfObjectImplPc18* o2 =
-                        reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34(
+                        reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
                             getObjectAt((u8*)CTaskGame_enumListGet(h40), i)));
                     if (o2->vf290() == 0) {
                         continue;
@@ -679,7 +679,7 @@ L_tail:
                         CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 0x9a, 0);
                     }
-                    if (func_80260264(o2->vf290(), 0x62, (s32*)&w38)) {
+                    if (IdTable_GetSum(o2->vf290(), 0x62, (s32*)&w38)) {
                         if (((cf::CfEnumList*)CTaskGame_enumListGet(h40))->field_620
                             == 1) {
                             PartyGaugeAddClamped(
@@ -725,7 +725,7 @@ void ObjPc_BattleTargetSync_6A58(cf::CfObjectImplPc* self)
         // (v2BC == 0) or its +0x3F00 bit 30 is set; otherwise re-arm the
         // 0x800000 flag via the fallback path below.
         cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
-            func_8016FE34((u8*)findObjectById((int)self->field_18->mSub.sf4C())));
+            MapFx_ResolveOwner((u8*)findObjectById((int)self->field_18->mSub.sf4C())));
         if (obj != 0 && obj->mSub.v160() != 0 &&
         (obj->v2BC() == 0 || (obj->field_3F00 & 2) != 0)) {
         goto L_flags;
@@ -788,7 +788,7 @@ L_flags:
             reinterpret_cast<cf::CfObjectImplPc18*>(
                 getCfObjectPc(cf::CfGameManager::getPlayer(0)));
         cf::CfObjectImplPc18* tgt = reinterpret_cast<cf::CfObjectImplPc18*>(
-            func_8016FE34((u8*)findObjectById((int)player->mSub.sf4C())));
+            MapFx_ResolveOwner((u8*)findObjectById((int)player->mSub.sf4C())));
         if (tgt != 0 && tgt->v2BC() == 0) {
             u32 tid = *tgt->field_04->vf30();
             if (testActorStatus(tgt, &tid, 0x100000) != 0) {
@@ -1002,7 +1002,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
             for (u32 j = 0; j < 8; j++) {
                 if (p[j] == (u32)list->field_04) {
                     actor = (cf::CfObjectImplPc18*)
-                        func_8016FE34((u8*)findObjectById((int)list->field_04));
+                        MapFx_ResolveOwner((u8*)findObjectById((int)list->field_04));
                     resolved = true;
                     break;
                 }
@@ -1013,7 +1013,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
             for (u32 i = 0; i < 16; i++) {
                 if (list->entries[i] != 0) {
                     actor = (cf::CfObjectImplPc18*)
-                        func_8016FE34((u8*)findObjectById((int)list->entries[i]));
+                        MapFx_ResolveOwner((u8*)findObjectById((int)list->entries[i]));
                     break;
                 }
             }
@@ -1183,26 +1183,26 @@ void ObjPc_BattleEventDispatch_819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u3
             goto L_case_end;
         }
         if (self->field_18->field_3F28 == 5 &&
-            func_80148778(&self->field_18->mArts, 0xf1) == 0) {
+            isBattleStatusActive(&self->field_18->mArts, 0xf1) == 0) {
             CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
         }
         goto L_case_end;
     L_st_c:
         if (self->field_18->field_3F28 == 2) {
-            if (func_80148778(&self->field_18->mArts, 0xeb) == 0) {
+            if (isBattleStatusActive(&self->field_18->mArts, 0xeb) == 0) {
                 CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
             }
             goto L_case_end;
         }
         if (self->field_18->field_3F28 == 5) {
-            if (func_80148778(&self->field_18->mArts, 0xef) == 0) {
+            if (isBattleStatusActive(&self->field_18->mArts, 0xef) == 0) {
                 CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
             }
         }
         goto L_case_end;
     L_st_d:
         if (self->field_18->field_3F28 == 5 &&
-            func_80148778(&self->field_18->mArts, 0xf0) == 0) {
+            isBattleStatusActive(&self->field_18->mArts, 0xf0) == 0) {
             CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 0x31, 0, -1, 1);
         }
     L_case_end:
@@ -1230,7 +1230,7 @@ void ObjPc_BattleEventDispatch_819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u3
             (((cf::CfObjectImplPc3F60*)self->field_18->field_3F60)->field_4EC &
              0x40000000) == 0) {
             dispatchItemLoad(self->field_18, 4);
-            CCharVoiceMan_EnqueuePcActionVoice(func_8016FE34((u8*)self->field_14));
+            CCharVoiceMan_EnqueuePcActionVoice(MapFx_ResolveOwner((u8*)self->field_14));
         }
         break;
     case 29:
@@ -1279,7 +1279,7 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
     // while since MWCC emits identical bytes either way.
     u32 i = 0;
     while (i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620) {
-        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
+        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
             getObjectAt(CTaskGame_enumListGet(holder), i));
         self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
         i++;
@@ -1289,7 +1289,7 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
     if (self->field_18->mSub.sf4C() == 0) {
         self->field_18->mSub.sf50(listId);
         if (self->field_18->mSub.sf4C() == 0) {
-            cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)func_8016FE34(
+            cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
                 (u8*)findObjectById((int)getCfObjectPc(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
             if (pobj == 0) {
                 return;
@@ -1336,10 +1336,10 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     // Resolve the current action target's actor; when missing, fall back to
     // the id stored in the global record returned by Selector_GetInstance.
     cf::CfObjectImplPc18* actor = reinterpret_cast<cf::CfObjectImplPc18*>(
-        func_8016FE34(
+        MapFx_ResolveOwner(
             (u8*)findObjectById((int)self->field_18->mSub.sf4C())));
     if (actor == 0) {
-        actor = reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34((u8*)
+        actor = reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner((u8*)
             findObjectById(
                 (int)reinterpret_cast<cf::CfObjectImplPcFe68C*>(Selector_GetInstance())
                     ->field_90E4)));
@@ -1349,7 +1349,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     }
 
     // Arts entry 0xae present: forward its magnitude through slot 0x2F8.
-    if (func_80148778(&self->field_18->mArts, 0xae)) {
+    if (isBattleStatusActive(&self->field_18->mArts, 0xae)) {
         u32 mag = ((cf::CfObjectImplPc149154*)findBattleStatusEntry(
                        &self->field_18->mArts, 0xae))
                       ->field_10;
@@ -1359,7 +1359,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     // Arts entries 0xaf / 0xb0 each build a fresh 0x34-byte status-effect
     // request (battle id, flag word 0x8000, payload from the arts magnitude)
     // and dispatch it twice (source + target both set to the battle object).
-    if (func_80148778(&self->field_18->mArts, 0xaf)) {
+    if (isBattleStatusActive(&self->field_18->mArts, 0xaf)) {
         u32 mag = ((cf::CfObjectImplPc149154*)findBattleStatusEntry(
                        &self->field_18->mArts, 0xaf))
                       ->field_10;
@@ -1374,7 +1374,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
         cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
         func_800EC918(mgr, bt, bt, &eff, 0);
     }
-    if (func_80148778(&self->field_18->mArts, 0xb0)) {
+    if (isBattleStatusActive(&self->field_18->mArts, 0xb0)) {
         u32 mag = ((cf::CfObjectImplPc149154*)findBattleStatusEntry(
                        &self->field_18->mArts, 0xb0))
                       ->field_10;
@@ -1536,7 +1536,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
 // target, and replays the landing scale when the state machine is idle.
 void ObjPc_BattleStartReset_969C(cf::CfObjectImplPc* self)
 {
-    if (func_80148778(&self->field_18->mArts, 0xea) != 0) {
+    if (isBattleStatusActive(&self->field_18->mArts, 0xea) != 0) {
         self->field_18->mArts.vf20(0xea);
     }
     if (self->field_18->v29C(0)->field_50 != 0) {
@@ -1652,7 +1652,7 @@ L_chainEnd:
             }
         }
         s32 gauge;
-        if (self->field_18->vf290() != 0 && func_80260264(self->field_18->vf290(), 0x63, &gauge) != 0 &&
+        if (self->field_18->vf290() != 0 && IdTable_GetSum(self->field_18->vf290(), 0x63, &gauge) != 0 &&
             isBattleEventKind3(evt->field_0C)) {
             PartyGaugeAddClamped(&cf::CBattleManager::getInstance()->unk194, gauge);
         }
@@ -1809,14 +1809,14 @@ L_chain:
 }
 
 // Arts command dispatch: promotes id 0xCF to 0xD0 while the battle object's
-// +0x3374 bit-0x8000 flag is set, then asks func_80148778 whether the arts
+// +0x3374 bit-0x8000 flag is set, then asks isBattleStatusActive whether the arts
 // container holds the id; when missing, bounces to the object's vtable[0x94].
 void ObjPc_DispatchArtsCmd_A084(cf::CfObjectImplPc* self, u32 param)
 {
     if (param == 0xcf && (self->field_18->field_3374 & 0x8000) != 0) {
         param = 0xd0;
     }
-    if (func_80148778(&self->field_18->mArts, (int)param) == 0) {
+    if (isBattleStatusActive(&self->field_18->mArts, (int)param) == 0) {
         self->vf94(param);
     }
 }
@@ -1892,7 +1892,7 @@ int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self)
     CTaskGame_enumListCtor(holder);
     startEnumObjects(CTaskGame_enumListGet(holder), 0x80000000, 0x800);
     for (u32 i = 0; i < ((cf::CfEnumList*)CTaskGame_enumListGet(holder))->field_620; i++) {
-        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
+        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
             getObjectAt(CTaskGame_enumListGet(holder), i));
         if (obj->mSub.sf4C() == self->field_18->field_3F10) {
             self->field_37C++;
@@ -1955,7 +1955,7 @@ extern "C" void ObjPc_DtorThunk10_A4E4(void* self)
 // Battle event command dispatcher (request mode 0x12): after the scenario
 // token gate, dispatches on the ASCII command name in the event record
 // (+0x1C) against offsets into the string table at lbl_eu_804FC758. Each
-// command drives a different mix of actor refresh (func_8016FE34 of
+// command drives a different mix of actor refresh (MapFx_ResolveOwner of
 // findObjectById over field_3E5C), battle-manager notifications, arts
 // queries and status-effect structs. Every exit shares one tail that
 // replays the landing sound for battle state 4.
@@ -2001,7 +2001,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
             // Actor refresh; retail duplicates the F3970 notify (once in the
             // non-idle branch, once unconditionally).
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)findObjectById(
+                MapFx_ResolveOwner((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -2062,7 +2062,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
             }
             void* q43 = self->field_18->vf290();
             s32 out43;
-            if (q43 != 0 && func_80260264(q43, 0x43, &out43)) {
+            if (q43 != 0 && IdTable_GetSum(q43, 0x43, &out43)) {
                 if (res->v2BC() == 0) {
                     // Damage amount scaled by the idle rate, then fed back
                     // through v11C after the D81A8 cancel.
@@ -2073,7 +2073,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 }
             }
             s32 out60;
-            if (func_80260264(self->field_18->vf290(), 0x60, &out60)) {
+            if (IdTable_GetSum(self->field_18->vf290(), 0x60, &out60)) {
                 addTableValueWithClamp__Q22cf13CfGameManagerFv(
                     self->field_18->field_3F28, res->field_3F28, (u32)out60);
             }
@@ -2084,7 +2084,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
             // Like +7 but drives the arts container with ids 9 / 0xb and
             // notifies with kind 7 (no duplicated call, no query ladder).
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)findObjectById(
+                MapFx_ResolveOwner((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -2106,7 +2106,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
         if (strcmp(cmd, lbl_eu_804FC758 + 0x12) == 0) {
             // Same shape as +0xC minus the arts dispatch, slot 0x5AC.
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)findObjectById(
+                MapFx_ResolveOwner((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -2131,7 +2131,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 break;
             }
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)findObjectById(
+                MapFx_ResolveOwner((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -2145,7 +2145,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
             void* q7a = self->field_18->vf290();
             if (q7a != 0) {
                 s32 o18;
-                if (func_80260264(self->field_18->vf290(), 0x7a, &o18)) {
+                if (IdTable_GetSum(self->field_18->vf290(), 0x7a, &o18)) {
                     dmg = 100 - o18;
                 }
             }
@@ -2171,7 +2171,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 break;
             }
             f32 total = lbl_eu_80666BEC;
-            if (func_80148778(&self->field_18->mArts, 0xc4)) {
+            if (isBattleStatusActive(&self->field_18->mArts, 0xc4)) {
                 cf::CfObjectImplPc149154* p =
                     (cf::CfObjectImplPc149154*)findBattleStatusEntry(
                         &self->field_18->mArts, 0xc4);
@@ -2183,7 +2183,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 f32 scale = lbl_eu_80666BE8;
                 for (s32 i = 0; i < 3; i++) {
                     cf::CfObjectImplPc18* pl =
-                        reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34(
+                        reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
                             (u8*)cf::CfGameManager::getPlayer(i)));
                     if (pl == 0) {
                         continue;
@@ -2193,7 +2193,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                         continue;
                     }
                     s32 w49;
-                    if (func_80260264(pq, 0x49, &w49)) {
+                    if (IdTable_GetSum(pq, 0x49, &w49)) {
                         total += (f32)(((f64)w49 - lbl_eu_80666BE0) / scale);
                     }
                 }
@@ -2214,12 +2214,12 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 break;
             }
             cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)findObjectById(
+                MapFx_ResolveOwner((u8*)findObjectById(
                     (int)((cf::CfObjectImplPc18*)dc)->vFC())));
             if (obj == 0) {
                 break;
             }
-            if (func_80148778(&obj->mArts, 0x116) == 0) {
+            if (isBattleStatusActive(&obj->mArts, 0x116) == 0) {
                 obj->v11C(lbl_eu_80666BF0);
             }
             if (self->field_18->field_3F10 == 0) {

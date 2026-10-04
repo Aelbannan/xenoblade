@@ -22,7 +22,7 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
     if (biased != (CCharVoice*)cf::CfGameManager::getPlayer(0)) {
         return NULL;
     }
-    if (func_802AF388(A) != 0) {
+    if (BmVoice_HasEntry(A) != 0) {
         return NULL;
     }
 
@@ -226,7 +226,7 @@ int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
     CVoiceHandle* h = self;
     CCharVoice* vp = (CCharVoice*)h;
     if (h != NULL) vp = &h->voice;
-    RequestVoicePlayback(vp, func_802AED0C(), 0x1e);
+    RequestVoicePlayback(vp, BmVoice_FindPoolA(), 0x1e);
     return 0;
 }
 
@@ -234,7 +234,107 @@ int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
 // Bit test on the shared voice-ID helper: report whether its second-lowest
 // bit is set.
 int BtlBeg_IsVoiceBit_03A4() {
-    int x = func_802AED0C();
+    int x = BmVoice_FindPoolA();
     return (int)((((u32)(-x) & (u32)(~x)) >> 31) & 1);
 }
+
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_BATTLE_BEGIN.txt): three .rodata typeinfo
+// names (BATTLE_BEGIN exact-fit; the two LIB names sized to absorb the
+// retail pad), four .data init-state triples ({0, -1, callback}), the
+// 8-word thread vtable ({typeinfo, 0, play, remove, playGate, alwaysTrue,
+// nullDispatch, 0}), two trailing mixed pointer/constant blocks, and three
+// .sdata typeinfo objects ({name, trailing-or-0}). Global-scope data
+// symbols: MWCC does not mangle them.
+//
+// NOTE (frozen-rule residual): this TU carries a UNIT_RULES
+// extern_data_sections=(".data", ".rodata", ".sdata") entry that
+// zeroes these sections in the link-time reloc.o. The retail split object
+// genuinely carries them (0x80/0x48/0x18, reconstructed byte-identical
+// below), so that rule entry is stale and should be removed; until then
+// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the CCharVoiceMan range and is referenced, not defined, here.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_8053ACA0[3];
+extern u32 lbl_eu_8053ACD8[8];
+extern u32 lbl_eu_8053ACF8[4];
+extern u32 lbl_eu_80662E10[2];
+extern u32 lbl_eu_80662E18[2];
+extern u32 lbl_eu_80662E20[2];
+
+extern const char lbl_eu_805134A8[] = "cf::CVS_THREAD_BATTLE_BEGIN";
+extern const char lbl_eu_805134C4[0x14] = "cf::EVS_THREAD_LIB";
+extern const char lbl_eu_805134D8[0x18] = "cf::CVS_THREAD_LIB";
+
+u32 lbl_eu_8053AC88[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)BtlBeg_InitSlots_FC54,
+};
+
+u32 lbl_eu_8053AC94[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)BtlBeg_ReinitSlots_FCC8,
+};
+
+u32 lbl_eu_8053ACA0[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)BtlBeg_AdvanceSlot_00EC,
+};
+
+u32 lbl_eu_8053ACAC[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)BtlBeg_ReinitSlots_FCC8,
+};
+
+u32 lbl_eu_8053ACB8[8] = {
+    (u32)lbl_eu_80662E10,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)BtlBeg_RemoveVoice_01B0,
+    (u32)BtlBeg_PlayGate_033C,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+    0,
+};
+
+u32 lbl_eu_8053ACD8[8] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    (u32)lbl_eu_80662E18,
+    0x80000021,
+    1,
+    (u32)lbl_eu_80662E20,
+    0x21,
+    0,
+};
+
+u32 lbl_eu_8053ACF8[4] = {
+    (u32)lbl_eu_80662E20,
+    0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662E10[2] = {
+    (u32)lbl_eu_805134A8,
+    (u32)lbl_eu_8053ACD8,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662E18[2] = {
+    (u32)lbl_eu_805134C4,
+    (u32)lbl_eu_8053ACF8,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662E20[2] = {
+    (u32)lbl_eu_805134D8,
+    0,
+};
+
 

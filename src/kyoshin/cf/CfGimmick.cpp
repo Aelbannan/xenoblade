@@ -108,7 +108,7 @@ public:
 } // namespace cf
 
 // Builds/inverts the gimmick collider placement matrix (see definition below).
-void func_802089BC(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
+void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
 
 using namespace cf;
 
@@ -121,7 +121,7 @@ namespace cf {
     }
 
     void CfGimmick::CfGimmick_UpdateColliderMatrix() {
-        func_802089BC((CfGimmick*)((char*)this + 0x1c), (const f32*)((char*)this + 4),
+        CfGimmick_BuildColliderMtx((CfGimmick*)((char*)this + 0x1c), (const f32*)((char*)this + 4),
                       (const CfGimmickVec3*)((char*)this + 0x10));
     }
 
@@ -157,7 +157,7 @@ cf::CfGimmick::~CfGimmick() {}
 // invert it in place.  field_44 records which placement shape was selected.
 // Retail never CSEs the float-pool constants: every test reloads lbl_eu_80668350
 // via lfs, so the source references the globals directly (no zero/one locals).
-void func_802089BC(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
+void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
     f32* m = ((nw4r::math::MTX34*)self)->m[0];
 
     if (self->field_38 > lbl_eu_80668350)
@@ -434,7 +434,7 @@ extern "C" void CfGimmick_TriggerSound2CC8(u32 id) { CtrlRemote_SetSharedBit(id 
 // Party/rotation-gated checker dispatch: when mask has the party bits (0x21)
 // the loaded-party flag and matching party id must hold; when mask has the
 // rotation bit (0x4) the heading dot-product and side tests must pass.  Only
-// then is the per-gimmick jumptable checker invoked (mirrors func_802098EC's
+// then is the per-gimmick jumptable checker invoked (mirrors CfGimmick_QueryTrigger's
 // guarded section).  The scaled angle is recomputed per Sin/Cos call (no
 // local) to match retail's caller-saved FPR budget (f29-f31 only).
 int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
@@ -494,7 +494,7 @@ rotation:
 // scan, 0x00800000 enable player scan after it, 0x01000000 player 0 only
 // (otherwise all players minus the 0x10<<i presence bits).  When neither the
 // fight-list nor the bc&4 enemy-list path runs, players are scanned alone.
-int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
+int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId) {
     int partyValid = 0;
     if (mask & 0x21) {
@@ -823,7 +823,7 @@ extern "C" void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self) {
     }
 }
 
-// Message-format gate shared by func_8020A484 / func_8020A6B0.
+// Message-format gate shared by CfGimmick_PostGimmickName / CfGimmick_UpdateProximity.
 unsigned int CfGimmick_IsMessageSystemBusy();
 
 // Look up a gimmick name from the bdat table: resolve the column for the
@@ -832,7 +832,7 @@ unsigned int CfGimmick_IsMessageSystemBusy();
 // gated on UIWin_GetInstance() (message system loaded) and SysWinGetSingleton() being
 // zero (via the inlined CfGimmick_IsMessageSystemBusy boolean).  When the row is out of range
 // (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
-extern "C" int func_8020A484(int index) {
+extern "C" int CfGimmick_PostGimmickName(int index) {
     // One reused `name` local: retail colors the bdat/column-string web and
     // the cap/default-name web into r31/r30 respectively.
     u8* bdat;
@@ -903,7 +903,7 @@ extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     return lbl_eu_80662788;
 }
 
-void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
+void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
                    s32 index, s32 mod, s32 arg7) {
     // Distance from the fixed reference point to the requested position.
     // VEC3Sub's paired-single kernel reproduces retail's psq_l/ps_sub/psq_st
@@ -1023,7 +1023,7 @@ int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const CfGimmickVec3* point, con
 // the reference vector, and after transforming it into the gimmick's local
 // space it must lie inside the horizontal radius (field_30) and vertical
 // band [field_38, field_34].
-int func_8020A928(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerCylinderLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     // SDK VEC3Sub + VEC3LenSq kernels reproduce the retail paired-single
     // distance block.
     nw4r::math::VEC3 diff;
@@ -1059,7 +1059,7 @@ int CfGimmick_CheckerBoxExtent(CfGimmick* self, const CfGimmickVec3* point, cons
 // distance math goes through the nw4r VEC3Sub/VEC3LenSq helpers, whose
 // inlined paired-single kernels reproduce retail's psq_l/ps_sub/ps_mul/
 // ps_madd/ps_sum0 sequence.
-int func_8020AA8C(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+int CfGimmick_CheckerBoxLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     nw4r::math::VEC3 diff;
     VEC3Sub(&diff, (const nw4r::math::VEC3*)center, (const nw4r::math::VEC3*)point);
     // Success path nested inside the radius test keeps one shared fail-exit
@@ -1127,8 +1127,8 @@ __declspec(section ".data") __attribute__((used))
 CfGimmickChecker jumptable_eu_80535830[5] = {
     (CfGimmickChecker)CfGimmick_CheckerKind0Always,
     (CfGimmickChecker)CfGimmick_CheckerCylinderXZ,
-    (CfGimmickChecker)func_8020A928,
+    (CfGimmickChecker)CfGimmick_CheckerCylinderLocal,
     (CfGimmickChecker)CfGimmick_CheckerBoxExtent,
-    (CfGimmickChecker)func_8020AA8C,
+    (CfGimmickChecker)CfGimmick_CheckerBoxLocal,
 };
 }

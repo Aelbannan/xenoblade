@@ -6,7 +6,7 @@
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);
 
 // Accessor teardown helper (code_80135FDC.cpp); retail symbol is the
 // Itanium-mangled name, so declare unmangled.
@@ -38,7 +38,7 @@ public:
     u8 unk55; // 0x55 - pending update-mark
 };
 
-// Opaque battle-side object returned by func_8016FE34 (touched by Move).
+// Opaque battle-side object returned by MapFx_ResolveOwner (touched by Move).
 struct CUIBattleActor {
     u8 unk00[0x4];
     void* field_04;                   // 0x04 - queried sub-object (vtable slot 0x30)
@@ -64,10 +64,10 @@ extern "C" bool CMenuArtsSelect_isFinished();
 extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self);
 extern "C" CUIBattleManager* __ct__CUIBattleManager(
     CUIBattleManager* self, CScnNw4r* pScene, mtl::ALLOC_HANDLE handle);
-extern "C" CUIBattleChild* func_8012F5F8();
-extern "C" CUIBattleChild* func_8012F750(u32 arg);
-extern "C" void func_8012FAA8();
-extern "C" void func_8012F87C(u32 arg);
+extern "C" CUIBattleChild* UIBattleCreatePlayerState();
+extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg);
+extern "C" void UIBattleReleaseAll();
+extern "C" void UIBattleRemoveAll(u32 arg);
 
 // Minimal IUIBattle interface tag. Retail instantiates reslist<IUIBattle>
 // (dtors __dt___reslist_base_IUIBattle / __dt__reslist_IUIBattle) whose nodes
@@ -100,7 +100,7 @@ class CUIBattleManager : public CTTask<CUIBattleManager>, public IWorkEvent {
 public:
     static CUIBattleManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
 
-    static void func_8012F87C(u32);
+    static void UIBattleRemoveAll(u32);
 
     void Init();
     void Move();
@@ -149,14 +149,14 @@ private:
     friend void* UIBattleFindPartyTimg(const char* name);
     // Retail file-cancel / busy-flag free functions over the private handles.
     friend void UIBattleCancelPendingLoads(CUIBattleManager* self);
-    friend int func_8012E6DC();
+    friend int UIBattleHasPendingLoads();
     // Teardown / create-bind / release helpers over the private fields.
     friend void __dt__8012E534(CUIBattleManager* self);
-    friend int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt);
-    friend CUIBattleChild* func_8012F5F8();
-    friend CUIBattleChild* func_8012F750(u32 arg);
-    friend void func_8012FAA8();
-    friend void func_8012F87C(u32 arg);
+    friend int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt);
+    friend CUIBattleChild* UIBattleCreatePlayerState();
+    friend CUIBattleChild* UIBattleCreateVisionMenu(u32 arg);
+    friend void UIBattleReleaseAll();
+    friend void UIBattleRemoveAll(u32 arg);
     // Flat retail ctor symbol (CQuestWindow idiom): global free function with
     // C linkage, friended for member access during construction.
     friend CUIBattleManager* __ct__CUIBattleManager(CUIBattleManager* self,

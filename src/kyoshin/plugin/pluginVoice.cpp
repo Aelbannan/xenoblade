@@ -8,11 +8,21 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/util.hpp"
 
-// Retail data labels referenced by voice_play.
-extern const char lbl_eu_80513988[];
-extern PluginFuncData lbl_eu_8053B880[];
-extern float lbl_eu_80669008;
-extern float lbl_eu_8066900C;
+// Retail data sections (all defined by this TU): .rodata plugin name "voice",
+// .sdata2 voice-playback floats + entry name "play" + trailing pool floats
+// (splitter's generic names), .data PluginFuncData table {name, func}
+// terminated by {NULL, NULL}. voice_play reads the first two floats via
+// sda21; the trailing 1.0f/0.5f ride in this TU's sdata2 pool (retail layout).
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80513988[0x8] = "voice";
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80669008 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_8066900C = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80669010[0x8] = "play";
+__declspec(section ".sdata2") __attribute__((used)) float float_8066B818 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) float float_8066B81C = 0.5f;
+__declspec(section ".data") __attribute__((used)) PluginFuncData lbl_eu_8053B880[2] = {
+    { lbl_eu_80669010, voice_play },
+    { 0, 0 },
+};
 
 int voice_play(VMThread* pThread) {
     VoiceActorListNode* node;

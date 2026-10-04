@@ -50,7 +50,7 @@ void Class_80296898::init(){
     mConfigData[0x2A] = 5;
 
     // Retail reads from the global singleton at offset 0x1C (mConfigData[0x0C])
-    func_eu_802B14F8(lbl_eu_805772C8.mConfigData[0x0C] != 0);
+    setErrMesLanguage(lbl_eu_805772C8.mConfigData[0x0C] != 0);
 }
 
 // Overwrite the full configuration from external source.
@@ -62,5 +62,5 @@ void updateConfig(u8* src){
         lbl_eu_805772C8.mFrameCount = 0xA;
     }
 
-    func_eu_802B14F8(lbl_eu_805772C8.mConfigData[0x0C] != 0);
+    setErrMesLanguage(lbl_eu_805772C8.mConfigData[0x0C] != 0);
 }

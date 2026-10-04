@@ -454,7 +454,7 @@ extern "C" u32 Bdat_GetRowBase_B41C(void* p) {
 }
 
 #pragma dont_inline on
-extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
+extern "C" u32 Bdat_GetFlagValue(void* bdat, const char* col1, s32 row, const char* col2){
     const char* col1Arg;
     s32 rowArg;
     const char* col2Arg;
@@ -763,7 +763,7 @@ extern "C" int getFlagVal(VMThread* t, void* bdat) {
     row = vmArgIntGet(3, vmArgPtrGet(thread, 2));
     col2 = vmArgStringGet(4, vmArgPtrGet(thread, 3));
     result.type = VM_TYPE_INT;
-    result.value.uintVal = func_eu_8003B488(bdatTbl, col1, row, col2);
+    result.value.uintVal = Bdat_GetFlagValue(bdatTbl, col1, row, col2);
     vmRetValSet(thread, &result);
     return 1;
 }

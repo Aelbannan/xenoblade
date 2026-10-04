@@ -32,13 +32,13 @@ struct PtmfNullTriple {
 // unmangled names, so the declarations/definitions keep C linkage.
 extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self);
 extern "C" void setKeyAssignLabels(CMenuKeyAssign* self, char* str, int idx);
-extern "C" void func_801159DC(CMenuKeyAssign* self);
+extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self);
 
 // Open the key-assign menu: state is the remap-column base index (also the
 // mField_78 open state), count is the number of columns to show, mode selects
 // the special 3-column layout. Retail emits these under the unmangled names.
-extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mode);
-extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode);
+extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count, int mode);
+extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode);
 
 // us-8011492c - CMenuKeyAssign::~CMenuKeyAssign
 // Complete-object destructor. The UnkClass_8045F564 scratch region at +0x64 is
@@ -117,7 +117,7 @@ void CMenuKeyAssign::Term() {
 // Per-frame input handling: gate prefix (task busy / global bits / scene
 // active / presentation flags / menu state), then dispatch on battle vs
 // non-battle state, pad bits and the arts-select singleton to open the key-
-// assign menu (func_80115060 / func_801154D0 / func_801159DC). The retail
+// assign menu (openKeyAssignColumns / openKeyAssignButtons / openKeyAssignPlayer). The retail
 // vf128 arts-gauge call is intentionally OUTSIDE the artsState null guard
 // (retail dereferences the possibly-null pointer - mirrored exactly).
 void CMenuKeyAssign::Move() {
@@ -144,7 +144,7 @@ void CMenuKeyAssign::Move() {
 
     CMenuKeyAssignPlayer* player =
         (CMenuKeyAssignPlayer*)cf::CfGameManager::getPlayer(0);
-    CMenuKeyAssignActor* arts = (CMenuKeyAssignActor*)func_8016FE34(player);
+    CMenuKeyAssignActor* arts = (CMenuKeyAssignActor*)MapFx_ResolveOwner(player);
     CPad* pad = cf::CfGameManager::getCurrentPad();
 
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
@@ -160,22 +160,22 @@ void CMenuKeyAssign::Move() {
             bool inRange = phase >= 1 && phase <= 0x18;
             if (inRange) {
                 if (CMenuArtsSelect_IsAvailable() != 0) {
-                    func_80115060(self, 0x19, 1, 0);
+                    openKeyAssignColumns(self, 0x19, 1, 0);
                     goto done;
                 }
-                func_80115060(self, 0x18, 1, 0);
+                openKeyAssignColumns(self, 0x18, 1, 0);
                 goto done;
             }
         }
         if ((pad->mHeldButtonFlags & 0x10) != 0) {
             int b = battleCommuIsActive();
-            if (b == 0 && func_8017FD44() == 0) {
-                func_801154D0(self, 9, 10, 13, 12, 0, 1);
+            if (b == 0 && GetZealObjPtr() == 0) {
+                openKeyAssignButtons(self, 9, 10, 13, 12, 0, 1);
                 goto done;
             }
         }
         if (CMainMenu_IsOpen() != 0) {
-            func_80115060(self, 0x16, 2, 0);
+            openKeyAssignColumns(self, 0x16, 2, 0);
             goto done;
         }
         if (CMenuArtsSelect_isCreated() != 0) {
@@ -186,7 +186,7 @@ void CMenuKeyAssign::Move() {
                     if ((pad->mHeldButtonFlags & 8) != 0) {
                         int b2 = battleCommuIsActive();
                         if (battleMode == 0 && b2 == 0 &&
-                            func_8017FD44() == 0) {
+                            GetZealObjPtr() == 0) {
                             CMenuKeyAssignBattleMgr* bmv =
                                 (CMenuKeyAssignBattleMgr*)bm;
                             u32 cnt = 0;
@@ -197,9 +197,9 @@ void CMenuKeyAssign::Move() {
                                 cnt++;
                             }
                             if (cnt > 1) {
-                                func_801159DC(self);
+                                openKeyAssignPlayer(self);
                             } else {
-                                func_80115060(self, 3, 1, 0);
+                                openKeyAssignColumns(self, 3, 1, 0);
                             }
                             handled = 1;
                             goto artsDone;
@@ -207,35 +207,35 @@ void CMenuKeyAssign::Move() {
                     }
                     switch (player->mSub38->mState36C) {
                     case 1:
-                        func_80115060(self, player->mSub38->mCount370 + 0x1b, 0, 0);
+                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1b, 0, 0);
                         handled = 1;
                         break;
                     case 2:
-                        func_80115060(self, player->mSub38->mCount370 + 0x1c, 0, 0);
+                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1c, 0, 0);
                         handled = 1;
                         break;
                     case 3:
-                        func_80115060(self, player->mSub38->mCount370 + 0x1d, 0, 0);
+                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1d, 0, 0);
                         handled = 1;
                         break;
                     case 4:
                         if (player->mSub38->mCount370 == 1) {
-                            func_80115060(self, 0x1e, 0, 0);
+                            openKeyAssignColumns(self, 0x1e, 0, 0);
                         } else {
-                            func_80115060(self, 0x1f, 0, 0);
+                            openKeyAssignColumns(self, 0x1f, 0, 0);
                         }
                         handled = 1;
                         break;
                     case 7:
-                        func_80115060(self, player->mSub38->mCount370 + 0x25, 0, 0);
+                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x25, 0, 0);
                         handled = 1;
                         break;
                     case 8:
-                        func_80115060(self, player->mSub38->mCount370 + 0x26, 0, 0);
+                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x26, 0, 0);
                         handled = 1;
                         break;
                     default:
-                        func_80115060(self, 0x1a, 1, 0);
+                        openKeyAssignColumns(self, 0x1a, 1, 0);
                         break;
                     }
                     goto artsDone;
@@ -244,22 +244,22 @@ void CMenuKeyAssign::Move() {
             // arts == 0 or testActorStatus == 0: retail dereferences arts here.
             f32 gauge = ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
             if (gauge <= lbl_eu_80667078) {
-                func_801154D0(self, 0x18, 1, 9, 0, 0, 1);
+                openKeyAssignButtons(self, 0x18, 1, 9, 0, 0, 1);
             } else {
-                func_801154D0(self, 1, 2, 9, 0, 0, 1);
+                openKeyAssignButtons(self, 1, 2, 9, 0, 0, 1);
             }
             handled = 1;
         artsDone:
             if (handled == 0) {
                 if (CMenuArtsSelect_IsAvailable() != 0) {
-                    func_80115060(self, 0x19, 1, 0);
+                    openKeyAssignColumns(self, 0x19, 1, 0);
                     goto done;
                 }
                 if (battleMode != 0) {
-                    func_801154D0(self, 0x18, 9, 0, 0, 0, 1);
+                    openKeyAssignButtons(self, 0x18, 9, 0, 0, 0, 1);
                     goto done;
                 }
-                func_801154D0(self, 0x18, 1, 9, 0, 0, 1);
+                openKeyAssignButtons(self, 0x18, 1, 9, 0, 0, 1);
                 goto done;
             }
         }
@@ -286,51 +286,51 @@ void CMenuKeyAssign::Move() {
                                     ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                                 switch (st) {
                                 case 3:
-                                    func_80115060(self, 0x10, 1, 0);
+                                    openKeyAssignColumns(self, 0x10, 1, 0);
                                     goto done;
                                 case 2:
-                                    func_80115060(self, 0x11, 2, 0);
+                                    openKeyAssignColumns(self, 0x11, 2, 0);
                                     goto done;
                                 case 9:
-                                    func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 default:
-                                    func_80115060(self, 0xf, 1, 0);
+                                    openKeyAssignColumns(self, 0xf, 1, 0);
                                     goto done;
                                 }
                             }
                             if ((flags & 0x4000) || (flags & 0x8000)) {
                                 switch (((CActorTargetView*)target)->mType91) {
                                 case 6:
-                                    func_80115060(self, 0x15, 1, 0);
+                                    openKeyAssignColumns(self, 0x15, 1, 0);
                                     goto done;
                                 case 0xc:
-                                    func_80115060(self, 0x14, 1, 0);
+                                    openKeyAssignColumns(self, 0x14, 1, 0);
                                     goto done;
                                 case 9:
-                                    func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 case 0xa:
-                                    func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 case 0xb:
-                                    func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 default:
-                                    func_80115060(self, 0x13, 1, 0);
+                                    openKeyAssignColumns(self, 0x13, 1, 0);
                                     goto done;
                                 }
                             }
-                            func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                            openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                             goto done;
                         }
-                        func_80115060(self, 0xe, 1, 0);
+                        openKeyAssignColumns(self, 0xe, 1, 0);
                         goto done;
                     }
-                    func_80115060(self, 0xe, 1, 0);
+                    openKeyAssignColumns(self, 0xe, 1, 0);
                     goto done;
                 }
-                func_80115060(self, 0xe, 1, 0);
+                openKeyAssignColumns(self, 0xe, 1, 0);
                 goto done;
             }
         }
@@ -341,13 +341,13 @@ void CMenuKeyAssign::Move() {
                 id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                 if (id != 0) {
                     if (findObjectById(id) != 0) {
-                        func_801154D0(self, 1, 2, 9, 0, 0, 1);
+                        openKeyAssignButtons(self, 1, 2, 9, 0, 0, 1);
                         goto done;
                     }
                 }
             }
         }
-        func_80115060(self, 0xe, 1, 0);
+        openKeyAssignColumns(self, 0xe, 1, 0);
         goto done;
     }
 
@@ -364,28 +364,28 @@ void CMenuKeyAssign::Move() {
         bool inRange = phase >= 1 && phase <= 0x18;
         if (inRange) {
             if (CMenuArtsSelect_IsAvailable() != 0) {
-                func_80115060(self, 0x19, 1, 0);
+                openKeyAssignColumns(self, 0x19, 1, 0);
                 goto done;
             }
-            func_80115060(self, 0x18, 1, 0);
+            openKeyAssignColumns(self, 0x18, 1, 0);
             goto done;
         }
     }
     if ((pad->mHeldButtonFlags & 0x800) != 0) {
         int b = battleCommuIsActive();
-        if (b == 0 && func_8017FD44() == 0) {
-            func_801154D0(self, 9, 10, 13, 12, 0, 1);
+        if (b == 0 && GetZealObjPtr() == 0) {
+            openKeyAssignButtons(self, 9, 10, 13, 12, 0, 1);
             goto done;
         }
     }
     if (CMainMenu_IsOpen() != 0) {
-        func_80115060(self, 0x16, 2, 0);
+        openKeyAssignColumns(self, 0x16, 2, 0);
         goto done;
     }
     if ((pad->mHeldButtonFlags & 0x1000) != 0) {
         if (battleMode == 0) {
             int b = battleCommuIsActive();
-            if (b == 0 && func_8017FD44() == 0) {
+            if (b == 0 && GetZealObjPtr() == 0) {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
                     if (testActorStatus(arts, &id, 0x803) != 0) {
@@ -399,10 +399,10 @@ void CMenuKeyAssign::Move() {
                             cnt++;
                         }
                         if (cnt > 1) {
-                            func_801159DC(self);
+                            openKeyAssignPlayer(self);
                             goto done;
                         }
-                        func_80115060(self, 3, 1, 0);
+                        openKeyAssignColumns(self, 3, 1, 0);
                         goto done;
                     }
                 }
@@ -412,14 +412,14 @@ void CMenuKeyAssign::Move() {
                         f32 gauge =
                             ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
                         if (gauge <= lbl_eu_80667078) {
-                            func_80115060(self, 1, 1, 0);
+                            openKeyAssignColumns(self, 1, 1, 0);
                             goto done;
                         }
-                        func_80115060(self, 1, 2, 0);
+                        openKeyAssignColumns(self, 1, 2, 0);
                         goto done;
                     }
                 }
-                func_80115060(self, 0, 0, 0);
+                openKeyAssignColumns(self, 0, 0, 0);
                 goto done;
             }
         }
@@ -431,45 +431,45 @@ void CMenuKeyAssign::Move() {
             if (testActorStatus(arts, &id, 0x803) != 0) {
                 switch (player->mSub38->mState36C) {
                 case 1:
-                    func_80115060(self, player->mSub38->mCount370 + 0x1b, 0, 0);
+                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1b, 0, 0);
                     handled = 1;
                     break;
                 case 2:
-                    func_80115060(self, player->mSub38->mCount370 + 0x1c, 0, 0);
+                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1c, 0, 0);
                     handled = 1;
                     break;
                 case 3:
-                    func_80115060(self, player->mSub38->mCount370 + 0x1d, 0, 0);
+                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1d, 0, 0);
                     handled = 1;
                     break;
                 case 4:
                     if (player->mSub38->mCount370 == 1) {
-                        func_80115060(self, 0x1e, 0, 0);
+                        openKeyAssignColumns(self, 0x1e, 0, 0);
                     } else {
-                        func_80115060(self, 0x1f, 0, 0);
+                        openKeyAssignColumns(self, 0x1f, 0, 0);
                     }
                     handled = 1;
                     break;
                 case 7:
-                    func_80115060(self, player->mSub38->mCount370 + 0x25, 0, 0);
+                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x25, 0, 0);
                     handled = 1;
                     break;
                 case 8:
-                    func_80115060(self, player->mSub38->mCount370 + 0x26, 0, 0);
+                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x26, 0, 0);
                     handled = 1;
                     break;
                 default:
-                    func_80115060(self, 0x1a, 1, 0);
+                    openKeyAssignColumns(self, 0x1a, 1, 0);
                     break;
                 }
             }
         }
         if (handled == 0) {
             if (CMenuArtsSelect_IsAvailable() != 0) {
-                func_80115060(self, 0x19, 1, 0);
+                openKeyAssignColumns(self, 0x19, 1, 0);
                 goto done;
             }
-            func_80115060(self, 0x18, 1, 0);
+            openKeyAssignColumns(self, 0x18, 1, 0);
             goto done;
         }
     }
@@ -496,55 +496,55 @@ void CMenuKeyAssign::Move() {
                                 ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                             switch (st) {
                             case 3:
-                                func_80115060(self, 0x10, 1, 0);
+                                openKeyAssignColumns(self, 0x10, 1, 0);
                                 goto done;
                             case 2:
-                                func_80115060(self, 0x11, 2, 0);
+                                openKeyAssignColumns(self, 0x11, 2, 0);
                                 goto done;
                             case 9:
-                                func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             default:
-                                func_80115060(self, 0xf, 1, 0);
+                                openKeyAssignColumns(self, 0xf, 1, 0);
                                 goto done;
                             }
                         }
                         if ((flags & 0x4000) || (flags & 0x8000)) {
                             switch (((CActorTargetView*)target)->mType91) {
                             case 6:
-                                func_80115060(self, 0x15, 1, 0);
+                                openKeyAssignColumns(self, 0x15, 1, 0);
                                 goto done;
                             case 0xc:
-                                func_80115060(self, 0x14, 1, 0);
+                                openKeyAssignColumns(self, 0x14, 1, 0);
                                 goto done;
                             case 9:
-                                func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             case 0xa:
-                                func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             case 0xb:
-                                func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             default:
-                                func_80115060(self, 0x13, 1, 0);
+                                openKeyAssignColumns(self, 0x13, 1, 0);
                                 goto done;
                             }
                         }
-                        func_801154D0(self, 0xe, 0, 0, 0, 0, 0);
+                        openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
                         goto done;
                     }
-                    func_80115060(self, 0xe, 1, 0);
+                    openKeyAssignColumns(self, 0xe, 1, 0);
                     goto done;
                 }
-                func_80115060(self, 0xe, 1, 0);
+                openKeyAssignColumns(self, 0xe, 1, 0);
                 goto done;
             }
-            func_80115060(self, 0xe, 1, 0);
+            openKeyAssignColumns(self, 0xe, 1, 0);
             goto done;
         }
     }
-    func_80115060(self, 0xe, 1, 0);
+    openKeyAssignColumns(self, 0xe, 1, 0);
 done:
     ((void (*)(void*, u32))((void**)self->mLayout)[0x38 / 4])(self->mLayout, 0);
 }
@@ -649,7 +649,7 @@ extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
 // from the texture dimensions (u16 -> f32 via the 0x43300000 magic double),
 // then assigns the button labels through setKeyAssignLabels. The F64Conv pairs are
 // function-scope (their 0x43300000 words are stored once, before the guards).
-extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mode) {
+extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count, int mode) {
     // F64Conv pairs are function-scope (their 0x43300000 words are stored once,
     // before the guards).
     F64Conv ch, cw;
@@ -776,7 +776,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
 // 3-column layout. mField_78 stores (a+b+c+d+e)*100 as the open state. `count`
 // is the index of the first zero id (5 when all non-zero); the ids are kept in
 // a stack array because the loop indexes them by pointer.
-extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode) {
+extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode) {
     F64Conv cw, ch;
     cw.w[0] = 0x43300000;
     ch.w[0] = 0x43300000;
@@ -912,7 +912,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
 // the corresponding "timg" texture and sizes the target pane from the texture
 // dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
 // button labels through setKeyAssignLabels.
-extern "C" void func_801159DC(CMenuKeyAssign* self) {
+extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self) {
     if ((s32)self->mField_78 == 3) {
         return;
     }
@@ -966,9 +966,9 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
     }
 }
 
-// Hide button panes by name (called from Init and func_801159DC). Formats the
+// Hide button panes by name (called from Init and openKeyAssignPlayer). Formats the
 // pane name from the loop index; the 5 extra panes are skipped for i==5
-// (retail shape - the i==5 pane is the one func_801159DC re-labels).
+// (retail shape - the i==5 pane is the one openKeyAssignPlayer re-labels).
 extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self) {
     char buf[0x20];
     int i;

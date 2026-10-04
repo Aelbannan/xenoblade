@@ -300,7 +300,7 @@ public:
 // instantiated; only cast + call a slot, so no vtable is emitted.
 // ---------------------------------------------------------------------------
 
-// func_8016FE34 result (player move record): phantom vtable with the
+// MapFx_ResolveOwner result (player move record): phantom vtable with the
 // battle-active check at 0x2BC (index 173), embedded move sub-object at
 // +0x3E9C, battle-object pointer at +0x3F60.
 class CfWalkPlayerRec {
@@ -701,7 +701,7 @@ struct CfWalkEnumItem {
     u8 field_18;                               // 0x18
 };
 
-// Stack CRect view filled by func_8043E928; a signed 16-bit value is read
+// Stack CRect view filled by insetRectToView; a signed 16-bit value is read
 // back from +0x4.
 struct CfWalkRect4 {
     u8 _00[0x04];                              // 0x00-0x03
@@ -960,15 +960,15 @@ void CfObjectMove_setMoveSpeed(void* player, float value);
 void __dt__80043E88(void* holder, int flags); // canonical void* form (CVision.hpp owner)
 int UIWin_HasPendingUpdate(int v);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-void* func_8016FE34(void* src);
+void* MapFx_ResolveOwner(void* src);
 void CfObjectTbox_ForwardToImpl(void* obj, int flag);
 void UIWin_ControlWindowLists(u32 a, u32 b);
 void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManagerApi.hpp owner)
 void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 void setTargetFlag04(void* obj);
 void setTargetFlag08(void* obj);
-u32 func_800FE7D8(void* obj);
-void func_800FE738();
+u32 Selector_FetchResult(void* obj);
+void Selector_ReissueRequest();
 void ObjPc_BattleEventDispatch_819C();
 void ObjPc_BattleActorScan_86E8(void* self);
 void registerBattleActor(void* mgr, void* obj);
@@ -992,8 +992,8 @@ void* getObjectAt(void* list, u32 index);
 void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
 void* getEntryAt(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
-int func_800FE6A4(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
-int func_80148778(void* obj, int id); // canonical (void*,int) form
+int Selector_IssueRequest(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
+int isBattleStatusActive(void* obj, int id); // canonical (void*,int) form
 
 // Bdat table helpers.
 void* Bdat_GetTable_AA34(void);
@@ -1010,7 +1010,7 @@ void CCharVoiceMan_EnqueueBattleBeginVoice(void* obj);
 void CBattleMan_FireActorEvent918(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int IdTable_QuerySumMaxFloat(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
 int IdTable_QuerySumFloat(void* obj, u32 id, u32* outA, f32* outB);
-int func_80260264(void* obj, u32 id, u32* outA);
+int IdTable_GetSum(void* obj, u32 id, u32* outA);
 void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h, u32 i);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
 int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
@@ -1019,7 +1019,7 @@ void* CBattleMan_FetchVisionObj(void* mgr);
 
 // Action/art play + system helpers.
 void* Scn_SetCamIndex(void* scene, int flag);
-void func_8043E928__5CViewFRQ22ml5CRectP5CView(void* rect, void* view);
+void insetRectToView__5CViewFRQ22ml5CRectP5CView(void* rect, void* view);
 // Scn_IsDefaultScale (monolib/src/scn/CScn.cpp): default-scale probe.
 extern "C" bool Scn_IsDefaultScale(class CScn* scene);
 // isAnyFieldFlagSet__Q22cf13CfGameManagerFv (retail mangled C++ name).

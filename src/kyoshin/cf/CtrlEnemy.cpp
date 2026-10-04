@@ -23,12 +23,12 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self);
 // Retail __ct__cf_CtrlEnemy (0x80087F80): runs the base ctor (passing the
 // parent through), installs the retail vtable, constructs the +0x84 enemy
 // move-controller sub-object (passing the owner as its parent), then stores
-// the func_8016FE34(parent) result at +0x80. Returns self.
+// the MapFx_ResolveOwner(parent) result at +0x80. Returns self.
 void* __ct__cf_CtrlEnemy(cf::CtrlEnemy* self, void* parent) {
     __ct__800D10DC(self, parent);
     *(void**)self = (void*)lbl_eu_80527738;
     __ct__8008A104(&self->mSub84, self);
-    self->field_0x80 = (cf::CtrlEnemyActor*)func_8016FE34(parent);
+    self->field_0x80 = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(parent);
     return self;
 }
 
@@ -105,9 +105,9 @@ void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
     actor = self->field_0x80;
     w2C = *actor->field_04->b030();
     if (testActorStatus(actor, &w2C, 0x18) != 0) goto fail;
-    if (func_80148778((u8*)self->field_0x80 + 0x8, 0xf) != 0) goto fail;
-    if (func_80148778((u8*)self->field_0x80 + 0x8, 0x10) != 0) goto fail;
-    if (func_80148778((u8*)self->field_0x80 + 0x8, 0x9) != 0) goto fail;
+    if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0xf) != 0) goto fail;
+    if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0x10) != 0) goto fail;
+    if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0x9) != 0) goto fail;
     actor = self->field_0x80;
     if (actor->field_3374 & 0x2000) goto fail;
 fail:
@@ -181,7 +181,7 @@ L_8854C:
             self->field_0x80->mSub.s050((u32)enemy);
             if (self->field_0x80->mSub.s00C(0x100) == 0) {
                 self->field_0x80->mSub.s008(0x100);
-                void* obj = func_8016FE34(findObjectById((int)enemy));
+                void* obj = MapFx_ResolveOwner(findObjectById((int)enemy));
                 self->field_0x80->v2C4(obj, lbl_eu_80666574, lbl_eu_80666570,
                                        lbl_eu_80666570);
             }
@@ -212,8 +212,8 @@ L_886DC:
     actor = self->field_0x80;
     w14 = *actor->field_04->b030();
     if (testActorStatus(actor, &w14, 0x4000) != 0) goto L_88744;
-    if (func_80148778((u8*)self->field_0x80 + 0x8, 0x6) != 0) goto L_88744;
-    if (func_80148778((u8*)self->field_0x80 + 0x8, 0xcd) == 0) goto L_8874C;
+    if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0x6) != 0) goto L_88744;
+    if (isBattleStatusActive((u8*)self->field_0x80 + 0x8, 0xcd) == 0) goto L_8874C;
 L_88744:
     self->field_0x14 = lbl_eu_80666570;
 L_8874C:
@@ -356,7 +356,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     // Scan candidates: nearest eligible enemy wins.
     for (i = 0; i < (int)((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
         id = (int)getObjectIdAt(CTaskGame_enumListGet(&holder), i);
-        obj = (cf::CtrlEnemyActor*)func_8016FE34(findObjectById(id));
+        obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(findObjectById(id));
         if (obj->field_3F60 != 0 &&
             (((cf::CtrlEnemySubFlag*)obj->field_3F60)->field_530 & 1) != 0) {
             continue;
@@ -396,7 +396,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
             f32 distSq = diff[2];
             distSq = distSqTmp[0] * distSqTmp[0] + distSqTmp[1] * distSqTmp[1] +
                      distSq * distSq;
-            if (func_80148778((u8*)obj + 8, artId) != 0) {
+            if (isBattleStatusActive((u8*)obj + 8, artId) != 0) {
                 cf::CtrlEnemyArtsInfo* info =
                     (cf::CtrlEnemyArtsInfo*)findBattleStatusEntry((u8*)obj + 8, artId);
                 // Remaining-power ratio, squared, as a double wall.
@@ -444,7 +444,7 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     f32 gauge = *self->field_0x80->v268();
     __ct__800FB044(CTaskGame_enumListGet(&holder), gauge, pos, 0);
     for (u32 i = 0; i < ((cf::CtrlEnemyEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
-        cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)func_8016FE34(
+        cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)MapFx_ResolveOwner(
             findObjectById((int)getObjectIdAt(CTaskGame_enumListGet(&holder), i)));
         if (obj == 0) continue;
         int objId = obj->v0E0();

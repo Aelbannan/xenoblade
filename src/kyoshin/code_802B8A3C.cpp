@@ -78,7 +78,7 @@ void startOrderThreadPlayback(CVS_THREAD_ORDER* self) {
         return;
     }
 
-    CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34(cf::CfGameManager::getPlayer(0));
+    CVoiceHandle* handle = (CVoiceHandle*)MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0));
     if (handle == NULL) {
         return;
     }
@@ -135,7 +135,7 @@ void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     ((OrderThreadWords*)self)->words[0] = v0;
     ((OrderThreadWords*)self)->words[2] = src[1];
 
-    handle = (CVoiceHandle*)func_8016FE34(cf::CfGameManager::getPlayer(0));
+    handle = (CVoiceHandle*)MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0));
     count = HpVoice_CollectIdle(arr, 3, handle);
 
     // Counter/walker loop matching retail's register layout: reusing
@@ -163,22 +163,22 @@ int getOrderThreadBufferSize(CVS_THREAD_ORDER* self) {
     return CVS_THREAD_ORDER::BUFFER_SIZE;
 }
 
-// us-802bb7bc (func_802B8D4C)
+// us-802bb7bc (requestOrderConfigVoice)
 // Resolve a config entry from the player's voice selector; failing that, walk
 // the gimmick list comparing each object's name against 0x803. Play the found
 // entry's voice. Returns 0 unconditionally.
-int func_802B8D4C() {
+int requestOrderConfigVoice() {
     OrderConfigEntry* cfg;
 
     // First resolution path: player's embedded voice selector. The virtual
     // probe runs on the biased voice pointer (handle + 0x3E9C), which retail
     // fuses into an lwzu.
-    CVoiceHandle* handle = (CVoiceHandle*)func_8016FE34((void*)cf::CfGameManager::getPlayer(0));
+    CVoiceHandle* handle = (CVoiceHandle*)MapFx_ResolveOwner((void*)cf::CfGameManager::getPlayer(0));
     if (handle == NULL) {
         cfg = NULL;
     } else {
         int sel = ((CVoiceSelView*)&handle->voice)->mAt4C();
-        GimmickHandleData* src = (GimmickHandleData*)func_8016FE34(findObjectById(sel));
+        GimmickHandleData* src = (GimmickHandleData*)MapFx_ResolveOwner(findObjectById(sel));
         if (src == NULL) {
             cfg = NULL;
         } else {

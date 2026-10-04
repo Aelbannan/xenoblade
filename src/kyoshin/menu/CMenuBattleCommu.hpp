@@ -69,7 +69,7 @@ public:
     virtual u32* getActorId();        // +0x30
 };
 
-// Actor/voice-action handle returned by func_8016FE34.
+// Actor/voice-action handle returned by MapFx_ResolveOwner.
 struct CBattleCommuActor2 {
     u8 _00[0x04];
     CBattleCommuActor2Sub* mSub04;    // +0x04
@@ -165,7 +165,7 @@ void removeRenderCB__4CScnFP10IScnRender(CScn* self, IScnRender* cb);
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* self, void* cb,
                                           u32 prio, u32 flag);
 // Battle actor helpers (unmangled retail symbols).
-CBattleCommuActor2* func_8016FE34(CBattleCommuPlayer* source);
+CBattleCommuActor2* MapFx_ResolveOwner(CBattleCommuPlayer* source);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 // Shared ARC resource accessor / message manager.

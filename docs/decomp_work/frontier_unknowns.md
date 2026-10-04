@@ -100,10 +100,10 @@ Only **one** `UnkClass_*` symbol is referenced by the ready frontier:
 
 **Demangled methods:**
 - `initLodTables` — likely constructor; stores computed pointer to static
-- `func_80463118` — reads u16 at `this+0x0`, converts to float
-- `func_8046323C` — same pattern as above
-- `func_8046339C` — multiple params, u16-to-float conversion
-- `func_80463590` — same u16-to-float pattern
+- `lerpDistEntry` — reads u16 at `this+0x0`, converts to float
+- `catmullRomBin` — same pattern as above
+- `fetchSampleXY` — multiple params, u16-to-float conversion
+- `findCutBinIdx` — same u16-to-float pattern
 
 **Proposed semantic name: `CLODCacheManagerS`** (17 chars, same-length)
 

@@ -105,9 +105,9 @@ void* getMovieWorkSize__7CLibCriFv(void);
 CREvtMovie* __ct__CREvtMovie(CREvtMovie* self, CREvtMovieScript* scriptData);
 CREvtMovie* __ct__802948D0(CREvtMovie* self, int dealloc_flag);
 void EvtMovie_MaybeAdvance_493C(CREvtMovie* self);
-void func_80294980(CREvtMovie* self);
-void func_80294A70(CREvtMovie* self);
-void func_80294BA4(CREvtMovie* self);
+void EvtMovie_StartPlayback_4980(CREvtMovie* self);
+void EvtMovie_PreloadMovie_4A70(CREvtMovie* self);
+void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 void EvtMovie_Noop_4CB0(void);
 
 } // extern "C"

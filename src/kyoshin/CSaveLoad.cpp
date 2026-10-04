@@ -451,7 +451,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     extern void CSLCur_reset(CSLCur*);
     extern void __ct__UnkClass_8011C974(void*, void*);
     extern void __dt__10CScrollBarFv(void*, int);
-    extern void func_8016742C(void*, void*);
+    extern void InfoCfCopySysWin(void*, void*);
     extern void __dt__7CSysWinFv(void*, int);
 
     // Temp storage; declaration order fixes stack offsets (scrollbar
@@ -528,12 +528,12 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
 
     // Temporary CSysWin for copy initialization of mSysWin98
     __ct__CSysWin(tempSysWin2, 2);
-    func_8016742C(&self->mSysWin98, tempSysWin2);
+    InfoCfCopySysWin(&self->mSysWin98, tempSysWin2);
     __dt__7CSysWinFv(tempSysWin2, -1);
 
     // Temporary CSysWin for copy initialization of mSysWinD4
     __ct__CSysWin(tempSysWin0, 0);
-    func_8016742C(&self->mSysWinD4, tempSysWin0);
+    InfoCfCopySysWin(&self->mSysWinD4, tempSysWin0);
     __dt__7CSysWinFv(tempSysWin0, -1);
 
     return self;
@@ -700,7 +700,7 @@ void CSaveLoad_open(CSaveLoad* p) {
     CScrollBar_UpdateThumb(p->mScrollbar, 3, val);
 
     {
-        void (*fn90994)(CSaveLoad*) = func_80290994;
+        void (*fn90994)(CSaveLoad*) = CSaveLoad_renderSlots;
         fn90994(p);
     }
 }
@@ -953,9 +953,9 @@ noCursor:
     s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
 
 common:
-    func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+    sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
     sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-    func_8022BFC8(&self->mSysWin98, 0);
+    sysWinApplyKind(&self->mSysWin98, 0);
     sysWinOpenPhase1(&self->mSysWin98);
     self->mField128 = 1;
     self->mField121 = 6;
@@ -991,9 +991,9 @@ void CSaveLoad_openDel(CSaveLoad* self) {
     char* s1 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3b);
     char* s2 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3c);
     char* s3 = BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3d);
-    func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+    sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
     sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-    func_8022BFC8(&self->mSysWin98, 0);
+    sysWinApplyKind(&self->mSysWin98, 0);
     sysWinOpenPhase1(&self->mSysWin98);
     self->mField128 = 1;
     self->mField12C = 1;
@@ -1177,7 +1177,7 @@ extern "C" __declspec(noinline) void CSaveLoad_tickWait(CSaveLoad* p) {
 // and sets up the appropriate syswin with strings.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802904B4(CSaveLoad* self) {
+extern "C" __declspec(noinline) void CSaveLoad_tickWindow(CSaveLoad* self) {
     char* s1;
     char* s2;
     char* s3;
@@ -1196,14 +1196,14 @@ extern "C" __declspec(noinline) void func_802904B4(CSaveLoad* self) {
         goto clear12E;
 win54:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
-        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
-        func_8022BFC8(&self->mSysWinD4, 1);
+        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&self->mSysWinD4, 1);
         sysWinOpenPhase1(&self->mSysWinD4);
         goto clear12E;
 win55:
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
-        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
-        func_8022BFC8(&self->mSysWinD4, 1);
+        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&self->mSysWinD4, 1);
         sysWinOpenPhase1(&self->mSysWinD4);
         goto clear12E;
 threeString:
@@ -1219,9 +1219,9 @@ threeString:
         // Single call site
         s3 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2],
                                   msgIdx);
-        func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+        sysWinSetKindContent(&self->mSysWin98, (u32)s1, 0);
         sysWinSetTwoTextValues(&self->mSysWin98, (u32)s2, (u32)s3);
-        func_8022BFC8(&self->mSysWin98, 0);
+        sysWinApplyKind(&self->mSysWin98, 0);
         sysWinOpenPhase1(&self->mSysWin98);
         self->mField128 = 1;
         self->mField12C = 1;
@@ -1236,8 +1236,8 @@ clear12E:
         DevFile_SetByteA9(1);
         CLibHbm::setHbmStopFlag(false);
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
-        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
-        func_8022BFC8(&self->mSysWinD4, 1);
+        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&self->mSysWinD4, 1);
         sysWinOpenPhase1(&self->mSysWinD4);
         playUISound(0x7A);
         return;
@@ -1245,8 +1245,8 @@ clear12E:
 
     if (self->mField129 != 0) {
         s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
-        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
-        func_8022BFC8(&self->mSysWinD4, 1);
+        sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
+        sysWinApplyKind(&self->mSysWinD4, 1);
         sysWinOpenPhase1(&self->mSysWinD4);
         lbl_eu_80662ACC = (u32)(s8)self->mField124;
         self->mField12D = 1;
@@ -1262,8 +1262,8 @@ clear12E:
     DevFile_SetByteA9(1);
     CLibHbm::setHbmStopFlag(false);
     s1 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
-    func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
-    func_8022BFC8(&self->mSysWinD4, 1);
+    sysWinSetKindContent(&self->mSysWinD4, (u32)s1, 0);
+    sysWinApplyKind(&self->mSysWinD4, 1);
     sysWinOpenPhase1(&self->mSysWinD4);
     lbl_eu_80662ACC = (u32)(s8)self->mField124;
     playUISound(0x28);
@@ -1277,7 +1277,7 @@ extern "C" __declspec(noinline) void CSaveLoad_tickSlot(CSaveLoad* p) {
         p->mField121 = 0xb;
         p->mField11C = 3;
         p->mField11E = 0;
-        func_80290994(p);
+        CSaveLoad_renderSlots(p);
     }
 }
 
@@ -1319,7 +1319,7 @@ void CSaveLoad_update(CSaveLoad* self) {
         CSaveLoad_tickWait(self);
         break;
     case 9:
-        func_802904B4(self);
+        CSaveLoad_tickWindow(self);
         break;
     case 10:
     case 11:
@@ -1332,7 +1332,7 @@ void CSaveLoad_update(CSaveLoad* self) {
     CSLCur_update((UnkPtrHolder*)((char*)self + 0x28));
     CScrollBar_UpdateDispatch(self->mScrollbar);
     sysWinDispatchPhase(&self->mSysWin98);
-    func_801D202C((char*)self + 0x40);
+    Cur_Update((char*)self + 0x40);
     sysWinDispatchPhase(&self->mSysWinD4);
     CSLSub_update((CSLCur*)((char*)self + 0x110));
 }
@@ -1410,7 +1410,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
 // Render the save/load screen for all 3 slots.
 // Gets localized strings, sets up text elements, buttons, and scrollbar
 // for each save slot based on slot data (or empty if no data).
-void func_80290994(CSaveLoad* self) {
+void CSaveLoad_renderSlots(CSaveLoad* self) {
     char* strBase = (char*)lbl_eu_8050F7CC;
 
     char* str4a = (char*)BdatTouchStringCell(&strBase[0xa7], &strBase[0xb2], 0x4a);

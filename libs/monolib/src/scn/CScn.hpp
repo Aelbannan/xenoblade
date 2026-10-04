@@ -79,7 +79,7 @@ public:
     virtual void Draw();
     virtual ~CScn();
     void Term();
-    void func_804962B0(u32 a, u32 b, void* str, u32 d);
+    void initSubsystems(u32 a, u32 b, void* str, u32 d);
 
     //0x000: vtable 1 (CTTask)
     //0x000-054: CTTask
@@ -104,19 +104,19 @@ public:
 
 class CView;
 
-extern "C" s32 func_8049AF80(UnkScn68* cam);
-extern "C" CView* func_8049B0A0(UnkScn68* cam, s16 idx);
+extern "C" s32 CamMan_SyncCameraToView(UnkScn68* cam);
+extern "C" CView* CamMan_GetViewThread(UnkScn68* cam, s16 idx);
 extern "C" void* simFwdAnimSetup102(void*, void*, void*, void*, int);
 extern "C" int simFwdAnimReset(int, int, int);
 extern "C" void __ct__8049E710();
 extern "C" void __ct__804820F8();
-extern "C" void func_8049C72C(int);
+extern "C" void startFade(int);
 extern "C" void* isFadeIdle(void*);
 extern "C" void* isFadeSettled(void*);
 extern "C" int CamMan_SwapViewParam_AED4(int);
 extern "C" int CamMan_FindItemA_B158(int);
-extern "C" bool func_8049B240(int);
-extern "C" void* func_8049B2C4(void*);
+extern "C" bool CamMan_FindViewItemA(int);
+extern "C" void* CamMan_FindViewItemB(void*);
 
 // Camera-item payload block copied by Scn_CopyCamProjMatrix: the 64-byte projection
 // matrix (MTX44) at item+0x194.

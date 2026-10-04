@@ -100,8 +100,8 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" void initQstInfo(QstInfo* ptr);
 extern "C" void* __dt__80227030(void* self, int mode);
 extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);
-extern "C" void func_80227660(QstInfo* dst, const QstInfo* src);
-extern "C" void func_8022769C(QstInfo* dst, const QstInfo* src);
+extern "C" void QstCnt_CopyInfoA(QstInfo* dst, const QstInfo* src);
+extern "C" void QstCnt_CopyInfoB(QstInfo* dst, const QstInfo* src);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);

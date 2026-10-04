@@ -1,5 +1,5 @@
 // CVS_THREAD_HAGE: Voice thread variant for "Hage" (bald/bare) audio.
-// FULL_MATCH: func_802A724C -- buffer-size getter (virtual method override).
+// FULL_MATCH: HageGetBufferSize -- buffer-size getter (virtual method override).
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -13,9 +13,9 @@ void HageVxOnComplete(CVS_THREAD_HAGE* self) {
     }
 }
 
-// us-802a9908 (func_802A71D4)
+// us-802a9908 (HageRemoveVoice)
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
+void HageRemoveVoice(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
     DetachThreadVoice(self, voicePtr);
 
     // Slot 0x20: load handle, bias if non-null, compare with voicePtr
@@ -39,12 +39,12 @@ void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
     }
 }
 
-// us-802a97fc (func_802A70C8)
+// us-802a97fc (HageAdvanceSlot2)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
 // the voice is still active (CActorParam slot 138 at 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0xC27).
-void func_802A70C8(CVS_THREAD_HAGE* self) {
+void HageAdvanceSlot2(CVS_THREAD_HAGE* self) {
     if (IsThreadVoiceActive(self) == 0) {
         // v0 declared before p so the lwzu result claims the lower scratch
         // register (retail: r4) and the base pointer takes r5.
@@ -127,13 +127,13 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     return self;
 }
 
-// us-802a96c0 (func_802A6F8C)
+// us-802a96c0 (HageAdvanceSlot1)
 // Advance/play function for voice slot 1 (field_0x20). Uses a weighted
 // random selection: mtRand(4) picks between three specific voice IDs
 // (0xC24, 0xC25, 0xC26) or a dynamic ID based on the slot 2 iterator
 // (iter + 0xC1C) if the iterator check and slot conflict check both pass.
 // Retries until a voice ID is selected, then plays via TryRequestVoice.
-void func_802A6F8C(CVS_THREAD_HAGE* self) {
+void HageAdvanceSlot1(CVS_THREAD_HAGE* self) {
     // Copy init data; slot-1 handle is read mid-copy (between word 0 and
     // word 1 loads) as in retail, so keep the reads interleaved.
     // v0 declared before p so the lwzu result claims the lower scratch

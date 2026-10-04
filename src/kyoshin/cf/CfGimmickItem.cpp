@@ -159,7 +159,7 @@ extern "C" void GimItem_StateDispatch(cf::CfGimmickItem* self) {
     if (self->field_74 & kItemFlagWork) {
         if (self->field_66 & 1) {
             // Attach an item object at the placement point while working.
-            func_8020A6B0(&self->field_7C, &self->vvec04, self->field_6A,
+            CfGimmick_UpdateProximity(&self->field_7C, &self->vvec04, self->field_6A,
                           lbl_eu_8066844C, 0, 0);
         }
         self->field_74 &= ~kItemFlagWork;
@@ -176,7 +176,7 @@ void GimItem_BusyActivate(cf::CfGimmickItem* self) {
     CfGimmick_SetGlobalFlagC0042();
 
     // a busy actor only stays when CfGimmick_IsMessageSystemBusy still reports work, and an
-    // idle one is (re)spawned via func_8020A484 + busy bit.  The two fail
+    // idle one is (re)spawned via CfGimmick_PostGimmickName + busy bit.  The two fail
     // paths branch to the shared `zero` merge (single `li r3,0`); the ready
     // paths set ok=1 and jump straight to the test.
     u32 ok;
@@ -191,7 +191,7 @@ void GimItem_BusyActivate(cf::CfGimmickItem* self) {
             goto zero;
         }
     } else {
-        func_8020A484(self->field_6A);
+        CfGimmick_PostGimmickName(self->field_6A);
         self->field_74 |= kItemFlagBusy;
         ok = 1;
     }
@@ -372,7 +372,7 @@ void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
                 goto zero;
             }
         } else {
-            func_8020A484(self->field_8C);
+            CfGimmick_PostGimmickName(self->field_8C);
             self->field_74 |= kItemFlagBusy;
             ok = 1;
         }
@@ -401,13 +401,12 @@ __declspec(section ".rodata") __attribute__((used, aligned(8)))
 char lbl_eu_80508798[0x14] = "cf::CfGimmickItem";
 // .rodata BDAT column-name pool. Offsets match every lbl_eu_805087AC+N site
 // in the ctor (0x00 rectype .. 0x57 quest_Min); tail zero-pads to 0x64.
-// .rodata BDAT column-name pool as an UNREFERENCED pad object with exact
-// retail bytes. Rationale: defining the code-referenced lbl_eu_805087AC
-// locally perturbs MWCC's whole-function scheduling for the ctor
-// (92.1% -> 21.4% with ANY local def, even zero-init), while an
-// unreferenced object with identical bytes is codegen-neutral (proven by
-// the lbl_eu_80508798 control). lbl_eu_805087AC itself stays extern, so
-// the ctor keeps its baseline schedule; the pad supplies the section bytes.
+// NOTE: this stays an UNREFERENCED pad object with exact retail bytes.
+// Defining the code-referenced lbl_eu_805087AC locally perturbs MWCC's
+// whole-function scheduling for the ctor (92.1% -> 21.4% with ANY local
+// def, even zero-init; re-verified this wave) while the unreferenced pad
+// is codegen-neutral. lbl_eu_805087AC itself stays extern (header decl);
+// closing that row needs a rule-side add_symbols entry (frozen) -- reported.
 __declspec(section ".rodata") __attribute__((used, aligned(4)))
 static char gimmickitem_rodata_87AC_pad[0x64] =
     "rectype\0"
@@ -435,28 +434,28 @@ extern char lbl_eu_80661BE0[];
 extern char lbl_eu_80662708[];
 extern "C" {
 void CfGimmick_DetachManager(void);
-void func_8020F484(void);
+void CfGimmickJump_UpdateState(void);
 void GimNoopB(void);
 void GimNoopC(void);
 void GimNoopD(void);
-void func_8020F38C(void);
+void CfGimmickJump_RefreshMatrices(void);
 void __dt__Q22cf13CfGimmickJumpFv(void*, int);  // ABI deleting dtor
 }
-__declspec(section ".data") __attribute__((used, aligned(8)))
+__declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80535A18[9] = {
     (u32)lbl_eu_806627B0, 0,
     (u32)__dt__Q22cf13CfGimmickJumpFv,
-    (u32)CfGimmick_DetachManager, (u32)func_8020F484,
+    (u32)CfGimmick_DetachManager, (u32)CfGimmickJump_UpdateState,
     (u32)GimNoopB, (u32)GimNoopC,
-    (u32)GimNoopD, (u32)func_8020F38C,
+    (u32)GimNoopD, (u32)CfGimmickJump_RefreshMatrices,
 };
-__declspec(section ".data") __attribute__((used, aligned(8)))
+__declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80535A3C[5] = {
     (u32)lbl_eu_80661BE0, 0, (u32)lbl_eu_80662708, 0, 0,
 };
 // .data PTMF state table: 6 x (this-delta 0, -1 marker, func addr).
 // Func slots are zero in-file (linker fills them); -1 words are immediates.
-__declspec(section ".data") __attribute__((used, aligned(8)))
+__declspec(section ".data") __attribute__((used, aligned(4)))
 char lbl_eu_80535A50[0x48] = {
     0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
@@ -491,6 +490,12 @@ char* lbl_eu_806627B8[2] = { lbl_eu_80668438, lbl_eu_80668440 };
 // dedup (two 0.0f) and exile zero mutable scalars to .sbss2. CONST (Elv
 // precedent): struct members keep exact offsets; code loads stay pool loads.
 // Only this TU uses these names.
+// NOTE (wave DL): giving 80668448/44C/450/454 real per-label definitions was
+// tried and REJECTED -- any TU-visible definition of the code-read labels
+// reschedules the ctor 92.1% -> 21.4% (+4 bytes), and the unreferenced const
+// scalars fold while zero arrays/non-const zeros exile to .sbss2. The bytes
+// are retail-identical through this struct; closing the four name rows needs
+// a rule-side add_symbols entry (frozen table) -- see unit report.
 struct Sdata2_GimmickItem {
     float lod;    // 80668448 0.0f LOD constant
     float dist;   // 8066844C 5.0f spawn distance

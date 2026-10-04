@@ -1,13 +1,13 @@
 #pragma once
 
 #include <types.h>
-// code_800AA008.hpp declares func_800AA714 with C++ linkage; retail keeps
+// code_800AA008.hpp declares Tok_ParseFile with C++ linkage; retail keeps
 // the bare C name (CfBdat.hpp form). Hide it for this include and declare
 // the retail spelling here (single includer: code_800C17DC.cpp).
-#define func_800AA714 code_800C17DC_func_800AA714_hidden
+#define Tok_ParseFile code_800C17DC_Tok_ParseFile_hidden
 #include "kyoshin/code_800AA008.hpp"
-#undef func_800AA714
-extern "C" u32 func_800AA714(const char* path);
+#undef Tok_ParseFile
+extern "C" u32 Tok_ParseFile(const char* path);
 
 // Callback table record at lbl_eu_805739F8 (size 0x28).
 // Owns an array of callbacks invoked by func_800C1EB8; field20 is the index
@@ -34,7 +34,7 @@ extern Unk805739E8 lbl_eu_805739E8;
 // index/id word and a sequence number.  8 bytes, stored `stw pt, off; sth, off+4;
 // sth, off+6`.
 struct TextEntry {
-    u32 hash;      // 0x00  func_800AA714(path) result
+    u32 hash;      // 0x00  Tok_ParseFile(path) result
     u16 field4;    // 0x04  atoi(value) when provided
     u16 field6;    // 0x06  running sequence counter
 };

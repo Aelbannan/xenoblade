@@ -646,7 +646,7 @@ SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
 // The `const void* self` parameter (vs the header's plain `void*`) is
 // deliberate: MWCC's scheduler only hoists the first member load above the
 // LR-save `stw` in the prologue when the self pointer is const-qualified
-// (docs/evidence/decomp/attempts.jsonl func_8049BF0C family: "const self
+// (docs/evidence/decomp/attempts.jsonl EffectActNw4rGetAct48 family: "const self
 // param hoists mpMgr load above LR-save stw"). MWCC accepts the const
 // definition against the header's extern "C" void* declaration and still
 // emits the bare C symbol, so the bytes come out retail-identical.

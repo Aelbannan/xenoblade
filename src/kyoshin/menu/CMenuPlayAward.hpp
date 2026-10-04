@@ -242,7 +242,7 @@ extern const float lbl_eu_806689B8;
 extern const float lbl_eu_806689BC;
 
 // .sdata2 float pool: award-list menu frame-step (8066899C) and clamp
-// (806689A0) for the mField115C accumulator in func_80270454.
+// (806689A0) for the mField115C accumulator in PlayAward_Phase2_HandleInput.
 extern const float lbl_eu_8066899C;
 extern const float lbl_eu_806689A0;
 
@@ -256,13 +256,13 @@ extern const double lbl_eu_806689B0;
 extern unsigned long lbl_eu_806648A0;
 
 // Loaded-BDAT pointer for the award tables (stored by OnFileEvent branch 2
-// from getFP; read by func_80270770's sort/list build).
+// from getFP; read by PlayAward_BuildEntries's sort/list build).
 extern void* lbl_eu_806648A8;
 
 // Second string pool (split .rodata): title/help arc paths used by Init.
 extern char lbl_eu_8050E7A0[];
 
-// .sdata2 float pool: award-list page-progress scale for func_80270770's
+// .sdata2 float pool: award-list page-progress scale for PlayAward_BuildEntries's
 // field_1004 ratio (const * field_1000 / field_1001).
 extern const float lbl_eu_806689AC;
 
@@ -319,10 +319,10 @@ extern "C" void __declspec(noinline) PlayAward_RefreshEntryPanes(CPlayAwardList*
 extern "C" void __declspec(noinline) PlayAward_FlipPage(CPlayAwardList* self);
 extern "C" void __declspec(noinline) PlayAward_MoveCursorUp(CPlayAwardList* self);
 extern "C" void __declspec(noinline) PlayAward_ScrollPageDown(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_80271190(CPlayAwardList* self);
-extern "C" void __declspec(noinline) func_802719F8(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_MoveCursorDown(CPlayAwardList* self);
+extern "C" void __declspec(noinline) PlayAward_LoadEntries(CPlayAwardList* self);
 extern "C" void __declspec(noinline) PlayAward_RefreshPageTitles(CPlayAwardList* self);
-extern "C" void func_80270770(CPlayAwardEntryArray* self);
+extern "C" void PlayAward_BuildEntries(CPlayAwardEntryArray* self);
 extern "C" void __declspec(noinline) PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" __declspec(noinline) u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param);
 
@@ -331,7 +331,7 @@ extern "C" __declspec(noinline) u8* PlayAward_FindEntry(CPlayAwardEntryArray* se
 // retail names).
 extern "C" void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self);
 extern "C" void PlayAward_Phase1_Advance(CMenuPlayAward* self);
-extern "C" void func_80270454(CMenuPlayAward* self);
+extern "C" void PlayAward_Phase2_HandleInput(CMenuPlayAward* self);
 extern "C" void PlayAward_Phase3_RequestClose(CMenuPlayAward* self);
 extern "C" void PlayAward_UpdateList(CPlayAwardList* self);
 extern "C" void PlayAward_LoadLayouts(CPlayAwardList* self);
@@ -379,7 +379,7 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 
-// Title/help bar close + mode-set helpers (func_80270454).
+// Title/help bar close + mode-set helpers (PlayAward_Phase2_HandleInput).
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
@@ -433,7 +433,7 @@ extern "C" void CScrollBar_Teardown(u8* scrollBar);
 extern "C" void CScrollBar_UpdateDispatch(u8* scrollBar);
 extern "C" void CScrollBar_UpdateThumb(u8* scrollBar, int, int);
 extern "C" void CScrollBar_PlaceThumb(u8* scrollBar, u16 val);
-extern "C" void func_801D202C(u8* cursor);
+extern "C" void Cur_Update(u8* cursor);
 
 // Embedded-widget destructors (retail mangled __dt__ names; the widget
 // storages are opaque u8 arrays so the dtor calls are C-ABI imports).

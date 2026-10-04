@@ -234,10 +234,10 @@ bool CLibLayout::wkStandbyLogin() {
         mtl::ALLOC_HANDLE h = mtl::MemManager::create(
             mtl::MemManager::getHandleMEM2(), 0x3FFE0, lbl_eu_805231BC);
         mAllocHandle = h;
-        // Alloc/free callbacks are the extern "C" func_8045F438/func_8045F4E4,
+        // Alloc/free callbacks are the extern "C" layoutAllocCallback/layoutFreeCallback,
         // invoked with the allocator pointer and the requested size/block.
-        mAllocFuncs.allocFunc = &func_8045F438__10CLibLayoutFv;
-        mAllocFuncs.freeFunc = &func_8045F4E4__10CLibLayoutFv;
+        mAllocFuncs.allocFunc = &layoutAllocCallback__10CLibLayoutFv;
+        mAllocFuncs.freeFunc = &layoutFreeCallback__10CLibLayoutFv;
         mAllocator.funcs = &mAllocFuncs;
         mAllocator.heap = NULL;
         mAllocator.heapParam1 = 0x20;
@@ -271,7 +271,7 @@ bool CLibLayout::wkStandbyLogout() {
 // Allocator callback. Resolves the buffer either from the hash table's
 // registered frame heap or from the default accelerator-allocator handle.
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
-void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
+void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // Every access is spelled through the global singleton so MWCC CSEs all
     // the global loads into one anonymous scratch temp (retail keeps the
     // singleton in a scratch reg, not a named local). The volatile views stop
@@ -304,7 +304,7 @@ void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
 }
 #undef CLIBLAYOUT_WORD
 
-void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
+void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // Free callback for the nw4r layout allocator: blocks inside the layout
     // region (or inside a tracked instance's buffer range) go back to the
     // MemManager; anything else is ignored.

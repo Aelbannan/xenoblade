@@ -102,7 +102,7 @@ public:
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0 (total 0x108)
 
     // Script loading thunks for each slot.
-    // noinline: these are retail `bl`-thunks (forward this+name to func_80068ECC);
+    // noinline: these are retail `bl`-thunks (forward this+name to CfScript_LoadScript);
     // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
     void __declspec(noinline) loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
     void func_80068B20(const char* n) { loadSlotZero(n); } // compat
@@ -146,6 +146,6 @@ extern CfScriptPMF lbl_eu_80526DD0[2];
 // Unmangled retail symbols implemented in this TU (C linkage so the emitted
 // symbol names match the retail split verbatim).
 extern "C" {
-    bool func_80068ECC(cf::CfScript* script, const char* name);
+    bool CfScript_LoadScript(cf::CfScript* script, const char* name);
     u32 CfScript_TestFlags(cf::CfScriptManager* mgr, int index, int mask);
 }

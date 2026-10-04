@@ -80,7 +80,7 @@ struct CHelpTableEntry {
 };
 
 // Static help-dispatch table (lbl_eu_80576D08) embedding the CHelp objects
-// func_80295BF4 drives when mField10 is 3 / 5.
+// dispatchScenarioHelp drives when mField10 is 3 / 5.
 struct CHelpManagerTbl {
     u8 pad_00[0x20];
     cf::CHelp mHelp1; // 0x20 (mField10 == 3)
@@ -90,13 +90,13 @@ struct CHelpManagerTbl {
     cf::CHelp mHelp3; // 0x60 (mField10 == 5)
 };
 
-// Battle-object argument for func_80295CC8 (flags word at +0x3F08).
+// Battle-object argument for updateBattleHelpState (flags word at +0x3F08).
 struct CHelpBattleObjArg {
     u8 pad[0x3F08]; // 0x0..0x3F07
     u32 mField3F08; // 0x3F08
 };
 
-// Battle-manager actor-list view used by func_80295CC8: mirrors
+// Battle-manager actor-list view used by updateBattleHelpState: mirrors
 // monolib's reslist/_reslist_base at CBattleManager+0x44 (mActorList3) so
 // the inlined size() walk reproduces retail codegen.
 struct CHelpBmListNode {
@@ -129,7 +129,7 @@ struct CHelpBmView44 {
     CHelpBmResList mList3; // 0x44 (mActorList3)
 };
 
-// Minimal cf::CBattleManager stand-in so func_80295CC8 can call the real
+// Minimal cf::CBattleManager stand-in so updateBattleHelpState can call the real
 // static member: its mangled name is exactly the retail import
 // getInstance__Q22cf14CBattleManagerFv. Only the fields the helper touches
 // are modeled (actor list at +0x44).

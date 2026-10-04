@@ -53,7 +53,7 @@ extern "C" {
     int KyoshinHeap_GetBlk98(int);
     int KyoshinHeap_GetPtrTblA(int, int, int);
     u32 CfRes_lookupNameTable(u32*, int, u32*);
-    int func_800AA600(void*);
+    int Tok_GetPrefix(void*);
     bool KyoshinHeap_HasActive54(void*);
     bool KyoshinHeap_Contains38(void*);
     void KyoshinHeap_Free38(void*);
@@ -82,7 +82,7 @@ extern "C" {
 }
 
 // Main per-entry update tick (defined below).
-bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel);
+bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel);
 
 // Named wrappers (forward decls)
 extern "C" bool testResInfoFlag(u32 flags);
@@ -290,7 +290,7 @@ extern "C" int CfRes_getTypeSlotValue(int unused, ResInfoEntry* self, int param)
 }
 
 // ============================================================
-// func_800661A8 (0xC4) - range check: builds a per-type limit mask, then
+// CfRes_checkLimit (0xC4) - range check: builds a per-type limit mask, then
 // returns value > mask (unsigned). The retail xor/cntlzw/slw/srwi tail is
 // MWCC's branchless expansion of that unsigned comparison.
 // Leading unused int keeps the retail free-function ABI (entry record in r4).
@@ -298,7 +298,7 @@ extern "C" int CfRes_getTypeSlotValue(int unused, ResInfoEntry* self, int param)
 // result; keeping them as labeled cases plus a real `default: return false`
 // preserves the dense 0..10 switch range MWCC needs to emit the retail jump
 // table (Wii/1.1 lowers cheaper switches to a compare chain).
-extern "C" bool func_800661A8(int unused, ResInfoEntry* entry, u32 value, u32 param) {
+extern "C" bool CfRes_checkLimit(int unused, ResInfoEntry* entry, u32 value, u32 param) {
     u32 slot = (param >> 20) & 0x7F;
     u32 mask = 0;
     u8 type = entry->field_0x33;
@@ -390,7 +390,7 @@ extern "C" void CfRes_releaseCachedBase(ResInfoEntry* self, bool cleanup) {
 // ============================================================
 extern "C" void CfRes_attachEntryData(ResInfoEntry* self, u32* data, u32 size) {
     if (self->field_0x2C->getFlags() & 0x18E) {
-        func_80066788(self, 0, 0, 0);
+        CfRes_updateEntry(self, 0, 0, 0);
         self->data = data;
         self->field_0x1C = size;
         self->field_0x00 |= 0x80;
@@ -412,7 +412,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
             for (u32 i = 0; i < *(u32*)((u8*)base + 0x08); p += 16, i++) {
                 // Entry stride is 16 bytes: word 0 is the offset, word 2 (+8) a tag
                 // whose value 0xC..0x11 marks a match (unsigned compare after -0xC).
-                int val = func_800AA600(p + 8) - 0xC;
+                int val = Tok_GetPrefix(p + 8) - 0xC;
                 if ((u32)val <= 5) {
                     result = (u8*)base + *(u32*)(eb + i * 16);
                     break;
@@ -438,7 +438,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u3
         for (u32 i = 0; i < *(u32*)((char*)base + 0x08); p += 0x10, i++) {
             // Entry stride is 16 bytes; word 2 (+8) is a tag whose value
             // 0x12..0x16 marks a match (unsigned compare after -0x12).
-            if ((u32)(func_800AA600(p + 8) - 0x12) <= 4) {
+            if ((u32)(Tok_GetPrefix(p + 8) - 0x12) <= 4) {
                 u32 off = eb[i * 4];
                 *outIdx = eb[i * 4 + 1];
                 result = (char*)base + off;
@@ -454,7 +454,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u3
 // ============================================================
 // Resolves the resource base through the object's lookup and returns the
 // entry whose 8-byte name tag (at base+0x10 + i*0x10 + 8) matches the packed
-// token formatted by func_800AA33C. Categories 14/15 short-circuit on the
+// token formatted by Tok_FormatStr. Categories 14/15 short-circuit on the
 // vtable+0x40 probe instead of the name table.
 extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
     void* base;
@@ -473,7 +473,7 @@ extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
     if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
         ml::FixStr<64> buf(true);
         eb = (u32*)((char*)base + 0x10);
-        func_800AA33C(buf, id, 0, 0);
+        Tok_FormatStr(buf, id, 0, 0);
         cnt = *(u32*)((char*)base + 0x08);
         p = (char*)eb;
         for (u32 i = 0; i < cnt; p += 0x10, i++) {
@@ -488,14 +488,14 @@ extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
 }
 
 // ============================================================
-// func_80066788 (0x4D4) - main update
+// CfRes_updateEntry (0x4D4) - main update
 // ============================================================
 // Per-record state machine tick. Drives the fade counter at +0x36 through
 // its load/unload thresholds, cancels in-flight device I/O when the lookup
 // object reports it, and releases the record's data buffer once the fade
 // finishes. paramLoad/paramFade/paramCancel select which caller policy
 // applies; when both load and cancel are false they default to true.
-bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel) {
+bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool paramCancel) {
     if (paramLoad == false && paramCancel == false) {
         paramLoad = true;
         paramFade = true;
@@ -764,7 +764,7 @@ extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVa
 }
 
 // ============================================================
-// func_800686E4 (0x244) - update/resolve
+// CfRes_updateGrids (0x244) - update/resolve
 // ============================================================
 // Frame tick for the 0x59..0x80 resource grids. Depending on global flags it
 // either resets the 0x1ED0 counter (param ? 3.0 : 120.0) or decrements it
@@ -772,7 +772,7 @@ extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVa
 // flags say they are done, and clearing the resolution probe for the rest.
 // Retail reads the global flag word twice (bit 0x20 gate, then the rest),
 // so the volatile alias keeps both loads distinct.
-extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
+extern "C" bool CfRes_updateGrids(ResInfoContainer* self, bool param) {
     // Declaration order mirrors retail callee-saved coloring:
     // cond=r31, flag25=r30, res=r29, target=r28, base=r27, any=r26.
     u32 fGate = *(volatile u32*)&lbl_eu_80663E24;
@@ -840,7 +840,7 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
                     }
                 }
                 if (res != 0) {
-                    if (func_80066788((ResInfoEntry*)target, true, param, false)) {
+                    if (CfRes_updateEntry((ResInfoEntry*)target, true, param, false)) {
                         any = true;
                     }
                 }
@@ -860,9 +860,9 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
 }
 
 // ============================================================
-// func_80068928 (0x68) - search id in [start, end)
+// CfRes_findIdInRange (0x68) - search id in [start, end)
 // ============================================================
-void* func_80068928(u8* self, u32 id, int start, int end) {
+void* CfRes_findIdInRange(u8* self, u32 id, int start, int end) {
     ResEntry* entry = (ResEntry*)((u8*)self + start * 0x3C);
     int i;
     // Counted for-loop with live-out index: MWCC emits subf/mtctr guard +
@@ -951,7 +951,7 @@ extern "C" void CfRes_updateHighGrid(u8* self, bool param) {
     ResGridEntry* base = (ResGridEntry*)(self + 0x16BC);
     for (int i = 0x61; i < 0x81; i++) {
         if (base->lookup->getResourceBase(target, 0) != 0) {
-            func_80066788((ResInfoEntry*)target, 0, 0, param);
+            CfRes_updateEntry((ResInfoEntry*)target, 0, 0, param);
         }
         target++;
         base++;
@@ -969,7 +969,7 @@ extern "C" void CfRes_updateHighGridFiltered(void* self, bool param) {
             u32 cat = base->id >> 27;
             bool skip = (cat == 8) || (cat == 11);
             if (skip) continue;
-            func_80066788((ResInfoEntry*)target, 0, 0, param);
+            CfRes_updateEntry((ResInfoEntry*)target, 0, 0, param);
         }
     }
 }
@@ -983,7 +983,7 @@ extern "C" void CfRes_updateHighGridFlagged(u8* self) {
     for (int i = 0x61; i < 0x81; i++) {
         if (base->lookup->getResourceBase(target, 0) != 0) {
             if (base->field_0x04 & 0x3000) {
-                func_80066788((ResInfoEntry*)target, 0, 0, true);
+                CfRes_updateEntry((ResInfoEntry*)target, 0, 0, true);
             }
         }
         target++;
@@ -1003,7 +1003,7 @@ extern "C" void CfRes_reloadLoadedEntries(u8* self) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
             if (KyoshinHeap_Contains38(r)) {
-                func_80066788((ResInfoEntry*)target, 1, 1, 0);
+                CfRes_updateEntry((ResInfoEntry*)target, 1, 1, 0);
             }
         }
         target++;
@@ -1030,11 +1030,11 @@ extern "C" void CfRes_updateLowGrid(u8* self, bool param) {
                     u32 fl = base->field_0x04;
                     bool hasFlag2 = (fl & 0x200) || (fl & 0x400);
                     if (param && hasFlag2) {
-                        func_80066788((ResInfoEntry*)target, 0, 0, 1);
+                        CfRes_updateEntry((ResInfoEntry*)target, 0, 0, 1);
                     } else if (!hasFlag2) {
                         u32 cat = base->id >> 27;
                         if (!(flagResult && (cat == 8 || cat == 11))) {
-                            func_80066788((ResInfoEntry*)target, 0, 0, 1);
+                            CfRes_updateEntry((ResInfoEntry*)target, 0, 0, 1);
                         }
                     }
                 }
@@ -1063,7 +1063,7 @@ extern "C" void CfRes_updateFlaggedGrid(u8* self) {
                     if (hasFlag2) {
                         if (!waited) CDeviceVI::waitForDrawDone();
                         waited = true;
-                        func_80066788((ResInfoEntry*)target, 0, 0, 1);
+                        CfRes_updateEntry((ResInfoEntry*)target, 0, 0, 1);
                     }
                 }
             }
@@ -1086,7 +1086,7 @@ extern "C" void CfRes_tickIfFlagged(void* self) {
     }
 
     if (testWordFlag((const u32*)self, 1)) {
-        func_800686E4((ResInfoContainer*)self, flag2);
+        CfRes_updateGrids((ResInfoContainer*)self, flag2);
         clearWordFlag((u32*)self, 2);
     }
 }
@@ -1308,7 +1308,7 @@ extern "C" void __dt__80067670(u8* self) {
 }
 
 // ============================================================
-// func_800676F8 (0x658) - initializer
+// CfRes_initWork (0x658) - initializer
 // ============================================================
 // Full initializer: bulk-clears everything after the flag word, sets bit 0,
 // resets the fade counter, re-closes the embedded reslist ring at 0x1EB4,
@@ -1329,7 +1329,7 @@ extern "C" void __dt__80067670(u8* self) {
 //   cached `u32* slots` local (r31-relative addressing) frees one callee-
 //   saved reg but shifts ALL colors (_savegpr_19) and scores worse (383).
 //   Likely needs whole-function allocation alignment, not a local fix.
-extern "C" void func_800676F8(ResInfoWork* self) {
+extern "C" void CfRes_initWork(ResInfoWork* self) {
     memset(&self->_04, 0, 0x1E78);
     u32 flags = self->flags | 1;
     self->counter = lbl_eu_80666200;

@@ -35,10 +35,10 @@ extern "C" {
     void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
     int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
     int HpVoice_CollectIdle(void* arr, int capacity, int unused);
-    int func_802AED0C(void);
+    int BmVoice_FindPoolA(void);
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8* CCharVoiceMan_AllocVoiceArena(int size);
-    int func_802AF388(CVoiceHandle* a);
+    int BmVoice_HasEntry(CVoiceHandle* a);
     void __ct__cf_CVS_THREAD(CVS_THREAD_BATTLE_BEGIN* self);
 }
 
@@ -69,7 +69,8 @@ struct CVSThreadStateTriple {
 extern u32 lbl_eu_8053AC94[3];
 extern u32 lbl_eu_8053ACAC[3];
 extern u32 lbl_eu_8053AC88[3];
-extern u32 lbl_eu_8053ACB8[7];
+// Retail size 0x20 (8 words: 7 vtable slots plus a trailing zero word).
+extern u32 lbl_eu_8053ACB8[8];
 
 // Overlay over the virtual-dispatch slot (0x1C) so the manual factory
 // constructor can install the subclass vtable.

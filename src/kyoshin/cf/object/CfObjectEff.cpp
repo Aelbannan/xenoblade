@@ -243,12 +243,12 @@ extern "C" void setEffPosVec___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
 
 } // namespace cf
 
-// ACCE4 is Eff's UVF25 override: forward to the base implementation with the
+// snapEffTarget is Eff's UVF25 override: forward to the base implementation with the
 // same (pos, scale) ABI, then copy into the child.
 extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self,
                                                            ml::CVec3* pos,
                                                            float scale);
-void func_800ACCE4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
+void snapEffTarget__Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
                                          cf::CfObjectEffU32Vec3* src,
                                          float scale) {
     CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
@@ -479,7 +479,7 @@ void createEffect_(cf::CfObjectEff* self) {
         if (mgr == 0) mgr = (void*)CfRes_getD80Flag();
         if (self->mCount8C != 0) {
             self->mChildEff = static_cast<cf::CfObjectEffChild*>(
-                func_804CC1F4(lbl_eu_8065FC18, bdat, mgr, self->mCount8C - 1, work, 0));
+                EffRoot_AddSchedReq(lbl_eu_8065FC18, bdat, mgr, self->mCount8C - 1, work, 0));
         }
         self->mField98 = static_cast<u8*>(bdat);
         if (self->mChildEff != 0) {

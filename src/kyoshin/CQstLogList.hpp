@@ -159,21 +159,21 @@ public:
 
 // Sort-menu scroll/page handlers (defined in CSortMenu.cpp). Retail names are
 // unmangled C linkage - keep extern "C" so the bl relocs bind to them.
-extern "C" void func_801D3620(CSortMenu* _this);  // scroll up
-extern "C" void func_801D3698(CSortMenu* _this);  // scroll down
-extern "C" void func_801D3724(CSortMenu* _this);  // page up
+extern "C" void sortMenuScrollUp(CSortMenu* _this);  // scroll up
+extern "C" void sortMenuScrollDown(CSortMenu* _this);  // scroll down
+extern "C" void sortMenuPageUpStep(CSortMenu* _this);  // page up
 extern "C" void sortMenuPageDownStep(CSortMenu* _this);  // page down
 extern "C" void sortMenuFormatPaneText(nw4r::math::VEC3* out, CSortMenu* _this);  // copy sort-menu state
 
 // Imports with unmangled retail names (defined in CSortMenu.cpp / cursor TUs).
-extern "C" int func_801D32DC(CSortMenu* _this);
+extern "C" int sortMenuIsScrollbarVisible(CSortMenu* _this);
 extern "C" void sortMenuResetCount(void*);                  // sort-menu array reset
 extern "C" void func_801D3518(void*, void*);            // sort-menu array append
-extern "C" void func_801D353C(void*, u8);               // sort-menu page set
+extern "C" void sortMenuSetPage(void*, u8);               // sort-menu page set
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void sortMenuSetLayoutPos(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
 extern "C" void sortMenuOpenInit(CQstLogListSortMenuData*);
-extern "C" void func_801D202C(void*);                 // CCur18 per-frame update
+extern "C" void Cur_Update(void*);                 // CCur18 per-frame update
 extern "C" void sortMenuDispatchState(void*);                 // CSortMenu per-frame update
 extern "C" void sortMenuTermCleanup(void*);                 // CSortMenu destroy
 extern "C" u8 sortMenuGetPageIdx(void*);                   // sort-menu selected page
@@ -182,7 +182,7 @@ extern "C" u8 sortMenuGetSubPageIdx(void*);                   // sort-menu selec
 // Imports with retail names spelled verbatim (C linkage; MWCC would mangle
 // plain declarations - the bl reloc must bind to the unmangled retail name).
 extern "C" void sortMenuInitFileRead(void*);
-extern "C" void func_801D31F8(void*, void*);
+extern "C" void sortMenuDraw(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sortMenuToState4Page(void*);
 extern "C" int sortMenuGetFlag2B(void*);
@@ -202,13 +202,13 @@ extern "C" void copyScrollBarData(CScrollBarData*, const CScrollBarData*);  // C
 // Quest-info buffer helpers (defined in CMenuQstCnt.cpp).
 extern "C" void QstCnt_InitRecords_6FAC(u8*);               // QstData construct (8x0x400)
 extern "C" void copyQstInfo(u8*, const u8*);      // 8-byte QstInfo copy
-extern "C" void func_80227260(u8*, u32, u32);
+extern "C" void QstCnt_SortRecords(u8*, u32, u32);
 extern "C" u16 selectQstIndex(const u8*);
 extern "C" CQstLogListQstInfo* QstCnt_GetInfoAt_76F4(u8*, u16);
 extern "C" u32 SearchThresholdIdx(u16);
-extern "C" void func_802270CC(u8*);               // QstData refresh
+extern "C" void QstCnt_RefreshRecords(u8*);               // QstData refresh
 // Quest-list row count for the given quest-log list id (returns u16).
-extern "C" u16 func_80227710(u8*, u16);
+extern "C" u16 QstCnt_FindInfoIndex(u8*, u16);
 
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);              // BDAT row count

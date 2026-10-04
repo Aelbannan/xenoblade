@@ -5,7 +5,7 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
-#include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the func_800AA33C import
+#include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the Tok_FormatStr import
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -69,14 +69,14 @@ extern "C" u32 bdatResolveItem(u32 arg1, u32 arg2, u32 arg3);                   
 
 extern "C" u32 bdatPcPartsRes(u32 param1, int param2, u32 param3, u32 param4);   // CfBdat.cpp
 
-extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);                              // CActorParam.cpp
+extern "C" void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src);                              // CActorParam.cpp
 
 // Three args: actor (r3, already the lookup result at retail call sites),
 // f32 (f1) and u32 (r4). A 2-arg (f32, u32) declaration would put the u32
 // in r3 (MWCC assigns integer args to GPRs in order, floats independently).
-extern "C" void func_801765A4(void* actor, f32 value, u32 arg);                 // CActorParam.cpp
+extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);                 // CActorParam.cpp
 
-extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
+extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
 
 extern "C" void* CItem_kindPtr(u32 index, s16 value);                           // CItemBoxInfo.cpp
 
@@ -103,7 +103,7 @@ extern "C" void Counter_AddClamped(u8* obj, u32 value, int flag);               
 extern "C" void Counter884_AddClamped(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
 
 // CtrlObjectParam_ReapplyArtsSet helpers (code_8025F2E8.cpp / code_80280F44.cpp).
-extern "C" void func_eu_80263A24(void* dst, void* artsSet);                  // arts-set copy hook
+extern "C" void IdTable_DeepCopy(void* dst, void* artsSet);                  // arts-set copy hook
 extern "C" void KizunagramStoreTotalEntry(void* artsSet, u32 row, u32 slot, u32 idx);   // slot fill
 extern "C" void KizunagramStoreChartEntry(void* artsSet, u32 row, u32 slot);            // slot clear
 extern "C" void KizunagramRebuildSlotList(void* artsSet);                               // arts-set rebuild
@@ -117,7 +117,7 @@ struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global s
 
 extern "C" int CtrlObjectParam_InitItemSlotArea(u8* self);
 extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self);      // CPcKizunagram.cpp (affinity-slot clear)
-extern "C" void func_8016455C(CEventDataTable* self);                    // CTaskREvent.cpp (event data table fill)
+extern "C" void evtInitDataTable(CEventDataTable* self);                    // CTaskREvent.cpp (event data table fill)
 
 namespace cf {
 
@@ -464,11 +464,11 @@ namespace cf {
 
     // -- CtrlObjectParam_SyncParamFromActor view: arts-data object -------------------------------
     // u16 type id at +0x00 (fed to findObjB28ById) and a write target at
-    // +0x17C (func_80175A50's obj argument).
+    // +0x17C (CActorParam_copyAll's obj argument).
     struct CtrlObjectParamArtsView {
         u16 field_00;         // +0x00: type id passed to findObjB28ById
         u8  pad_02[0x17A];    // +0x02..0x17B
-        u8  field_17C;        // +0x17C: write target of func_80175A50
+        u8  field_17C;        // +0x17C: write target of CActorParam_copyAll
     };
 
     // -- CtrlObjectParam_SyncParamFromActor dispatch: vtable slot 0x28C -------------------------
@@ -566,7 +566,7 @@ namespace cf {
         u8   bitmap_1FFC[0x186A];            // 0x1FFC..0x3865 (50000-bit bitmap)
         u8   bitmap_3866[0x28];              // 0x3866..0x388D (320-bit bitmap)
         u8   pad_388E[2];                    // 0x388E..0x388F
-        u8   eventTable[0x960];              // 0x3890..0x41EF (CEventDataTable storage, func_8016455C)
+        u8   eventTable[0x960];              // 0x3890..0x41EF (CEventDataTable storage, evtInitDataTable)
         CtrlObjectParamEntry entries[14];    // 0x41F0..0x3A387
         u32  field_3A388;                    // 0x3A388..0x3A38B (CtrlObjectParam_SetWorkTailValue / CtrlObjectParam_GetWorkTailValue)
     };  // total 0x3A38C
@@ -809,7 +809,7 @@ namespace cf {
 
     // -- __ct__8009ED08 stack-snapshot blocks (entryB param sub-region) -----
     // The constructor snapshots three blocks of entryB's param area to stack
-    // locals across the func_80175A50 call, then restores them. The field
+    // locals across the CActorParam_copyAll call, then restores them. The field
     // types drive the retail copy shapes: block1 = 2 u16s + a word-pair
     // counted loop; block2 = u32 + 8 u16s + a u16[0x38] loop (save) / word
     // pairs (restore); block3 = 12 words.

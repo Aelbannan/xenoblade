@@ -181,13 +181,13 @@ void __declspec(noinline) UnkClass_8047CD0C::freeGlobalHeap() {
 }
 
 // ------------------------------------------------------------------
-// func_8047CD0C -- constructor from a scene-config blob.
+// initFromConfig -- constructor from a scene-config blob.
 // Config magic 0x57504F49: adopt node array (config+0x0C), resize the pool,
 // attach nodes. Retail calls init__17UnkClass_8047E110Fv(self, config+0x0C).
 extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self, void* desc);
 // ------------------------------------------------------------------
 
-extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" void initFromConfig__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       u8* config) {
     s32 i;
     s32 off;

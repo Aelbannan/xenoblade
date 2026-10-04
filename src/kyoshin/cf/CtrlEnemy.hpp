@@ -144,7 +144,7 @@ struct CtrlEnemyPos4 {
     f32 e0, e1, e2, e3;            // +0, +4, +8, +C
 };
 
-// Battle-actor container rooted at CtrlEnemy::field_0x80 (func_8016FE34
+// Battle-actor container rooted at CtrlEnemy::field_0x80 (MapFx_ResolveOwner
 // result). Declared with the full vtable so the dispatched slots below sit
 // at their retail offsets.
 class CtrlEnemyActor {
@@ -407,7 +407,7 @@ public:
     u8 _pad10[0x14 - 0x10];          // 0x10-0x13
     f32 field_0x14;                  // 0x14 (cooldown/counter, reset to 0.0)
     u8 _pad18[0x80 - 0x18];          // 0x18-0x7F
-    CtrlEnemyActor* field_0x80;      // 0x80 (func_8016FE34 result, set by ctor)
+    CtrlEnemyActor* field_0x80;      // 0x80 (MapFx_ResolveOwner result, set by ctor)
     u8 mSub84[0x1E0 - 0x84];         // 0x84 move-controller sub-object
     void* field_0x1E0;               // 0x1E0
     u8 _pad1E4[0x200 - 0x1E4];       // 0x1E4-0x1FF
@@ -455,7 +455,7 @@ void moveBaseRoute(void* self);  // one-arg delegate form
 void moveBaseScnCmd(void* self);  // one-arg delegate form
 void __ct__800D10DC(void* self, void* parent);  // CtrlEnemy base ctor
 void __ct__8008A104(void* self, void* parent);  // +0x84 sub-object ctor
-void* func_8016FE34(void* source);              // voice/battle-list resolve
+void* MapFx_ResolveOwner(void* source);              // voice/battle-list resolve
 void CtrlMoveEne_ForwardBaseRefresh(void* self);                 // +0x84 sub-object dtor (blr)
 void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                    const ml::CVec3* src, int flag);
@@ -466,7 +466,7 @@ int moveBaseSeekTo(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
-int func_80148778(void* obj, int id);
+int isBattleStatusActive(void* obj, int id);
 void* findBattleStatusEntry(void* obj, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
 void unregisterBattleActor(void* mgr, void* target);
 void CtrlMoveEne_UpdateBattleMove(void* sub);

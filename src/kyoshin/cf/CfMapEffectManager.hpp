@@ -14,7 +14,7 @@ struct CfMapEffectHandle {
 };
 
 // Effect-object view exposing the release flag at 0xB0 used by
-// func_8016EF2C / func_8016FC98 (the concrete effect subclasses are opaque
+// MapFx_ResetSlots / MapFx_ReleaseObject (the concrete effect subclasses are opaque
 // here).
 struct CfMapEffectObject {
     u8 field_0x0[0xB0];
@@ -175,18 +175,18 @@ u16 getReloadParam0();                     // play-time seconds getter
 // Sibling functions of this unit (retail 0x801702E0 / 0x801706A0). Kept as
 // declared-only externs so calls from matched functions emit a real bl - a
 // same-TU stub definition would be inlined by MWCC (-O4).
-void func_8016EF2C(cf::CfMapEffectManager* pSelf);
-void func_8016F2A4(cf::CfMapEffectManager* pSelf, int index, u8* bdat);
+void MapFx_ResetSlots(cf::CfMapEffectManager* pSelf);
+void MapFx_UpdateRow(cf::CfMapEffectManager* pSelf, int index, u8* bdat);
 void setChildScl__(cf::CfObject* object, float first, float second);
 // CfGameManager phase/counter getters (same signatures as CfGimmickItem.hpp;
 // CfGimmickItem.hpp itself cannot be included here - its CfGimmick.hpp
 // re-declares CtrlRemote_TouchBitByArg with a conflicting signature).
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
-int func_8016EFD8(int unused, int index);
-void func_8016FC98(cf::CfMapEffectManager* pSelf, cf::CfObject* target);
-void func_8016FD84(float first, float second);
-int func_8016FA68(int unused, int b, int c, int d); // same-TU definition below
+int MapFx_CheckRowRange(int unused, int index);
+void MapFx_ReleaseObject(cf::CfMapEffectManager* pSelf, cf::CfObject* target);
+void MapFx_PushFlash(float first, float second);
+int MapFx_MatchKind(int unused, int b, int c, int d); // same-TU definition below
 void CfT_DispatchFrameCounts();
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 }
@@ -201,7 +201,7 @@ extern const float lbl_eu_80667730;           // sdata2: clamp threshold
 extern char lbl_eu_80503248[];
 extern u16 lbl_eu_80661AF4;                   // sdata: play-clock / BGM frame counter
 extern u8* lbl_eu_806623EC;                   // sdata: scratch pointer (byte at +0x06)
-// sdata2 float/double pool constants (func_8016F2A4)
+// sdata2 float/double pool constants (MapFx_UpdateRow)
 extern const float lbl_eu_80667710;           // default flash value (setChildScl__ arg 2)
 extern const float lbl_eu_80667714;           // u32 column -> float scale
 extern const float lbl_eu_80667718;           // s16 column -> float scale

@@ -1136,7 +1136,7 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
                         (float*)out2, 0x4044a05, 0, 0,
                         lbl_eu_80666448, lbl_eu_8066641C)) {
                     CamTripletLocals t; // retail 0x1B8
-                    ((CamGroundRecordFn)func_804BE4B4)((float*)&t, 0);
+                    ((CamGroundRecordFn)ScnRes_CopyEntryHead)((float*)&t, 0);
                     out2->y = t.y + lbl_eu_80666428;
                 } else {
                     out2->y = out2->y + lbl_eu_80666428;
@@ -1226,8 +1226,8 @@ int CamEvtAdvanceEvent(CfCamEventManager* self) {
 
     void* hA = findObjectById__Fi((int)self->field_0x10);
     void* hB = findObjectById__Fi((int)self->field_0x24);
-    void* sa = func_8016FE34(hA);
-    void* sb = func_8016FE34(hB);
+    void* sa = MapFx_ResolveOwner(hA);
+    void* sb = MapFx_ResolveOwner(hB);
     if (hA == 0 || hB == 0) return 0;
 
     ml::CVec3 o1, o2;
@@ -1398,7 +1398,7 @@ cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_getBattleStats() {
 #pragma dont_inline on
 void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam) {
-    CamEventSrc* src = (CamEventSrc*)func_8016FE34(srcArg);
+    CamEventSrc* src = (CamEventSrc*)MapFx_ResolveOwner(srcArg);
     u32 field_0x3F10 = (u32)src->field_0x3F10;
     CamEventBody* body = ((CamEventSrc*)src)->unk298();
     void* p31 = body->field_0x04;
@@ -1411,8 +1411,8 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
     }
     void* srcSel = src;
     if (src != 0) srcSel = &src->voice;
-    void* srcVoice = func_8016FE34(srcSel);
-    int otherVoice = (int)func_8016FE34(followObj);
+    void* srcVoice = MapFx_ResolveOwner(srcSel);
+    int otherVoice = (int)MapFx_ResolveOwner(followObj);
 
     // "Band" check: any of the four cam halfwords selects waveform 2/3.
     // Single short-circuit chain so MWCC lays out the beq-to-block /
@@ -1437,7 +1437,7 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
             self->field_0x34 = (u32)followObj;
         }
         if (followObj == 0) return 0;
-        otherVoice = (int)func_8016FE34(followObj);
+        otherVoice = (int)MapFx_ResolveOwner(followObj);
         }
     }
 
@@ -1755,7 +1755,7 @@ void* CamEvtBuildFollowState(
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    CamEventSrc* src = (CamEventSrc*)func_8016FE34(srcArg);
+    CamEventSrc* src = (CamEventSrc*)MapFx_ResolveOwner(srcArg);
     u32 field3F10 = (u32)src->field_0x3F10;
     CamEventBody* body = ((CamEventSrc*)src)->unk298();
     void* follow = body->field_0x04;
@@ -1768,8 +1768,8 @@ void* CamEvtBuildFollowState(
 
     CinemCamSrc* voice =
         (src != 0) ? (CinemCamSrc*)&src->voice : (CinemCamSrc*)src;
-    CamEventSrc* voiceSrc = (CamEventSrc*)func_8016FE34(voice);
-    CamEventTargetInfo* otherArg = (CamEventTargetInfo*)func_8016FE34(other);
+    CamEventSrc* voiceSrc = (CamEventSrc*)MapFx_ResolveOwner(voice);
+    CamEventTargetInfo* otherArg = (CamEventTargetInfo*)MapFx_ResolveOwner(other);
 
     // NOTE: retail reads the winning row back from the SIXTH argument slot,
     // so the row target goes last here (the fifth is never read again).
@@ -3256,7 +3256,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
 
     if (updateResult != 0) {
         cleanupMapEffects__Q22cf13CfGameManagerFv();
-        func_8016FD84(lbl_eu_80666470, lbl_eu_80666428);
+        MapFx_PushFlash(lbl_eu_80666470, lbl_eu_80666428);
     }
 
     if (self->field_0x38 != 0) {

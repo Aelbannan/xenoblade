@@ -1,6 +1,6 @@
 /**
  * monolib code_804DB938 — isolated Gekko paired-single backend for the
- * func_804DD89C / func_804DD8C8 vector lerps.
+ * CEVec3LerpPS / CEVec4LerpPS vector lerps.
  *
  * Isolated PS backend under PLAN.md §17.6 ("Isolated MWCC Gekko paired-single
  * backend").  Included ONLY by code_804DB938.cpp on the Wii/MWCC build;
@@ -29,7 +29,7 @@
 // clang-format off
 
 // 3-component lerp: a.xy/b.xy as one pair, a.z/b.z as 32-bit singles.
-asm void func_804DD89C(register void* out, register const void* a,
+asm void CEVec3LerpPS(register void* out, register const void* a,
                        register const void* b, register f32 t) {
     nofralloc
     psq_l      f0, 0x0(r4), 0, 0
@@ -46,7 +46,7 @@ asm void func_804DD89C(register void* out, register const void* a,
 }
 
 // 4-component lerp: two full pairs (all W=0 loads/stores).
-asm void func_804DD8C8(register void* out, register const void* a,
+asm void CEVec4LerpPS(register void* out, register const void* a,
                        register const void* b, register f32 t) {
     nofralloc
     psq_l      f0, 0x0(r4), 0, 0
@@ -67,7 +67,7 @@ asm void func_804DD8C8(register void* out, register const void* a,
 #else
 
 // Scalar fallbacks (PC / NONMATCHING builds).
-void func_804DD89C(void* out, const void* a, const void* b, f32 t) {
+void CEVec3LerpPS(void* out, const void* a, const void* b, f32 t) {
     const f32* av = (const f32*)a;
     const f32* bv = (const f32*)b;
     f32* ov = (f32*)out;
@@ -76,7 +76,7 @@ void func_804DD89C(void* out, const void* a, const void* b, f32 t) {
     ov[2] = av[2] + (bv[2] - av[2]) * t;
 }
 
-void func_804DD8C8(void* out, const void* a, const void* b, f32 t) {
+void CEVec4LerpPS(void* out, const void* a, const void* b, f32 t) {
     const f32* av = (const f32*)a;
     const f32* bv = (const f32*)b;
     f32* ov = (f32*)out;

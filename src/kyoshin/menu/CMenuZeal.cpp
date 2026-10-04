@@ -109,12 +109,12 @@ void CMenuZeal::Init() {}
 void CMenuZeal::Move() {}
 
 // ---------------------------------------------------------------------------
-// func_8017FEF0: position the collective menu relative to the player.
+// AddZealEffect: position the collective menu relative to the player.
 // Gets the player object; if present, stores the sdata2 constant into
 // mField_9C and routes the effect lookup through the 0xc1 (or 0xc2 when
 // arg2 is zero) effect table entry.
 // ---------------------------------------------------------------------------
-void func_8017FEF0(CMenuZeal* self, int arg2) {
+void AddZealEffect(CMenuZeal* self, int arg2) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != 0) {
         self->mField_9C = lbl_eu_80667890;
@@ -233,16 +233,16 @@ body:
 // these as offset-adjusted dispatch stubs: only r3 is re-based, then a tail
 // jump into the right member). Preserved from the scaffold.
 // ---------------------------------------------------------------------------
-void func_8017FF60(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x58); }
+void zealDtorThunk58(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x58); }
 
-void func_8017FF68(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuZealFv)((char*)self - 0x5c); }
+void zealRenderBeforeThunk(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuZealFv)((char*)self - 0x5c); }
 
-void func_8017FF70(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x5c); }
+void zealDtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x5c); }
 
-u32 func_8017FD44() { return (u32)lbl_eu_806642A0; }
+u32 GetZealObjPtr() { return (u32)lbl_eu_806642A0; }
 
 // ---------------------------------------------------------------------------
-// func_8017FD4C: advance the Zeal menu state when the collective-gauge intro
+// GetZealResult: advance the Zeal menu state when the collective-gauge intro
 // has played. Sets the 0xA0 draw flag, binds the second layout's anim colours
 // (two 0xff s16 quads), then when the 0x94 timer passes the threshold binds
 // the layout-1 texture (name depends on classic-controller detection) and
@@ -250,7 +250,7 @@ u32 func_8017FD44() { return (u32)lbl_eu_806642A0; }
 // with result 1/2 (2 when 0x98 is inside the b4-scaled window), otherwise
 // the fallback path plays sound 0xaa and returns 0.
 // ---------------------------------------------------------------------------
-int func_8017FD4C(CMenuZeal* self) {
+int GetZealResult(CMenuZeal* self) {
     if (self->mField_A1 != 0) {
         return 0;
     }

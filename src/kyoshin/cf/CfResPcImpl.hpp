@@ -19,7 +19,7 @@ struct CfResPcEntryObj {
 
 // Entry returned by the resource-table lookup; +0x2C holds the resource
 // object detached by CfResPcImpl_teardownLookupEntry, +0x04 is the resource pointer fed to
-// func_800AA33C by func_8018E7E4.
+// Tok_FormatStr by CfResPcImpl_open.
 struct CfResPcLookupEntry {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u8* field_04;
@@ -28,7 +28,7 @@ struct CfResPcLookupEntry {
 };
 
 // 0x3C-byte resource-table entry returned by CfRes_getPcGridEntry: an array base
-// whose entries [1..5] are walked by func_8018DE8C (each has its resource
+// whose entries [1..5] are walked by CfResPcImpl_advance (each has its resource
 // object at +0x2C; entry[1]'s +0x2C is also reachable as base+0x68).
 struct CfResPcTableEntry {
     /* 0x00 */ u32 field_00;
@@ -39,7 +39,7 @@ struct CfResPcTableEntry {
 };
 
 // Sub-object at parent +0xC4: the flag word at +0x4EC is folded by
-// func_8018DE8C when the player-positioning block ran.
+// CfResPcImpl_advance when the player-positioning block ran.
 struct CfResPcC4Obj {
     u8 field_00[0x4EC];
     /* 0x4EC */ u32 field_4EC;
@@ -50,7 +50,7 @@ struct CfResPcC4Obj {
 
 
 // Object created by scnImN4BuildByIdx and stored at parent+0x6F8 / +0x6FC:
-// vtable at +0x00, flag word at +0x64 (bit 1 tested by func_8018E7E4),
+// vtable at +0x00, flag word at +0x64 (bit 1 tested by CfResPcImpl_open),
 // model flag word at +0x7A4 (bit 6 set after creation).
 struct CfResPcResObj {
     u8 field_00[0x64];
@@ -65,7 +65,7 @@ struct CfResPcResObj {
 // ResModel pads deleted (both variants).
 
 // Object stored at parent+0x700: the first word is a handle pointer
-// (null-checked after the entry-build dispatch by func_8018E7E4).
+// (null-checked after the entry-build dispatch by CfResPcImpl_open).
 struct CfResPc700Obj {
     /* 0x00 */ u8* field_00;
 };
@@ -73,7 +73,7 @@ struct CfResPc700Obj {
 
 
 // Stack view of the CMcaFile object constructed by __ct__CMcaFile in
-// func_8018E7E4: vptr at +0x00, payload pointers at +0x08 / +0x0C (the
+// CfResPcImpl_open: vptr at +0x00, payload pointers at +0x08 / +0x0C (the
 // +0x0C word is the data-adjacent pointer passed to Scn_InitGlobalA).
 struct CfResPcMca {
     u8 field_00[0x8];
@@ -81,7 +81,7 @@ struct CfResPcMca {
     /* 0x0C */ void* field_0C;
 };
 
-// Entry returned by findResEntry in func_8018D79C: the +0x0C word is
+// Entry returned by findResEntry in CfResPcImpl_reload: the +0x0C word is
 // cleared on a successful install.
 struct CfResPcFindEntry {
     u8 field_00[0x0C];
@@ -107,14 +107,14 @@ struct CfResPcAreaEntry {
 };
 
 // 8-byte float pair of the position table copied from lbl_eu_80503B30 by
-// func_8018E7E4 (indexed by the slot id).
+// CfResPcImpl_open (indexed by the slot id).
 struct CfResPcPosTableEntry {
     /* 0x00 */ f32 field_00;
     /* 0x04 */ f32 field_04;
 };
 
 // 0x50-byte block copied from lbl_eu_80503B30 into table[1..10] by
-// func_8018E7E4 (struct copy so MWCC emits the inline lwzu/stwu loop).
+// CfResPcImpl_open (struct copy so MWCC emits the inline lwzu/stwu loop).
 struct CfResPcPosTable {
     /* 0x00 */ CfResPcPosTableEntry entries[10];
 };
@@ -127,7 +127,7 @@ struct CfResPcPosTable {
 // import block.)
 struct CfResPcParent {
     u8 field_00[0x38];             // 0x00..0x37 (incl. the vptr)
-/* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4) -> CfObject_getPosTriple
+/* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by CfResPcImpl_open) -> CfObject_getPosTriple
     u8 field_3C[0x64 - 0x3C];
     /* 0x64 */ u32 field_64;       // flags (bit 1 = 0x2 tested by CfResPcImpl_teardownLookupEntry, bit 31 = 0x80000000 tested by CfResPcImpl_euReregisterOnFlag)
     /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by CfResPcImpl_notifyReloadEvent/CF90)
@@ -137,14 +137,14 @@ struct CfResPcParent {
     u8 field_78[0x8C - 0x78];      // 0x78..0x8B
     /* 0x8C */ u16 field_8C;       // slot id read by CfResPcImpl_lookupPackedToken
     /* 0x8E */ u16 field_8E;       // cleared by the ctor when a parent is present
-    /* 0x90 */ u32 field_90;       // cleared by func_8018CB3C
-    /* 0x94 */ u32 field_94;       // cleared by func_8018CB3C
-    /* 0x98 */ void* field_98;  // model object (vtable slot +0xC4 dispatched by func_8018E7E4)
-    /* 0x9C */ u32 field_9C;       // model handle (initMcaFile result, written by func_8018DE8C)
+    /* 0x90 */ u32 field_90;       // cleared by CfResPcImpl_teardown
+    /* 0x94 */ u32 field_94;       // cleared by CfResPcImpl_teardown
+    /* 0x98 */ void* field_98;  // model object (vtable slot +0xC4 dispatched by CfResPcImpl_open)
+    /* 0x9C */ u32 field_9C;       // model handle (initMcaFile result, written by CfResPcImpl_advance)
     u8 field_A0[0xC4 - 0xA0];      // 0xA0..0xC3
-    /* 0xC4 */ CfResPcC4Obj* field_C4;  // sub-object (flag word at +0x4EC folded by func_8018DE8C)
+    /* 0xC4 */ CfResPcC4Obj* field_C4;  // sub-object (flag word at +0x4EC folded by CfResPcImpl_advance)
     u8 field_C8[0x6CC - 0xC8];     // 0xC8..0x6CB
-    /* 0x6CC */ u16 field_6CC;     // set to 1 by func_8018DE8C when parent != getPlayer(0)
+    /* 0x6CC */ u16 field_6CC;     // set to 1 by CfResPcImpl_advance when parent != getPlayer(0)
     u8 field_6CE[0x6D4 - 0x6CE];   // 0x6CE..0x6D3
     /* 0x6D4 */ u32 field_6D4;     // model handle (initMcaFile result for the +0x708 object)
     /* 0x6D8 */ u32 field_6D8;     // loaded model handle (Scn_InitGlobalA result)
@@ -153,8 +153,8 @@ struct CfResPcParent {
     u8 field_6E4[0x6F8 - 0x6E4];   // 0x6E4..0x6F7
     /* 0x6F8 */ CScnItemModel* field_6F8[2];  // CScnItemModel (+0x6F8 / +0x6FC)
     /* 0x700 */ CfResPc700Obj* field_700; // entry-build result (handle pointer at +0x00)
-    /* 0x704 */ u32 field_704;     // cleared by func_8018CB3C
-    /* 0x708 */ u32 field_708;     // resource handle (written by func_8018DE8C)
+    /* 0x704 */ u32 field_704;     // cleared by CfResPcImpl_teardown
+    /* 0x708 */ u32 field_708;     // resource handle (written by CfResPcImpl_advance)
     /* 0x70C */ u16 field_70C[4];  // +0x70C..+0x712 u16 ids (written by CfResPcImpl_loadPcState)
 };
 
@@ -236,7 +236,7 @@ struct CfResPcMgrHost {
 // id (u16) read by CfResPcImpl_lookupPackedToken.
 struct CfResPcCharData {
     u8 field_00[0x0E];
-    /* 0x0E */ u16 field_0E[5];  // s16 id list indexed by func_8018D79C's loop
+    /* 0x0E */ u16 field_0E[5];  // s16 id list indexed by CfResPcImpl_reload's loop
     /* 0x18 */ u16 field_18;
 };
 
@@ -265,7 +265,7 @@ public:
     virtual void ResObj_Noop_CD64();           // 0x1C
     virtual int CfResPcImpl_getHandlerLimit();            // 0x20
     virtual void CfResPcImpl_detachResources();           // 0x24
-    virtual void func_8018CB3C();           // 0x28
+    virtual void CfResPcImpl_teardown();           // 0x28
     virtual void CfResPcImpl_euReregisterOnFlag();        // 0x2C
     virtual void CfResPcImpl_setSlotTableEntry(int idx, u32 value); // 0x30
     virtual u32 CfResPcImpl_getSlotTableEntry(int idx);     // 0x34
@@ -436,7 +436,7 @@ extern const float lbl_eu_80667A40;
 
 // C-ABI import previously pulled in via cf/CfBdat.hpp (not included here;
 // see the note in CfResPcImpl.cpp).
-extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 
 // C-ABI imports (defined in CfRes.cpp / IResInfo.cpp / CfScript.cpp /
 // CtrlObjectParam.cpp / code_8018F8D8.cpp / CfGameManagerUnityHelpers.hpp).
@@ -503,7 +503,7 @@ extern "C" void loadPartyResources__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void syncGameTime__Q22cf13CfGameManagerFv(cf::CfGameManager* object, u32 first, u32 second);
 extern "C" void resetGameFlags__Q22cf13CfGameManagerFv(int arg);
 extern "C" int MenuSnd_IsSlotLive_892C(int index);
-extern "C" void func_8004302C(int a, int b);
+extern "C" void CTaskGame_setLoadScreen(int a, int b);
 
 // Game-manager flag words read/written by CfResPcImpl_handleMapChangeEvent / CfResPcImpl_loadFileEventTable /
 // CfResPcImpl_requestResourceLoad / CfResPcImpl_reloadMapSection.
@@ -549,7 +549,7 @@ extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
 extern "C" void func_80085248__Q22cf13CfGameManagerFv(cf::CfGameManager*);
 extern "C" void func_8007D84C__Q22cf13CfGameManagerFv(cf::CfGameManager*);
 
-// C-ABI imports used by func_8018E7E4 / func_8018D79C (defined in IResInfo.cpp /
+// C-ABI imports used by CfResPcImpl_open / CfResPcImpl_reload (defined in IResInfo.cpp /
 // CfGameManager.cpp / the model layer). extern "C" keeps the call-site relocs
 // at the plain retail names.
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
@@ -574,36 +574,36 @@ extern "C" void* Scn_InitGlobalA(void* global, void* data, void* buf);
 // the reader's opaque view (see the .cpp note).
 extern cf::CfResPcAreaEntry lbl_eu_805327F8[8];
 
-// Position table copied by func_8018E7E4 (.data, 0x50 bytes).
+// Position table copied by CfResPcImpl_open (.data, 0x50 bytes).
 extern cf::CfResPcPosTable lbl_eu_80503B30;
 
-// Float constant passed to the +0x48 slot by func_8018E7E4 (.sdata2).
+// Float constant passed to the +0x48 slot by CfResPcImpl_open (.sdata2).
 extern const float lbl_eu_80667A60;
 
 // Model-layer global passed as the first scnImN4BuildByIdx argument (.sbss).
 
-// C-ABI imports used by func_8018DE8C (defined in CfRes.cpp / IResInfo.cpp /
+// C-ABI imports used by CfResPcImpl_advance (defined in CfRes.cpp / IResInfo.cpp /
 // the model layer / monolib scn). extern "C" keeps the call-site relocs at
 // the plain retail names.
 extern "C" cf::CfResPcTableEntry* CfRes_getPcGridEntry(int id, int a);
 extern "C" void CfModel_InstallSub(cf::CfResPcParent* parent, u8* handle);
 extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" void simResetAnimAtC(void* obj, const char* name);
-extern "C" void func_804831C4(void* obj, u8* handle);
+extern "C" void simAttachModel(void* obj, u8* handle);
 extern "C" void* Scn_SetupAnim(u32 global, u32 id, int a, int b);
-extern "C" char* func_800AA5C0(void* handle);
+extern "C" char* Tok_FormatRes(void* handle);
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" int ScnRes_Notify5Ptr_E470(void* a1, void* a2, void* a3, void* a4, void* a5);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
-// RTTI typeinfo pair for the __dynamic_cast in func_8018DE8C (.sdata).
+// RTTI typeinfo pair for the __dynamic_cast in CfResPcImpl_advance (.sdata).
 extern const void* lbl_eu_806624C0[2];
 extern const void* lbl_eu_806624C8[2];
 extern const void* lbl_eu_806624D0[2];
 extern const void* lbl_eu_806624D8[2];
 
-// Debug/format string used by func_8018DE8C (.rodata).
+// Debug/format string used by CfResPcImpl_advance (.rodata).
 extern char lbl_eu_80503BC4[];
 
 // Free-function vtable-slot targets owned by other TUs (retail .data
@@ -618,7 +618,7 @@ extern "C" void __dt__Q22cf11CfResPcImplFv();
 // sdata locator owned by another TU (first word of the .data descriptor at
 // lbl_eu_805327E0; same forward-decl pattern as CfResObjImpl.hpp).
 extern const void* lbl_eu_806623D8[2];
-// .sdata2 float constants used by func_8018DE8C.
+// .sdata2 float constants used by CfResPcImpl_advance.
 extern const float lbl_eu_80667A44;
 extern const float lbl_eu_80667A48;
 extern const float lbl_eu_80667A4C;

@@ -1,5 +1,5 @@
 {
-  "count": 2215,
+  "count": 2214,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -21057,7 +21057,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/wud/WUD@5781": {
+    "main/RVL_SDK/src/revolution/wud/WUD@5780": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23313,7 +23313,7 @@
         ]
       }
     },
-    "main/kyoshin/code_802B9064@10336": {
+    "main/kyoshin/code_802B9064@10338": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23327,7 +23327,7 @@
         ]
       }
     },
-    "main/kyoshin/code_802B9064@10337": {
+    "main/kyoshin/code_802B9064@10339": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24636,7 +24636,7 @@
         ]
       }
     },
-    "main/monolib/src/lib/CLibCriStreamingPlay@2923": {
+    "main/monolib/src/lib/CLibCriStreamingPlay@2925": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24830,34 +24830,6 @@
         ]
       }
     },
-    "main/monolib/src/lod/CTaskLOD@2027": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A5B8",
-        "scoped": true,
-        "units": [
-          "main/monolib/src/lod/CTaskLOD"
-        ]
-      }
-    },
-    "main/monolib/src/lod/CTaskLOD@2105": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A5BC",
-        "scoped": true,
-        "units": [
-          "main/monolib/src/lod/CTaskLOD"
-        ]
-      }
-    },
     "main/monolib/src/lod/LODMemMan@12628": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -24872,7 +24844,7 @@
         ]
       }
     },
-    "main/monolib/src/lod/UnkClass_80466348@1889": {
+    "main/monolib/src/lod/UnkClass_80466348@1892": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24886,7 +24858,7 @@
         ]
       }
     },
-    "main/monolib/src/lod/UnkClass_80466348@1963": {
+    "main/monolib/src/lod/UnkClass_80466348@1966": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24914,7 +24886,7 @@
         ]
       }
     },
-    "main/monolib/src/lod/code_8046A530@3212": {
+    "main/monolib/src/lod/code_8046A530@3208": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -25438,6 +25410,34 @@
         ]
       }
     },
+    "main/monolib/src/math/CMat44@2386": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A258",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CMat44"
+        ]
+      }
+    },
+    "main/monolib/src/math/CMat44@2387": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A25C",
+        "scoped": true,
+        "units": [
+          "main/monolib/src/math/CMat44"
+        ]
+      }
+    },
     "main/monolib/src/math/CQuat@2441": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -25642,7 +25642,7 @@
         ]
       }
     },
-    "main/monolib/src/scn/UnkClass_8047E110@3701": {
+    "main/monolib/src/scn/UnkClass_8047E110@3697": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -25656,7 +25656,7 @@
         ]
       }
     },
-    "main/monolib/src/scn/UnkClass_8047E110@3762": {
+    "main/monolib/src/scn/UnkClass_8047E110@3758": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -26147,20 +26147,6 @@
         "scoped": true,
         "units": [
           "main/nw4r/src/g3d/g3d_camera"
-        ]
-      }
-    },
-    "main/nw4r/src/g3d/g3d_draw@12020": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80669C48",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/g3d/g3d_draw"
         ]
       }
     },
@@ -28236,7 +28222,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_CharWriter@4071": {
+    "main/nw4r/src/ut/ut_CharWriter@4060": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -29354,9 +29340,9 @@
       }
     }
   },
-  "function_pairs": 13710,
-  "generated": "2026-10-03T14:28:34.098275",
+  "function_pairs": 13724,
+  "generated": "2026-10-03T15:08:37.774744",
   "region": "us",
-  "units_scanned": 1129,
+  "units_scanned": 1132,
   "version": 1
 }

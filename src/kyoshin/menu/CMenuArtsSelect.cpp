@@ -1,5 +1,5 @@
 // CTaskGame.hpp must come first: its line-10 `extern "C"` declaration of
-// func_8004302C must precede the plain C++ declaration pulled in by
+// CTaskGame_setLoadScreen must precede the plain C++ declaration pulled in by
 // CMenuArtsSelect.hpp (monolib/scn.hpp -> CScnNw4r.hpp -> functions.hpp);
 // MWCC rejects the reverse order (10505 illegal overloading).
 //
@@ -35,14 +35,14 @@
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
 // headers (see CSuddenCommu.hpp); its battle-manager singleton copy is now
 // unified in kyoshin/cf/CBattleManagerApi.hpp.
-// CSuddenCommu.hpp declares func_8017FD44 with the unified no-arg form
+// CSuddenCommu.hpp declares GetZealObjPtr with the unified no-arg form
 // (retail callers never materialize r3 before this call).
 #include "kyoshin/cf/CSuddenCommu.hpp"
 // CChain.hpp's lbl_eu_80663E24 copy is volatile and clashes with
 // CfObjectMove.hpp's non-volatile extern (excluded symbol, other agent).
 // (checkSlotUsable: the TU-local decl now matches CChain.hpp's (void*, s32)
 // form - no guard needed.)
-// CChainActorList.hpp (via CChain.hpp) declares func_8017FD44 with the
+// CChainActorList.hpp (via CChain.hpp) declares GetZealObjPtr with the
 // unified no-arg form - no guard needed.
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -92,7 +92,7 @@ struct ArtsParamInfo {
 struct BattleActor {
     void* mVtable0;          // +0x00: primary vtable
     void* mSecondaryVtable;  // +0x04: secondary MI vtable
-    u8 mArtsList[0x1530 - 0x08]; // +0x08: arts container (func_80148778 operates on &+0x8)
+    u8 mArtsList[0x1530 - 0x08]; // +0x08: arts container (isBattleStatusActive operates on &+0x8)
     u32 mField1530;          // +0x1530
     u8 _pad1534[0x3388 - 0x1534];
     u16 mField3388;          // +0x3388
@@ -134,7 +134,7 @@ struct ArtsActionSource {
 
 // handleConfirm support types.
 
-// Opaque scene pose object (Scn_FindCamItem result; passed to func_8049B59C).
+// Opaque scene pose object (Scn_FindCamItem result; passed to CamMan_ProjectToScreen).
 struct ArtsSelPose {
     u8 _pad00[0x10];
 };
@@ -202,7 +202,7 @@ u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, floa
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 // CMenuArtsSelect_CheckTalentUse player gate: converts a CfObjectMove to its actor container.
 extern "C" BattleActor* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* objMove);
-extern "C" int func_801B2084();
+extern "C" int countActiveSlots();
 extern "C" bool pushYawToLink(void*);
 
 
@@ -241,7 +241,7 @@ void BtlDmg_CursorToState3(void*);
 void BtlDmg_CursorToState4(void*);
 void* findObjB28ById(s32 id);                 // actor-container lookup by id
 void* Scn_FindCamItem(void* scn, int index);   // matches CfCam.hpp decl
-void func_8049B59C(f32* out, void* pose, nw4r::math::VEC3* pos);
+void CamMan_ProjectToScreen(f32* out, void* pose, nw4r::math::VEC3* pos);
 void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
 void __dt__80043E88(void* holder, int flag);
@@ -255,7 +255,7 @@ extern const ArtsSelEnumIds lbl_eu_804FD128;
 extern "C" FourShorts PaneMatGetS16QuadByName(nw4r::lyt::Layout*, const char*, int);
 extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout*, const char*, s16*, int);
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
-extern "C" int func_8027DF38(u8* self, u8* actor, int flag, int index);
+extern "C" int ChainTmr_GateArts_DF38(u8* self, u8* actor, int flag, int index);
 extern "C" int CChain_CheckActivateReady(u8* self, int param);
 // (UIBattleFindElemTimg/UIBattleFindPartyTimg: declared on CUIBattleManager.hpp, void*
 // return - the old local u8* copies are gone; call sites cast.)
@@ -265,7 +265,7 @@ extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_
 extern "C" int CBattleMan_ListHasValue(void*, void*);
 extern "C" void EneSt_CursorSet41(void*, u8);
 extern "C" void EneSt_CursorActivate(void*);
-extern "C" void func_8010A848(void*, u8);
+extern "C" void BtlDmg_CursorSetFlag(void*, u8);
 extern "C" void BtlDmg_CursorActivate(void*);
 extern "C" int getPTGaugeWord();
 extern "C" void PTGaugeTickSP();
@@ -1024,7 +1024,7 @@ void CMenuArtsSelect::Move() {
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
                         cf::CfGameManager::getPlayer(0);
-                        void* skillSrc = func_8016FE34(NULL);
+                        void* skillSrc = MapFx_ResolveOwner(NULL);
                         int ready = 0;
                         if (skillSrc != NULL) {
                             typedef u16* (*GetU16Fn)(void*);
@@ -2015,7 +2015,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 EneSt_CursorActivate((u8*)EneSt_GetSingleton() + 0x7E4);
             }
             if (BpsStateSingletonToInt() != NULL) {
-                func_8010A848((u8*)BpsStateSingletonToInt() + 0x7CC, (u8)self->unk330);
+                BtlDmg_CursorSetFlag((u8*)BpsStateSingletonToInt() + 0x7CC, (u8)self->unk330);
                 BtlDmg_CursorActivate((u8*)BpsStateSingletonToInt() + 0x7CC);
             }
             goto end_body;
@@ -2250,7 +2250,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         // No page-direction input.
         if (selDir == 0) {
             if (self->unk324 == 0) return;
-            if (func_8017FD44() != 0) return;
+            if (GetZealObjPtr() != 0) return;
             func_80138078__FUl(6);
             self->unk298 = 7;
             if (EneSt_GetSingleton() != NULL) {
@@ -2377,7 +2377,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         nw4r::math::VEC3* pos =
             (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(mv)->CfObject_getPosVector();
         f32 d;
-        func_8049B59C(&d, pose, pos);
+        CamMan_ProjectToScreen(&d, pose, pos);
         dist[count] = d;
         order[count] = static_cast<u8>(i);
         count++;
@@ -2431,7 +2431,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
             EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7e4, (u8)self->unk330);
         }
         if (BpsStateSingletonToInt() != NULL) {
-            func_8010A848((u8*)BpsStateSingletonToInt() + 0x7cc, (u8)self->unk330);
+            BtlDmg_CursorSetFlag((u8*)BpsStateSingletonToInt() + 0x7cc, (u8)self->unk330);
         }
         func_80138078__FUl(0x54);
     }
@@ -2546,7 +2546,7 @@ void CMenuArtsSelect::driveArtsGauge() {
                 reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock()),
             2, 0));
         if (rc->mCheckFlag != 0) {
-            if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
+            if (checkArtsFull(rc, actor, 0) & 0x80) flag = 1;
             if (actor->mField3F28 == 7 && flag != 0 && CMenuArtsSelect_CheckTalentUse(this) == 0) {
                 flag = 0;
             }
@@ -2628,7 +2628,7 @@ void CMenuArtsSelect::driveTalentGauge() {
                 reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag != 0) {
-                if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
+                if (checkArtsFull(rc, actor, 0) & 0x80) flag = 1;
                 if (actor->mField3F28 == 7 && flag != 0 && CMenuArtsSelect_CheckTalentUse(this) == 0) {
                     flag = 0;
                 }
@@ -2749,12 +2749,12 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
         // Partner readiness: same probe chain against the second player.
         cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
         if (pl != NULL) {
-            void* other = func_8016FE34(pl);
+            void* other = MapFx_ResolveOwner(pl);
             void* arts2 = reinterpret_cast<cf::CActorParam*>(other)->CActorParam_getArtsSetBlock();
             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
                 getArtsParamAtCnt(arts2, index));
             if (p->mCheckFlag != 0) {
-                if (func_80154280(p, other, 0) & 0x100) flag = 1;
+                if (checkArtsFull(p, other, 0) & 0x100) flag = 1;
             }
         }
     }
@@ -3094,7 +3094,7 @@ int CMenuArtsSelect::isSlotAvailable(s32 index) {
             reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 0;
-        if ((func_80154280(p, actor, 0) & 0x20) == 0) return 0;
+        if ((checkArtsFull(p, actor, 0) & 0x20) == 0) return 0;
         return 1;
     }
 
@@ -3133,7 +3133,7 @@ int CMenuArtsSelect::isSlotAvailable(s32 index) {
             reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
         if (rc->mCheckFlag == 0) return 0;
-        if ((func_80154280(rc, actor, 0) & 0x20) == 0) {
+        if ((checkArtsFull(rc, actor, 0) & 0x20) == 0) {
             if (actor->mField3F28 == 7 && CMenuArtsSelect_CheckTalentUse(this) == 0) return 1;
             return 0;
         }
@@ -3159,7 +3159,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
             reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 1;
-        if (func_80154280(p, actor, 0) & 0xd0) return 1;
+        if (checkArtsFull(p, actor, 0) & 0xd0) return 1;
         if (actor->mField3F60 != NULL) {
             u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor->mField3F60) + 0x4ec);
             if ((f & 0x2) != 0 || (f & 0x100000) != 0) return 1;
@@ -3170,7 +3170,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
                 reinterpret_cast<u8*>(actor), 0) != 0) {
             return 1;
         }
-        if (func_8027DF38(
+        if (ChainTmr_GateArts_DF38(
                 reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x20c8,
                 reinterpret_cast<u8*>(actor), 0, index) != 0) {
             return 1;
@@ -3181,7 +3181,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
         if (mv != NULL) {
             void* src = findObjectById((int)mv);
             if (src != NULL) {
-                void* skill = func_8016FE34(src);
+                void* skill = MapFx_ResolveOwner(src);
                 if (skill != NULL) {
                     if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(skill) + 0x3374) & 0x800000) {
                         return 1;
@@ -3203,7 +3203,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
                 reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag == 0) return 1;
-            if (func_80154280(rc, actor, 0) & 0xc0) return 1;
+            if (checkArtsFull(rc, actor, 0) & 0xc0) return 1;
         }
         if (actor->mField3F60 != NULL) {
             u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor->mField3F60) + 0x4ec);
@@ -3215,25 +3215,25 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
             return 1;
         }
         u8* chainWin = reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x20c8;
-        if (func_8027DF38(chainWin, reinterpret_cast<u8*>(actor), 1, 0) != 0) return 1;
+        if (ChainTmr_GateArts_DF38(chainWin, reinterpret_cast<u8*>(actor), 1, 0) != 0) return 1;
 
         if (unk328 == 1) {
             if (*reinterpret_cast<s16*>(chainWin) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0x9) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xf) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0x10) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xb) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xeb) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xf8) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xef) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xf0) != 0) return 1;
-            if (func_80148778(&actor->mArtsList, 0xf1) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0x9) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xf) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0x10) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xb) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xeb) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xf8) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xef) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xf0) != 0) return 1;
+            if (isBattleStatusActive(&actor->mArtsList, 0xf1) != 0) return 1;
         } else {
             void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
             if (mv != NULL) {
                 void* src = findObjectById((int)mv);
                 if (src != NULL) {
-                    void* skill = func_8016FE34(src);
+                    void* skill = MapFx_ResolveOwner(src);
                     if (skill != NULL) {
                         if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(skill) + 0x3374) & 0x800000) {
                             return 1;
@@ -3275,7 +3275,7 @@ void CMenuArtsSelect::updateSlotStates() {
     unk308 &= ~0x20;
 
     BattleActor* actor = reinterpret_cast<BattleActor*>(
-        func_8016FE34(cf::CfGameManager::getPlayer(0)));
+        MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0)));
     u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
 
     f32 zeroF = lbl_eu_80666F28;
@@ -3446,7 +3446,7 @@ extern "C" int checkArtUsable(CMenuArtsSelect* self) {
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
             getArtsParamAtCnt(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock(),
                               idx));
-        if (func_80148778(&actor->mArtsList, 0xeb) != 0 && p->mField28 == 0x16) {
+        if (isBattleStatusActive(&actor->mArtsList, 0xeb) != 0 && p->mField28 == 0x16) {
             return 0;
         }
 
@@ -3527,7 +3527,7 @@ body:
     if ((u8)actor->mField3F28 != 7) return 1;
     void* sub = actor->mField3F60;
     if (sub == NULL) return 0;
-    int v = func_801B2084();
+    int v = countActiveSlots();
     if (pushYawToLink(sub) != 0) {
         if (v <= 1) goto ret0;
         return 1;

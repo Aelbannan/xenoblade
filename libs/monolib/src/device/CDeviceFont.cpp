@@ -294,14 +294,14 @@ extern "C" {
 
 // Tail-call targets of the lookup wrappers: retail relocs to the Fv-mangled
 // names even though the calls pass trailing arguments through in r4+.
-void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
+void queueText__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
                                          u32 a2, u32 a3);
 void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 
 // Find the font layer for `fontId` (0 selects the device's current font id)
-// and tail-call the layer's func_80453BB4 with the passed-through args.
+// and tail-call the layer's queueText with the passed-through args.
 // Loop locals declared first (see dispatchLayer4508): MWCC allocates in
 // declaration order, and retail keeps child/candidate in r7, the walk node
 // in r8 and the start sentinel in r9 (r4-r6 hold the passed-through args).
@@ -341,7 +341,7 @@ void dispatchLayerBB4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     layer = 0;
 found:
     if (layer == 0) return;
-    func_80453BB4__16CDeviceFontLayerFv(layer, a1, a2, a3);
+    queueText__16CDeviceFontLayerFv(layer, a1, a2, a3);
 }
 
 // Same lookup as dispatchLayerBB4, dispatching to the layer's setBackgroundColor.
@@ -470,8 +470,8 @@ found:
 // signatures take arguments, so the calls reference the literal retail names
 // (same arrangement as the layer unit's own extern "C" definitions).
 // ---------------------------------------------------------------------------
-void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
-void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 flag);
+void queueLineMode__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void replayQueue__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 flag);
 u32 getScaledTextHeight__16CDeviceFontLayerFv(CDeviceFontLayer* layer);
 u32 getFontSlotData__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 index);
 
@@ -488,7 +488,7 @@ extern "C" CDeviceFontLayer* __ct__CDeviceFontLayer(CDeviceFontLayer* self,
 // call it directly after the raw 4-byte allocation (placement-new style).
 extern "C" CFontLayer* __ct__CFontLayer(CFontLayer* self);
 
-// Same lookup as dispatchLayerBB4, dispatching to the layer's func_80454508.
+// Same lookup as dispatchLayerBB4, dispatching to the layer's queueLineMode.
 void dispatchLayer4508__11CDeviceFontFv(u32 fontId, u32 a1) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
@@ -528,10 +528,10 @@ void dispatchLayer4508__11CDeviceFontFv(u32 fontId, u32 a1) {
     layer = 0;
 found:
     if (layer == 0) return;
-    func_80454508__16CDeviceFontLayerFv(layer, a1);
+    queueLineMode__16CDeviceFontLayerFv(layer, a1);
 }
 
-// Same lookup as dispatchLayerBB4, dispatching to the layer's func_80454B70
+// Same lookup as dispatchLayerBB4, dispatching to the layer's replayQueue
 // with the passed-through flag.
 void dispatchLayer4B70__11CDeviceFontFv(u32 fontId, u32 flag) {
     if (lbl_eu_80665678 == 0) return;
@@ -568,7 +568,7 @@ void dispatchLayer4B70__11CDeviceFontFv(u32 fontId, u32 flag) {
     layer = 0;
 found:
     if (layer == 0) return;
-    func_80454B70__16CDeviceFontLayerFv(layer, flag);
+    replayQueue__16CDeviceFontLayerFv(layer, flag);
 }
 
 // Same lookup as dispatchLayerBB4, but without the fontId-defaulting or the
@@ -758,7 +758,7 @@ IDeviceFontInfo* CDeviceFont::findFontByDevice() {
 // Create a font-info provider
 // free slot; setItem is guarded by the retail null check + try/catch frame
 // marker), and flag the list dirty (field_0x1EC = 2).
-u32 CDeviceFont::func_80452D80() {
+u32 CDeviceFont::createFontInfo() {
     if (lbl_eu_80665678 == 0) return 0;
 
     CDeviceFontInfoExt* info = CDeviceFontInfoExt::create();

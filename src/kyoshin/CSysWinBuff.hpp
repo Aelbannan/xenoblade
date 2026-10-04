@@ -206,10 +206,10 @@ int IsMenuState621F0();
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols, defined in
-// CSysWin.cpp). func_8022BFC8 lives in CSysWin.hpp with a CSysWin* first arg.
+// CSysWin.cpp). sysWinApplyKind lives in CSysWin.hpp with a CSysWin* first arg.
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
-void func_8022B9B4(void* syswin, void* str1, void* str2);
+void sysWinSetKindContent(void* syswin, void* str1, void* str2);
 void sysWinOpenPhase1(void* syswin);
 void sysWinAdvancePhase3(void* syswin);
 void sysWinDispatchPhase(void* syswin);

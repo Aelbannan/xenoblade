@@ -1,11 +1,11 @@
 // CChainTimer - chain timer / battle-chain state management.
 //
 // Implements the chain-state helpers of the kyoshin chain system:
-//   func_8027DE44 - start a chain (battle-manager gates)
+//   ChainTmr_Start_DE44 - start a chain (battle-manager gates)
 //   ChainTmr_IsUsable_E070 - battle-object usability check
-//   func_8027D20C - per-frame chain-state update (dead-object cleanup, wave)
+//   ChainTmr_Update_D20C - per-frame chain-state update (dead-object cleanup, wave)
 //   ChainTmr_Advance_D8C4 - chain state-machine advance
-//   func_8027E200 - arts-select usability scan
+//   ChainTmr_ScanUsable_E200 - arts-select usability scan
 //
 // The chain state object is the cf::UnkClass_800D8DBC member of the battle
 // manager; the battle objects are CfImplEneBattleObj-style actors whose
@@ -37,18 +37,18 @@ struct CBattleManagerChainGate {
 };
 } // namespace cf
 
-// Same-TU helpers (retail symbols ChainTmr_Advance_D8C4 / func_8027DB74 /
-// ChainTmr_IsUsable_E070 / func_8027E200 are unmangled, so they are defined with C
+// Same-TU helpers (retail symbols ChainTmr_Advance_D8C4 / ChainTmr_SetActive_DB74 /
+// ChainTmr_IsUsable_E070 / ChainTmr_ScanUsable_E200 are unmangled, so they are defined with C
 // linkage to keep intra-TU call reloc names identical to retail).
-extern "C" void func_8027DB74(cf::CChainState* self, int val);
+extern "C" void ChainTmr_SetActive_DB74(cf::CChainState* self, int val);
 extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self);
 extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj* obj);
-extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag);
+extern "C" int ChainTmr_ScanUsable_E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag);
 
 // The member sub-objects construct implicitly before this body (flusher
 // vptr/zero, chain-temp memset, chain-time ctor call, chain-timer vptr).
 // The body assigns the chain-temp manual vtable, then runs the inlined
-// chain reset (func_8027D1A4 semantics): unk0 is still uninitialized at
+// chain reset (ChainTmr_Reset_D1A4 semantics): unk0 is still uninitialized at
 // that point, so the runtime branch against it survives like retail.
 cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {
     mChainTemp.mVTable = (u32)&lbl_eu_80538338;
@@ -68,7 +68,7 @@ cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {
 
 // Chain reset: if a chain is active, clear the global chain flag, reset the
 // embedded chain timer and wave state; then zero the whole chain state.
-extern "C" void func_8027D1A4(cf::CChainState* self) {
+extern "C" void ChainTmr_Reset_D1A4(cf::CChainState* self) {
     if (self->field_0 != 0) {
         lbl_eu_80663DA0 &= 0xFE;
         self->field_84.resetChainTime();
@@ -84,7 +84,7 @@ extern "C" void func_8027D1A4(cf::CChainState* self) {
 // Per-frame chain-state update. Clears dead battle objects out of the state,
 // resets the chain when any died, otherwise advances the state machine and
 // drives the chain wave effect.
-void func_8027D20C(cf::CChainState* self) {
+void ChainTmr_Update_D20C(cf::CChainState* self) {
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     if (self->field_0 == 0) return;
 
@@ -115,7 +115,7 @@ void func_8027D20C(cf::CChainState* self) {
     }
 
     if (changed) {
-        func_8027DB74(self, 0);
+        ChainTmr_SetActive_DB74(self, 0);
         if (self->field_0 != 0) {
             lbl_eu_80663DA0 &= 0xFE;
             self->field_84.resetChainTime();
@@ -259,13 +259,13 @@ void ChainTmr_CheckArts_D478(cf::CChainState* self, cf::CChainBattleObj* obj) {
 extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
     int st = 0;
     cf::CChainBattleObj* voice =
-        (cf::CChainBattleObj*)func_8016FE34(findObjectById((int)self->field_C));
+        (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById((int)self->field_C));
     if (voice == 0) st = 1;
     else if (voice->v173() != 0) st = 1;
     else if (self->field_4->v173() != 0) st = 1;
     else if (self->field_8->v173() != 0) st = 1;
     else if (ChainTmr_IsUsable_E070(self, self->field_8) == 0) st = 1;
-    else st = (func_8027E200(self, self->field_8, 0) == 0);
+    else st = (ChainTmr_ScanUsable_E200(self, self->field_8, 0) == 0);
     if (st != 0) self->field_0 = 3;
 
     resetBattleGauge__Q22cf13CfGameManagerFv();
@@ -314,7 +314,7 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
         break;
     }
     case 3:
-        func_8027DB74(self, 0);
+        ChainTmr_SetActive_DB74(self, 0);
         lbl_eu_80663DA0 &= 0xFE;
         self->field_84.mTimer = lbl_eu_80668A98;
         self->field_84.mEnabled = 0;
@@ -328,7 +328,7 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
 // sub-objects (aiRebootAction/E0 on +0x3380, vtable calls on the embedded
 // +0x3E9C voice), refreshes the wave target / arts music table, and toggles
 // the arts-select menu.
-extern "C" void func_8027DB74(cf::CChainState* self, int val) {
+extern "C" void ChainTmr_SetActive_DB74(cf::CChainState* self, int val) {
     if (self->field_4 != 0) {
         if (val != 0) {
             dispatchItemLoad(self->field_4, 0x4000);
@@ -359,7 +359,7 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
             int actorId = (int)self->field_C;
             cf::CChainBattleObj* target = self->field_8;
             cf::CChainBattleObj* voice =
-                (cf::CChainBattleObj*)func_8016FE34(findObjectById(actorId));
+                (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById(actorId));
             f32 distSq;
             if (voice == 0) {
                 distSq = lbl_eu_80668AC4;
@@ -405,7 +405,7 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
 
 // Starts a chain on the state object with the two battle objects and actor
 // id, gated by the battle-manager state and the sudden-commu flag.
-int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
+int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
                   cf::CChainBattleObj* p2, u32 p3) {
     int ok;
     if (self->field_0 != 0) {
@@ -450,14 +450,14 @@ int func_8027DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     self->field_84.mTimer = lbl_eu_80668AA8;
     self->field_84.mEnabled = 1;
     self->field_84.mPaused = 1;
-    func_8027DB74(self, 1);
+    ChainTmr_SetActive_DB74(self, 1);
     return 1;
 }
 
 // Chain-target arts gate: with an active chain, when flag==0 scan arts slot
-// cnt - if it passes func_80154280 and its id is not 2 the chain is usable;
+// cnt - if it passes checkArtsFull and its id is not 2 the chain is usable;
 // otherwise only fail while the chain state is still in state 2.
-extern "C" int func_8027DF38(cf::CChainState* self, cf::CChainBattleObj* obj,
+extern "C" int ChainTmr_GateArts_DF38(cf::CChainState* self, cf::CChainBattleObj* obj,
                              int flag, int cnt) {
     if (self->field_0 == 0) return 0;
 
@@ -467,7 +467,7 @@ extern "C" int func_8027DF38(cf::CChainState* self, cf::CChainBattleObj* obj,
             if (cnt < 8) {
                 cf::CAttackParam* artsParam =
                     (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), cnt);
-                if (func_80154280(artsParam, obj, -2) == 0)
+                if (checkArtsFull(artsParam, obj, -2) == 0)
                     res = (artsParam->unk5E == 2);
                 else
                     res = 0;
@@ -481,9 +481,9 @@ extern "C" int func_8027DF38(cf::CChainState* self, cf::CChainBattleObj* obj,
 
 // Chain-start usability gate: only allow starting a chain on obj when it
 // passes the battle-object usability check.
-extern "C" int func_8027E018(cf::CChainState* self, cf::CChainBattleObj* obj) {
+extern "C" int ChainTmr_StartUsable_E018(cf::CChainState* self, cf::CChainBattleObj* obj) {
     if (ChainTmr_IsUsable_E070(self, obj) == 0) return 0;
-    return func_8027E200(self, obj, 1);
+    return ChainTmr_ScanUsable_E200(self, obj, 1);
 }
 
 // Battle-object usability check: chainable (vtable 0x2bc), owns the actor id
@@ -496,8 +496,8 @@ extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj
     u32 id2 = *(u32*)obj->field_04->f30();
     if (testActorStatus(obj, (int*)&id2, 0x1a) != 0) return 0;
     if (obj->field_3F28 == 5) {
-        if (func_80148778((u8*)obj + 8, 0xf0) != 0) return 0;
-        if (func_80148778(&((u8*)obj)[8], 0xf1) != 0) return 0;
+        if (isBattleStatusActive((u8*)obj + 8, 0xf0) != 0) return 0;
+        if (isBattleStatusActive(&((u8*)obj)[8], 0xf1) != 0) return 0;
         u32 id3 = *(u32*)obj->field_04->f30();
         if (testActorStatus(obj, (int*)&id3, 0xb) != 0) return 0;
         f32 a = obj->v084();
@@ -511,9 +511,9 @@ extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj
 // (through the menu, or the battle object directly) passes all gates.
 // Per-slot pipeline: menu slot check (state-2 path only), busy-slot skip
 // (slot 8 while field_3F28 == 5), a pre-check that drops slots whose arts
-// param is flagged (id == 2 via func_80154280 -2), then the real usage check
+// param is flagged (id == 2 via checkArtsFull -2), then the real usage check
 // with the caller flag (slot 8 uses the RC arts param).
-extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag) {
+extern "C" int ChainTmr_ScanUsable_E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag) {
     // Declared first: MWCC pins it to r30 across both loops like retail.
     cf::CAttackParam* artsParam;
     int f = 0x22;
@@ -531,14 +531,14 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
             // Out-of-range arm spelled as if/else with ||. NOTE (wall class
             // 13): retail keeps two separate signed compares (cmpi 0/blt,
             // cmpi 8/blt); the Wii/1.1 compiler locked for this unit always
-            // folds the range test to cmpli 7/bgt - cf. the func_8027DE44
+            // folds the range test to cmpli 7/bgt - cf. the ChainTmr_Start_DE44
             // version-split note above.
             int skip;
             if (i < 0 || i >= 8) {
                 skip = 0;
             } else {
                 artsParam = (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
-                if (func_80154280(artsParam, obj, -2) != 0)
+                if (checkArtsFull(artsParam, obj, -2) != 0)
                     skip = 0;
                 else
                     skip = (artsParam->unk5E == 2);
@@ -546,10 +546,10 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
             if (skip != 0) continue;
             int res;
             if (i < 8) {
-                res = func_80154280(
+                res = checkArtsFull(
                     (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i), obj, f);
             } else if (i == 8) {
-                res = func_80154280(
+                res = checkArtsFull(
                     (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0), obj, f);
             } else {
                 res = 0;
@@ -568,7 +568,7 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
             skip = 0;
         } else {
             artsParam = (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i);
-            if (func_80154280(artsParam, obj, -2) != 0)
+            if (checkArtsFull(artsParam, obj, -2) != 0)
                 skip = 0;
             else
                 skip = (artsParam->unk5E == 2);
@@ -576,10 +576,10 @@ extern "C" int func_8027E200(cf::CChainState* self, cf::CChainBattleObj* obj, in
         if (skip != 0) continue;
         int res;
         if (i < 8) {
-            res = func_80154280(
+            res = checkArtsFull(
                 (cf::CAttackParam*)getArtsParamAtCnt(obj->v157(), i), obj, f);
         } else if (i == 8) {
-            res = func_80154280(
+            res = checkArtsFull(
                 (cf::CAttackParam*)getArtsParamRC(obj->v157(), 2, 0), obj, f);
         } else {
             res = 0;

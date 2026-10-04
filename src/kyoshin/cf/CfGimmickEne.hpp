@@ -90,12 +90,12 @@ extern "C" void gimmickEneNoopDispatch5();
 // CfGimmickEne vtable (stored at +0x00 by the constructor/destructor).
 extern u8 lbl_eu_80537A78[];
 
-// sdata2 float constants used by the arts-interaction logic (func_8026EBA8).
+// sdata2 float constants used by the arts-interaction logic (gimmickEneArtsSetup).
 extern f32 lbl_eu_80668968;
 extern f32 lbl_eu_8066896C;
 extern f32 lbl_eu_8066897C;
 extern f64 lbl_eu_80668980;
-// Alpha scale / interpolation constants (func_8026ECEC).
+// Alpha scale / interpolation constants (gimmickEneUpdateLOD).
 extern f32 lbl_eu_80668988;
 extern f32 lbl_eu_8066898C;
 
@@ -140,7 +140,7 @@ extern char* lbl_eu_80537A68[4];
 // Color-column name buffer: the ctor writes '1'+i into [2] before each read.
 extern char* lbl_eu_806629B0;
 
-// CTaskLOD delegates (monolib lod) and sound helpers used by func_8026ECEC.
+// CTaskLOD delegates (monolib lod) and sound helpers used by gimmickEneUpdateLOD.
 extern void setLODEnable__8CTaskLODFv(u8 lod, int mode);
 extern void refreshLOD__8CTaskLODFv(u8 lod, f32 f);
 extern void removeLODEntry__8CTaskLODFv(u8 lod, f32 f);
@@ -179,7 +179,7 @@ extern "C" extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int i
 extern "C" extern int getArtsSlotByFlatIdx(const void* artsSet, int index);
 
 // Same-TU call targets (scaffold stubs).
-extern void func_8026E6E4(cf::CfGimmickEne* self);
+extern void gimmickEneSetupActor(cf::CfGimmickEne* self);
 extern void gimmickEneSetupGXState(cf::CfGimmickEne* self, int arg);
 
 } // extern "C"

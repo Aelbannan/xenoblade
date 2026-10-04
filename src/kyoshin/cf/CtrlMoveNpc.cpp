@@ -3,7 +3,7 @@
 // CCtrlMoveNpc - NPC movement controller. Derived from CCtrlMoveBase (base
 // occupies 0x00..0x4B; secondary vtable at 0x48 overwritten by the derived
 // ctor). Own fields begin at 0x4C; mStateFunc (0x4C) is a ptmf, null by
-// default and set to a real state function by func_8019F6E8.
+// default and set to a real state function by beginNpcMove.
 //
 // Layout / types are defined here (this TU has no unit header); struct layouts
 // recovered from the retail assembly in the session brief.
@@ -85,7 +85,7 @@ extern int (CCtrlMoveNpc::*const lbl_eu_80532DA8)();
 
 // bdat helpers / task helpers / movement helper (unmangled global symbols).
 // Bdat_GetTable_AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
-// func_8019FB54 is defined below; this prototype fixes its C linkage so the
+// isNpcRowUsable is defined below; this prototype fixes its C linkage so the
 // retail unmangled symbol name is emitted.
 u32 Bdat_GetRowBase_B41C(void* bdat);
 u32 Bdat_GetMaxRow_B1EC(void* bdat);
@@ -96,7 +96,7 @@ void ScnData_FwdB7D9C(void*, s8 v);
 void ScnData_FwdB7DD4(void*, u8 v);
 void maskMoveChildFlags(cf::CCtrlMoveBase* ths);
 f32 FrSqrt__Q24nw4r4mathFf(f32 x);
-int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
+int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
 
 // Movement base helpers / npc move helpers (unmangled global symbols).
@@ -128,7 +128,7 @@ extern const char lbl_eu_80526300[];
 // ptr member-function null constant (3 words).
 extern int (CCtrlMoveNpc::*const __ptmf_null)();
 
-// sdata2 float literals referenced by func_8019F6E8 / func_8019F93C.
+// sdata2 float literals referenced by beginNpcMove / tickNpcMove.
 extern const f32 lbl_eu_80667C58;
 extern const f32 lbl_eu_80667C5C;
 extern const f32 lbl_eu_80667C60;
@@ -170,11 +170,11 @@ extern "C" int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8019F6E8 - pick a movement target, initialise move fields and
+// beginNpcMove - pick a movement target, initialise move fields and
 // set the state fn. Approached-fraction is clamped into [0, max].
 // ---------------------------------------------------------------------------
 namespace cf {
-extern "C" void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
+extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
     ths->mField64 = 4;
     ths->mField58 = *vec;
     ths->mField68 = scale;
@@ -222,11 +222,11 @@ extern "C" void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale
 }
 
 // ---------------------------------------------------------------------------
-// func_8019FB54 - range check an Npc table row against row/value
+// isNpcRowUsable - range check an Npc table row against row/value
 // columns. Returns whether the row is "usable" for the current situation.
 // C linkage inherited from the prototype above (retail symbol is unmangled).
 // ---------------------------------------------------------------------------
-int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
+int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
     void* bdat = lbl_eu_806640B4;
     // Column values live in address-taken slots (full-word stores after each
@@ -267,12 +267,12 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 }
 
 // ---------------------------------------------------------------------------
-// func_8019FD2C - walk the table rows, toggling a per-row bit in the
+// refreshNpcRowFlags - walk the table rows, toggling a per-row bit in the
 // bitmap and notifying LOD when the usable-flag flips.
 // C linkage inherited from the CfGameManager.hpp declaration
 // (retail symbol is the unmangled pre-mangled name).
 // ---------------------------------------------------------------------------
-void func_8019FD2C() {
+void refreshNpcRowFlags() {
     Bdat_GetTable_AA34();
     void* bdat = lbl_eu_806640B4;
     cf::CfGameManager::getGameSubManager();
@@ -291,7 +291,7 @@ void func_8019FD2C() {
         // matching the retail shape (see CfGimmickSaveOff ctor pattern).
         u32 vfull = getBdatStringColumnValue(bdat, &str[0x38], idx);
         u8 v = *(u8*)&vfull;
-        if (func_8019FB54(idx, &str[0x6], &str[0xe], &str[0x17],
+        if (isNpcRowUsable(idx, &str[0x6], &str[0xe], &str[0x17],
                           &str[0x20], &str[0x26], &str[0x2c], &str[0x32]) != 0) {
             s32 word = idx >> 5;
             u32 w = bitmap[word];
@@ -318,12 +318,12 @@ void func_8019FD2C() {
 // Non-target functions kept from the scaffold so the unit still builds.
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// func_8019F93C - approach-an Npc toward its movement target. Computes
+// tickNpcMove - approach-an Npc toward its movement target. Computes
 // the target delta, drives the move helpers, and returns to idle (empty state
 // fn) once the target is nearly reached or approach no longer applies.
 // ---------------------------------------------------------------------------
 namespace cf {
-void func_8019F93C(CCtrlMoveNpc* ths) {
+void tickNpcMove(CCtrlMoveNpc* ths) {
     const ml::CVec3* pos =
         ths->mBaseData->mPosObj->CfObject_getPosVector();
 

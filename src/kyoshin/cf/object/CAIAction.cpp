@@ -574,7 +574,7 @@ extern "C" void aiResetTables(void* self) {
         p = (u8*)p + 14;
     }
 }
-void func_8014B8BC(){}
+void aiFetchAction(){}
 
 
 
@@ -789,12 +789,12 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 0x4E: case 0x4F: {
             // Attack-slot accumulator window; inner keys 0x4E/0x4F only.
             u32 acc = 0;
-            if (func_80148778((u8*)party + 8, 0x8D))
+            if (isBattleStatusActive((u8*)party + 8, 0x8D))
                 acc = *(u32*)findBattleStatusEntry((u8*)party + 8, 0x8D);
             s32 probe = (s32)(uintptr_t)((cf::CActorParam*)party)->CActorParam_getStatusTable();
             if (probe != 0) {
                 s32 val;
-                if (func_80260264((void*)((cf::CActorParam*)party)->CActorParam_getStatusTable(), 0x57, &val))
+                if (IdTable_GetSum((void*)((cf::CActorParam*)party)->CActorParam_getStatusTable(), 0x57, &val))
                     acc += (u32)val;
             }
             if (k == 0x4E) {
@@ -819,7 +819,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             return 0;
     }
     if (e[3] != 0 && e[4] != 0) {
-        if (func_801522C4(self, out) == 0)
+        if (aiDispatchAct(self, out) == 0)
             return 0;
     }
 
@@ -845,7 +845,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             CTaskGame_enumListCtor(&h);
             startEnumObjects(CTaskGame_enumListGet(&h), 0x20, 0x800);
             for (u32 i = 0; i < ((CAIEnumIter*)CTaskGame_enumListGet(&h))->field620; i++) {
-                void* obj = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&h), i));
+                void* obj = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&h), i));
                 if (obj == 0)
                     continue;
                 u32 v;
@@ -865,9 +865,9 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             __dt__80043E88(&h, -1);
         }
 
-        if (func_80148778((u8*)party + 8, 0xC) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xC) != 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0xCB) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xCB) != 0)
             return 0;
 
         // Collect usable arts slot indices.
@@ -896,13 +896,13 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         CAIArtsParamView* param = (CAIArtsParamView*)(uintptr_t)out->unk18;
         if (param == 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0x2F) == 0 && param->field80 - out->unk14 > 0.0f)
+        if (isBattleStatusActive((u8*)party + 8, 0x2F) == 0 && param->field80 - out->unk14 > 0.0f)
             return 0;
-        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
+        if (isBattleStatusActive((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
-        if (func_80148778((u8*)party + 8, 0x31) == 0
+        if (isBattleStatusActive((u8*)party + 8, 0x31) == 0
             && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
         return 1;
@@ -915,7 +915,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         v = *p;
         if (testActorStatus(p, &v, 6) == 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0xCC) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xCC) != 0)
             return 0;
         int idx = d - 5; // always 0 here
         void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
@@ -927,7 +927,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d == 2 || d == 3 || d == 0x54 || d == 0x55) {
         // 0xCA list check + result slot reset.
-        if (func_80148778((u8*)party + 8, 0xCA) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xCA) != 0)
             return 0;
         out->unk12 = -1;
         return 1;
@@ -935,9 +935,9 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d >= 0x11 && d <= 0x20) {
         // Scan arts list for a category match, then full gate chain.
-        if (func_80148778((u8*)party + 8, 0xC) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xC) != 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0xCB) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xCB) != 0)
             return 0;
         out->unk12 = -1;
         int want = d - 0x11;
@@ -959,18 +959,18 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (!getArtsSlotByFlatIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel))
             return 0;
         CAIArtsParamView* param = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel);
-        if (func_80148778((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0x117) != 0 && isBattleEventKind3(param->field48) != 0)
             return 0;
-        if (func_801554DC(param, party, 0x200) == 0)
+        if (ArtsGateClear(param, party, 0x200) == 0)
             return 0;
-        if (func_80148778((u8*)party + 8, 0x2F) == 0) {
-            if (!(param->field48 == 0xEB && func_80148778((u8*)party + 8, 0xEB) != 0)
+        if (isBattleStatusActive((u8*)party + 8, 0x2F) == 0) {
+            if (!(param->field48 == 0xEB && isBattleStatusActive((u8*)party + 8, 0xEB) != 0)
                 && param->field80 - out->unk14 > 0.0f)
                 return 0;
         }
-        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
+        if (isBattleStatusActive((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
-        if (func_80148778((u8*)party + 8, 0x31) == 0
+        if (isBattleStatusActive((u8*)party + 8, 0x31) == 0
             && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
 
@@ -985,11 +985,11 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     }
 
     if ((d >= 0x27 && d <= 0x34) || d == 0x53)
-        return func_80148778((u8*)party + 8, 6) == 0;
+        return isBattleStatusActive((u8*)party + 8, 6) == 0;
 
     if (d == 0x35) {
         // Pair-flag + unlock + turn-count gate chain.
-        void* obj = func_8016FE34(findObjectById((int)out->unk00));
+        void* obj = MapFx_ResolveOwner(findObjectById((int)out->unk00));
         if (obj != 0 && !(*(u32*)((u8*)obj + 0x3F00) & 2))
             return 0;
         if (!(*(u32*)((u8*)party + 0x3F00) & 2))
@@ -1006,7 +1006,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             return 0;
         if (d != 0x3B)
             return 1;
-        void* obj = func_8016FE34(findObjectById((int)out->unk00));
+        void* obj = MapFx_ResolveOwner(findObjectById((int)out->unk00));
         if (obj != 0) {
             u32 v;
             u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
@@ -1021,16 +1021,16 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         // Chained list checks (0x111 only on 0x3D, 0x112 only on 0x3E).
         if (!(*(u32*)((u8*)party + 0x3F00) & 2))
             return 0;
-        if (d == 0x3D && func_80148778((u8*)party + 8, 0x111) != 0)
+        if (d == 0x3D && isBattleStatusActive((u8*)party + 8, 0x111) != 0)
             return 0;
-        if (d == 0x3E && func_80148778((u8*)party + 8, 0x112) != 0)
+        if (d == 0x3E && isBattleStatusActive((u8*)party + 8, 0x112) != 0)
             return 0;
-        return func_80148778((u8*)party + 8, 0x117) == 0;
+        return isBattleStatusActive((u8*)party + 8, 0x117) == 0;
     }
 
     if (d >= 0x56 && d <= 0x58) {
         // Attack-slot pick with parameter fetch.
-        if (func_80148778((u8*)party + 8, 0xCA) == 0)
+        if (isBattleStatusActive((u8*)party + 8, 0xCA) == 0)
             return 0;
         int idx = d - 0x56;
         void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSlotIds();
@@ -1044,7 +1044,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     return 1; // 0x3F..0x52
 #undef party
 }
-extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
+extern "C" int aiTagDispatch(cf::CAIAction* self, CAIActionQuery* in) {
     // Retail dispatch on query byte 0xD (0..90, 91 entries -> EC80 0x16C).
     // Grouping mirrors the retail jumptable targets so MWCC lowers to a dense
     // 91-entry address table; each group probes a distinct action list id.
@@ -1082,31 +1082,31 @@ extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
             return 1;
         return 0;
     case 53:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x11))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x11))
             return 1;
         return 0;
     case 54:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x12))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x12))
             return 1;
         return 0;
     case 55:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x13))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x13))
             return 1;
         return 0;
     case 56:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x14))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x14))
             return 1;
         return 0;
     case 59:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x15))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x15))
             return 1;
         return 0;
     case 60:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x16))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x16))
             return 1;
         return 0;
     case 61: case 62:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x17))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x17))
             return 1;
         return 0;
     case 63: case 64: case 65: case 66: case 67:
@@ -1114,15 +1114,15 @@ extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
         return 1;
     case 73: case 74: case 75: case 76:
     case 77: case 78: case 79: case 80:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x18))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x18))
             return 1;
         return 0;
     case 81: case 82:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x19))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x19))
             return 1;
         return 0;
     case 86: case 87: case 88:
-        if (func_80148778((u8*)self->unkB14 + 8, 0x1A))
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x1A))
             return 1;
         return 0;
     case 89: case 90:
@@ -1159,16 +1159,16 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
         return result;
     }
 
-    // func_80150828 returns the primary handle; on success one of the three
+    // aiQueryHandle returns the primary handle; on success one of the three
     // sub-cases (1/2/3 by target unk5C) refines it.
-    result = func_80150828(self, in);
+    result = aiQueryHandle(self, in);
 
     tgt = in->unk18;
     if (tgt != 0) {
         s16 which = tgt->unk5C;
         if (which == 1) {
             if (result != 0) {
-                void* obj = func_8016FE34(findObjectById((int)(uintptr_t)result));
+                void* obj = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
@@ -1191,7 +1191,7 @@ extern "C" void* aiTargetQuery(cf::CAIAction* self, CAIActionQuery* in) {
                 result = v;
         } else if (which == 3) {
             if (result != 0) {
-                void* obj = func_8016FE34(findObjectById((int)(uintptr_t)result));
+                void* obj = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
@@ -1248,7 +1248,7 @@ static inline void* aiMoveBaseSelfId(void* partyBase) {
     return (void*)(uintptr_t)((cf::CObjectParam*)((u8*)partyBase + 0x3E9C))->CObjectParam_getSelfObjectId();
 }
 
-extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
+extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     CAIActionEnumHolder holder;
     const void* c = cmd;
 
@@ -1261,17 +1261,17 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     switch (sel) {
     case 6: {
-        if (func_80148778((u8*)self->unkB14 + 8, 0x11)) {
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             void* o = findBattleStatusEntry((u8*)self->unkB14 + 8, 0x11);
             appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
-            void* v = func_8016FE34(findObjectById((int)self->unkB18));
+            void* v = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
             if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
                 appendObjectById(CTaskGame_enumListGet(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
         } else {
-            void* v = func_8016FE34(findObjectById((int)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14)));
+            void* v = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14)));
             if (v) {
                 u8* moveBase = (u8*)self->unkB14 + 0x3E9C;
                 u32 mf = *(u32*)(moveBase + 0x64);
@@ -1291,7 +1291,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         break;
 
     case 36: {
-        void* v = func_8016FE34(findObjectById(*(u32*)((const u8*)c + 0x00)));
+        void* v = MapFx_ResolveOwner(findObjectById(*(u32*)((const u8*)c + 0x00)));
         if (v)
             appendObjectById(CTaskGame_enumListGet(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)v));
         break;
@@ -1299,11 +1299,11 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 1:
     case 10: {
-        if (func_80148778((u8*)self->unkB14 + 8, 0x11)) {
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             void* o = findBattleStatusEntry((u8*)self->unkB14 + 8, 0x11);
             appendObjectById(CTaskGame_enumListGet(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
-            void* v = func_8016FE34(findObjectById((int)self->unkB18));
+            void* v = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
             if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
                 appendObjectById(CTaskGame_enumListGet(&holder), (u32)self->unkB18);
             else
@@ -1360,7 +1360,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         startEnumObjects(CTaskGame_enumListGet(&holder), filter, 0);
         for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
-            void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+            void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (obj && obj == (void*)self->unkB14) {
                 slot->unk18 = slot->unk18 | 0x70;
                 break;
@@ -1468,7 +1468,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         if (aiListCount(list) != 0) {
             for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
                 CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
-                void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+                void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
                 if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x2) &&
                       (op - 143) == (s32)*(u16*)((u8*)obj + 0x3F28)))
                     slot->unk18 = slot->unk18 | 0x70;
@@ -1492,7 +1492,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     case 163: {
         if (aiListCount(CTaskGame_enumListGet(&holder)) != 0) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), 0);
-            void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+            void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x4) &&
                   ((cf::CActorParam*)obj)->CActorParam_getActorType() == (s32)(op - 151)))
                 aiListClear(CTaskGame_enumListGet(&holder));
@@ -1502,12 +1502,12 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 1: {
         void* obj;
-        if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
+        if (!isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(CTaskGame_enumListGet(&holder));
             obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMaxGaugeEntry();
             if (obj == 0) {
                 obj = aiMoveBaseSelfId((u8*)self->unkB14);
-                void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
+                void* v = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback1;
                 if (((cf::CActorParam*)v)->CActorParam_isBattleLocked() != 0)
@@ -1526,12 +1526,12 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 2: {
         void* obj;
-        if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
+        if (!isBattleStatusActive((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(CTaskGame_enumListGet(&holder));
             obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMinGaugeEntry();
             if (obj == 0) {
                 obj = aiMoveBaseSelfId((u8*)self->unkB14);
-                void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
+                void* v = MapFx_ResolveOwner(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback2;
                 if (((cf::CActorParam*)v)->CActorParam_isBattleLocked() != 0)
@@ -1841,18 +1841,18 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         u32 i;
         for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
-            void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+            void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj)
                 slot->unk18 = slot->unk18 | 0x70;
-            else if (func_80148778((u8*)obj + 8, 0x117))
+            else if (isBattleStatusActive((u8*)obj + 8, 0x117))
                 slot->unk18 = slot->unk18 | 0x70;
-            else if (func_80148778(&((u8*)obj)[8], 0x6E))
+            else if (isBattleStatusActive(&((u8*)obj)[8], 0x6E))
                 goto final177;
-            else if (func_80148778((u8*)((unsigned long)obj + 8), 0x6F))
+            else if (isBattleStatusActive((u8*)((unsigned long)obj + 8), 0x6F))
                 goto final177;
-            else if (func_80148778((u8*)((unsigned int)obj + 8), 0x70))
+            else if (isBattleStatusActive((u8*)((unsigned int)obj + 8), 0x70))
                 goto final177;
-            else if (func_80148778((u8*)obj + 0x8, 0x71))
+            else if (isBattleStatusActive((u8*)obj + 0x8, 0x71))
                 goto final177;
             else
                 slot->unk18 = slot->unk18 | 0x70;
@@ -1873,7 +1873,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         u32 i;
         for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
-            void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+            void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj) {
                 slot->unk18 = slot->unk18 | 0x70;
             } else if (op == 135) {
@@ -1896,7 +1896,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         u32 i;
         for (i = 0; i < aiListCount(CTaskGame_enumListGet(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)getEntryAt(CTaskGame_enumListGet(&holder), i);
-            void* obj = slot ? func_8016FE34(slot->unk04) : 0;
+            void* obj = slot ? MapFx_ResolveOwner(slot->unk04) : 0;
             if (!obj || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                 slot->unk18 = slot->unk18 | 0x70;
                 continue;
@@ -1984,7 +1984,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     return result;
 }
 
-// Base cf object as used here (func_8016FE34 returns obj = movePtr - 0x3E9C).
+// Base cf object as used here (MapFx_ResolveOwner returns obj = movePtr - 0x3E9C).
 struct CfObjBase {
     void* vtable;          // 0x00
     u8    pad[0x1530 - 4];
@@ -1998,7 +1998,7 @@ struct CfObjBase {
     u32   unk3F10;         // 0x3F10 battle handle
 };
 
-extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
+extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
     CAIActionEnumHolder it;
     const u8* qb = (const u8*)q;
     u8 b5  = qb[5];   // 2nd switch key (0..178)
@@ -2027,7 +2027,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
         startEnumObjects(list, filter, 0);
         for (u32 i = 0; i < aiListCount(list); i++) {
             CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
-            void* obj = e ? func_8016FE34(e->unk04) : 0;
+            void* obj = e ? MapFx_ResolveOwner(e->unk04) : 0;
             if (obj == 0) continue;
             if (obj != ((CfObjBase*)self->unkB14)) continue;
             e->unk18 = e->unk18 | 0x70;
@@ -2054,7 +2054,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
         }
     } else {
         // +0x6200 default
-        if (func_80148778((u8*)self->unkB14 + 8, 274)) {
+        if (isBattleStatusActive((u8*)self->unkB14 + 8, 274)) {
             void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 274);
             appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
         } else if (b6 <= 34) {
@@ -2070,13 +2070,13 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             case 1:
             case 10: {
                 // +0x6410
-                if (func_80148778((u8*)self->unkB14 + 8, 17)) {
+                if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) {
                     void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 17);
                     appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
                     break;
                 }
                 if (self->unkB18 != 0) {
-                    void* obj = func_8016FE34(findObjectById((int)self->unkB18));
+                    void* obj = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                         appendObjectById(CTaskGame_enumListGet(&it), self->unkB18);
                     } else {
@@ -2121,13 +2121,13 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
             case 6: {
                 // +0x6260
-                if (func_80148778((u8*)self->unkB14 + 8, 17)) {
+                if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) {
                     void* tag = findBattleStatusEntry((u8*)self->unkB14 + 8, 17);
                     appendObjectById(CTaskGame_enumListGet(&it), *(u32*)((u8*)tag + 0x10));
                     break;
                 }
                 if (self->unkB18 != 0) {
-                    void* obj = func_8016FE34(findObjectById((int)self->unkB18));
+                    void* obj = MapFx_ResolveOwner(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                         appendObjectById(CTaskGame_enumListGet(&it), self->unkB18);
                     } else {
@@ -2138,7 +2138,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x62F4 battle-object dance
                 {
                     u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                    CfObjBase* obj = (CfObjBase*)func_8016FE34(findObjectById((int)id));
+                    CfObjBase* obj = (CfObjBase*)MapFx_ResolveOwner(findObjectById((int)id));
                     if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
                         startEnumObjects(CTaskGame_enumListGet(&it), filter, 0x800);
@@ -2219,7 +2219,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
         case 1: {
             // +0x6744
-            if (func_80148778((u8*)self->unkB14 + 8, 17)) break;
+            if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) break;
             if (self->unkB18 != 0) break;
             void* list = CTaskGame_enumListGet(&it);
             ((CAIEnumList*)list)->count = 0;
@@ -2228,7 +2228,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                void* obj = func_8016FE34(findObjectById((int)id));
+                void* obj = MapFx_ResolveOwner(findObjectById((int)id));
                 if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -2242,7 +2242,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
         case 2: {
             // +0x6828 (same as case 1 but vtable slot 0x2EC)
-            if (func_80148778((u8*)self->unkB14 + 8, 17)) break;
+            if (isBattleStatusActive((u8*)self->unkB14 + 8, 17)) break;
             if (self->unkB18 != 0) break;
             void* list = CTaskGame_enumListGet(&it);
             ((CAIEnumList*)list)->count = 0;
@@ -2251,7 +2251,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
-                void* obj = func_8016FE34(findObjectById((int)id));
+                void* obj = MapFx_ResolveOwner(findObjectById((int)id));
                 if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -2402,7 +2402,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* list = CTaskGame_enumListGet(&it);
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
-                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
                 if (obj == 0) {
                     if (e) e->unk18 = e->unk18 | 0x70;
                     continue;
@@ -2422,7 +2422,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* list = CTaskGame_enumListGet(&it);
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
-                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
                 if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                     if (e) e->unk18 = e->unk18 | 0x70;
                     continue;
@@ -2472,23 +2472,23 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* list = CTaskGame_enumListGet(&it);
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
-                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
                 if (obj == 0) {
                     if (e) e->unk18 = e->unk18 | 0x70;
                     continue;
                 }
-                if (func_80148778((u8*)obj + 8, 279)) { e->unk18 = e->unk18 | 0x70; continue; }
-                if (func_80148778((u8*)obj + 8, 110) &&
-                    func_80148778((u8*)obj + 8, 111) &&
-                    func_80148778((u8*)obj + 8, 112)) {
-                    if (func_80148778((u8*)obj + 8, 113)) { e->unk18 = e->unk18 | 0x70; continue; }
+                if (isBattleStatusActive((u8*)obj + 8, 279)) { e->unk18 = e->unk18 | 0x70; continue; }
+                if (isBattleStatusActive((u8*)obj + 8, 110) &&
+                    isBattleStatusActive((u8*)obj + 8, 111) &&
+                    isBattleStatusActive((u8*)obj + 8, 112)) {
+                    if (isBattleStatusActive((u8*)obj + 8, 113)) { e->unk18 = e->unk18 | 0x70; continue; }
                 }
                 if (b5 == 178) {
                     if (!(obj->unk3374 & 0x1000)) e->unk18 = e->unk18 | 0x70;
                 } else {  // 176, 177
                     if (!(obj->unk3374 & 0x1000)) {
                         e->unk18 = e->unk18 | 0x70;
-                    } else if (func_80148778((u8*)obj + 8, 16)) {
+                    } else if (isBattleStatusActive((u8*)obj + 8, 16)) {
                         e->unk18 = e->unk18 | 0x70;
                     }
                 }
@@ -2513,7 +2513,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 if (word == 0) continue;
                 for (u32 i = 0; i < aiListCount(list); i++) {
                     CAIEnumSlot* e = (CAIEnumSlot*)getEntryAt(list, (int)i);
-                    CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                    CfObjBase* obj = e ? (CfObjBase*)MapFx_ResolveOwner(e->unk04) : 0;
                     if (obj == 0) continue;
                     if (word - 17 > 60) continue;
                     switch (word) {  // jumptable_eu_8052EDEC, words 17..77
@@ -2659,7 +2659,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
 
 // ---------------------------------------------------------------------------
-// func_801522C4 -- AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
+// aiDispatchAct -- AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
 // Given a 0x20-byte action-query struct, builds a CfObjEnumList of event
 // entries (switch on byte 8 = sel), filters it (switch on byte 7 = op),
 // and returns the selected entry payload (findFirstCleanObjectId) or 0.
@@ -2712,7 +2712,7 @@ extern "C" void aiRebootAction(cf::CAIAction* self) {
     // active battle via vt slot 0x5C0, probed with the resolved object).
     CAIPartyObj* cur = (CAIPartyObj*)self->unkB14;
     void* src = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)cur + 0x3E9C))->CObjectParam_getSelfObjectId();
-    void* obj = func_8016FE34(findObjectById((int)(intptr_t)src));
+    void* obj = MapFx_ResolveOwner(findObjectById((int)(intptr_t)src));
     cur = (CAIPartyObj*)self->unkB14;
     if (obj == (void*)cur || ((cf::CfObjectActor*)cur)->CfObjectActor_sharesMoveFlags(obj) != 0) {
         ((cf::CObjectParam*)((u8*)self->unkB14 + 0x3E9C))->CObjectParam_signalActionEnd(0);

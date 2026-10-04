@@ -21,7 +21,7 @@ u8 CQstLogInfo::QstLogInfo_GetReadyMark() { return mField39; }
 
 // Start the quest-log state machine: mark busy (+0x34=1), clear the 0x39
 // flag, run the state step and play sound 0x6d. Guarded by the state.
-extern "C" void func_802296E0(CQstLogInfo* self) {
+extern "C" void QstLogInfo_Start(CQstLogInfo* self) {
     if (self->field_0x34 == 0) {
         self->field_0x34 = 1;
         self->mField39 = 0;
@@ -32,7 +32,7 @@ extern "C" void func_802296E0(CQstLogInfo* self) {
 
 // Continue the quest-log machine when idle-at-step-3: mark busy (+0x34=4),
 // clear the 0x39 flag, step and play sound 6.
-extern "C" void func_80229724(CQstLogInfo* self) {
+extern "C" void QstLogInfo_Resume(CQstLogInfo* self) {
     if (self->field_0x34 == 3) {
         self->field_0x34 = 4;
         self->mField39 = 0;
@@ -186,8 +186,8 @@ extern "C" __declspec(noinline) void QstLogInfo_RefreshQuestDisplay(CQstLogInfo*
     QstLogInfo_UpdateNameIconPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
     QstLogInfo_UpdateClearReasonPane(self, (const char*)lbl_eu_80573D18[idx], self->mField3A);
     QstLogInfo_UpdateExpRewardPane(self, (const char*)self->field_0x3C, self->mField3A);
-    func_80229CF0(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
-    func_8022A904(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
+    QstLogInfo_UpdateBandObjectives(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
+    QstLogInfo_UpdateTypeObjectives(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
 }
 #pragma optimize_for_size off
 
@@ -271,7 +271,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo*
 // into the layout; the odd/even variant of each format picks the column. The
 // kind != 1 path repeats the fixed rows (loop over i) and binds them by name.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char bufE8[0x20];
     char bufC8[0x20];
@@ -509,11 +509,11 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
 #pragma optimize_for_size off
 
 // Quest-log objective/sub-objective update with per-band pane binding (see
-// func_80229CF0 for the v >= 0xFE band). The two loops are identical except
+// QstLogInfo_UpdateBandObjectives for the v >= 0xFE band). The two loops are identical except
 // for their pane-name formats and buffers; the switch maps the BDAT quest
 // type (v1) to the table that supplies the objective text.
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
+extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char buf8[0x20];
     char buf28[0x20];

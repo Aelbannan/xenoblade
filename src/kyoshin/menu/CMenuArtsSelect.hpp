@@ -195,4 +195,4 @@ extern "C" void* BpsStateSingletonToInt();
 extern "C" void EneSt_CursorReset(void*);
 extern "C" void BtlDmg_CursorReset(void*);
 extern "C" void CUICfManager_queueMoveBaseMenu();
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);

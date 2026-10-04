@@ -59,12 +59,12 @@ extern "C" CMakeCrystalWin* __dt__15CMakeCrystalWinFv(CMakeCrystalWin* _this, in
 }
 #pragma pop
 
-void func_8021260C(){}
+void mkCrystalBuildWin(){}
 
 // Retail 0x802147F4: tear down the crystal window. Removes the render
 // callback from the owning scene, releases all four subobjects, flags the
 // scene bytes, detaches the child work thread's view and clears it.
-void func_8021299C(CMakeCrystalWin* self) {
+void mkCrystalTeardown(CMakeCrystalWin* self) {
     CDeviceVI::waitForDrawDone();
 
     CScn* scene = self->mScene;
@@ -102,7 +102,7 @@ void func_8021299C(CMakeCrystalWin* self) {
 }
 
 
-void func_80212A68(){}
+void mkCrystalTick(){}
 
 u8 mkCrystalGetFlag4361(void* self) { return ((CMakeCrystalWin*)self)->field_4361; }
 
@@ -150,7 +150,7 @@ void mkCrystalToState2Idle(CMakeCrystalWin* self) {
     }
 }
 
-void func_80212CB0(){}
+void mkCrystalToState3Box(){}
 
 // Retail 0x80214D2C: same gate as mkCrystalToState2Idle but flags the secondary
 // state byte (field_4361) instead.
@@ -171,7 +171,7 @@ void mkCrystalToState5Banner(CMakeCrystalWin* self) {
     }
 }
 
-void func_80212F70(){}
+void mkCrystalToState6Box(){}
 
 // Retail 0x80214F58: same gate as mkCrystalToState5Banner but with banner mode 0x34
 // and window state 2.
@@ -185,7 +185,7 @@ void mkCrystalToState2Banner(CMakeCrystalWin* self) {
 // Retail 0x80214FA4: once the title-help banner is idle and the crystal box
 // is active, sync the crystal cursor, update the display selection, and show
 // the load overlay when either selection index reaches 3.
-void func_8021314C(CMakeCrystalWin* self) {
+void mkCrystalToState8Box(CMakeCrystalWin* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
             teardownCrystalBox(&self->mCrystalBox);
@@ -251,14 +251,14 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
             u8 boxTemp[0x1508];    // CMCCrystalBox temp at +0x2DE0
             u8 dispTemp[0x2DD8];   // CModelDispMakeCrystal temp at +0x8
             __ct__CMCCrystalBox(reinterpret_cast<CMCCrystalBox*>(boxTemp), 0);
-            func_80211CEC(&self->mCrystalBox, reinterpret_cast<const CMCCrystalBox*>(boxTemp));
+            MakeCrystalCopyBox(&self->mCrystalBox, reinterpret_cast<const CMCCrystalBox*>(boxTemp));
             __dt__13CMCCrystalBoxFv(reinterpret_cast<CMCCrystalBox*>(boxTemp), -1);
             initCrystalBoxResources(&self->mCrystalBox);
 
             // Rebuild the model display the same way (temp constructed with
             // the owning scene, copied in, destroyed).
             __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), self->mScene);
-            func_80210E9C(&self->mModelDispArea[0], &dispTemp[0]);
+            MakeCrystalCopyDispArea(&self->mModelDispArea[0], &dispTemp[0]);
             __dt__21CModelDispMakeCrystalFv(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), -1);
             MakeCrystal_InitFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
             func_801C41E8(&self->mTitleAHelp, 0x30);

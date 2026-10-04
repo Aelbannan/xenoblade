@@ -375,13 +375,13 @@ struct CtrlPlayerSub50 {         // target of vf2A4-result->mField50
 };
 
 // Retail CtrlPc_HandleMenuSelect / CtrlPc_InstallArtsAction imports.
-// func_8017FD44 result view: selector word at +0xB8.
+// GetZealObjPtr result view: selector word at +0xB8.
 struct Fd44State {
     u8 _00[0xB8];
     u32 mFieldB8;
 };
-extern "C" Fd44State* func_8017FD44(void);
-extern "C" int func_8017FD4C(Fd44State* state);
+extern "C" Fd44State* GetZealObjPtr(void);
+extern "C" int GetZealResult(Fd44State* state);
 struct ArtsSelStateViewPc {
     s8 byte0;   // 0x00
     s8 byte1;   // 0x01
@@ -663,7 +663,7 @@ public:
     virtual void* vf5C0(void* obj);     // vtable slot 0x5C0
 
     CtrlPlayerSub4* mField4;      // 0x04 (sub-object, vf30 -> u32* word holder)
-    u8 mField8;                   // 0x08 (state region handed to func_80148778)
+    u8 mField8;                   // 0x08 (state region handed to isBattleStatusActive)
     u8 _9[0x1530 - 0x9];
     u32 mField1530;               // 0x1530
     u8 _1534[0x3380 - 0x1534];
@@ -749,6 +749,6 @@ extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 extern "C" void setPadConfigEntry(int index, u32 value);
 
 extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
-extern "C" int func_801B202C(void);
-extern "C" int func_801B1D4C(int arg);
-extern "C" int func_801B1FA4(void);
+extern "C" int hasAnyActiveSlot(void);
+extern "C" int findActiveEntryID(int arg);
+extern "C" int getFirstFreeSlot(void);

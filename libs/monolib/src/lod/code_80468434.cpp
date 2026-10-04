@@ -8,13 +8,13 @@
 using namespace LOD;
 
 // ===========================================================================
-// us-8046cbac  func_80468BDC  (billboard record draw, dual normal + facing)
-// Same guard chain as func_80469138; the billboard uses two transformed
+// us-8046cbac  drawLodBillDual  (billboard record draw, dual normal + facing)
+// Same guard chain as drawLodBillView1C; the billboard uses two transformed
 // direction normals (X and Y axes) and each record may lean toward the
 // matrix translation column by field_0x14 (a normalized offset added to the
 // base position).  Returns the +0x1C record view.
 // ===========================================================================
-u16* LOD::UnkClass_80468434::func_80468BDC() {
+u16* LOD::UnkClass_80468434::drawLodBillDual() {
     LodDrawHeader* h = (LodDrawHeader*)this;
     // Grouping keeps the scaled index as the add's first operand
     // (retail: mulli r4,r4,0x2c; add r4,r4,r3; addi r0,r4,0x1C).
@@ -33,18 +33,18 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
     // Visibility guard chain (mirrors the cull helpers' checks).
     if ((h->field_0x1 & lbl_eu_8066A5F0) != 0) {
         if ((h->field_0x1 & 2) != 0) {
-            if (func_804643D8(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
+            if (applyLodRangeFade(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
                               h->field_0xC * 0x3c, h->field_0xD * 0x3c) != 0) {
                 return rec;
             }
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(h->field_0x1) != 0) {
+        if (updateLodFade(h->field_0x1) != 0) {
             return rec;
         }
         if ((h->field_0x1 & 0x80) != 0) {
-            if (func_804642BC(h->field_0x10, h->field_0x12) != 0) {
+            if (getLodFadeRatio(h->field_0x10, h->field_0x12) != 0) {
                 return rec;
             }
         }
@@ -63,7 +63,7 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
     }
 
     selectLodTexCoord(h->field_0x6);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
     bindLodVertexArrays(texCount);
 
@@ -154,13 +154,13 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
 }
 
 // ===========================================================================
-// us-8046c404  func_80468434  (record render dispatch)
+// us-8046c404  dispatchLodRecord  (record render dispatch)
 // Stores the object as current, selects the view matrix (from the matrix
 // tables or the caller's argument), uploads it, assembles the per-record
 // matrices, submits the display lists, registers the vertex arrays and
 // dispatches the record's render functions through lbl_eu_8056D980.
 // ===========================================================================
-void func_80468434__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
+void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
                                                 u8* arg2) {
     LodHeader34* o = (LodHeader34*)self;
     u32 idx = lbl_eu_80665794;
@@ -259,13 +259,13 @@ void func_80468434__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
 }
 
 // ===========================================================================
-// us-8046e384  func_8046A3B4  (billboard matrix assembly + submit)
+// us-8046e384  submitLodBillMtx  (billboard matrix assembly + submit)
 // Resolves the render object for the given type index through the LOD
 // per-type pointer tables (stride 0x18), stores it as the current object,
 // assembles the per-record matrices in lbl_eu_80658048, then copies the
 // caller's view matrix and submits every record flagged with bit 2.
 // ===========================================================================
-void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
+void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
                                                 u8* arg2) {
     // Resolve the object: pool base + the u32 record table entry at
     // byte offset idx*0x18 of the draw-records pointer.
@@ -327,13 +327,13 @@ void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
 }
 
 // ===========================================================================
-// us-8046db2c  func_80469B5C  (billboard record draw, +0x48 view)
+// us-8046db2c  drawLodBillView48  (billboard record draw, +0x48 view)
 // Guard chain identical to the cull helpers; on visible, uploads the matrix
 // slot + texcoord state and emits the record's billboard quad.  The quad
 // corners are the scaled direction normal spread around two base vectors
 // (record +0x10 / +0x18 heights) and the position base is record +0x0.
 // ===========================================================================
-u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
+u16* drawLodBillView48__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     LodDrawHeader* h = (LodDrawHeader*)self;
     // Integer-sum form keeps (idx * 0x2C) as the add's first operand
     // (retail: add r4, r4, r3; addi r31, r4, 0x48).
@@ -342,18 +342,18 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     // Visibility guard chain (mirrors the cull helpers' checks).
     if ((h->field_0x1 & lbl_eu_8066A5F0) != 0) {
         if ((h->field_0x1 & 2) != 0) {
-            if (func_804643D8(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
+            if (applyLodRangeFade(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
                               h->field_0xC * 0x3c, h->field_0xD * 0x3c) != 0) {
                 return (u16*)rec;
             }
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(h->field_0x1) != 0) {
+        if (updateLodFade(h->field_0x1) != 0) {
             return (u16*)rec;
         }
         if ((h->field_0x1 & 0x80) != 0) {
-            if (func_804642BC(h->field_0x10, h->field_0x12) != 0) {
+            if (getLodFadeRatio(h->field_0x10, h->field_0x12) != 0) {
                 return (u16*)rec;
             }
         }
@@ -362,10 +362,10 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     }
 
     // Visible: upload the matrix slot and set up colour/texcoord state.
-    func_80463C24((s32)h->field_0xE >> 1, h->field_0xF,
+    uploadLodMatrix((s32)h->field_0xE >> 1, h->field_0xF,
                   (const f32 (*)[3][4])&h->field_0x18);
     selectLodTexCoord(h->field_0x6);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
     bindLodVertexArrays(texCount);
 
@@ -436,11 +436,11 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 namespace LOD {
 
 // ===========================================================================
-// us-8046d5f0  func_80469620  (billboard record draw, dual normal)
-// Same guard chain as func_80469B5C; the quad uses two transformed direction
+// us-8046d5f0  drawLodBillNorm  (billboard record draw, dual normal)
+// Same guard chain as drawLodBillView48; the quad uses two transformed direction
 // normals (X and Y axes) so the billboard can orient freely.
 // ===========================================================================
-u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
+u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     LodDrawHeader* h = (LodDrawHeader*)self;
     // Integer-sum form keeps (idx * 0x2C) as the add's first operand.
     LodDrawRec* rec = (LodDrawRec*)(h->field_0x2 * 0x2c + (u32)self + 0x48);
@@ -448,18 +448,18 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     // Visibility guard chain (mirrors the cull helpers' checks).
     if ((h->field_0x1 & lbl_eu_8066A5F0) != 0) {
         if ((h->field_0x1 & 2) != 0) {
-            if (func_804643D8(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
+            if (applyLodRangeFade(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
                               h->field_0xC * 0x3c, h->field_0xD * 0x3c) != 0) {
                 return (u16*)rec;
             }
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(h->field_0x1) != 0) {
+        if (updateLodFade(h->field_0x1) != 0) {
             return (u16*)rec;
         }
         if ((h->field_0x1 & 0x80) != 0) {
-            if (func_804642BC(h->field_0x10, h->field_0x12) != 0) {
+            if (getLodFadeRatio(h->field_0x10, h->field_0x12) != 0) {
                 return (u16*)rec;
             }
         }
@@ -468,10 +468,10 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     }
 
     // Visible: upload the matrix slot and set up colour/texcoord state.
-    func_80463C24((s32)h->field_0xE >> 1, h->field_0xF,
+    uploadLodMatrix((s32)h->field_0xE >> 1, h->field_0xF,
                   (const f32 (*)[3][4])&h->field_0x18);
     selectLodTexCoord(h->field_0x6);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
     bindLodVertexArrays(texCount);
 
@@ -553,13 +553,13 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 }
 
 // ===========================================================================
-// us-8046d108  func_80469138  (billboard record draw, +0x1C view)
+// us-8046d108  drawLodBillView1C  (billboard record draw, +0x1C view)
 // Guard chain returns the +0x1C record view; the direction normal is the
 // transformed X axis of a matrix selected by the u16 at header +0x0E, and
 // each record either dispatches through lbl_eu_8056D9B0 (bit 0 of +0x2B) or
 // copies its position base directly.
 // ===========================================================================
-u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
+u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     LodDrawHeader* h = (LodDrawHeader*)self;
     // Integer-sum form keeps (idx * 0x2C) as the add's first operand.
     LodDrawRec* rec = (LodDrawRec*)(h->field_0x2 * 0x2c + (u32)self + 0x1c);
@@ -567,18 +567,18 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     // Visibility guard chain (mirrors the cull helpers' checks).
     if ((h->field_0x1 & lbl_eu_8066A5F0) != 0) {
         if ((h->field_0x1 & 2) != 0) {
-            if (func_804643D8(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
+            if (applyLodRangeFade(h->field_0x8 * 0x3c, h->field_0xA * 0x3c,
                               h->field_0xC * 0x3c, h->field_0xD * 0x3c) != 0) {
                 return (u16*)rec;
             }
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(h->field_0x1) != 0) {
+        if (updateLodFade(h->field_0x1) != 0) {
             return (u16*)rec;
         }
         if ((h->field_0x1 & 0x80) != 0) {
-            if (func_804642BC(h->field_0x10, h->field_0x12) != 0) {
+            if (getLodFadeRatio(h->field_0x10, h->field_0x12) != 0) {
                 return (u16*)rec;
             }
         }
@@ -599,7 +599,7 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     }
 
     selectLodTexCoord(h->field_0x6);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
     bindLodVertexArrays(texCount);
 
@@ -829,7 +829,7 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     u8* result = &self->records[0].field_0x24;
     if ((self->records[0].field_0x16 & lbl_eu_8066A5F0) != 0) {
         if ((self->records[0].field_0x16 & 2) != 0) {
-            if (func_804643D8(self->records[0].field_0x2 * 0x3c,
+            if (applyLodRangeFade(self->records[0].field_0x2 * 0x3c,
                               self->records[0].field_0x4 * 0x3c,
                               self->records[0].field_0x6 * 0x3c,
                               self->records[0].field_0x7 * 0x3c) != 0) {
@@ -838,11 +838,11 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(self->records[0].field_0x16) != 0) {
+        if (updateLodFade(self->records[0].field_0x16) != 0) {
             return result;
         }
         if ((self->records[0].field_0x16 & 0x80) != 0) {
-            if (func_804642BC(*(u16*)&self->records[0].field_0x18,
+            if (getLodFadeRatio(*(u16*)&self->records[0].field_0x18,
                               self->records[0].field_0x1A) != 0) {
                 return result;
             }
@@ -851,7 +851,7 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
     selectLodTexCoord(self->records[0].field_0x8);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
     setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(self->records[0].field_0x14 + 3);
     GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
                       self->records[0].field_0x10);
@@ -869,7 +869,7 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     u8* result = &self->records[2].field_0x0;
     if ((self->records[0].field_0x16 & lbl_eu_8066A5F0) != 0) {
         if ((self->records[0].field_0x16 & 2) != 0) {
-            if (func_804643D8(self->records[0].field_0x2 * 0x3c,
+            if (applyLodRangeFade(self->records[0].field_0x2 * 0x3c,
                               self->records[0].field_0x4 * 0x3c,
                               self->records[0].field_0x6 * 0x3c,
                               self->records[0].field_0x7 * 0x3c) != 0) {
@@ -878,11 +878,11 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
-        if (func_80464128(self->records[0].field_0x16) != 0) {
+        if (updateLodFade(self->records[0].field_0x16) != 0) {
             return result;
         }
         if ((self->records[0].field_0x16 & 0x80) != 0) {
-            if (func_804642BC(self->records[1].field_0x20,
+            if (getLodFadeRatio(self->records[1].field_0x20,
                               self->records[1].field_0x22) != 0) {
                 return result;
             }
@@ -890,11 +890,11 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     } else {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
-    func_80463C24((s32)self->records[0].field_0x18 >> 1,
+    uploadLodMatrix((s32)self->records[0].field_0x18 >> 1,
                   self->records[0].field_0x19,
                   (const f32 (*)[3][4])&self->records[0].field_0x1C);
     selectLodTexCoord(self->records[0].field_0x8);
-    func_8046534C__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
+    applyLodRecState__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
     GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
                       self->records[0].field_0x10);
     lbl_eu_80665818 = (u32)-1;
@@ -913,11 +913,11 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 namespace Blob34 {
 extern "C" {
 void renderLodBatch__Q23LOD17UnkClass_80468434Fv();
-void func_80468BDC__Q23LOD17UnkClass_80468434Fv();
-void func_80469138__Q23LOD17UnkClass_80468434Fv();
+void drawLodBillDual__Q23LOD17UnkClass_80468434Fv();
+void drawLodBillView1C__Q23LOD17UnkClass_80468434Fv();
 void renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv();
-void func_80469620__Q23LOD17UnkClass_80468434Fv();
-void func_80469B5C__Q23LOD17UnkClass_80468434Fv();
+void drawLodBillNorm__Q23LOD17UnkClass_80468434Fv();
+void drawLodBillView48__Q23LOD17UnkClass_80468434Fv();
 void cullLodRecordA__Q23LOD17UnkClass_80468434Fv();
 void cullLodEntry__Q23LOD17UnkClass_80468434Fv();
 void cullLodRecordB__Q23LOD17UnkClass_80468434Fv();
@@ -929,11 +929,11 @@ void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv();
 }
 extern "C" __declspec(align(8)) u32 lbl_eu_8056D980[16] = {
     (u32)&Blob34::renderLodBatch__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_80468BDC__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_80469138__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::drawLodBillDual__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::drawLodBillView1C__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_80469620__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_80469B5C__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::drawLodBillNorm__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::drawLodBillView48__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::cullLodRecordA__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,

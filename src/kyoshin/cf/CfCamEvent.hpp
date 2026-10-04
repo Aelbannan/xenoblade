@@ -51,7 +51,7 @@ struct CfCamSrc160 {
     CfCamBlock48 block;   // 0x9C
 };
 
-// Linked-list node iterated by the cam-event flush loop in func_8006ACC0.
+// Linked-list node iterated by the cam-event flush loop in CfCamEvt_Update.
 struct CfCamNode {
     CfCamNode* next;      // 0x00
     u8 unk04[4];          // 0x04
@@ -169,7 +169,7 @@ void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager ac
 void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern const volatile unsigned char lbl_eu_80527048[];                          // CfCamEvent vtable label
 
-// Per-frame update (func_8006ACC0) imports.
+// Per-frame update (CfCamEvt_Update) imports.
 extern "C" void stubEmptyE__Q22cf13CfGameManagerFv(u32);
 extern "C" int getNullPtrC__Q22cf13CfGameManagerFv(u32);
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
@@ -184,7 +184,7 @@ extern "C" void cfCam_applyRelPos(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
 extern "C" float Scn_GetFrameDelta();                     // scene elapsed-time getter
 extern "C" int ScnRes_VertRayForward_E398(void*, u32, u32, u32, f32, f32);
-extern "C" void func_804BE4B4(void*, int);
+extern "C" void ScnRes_CopyEntryHead(void*, int);
 extern "C" void scnImN4DynStart();
 extern "C" void simSetValue7E8(void*, int);
 extern "C" void scnImN4SetShadFlg(void*);

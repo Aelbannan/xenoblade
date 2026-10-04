@@ -111,11 +111,11 @@ extern "C" const u32 lbl_eu_80525B0C[3];
 // referencing it by name keeps the pool reloc named instead of a private @label.
 extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AD0;
 
-void CTaskGameCf::func_8004431C() {
+void CTaskGameCf::startMode1New() {
     mMoveFunc = lbl_eu_80525AB8;
 }
 
-void CTaskGameCf::func_8004433C() {
+void CTaskGameCf::startMode2Con() {
     typedef void (cf::CTaskGameCf::*Ptmf)();
     *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::startContinue;
 }
@@ -169,15 +169,15 @@ void CTaskGameCf::Draw() {}
         mMoveFunc = &CTaskGameCf::bootGameWorld;
     }
 
-void cf::CTaskGameCf::func_800444DC(){
+void cf::CTaskGameCf::chainNextMove(){
     typedef void (cf::CTaskGameCf::*Ptmf)();
-    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::func_800444FC;
+    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::setPooledMove;
 }
 
 extern "C" CTaskGameCf::MoveFunc lbl_eu_80525B18;
 extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B24;
 
-void CTaskGameCf::func_800444FC(){
+void CTaskGameCf::setPooledMove(){
     mMoveFunc = lbl_eu_80525B18;
 }
 
@@ -209,7 +209,7 @@ void CTaskGameCf::func_800444FC(){
             CScnNw4r* wmScene = pTaskGame->getScene();
             u32 memHandle = mtl::MemManager::getHandleMEM2();
             UIWin_CreateManager(this, wmScene, memHandle);
-            func_8012F558(this, pTaskGame->getScene(), -1);
+            UIBattleGetOrCreate(this, pTaskGame->getScene(), -1);
             lbl_eu_80663E28 |= 0x10000000;
         }
 
@@ -248,7 +248,7 @@ void CTaskGameCf::func_800444FC(){
         if(CtrlRemote_TouchBitByArg((u32)0x20) == 0){
             CtrlRemote_SetSharedBit(0x20, 1);
         }
-        func_8004302C(1, 0);
+        CTaskGame_setLoadScreen(1, 0);
         // Switch to the running-state move handler (pooled PTMF copy from
         // the retail .data constant at lbl_eu_80525B24).
         MoveFunc nextMove = *(const MoveFunc*)&lbl_eu_80525B24;
@@ -288,7 +288,7 @@ void CTaskGameCf::func_800444FC(){
                 ((CProcess*)UIWin_GetInstance())->SetRemove();
             }
 
-            ::func_8012F87C(0);
+            ::UIBattleRemoveAll(0);
 
             ((CProcess*)evtGetManagerAddr())->SetRemove();
 

@@ -308,7 +308,7 @@ extern "C" {
     int CCharVoiceMan_IsNodeActive(u32 arg);
     int CCharVoiceMan_AllocChainVoiceId();
     int CCharVoiceMan_ForwardNodeCall(int a, CChainBattleObjTail* b, int c);
-    extern "C" void func_8027B164(cf::CChainActorList* self);
+    extern "C" void Chain_ClearAll(cf::CChainActorList* self);
     extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key);
     void ChainList_Clear(cf::CChainList* self);
     extern "C" void trackChainPlayer(CBattleChainMenuState* self);
@@ -320,18 +320,18 @@ extern "C" {
     // Chain-actor-list helpers (CChainActorList.cpp). C linkage keeps the
     // call reloc names verbatim (MWCC otherwise mangles global functions).
     extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self);
-    extern "C" void func_8027B2CC(cf::CChainActorList* self);
+    extern "C" void Chain_RebuildLinks(cf::CChainActorList* self);
     extern "C" void ChainList_SweepDead(cf::CChainList* self);
     extern "C" void ChainList_UpdateAll(cf::CChainList* self);
-    extern "C" void func_8027C0B0(cf::CChainChanceS* self);
+    extern "C" void Chain_TickChanceCount(cf::CChainChanceS* self);
     extern "C" int  Chain_RemoveActor(cf::CChainActorList* self, u32 key);
-    extern "C" int  func_8027BC14(cf::CChainActorList* self, u32 key);
+    extern "C" int  Chain_CheckActivatable(cf::CChainActorList* self, u32 key);
     extern "C" int  ChainList_RemoveKey(cf::CChainList* self, u32 key);
     // Chain-start helpers used by CChain_TryActivateChain / CChain_AdvanceChainLink
     // (CChainActorList.cpp / CMenuBattleChain.cpp).
-    extern "C" void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other, cf::CfObjectActor* target);
+    extern "C" void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other, cf::CfObjectActor* target);
     extern "C" void ChainList_StepTargets(cf::CChainList* self, int target);
-    void func_8027C6B4(cf::CChainList* self, int target, int index);
+    void Chain_LinkList(cf::CChainList* self, int target, int index);
     extern "C" void Chain_EmitThresholdEvents(cf::CChainFlag* self);
     extern "C" void Chain_EmitCountEvents(cf::CChainFlag* self);
     extern "C" void reinitChainPlayer(CBattleChainMenuState* self);
@@ -345,16 +345,16 @@ extern "C" {
     // class member (which mangles to checkSlotUsable__15CMenuArtsSelectFl).
     int checkSlotUsable(void* menu, int index);
     // Arts-menu-up query (CtrlPc.cpp family) used by CChainActor_CheckFacing.
-    int func_801B202C();
+    int hasAnyActiveSlot();
     // Battle-event dispatcher (defined in CBattleManager.cpp): single shared
     // decl on kyoshin/cf/CBattleManagerApi.hpp (extern "C", retail-unmangled
     // symbol); the C++-linkage copy here clashed with it (10197).
     // Voice-act / chain arts-combo helpers. aiRebootAction lives in
     // CVision.hpp (same signature, no clash); aiRingCompact and
-    // func_80293E24 have no header declaration, so they are declared here.
+    // updateChainCombo have no header declaration, so they are declared here.
     void aiRebootAction(void* self);
     void aiRingCompact(void* self);
-    void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor);
+    void updateChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor);
     // Same-TU helper (defined in CChain.cpp after its first caller).
     void CChain_TickChain(cf::CChain* self);
     // Same-TU chain-voice reset (defined in CChain.cpp); used by the ctor.
@@ -369,7 +369,7 @@ extern "C" {
     void ErrWin_RegEntryS3_4A68(CErrMesEntry* self, CErrMesOwner* owner);
     // Battle-chain menu helpers (CMenuBattleChain.cpp).
     void requestAnimReset(CBattleChainMenuState* self);
-    extern "C" int func_802AB510(CBattleChainMenuState* self, u8* out);
+    extern "C" int isChainReady(CBattleChainMenuState* self, u8* out);
     // Chain-state-machine helpers used by CChain_TickChain (same-TU or
     // CChainActorList.cpp / CUIErrMesWin.cpp / CMenuBattleChain.cpp).
     void CChain_ResetVoiceMgr();
@@ -377,11 +377,11 @@ extern "C" {
     void CChain_TryExtend(cf::CChain* self);
     void CChain_DriveChainExtend(cf::CChain* self);
     extern "C" void Chain_FindOrCreateActor(cf::CChainActorList* self, u32 key);
-    extern "C" void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list);
+    extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list);
     extern "C" int  Chain_HasValidTarget(cf::CChainActorList* self);
     extern "C" int  ChainList_CheckCondition(cf::CChainList* self, int target, int check);
     extern "C" int  ChainList_HasCount(cf::CChainList* self, int key);
-    void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor);
+    void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor);
     extern "C" int  Chain_RollActivation(cf::CChainChance* self, cf::CChainBattleObj* target, cf::CChainBattleObj* source);
     extern "C" int  Chain_ReadPadAction(cf::CChainAction* self, u8* out);
     extern "C" void ChainCounter_Drain(cf::CChainCounter* self);

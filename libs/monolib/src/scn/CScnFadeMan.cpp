@@ -135,15 +135,15 @@ extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
         draw.setCol(self->mCurrentColor);
         draw.begin(0x9, 0x1);
         ml::CRect rect;
-        CView::func_8043EA88(rect, CView::getCurrentView());
+        CView::fitRectToView(rect, CView::getCurrentView());
         draw.add(*(ml::CRect16*)&rect);
         draw.end();
     }
 }
 
-// --- func_8049C72C -----------------------------------------------------------
+// --- startFade -----------------------------------------------------------
 
-void func_8049C72C(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
+void startFade(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
     if (CDeviceVI::isTvFormatPal() && count > 1) {
         count = (u32)(u32ToF_AB98(count) / lbl_eu_8066AB90);
     }

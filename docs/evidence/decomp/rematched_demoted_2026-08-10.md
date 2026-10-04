@@ -86,10 +86,10 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-8018cc64 | kyoshin/menu/CMenuShopSell | `MenuShopSellDtorThunk58` |
 | us-80144f94 | kyoshin/menu/CMenuUpdate | `dtorThunk_6c` |
 | us-80144fa4 | kyoshin/menu/CMenuUpdate | `dtorThunk_70` |
-| us-80181140 | kyoshin/menu/CMenuZeal | `func_8017FD44` |
-| us-8018135c | kyoshin/menu/CMenuZeal | `func_8017FF60` |
-| us-80181364 | kyoshin/menu/CMenuZeal | `func_8017FF68` |
-| us-8018136c | kyoshin/menu/CMenuZeal | `func_8017FF70` |
+| us-80181140 | kyoshin/menu/CMenuZeal | `GetZealObjPtr` |
+| us-8018135c | kyoshin/menu/CMenuZeal | `zealDtorThunk58` |
+| us-80181364 | kyoshin/menu/CMenuZeal | `zealRenderBeforeThunk` |
+| us-8018136c | kyoshin/menu/CMenuZeal | `zealDtorThunk5C` |
 | us-8020373c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkReplayAnims` |
 | us-8020374c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkSlotCmd` |
 | us-8020375c | kyoshin/menu/parts/CModelDispEquip | `ModelDispEquip_ThunkRefreshRef` |

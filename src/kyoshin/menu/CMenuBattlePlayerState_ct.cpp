@@ -23,7 +23,7 @@ char lbl_eu_8052C42C[];
 extern u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-void func_8010B324(CMenuBattlePlayerStateSlot*);
+void BpsStateClearSlot(CMenuBattlePlayerStateSlot*);
 void __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 extern const f32 lbl_eu_80666F94; // 0.0f
@@ -73,7 +73,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     mScn = scn;
 
     __ct__17UnkClass_8045F564Fv(&unk64);
-    __construct_array(mSlots, reinterpret_cast<void*>(func_8010B324),
+    __construct_array(mSlots, reinterpret_cast<void*>(BpsStateClearSlot),
                       reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
 
     // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
@@ -122,7 +122,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         unk7F8 = z;
         i = 0;
         do {
-            // Inlined func_8010B324: clear +0x74..+0x8c then pad90[0x174].
+            // Inlined BpsStateClearSlot: clear +0x74..+0x8c then pad90[0x174].
             slot.unk74 = (void*)z;
             slot.unk78 = (nw4r::lyt::Layout*)z;
             slot.unk7C = (nw4r::lyt::AnimTransform*)z;

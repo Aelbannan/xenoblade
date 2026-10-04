@@ -18,7 +18,7 @@ extern "C" const float lbl_eu_80667414 = 0.9f;
 
 extern "C" void BtlDmg_FilterNotifyDamage(void* ptr, u32 id, int arg);
 extern "C" void UIWin_CreateMenuUpdate(int a, u32 id, int b, int c);
-int func_80148778(cf::CBattleState* self, u32 id);
+int isBattleStatusActive(cf::CBattleState* self, u32 id);
 
 namespace cf {
 
@@ -2185,7 +2185,7 @@ extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(
 // Batch 2026-08: battlestate-vfunc7 owns CBattleState_clearStatusId
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
 // in r4 (fake-Fv ABI, same as UnkVirtualFunc9/12). Guards: id >= 0x12f,
-// id == 0, and func_80148778(self, id) == 0 all bail early. Otherwise
+// id == 0, and isBattleStatusActive(self, id) == 0 all bail early. Otherwise
 // builds a zeroed CBattleStateEntry (unk0C = id, unk30 |= 0x200,
 // unk2E = id) and dispatches it through vt+0x24 (UnkVirtualFunc8).
 extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
@@ -2198,7 +2198,7 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
     if (id == 0) {
         return;
     }
-    if (func_80148778(self, id) == 0) {
+    if (isBattleStatusActive(self, id) == 0) {
         return;
     }
 
@@ -2209,7 +2209,7 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
     self->CBattleState_applyEventEntry(&entry);
 }
 
-// func_80148778: r3 = self, r4 = status id. Returns whether status `id` is
+// isBattleStatusActive: r3 = self, r4 = status id. Returns whether status `id` is
 // active per the this+0x15AC bitfield (bit = id & 0x1F, word offset =
 // (id >> 3) & ~3). ids < 0x12f test the bit directly (branchless boolify);
 // ids >= 0x12f scan candidate statuses 1..0x12e for a match:
@@ -2223,7 +2223,7 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
 // (kind = the same 0/1/2/3 decision tree as isBattleEventKind1, inlined once per
 // loop; bdat column-value low-byte truncation is the stw/lbz union trick
 // from classifyBattleCommand.)
-int func_80148778(cf::CBattleState* self, u32 id) {
+int isBattleStatusActive(cf::CBattleState* self, u32 id) {
     int i;
     u32 one;
 

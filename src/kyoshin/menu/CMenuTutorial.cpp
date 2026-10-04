@@ -221,7 +221,7 @@ body:
         break;
     }
     updateHelp(&mTitleAHelp);
-    func_8029AB28(&mTutorial);
+    Tutorial_Move(&mTutorial);
     return;
 }
 
@@ -297,7 +297,7 @@ void MenuTutorialHandlePhase0(CMenuTutorial* self) {
             BdatTouchStringCell(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17,
                 self->mType));
 
-        u8 phase = func_8029AE5C(&self->mTutorial);
+        u8 phase = Tutorial_GetPageState(&self->mTutorial);
         switch (phase) {
         case 0:
             func_801C41E8(&self->mTitleAHelp, 0x6f);
@@ -337,17 +337,17 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
             second = (pad->mPressedButtonFlags >> 5) & 1;
         }
         if (first) {
-            func_8029AD88(&self->mTutorial);
+            Tutorial_NextPage(&self->mTutorial);
             if (Tutorial_GetField52Mark(&self->mTutorial) != 0) {
                 beginClose(&self->mTitleAHelp);
                 Tutorial_AdvanceState3To4(&self->mTutorial);
                 self->mIsInitialised = 3;
             }
         } else if (second) {
-            func_8029ADF8(&self->mTutorial);
+            Tutorial_PrevPage(&self->mTutorial);
         }
 
-        u8 phase = func_8029AE5C(&self->mTutorial);
+        u8 phase = Tutorial_GetPageState(&self->mTutorial);
         switch (phase) {
         default:
             break;

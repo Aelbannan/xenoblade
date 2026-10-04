@@ -685,7 +685,7 @@ public:
     virtual void* vf5d0();                     // index 371 -> vtable 0x5d0
 
     CfActorObj4* field_04;                 // 0x04
-    u8 field_08[8];                        // 0x08 (handler block probed by func_80148778)
+    u8 field_08[8];                        // 0x08 (handler block probed by isBattleStatusActive)
     u8 _pad10[0x74 - 0x10];
     u32 field_74;                          // 0x74 (bit-group clear target)
     u8 _pad78b[0x3374 - 0x78];
@@ -836,7 +836,7 @@ extern bool isGlobalCamFlagSet(int mask);
 
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
-void* func_8016FE34(void* source);
+void* MapFx_ResolveOwner(void* source);
 void aiActionClearBlockADC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
 void simPushWordToBuf(u32 id, void* source);
 void* CBattleMan_FetchVisionObj(void* bm);
@@ -858,13 +858,13 @@ void __dt__80043E88(void* holder, int flags);
 // dtor ABI (li r4, delete-flag) plus __FPv mangling; the retail thunks are
 // 1-arg tail calls to the unmangled symbol, so keep C linkage here.
 void __dt__Q22cf16CfObjectImplMoveFv(void* self);
-int func_80148778(void* obj, int id);
+int isBattleStatusActive(void* obj, int id);
 void aiRingCompact(void* buf);   // move-state buffer init (actor +0x3380)
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void setTargetObj_(void* obj, void* target);
 void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
 void simRemoveWordFromBuf(void* handler, void* source);
-void func_8015BD94(void* effect);
+void CharEffDetachAllSlots(void* effect);
 extern "C" void stopVoiceA(void* self);
 void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (MoveImplTriggerCamShake)
 void CamEvtForwardShakeFlag(void* shake, int flag);    // camera-shake dispatch (MoveImplTriggerCamShake)
@@ -883,7 +883,7 @@ extern "C" void initBattleActorState(void* mgr, void* actor, u32 param);
 // Voice-manager hook fired at the end of MoveImplDriveTransition's case 8 body.
 extern "C" void CCharVoiceMan_FlushPendingActorVoice(void* actor);
 // Vision-system refresh (code_800F42AC.cpp), called by MoveImplDriveTransition.
-extern "C" void func_800F449C(void* obj);
+extern "C" void ScMain_Reset(void* obj);
 // Battle-status add helper (CActParamAnimGame.cpp), used by MoveImplDriveTransition.
 extern "C" void setAnimCount(void* obj, u32 param);
 
@@ -1016,6 +1016,6 @@ extern "C" void* simGetLeafActData(void);
 // Call sites needing another ABI cast through a local fn-pointer typedef
 // (CfCam BE398Fn convention).
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e); // int (not u32) to match CtrlMoveBase.hpp - u32/int here made the two extern "C" decls distinct signatures (illegal overloading) in every TU seeing both
-extern "C" void func_804BE4B4(void* a, int b);
-extern "C" void func_804BE4E0(void* a, int b);
+extern "C" void ScnRes_CopyEntryHead(void* a, int b);
+extern "C" void ScnRes_CopyEntryMid(void* a, int b);
 // (remaining helpers are declared by their owning headers)

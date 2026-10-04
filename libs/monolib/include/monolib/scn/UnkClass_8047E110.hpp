@@ -15,41 +15,41 @@
 class UnkClass_8047E110 {
 public:
     void func_8047E110();
-    void func_8047E1B0();
-    void func_8047E390();
+    void findNodeContaining();
+    void findClosestNeighbor();
     void func_8047E62C();
-    void func_8047E6C4();
-    void func_8047EAD4();
-    void func_8047EEB0();
-    void func_8047EFBC();
-    void func_8047F214();
-    void func_8047F658();
-    void func_8047F730();
-    void func_8047FE48();
-    void func_8047FF9C();
-    void func_80480140();
-    void func_8048020C();
-    void func_804804DC();
-    void func_804808A0();
+    void resolveNodeAtPos();
+    void buildCandidateList();
+    void scanNeighbors();
+    void expandWalkPath();
+    void computeWalkDirection();
+    void fetchWalkTarget();
+    void floodFillWalkTable();
+    void queryWalkTable();
+    void seedPathTable();
+    void stepToBestNeighbor();
+    void findPathBfs();
+    void findPathBidirectional();
+    void testPortalCrossing();
     void func_80480EF0();
     void func_80480F48();
     void func_80481014();
-    void func_80481074();
+    void probeWalkerContact();
     void func_804812D8();
     void func_804813E8();
-    void func_804814DC();
+    void rebuildWalkBox();
     void func_8048163C();
     void func_8048169C();
-    void func_80481790();
+    void searchWalkGraph();
     void func_804819AC();
-    void func_804819C4();
+    void stepWalker();
 };
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Walk-graph float constants used by func_804808A0 (retail .rodata pool)
+// Walk-graph float constants used by testPortalCrossing (retail .rodata pool)
 extern "C" const f32 lbl_eu_8066A898;
 extern "C" const f32 lbl_eu_8066A8A8;
 extern "C" const f32 lbl_eu_8066A8AC;

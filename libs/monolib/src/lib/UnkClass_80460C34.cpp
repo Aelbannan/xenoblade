@@ -124,14 +124,14 @@ extern "C" int cleanupState__17UnkClass_80460C34Fv(z_stream* strm) {
 }
 
 // ---------------------------------------------------------------------------
-// inflate_table  (retail func_80462068__17UnkClass_80460C34Fv, 0x770)
+// inflate_table  (retail inflate_table__17UnkClass_80460C34Fv, 0x770)
 // zlib 1.2.3 inftrees.c
 // ---------------------------------------------------------------------------
 #define Z_MAXBITS 15
 
 typedef enum { Z_CODES, Z_LENS, Z_DISTS } z_codetype;
 
-extern "C" int func_80462068__17UnkClass_80460C34Fv(
+extern "C" int inflate_table__17UnkClass_80460C34Fv(
         z_codetype type, z_ushort* lens, z_uint codes,
         z_code** table, z_uint* bits, z_ushort* work) {
     z_ushort count[Z_MAXBITS + 1];
@@ -311,7 +311,7 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
 }
 
 // ---------------------------------------------------------------------------
-// inflate  (retail func_80460F58__17UnkClass_80460C34Fv, 0x1088)
+// inflate  (retail inflate__17UnkClass_80460C34Fv, 0x1088)
 // zlib 1.2.3 inflate.c, with the retail build's non-gzip compact state set.
 // ---------------------------------------------------------------------------
 #define ZI_LOAD() do { \
@@ -357,7 +357,7 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
 #define fixed_lencode lbl_80526B70
 #define fixed_distcode lbl_eu_80523A48
 
-extern "C" int func_80460F58__17UnkClass_80460C34Fv(
+extern "C" int inflate__17UnkClass_80460C34Fv(
         z_stream* strm, int flush) {
     z_inflate_state* state;
     z_uchar* next;
@@ -520,7 +520,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
             state->next = state->codes;
             state->lencode = state->next;
             state->lenbits = 7;
-            ret = func_80462068__17UnkClass_80460C34Fv(
+            ret = inflate_table__17UnkClass_80460C34Fv(
                 Z_CODES, state->lens, 19, &state->next,
                 &state->lenbits, state->work);
             if (ret) {
@@ -583,7 +583,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
             state->next = state->codes;
             state->lencode = state->next;
             state->lenbits = 9;
-            ret = func_80462068__17UnkClass_80460C34Fv(
+            ret = inflate_table__17UnkClass_80460C34Fv(
                 Z_LENS, state->lens, state->nlen, &state->next,
                 &state->lenbits, state->work);
             if (ret) {
@@ -593,7 +593,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
             }
             state->distcode = state->next;
             state->distbits = 6;
-            ret = func_80462068__17UnkClass_80460C34Fv(
+            ret = inflate_table__17UnkClass_80460C34Fv(
                 Z_DISTS, state->lens + state->nlen, state->ndist,
                 &state->next, &state->distbits, state->work);
             if (ret) {
@@ -792,7 +792,7 @@ inflate_leave:
 #undef ZI_BYTEBITS
 #undef ZI_REVERSE
 // [.data] 0x8056D600-0x8056D678 (120B): switch jumptable (116B) + pad.
-// NOTE: MWCC auto-emits this jumptable from the switch in func_80460F58
+// NOTE: MWCC auto-emits this jumptable from the switch in inflate
 // with identical relocs; this explicit table + pad is NOT added (the auto
 // table already matches). See below for the 4-byte pad.
 // [.rodata] 0x80523248-0x80523D60 (2840B): zlib inflate tables/strings.

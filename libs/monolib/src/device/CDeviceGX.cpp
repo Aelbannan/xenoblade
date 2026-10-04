@@ -309,7 +309,7 @@ int CDeviceGX::getHeapSize(){
 }
 
 bool CDeviceGX::wkStandbyLogin(){
-    if(CDeviceVI::func_804482DC()){
+    if(CDeviceVI::isRunningNoFlag2()){
         GXInit(mGxHeap, gxHeapSize);
 
         if(lbl_eu_806656A0->mDevicesInitialized == true){

@@ -17,4 +17,4 @@ struct CHelpFlagBag;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" CHelpFlagBag* lbl_eu_80664A10;
-extern "C" UNKWORD func_80295D30(CHelpFlagBag* bag);
+extern "C" UNKWORD isHelpPopupReady(CHelpFlagBag* bag);

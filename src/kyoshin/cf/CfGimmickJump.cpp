@@ -73,15 +73,15 @@ extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
 extern void CfGimmick_ClearManagerBinding(void* self);
 extern void CfGimmick_UnregisterSpawnedObject(void* value);
-extern void func_802089BC(void* destination, void* position, void* rotation);
+extern void CfGimmick_BuildColliderMtx(void* destination, void* position, void* rotation);
 extern void CfGimmick_LoadBdatAreaPos(void* self, void* destination, void* bdat, void* table);
 extern void CfGimmick_LoadBdatAreaExtents(void* self, void* destination, void* bdat, void* table);
 extern void CfGimmick_LoadBdatClAreaExtents(void* self, void* destination, void* bdat, void* table);
 extern void CfGimmick_LoadBdatAreaRotation(void* self, void* destination, void* bdat, void* table);
-extern void func_8020A6B0(void* effect, void* position, u16 resourceId, f32 scale,
+extern void CfGimmick_UpdateProximity(void* effect, void* position, u16 resourceId, f32 scale,
                           int arg5, int arg6);
-extern void func_8020F540(CfGimmickJump* self);
-extern void func_8020A484(u16 resourceId);
+extern void CfGimmickJump_MoveRiders(CfGimmickJump* self);
+extern void CfGimmick_PostGimmickName(u16 resourceId);
 extern int CfGimmick_IsMessageSystemBusy(void* self);
 extern int CfGimmick_CheckPartyIdLoaded(void* self, void* effect);
 extern int CfGimmick_CheckStateFlag2CC8(u16 duration);
@@ -105,7 +105,7 @@ extern void __dl__FPv(void* value);
 /*
  * Dispatched-object identities (US split1.s tables):
  * - State table lbl_eu_805359E8: four 12-byte member-function pointers over
- *   cf::CfGimmickJump itself (motion states 1-4: func_8020F8C4 / F984 /
+ *   cf::CfGimmickJump itself (motion states 1-4: CfGimmickJump_TryFire / F984 /
  *   FC14 / FD2C).
  * - Player object: the cf::CfObjectMove base embedded at
  *   cf::CfObjectActor+0x3E9C (vtable lbl_eu_80529690, the cf-chain table:
@@ -262,14 +262,14 @@ CfGimmickJump::~CfGimmickJump() {
     __dt__Q22cf9CfGimmickFv(this, 0);
 }
 
-extern "C" void func_8020F38C(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_RefreshMatrices(CfGimmickJump* self) {
     self->savedState = self->initialState;
-    func_802089BC(&self->initialState, &self->position, &self->rotation);
-    func_802089BC(&self->savedState, &self->position, &self->rotation);
-    func_802089BC(&self->transformedPosition, &self->position, &self->rotation);
+    CfGimmick_BuildColliderMtx(&self->initialState, &self->position, &self->rotation);
+    CfGimmick_BuildColliderMtx(&self->savedState, &self->position, &self->rotation);
+    CfGimmick_BuildColliderMtx(&self->transformedPosition, &self->position, &self->rotation);
 }
 
-extern "C" void func_8020F484(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_UpdateState(CfGimmickJump* self) {
     if ((lbl_eu_80663E24 & 0x4000000) == 0) {
         self->timer += Scn_GetFrameDelta(lbl_eu_80663E14);
         // State handler dispatch: retail stores 12-byte member-function
@@ -277,12 +277,12 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
         JumpStateFn* stateTable = reinterpret_cast<JumpStateFn*>((void*)lbl_eu_805359E8);
         JumpStateFn& stateFn = stateTable[self->motionState];
         (self->*stateFn)();
-        func_8020F540(self);
+        CfGimmickJump_MoveRiders(self);
     }
 
     if ((self->flags & 0x400) != 0) {
         if ((self->flags66 & 1) != 0) {
-            func_8020A6B0(&self->effect, &self->position, self->resourceId, 1.0f, 0, 0);
+            CfGimmick_UpdateProximity(&self->effect, &self->position, self->resourceId, 1.0f, 0, 0);
         }
         self->flags &= ~0x400u;
     } else {
@@ -290,11 +290,11 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
     }
 }
 
-extern "C" void func_8020F540(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_MoveRiders(CfGimmickJump* self) {
     return;
 }
 
-extern "C" void func_8020F8C4(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_TryFire(CfGimmickJump* self) {
     self->timer = lbl_eu_80668404;
     if ((self->flags66 & 1) != 0) {
         if ((self->flags & 0x800) != 0) {
@@ -303,7 +303,7 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
             }
             self->flags &= ~0x800u;
         } else if (CfGimmick_CheckPartyIdLoaded(self, self->effect) != 0) {
-            func_8020A484(self->resourceId);
+            CfGimmick_PostGimmickName(self->resourceId);
             self->flags |= 0x800;
             return;
         }
@@ -315,7 +315,7 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     }
 }
 
-extern "C" void func_8020F984(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_StartLift(CfGimmickJump* self) {
     const CfGimmickJumpVec3* playerPosition = jumpPlayerPosition(0);
     if (playerPosition == 0) {
         return;
@@ -398,7 +398,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 // Retail converts the frame count via the shared .sdata2 2^52 magic
 // object; the int-to-float conversion sequences reference them directly.)
 
-extern "C" void func_8020FC14(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_WaitLift(CfGimmickJump* self) {
     CfGimmickJumpVec3 position;
     if (self->soundHandle != 0) {
         if (CfSoundMan_TouchSlotById(self->soundHandle) != 0) {
@@ -429,7 +429,7 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
     }
 }
 
-extern "C" void func_8020FD2C(CfGimmickJump* self) {
+extern "C" void CfGimmickJump_RunLift(CfGimmickJump* self) {
     bool finished = false;
     if (self->soundHandle != 0) {
         if (CfSoundMan_TouchSlotById(self->soundHandle) != 0) {

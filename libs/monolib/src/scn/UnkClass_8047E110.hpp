@@ -27,7 +27,7 @@ struct ScnNodeMap {
 // Walk-graph node pool entry (stride 0x10).
 struct ScnWalkNode {
     union {
-        u32 reserved; // reinterpreted as f32 by func_8047F658
+        u32 reserved; // reinterpreted as f32 by fetchWalkTarget
         f32 xPos;
     };
     u32 edgeOffset;
@@ -92,13 +92,13 @@ struct WalkDescRef {
     u32 relField1C; // relative pointer
 };
 
-// Per-node distance info used by func_80480140 (overlays 4-byte ScnWpKey).
+// Per-node distance info used by stepToBestNeighbor (overlays 4-byte ScnWpKey).
 struct WalkDistInfo {
     u16 baseIndex;
     u16 limit;
 };
 
-// kd-tree node (stride 8) used by func_8047E1B0; cell -> edge-list lookup.
+// kd-tree node (stride 8) used by findNodeContaining; cell -> edge-list lookup.
 struct ScnKdNode {
     u16 edgeBase;
     u16 slotA;
@@ -115,7 +115,7 @@ struct ScnWpQ {
     s16 q1; // +A
 };
 
-// stride-10 per-node record used by func_8047EFBC / func_80480F48.
+// stride-10 per-node record used by expandWalkPath / func_80480F48.
 // (+4/+6) select the record by node id; (+0/+2) hold each endpoint's paired id.
 struct ScnRec10 {
     u16 node[2];   // paired ids for the two endpoints (+0/+2)
@@ -129,13 +129,13 @@ struct ScnBlockC {
     u32 edgeBase;
 };
 
-// Fe48Table extended view (+0x14 range-limit word read by func_8047EFBC).
+// Fe48Table extended view (+0x14 range-limit word read by expandWalkPath).
 struct Fe48TableExt {
     u8 pad[0x14];
     u32 field_0x14;
 };
 
-// query record consumed by func_80481074.
+// query record consumed by probeWalkerContact.
 struct WalkHitQuery {
     f32 field_0x0;
     u8 pad[6];
@@ -182,33 +182,33 @@ public:
     ScnPtmf callback; // 0x9C null pointer-to-member block
 
     void init();
-    void func_8047E1B0();
-    void func_8047E390();
+    void findNodeContaining();
+    void findClosestNeighbor();
     void findNode();
-    void func_8047EAD4();
-    void func_8047EEB0();
-    void func_8047EFBC();
-    void func_8047F214();
-    void func_8047F658();
-    void func_8047F730();
-    void func_8047FE48();
-    void func_8047FF9C();
-    void func_80480140();
-    void func_8048020C();
-    void func_804804DC();
-    void func_804808A0();
+    void buildCandidateList();
+    void scanNeighbors();
+    void expandWalkPath();
+    void computeWalkDirection();
+    void fetchWalkTarget();
+    void floodFillWalkTable();
+    void queryWalkTable();
+    void seedPathTable();
+    void stepToBestNeighbor();
+    void findPathBfs();
+    void findPathBidirectional();
+    void testPortalCrossing();
     void hasNeighbor();
     void compareRecords();
     void setWalkBox();
-    void func_80481074();
+    void probeWalkerContact();
     void isNodeInWalkBox();
     void isNodeAtPosition();
-    void func_804814DC();
+    void rebuildWalkBox();
     void setWalkBoxCenter();
     void setWalkBoxBounds();
-    void func_80481790();
+    void searchWalkGraph();
     void isNodeBlocked();
-    void func_804819C4();
+    void stepWalker();
 };
 
 // quantized walk-table key record (indexed by coordinate selector): covers
@@ -228,14 +228,14 @@ void Warning(const char* file, int line, const char* fmt, ...);
 }
 } // namespace nw4r
 
-// Query descriptor consumed by func_8047EEB0.
+// Query descriptor consumed by scanNeighbors.
 struct WalkQueryInfo {
     u32 field_0x0;
     u32 field_0x4;   // edge-list index
     u16 field_0x8;   // status flags
 };
 
-// Foreign data table read by func_8047FE48 (+0x8 = waypoint table pointer).
+// Foreign data table read by queryWalkTable (+0x8 = waypoint table pointer).
 // const so loads of its fields hoist across calls.
 struct Fe48Table {
     u32 field_0x0;

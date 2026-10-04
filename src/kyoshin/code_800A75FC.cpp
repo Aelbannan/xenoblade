@@ -107,9 +107,11 @@ extern "C" GlobalStruct_80572B94* __dt__800A75FC(GlobalStruct_80572B94* ths, int
     return ths;
 }
 
-extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
+extern "C" void KyoshinHeap_CreateRegions(GlobalStruct_80572B94* g) {
     u8* blk = (u8*)lbl_eu_80572AC8;
-    const u32 zero = 0;
+    // NOTE: keep non-const: const materializes a dead WEAK @LOCAL@..@zero
+    // word in .sdata2 (retail has none); all uses already fold to li.
+    u32 zero = 0;
 
     // --- memory debug statistics (retail keeps these as unused locals) ---
     double memStat[2];
@@ -295,7 +297,7 @@ extern "C" void KyoshinHeap_Init() {
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    func_800A76EC(&lbl_eu_80572B94);
+    KyoshinHeap_CreateRegions(&lbl_eu_80572B94);
 }
 
 extern "C" void KyoshinHeap_Shutdown() {
@@ -848,7 +850,7 @@ extern "C" int KyoshinHeap_GetField58() {
     return lbl_eu_80572B94.field_0x58;
 }
 
-extern "C" int func_800A8E6C(int size, int arg2) {
+extern "C" int KyoshinHeap_AllocNode(int size, int arg2) {
     if (size == 0) return 0;
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
@@ -938,7 +940,7 @@ extern "C" int KyoshinHeap_HasActive54() {
     return lbl_eu_80572B94.field_0x54 != 0;
 }
 
-extern "C" int func_800A9134() {
+extern "C" int KyoshinHeap_GetField54() {
     if (lbl_eu_80663E98 == 0) {
         // Lazy-init the global singleton once.
         GlobalStruct_80572B94* g = &lbl_eu_80572B94;
@@ -1468,8 +1470,8 @@ s8 lbl_eu_80663E98;
 // KyoshinHeap_Init.  .data holds the per-stage 14-word offset tables and the
 // two 6-slot LblPtrTable arrays the runtime fills in.  Values are the retail
 // split's bytes (build/us/obj/kyoshin/code_800A75FC.o); the tables are read
-// only by the heap entry points that are still open (func_800A76EC /
-// func_800A8E6C / func_800A9134), so nothing in this TU references them yet.
+// only by the heap entry points that are still open (KyoshinHeap_CreateRegions /
+// KyoshinHeap_AllocNode / KyoshinHeap_GetField54), so nothing in this TU references them yet.
 // The all-zero arrays need #pragma section data_type: MWCC migrates an
 // all-zero aggregate to .bss even with __declspec(section ...), and the
 // nocommon/aligned attribute forms do not survive it either.  Keeping every

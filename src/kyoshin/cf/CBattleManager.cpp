@@ -24,7 +24,7 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 // BMIf removed: CVision real vt used via mVision.
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
-// (CfModel_SyncVisFlag/func_800BCFA0/getUnk80664658/BasicSound + the C-ABI import
+// (CfModel_SyncVisFlag/CfObjectMove_initAnimTarget/getUnk80664658/BasicSound + the C-ABI import
 // names below now resolve via their single owner-header decls; only the
 // other agents' guards (lbl_eu_*) remain.)
 #include "kyoshin/cf/object/CfObjectEne.hpp"
@@ -65,7 +65,7 @@ extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 extern "C" void initVisionSlots(cf::CVision* self);
 extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self);
 extern "C" void CChain_ResetChainState(cf::CChain* self);
-extern "C" void func_8027D1A4(cf::UnkClass_800D8DBC* self);
+extern "C" void ChainTmr_Reset_D1A4(cf::UnkClass_800D8DBC* self);
 extern "C" void SuddenCommuResetPairingState(cf::CSuddenCommu* self);
 // Generic-object holder register/deregister (retail unmangled: the static
 // member UnkClass_805764CC::getInstance would mangle to
@@ -478,7 +478,7 @@ _reslist_base<cf::IBattleEvent*>::~_reslist_base() {
 
 // Global battle manager instance pointer (defined later in this file)
 // Voice action helper:
-void* func_8016FE34(void*);
+void* MapFx_ResolveOwner(void*);
 
 // Attack sound-id table (retail .rodata 0x804FCA08; 10 known entries of the
 // 0x34-byte symbol). Defined with the retail name so the lwzx reloc binds.
@@ -612,7 +612,7 @@ CBattleManager* CBattleManager::getInstance() {
         initVisionSlots(&mVision);
         __ct__80192C10(&unk19C);
         CChain_ResetChainState(&mChain);
-        func_8027D1A4(&unk20C8);
+        ChainTmr_Reset_D1A4(&unk20C8);
         SuddenCommuResetPairingState(&mSuddenCommu);
         // Single read of the named 0.0f global (retail does one lfs from
         // lbl_eu_80666DDC, then reuses f0 for all three stfs). Naming the
@@ -643,7 +643,7 @@ CBattleManager* CBattleManager::getInstance() {
         // Bits 0x02 or 0x04 = object removal / cleanup path.
         if(!(listFlags & 0x02) && !(listFlags & 0x04)) return;
 
-        BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)func_8016FE34(this);
+        BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)MapFx_ResolveOwner(this);
 
         // If the target is a member of mActorList1, unregister it everywhere.
         if(mActorList1.find((CfObjectActor*)target) != mActorList1.end()){
@@ -662,7 +662,7 @@ CBattleManager* CBattleManager::getInstance() {
 
             for(int i = 0; i < 3; i++){
                 void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-                void* action = func_8016FE34(player);
+                void* action = MapFx_ResolveOwner(player);
                 if(action != nullptr){
                     ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x40);
                     ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80);
@@ -682,7 +682,7 @@ CBattleManager* CBattleManager::getInstance() {
             startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
 
             for(u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-                void* action = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* action = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 ((cf::CActorParam*)action)->CActorParam_setupActorState();
                 ((cf::CActorParam*)action)->CActorParam_refreshBattleStatus();
                 ((cf::CActorParam*)action)->CActorParam_initStatusCounter();
@@ -766,9 +766,9 @@ extern "C" void CBattleMan_EmitVisionEvent(u8* self, void*) { ((cf::CBattleManag
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
 // The callers below pass ABI-compatible args; the typed definition follows.
 // (unmangled), so they must be declared extern "C" for reloc-name matching.
-// func_80148778 / findBattleStatusEntry / Counter_TestBit are already declared in
+// isBattleStatusActive / findBattleStatusEntry / Counter_TestBit are already declared in
 // object/CAIAction.hpp / CVision.hpp (included via CBattleManager.hpp).
-extern "C" int func_80260264(void*, int, void*);
+extern "C" int IdTable_GetSum(void*, int, void*);
 extern "C" bool CChain_chkActorList(void*);  // retail C wrapper symbol
 extern "C" void* findTopBattleStatusEntry(void*, u32);
 extern "C" bool isBattleStatusKind1(int);
@@ -784,11 +784,11 @@ extern "C" f32 lbl_eu_80666DD8;   // 0.01f
 
 // --- updateBattleManager imports (retail-unmangled names) ---
 extern "C" void driveVisionRingFx(cf::CVision* self);
-extern "C" void func_8018C610(cf::UnkClass_8018C5FC* self);
-extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self);
-extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self);
+extern "C" void PartyGaugeTickDecay(cf::UnkClass_8018C5FC* self);
+extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self);
+extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self);
 extern "C" void CChain_UpdatePerFrame(cf::CChain* self);
-extern "C" void func_8027D20C(cf::UnkClass_800D8DBC* self);
+extern "C" void ChainTmr_Update_D20C(cf::UnkClass_800D8DBC* self);
 extern "C" void SuddenCommuDriveFrame(cf::CSuddenCommu* self);
 extern "C" void SysWinBuff_EmptyStubB20(void* self);
 extern "C" void SysWinLog_PollBattleEnd();
@@ -827,8 +827,8 @@ extern "C" void PartyGaugeAddClamped(void*, int);                   // party-gau
 extern "C" u16 getReloadParam0();                              // current chapter/episode
 extern "C" void* bindIndexedEffect(u32 cls, int param);          // object factory
 extern "C" f32 getArtsFacing(void*);                         // table[clamp(idx,0,4)] @0x80501978
-extern "C" f32 func_8015408C(void*);                         // table[clamp(idx,0,5)] @0x80501990
-extern "C" f32 func_801540C0(void*);                         // per-frame-scaled table @0x805019A8
+extern "C" f32 getArtsClampedRate(void*);                         // table[clamp(idx,0,5)] @0x80501990
+extern "C" f32 getArtsScaledSpeed(void*);                         // per-frame-scaled table @0x805019A8
 extern "C" f32 getArtsGaugeRate(void*);                         // table[clamp(idx,0,5)] @0x805019C0
 extern "C" void CCharVoiceMan_EnqueueDamageVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
 extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(void*);                        // battle-voice clear
@@ -836,7 +836,7 @@ extern "C" void CCharVoiceMan_EnqueueHurtVoice(void*, void*, void*);          //
 extern "C" void SysWinLog_PollSequenceProgress(void*, s32, void*);            // battle-voice (3 args)
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);      // nw4r math
 extern "C" void* Selector_GetInstance(void);
-extern "C" void func_800FE96C(void*, u32);
+extern "C" void Selector_UpdateFilter(void*, u32);
 extern "C" void seedReloadTmr(s32);
 extern "C" s32 CPartsChange_SubmitSpawnRequest(u32, u16);
 extern "C" void CCharVoiceMan_EnqueueBattleEventVoice(void*, void*, void*);
@@ -849,9 +849,9 @@ extern "C" void SysWinLog_TickCounter0B(void*);
 extern "C" void SysWinLog_DrivePair(void*, void*);
 extern "C" void* getLiveParamPtr(void*);
 extern "C" void attachEffectById(void*, void*, u32, u32);
-extern "C" void func_801BAB94(void*, void*, void*, void*);
+extern "C" void SuddenCommuDispatchAttacker(void*, void*, void*, void*);
 extern "C" void SuddenCommuDispatchPartner(void*, void*, void*);
-extern "C" int func_80260A6C(void*, int, u32*, u32*);
+extern "C" int IdTable_GetSumMax(void*, int, u32*, u32*);
 extern "C" int IdTable_QuerySumMaxFloat(void*, int, u32*, u32*, u32*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void broadcastBattleDamage(void*, void*, s32, s32, s32, s32, void*);
@@ -1057,7 +1057,7 @@ extern "C" void* getFP__FPCc(const char* str);
 extern "C" u8 lbl_eu_80573EEC[];
 extern "C" void CUICfManager_queueMultiGetItemMenu(u8 v);
 extern "C" void* matchBattleStatusEntry(void*, u32, u32, u32, u32);
-extern "C" s32 func_8015B130(s32 a, u16 b);
+extern "C" s32 CItem_rollBoxEntry(s32 a, u16 b);
 extern "C" s32 spawnBankByte(void);
 extern "C" void CCharVoiceMan_EnqueueArtsVoice(void* pc, s32 v);
 extern void getCfObjectPc(cf::CfObjectMove* moveObj);
@@ -1376,7 +1376,7 @@ extern "C" s32 func_800EC918(
     }
 
     // ---- Status check: 0x27 ----
-    if (func_80148778((&acc->subObject), 0x27)) {
+    if (isBattleStatusActive((&acc->subObject), 0x27)) {
         if (!(acc == (EC918_BattleObjAccessor*)pc && evt->eventType == 0x11)) {
             if (isBattleEventKind1(evt->eventType)) {
                 void* entry27 = findBattleStatusEntry((&acc->subObject), 0x27);
@@ -1398,7 +1398,7 @@ extern "C" s32 func_800EC918(
     }
 
     // ---- Status check: 0xCE ----
-    if (func_80148778((&acc->subObject), 0xCE)) {
+    if (isBattleStatusActive((&acc->subObject), 0xCE)) {
         if (tgt != nullptr && (tgt->field_78 & 0x1000)) {
             if (isBattleStatusKind1(evt->eventType)) {
                 void* entryCE = findTopBattleStatusEntry((&acc->subObject), 0xCE);
@@ -1469,7 +1469,7 @@ extern "C" s32 func_800EC918(
         if (statObj != nullptr) {
             if (isBattleEventKind3(evt->eventType)) {
                 u32 stackVal;
-                if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x75, (s32*)&stackVal)) {
+                if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x75, (s32*)&stackVal)) {
                     f32 statMul = (f32)(s32)stackVal;
                     evt->field_20 += statMul;
                 }
@@ -1483,7 +1483,7 @@ extern "C" s32 func_800EC918(
         if (accStatObj != nullptr) {
             if (isBattleStatusKind1(evt->eventType)) {
                 u32 stackVal2;
-                if (func_80260264(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x7C, (s32*)&stackVal2)) {
+                if (IdTable_GetSum(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x7C, (s32*)&stackVal2)) {
                     if (tgt != nullptr) {
                         if ((s32)tgt->field_B4 < (s32)stackVal2) {
                             return CBattleMan_ApplyHitStop10(
@@ -1514,7 +1514,7 @@ extern "C" s32 func_800EC918(
 
     case 17: {
         // Skill roll: status 0x22 (resist/evade gate)
-        if (func_80148778((&acc->subObject), 0x22)) {
+        if (isBattleStatusActive((&acc->subObject), 0x22)) {
             if (acc != (EC918_BattleObjAccessor*)pc) {  // cmplw r24,r23; beq
                 void* entry22 = findBattleStatusEntry((&acc->subObject), 0x22);
                 s32 rollVal;
@@ -1528,7 +1528,7 @@ extern "C" s32 func_800EC918(
         }
 
         // Clear status 0x11 through the sub-acc
-        if (func_80148778((&acc->subObject), 0x11)) {
+        if (isBattleStatusActive((&acc->subObject), 0x11)) {
             ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(0x11);   // lwz r12,8(r24); lwz r12,0x20(r12); bctrl
         }
 
@@ -1559,7 +1559,7 @@ extern "C" s32 func_800EC918(
         cf::CfObjectMove* subIdent = getObjectMove(acc);
         if (subIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
             void* hud = Selector_GetInstance();
-            func_800FE96C(hud, *(u32*)((u8*)pc + 0x3F10));
+            Selector_UpdateFilter(hud, *(u32*)((u8*)pc + 0x3F10));
         }
 
         // Second half: only when the tgt lacks bit0 of field_78
@@ -1582,14 +1582,14 @@ extern "C" s32 func_800EC918(
             cf::CfObjectMove* pcSubIdent = getObjectMove(pc);
             if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
                 void* hud = Selector_GetInstance();
-                func_800FE96C(hud, *(u32*)((u8*)acc + 0x3F10));
+                Selector_UpdateFilter(hud, *(u32*)((u8*)acc + 0x3F10));
             }
         }
         return 1;                               // li r3,1; b .L_800F41D4
     }
 
     case 4: {
-        if (func_80148778((&acc->subObject), 0x15)) {
+        if (isBattleStatusActive((&acc->subObject), 0x15)) {
             void* entry15 = findBattleStatusEntry((&acc->subObject), 0x15);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1608,7 +1608,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 9: {
-        if (func_80148778((&acc->subObject), 0x1A)) {
+        if (isBattleStatusActive((&acc->subObject), 0x1A)) {
             void* entry1A = findBattleStatusEntry((&acc->subObject), 0x1A);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1621,7 +1621,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 6: {
-        if (func_80148778((&acc->subObject), 0x17)) {
+        if (isBattleStatusActive((&acc->subObject), 0x17)) {
             void* entry17 = findBattleStatusEntry((&acc->subObject), 0x17);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1634,7 +1634,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 7: {
-        if (func_80148778((&acc->subObject), 0x18)) {
+        if (isBattleStatusActive((&acc->subObject), 0x18)) {
             void* entry18 = findBattleStatusEntry((&acc->subObject), 0x18);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1647,7 +1647,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 19: {
-        if (func_80148778((&acc->subObject), 0x24)) {
+        if (isBattleStatusActive((&acc->subObject), 0x24)) {
             void* entry24 = findBattleStatusEntry((&acc->subObject), 0x24);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1660,7 +1660,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 11: {
-        if (func_80148778((&acc->subObject), 0x1C)) {
+        if (isBattleStatusActive((&acc->subObject), 0x1C)) {
             void* entry1C = findBattleStatusEntry((&acc->subObject), 0x1C);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1673,7 +1673,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 12: {
-        if (func_80148778((&acc->subObject), 0x1D)) {
+        if (isBattleStatusActive((&acc->subObject), 0x1D)) {
             void* entry1D = findBattleStatusEntry((&acc->subObject), 0x1D);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1728,7 +1728,7 @@ extern "C" s32 func_800EC918(
                 val = *(u32*)((cf::CObjectState*)obj4)->CObjectState_getStateData();
             }
             if (testActorStatus((void*)acc, &val, 0x802) == 0 &&   // bl testActorStatus; cmpwi; bne skip
-                !func_80148778((&acc->subObject), 0x32)) {      // has 0x32 -> skip gate
+                !isBattleStatusActive((&acc->subObject), 0x32)) {      // has 0x32 -> skip gate
                 // f28 base by acc->field_15E4 (0 -> 0.0, 6+ -> 0.0)
                 f32 f28 = lbl_eu_80666DDC;
                 s32 state = acc->field_15E4;
@@ -1825,8 +1825,8 @@ extern "C" s32 func_800EC918(
                 // Menu gate: vf324()[0] & 0x8, status 0x3A, status 0x32
                 s32 menuFlag = 0;                       // li r15, 0
                 if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getActorModeFlags() & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
-                if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
-                if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
+                if (isBattleStatusActive((&acc->subObject), 0x3A)) menuFlag = 1;
+                if (isBattleStatusActive((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r15,0; beq .L_800EE950
                     return CBattleMan_ApplyHitStop9(
                         self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);
@@ -1836,7 +1836,7 @@ extern "C" s32 func_800EC918(
             // .L_800EE950 -- roll gate (runs even when field_10 & 0x4)
             s32 rollFlag = 0;                           // li r15, 0
             if (!(evt->field_10 & 0x5)) {                // andi. r0, r0, 0x5; bne .L_800EE9C8
-                if (func_80148778((&acc->subObject), 0x21)) {
+                if (isBattleStatusActive((&acc->subObject), 0x21)) {
                     void* entry21 = findBattleStatusEntry((&acc->subObject), 0x21);
                     s32 rollVal;
                     if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1849,8 +1849,8 @@ extern "C" s32 func_800EC918(
                 }
             }
             if (!(evt->field_10 & 0x6)) {                // rlwinm. 0,0,29,30; bne .L_800EEA2C
-                if (!func_80148778((&acc->subObject), 0x12) &&
-                    !func_80148778((&acc->subObject), 0x10)) {
+                if (!isBattleStatusActive((&acc->subObject), 0x12) &&
+                    !isBattleStatusActive((&acc->subObject), 0x10)) {
                     if (acc->field_3F00 & 0x4) rollFlag = 1;  // rlwinm. 0,0,29,29
                 }
             }
@@ -1860,10 +1860,10 @@ extern "C" s32 func_800EC918(
             }
 
             // .L_800EEA2C -- pc skills 0x9C (multiply) / 0x9D (divide)
-            if (func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9C)) {
+            if (isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9C)) {
                 void* entry9C = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9C);
                 evt->field_20 *= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9C + 0x10)) / lbl_eu_80666E00;
-            } else if (func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9D)) {
+            } else if (isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9D)) {
                 void* entry9D = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9D);
                 evt->field_20 /= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9D + 0x10)) / lbl_eu_80666E00;
             }
@@ -1872,8 +1872,8 @@ extern "C" s32 func_800EC918(
             if (!(evt->field_10 & 0x4)) {                // rlwinm. 0,0,29,29; bne .L_800EEB68
                 s32 menuFlag = 0;                       // li r14, 0
                 if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getActorModeFlags() & 0x8) menuFlag = 1;
-                if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
-                if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
+                if (isBattleStatusActive((&acc->subObject), 0x3A)) menuFlag = 1;
+                if (isBattleStatusActive((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r14,0; beq .L_800EEB68
                     return CBattleMan_ApplyHitStop9(self, (BattleObjAccessor*)acc, evt, tgt);
                 }
@@ -1882,7 +1882,7 @@ extern "C" s32 func_800EC918(
             // .L_800EEB68 -- roll gate (no 0x3374 check here)
             s32 rollFlag = 0;                           // li r15, 0
             if (!(evt->field_10 & 0x5)) {                // andi. r0, r0, 0x5; bne .L_800EEBC4
-                if (func_80148778((&acc->subObject), 0x21)) {
+                if (isBattleStatusActive((&acc->subObject), 0x21)) {
                     void* entry21 = findBattleStatusEntry((&acc->subObject), 0x21);
                     s32 rollVal;
                     if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1891,8 +1891,8 @@ extern "C" s32 func_800EC918(
                 }
             }
             if (!(evt->field_10 & 0x6)) {                // rlwinm. 0,0,29,30; bne .L_800EEC28
-                if (!func_80148778((&acc->subObject), 0x12) &&
-                    !func_80148778((&acc->subObject), 0x10)) {
+                if (!isBattleStatusActive((&acc->subObject), 0x12) &&
+                    !isBattleStatusActive((&acc->subObject), 0x10)) {
                     if (acc->field_3F00 & 0x4) rollFlag = 1;
                 }
             }
@@ -1950,8 +1950,8 @@ extern "C" s32 func_800EC918(
                     // Menu gate: vf320()[0] & 0x8, status 0x3B, status 0x32
                     s32 menuFlag = 0;                   // li r15, 0
                     if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getStateFlags() & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
-                    if (func_80148778((&acc->subObject), 0x3B)) menuFlag = 1;
-                    if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
+                    if (isBattleStatusActive((&acc->subObject), 0x3B)) menuFlag = 1;
+                    if (isBattleStatusActive((&acc->subObject), 0x32)) menuFlag = 1;
                     if (menuFlag) {                     // cmpwi r15,0; beq .L_800EEDA4
                         return CBattleMan_ApplyHitStop9(
                             self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);
@@ -1961,7 +1961,7 @@ extern "C" s32 func_800EC918(
                 // .L_800EEDA4 -- roll gate (runs even when field_10 & 0x4)
                 s32 rollFlag = 0;                       // li r15, 0
                 if (!(evt->field_10 & 0x5)) {            // andi. r0, r0, 0x5; bne .L_800EEE1C
-                    if (func_80148778((&acc->subObject), 0x20)) {
+                    if (isBattleStatusActive((&acc->subObject), 0x20)) {
                         void* entry20 = findBattleStatusEntry((&acc->subObject), 0x20);
                         s32 rollVal;
                         if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1974,7 +1974,7 @@ extern "C" s32 func_800EC918(
                     }
                 }
                 if (!(evt->field_10 & 0x6)) {            // rlwinm. 0,0,29,30; bne .L_800EEE7C
-                    if (!func_80148778((&acc->subObject), 0x10)) {
+                    if (!isBattleStatusActive((&acc->subObject), 0x10)) {
                         if (acc->field_3F00 & 0x4) rollFlag = 1;
                     }
                 }
@@ -1984,25 +1984,25 @@ extern "C" s32 func_800EC918(
                 }
 
                 // .L_800EEE7C -- pc skills 0x9A (multiply) / 0x9B (divide)
-                if (func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9A)) {
+                if (isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9A)) {
                     void* entry9A = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9A);
                     evt->field_20 *= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9A + 0x10)) / lbl_eu_80666E00;
-                } else if (func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9B)) {
+                } else if (isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9B)) {
                     void* entry9B = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x9B);
                     evt->field_20 /= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9B + 0x10)) / lbl_eu_80666E00;
                 }
             }
         } else {
             // .L_800EEF34 -- pc == nullptr branch
-            if (func_80148778((&acc->subObject), 0x32)) {
+            if (isBattleStatusActive((&acc->subObject), 0x32)) {
                 return 0;                               // bne .L_800EF09C
             }
             if (!(evt->field_30 & 0x80)) {               // rlwinm. 0,0,24,24; bne .L_800EF0A4
                 if (!(evt->field_10 & 0x4)) {            // rlwinm. 0,0,29,29; bne .L_800EEFD8
                     s32 menuFlag = 0;                   // li r14, 0
                     if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getStateFlags() & 0x8) menuFlag = 1;
-                    if (func_80148778((&acc->subObject), 0x3B)) menuFlag = 1;
-                    if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
+                    if (isBattleStatusActive((&acc->subObject), 0x3B)) menuFlag = 1;
+                    if (isBattleStatusActive((&acc->subObject), 0x32)) menuFlag = 1;
                     if (menuFlag) {                     // cmpwi r14,0; beq .L_800EEFD8
                         return CBattleMan_ApplyHitStop9(self, (BattleObjAccessor*)acc, evt, tgt);
                     }
@@ -2011,7 +2011,7 @@ extern "C" s32 func_800EC918(
                 // .L_800EEFD8 -- roll gate (no 0x3374 check)
                 s32 rollFlag = 0;                       // li r15, 0
                 if (!(evt->field_10 & 0x5)) {            // andi. r0, r0, 0x5; bne .L_800EF034
-                    if (func_80148778((&acc->subObject), 0x20)) {
+                    if (isBattleStatusActive((&acc->subObject), 0x20)) {
                         void* entry20 = findBattleStatusEntry((&acc->subObject), 0x20);
                         s32 rollVal;
                         if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -2020,7 +2020,7 @@ extern "C" s32 func_800EC918(
                     }
                 }
                 if (!(evt->field_10 & 0x6)) {            // rlwinm. 0,0,29,30; bne .L_800EF0A4
-                    if (!func_80148778((&acc->subObject), 0x10)) {
+                    if (!isBattleStatusActive((&acc->subObject), 0x10)) {
                         if (acc->field_3F00 & 0x4) rollFlag = 1;
                     }
                 }
@@ -2040,7 +2040,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 102: {
-        if (func_80148778((&acc->subObject), 0x86)) {
+        if (isBattleStatusActive((&acc->subObject), 0x86)) {
             void* entry86 = findBattleStatusEntry((&acc->subObject), 0x86);
             if (*(s32*)((u8*)entry86 + 0x10) >= 0x64) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -2063,7 +2063,7 @@ extern "C" s32 func_800EC918(
         }
 
         // .L_800EF1A4 -- pc skill 0x85: field_10 += field_10/100 * entry
-        if (pc != nullptr && func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x85)) {
+        if (pc != nullptr && isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x85)) {
             void* entry85 = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x85);
             s32 entryVal = *(s32*)((u8*)entry85 + 0x10);
             evt->field_10 = (s32)(((f32)(s32)evt->field_10 / lbl_eu_80666E00) *
@@ -2073,7 +2073,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 103: {
-        if (func_80148778((&acc->subObject), 0x88)) {
+        if (isBattleStatusActive((&acc->subObject), 0x88)) {
             void* entry88 = findBattleStatusEntry((&acc->subObject), 0x88);
             if (*(s32*)((u8*)entry88 + 0x10) >= 0x64) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -2094,7 +2094,7 @@ extern "C" s32 func_800EC918(
                                  ((f32)(s32)roundVal / lbl_eu_80666E00));  // fsubs+fdivs+fmuls+fctiwz
         }
 
-        if (pc != nullptr && func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x87)) {
+        if (pc != nullptr && isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x87)) {
             void* entry87 = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x87);
             s32 entryVal = *(s32*)((u8*)entry87 + 0x10);
             evt->field_10 = (s32)(((f32)(s32)evt->field_10 / lbl_eu_80666E00) *
@@ -2102,7 +2102,7 @@ extern "C" s32 func_800EC918(
         }
         if (pc != nullptr && ((cf::CActorParam*)pc)->CActorParam_getStatusTable() != nullptr) {
             s32 bonus;
-            if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x80, &bonus)) {
+            if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x80, &bonus)) {
                 evt->field_20 += (f32)bonus;
             }
         }
@@ -2110,7 +2110,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 104: {
-        if (func_80148778((&acc->subObject), 0x8A)) {
+        if (isBattleStatusActive((&acc->subObject), 0x8A)) {
             void* entry8A = findBattleStatusEntry((&acc->subObject), 0x8A);
             if (*(s32*)((u8*)entry8A + 0x10) >= 0x64) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -2131,7 +2131,7 @@ extern "C" s32 func_800EC918(
                                  ((f32)(s32)roundVal / lbl_eu_80666E00));  // fsubs+fdivs+fmuls+fctiwz
         }
 
-        if (pc != nullptr && func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x89)) {
+        if (pc != nullptr && isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x89)) {
             void* entry89 = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x89);
             s32 entryVal = *(s32*)((u8*)entry89 + 0x10);
             evt->field_10 = (s32)(((f32)(s32)evt->field_10 / lbl_eu_80666E00) *
@@ -2139,7 +2139,7 @@ extern "C" s32 func_800EC918(
         }
         if (pc != nullptr && ((cf::CActorParam*)pc)->CActorParam_getStatusTable() != nullptr) {
             s32 bonus;
-            if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x7F, &bonus)) {
+            if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x7F, &bonus)) {
                 evt->field_20 += (f32)bonus;
             }
         }
@@ -2147,7 +2147,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 105: {
-        if (func_80148778((&acc->subObject), 0x8C)) {
+        if (isBattleStatusActive((&acc->subObject), 0x8C)) {
             void* entry8C = findBattleStatusEntry((&acc->subObject), 0x8C);
             if (*(s32*)((u8*)entry8C + 0x10) >= 0x64) {
                 return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
@@ -2168,7 +2168,7 @@ extern "C" s32 func_800EC918(
                                  ((f32)(s32)roundVal / lbl_eu_80666E00));  // fsubs+fdivs+fmuls+fctiwz
         }
 
-        if (pc != nullptr && func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x8B)) {
+        if (pc != nullptr && isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x8B)) {
             void* entry8B = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x8B);
             s32 entryVal = *(s32*)((u8*)entry8B + 0x10);
             evt->field_10 = (s32)(((f32)(s32)evt->field_10 / lbl_eu_80666E00) *
@@ -2176,7 +2176,7 @@ extern "C" s32 func_800EC918(
         }
         if (pc != nullptr && ((cf::CActorParam*)pc)->CActorParam_getStatusTable() != nullptr) {
             s32 bonus;
-            if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x81, &bonus)) {
+            if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x81, &bonus)) {
                 evt->field_20 += (f32)bonus;
             }
         }
@@ -2184,7 +2184,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 106: {
-        if (pc != nullptr && func_80148778(&((EC918_BattleObjAccessor*)pc)->subObject, 0x4E)) {
+        if (pc != nullptr && isBattleStatusActive(&((EC918_BattleObjAccessor*)pc)->subObject, 0x4E)) {
             void* entry4E = findBattleStatusEntry(&((EC918_BattleObjAccessor*)pc)->subObject, 0x4E);
             s32 entryVal = *(s32*)((u8*)entry4E + 0x10);
             evt->field_10 = (s32)(((f32)(s32)evt->field_10 / lbl_eu_80666E00) *
@@ -2302,7 +2302,7 @@ extern "C" s32 func_800EC918(
             CTaskGame_enumListCtor(&holder);
             startEnumObjects(CTaskGame_enumListGet(&holder), 0x80000000, 0);  // lis r4,0x8000
             for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
-                void* actorAcc = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* actorAcc = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 // ((cf::CActorParam*)actorAcc)->CActorParam_findGaugeEntry(acc->3F10) -> hit result (or 0)
                 void* res = ((cf::CActorParam*)actorAcc)->CActorParam_findGaugeEntry(acc->field_3F10);
                 if (res != nullptr) {               // beq .L_800EFD38
@@ -2326,7 +2326,7 @@ extern "C" s32 func_800EC918(
     case 213:
     case 263: {
         if (((cf::CActorParam*)acc)->CActorParam_isBattleLocked() != 0) break;   // bne .L_800F4000
-        if (func_80148778((&acc->subObject), 0x120)) break;  // bne .L_800F4000
+        if (isBattleStatusActive((&acc->subObject), 0x120)) break;  // bne .L_800F4000
 
         s32 r17 = evt->field_10;                     // lwz r17, 0x10(r25)
         if (evt->field_08 == 0x8000) {               // cmplwi r0,0x8000; bne .L_800EFDE4
@@ -2456,7 +2456,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 218: {
-        void* r14 = func_8016FE34(findObjectById(evt->field_00));  // bl 800B708C; bl 8016FE34
+        void* r14 = MapFx_ResolveOwner(findObjectById(evt->field_00));  // bl 800B708C; bl 8016FE34
         f32 f28 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);        // fmr f28, f1
         s32 level = ((cf::CActorParam*)pc)->CActorParam_getActorLevel();             // addi r4, r3, 0xe
         s32 product = evt->field_10 * (level + 14);  // mullw
@@ -2466,7 +2466,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 219: {
-        void* r14 = func_8016FE34(findObjectById(evt->field_00));
+        void* r14 = MapFx_ResolveOwner(findObjectById(evt->field_00));
         s32 level = ((cf::CActorParam*)pc)->CActorParam_getActorLevel();
         // r17 = field_10 * 100 + (level - 1) * 120   (mulli 0x64 / mulli 0x78)
         s32 r17 = evt->field_10 * 100 + (level - 1) * 120;
@@ -2475,19 +2475,19 @@ extern "C" s32 func_800EC918(
         if (pc != nullptr) {                        // cmpwi r23,0; beq .L_800F051C
             if (((cf::CActorParam*)pc)->CActorParam_getStatusTable() != nullptr) {    // beq .L_800F051C
                 s32 sv;
-                // func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x67, &sv) -> f28 += sv/100
-                if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x67, &sv)) {
+                // IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x67, &sv) -> f28 += sv/100
+                if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x67, &sv)) {
                     f28 += (f32)(s32)sv / lbl_eu_80666E00;
                 }
                 // .L_800F04B0: 0x68 bonus only when acc->3E9C ecVf4C() != pc->3F10
-                if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x68, &sv)) {
+                if (IdTable_GetSum(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x68, &sv)) {
                     if (((cf::CBattleState*)((u8*)acc + 0x3E9C))->CBattleState_getLinkedActorId() != *(void**)((u8*)pc + 0x3F10)) {
                         f28 += (f32)(s32)sv / lbl_eu_80666E00;
                     }
                 }
             }
             // .L_800F051C: status 0xEE on pc -> +0.25
-            if (func_80148778((SubAccessor*)((u8*)pc + 8), 0xEE)) {
+            if (isBattleStatusActive((SubAccessor*)((u8*)pc + 8), 0xEE)) {
                 f28 += k0_25f;                      // lfs 80666E1C; fadds
             }
         }
@@ -2495,7 +2495,7 @@ extern "C" s32 func_800EC918(
         // .L_800F0538: r15 = (s32)((f32)(s32)r17 * f28)
         s32 r15 = (s32)((f32)(s32)r17 * f28);
 
-        if (func_80148778((SubAccessor*)((u8*)pc + 8), 0xED)) {
+        if (isBattleStatusActive((SubAccessor*)((u8*)pc + 8), 0xED)) {
             // .L_800F0570: status 0xED path -- AOE via filtered actor list
             f32 f28b = (artsData != nullptr) ? *(f32*)((u8*)artsData + 0x60)
                                              : lbl_eu_80666DDC;
@@ -2509,7 +2509,7 @@ extern "C" s32 func_800EC918(
             __ct__800FB044(CTaskGame_enumListGet(&holder), f28b, idObj, 8);
 
             for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
-                void* actorAcc = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* actorAcc = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 // ((cf::CActorParam*)actorAcc)->CActorParam_addHate(pc, 0.0f, 0.0f, (f32)(s32)r15)
                 ((cf::CfObjectActor*)actorAcc)->CActorParam_addHate(pc, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
             }
@@ -2526,7 +2526,7 @@ extern "C" s32 func_800EC918(
 
     case 220: {
         // Skill roll: status 0x26
-        if (func_80148778((&acc->subObject), 0x26)) {
+        if (isBattleStatusActive((&acc->subObject), 0x26)) {
             void* entry26 = findBattleStatusEntry((&acc->subObject), 0x26);
             s32 rollVal;
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;  // cmpwi r26,0
@@ -2571,13 +2571,13 @@ extern "C" s32 func_800EC918(
         }
 
         // .L_800F084C: status 0x33 clear
-        if (func_80148778((&acc->subObject), 0x33)) {
+        if (isBattleStatusActive((&acc->subObject), 0x33)) {
             ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(0x33);           // slot 0x20
         }
         if (tgt != nullptr) {
             tgt->field_74 |= 0x90000000;         // oris r0,r0,0x9000; stw 0x74
-            func_80148778((&acc->subObject), 0xFC);  // results unused
-            func_80148778((&acc->subObject), 0x100);
+            isBattleStatusActive((&acc->subObject), 0xFC);  // results unused
+            isBattleStatusActive((&acc->subObject), 0x100);
         }
         // .L_800F08A4: when acc == pc, flag 0x04000000 + event bit 0x800
         if (acc == pc) {                       // cmplw r24,r23; bne tail
@@ -2720,7 +2720,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 235: {
-        if (func_80148778((&acc->subObject), 0xEB)) {
+        if (isBattleStatusActive((&acc->subObject), 0xEB)) {
             ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(0xEB);           // slot 0x20
             return 0;                               // li r3,0; b .L_800F41D4
         }
@@ -2851,7 +2851,7 @@ extern "C" s32 func_800EC918(
                 void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* actorAcc = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 func_800EC918(self, pc, (EC918_BattleObjAccessor*)actorAcc,
                               &eventWorkspace.case243Event, tgt);
             }
@@ -2864,7 +2864,7 @@ extern "C" s32 func_800EC918(
                 void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* actorAcc = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 if (actorAcc == acc) continue; // cmplw r3,r24; beq
                 ((cf::CBattleState*)((u8*)actorAcc + 0x08))->CBattleState_clearStatusId(0x0B);
             }
@@ -2889,7 +2889,7 @@ extern "C" s32 func_800EC918(
                 void* l = CTaskGame_enumListGet(&holder);
                 u32 count = *(u32*)((u8*)l + 0x620);
                 if (i >= count) break;
-                void* actorAcc = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* actorAcc = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 if (actorAcc == acc) continue; // cmplw r3,r24; beq .L_800F1700
 
                 // skip actors whose subIdent->vf4C() == pc->field_3F10
@@ -2982,7 +2982,7 @@ extern "C" s32 func_800EC918(
 
     case 240: {
         // Status 0xF1 gate: if the actor has this status, reject the event.
-        if (func_80148778((&acc->subObject), 0xF1)) {
+        if (isBattleStatusActive((&acc->subObject), 0xF1)) {
             return 0; // li r3,0; b .L_800F41D4
         }
 
@@ -2993,7 +2993,7 @@ extern "C" s32 func_800EC918(
             if (statObj != nullptr) {
                 s32 sv;
                 statObj = ((cf::CActorParam*)acc)->CActorParam_getStatusTable();
-                if (func_80260264(statObj, 0x83, &sv)) {
+                if (IdTable_GetSum(statObj, 0x83, &sv)) {
                     f32 num = (f32)amount;
                     f32 den = (f32)(0x64 - sv) / lbl_eu_80666E00; // subfic + fdivs
                     amount = (s32)(num / den);         // fdivs + fctiwz
@@ -3022,7 +3022,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 241: {
-        if (func_80148778((&acc->subObject), 0xF1)) {
+        if (isBattleStatusActive((&acc->subObject), 0xF1)) {
             return 0; // li r3,0; b .L_800F41D4
         }
 
@@ -3032,7 +3032,7 @@ extern "C" s32 func_800EC918(
             void* statObj = ((cf::CActorParam*)acc)->CActorParam_getStatusTable();
             if (statObj != nullptr) {
                 s32 sv;
-                if (func_80260264(statObj, 0x83, &sv)) {
+                if (IdTable_GetSum(statObj, 0x83, &sv)) {
                     f32 num = (f32)0x0F;
                     f32 den = (f32)(0x64 - sv) / lbl_eu_80666E00;
                     amount = (s32)(num / den);
@@ -3116,7 +3116,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 274: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         evt->prevEventType = evt->eventType;
@@ -3150,7 +3150,7 @@ extern "C" s32 func_800EC918(
         // pick a random actor from the party list.
         {
             void* obj = findObjectById((int)((cf::CObjectParam*)((u8*)acc + 0x3E9C))->CObjectParam_getSelfObjectId());
-            void* acc = func_8016FE34(obj);
+            void* acc = MapFx_ResolveOwner(obj);
             if (acc != nullptr) {
                 if (((cf::CActorParam*)acc)->CActorParam_isBattleLocked() == 0) {
                     evt->field_10 = *(u32*)((u8*)acc + 0x3F10);
@@ -3179,7 +3179,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 273: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         evt->prevEventType = evt->eventType;
@@ -3245,7 +3245,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 275: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         evt->prevEventType = evt->eventType;
@@ -3259,14 +3259,14 @@ extern "C" s32 func_800EC918(
     }
 
     case 276: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         break; // beq .L_800F4000 (shared tail)
     }
 
     case 277: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         evt->prevEventType = evt->eventType;
@@ -3275,7 +3275,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 278: {
-        if (func_80148778((&acc->subObject), 0x117)) {
+        if (isBattleStatusActive((&acc->subObject), 0x117)) {
             return 0; // li r3,0; b .L_800F41D4
         }
         break; // beq .L_800F4000 (shared tail)
@@ -3366,7 +3366,7 @@ extern "C" s32 func_800EC918(
         CTaskGame_enumListCtor(&actorList);                           // walker ctor @stack 0x48
         startEnumObjects(CTaskGame_enumListGet(&actorList), 0x80000000, 0);  // lis r4,0x8000 ; li r5,0
         for (s32 i = 0; i < *(s32*)((u8*)CTaskGame_enumListGet(&actorList) + 0x620); i++) {
-            void* actor = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&actorList), i));
+            void* actor = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&actorList), i));
             void* result = ((cf::CActorParam*)actor)->CActorParam_findGaugeEntry(*(u32*)((u8*)acc + 0x3F10));
             if (result != nullptr) {
                 // Each vector component is evaluated independently in the original.
@@ -3394,10 +3394,10 @@ extern "C" s32 func_800EC918(
                         if (*(f32*)((u8*)item + 0x20) > 0.0f) {   // fcmpo vs 0.0
                             *(f32*)((u8*)item + 0x20) += evt->field_20;
                             if (*(u16*)((u8*)item + 0x0C) == 0x11) {  // cmplwi 0x11
-                                void* actor = func_8016FE34(
+                                void* actor = MapFx_ResolveOwner(
                                     findObjectById(*(s32*)((u8*)item + 0x10)));
                                 if (actor != nullptr &&
-                                    func_80148778((u8*)actor + 8, 0x11)) {
+                                    isBattleStatusActive((u8*)actor + 8, 0x11)) {
                                     void* entry2 = findBattleStatusEntry((u8*)actor + 8, 0x11);
                                     if (entry2 != nullptr) {
                                         *(f32*)((u8*)entry2 + 0x20) += evt->field_20;
@@ -3417,7 +3417,7 @@ extern "C" s32 func_800EC918(
             CTaskGame_enumListCtor(&actorList);
             startEnumObjects(CTaskGame_enumListGet(&actorList), 0x20, 0x800);
             for (s32 i = 0; i < *(s32*)((u8*)CTaskGame_enumListGet(&actorList) + 0x620); i++) {
-                void* actor = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&actorList), i));
+                void* actor = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&actorList), i));
                 if (actor != nullptr && actor != acc) {   // cmplw r3,r24 ; beq
                     SubAccessor* sub = (SubAccessor*)((u8*)actor + 8);
                     for (s32 j = 0; j < 0x20; j++) {  // vfunc 0x58 list
@@ -3611,7 +3611,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
         }
         // .L_800F355C
         if (r29 != 0) {
-            if (!func_8015B130(r29, acc->field_3F28)) {
+            if (!CItem_rollBoxEntry(r29, acc->field_3F28)) {
                 chosen = 5;                            // li r15,5 ; b .L_800F2FAC
                 goto reselect;
             }
@@ -3625,7 +3625,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
     case 261: {
         evt->prevEventType = evt->eventType;
         evt->field_30 |= 0x2;
-        if (func_80148778((&acc->subObject), 0x112)) {
+        if (isBattleStatusActive((&acc->subObject), 0x112)) {
             void* artsData = *(void**)((u8*)tgt + 0x50);
             s32 artsVal;
             artsVal = artsSubGetMax(artsData);
@@ -3667,7 +3667,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
         eventWorkspace.case287Event.field_00 = *(u32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x250
         for (s32 i = 0; i < 6; i++) {                  // mtctr 6 ; bdnz
             if (artsNo != artsNumbers[i]) continue;           // cmpw r14,r0 ; bne .L_800F38EC
-            if (func_80148778((u8*)pc + 8, eventTypes[i])) break;   // bne -> return 1
+            if (isBattleStatusActive((u8*)pc + 8, eventTypes[i])) break;   // bne -> return 1
             for (s32 idx = 0; idx <= 1; idx++) {       // r17=0 ; cmpwi 1 ; ble
                 for (s32 slot = 0; slot < 8; slot++) { // r18=0 ; cmpwi 8 ; blt
                     void* artsParam = getArtsParamRC2(((cf::CActorParam*)pc)->CActorParam_getArtsSet(), idx, slot);
@@ -3803,7 +3803,7 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
     case 50: {
         if (pc != nullptr) {
             if ((*(u32*)((u8*)pc + 0x3F00) & 0x2) && (*(u16*)((u8*)pc + 0x3F28) == 0x2)) {
-                if (func_80148778(
+                if (isBattleStatusActive(
                         &((EC918_BattleObjAccessor*)pc)->subObject, 0x32)) {
                     SubAccessor* playerStatus =
                         &((EC918_BattleObjAccessor*)pc)->subObject;
@@ -4024,50 +4024,50 @@ extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target) {
     u32 stackVal;
 
     if (targetFlags & 0x200) {
-        if (func_80148778(obj + 8, 0xB4)) {
+        if (isBattleStatusActive(obj + 8, 0xB4)) {
             void* entry = findBattleStatusEntry(obj + 8, 0xB4);
             result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
         }
     } else if (targetFlags & 0xC00) {
-        if (func_80148778(obj + 8, 0xB5)) {
+        if (isBattleStatusActive(obj + 8, 0xB5)) {
             void* entry = findBattleStatusEntry(obj + 8, 0xB5);
             result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
         }
     }
 
-    if (func_80148778(obj + 8, 0xB3)) {
+    if (isBattleStatusActive(obj + 8, 0xB3)) {
         void* entry = findBattleStatusEntry(obj + 8, 0xB3);
         result += 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
     }
 
-    if (func_80148778(obj + 8, 0xB6)) {
+    if (isBattleStatusActive(obj + 8, 0xB6)) {
         void* entry = findBattleStatusEntry(obj + 8, 0xB6);
         result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
     }
 
     // Fetch the stat object through CActorParam_getStatusTable (vtable slot
-    // 0x290); each func_80260264 receives its return value as arg1
+    // 0x290); each IdTable_GetSum receives its return value as arg1
     if (((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable() != nullptr) {
         // Reload flags from target (retail: lwz r0, 0x78(r31))
         if (*(volatile u32*)((u8*)target + 0x78) & 0xC00) {
-            if (func_80260264(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x64, &stackVal)) {
+            if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x64, &stackVal)) {
                 result -= 0.001f * (f32)(s32)stackVal;
             }
         }
 
         if (*(f32*)((u8*)target + 0x5c) > 0.0f) {
-            if (func_80260264(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x6F, &stackVal)) {
+            if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x6F, &stackVal)) {
                 result += 0.001f * (f32)(s32)stackVal;
             }
         }
 
-        if (func_80260264(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x71, &stackVal)) {
+        if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x71, &stackVal)) {
             if (*(u32*)((u8*)obj + 0x1530) != 0) {
                 result -= 0.001f * (f32)(s32)stackVal;
             }
         }
 
-        if (func_80260264(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x70, &stackVal)) {
+        if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x70, &stackVal)) {
             if (*(u32*)((u8*)obj + 0x3374) & 0x200000) {
                 result += 0.001f * (f32)(s32)stackVal;
             }
@@ -4090,10 +4090,10 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
 
     // ---- First block: accumulate from target's battle status values ----
     if(target != nullptr){
-        if(func_80148778((u8*)target + 8, 0x8f) != 0){
+        if(isBattleStatusActive((u8*)target + 8, 0x8f) != 0){
             void* entry = findBattleStatusEntry((u8*)target + 8, 0x8f);
             result += lbl_eu_80666DD8 * (f32)((BDSessionEntry*)entry)->field_10;
-        }else if(func_80148778((u8*)target + 8, 0x8e) != 0){
+        }else if(isBattleStatusActive((u8*)target + 8, 0x8e) != 0){
             void* entry = findBattleStatusEntry((u8*)target + 8, 0x8e);
             result += lbl_eu_80666DD8 * (f32)((BDSessionEntry*)entry)->field_10;
         }
@@ -4102,7 +4102,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
         if(((cf::CActorParam*)target)->CActorParam_getStatusTable() != nullptr && src != nullptr &&
            (src->field_78 & 0x40000000) && src->type_3c == 3){
             s32 v;
-            if(func_80260264(((cf::CActorParam*)target)->CActorParam_getStatusTable(), 0x3e, &v) != 0){
+            if(IdTable_GetSum(((cf::CActorParam*)target)->CActorParam_getStatusTable(), 0x3e, &v) != 0){
                 result += lbl_eu_80666DD8 * (f32)v;
             }
         }
@@ -4122,7 +4122,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
         if(((cf::CActorParam*)obj)->CActorParam_getStatusTable() != nullptr && src != nullptr &&
            (src->field_78 & 0x40000000) && src->type_3c == 3){
             s32 v;
-            if(func_80260264(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x3d, &v) != 0){
+            if(IdTable_GetSum(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x3d, &v) != 0){
                 result += lbl_eu_80666DD8 * (f32)v;
             }
         }
@@ -4130,7 +4130,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
         // Art type 5 on the source: 0x42 value
         if(src != nullptr && (src->field_78 & 0x40000000) && src->field_40 == 5){
             s32 v;
-            if(func_80260264(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x42, &v) != 0){
+            if(IdTable_GetSum(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x42, &v) != 0){
                 result += lbl_eu_80666DD8 * (f32)v;
             }
         }
@@ -4138,7 +4138,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
         // Generic 0x3f value against the target's vfunc 0x5C0 / 0x130 gate
         if(src != nullptr && (src->field_78 & 0x40000000)){
             s32 v;
-            if(func_80260264(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x3f, &v) != 0){
+            if(IdTable_GetSum(((cf::CActorParam*)obj)->CActorParam_getStatusTable(), 0x3f, &v) != 0){
                 if(target != nullptr && ((cf::CfObjectActor*)obj)->CfObjectActor_sharesMoveFlags(target) != nullptr &&
                    ((cf::CActorParam*)target)->CActorParam_getHitRate() < lbl_eu_80666DE8){
                     result += lbl_eu_80666DD8 * (f32)v;
@@ -4163,10 +4163,10 @@ extern "C" void updateBattleManager(cf::CBattleManager* self) {
     }
 
     driveVisionRingFx(&self->mVision);
-    func_8018C610(&self->unk194);
-    func_80192CB0(&self->unk19C);
+    PartyGaugeTickDecay(&self->unk194);
+    updatePtStateTimer(&self->unk19C);
     CChain_UpdatePerFrame(&self->mChain);
-    func_8027D20C(&self->unk20C8);
+    ChainTmr_Update_D20C(&self->unk20C8);
     SuddenCommuDriveFrame(&self->mSuddenCommu);
     SysWinBuff_EmptyStubB20((u8*)&self->mSuddenCommu + 0x28);
     SysWinLog_PollBattleEnd();
@@ -4347,7 +4347,7 @@ void unregisterBattleActor(void* mgrV, void* targetV){
         // Player cleanup loop
         for(int i = 0; i < 3; i++){
             void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-            void* action = func_8016FE34(player);
+            void* action = MapFx_ResolveOwner(player);
             if(action != nullptr){
                 ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x40);
                 ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80);
@@ -4370,7 +4370,7 @@ void unregisterBattleActor(void* mgrV, void* targetV){
         startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
 
         for(u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-            void* element = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+            void* element = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
             ((cf::CActorParam*)element)->CActorParam_setupActorState();
             ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
             ((cf::CActorParam*)element)->CActorParam_initStatusCounter();
@@ -4469,7 +4469,7 @@ void initBattleActorState(void* self_, void* actor_) {
     if (stats == nullptr) return;
     u32 statFlags = *(u32*)((u8*)stats + 0x64);
     if (!(statFlags & 0x04) && !(statFlags & 0x02)) return;
-    void* res = func_8016FE34(stats);
+    void* res = MapFx_ResolveOwner(stats);
 
     // Reset the move record when the 0x08000000 flag is clear.
     if (!(sub->mFlagsArray[1].flags & 0x08000000)) {
@@ -4511,7 +4511,7 @@ void initBattleActorState(void* self_, void* actor_) {
     void* skill = ((cf::CActorParam*)actor)->CActorParam_getStatusTable();
     if (skill != nullptr) {
         u32 sv;
-        if (func_80260264(skill, 0x77, &sv) != 0) {
+        if (IdTable_GetSum(skill, 0x77, &sv) != 0) {
             if (subObj->unk78 & 0x40000000) {
                 if (power <= lbl_eu_80666DF0 && power >= k15_0f) {
                     convB.w[1] = (u32)(s32)sv ^ 0x80000000;
@@ -4683,17 +4683,17 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
 
     getInstance__Q22cf13CfGameManagerFv();
     if (!isGlobalCamFlagSet__Fi(0x04000000)) {
-        if (!func_80148778((u8*)actor + 0x08, 0x2F)) {
+        if (!isBattleStatusActive((u8*)actor + 0x08, 0x2F)) {
             *(f32*)((u8*)subObj + 0x80) = artsSubGetF14(subObj);
         }
-        if (!func_80148778((u8*)actor + 0x08, 0x30)) {
+        if (!isBattleStatusActive((u8*)actor + 0x08, 0x30)) {
             ((cf::CActorParam*)actor)->CActorParam_addHitCharge(lbl_eu_80666DDC);
         }
-        if (!func_80148778((u8*)actor + 0x08, 0x31)) {
+        if (!isBattleStatusActive((u8*)actor + 0x08, 0x31)) {
             convB.w[1] = (u32)(s32)subObj->field_34 ^ 0x80000000;
             f32 penalty = (f32)(convB.d - lbl_eu_80666DE0);
             if (penalty < lbl_eu_80666DDC) {
-                if (func_80148778((u8*)actor + 0x08, 0x12C)) {
+                if (isBattleStatusActive((u8*)actor + 0x08, 0x12C)) {
                     void* entry = findBattleStatusEntry((u8*)actor + 0x08, 0x12C);
                     if (entry != nullptr) {
                         convA.w[1] = (u32)*(s32*)((u8*)entry + 0x10) ^ 0x80000000;
@@ -4719,7 +4719,7 @@ f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
                 u32 voiceId = 0;
                 if (((cf::CActorParam*)actor)->CActorParam_getStatusTable() != 0) {
                     void* skill2 = ((cf::CActorParam*)actor)->CActorParam_getStatusTable();
-                    func_80260264(skill2, 0x3B, &voiceId);
+                    IdTable_GetSum(skill2, 0x3B, &voiceId);
                 }
                 func_800F3970((void*)lbl_eu_80663F00, actor, nullptr, 0x0B, (s32)voiceId);
             }
@@ -4866,7 +4866,7 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
 
     if (bob->field_3f00 & 0x2) {
         if (move->field_78 & 0x400) {
-            func_80192C2C(&((cf::CBattleManager*)self)->unk19C);
+            refreshPtStateAccum(&((cf::CBattleManager*)self)->unk19C);
         }
     }
 
@@ -4885,10 +4885,10 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
     if ((move->field_74 & 1) && !(move->field_74 & 2) &&
         !(enemy->field_3374 & 0x1000) &&
 ((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getMoveFactor() != lbl_eu_80666DDC &&
-        func_80148778(&enemy->statusBase, 0x32) == 0) {
+        isBattleStatusActive(&enemy->statusBase, 0x32) == 0) {
         s32 flag = 0;
 
-            if (func_80148778(&enemy->statusBase, 0xCE) && (move->field_78 & 0x800)) {
+            if (isBattleStatusActive(&enemy->statusBase, 0xCE) && (move->field_78 & 0x800)) {
                 void* entry = findTopBattleStatusEntry(&enemy->statusBase, 0xCE);
                 s32 val = ((cf::CActorParam*)arts)->CActorParam_getActorType();
                 if (*(s32*)((u8*)entry + 0x10) >= val) flag = 1;
@@ -4899,9 +4899,9 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
                     arts->field_44 == (s32)(((cf::CActorParam*)bob)->CActorParam_getStatsSlot() + 1)) {
                     int type58 = arts->field_58;
                     if (type58 == 1) {
-                        if (!func_80148778(&enemy->statusBase, 0xF) &&
-                            !func_80148778(&enemy->statusBase, 0x10)) {
-                            if (func_80148778(&enemy->statusBase, 0x29)) {
+                        if (!isBattleStatusActive(&enemy->statusBase, 0xF) &&
+                            !isBattleStatusActive(&enemy->statusBase, 0x10)) {
+                            if (isBattleStatusActive(&enemy->statusBase, 0x29)) {
                                 void* e = findBattleStatusEntry(&enemy->statusBase, 0x29);
                                 if (move->field_B4 >= *(s32*)((u8*)e + 0x10)) {
                                     move->field_74 |= 0x80010000;
@@ -4915,7 +4915,7 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
                                 if (((cf::CActorParam*)enemy)->CActorParam_getStatusTable()) {
                                     if (Counter_TestBit(((cf::CActorParam*)enemy)->CActorParam_getStatusTable(), 0x76)) flag = 0;
                                 }
-                                if (func_80148778(&enemy->statusBase, 0x28)) {
+                                if (isBattleStatusActive(&enemy->statusBase, 0x28)) {
                                     void* e = findBattleStatusEntry(&enemy->statusBase, 0x28);
                                     if (move->field_B4 < *(s32*)((u8*)e + 0x10)) flag = 0;
                                 }
@@ -4949,11 +4949,11 @@ void handleBattleMoveEvent(void* r3, void* r4, void* arg3, void* arg4) {
 if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80666DDC) goto tailcall;
 
     // Check flag 0x32 on arg3+8
-    if (func_80148778((u8*)arg3 + 8, 0x32)) goto tailcall;
+    if (isBattleStatusActive((u8*)arg3 + 8, 0x32)) goto tailcall;
 
     // Check flag 0xCE
     flag = 0;
-    if (func_80148778((u8*)arg3 + 8, 0xCE)) {
+    if (isBattleStatusActive((u8*)arg3 + 8, 0xCE)) {
         // Check if move->field_78 & 0x800
         if (move->field_78 & 0x800) {
             void* entry = findTopBattleStatusEntry((u8*)arg3 + 8, 0xCE);
@@ -4970,10 +4970,10 @@ if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80
     // signed cmpi, which MWCC only emits for a signed local.
     int type = sourceObj->type_58;
     if (type == 1) {
-        if (func_80148778((u8*)arg3 + 8, 0xF)) goto tailcall;
-        if (func_80148778((u8*)arg3 + 8, 0x10)) goto tailcall;
+        if (isBattleStatusActive((u8*)arg3 + 8, 0xF)) goto tailcall;
+        if (isBattleStatusActive((u8*)arg3 + 8, 0x10)) goto tailcall;
 
-        if (func_80148778((u8*)arg3 + 8, 0x29)) {
+        if (isBattleStatusActive((u8*)arg3 + 8, 0x29)) {
             void* entry = findBattleStatusEntry((u8*)arg3 + 8, 0x29);
             if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) goto tailcall;
         }
@@ -4992,7 +4992,7 @@ if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80
             if (Counter_TestBit(((cf::CActorParam*)arg3)->CActorParam_getStatusTable(), 0x76)) flag = 0;
         }
 
-        if (func_80148778((u8*)arg3 + 8, 0x28)) {
+        if (isBattleStatusActive((u8*)arg3 + 8, 0x28)) {
             void* entry = findBattleStatusEntry((u8*)arg3 + 8, 0x28);
             if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) flag = 0;
         }
@@ -5005,7 +5005,7 @@ if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80
 tailcall:
     emitBattleEvents(r3, r4, arg3, arg4);
 }
-extern int func_801B1FA4();
+extern int getFirstFreeSlot();
 extern void spawnPcEffect(u16 r3, int r4);
 
 void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObjAccessor* arg2) {
@@ -5015,7 +5015,7 @@ void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* arg1,
     if (obj->field_3f00 & 0x2) {
         if (obj->field_3f28 == 7) {
             if (arg2->field_78 & 0x400) {
-                int result = func_801B1FA4();
+                int result = getFirstFreeSlot();
                 if (result != -1) {
                     spawnPcEffect(subObj->field_40, -1);
                 }
@@ -5063,21 +5063,21 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
         bool blocked;
         sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData();
         blocked = testActorStatus(tgt, &sv, 0x805) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x9) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xb) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0x9) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xb) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf) != 0;
         if (!blocked) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x4) != 0; }
         if (!blocked) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x19) != 0; }
         if (!blocked) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x1a) != 0; }
         if (!blocked) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked = testActorStatus(tgt, &sv, 0x1b) != 0; }
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x32) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xeb) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf0) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf1) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0xf7) != 0;
-        if (!blocked) blocked = func_80148778((u8*)arg2 + 8, 0x106) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0x32) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf8) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xeb) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf0) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf1) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf8) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0xf7) != 0;
+        if (!blocked) blocked = isBattleStatusActive((u8*)arg2 + 8, 0x106) != 0;
         // Extra-object page gate.
         if (!blocked && (*(void**)((u8*)tgt + 0x3F60)) == nullptr) blocked = true;
         if (!blocked && getAnimModelId((*(void**)((u8*)tgt + 0x3F60))) == 0x31) blocked = true;
@@ -5091,17 +5091,17 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 chance = lo;
                 if (((cf::CActorParam*)arg1)->CActorParam_getStatusTable() != 0) {
                     u32 q1;
-                    if (func_80260264(((cf::CActorParam*)arg1)->CActorParam_getStatusTable(), 0x1D, &q1)) {
+                    if (IdTable_GetSum(((cf::CActorParam*)arg1)->CActorParam_getStatusTable(), 0x1D, &q1)) {
                         mod -= (f32)q1 / lbl_eu_80666E00;
                     }
                     u32 q2;
-                    if (func_80260264(((cf::CActorParam*)arg1)->CActorParam_getStatusTable(), 0x7E, &q2) && (move->mFlagsArray[0].flags & 0x40)) {
+                    if (IdTable_GetSum(((cf::CActorParam*)arg1)->CActorParam_getStatusTable(), 0x7E, &q2) && (move->mFlagsArray[0].flags & 0x40)) {
                         chance = lo - (f32)q2;
                     }
                 }
                 if (((*(u32*)((u8*)atk + 0x3F00)) & 0x2) && ((cf::CActorParam*)arg1)->CActorParam_getStatusCount() == 0) res = 1;
                 if (((*(u32*)((u8*)atk + 0x3F00)) & 0x2) && ((cf::CActorParam*)arg1)->CActorParam_getStatusCount() == 1) chance += k50_0f * mod;
-                if (func_80148778((u8*)arg2 + 8, 0x116)) res = 1;
+                if (isBattleStatusActive((u8*)arg2 + 8, 0x116)) res = 1;
                 s32 lv = ((cf::CActorParam*)arg2)->CActorParam_getActorLevel() - ((cf::CActorParam*)arg1)->CActorParam_getActorLevel();
                 if (lv < -10) lv = -10;
                 if (lv > 10) lv = 10;
@@ -5111,27 +5111,27 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                 if ((*(u32*)((u8*)atk + 0x3F00)) & 0x2) chance += k50_0f * (f32)*(s16*)((u8*)prm1 + 0x36);
                 if (getCurrentSlotIndex__Q22cf13CfGameManagerFv() == 4) {
                     if ((*(u32*)((u8*)atk + 0x3F00)) & 0x2) {
-                        if (func_80148778((u8*)arg1 + 8, 0xa2)) {
+                        if (isBattleStatusActive((u8*)arg1 + 8, 0xa2)) {
                             void* e = findBattleStatusEntry((u8*)arg1 + 8, 0xa2);
                             chance -= (f32)*(s32*)((u8*)e + 0x10);
                         }
                     } else if ((*(u32*)((u8*)tgt + 0x3F00)) & 0x2) {
-                        if (func_80148778((u8*)arg2 + 8, 0xa2)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0xa2)) {
                             void* e = findBattleStatusEntry((u8*)arg2 + 8, 0xa2);
                             s32 ev = *(s32*)((u8*)e + 0x10);
                             chance += (f32)(ev / 2);
                         }
                     }
                 }
-                if (func_80148778((u8*)arg2 + 8, 0xd1)) chance += lbl_eu_80666E20;
-                if (func_80148778((u8*)arg2 + 8, 0xf5)) {
+                if (isBattleStatusActive((u8*)arg2 + 8, 0xd1)) chance += lbl_eu_80666E20;
+                if (isBattleStatusActive((u8*)arg2 + 8, 0xf5)) {
                     chance += k50_0f;
                     if (((cf::CActorParam*)arg2)->CActorParam_getHitRate() < lbl_eu_80666E24) chance += k25_0f;
-                } else if (func_80148778((u8*)arg1 + 8, 0xf5)) {
+                } else if (isBattleStatusActive((u8*)arg1 + 8, 0xf5)) {
                     chance -= k50_0f;
                     if (((cf::CActorParam*)arg2)->CActorParam_getHitRate() < lbl_eu_80666E24) chance -= k25_0f;
                 }
-                if (func_80148778((u8*)arg2 + 8, 0x114)) chance += lbl_eu_80666E20;
+                if (isBattleStatusActive((u8*)arg2 + 8, 0x114)) chance += lbl_eu_80666E20;
                 f32 f1 = chance - (f32)(*(s16*)((u8*)sub + 0x36) * artsSubGetMax(sub));
                 f1 = f1 + (f32)(*(s16*)((u8*)prm2 + 0x1E) - *(s16*)((u8*)prm1 + 0x1E));
                 if (f1 < lo) f1 = lo;
@@ -5149,7 +5149,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
                     if ((f3 & 0x4000) && !(f3 & 0x8000)) res = 3;
                 }
                 if (((*(u32*)((u8*)atk + 0x3F00)) & 0x2) && ((cf::CActorParam*)arg1)->CActorParam_getStatusCount() == 0) res = 3;
-                if (func_80148778((u8*)arg2 + 8, 0x116)) res = 3;
+                if (isBattleStatusActive((u8*)arg2 + 8, 0x116)) res = 3;
                 if (((*(u32*)((u8*)atk + 0x3F00)) & 0x2) && ((cf::CActorParam*)arg1)->CActorParam_getStatusCount() == 1) chance += k25_0f;
                 void* v290 = ((cf::CActorParam*)arg1)->CActorParam_getStatusTable();
                 if (v290 != nullptr) {
@@ -5186,17 +5186,17 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
             s32 e0 = ((cf::CActorParam*)arg2)->CActorParam_getActorType();
             u32 f3374 = (*(u32*)((u8*)atk + 0x3374));
             if (e0 == 1) {
-                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) &&
-                    !func_80148778((u8*)arg2 + 8, 0x10)) {
-                    if (!func_80148778((u8*)arg1 + 8, 0xea) && !func_80148778((u8*)arg1 + 8, 0xcf) &&
-                        !func_80148778((u8*)arg1 + 8, 0xd0) && !(f3374 & 0x4000)) {
+                if (!isBattleStatusActive((u8*)arg2 + 8, 0x9) && !isBattleStatusActive((u8*)arg2 + 8, 0xf) &&
+                    !isBattleStatusActive((u8*)arg2 + 8, 0x10)) {
+                    if (!isBattleStatusActive((u8*)arg1 + 8, 0xea) && !isBattleStatusActive((u8*)arg1 + 8, 0xcf) &&
+                        !isBattleStatusActive((u8*)arg1 + 8, 0xd0) && !(f3374 & 0x4000)) {
                         if (move->unk84[1] < 100) splash = true;
                     }
                 }
             } else if (e0 == 2) {
-                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) &&
-                    !func_80148778((u8*)arg2 + 8, 0x10)) {
-                    if (!(f3374 & 0x8000) && !func_80148778((u8*)arg1 + 8, 0xd0)) {
+                if (!isBattleStatusActive((u8*)arg2 + 8, 0x9) && !isBattleStatusActive((u8*)arg2 + 8, 0xf) &&
+                    !isBattleStatusActive((u8*)arg2 + 8, 0x10)) {
+                    if (!(f3374 & 0x8000) && !isBattleStatusActive((u8*)arg1 + 8, 0xd0)) {
                         if (move->unk84[1] < 100) splash = true;
                     }
                 }
@@ -5205,7 +5205,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
             }
         }
     } else if (sub->field_3C == 2 || sub->field_3C == 6) {
-        if (func_80148778((u8*)arg2 + 8, 0xf7)) {
+        if (isBattleStatusActive((u8*)arg2 + 8, 0xf7)) {
             if (((cf::CfObjectActor*)arg2)->CfObjectActor_sharesMoveFlags((void*)arg1) == 0) {
                 if (move->mFlagsArray[0].flags & 1) {
                     findBattleStatusEntry((u8*)arg2 + 8, 0xf7);
@@ -5224,7 +5224,7 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
         move->unk54 = lbl_eu_80666DD4;
         move->mFlagsArray[0].flags = (move->mFlagsArray[0].flags | 0x80000000) | 0x41;
         move->unk5C = move->unk54 * move->unk58;
-        if (func_80148778((u8*)arg2 + 8, 0x1)) move->unk5C = lbl_eu_80666DDC;
+        if (isBattleStatusActive((u8*)arg2 + 8, 0x1)) move->unk5C = lbl_eu_80666DDC;
         move->mFlagsArray[1].flags |= 0x40000020;
         CBattleManagerTail283D4* tail = (CBattleManagerTail283D4*)self;
         move->unk80 = tail->field_283D0;
@@ -5244,16 +5244,16 @@ void prepareBattleMove(void* self, BattleObjAccessor* arg1, void* arg2, void* mo
     if (!blocked2) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x19) != 0; }
     if (!blocked2) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1a) != 0; }
     if (!blocked2) { sv = *(s32*)((cf::CObjectState*)(*(void**)((u8*)tgt + 0x04)))->CObjectState_getStateData(); blocked2 = testActorStatus(tgt, &sv, 0x1b) != 0; }
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0x9) != 0;
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xb) != 0;
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf) != 0;
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf0) != 0;
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf1) != 0;
-    if (!blocked2) blocked2 = func_80148778((u8*)arg2 + 8, 0xf8) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0x9) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xb) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf0) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf1) != 0;
+    if (!blocked2) blocked2 = isBattleStatusActive((u8*)arg2 + 8, 0xf8) != 0;
     if (blocked2) res2 = 1;
     if (res2 == 0 && sub->field_3C != 1) res2 = 1;
-    if (res2 == 0 && func_80148778((u8*)arg2 + 8, 0xeb) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
-    if (res2 == 0 && func_80148778((u8*)arg2 + 8, 0x10c) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
+    if (res2 == 0 && isBattleStatusActive((u8*)arg2 + 8, 0xeb) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
+    if (res2 == 0 && isBattleStatusActive((u8*)arg2 + 8, 0x10c) && !(move->mFlagsArray[1].flags & 0x800)) res2 = 2;
     if (res2 == 0 && ((*(u32*)((u8*)atk + 0x3F00)) & 0x4) && (sub->unk78 & 0x1)) res2 = 1;
     if (sub->unk78 & 0x8) res2 = 1;
     if (res2 == 0) {
@@ -5463,7 +5463,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
         // --- zero ratio under data-map flags ---
         // Retail: li r26,0 then f28=(f32)r26 via xoris/fsubs (not lfs 0.0).
-        if (func_80148778(tgtB + 8, 0x13)) {
+        if (isBattleStatusActive(tgtB + 8, 0x13)) {
             r26 = 0;
             f28 = (f32)(s32)r26;
         }
@@ -5503,7 +5503,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             move->field_54 =
                 (f32)(s32)(r25 - r26) * (f32)(s32)r5 / lbl_eu_80666E00;
 
-            if (func_80148778(atkB + 8, 0xC8)) {
+            if (isBattleStatusActive(atkB + 8, 0xC8)) {
                 findBattleStatusEntry(atkB + 8, 0xC8);       // presence (retail always fetches)
                 move->field_54 *= lbl_eu_80666DE8;
             }
@@ -5543,10 +5543,10 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             move->field_54 = move->field_54 - move->field_54 * f28;
 
             // 0x800DDC10: 0x93 -> field_58 += 0.5 ; 0xC0 -> += val/10 - 1
-            if (func_80148778(atkB + 8, 0x93)) {
+            if (isBattleStatusActive(atkB + 8, 0x93)) {
                 move->field_58 += lbl_eu_80666DE8;
             }
-            if (func_80148778(atkB + 8, 0xC0)) {
+            if (isBattleStatusActive(atkB + 8, 0xC0)) {
                 void* entry = findBattleStatusEntry(atkB + 8, 0xC0);
                 move->field_58 +=
                     (f32)(s32)*(u32*)((u8*)entry + 0x10) / 10.0f - 1.0f;
@@ -5612,7 +5612,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         }
 
         // --- 0x800DDE7C: art-type dispatch (guard: !data 0x13) ---
-        if (!func_80148778(tgtB + 8, 0x13)) {
+        if (!isBattleStatusActive(tgtB + 8, 0x13)) {
             u16 artType = sub->field_40;
             s32 r0 = 0;
 
@@ -5771,7 +5771,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         }
 
         // --- 0x800DE5F8: 0xCE reaction block ---
-        if (func_80148778(tgtB + 8, 0xCE)) {
+        if (isBattleStatusActive(tgtB + 8, 0xCE)) {
             if (move->field_78 & 0x800) {
                 void* entry = findTopBattleStatusEntry(tgtB + 8, 0xCE);
                 if ((s32)*(u32*)((u8*)entry + 0x10) >= artsSubGetMax(sub)) {
@@ -5822,21 +5822,21 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 }
             }
         }
-        if (func_80148778(tgtB + 8, 0xC2)) {
+        if (isBattleStatusActive(tgtB + 8, 0xC2)) {
             void* entry = findBattleStatusEntry(tgtB + 8, 0xC2);
             r20 -= (s32)*(u32*)((u8*)entry + 0x10);
         }
         // 0x800DE804: signed (field_98 % 100) < r20 -> crit (mulhw), else skip
         if ((s32)move->field_98 % 100 < r20) {
             f32 f26 = 0.25f;
-            if (func_80148778(tgtB + 8, 0xF) ||
-                func_80148778(tgtB + 8, 0x10)) {
+            if (isBattleStatusActive(tgtB + 8, 0xF) ||
+                isBattleStatusActive(tgtB + 8, 0x10)) {
                 f26 += 0.25f;                            // 0.5 total
             }
             if (r22f) f26 += 0.25f;
             if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable() != 0) {
                 u32 sv;
-                if (func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x51, &sv)) {
+                if (IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x51, &sv)) {
                     f26 += (f32)(s32)sv / 100.0f;
                 }
             }
@@ -5880,7 +5880,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             else if (f28 > lbl_eu_80666E30) f28 = lbl_eu_80666E30;
 
             // --- zero ratio under data-map flags ---
-            if (func_80148778(tgtB + 8, 0x13)) { // 0x800DE9F8
+            if (isBattleStatusActive(tgtB + 8, 0x13)) { // 0x800DE9F8
                 r26 = 0;
                 f28 = (f32)(s32)r26;
             }
@@ -5918,7 +5918,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 }
                 move->field_54 = (f32)(s32)(r25 - r26) * (f32)(s32)r5 / 100.0f;
 
-                if (func_80148778(atkB + 8, 0xC8)) {
+                if (isBattleStatusActive(atkB + 8, 0xC8)) {
                     findBattleStatusEntry(atkB + 8, 0xC8);
                     move->field_54 *= 0.5f;
                 }
@@ -5958,8 +5958,8 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                     u16 f28t = (*(u16*)(atkB + 0x3F28));
                     if (etype == 1) {
                         if (f28t != 1 && f28t != 8 &&
-                            !func_80148778(atkB + 8, 0xCF) &&
-                            !func_80148778(atkB + 8, 0xD0) &&
+                            !isBattleStatusActive(atkB + 8, 0xCF) &&
+                            !isBattleStatusActive(atkB + 8, 0xD0) &&
                             !(*(u32*)(atkB + 0x3374) & 0x4000)) {
                             f26b = 0.5f;
                         }
@@ -5967,7 +5967,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                         s32 etype2 = (s32)((cf::CActorParam*)(target))->CActorParam_getActorType();
                         if (etype2 == 2) {
                             if (f28t != 8 &&
-                                !func_80148778(atkB + 8, 0xD0) &&
+                                !isBattleStatusActive(atkB + 8, 0xD0) &&
                                 !(*(u32*)(atkB + 0x3374) & 0x8000)) {
                                 f26b = 0.5f;
                             }
@@ -5978,7 +5978,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
                 // --- 0x800DEE7C: 0x10A bonus ---
                 if ((move->field_78 & 0x800) &&
-                    func_80148778(atkB + 8, 0x10A)) {
+                    isBattleStatusActive(atkB + 8, 0x10A)) {
                     move->field_58 += 1.0f;
                 }
 
@@ -5987,7 +5987,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 move->field_54 = move->field_54 - move->field_54 * f28;
 
                 // 0x800DEEC4: 0xC0 skill -> field_58 += val/10 - 1
-                if (func_80148778(atkB + 8, 0xC0)) {
+                if (isBattleStatusActive(atkB + 8, 0xC0)) {
                     void* entry = findBattleStatusEntry(atkB + 8, 0xC0);
                     move->field_58 +=
                         (f32)(s32)*(u32*)((u8*)entry + 0x10) / 10.0f - 1.0f;
@@ -5998,18 +5998,18 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                     if (st != 0) {
                         u32 sv;
                         st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
-                        if (func_80260264(st, 0x4E, &sv)) {
+                        if (IdTable_GetSum(st, 0x4E, &sv)) {
                             move->field_58 += (f32)(s32)sv / 100.0f;
                         }
                         if (sub->field_40 == 6) {
                             st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
-                            if (func_80260264(st, 0x55, &sv)) {
+                            if (IdTable_GetSum(st, 0x55, &sv)) {
                                 move->field_58 += (f32)(s32)sv / 100.0f;
                             }
                         }
                         if (sub->field_40 == 8) {
                             st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
-                            if (func_80260264(st, 0x56, &sv)) {
+                            if (IdTable_GetSum(st, 0x56, &sv)) {
                                 move->field_58 += (f32)(s32)sv / 100.0f;
                             }
                         }
@@ -6068,7 +6068,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             }
 
             // --- 0x800DF228: art-type dispatch (guard: !data 0x13) ---
-            if (!func_80148778(tgtB + 8, 0x13)) {
+            if (!isBattleStatusActive(tgtB + 8, 0x13)) {
                     u16 artType = sub->field_40;
                 s32 r0 = 0;
 
@@ -6213,7 +6213,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
                 // ALT only (0x800DF93C): sub->field_40 == 6 -> attacker 0x4E * 0.01
                 if (sub->field_40 == 6) {
-                    if (func_80148778(atkB + 8, 0x4E)) {
+                    if (isBattleStatusActive(atkB + 8, 0x4E)) {
                         void* entry = findBattleStatusEntry(atkB + 8, 0x4E);
                         move->field_58 +=
                             lbl_eu_80666DD8 * (f32)(s32)*(u32*)((u8*)entry + 0x10);
@@ -6233,7 +6233,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 if (d <= 10.0f) move->field_58 += 2.0f;
             }
 
-            if (func_80148778(tgtB + 8, 0xCE)) {
+            if (isBattleStatusActive(tgtB + 8, 0xCE)) {
                 if (move->field_78 & 0x800) {
                     void* entry = findTopBattleStatusEntry(tgtB + 8, 0xCE);
                     if ((s32)*(u32*)((u8*)entry + 0x10) >= artsSubGetMax(sub)) {
@@ -6266,22 +6266,22 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                     r20 = 100;
                 }
                 // ALT crit: no 0x59/0x5A status checks (MAIN-only).
-                if (func_80148778(tgtB + 8, 0xC2)) {
+                if (isBattleStatusActive(tgtB + 8, 0xC2)) {
                     void* entry = findBattleStatusEntry(tgtB + 8, 0xC2);
                     r20 -= (s32)*(u32*)((u8*)entry + 0x10);
                 }
                 // ALT gate: rem < r20 OR (rem >= r20 && has 0x10) -> crit
                 s32 rem = (s32)move->field_98 % 100;
-                if (rem < r20 || func_80148778(tgtB + 8, 0x10)) {
+                if (rem < r20 || isBattleStatusActive(tgtB + 8, 0x10)) {
                     f32 f26 = 0.25f;
-                    if (func_80148778(tgtB + 8, 0xF) ||
-                        func_80148778(tgtB + 8, 0x10)) {
+                    if (isBattleStatusActive(tgtB + 8, 0xF) ||
+                        isBattleStatusActive(tgtB + 8, 0x10)) {
                         f26 += 0.25f;
                     }
                     if (r22f) f26 += 0.25f;
                     if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable() != 0) {
                         u32 sv;
-                        if (func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x51, &sv)) {
+                        if (IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x51, &sv)) {
                             f26 += (f32)(s32)sv / 100.0f;
                         }
                     }
@@ -6302,15 +6302,15 @@ post_dispatch:;
     // ================================================================
     // 0x800DFC5C: 0xF/0x83 and 0x10/0x84 data-map pairs
     // ================================================================
-    if (func_80148778(tgtB + 8, 0xF)) {
-        if (func_80148778(atkB + 8, 0x83)) {
+    if (isBattleStatusActive(tgtB + 8, 0xF)) {
+        if (isBattleStatusActive(atkB + 8, 0x83)) {
             void* entry = findBattleStatusEntry(atkB + 8, 0x83);
             move->field_58 +=
                 (f32)(s32)*(u32*)((u8*)entry + 0x10) / 100.0f;
         }
     }
-    if (func_80148778(tgtB + 8, 0x10)) {
-        if (func_80148778(atkB + 8, 0x84)) {
+    if (isBattleStatusActive(tgtB + 8, 0x10)) {
+        if (isBattleStatusActive(atkB + 8, 0x84)) {
             void* entry = findBattleStatusEntry(atkB + 8, 0x84);
             move->field_58 +=
                 (f32)(s32)*(u32*)((u8*)entry + 0x10) / 100.0f;
@@ -6338,7 +6338,7 @@ post_dispatch:;
                 move->field_78 |= 0x40000002;
             }
         }
-        if (func_80148778(atkB + 8, 0xB2)) {
+        if (isBattleStatusActive(atkB + 8, 0xB2)) {
             void* entry = findBattleStatusEntry(atkB + 8, 0xB2);
             move->field_58 +=
                 (f32)(s32)*(u32*)((u8*)entry + 0x10) / 100.0f;
@@ -6352,7 +6352,7 @@ post_dispatch:;
         void* f4 = *(void**)(atkB + 0x4);
         outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
         if (testActorStatus(attacker, &outVal, 0x08000000) != 0) {
-            if (func_80148778(atkB + 8, 0xB1)) {
+            if (isBattleStatusActive(atkB + 8, 0xB1)) {
                 void* entry = findBattleStatusEntry(atkB + 8, 0xB1);
                 move->field_58 +=
                     (f32)(s32)*(u32*)((u8*)entry + 0x10) / 100.0f;
@@ -6362,7 +6362,7 @@ post_dispatch:;
                 if (st != 0) {
                     u32 sv;
                     st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
-                    if (func_80260264(st, 0x52, &sv)) {
+                    if (IdTable_GetSum(st, 0x52, &sv)) {
                         move->field_58 += (f32)(s32)sv / 100.0f;
                     }
                 }
@@ -6373,7 +6373,7 @@ post_dispatch:;
                 if (st != 0) {
                     u32 sv;
                     st = (void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable();
-                    if (func_80260264(st, 0x53, &sv) &&
+                    if (IdTable_GetSum(st, 0x53, &sv) &&
                         *(u32*)(atkB + 0x1530) != 0 &&
                         (s32)((cf::CActorParam*)(target))->CActorParam_getActorType() == 9) {
                         move->field_58 += (f32)(s32)sv / 100.0f;
@@ -6386,11 +6386,11 @@ post_dispatch:;
                 f32 f1 = ((cf::CActorParam*)(attacker))->CActorParam_getArtsGauge();
                 move->field_58 += f1 / 150.0f;
             }
-            if (func_80148778(tgtB + 8, 0x9)) {
+            if (isBattleStatusActive(tgtB + 8, 0x9)) {
                 move->field_58 += 0.5f;
                 if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable() != 0) {
                     u32 sv;
-                    if (func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x58, &sv)) {
+                    if (IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x58, &sv)) {
                         move->field_58 += (f32)(s32)sv / 100.0f;
                     }
                 }
@@ -6414,8 +6414,8 @@ post_dispatch:;
     // ================================================================
     // 0x800E010C: 0x10C / 0xFD penalty
     // ================================================================
-    if (func_80148778(atkB + 8, 0x10C) ||
-        func_80148778(atkB + 8, 0xFD)) {
+    if (isBattleStatusActive(atkB + 8, 0x10C) ||
+        isBattleStatusActive(atkB + 8, 0xFD)) {
         move->field_58 -= 0.25f;
     }
 
@@ -6430,26 +6430,26 @@ post_dispatch:;
             u32 sv;
             if (move->field_78 & 0x400) {
                 st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
-                if (func_80260264(st, 0x4E, &sv) && sub->field_40 == 6) {
+                if (IdTable_GetSum(st, 0x4E, &sv) && sub->field_40 == 6) {
                     move->field_58 += (f32)(s32)sv / 100.0f;
                 }
                 st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
-                if (func_80260264(st, 0x4E, &sv) && sub->field_40 == 8) {
+                if (IdTable_GetSum(st, 0x4E, &sv) && sub->field_40 == 8) {
                     move->field_58 += (f32)(s32)sv / 100.0f;
                 }
             }
             if (sub->type_3C == 1 || sub->type_3C == 5) {
                 st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
-                if (func_80260264(st, 0x4F, &sv)) {
+                if (IdTable_GetSum(st, 0x4F, &sv)) {
                     move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
                 }
             } else {
                 st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
-                if (func_80260264(st, 0x50, &sv)) {
+                if (IdTable_GetSum(st, 0x50, &sv)) {
                     move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
                 }
                 st = (void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable();
-                if (func_80260264(st, 0x54, &sv) && sub->field_5E != 0) {
+                if (IdTable_GetSum(st, 0x54, &sv) && sub->field_5E != 0) {
                     move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
                 }
             }
@@ -6467,7 +6467,7 @@ post_dispatch:;
     // ================================================================
     // 0x800E039C: field_5C clamp
     // ================================================================
-    if (func_80148778(tgtB + 8, 0x1)) {
+    if (isBattleStatusActive(tgtB + 8, 0x1)) {
         move->field_5C = 0.0f;
     } else if (!(move->field_74 & 0x8000) && move->field_5C < 1.0f) {
         move->field_5C = 1.0f;
@@ -6508,9 +6508,9 @@ post_dispatch:;
         ((cf::CActorParam*)(target))->CActorParam_isBattleLocked() == 0 &&
         move->field_5C > 0.0f) {
         // ---- 0x92 counter block (0x800E04F0) ----
-        if (func_80148778(tgtB + 8, 0x92)) {
+        if (isBattleStatusActive(tgtB + 8, 0x92)) {
             s32 extra = 0;
-            if (func_80148778(tgtB + 8, 0xA1)) {
+            if (isBattleStatusActive(tgtB + 8, 0xA1)) {
                 void* e = findBattleStatusEntry(tgtB + 8, 0xA1);
                 extra = (s32)*(u32*)((u8*)e + 0x10);
             }
@@ -6526,7 +6526,7 @@ post_dispatch:;
         }
         // ---- 0xFC block (0x800E05B0) ----
         if (!(move->field_78 & 0x2000) &&
-            func_80148778(tgtB + 8, 0xFC)) {
+            isBattleStatusActive(tgtB + 8, 0xFC)) {
             void* entry = findBattleStatusEntry(tgtB + 8, 0xFC);
             if (entry != 0 && move->field_68 <= 0.0f) {
                 move->field_78 |= 0x40002000;
@@ -6536,7 +6536,7 @@ post_dispatch:;
         }
         // ---- 0x100 block (0x800E064C) ----
         if (!(move->field_78 & 0x2000) &&
-            func_80148778(tgtB + 8, 0x100)) {
+            isBattleStatusActive(tgtB + 8, 0x100)) {
             void* entry = findBattleStatusEntry(tgtB + 8, 0x100);
             if (entry != 0 && move->field_68 <= 0.0f) {
                 move->field_78 |= 0x40002000;
@@ -6553,7 +6553,7 @@ post_dispatch:;
         ((cf::CActorParam*)(target))->CActorParam_isBattleLocked() == 0) {
         // ---- 0x36 block (0x800E070C) ----
         if (!(move->field_78 & 0x4000) &&
-            func_80148778(tgtB + 8, 0x36)) {
+            isBattleStatusActive(tgtB + 8, 0x36)) {
             void* entry = findBattleStatusEntry(tgtB + 8, 0x36);
             if (entry != 0 && move->field_68 > 0.0f) {
                 s32 v = (s32)*(u32*)((u8*)entry + 0x10);
@@ -6573,9 +6573,9 @@ post_dispatch:;
             }
         }
         // ---- 0x37 block (0x800E07E4) ----
-        if (func_80148778(tgtB + 8, 0x37)) {
+        if (isBattleStatusActive(tgtB + 8, 0x37)) {
             s32 extra = 0;
-            if (func_80148778(tgtB + 8, 0xA1)) {
+            if (isBattleStatusActive(tgtB + 8, 0xA1)) {
                 void* e = findBattleStatusEntry(tgtB + 8, 0xA1);
                 extra = (s32)*(u32*)((u8*)e + 0x10);
             }
@@ -6593,7 +6593,7 @@ post_dispatch:;
         }
         // ---- 0x11E block (0x800E08E4) ----
         if (!(move->field_78 & 0x4000) &&
-            func_80148778(tgtB + 8, 0x11E)) {
+            isBattleStatusActive(tgtB + 8, 0x11E)) {
             void* entry = findBattleStatusEntry(tgtB + 8, 0x11E);
             if (entry != 0 && move->field_68 > 0.0f) {
                 f32 f1 = ((cf::CActorParam*)(target))->CActorParam_getDamageScale();
@@ -6625,7 +6625,7 @@ post_dispatch:;
     // ================================================================
     // 0x800E0A20: 0x106 block -- final rounded damage to field_6C
     // ================================================================
-    if (func_80148778(tgtB + 8, 0x106)) {
+    if (isBattleStatusActive(tgtB + 8, 0x106)) {
         findBattleStatusEntry(tgtB + 8, 0x106);
         if (!(move->field_78 & 0x800)) {
             // Reload sub from move (retail lwz 0x50(r31) before each virt).
@@ -6665,7 +6665,7 @@ post_dispatch:;
             }
             if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable() != 0) {
                 u32 sv;
-                if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &sv)) {
+                if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &sv)) {
                     mult *= 1.0f + (f32)(s32)sv / 100.0f;
                 }
             }
@@ -6686,13 +6686,13 @@ post_dispatch:;
     // ================================================================
     // 0x800E0CA4: guards before the art loop
     // ================================================================
-    if (func_80148778(tgtB + 8, 0x10)) {
+    if (isBattleStatusActive(tgtB + 8, 0x10)) {
         if (!(*(u32*)(tgtB + 0x3374) & 0x40000)) return;  // bit13
         void* f4 = *(void**)(tgtB + 0x4);
         outVal = *(s32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
         if (testActorStatus(target, &outVal, 0x17) == 0) return;
     }
-    if (func_80148778(tgtB + 8, 0x117)) return;
+    if (isBattleStatusActive(tgtB + 8, 0x117)) return;
     if (move->field_74 & 0x80) return;
 
     // ================================================================
@@ -6742,26 +6742,26 @@ post_dispatch:;
             if (findBattleStatusEntry(tgtB + 8, 0x6F) != 0 ||
                 findBattleStatusEntry(tgtB + 8, 0x79) != 0) {
                 u32 sv;
-                if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &sv)) {
+                if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &sv)) {
                     val = (s32)((f32)(s32)val *
                                 (1.0f + (f32)(s32)sv / 100.0f));
                 }
             }
         }
         // 0x800E0F3C: 0x8D / vf0x290 0x57 reductions
-        if (func_80148778(atkB + 8, 0x8D)) {
+        if (isBattleStatusActive(atkB + 8, 0x8D)) {
             void* e = findBattleStatusEntry(atkB + 8, 0x8D);
             f27 = 1.0f - 0.01f * (f32)(s32)*(u32*)((u8*)e + 0x10);
         }
         if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable() != 0) {
             u32 sv;
-            if (func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x57, &sv)) {
+            if (IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x57, &sv)) {
                 f27 = 1.0f - 0.01f * (f32)(s32)sv;
             }
         }
         val = (s32)((f32)(s32)val * f27);               // 0x800E0FD0
         if (val < 1) val = 0;
-        if (func_80148778(atkB + 8, 0x1)) val = 0;
+        if (isBattleStatusActive(atkB + 8, 0x1)) val = 0;
 
         // skill dispatch (0x800E1014): same (id-1) CF as art, but >>n&1 (no neg/or)
         s32 r0 = 0;
@@ -6891,7 +6891,7 @@ static void func_staleMove(void* self, void* arg1, void* arg2, void* move) {
     // 0xF7 status + 0x5C0 self-target check: when no confirmation is pending
     // the event source falls back to arg1.
     if (!(*(u32*)((u8*)move + 0x74) & 0x08)) {
-        if (func_80148778((u8*)arg2 + 8, 0xF7)) {
+        if (isBattleStatusActive((u8*)arg2 + 8, 0xF7)) {
             if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags(arg1) == 0) {
                 findBattleStatusEntry((u8*)arg2 + 8, 0xF7);
                 u32 f78 = *(u32*)((u8*)move + 0x78);
@@ -6957,13 +6957,13 @@ static void func_staleMove(void* self, void* arg1, void* arg2, void* move) {
             if (*(u32*)((u8*)move + 0x74) & 0x2000000) r30 = 1;
             break;
         case 0x05:
-            if (func_80148778((u8*)arg1 + 8, 0xC1)) r30 = 1;
+            if (isBattleStatusActive((u8*)arg1 + 8, 0xC1)) r30 = 1;
             break;
         case 0x06:
-            if (func_80148778((u8*)arg2 + 8, 0x10)) r30 = 1;
+            if (isBattleStatusActive((u8*)arg2 + 8, 0x10)) r30 = 1;
             break;
         case 0x07:
-            if (func_80148778((u8*)arg2 + 8, 0x0F)) r30 = 1;
+            if (isBattleStatusActive((u8*)arg2 + 8, 0x0F)) r30 = 1;
             break;
         case 0x08: {
             void* m = (u8*)arg2 + 0x3E9C;
@@ -7077,7 +7077,7 @@ done1744_1B8C:;
         CTaskGame_enumListCtor(&holder);
         startEnumObjects(CTaskGame_enumListGet(&holder), 0x8000, 0);
         for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620); i++) {
-            void* o = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+            void* o = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
             if (o != arg2) emitBattleMoveEvents(self, arg1, o, &ev, move);
         }
         __dt__80043E88(&holder, -1);
@@ -7174,7 +7174,7 @@ postEmit:
         }
         if (ival > 0) {
             if (!(*(u32*)((u8*)move + 0x74) & 0x10)) {
-                if (func_80148778((u8*)arg2 + 8, 0xF7)) {
+                if (isBattleStatusActive((u8*)arg2 + 8, 0xF7)) {
                     if (((cf::CfObjectActor*)(arg2))->CfObjectActor_sharesMoveFlags(arg1) == 0) {
                         u32 m78 = *(u32*)((u8*)move + 0x78);
                         if ((m78 & 0x200) || ((m78 & 0x400) && !(m78 & 0x800))) {
@@ -7206,7 +7206,7 @@ postEmit:
             goto afterCounter;
         counterHit:
             // 0x33 status: per-hit counter bleed from the move block.
-            if (!func_80148778((u8*)arg2 + 8, 0x33)) goto afterCounter;
+            if (!isBattleStatusActive((u8*)arg2 + 8, 0x33)) goto afterCounter;
             void* entry = findBattleStatusEntry((u8*)arg2 + 8, 0x33);
             if (entry == nullptr) goto afterCounter;
 
@@ -7282,9 +7282,9 @@ afterCounter:
             if (!(*(u32*)((u8*)move + 0x78) & 0x1000)) {
                 if (((cf::CActorParam*)(arg2))->CActorParam_isBattleLocked() == 0) {
                     // 0x92 proc-rate block.
-                    if (func_80148778((u8*)arg2 + 8, 0x92)) {
+                    if (isBattleStatusActive((u8*)arg2 + 8, 0x92)) {
                         s32 bonus = 0;
-                        if (func_80148778((u8*)arg2 + 8, 0xA1)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0xA1)) {
                             void* eA1 = findBattleStatusEntry((u8*)arg2 + 8, 0xA1);
                             bonus = *(s32*)((u8*)eA1 + 0x10);
                         }
@@ -7300,7 +7300,7 @@ afterCounter:
                     }
                     if (!(*(u32*)((u8*)move + 0x78) & 0x2000)) {
                         // 0xFC / 0x100 fixed-rate bleeds.
-                        if (func_80148778((u8*)arg2 + 8, 0xFC)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0xFC)) {
                             void* eFC = findBattleStatusEntry((u8*)arg2 + 8, 0xFC);
                             if (eFC != nullptr && *(f32*)((u8*)move + 0x68) <= 0.0f) {
                                 *(u32*)((u8*)move + 0x78) |= 0x40002000;
@@ -7309,7 +7309,7 @@ afterCounter:
                                     *(f32*)((u8*)move + 0x68) * (f32)(*(s32*)((u8*)eFC + 0x10)) * lbl_eu_80666DD8;
                             }
                         }
-                        if (func_80148778((u8*)arg2 + 8, 0x100)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0x100)) {
                             void* e100 = findBattleStatusEntry((u8*)arg2 + 8, 0x100);
                             if (e100 != nullptr && *(f32*)((u8*)move + 0x68) <= 0.0f) {
                                 *(u32*)((u8*)move + 0x78) |= 0x40002000;
@@ -7319,7 +7319,7 @@ afterCounter:
                             }
                         }
                         // 0x36 growth block.
-                        if (func_80148778((u8*)arg2 + 8, 0x36)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0x36)) {
                             void* e36 = findBattleStatusEntry((u8*)arg2 + 8, 0x36);
                             if (e36 != nullptr && *(f32*)((u8*)move + 0x68) > 0.0f) {
                                 s32 v36 = *(s32*)((u8*)e36 + 0x10);
@@ -7338,7 +7338,7 @@ afterCounter:
                     }
                     if (!(*(u32*)((u8*)move + 0x78) & 0x4000)) {
                         // 0x11E protection block.
-                        if (func_80148778((u8*)arg2 + 8, 0x11E)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0x11E)) {
                             void* e11E = findBattleStatusEntry((u8*)arg2 + 8, 0x11E);
                             if (e11E != nullptr && *(f32*)((u8*)move + 0x68) > 0.0f) {
                                 f32 f68 = *(f32*)((u8*)move + 0x68);
@@ -7366,9 +7366,9 @@ afterCounter:
                             }
                         }
                         // 0x37 proc-rate block (same shape as 0x92).
-                        if (func_80148778((u8*)arg2 + 8, 0x37)) {
+                        if (isBattleStatusActive((u8*)arg2 + 8, 0x37)) {
                             s32 bonus = 0;
-                            if (func_80148778((u8*)arg2 + 8, 0xA1)) {
+                            if (isBattleStatusActive((u8*)arg2 + 8, 0xA1)) {
                                 void* eA1 = findBattleStatusEntry((u8*)arg2 + 8, 0xA1);
                                 bonus = *(s32*)((u8*)eA1 + 0x10);
                             }
@@ -7425,7 +7425,7 @@ void emitBattleEvents(void* self_, void* attacker_, void* target_, void* move_) 
     if (target == nullptr) return;
 
     if (!(move->mFlagsArray[0].flags & 0x08)) {
-        if (func_80148778((u8*)target + 8, 0xF7)) {
+        if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
             if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags(attacker) == 0) {
                 findBattleStatusEntry((u8*)target + 8, 0xF7);
                 if ((move->mFlagsArray[1].flags & 0x200) ||
@@ -7476,13 +7476,13 @@ void emitBattleEvents(void* self_, void* attacker_, void* target_, void* move_) 
         if (move->mFlagsArray[0].flags & 0x02000000) hit = 1;
         break;
     case 0x05:
-        if (func_80148778((u8*)attacker + 8, 0xC1)) hit = 1;
+        if (isBattleStatusActive((u8*)attacker + 8, 0xC1)) hit = 1;
         break;
     case 0x06:
-        if (func_80148778((u8*)target + 8, 0x10)) hit = 1;
+        if (isBattleStatusActive((u8*)target + 8, 0x10)) hit = 1;
         break;
     case 0x07:
-        if (func_80148778((u8*)target + 8, 0x0F)) hit = 1;
+        if (isBattleStatusActive((u8*)target + 8, 0x0F)) hit = 1;
         break;
     case 0x08:
         if (((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_getLinkedActorId() ==
@@ -7583,7 +7583,7 @@ postSwitch:
             CTaskGame_enumListCtor(&holder);
             startEnumObjects(CTaskGame_enumListGet(&holder), 0x8000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                void* o = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* o = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 if (o != target) {
                     emitBattleMoveEvents(self, attacker, o, &ev, move);
                 }
@@ -7681,7 +7681,7 @@ tail2:
         }
         if (cnt > 0) {
             if (!(move->mFlagsArray[0].flags & 0x10000000)) {
-                if (func_80148778((u8*)target + 8, 0xF7)) {
+                if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
                     if (((cf::CfObjectActor*)target)->CfObjectActor_sharesMoveFlags(attacker) == 0) {
                         if ((move->mFlagsArray[1].flags & 0x200) ||
                             ((move->mFlagsArray[1].flags & 0x400) && !(move->mFlagsArray[1].flags & 0x800))) {
@@ -7691,7 +7691,7 @@ tail2:
                 }
             }
             if ((move->mFlagsArray[0].flags & 0x8000) || !(move->mFlagsArray[1].flags & 0x8000)) {
-                if (!func_80148778((u8*)target + 8, 0x33)) {
+                if (!isBattleStatusActive((u8*)target + 8, 0x33)) {
                     goto dotBlock;
                 }
                 cf::CfStatusEntry* entry = (cf::CfStatusEntry*)findBattleStatusEntry(
@@ -7765,9 +7765,9 @@ dotBlock:
         if (((cf::CfObjectActor*)target)->CActorParam_isBattleLocked() != 0) goto finalClamp;
 
         // 0x92 proc-rate block.
-        if (func_80148778((u8*)target + 8, 0x92)) {
+        if (isBattleStatusActive((u8*)target + 8, 0x92)) {
             s32 bonus = 0;
-            if (func_80148778((u8*)target + 8, 0xA1)) {
+            if (isBattleStatusActive((u8*)target + 8, 0xA1)) {
                 bonus = ((cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0xA1))->field_0x10;
             }
@@ -7784,7 +7784,7 @@ dotBlock:
         }
         if (!(move->mFlagsArray[1].flags & 0x2000)) {
             // 0xFC fixed-rate bleed.
-            if (func_80148778((u8*)target + 8, 0xFC)) {
+            if (isBattleStatusActive((u8*)target + 8, 0xFC)) {
                 cf::CfStatusEntry* eFC = (cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0xFC);
                 if (eFC != nullptr && move->unk68 <= 0.0f) {
@@ -7798,7 +7798,7 @@ dotBlock:
         }
         if (!(move->mFlagsArray[1].flags & 0x2000)) {
             // 0x100 fixed-rate bleed.
-            if (func_80148778((u8*)target + 8, 0x100)) {
+            if (isBattleStatusActive((u8*)target + 8, 0x100)) {
                 cf::CfStatusEntry* e100 = (cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0x100);
                 if (e100 != nullptr && move->unk68 <= 0.0f) {
@@ -7812,7 +7812,7 @@ dotBlock:
         }
         if (!(move->mFlagsArray[1].flags & 0x4000)) {
             // 0x36 growth block.
-            if (func_80148778((u8*)target + 8, 0x36)) {
+            if (isBattleStatusActive((u8*)target + 8, 0x36)) {
                 cf::CfStatusEntry* e36 = (cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0x36);
                 if (e36 != nullptr && move->unk68 > 0.0f) {
@@ -7827,9 +7827,9 @@ dotBlock:
             }
         }
         // 0x37 proc-rate block (same shape as 0x92).
-        if (func_80148778((u8*)target + 8, 0x37)) {
+        if (isBattleStatusActive((u8*)target + 8, 0x37)) {
             s32 bonus = 0;
-            if (func_80148778((u8*)target + 8, 0xA1)) {
+            if (isBattleStatusActive((u8*)target + 8, 0xA1)) {
                 bonus = ((cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0xA1))->field_0x10;
             }
@@ -7851,7 +7851,7 @@ dotBlock:
         }
         if (!(move->mFlagsArray[1].flags & 0x4000)) {
             // 0x11E protection block.
-            if (func_80148778((u8*)target + 8, 0x11E)) {
+            if (isBattleStatusActive((u8*)target + 8, 0x11E)) {
                 cf::CfStatusEntry* e11E = (cf::CfStatusEntry*)findBattleStatusEntry(
                     (u8*)target + 8, 0x11E);
                 if (e11E != nullptr && move->unk68 > 0.0f) {
@@ -7910,7 +7910,7 @@ void previewBattleDamage(void* self, void* actor, void* obj, f32* outDamage, s32
 
     // r23: selected target sub-object from obj's move slot; r31: its action.
     void* subObj = *(void**)((u8*)objM->CActorParam_getBattleStats() + 0x50);
-    cf::CActorParam* action = (cf::CActorParam*)func_8016FE34((void*)(intptr_t)findObjectById__Fi(
+    cf::CActorParam* action = (cf::CActorParam*)MapFx_ResolveOwner((void*)(intptr_t)findObjectById__Fi(
         *(s32*)((u8*)objM->CActorParam_getBattleStats() + 4)));
 
     *outDamage = lbl_eu_80666DDC;
@@ -7940,7 +7940,7 @@ void previewBattleDamage(void* self, void* actor, void* obj, f32* outDamage, s32
     action->CActorParam_resetArtsStatus(0);
     for (s32 i = 0; i < 3; i++) {
         cf::CActorParam* player =
-            (cf::CActorParam*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
+            (cf::CActorParam*)MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
         if (player != nullptr && player != action) {
             player->CActorParam_resetArtsStatus(0);
         }
@@ -8117,7 +8117,7 @@ void evalBattleTarget(void* mgr, void* actor) {
     if (av->field_3F60 == 0) return;
 
     cf::CActorParam* action =
-        (cf::CActorParam*)func_8016FE34(
+        (cf::CActorParam*)MapFx_ResolveOwner(
             (void*)(intptr_t)findObjectById__Fi((s32)src->w04));
 
     // Snapshot the full move block (sp+0xF4..0x1AC); the target pointer
@@ -8147,7 +8147,7 @@ void evalBattleTarget(void* mgr, void* actor) {
                 startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
                 for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet(&holder) + 0x620);
                      i++) {
-                    cf::CActorParam* o = (cf::CActorParam*)func_8016FE34(
+                    cf::CActorParam* o = (cf::CActorParam*)MapFx_ResolveOwner(
                         getObjectAt(CTaskGame_enumListGet(&holder), i));
                     o->CActorParam_setHp(lbl_eu_80666DDC);
                 }
@@ -8204,7 +8204,7 @@ skipScan:
         u32* idp = (u32*)((u8*)&snap + 8);
         for (s32 i = 0; i < 16; i++, idp++) {
             if (*idp == 0) continue;
-            void* pl = func_8016FE34((void*)(intptr_t)findObjectById__Fi((s32)*idp));
+            void* pl = MapFx_ResolveOwner((void*)(intptr_t)findObjectById__Fi((s32)*idp));
             E1B5C_ObjView* pv = (E1B5C_ObjView*)pl;
             if (pl == nullptr || ((cf::CActorParam*)pl)->CActorParam_isBattleLocked() != 0) {
                 *idp = 0;
@@ -8280,7 +8280,7 @@ skipScan:
 
     // Status reset: clear status 0xC0 through the actor's status object when
     // the target is a type-1/2 object with the 0x400 move flag.
-    if (func_80148778((u8*)actor + 8, 0xC0)) {
+    if (isBattleStatusActive((u8*)actor + 8, 0xC0)) {
         if (targetPtr != nullptr) {
             E1B5C_TargetObj* tp = (E1B5C_TargetObj*)targetPtr;
             if ((u32)(tp->type_3c - 1) <= 1) {
@@ -8544,7 +8544,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x400) == 0) {
         if (((cf::CActorParam*)(target))->CActorParam_isBattleLocked() == 0) return;
-        if (func_80148778((u8*)target + 8, 0xF8)) return;
+        if (isBattleStatusActive((u8*)target + 8, 0xF8)) return;
     }
     if (*(u32*)((u8*)target + 0x3374) & 0x08000000) return;
     if (*(u32*)((u8*)attacker + 0x3F60) == 0) return;
@@ -8553,7 +8553,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
     void* sub = move->field_50;
 
     // ---- 0xCE "reaction" block ----
-    if (func_80148778((u8*)target + 8, 0xCE) &&
+    if (isBattleStatusActive((u8*)target + 8, 0xCE) &&
         (move->field_78 & 0x00000800) && !(move->field_74 & 0x00002000)) {
         void* sub2 = findTopBattleStatusEntry((u8*)target + 8, 0xCE);
         if (*(u32*)((u8*)sub2 + 0x10) >= (u32)artsSubGetMax(sub)) {
@@ -8564,7 +8564,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
     }
 
     // ---- 0xEB "knockback" block ----
-    if (func_80148778((u8*)target + 8, 0xEB) && !(move->field_74 & 0x2)) {
+    if (isBattleStatusActive((u8*)target + 8, 0xEB) && !(move->field_74 & 0x2)) {
         u16 type = *(u16*)((u8*)sub + 0x3C);
         if (type == 1 || type == 5) {
             move->field_74 &= ~0x00030000;
@@ -8585,7 +8585,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                                      // the 0x106 block; value is register-garbage
                                      // otherwise -- declared here for safety)
 
-        if (func_80148778((u8*)target + 8, 0xF7)) {
+        if (isBattleStatusActive((u8*)target + 8, 0xF7)) {
             if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags(attacker) == 0) {
                 findBattleStatusEntry((u8*)target + 8, 0xF7);
                 u32 f = move->field_78;
@@ -8600,7 +8600,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             }
         }
 
-        if (func_80148778((u8*)target + 8, 0x106)) {
+        if (isBattleStatusActive((u8*)target + 8, 0x106)) {
             findBattleStatusEntry((u8*)target + 8, 0x106);
             if (!(move->field_78 & 0x00000800)) {
                 if (move->field_50 == nullptr) return;
@@ -8620,7 +8620,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
 
                 if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable()) {
                     u32 tmp;
-                    if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &tmp)) {
+                    if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &tmp)) {
                         f27 = f27 + lbl_eu_80666DD8 * (f32)i2d((s32)tmp);
                     }
                 }
@@ -8663,12 +8663,12 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             if (move->field_50 == nullptr) return;          // 0x3CB0
             if (move->field_78 & 0x00000200) {
                 s32 r15 = 0;
-                if (func_80148778((u8*)attacker + 8, 0xA0)) {
+                if (isBattleStatusActive((u8*)attacker + 8, 0xA0)) {
                     r15 = *(s32*)((u8*)findBattleStatusEntry((u8*)attacker + 8, 0xA0) + 0x10);
                 }
 
 #define EMIT_TAG(tag, evType, extraField)                                        \
-    if (func_80148778((u8*)attacker + 8, tag)) {                                \
+    if (isBattleStatusActive((u8*)attacker + 8, tag)) {                                \
         void* entry = findBattleStatusEntry((u8*)attacker + 8, tag);                    \
         s32 val = *(s16*)((u8*)entry + 0x1A);                                   \
         if (*(u32*)((u8*)entry + 0x08) == 0x4000) val += r15;                   \
@@ -8696,7 +8696,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 EMIT_TAG(0x81, 0x69, ev.field_24 = k2_0f;)
 
                 // 0x82 -- unconditional, 0.35/0.35
-                if (func_80148778((u8*)attacker + 8, 0x82)) {
+                if (isBattleStatusActive((u8*)attacker + 8, 0x82)) {
                     void* entry = findBattleStatusEntry((u8*)attacker + 8, 0x82);
                     BattleEventData ev;
                     std::memset(&ev, 0, sizeof(ev));
@@ -8710,7 +8710,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 }
 
                 // 0xA8 -- extra u16 at +0x14
-                if (func_80148778((u8*)attacker + 8, 0xA8)) {
+                if (isBattleStatusActive((u8*)attacker + 8, 0xA8)) {
                     void* entry = findBattleStatusEntry((u8*)attacker + 8, 0xA8);
                     s32 val = *(s16*)((u8*)entry + 0x1A);
                     if (*(u32*)((u8*)entry + 0x08) == 0x4000) val += r15;
@@ -8728,7 +8728,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 }
 
                 // 0xA9 -- constant value 0x4B, type 7
-                if (func_80148778((u8*)attacker + 8, 0xA9)) {
+                if (isBattleStatusActive((u8*)attacker + 8, 0xA9)) {
                     void* entry = findBattleStatusEntry((u8*)attacker + 8, 0xA9);
                     s32 val = *(s16*)((u8*)entry + 0x1A);
                     if (*(u32*)((u8*)entry + 0x08) == 0x4000) val += r15;
@@ -8747,7 +8747,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 EMIT_TAG(0xAA, 0x12, (void)0)
 
                 // 0xA6 -- constant value 0x32, type 4
-                if (func_80148778((u8*)attacker + 8, 0xA6)) {
+                if (isBattleStatusActive((u8*)attacker + 8, 0xA6)) {
                     void* entry = findBattleStatusEntry((u8*)attacker + 8, 0xA6);
                     s32 val = *(s16*)((u8*)entry + 0x1A);
                     if (*(u32*)((u8*)entry + 0x08) == 0x4000) val += r15;
@@ -8789,7 +8789,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 // 0x6D event -- requires move->field_B0 < out2
                 if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) {
                     u32 out1, out2;
-                    if (func_80260A6C((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x6D, &out1, &out2)) {
+                    if (IdTable_GetSumMax((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x6D, &out1, &out2)) {
                         if (move->field_B0 < out2) {
                             BattleEventData ev;
                             std::memset(&ev, 0, sizeof(ev));
@@ -8841,7 +8841,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             SysWinLog_PollSequenceProgress(attacker, r28, move);
             if (move->field_50 == nullptr) return;
 
-            if (r28 >= 0) func_801BAB94(&self->mSuddenCommu, attacker, target, &localMove);
+            if (r28 >= 0) SuddenCommuDispatchAttacker(&self->mSuddenCommu, attacker, target, &localMove);
 
             // ---- 0x4A44: element-type sound selection ----
             {
@@ -8878,11 +8878,11 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 if (testActorStatus((u8*)target, &sid, 0x801)) {
                     r14ok = false;
                 } else {
-                    if (func_80148778((u8*)target + 8, 0x7) ||
-                        func_80148778((u8*)target + 8, 0xB) ||
-                        func_80148778((u8*)target + 8, 0x9) ||
-                        func_80148778((u8*)target + 8, 0xF) ||
-                        func_80148778((u8*)target + 8, 0x10)) {
+                    if (isBattleStatusActive((u8*)target + 8, 0x7) ||
+                        isBattleStatusActive((u8*)target + 8, 0xB) ||
+                        isBattleStatusActive((u8*)target + 8, 0x9) ||
+                        isBattleStatusActive((u8*)target + 8, 0xF) ||
+                        isBattleStatusActive((u8*)target + 8, 0x10)) {
                         r14ok = false;
                     }
                 }
@@ -8924,7 +8924,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                     if (localMove.field_74 & 0x100) {
                         if (*(u32*)((u8*)attacker + 0x3F00) & 0x2) {
                             u32 v = 0;
-                            if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x3A, &v);
+                            if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x3A, &v);
                             func_800F3970((void*)lbl_eu_80663F00, attacker, target, 3, (s32)v);
                             PartyGaugeAddClamped(&self->unk194, 0xA);
                         }
@@ -8935,11 +8935,11 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                         }
                     }
                     if (localMove.field_78 & 0xC00) {
-                        if (func_80148778((u8*)target + 8, 0x10)) {
+                        if (isBattleStatusActive((u8*)target + 8, 0x10)) {
                             func_800F3970((void*)lbl_eu_80663F00, attacker, target, 4, 0);
                         }
-                        if (func_80148778((u8*)target + 8, 0xF) ||
-                            func_80148778((u8*)target + 8, 0x9)) {
+                        if (isBattleStatusActive((u8*)target + 8, 0xF) ||
+                            isBattleStatusActive((u8*)target + 8, 0x9)) {
                             func_800F3970((void*)lbl_eu_80663F00, attacker, target, 5, 0);
                         }
                     }
@@ -8948,14 +8948,14 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 // ---- 0x4F84 ----
                 {
                     u32 v = 0;
-                    if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x74, &v);
+                    if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x74, &v);
                     if (localMove.field_74 & 0x18) {
                         func_800F3970((void*)lbl_eu_80663F00, attacker, 0, 0xD, (s32)v);
                     }
                     if (localMove.field_74 & 0x2) {
                         func_800F3970((void*)lbl_eu_80663F00, attacker, 0, 0xE, (s32)v);
                     }
-                    if (func_80148778((u8*)target + 8, 0xF)) {
+                    if (isBattleStatusActive((u8*)target + 8, 0xF)) {
                         void* e = findBattleStatusEntry((u8*)attacker + 8, 0xBD);
                         if (e != nullptr) ((cf::CActorParam*)(attacker))->CActorParam_accumulateTension((int)(*(u32*)((u8*)e + 0x10)));
                     }
@@ -8969,7 +8969,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
 
             // ---- 0x50AC: talent-art gate ----
             bool runTalent = true;
-            if (func_80148778((u8*)target + 8, 0x10)) {
+            if (isBattleStatusActive((u8*)target + 8, 0x10)) {
                 if (!(*(u32*)((u8*)target + 0x3374) & 0x00040000)) {
                     runTalent = false;                 // -> 0x5A00
                 } else {
@@ -8978,7 +8978,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 }
             }
             if (runTalent) {
-                if (func_80148778((u8*)target + 8, 0x117)) runTalent = false;
+                if (isBattleStatusActive((u8*)target + 8, 0x117)) runTalent = false;
                 if (localMove.field_74 & 0x80) runTalent = false;
             }
 
@@ -9050,25 +9050,25 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                             if (e == nullptr) e = findBattleStatusEntry((u8*)target + 8, 0x79);
                             if (e != nullptr) {
                                 u32 tmp;
-                                if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable() && func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &tmp)) {
+                                if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable() && IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x5B, &tmp)) {
                                     value = (s32)((f32)i2d(value) *
                                         (1.0f + (f32)i2d((s32)tmp) / lbl_eu_80666E00));
                                 }
                             }
                         }
-                        if (func_80148778((u8*)attacker + 8, 0x8D)) {
+                        if (isBattleStatusActive((u8*)attacker + 8, 0x8D)) {
                             void* e = findBattleStatusEntry((u8*)attacker + 8, 0x8D);
                             ratio = ratio - lbl_eu_80666DD8 * (f32)i2d(*(s32*)((u8*)e + 0x10));
                         }
                         if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) {
                             u32 tmp;
-                            if (func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x57, &tmp)) {
+                            if (IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x57, &tmp)) {
                                 ratio = ratio - lbl_eu_80666DD8 * (f32)i2d((s32)tmp);
                             }
                         }
                         value = (s32)((f32)i2d(value) * ratio);
                         if (value < 1) value = 0;
-                        if (func_80148778((u8*)attacker + 8, 0x1)) value = 0;
+                        if (isBattleStatusActive((u8*)attacker + 8, 0x1)) value = 0;
 
                         // talent classification A (byte +0x72 / s16 +0x64..)
                         s32 r0 = talentBit(tgt, 0x72, r25);
@@ -9210,11 +9210,11 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                             }
                             if (*(u8*)((u8*)self + 0x1AA) < 1 || *(u8*)((u8*)self + 0x1AA) > 0x18) {
-                                *(f32*)((u8*)st2 + 0x470) = func_8015408C(sub);
-                                *(f32*)((u8*)st2 + 0x474) = func_801540C0(sub);
+                                *(f32*)((u8*)st2 + 0x470) = getArtsClampedRate(sub);
+                                *(f32*)((u8*)st2 + 0x474) = getArtsScaledSpeed(sub);
                             } else {
                                 *(f32*)((u8*)st2 + 0x470) = 0.0f;
-                                f32 c0 = func_801540C0(sub);
+                                f32 c0 = getArtsScaledSpeed(sub);
                                 *(f32*)((u8*)st2 + 0x474) = c0 < 0.0f ? 0.0f : c0;
                             }
                             f32 f134 = getArtsGaugeRate(sub);
@@ -9286,7 +9286,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
 
             {
                 u32 v = 0;
-                if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) func_80260264((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x74, &v);
+                if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x74, &v);
                 func_800F3970((void*)lbl_eu_80663F00, attacker, 0, 0xC, (s32)v);
             }
             SuddenCommuDispatchPartner(&self->mSuddenCommu, attacker, target);
@@ -9298,11 +9298,11 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             {
                 int sid = (int)getStatusId(target);
                 if (testActorStatus((u8*)target, &sid, 0x801) ||
-                    func_80148778((u8*)target + 8, 0x7) ||
-                    func_80148778((u8*)target + 8, 0xB) ||
-                    func_80148778((u8*)target + 8, 0x9) ||
-                    func_80148778((u8*)target + 8, 0xF) ||
-                    func_80148778((u8*)target + 8, 0x10)) {
+                    isBattleStatusActive((u8*)target + 8, 0x7) ||
+                    isBattleStatusActive((u8*)target + 8, 0xB) ||
+                    isBattleStatusActive((u8*)target + 8, 0x9) ||
+                    isBattleStatusActive((u8*)target + 8, 0xF) ||
+                    isBattleStatusActive((u8*)target + 8, 0x10)) {
                     r15ok = false;
                 }
             }
@@ -9344,7 +9344,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
         if ((localMove.field_78 & 0x200) &&
             !(localMove.field_78 & 0x01000000) &&
             !(localMove.field_78 & 0x02000000)) {
-            if (!func_80148778((u8*)target + 8, 0x7)) {
+            if (!isBattleStatusActive((u8*)target + 8, 0x7)) {
                 if (((cf::CActorParam*)(attacker))->CActorParam_getRankByte() < localMove.field_A0) {
                     // note: retail uses *target*->field_3F10 here, installed
                     // on *attacker*+0x3380
@@ -9358,11 +9358,11 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
     f32 f26 = lbl_eu_80666DD4;
     if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable()) {
         u32 tmp;
-        if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x6E, &tmp)) {
+        if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(), 0x6E, &tmp)) {
             f26 = f26 + (f32)i2d((s32)tmp) / lbl_eu_80666E00;
         }
     }
-    if (func_80148778((u8*)target + 8, 0xFE)) f26 = 0.0f;
+    if (isBattleStatusActive((u8*)target + 8, 0xFE)) f26 = 0.0f;
     if (f25 < 0.0f) f25 = 0.0f;
     if (f26 < 0.0f) f26 = 0.0f;
 
@@ -9644,11 +9644,11 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
     if (bm->mFlags74 & 0x80) {
         target = actor;                               // 0x7034
     } else {
-        target = func_8016FE34(findObjectById((s32)bm->mSubId));  // 0x703C-0x7048
+        target = MapFx_ResolveOwner(findObjectById((s32)bm->mSubId));  // 0x703C-0x7048
     }
 
     if (((cf::CActorParam*)(target))->CActorParam_isBattleLocked() != 0) return;   // 0x704C-0x7064
-    if (func_80148778((u8*)target + 8, 0xF8)) return;                             // 0x7068-0x7078
+    if (isBattleStatusActive((u8*)target + 8, 0xF8)) return;                             // 0x7068-0x7078
 
     emitBattleEvents(self, actor, target, move);         // 0x707C-0x708C
 
@@ -9674,7 +9674,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
     }
 
     // ---- status 0x106 branch: rate + knockback + voice ---------------------
-    if (func_80148778((u8*)target + 8, 0x106)) {      // 0x7164-0x7174
+    if (isBattleStatusActive((u8*)target + 8, 0x106)) {      // 0x7164-0x7174
         findBattleStatusEntry((u8*)target + 8, 0x106);        // 0x7178-0x7180
         if (!(bm->mFlags78 & 0x800)) {              // 0x7184-0x718C
             if (sub == nullptr) return;               // 0x7190-0x7198 (reload)
@@ -9698,7 +9698,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
 
             if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable() != nullptr) {  // 0x7274-0x728C
                 u32 v;
-                if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(),
+                if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(),
                                   0x5B, &v)) {        // 0x7290-0x72B0
                     rate *= 1.0f + (f32)(u32)v / lbl_eu_80666E00;   // 0x72B8-0x72E0 (100.0f)
                 }
@@ -9733,7 +9733,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
     }
 
     // ---- gates before the status loop (0x753C-0x75AC) ----------------------
-    if (func_80148778((u8*)target + 8, 0x10)) {       // 0x753C-0x754C
+    if (isBattleStatusActive((u8*)target + 8, 0x10)) {       // 0x753C-0x754C
         if (!(*(u32*)((u8*)target + 0x3374) & 0x40000)) goto postLoop;   // 0x7550-0x7558
         {
             void* sub4 = *(void**)((u8*)target + 0x04);
@@ -9741,7 +9741,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
             if (testActorStatus(target, &v, 0x17) == 0) goto postLoop;        // 0x7574-0x758C
         }
     }
-    if (func_80148778((u8*)target + 8, 0x117)) goto postLoop;   // 0x7590-0x759C
+    if (isBattleStatusActive((u8*)target + 8, 0x117)) goto postLoop;   // 0x7590-0x759C
     if (bm->mFlags74 & 0x80) goto postLoop;                   // 0x75A0-0x75AC
 
     // ---- main status loop: CBattleState entries 0x40..0x67 ----------------
@@ -9795,26 +9795,26 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
                 if (findBattleStatusEntry((u8*)target + 8, 0x6F) != nullptr ||
                     findBattleStatusEntry((u8*)target + 8, 0x79) != nullptr) {                    // 0x78A0-0x78C4
                     u32 v;
-                    if (func_80260264((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(),
+                    if (IdTable_GetSum((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable(),
                                       0x5B, &v)) {   // 0x78C8-0x78E8
                         val = (s32)((f32)(s32)val * (1.0f + (f32)(u32)v / lbl_eu_80666E00)); // 0x78F0-0x7928
                     }
                 }
             }
-            if (func_80148778((u8*)actor + 8, 0x8D)) {                                     // 0x792C-0x793C
+            if (isBattleStatusActive((u8*)actor + 8, 0x8D)) {                                     // 0x792C-0x793C
                 BtlStatusEntry* e = (BtlStatusEntry*)findBattleStatusEntry((u8*)actor + 8, 0x8D);
                 rate -= lbl_eu_80666DD8 * (f32)(s32)e->unk10;   // 0.001f (0x7940-0x7960)
             }
             if ((void*)((cf::CActorParam*)(actor))->CActorParam_getStatusTable() != nullptr) {      // 0x7964-0x797C
                 u32 v;
-                if (func_80260264((void*)((cf::CActorParam*)(actor))->CActorParam_getStatusTable(),
+                if (IdTable_GetSum((void*)((cf::CActorParam*)(actor))->CActorParam_getStatusTable(),
                                   0x57, &v)) {       // 0x7980-0x79A0
                     rate -= lbl_eu_80666DD8 * (f32)(s32)v;       // 0x79A8-0x79BC
                 }
             }
             val = (s32)((f32)(s32)val * rate);        // 0x79C0-0x79DC
             if (val < 1) val = 0;                     // 0x79E0-0x79E8
-            if (func_80148778((u8*)actor + 8, 0x01)) val = 0;    // 0x79EC-0x7A00
+            if (isBattleStatusActive((u8*)actor + 8, 0x01)) val = 0;    // 0x79EC-0x7A00
 
             // sign decision (0x7A04-0x7C40)
             int r0;
@@ -9855,7 +9855,7 @@ nextStatus:
 postLoop:
     // ---- post-loop: target switch + per-sub event dispatch (0x7FE0-0x8FEC) --
     if (!(bm->mFlags74 & 0x8)) {                    // 0x7FE0-0x7FE8
-        if (func_80148778((u8*)target + 8, 0xF7)) {   // 0x7FEC-0x7FFC
+        if (isBattleStatusActive((u8*)target + 8, 0xF7)) {   // 0x7FEC-0x7FFC
             if ((u32)((cf::CfObjectActor*)(target))->CfObjectActor_sharesMoveFlags(actor) == 0) {  // 0x8000-0x801C
                 findBattleStatusEntry((u8*)target + 8, 0xF7); // 0x8020-0x8028
                 u32 f78 = bm->mFlags78;             // 0x802C
@@ -9898,13 +9898,13 @@ postLoop:
                     if (bm->mFlags74 & 0x2000000) hit = 1;
                     break;
                 case 5:   // 0x8170
-                    if (func_80148778((u8*)actor + 8, 0xC1)) hit = 1;
+                    if (isBattleStatusActive((u8*)actor + 8, 0xC1)) hit = 1;
                     break;
                 case 6:   // 0x818C
-                    if (func_80148778((u8*)target + 8, 0x10)) hit = 1;
+                    if (isBattleStatusActive((u8*)target + 8, 0x10)) hit = 1;
                     break;
                 case 7:   // 0x81A8
-                    if (func_80148778((u8*)target + 8, 0x0F)) hit = 1;
+                    if (isBattleStatusActive((u8*)target + 8, 0x0F)) hit = 1;
                     break;
                 case 8:   // 0x81C4
                     if ((void*)(uintptr_t)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId()
@@ -10031,7 +10031,7 @@ postLoop:
                             void* list = CTaskGame_enumListGet(&holder);
                             u32 count = *(u32*)((u8*)list + 0x620);
                             if (i >= count) break;
-                            void* elem = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                            void* elem = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                             if (elem != target)
                                 func_800EC918(self, actor, elem, &ev, move);
                         }
@@ -10193,13 +10193,13 @@ postLoop:
                             md2->mFacing478 = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * lbl_eu_80666E10;
                         }
                         if (chapterInRange(self)) {
-                            f32 v = func_801540C0(sub);
+                            f32 v = getArtsScaledSpeed(sub);
                             if (v >= lbl_eu_80666DD4) v = lbl_eu_80666DD4;   // min(v,1.0f) (0x8ED4)
                             md2->mSpeed470 = lbl_eu_80666DDC;
                             md2->mSpeed474 = v;
                         } else {
-                            md2->mSpeed470 = func_8015408C(sub);
-                            md2->mSpeed474 = func_801540C0(sub);
+                            md2->mSpeed470 = getArtsClampedRate(sub);
+                            md2->mSpeed474 = getArtsScaledSpeed(sub);
                         }
                     }
                     if (getArtsGaugeRate(sub) != lbl_eu_80666DDC) {   // 0x8EF4-0x8F38
@@ -10313,8 +10313,8 @@ struct E484_Global6C {      // getEffectTask result: f32 at +0x6C
 // ---- imports (retail-unmangled names) --------------------------------------
 extern "C" void CCharVoiceMan_FlagBattleActiveVoice();
 extern "C" void SysWinLog_PollBattleStart();
-extern "C" void func_80295BF4(void*);
-extern "C" void func_80295CC8(void*, void*);
+extern "C" void dispatchScenarioHelp(void*);
+extern "C" void updateBattleHelpState(void*, void*);
 extern "C" s32 startPcEffect(void*, s32, void*, s32);
 extern "C" void CfObjectMove_relaySubB0Slot54(void*, int, int, u32, f32, f32);
 extern "C" void Scn_SetTimeScale(void*);
@@ -10346,7 +10346,7 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
     void* stat = (void*)findFreeBattleSlot((void*)move);
     if (((E85F0_Move*)move)->flags78 & 0x800) {              // 0x800E9130
         if (((cf::CActorParam*)(actor))->CActorParam_getStatsSlot() == 0) {                           // 0x800E9138 chain-arts pass
-            stat = (void*)func_80148778((u8*)actor + 8, 0x10A);
+            stat = (void*)isBattleStatusActive((u8*)actor + 8, 0x10A);
             // Retail parks the chain type in the move pointer's register --
             // mirrored here by reusing the parameter slot.
             move = (void*)(uintptr_t)startPcEffect((target != nullptr) ? (u8*)target + 0x3E9C : target, -1, stat, 0);
@@ -10374,7 +10374,7 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
                 break;
             }
 
-            if (func_80148778((u8*)actor + 8, 0x12E)) {      // 0x800E92C8
+            if (isBattleStatusActive((u8*)actor + 8, 0x12E)) {      // 0x800E92C8
                 stat = findBattleStatusEntry((u8*)actor + 8, 0x12E); // entry ptr shares the scratch home
                 E85F0_Entry12E* e = (E85F0_Entry12E*)stat;
                 if (e->field_10 != type) ((cf::CActorParam*)(actor))->CActorParam_addArtsGauge(k5_0f);
@@ -10399,7 +10399,7 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
         }
         // 0x800E9538: second pass -- the move flags are re-read here
         if (((cf::CActorParam*)(actor))->CActorParam_getStatsSlot() == 1) {                           // 0x800E9544
-            stat = (void*)func_80148778((u8*)actor + 8, 0x10A);
+            stat = (void*)isBattleStatusActive((u8*)actor + 8, 0x10A);
             if (sub != nullptr) {                            // r30 == move->unk50
                 if ((u32)(((E2594_Sub*)sub)->type3C - 5) <= 1) {   // types 5,6
                     updateBattleAction((cf::CBattleManager*)self, (cf::CfObjectActor*)actor,
@@ -10436,7 +10436,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     void* obj = actor;                                       // r27
 
     void* sub = ((E2A9C_BattleMoveData*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord())->field_50;         // r31
-    void* action = func_8016FE34(
+    void* action = MapFx_ResolveOwner(
         (void*)(intptr_t)findObjectById((s32)((BtlMove*)((cf::CActorParam*)(obj))->CActorParam_getMoveRecord())->mSubId)); // r30
 
     *outDamage = lbl_eu_80666DDC;                            // 0x800E96C4
@@ -10451,7 +10451,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     // Clear the selection flag on the action, the 3 party members, and obj.
     ((cf::CActorParam*)(action))->CActorParam_resetArtsStatus((void*)(0));                                       // 0x800E9708
     for (s32 i = 0; i < 3; i++) {                            // 0x800E9724
-        void* p = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
+        void* p = MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
         if (p != nullptr && p != action) ((cf::CActorParam*)(p))->CActorParam_resetArtsStatus((void*)(0));
     }
     ((cf::CActorParam*)(obj))->CActorParam_resetArtsStatus((void*)(0));                                          // 0x800E9760
@@ -10548,7 +10548,7 @@ extern "C" void spreadChainArtsHits(void* self, void* target, void* attacker, vo
 
     if (attacker == nullptr) {                               // 0x800EA720
         s32 subId = (s32)(uintptr_t)((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_getLinkedActorId();
-        attacker = func_8016FE34(findObjectById(subId));
+        attacker = MapFx_ResolveOwner(findObjectById(subId));
     }
 
     if (attacker != nullptr &&
@@ -10576,7 +10576,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
             if (cnt <= 1) {
                 CCharVoiceMan_FlagBattleActiveVoice();
                 SysWinLog_PollBattleStart();
-                func_80295BF4((void*)lbl_eu_80664A10);
+                dispatchScenarioHelp((void*)lbl_eu_80664A10);
                 goto e9B54_tail;
             }
         }
@@ -10595,7 +10595,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
             const s32 cSel13 = 0x13;
 
             for (u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++) {
-                void* obj = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                void* obj = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
                 void* r29 = obj;
                 if (obj == attacker) {                       // 0x800EA8A0
                     if (((cf::CActorParam*)obj)->CActorParam_getStatusTable() &&       // called twice (retail)
@@ -10609,7 +10609,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
                         ev.field_20 = out0c;
                         ev.field_0C = (u16)cEvType2;
                         for (u32 j = 0; j < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; j++) {
-                            void* sub = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), j));
+                            void* sub = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), j));
                             ev.field_00 = (u32)(uintptr_t)((BattleObjAccessor*)sub)->field_3f10;
                             ev.field_04 = (u32)cArt35;
                             ev.field_08 = (u32)cVal1000;
@@ -10647,7 +10647,7 @@ CtrlObjectParam_RunPartyArtsFlow(arts, (s32)(uintptr_t)((cf::CActorParam*)target
     } else {
         // 0x800EAA88: target is a player -- rescue via the help manager
         if (((BattleObjAccessor*)target)->field_3f00 & 0x2) {
-            func_80295CC8((void*)lbl_eu_80664A10, target);
+            updateBattleHelpState((void*)lbl_eu_80664A10, target);
         }
     }
 
@@ -10708,7 +10708,7 @@ extern "C" void dispatchBattleMove(void* self, void* actor, void* target, void* 
         }
         if (!canCounter) {
             // 0x800E3394: 0x91 counter status event
-            if (func_80148778((u8*)r28 + 8, 0x91)) {
+            if (isBattleStatusActive((u8*)r28 + 8, 0x91)) {
                 BtlStatusEntry* entry = (BtlStatusEntry*)findBattleStatusEntry((u8*)r28 + 8, 0x91);
                 BattleEventData ev;
                 std::memset(&ev, 0, sizeof(ev));
@@ -10728,7 +10728,7 @@ extern "C" void dispatchBattleMove(void* self, void* actor, void* target, void* 
     }
 
     if (local.field_78 & 0xC00) {                            // 0x800E342C
-        if (func_80148778((u8*)r28 + 8, 0xC1)) {
+        if (isBattleStatusActive((u8*)r28 + 8, 0xC1)) {
             if ((((E2594_Sub*)sub)->flags78 & 0x2000) &&
                 ((u32)((E2594_Sub*)sub)->b44 != ((cf::CActorParam*)(r28))->CActorParam_getStatsSlot() + 1) &&
                 (local.field_74 & 1) && !(local.field_74 & 0x2) &&
@@ -10744,7 +10744,7 @@ extern "C" void dispatchBattleMove(void* self, void* actor, void* target, void* 
     }
 
     if (local.field_78 & 0x800) {                            // 0x800E34C8
-        if (func_80148778((u8*)r29 + 8, 0xCE)) {
+        if (isBattleStatusActive((u8*)r29 + 8, 0xCE)) {
             if (r28 != r29) {                                // 0x800E34E8
                 bool keep = true;
                 if (((E2594_Sub*)sub)->flags78 & 0x2000) {
@@ -10793,7 +10793,7 @@ extern "C" void broadcastBattleDamage(void* self, void* arg1, s32 arg2, s32 arg3
 
     f64 magic = lbl_eu_80666DE0;
 
-    if (func_80148778((u8*)target + 8, 0x101)) {
+    if (isBattleStatusActive((u8*)target + 8, 0x101)) {
         if (arg2 != 0) arg2 = 1;
         if (arg3 != 0) arg3 = 1;
         if (arg4 != 0) arg4 = 1;
@@ -10921,11 +10921,11 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
                 void* r26 = __dynamic_cast(o2, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 if (((E484_TypeObj*)r26)->field_9C == r28)
                     ((cf::CfObject*)r26)->CfObject_pushRefreshValue((float)value);
-                void* a = func_8016FE34(findObjectById((s32)(uintptr_t)r28));
+                void* a = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)r28));
                 if (a != nullptr) {
                     void* b = ((E484_VisionActor*)a)->field_45B8;
                     if (b != nullptr) {
-                        void* c = func_8016FE34(findObjectById((s32)(uintptr_t)b));
+                        void* c = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b));
                         if (c != nullptr) c = (u8*)c + 0x3E9C;
                         if (((E484_TypeObj*)r26)->field_9C == c)
                             ((cf::CfObject*)r26)->CfObject_pushRefreshValue((float)value);
@@ -10987,8 +10987,8 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
         }
         if (vision != nullptr) {
             E484_VisionPair* vp = (E484_VisionPair*)vision;
-            void* r26 = func_8016FE34(findObjectById((s32)vp->field_00));
-            void* r27 = func_8016FE34(findObjectById((s32)vp->field_04));
+            void* r26 = MapFx_ResolveOwner(findObjectById((s32)vp->field_00));
+            void* r27 = MapFx_ResolveOwner(findObjectById((s32)vp->field_04));
 ((cf::CfObjectActor*)r26)->CfObjectActor_pushRefreshValue((float)value);
 ((cf::CfObjectActor*)r27)->CfObjectActor_pushRefreshValue((float)value);
             startEnumObjects(CTaskGame_enumListGet(&h2), 0x80000, 0);
@@ -11002,7 +11002,7 @@ extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int fla
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;
                     if (b != nullptr) {
-                        void* c = func_8016FE34(findObjectById((s32)(uintptr_t)b));
+                        void* c = MapFx_ResolveOwner(findObjectById((s32)(uintptr_t)b));
                         if (c != nullptr) c = (u8*)c + 0x3E9C;
                         if (((E484_TypeObj*)r29)->field_9C == c)
                             ((cf::CfObject*)r29)->CfObject_pushRefreshValue((float)value);
@@ -11202,7 +11202,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     }
 
     // ---- Skill 39 block (cmd 17 / same-actor exception). ----
-    if (func_80148778((u8*)actorB + 8, 39) != nullptr) {
+    if (isBattleStatusActive((u8*)actorB + 8, 39) != nullptr) {
         if (actorB != actorA || evt->cmd != 17) {
             if (isBattleEventKind1(evt->cmd)) {
                 void* e = findBattleStatusEntry((u8*)actorB + 8, 39);
@@ -11215,7 +11215,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     }
 
     // ---- Skill 206 block (physical-attack + stat bit 11 gate). ----
-    if (func_80148778((u8*)actorB + 8, 206) != nullptr) {
+    if (isBattleStatusActive((u8*)actorB + 8, 206) != nullptr) {
         if (stat != nullptr && (stat->field_78 & 0x800)) {
             if (isBattleStatusKind1(evt->cmd)) {
                 void* e = findTopBattleStatusEntry((u8*)actorB + 8, 206);
@@ -11245,7 +11245,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     if ((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable() != nullptr) {
         if (isBattleStatusKind1(evt->cmd)) {
             u32 val;
-            if (func_80260264((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable(), 124, &val)) {
+            if (IdTable_GetSum((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable(), 124, &val)) {
                 u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
                 if (roll < val) goto fail_10;
             }
@@ -11259,7 +11259,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 4: skill 21 roll. ----
     case 4:
-        if (func_80148778((u8*)actorB + 8, 21) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 21) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 21);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11272,7 +11272,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 6: skill 23 roll. ----
     case 6:
-        if (func_80148778((u8*)actorB + 8, 23) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 23) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 23);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11281,7 +11281,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 7: skill 24 roll. ----
     case 7:
-        if (func_80148778((u8*)actorB + 8, 24) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 24) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 24);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11290,7 +11290,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 9: skill 26 roll. ----
     case 9:
-        if (func_80148778((u8*)actorB + 8, 26) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 26) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 26);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11306,7 +11306,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 11: skill 28 roll. ----
     case 11:
-        if (func_80148778((u8*)actorB + 8, 28) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 28) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 28);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11315,7 +11315,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 12: skill 29 roll. ----
     case 12:
-        if (func_80148778((u8*)actorB + 8, 29) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 29) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 29);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11345,13 +11345,13 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 if (!(evt->field_10 & 4)) {
                     u32 r = 0;                                   // r29
                     if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getStateFlags() & 8) r = 1;
-                    if (func_80148778((u8*)actorB + 8, 59) != nullptr) r = 1;
-                    if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
+                    if (isBattleStatusActive((u8*)actorB + 8, 59) != nullptr) r = 1;
+                    if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) r = 1;
                     if (r) goto fail_10;
                 }
                 if (!(evt->field_10 & 5)) {
                     u32 r = 0;                                   // r29 (re-reset per retail)
-                    if (func_80148778((u8*)actorB + 8, 32) != nullptr) {
+                    if (isBattleStatusActive((u8*)actorB + 8, 32) != nullptr) {
                         void* e = findBattleStatusEntry((u8*)actorB + 8, 32);
                         u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
                         if (roll < *(u32*)((u8*)e + 0x10)) r = 1;
@@ -11360,18 +11360,18 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                         if (*(u32*)((u8*)tgt + 0x74) & 0x4000) r = 1;
                     }
                     if (!(evt->field_10 & 6)) {
-                        if (func_80148778((u8*)actorB + 8, 16) == nullptr) {
+                        if (isBattleStatusActive((u8*)actorB + 8, 16) == nullptr) {
                             if (((BattleActor*)actorB)->flags_3F00 & 4) r = 1;
                         }
                         if (r) goto fail_10;
                     }
                 }
                 // Skill 154/155 power scaling of evt->+0x20.
-                if (func_80148778((u8*)actorA + 8, 154) != nullptr) {
+                if (isBattleStatusActive((u8*)actorA + 8, 154) != nullptr) {
                     s32 v = *(s32*)((u8*)findBattleStatusEntry((u8*)actorA + 8, 154) + 0x10);
                     f32 ratio = (f32)((f64)(s32)v / (f64)lbl_eu_80666E00);
                     evt->field_20 = evt->field_20 * (lbl_eu_80666DD4 + ratio);
-                } else if (func_80148778((u8*)actorA + 8, 155) != nullptr) {
+                } else if (isBattleStatusActive((u8*)actorA + 8, 155) != nullptr) {
                     s32 v = *(s32*)((u8*)findBattleStatusEntry((u8*)actorA + 8, 155) + 0x10);
                     f32 ratio = (f32)((f64)(s32)v / (f64)lbl_eu_80666E00);
                     evt->field_20 = evt->field_20 / (lbl_eu_80666DD4 + ratio);
@@ -11380,17 +11380,17 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         } else {
             int val3 = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
             if (testActorStatus(actorB, &val3, 0x802) != 0) return 0;
-            if (func_80148778((u8*)actorB + 8, 50) != nullptr) return 0;
+            if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) return 0;
             if (!(evt->field_30 & 0x80)) {
                 if (!(evt->field_10 & 4)) {
                     u32 r = 0;
                     if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getStateFlags() & 8) r = 1;
-                    if (func_80148778((u8*)actorB + 8, 59) != nullptr) r = 1;
-                    if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
+                    if (isBattleStatusActive((u8*)actorB + 8, 59) != nullptr) r = 1;
+                    if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) r = 1;
                     if (r) goto fail_10;
                 }
                 if (!(evt->field_10 & 5)) {
-                    if (func_80148778((u8*)actorB + 8, 32) != nullptr) {
+                    if (isBattleStatusActive((u8*)actorB + 8, 32) != nullptr) {
                         void* e = findBattleStatusEntry((u8*)actorB + 8, 32);
                         u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
                         if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11398,7 +11398,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 }
                 if (!(evt->field_10 & 6)) {
                     u32 r = 0;
-                    if (func_80148778((u8*)actorB + 8, 16) == nullptr) {
+                    if (isBattleStatusActive((u8*)actorB + 8, 16) == nullptr) {
                         if (((BattleActor*)actorB)->flags_3F00 & 4) r = 1;
                     }
                     if (r) goto fail_10;
@@ -11431,13 +11431,13 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;                                   // r29
                 if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getActorModeFlags() & 8) r = 1;
-                if (func_80148778((u8*)actorB + 8, 58) != nullptr) r = 1;
-                if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
+                if (isBattleStatusActive((u8*)actorB + 8, 58) != nullptr) r = 1;
+                if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) r = 1;
                 if (r) goto fail_1000;
             }
             if (!(evt->field_10 & 5)) {
                 u32 r = 0;                                   // r29 (re-reset per retail)
-                if (func_80148778((u8*)actorB + 8, 33) != nullptr) {
+                if (isBattleStatusActive((u8*)actorB + 8, 33) != nullptr) {
                     void* e = findBattleStatusEntry((u8*)actorB + 8, 33);
                     u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
                     if (roll < *(u32*)((u8*)e + 0x10)) r = 1;
@@ -11446,8 +11446,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                     if (*(u32*)((u8*)tgt + 0x74) & 0x4000) r = 1;
                 }
                 if (!(evt->field_10 & 6)) {
-                    if (func_80148778((u8*)actorB + 8, 18) == nullptr &&
-                        func_80148778((u8*)actorB + 8, 16) == nullptr) {
+                    if (isBattleStatusActive((u8*)actorB + 8, 18) == nullptr &&
+                        isBattleStatusActive((u8*)actorB + 8, 16) == nullptr) {
                         if (((BattleActor*)actorB)->flags_3F00 & 4) r = 1;
                     }
                     if (r) goto fail_10;
@@ -11459,12 +11459,12 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;
                 if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getActorModeFlags() & 8) r = 1;
-                if (func_80148778((u8*)actorB + 8, 58) != nullptr) r = 1;
-                if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
+                if (isBattleStatusActive((u8*)actorB + 8, 58) != nullptr) r = 1;
+                if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) r = 1;
                 if (r) goto fail_1000;
             }
             if (!(evt->field_10 & 5)) {
-                if (func_80148778((u8*)actorB + 8, 33) != nullptr) {
+                if (isBattleStatusActive((u8*)actorB + 8, 33) != nullptr) {
                     void* e = findBattleStatusEntry((u8*)actorB + 8, 33);
                     u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
                     if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11472,8 +11472,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
             }
             if (!(evt->field_10 & 6)) {
                 u32 r = 0;
-                if (func_80148778((u8*)actorB + 8, 18) == nullptr &&
-                    func_80148778((u8*)actorB + 8, 16) == nullptr) {
+                if (isBattleStatusActive((u8*)actorB + 8, 18) == nullptr &&
+                    isBattleStatusActive((u8*)actorB + 8, 16) == nullptr) {
                     if (((BattleActor*)actorB)->flags_3F00 & 4) r = 1;
                 }
                 if (r) goto fail_10;
@@ -11486,7 +11486,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 17: skill 34 roll (same-actor exception). ----
     case 17:
-        if (func_80148778((u8*)actorB + 8, 34) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 34) != nullptr) {
             if (actorB != actorA) {
                 void* e = findBattleStatusEntry((u8*)actorB + 8, 34);
                 u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
@@ -11498,7 +11498,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
     // ---- cmd 18: no-op (retail -> default). ----
     case 18:
         break;
-        if (func_80148778((u8*)actorB + 8, 34) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 34) != nullptr) {
             if (actorB != actorA) {
                 void* e = findBattleStatusEntry((u8*)actorB + 8, 34);
                 u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
@@ -11509,7 +11509,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 19: skill 36 roll. ----
     case 19:
-        if (func_80148778((u8*)actorB + 8, 36) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 36) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 36);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11522,7 +11522,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if ((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable() != nullptr) {
             if (Counter_TestBit((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable(), 0x66)) goto fail_10;
         }
-        if (func_80148778((u8*)actorB + 8, 0x26) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 0x26) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 0x26);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11534,8 +11534,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 if (stat->field_5C < v) stat->field_5C = v;
             }
             stat->field_74 |= 0x90000000;
-            func_80148778((u8*)actorB + 8, 252);
-            func_80148778((u8*)actorB + 8, 256);
+            isBattleStatusActive((u8*)actorB + 8, 252);
+            isBattleStatusActive((u8*)actorB + 8, 256);
         }
         break;
 
@@ -11553,7 +11553,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if ((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable() != nullptr) {
             if (Counter_TestBit((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable(), 0x66)) goto fail_10;
         }
-        if (func_80148778((u8*)actorB + 8, 0x26) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 0x26) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 0x26);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11565,8 +11565,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 if (stat->field_5C < v) stat->field_5C = v;
             }
             stat->field_74 |= 0x90000000;
-            func_80148778((u8*)actorB + 8, 252);
-            func_80148778((u8*)actorB + 8, 256);
+            isBattleStatusActive((u8*)actorB + 8, 252);
+            isBattleStatusActive((u8*)actorB + 8, 256);
         }
         break;
 
@@ -11580,34 +11580,34 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 102: retail 0x800ECAF8: skills 134, 136. ----
     case 102:
-        if (func_80148778((u8*)actorB + 8, 134) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 134) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 134) + 0x10) >= 100) goto fail_10;
         }
-        if (func_80148778((u8*)actorB + 8, 136) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 136) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 136) + 0x10) >= 100) goto fail_10;
         }
         break;
 
     // ---- cmd 103: retail 0x800ECB28: skill 136. ----
     case 103:
-        if (func_80148778((u8*)actorB + 8, 136) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 136) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 136) + 0x10) >= 100) goto fail_10;
         }
         break;
 
     // ---- cmd 104: retail 0x800ECB58: skills 138, 140. ----
     case 104:
-        if (func_80148778((u8*)actorB + 8, 138) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 138) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 138) + 0x10) >= 100) goto fail_10;
         }
-        if (func_80148778((u8*)actorB + 8, 140) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 140) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 140) + 0x10) >= 100) goto fail_10;
         }
         break;
 
     // ---- cmd 105: retail 0x800ECB88: skill 140 + status 0x7B/0x66. ----
     case 105:
-        if (func_80148778((u8*)actorB + 8, 140) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 140) != nullptr) {
             if (*(s32*)((u8*)findBattleStatusEntry((u8*)actorB + 8, 140) + 0x10) >= 100) goto fail_10;
         }
         if ((void*)((cf::CActorParam*)(actorB))->CActorParam_getStatusTable() != nullptr) {
@@ -11671,7 +11671,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
 
     // ---- cmd 220: skill 38 roll + stat/vision updates. ----
     case 220:
-        if (func_80148778((u8*)actorB + 8, 38) != nullptr) {
+        if (isBattleStatusActive((u8*)actorB + 8, 38) != nullptr) {
             void* e = findBattleStatusEntry((u8*)actorB + 8, 38);
             u32 roll = stat != nullptr ? stat->field_B4 : (u32)mtRand__Q22ml4mathFi(100);
             if (roll < *(u32*)((u8*)e + 0x10)) goto fail_10;
@@ -11696,8 +11696,8 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         }
         if (stat != nullptr) {
             stat->field_74 |= 0x90000000;
-            func_80148778((u8*)actorB + 8, 252);
-            func_80148778((u8*)actorB + 8, 256);
+            isBattleStatusActive((u8*)actorB + 8, 252);
+            isBattleStatusActive((u8*)actorB + 8, 256);
         }
         break;
 
@@ -11744,7 +11744,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
         if (brk == 0) {
             int val = *(s32*)((cf::CObjectState*)((cf::CActorState*)(actorB))->unk4)->CObjectState_getStateData();
             if (testActorStatus(actorB, &val, 0x802) != 0) brk = 1;
-            else if (func_80148778((u8*)actorB + 8, 50) != nullptr) brk = 1;
+            else if (isBattleStatusActive((u8*)actorB + 8, 50) != nullptr) brk = 1;
             else {
                 // power table by enemy type (retail f29 loads).
                 f32 power = lbl_eu_80666DDC;                     // 0.0f
@@ -12049,7 +12049,7 @@ void CBattleMan_BumpUnk94Key(cf::CBattleManager* mgr, s32 key) {
 // Searches for an actor with field_0x15F0 matching arg1.
 // Pass 1 scans mActorList3 directly; pass 2 counts mActorList3 (empty list
 // falls through); pass 3 scans mActorList1, resolving each actor's move
-// sub-object probe through findObjectById/func_8016FE34.
+// sub-object probe through findObjectById/MapFx_ResolveOwner.
 // Returns 1 if found, 0 otherwise.
 s32 CBattleMan_FindActorByKind(cf::CBattleManager* mgr, s32 arg1) {
     // Pass 1: search mActorList3 for a direct type-id match.
@@ -12081,7 +12081,7 @@ s32 CBattleMan_FindActorByKind(cf::CBattleManager* mgr, s32 arg1) {
             s32 vresult = (s32)(uintptr_t)((cf::CBattleState*)((u8*)actor + 0x3E9C))->CBattleState_getLinkedActorId();
             if (vresult != 0) {
                 BattleScanStateView* found =
-                    (BattleScanStateView*)func_8016FE34(findObjectById(vresult));
+                    (BattleScanStateView*)MapFx_ResolveOwner(findObjectById(vresult));
                 if (found != nullptr && (found->field_3F00 & 4) &&
                     (s32)found->field_15F0 == arg1) {
                     return 1;
@@ -12132,7 +12132,7 @@ void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr) {
     goto check;
 loop:
     {
-        element = func_8016FE34(getObjectAt(CTaskGame_enumListGet(&holder), i));
+        element = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
         // Retail uses canonical r12 virtual dispatch (slots 0xB0/0xB8/0x314).
         ((cf::CActorParam*)element)->CActorParam_setupActorState();
         ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
@@ -12221,7 +12221,7 @@ void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
                 void* player = getPlayer__Q22cf13CfGameManagerFi(i);
                 if (player != nullptr) {
                     if (*(u16*)((u8*)player + 0x8c) == 6) {
-                        void* action = func_8016FE34(player);
+                        void* action = MapFx_ResolveOwner(player);
                         CCharVoiceMan_EnqueueItemVoice(action);
                         goto cleanup;
                     }

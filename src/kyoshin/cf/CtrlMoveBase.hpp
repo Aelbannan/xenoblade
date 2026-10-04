@@ -62,18 +62,18 @@ namespace cf {
 // ---------------------------------------------------------------------------
 
 extern "C" void* allocFreeNode__17UnkClass_8047CD0CFv();
-extern "C" int func_8047D2AC__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
+extern "C" int runWalkerTick__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, const void* f);
 extern "C" int walkPathCheck__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
                                                      f32 d, f32 e, int f);
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
-extern "C" void func_804BE4B4(void* out, int a);
-extern "C" void func_804BE4E0(void* out, int a);
+extern "C" void ScnRes_CopyEntryHead(void* out, int a);
+extern "C" void ScnRes_CopyEntryMid(void* out, int a);
 
 extern "C" void* lbl_eu_80527808[];
-extern "C" int func_8047DC8C__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
+extern "C" int findWalkRoute__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, f32 f, int g);
-extern "C" int func_8047DE3C__17UnkClass_8047D2ACFv(void* a, void* b,
+extern "C" int solveWalkPair__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);
 extern "C" int dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);

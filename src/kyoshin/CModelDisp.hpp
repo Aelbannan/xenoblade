@@ -62,13 +62,13 @@ extern const f32 lbl_eu_806681F8; // .sdata2 float -> field_2FDC increment
 // (runtime imports and act-param view types come from
 // kyoshin/menu/parts/CModelDispEquip.hpp, pulled in via harness_catalog.hpp)
 
-// Filter-word tables copied to the stack by func_801FCBF4 (.rodata).
+// Filter-word tables copied to the stack by ModelDispScanRebind (.rodata).
 extern u32 lbl_eu_80507CDC[];
 extern u32 lbl_eu_80507CD0[];
 // Name-string buffer holding several NUL-terminated strings back to back
-// (elements addressed at +0/+4/+8/+0xC by func_801FC3B0).
+// (elements addressed at +0/+4/+8/+0xC by ModelDispUpdateSlots).
 extern char lbl_eu_80507CF4[];
-// .sdata2 floats used by func_801FC3B0's per-slot color selection.
+// .sdata2 floats used by ModelDispUpdateSlots's per-slot color selection.
 extern const f32 lbl_eu_806681FC;
 extern const f32 lbl_eu_80668200;
 extern const f32 lbl_eu_80668204;
@@ -78,7 +78,7 @@ extern const f32 lbl_eu_80668210;
 
 // Overlay view of CActParamHolder words the shared view does not expose:
 // the owner back-pointers at +0x10/+0x40 and the act-param flag word at
-// +0x18 (bit 23 cleared, bits 0x160 set by func_801FC3B0).
+// +0x18 (bit 23 cleared, bits 0x160 set by ModelDispUpdateSlots).
 struct CDispHolderWordView {
     u8 _00[0x10];
     void* owner10; // +0x10 back-pointer to the owning CModelDisp
@@ -93,9 +93,9 @@ struct CDispHolderWordView {
 // now use the owning class directly.)
 
 // --- C-linkage runtime helper and sub-object ctor/dtor (retail names) ---
-// The sub-object ctor/dtor are retail-named symbols (func_801FBEB8 /
+// The sub-object ctor/dtor are retail-named symbols (ModelDispConstructSub /
 // __dt__801FBF0C), not C++ member symbols; C linkage keeps the __construct_array
 // data relocs byte-identical to retail (same pattern as code_801C2C14.cpp).
 // (__construct_array itself is declared in CModelDispEquip.hpp.)
-extern "C" void* func_801FBEB8(CModelDispSub* sub);
+extern "C" void* ModelDispConstructSub(CModelDispSub* sub);
 extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);

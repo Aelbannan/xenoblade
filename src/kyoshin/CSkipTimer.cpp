@@ -16,9 +16,9 @@ extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(v
 extern const float lbl_eu_80668C30;
 // (AnimRewindFrame stays as declared in code_80135FDC.hpp - read-only header)
 // CfT_PlayClockSnapshot is declared extern "C" in code_80135FDC.hpp.
-// CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone / func_802A041C / CSkipTimerBindAnim24 /
+// CSkipTimer2OnFwdDone / CSkipTimer2OnRewindDone / CSkipTimer_UpdateSlotFrame / CSkipTimerBindAnim24 /
 // CSkipTimerBindAnim20 / CSkipTimer2Start are declared extern "C" in CSkipTimer.hpp.
-// Retail keeps CSkipTimerStampSlotText out-of-line (func_802A041C emits a real `bl`);
+// Retail keeps CSkipTimerStampSlotText out-of-line (CSkipTimer_UpdateSlotFrame emits a real `bl`);
 // __declspec(noinline) stops -inline auto from inlining the body into it.
 extern "C" __declspec(noinline) void CSkipTimerStampSlotText(CSkipTimer* self, int arg1, int arg2);
 
@@ -149,7 +149,7 @@ __declspec(noinline) void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
 }
 #pragma pop
 
-// func_8029F73C: check forward-anim reached end -> ready state (retail body).
+// CSkipTimer2OnAdvanceEnd: check forward-anim reached end -> ready state (retail body).
 // CSkipTimer2OnRewindDone likewise lives in retail (mirror pane alpha);
 // all three are extern here so CSkipTimer2DriveState calls them with a `bl`, matching
 // the retail dispatch (defined-in-TU copies would be inlined).
@@ -199,12 +199,12 @@ void CSkipTimer2OnRewindDone(CSkipTimer2* self) {
 }
 #pragma pop
 
-// func_802A041C: advance the skip-timer animation to the frame computed from
+// CSkipTimer_UpdateSlotFrame: advance the skip-timer animation to the frame computed from
 // the slot key (mField2C*60 + mField2E), wrapped to the anim frame count, then
 // stamp the slot text and run the sub-controller.
 #pragma push
 #pragma auto_inline off
-void func_802A041C(CSkipTimer* self) {
+void CSkipTimer_UpdateSlotFrame(CSkipTimer* self) {
     // Slot key -> animation frame: (mField2C*60 + mField2E) frames at 30fps,
     // wrapped modulo the anim length. The signed (float)(s32) casts select
     // MWCC's xoris/0x4330-double conversion idiom like retail.
@@ -327,7 +327,7 @@ extern "C" void CSkipTimer2DriveState(CSkipTimer2* self) {
     case 1: CSkipTimer2OnFwdDone(self); break;
     case 3: CSkipTimer2OnRewindDone(self); break;
     case 4: func_8029F6EC(self); break;
-    case 5: func_8029F73C(self); break;
+    case 5: CSkipTimer2OnAdvanceEnd(self); break;
     }
     reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->Animate(0);
 }
@@ -423,13 +423,13 @@ __declspec(noinline) void CSkipTimer2RebindAnim(CSkipTimer2* self) {
     reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->Animate(0);
 }
 
-// func_8029FBE0: kick off the System.arc load for the skip-timer widget.
+// CSkipTimer_BeginLoad: kick off the System.arc load for the skip-timer widget.
 // Reads the arc through the MEM2 allocator (self receives the file event),
 // then builds a temporary CSysWin and copy-initializes the embedded panel
 // blob at +0x34 from it (copy-ctor semantics: member-wise, vtable NOT
 // copied), destroys the temp, and fires the panel's load-complete virtual
 // (vtable offset 0x88). Finally clears the ready flag at +0x2A.
-void func_8029FBE0(CSkipTimer* self) {
+void CSkipTimer_BeginLoad(CSkipTimer* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), &lbl_eu_80510568[0x99],
         reinterpret_cast<IWorkEvent*>(self), 0, 0);
@@ -587,7 +587,7 @@ void CSkipTimerNextKey(CSkipTimer* self) {
     s16 t = self->mField2C + 1;
     self->mField2C = t;
     if (t > 0x17) self->mField2C = 0;
-    func_802A041C(self);
+    CSkipTimer_UpdateSlotFrame(self);
     playUISound__FUl(0x22);
 }
 
@@ -598,7 +598,7 @@ void CSkipTimerPrevKey(CSkipTimer* self) {
     s16 t = self->mField2C - 1;
     self->mField2C = t;
     if (t < 0) self->mField2C = 0x17;
-    func_802A041C(self);
+    CSkipTimer_UpdateSlotFrame(self);
     playUISound__FUl(0x22);
 }
 
@@ -642,8 +642,8 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         self->mField29 = 6;
         self->mField2B = 0;
         char* msg = BdatTouchStringCell(&lbl_eu_80510568[0xaf], &lbl_eu_80510568[0xb8], 0x3a);
-        func_8022B9B4(&self->mSysWinData[0], msg, 0);
-        func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
+        sysWinSetKindContent(&self->mSysWinData[0], msg, 0);
+        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
         sysWinOpenPhase1(&self->mSysWinData[0]);
         playUISound__FUl(3);
     }
@@ -752,14 +752,14 @@ __declspec(noinline) void CSkipTimerActivateTimer(CSkipTimer* self) {
     self->mField2E = 0;
     CfT_PlayClockSnapshot(reinterpret_cast<u16*>(&self->mField2C), &self->mField2E);
     self->mField2E = 0;
-    func_802A041C(self);
+    CSkipTimer_UpdateSlotFrame(self);
     CSkipTimerBindAnim20(self);
     self->mField2A = 1;
     self->mField28 = 1;
 }
 #pragma pop
 
-// func_802A041C (CSkipTimer): sibling helper, not a harness target.
+// CSkipTimer_UpdateSlotFrame (CSkipTimer): sibling helper, not a harness target.
 // Declared extern "C" at top (resolved to retail at link); not defined here.
 
 // OnFileEvent: rebuild the whole skip-timer widget from the freshly-exchanged

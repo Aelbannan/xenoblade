@@ -17,7 +17,7 @@ extern const f32 lbl_eu_8066AB74;
 // .sdata, retail linker name).
 extern const char* lbl_eu_80663A18;
 
-// Panic strings referenced by func_8049BA58's nw4r DB asserts (retail names;
+// Panic strings referenced by EffectActNw4rRegisterNodes's nw4r DB asserts (retail names;
 // global-scope names are not mangled by MWCC).
 extern const char lbl_eu_8056E194[]; // file (node-name assert, line 0x2c)
 extern const char lbl_eu_8056E178[]; // fmt

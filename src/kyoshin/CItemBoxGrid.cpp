@@ -39,14 +39,14 @@
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
 #define ScalePaneWorldPos ScalePaneWorldPos_csys_dup
 #define code80135FDC_setVec3 code80135FDC_setVec3_csys_dup
-#define func_8022BFC8 func_8022BFC8_csys_dup
+#define sysWinApplyKind sysWinApplyKind_csys_dup
 #define sysWinSwitchKindPane sysWinSwitchKindPane_csys_dup
 #include "kyoshin/CSysWin.hpp"
 #undef __dt__17UnkClass_8045F564Fv
 #undef __ct__17UnkClass_8045F564Fv
 #undef ScalePaneWorldPos
 #undef code80135FDC_setVec3
-#undef func_8022BFC8
+#undef sysWinApplyKind
 #undef sysWinSwitchKindPane
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/ut/ut_TagProcessorBase.h>
@@ -62,10 +62,10 @@ void* __dt__10CQuestItemFv(void* self, int mode);
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Forward declarations for functions defined later in this file
-u32 func_801C7958(void* self, void* item);
+u32 GetItemBasePrice(void* self, void* item);
 u32 HasEquippedSlot(void* self, void* item);
 extern "C" u32 FindKindPoolIdx(void* self, void* entry);
-s32 func_801C7C7C(void* self, u32 id, void* item);
+s32 GetShopItemValue(void* self, u32 id, void* item);
 extern "C" u32 FormatCellName(void* self, u32 idx);
 extern "C" long RoundHalfAway0(double f);
 extern "C" u8 GetCellFlag0(CItemBoxGridFull* self, u16 idx);
@@ -75,10 +75,10 @@ extern "C" u8 GetCellByte7(CItemBoxGridFull* self, u16 idx);
 extern "C" u8 GetCellByte8(CItemBoxGridFull* self, u16 idx);
 extern "C" __declspec(noinline) u8 GetCategoryCap(CItemBoxGridFull* self);
 extern "C" __declspec(noinline) u8 CountMarkedCells(CItemBoxGridFull* self);
-extern "C" u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);  // retail symbols are unmangled
+extern "C" u32 GetCellSellPrice(CItemBoxGridFull* self, u16 idx);  // retail symbols are unmangled
 extern "C" s32 CheckCellState(CItemBoxGridFull* self, u16 idx);
-u32 func_801C618C(void* self, u32 id, void* item, int r6);
-void func_801C6EC0(CItemBoxGridFull* self, u16 idx);
+u32 GetScaledItemValue(void* self, u32 id, void* item, int r6);
+void ResortGridEntries(CItemBoxGridFull* self, u16 idx);
 int LookupIndexedByte(char* obj);
 extern "C" {
 void NextGridPage(void*);
@@ -92,7 +92,7 @@ void CheckState4_Animate(char*);
 void AdvanceCloseAnim(void*);
 void FinishNumSelect(void*);
 void ShowSubMenuCur(void*);
-void func_801CE524(void*);
+void DispatchSubmenuConfirm(void*);
 void ShowExchangeCur(void*);
 void FinishExchange(void*);
 void ShowPresentCur(void*);
@@ -104,7 +104,7 @@ void SetGridReady(void*);
 void SetInfoMsgId(void*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
-void func_801CBA04(void*);
+void GridMoveCursorRight(void*);
 void getEntry__5CBdatFUl(u32);
 void closeFileHandle__FPP11CFileHandle(void**);
 void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
@@ -116,8 +116,8 @@ extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx);
 extern "C" void ShowCellCount(void* self, u32 r4, void* r5, void* r6, u32 r7);
 extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx);
 extern "C" u32 CalcGridRowCount(void* self);
-char* func_801C6A44(void* self, u16 idx);
-// .sdata2 conversion magics referenced by func_801C9F88 (retail pool
+char* FormatCellItemName(void* self, u16 idx);
+// .sdata2 conversion magics referenced by GetItemValueFloat (retail pool
 // constants; F48 = signed-int magic 0x4330000080000000, F40 = plain 2^52).
 extern const double lbl_eu_80667F40;
 extern const double lbl_eu_80667F48;
@@ -192,7 +192,7 @@ void FinishOpenAnim(void*);
 void AdvanceCloseAnim(void*);
 void FinishNumSelect(void*);
 void ShowSubMenuCur(void*);
-void func_801CE524(void*);
+void DispatchSubmenuConfirm(void*);
 void ShowExchangeCur(void*);
 void FinishExchange(void*);
 void ShowPresentCur(void*);
@@ -202,7 +202,7 @@ void HandleSysWinOK(void*);
 void FinishSysWin(void*);
 void SetGridReady(void*);
 void SetInfoMsgId(void*, u32);
-void func_801D0E88(void*, int, int);
+void UnequipPartyItem(void*, int, int);
 
 
 // Externs for LoadItemBoxFiles and UnloadItemBox
@@ -298,7 +298,7 @@ exit:
 
 // C linkage: retail exports this helper under its plain address-name symbol.
 // C linkage: retail exports this helper under its plain address-name symbol.
-extern "C" void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, int r6, int r7) {
+extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int r5, int r6, int r7) {
     u8* p = (u8*)self;
     u32 i;
     *(u16*)(p + 0x2800) = 0;
@@ -323,9 +323,9 @@ extern "C" void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, int r6, in
         if (!item) continue;
         if (!*(u32*)item) continue;
         if (r6) {
-            u32 v1 = func_801C618C((CItemBoxGridFull*)self, r6, 0, (int)r7);
+            u32 v1 = GetScaledItemValue((CItemBoxGridFull*)self, r6, 0, (int)r7);
             u32 kind = (*(u32*)item) >> 20;
-            u32 v2 = func_801C618C((CItemBoxGridFull*)self, kind, item, (int)r7);
+            u32 v2 = GetScaledItemValue((CItemBoxGridFull*)self, kind, item, (int)r7);
             if (v1 > v2) continue;
         }
         u16 count = *(u16*)(p + 0x2800);
@@ -499,11 +499,11 @@ check_next:;
             j++;
         }
     }
-    func_801C6EC0((CItemBoxGridFull*)self, 0);
+    ResortGridEntries((CItemBoxGridFull*)self, 0);
 }
 
 // Search for a matching short id in an array, return 1 if found.
-// noinline: retail func_801C5158 keeps a `bl HasSlotIdMatch` call; u32 id
+// noinline: retail PushUniqueItemId keeps a `bl HasSlotIdMatch` call; u32 id
 // (retail compares the full register, no call-site mask).
 extern "C" __declspec(noinline) int HasSlotIdMatch(void* obj, u32 id) {
     u16 count = *(u16*)((u8*)obj + 0x804);
@@ -568,9 +568,9 @@ extern "C" s16 GetCellItemId(CItemBoxGridFull* self, u16 idx) {
 
 // Item sell price for the cell at page*0x1e+idx: 0 when the cell is out of
 // range or the referenced item object is invalid. Otherwise the item's base
-// price (func_801C7958) scaled by kind type (0xB unchanged, 0xD half, else
+// price (GetItemBasePrice) scaled by kind type (0xB unchanged, 0xD half, else
 // tenth), then multiplied by 100 + the party's skill-0x93 bonus and rounded.
-extern "C" __declspec(noinline) u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
+extern "C" __declspec(noinline) u32 GetCellSellPrice(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u32 offset = (u16)(base * 0x1e + idx);
     if (offset >= (u32)self->field_2800) return 0;
@@ -582,7 +582,7 @@ extern "C" __declspec(noinline) u32 func_801C5FC0(CItemBoxGridFull* self, u16 id
     LookupItemTypeTable(kind);
     u32 type = BdatGetItemType(kind);
     BdatGetItemId(kind);
-    u32 price = func_801C7958(self, obj);
+    u32 price = GetItemBasePrice(self, obj);
 
     if ((u32)(u16)type == 0xB) {
         // kind 0xB sells at the base price unchanged
@@ -612,11 +612,11 @@ extern "C" __declspec(noinline) long RoundHalfAway0(double f) {
     return (long)(f + (f > lbl_eu_80667F34 ? lbl_eu_80667F60 : lbl_eu_80667F68));
 }
 
-// Item value: base price from func_801C7C7C, then scaled by the party's
+// Item value: base price from GetShopItemValue, then scaled by the party's
 // equipment-skill bonus when a concrete item (not a bare kind) is passed.
 // The category is a conditional dereference: retail keeps `obj = item ?
 // item : 0` and re-tests item for the load, so both branches stay separate.
-u32 func_801C618C(void* self, u32 id, void* item, int r6) {
+u32 GetScaledItemValue(void* self, u32 id, void* item, int r6) {
     void* obj = item ? item : 0;
     u32 cat;
     if (item) {
@@ -627,7 +627,7 @@ u32 func_801C618C(void* self, u32 id, void* item, int r6) {
     LookupItemTypeTable(cat & 0xFFFF);
     BdatGetItemType(cat & 0xFFFF);
     BdatGetItemId(cat & 0xFFFF);
-    u32 result = func_801C7C7C(self, cat & 0xFFFF, item);
+    u32 result = GetShopItemValue(self, cat & 0xFFFF, item);
 
     if (item) {
         u32 base = 0x64;
@@ -924,7 +924,7 @@ fail:
 // per-language slot text (a 7-word table from lbl_eu_805055F0 is copied to
 // the stack and indexed by the item's vtable+0x08 byte).
 #pragma optimize_for_size on
-char* func_801C6A44(CItemBoxGridFull* self, u16 idx) {
+char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
     // Stack slots follow retail: word table @0x08, tag buffers @0x28/0x48/0x68.
     u32 wordTbl[7];
     char buf28[32];
@@ -1071,7 +1071,7 @@ extern "C" __declspec(noinline) int IsSkillItem(void* obj) {
 }
 
 // Forward declarations for sort helpers defined later in this file.
-void func_801C7EF0(CItemBoxGridFull* self, u32 mode);
+void SortGridEntries(CItemBoxGridFull* self, u32 mode);
 extern "C" void SortByItemU16(CItemBoxGridFull* self);
 extern "C" void SortByPriceDesc(CItemBoxGridFull* self);
 extern "C" void SortByKindNameD(CItemBoxGridFull* self);
@@ -1082,23 +1082,23 @@ extern "C" void SortByFlag6Asc(CItemBoxGridFull* self);
 extern "C" void SortByItemVf08(CItemBoxGridFull* self);
 void GroupBySlotStat(CItemBoxGridFull* self, u32 target);
 void GroupBySlotAlt(CItemBoxGridFull* self, u32 target);
-void func_801C8DE4(CItemBoxGridFull* self);
+void SortGridByValue(CItemBoxGridFull* self);
 extern "C" void SortByItemVf30(CItemBoxGridFull* self);
 extern "C" void SortByEquipAsc(CItemBoxGridFull* self);
 extern "C" void SortByEquipDesc(CItemBoxGridFull* self);
-void func_801C9270(CItemBoxGridFull* self);
-void func_801C9390(CItemBoxGridFull* self);
-void func_801C94E0(CItemBoxGridFull* self);
+void SortGridBySlotStatus(CItemBoxGridFull* self);
+void SortGridByKindName(CItemBoxGridFull* self);
+void SortGridByKindNameAlt(CItemBoxGridFull* self);
 extern "C" void SortByCapKeyAsc(CItemBoxGridFull* self);
 extern "C" void SortByCapKey2Asc(CItemBoxGridFull* self);
 void GroupByCapKey(CItemBoxGridFull* self, u32 target);
 extern "C" void SortByCapKeyDesc(CItemBoxGridFull* self);
 extern "C" void SortByItemVf90(CItemBoxGridFull* self);
-void func_801C9CCC(CItemBoxGridFull* self);
+void SortGridByMsgKeyDesc(CItemBoxGridFull* self);
 void GroupByKindName(CItemBoxGridFull* self, u32 target);
 
 // Re-sort the grid after its contents changed: dispatch on the current
-// category (sorting first with func_801C7EF0 and masking the per-category
+// category (sorting first with SortGridEntries and masking the per-category
 // CItemBlock_getFlag120EC result into an 8-bit value v), then apply the category's
 // inner sort sequence. Categories 8-13 do nothing (default). optimize_for_size
 // merges the r30/r31 saves into retail's stmw prologue. The empty cases
@@ -1107,13 +1107,13 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target);
 // table (`cmpli 7`); the return-form placeholder extends it to retail's
 // 14-entry `cmplwi 0xd` table. Remaining residuals: (a) MWCC colors the
 // outer switch operand r0 where retail keeps r4 (a named u8 local recolors
-// it but also reorders the func_801C7EF0/CItemBlock_getFlag120EC call scheduling --
+// it but also reorders the SortGridEntries/CItemBlock_getFlag120EC call scheduling --
 // worse); (b) ~40-byte block-order divergence starting at the case-2 jump
 // table (decomp places case-1 subcase-8/9 body where retail puts the
 // jumptable_eu_80534598 setup).
 #pragma optimize_for_size on
-void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
-    func_801C7EF0(self, self->field_2802);
+void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
+    SortGridEntries(self, self->field_2802);
     u8 v = (u8)CItemBlock_getFlag120EC(self->field_2802);
     switch (self->field_2802) {
     case 0:
@@ -1122,34 +1122,34 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
         case 1:
             SortByEquipAsc(self);
             SortByItemVf30(self);
-            func_801C8DE4(self);
-            func_801C9270(self);
+            SortGridByValue(self);
+            SortGridBySlotStatus(self);
             break;
         case 2:
             SortByEquipAsc(self);
             SortByItemVf30(self);
-            func_801C8DE4(self);
-            func_801C9390(self);
-            func_801C9270(self);
+            SortGridByValue(self);
+            SortGridByKindName(self);
+            SortGridBySlotStatus(self);
             break;
         case 3:
             SortByEquipAsc(self);
             SortByItemVf30(self);
-            func_801C8DE4(self);
-            func_801C94E0(self);
-            func_801C9270(self);
+            SortGridByValue(self);
+            SortGridByKindNameAlt(self);
+            SortGridBySlotStatus(self);
             break;
         case 4:
-            func_801C8DE4(self);
+            SortGridByValue(self);
             SortByItemVf30(self);
             SortByEquipDesc(self);
-            func_801C9270(self);
+            SortGridBySlotStatus(self);
             break;
         case 5:
-            func_801C8DE4(self);
+            SortGridByValue(self);
             SortByItemVf30(self);
             SortByEquipAsc(self);
-            func_801C9270(self);
+            SortGridBySlotStatus(self);
             break;
         case 6:
             SortByPriceDesc(self);
@@ -1240,11 +1240,11 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             break;
         case 1:
             SortByItemVf90(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             SortByItemVf08(self);
             break;
         case 2:
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             SortByItemVf90(self);
             SortByItemVf08(self);
             GroupBySlotAlt(self, 2);
@@ -1252,7 +1252,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 1);
             break;
         case 3:
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             SortByItemVf90(self);
             SortByItemVf08(self);
             GroupBySlotAlt(self, 1);
@@ -1260,7 +1260,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             break;
         case 4:
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             SortByItemVf90(self);
             SortByItemVf08(self);
             GroupBySlotAlt(self, 2);
@@ -1273,7 +1273,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 1);
             break;
         case 6:
@@ -1282,7 +1282,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 2);
             break;
         case 7:
@@ -1291,7 +1291,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 3);
             break;
         case 8:
@@ -1300,7 +1300,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 4);
             break;
         case 9:
@@ -1309,7 +1309,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 5);
             break;
         case 10:
@@ -1318,7 +1318,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 0);
             SortByItemVf90(self);
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 6);
             break;
         case 11:
@@ -1337,7 +1337,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             break;
         case 2:
             SortByItemVf08(self);
-            func_801C7EF0(self, self->field_2802);
+            SortGridEntries(self, self->field_2802);
             break;
         case 3:
             SortByItemU16(self);
@@ -1390,14 +1390,14 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
             GroupByKindName(self, 3);
             GroupByKindName(self, 2);
             GroupByKindName(self, 1);
-            func_801C9CCC(self);
+            SortGridByMsgKeyDesc(self);
             SortByFlag6Desc(self);
             break;
         case 2:
             GroupByKindName(self, 3);
             GroupByKindName(self, 2);
             GroupByKindName(self, 1);
-            func_801C9CCC(self);
+            SortGridByMsgKeyDesc(self);
             SortByFlag6Asc(self);
             break;
         case 3:
@@ -1423,7 +1423,7 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
 // passes swap every still-empty (-1 id) cell toward the front. Afterwards,
 // when the entry count changed, recompute the row count (entries per row /
 // rounded up) and reset the page index.
-void func_801C7730(CItemBoxGridFull* self) {
+void CompactGridEntries(CItemBoxGridFull* self) {
     u8* p = (u8*)self;
     u16 count = self->field_2800;
     u16 i;
@@ -1495,7 +1495,7 @@ __declspec(noinline) char* CopyEntry9Bytes(char* dst, const char* src) {
 //   0x67F38; the common tail applies an extra x10.
 // - types 2..8: price row scaled by 0x67F78 + 0x67F7C per slot count.
 // - anything else: plain price row lookup.
-__declspec(noinline) u32 func_801C7958(void* self, void* item) {
+__declspec(noinline) u32 GetItemBasePrice(void* self, void* item) {
     u32 word = *(u32*)item;
     u32 kind = word >> 20;
     u32 type = (word >> 16) & 0xF;
@@ -1539,13 +1539,13 @@ __declspec(noinline) u32 func_801C7958(void* self, void* item) {
 }
 
 // Item value used for shop buy/sell comparisons. Kind/type split mirrors
-// func_801C7958: type 3 prices off the +0x54 slot row scaled by the
+// GetItemBasePrice: type 3 prices off the +0x54 slot row scaled by the
 // lbl_eu_8050560C row indexed by the +0x08 slot (or, for bare kinds, the
 // name-table lookups); type 9 values at 0; types 2-8 price off the row
 // scaled by 0x67F78 + 0x67F7C per slot; everything else is the plain row.
 // Result is always x10.
 #pragma optimize_for_size on
-__declspec(noinline) s32 func_801C7C7C(void* self, u32 id, void* item) {
+__declspec(noinline) s32 GetShopItemValue(void* self, u32 id, void* item) {
     void* obj;
     u32 type;
     u32 kind;
@@ -1593,7 +1593,7 @@ __declspec(noinline) s32 func_801C7C7C(void* self, u32 id, void* item) {
 
 // Bubble-sort grid entries ascending under the selected comparison mode.
 // A pass that performs no swap ends the sort early (i only advances on swap).
-void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
+void SortGridEntries(CItemBoxGridFull* self, u32 mode) {
     u32 i;
     for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
@@ -1690,7 +1690,7 @@ extern "C" void SortByItemU16(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble-sort grid entries by item price (func_801C7958). The value calls
+// Bubble-sort grid entries by item price (GetItemBasePrice). The value calls
 // evaluate item j+1 before item j (locals force the call order), matching
 // retail's sequence; the 3-slot temp shuffle is the same shape as
 // SortByItemU16. Swap when the first item's price is strictly lower.
@@ -1705,8 +1705,8 @@ extern "C" void SortByPriceDesc(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = CItem_kindPtr(self->field_2802, *(s16*)e1);
             void* obj2 = CItem_kindPtr(self->field_2802, *(s16*)e2);
-            u32 v2 = func_801C7958(self, obj2);
-            u32 v1 = func_801C7958(self, obj1);
+            u32 v2 = GetItemBasePrice(self, obj2);
+            u32 v1 = GetItemBasePrice(self, obj1);
             if (v1 >= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1963,11 +1963,11 @@ void GroupBySlotAlt(CItemBoxGridFull* self, u32 target) {
     }
 }
 
-// Bubble sort grid entries ascending by item value (func_801C9F88), with
+// Bubble sort grid entries ascending by item value (GetItemValueFloat), with
 // early exit when a pass makes no swaps. The 3-slot temp shuffle at a
 // 12-byte stride reproduces retail's sp+8/sp+0x14/sp+0x20 copy sequence;
 // v1 must survive the second value call, so it lives in saved f31.
-void func_801C8DE4(CItemBoxGridFull* self) {
+void SortGridByValue(CItemBoxGridFull* self) {
     u16 i;
     for (i = 0; i < self->field_2800 - 1; i++) {
         int swapped = 0;
@@ -1977,8 +1977,8 @@ void func_801C8DE4(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = CItem_kindPtr(self->field_2802, *(s16*)e1);
             void* obj2 = CItem_kindPtr(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
+            float v1 = GetItemValueFloat(self, obj1);
+            float v2 = GetItemValueFloat(self, obj2);
             if (v1 >= v2) continue;
             char tmp[36];
             CopyEntry9Bytes(tmp, (const char*)e1);
@@ -2072,8 +2072,8 @@ extern "C" void SortByEquipDesc(CItemBoxGridFull* self) {
 
 // Bubble sort grid entries by FindKindPoolIdx slot status, ascending (swap
 // when entry j's status is strictly higher). Same 3-slot temp shuffle as
-// func_801C8DE4; both value calls pass (self, item).
-void func_801C9270(CItemBoxGridFull* self) {
+// SortGridByValue; both value calls pass (self, item).
+void SortGridBySlotStatus(CItemBoxGridFull* self) {
     u16 i;
     for (i = 0; i < self->field_2800 - 1; i++) {
         u16 j;
@@ -2101,7 +2101,7 @@ void func_801C9270(CItemBoxGridFull* self) {
 // a short id, which is looked up in the owner table (lbl_eu_806640F4) with
 // the sort-key string; swap when item j's key byte is strictly lower. Same
 // 3-slot temp shuffle shape as SortByItemU16.
-void func_801C9390(CItemBoxGridFull* self) {
+void SortGridByKindName(CItemBoxGridFull* self) {
     u16 i;
     for (i = 0; i < self->field_2800 - 1; i++) {
         int swapped = 0;
@@ -2132,8 +2132,8 @@ void func_801C9390(CItemBoxGridFull* self) {
 
 // Bubble-sort grid entries ascending by the byte value of each item's kind
 // name lookup, using the alternate owner table key string (offset 0x22f).
-// Same per-item kind->lookup interleave and temp shuffle as func_801C9390.
-void func_801C94E0(CItemBoxGridFull* self) {
+// Same per-item kind->lookup interleave and temp shuffle as SortGridByKindName.
+void SortGridByKindNameAlt(CItemBoxGridFull* self) {
     u16 i;
     for (i = 0; i < self->field_2800 - 1; i++) {
         int swapped = 0;
@@ -2328,7 +2328,7 @@ extern "C" void SortByItemVf90(CItemBoxGridFull* self) {
 // swapped when entry j's key byte exceeds entry j+1's. Lookup is inlined
 // (same chain as the 100% sibling GroupByKindName) so the SDA load of
 // lbl_eu_80664110 and the 39358/361E8 calls stay in this function.
-void func_801C9CCC(CItemBoxGridFull* self) {
+void SortGridByMsgKeyDesc(CItemBoxGridFull* self) {
     u32 i;
     for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
@@ -2337,7 +2337,7 @@ void func_801C9CCC(CItemBoxGridFull* self) {
         for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
             // tbl declared first, assigned after the 57C4C calls so the SDA
             // load stays at retail +0x70 (early assign moved it and added
-            // structural). Residual: e1↔tbl r23/r24.
+// structural). Residual: e1<->tbl r23/r24.
             u32 tbl;
             u8* e1 = (u8*)self + (u16)j * 10;
             u8* e2 = (u8*)self + ((u16)j + 1) * 10;
@@ -2401,7 +2401,7 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target) {
 // prologue, which only size-opt emits on this unit.
 #pragma push
 #pragma optimize_for_size on
-float func_801C9F88(void* self, void* entry) {
+float GetItemValueFloat(void* self, void* entry) {
     u32 word = *(u32*)entry;
     u32 tbl = (u32)(size_t)lbl_eu_806640F4;
     u32 kind = BdatGetItemId(word >> 20);
@@ -2563,12 +2563,12 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
         __dt__12CExchangeWinFv(tmpEx, -1);
     }
 
-    // sys-win temps copied via func_8016742C
+    // sys-win temps copied via InfoCfCopySysWin
     __ct__CSysWin(tmpWin1, 2);
-    func_8016742C(p + 0x4ac, tmpWin1);
+    InfoCfCopySysWin(p + 0x4ac, tmpWin1);
     __dt__7CSysWinFv(tmpWin1, -1);
     __ct__CSysWin(tmpWin2, 0);
-    func_8016742C(p + 0x4e8, tmpWin2);
+    InfoCfCopySysWin(p + 0x4e8, tmpWin2);
     __dt__7CSysWinFv(tmpWin2, -1);
 
     lbl_eu_80664508 = 0;
@@ -2592,9 +2592,9 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
     }
     *(CibgWords16*)(p + 0x2d71) = *(CibgWords16*)(tmpGrid + 0x825);
     *(CibgByteBlock200*)(p + 0x2df1) = *(CibgByteBlock200*)(tmpGrid + 0x8a5);
-    func_8018B130(p + 0x31f4, tmpGrid + 0xca8);
-    func_8018B130(p + 0x39fc, tmpGrid + 0x34b0);
-    func_8018B130(p + 0x4204, tmpGrid + 0x3cb8);
+    MenuShopSellCopyData(p + 0x31f4, tmpGrid + 0xca8);
+    MenuShopSellCopyData(p + 0x39fc, tmpGrid + 0x34b0);
+    MenuShopSellCopyData(p + 0x4204, tmpGrid + 0x3cb8);
     __dt__801C5670(tmpGrid, -1);
 
     CItemBlock_setFlag120EC(2, 0);
@@ -2733,7 +2733,7 @@ extern "C" void UpdateItemBox(void* self, int r4) {
             ShowSubMenuCur(self);
             break;
         case 11:
-            func_801CE524(self);
+            DispatchSubmenuConfirm(self);
             break;
         case 12:
             if (NumSel_GetField2E_B028(p + 0x3e4)) {
@@ -2778,15 +2778,15 @@ extern "C" void UpdateItemBox(void* self, int r4) {
     nw4r::lyt::Layout* layout = *(nw4r::lyt::Layout**)(p + 0x44);
     layout->Animate(0);
 
-    func_801D202C(p + 0x70);
-    func_801D202C(p + 0x88);
-    func_801D202C(p + 0xa0);
-    func_801D202C(p + 0xb8);
-    func_801D202C(p + 0xd0);
+    Cur_Update(p + 0x70);
+    Cur_Update(p + 0x88);
+    Cur_Update(p + 0xa0);
+    Cur_Update(p + 0xb8);
+    Cur_Update(p + 0xd0);
     sortMenuDispatchState(p + 0xe8);
     updateItemBoxAnims(p + 0x1d8);
     NumSel_DispatchState_AED4(p + 0x3e4);
-    func_80208260(p + 0x418);
+    GridSubMenu_Move(p + 0x418);
     ExWin_TickUpdate(p + 0x440);
     updatePresentWin(p + 0x468);
     sysWinDispatchPhase(p + 0x4ac);
@@ -2811,7 +2811,7 @@ extern "C" void DrawItemBoxGrid(void* self, int r4) {
         Cur_DrawLayout(p + 0x88, (void*)r4);
     }
 
-    func_801D31F8(p + 0xe8, (void*)r4);
+    sortMenuDraw(p + 0xe8, (void*)r4);
     GridSubMenu_DrawLayoutGated(p + 0x418, r4);
     ExWin_DrawLayout(p + 0x440, r4);
     sysWinDrawLayout(p + 0x4ac, (void*)r4);
@@ -2882,7 +2882,7 @@ extern "C" void UnloadItemBox(void* self, int r4) {
     sortMenuTermCleanup(p + 0xe8);
     closeItemBox1(p + 0x1d8);
     NumSel_Teardown_AF9C(p + 0x3e4);
-    func_802082F0(p + 0x418);
+    GridSubMenu_TermLayout(p + 0x418);
     ExWin_Teardown(p + 0x440);
     termPresentWin(p + 0x468);
     sysWinTermLayout(p + 0x4ac);
@@ -2893,7 +2893,7 @@ extern "C" void UnloadItemBox(void* self, int r4) {
 // Check if item grid is fully ready.
 extern "C" u32 IsItemBoxReady(void* self) {
     u8* p = (u8*)self;
-    if (!func_801D32DC(p + 0xe8)) return 0;
+    if (!sortMenuIsScrollbarVisible(p + 0xe8)) return 0;
     if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
     if (!NumSel_GetField2D_B018(p + 0x3e4)) return 0;
     if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
@@ -2936,13 +2936,13 @@ extern "C" u32 IsSubWinActive(void* self) {
 
 // Initialize item display state. `item` (GetCellItemPtr result) is declared
 // first so MWCC colors it to r31 (first-declared -> highest saved reg).
-void func_801CB28C(void* self) {
+void InitItemDisplay(void* self) {
     u32 item;   // GetCellItemPtr result
     u8* p = (u8*)self;
     if (*(u32*)(p + 0x58)) return;
     *(u32*)(p + 0x58) = 1;
     p[0x61] = 0;
-    func_801CFD2C(self);
+    RefreshCategoryTabs(self);
     func_801D0BD8(self);
     startItemBoxOpen(p + 0x1D8);
     hideItemBoxPanes(p + 0x1D8, (p + (s8)p[0x6F])[0x62]);
@@ -3007,7 +3007,7 @@ extern "C" __declspec(noinline) void IncListIndex(void* self) {
     if ((s8)idx >= p[0x6e]) {
         p[0x6f] = 0;
     }
-    func_801D05D4(self, 0);
+    MoveTabPage(self, 0);
     RebuildGridCat(self);
     playUISound__FUl(0x70);
 }
@@ -3022,7 +3022,7 @@ extern "C" __declspec(noinline) void DecListIndex(void* self) {
     if ((s8)idx < 0) {
         p[0x6f] = p[0x6e] - 1;
     }
-    func_801D05D4(self, 1);
+    MoveTabPage(self, 1);
     RebuildGridCat(self);
     playUISound__FUl(0x70);
 }
@@ -3032,7 +3032,7 @@ extern "C" __declspec(noinline) void DecListIndex(void* self) {
 // cast class so MWCC emits lwz r12,0x10(r12); mtctr; bctrl.
 #pragma push
 #pragma optimize_for_size on
-void func_801CB5F0(void* self) {
+void GridMoveCursorLeft(void* self) {
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) {
@@ -3049,7 +3049,7 @@ void func_801CB5F0(void* self) {
         if (GridSubMenu_IsOpenedFlag(p + 0x418)) {
             GridSubMenu_MoveSelectionPrev(p + 0x418);
             u8 temp[12];
-            func_80208760(temp, p + 0x418);
+            GridSubMenu_GetCursorPos(temp, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
             playUISound__FUl(1);
         }
@@ -3092,7 +3092,7 @@ void func_801CB5F0(void* self) {
                 }
                 NumSel_ShowPaneA_B218(p + 0x3e4);
                 NumSel_SetCaptionNum_B04C((void*)(p + 0x3e4), (u32)p[0x529]);
-                u32 cost = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+                u32 cost = GetCellSellPrice((CItemBoxGridFull*)sub, entry);
                 u32 total = (s8)p[0x529] * cost;
                 NumSel_FormatPicName_B064((void*)(p + 0x3e4), total);
                 goto sound_and_return;
@@ -3119,7 +3119,7 @@ void func_801CB5F0(void* self) {
             *(s8*)&p[0x525] = -2;
         }
         UpdateCursors(self);
-        func_801D0328(self);
+        RefreshSelectedCellText(self);
         goto sound_and_return;
     }
     {
@@ -3128,11 +3128,11 @@ void func_801CB5F0(void* self) {
             p[0x525] = (u8)(LookupIndexedByte((char*)self) - 1);
         }
         UpdateCursors(self);
-        func_801D0328(self);
+        RefreshSelectedCellText(self);
     }
     } else {
         if (sortMenuGetFlag2B(p + 0xe8)) {
-            func_801D3620(p + 0xe8);
+            sortMenuScrollUp(p + 0xe8);
             u8 temp[12];
             sortMenuFormatPaneText(temp, p + 0xe8);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
@@ -3174,12 +3174,12 @@ __declspec(noinline) void CopyTabSlotVec(u32* dst, void* src, u32 idx) {
 // Right navigation. optimize_for_size: retail saves r29-r31 as one stmw
 // block (-0x50 frame); sub/entry stay live across calls so MWCC colors them
 // into the saved regs. Stack buffers mirror retail slots: 0x08/0x14/0x20 are
-// 12-byte payloads, 0x2c is a 24-byte buffer filled by func_80208760. The
+// 12-byte payloads, 0x2c is a 24-byte buffer filled by GridSubMenu_GetCursorPos. The
 // do/while(0) gives every sound path one shared tail (retail branches to a
 // single li r3,1/bl site) without goto-forced spills.
 #pragma push
 #pragma optimize_for_size on
-void func_801CBA04(void* self) {
+void GridMoveCursorRight(void* self) {
     u8* sub;
     u32 entry;
     u8* p = (u8*)self;
@@ -3199,7 +3199,7 @@ void func_801CBA04(void* self) {
         if (GridSubMenu_IsOpenedFlag(p + 0x418)) {
             GridSubMenu_MoveSelectionNext(p + 0x418);
             u32 buf2c[3];
-            func_80208760(buf2c, p + 0x418);
+            GridSubMenu_GetCursorPos(buf2c, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf2c));
             playUISound__FUl(1);
         }
@@ -3208,7 +3208,7 @@ void func_801CBA04(void* self) {
     if (isPresentActive(p + 0x468)) return;
     if (sortMenuIsVisible28(p + 0xe8)) {
         if (sortMenuGetFlag2B(p + 0xe8)) {
-            func_801D3698(p + 0xe8);
+            sortMenuScrollDown(p + 0xe8);
             u32 buf20[3];
             sortMenuFormatPaneText(buf20, p + 0xe8);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf20));
@@ -3250,7 +3250,7 @@ void func_801CBA04(void* self) {
                 NumSel_ShowPaneB_B314(p + 0x3e4);
                 NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
                 NumSel_FormatPicName_B064(p + 0x3e4,
-                              func_801C5FC0((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
+                              GetCellSellPrice((CItemBoxGridFull*)sub, (u16)entry) * (s8)p[0x529]);
                 goto sound_and_return2;
             } else if (p[0x527] == 2) {
                 if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
@@ -3275,7 +3275,7 @@ void func_801CBA04(void* self) {
                 if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -2;
             }
             UpdateCursors(self);
-            func_801D0328(self);
+            RefreshSelectedCellText(self);
             goto sound_and_return2;
         }
         {
@@ -3283,7 +3283,7 @@ void func_801CBA04(void* self) {
             u8 max = (u8)LookupIndexedByte((char*)(p + 0x54c));
             if ((s8)p[0x525] >= max) *(s8*)&p[0x525] = -1;
             UpdateCursors(self);
-            func_801D0328(self);
+            RefreshSelectedCellText(self);
         }
 sound_and_return2:
     playUISound__FUl(1);
@@ -3294,7 +3294,7 @@ sound_and_return2:
 // (-0x30 frame); sub (r29) and entry (r30) are declared at function scope so
 // their live ranges span the calls and MWCC colors them to the saved regs.
 #pragma optimize_for_size on
-void func_801CBDE8(void* self) {
+void GridMoveCursorDown(void* self) {
     // sub-array pointer and grid index stay live across calls -> MWCC colors
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
@@ -3329,7 +3329,7 @@ void func_801CBDE8(void* self) {
             if ((s8)(u8)cnt < 1) p[0x529] = 1;
         }
         NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
-        u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+        u32 v = GetCellSellPrice((CItemBoxGridFull*)sub, entry);
         s32 total = (s8)p[0x529] * v;
         NumSel_FormatPicName_B064(p + 0x3e4, total);
         playUISound__FUl(1);
@@ -3337,7 +3337,7 @@ void func_801CBDE8(void* self) {
     }
     if (sortMenuIsVisible28(p + 0xe8)) {
         if (!sortMenuGetFlag2B(p + 0xe8)) return;
-        func_801D3724(p + 0xe8);
+        sortMenuPageUpStep(p + 0xe8);
         sortMenuFormatPaneText(sbuf + 3, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf + 3));
         playUISound__FUl(1);
@@ -3375,15 +3375,15 @@ void func_801CBDE8(void* self) {
         p[0x524] = (u8)col;
         if ((s8)p[0x524] < 0) p[0x524] = 9;
         UpdateCursors(self);
-        func_801D0328(self);
+        RefreshSelectedCellText(self);
     }
     playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
-// Up navigation. Same shape as func_801CBDE8 (see notes there).
+// Up navigation. Same shape as GridMoveCursorDown (see notes there).
 #pragma optimize_for_size on
-void func_801CC0EC(void* self) {
+void GridMoveCursorUp(void* self) {
     // sub-array pointer and grid index stay live across calls -> MWCC colors
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u32 entry;
@@ -3417,7 +3417,7 @@ void func_801CC0EC(void* self) {
             if ((s8)(u8)cnt > chk) p[0x529] = (u8)chk;
         }
         NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
-        s32 total = (s8)p[0x529] * func_801C5FC0((CItemBoxGridFull*)sub, entry);
+        s32 total = (s8)p[0x529] * GetCellSellPrice((CItemBoxGridFull*)sub, entry);
         NumSel_FormatPicName_B064(p + 0x3e4, total);
         playUISound__FUl(1);
         return;
@@ -3461,7 +3461,7 @@ void func_801CC0EC(void* self) {
         p[0x524]++;
         if ((s8)p[0x524] >= 10) p[0x524] = 0;
         UpdateCursors(self);
-        func_801D0328(self);
+        RefreshSelectedCellText(self);
     }
     playUISound__FUl(1);
 }
@@ -3487,8 +3487,8 @@ __declspec(noinline) void NextGridPage(void* self) {
     // retail branches over the store when a < b (bc 12,0), so negate
     if (!((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub)))
         p[0x525] = (u8)(LookupIndexedByte((char*)sub) - 1);
-    func_801CFFEC(self);
-    func_801D0328(self);
+    RebuildGridUI(self);
+    RefreshSelectedCellText(self);
     u8 rows = sub[0x2803];
     u8 f = rows == 0 ? 1 : rows;
     if (f != 1) playUISound__FUl(0xa);
@@ -3511,8 +3511,8 @@ __declspec(noinline) void PrevGridPage(void* self) {
     // retail branches over the store when a < b (bc 12,0), so negate
     if (!((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub)))
         p[0x525] = (u8)(LookupIndexedByte((char*)sub) - 1);
-    func_801CFFEC(self);
-    func_801D0328(self);
+    RebuildGridUI(self);
+    RefreshSelectedCellText(self);
     u8 rows = sub[0x2803];
     u8 f = rows == 0 ? 1 : rows;
     if (f != 1) playUISound__FUl(0xa);
@@ -3552,7 +3552,7 @@ void OpenSortMenu(void* self) {
         ScalePaneWorldPos(&buf[3], ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x2f8, 1),
                       ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x301, 1), pane);
         sortMenuSetLayoutPos(p + 0xe8, &buf[3]);
-        func_801D353C(p + 0xe8, (u8)(p[0x547] + p[0x548]));
+        sortMenuSetPage(p + 0xe8, (u8)(p[0x547] + p[0x548]));
         sortMenuFormatPaneText(buf, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         Cur_SetVisible(p + 0xa0, 1);
@@ -3691,7 +3691,7 @@ void func_801CCAF0(void* self) {
     }
     if (GridSubMenu_IsVisibleFlag(p + 0x418)) {
         if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
-        if ((func_802087B8(p + 0x418) & 0xFF) == 1) {
+        if ((GridSubMenu_GetOptionCount(p + 0x418) & 0xFF) == 1) {
             sub = (CItemBoxGridFull*)(p + 0x54c);
             entry = (u8)(p[0x524] + p[0x525] * 10);
             item = GetCellItemPtr((CItemBoxGridFull*)sub, (u16)entry);
@@ -3834,8 +3834,8 @@ void func_801CCAF0(void* self) {
         if ((CountMarkedCells(sub) & 0xFF) >= cap) {
             if (((int (*)(CItemBoxGridFull*, u16))GetCellByte8)(sub, entry)) {
                 ToggleCellMark(sub, entry);
-                func_801CFFEC(p);
-                func_801D0328(p);
+                RebuildGridUI(p);
+                RefreshSelectedCellText(p);
                 func_801D0BD8(p);
                 playUISound__FUl(6);
                 return;
@@ -3844,8 +3844,8 @@ void func_801CCAF0(void* self) {
             *(u32*)(p + 0x58) = 0x12;
             u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
             sysWinSwitchKindPane(p + 0x4e8, 0);
-            func_8022B9B4(p + 0x4e8, msg, 0);
-            func_8022BFC8(p + 0x4e8, 1);
+            sysWinSetKindContent(p + 0x4e8, msg, 0);
+            sysWinApplyKind(p + 0x4e8, 1);
             sysWinOpenPhase1(p + 0x4e8);
             Cur_SetVisible(p + 0x70, 0);
             playUISound__FUl(5);
@@ -3854,8 +3854,8 @@ void func_801CCAF0(void* self) {
         if ((u8)GetCellFlag0(sub, entry)) return;
         if (!(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF)) return;
         ToggleCellMark(sub, entry);
-        func_801CFFEC(p);
-        func_801D0328(p);
+        RebuildGridUI(p);
+        RefreshSelectedCellText(p);
         func_801D0BD8(p);
         if (((int (*)(CItemBoxGridFull*, u16))GetCellByte8)(sub, entry)) {
             playUISound__FUl(3);
@@ -3876,7 +3876,7 @@ void func_801CCAF0(void* self) {
             u32 type = (*(u32*)item >> 16) & 0xF;
             if ((u8)GetCellFlag0(sub, entry)) {
                 s16 sid = GetCellItemId(sub, entry);
-                func_801D0E88(p, (int)type, (int)sid);
+                UnequipPartyItem(p, (int)type, (int)sid);
             }
             if (type == 2 || (u8)(type + 0xfc) <= 4) {
                 u8 numSlots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
@@ -3887,7 +3887,7 @@ void func_801CCAF0(void* self) {
                     }
                 }
             }
-            s32 add = (s8)p[0x529] * (s32)func_801C5FC0(sub, entry);
+            s32 add = (s8)p[0x529] * (s32)GetCellSellPrice(sub, entry);
             CItemBlock_setCount((s32)((u32)CItemBlock_getPtr20E8() + add));
             DispatchItemEvt(p, item, (s8)count - (s8)p[0x529]);
             RebuildGridCat(p);
@@ -3906,13 +3906,13 @@ void func_801CCAF0(void* self) {
             p[0x529] = 1;
             NumSel_SetCaption_B030(p + 0x3e4, (void*)FormatCellName(sub, entry));
             NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
-            NumSel_FormatPicName_B064(p + 0x3e4, (s8)p[0x529] * func_801C5FC0(sub, entry));
+            NumSel_FormatPicName_B064(p + 0x3e4, (s8)p[0x529] * GetCellSellPrice(sub, entry));
             if (((int (*)(CItemBoxGridFull*, u16))GetCellFlag1)(sub, entry)) {
                 *(u32*)(p + 0x58) = 0x12;
                 u32 msg2 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
                 sysWinSwitchKindPane(p + 0x4e8, 0);
-                func_8022B9B4(p + 0x4e8, msg2, 0);
-                func_8022BFC8(p + 0x4e8, 1);
+                sysWinSetKindContent(p + 0x4e8, msg2, 0);
+                sysWinApplyKind(p + 0x4e8, 1);
                 sysWinOpenPhase1(p + 0x4e8);
                 Cur_SetVisible(p + 0x70, 0);
             } else if ((u8)GetCellFlag0(sub, entry)) {
@@ -3921,8 +3921,8 @@ void func_801CCAF0(void* self) {
                     *(u32*)(p + 0x58) = 0x12;
                     u32 msg3 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
                     sysWinSwitchKindPane(p + 0x4e8, 0);
-                    func_8022B9B4(p + 0x4e8, msg3, 0);
-                    func_8022BFC8(p + 0x4e8, 1);
+                    sysWinSetKindContent(p + 0x4e8, msg3, 0);
+                    sysWinApplyKind(p + 0x4e8, 1);
                     sysWinOpenPhase1(p + 0x4e8);
                     Cur_SetVisible(p + 0x70, 0);
                 } else {
@@ -3930,9 +3930,9 @@ void func_801CCAF0(void* self) {
                     u32 msg4 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
                     u32 msg5 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                     u32 msg6 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                    func_8022B9B4(p + 0x4ac, msg4, 0);
+                    sysWinSetKindContent(p + 0x4ac, msg4, 0);
                     sysWinSetTwoTextValues(p + 0x4ac, msg5, msg6);
-                    func_8022BFC8(p + 0x4ac, 0);
+                    sysWinApplyKind(p + 0x4ac, 0);
                     sysWinOpenPhase1(p + 0x4ac);
                     Cur_SetVisible(p + 0x70, 0);
                     p[0x540] = 1;
@@ -3941,14 +3941,14 @@ void func_801CCAF0(void* self) {
                 u8 listVal2 = p[0x62 + (s8)p[0x6f]];
                 if (listVal2 == 0xd) {
                     u32 k12 = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
-                    if (func_801D12D4(p, k12 & 0xFFFF)) {
+                    if (IsItemTeachable(p, k12 & 0xFFFF)) {
                         *(u32*)(p + 0x58) = 0x15;
                         u32 msg7 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
                         u32 msg8 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
                         u32 msg9 = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                        func_8022B9B4(p + 0x4ac, msg7, 0);
+                        sysWinSetKindContent(p + 0x4ac, msg7, 0);
                         sysWinSetTwoTextValues(p + 0x4ac, msg8, msg9);
-                        func_8022BFC8(p + 0x4ac, 0);
+                        sysWinApplyKind(p + 0x4ac, 0);
                         sysWinOpenPhase1(p + 0x4ac);
                         Cur_SetVisible(p + 0x70, 0);
                         p[0x540] = 1;
@@ -3986,11 +3986,11 @@ void func_801CCAF0(void* self) {
                 u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)entry);
                 s32 count = CheckCellState(sub, entry);
                 if (!(kind & 0xFFFF)) return;
-                u32 v1 = func_801C618C(sub, *(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
-                u32 v2 = func_801C618C(sub, (u16)kind, item, *(u16*)(p + 0x52a));
+                u32 v1 = GetScaledItemValue(sub, *(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
+                u32 v2 = GetScaledItemValue(sub, (u16)kind, item, *(u16*)(p + 0x52a));
                 if (v1 > v2) return;
                 u16 nVal = BdatGetU16Direct((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
-                u32 test = func_801C618C(sub, nVal, 0, 0);
+                u32 test = GetScaledItemValue(sub, nVal, 0, 0);
                 s8 leftover = (s8)count;
                 s32 neg = -((s32)(v2 - v1) < (s32)test);
                 p[0x52d] = (u8)neg;
@@ -4064,7 +4064,7 @@ void func_801CCAF0(void* self) {
         }
         u32 sendVal = 0xFF;
         if (p[0x527] != 3) sendVal = listVal3;
-        func_802084D4(p + 0x418, sendVal & 0xFF);
+        GridSubMenu_SetupOptions(p + 0x418, sendVal & 0xFF);
         Cur_SetVisible(p + 0x70, 0);
         GridSubMenu_BeginOpenAnim(p + 0x418);
         *(u32*)(p + 0x58) = 6;
@@ -4098,7 +4098,7 @@ u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this
 // and page to it. optimize_for_size merges the r29-r31 saves into retail's
 // _savegpr_29 prologue.
 #pragma optimize_for_size on
-void func_801CDC40(void* self) {
+void TickItemBoxGrid(void* self) {
     u8* p = (u8*)self;
     if (p[0x528]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -4126,8 +4126,8 @@ void func_801CDC40(void* self) {
             obj = (void*)BdatGetPtrDirect((const void*)*(u32*)(lbl_eu_80664510), &lbl_eu_8050566C[0x321], val & 0xFFFF);
         }
         sysWinSwitchKindPane(p + 0x4e8, 0);
-        func_8022B9B4(p + 0x4e8, (u32)obj, 0);
-        func_8022BFC8(p + 0x4e8, 1);
+        sysWinSetKindContent(p + 0x4e8, (u32)obj, 0);
+        sysWinApplyKind(p + 0x4e8, 1);
         sysWinOpenPhase1(p + 0x4e8);
         Cur_SetVisible(p + 0xa0, 0);
         return;
@@ -4179,7 +4179,7 @@ extern "C" void SelectCatRow(void* self) {
     if (p[0x544]) return;
     ((s8*)p)[0x525] = -1;
     UpdateCursors(self);
-    func_801D0328(self);
+    RefreshSelectedCellText(self);
     playUISound__FUl(2);
 }
 
@@ -4228,7 +4228,7 @@ extern "C" __declspec(noinline) void FinishOpenAnim(void* self) { // noinline: d
         ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 0);
         ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 1);
         p[0x61] = 1;
-        func_801D0328(self);
+        RefreshSelectedCellText(self);
         Cur_SetVisible((void*)(p + 0x70), 1);
         Cur_SetVisible((void*)(p + 0x88), 1);
         UpdateCursors(self);
@@ -4237,8 +4237,8 @@ extern "C" __declspec(noinline) void FinishOpenAnim(void* self) { // noinline: d
             {
                 u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
                 sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
-                func_8022B9B4((void*)(p + 0x4e8), msg, 0);
-                func_8022BFC8((void*)(p + 0x4e8), 1);
+                sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
+                sysWinApplyKind((void*)(p + 0x4e8), 1);
                 sysWinOpenPhase1((void*)(p + 0x4e8));
                 Cur_SetVisible((void*)(p + 0x70), 0);
             }
@@ -4292,8 +4292,8 @@ extern "C" __declspec(noinline) void FinishNumSelect(void* self) { // noinline: 
             {
                 u32 msg = (u32)BdatTouchStringCell((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
                 sysWinSwitchKindPane((void*)(p + 0x4e8), 0);
-                func_8022B9B4((void*)(p + 0x4e8), msg, 0);
-                func_8022BFC8((void*)(p + 0x4e8), 1);
+                sysWinSetKindContent((void*)(p + 0x4e8), msg, 0);
+                sysWinApplyKind((void*)(p + 0x4e8), 1);
                 sysWinOpenPhase1((void*)(p + 0x4e8));
                 Cur_SetVisible((void*)(p + 0x70), 0);
             }
@@ -4307,17 +4307,17 @@ __declspec(noinline) void ShowSubMenuCur(void* self) { // noinline: dispatch tab
     if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
     *(u32*)(p + 0x58) = 7;
     u8 temp[16];
-    func_80208760(temp, p + 0x418);
+    GridSubMenu_GetCursorPos(temp, p + 0x418);
     ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
     Cur_SetVisible(p + 0xa0, 1);
 }
 
 
-__declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void DispatchSubmenuConfirm(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
     *(u32*)(p + 0x58) = 3;
-    if ((func_802087B8(p + 0x418) & 0xFF) == 2) {
+    if ((GridSubMenu_GetOptionCount(p + 0x418) & 0xFF) == 2) {
         // Confirmed: dispatch on the selected cell's category byte.
         s32 val = (s8)p[0x6f];
         if (p[val + 0x62] == 0xa) {
@@ -4411,8 +4411,8 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
         }
 
         sysWinSwitchKindPane(p + 0x4e8, showDetail);
-        func_8022B9B4(p + 0x4e8, (u32)msg, (u32)subMsg);
-        func_8022BFC8(p + 0x4e8, 1);
+        sysWinSetKindContent(p + 0x4e8, (u32)msg, (u32)subMsg);
+        sysWinApplyKind(p + 0x4e8, 1);
         sysWinOpenPhase1(p + 0x4e8);
         *(u32*)(p + 0x58) = 0x12;
         p[0x528] = 0;
@@ -4429,8 +4429,8 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
         *(u32*)(p + 0x58) = 0x12;
         void* msg = BdatTouchStringCell(&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
         sysWinSwitchKindPane(p + 0x4e8, 0);
-        func_8022B9B4(p + 0x4e8, (u32)msg, 0);
-        func_8022BFC8(p + 0x4e8, 1);
+        sysWinSetKindContent(p + 0x4e8, (u32)msg, 0);
+        sysWinApplyKind(p + 0x4e8, 1);
         sysWinOpenPhase1(p + 0x4e8);
         Cur_SetVisible(p + 0x70, 0);
     } else {
@@ -4925,7 +4925,7 @@ extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx) {
 // category mode (0x527 == 2). No pragma: retail's stmw r26 prologue is the
 // plain -O4 shape, so keep exactly six long-lived values (cat, isOtherTab,
 // i, isCurTab, string base, self).
-extern "C" void func_801CFD2C(void* self) {
+extern "C" void RefreshCategoryTabs(void* self) {
     u8* p = (u8*)self;
     int isCurTab;
     u32 i;
@@ -4961,13 +4961,13 @@ extern "C" void func_801CFD2C(void* self) {
         setPaneVisible(t2, isOtherTab);
         SetTabHeader(self, cat, (u8)i);
     }
-    func_801D05D4(self, 0);
+    MoveTabPage(self, 0);
     if (p[0x527] == 2) {
         CItemBoxGridFull* subGrid = (CItemBoxGridFull*)(p + 0x54c);
         p[0x542] = 0;
-        func_801C56D8(subGrid, p[0x62], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
+        PopulateGridEntries(subGrid, p[0x62], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
         u16 count1 = subGrid->field_2800;
-        func_801C56D8(subGrid, p[0x63], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
+        PopulateGridEntries(subGrid, p[0x63], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
         if (!(count1 | subGrid->field_2800)) {
             p[0x542] = 1;
         }
@@ -4980,16 +4980,16 @@ extern "C" void func_801CFD2C(void* self) {
 void RebuildGridCat(void* self) {
     u8* p = (u8*)self;
     u8* sub = p + 0x54c;
-    func_801C56D8((CItemBoxGridFull*)sub, (p + 0x62)[(s8)p[0x6f]], 0,
+    PopulateGridEntries((CItemBoxGridFull*)sub, (p + 0x62)[(s8)p[0x6f]], 0,
                   *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
     if (p[0x527] == 4) {
-        func_801C7730((CItemBoxGridFull*)sub);
+        CompactGridEntries((CItemBoxGridFull*)sub);
     }
     setLayoutTextBoxNumber(reinterpret_cast<nw4r::lyt::Layout*>(*(u32*)(p + 0x44)),
                   const_cast<char*>(&lbl_eu_8050566C[0x53e]),
                   (u8)CalcGridRowCount((void*)sub));
-    func_801CFFEC(self);
-    func_801D0328(self);
+    RebuildGridUI(self);
+    RefreshSelectedCellText(self);
     func_801D0BD8(self);
     if (getItemBoxState__FP12CItemBoxInfo(p + 0x1d8) != 0) {
         hideItemBoxPanes(p + 0x1d8, (p + 0x62)[(s8)p[0x6f]]);
@@ -5001,7 +5001,7 @@ void RebuildGridCat(void* self) {
 // row count/page, then pushes all 30 entries' state back into the widgets.
 // Keep `rows` full-width: retail converts (10 - rows) through the u8 truncate
 // and holds the raw return in a callee-saved register across both loops.
-void func_801CFFEC(void* self) {
+void RebuildGridUI(void* self) {
     // Declaration order nudges MWCC's callee-saved allocation toward retail
     // (rows gets the highest register, sub/self the middle ones).
     u32 rows;
@@ -5086,7 +5086,7 @@ void func_801CFFEC(void* self) {
 // Refreshes the grid UI text for the selected cell. Retail computes the
 // selected index unconditionally from the raw bytes, then special-cases the
 // "no selection" rows (-1/-2).
-__declspec(noinline) void func_801D0328(void* self) {
+__declspec(noinline) void RefreshSelectedCellText(void* self) {
     u8* p = (u8*)self;
     CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
     s8 row = (s8)p[0x525];
@@ -5101,7 +5101,7 @@ __declspec(noinline) void func_801D0328(void* self) {
     } else {
         char* name = (char*)FormatCellName(sub, (u16)(u8)idx);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x581], name, 0);
-        char* str = func_801C6A44(sub, (u16)(u8)idx);
+        char* str = FormatCellItemName(sub, (u16)(u8)idx);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x58a], str, *(u32*)(p + 0x5c));
     }
     u32 qty;
@@ -5110,12 +5110,12 @@ __declspec(noinline) void func_801D0328(void* self) {
         u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)(u8)idx);
         CheckCellState(sub, (u16)(u8)idx);  // result unused in retail
         if ((s8)p[0x525] > -1)
-            qty = func_801C618C(sub, kind & 0xFFFF, (void*)obj, *(u16*)(p + 0x52a));
+            qty = GetScaledItemValue(sub, kind & 0xFFFF, (void*)obj, *(u16*)(p + 0x52a));
         else
             qty = 0;
     } else {
         if ((s8)p[0x525] > -1)
-            qty = func_801C5FC0(sub, (u16)(u8)idx);
+            qty = GetCellSellPrice(sub, (u16)(u8)idx);
         else
             qty = 0;
     }
@@ -5145,7 +5145,7 @@ __declspec(noinline) void func_801D0328(void* self) {
 // Tab-page mover: rewrites the "N/total" tab labels for the new page
 // (wrapping around the page count at +0x6e) and refreshes the 12 overlay
 // panes with the colour pair matching the current category.
-extern "C" void func_801D05D4(void* self, int val) {
+extern "C" void MoveTabPage(void* self, int val) {
     u8* p = (u8*)self;
     u8 buf[2];
     u8 b = p[0x6f];
@@ -5287,7 +5287,7 @@ extern "C" __declspec(noinline) void func_801D0BD8(void* self) { }
 // category 3 without a match just continues to the next pass.
 #pragma push
 #pragma optimize_for_size on  // stmw r20..r31 block-save prologue
-void func_801D0E88(void* self, int kind, int id) {
+void UnequipPartyItem(void* self, int kind, int id) {
     u8 cats[6];
     // Aggregate seed: MWCC stores both halves to the stack in the prologue
     // and the category-3 arm re-copies them into the scan list every pass.
@@ -5393,7 +5393,7 @@ void func_801D0E88(void* self, int kind, int id) {
                     CItemBoxGridMoveObj* mv = (CItemBoxGridMoveObj*)
                         getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_04);
                     if ((u8)pass == mv->field_3f28) {
-                        func_800BFDE0(mv, 0);
+                        CfObjectPc_setupFrame(mv, 0);
                         break;
                     }
                 }
@@ -5450,7 +5450,7 @@ u32 GetCatLabelMsg(void* self) {
 // (lbl_eu_80664110) and test the character's learned-arts flags at
 // charData + count*0x49 + (table byte << 1). Returns 1 when the flag test
 // fails (item not yet learned); 0 when it is already learned.
-u32 func_801D12D4(void* self, u32 kind) {
+u32 IsItemTeachable(void* self, u32 kind) {
     u32 bdat = lbl_eu_80664110;
     BdatGetItemType(kind);
     u32 shortKind = BdatGetItemId(kind);
@@ -5512,13 +5512,13 @@ __declspec(noinline) void* __dt__13CArtsBookItemFv(void* self, int mode) {
 // GetU16PairEntry and register teachable entries: an item qualifies when its
 // type-specific name row (base-name key, or the +0xc8 teach key, or a free
 // ability slot) equals 2 and the paired look-up key is present, in which
-// case func_801C5158 pushes the id.
+// case PushUniqueItemId pushes the id.
 // Direct global references (no pointer locals): retail keeps two webs for
 // lbl_eu_8050566C - an @ha base copy and a full-pointer copy - which only
 // appears when the pool is referenced directly instead of through a local.
 #define XB_K ((const char*)lbl_eu_8050566C)
 #define XB_TABLES ((const void* const*)lbl_eu_80573D18)
-void func_801C4BB4(void* self) {
+void RegisterTeachableItems(void* self) {
     // C89-style declarations: MWCC births virtual registers in declaration
     // order when locals are hoisted, which is the shape retail claims.
     void* tbl;
@@ -5538,11 +5538,11 @@ void func_801C4BB4(void* self) {
             tbl = (void*)XB_TABLES[SearchThresholdIdx((u16)id)];
             if ((u8)BdatGetU8Direct((u32)tbl, &XB_K[0], (u16)id)) {
                 // Retail pushes the masked lookup value, not the raw item id:
-                // each `clrlwi. r4, r3, 16` result feeds func_801C5158's r4.
+                // each `clrlwi. r4, r3, 16` result feeds PushUniqueItemId's r4.
                 #define XB_PUSH(tblArg, kOff) \
                 do { \
                     v = BdatGetU16Direct((const void*)(tblArg), &XB_K[kOff], (u16)id); \
-                    if (v) func_801C5158(self, v); \
+                    if (v) PushUniqueItemId(self, v); \
                 } while (0)
                 if (tp == 1) {
                     // Both lookups are issued before either result is tested.
@@ -5594,12 +5594,12 @@ void func_801C4BB4(void* self) {
     }
 }
 // Add id to list if not already present and capacity check passes.
-// noinline: func_801C53D8 (and the other callers in this TU) must emit `bl`
+// noinline: RegisterLearnedSkills (and the other callers in this TU) must emit `bl`
 // to the retail symbol - the unit builds with -inline and would otherwise
-// fold this body into every call site (tripling func_801C53D8).
+// fold this body into every call site (tripling RegisterLearnedSkills).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_801C5158(void* self, u32 id) {
+__declspec(noinline) void PushUniqueItemId(void* self, u32 id) {
     if (HasSlotIdMatch(self, id)) return;
     if ((BdatGetItemType(id) & 0xFFFF) == 12) return;
     u8* p = (u8*)self;
@@ -5608,7 +5608,7 @@ __declspec(noinline) void func_801C5158(void* self, u32 id) {
     *(u16*)(p + 0x804) = count + 1;
 }
 #pragma pop
-void func_801C5254(void* self) {
+void PushGatedTypeIds(void* self) {
     void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
     if (!bdat) return;
 
@@ -5632,7 +5632,7 @@ void func_801C5254(void* self) {
 
         u32 type = BdatGetU16Direct(bdat, (const char*)&lbl_eu_8050566C[0x102], (u32)i);
         if (type & 0xFFFF) {
-            func_801C5158(self, type & 0xFFFF);
+            PushUniqueItemId(self, type & 0xFFFF);
         }
     }
 }
@@ -5641,7 +5641,7 @@ void func_801C5254(void* self) {
 // push each one into the list when its per-party table cell has the
 // "learned" flag bit set. The cell address is charData + party * 0x49 +
 // dialogType * 2; bits at +0xE8/+0xE9 select the check by category.
-void func_801C53D8(void* self) {
+void RegisterLearnedSkills(void* self) {
     u32 bdat = lbl_eu_80664110;
     s32 count = (s32)Bdat_GetMaxRow_B1EC((void*)bdat);
     u8 i;
@@ -5659,17 +5659,17 @@ void func_801C53D8(void* self) {
         switch ((u8)flag) {
         case 1:
             if (cell[0xE8] != 0) {
-                func_801C5158(self, (u32)i);
+                PushUniqueItemId(self, (u32)i);
             }
             break;
         case 2:
             if ((cell[0xE9] >> 7) & 1) {
-                func_801C5158(self, (u32)i);
+                PushUniqueItemId(self, (u32)i);
             }
             break;
         case 3:
             if ((cell[0xE9] >> 6) & 1) {
-                func_801C5158(self, (u32)i);
+                PushUniqueItemId(self, (u32)i);
             }
             break;
         }
@@ -5789,12 +5789,12 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     // Build each cursor from a stack temporary handed to the attach helper.
     u8 cur07Buf[0x18];
     __ct__CCur07(cur07Buf, *(void**)(p + 0x3c));
-    func_8018B0FC(p + 0x70, cur07Buf);
+    MenuShopSellCopyCursor(p + 0x70, cur07Buf);
     __dt__6CCur07Fv(cur07Buf, -1);
     ((CBaseCur*)(p + 0x70))->initLayout();
     u8 cur09Buf[0x18];
     __ct__CCur09(cur09Buf, *(void**)(p + 0x3c));
-    func_8018B0FC(p + 0x88, cur09Buf);
+    MenuShopSellCopyCursor(p + 0x88, cur09Buf);
     __dt__6CCur09Fv(cur09Buf, -1);
     ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
@@ -5805,21 +5805,21 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
     u8 cur18Buf[0x18];
     __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
-    func_8018B0FC(p + 0xa0, cur18Buf);
+    MenuShopSellCopyCursor(p + 0xa0, cur18Buf);
     __dt__6CCur18Fv(cur18Buf, -1);
     ((CBaseCur*)(p + 0xa0))->initLayout();
     u8 cur16Buf[0x18];
     __ct__CCur16(cur16Buf, *(void**)(p + 0x3c));
-    func_8018B0FC(p + 0xb8, cur16Buf);
+    MenuShopSellCopyCursor(p + 0xb8, cur16Buf);
     __dt__6CCur16Fv(cur16Buf, -1);
     ((CBaseCur*)(p + 0xb8))->initLayout();
     u8 cur11Buf[0x18];
     __ct__CCur11(cur11Buf, *(void**)(p + 0x3c));
-    func_8018B0FC(p + 0xd0, cur11Buf);
+    MenuShopSellCopyCursor(p + 0xd0, cur11Buf);
     __dt__6CCur11Fv(cur11Buf, -1);
     ((CBaseCur*)(p + 0xd0))->initLayout();
     initPresentWin(p + 0x468, *(void**)(p + 0x3c));
-    func_80207FC8(p + 0x418, *(void**)(p + 0x3c));
+    GridSubMenu_InitLayout(p + 0x418, *(void**)(p + 0x3c));
     // Group colour snapshot for the grid cells.
     void* grpPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x723], 1);
     if (grpPane != NULL) {

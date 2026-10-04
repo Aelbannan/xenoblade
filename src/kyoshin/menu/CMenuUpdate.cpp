@@ -140,7 +140,7 @@ extern "C" void* __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u
     memset(obj->mEntries, 0, 0x80);
     memset(&obj->mEntries[8], 0, 0x10);
 
-    func_80143ADC(obj, r5, r6, r7, r8);
+    MenuUpdate_UpsertEntry(obj, r5, r6, r7, r8);
     return obj;
 }
 
@@ -231,7 +231,7 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
 
     switch ((int)obj->mMode) {
     case 0: MenuUpdate_EnterMode1Chime(self); break;
-    case 1: func_801440A8(self); break;
+    case 1: MenuUpdate_MaintainActive(self); break;
     case 2: MenuUpdate_GuardFirstEntry(self); break;
     }
 
@@ -308,7 +308,7 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 r4, int r5, int 
         }
     }
     if (lbl_eu_80664198 != 0) {
-        func_80143ADC((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
+        MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
@@ -342,13 +342,13 @@ extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg
     if (text) PaneSetTexPaletteByName(obj->mLayout, (const char*)name, text);
 }
 
-// func_80142D60 - (re)bind the window layout's textures, animations and pane
+// MenuUpdate_RebindLayout - (re)bind the window layout's textures, animations and pane
 // visibility for the current state, then start the active animation.
 // The string-pool base is written as a plain address expression at every use;
 // MWCC's CSE materializes it into a register per region (matching retail's
 // repeated lis/addi pairs) and mLayout is reloaded from the object before
 // every use.
-extern "C" __declspec(noinline) void func_80142D60(void* self) {
+extern "C" __declspec(noinline) void MenuUpdate_RebindLayout(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
     obj->mLayout->UnbindAllAnimation();
@@ -650,11 +650,11 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     obj->mLayout->Animate(0);
 }
 
-// func_80143ADC - insert/select a window entry.
+// MenuUpdate_UpsertEntry - insert/select a window entry.
 // r4 = entry type, r5..r7 = payload words. Selects an existing matching entry
 // or appends into the first free slot; the general path preserves leading
 // entries, clears the table, and re-appends around the new entry.
-extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u32 arg1, u32 arg2,
+extern "C" __declspec(noinline) void MenuUpdate_UpsertEntry(CMenuUpdate* obj, int type, u32 arg1, u32 arg2,
                                                     u32 arg3) {
     // Local re-declarations in this order pin MWCC's parameter-save order.
     u32 sArg2 = arg2;
@@ -809,8 +809,8 @@ extern "C" __declspec(noinline) void MenuUpdate_EnterMode1Chime(void* self) {
     obj->mMode = 1;
 }
 
-// func_801440A8
-extern "C" __declspec(noinline) void func_801440A8(void* self) {
+// MenuUpdate_MaintainActive
+extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
     if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mState != 4 && obj->mState != 5) {
@@ -932,7 +932,7 @@ extern "C" __declspec(noinline) void MenuUpdate_GuardFirstEntry(void* self) {
         CMenuUpdate_8014274C clr;
         MenuUpdate_CopyQuadWord((u32*)&obj->mEntries[0].field_0, (u32*)__ct__8014274C(&clr));
     }
-    func_80142D60(self);
+    MenuUpdate_RebindLayout(self);
 
     // Compact entries[1..7] down over the freed front slots.
     CMenuUpdate_8014274C tmp[8]; // sp+0x18

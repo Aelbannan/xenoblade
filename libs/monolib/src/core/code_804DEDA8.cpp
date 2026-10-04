@@ -811,10 +811,10 @@ struct CEffectNodePool {
 extern CEffectNodePool lbl_eu_80661738;
 
 // Effect-manager release (monolib/src/effect/code_804C8718.cpp).
-extern "C" void func_804C8790(CEffectObj* obj);
+extern "C" void EffRoot_InitDefaults(CEffectObj* obj);
 
 // Effect-object constructor (monolib/src/effect/code_804C8718.cpp).
-extern "C" s32 func_804C8830(CEffectObj* self, const u8* base, const u8* data,
+extern "C" s32 EffObj_Construct(CEffectObj* self, const u8* base, const u8* data,
                              u8* arg4, s32 arg5, u8 arg6);
 
 // Re-initialize the schedule resource tables: clear both element arrays and
@@ -1060,14 +1060,14 @@ s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
     if (node == NULL) {
         return -1;
     }
-    if (func_804C8830(node, base, data, arg3, arg4, arg5) != 0) {
+    if (EffObj_Construct(node, base, data, arg3, arg4, arg5) != 0) {
         return *(s16*)((u8*)node + 0x1e);
     }
     // Constructor failed: rewind the handle cursor and release the object.
     s16 h = *(s16*)((u8*)node + 0x1e);
     if (h >= 0 && h < lbl_eu_80661728.mCount) {
         lbl_eu_80661728.mLastHandle = h;
-        func_804C8790((CEffectObj*)((u8*)lbl_eu_80661728.mBase + h * 0x22c));
+        EffRoot_InitDefaults((CEffectObj*)((u8*)lbl_eu_80661728.mBase + h * 0x22c));
         if (lbl_eu_80661728.mActiveCount > 0) {
             lbl_eu_80661728.mActiveCount--;
         }
@@ -1083,7 +1083,7 @@ void SchedFx_ReleaseHandle(s16 handle) {
     }
     if (!(handle < 0) && lbl_eu_80661728.mCount > handle) {
         lbl_eu_80661728.mLastHandle = handle;
-        func_804C8790((CEffectObj*)&lbl_eu_80661728.mBase[handle]);
+        EffRoot_InitDefaults((CEffectObj*)&lbl_eu_80661728.mBase[handle]);
         if (lbl_eu_80661728.mActiveCount > 0) {
             lbl_eu_80661728.mActiveCount--;
         }

@@ -20,9 +20,9 @@ extern "C" __declspec(noinline) void sortMenuState1Opening(CSortMenu*);
 extern "C" __declspec(noinline) void sortMenuState2WaitAnim(CSortMenu*);
 extern "C" __declspec(noinline) void sortMenuState4Scroll(CSortMenu*);
 extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu*);
-// noinline: retail calls func_801D3A3C via bl from every caller; without it MWCC
+// noinline: retail calls sortMenuRefreshSlotText via bl from every caller; without it MWCC
 // -inline auto inlines the loop body into each caller and bloats the TU.
-extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu*);
+extern "C" __declspec(noinline) void sortMenuRefreshSlotText(CSortMenu*);
 
 // Retail-named SDA2 constants.
 extern const float lbl_eu_80667FF0;  // row height (SDA21)
@@ -129,9 +129,9 @@ extern "C" void sortMenuDispatchState(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D31F8: Draw
+// sortMenuDraw: Draw
 // ============================================================================
-extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void sortMenuDraw(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
     if (_this->field_0x28 == 0) return;
     drawLayout(_this->mpLayout, drawInfo, 0, 1);
     if (_this->mCount > 5) {
@@ -157,9 +157,9 @@ extern "C" void sortMenuTermCleanup(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D32DC: Check if scrollbar is visible
+// sortMenuIsScrollbarVisible: Check if scrollbar is visible
 // ============================================================================
-extern "C" u8 func_801D32DC(CSortMenu* _this) {
+extern "C" u8 sortMenuIsScrollbarVisible(CSortMenu* _this) {
     if (CScrollBar_isVisible((u8*)_this + 0x2C) != 0) {
         return _this->field_0x29;
     }
@@ -202,7 +202,7 @@ extern "C" void sortMenuOpenInit(CSortMenu* _this) {
     CScrollBar_UpdateThumb(&_this->mScrollBar, 5, _this->mCount);
     CScrollBar_requestScrollIn(&_this->mScrollBar);
 
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
@@ -263,9 +263,9 @@ extern "C" void func_801D3518(CSortMenu* _this, int value) {
 }
 
 // ============================================================================
-// func_801D353C: Set page
+// sortMenuSetPage: Set page
 // ============================================================================
-extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
+extern "C" void sortMenuSetPage(CSortMenu* _this, s8 page) {
     nw4r::lyt::Pane* pane =
         _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
 
@@ -297,13 +297,13 @@ extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
         _this->mPage = 4;
     }
 
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
-// func_801D3620: Scroll up
+// sortMenuScrollUp: Scroll up
 // ============================================================================
-extern "C" void func_801D3620(CSortMenu* _this) {
+extern "C" void sortMenuScrollUp(CSortMenu* _this) {
     _this->mPage = (u8)(_this->mPage - 1);
     if ((s8)_this->mPage < 0) {
         _this->mPage = 0;
@@ -323,13 +323,13 @@ extern "C" void func_801D3620(CSortMenu* _this) {
             }
         }
     }
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
-// func_801D3698: Scroll down
+// sortMenuScrollDown: Scroll down
 // ============================================================================
-extern "C" void func_801D3698(CSortMenu* _this) {
+extern "C" void sortMenuScrollDown(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
         u8 pageU = (u8)(_this->mPage + 1);
@@ -355,13 +355,13 @@ extern "C" void func_801D3698(CSortMenu* _this) {
             _this->mSubPage = 0;
         }
     }
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
-// func_801D3724: Page up
+// sortMenuPageUpStep: Page up
 // ============================================================================
-extern "C" void func_801D3724(CSortMenu* _this) {
+extern "C" void sortMenuPageUpStep(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
         u8 subU8 = (u8)(_this->mSubPage - 5);
@@ -377,7 +377,7 @@ extern "C" void func_801D3724(CSortMenu* _this) {
         _this->mPage = 0;
         _this->mSubPage = 0;
     }
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
@@ -406,7 +406,7 @@ extern "C" void sortMenuPageDownStep(CSortMenu* _this) {
             _this->mPage = 0;
         }
     }
-    func_801D3A3C(_this);
+    sortMenuRefreshSlotText(_this);
 }
 
 // ============================================================================
@@ -431,10 +431,10 @@ extern "C" u8 sortMenuGetSubPageIdx(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3818: Convert sort value to page+subpage
+// sortMenuValueToPage: Convert sort value to page+subpage
 // ============================================================================
 #pragma optimize_for_size on
-extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outSubPage) {
+extern "C" void sortMenuValueToPage(CSortMenu* _this, int value, u8* outPage, u8* outSubPage) {
     *outPage = CItemBlock_getFlag120EC(value);
     *outSubPage = 0;
     if ((s8)*outPage >= 5) {
@@ -490,11 +490,11 @@ extern "C" __declspec(noinline) void sortMenuState5Closing(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3A3C: Update pane text for all 5 slots
+// sortMenuRefreshSlotText: Update pane text for all 5 slots
 // optimize_for_size: retail uses an stmw r28/lmw r28 block-save frame.
 // ============================================================================
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
+extern "C" __declspec(noinline) void sortMenuRefreshSlotText(CSortMenu* _this) {
     // Declare-then-assign: resBase is born first (takes r31), but strTable's
     // lis/addi must be EMITTED first (retail schedule) into r30.
     char* resBase;

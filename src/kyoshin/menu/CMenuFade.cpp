@@ -150,4 +150,4 @@ extern "C" void fwdFadeDtor5C(void* arg0) {
     ((void(*)(CMenuFade*))__dt__9CMenuFadeFv)((struct CMenuFade*)((char*)arg0 - 0x5C));
 }
 
-void func_80113C84(){}
+void createFadeMenu(){}

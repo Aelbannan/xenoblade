@@ -25,10 +25,10 @@ void CHelp_Talk::resetTalkHelp() {
 // split documented for CtrlAct.cpp / CfCamEvent_1.cpp / code_800B06A4.cpp,
 // which only match under mw_version="GC/3.0a5.2". Try an A/B under GC
 // versioning before further source reshaping.
-bool CHelp_Talk::func_802B86F0() {
+bool CHelp_Talk::isTalkHelpReady() {
     // Get the current voice action for player 0.
     bool voiceActive;
-    CVoiceRec* voice = static_cast<CVoiceRec*>(func_8016FE34(CfGameManager::getPlayer(0)));
+    CVoiceRec* voice = static_cast<CVoiceRec*>(MapFx_ResolveOwner(CfGameManager::getPlayer(0)));
     voiceActive = false;
 
     if (voice != nullptr) {
@@ -55,7 +55,7 @@ bool CHelp_Talk::func_802B86F0() {
     // If field_0x10 is set, validate it against the talk target's id (+0x8C).
     if (field_0x10 != 0) {
         CPlayerTalkRec* targetResult = static_cast<CPlayerTalkRec*>(
-            func_8016FE34(CfGameManager::getPlayer(0)));
+            MapFx_ResolveOwner(CfGameManager::getPlayer(0)));
         // Sub-object at +0x3E9C: vtable 0x4C yields the actor id.
         CTalkActor* targetObj = targetResult != nullptr
             ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(
@@ -73,7 +73,7 @@ bool CHelp_Talk::func_802B86F0() {
     // If state is still set and field_0x15 is set, check the actor's state id.
     if (field_0x16 != 0 && field_0x15 != 0) {
         CPlayerTalkRec* actorResult = static_cast<CPlayerTalkRec*>(
-            func_8016FE34(CfGameManager::getPlayer(0)));
+            MapFx_ResolveOwner(CfGameManager::getPlayer(0)));
         // vtable 0x228: current state id; success when it equals 3.
         bool stateOk = actorResult != nullptr
             ? static_cast<CTalkActor*>(CfObjectMove_getSelfIfActive(findObjectById(

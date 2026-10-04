@@ -26,7 +26,7 @@ extern "C" void requestCancelChain__Fv();
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
 
-// 3-entry table indexed by probability thresholds in func_80293EEC.
+// 3-entry table indexed by probability thresholds in payoutChainCombo.
 extern "C" int lbl_eu_80538988[3];
 
 namespace cf {
@@ -37,7 +37,7 @@ namespace cf {
 struct CChainCombo {
     int mArtsType;   // 0x0 - last arts category byte (0..8)
     int mComboCount; // 0x4 - steps 0..5
-    bool mPending;   // 0x8 - set externally; consumed by func_80293EEC
+    bool mPending;   // 0x8 - set externally; consumed by payoutChainCombo
     u8 pad9[3];
     CChainGauge mGauge; // 0xC - chain gauge pair
     void** mVtbl;       // 0x14 - lbl_eu_80538994

@@ -485,7 +485,7 @@ public:
 extern "C" float* code80135FDC_setVec3(float*, float, float, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void Cur_SetVisible(void*, u8);  // retail symbol is unmangled
-extern "C" u32 func_801D32DC(void*);
+extern "C" u32 sortMenuIsScrollbarVisible(void*);
 extern "C" int func_8021A8EC(void*);
 extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
@@ -519,11 +519,11 @@ extern "C" void MCCrystal_OpenFromClosed(void*);
 extern "C" void MCCrystal_DrawLayout(void*, void*);
 extern "C" void MCCrystal_ShowItem(void*, unsigned short, void*);
 extern "C" int sortMenuIsVisible28(void*);
-extern "C" void func_801D31F8(void*, void*);
+extern "C" void sortMenuDraw(void*, void*);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sortMenuResetCount(void*);
 extern "C" void func_801D3518(void*, void*);
-extern "C" void func_801D353C(void*, u8);
+extern "C" void sortMenuSetPage(void*, u8);
 extern "C" void CScrollBar_draw(void*, void*);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void CScrollBar_InitRootPane(void*, const float*);
@@ -561,7 +561,7 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
-extern "C" void func_8018B0FC(void*, void*);   // cursor copy (Cur_SetTwoPanes09 sibling)
+extern "C" void MenuShopSellCopyCursor(void*, void*);   // cursor copy (Cur_SetTwoPanes09 sibling)
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
 extern "C" float lbl_eu_80668488;
@@ -611,13 +611,13 @@ extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinSwitchKindPane(void*, int);
-extern "C" void func_8022B9B4(void*, u32, int);
-extern "C" void func_8022BFC8(void*, int);
+extern "C" void sysWinSetKindContent(void*, u32, int);
+extern "C" void sysWinApplyKind(void*, int);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void sortMenuDispatchState(void*);
 extern "C" void MCCrystal_StepState(void*);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void CScrollBar_UpdateDispatch(void*);
 extern "C" void sysWinDispatchPhase(void*);
 extern "C" void MakeCrystal_ResetTable(void*);
@@ -684,10 +684,10 @@ extern "C" void rebuildCrystalSortMenu(CMCCrystalBox* self);
 // retail names. copyCrystalParamRet returns its first argument (callers chain it as
 // the copy source for copyCrystalBoxParam); its definition lives in this TU under
 // the name copyCrystalParamRet (linked by address via symbols.txt).
-extern "C" void func_801D3698(void*);   // sort menu: scroll down
-extern "C" void func_801D3620(void*);   // sort menu: scroll up one entry
-// (func_801D3724 / sortMenuPageDownStep are the page-up / page-down variants)
-extern "C" void func_801D3724(void*);
+extern "C" void sortMenuScrollDown(void*);   // sort menu: scroll down
+extern "C" void sortMenuScrollUp(void*);   // sort menu: scroll up one entry
+// (sortMenuPageUpStep / sortMenuPageDownStep are the page-up / page-down variants)
+extern "C" void sortMenuPageUpStep(void*);
 extern "C" void sortMenuPageDownStep(void*);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int MakeCrystal_AllFlagsSet(void*);   // all-flags-set check (code_80213488.cpp)

@@ -3,12 +3,12 @@
 #include "monolib/scn/CScnFilter.hpp"
 
 // Forward declaration for the primary base class (vtable at 0x804997D0)
-// Initialized by func_804996E8, destroyed by __dt__804997D0.
+// Initialized by CScnBloom_InitBase, destroyed by __dt__804997D0.
 class CScnBloomBase {
 public:
     virtual ~CScnBloomBase();
 
-    // Bloom effect parameters (initialized by func_80499718)
+    // Bloom effect parameters (initialized by CScnBloom_InitParams)
     f32 mColorR;         // 0x00
     f32 mColorG;         // 0x04
     f32 mColorB;         // 0x08

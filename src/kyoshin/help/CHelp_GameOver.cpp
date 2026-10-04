@@ -17,7 +17,7 @@ public:
 
 namespace cf {
 bool CHelp_GameOver::isAvailable() {
-    if (func_80295D30(lbl_eu_80664A10) == 0) {
+    if (isHelpPopupReady(lbl_eu_80664A10) == 0) {
         return false;
     }
     if (unkC != 0 && CfGameManager::getQueuedFileEventCount() < unkC) {

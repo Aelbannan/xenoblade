@@ -66,7 +66,7 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // CLibCriStreamingPlay factory (static, 8 args; member-flavoured retail name
 // on a free function).
-extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(
+extern "C" int startStream__20CLibCriStreamingPlayFv(
     const char* filename,
     int allocHandle,
     int loopFlag,

@@ -36,9 +36,9 @@ extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
     extern void __ct__80172668(void* self, int);
     extern void __dt__80185754(void* self);
-    extern void func_801729F0(void* self, void* r4, void* r5);
-    extern void func_801726DC(void* self);
-    extern void func_80172768(void* self);
+    extern void EvtModelSetEventData(void* self, void* r4, void* r5);
+    extern void EvtModelReleaseAnimsOnce(void* self);
+    extern void EvtModelReleaseAnims(void* self);
     extern void EvtSeqInsertRtEvent(void* self);
     extern int EvtSeqProbeEvtSlot(void* self, void* r4);
     extern int EvtSeqIsSameNameType3Busy(void* self);
@@ -51,17 +51,17 @@ extern "C" {
     extern void func_801836CC(void* self, unsigned long value);
     extern int EvtSeqGetStateBit14(void);
     extern int EvtSeqGetStateBit5(void);
-    extern void* func_80167F6C(int, int, int);
-    extern void* func_800A8E6C(int, int);
+    extern void* allocEvtMemAligned(int, int, int);
+    extern void* KyoshinHeap_AllocNode(int, int);
     extern void KyoshinHeap_Free78(void*, int);
     extern void Tok_Unpack(void* r3, void* r4, void* r5, void* r6, void* r7);
-    extern char* func_800AA5C0(void* r3);
+    extern char* Tok_FormatRes(void* r3);
     extern void CfRes_tryResolveToken(void* r3, void* r4);
     extern int CfRes_tryDelegateLoad1(void* r3, int);
     extern void schedClearFlag15Update(void*);
     extern void schedAttachChildSlot(void*, void*);
     extern void schedSetStepIntervals(void*, float, float);
-    extern "C" void* func_804CC1F4(void*, u32, u32, int, int, int);
+    extern "C" void* EffRoot_AddSchedReq(void*, u32, u32, int, int, int);
     extern void EffSched_LookupA(void*);
     extern void EffSched_LookupB(void* mgr, void* key);
     extern void* Scn_CallUnk8C_V9(u32);
@@ -69,14 +69,14 @@ extern "C" {
     extern void simSetLeafDist7B0(void*, float);
     extern void simRefreshFlag8(void*, float);
     extern void simSetFlag2OnTree(void*, int);
-    extern void func_80483448(void*, void*);
+    extern void simCoupleModel(void*, void*);
     extern void* getScnCounter__Fv(void);
     extern void* isVisionPackLoaded__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
     extern void* EvtSeqResolvePackedResId(void*);
-    extern void* func_80164838(void*, int);
-    extern int func_800AA33C(const char*, u32, int, int);
+    extern void* evtLookupEntryWord(void*, int);
+    extern int Tok_FormatStr(const char*, u32, int, int);
     extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
     extern int setHandleParam__11CDeviceFileFP11CFileHandleUl(void*, u32);
     extern int isStandbyReady__11CDeviceFileFv(void);
@@ -234,13 +234,13 @@ extern "C" void EvtObj_SetupPlayer(CREvtModelObj* self, void* r4, void* r5) {
         self->mFileHandle3 = 0;
     }
 
-    func_801729F0(self, r4, r5);
+    EvtModelSetEventData(self, r4, r5);
 
     if ((int)self->mState84 == 1) {
         if (lbl_eu_806642B8 != 0 && self->mModel != 0 && r4 != 0 &&
             self->mFileHandle3 == 0 && self->mCount80 != 0) {
             // Open a per-player event file slot (player index = count-1)
-            CFileHandle* handle = (CFileHandle*)func_804CC1F4(
+            CFileHandle* handle = (CFileHandle*)EffRoot_AddSchedReq(
                 &lbl_eu_8065FC18, (u32)lbl_eu_80663E14, self->mCount80 - 1, 1, 0, 0);
             self->mFileHandle3 = handle;
 
@@ -282,7 +282,7 @@ extern "C" int EvtObj_Cancel(CREvtModelObj* self) {
         self->mFileHandle3 = 0;
     }
 
-    func_801726DC(self);
+    EvtModelReleaseAnimsOnce(self);
 
     // Release loaded data according to the file load state.
     // (The duplicated null checks mirror the retail binary.)
@@ -352,7 +352,7 @@ extern "C" void EvtObj_ResetState(void* self) {
         FLD(u32, s, 0x7C) = 0;
     }
 
-    func_80172768(self);
+    EvtModelReleaseAnims(self);
 
     // Free the loaded/archived data depending on the file state. The
     // status-3 path carries the duplicated null check (two consecutive beq)
@@ -497,7 +497,7 @@ extern "C" void EvtObj_StartLoad(void* self) {
         if (charStr[0] != 0) {
             int charId = r14;
             int index = (int)((unsigned int)(charId * 0xCCCD) >> 19);
-            void* result = func_80164838(charStr, index);
+            void* result = evtLookupEntryWord(charStr, index);
             if (result != 0) {
                 FLD(u32, s, 0x5C) = (u32)result;
             }
@@ -517,7 +517,7 @@ extern "C" void EvtObj_StartLoad(void* self) {
     FLD(int, filename, 0x1C0) = 0;
 
     // Get the filename from resource ID
-    char* source = func_800AA5C0((void*)resourceId);
+    char* source = Tok_FormatRes((void*)resourceId);
     int srcLen = strlen(source);
     FLD(int, filename, 0x84) = srcLen;
 
@@ -672,7 +672,7 @@ extern "C" void EvtObj_SetupModel(void* self) {
 
                 // Handle loaded data callback
                 if (FLD(u32, s, 0x70) != 0) {
-                    func_80483448(model, FLD(void*, s, 0x70));
+                    simCoupleModel(model, FLD(void*, s, 0x70));
                     void** modelVtbl3 = *(void***)model;
                     void (*setAnim)(void*, int) = (void (*)(void*, int))modelVtbl3[0x64 / 4];
                     setAnim(model, 4);
@@ -836,7 +836,7 @@ extern "C" void EvtObj_ScanPlayers(void* self) {
     if (model == 0) return;
     if (FLD(u32, s, 0x24) == 0) return;
 
-    CFileHandle* h = (CFileHandle*)func_804CC1F4(
+    CFileHandle* h = (CFileHandle*)EffRoot_AddSchedReq(
         &lbl_eu_8065FC18, (u32)lbl_eu_806642B8, (u32)lbl_eu_80663E14,
         FLD(u32, s, 0x80) - 1, 1, 0);
     FLD(u32, s, 0x7C) = (u32)h;

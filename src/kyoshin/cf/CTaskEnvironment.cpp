@@ -286,7 +286,7 @@ extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
 // vector is materialised on the stack by its ctor - so retail needs no FP
 // callee-saves.
 extern "C" __declspec(noinline) void Env_BuildLights(CTaskEnvironment* self) {
-    func_804923F8(self->mScene->field_0x5C, 0);
+    scnVlResetMgr(self->mScene->field_0x5C, 0);
 
     // Re-assign from the ctor's returned 'this' so the pointer lives only in
     // r3 across the call (retail stores the post-ctor r3 at the merge point).
@@ -317,7 +317,7 @@ extern "C" __declspec(noinline) void Env_BuildLights(CTaskEnvironment* self) {
     self->mLgtAC = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
-    self->mLgtB0 = func_804933AC(
+    self->mLgtB0 = scnVlDirFromVec(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
     self->mLgtB8 =
@@ -329,7 +329,7 @@ extern "C" __declspec(noinline) void Env_BuildLights(CTaskEnvironment* self) {
 
     // Sun colour/direction pair built from the sdata table scaled by FC0.
     const float* sunTable = lbl_eu_80570860;
-    self->mLgtC0 = func_804933AC(
+    self->mLgtC0 = scnVlDirFromVec(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
         &ml::CVec4(sunTable[0] * FC0, sunTable[1] * FC0, sunTable[2] * FC0,
                    sunTable[3]),
@@ -337,13 +337,13 @@ extern "C" __declspec(noinline) void Env_BuildLights(CTaskEnvironment* self) {
     self->mLgtC4 = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
-    self->mLgtC8 = func_804933AC(
+    self->mLgtC8 = scnVlDirFromVec(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x0C,
         &ml::CVec4(FC0, FC0, FC0, FAC), &ml::CVec3(FC4, FC8, FC4));
     self->mLgtD4 = scnVlCreateAmb(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
         &ml::CVec4(FAC, FAC, FAC, FAC));
-    self->mLgtD8 = func_804933AC(
+    self->mLgtD8 = scnVlDirFromVec(
         self->mScene->field_0x5C, self->mScene->field_0x5C->field_0x2C,
         &ml::CVec4(sunTable[0] * FC0, sunTable[1] * FC0, sunTable[2] * FC0,
                    sunTable[3]),

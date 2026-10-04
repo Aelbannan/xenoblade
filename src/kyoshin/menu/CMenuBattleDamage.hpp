@@ -35,7 +35,7 @@ struct CMenuBattleDamageEntry {
     nw4r::lyt::AnimTransform* mAnim3; // 0x18
     u8 mActive;                       // 0x1C nonzero = slot in use
     u8 _pad1D[3];                     // 0x1D-0x1F
-    u32 field_20;                     // 0x20 damage value (func_801098B0 arg)
+    u32 field_20;                     // 0x20 damage value (BtlDmg_SpawnPopup arg)
     u32 field_24;                     // 0x24 actor/target id
     f32 field_28;                     // 0x28 x position
     f32 field_2C;                     // 0x2C y position
@@ -47,7 +47,7 @@ struct CMenuBattleDamageEntry {
 };
 
 // 0xc-byte queued digit triple (stride of the 0x20-element array at +0x10 of
-// CMenuBattleDamageQueue). func_8010A940 appends, BtlDmg_QueueDraw draws one.
+// CMenuBattleDamageQueue). BtlDmg_QueueEnqueue appends, BtlDmg_QueueDraw draws one.
 struct CMenuBattleDamageSlot {
     u32 mVal0; // 0x00
     u32 mVal1; // 0x04
@@ -158,7 +158,7 @@ public:
 // (slot 43) and +0x12c (slot 75): declaring them as real virtuals makes MWCC
 // emit the retail dispatch shape (`lwz r12,0(r3); lwz r12,slot(r12)`); a
 // cast-and-call helper allocates a temp register instead. field_0x64 bit 1 is
-// the actor's "action source" flag read by Move/func_801098B0. Never
+// the actor's "action source" flag read by Move/BtlDmg_SpawnPopup. Never
 // instantiated - only called through.
 struct CMenuBattleDamageObjPos;
 class CMenuBattleDamageActor {
@@ -253,7 +253,7 @@ struct CMenuBattleDamageObjPos {
 };
 
 // Opaque view of the Scn_FindCamItem(scene, -1) camera/pose block (only passed
-// through to func_8049B59C in this unit).
+// through to CamMan_ProjectToScreen in this unit).
 struct CMenuBattleDamagePose;
 
 // Cast-only mirror of the font object returned by
@@ -308,7 +308,7 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int GetSysStateFlag24();
 int IsMenuState621F0();
-const char* func_80145AA8(int index);
+const char* getTelopString(int index);
 char* BdatGetPtrDirect(const void*, const void*, int);
 void ApplyFontToTxtPanes(void*, u32);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
@@ -319,7 +319,7 @@ void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 CMenuBattleDamagePose* Scn_FindCamItem(CScn* scene, int index);
-void func_8049B59C(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
+void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
                    const nw4r::math::VEC3* in);
 char* BdatTouchStringCell(const void*, const void*, int);
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);

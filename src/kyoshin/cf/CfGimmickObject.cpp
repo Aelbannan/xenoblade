@@ -345,8 +345,8 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
 // Rebuild both collider matrices from the object's basis (+0x04) and the
 // reference point (+0x10); collider A lives at +0x1C, collider B at +0xF4.
 void GimObjRebuildColliders(cf::CfGimmickObject* self) {
-    func_802089BC(self->field_1C, self->field_04, &self->field_10);
-    func_802089BC(self->field_F4, self->field_04, &self->field_10);
+    CfGimmick_BuildColliderMtx(self->field_1C, self->field_04, &self->field_10);
+    CfGimmick_BuildColliderMtx(self->field_F4, self->field_04, &self->field_10);
 }
 
 cf::CfGimmickObject::~CfGimmickObject() {
@@ -1114,7 +1114,7 @@ int GimObjTickStepCountdown(cf::CfGimmickObject* self) {
 }
 
 // GimObjCleanupStepMachine - step-machine cleanup: resolves the +0x6A area registration
-// (func_8020A6B0 / CfGimmick_UnregisterSpawnedObject), runs the +0x180 effect countdown
+// (CfGimmick_UpdateProximity / CfGimmick_UnregisterSpawnedObject), runs the +0x180 effect countdown
 // (Scn_GetFrameDelta delta; on expiry notify CfGimmick_ClearManagerBinding, otherwise scale the
 // remaining time into setChildV40__'s position vector), and plays / refreshes
 // the step sound selected by field_192 (playActorSound for kind 3,
@@ -1140,14 +1140,14 @@ int GimObjGateStepAvailability(cf::CfGimmickObject* self) {
 // the step machine into state 1; while the +0x15E mode byte is active the
 // +0x6C..0x6E and per-area +0x04/0x06 sequence windows must contain the
 // current scenario sequence. The +0x66 flags then drive the spawn/effect
-// gate (func_802098EC) and, on the fail path, the +0x6A area registration
+// gate (CfGimmick_QueryTrigger) and, on the fail path, the +0x6A area registration
 // retry (CfGimmick_IsMessageSystemBusy / CfGimmick_CheckPartyIdLoaded).
 int GimObjTickStepGate(cf::CfGimmickObject* self) {
     return 0;
 }
 
 // GimObjDriveSpawnEffects - spawn/effect driver. Runs the field_66 gate: 0x20 =
-// collision check via func_802098EC (success re-registers the map object),
+// collision check via CfGimmick_QueryTrigger (success re-registers the map object),
 // otherwise a jumptable_eu_80535830[idx] checker is run against either the
 // reference point, the object list (getReslistB48 / getReslistB68) or the
 // players (slot 0xAC spot). The +0x74 flag 0x800 tail then drives the

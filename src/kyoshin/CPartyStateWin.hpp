@@ -50,7 +50,7 @@ struct CPartyStateWinMem {
 };
 
 // Byte view of the u32 window-state word (lbl_eu_806681E4) used by
-// func_801FBC7C: the word is copied to a stack local and indexed by the
+// PartyStateWin_RefreshTitleHelp: the word is copied to a stack local and indexed by the
 // party-state selection value (retail: lwz/stw copy + lbzx index).
 union CPartyStateWinWord {
     u32 word;     // 0x00
@@ -58,7 +58,7 @@ union CPartyStateWinWord {
 };
 
 // Copy blob used by PartyStateWin_CopyWinBlob: three 0xFF0-byte blocks at +0x08/+0xFF8/
-// +0x1FE8 (copied by func_801F9998) plus trailing scalar fields.
+// +0x1FE8 (copied by PartyStateWin_CopyBlockFF0) plus trailing scalar fields.
 struct CPartyStateWinCopy {
     u8 _pad00[0x4];              // 0x00
     u32 field_0x4;               // 0x04
@@ -72,15 +72,15 @@ struct CPartyStateWinCopy {
     u8 field_0x2FE4;             // 0x2FE4
 };
 
-// 8-byte pair (two u32) used for the tail of the func_801F9998 block; the
+// 8-byte pair (two u32) used for the tail of the PartyStateWin_CopyBlockFF0 block; the
 // copy loop iterates these (retail mtctr/bdnz lwzu+stwu shape, same as the
-// SCopyPair loops in func_80191C88).
+// SCopyPair loops in CopyPTSubBlob).
 struct CPartyStateWinWordPair {
     u32 lo;  // 0x00
     u32 hi;  // 0x04
 };
 
-// 0xFF0-byte state block copied by func_801F9998: three leading u32, three
+// 0xFF0-byte state block copied by PartyStateWin_CopyBlockFF0: three leading u32, three
 // SCopy_80191C88 blobs (0x53C each), a trailing u32, a single word copied
 // before the loop and four word-pairs (words[1..8]) copied by the loop.
 struct CPartyStateWinBlock {
@@ -98,7 +98,7 @@ struct CPartyStateWinBlock {
     u32 field_0xfec;     // 0xFEC..0xFF0 (not copied)
 };
 
-// 0x24-byte ring-buffer record pushed by func_801F9754 into the view object
+// 0x24-byte ring-buffer record pushed by PartyStateWin_PushRingRecord into the view object
 // at CPartyStateWin +0x14 (type word, 7 words, u16, u8, u8 - the trailing
 // fields sit at 0x20/0x22/0x23, not packed after 0x18).
 struct CPartyStateWinRec {
@@ -115,7 +115,7 @@ struct CPartyStateWinRec {
     u8 field_0x23;       // 0x23
 };
 
-// Ring-buffer view of the object func_801F9754 pushes records into (the
+// Ring-buffer view of the object PartyStateWin_PushRingRecord pushes records into (the
 // CView created by the ctor at CPartyStateWin +0x14).
 struct CPartyStateWinRing {
     u8 _pad00[0x3ec];    // 0x000..0x3EC
@@ -207,7 +207,7 @@ extern "C" void ModelDispStartFadeOut(CModelDisp*);
 extern "C" void EquipChange_RefreshCategory(CEquipChange*, u8);
 extern "C" int EquipChange_IsSubcurBusy(CEquipChange*);
 
-// Per-frame party-state input handlers used by func_801FA674's pad chain
+// Per-frame party-state input handlers used by PartyStateWin_StatePartyInput's pad chain
 // (retail unmangled; CPartyState.hpp cannot be included here). int returns
 // where the retail cmpwi's the call result directly.
 extern "C" void cancelPartySelect(CPartyState*);
@@ -261,20 +261,20 @@ void playUISound(u32);
 
 // Sibling in this TU (retail unmangled name; extern "C" so the call site in
 // PartyStateWin_StateOpen binds to the retail symbol).
-extern "C" void func_801FBC7C(CPartyStateWin*);
+extern "C" void PartyStateWin_RefreshTitleHelp(CPartyStateWin*);
 
 // Sibling copy helper in this TU (retail unmangled name; copies a 0xFF0-byte
 // block and returns dst, matching retail's mr r3,r30; extern "C" so the call
 // sites in PartyStateWin_CopyWinBlob emit the retail name).
-extern "C" u8* func_801F9998(u8* dst, u8* src);
+extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src);
 
-// State-blob copy helper called by func_801F9998 (retail unmangled; defined
+// State-blob copy helper called by PartyStateWin_CopyBlockFF0 (retail unmangled; defined
 // in code_8018F8D8.cpp). Opaque byte pointers because SCopy_80191C88's
 // header cannot be included here.
-extern "C" void func_80191C88(u8* dst, const u8* src);
+extern "C" void CopyPTSubBlob(u8* dst, const u8* src);
 
 // C-linkage imports for the embedded CPartyState sub-object used by
-// PartyStateWin_StateSettle / func_801FBC7C. func_801FD5C4 returns u8 here (the caller
+// PartyStateWin_StateSettle / PartyStateWin_RefreshTitleHelp. func_801FD5C4 returns u8 here (the caller
 // masks at use sites, retail has no post-call rlwinm); isPartyReady returns
 // int (retail cmpwi's the call result directly).
 extern "C" int isPartyReady(CPartyState*);
@@ -287,7 +287,7 @@ extern "C" u8 getPartySelectIndex(CPartyState*);
 
 // UI sound/announce helper (retail unmangled; declared in
 // CfGameManagerUnityHelpers.hpp, which is not included here).
-extern "C" void func_8012FAA8();
+extern "C" void UIBattleReleaseAll();
 
 // CTitleAHelp byte-setter (retail unmangled; CTitleAHelp.hpp cannot be
 // included here).
@@ -302,7 +302,7 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // getter (retail unmangled, same declarations as CPartyState.hpp).
 extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
-// Window-state word read by func_801FBC7C (.sdata, retail unmangled). const
+// Window-state word read by PartyStateWin_RefreshTitleHelp (.sdata, retail unmangled). const
 // lets MWCC hoist the sda21 load above the frame stores (retail shape -
 // MWCC_CASES "extern const float" pattern).
 extern const u32 lbl_eu_806681E4;
@@ -382,7 +382,7 @@ extern "C" CPartyStateS16Quad* PartyStateWin_BuildS16Quad(CPartyStateS16Quad* ds
                                                const CPartyStateS16Pair* srcA,
                                                const CPartyStateS16Pair* srcB);
 
-// Source view of func_801F969C's second argument: an embedded CViewFrame at
+// Source view of PartyStateWin_BuildRectQuad's second argument: an embedded CViewFrame at
 // 0x1DC whose content origin (mContentX/Y at frame +0x54/0x56) doubles as the
 // s16 pair at 0x230/0x232 read by the offset computation.
 struct CPartyStateWinRectSrc {
@@ -422,7 +422,7 @@ struct CTaskGameProcView {
 // embedded CTitleAHelp/CModelDisp/CPartyState/CEquipChange/CSysWin headers
 // cannot be included here). ModelDispEquip_ResetDisplay is declared above.
 extern "C" void teardown(CTitleAHelp*);
-extern "C" void func_801FC0C4(CModelDisp*);
+extern "C" void ModelDispTeardownAll(CModelDisp*);
 extern "C" void termPartyState(CPartyState*);
 extern "C" void EquipChange_CleanupFiles(CEquipChange*);
 extern "C" void sysWinTermLayout(CSysWin*);
@@ -475,8 +475,8 @@ extern "C" int EquipChange_IsMenuBusy(CEquipChange*);
 extern "C" void EquipChange_HandleEIBName(CEquipChange*);
 extern "C" void EquipChange_TryCloseEIBRow(CEquipChange*);
 extern "C" u32 EquipChange_GetMenuId(CEquipChange*);
-extern "C" void func_8022B9B4(CSysWin*, char*, u32);
-extern "C" void func_8022BFC8(CSysWin*, u32);
+extern "C" void sysWinSetKindContent(CSysWin*, char*, u32);
+extern "C" void sysWinApplyKind(CSysWin*, u32);
 extern "C" void sysWinOpenPhase1(CSysWin*);
 extern "C" int ModelDispEquip_GetState21(CModelDispEquipView*);
 extern "C" void ModelDispEquip_StartFadeIn(CModelDispEquipView*);
@@ -517,7 +517,7 @@ extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
-extern "C" void func_800BFDE0(void* obj, u32 flag);
+extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 
 // 3-word name-table read by PartyStateWin_StateEquipRefresh's item-filter block (.rodata,
@@ -526,7 +526,7 @@ extern "C" void __dt__80043E88(void*, int);
 extern const u32 lbl_eu_80507C78[3];
 
 // 0x18-byte cursor-like sub-object embedded at +0x34 of the PartyStateWin_CopyStateBlob58
-// blob. func_8018B0FC copies its +0x4..+0x15 region (4 words + 2 bytes); the
+// blob. MenuShopSellCopyCursor copies its +0x4..+0x15 region (4 words + 2 bytes); the
 // +0x0 word is not copied (same shape as ShopSellCursor18 in
 // CMenuShopSell.hpp, which cannot be included here).
 struct CPartyStateWinCursor {
@@ -541,7 +541,7 @@ struct CPartyStateWinCursor {
 
 // 0x58-byte menu-state blob copied by PartyStateWin_CopyStateBlob58: a 4-word mem region at
 // +0x04 (copied by the __ct__UnkClass_8011C974 helper), scalar fields
-// +0x14..+0x31, a cursor sub-object at +0x34 (copied by func_8018B0FC) and a
+// +0x14..+0x31, a cursor sub-object at +0x34 (copied by MenuShopSellCopyCursor) and a
 // packed tail. The tail's +0x4F u32 and +0x53 u16 sit at odd offsets, so the
 // struct is 1-packed to reproduce the retail misaligned lwz/stw + lhz/sth
 // (same pack pattern as CInfoCf.hpp).
@@ -560,7 +560,7 @@ struct CPartyStateWinBlob58 {
     u8 field_0x30;              // 0x30
     u8 field_0x31;              // 0x31
     u8 _pad32[2];               // 0x32..0x34
-    CPartyStateWinCursor field_0x34;  // 0x34..0x4C (copied by func_8018B0FC)
+    CPartyStateWinCursor field_0x34;  // 0x34..0x4C (copied by MenuShopSellCopyCursor)
     u8 field_0x4C;              // 0x4C
     u8 field_0x4D;              // 0x4D
     u8 field_0x4E;              // 0x4E
@@ -572,7 +572,7 @@ struct CPartyStateWinBlob58 {
 };
 #pragma pack(pop)
 
-// 0x10C0-byte state blob copied by func_801F9B18 (same family as
+// 0x10C0-byte state blob copied by PartyStateWin_CopyBlob10C0 (same family as
 // CPartyStateWinBlock: three 0x53C SCopy_80191C88 regions with word tails,
 // then counted 8-byte pair runs). Adjacent word pairs that retail copies as a
 // 2-load/2-reverse-store unit (0xFD8/0xFDC, 0x1004/0x1008, 0x1098/0x109C,
@@ -623,16 +623,16 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, const void* src);
 // Cursor sub-object copy helper (retail unmangled; also declared in
 // COption.hpp / CItemBoxGrid.hpp). Copies the +0x4..+0x15 region of a
 // 0x18-byte cursor object; PartyStateWin_CopyStateBlob58 passes its +0x34 sub-object.
-extern "C" void func_8018B0FC(void* dst, const void* src);
+extern "C" void MenuShopSellCopyCursor(void* dst, const void* src);
 
-// Copy helpers used by func_801F9CB4 / func_801F941C (retail unmangled names;
+// Copy helpers used by PartyStateWin_CopyEquipChange / PartyStateWin_OpenWindow (retail unmangled names;
 // owning TU headers cannot be included here).
-extern "C" void func_8018BE74(u8* dst, const u8* src);
+extern "C" void ShopBuy_CopyData(u8* dst, const u8* src);
 extern "C" void PartyStateWin_CopySlotRec(u8* dst, const u8* src);
-extern "C" void func_8016742C(u8* dst, const u8* src);
+extern "C" void InfoCfCopySysWin(u8* dst, const u8* src);
 
 // Byte-offset view of the embedded CEquipChange sub-object (retail size
-// 0x2A58) as copied by func_801F9CB4. Regions handled by copy helpers are
+// 0x2A58) as copied by PartyStateWin_CopyEquipChange. Regions handled by copy helpers are
 // opaque byte blobs; every individually-copied scalar keeps field-style
 // naming. The three counted loops copy 8-byte records through the shared
 // wd[1]/wd[2] pointer-walk form, so their base pointers sit 4 bytes before
@@ -647,9 +647,9 @@ struct CEquipChangeCopyView {
     u8 f4c;              // 0x04c
     u8 f4d;              // 0x04d
     u8 _pad4e[2];
-    u8 f50[0x18];        // 0x050 (func_8018B0FC)
-    u8 f68[0x18];        // 0x068 (func_8018B0FC)
-    u8 f80[0x18];        // 0x080 (func_8018B0FC)
+    u8 f50[0x18];        // 0x050 (MenuShopSellCopyCursor)
+    u8 f68[0x18];        // 0x068 (MenuShopSellCopyCursor)
+    u8 f80[0x18];        // 0x080 (MenuShopSellCopyCursor)
     u8 f98;              // 0x098
     u8 f99;              // 0x099
     u32 f9a;             // 0x09a
@@ -672,14 +672,14 @@ struct CEquipChangeCopyView {
     u16 f150;            // 0x150
     u8 f152;             // 0x152
     u8 _pad153;
-    u8 f154[0x160];      // 0x154..0x2b4 (func_8018BE74)
+    u8 f154[0x160];      // 0x154..0x2b4 (ShopBuy_CopyData)
     u8 f2b4[0x10];       // 0x2b4 (__ct__UnkClass_8011C974)
     u8 f2c4[0x10];       // 0x2c4 (__ct__UnkClass_8011C974)
     u32 f2d4[7];         // 0x2d4..0x2f0
     u8 f2f0[4];          // 0x2f0..0x2f4
     u8 f2f4[0x18];       // 0x2f4 (PartyStateWin_CopySlotRec)
     u8 f30c[0x18];       // 0x30c (PartyStateWin_CopySlotRec)
-    u8 f324[0x1c];       // 0x324 (func_8018B0FC)
+    u8 f324[0x1c];       // 0x324 (MenuShopSellCopyCursor)
     u8 f340[0x10];       // 0x340 (__ct__UnkClass_8011C974)
     u32 f350[5];         // 0x350..0x364
     u8 f364[4];          // 0x364..0x368
@@ -693,8 +693,8 @@ struct CEquipChangeCopyView {
     u8 pairs16[0x80];    // 0x3a8..0x428 (counted loop, 16 records)
     u8 f428[3];          // 0x428..0x42b
     u8 _pad42b;
-    u8 f42c[0x3c];       // 0x42c (func_8016742C)
-    u8 f468[0x3c];       // 0x468 (func_8016742C)
+    u8 f42c[0x3c];       // 0x42c (InfoCfCopySysWin)
+    u8 f468[0x3c];       // 0x468 (InfoCfCopySysWin)
     u8 f4a4[3];          // 0x4a4..0x4a7
     u8 _pad4a7;
     u16 f4a8;            // 0x4a8
@@ -706,7 +706,7 @@ struct CEquipChangeCopyView {
     u32 f4b4;            // 0x4b4
     u32 f4b8;            // 0x4b8
     u32 f4bc;            // 0x4bc
-    u8 f4c0[0x15c];      // 0x4c0..0x61c (func_8018BE74)
+    u8 f4c0[0x15c];      // 0x4c0..0x61c (ShopBuy_CopyData)
     u32 f61c;            // 0x61c
     u16 f620;            // 0x620
     u8 f622[0xe];        // 0x622..0x630 (&f622[8] is the loop base at 0x62a)
@@ -747,7 +747,7 @@ extern "C" void loadPartyLayoutArc(CPartyState* self);
 extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquipView* self);
 extern "C" void EquipChange_LoadBindFiles(CEquipChange* self);
 extern "C" void Scn_GetCamWorkInt(CScn* scn, CWorkThread* work, u32 flag);
-extern "C" void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
+extern "C" void PartyStateWin_BuildRectQuad(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
 extern "C" void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src);
 // Defined with C++ linkage in CTaskGameEff.cpp; declared here to match.
 void registerEffScene(CScn* scn);
@@ -764,7 +764,7 @@ extern "C" u32 PartyStateWin_GetGameWorkThread(u8* self);
 extern "C" u32 PartyStateWin_GetSharedWinObj(void);
 
 // Sibling helpers defined later in this TU (retail unmangled names).
-extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag);
+extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag);
 extern "C" CPartyStateWinMem* PartyStateWin_InitMemCounters(CPartyStateWinMem* self);
 extern "C" void PartyStateWin_InitGaugeRecord(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
                               u16 d);
@@ -773,12 +773,12 @@ extern "C" CPartyStateWinCopy* PartyStateWin_CopyWinBlob(CPartyStateWinCopy* dst
                                              CPartyStateWinCopy* src);
 extern "C" CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlob58* self,
                                                CPartyStateWinBlob58* src);
-extern "C" CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
+extern "C" CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartyStateWinBlob10C0* self,
                                                  CPartyStateWinBlob10C0* src);
-extern "C" void func_801F9CB4(CEquipChange* dst, CEquipChange* src);
-extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2);
+extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dst, CEquipChange* src);
+extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg2);
 
-// Equip-display pad-chain targets used by func_801FB900 (retail unmangled;
+// Equip-display pad-chain targets used by PartyStateWin_StateEquipDisplay (retail unmangled;
 // the CModelDispEquip header cannot be included here).
 extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquipView*);

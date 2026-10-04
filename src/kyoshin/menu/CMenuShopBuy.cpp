@@ -13,7 +13,7 @@
 extern "C" void cbRenderBefore__12CMenuShopBuyFv(void*);
 
 // Same-TU blob copy helper (defined below); Init uses it twice.
-extern "C" void func_8018BE74(ShopBuyData* dst, const ShopBuyData* src);
+extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src);
 
 /*
  * Destructor (retail D2 form, symbol keeps its C++ mangling in US).
@@ -145,10 +145,10 @@ void CMenuShopBuy::Init() {
     mItemBox.mIBLData.unk59 = tmpLine.mData.unk59;
     mItemBox.mIBLData.tabEntries10 = tmpLine.mData.tabEntries10;
     mItemBox.mIBLData.pad6410 = tmpLine.mData.pad6410;
-    func_8018B0FC(&mItemBox.mIBLData.cursors[0], &tmpLine.mData.cursors[0]);
-    func_8018B0FC(&mItemBox.mIBLData.cursors[1], &tmpLine.mData.cursors[1]);
-    func_8018B0FC(&mItemBox.mIBLData.cursors[2], &tmpLine.mData.cursors[2]);
-    func_8018B0FC(&mItemBox.mIBLData.cursors[3], &tmpLine.mData.cursors[3]);
+    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[0], &tmpLine.mData.cursors[0]);
+    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[1], &tmpLine.mData.cursors[1]);
+    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[2], &tmpLine.mData.cursors[2]);
+    MenuShopSellCopyCursor(&mItemBox.mIBLData.cursors[3], &tmpLine.mData.cursors[3]);
     __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegionD4, &tmpLine.mData.mRegionD4);
     __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegionE4, &tmpLine.mData.mRegionE4);
     mItemBox.mIBLData.field_0xF0[0] = tmpLine.mData.field_0xF0[0];
@@ -186,7 +186,7 @@ void CMenuShopBuy::Init() {
     mItemBox.mIBLData.chunk168 = tmpLine.mData.chunk168;
     mItemBox.mIBLData.chunk170 = tmpLine.mData.chunk170;
     mItemBox.mIBLData.field_0x178 = tmpLine.mData.field_0x178;
-    func_8018BE74(&mItemBox.mIBLData.blob17C, &tmpLine.mData.blob17C);
+    ShopBuy_CopyData(&mItemBox.mIBLData.blob17C, &tmpLine.mData.blob17C);
 
     __ct__UnkClass_8011C974(&mItemBox.mIBLData.mRegion2DC, &tmpLine.mData.mRegion2DC);
     mItemBox.mIBLData.field_0x2EC[0] = tmpLine.mData.field_0x2EC[0];
@@ -259,7 +259,7 @@ void CMenuShopBuy::Init() {
     strcpy(mItemBox.mIBLData.str434, tmpLine.mData.str434);
     mItemBox.mIBLData.len4D8 = strlen(tmpLine.mData.str458);
     strcpy(mItemBox.mIBLData.str458, tmpLine.mData.str458);
-    func_8018BE74(&mItemBox.mIBLData.blob4DC, &tmpLine.mData.blob4DC);
+    ShopBuy_CopyData(&mItemBox.mIBLData.blob4DC, &tmpLine.mData.blob4DC);
     __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>(&tmpLine), -1);
 
     // Reset the real member and register the render callback (same
@@ -317,7 +317,7 @@ void CMenuShopBuy::Move() {
         ShopBuy_AdvancePhase(this);
         break;
     case 2:
-        func_8018C258(this);
+        ShopBuy_HandleInput(this);
         break;
     case 3:
         ShopBuy_MarkClosing(this);
@@ -353,7 +353,7 @@ void CMenuShopBuy::cbRenderBefore() {
 // Copy the 0x159-byte shop-buy data blob field-by-field. Each sub-struct
 // assignment comes out as a mtctr/lwzu/stwu counted loop; the u32 slot group
 // is unrolled into 6 word pairs and the byte is a single lbz/stb.
-extern "C" void func_8018BE74(ShopBuyData* dst, const ShopBuyData* src) {
+extern "C" void ShopBuy_CopyData(ShopBuyData* dst, const ShopBuyData* src) {
     dst->m00 = src->m00;
     dst->m18 = src->m18;
     // Six independent word slots: MWCC schedules these as interleaved
@@ -373,7 +373,7 @@ extern "C" void func_8018BE74(ShopBuyData* dst, const ShopBuyData* src) {
 // the work heap, construct the CMenuShopBuy, publish it to the singleton flag
 // and register it as a CProcess child of `parent`. Returns the singleton (or 0
 // when one already exists).
-extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg) {
+extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 arg) {
     if (lbl_eu_806642F8 != 0)
         return 0;
 
@@ -421,7 +421,7 @@ extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
 // Phase 2 (interaction): poll the pad and drive the item-box line. The two
 // branches differ only in the flag layout (input-enabled vs pointer-input
 // controller); each handler ends by jumping to the shared focus-refresh.
-extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
+extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
     if (MenuTutorialIsCreated() != 0) return;
 
     // Timer clamped to lbl_eu_80667A28, reset to lbl_eu_80667A20 on confirm.

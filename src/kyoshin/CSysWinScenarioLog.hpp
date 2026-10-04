@@ -854,7 +854,7 @@ extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int   CBattleMan_ListHasValue(void* bm, void* obj); // battle-list membership check
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
 extern "C" u16  lbl_eu_80663E42;          // current area id (SysWinLog_DriveCounters gate)
 extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton

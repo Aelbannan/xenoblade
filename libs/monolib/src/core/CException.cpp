@@ -99,8 +99,8 @@ extern "C" {
     void TagWriterSetScale(void* writer, f32 a, f32 b);
     void TagWriterSetCharSpace(void* writer, f32 a);
     void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value);
-    void func_80458084__10CExceptionFv(const void* message);
-    void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);
+    void drawExceptionText__10CExceptionFv(const void* message);
+    void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);
     void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t* text);
 
     // Device exception is an unnamed class in CDevice.cpp.
@@ -193,7 +193,7 @@ extern "C" bool isFadedIn__10CExceptionFv(CException* self) {
 }
 
 // Static factory function
-CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message,
+CException* CException::createException(CWorkThread* pThread, const wchar_t* message,
                                       u32 value) {
     CException* exception;
     if (isHbmActive__7CLibHbmFv()) {
@@ -340,21 +340,21 @@ void CException::wkRender() {
     if (mAnimState >= 1 && (mFlags & 1) != 0) {
         return;
     }
-    func_80458084__10CExceptionFv(mMessage);
+    drawExceptionText__10CExceptionFv(mMessage);
 }
 
 // Main exception text renderer.
 #pragma dont_inline on
-extern "C" void func_80458084__10CExceptionFv(const void* message) {
+extern "C" void drawExceptionText__10CExceptionFv(const void* message) {
     u8* writer = (u8*)findFontByDevice__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
-    func_80458B78__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
+    setWriterCursor__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
     printExceptionMessage__10CExceptionFv(writer, (const wchar_t*)message);
 }
 #pragma dont_inline reset
 
 // Set the nw4r TextWriter font pointer.
-extern "C" void func_eu_8045C964__10CExceptionFv(u8* writer, void* font) {
+extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {
     // Validate the writer pointer against the Wii memory map (MEM1, MEM2,
     // hardware IO registers); panic if it falls outside every known range.
     bool writerRegs2 = true;
@@ -428,7 +428,7 @@ extern "C" void setExceptionColor__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, 
 }
 
 // Set a TextWriter cursor position.
-extern "C" void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
+extern "C" void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
     u32 address = (u32)writer;
     bool validMem1 = true;
     bool validMem2 = true;
@@ -616,7 +616,7 @@ extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
     for (;;) {
         endFrame__9CDeviceVIFv();
         beginFrame__9CDeviceVIFv();
-        func_80458084__10CExceptionFv(message);
+        drawExceptionText__10CExceptionFv(message);
     }
 }
 
@@ -628,7 +628,7 @@ void CException::AddToGlobalArray(IException* pException) {
 }
 
 // Remove from global array
-extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
+extern "C" void RemoveFromGlobalArray__10CExceptionFP10IException(CException* self) {
     int count = lbl_eu_806656C4;
     for (int index = 0; index < count; ++index) {
         if (lbl_eu_80657B50[index] == self) {

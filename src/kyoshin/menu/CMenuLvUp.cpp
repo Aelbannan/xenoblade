@@ -112,7 +112,7 @@ void CMenuLvUp::Term() {
 // Move - per-frame driver. The guard chain (same shape as cbRenderBefore)
 // gates on the task state; when the menu is active (mField11C) each entry's
 // state machine runs: 1/2 advance their anim to the target frame then reset,
-// 3 hands off to func_802764A0. The active flag is then re-derived from the
+// 3 hands off to driveLvUpEntryState. The active flag is then re-derived from the
 // three entry states.
 // ---------------------------------------------------------------------------
 void CMenuLvUp::Move() {
@@ -144,7 +144,7 @@ void CMenuLvUp::Move() {
                 }
                 break;
             case 3:
-                func_802764A0(this, entry);
+                driveLvUpEntryState(this, entry);
                 break;
             default:
                 break;
@@ -250,34 +250,34 @@ extern "C" CMenuLvUp* __ct__CMenuLvUp(CProcess* parent, CScn* scene) {
 
 void fireLvUpCombo(CMenuLvUp* self, u32 flag) {
     if (lbl_eu_80664900 != 0) {
-        func_80276200(lbl_eu_80664900, self, 1);
-        func_80276200(lbl_eu_80664900, self, 2);
+        registerLvUpAction(lbl_eu_80664900, self, 1);
+        registerLvUpAction(lbl_eu_80664900, self, 2);
         if (flag != 0) {
-            func_80276200(lbl_eu_80664900, self, 3);
+            registerLvUpAction(lbl_eu_80664900, self, 3);
         }
     }
 }
 
 void fireLvUpMode2(CMenuLvUp* self) {
     if (lbl_eu_80664900 != 0) {
-        func_80276200(lbl_eu_80664900, self, 2);
+        registerLvUpAction(lbl_eu_80664900, self, 2);
     }
 }
 
 void fireLvUpMode4(CMenuLvUp* self) {
     if (lbl_eu_80664900 != 0) {
-        func_80276200(lbl_eu_80664900, self, 4);
+        registerLvUpAction(lbl_eu_80664900, self, 4);
     }
 }
 
 // ---------------------------------------------------------------------------
-// func_80276200 - register a menu action for an actor. When an entry already
+// registerLvUpAction - register a menu action for an actor. When an entry already
 // tracks the actor id its queued-state list (entry+0x16, 32 bytes) is
 // compacted (non-zero states packed to the front) and the new state is
 // appended; otherwise the first empty entry claims the id with state 3 and
 // the new state as its first queue element. The menu-active flag is set.
 // ---------------------------------------------------------------------------
-void func_80276200(CMenuLvUp* a, CMenuLvUp* b, int c) {
+void registerLvUpAction(CMenuLvUp* a, CMenuLvUp* b, int c) {
     for (u8 i = 0; i < 3; i++) {
         CMenuLvUpEntry* entry = &a->mEntries[i];
         if (entry->field_0x10 == (u32)b) {
@@ -318,14 +318,14 @@ void func_80276200(CMenuLvUp* a, CMenuLvUp* b, int c) {
 }
 
 // ---------------------------------------------------------------------------
-// func_802764A0 - drive the next queued state for an entry. Scans the 32-byte
+// driveLvUpEntryState - drive the next queued state for an entry. Scans the 32-byte
 // queued-state list (0 = empty) for the first non-zero entry; states 1-4
 // prepare the matching layout pane set (visible flags) and play a UI sound,
 // state 1 also triggers the actor's level-up voice. The processed state is
 // recorded at +0x15 and its slot cleared. An exhausted list resets the entry
 // (actor id and state cleared).
 // ---------------------------------------------------------------------------
-void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
+void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     for (u8 i = 0; i < 0x20; i++) {
         // Retail keeps the slot ADDRESS (entry+i) in a callee-saved register
         // across the state handling (the index itself only feeds i++).
@@ -473,7 +473,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         world.z = src->z;
 
         MenuLvUpPose* pose = Scn_FindCamItem(self->mScene, -1);
-        func_8049B59C(&screen, pose, &world);
+        CamMan_ProjectToScreen(&screen, pose, &world);
         screen.x -= lbl_eu_80668A08;
         screen.y -= lbl_eu_80668A0C;
         screen.y *= lbl_eu_80668A10;

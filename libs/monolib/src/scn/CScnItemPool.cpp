@@ -259,7 +259,7 @@ extern "C" __declspec(noinline) u32 CScnItemPool_getItemPtr(u8* self) { return (
 // free slot (a node whose mNext is null), stores the item through the guarded
 // setItem pattern, and links the node onto the ring. The setItem try/catch
 // forces the retail frame marker (mr r31,r1 / stw r1) - same shape as
-// ScheduleList.cpp func_804E4830.
+// ScheduleList.cpp SchedList_AddItem.
 extern "C" __declspec(noinline) void CScnItemPool_pushItemToList(u32 a, u32* b) {
     _reslist_base<CScnItem*>* self = (_reslist_base<CScnItem*>*)a;
     int i;
@@ -518,7 +518,7 @@ struct CScnItemPoolListNode {
 };
 
 // Node-array view of a sub-pool reslist (allocated node array + capacity),
-// used by func_8048C0EC. Layout mirrors _reslist_base<CScnItem*>.
+// used by CScnItemPool_initNodeArray. Layout mirrors _reslist_base<CScnItem*>.
 struct CScnItemPoolNodeArray {
     u32* mVtable;                        // 0x00
     CScnItemPoolLink* mStartNodePtr;     // 0x04
@@ -529,13 +529,13 @@ struct CScnItemPoolNodeArray {
     bool field_0x1c;                     // 0x1C
 };
 
-// func_8048C0EC: (re)initializes sub-pool #0's node array: allocates `count`
+// CScnItemPool_initNodeArray: (re)initializes sub-pool #0's node array: allocates `count`
 // nodes from MemManager, clears every node's mNext (the free marker used by
 // CScnItemPool_pushItemToList), and records the capacity.
 // noinline: retail CALLS this from __ct__CScnItemPool (x5); without it -ipa
 // flattens the allocation loop into the constructor. extern "C" matches the
-// retail address-named symbol func_8048C0EC.
-extern "C" __declspec(noinline) void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count) {
+// retail address-named symbol CScnItemPool_initNodeArray.
+extern "C" __declspec(noinline) void CScnItemPool_initNodeArray(CScnItemPoolNodeArray* self, u32 handle, int count) {
     self->mList = (CScnItemPoolListNode*)mtl::MemManager::allocate_array((u32)count * 0xC, handle);
     for (int i = 0; i < count; i++) {
         self->mList[i].mNext = nullptr;
@@ -727,13 +727,13 @@ CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
     __ct__reslist_CScnItem(&mListAC);
     mSubCountDC = 0;
     // Node-array init order matches retail: 0xC, 0x4C, 0x6C, 0x2C, 0x8C.
-    func_8048C0EC((CScnItemPoolNodeArray*)&mList0C, Scn_CallUnk8C_V8(scene), cnt0C);
-    func_8048C0EC((CScnItemPoolNodeArray*)&mList4C, Scn_CallUnk8C_V8(scene), cnt4C);
-    func_8048C0EC((CScnItemPoolNodeArray*)&mList6C, Scn_CallUnk8C_V8(scene), cnt6C);
-    func_8048C0EC((CScnItemPoolNodeArray*)&mList2C, Scn_CallUnk8C_V8(scene), cnt2C);
-    func_8048C0EC((CScnItemPoolNodeArray*)&mList8C, Scn_CallUnk8C_V8(scene), cnt8C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList0C, Scn_CallUnk8C_V8(scene), cnt0C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList4C, Scn_CallUnk8C_V8(scene), cnt4C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList6C, Scn_CallUnk8C_V8(scene), cnt6C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList2C, Scn_CallUnk8C_V8(scene), cnt2C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList8C, Scn_CallUnk8C_V8(scene), cnt8C);
     // Sub-pool 0xAC shares the 0xC node count.
-    func_8048C0EC((CScnItemPoolNodeArray*)&mListAC, Scn_CallUnk8C_V8(scene), cnt0C);
+    CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mListAC, Scn_CallUnk8C_V8(scene), cnt0C);
     mFlagsCC = (u8*)mtl::MemManager::allocate_head(Scn_CallUnk8C_V8(scene), cnt2C, 4);
     mSlotsD0 = (CScnItem*)mtl::MemManager::allocate_head(Scn_CallUnk8C_V8(scene), cnt2C * 0x58, 4);
     memset(mFlagsCC, 0, cnt2C);

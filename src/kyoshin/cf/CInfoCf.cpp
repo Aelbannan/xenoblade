@@ -16,14 +16,14 @@
 // extern "C": the retail reloc names are unmangled (same convention as
 // ItemMenu_IsPresent in kyoshin/menu/CMenuItem.cpp).
 extern "C" void InfoCfCopyObjE48(CInfoCfObjE48* dst, const CInfoCfObjE48* src);
-extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src);
+extern "C" void InfoCfCopyObjF80(CInfoCfObjF80* dst, const CInfoCfObjF80* src);
 extern "C" void InfoCfCopyObjD4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
 extern "C" void InfoCfCopyObj60(CInfoCfObj60* dst, const CInfoCfObj60* src);
 extern "C" void InfoCfCopyObjE4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
-extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src);
-// func_8016742C is declared by CItemBoxGrid.hpp (retail-unmangled name,
+extern "C" void InfoCfCopyObj368(CInfoCfObj368* dst, const CInfoCfObj368* src);
+// InfoCfCopySysWin is declared by CItemBoxGrid.hpp (retail-unmangled name,
 // void* ABI); the typed object views are passed straight through.
-extern "C" void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src);
+extern "C" void InfoCfCopyObj4D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src);
 
 // The retail ctor symbol __ct__cf_CInfoCf is a C-linkage name (no C++ mangling
 // markers), so it is emitted as a global function taking the instance (same
@@ -209,13 +209,13 @@ void CMenuItem::Init() {
     dh->tail.field_6E = sh->tail.field_6E;
     dh->tail.field_6F = sh->tail.field_6F;
     InfoCfCopyObjE48(&dstBody->objE8, &srcBody->objE8);
-    func_80166F80(&dstBody->obj1D8, &srcBody->obj1D8);
+    InfoCfCopyObjF80(&dstBody->obj1D8, &srcBody->obj1D8);
     InfoCfCopyObjD4(&dstBody->obj3E4, &srcBody->obj3E4);
     InfoCfCopyObj60(&dstBody->obj418, &srcBody->obj418);
     InfoCfCopyObjE4(&dstBody->obj440, &srcBody->obj440);
-    func_80167368(&dstBody->obj468, &srcBody->obj468);
-    func_8016742C(&dstBody->obj4AC, (void*)&srcBody->obj4AC);
-    func_8016742C(&dstBody->obj4E8, (void*)&srcBody->obj4E8);
+    InfoCfCopyObj368(&dstBody->obj468, &srcBody->obj468);
+    InfoCfCopySysWin(&dstBody->obj4AC, (void*)&srcBody->obj4AC);
+    InfoCfCopySysWin(&dstBody->obj4E8, (void*)&srcBody->obj4E8);
     dstBody->tail524.field_524 = srcBody->tail524.field_524;
     dstBody->tail524.field_525 = srcBody->tail524.field_525;
     dstBody->tail524.field_526 = srcBody->tail524.field_526;
@@ -239,7 +239,7 @@ void CMenuItem::Init() {
     dstBody->tail524.field_547 = srcBody->tail524.field_547;
     dstBody->tail524.field_548 = srcBody->tail524.field_548;
     dstBody->tail524.field_549 = srcBody->tail524.field_549;
-    func_801674D0(&dstBody->obj54C, &srcBody->obj54C);
+    InfoCfCopyObj4D0(&dstBody->obj54C, &srcBody->obj54C);
     __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tempGrid), -1);
 
     ClearListSlots(&mItemBoxGrid);
@@ -279,7 +279,7 @@ extern "C" void InfoCfCopyObjE48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
     dst->tail = src->tail;
 }
 
-extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {
+extern "C" void InfoCfCopyObjF80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {
     dst->head = src->head;
     dst->mid = src->mid;
 }
@@ -305,7 +305,7 @@ extern "C" void InfoCfCopyObjD4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
 // with one temp per field (22 temps fit the register file); the packed tail
 // words at +0x39/+0x3D (odd offsets) are read with word casts from the raw
 // tail slice.
-extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
+extern "C" void InfoCfCopyObj368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
     u32 v04 = src->body.field_04;
     u32 v08 = src->body.field_08;
     u32 v0C = src->body.field_0C;
@@ -355,7 +355,7 @@ extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
 // CSysWin body copy: every field from +0x04..+0x39 except the 0x29-0x2B
 // alignment gap (implicit padding in CInfoCfSysWinBody, not copied by the
 // struct assignment - matching retail).
-void func_8016742C(void* dstV, void* srcV) {
+void InfoCfCopySysWin(void* dstV, void* srcV) {
     CInfoCfObjSysWin* dst = (CInfoCfObjSysWin*)dstV;
     const CInfoCfObjSysWin* src = (const CInfoCfObjSysWin*)srcV;
     u8 t28 = src->body.field_28;
@@ -400,7 +400,7 @@ void func_8016742C(void* dstV, void* srcV) {
 // region, mirroring retail's split schedule: u64 tables via counted lwzu/stwu
 // loops (pointer walks keep MWCC from unrolling), then the packed string/data
 // run as word/byte copies.
-extern "C" void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src) {
+extern "C" void InfoCfCopyObj4D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src) {
     u8* d = (u8*)dst;
     const u8* s = (const u8*)src;
     u64* dq = (u64*)d;
@@ -507,7 +507,7 @@ void CMenuItem::Move() {
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
             IsItemBoxReady(&mItemBoxGrid) != 0) {
             func_801C412C(&mTitleAHelp);
-            func_801CB28C(&mItemBoxGrid);
+            InitItemDisplay(&mItemBoxGrid);
             mState = 1;
             playUISound__FUl(0x6d);
         }
@@ -519,7 +519,7 @@ void CMenuItem::Move() {
         }
         break;
     case 2:
-        func_80167A2C(this);
+        CMenuItem_HandleInput(this);
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.

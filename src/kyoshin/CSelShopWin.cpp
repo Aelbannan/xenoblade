@@ -99,7 +99,7 @@ CSelShopWin::CSelShopWin() : CSelShopWinVtblBase(), mMemRegion() {
 
 // Retail saves r30/r31 with a single stmw (block save). -O4,p emits separate
 // stw pairs; optimize_for_size flips to the stmw/lmw frame (MWCC_CASES
-// §11162, CItemBoxGrid func_801C5158 pattern).
+// §11162, CItemBoxGrid PushUniqueItemId pattern).
 #pragma push
 #pragma optimize_for_size on
 CSelShopWin::~CSelShopWin() {

@@ -188,8 +188,8 @@ void CtrlPc_UpdatePadState(cf::CtrlPc* self) {
     pl = self->mField5C;
     v3 = *pl->mField4->vf30();
     if (testActorStatus(pl, &v3, 0x4000) != 0 ||
-        func_80148778(&self->mField5C->mField8, 6) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xCD) != 0) {
+        isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
         goto probe100;
     }
     v4 = *obj->mField4->vf30();
@@ -257,7 +257,7 @@ probe100:
     }
     movePcTopTickDispatch((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
     self->mField10 = self->mFieldC;
-    if (func_80148778(&self->mField5C->mField8, 6) != 0 ||
+    if (isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
         (cf::CfGameManager::getInstance(), isGlobalCamFlagSet__Fi(0x400000) != 0)) {
         self->mField14 = lbl_eu_80666720;
     }
@@ -294,8 +294,8 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     p = self->mField5C;
     v4 = *p->mField4->vf30();
     if (testActorStatus(p, &v4, 0x1D) != 0) goto fail;
-    if (func_80148778(&self->mField5C->mField8, 0xF) != 0 ||
-        func_80148778(&self->mField5C->mField8, 9) != 0) {
+    if (isBattleStatusActive(&self->mField5C->mField8, 0xF) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 9) != 0) {
     fail:
         self->mField14 = lbl_eu_80666720;
         return;
@@ -337,8 +337,8 @@ void dispatchCtrlPcActions(cf::CtrlPc* self) {
     p = self->mField5C;
     v8 = *p->mField4->vf30();
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
-        func_80148778(&self->mField5C->mField8, 6) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xCD) != 0) {
+        isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
         self->mField14 = lbl_eu_80666720;
     }
     {
@@ -374,14 +374,14 @@ void CtrlPc_HandleMenuSelect(cf::CtrlPc* self) {
     if (CtrlPc_IsPadIdle(self) == 0) {
         return;
     }
-    Fd44State* h = func_8017FD44();
+    Fd44State* h = GetZealObjPtr();
     if (h != 0 && h->mFieldB8 == 4) {
         // Battle-menu open: gate the action on the pad bit mask.
         mask = getPadConfigEntry(0x16);
         if ((self->vf38()->mField4 & mask) == 0) {
             return;
         }
-        int sw = func_8017FD4C(h);
+        int sw = GetZealResult(h);
         // Retail duplicates the whole attach sequence in each arm.
         if (sw == 2) {
             self->mField5C->vf2F8(0x19);
@@ -473,8 +473,8 @@ void CtrlPc_UpdateBattleState(cf::CtrlPc* self) {
     p = self->mField5C;
     v8 = *p->mField4->vf30();
     if (testActorStatus(p, &v8, 0x4000) != 0 ||
-        func_80148778(&self->mField5C->mField8, 6) != 0 ||
-        func_80148778(&self->mField5C->mField8, 0xCD) != 0) {
+        isBattleStatusActive(&self->mField5C->mField8, 6) != 0 ||
+        isBattleStatusActive(&self->mField5C->mField8, 0xCD) != 0) {
         self->mField14 = lbl_eu_80666720;
     }
     // Any of the three actor-id probes set routes into the voice sync.

@@ -69,7 +69,7 @@ namespace cf {
         // NPC-specific member functions
         bool initNpcFlags();
         void updateNpcDialog();
-        void func_800BF764();
+        void loadNpcParams();
         void loadIconType();
         s16 getRltMeet();
         u8 getIconType();

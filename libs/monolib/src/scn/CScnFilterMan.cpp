@@ -35,7 +35,7 @@ extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 w0, u32 w1, u3
 extern "C" u32 ScnFilterList_size(CScnFilterReslist* list);
 extern "C" CGXCache* ScnFilterMan_getGXCache(void);
 extern "C" s32 ScnFilter_isRenderEnabled(CScnFilter* filter);
-extern "C" void func_8049D9D0(CScnFilterMan* self);
+extern "C" void ScnFilterMan_sortByState(CScnFilterMan* self);
 
 // Flattened template ctors defined below; forward-declared so the derived
 // ctors above them emit bl calls instead of inlining the base init.
@@ -689,7 +689,7 @@ extern "C" s32 ScnFilterListIter_equal(CScnFilterListIter* a, CScnFilterListIter
 // end2=0x8); declaration order drives MWCC's reverse allocation.
 #pragma push
 #pragma auto_inline off
-extern "C" __declspec(noinline) void func_8049D9D0(CScnFilterMan* self) {
+extern "C" __declspec(noinline) void ScnFilterMan_sortByState(CScnFilterMan* self) {
     bool swapped;
     CScnFilterListIter itCur;   // 0x1c
     CScnFilterListIter itAdj;   // 0x18
@@ -748,7 +748,7 @@ extern "C" __declspec(noinline) void ScnFilterMan_preRender(CScnFilterMan* self)
     }
     resetGXStateA__8CGXCacheFv(ScnFilterMan_getGXCache());
     updateCmd1Words__8CGXCacheFv(ScnFilterMan_getGXCache(), 1, 4, 5, 0, 1);
-    func_8049D9D0(self);
+    ScnFilterMan_sortByState(self);
 
     // Declaration order drives MWCC's reverse slot allocation (retail:
     // itOut=0x10, itTmp=0xc, itEnd=0x8).

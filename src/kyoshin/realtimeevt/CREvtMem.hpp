@@ -35,7 +35,8 @@ struct CREvtMem {
 extern u8 lbl_eu_80530A30[];
 extern cf::CREvtMem* lbl_eu_80664260;
 
-// Float constant loaded by the ctor (retail sdata2 pool).
+// Float constant loaded by the ctor (retail sdata2 pool; UNDEF slot kept
+// for rule-side pool naming -- see the sbss note in CREvtMem.cpp).
 extern const f32 lbl_eu_80667650;
 
 // Arena bounds helpers imported from the CInfoCf TU (bodies in
@@ -44,11 +45,11 @@ extern "C" void* InfoCfGetUnk0C(void);
 extern "C" void* InfoCfGetUnk10(void);
 
 // Initialise the arena and allocate the two realtime-event chunks.
-extern "C" u32 func_80167D40(u32 size, u32 offset);
+extern "C" u32 initEvtMemArena(u32 size, u32 offset);
 // Release both chunks if they were backed by MEM2 allocations.
 extern "C" void freeEvtMemAll(void);
 // Aligned allocation: carve from the arena while it fits, else heap/MEM1.
-extern "C" u8* func_80167F6C(u32 size, u32 alignment, int useMEM1);
+extern "C" u8* allocEvtMemAligned(u32 size, u32 alignment, int useMEM1);
 // Free a pointer only if it came from outside the arena (heap-backed).
 extern "C" void freeEvtMemPtr(u8* ptr);
 // Indexed accessor over the pointer slot array starting at ptr1 (+0x10).

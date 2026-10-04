@@ -54,7 +54,7 @@ struct CScnMgrLayout {
     u8 pad_0x0[0x60];                 // +0x00
     CScnItemPool* mItemPool;          // +0x60 (arg of CScnItemPool_forEachCallVfunc14)
     CScnLightMan* mLightMan;          // +0x64 (arg of LightManInvokeLightV3)
-    CScnCameraMan* mCamWork;          // +0x68 (arg of func_8049B024)
+    CScnCameraMan* mCamWork;          // +0x68 (arg of CamMan_RefreshCurrentCamera)
     u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
     CScnFogMan* mFogMan;              // +0x78 (arg of FogManIsFogEnabled)
     CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of scnLgtBindCamera / 22F0 / 19B8)
@@ -116,7 +116,7 @@ extern "C" void Scn_SetCurrentScene(u32 value);
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtUpdateSceneLights(CScnEnvLgtCtrl* ctrl);
 extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
-extern "C" void func_8049B024(CScnCameraMan* cam);
+extern "C" void CamMan_RefreshCurrentCamera(CScnCameraMan* cam);
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);
 extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
@@ -131,9 +131,9 @@ extern const char lbl_eu_8056E6F8[];
 // Bloom post-effect owned at CScnRootNw4r::field_0x14 (defined in
 // libs/monolib/src/scn/CScnBloom.cpp).
 class CScnBloom;
-extern "C" void func_8049A128(CScnBloom* bloom);
-extern "C" void func_8049A318(CScnBloom* bloom);
-extern "C" void func_8049AA74(CScnBloom* bloom);
+extern "C" void CScnBloom_RenderFullRes(CScnBloom* bloom);
+extern "C" void CScnBloom_RenderCached(CScnBloom* bloom);
+extern "C" void CScnBloom_RenderHalfRes(CScnBloom* bloom);
 
 // Scene-item model pool item drawn through the kind-1 draw list.
 class CScnItemModel;

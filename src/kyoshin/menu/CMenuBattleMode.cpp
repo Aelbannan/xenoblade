@@ -259,7 +259,7 @@ run:
         if (player == 0) {
             break;
         }
-        func_8016FE34(player);
+        MapFx_ResolveOwner(player);
         if (ActorList1Count(
                 &cf::CBattleManager::getInstance()->mActorList1) == 0) {
             break;
@@ -285,7 +285,7 @@ run:
         if (player == 0) {
             break;
         }
-        func_8016FE34(player);
+        MapFx_ResolveOwner(player);
         if (ActorList1Count(
                 &cf::CBattleManager::getInstance()->mActorList1) != 0) {
             break;

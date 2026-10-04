@@ -22,7 +22,7 @@ namespace cf{
     }
 }
 
-void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
+void updateChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_getMoveRecord();
@@ -51,13 +51,13 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     }
 }
 
-void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
+void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending != 0) {
         // Slot +0x4C is CObjectParam_getSelfObjectId on the CfObjectMove
         // sub-object at actor+0x3E9C (same shape as CAIAction aiMoveBaseVt4C);
-        // its id result resolves through findObjectById -> func_8016FE34 to
+        // its id result resolves through findObjectById -> MapFx_ResolveOwner to
         // a CActorParam whose slot +0x184 is CActorParam_addSecondGauge.
-        cf::CActorParam* vobj = (cf::CActorParam*)func_8016FE34(findObjectById(
+        cf::CActorParam* vobj = (cf::CActorParam*)MapFx_ResolveOwner(findObjectById(
             ((cf::CObjectParam*)((u8*)actor + 0x3E9C))->CObjectParam_getSelfObjectId()));
 
         if (vobj != nullptr) {

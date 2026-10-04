@@ -7,12 +7,12 @@ public:
     CToken();
     virtual ~CToken();
 
-    u32 func_8043A8D8();
+    u32 parseHexToken();
     void func_8043AA1C();
     void clear();
-    void func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName);
-    char* func_8043AB14(char* pInput, int tokenIndex);
-    bool func_8043ABD4(const char* pInput, const char* mode);
+    void findTokenName(char* pOutBuffer, int bufferLen, const char* pName);
+    char* extractWordAt(char* pInput, int tokenIndex);
+    bool matchKeyWords(const char* pInput, const char* mode);
 
     //0x0: vtable
     u8 field_0x4[0x1100];     //0x4

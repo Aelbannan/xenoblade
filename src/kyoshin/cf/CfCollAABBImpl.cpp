@@ -13,7 +13,7 @@
 // memory. Position is fetched via cf::CfObject::GetPosition (virtual at +0xAC,
 // lbl_eu_80528600) on the CfObjectColl.
 
-extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
+extern "C" void CollAABB_DrawDebugShape(void* /*ctx*/, cf::CfObjectColl* coll) {
     // View coll memory as AABB data.
     cf::CfCollAABBImpl* aabb = reinterpret_cast<cf::CfCollAABBImpl*>(coll);
 

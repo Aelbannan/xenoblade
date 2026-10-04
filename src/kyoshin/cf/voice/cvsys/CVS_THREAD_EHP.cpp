@@ -23,10 +23,10 @@ extern "C" int getEhpBufferSize() {
     return 0xB4;
 }
 
-// us-802a8e4c (func_802A6718)
+// us-802a8e4c (EhpVxOnComplete)
 // Completion callback: if no active voice is playing, invoke the
 // playback-start virtual (CVS_THREAD::PlayThreadVoice, vtable slot 0).
-void func_802A6718(CVS_THREAD_EHP* self) {
+void EhpVxOnComplete(CVS_THREAD_EHP* self) {
     if (IsThreadVoiceActive(self) == 0) {
         self->PlayThreadVoice();
     }

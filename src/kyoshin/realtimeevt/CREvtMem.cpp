@@ -61,11 +61,11 @@ cf::CREvtMem::~CREvtMem() {
 }
 
 // ============================================================================
-// func_80167D40: Initialize arena and allocate two chunks
+// initEvtMemArena: Initialize arena and allocate two chunks
 // r3 = size, r4 = offset
 // Returns the chunk size
 // ============================================================================
-u32 func_80167D40(u32 size, u32 offset) {
+u32 initEvtMemArena(u32 size, u32 offset) {
     // Establish the arena bounds from the realtime event region.
     lbl_eu_80664260->field_08 = (u32)InfoCfGetUnk0C();
     lbl_eu_80664260->field_0C = (u32)InfoCfGetUnk10();
@@ -149,11 +149,11 @@ void freeEvtMemAll(void) {
 }
 
 // ============================================================================
-// func_80167F6C: Aligned allocation from arena or heap
+// allocEvtMemAligned: Aligned allocation from arena or heap
 // r3 = size, r4 = alignment, r5 = useMEM1 flag
 // Returns pointer to allocated memory, or 0 if fails
 // ============================================================================
-u8* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
+u8* allocEvtMemAligned(u32 size, u32 alignment, int useMEM1) {
     cf::CREvtMem* m = lbl_eu_80664260;
     u32 end = m->arenaEnd;
 
@@ -200,3 +200,13 @@ u8* getEvtMemSlot(u32 idx) {
     // Reads slot [idx] from the pointer array that begins at ptr1 (+0x10).
     return ((u8**)&lbl_eu_80664260->ptr1)[idx];
 }
+
+// [.sbss] 0x80664260-0x80664268 (8B): event-memory singleton pointer + 4
+// retail pad bytes (label spans 0x8; only the pointer is ever referenced).
+// NOTE (wave DL): the sdata2 zero-double (lbl_eu_80667650) stays UNDEF here:
+// defining the 8-byte zero slot in-TU (non-const + section-forced, the only
+// type-correct shape) lets -ipa reschedule the ctor's stfs early (100% ->
+// 35.3%). It needs rule-side pool naming (zero-double pattern, as in
+// CScnFogMan.o's sdata2 pool_patterns) -- frozen, reported.
+cf::CREvtMem* lbl_eu_80664260 = nullptr;
+u8 gap_10_80664264_sbss[4];

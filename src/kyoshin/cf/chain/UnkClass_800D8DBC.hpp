@@ -13,7 +13,7 @@ namespace cf {
     public:
         UnkClass_800D8DBC();
         ~UnkClass_800D8DBC();
-        void func_8027D1A4();
+        void ChainTmr_Reset_D1A4();
 
         u16 unk0;
         u8 unk2[2];

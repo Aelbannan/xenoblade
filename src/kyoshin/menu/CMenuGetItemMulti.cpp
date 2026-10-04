@@ -1190,7 +1190,7 @@ body:
 
     // Per-frame update tail (all states fall through to here).
     mLayout->Animate(0);
-    func_801D202C(&mCursor);
+    Cur_Update(&mCursor);
     sysWinDispatchPhase(&mSystemWindow[0]);
 }
 
@@ -2730,9 +2730,9 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             char* n2 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1d);
             char* n3 = BdatTouchStringCell(base + 0x177, base + 0x182, 0x1e);
             sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            func_8022B9B4(&self->mSystemWindow[0], n1, 0);
+            sysWinSetKindContent(&self->mSystemWindow[0], n1, 0);
             sysWinSetTwoTextValues(&self->mSystemWindow[0], n2, n3);
-            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
             sysWinOpenPhase1(&self->mSystemWindow[0]);
             Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
@@ -2960,8 +2960,8 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                                          &lbl_eu_80504A3C[0x141], slotId);
                 }
                 sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                func_8022B9B4(&self->mSystemWindow[0], text, 0);
-                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
+                sysWinSetKindContent(&self->mSystemWindow[0], text, 0);
+                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
                 sysWinOpenPhase1(&self->mSystemWindow[0]);
                 Cur_SetVisible(&self->mCursor, 0);
                 return;
@@ -3174,8 +3174,8 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                            &lbl_eu_80504A3C[0x182], 3);
                 sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-                func_8022B9B4(&self->mSystemWindow[0], name, 0);
-                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
+                sysWinSetKindContent(&self->mSystemWindow[0], name, 0);
+                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
                 sysWinOpenPhase1(&self->mSystemWindow[0]);
                 Cur_SetVisible(&self->mCursor, 0);
             } else {
@@ -3187,9 +3187,9 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                          &lbl_eu_80504A3C[0x182], 5);
                 sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-                func_8022B9B4(&self->mSystemWindow[0], n2, 0);
+                sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
                 sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+                sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
                 sysWinOpenPhase1(&self->mSystemWindow[0]);
                 Cur_SetVisible(&self->mCursor, 0);
                 self->field_1F4 = 1;
@@ -3203,9 +3203,9 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
             sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            func_8022B9B4(&self->mSystemWindow[0], n2, 0);
+            sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
             sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
             sysWinOpenPhase1(&self->mSystemWindow[0]);
             Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
@@ -3255,8 +3255,8 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             char* name = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                        &lbl_eu_80504A3C[0x182], 3);
             sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
-            func_8022B9B4(&self->mSystemWindow[0], name, 0);
-            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
+            sysWinSetKindContent(&self->mSystemWindow[0], name, 0);
+            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 1);
             sysWinOpenPhase1(&self->mSystemWindow[0]);
             Cur_SetVisible(&self->mCursor, 0);
         } else {
@@ -3268,9 +3268,9 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                      &lbl_eu_80504A3C[0x182], 5);
             sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-            func_8022B9B4(&self->mSystemWindow[0], n2, 0);
+            sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
             sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+            sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
             sysWinOpenPhase1(&self->mSystemWindow[0]);
             Cur_SetVisible(&self->mCursor, 0);
             self->field_1F4 = 1;
@@ -3284,9 +3284,9 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
         char* n5 = BdatTouchStringCell(&lbl_eu_80504A3C[0x177],
                                  &lbl_eu_80504A3C[0x182], 5);
         sysWinSwitchKindPane(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 2);
-        func_8022B9B4(&self->mSystemWindow[0], n2, 0);
+        sysWinSetKindContent(&self->mSystemWindow[0], n2, 0);
         sysWinSetTwoTextValues(&self->mSystemWindow[0], n4, n5);
-        func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
+        sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSystemWindow[0]), 0);
         sysWinOpenPhase1(&self->mSystemWindow[0]);
         Cur_SetVisible(&self->mCursor, 0);
         self->field_1F4 = 1;

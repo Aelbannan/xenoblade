@@ -98,8 +98,8 @@ extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d,
 // Debug-draw setup: binds a CDrawGX to the scene + view (r5 = view, 0 = current).
 extern "C" void TexMan_ApplyCamPersp_034C(void* a, void* b, CView* c);
 // Copy the 12-byte header / info block of scene-resource entry [index].
-extern "C" void func_804BE4B4(void* dst, int index);
-extern "C" void func_804BE4E0(void* dst, int index);
+extern "C" void ScnRes_CopyEntryHead(void* dst, int index);
+extern "C" void ScnRes_CopyEntryMid(void* dst, int index);
 // Segment-query walker (monolib coli unit).
 extern "C" int ColiQuerySegment(ColiProbeObj* self, ml::CVec3* a, ml::CVec3* b,
                              int filter, int isFirst);
@@ -1050,8 +1050,8 @@ int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, f
     ml::CVec3 d1c;
     int result = ScnRes_VertRayForward_E398(b, (int)(uintptr_t)c, 0, 0, -f, g);
     if (result != 0) {
-        func_804BE4B4(&tmp68, 0);
-        func_804BE4E0(&tmp74, 0);
+        ScnRes_CopyEntryHead(&tmp68, 0);
+        ScnRes_CopyEntryMid(&tmp74, 0);
     }
     if (result != 0) {
         tmp44.set(lbl_eu_806667D8, -f, lbl_eu_806667D8);
@@ -1099,13 +1099,13 @@ int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* a
     ml::CVec3 d1c;
     int result1 = ScnRes_VertRayForward_E398(arg2, (int)(uintptr_t)arg3, 0, 0, f1, f2);
     if (result1 != 0) {
-        func_804BE4B4(&tmp74, 0);
-        func_804BE4E0(&tmp80, 0);
+        ScnRes_CopyEntryHead(&tmp74, 0);
+        ScnRes_CopyEntryMid(&tmp80, 0);
     }
     int result2 = ScnRes_VertRayForward_E398(arg2, (int)(uintptr_t)arg3, 0, 0, -f1, f2);
     if (result2 != 0) {
-        func_804BE4B4(&tmp68, 0);
-        func_804BE4E0(&tmp80, 0);
+        ScnRes_CopyEntryHead(&tmp68, 0);
+        ScnRes_CopyEntryMid(&tmp80, 0);
     }
     if (ml::math::abs(tmp74.y - self->y) < ml::math::abs(tmp68.y - self->y) && result1 != 0) {
         tmp68 = tmp74;

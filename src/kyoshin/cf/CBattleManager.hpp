@@ -233,7 +233,7 @@ struct BattleRemoveObjAccessor {
 };
 
 // Enemy/status object view for setupBattleMove's arg3: status region base at
-// +0x8 (func_80148778 operates on &+0x8), flags at +0x3374, embedded move
+// +0x8 (isBattleStatusActive operates on &+0x8), flags at +0x3374, embedded move
 // sub-object at +0x3E9C (vtable slot 0x140, dispatched as a real virtual
 // on the owning move class).
 struct DB4FC_EnemyObj {
@@ -277,7 +277,7 @@ struct BMSentinelView {
     _reslist_node<cf::CfObjectActor*>* sentinel;  // +0x48
 };
 
-// func_8016FE34 result view for CBattleMan_FindActorByKind: flags at +0x3F00 (bit 2 =
+// MapFx_ResolveOwner result view for CBattleMan_FindActorByKind: flags at +0x3F00 (bit 2 =
 // targetable) and type id at +0x15F0.
 struct BattleScanStateView {
     u8 pad_00[0x15F0];

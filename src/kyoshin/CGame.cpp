@@ -309,7 +309,7 @@ void CGame::GameMain() {
 // @param param    Opaque parameter forwarded to the handler
 void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException* handler, u32 param) {
     if (spInstance != nullptr && CTaskGame::isFlag01Set() == nullptr && !spInstance->isNoEvent()) {
-        CException* exception = CException::func_80457CA4(spInstance, message, 5);
+        CException* exception = CException::createException(spInstance, message, 5);
         if (exception != nullptr) {
             exception->mException = handler;
             exception->unk204 = param;

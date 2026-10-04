@@ -106,7 +106,7 @@ public:
     }
 
     // us-80441420: build a rect from this CView's insets (x/y zeroed, w/h = view size minus insets)
-    void func_8043EA88(ml::CRect& rect, CView* other);
+    void fitRectToView(ml::CRect& rect, CView* other);
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread

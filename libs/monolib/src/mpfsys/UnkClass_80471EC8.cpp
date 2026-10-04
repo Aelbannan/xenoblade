@@ -60,7 +60,7 @@ extern const char lbl_eu_80526300[];
 // Per-view render state shared by the layer draw path. lbl_eu_80665848 holds
 // the active map ResFile handle table (indexed by texture slot),
 // lbl_eu_8066584C the per-view display-list offset table (12-byte entries),
-// and lbl_eu_80658410 the scratch camera block used by func_80474064.
+// and lbl_eu_80658410 the scratch camera block used by pushLayerDraw.
 extern void* lbl_eu_80665840;
 extern u32 lbl_eu_80665864;
 extern u32 lbl_eu_80665860;
@@ -114,7 +114,7 @@ extern f32 lbl_eu_80663854;
 extern const f64 lbl_eu_8066A768; // 2^52 (unsigned int -> double conversion)
 extern const f64 lbl_eu_8066A7C8; // 2^32 (unsigned int -> double conversion)
 
-// nw4r assertion strings for func_80473500.
+// nw4r assertion strings for setupMapTexture.
 extern const char lbl_eu_8052CF10[];
 extern const char lbl_eu_8052CEF4[];
 extern const char lbl_eu_8052CF6C[];
@@ -132,21 +132,21 @@ extern u32 lbl_eu_80665884;
 
 // Retail-named imports. These resolve against retail symbols (Scn_HasCamItem is
 // defined in scn/CScn.cpp, func_80477F80 in MPFDrawDisplayList.cpp,
-// func_80474064 is still retail at 0x80474064); extern "C" keeps the call-site
+// pushLayerDraw is still retail at 0x80474064); extern "C" keeps the call-site
 // relocs verbatim (MWCC would otherwise re-mangle the `__` names with the
 // parameter encoding).
 extern "C" void* Scn_HasCamItem(void* camera, void* view);
 // Current-scene getter (scn TU) and its env-light controller push.
 extern "C" void* Scn_GetCurrentScene();
 extern "C" void scnLgtEnterMode20(void* ctrl);
-// nw4r diagnostics / math helpers used by func_804728E8 (retail-named).
+// nw4r diagnostics / math helpers used by simulateLayer (retail-named).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 extern "C" void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* inst, u8* ptr, u8 byte, u32 count);
 // Layer-draw push (defined below): Fv-annotated but actually receives
 // (self, frame+0x9C, a5, a6, f1) from func_80471FCC.
-void func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
+void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* viewMtx, void* a5, void* a6,
     f32 fovScale);
 
@@ -255,7 +255,7 @@ bool tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
             s->field_0x2E08 = a6;
             s->field_0x2E0C = (void*)a7;
         }
-        self->func_804724DC();
+        self->initLayerRecords();
         return true;
     }
     return false;
@@ -276,7 +276,7 @@ void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self,
         MpfsysViewFrame* vf =
             (MpfsysViewFrame*)Scn_HasCamItem(s->field_0x2E08, s->field_0x2E0C);
         f32 scale = vf->field_0x1E0;
-        func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
+        pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)a4, (u8*)vf + 0x9C, a5, a6, scale);
         mpfsys::MPFDrawDisplayList* inst = mpfsys::MPFDrawDisplayList::getInstance();
         paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
@@ -311,7 +311,7 @@ struct MpfsysDlBuf {
 // interleaving two running index counters with the block's four palette
 // bytes, then zero fill up to the 0x300 boundary. Finally the whole region
 // is flushed from the data cache.
-void func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(
+void buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, MpfsysMapHead* src, MpfsysDlBuf* out,
     u32 total) {
     s32 cnt = src->field_0x10;
@@ -404,7 +404,7 @@ void func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(
     DCStoreRange(bufBase, tail->itemCount * 0x300);
 }
 
-// Per-layer animation record laid out by func_804724DC (stride 0xB4).
+// Per-layer animation record laid out by initLayerRecords (stride 0xB4).
 // Uses a trivial POD vector so member copies stay inline word copies
 // (retail never calls the ml::CVec3 assignment operator here).
 struct MpfsysVec3 {
@@ -442,7 +442,7 @@ struct MpfsysInitLayout {
     u16 field_0x2E12;
 };
 
-void mpfsys::UnkClass_80471EC8::func_804724DC() {
+void mpfsys::UnkClass_80471EC8::initLayerRecords() {
     // Anchor-row Y heights as ints: retail converts these at runtime
     // (li/xoris/magic-double path), never folding them to float literals.
     const u32* zw = (const u32*)&ml::CVec3::zero;
@@ -525,7 +525,7 @@ void mpfsys::UnkClass_80471EC8::func_804724DC() {
 }
 
 // Self-referential offset table on UnkClass_80471EC8 used by
-// func_80473984: each field holds an offset to a u32 that itself holds an
+// drawMapLayer: each field holds an offset to a u32 that itself holds an
 // offset from `this` (two-level pointer chase into the embedded state).
 struct MpfsysDlRefSrc {
     u8 pad0[0xC];
@@ -538,20 +538,20 @@ struct MpfsysDlRefSrc {
     u32 off2C;
 };
 
-// Scene object tail consumed by the env-light refresh in func_80473984.
+// Scene object tail consumed by the env-light refresh in drawMapLayer.
 struct MpfsysSceneCtrl {
     u8 pad[0x7C];
     void* envLgtCtrl;
 };
 
-// Simulation constants tail of UnkClass_80471EC8 (func_804728E8).
+// Simulation constants tail of UnkClass_80471EC8 (simulateLayer).
 struct MpfsysSimState {
     u8 pad[0x2DE8];
     f32 field_2DE8; // wobble amplitude
     f32 field_2DEC; // time scale
 };
 
-// Scratch camera block layout used by func_80474064/func_80473984 (at
+// Scratch camera block layout used by pushLayerDraw/drawMapLayer (at
 // lbl_eu_80658410).
 struct MpfsysMtxWords {
     union {
@@ -699,7 +699,7 @@ void setColorMode__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* sel
 // distance constraints along the P-chain, randomised jitter, clamps the
 // targets, integrates positions, and re-derives both orientation quaternions
 // from the point chain.
-void func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(
+void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, MpfsysLayerRec* rec, f32 arg) {
     MpfsysSimState* st = (MpfsysSimState*)self;
     // Trivial POD view of the shared zero vector so copies stay inline word
@@ -1006,13 +1006,13 @@ void mpfsys::UnkClass_80471EC8::updateLayers() {
     // (base + 0x1680) at the scaled rate.
     MpfsysLayerRec* rec = (MpfsysLayerRec*)this;
     for (int i = 0; i < 0x20; i++) {
-        func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(
+        simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             this, rec, lbl_eu_8066A750);
         rec++;
     }
     rec = (MpfsysLayerRec*)((u8*)this + 0x1680);
     for (int i = 0x20; i < 0x40; i++) {
-        func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(
+        simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             this, rec, lbl_eu_8066A778);
         rec++;
     }
@@ -1050,7 +1050,7 @@ extern "C" bool GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
     MpfsysResTexHandle* tex, void** ppTexData, u16* pWidth, u16* pHeight,
     GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod, u8* pMipMap);
 
-void func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 lodBias) {
+void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 lodBias) {
     // Resolve the active map's texture dictionary entry.
     MpfsysResTexHandle tex;
     tex.mpData = (nw4r::g3d::ResTexData*)GetResTex__Q34nw4r3g3d7ResFileCFi(
@@ -1168,7 +1168,7 @@ void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) {
         return;
     }
     lbl_eu_80665858 = texIndex;
-    func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(texIndex, 0, texScale);
+    setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(texIndex, 0, texScale);
 }
 }
 
@@ -1185,10 +1185,10 @@ struct MpfsysTevEntry {
     u32 ofs;
 };
 
-void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s32 index, f32 scale) {
+void setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(s32 index, f32 scale) {
     // Per-layer textured-draw setup: invalidate the cached texture index,
     // lazily install the fullscreen TEV/vertex-desc state for mode 6, then
-    // feed every item of display-list entry `index` to func_80473500 with
+    // feed every item of display-list entry `index` to setupMapTexture with
     // the given scale.
     lbl_eu_80665858 = -1;
     // The cached-index store above may alias the entry table, so the count
@@ -1218,16 +1218,16 @@ void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s32 index, f32 scale) {
         }
     }
     for (u32 i = 0; i < count; i++) {
-        func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(items[i].id, i, scale);
+        setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(items[i].id, i, scale);
     }
 }
 
 // Camera setup + full GX state push for the map layer draw. The retail
 // symbol is Fv-annotated but actually receives (self, texBase, srcMtx, a6,
 // a7, swapMode, fovScale); literal mangled name kept (func_8047233C
-// precedent). Mirrors the prologue of func_80474064, then configures the
+// precedent). Mirrors the prologue of pushLayerDraw, then configures the
 // fixed TEV/vertex/light pipeline and refreshes scene fog.
-void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
+void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* texBase, const Mtx srcMtx, void* a6,
     void* a7, u32 swapMode, f32 fovScale) {
     MpfsysCamBlock* cam = (MpfsysCamBlock*)lbl_eu_80658410;
@@ -1589,7 +1589,7 @@ void mpfsys::UnkClass_80471EC8::disableAlphaBlend() {
 // and uploads it as position matrix 3. When layerIdx is non-zero, the layer's
 // animated matrices at +0x84 / +0x54 are concatenated with it and uploaded as
 // position matrices 6 and 9.
-void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
+void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
                                                    u8 layerSel, f32 scale) {
     ml::CVec3* ofs =
         (ml::CVec3*)(lbl_eu_8066584C[idx].base + idx * 0xC);
@@ -1638,7 +1638,7 @@ void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
     }
 }
 
-// Map-object overlay consumed by func_80474064: +0x24 holds the offset to
+// Map-object overlay consumed by pushLayerDraw: +0x24 holds the offset to
 // the display-list header record.
 struct MpfsysDrawSrc {
     u8 field_0x0[0x24];
@@ -1670,7 +1670,7 @@ struct MpfsysCamView {
 // Inverts a copy of the view-frame matrix, derives the billboard axis by
 // transforming the constant (0, 0, 1) vector through the rotation part,
 // then publishes the FOV scale factors and display-list pointers.
-void func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
+void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* viewMtx, void* a5, void* a6,
     f32 fovScale) {
     MpfsysCamBlock* cam = (MpfsysCamBlock*)lbl_eu_80658410;
@@ -1904,7 +1904,7 @@ extern "C" u32 lbl_eu_8056DB90;  // .data: object
 // retail has the pointer pair at +0x00/+0x04 BEFORE the two floats.
 extern "C" u32 lbl_eu_80663848[2] = { (u32)&lbl_eu_80523D80, (u32)&lbl_eu_8056DB90 };
 
-// Float constants shared with func_804724DC/func_804728E8. Retail bit
+// Float constants shared with initLayerRecords/simulateLayer. Retail bit
 // patterns are 0x3B03126F / 0x3BA3D70A; use decimal literals (which round to
 // exactly those bits) - writing the hex ints as f32 would int->float convert
 // them into entirely different values.

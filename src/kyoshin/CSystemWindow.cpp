@@ -12,6 +12,10 @@
 #include <revolution/gx/GXPixel.h>
 #include <string.h>
 
+// Retail .sbss singleton slot owned by this TU (split 0x80663FD8-0x80663FDC).
+// Tentative definition -> .sbss, zero-initialized like retail.
+CSystemWindow* lbl_eu_80663FD8;
+
 // Retail declares the constructor as a C-ABI global `__ct__CSystemWindow` (the
 // split symbol carries no class-length mangling), so it is kept as a plain
 // global function rather than a member ctor.
@@ -166,8 +170,8 @@ void CSystemWindow::Move() {
         // Window just became ready: load strings and start animation.
         if (CSysWin_isReady(&mSysWin[0])) {
             mState = 1;
-            func_8022B9B4(&mSysWin[0], &mStr1[0], &mStr2[0]);
-            func_8022BFC8(&mSysWin[0], 1);
+            sysWinSetKindContent(&mSysWin[0], &mStr1[0], &mStr2[0]);
+            sysWinApplyKind(&mSysWin[0], 1);
             sysWinOpenPhase1(&mSysWin[0]);
         }
         break;

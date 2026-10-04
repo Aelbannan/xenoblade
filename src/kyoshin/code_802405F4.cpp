@@ -747,7 +747,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 2:
-        func_80242368(this);
+        handleWorldMapInput(this);
         break;
 
     case 3:
@@ -757,7 +757,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 4:
-        func_80242524(this);
+        setupFloorMapPhase(this);
         break;
 
     case 5:
@@ -780,7 +780,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 7:
-        func_80242A28(this);
+        handleFloorMapInput(this);
         break;
 
     case 8:

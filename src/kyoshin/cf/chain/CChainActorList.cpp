@@ -87,7 +87,7 @@ namespace cf {
 
     CChainActorList::~CChainActorList(){
         // Pass 1: destroy every actor through its manual vtable slot 17
-        // (same body as func_8027B164, inlined by retail).
+        // (same body as Chain_ClearAll, inlined by retail).
         _reslist_node<cf::CChainActor*>* node =
             mChainActorList.mStartNodePtr->mNext;
         while (node != mChainActorList.mStartNodePtr) {
@@ -137,7 +137,7 @@ extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key) {
     return 0;
 }
 
-extern "C" void func_8027B164(cf::CChainActorList* self){
+extern "C" void Chain_ClearAll(cf::CChainActorList* self){
     // Pass 1: call the vtable[5] (destroy/remove) hook on every actor.
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
@@ -180,7 +180,7 @@ extern "C" void Chain_SweepDeadActors(cf::CChainActorList* self){
 // successor keeps vtable[17](first,next) nonzero, records the run members into
 // one of two local arrays (chainable via vtable[8] go to chainArr, the rest to
 // otherArr), then drives each array's chain/skill linkage through vtable[12].
-extern "C" void func_8027B2CC(cf::CChainActorList* self){
+extern "C" void Chain_RebuildLinks(cf::CChainActorList* self){
     // Stack order matters: retail puts otherArr at r1+0x8 and chainArr at
     // r1+0xf4; MWCC places the first-declared array at the higher slot.
     cf::CChainActor* chainArr[0x3B];
@@ -277,7 +277,7 @@ extern "C" cf::CChainActor* Chain_FindOrCreateActor(cf::CChainActorList* self, u
         searchActorByHead(self->mChainActorList.mStartNodePtr, key);
     if (found == 0) {
         cf::CChainActor* newActor = SysWinLog_AllocFreeSlot(self);
-        func_8027B8C8(self, newActor);
+        Chain_InsertOrdered(self, newActor);
         if (self->unk1DA8[0]) {
             newActor->CChainActor_ToggleMoveFlag(1);
         }
@@ -312,8 +312,8 @@ extern "C" int Chain_RemoveActor(cf::CChainActorList* self, u32 key) {
 // <= @p actor's. The sentinel pointer is re-read from $self at every compare
 // (retail never caches it). Uses an empty node slot from the preallocated
 // node array, as reslist::insert does. Retail's symbol is the unmangled C-ABI
-// name func_8027B8C8 (call sites must reference it unmangled).
-extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor) {
+// name Chain_InsertOrdered (call sites must reference it unmangled).
+extern "C" void Chain_InsertOrdered(cf::CChainActorList* self, cf::CChainActor* actor) {
     int myVal = actor->CChain_getZero_A9E0();
     _reslist_node<cf::CChainActor*>* pre =
         self->mChainActorList.mStartNodePtr->mNext;
@@ -354,7 +354,7 @@ place:;
 // remaining chainable actor (vtable slot 18 against target, and slot 8
 // against target's move subobject) is appended to @p other and removed from
 // the reslist.
-// Return-inside-loop search helper: when inlined at func_8027BA0C's first
+// Return-inside-loop search helper: when inlined at Chain_CollectChainable's first
 // phase, MWCC keeps the key in the caller's incoming param register and emits
 // the retail two-branch shape (bne-next / b-merge with li r3,0 at the merge).
 static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self) {
@@ -389,7 +389,7 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     }
 }
 
-void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other,
+void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other,
                    cf::CfObjectActor* target) {
     // 1. Activate the resident actor whose unk0 references @p target.
     cf::CChainActor* found = findActorByTarget((u32)target, self);
@@ -428,17 +428,17 @@ static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
 }
 
 // For each actor in @p list, ensures it is present in @p self's reslist
-// (adding it via func_8027B8C8 when missing), then clears @p list.
-extern "C" void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list){
+// (adding it via Chain_InsertOrdered when missing), then clears @p list.
+extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list){
     cf::CChainList* l = list;
     for (int i = 0; i < (int)l->mCount; i++) {
         cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
         if (findActorForBB4C(actor->unk0, self) == 0)
-            func_8027B8C8(self, actor);
+            Chain_InsertOrdered(self, actor);
     }
     ChainList_Clear(list);
 }
-// Same-TU search helper inlined at func_8027BC14. Argument order (self, key)
+// Same-TU search helper inlined at Chain_CheckActivatable. Argument order (self, key)
 // reproduces retail's register coloring (the located actor lands in r31).
 static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
     _reslist_node<cf::CChainActor*>* head =
@@ -455,7 +455,7 @@ static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
 // Chain-activation validator
 // when the candidate passes its activation gates AND at least two actors in
 // the list are chainable against it, else 0.
-extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
+extern "C" int Chain_CheckActivatable(cf::CChainActorList* self, u32 key){
     // Locate the actor whose unk0 matches key.
     cf::CChainActor* actor = findActorForKey(self, key);
     if (actor == 0) return 0;
@@ -469,9 +469,9 @@ extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
     // ... and must pass the "already chained" anti-gate (vtable[29]).
     if (actor->CChain_getZero_A9D0() != 0) return 0;
     // The battle object's probed address must not be in any of three states.
-    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xeb) != 0) return 0;
-    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xcb) != 0) return 0;
-    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xf8) != 0) return 0;
+    if (isBattleStatusActive(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xeb) != 0) return 0;
+    if (isBattleStatusActive(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xcb) != 0) return 0;
+    if (isBattleStatusActive(&reinterpret_cast<cf::CChainBattleObj*>(key)->mSub8, 0xf8) != 0) return 0;
     // The battle object's arts-selection state must not match the no-chain id.
     int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>(key)->field_04->f30());
     if (testActorStatus((void*)key, &local, 0x1f) != 0) return 0;
@@ -498,15 +498,15 @@ extern "C" int func_8027BC14(cf::CChainActorList* self, u32 key){
 }
 // Returns 1 if some reslist actor is a valid chain-activation target, else 0.
 // The target object (actor->unk0) is re-read before each probe so it stays in
-// temps across the func_80148778 calls; only the post-check read lives in a
+// temps across the isBattleStatusActive calls; only the post-check read lives in a
 // callee-saved register (retail r31), matching the Chain_SweepDeadActors pattern.
 extern "C" int Chain_HasValidTarget(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node;
     cf::CChainBattleObj* obj;
     node = self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->mSub8, 0x10c) == 0 &&
-            func_80148778(&reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->mSub8, 0xf8) == 0) {
+        if (isBattleStatusActive(&reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->mSub8, 0x10c) == 0 &&
+            isBattleStatusActive(&reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->mSub8, 0xf8) == 0) {
             obj = reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0);
             int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>(node->mItem->unk0)->field_04->f30());
             if (testActorStatus(obj, &local, 0x801) != 0) return 1;
@@ -556,7 +556,7 @@ extern "C" void ChainChance_Reset(cf::CChainChanceS* self) {
 }
 // Decrements the chain count; plays the indexed chain sound at the wrap
 // point and advances the step counters (field_8 / field_A wraps at 4).
-extern "C" void func_8027C0B0(cf::CChainChanceS* self) {
+extern "C" void Chain_TickChanceCount(cf::CChainChanceS* self) {
     int flag;
     s16 count = self->mChainCount;
     if (count < 1) {
@@ -583,9 +583,9 @@ extern "C" void func_8027C0B0(cf::CChainChanceS* self) {
 // tuning-pool record selected by objA's vtable(+0x308) query, offset by one
 // 0x14-byte record when the step flag at +0xC is consumed, and scaled by the
 // pair value capped at 5000. Succeeds when mtRand(100) exceeds the score.
-// C linkage comes from the func_8027C1A8 declaration in the TU header
+// C linkage comes from the Chain_CheckChanceRoll declaration in the TU header
 // (retail callers bl the unmangled label; MWCC_CASES CBattleMan_OnActorsEmpty record).
-int func_8027C1A8(cf::CChainChanceS* self,
+int Chain_CheckChanceRoll(cf::CChainChanceS* self,
                   cf::CChainBattleObj* objA,
                   cf::CChainBattleObj* objB) {
     if (self->mField08 >= 0xf) {
@@ -634,7 +634,7 @@ extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
     // Route through an unprototyped pointer type so the call passes none;
     // MWCC folds the constant function address back into a direct bl.
     typedef int (*UnprotoChainRollFn)();
-    if (((UnprotoChainRollFn)func_8027C1A8)() != 0) {
+    if (((UnprotoChainRollFn)Chain_CheckChanceRoll)() != 0) {
         chainResolveMemberPtr(0xc3, 0);
         self->field_0x0 = 0xa;
         return 1;
@@ -657,10 +657,10 @@ extern "C" void Chain_EmitTallyEvents(unsigned int param) {
     }
 }
 // Reads the current pad press. If a chain-trigger button is held, performs the
-// action selected by func_8017FD4C; writes result to *out and returns 1.
+// action selected by GetZealResult; writes result to *out and returns 1.
 extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
     if (self->field_0 > 0) return 0;
-    int sel = func_8017FD44();
+    int sel = GetZealObjPtr();
     if (sel == 0) {
         *out = 0;
         return 1;
@@ -671,7 +671,7 @@ extern "C" int Chain_ReadPadAction(cf::CChainAction* self, u8* out){
                   ? (pad->mPressedButtonFlags >> 22) & 1
                   : (pad->mPressedButtonFlags >> 5) & 1;
     if (bit != 0) {
-        int action = func_8017FD4C(sel);
+        int action = GetZealResult(sel);
         // Sparse dispatch: goto-chain keeps the retail compare-chain layout with
         // the case bodies appended after the tests (if/else-if would inline them).
         if (action == 1) goto case1;
@@ -767,10 +767,10 @@ extern "C" int ChainList_RemoveKey(cf::CChainList* self, u32 key){
 // @p index is -1: the -1 path nests three slot loops (retail's dead i/j/k ==
 // -1 guards fall through, and the != -1 single-slot blocks come after), with
 // the innermost re-entering this function per slot.
-// extern "C" definition (same idiom as func_8027B8C8/ChainList_Clear): retail's
-// symbol is the bare name func_8027C6B4, and the recursive innermost-loop
-// call must emit `bl func_8027C6B4` (unmangled) to match retail's reloc.
-extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
+// extern "C" definition (same idiom as Chain_InsertOrdered/ChainList_Clear): retail's
+// symbol is the bare name Chain_LinkList, and the recursive innermost-loop
+// call must emit `bl Chain_LinkList` (unmangled) to match retail's reloc.
+extern "C" void Chain_LinkList(cf::CChainList* self, int target, int index){
     int i, j, k, m;
     cf::CChainActor** it;
     cf::CChainActor** jt;
@@ -784,7 +784,7 @@ extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
                              k++, kt++) {
                             if (k == -1) {
                                 for (m = 0; m < (int)self->mCount; m++) {
-                                    func_8027C6B4(self, target, m);
+                                    Chain_LinkList(self, target, m);
                                 }
                             } else {
                                 CHAIN_LINK_BODY(k, *kt);

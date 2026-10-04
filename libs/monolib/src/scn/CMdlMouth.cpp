@@ -142,7 +142,7 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
     }
 }
 
-extern "C" void func_804E65CC(CMdlMouth* ths, CMdlOwnerCtx* model) {
+extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model) {
     // Member field init (mirrors the retail ctor stores).
     ths->field_0x04 = model;
     ths->field_0x08 = 0;

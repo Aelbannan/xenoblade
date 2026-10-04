@@ -342,7 +342,7 @@ u32 CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv(cf::CfObject* self) {
 }
 
 // Returns a packed flag: the +0x70 word's top-5-bit type (2/3/4/6 map to
-// 2/8/4/0x80), refreshed from func_800AA714's hash of the vtable+0x180
+// 2/8/4/0x80), refreshed from Tok_ParseFile's hash of the vtable+0x180
 // result when both are non-zero; the +0x64 low 16 bits are the default.
 // Retail returns a u32 even though the base header declares the slot void -
 // written with the verbatim mangled name.
@@ -356,7 +356,7 @@ u32 CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
     u32 word = obj->field_70;
     void* p = self->CfObjectModel_getModelName();  // vtable +0x180
     if (p != 0) {
-        u32 q = func_800AA714(reinterpret_cast<const char*>(p));
+        u32 q = Tok_ParseFile(reinterpret_cast<const char*>(p));
         if (q != 0) {
             word = q;
         }
@@ -472,8 +472,8 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
         int found = ScnRes_VertRayForward_E398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
                                   lbl_eu_80666A74);
         if (found != 0) {
-            func_804BE4B4(&hitPos, 0);
-            func_804BE4E0(&normal, 0);
+            ScnRes_CopyEntryHead(&hitPos, 0);
+            ScnRes_CopyEntryMid(&normal, 0);
             // ...then re-probe from a lifted copy of the hit point.
             ml::CVec3 offset(lbl_eu_80666A68, lbl_eu_80666A78, lbl_eu_80666A68);
             ml::CVec3 sum = probe + offset;

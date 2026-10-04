@@ -16,10 +16,10 @@ struct CfGimmickLockSub {
     u16 timer;         // 0xB2
 };
 
-// Player object base (list-object pointer minus 0x3E9C) read by func_8020D204.
+// Player object base (list-object pointer minus 0x3E9C) read by CfGimmickLock_MarkSlots.
 struct CfGimmickLockPlayer {
     u8 pad_00[0x63C];
-    f32 field_63C;              // 0x63C - read by func_8020C640 (distance addend)
+    f32 field_63C;              // 0x63C - read by CfGimmickLock_Update (distance addend)
     u8 pad_640[0x3374 - 0x640];
     u32 flags3374;              // 0x3374 - per-player "locked" bit word
     u8 pad_3378[0x456C - 0x3378];
@@ -65,11 +65,11 @@ public:
     /* 0x8C */ CfGimmickLockSub subA;
     /* 0x140 */ CfGimmickLockSub subB;
     /* 0x1F4 */ f32 field_1F4;
-    /* 0x1F8 */ s16 field_1F8;   // unlock timer (signed - read with lha in func_8020C640)
+    /* 0x1F8 */ s16 field_1F8;   // unlock timer (signed - read with lha in CfGimmickLock_Update)
 };
 
 // Function-pointer types for the vtable slots the lock invokes on the
-// game-manager object stored in field_78 (see func_8020CFD0).
+// game-manager object stored in field_78 (see CfGimmickLock_Activate).
 typedef void (*CfGimmickLockSetPosFn)(void*, const f32*);
 typedef void (*CfGimmickLockSetYFn)(void*, f32);
 typedef void (*CfGimmickLockSetScaleFn)(void*, f32);
@@ -172,7 +172,7 @@ extern u8 lbl_eu_80535900[];
 extern "C" void __ct__cf_CfGimmick(void* self);
 extern "C" void __dt__Q22cf9CfGimmickFv(void* self, int flag);
 extern "C" void CfGimmick_ClearManagerBinding(cf::CfGimmickLock* self);
-extern "C" void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
+extern "C" void CfGimmick_BuildColliderMtx(void* matrix, const f32* basis, const CfGimmickVec3* point);
 extern "C" void CfGimmick_LoadBdatAreaPos(void* self, void* out, void* bdat, void** holder);
 extern "C" void CfGimmick_LoadBdatAreaExtents(void* self, void* out, void* bdat, void** holder);
 extern "C" void CfGimmick_LoadBdatAreaRotation(void* self, void* out, void* bdat, void** holder);
@@ -195,7 +195,7 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 // CfGimmick-TU helpers (CfGimmick.cpp).
 extern "C" int CfGimmick_CheckFightListPlayerAlive();
-extern "C" void func_8020A484(u16 resourceId);
+extern "C" void CfGimmick_PostGimmickName(u16 resourceId);
 extern "C" unsigned int CfGimmick_IsMessageSystemBusy();
 extern "C" void CfGimmick_SetGlobalFlag8008();
 
@@ -206,10 +206,10 @@ extern "C" void CtrlMoveEne_MarkActiveSteady(void* target);
 
 // Same-TU functions (C-linkage names, defined in CfGimmickLock.cpp).
 extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row);
-extern "C" void func_8020C640(cf::CfGimmickLock* self);
-extern "C" void func_8020CC9C(cf::CfGimmickLock* self);
-extern "C" void func_8020CFD0(cf::CfGimmickLock* self);
-extern "C" void func_8020D204(cf::CfGimmickLock* self, int flag);
+extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self);
+extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self);
+extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self);
+extern "C" void CfGimmickLock_MarkSlots(cf::CfGimmickLock* self, int flag);
 
 // Small-data constants / globals.
 extern const f32 lbl_eu_806683B0;

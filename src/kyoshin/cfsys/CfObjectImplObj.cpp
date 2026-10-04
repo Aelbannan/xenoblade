@@ -9,10 +9,10 @@ extern "C" void MoveImplRunEffectVirtuals(void* self);
 
 // us-800caf20: per-frame prep - init via MoveImplInitFields, dispatch the
 // vtable 0xE4 query and feed its result + the +0x14/+0x18 sub-objects
-// into func_8015BB3C.
+// into CharEffInit.
 void ObjImplPrepFrame(cf::CfObjectImplObj* self) {
     MoveImplInitFields(self);
-    func_8015BB3C(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
+    CharEffInit(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
 }
 
 void* ObjImplGetUnk68(void* self) { return (void*)((u8*)self + 0x68); }

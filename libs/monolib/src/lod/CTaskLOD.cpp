@@ -125,6 +125,13 @@ __attribute__((aligned(8))) CTaskLOD* lbl_eu_80665730[2];
 extern "C" u32 lbl_eu_8056D6C0[9];
 extern "C" u32 lbl_eu_8056D678[9];
 
+// Shared float pool owned by CTaskLOD's sibling split (values verified from
+// the retail object: 8066A5B8 = 1.0f, 8066A5BC = 0.0f). Referencing the
+// retail names keeps the SDA21 relocs right and leaves no TU-local .sdata2
+// pool (retail .sdata2 is empty); literals would pool anonymously here.
+extern "C" const f32 lbl_eu_8066A5B8;
+extern "C" const f32 lbl_eu_8066A5BC;
+
 // LODMemMan delegate entry points used by the wrappers below.  The retail
 // symbol map labels them `.Fv` (no-arg) even though the retail bodies take
 // real arguments (r4/r5/...).  A C++ declaration cannot express that shape
@@ -135,7 +142,7 @@ extern "C" u32 lbl_eu_8056D678[9];
 extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
 extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
 extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
-extern "C" void func_8046EDD0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int value);
+extern "C" void linkTaskElements__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int value);
 extern "C" void setTimeParams__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a, void* b);
 extern "C" void clearElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void setElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
@@ -159,7 +166,7 @@ extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
 extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void scnLgtCallLightV26(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
-extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
+extern "C" void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
 extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
@@ -330,7 +337,7 @@ extern "C" void* acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
 // instance (retail never touches `this` except via the delegate call).
 void CTaskLOD::resetActiveLOD() {
     if (lbl_eu_80665730[0]) {
-        func_8046DAC0__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, (int)this);
+        teardownG3dObjects__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, (int)this);
         CTaskLOD* t = lbl_eu_80665730[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
@@ -367,7 +374,7 @@ float CTaskLOD::getLODScale() {
     if (lbl_eu_80665730[0]) {
         getBaseScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD);
     }
-    return 1.0f;
+    return lbl_eu_8066A5B8;
 }
 
 // Toggle the 0x40 flag bit on the active LODMemMan at offset 0x6c: set when
@@ -489,7 +496,7 @@ float CTaskLOD::getLODDistance() {
     if (lbl_eu_80665730[0]) {
         return getElementScale__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
-    return 0.0f;
+    return lbl_eu_8066A5BC;
 }
 void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
@@ -505,7 +512,7 @@ void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
 
 void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
-        func_8046EDD0__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
+        linkTaskElements__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 void* CTaskLOD::getLODObject() {
@@ -525,7 +532,7 @@ float CTaskLOD::getLODLevel() {
     if (lbl_eu_80665730[0]) {
         return getElementCachedValue__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
     }
-    return 0.0f;
+    return lbl_eu_8066A5BC;
 }
 
 // func_8046EF7C returns a pointer; when there is no active LOD the retail

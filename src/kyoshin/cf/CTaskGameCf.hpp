@@ -35,16 +35,16 @@ namespace cf{
         }
 
         void reqExit();
-        void func_8004431C();
-        void func_8004433C();
+        void startMode1New();
+        void startMode2Con();
         void startMission(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4);
 
         void startNewGame();
         void initNewGame();
         void startContinue();
         void initContinue();
-        void func_800444DC();
-        void func_800444FC();
+        void chainNextMove();
+        void setPooledMove();
         void bootGameWorld();
         void tickExitCheck();
         void beginExit();
@@ -86,16 +86,16 @@ extern "C" void init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs(CScnNw4r* scene, C
 extern "C" void* __ct__800FDB4C();
 extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool arg);
 extern "C" void UIWin_CreateManager(void* self, CScnNw4r* pScene, u32 memHandle);
-extern "C" void func_8012F558(void* self, CScnNw4r* pScene, s32 memHandle);
+extern "C" void UIBattleGetOrCreate(void* self, CScnNw4r* pScene, s32 memHandle);
 extern "C" void CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);
 extern "C" void evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
-extern "C" void CfT_ResetEventState();
+extern "C" void CfT_ResetEventState(); namespace cf { struct CtrlObjectParamSlots; } extern "C" int CtrlObjectParam_InsertSlotEntry(cf::CtrlObjectParamSlots* self, int value, int type, int index);
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3);
 extern "C" u32 NandImageLive();
 extern "C" void func_8007E514__Q22cf13CfGameManagerFv(int arg1, int arg2, const char* str, int arg4, u32 arg5);
 extern "C" void Env_CreateTask(CProcess* pParent, CScnNw4r* pScene);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
-extern "C" void func_8004302C(int a, int b);
+extern "C" void CTaskGame_setLoadScreen(int a, int b);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);

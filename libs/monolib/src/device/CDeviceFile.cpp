@@ -40,7 +40,7 @@ class IWorkEvent;
 void DevFile_SubstLangPath(char* pPath);
 
 // Pack-archive queries shared with CWorkSystemPack.
-extern "C" int func_804DE010(const char* pName);
+extern "C" int hasPackFile(const char* pName);
 extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
                               u32* outB, u32* outC, u32* outD);
 
@@ -312,7 +312,7 @@ public:
     bool clearParent();
     static void cancelJobsForPath(const char* pPath);
     static bool tryUpdateJobPriority(CFileHandle* pFileHandle, int param);
-    bool func_8044F1B8(CFileHandle* pFileHandle, int param);
+    bool updateJobPriority(CFileHandle* pFileHandle, int param);
     static void setHandleParam(CFileHandle* pHandle, unsigned long param);
     void getFileSize();
     int isInitialized();
@@ -578,7 +578,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
             nameBuf[idx] = '\0';
             nameLen = idx;
         }
-        if (func_804DE010(nameBuf)) {
+        if (hasPackFile(nameBuf)) {
             if (func_804DDD54(nameBuf, pPath, &pkbPath, &outB, &outC, &outD)) {
                 if (sizeUnits == 0) {
                     sizeUnits = outD << 11;
@@ -679,8 +679,8 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
 
     job->mHandle = handle;
     u32 prio = handle->field_0x48;
-    if (!CDeviceFileDvd::getInstance()->func_8044F1B8(handle, prio)) {
-        CDeviceFileCri::getInstance()->func_8044F1B8(handle, prio);
+    if (!CDeviceFileDvd::getInstance()->updateJobPriority(handle, prio)) {
+        CDeviceFileCri::getInstance()->updateJobPriority(handle, prio);
     }
     return handle;
 }
@@ -778,13 +778,13 @@ void CDeviceFile::cancel(CFileHandle* pFileHandle) {
 }
 
 bool CDeviceFile::tryUpdateJobPriority(CFileHandle* pFileHandle, int param) {
-    if (CDeviceFileDvd::getInstance()->func_8044F1B8(pFileHandle, param)) {
+    if (CDeviceFileDvd::getInstance()->updateJobPriority(pFileHandle, param)) {
         return true;
     }
-    return CDeviceFileCri::getInstance()->func_8044F1B8(pFileHandle, param);
+    return CDeviceFileCri::getInstance()->updateJobPriority(pFileHandle, param);
 }
 
-bool CDeviceFile::func_8044F1B8(CFileHandle* pFileHandle, int param) {
+bool CDeviceFile::updateJobPriority(CFileHandle* pFileHandle, int param) {
     // Request-state check over this device's child-job ring: find the queued
     // job holding pFileHandle, then either bump its priority (sole child) or
     // preempt a lower-priority sibling by parking nodes in the 0x70 job pool.

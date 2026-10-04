@@ -72,11 +72,11 @@ extern void getScnHandle();
 extern int ScnData_FwdBC9A0();
 extern bool ScnRes_VertRayForward_E398(mlCVec3* out, float x, float y, int a, int b);
 extern void ScnRes_Notify4Word_E3E0(const void* cb, void* mtx, u32 unk, int flag);
-extern bool func_804BE4B4(mlCVec3* v, int flag);
-extern bool func_804BE4E0(mlCVec3* v, int flag);
+extern bool ScnRes_CopyEntryHead(mlCVec3* v, int flag);
+extern bool ScnRes_CopyEntryMid(mlCVec3* v, int flag);
 extern void* ScnRes_GetEntryPtr_E50C(int idx);
 extern void* simGetLeafActData(ShadowCtx* ctx);
-extern void func_8048E2F8(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
+extern void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
 } // extern "C"
 
 // Foreign .sdata2 constants used by the draw path.

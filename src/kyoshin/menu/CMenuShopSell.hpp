@@ -10,7 +10,7 @@
 
 class CScn;
 
-/* 8-byte copy unit used by the sell-screen data blob. func_8018B130 copies
+/* 8-byte copy unit used by the sell-screen data blob. MenuShopSellCopyData copies
  * the 256-item array as one struct assignment, which MWCC lowers to the
  * retail `mtctr` + `lwzu/stwu` counted loop (same shape as CMenuShopBuy's
  * ShopBuyDataItem blob copies). */
@@ -26,14 +26,14 @@ struct ShopSellDataItems {
 };
 
 /* 0x806-byte sell data blob: the item array lives at +0x4 (offset +0x0 is
- * skipped by func_8018B130) with a trailing u16 at +0x804. */
+ * skipped by MenuShopSellCopyData) with a trailing u16 at +0x804. */
 struct ShopSellData {
     u32 mCount;                   // +0x0 (not copied)
     ShopSellDataItems mItems;     // +0x4..+0x803
     u16 mField804;                // +0x804
 };
 
-/* 0x18-byte cursor object. func_8018B0FC copies the +0x4..+0x15 region
+/* 0x18-byte cursor object. MenuShopSellCopyCursor copies the +0x4..+0x15 region
  * (4 words + 2 bytes); callers pass the object base, so member offsets are
  * absolute within the object. */
 struct ShopSellCursor18 {
@@ -51,13 +51,13 @@ struct ShopSellCursor18 {
  *
  * Layout mirrors the CMenuGCItem skeleton (retail offsets):
  *   0x00: CProcess -- task-system base (0x3C) + vtable PMF data
- *   0x54: u8 mField54 -- closing-state flag (func_8018B658)
+ *   0x54: u8 mField54 -- closing-state flag (MenuShopSellHandlePhase3)
  *   0x58: IScnRender -- render-callback subobject (member, vptr)
  *   0x5C: CScn* mScene -- owning scene (removeRenderCB target in Term)
  *   0x60: CBgTex -- background layout widget (0x20 bytes)
  *   0x80: CTitleAHelp -- title/help bar (0x38 bytes)
  *   0xB8: CItemBoxGrid -- item grid (vptr subobject; storage padded below)
- *  0x4AC4: u8 mState -- phase/state indicator (func_8018B420)
+ *  0x4AC4: u8 mState -- phase/state indicator (MenuShopSellHandlePhase1)
  */
 class CMenuShopSell : public CProcess {
 public:
@@ -93,14 +93,14 @@ extern "C" void Init__13CMenuShopSellFv();
 extern "C" void Term__13CMenuShopSellFv();
 extern "C" void Move__13CMenuShopSellFv();
 extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self);
-extern "C" void func_8018B0FC(void*, void*);
-extern "C" void func_8018B130(void*, void*);
-extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene);
+extern "C" void MenuShopSellCopyCursor(void*, void*);
+extern "C" void MenuShopSellCopyData(void*, void*);
+extern "C" CMenuShopSell* MenuShopSellCreateSingleton(CProcess* parent, CScn* scene);
 extern "C" bool MenuShopSellIsCreated();
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* self);
-extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self);
-extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self);
-extern "C" __declspec(noinline) void func_8018B658(CMenuShopSell* self);
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self);
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* self);
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self);
 
 // Base/subobject ctors (retail keeps the unmangled names at these call sites).
 extern "C" void __ct__8CProcessFv(CProcess* self);
@@ -115,7 +115,7 @@ extern char lbl_eu_8052BF70[];
 // CMenuShopSell composite vtable; IScnRender sub-vtable at +0x24.
 extern char lbl_eu_80532650[];
 
-/* Local shim for cf::CfPadData - only the flag words func_8018B470 reads
+/* Local shim for cf::CfPadData - only the flag words MenuShopSellHandlePhase2 reads
  * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
  * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
 struct ShopSellPadData {
@@ -125,7 +125,7 @@ struct ShopSellPadData {
     u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
 };
 
-// func_8018B470 pad/flag callees (retail unmangled names). IsItemBoxActive is
+// MenuShopSellHandlePhase2 pad/flag callees (retail unmangled names). IsItemBoxActive is
 // declared int so the caller compares with cmpwi directly; GetPromptState is
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
 extern "C" int MenuTutorialIsCreated();
@@ -135,12 +135,12 @@ extern "C" int IsItemBoxActive(CItemBoxGrid* self);
 extern "C" void HandleCancelBtn(CItemBoxGrid* self, u32 arg);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void AdvanceBoxState(CItemBoxGrid* self);
-extern "C" void func_801CB5F0(CItemBoxGrid* self);
-extern "C" void func_801CBA04(CItemBoxGrid* self);
-extern "C" void func_801CBDE8(CItemBoxGrid* self);
-extern "C" void func_801CC0EC(CItemBoxGrid* self);
+extern "C" void GridMoveCursorLeft(CItemBoxGrid* self);
+extern "C" void GridMoveCursorRight(CItemBoxGrid* self);
+extern "C" void GridMoveCursorDown(CItemBoxGrid* self);
+extern "C" void GridMoveCursorUp(CItemBoxGrid* self);
 extern "C" void OpenSortMenu(CItemBoxGrid* self);
-extern "C" void func_801CDC40(CItemBoxGrid* self);
+extern "C" void TickItemBoxGrid(CItemBoxGrid* self);
 extern "C" void SelectCatRow(CItemBoxGrid* self);
 extern "C" int GetPromptState(CItemBoxGrid* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
@@ -157,7 +157,7 @@ extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);
-extern "C" void func_801CB28C(CItemBoxGrid* self);
+extern "C" void InitItemDisplay(CItemBoxGrid* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void UpdateItemBox(CItemBoxGrid* self);

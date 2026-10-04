@@ -20,7 +20,7 @@ struct CEquipBoxFourShorts {
     s16 a, b, c, d;
 };
 
-/* 8-byte copy unit used by the shop-buy data blob. func_8018BE74 copies the
+/* 8-byte copy unit used by the shop-buy data blob. ShopBuy_CopyData copies the
  * blob's sub-struct members; MWCC turns each struct assignment into the
  * retail's `mtctr` + `lwzu/stwu` counted loop. */
 struct ShopBuyDataItem {
@@ -41,7 +41,7 @@ struct ShopBuyData128 {
 };
 
 /* Shop buy screen data blob (0x159 bytes), copied field-by-field by
- * func_8018BE74 (and filled from Init's stack scratch copies). */
+ * ShopBuy_CopyData (and filled from Init's stack scratch copies). */
 struct ShopBuyData {
     ShopBuyData24 m00;      // 0x00..0x18  (3 x 8B copy loop)
     ShopBuyData144 m18;     // 0x18..0xA8  (18 x 8B copy loop)
@@ -95,7 +95,7 @@ struct ShopBuyIBLData {
     ShopBuyIBL8 chunk168;             // 0x168..0x16F (2-word chunk)
     ShopBuyIBL8 chunk170;             // 0x170..0x177 (2-word chunk)
     u16 field_0x178;                  // 0x178
-    ShopBuyData blob17C;              // 0x17C..0x2D4 (func_8018BE74)
+    ShopBuyData blob17C;              // 0x17C..0x2D4 (ShopBuy_CopyData)
     ShopBuyIBLRegion mRegion2DC;      // 0x2DC..0x2EB mem region
     u32 field_0x2EC[6];               // 0x2EC..0x303 (6 words)
     u8 field_0x304[5];                // 0x304..0x308
@@ -124,10 +124,10 @@ struct ShopBuyIBLData {
     char str458[0x20];                // 0x458..0x477 (FixStr<32>)
     u32 len4D8;                       // 0x4D8
     u8 _pad478[0x4D8 - 0x478];        // 0x478..0x4D7
-    ShopBuyData blob4DC;              // 0x4DC..0x634 (func_8018BE74)
+    ShopBuyData blob4DC;              // 0x4DC..0x634 (ShopBuy_CopyData)
 };
 
-/* Local shim for cf::CfPadData - only the flag words func_8018C258 reads
+/* Local shim for cf::CfPadData - only the flag words ShopBuy_HandleInput reads
  * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
  * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
 struct ShopBuyPadData {
@@ -220,7 +220,7 @@ extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);
 extern "C" void ItemBoxLine_UnloadFiles(CItemBoxLine* self);
 extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);
 
-// func_8018C258 pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
+// ShopBuy_HandleInput pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int MenuTutorialIsCreated();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
@@ -242,7 +242,7 @@ extern "C" u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self);
 extern "C" void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
 extern "C" void ItemBoxLine_PushTabByte(CItemBoxLine* self, u8 val);
 extern "C" void ItemBoxLine_LoadFiles(CItemBoxLine* self);
-extern "C" void func_8018B0FC(void* dest, void* src);
+extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" char* BdatTouchStringCell(const void* a, const void* b, int id);
 extern "C" void beginClose(CTitleAHelp* self);
@@ -286,10 +286,10 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo);
 // real bls; see MWCC_CASES -inline auto same-TU helpers).
 extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self);
+extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self);
 extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32 arg);
-extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg);
+extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 arg);
 
 // Other retail-named helpers.
 // unsigned int (not u32 = unsigned long): must match CItemBoxLine.hpp's

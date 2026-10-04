@@ -45,11 +45,11 @@ extern "C" {
     extern float lbl_eu_80665E48;          // various constants
     extern float lbl_eu_80665E4C;          // 0.0f
 
-    void func_8004302C(int, int);
+    void CTaskGame_setLoadScreen(int, int);
     void CTaskGame_callCGameInit();
     void CtrlObjectParam_RefreshAllEquipImpls();
     void CItemBlock_clearSlotCnt();
-    void func_8012FAA8();
+    void UIBattleReleaseAll();
     int CItemBlock_addSlotCount(int);
     void CItemBlock_setCount(int);
     void CItem_AddBlockCountClamped(int);
@@ -1191,7 +1191,7 @@ int makeParty(VMThread* pThread) {
 
     if (cf::CfGameManager::getQueuedFileEventCount() == 1 &&
         isVisionPackLoaded__Q22cf13CfGameManagerFv()) {
-        func_8012FAA8();
+        UIBattleReleaseAll();
     }
 
     for (int i = 0; i < 3; i++) {
@@ -1374,7 +1374,7 @@ int equipItem(VMThread* vmThread) {
 
         if (act) {
             if (idx != 0) {
-                func_80158420(itemId & 0xFFFF, &outShort, 1, &outInt);
+                CItem_findOrCreateRec(itemId & 0xFFFF, &outShort, 1, &outInt);
                 CtrlObjectParam_WriteEquipSlotValue(charData, slot, (void*)(s32)outShort);
             } else {
                 CtrlObjectParam_WriteU16RowEntry(charData, slot & 0xFFFF, itemId & 0xFFFF);
@@ -1449,7 +1449,7 @@ int equipWeapon(VMThread* pThread) {
         ((CItemImplInstance*)CItem_initItemImplInstances(weaponSlot))->getItemId(weaponSlot);
         short slotVal;
         int unkVal;
-        func_80158420(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
+        CItem_findOrCreateRec(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
         CtrlObjectParam_SetEquipSlot5(charData, slotVal);
         walkListByItemId(charId, 0);
         lbl_eu_80663E28 |= 0x08000000;
@@ -2043,7 +2043,7 @@ int returnTitle() {
 }
 
 int dispLoading() {
-    func_8004302C(1, 0);
+    CTaskGame_setLoadScreen(1, 0);
     return 0;
 }
 

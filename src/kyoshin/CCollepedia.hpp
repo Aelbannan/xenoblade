@@ -200,15 +200,15 @@ extern "C" void* lbl_eu_806647D8;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void func_801D202C(void*); // CCur per-frame update
+extern "C" void Cur_Update(void*); // CCur per-frame update
 extern "C" u16 BdatGetItemId(u32);
 extern "C" void sysWinDispatchPhase(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
-extern "C" void func_8022B9B4(void*, void*, int);
-extern "C" void func_8022BFC8(CSysWin*, u8);
+extern "C" void sysWinSetKindContent(void*, void*, int);
+extern "C" void sysWinApplyKind(CSysWin*, u8);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinTermLayout(void*);
@@ -224,7 +224,7 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, 
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" float MenuSnd_GetMasterVol_95EC();
-extern "C" void func_80043738(u32, const char*, void*, u32, u32, u32);
+extern "C" void CTaskGame_openStream(u32, const char*, void*, u32, u32, u32);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" void copyVEC3(void*, const void*);
 
@@ -251,7 +251,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" void* CUICfManager_getPackedFont9C();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
-extern "C" void func_8018B0FC(void* dst, void* src);     // cursor body copy
+extern "C" void MenuShopSellCopyCursor(void* dst, void* src);     // cursor body copy
 
 // Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to
 // member-wise copy a stack-constructed CSysWin into the embedded window at

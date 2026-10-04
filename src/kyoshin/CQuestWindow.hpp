@@ -51,12 +51,12 @@ public:
 };
 
 // Full CCur18 vtable view (virtual index 2 -> vtable +0x10 - Move/cursor
-// positioning, invoked by func_8012435C with a computed VEC3).
+// positioning, invoked by placeQuestCursor with a computed VEC3).
 class CCur18View {
 public:
     virtual void vf02() = 0;       // index 0 -> +0x08
     virtual void vf03(void*) = 0;  // index 1 -> +0x0C
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, func_8012435C
+    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, placeQuestCursor
 };
 
 // Data body of the embedded CCur18 cursor (0x18 bytes). onQuestFileEvent copies
@@ -89,7 +89,7 @@ public:
     virtual u32 v7() = 0;  // vtable offset 0x24
 };
 
-// Minimal CPad / CfPadData view (offsets read by func_80122C08: pressed
+// Minimal CPad / CfPadData view (offsets read by handleQuestInput: pressed
 // buttons at +0x4, turbo/edge flags at +0x104).
 struct CPadView {
     u8 pad0[0x4];
@@ -166,8 +166,8 @@ struct QuestWinObj {
     CTTask<IUIWindow>::DrawFunc mDrawFunc;   // 0x48 Draw ptmf hook (12B)
     nw4r::lyt::Layout* mpLayout;             // 0x54 layout (enableAnimA/FC)
     u8 pad58[0x60 - 0x58];                   // 0x58
-    u32 field_0x60;                          // 0x60 (func_80122C08 writes c0+1)
-    u8 field_64;                             // 0x64 (func_80122EF8 sets 1)
+    u32 field_0x60;                          // 0x60 (handleQuestInput writes c0+1)
+    u8 field_64;                             // 0x64 (closeQuestWindow sets 1)
     u8 pad65[0x88 - 0x65];                   // 0x65
     u32 field_0x88;                          // 0x88 idle gate (installMoveHook)
     u32 field_0x8C;                          // 0x8C idle gate (installMoveHook)
@@ -175,10 +175,10 @@ struct QuestWinObj {
     nw4r::lyt::AnimTransform* mAnimA;        // 0x98
     nw4r::lyt::AnimTransform* mAnimB;        // 0x9C
     CBaseCur mCursor;                        // 0xA0 (sizeof 0x18, aligns to 4)
-    u32 field_B8;                            // 0xB8 quest id (func_80122EF8)
+    u32 field_B8;                            // 0xB8 quest id (closeQuestWindow)
     u8 field_0xBC;                           // 0xBC window state byte
     u8 padBD[0xC0 - 0xBD];                   // 0xBD
-    s32 field_0xC0;                          // 0xC0 cursor gate (func_8012435C / 80122C08)
+    s32 field_0xC0;                          // 0xC0 cursor gate (placeQuestCursor / 80122C08)
     u32 field_0xC4;                          // 0xC4
     u8 field_0xC8;                           // 0xC8 flag byte
     u32 field_0xCC;                          // 0xCC
@@ -210,37 +210,37 @@ extern char lbl_eu_8052D238[];
 extern u32 lbl_eu_80663FD0;
 
 // Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to
-// BdatGetU8Direct (func_80122EF8).
+// BdatGetU8Direct (closeQuestWindow).
 extern u32 lbl_eu_80573D18[];
 
 // Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to getFP
 // (onQuestFileEvent stores the file pointer at +0xD0).
 extern const char* lbl_eu_8052CFF4[];
 
-// func_801231C4 jump-table item-name pointers (.sdata): passed as the first
+// refreshQuestContent jump-table item-name pointers (.sdata): passed as the first
 // arg of BdatGetPtrDirect for the quest-slot name switch (cases 1, 3 and 4).
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640EC;
 extern u32 lbl_eu_80664104;
 
-// Shared string table (func_8012435C pane names, func_80122EF8 messages).
+// Shared string table (placeQuestCursor pane names, closeQuestWindow messages).
 extern char lbl_eu_804FEC84[];
 
-// Cursor-position pane-name tables indexed by field_0xC0 (func_8012435C):
+// Cursor-position pane-name tables indexed by field_0xC0 (placeQuestCursor):
 // each entry's 4 bytes spell the pane name passed to FindPaneByName. Non-const
 // with a fixed small size keeps the indexed loads sda21-based (incomplete or
 // const arrays go to .rodata/.data with absolute addressing).
 extern f32 lbl_eu_80667178[2];
 extern f32 lbl_eu_8066717C[2];
 
-// func_80122EF8 loop scaling / rounding constants (.sdata2).
+// closeQuestWindow loop scaling / rounding constants (.sdata2).
 extern const f32 lbl_eu_8066713C;
 extern const f32 lbl_eu_8066714C;
 extern const f64 lbl_eu_80667150;
 extern const f64 lbl_eu_80667158;
 extern const f64 lbl_eu_80667160;
 
-// func_80122EF8 5-byte window-name patch table: the leading word holds float
+// closeQuestWindow 5-byte window-name patch table: the leading word holds float
 // bits (read as raw bytes into a stack buffer) plus a trailing byte.
 extern const u32 lbl_eu_80667144;
 extern const u8 lbl_eu_80667148;
@@ -281,7 +281,7 @@ extern "C" {
 extern "C" void Cur_SetVisible(void*, int); // cursor visibility setter (CCur)
 u32 PTNotice_IsActive_3C10();                       // party-change notice screen active?
 u32 menuPTStateIsActive();                       // party-state screen active?
-void func_801D202C(void* cur);             // cursor per-frame update (CCur)
+void Cur_Update(void* cur);             // cursor per-frame update (CCur)
 void Cur_DrawLayout(void*, void*); // cursor draw
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
@@ -324,7 +324,7 @@ void* getCfPadData__Q22cf13CfGameManagerFv();
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 
-// C-ABI UI / misc imports used by Term, func_80122EF8, func_80122C08.
+// C-ABI UI / misc imports used by Term, closeQuestWindow, handleQuestInput.
 u8 DecMenuCounter64080();
 u32 GetItemMulti_IsActiveFlag();
 void CUICfManager_setTimeout30();
@@ -358,7 +358,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 // BDAT archive attach helpers (onQuestFileEvent common-archive branch).
 void setBdatEntry__5CBdatFUlPv(u32, void*);
 
-// Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
+// Quest-content helpers (refreshQuestContent). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
 // unmasked value in a callee-saved register between the call and the mask).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
@@ -371,34 +371,34 @@ void CtrlObjectParam_SetWorkField50(u16);
 void UIWin_CreateMenuUpdate(u32, u32, u32, u32);
 
 // Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs
-// the caller's flag byte; func_801231C4 pane show/hide calls).
+// the caller's flag byte; refreshQuestContent pane show/hide calls).
 extern "C" void setPaneVisible(void*, u32);
 
-// Copy 2 floats from src to self+0x4C (func_801231C4 cursor-pane placement).
+// Copy 2 floats from src to self+0x4C (refreshQuestContent cursor-pane placement).
 void writePanePos(u8* self, const float* src);
 }
 
 // Same-TU quest-window free functions. The retail names are unmangled, so the
 // calls from updateWindow keep C linkage (the definitions below inherit it).
-// noinline: func_8012435C/80122C08/80122EF8 are still empty stubs; without it
+// noinline: placeQuestCursor/80122C08/80122EF8 are still empty stubs; without it
 // MWCC inlines their empty bodies into updateWindow's switch and collapses
 // the case-2/3 dispatch (retail keeps the calls).
 extern "C" {
 void updateWindow(QuestWinObj* self);
 void completeWindowOpen(QuestWinObj* self);
 void enableAnimA(QuestWinObj* self);
-__attribute__((noinline)) void func_80122C08(QuestWinObj* self);
-__attribute__((noinline)) void func_80122EF8(QuestWinObj* self);
-__attribute__((noinline)) void func_8012435C(QuestWinObj* self);
+__attribute__((noinline)) void handleQuestInput(QuestWinObj* self);
+__attribute__((noinline)) void closeQuestWindow(QuestWinObj* self);
+__attribute__((noinline)) void placeQuestCursor(QuestWinObj* self);
 CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3);
 // CQuestWindow::OnFileEvent tail-calls onQuestFileEvent with this - 0x6C; the
 // event's file handle selects the window-arc (field_0x88) or common-archive
-// (field_0x8C) build branch. func_801231C4 refreshes the window content after
+// (field_0x8C) build branch. refreshQuestContent refreshes the window content after
 // either branch completes.
 bool onQuestFileEvent(CQuestWindow* self, CEventFile* event);
-// noinline: func_801231C4 is still an empty stub; without it MWCC inlines its
+// noinline: refreshQuestContent is still an empty stub; without it MWCC inlines its
 // empty body into onQuestFileEvent's two call sites (retail keeps the calls).
-__attribute__((noinline)) void func_801231C4(CQuestWindow* self);
+__attribute__((noinline)) void refreshQuestContent(CQuestWindow* self);
 }
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols

@@ -19,7 +19,7 @@
 namespace cf {
 
 // Region/link object referenced by the +0x4E8 / +0x4F4 slots; only the
-// +0x714 active byte is consumed by this TU (func_8005DC30).
+// +0x714 active byte is consumed by this TU (tryLinkActive).
 struct CActParamAnimGameLink {
     u8 _00[0x64];
     u32 f64;                       // +0x64 (func_8005EEB4 flag)
@@ -56,11 +56,11 @@ public:
     bool checkHeightBelow();
     bool clearFlag80000();
     bool startMoveGate(u32 type, u32 state);
-    bool func_8005D84C(u32 type, u32 state);
+    bool fireStateGate(u32 type, u32 state);
     bool tryGroundStep(u32 type, u32 state);
     bool dashStartGate(u32 type);
     bool scanActorList(u32 type);
-    bool func_8005DC30(u32 type);
+    bool tryLinkActive(u32 type);
     void snapFacingYaw();
     int steerForObsts(ml::CVec3* pos, ml::CVec3* move);
     void aimAtActorPos();
@@ -126,7 +126,7 @@ public:
     f32 field_51C;                         // +0x51C
     ml::CVec3 field_520;                  // +0x520 (trackGroundAt step vec)
     int field_52C;                         // +0x52C
-    volatile u16 field_530;                // +0x530 (volatile: retail reloads it across the flag-check branch in func_8005D84C)
+    volatile u16 field_530;                // +0x530 (volatile: retail reloads it across the flag-check branch in fireStateGate)
     u16 field_532;                         // +0x532
     u16 field_534;                         // +0x534
     u16 field_536;                         // +0x536
@@ -209,7 +209,7 @@ struct CActParamAnimGameMgr {
 };
 
 // Node of the manager list: +0x0 next pointer, +0x8 payload id fed to
-// func_8016FE34.
+// MapFx_ResolveOwner.
 struct CActParamAnimGameListNode {
     u32 next;      // +0x0
     u8 _04[4];
@@ -223,7 +223,7 @@ extern const float lbl_eu_80666040;   // sdata2: 0.0f (field_4F8 initializer)
 extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 initializer)
 extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer
 extern const float lbl_eu_8066604C;   // sdata2: field_47C initializer (trackGroundAt)
-extern const float lbl_eu_80666050;   // sdata2: ground-probe threshold (func_8005E60C)
+extern const float lbl_eu_80666050;   // sdata2: ground-probe threshold (probeStandGnd)
 extern const float lbl_eu_80666054;   // sdata2: ScnRes_Notify5Ptr_E470 probe arg (trackGroundAt)
 extern const float lbl_eu_80666058;   // sdata2: height-diff threshold (trackGroundAt)
 extern const float lbl_eu_8066605C;   // sdata2: move-vec scale (trackGroundAt)
@@ -246,7 +246,7 @@ extern const float lbl_eu_806660A0;   // sdata2: len threshold (trackGroundAt)
 extern const float lbl_eu_80666080;   // sdata2: ground-probe threshold (snapActorDown)
 extern const float lbl_eu_806660B0;   // sdata2: fall scale x (applyFallMove)
 extern const float lbl_eu_806660B4;   // sdata2: fall scale z (applyFallMove)
-extern const float lbl_eu_806660BC;   // sdata2: pos.y offset / probe arg (func_8005E60C)
+extern const float lbl_eu_806660BC;   // sdata2: pos.y offset / probe arg (probeStandGnd)
 extern const float lbl_eu_806660B8;   // sdata2: fall-penalty scale (applyFallMove)
 extern const float lbl_eu_806660C0;   // sdata2: fall-penalty cap (applyFallMove)
 extern const float lbl_eu_806660CC;   // sdata2: sin/cos fidx multiplier (40.743663f)
@@ -281,8 +281,8 @@ extern const float lbl_eu_80666110;   // sdata2: drop threshold (func_8005D2C4)
 extern const float lbl_eu_80666114;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_80666118;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_8066611C;   // sdata2: matrix row init (func_8005DCA8)
-extern const float lbl_eu_80666124;   // sdata2: probe arg (func_8005E60C)
-extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C); f32 form to match CtrlMoveBase.hpp
+extern const float lbl_eu_80666124;   // sdata2: probe arg (probeStandGnd)
+extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (probeStandGnd); f32 form to match CtrlMoveBase.hpp
 extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 
 // C++-mangled retail helper (actor id -> action source), used by
@@ -304,7 +304,7 @@ extern "C" int ScnData_FwdBC9A0(void);
 // system global state / query) and kyoshin/CUIBattleManager.cpp (link
 // resolution), used by func_8005D2C4.
 extern "C" void* getScnHandle__Fv(void);
-extern "C" void* func_8016FE34(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* r3);
 
 // C-linkage import: the retail base-class ctor, called directly by the
 // __ct__8005A3FC free function (a mangled ctor symbol cannot be invoked

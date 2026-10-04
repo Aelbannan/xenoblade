@@ -2,7 +2,7 @@
 
 #include <harness_catalog.h>
 
-// Resource data parsed by func_804BC9F4 from chunked file data.
+// Resource data parsed by Coli_ParseChunks from chunked file data.
 // Fields are populated based on entry type in the top-level chunk list.
 // Offsets 0x60 and 0x78 are used by Coli_GetOutMatrix_80A4 / Coli_ClearOutFlag_8078.
 struct ScnResData {

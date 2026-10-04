@@ -1216,8 +1216,8 @@ extern "C" __declspec(noinline) void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* sel
             }
         }
         acc.w = oneF;
-        func_80495644(env, layer);
-        func_804952C4(env, (const ml::CVec3*)&acc);
+        selectLightSlot(env, layer);
+        blendSlotAmbient(env, (const ml::CVec3*)&acc);
         resetLightSlotIndex(env);
         if (layer == 1) {
             self->flags |= 0x200;
@@ -1283,7 +1283,7 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     }
     if (ctl->field_0x04 & 0x8000) {
         CScnEnvLgtCtrlLgtEntry40* entry = &self->field_0x20_ptr[ctl->field_0x1E];
-        func_804C03A0(view, 1);
+        LightCtlSetAttnMode(view, 1);
         if (ctl->field_0x00 == self->lgt2.field_0xBC) {
             f32 s = self->lgt2.field_0xB8;
             CScnEnvLgtCtrlLgtVec3f tmp;
@@ -1295,16 +1295,16 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
             out.y = tmp.y;
             out.z = tmp.z;
             out.w = lbl_eu_8066B014;
-            func_804C07F0(view, &out);
+            LightCtlSetColor(view, &out);
         } else {
             CScnEnvLgtCtrlLgtVec4 out;
             out.x = entry->field_0x18;
             out.y = entry->field_0x1C;
             out.z = entry->field_0x20;
             out.w = lbl_eu_8066B014;
-            func_804C07F0(view, &out);
+            LightCtlSetColor(view, &out);
         }
-        func_804C0484(view, (const u8*)entry + 0xC);
+        LightCtlSetDir(view, (const u8*)entry + 0xC);
         LightCtlSetEnable(view, 1);
         return 1;
     }
@@ -1317,9 +1317,9 @@ int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     }
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
         out.w = lbl_eu_8066B014;
-        func_804C03A0(view, 1);
-        func_804C07F0(view, &out);
-        func_804C0484(view, (const u8*)ctl + 0x30);
+        LightCtlSetAttnMode(view, 1);
+        LightCtlSetColor(view, &out);
+        LightCtlSetDir(view, (const u8*)ctl + 0x30);
         LightCtlSetEnable(view, 1);
         return 1;
     }
@@ -1345,7 +1345,7 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     if (ctl->field_0x04 & 0x8000) {
         CScnEnvLgtCtrlLgtEntry40* entry =
             &self->field_0x20_ptr[ctl->field_0x1E];
-        func_804C03A0(view, 3);
+        LightCtlSetAttnMode(view, 3);
         CScnEnvLgtCtrlLgtVec3f tmp;
         tmp.z = entry->field_0x20 * scale;
         tmp.x = entry->field_0x18 * scale;
@@ -1355,8 +1355,8 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         out.y = tmp.y;
         out.z = tmp.z;
         out.w = lbl_eu_8066B014;
-        func_804C07F0(view, &out);
-        func_804C0454(view, (const u8*)entry);
+        LightCtlSetColor(view, &out);
+        LightCtlSetPos(view, (const u8*)entry);
         LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
         LightCtlSetEnable(view, 1);
@@ -1365,9 +1365,9 @@ int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     CScnEnvLgtCtrlLgtVec4 out;
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
         out.w = lbl_eu_8066B014;
-        func_804C03A0(view, 3);
-        func_804C07F0(view, &out);
-        func_804C0454(view, (const u8*)ctl + 0x30);
+        LightCtlSetAttnMode(view, 3);
+        LightCtlSetColor(view, &out);
+        LightCtlSetPos(view, (const u8*)ctl + 0x30);
         LightCtlInitDistAttn(view, ctl->field_0x44, ctl->field_0x48, ctl->field_0x4C);
         LightCtlSetEnable(view, 1);
         return 1;
@@ -1393,7 +1393,7 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     }
     if (ctl->field_0x04 & 0x8000) {
         CScnEnvLgtCtrlLgtEntry40* entry = &self->field_0x20_ptr[ctl->field_0x1E];
-        func_804C03A0(view, 4);
+        LightCtlSetAttnMode(view, 4);
         CScnEnvLgtCtrlLgtVec3f tmp;
         tmp.z = entry->field_0x20 * scale;
         tmp.y = entry->field_0x1C * scale;
@@ -1403,9 +1403,9 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
         out.y = tmp.y;
         out.z = tmp.z;
         out.w = lbl_eu_8066B014;
-        func_804C07F0(view, &out);
-        func_804C0454(view, (const u8*)entry);
-        func_804C0484(view, (const u8*)entry + 0xC);
+        LightCtlSetColor(view, &out);
+        LightCtlSetPos(view, (const u8*)entry);
+        LightCtlSetDir(view, (const u8*)entry + 0xC);
         LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
         LightCtlInitSpot(view, entry->field_0x38, entry->field_0x30);
@@ -1415,10 +1415,10 @@ int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* view,
     CScnEnvLgtCtrlLgtVec4 out;
     if (scnLgtFillLightVec4(self, &out, (CScnEnvLgtCtrlLgtParamEntry*)ctl, scale)) {
         out.w = lbl_eu_8066B014;
-        func_804C03A0(view, 4);
-        func_804C07F0(view, &out);
-        func_804C0454(view, (const u8*)ctl + 0x30);
-        func_804C0484(view, (const u8*)ctl + 0x44);
+        LightCtlSetAttnMode(view, 4);
+        LightCtlSetColor(view, &out);
+        LightCtlSetPos(view, (const u8*)ctl + 0x30);
+        LightCtlSetDir(view, (const u8*)ctl + 0x44);
         LightCtlInitDistAttn(view, ctl->field_0x50, ctl->field_0x54, ctl->field_0x58);
         LightCtlInitSpot(view, ctl->field_0x5C, ctl->field_0x60);
         LightCtlSetEnable(view, 1);
@@ -1453,8 +1453,8 @@ extern "C" __declspec(noinline) void scnLgtPushSlotLights(
             f32 d2 = nw4r::math::VEC3Dot(&diff, &diff);
             f32 radius = self->field_0xEC + slot->field_0x24;
             if (radius * radius >= d2) continue;
-            func_804C03A0(view, 3);
-            func_804C0454(view, (const u8*)&slot->field_0x18);
+            LightCtlSetAttnMode(view, 3);
+            LightCtlSetPos(view, (const u8*)&slot->field_0x18);
             LightCtlInitDistAttn(view, 0, lbl_eu_8066B020, lbl_eu_8066B024);
             f32 inner = kAtten * radius;
             if (inner * inner < d2) {
@@ -1474,25 +1474,25 @@ extern "C" __declspec(noinline) void scnLgtPushSlotLights(
                 pos.y = ofs.y;
                 pos.z = ofs.z;
                 pos.w = one;
-                func_804C07F0(view, &pos);
+                LightCtlSetColor(view, &pos);
             } else {
                 CScnEnvLgtCtrlLgtVec4 pos;
                 pos.x = slot->field_0x18f.x;
                 pos.y = slot->field_0x18f.y;
                 pos.z = slot->field_0x18f.z;
                 pos.w = one;
-                func_804C07F0(view, &pos);
+                LightCtlSetColor(view, &pos);
             }
         } else {
             // Simple path: push the raw slot position.
-            func_804C03A0(view, 1);
-            func_804C0484(view, (const u8*)&slot->field_0x18);
+            LightCtlSetAttnMode(view, 1);
+            LightCtlSetDir(view, (const u8*)&slot->field_0x18);
             CScnEnvLgtCtrlLgtVec4 pos;
             pos.x = slot->field_0x18f.x;
             pos.y = slot->field_0x18f.y;
             pos.z = slot->field_0x18f.z;
             pos.w = one;
-            func_804C07F0(view, &pos);
+            LightCtlSetColor(view, &pos);
         }
         self->field_0x130[self->field_0xE4] = zero;
         LightCtlSetEnable(view, 1);
@@ -4220,7 +4220,7 @@ u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self) {
 }
 // scnLgtDispatchEnv (us-804c5494): per-frame light-env dispatch. Resolves the
 // camera item through the owner's +0x68 camera-work blob, re-inits the four
-// CLightEnv slots (func_80495644 + func_804952C4 with the AFD8/AFDC color
+// CLightEnv slots (selectLightSlot + blendSlotAmbient with the AFD8/AFDC color
 // pair + resetLightSlotIndex), then walks the light-item ring forward dispatching
 // v9(env) plus the v12/v13 vec4 queries (applying results through
 // scnVlApplyDir4C / scnVlApplyDir6C on the owner's +0x5C virtual-light manager
@@ -4234,12 +4234,12 @@ void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env) {
     ml::CVec4 v18;   // sp+0x18 ring-walk vec4 (declared first -> higher slot)
     ml::CVec4 v8;    // sp+0x8 slot color
     for (u32 i = 0; i < 4; i++) {
-        func_80495644(env, i);
+        selectLightSlot(env, i);
         v8.x = lbl_eu_8066AFD8;
         v8.y = lbl_eu_8066AFD8;
         v8.z = lbl_eu_8066AFD8;
         v8.w = lbl_eu_8066AFDC;
-        func_804952C4(env, (const ml::CVec3*)&v8);
+        blendSlotAmbient(env, (const ml::CVec3*)&v8);
         resetLightSlotIndex(env);
     }
     CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;

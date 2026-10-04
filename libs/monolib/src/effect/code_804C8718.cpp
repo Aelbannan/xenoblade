@@ -82,7 +82,7 @@ struct EffectListNode {
     u16 field_0x10;             // 0x10 (child-list enabled flag)
 };
 
-// Full-layout effect object used by func_804CB5FC (the shared CEffectObj in
+// Full-layout effect object used by EffObj_GetPriority (the shared CEffectObj in
 // CScheduleItem.hpp only covers the fields the schedule TUs touch).
 struct BoundScene {
     u16 field_0x00;         // 0x00 flags
@@ -114,12 +114,12 @@ struct SceneViewObj {
     f32 field_0x1f0;        // 0x1f0 depth scale
 };
 
-// Object with a type id at +0x00 (compared to 0xe by func_804CB274).
+// Object with a type id at +0x00 (compared to 0xe by EffType_PickEmitVec).
 struct EffTypeObj {
     s32 field_0x00;         // 0x00
 };
 
-// Init blob (the `data` parameter of func_804C8830): two u16 offsets into the
+// Init blob (the `data` parameter of EffObj_Construct): two u16 offsets into the
 // resource base select the offset tables read for the 0xdc tail block.
 struct EffInitBlob {
     s16 field_0x00;          // 0x00
@@ -150,8 +150,8 @@ struct EffOffList {
     u16 field_0x14;          // 0x14
 };
 
-// Full effect-object view used by func_804C8830 / func_804CAC08 /
-// func_804C8D90 (same object as EffectRoot but with a u32 type word at 0x00
+// Full effect-object view used by EffObj_Construct / EffObj_EmitUpdate /
+// EffObj_Update (same object as EffectRoot but with a u32 type word at 0x00
 // and the resolved-pointer tail block typed as u32).
 struct EffObject {
     u32 field_0x00;          // 0x00 type
@@ -189,7 +189,7 @@ struct EffObject {
     f32 sub_0x204[8];        // 0x204..0x224 (SchedAnim_InitColor10/E2A5C target)
 };
 
-// Tail-state view used by func_804C8D90 (0x180..0x18c, inside the 0x17c
+// Tail-state view used by EffObj_Update (0x180..0x18c, inside the 0x17c
 // sub-region range).
 struct EffFrameTail {
     u8 field_0x180;          // 0x180
@@ -207,12 +207,12 @@ u32 SchedFx_CountActive(void);
 void SchedRes_ReinitTables(void);
 void DbgCopyCamProj(void* obj, void* arg);
 void getProjMatrix(void* obj, int flag, f32 w, f32 h);
-void func_804D854C(void);
+void resolveEffectFog(void);
 void SchedRes_ClearBuf60(void);
-void func_804D9364(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
-void func_804D9A10(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
-void func_804D9B70(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
-void func_804D9F00(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b);
+void cerandRandDir(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
+void cerandRandBox(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
+void cerandRandCylinder(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b, double radius);
+void cerandRandArc(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b);
 }
 
 struct CScnRootEnv;
@@ -264,7 +264,7 @@ void EffCtl_EmptyStub84(void* scene);
 u32 SchedFx_CountTotal(void);
 void SchedRes_AllocElemTables(void);
 void __ct__804E4B64(int arg);
-void func_804D82DC(void* scene);
+void Trail_SnapFog(void* scene);
 u32 lytBindCanResolveTarget(void* link);
 void EffFxRenderDispatch(void* obj, void* arg);
 void func_804D401C(void* a, float f);
@@ -322,23 +322,23 @@ void EffFxSetupSceneXforms(void* self, const void* src);
 
 // Scene/resource helpers (defined in code_804BD8E8.cpp).
 int ScnRes_VertRayForward_E398(Vec* v, u32 a, u32 b, u32 c, f32 f1, f32 f2);
-void func_804BE4B4(void* dst, int index);
+void ScnRes_CopyEntryHead(void* dst, int index);
 CEffectObj* SchedFx_FetchByHandle(s16 handle);
-void func_804CB274(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
+void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
                    const ml::CVec3* in, const ml::CVec3* r8);
 s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node);
 struct EffSceneRef;
 struct EffMtx;
-void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
+void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
                    const Mtx* m2, const EffMtx* m3, const EffMtx* m4);
 
-// Effect-node view used by func_804CAC08: a float at +0x10.
+// Effect-node view used by EffObj_EmitUpdate: a float at +0x10.
 struct EffNode10 {
     u8 pad_0x00[0x10];
     f32 field_0x10;          // 0x10
 };
 
-// Scene handle view used by func_804CAC08: an s16 index at +0x04.
+// Scene handle view used by EffObj_EmitUpdate: an s16 index at +0x04.
 struct EffSceneRef {
     u8 pad_0x00[0x04];
     s16 field_0x04;          // 0x04
@@ -349,7 +349,7 @@ struct EffMtx {
     u32 w[12];
 };
 
-// Emission packet built by func_804CAC08 and passed to EffFxSetupSceneXforms as a
+// Emission packet built by EffObj_EmitUpdate and passed to EffFxSetupSceneXforms as a
 // SrcMtx (first 0x54 bytes: three vectors + one matrix); the trailing matrix
 // is copied along but not part of SrcMtx.
 struct EmitData {
@@ -408,11 +408,11 @@ void EffSys_InitRoot(EffectRoot* self) {
     EffFxInitNodeHead((EffectInit*)self->renderArg);
 }
 
-// func_804C8790: effect-manager constructor tail. Releases the per-effect node
+// EffRoot_InitDefaults: effect-manager constructor tail. Releases the per-effect node
 // chain head (0x24), zeroes the 16-word tail state block (0xdc..0x11c), then
 // sets the per-effect defaults (floats at 0x0c/0x18 from sdata2, -1 sentinels
 // at 0x1e/0x20, cleared 0x23 flag).
-void func_804C8790(EffectRoot* self) {
+void EffRoot_InitDefaults(EffectRoot* self) {
     EffFxReleaseNodeChain((EffectNode*)self->renderArg);
     // Load order/register naming: A0's temp must be born first (f0), A4's
     // second (f1); MWCC then schedules both sdata2 loads right after the call.
@@ -477,7 +477,7 @@ void EffRender_PassHideSet(EffectRoot* self) {
     EffFxRenderDispatch(self->renderArg, self->field_0x08->field_0x0c);
 }
 
-s32 func_804CB5FC(EffObj* obj) {
+s32 EffObj_GetPriority(EffObj* obj) {
     // Direct-priority path: return the signed priority byte unchanged.
     if ((obj->field_0x1c >> 11) & 1) {
         return obj->field_0x23;
@@ -572,7 +572,7 @@ void EffSys_InitScene(EffectRoot* self, void* scene, u32 arg) {
         SchedRes_AllocElemTables();
         __ct__804E4B64(0);
         SchedRes_ReleaseEntries(0);
-        func_804D82DC(scene);
+        Trail_SnapFog(scene);
         EffCtl_EmptyStub84(scene);
     }
 }
@@ -616,7 +616,7 @@ void func_804CBB84(EffectRoot* self, void* scene) {
                 getProjMatrix(&self->field_0x48, 1, w, h);
                 self->flags0 = (u16)(self->flags0 | 0x4000);
             }
-            func_804D854C();
+            resolveEffectFog();
         }
     }
 }
@@ -797,7 +797,7 @@ u32 EffSched_LookupB(EffectRoot* self, void* key) {
     return 0;
 }
 
-// func_804CC1F4: add a schedule request. When either the 0x2000 or 0x1000
+// EffRoot_AddSchedReq: add a schedule request. When either the 0x2000 or 0x1000
 // flag is set, resolve an entry range via SchedRes_FindEntryValue and forward it to the
 // schedule lists; returns 0 when no flag is set or the entry carries no data.
 namespace {
@@ -808,7 +808,7 @@ inline u32 EntryEnd(const CScheduleEntryData* e, u16 off) {
 }
 } // namespace
 
-u32 func_804CC1F4(EffectRoot* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
+u32 EffRoot_AddSchedReq(EffectRoot* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
     u16 flags = self->flags0;
     if (!((flags >> 13) & 1)) {
         if (!((flags >> 12) & 1)) return 0;
@@ -829,12 +829,12 @@ extern "C" void EffSys_Init4F9C(void) { __ct__804E4F9C(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 
-// func_804C8830: effect-object constructor. Resolves the u16 offset tables
+// EffObj_Construct: effect-object constructor. Resolves the u16 offset tables
 // selected by `data` against `base` into the 0xdc tail block, binds the six
 // sub-regions (0x11c/0x14c/0x17c/0x194/0x1c4/0x204), builds flags1 from the
 // data byte fields plus the sign of arg7, then wires the two scene links and
 // the renderArg header. Returns 1 on success, 0 when the data is empty.
-s32 func_804C8830(EffObject* self, const u8* base, const EffInitBlob* data,
+s32 EffObj_Construct(EffObject* self, const u8* base, const EffInitBlob* data,
                   void* arg6, s32 arg7, u8 arg8) {
     if (data->field_0x04 == 0) return 0;
     // volatile read: retail re-loads field_0x06 here instead of reusing the
@@ -968,7 +968,7 @@ s32 func_804C8830(EffObject* self, const u8* base, const EffInitBlob* data,
     return 1;
 }
 
-// func_804C8D90: per-frame effect-object update. Refreshes the six bound
+// EffObj_Update: per-frame effect-object update. Refreshes the six bound
 // sub-regions with the current lifetime value (delta), clears stale flags
 // based on the field_0x08 bitmask / parent handle / lifetime, then when the
 // 0x4000 flag is set runs the spawn loop: computes the remaining-duration
@@ -987,7 +987,7 @@ inline f32 u16ToF_b0b8(u16 v) {
 }
 
 static inline double s32ToF64_b0b0(s32 v);
-// Node-chain view used by func_804C8D90: type at 0x00, flags at 0x06 and a
+// Node-chain view used by EffObj_Update: type at 0x00, flags at 0x06 and a
 // float time at 0x10; per-node timer slots are addressed as node + (0x22<<2).
 struct EffNodeUpd {
     s16 field_0x00;
@@ -1016,7 +1016,7 @@ struct SpawnArg {
 // Identity-rotation test shared by both update paths: chained element-wise
 // comparison of the object matrix against ml::CMat34::identity. Declaration
 // order controls MWCC's flag->register assignment (same shape as
-// func_804CB5FC). Kept inline: retail duplicates this block textually at both
+// EffObj_GetPriority). Kept inline: retail duplicates this block textually at both
 // sites.
 static inline s32 EffMtxNearIdentity(EffObj* eo) {
     s32 c11 = 0;
@@ -1077,7 +1077,7 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     return factor;
 }
 
-void func_804C8D90(EffObject* obj, f32 delta) {
+void EffObj_Update(EffObject* obj, f32 delta) {
     EffFrameTail* ft = (EffFrameTail*)&obj->sub_0x17c[1];
     EffObj* eo = (EffObj*)obj;
 
@@ -1309,7 +1309,7 @@ struct Field08Scale {
     f32 scale_z;             // 0x3c
 };
 
-// Frame-update view of the effect object used by func_804C9D30: the 0x64/0xac
+// Frame-update view of the effect object used by EffFrame_Update: the 0x64/0xac
 // emission matrices, the 0x128 position and the 0x140/0x170 anchor columns.
 struct EffFrameObj {
     u32 field_0x00;          // 0x00 type
@@ -1347,7 +1347,7 @@ struct EffWMat {
     };
 };
 
-// Node sink view used by func_804C9D30: two 12-word matrix slots at 0x130 and
+// Node sink view used by EffFrame_Update: two 12-word matrix slots at 0x130 and
 // 0x160 receive the emission transforms.
 struct EffNodeSink {
     u8 pad_0x00[0x130];
@@ -1393,13 +1393,13 @@ extern "C" void EffFxSceneTickDispatch(void* self);
         } \
     }
 
-// func_804C9D30: per-frame effect-object update. When the lifetime (0x2e) is
+// EffFrame_Update: per-frame effect-object update. When the lifetime (0x2e) is
 // positive, builds the two emission transforms (negated anchor columns via
 // CERotEulerOrder, position added, concatenated with the 0x64/0xac matrices;
 // optionally rescaled by the bound scene's 0x34 factors) once up front and
-// again per node inside the chain walk, calling func_804CAC08 and folding the
+// again per node inside the chain walk, calling EffObj_EmitUpdate and folding the
 // resulting matrices back into each node.
-void func_804C9D30(EffFrameObj* obj) {
+void EffFrame_Update(EffFrameObj* obj) {
     f32 cZero;
     if (obj->field_0x2e <= 0) return;
     s32 ok = 0;
@@ -1450,7 +1450,7 @@ void func_804C9D30(EffFrameObj* obj) {
         }
         if (ok != 0) {
             if (((node->field_0x06 >> 11) & 1) == 0) {
-                func_804CAC08((EffObject*)obj, (EffSceneRef*)node,
+                EffObj_EmitUpdate((EffObject*)obj, (EffSceneRef*)node,
                               &em68.mtx, &emC8.mtx, (const EffMtx*)&em98,
                               (const EffMtx*)&emF8);
             }
@@ -1492,13 +1492,13 @@ extern "C" void EffObj_StepNode(EffObject* self) {
     EffFxProcessNodeChain((EffectNode*)self->renderArg);
     self->field_0x0c += self->field_0x14;
 }
-// func_804CAC08: effect-object emission update. When the scene node index is
+// EffObj_EmitUpdate: effect-object emission update. When the scene node index is
 // valid, refreshes the six bound sub-regions with (nodeTime - 1.0), then
 // emits two emission vectors (mode/scale from the 0xdc tail block), builds a
 // direction vector (either the difference of the two matrix translations or
 // of the emission vectors), normalizes it, and hands the packet to
 // EffFxSetupSceneXforms.
-void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
+void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
                    const Mtx* m2, const EffMtx* m3, const EffMtx* m4) {
     f32 f31;
     if (scene->field_0x04 >= 0) {
@@ -1531,7 +1531,7 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     u32 mode1 = e4 ? *(const u8*)((const u8*)e4 - 0xe) : 0;
     u32 scale1 = e4 ? *(const u16*)((const u8*)e4 - 0xc) : 100;
     ml::CVec3 out1;
-    func_804CB274((EffTypeObj*)obj, &out1, mode1, scale1, &obj->field_0x134,
+    EffType_PickEmitVec((EffTypeObj*)obj, &out1, mode1, scale1, &obj->field_0x134,
                   (const ml::CVec3*)((const u8*)obj->field_0x08 + 0x34));
     Vec tmp1;
     PSMTXMultVec(&(*m1)[0], (const Vec*)&out1, &tmp1);
@@ -1543,7 +1543,7 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
             f31 = lbl_eu_8066B0C0 * out1.y;
         }
         if (ScnRes_VertRayForward_E398((Vec*)&data.va, 0x4801, 0, 0, -f31, lbl_eu_8066B0A0) != 0) {
-            func_804BE4B4(&data.va, 0);
+            ScnRes_CopyEntryHead(&data.va, 0);
         } else {
             data.va.y -= f31;
         }
@@ -1552,7 +1552,7 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     u32 mode2 = ec ? *(const u8*)((const u8*)ec - 0xe) : 0;
     u32 scale2 = ec ? *(const u16*)((const u8*)ec - 0xc) : 100;
     ml::CVec3 out2;
-    func_804CB274((EffTypeObj*)obj, &out2, mode2, scale2, &obj->field_0x164,
+    EffType_PickEmitVec((EffTypeObj*)obj, &out2, mode2, scale2, &obj->field_0x164,
                   (const ml::CVec3*)((const u8*)obj->field_0x08 + 0x34));
     Vec tmp2;
     PSMTXMultVec(&(*m2)[0], (const Vec*)&out2, &tmp2);
@@ -1580,7 +1580,7 @@ void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
 // EffSys_RebindSceneLinks: update both scene-bind links (0x4c and 0x94) for a scene
 // change. The per-link state is a flag byte 0xd before the bound object
 // pointer (word 2/4 of the 0xdc tail block): forced to 3 when the scene arg
-// is non-null, bit 1 selects func_804EE658, bit 0 selects func_804EE8FC, and
+// is non-null, bit 1 selects lytBindRefreshMatrix, bit 0 selects lytBindRefreshTrans, and
 // a non-positive field_0x14 clears the second link's state. Returns 1 when
 // both links resolve.
 s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node) {
@@ -1593,8 +1593,8 @@ s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node) {
     }
     if (scene != 0) state = 3;
     lytBindRefreshPlayer(&self->link0);
-    if (state & 2) func_804EE658(&self->link0, node);
-    if (state & 1) func_804EE8FC(&self->link0, node);
+    if (state & 2) lytBindRefreshMatrix(&self->link0, node);
+    if (state & 1) lytBindRefreshTrans(&self->link0, node);
 
     bound = self->field_0xdc[4];       // 0xec
     if (bound != 0) {
@@ -1605,8 +1605,8 @@ s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node) {
     if (self->field_0x14 <= lbl_eu_8066B0A0) state = 0;
     if (scene != 0) state = 3;
     lytBindRefreshPlayer(&self->link1);
-    if (state & 2) func_804EE658(&self->link1, node);
-    if (state & 1) func_804EE8FC(&self->link1, node);
+    if (state & 2) lytBindRefreshMatrix(&self->link1, node);
+    if (state & 1) lytBindRefreshTrans(&self->link1, node);
 
     s32 result = 0;
     if (lytBindCanResolveTarget(&self->link0) != 0 && lytBindCanResolveTarget(&self->link1) != 0) {
@@ -1627,12 +1627,12 @@ static inline double s32ToF64_b0b0(s32 v) {
     return c.d - lbl_eu_8066B0B0;
 }
 
-// func_804CB274: fill `out` with a random emission vector selected by `mode`
+// EffType_PickEmitVec: fill `out` with a random emission vector selected by `mode`
 // (7/1 = zero, 0 = direction, 2 = box, 4 = arc, 3 = cylinder). The radius
 // (1.0 - r6/maxScale) is computed up front and stays in f1 as the 4th
-// argument of the 4-arg callees (func_804D9F00 ignores it). When the object
+// argument of the 4-arg callees (cerandRandArc ignores it). When the object
 // type is 0xe the y component is post-processed.
-void func_804CB274(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
+void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
                    const ml::CVec3* in, const ml::CVec3* r8) {
     // Radius stays in double precision end-to-end (no frsp); the signed
     // argument converts through the shared 2^52+2^31 magic (helper above).
@@ -1645,18 +1645,18 @@ void func_804CB274(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
         *out = ml::CVec3::zero;
         break;
     case 0:
-        func_804D9364(out, in, r8, radius);
+        cerandRandDir(out, in, r8, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(out->y);
         break;
     case 2:
-        func_804D9A10(out, in, r8, radius);
+        cerandRandBox(out, in, r8, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
         break;
     case 4:
-        func_804D9F00(out, in, r8);
+        cerandRandArc(out, in, r8);
         break;
     case 3:
-        func_804D9B70(out, in, r8, radius);
+        cerandRandCylinder(out, in, r8, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
         break;
     }

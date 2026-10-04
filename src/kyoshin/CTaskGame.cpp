@@ -238,7 +238,7 @@ void CTaskGame::Init(){
     reinterpret_cast<CTaskGameUnkD4Obj*>(evt)->field_0x60 |= 2;
 
     if (lbl_eu_80663D2C != 0) {
-        func_8004302C(1, 1);
+        CTaskGame_setLoadScreen(1, 1);
         // Switch the move-hook ptmf from pool lbl_eu_80525568.
         // Pointer-walk form: MWCC emits the update-load (lwzu) for *pool++
         // and keeps the advanced base for the following element reads.
@@ -806,7 +806,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         if (CLibHbm::isHbmActive() == 0 && cf::CfGameManager::isSceneLoading() == 0) {
             if (CGame::getInstance() == 0 ||
                 CTaskGame_checkBusy7C(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
-                func_802AE560(lbl_eu_80663D1C);
+                CLoadUpdateLayout(lbl_eu_80663D1C);
             }
         }
         // Camera at idle pose with non-origin x -> skip the draw.
@@ -1127,7 +1127,7 @@ extern "C" void CTaskGame_movePrepFade(CTaskGame* self) {
 // (CTaskGame_windowGate) is clear, tick the unk78 frame budget. While the budget
 // lasts (below fps*4 - fps/2) and the CTaskGame_padConfirm gate opens: halve the
 // budget, push the float constants through the vec4 setter into the unkCC
-// object (index framerate/2), run the func_8004302C reset pair, and switch
+// object (index framerate/2), run the CTaskGame_setLoadScreen reset pair, and switch
 // the move-hook ptmf to pool lbl_eu_805255B0. When the budget hits zero the
 // move-hook switches to pool lbl_eu_805255BC instead.
 extern "C" void CTaskGame_moveFadeTick(CTaskGame* self) {
@@ -1144,7 +1144,7 @@ extern "C" void CTaskGame_moveFadeTick(CTaskGame* self) {
                 GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC),
                               getTargetFramerate__9CDeviceVIFv() >> 1,
                               reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
-                func_8004302C(1, 1);
+                CTaskGame_setLoadScreen(1, 1);
                 u32 v0;
                 u32* pool = reinterpret_cast<u32*>(lbl_eu_805255B0);
                 v0 = pool[0];
@@ -1169,7 +1169,7 @@ void CTaskGame_stub_80040DE4(){}
 // (CTaskGame_windowGate) is clear, tick the unk78 frame budget. While the budget
 // lasts and the CTaskGame_padConfirm gate opens: halve the budget, push the float
 // constants through the vec4 setter into the unkD0 object (index
-// framerate/2), run the func_8004302C reset pair, and switch the move-hook
+// framerate/2), run the CTaskGame_setLoadScreen reset pair, and switch the move-hook
 // ptmf to pool lbl_eu_80525568+0x6C. When the budget runs out, bump the
 // unk7C retry counter: at >= 2 the same vec4/reset sequence runs with pool
 // lbl_eu_80525568+0x78, otherwise the move-hook switches to pool
@@ -1194,7 +1194,7 @@ extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
             GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
                           reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
-            func_8004302C(1, 1);
+            CTaskGame_setLoadScreen(1, 1);
             // Pool entry view: MWCC keeps the entry address relative to the
             // materialized pool base (retail addi r3,r29,off / lwz off(rX)).
             CTaskGamePtmfPool* pool1 = reinterpret_cast<CTaskGamePtmfPool*>(
@@ -1213,7 +1213,7 @@ extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
             GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
                           reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D6C)));
-            func_8004302C(1, 1);
+            CTaskGame_setLoadScreen(1, 1);
             CTaskGamePtmfPool* pool2 = reinterpret_cast<CTaskGamePtmfPool*>(
                 reinterpret_cast<u32>(base) + 0x78);
             CTaskGamePtmfWords* words2 = reinterpret_cast<CTaskGamePtmfWords*>(self);
@@ -1786,7 +1786,7 @@ extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
 // captions are empty and the play-time gate (CTaskGame_playTimeGate) is closed but
 // the script-time gate (EvtSeqGetStateBit10) opens: start streaming the
 // lbl_eu_804FA890[0x6E] caption with the scene's alloc handle
-// (func_80043738). Pokes the unkD4 event object; then when unk68 bit 0x1000
+// (CTaskGame_openStream). Pokes the unkD4 event object; then when unk68 bit 0x1000
 // is set: clear bit 0x800, and by unkF4 mode clear the unkF0 object's +0x39
 // busy byte (0), run the CUICfManager_openSaveMenu / CUICfManager_queueOptionMenu pair and store the
 // scene's Scn_GetUnk80Resource byte into unk188 (1/2), then push the float
@@ -1797,7 +1797,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
     self->unk68 |= 0x400000;
     if (CTaskGame_windowGate(self) == 0) {
         if (self->unk86 == 0 && CTaskGame_playTimeGate() == 0 && EvtSeqGetStateBit10() != 0) {
-            func_80043738(0, &lbl_eu_804FA890[0x6E], Scn_CallUnk8C_V9(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
+            CTaskGame_openStream(0, &lbl_eu_804FA890[0x6E], Scn_CallUnk8C_V9(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
         }
         if (self->unkD4 != 0) {
             EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
@@ -2011,8 +2011,8 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
 // via CTaskGame_strAppend / the FixStr<32> format + CTaskGame_strAppend2), then reset the
 // unk86/unk88/unkA4/unk8A title fields. After the title path: disable the
 // Hbm state, create the cf::CTaskGameCf task, raise lbl_eu_80663E28 bit
-// 0x10000000, run the per-mode cf::CTaskGameCf start (func_8004431C /
-// func_8004433C / startMission by unk128), and switch the move-hook ptmf to
+// 0x10000000, run the per-mode cf::CTaskGameCf start (startMode1New /
+// startMode2Con / startMission by unk128), and switch the move-hook ptmf to
 // pool lbl_eu_805257F0.
 // optimize_for_size: retail saves r29-r31 with a single stmw.
 #pragma optimize_for_size on
@@ -2071,9 +2071,9 @@ extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     lbl_eu_80663E28 |= 0x10000000;
     if ((int)self->unk128 == 1) {
         // retail start helpers are flat C symbols; the instance flows in r3
-        func_8004431C(cf::CTaskGameCf::getInstance());
+        startMode1New(cf::CTaskGameCf::getInstance());
     } else if ((int)self->unk128 == 2) {
-        func_8004433C(cf::CTaskGameCf::getInstance());
+        startMode2Con(cf::CTaskGameCf::getInstance());
     } else if ((int)self->unk128 == 3) {
         cf::CTaskGameCf::getInstance()->startMission(self->unk80, self->unk82,
                                                      *reinterpret_cast<ml::FixStr<32>*>(&self->unk90), self->unk84);
@@ -2231,12 +2231,12 @@ extern "C" void DECOMP_DONT_INLINE CTaskGame_deleteLoad() {
     }
 }
 void CTaskGame_stub_8004302C(){}
-// Retail func_8004302C: loading-screen lifecycle switch. With the task live
+// Retail CTaskGame_setLoadScreen: loading-screen lifecycle switch. With the task live
 // and a scene attached (and, when flag bit 0x01000000 is raised, only when
 // b != 0): a != 0 constructs the global CLoad - MEM2 plain when b == 0 and no
 // loader exists yet, MEM1 tail-aligned otherwise - then starts the load and
 // clears the state counter; a == 0 stops and deletes it.
-void func_8004302C(int a, int b) {
+void CTaskGame_setLoadScreen(int a, int b) {
     CTaskGame* game = lbl_eu_80663D18;
     if (game == nullptr) {
         return;
@@ -2328,7 +2328,7 @@ s32 CTaskGame::isMoveFuncActive() {
 // Target us-80043cb4: streaming-open helper for voice/presentation files.
 // When the CTaskGame singleton is live and (with the play-time gate open)
 // the unkDC budget is not exceeded: resolve the file extension; when the
-// func_804DE010 pack check identifies an archive path (func_804DDD54) the
+// hasPackFile pack check identifies an archive path (func_804DDD54) the
 // size check is skipped; otherwise getFileSize(path, 1) must be >= 0. Then
 // run the shared reset (CTaskGame_resetStream), pick the alloc handle (Scn_CallUnk8C_V9
 // on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
@@ -2339,7 +2339,7 @@ s32 CTaskGame::isMoveFuncActive() {
 // unkDC budget, and behind the CfGameManager reset gate forward the stream
 // active state (setStreamPause) / run the MenuSnd_ResetFadeTargetA_9C70 sound reset and
 // store the unk8E ticker. Finally ramp the CRI volume (CTaskGame_setStreamVol).
-void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume) {
+void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume) {
     if (lbl_eu_80663D18 == 0) {
         return;
     }
@@ -2353,7 +2353,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
     if (ext == 0) {
         return;
     }
-    if (func_804DE010() != 0) {
+    if (hasPackFile() != 0) {
         u32 v0, v1, v2, v3;
         if (func_804DDD54(ext, path, &v0, &v1, &v2, &v3) != 0) {
             found = 1;
@@ -2407,20 +2407,20 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
 }
 // Target us-80043ec8: vision streaming-open helper. When the CTaskGame
 // singleton is live: build the voice file path into a local FixStr<32>
-// (func_802A0CB8, index/length args); if the requested id matches the
+// (formatVoiceFilePath, index/length args); if the requested id matches the
 // current unkE4/unkEC stream, stop it (CTaskGame_resetStream for the unkE4 case, or
 // the CRI stop + handle reset for the unkEC case). Then when the play-time
 // gate (CTaskGame_playTimeGate) is open: with a live unkE8 handle re-seed the unk18C
 // struct (CTaskGame_setVisionParam); otherwise allocate a fresh CRI stream (MEM2/MEM1
 // alloc-handle selection by max-alloc size, calcStreamBufferSize + 0x800 budget),
 // open it via CLibCri and record the unkE8 handle / unkEC id. When the
-// gate is closed: start streaming via func_80043738 and record the unkE4 id.
+// gate is closed: start streaming via CTaskGame_openStream and record the unkE4 id.
 extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
     if (lbl_eu_80663D18 == 0) {
         return 0;
     }
     ml::FixStr<32> filename;
-    if (func_802A0CB8(filename.mString, a, b) == 0) {
+    if (formatVoiceFilePath(filename.mString, a, b) == 0) {
         return 0;
     }
     if ((s32)lbl_eu_80663D18->unkE4 == (s32)a || (s32)lbl_eu_80663D18->unkEC == (s32)a) {
@@ -2454,7 +2454,7 @@ extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) 
         }
         return 0;
     }
-    func_80043738(0, filename.mString, c, d, e, 0, f);
+    CTaskGame_openStream(0, filename.mString, c, d, e, 0, f);
     if (CTaskGame_playTimeGate() != 0) {
         lbl_eu_80663D18->unkE4 = a;
         return 1;
@@ -2465,7 +2465,7 @@ extern "C" int CTaskGame_playTimeGate();
 // CRI volume/seek helper: while a CTaskGame instance exists and the play-time
 // gate (CTaskGame_playTimeGate) is open, forward (unkD8 handle, volume) to the CRI
 // streaming-play setter. The global instance is re-read after the call.
-// __declspec(noinline): retail func_80043738 calls it out of line
+// __declspec(noinline): retail CTaskGame_openStream calls it out of line
 // (fmr f1, f31; bl CTaskGame_setStreamVol); without it MWCC inlines the 5-instruction
 // gate body into the caller.
 extern "C" __declspec(noinline) void CTaskGame_setStreamVol(float f1) {

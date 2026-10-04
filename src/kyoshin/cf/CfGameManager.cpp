@@ -24,16 +24,16 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #undef createEffectForPlayer__Q22cf13CfGameManagerFv
 #undef getPlayer__Q22cf13CfGameManagerFi
-// CfObjectMap.hpp's import block declares func_800AA33C as int(char*,...)
+// CfObjectMap.hpp's import block declares Tok_FormatStr as int(char*,...)
 // clashing with the proper extern "C"
 // versions already in scope from CfObjectMove.hpp / IResInfo.hpp
 // (MWCC forbids overloading an extern "C"
 // function). Rename CfObjectMap.hpp's copies out of the way; this TU uses the
 // properly-typed declarations from those headers. (Scn_GetFrameDelta now has a
 // single unified decl.)
-#define func_800AA33C cfObjectMapFunc_800AA33C
+#define Tok_FormatStr cfObjectMapFunc_800AA33C
 #include "kyoshin/cf/object/CfObjectMap.hpp"
-#undef func_800AA33C
+#undef Tok_FormatStr
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
 // CtrlPc player-sub type for func_80085FB8's +0x38 sub-object probe (real
@@ -45,15 +45,15 @@
 #define cfCam_setClear04 ctrlPcFunc_8006BBF4
 #define Selector_GetInstance ctrlPcFunc_800FE68C
 #define appendObjectById ctrlPcFunc_800F6D50
-#define func_8017FD44 ctrlPcFunc_8017FD44
-#define func_8017FD4C ctrlPcFunc_8017FD4C
+#define GetZealObjPtr ctrlPcFunc_8017FD44
+#define GetZealResult ctrlPcFunc_8017FD4C
 #define getArtsParamRC2 ctrlPcGetArtsParamRC2
 #include "kyoshin/cf/CtrlPc.hpp"
 #undef Selector_GetInstance
 #undef cfCam_setClear04
 #undef appendObjectById
-#undef func_8017FD44
-#undef func_8017FD4C
+#undef GetZealObjPtr
+#undef GetZealResult
 #undef getArtsParamRC2
 // Full battle-manager class for resetBattlePresentation's real slot-0x1C call
 // (setPartyMaskFlag) and +0x94/+0x194 member access. Include-only: the class
@@ -165,7 +165,7 @@ extern "C" void func_8007DCB8__Q22cf13CfGameManagerFv();
 
 // --- imports for func_80086B5C ---
 extern "C" unsigned long CfT_DispatchFrameCounts();
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 // Retail symbol is Fv but callers pass three values (see setPad precedent).
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
                                                         int flag);
@@ -697,7 +697,7 @@ bool cf::CfGameManager::isManagerInitialized() {
 // CfGameManager.hpp CfDtor08).
 void cf::CfGameManager::teardownGameManager() {
     lbl_eu_80663E28 |= 0x200000;
-    func_8012F87C(0);
+    UIBattleRemoveAll(0);
     CUICfManager_setFlagState(0);
     CCharVoiceMan_DestroySingleton();
     getBattleStateB__Q22cf14CBattleManagerFv();
@@ -842,7 +842,7 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
         Func800B6BECList* list = getReslistB68();
         for (Func800B6BECNode* node = list->head->next; node != list->head;
              node = node->next) {
-            void* rawObj = func_8016FE34(node->object);
+            void* rawObj = MapFx_ResolveOwner(node->object);
             if (rawObj == nullptr) {
                 continue;
             }
@@ -865,7 +865,7 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
     Func800B6BECList* list = getReslistB68();
     for (Func800B6BECNode* node = list->head->next; node != list->head;
          node = node->next) {
-        void* rawObj = func_8016FE34(node->object);
+        void* rawObj = MapFx_ResolveOwner(node->object);
         if (rawObj == nullptr) {
             continue;
         }
@@ -1069,6 +1069,11 @@ extern "C" void dispatchObjectFunc19__Q22cf13CfGameManagerFv(
 }
 
 #pragma dont_inline on
+// Retail .text:0x80142524, unmangled global (the CfBdat static of the same name
+// is a different, mangled symbol). Called with `this` in r3 at both retail call
+// sites; no definition exists in this tree yet, so it stays a link-frontier item.
+extern "C" void* bdatFetchCache(void* self);
+
 void cf::CfGameManager::syncFieldAndBattle() {
     bdatFetchCache(this);
     setMgrFixStrName(this);
@@ -1119,7 +1124,7 @@ void* cf::CfGameManager::func_8007C8C8() {
     // the implicit void* conversion.
     updateBattleManager((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv());
     if (lbl_eu_80663E24 & 0x80) {
-        func_80295A88(lbl_eu_80664A10);
+        updateHelpManager(lbl_eu_80664A10);
     }
     CCharVoiceMan_Tick();
     if (lbl_eu_80663E14 != nullptr &&
@@ -1146,10 +1151,10 @@ void* cf::CfGameManager::func_8007C8C8() {
     if ((lbl_eu_80663E24 & 0xAFA40000) == 0 ||
         (lbl_eu_80663E28 & 0x1000000) == 0) {
         Selector_GetInstance();
-        func_800FE104();
+        Selector_FrameUpdate();
         if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
             if (lbl_eu_80663E24 & 0x1000) {
-                func_8019FD2C();
+                refreshNpcRowFlags();
             }
             // Retail loads E24 once and tests bit 26 (rlwinm 6,6) OR'd
             // with bit 21 (rlwimi 21,21).
@@ -1376,7 +1381,7 @@ extern "C" void CfSoundMan_ClearFxEffect(u32 first, u32 second);
 extern "C" void gmCallInit1954();
 extern "C" void MapFx_SetGlobalFloat(float value);
 extern "C" void resetBattleState__Q22cf14CBattleManagerFv(void* battle);
-extern "C" void func_80066788(u32 a, u32 b, u32 c, u32 d);
+extern "C" void CfRes_updateEntry(u32 a, u32 b, u32 c, u32 d);
 extern "C" void CfRes_getInstPtr170();
 extern "C" void EffSys_Init4F9C(void* object);
 extern "C" float lbl_eu_80667700;
@@ -1389,7 +1394,7 @@ void cf::CfGameManager::func_8007D84C() {
     CfSoundMan_StopAllModes(1);
     CfSoundMan_ClearFxEffect(0, 0);
     CfSoundMan_ClearFxEffect(1, 0);
-    func_8012F87C(0);
+    UIBattleRemoveAll(0);
     CUICfManager_setFlagState(0);
     if ((lbl_eu_80663EE0 & 0x40) != 0) {
         lbl_eu_80663EE0 &= ~0x40;
@@ -1436,7 +1441,7 @@ void cf::CfGameManager::func_8007D84C() {
         EffSys_Init4F9C(resetObject);
     }
     CfRes_getInstPtr170();
-    func_80066788(0, 0, 0, 0);
+    CfRes_updateEntry(0, 0, 0, 0);
     Selector_GetInstance();
     __dt__800FDEF8();
     resetBattleState__Q22cf14CBattleManagerFv(
@@ -2075,7 +2080,7 @@ void cf::CfGameManager::func_8007DCB8() {
             s16 extra;
             s32 active = 0;
             if (value != 0 && lbl_eu_80663E40 != 0 && dataId <= 7) {
-                func_80158420(value, &result, 1, &extra);
+                CItem_findOrCreateRec(value, &result, 1, &extra);
                 CtrlObjectParam_WriteU16RowEntry(data, col, value);
                 CtrlObjectParam_WriteEquipSlotValue(data, col, reinterpret_cast<void*>(static_cast<s32>(result)));
                 active = 1;
@@ -2323,7 +2328,7 @@ void cf::CfGameManager::resetBattlePresentation() {
     lbl_eu_80663EDC = lbl_eu_80666498;
     mineResetAll();
     evtTeardownActive();
-    func_802959AC(lbl_eu_80664A10);
+    resetHelpManager(lbl_eu_80664A10);
     CCharVoiceMan_ClearFieldFlag();
     if (NandQueueBusy() != 0) {
         if (!lbl_eu_80663E70) {
@@ -2542,7 +2547,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
         if (MiniMapHasGlobalData() != 0) {
             MiniMapResetLayoutAnims();
         }
-        func_8012F87C(0);
+        UIBattleRemoveAll(0);
         lbl_eu_80663E08 = lbl_eu_80666498;
         if (gateFunc10) {
             CfRes_callFunc_67F10(0);

@@ -51,7 +51,7 @@ struct CVec4;  // full definition in monolib/math/CVec4.hpp
 }
 extern "C" void Env_ScaleVec4(ml::CVec4* out, const ml::CVec4* in, float s);
 
-// Single-float math helpers used by func_804933AC's direction-vector to
+// Single-float math helpers used by scnVlDirFromVec's direction-vector to
 // dir-light-angle conversion (flat-name retail symbols; not yet decompiled).
 extern "C" f32 atan2AnimFIdx(f32 value);
 extern "C" f32 cfCam_mulSda2Const(f32 value);
@@ -123,13 +123,13 @@ extern "C" int CamMan_FindItemA_B158(CScnCameraMan* cam, s32 id);
 // field. Flat-name import; declared here (CScnVirtualLight.hpp) because the
 // declaring header CVirtualLightObj.hpp pulls CLight.hpp whose real class
 // conflicts with this TU's stub CLight/CVirtualLightObj dtors.
-extern "C" void func_804C03A0(u8* self, int value);
+extern "C" void LightCtlSetAttnMode(u8* self, int value);
 
 struct CVirtualLightAmb;  // defined in CVirtualLightAmb.hpp
 class CVirtualLightDir;   // defined in CVirtualLightDir.cpp
 
 // Dir-light factory (defined later in CScnVirtualLight.cpp). Declared with C
-// linkage here so func_804933AC's call reloc stays flat (retail scnVlCreateDir);
+// linkage here so scnVlDirFromVec's call reloc stays flat (retail scnVlCreateDir);
 // the plain definition below inherits the linkage.
 extern "C" CVirtualLightDir* scnVlCreateDir(CScnVirtualLightData* self, u8* field,
                                            const CTaskGame_setVec4_tmp* data, f32 val1,
@@ -151,7 +151,7 @@ extern "C" void VirtLight_SetPair(CVirtualLightDir* self, float a, float b);
 extern "C" void copyWord4Offset(u32* dst, const u32* src);
 
 // Same-TU helpers re-declared with C linkage so the flat retail call relocs
-// (scnVlCreateAmb / func_804933AC call sites) stay byte-identical; the
+// (scnVlCreateAmb / scnVlDirFromVec call sites) stay byte-identical; the
 // definitions below inherit the linkage and keep emitting the flat symbol.
 extern "C" void scnVlInsertItem(CScnVirtualLightData* self, u32 arg2);
 extern "C" void scnVlSetIntens(void* self, float val);
@@ -181,7 +181,7 @@ extern "C" void* scnVlIterItem(void* self);
 extern "C" void scnVlIterNext(u32* self);
 
 // Same-TU helpers used by the ctor / light-init walks / per-frame update
-// (scnVlInitLights, scnVlInitLights2, func_80493F08, scnVlUpdate). Declared
+// (scnVlInitLights, scnVlInitLights2, scnVlDispatchNode, scnVlUpdate). Declared
 // with C linkage so those call relocs stay flat (retail flat names); the
 // plain definitions below inherit the linkage.
 class CScnVirtualLight;  // full definition below
@@ -214,7 +214,7 @@ extern "C" u32 scnVlGetSlotPtr(void* self, u32 idx);
 extern "C" void scnVlSetSlotFld(void* self, u32 val, u32 idx);
 extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
                                const ml::CVec3* vec, int mode, f32 f1);
-extern "C" void func_80493F08(void* unused, CLightEnv* env, CScnVirtualLightNode* node);
+extern "C" void scnVlDispatchNode(void* unused, CLightEnv* env, CScnVirtualLightNode* node);
 extern "C" float scnVlGetFade(void* self);
 extern "C" u32 scnVlGetEnabled(void* self);
 extern "C" void* scnVlPtrVal14(void* self);
@@ -253,11 +253,11 @@ extern "C" u32 CScnItemPool_resolveScene(CScnVirtualLightSrc* self);
 extern "C" CScnVirtualLightSub* getSubField7C(CScnVirtualLightSrc* self);
 extern "C" u32 checkBitFlag(CScnVirtualLightSub* self);
 
-// Light-slot selection / env-state helpers used by func_804936AC's per-frame
+// Light-slot selection / env-state helpers used by scnVlPushFrame's per-frame
 // environment push (CVirtualLightObj.cpp / CScnEnvLgtCtrl.cpp flat-name
 // imports). scnLgtDispatchEnv's definition is a no-arg catalog stub; the retail
 // call site passes (sub, env), so the full ABI pair is declared here.
-extern "C" void func_80495644(CLightEnv* self, u32 idx);
+extern "C" void selectLightSlot(CLightEnv* self, u32 idx);
 extern "C" void resetLightSlotIndex(void* self);
 extern "C" void scnLgtDispatchEnv(CScnVirtualLightSub* sub, CLightEnv* env);
 
@@ -271,23 +271,23 @@ extern "C" void* __construct_new_array(void* block, ConstructorDestructor ctor,
 
 // Light-setup imports (CLight.cpp / CVirtualLightObj.cpp / CScnEnvLgtCtrl.cpp).
 extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
-extern "C" void func_804C02E4(CLight* self, u32 value);
-extern "C" void func_804C0928(CLight* self, f32 intensity);
+extern "C" void LightCtlCopyObj(CLight* self, u32 value);
+extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
 extern "C" void scnLgtGatherLights(CScnVirtualLightSub* self, f32 f, CScnEnvLgtData* data,
                                const ml::CVec3* vec);
-extern "C" void func_804952C4(CLightEnv* self, const ml::CVec3* v);
+extern "C" void blendSlotAmbient(CLightEnv* self, const ml::CVec3* v);
 extern "C" void bindOrientedLight(CLightEnv* self, u32 a, f32 f1, f32 f2);
 extern "C" void bindAttenuatedLight(CLightEnv* self, u32 a, u32 b, f32 f);
 extern "C" void bindSpotLight(CLightEnv* self, f32 a, f32 b, void* c, void* d,
                                f32 e, f32 f);
-extern "C" void func_80495AF4(CLightEnv* env, CScnEnvLgtData* data, int slot);
+extern "C" void exportSlotLights(CLightEnv* env, CScnEnvLgtData* data, int slot);
 
 // Scene light-data update imports (code_804BF59C.cpp). The 5-arg shape is
 // the retail call seen at the scnVlUpdate call site (reset in r6, float
 // in f1); the code_804BF59C.hpp declaration is a 4-arg stub.
-extern "C" void func_804BFA70(CScnEnvLgtData* self, const ml::CVec3* vec, int mode,
+extern "C" void scnVlUpdateShape(CScnEnvLgtData* self, const ml::CVec3* vec, int mode,
                               int reset, f32 f);
-extern "C" void func_804BFEB4(CScnEnvLgtData* self);
+extern "C" void scnVlUpdateColor(CScnEnvLgtData* self);
 
 // Vector builders (retail 3-float setter / vec3 copy / vec helpers).
 extern "C" ml::CVec3* writeVec3f(ml::CVec3* out, f32 x, f32 y, f32 z);
@@ -343,7 +343,7 @@ extern "C" void __ct__Q34nw4r3g3d8LightObjFv(void* self);
 extern "C" void __dt__Q34nw4r3g3d8LightObjFv(void* self, int flag);
 
 // Virtual-dispatch view of the light object (CVirtualLightObj-derived) used
-// by func_80493F08: slot +0x0C returns the light's position as ml::CVec3 by
+// by scnVlDispatchNode: slot +0x0C returns the light's position as ml::CVec3 by
 // value. Declared-only / abstract; never instantiated (the retail object's
 // own vtable is dispatched through). MWCC emits two vtable header slots, so
 // the dtor lands at +0x08 and the first user virtual at +0x0C.
@@ -434,8 +434,8 @@ extern u8 lbl_eu_8056E868[];
 extern "C" void __dt__reslist_CVirtualLightObj(CScnVirtualLightReslist* self, int flag);
 
 // Scene-light reset helper (defined later in CScnVirtualLight.cpp; retail
-// func_804923F8, a large init walk). Called by the dtor with a 0 flag.
-extern "C" void func_804923F8(CScnVirtualLight* self, int arg);
+// scnVlResetMgr, a large init walk). Called by the dtor with a 0 flag.
+extern "C" void scnVlResetMgr(CScnVirtualLight* self, int arg);
 
 // One slot of the virtual-light pool (0x40-byte stride). Content is opaque
 // here; the pool only allocates/frees whole slots.

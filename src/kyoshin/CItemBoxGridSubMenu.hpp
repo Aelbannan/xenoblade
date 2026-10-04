@@ -36,10 +36,10 @@ struct CItemBoxGridSubMenu {
     void GridSubMenu_MoveSelectionPrev();
     void GridSubMenu_BeginOpenAnim();
     void GridSubMenu_MoveSelectionNext();
-    void func_802084D4(int arg);
+    void GridSubMenu_SetupOptions(int arg);
 };
 
-void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
+void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void playUISound__FUl(u32);

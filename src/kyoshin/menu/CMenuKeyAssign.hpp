@@ -63,7 +63,7 @@ public:
     CScn* mScn;                // 0x60 - owning scene (removeRenderCB target)
     u8 mUnkClass[0x10];        // 0x64 - scratch region storage (manual dtor)
     nw4r::lyt::Layout* mLayout; // 0x74 - layout drawn in cbRenderBefore
-    u32 mField_78;             // 0x78 - open state (func_801159DC: 3 = already open)
+    u32 mField_78;             // 0x78 - open state (openKeyAssignPlayer: 3 = already open)
 };
 
 // View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
@@ -76,7 +76,7 @@ struct PaneFlagView {
 };
 
 // Pane view covering the size words (+0x4C/+0x50) and the visible flag
-// (+0xBB) - used by func_801159DC to size a picture pane from a texture.
+// (+0xBB) - used by openKeyAssignPlayer to size a picture pane from a texture.
 struct PaneSizeFlagView {
     u8 _00[0x4C];
     f32 sizeX; // 0x4C
@@ -86,7 +86,7 @@ struct PaneSizeFlagView {
 };
 
 // Texture object returned by the arc accessor's GetResource("timg", ...)
-// call in func_801159DC: +0x08 points at the texture header, whose first
+// call in openKeyAssignPlayer: +0x08 points at the texture header, whose first
 // word is a pointer to the u16 width/height pair.
 struct TexDimsView {
     u16* mDims; // 0x00
@@ -129,12 +129,12 @@ extern char lbl_eu_804FDEE8[];
 extern char lbl_eu_8052BF70[];
 // Composite vtable: IWorkEvent sub-vtable at +0x24, IScnRender sub-vtable at +0xac.
 extern char lbl_eu_8052C640[];
-// sdata2 double 0x4330000000000000 - u32->f32 conversion magic (func_801159DC).
+// sdata2 double 0x4330000000000000 - u32->f32 conversion magic (openKeyAssignPlayer).
 extern f64 lbl_eu_80667080;
 // sdata2 f32 compared against the arts-select gauge in Move (arts vf128).
 extern f32 lbl_eu_80667078;
 
-// Move's view of the arts-state object (func_8016FE34 result): sub-object at
+// Move's view of the arts-state object (MapFx_ResolveOwner result): sub-object at
 // +4 whose vtable slot 0x30 returns the actor-id word.
 struct CMenuKeyAssignActorSub {
     virtual void vf08();               // +0x08
@@ -214,12 +214,12 @@ void __ct__17UnkClass_8045F564Fv(u8* self);
 // any included header).
 int CMenuArtsSelect_IsAvailable();
 int battleCommuIsActive();
-int func_8017FD44(void);
+int GetZealObjPtr(void);
 int CMainMenu_IsOpen();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their
 // own TUs but not by any included header).
 void* CfObjectMove_getSelfIfActive(void* objParam);
-void* func_8016FE34(void* source);
+void* MapFx_ResolveOwner(void* source);
 bool CMenuArtsSelect_isCreated();
 }
 

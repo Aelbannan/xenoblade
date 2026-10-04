@@ -158,7 +158,7 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).
 // Cur_SetVisible / BuildSlotItemLists are declared in CEquipItemBox.hpp.
-extern "C" void func_801D2BFC(CBaseCur*, u8);
+extern "C" void Cur_HighlightPane(CBaseCur*, u8);
 extern "C" u8 code80135FDC_getByte_64077();
 
 // Party-select helpers (unmangled retail symbols).
@@ -224,7 +224,7 @@ extern "C" void swapPartyMembers(CPartyState*);
 extern "C" void scalePartySlotPane(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 
 // Embedded cursor ctor/dtor (defined in the CCur unit).
 extern "C" CBaseCur* __ct__CCur22(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
@@ -253,7 +253,7 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 
 // Cursor pane-position/show helpers (CCur unit, retail unmangled).
 extern "C" void Cur_PlacePaneByIndex(CBaseCur*, const nw4r::math::VEC3*, u8);
-extern "C" void func_801D2CF4(CBaseCur*, u8, u8);
+extern "C" void Cur_ShowPane(CBaseCur*, u8, u8);
 
 // Pane translate accumulation (code_80135FDC.cpp, retail unmangled).
 extern "C" void AccumPaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*);

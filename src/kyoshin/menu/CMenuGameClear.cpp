@@ -165,11 +165,11 @@ extern "C" unsigned long ClearMenu_IsPresent() {
     return lbl_eu_80664C08 != 0;
 }
 
-// Shared input-handler shape (func_802B22F4 selects -> state 4,
-// func_802B2488 backs out -> state 8). Reads the cf pad button word:
+// Shared input-handler shape (ClearMenu_ConfirmInput selects -> state 4,
+// ClearMenu_CancelInput backs out -> state 8). Reads the cf pad button word:
 // bit21/bit27 of +0x04 (port-dependent) is the confirm stroke, 0x8004 moves
 // the cursor up, bits 15/28 move it down.
-extern "C" void func_802B22F4(CMenuGameClear* self) {
+extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
     CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
     u32 buttons;
     int dirBit;
@@ -211,7 +211,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
     }
 }
 
-extern "C" void func_802B2488(CMenuGameClear* self) {
+extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
     CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
     u32 buttons;
     int dirBit;

@@ -53,7 +53,7 @@ public:
 };
 
 extern "C" void CLoadBeginFileRequest(CLoad* self);
-extern "C" void func_802AE560(CLoad* self);
+extern "C" void CLoadUpdateLayout(CLoad* self);
 extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CLoadTeardownLayout(CLoad* self);
 extern "C" u8 CLoadIsLoadReady(CLoad* self);

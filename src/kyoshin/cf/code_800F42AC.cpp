@@ -28,8 +28,8 @@ float ScMain_GetRoundedMetric(ScMain* self) {
     if (self->sub == NULL)
         return lbl_eu_80666E90;
 
-    cf::Sc48778* node = (cf::Sc48778*)func_8016FE34((void*)findObjectById__Fi((int)self->field_00));
-    if (func_80148778(node->data_08, 0x10) != 0) {
+    cf::Sc48778* node = (cf::Sc48778*)MapFx_ResolveOwner((void*)findObjectById__Fi((int)self->field_00));
+    if (isBattleStatusActive(node->data_08, 0x10) != 0) {
         cf::Sc149154Ret* obj = (cf::Sc149154Ret*)findBattleStatusEntry(node->data_08, 0x10);
         double round;
         f32 a = obj->field_20;
@@ -64,7 +64,7 @@ float ScMain_GetRatio(ScMain* self) {
 /// (Re)initialises a ScMain object: clears all slots, resets the per-sub
 /// table (0xCC, 5 entries) and zeroes the status flags. When the bit-17
 /// status flag is set, first tears down a register with id 0x375.
-void func_800F449C(ScMain* self) {
+void ScMain_Reset(ScMain* self) {
     if (self->flags_824 & 0x20000) {
         if (UIWin_QueryPageFlag(0x375) == 0) {
             CtrlRemote_SetSharedBit(0x30e3, 0);

@@ -16,6 +16,9 @@ namespace lyt {
  * Group
  *
  ******************************************************************************/
+// NOTE: Init/AppendPane are inline: every call site (Group::Group) inlines
+// these bodies, and retail keeps no out-of-line copies in this split, so
+// no T copy is emitted here (a non-inline definition would always emit one).
 Group::Group(const res::Group* pRes, Pane* pRootPane) {
     Init();
 
@@ -35,7 +38,7 @@ Group::Group(const res::Group* pRes, Pane* pRootPane) {
     }
 }
 
-void Group::Init() {
+inline void Group::Init() {
     mbUserAllocated = false;
 }
 
@@ -54,7 +57,7 @@ Group::~Group() {
     })
 }
 
-void Group::AppendPane(Pane* pPane) {
+inline void Group::AppendPane(Pane* pPane) {
     // Layout::NewObj<detail::PaneLink> spelled out against the retail
     // allocator label (see ~Group above); body mirrors the lyt_layout.h
     // template exactly so the schedule is unchanged.

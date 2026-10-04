@@ -18,7 +18,7 @@ extern "C" u32 Scn_CallUnk8C_V8(u32 handle);
 
 // Node user-data scanner (retail unmangled symbol; declared with C linkage in
 // CScnItemModelNw4r.hpp, which is not self-contained - mirrored here).
-extern "C" void func_804E5990(void* self, void* node, void* mtx);
+extern "C" void scanNodeUserData(void* self, void* node, void* mtx);
 
 // Virtual-dispatch view of the owner object for the vtable+0x18 getter
 // (CScnItemModelNw4r::v04, scnImN4CreateModel) used by the node user-data scan.
@@ -238,13 +238,13 @@ static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
 CMdlMaterial::~CMdlMaterial() {}
 
 // =============================================================================
-// func_804E54B8 - CMdlMaterial setup from model resource
+// setupFromModel - CMdlMaterial setup from model resource
 // =============================================================================
 // Initializes the material descriptor from a model resource. Allocates a
 // GXColor buffer (4 channels per material), extracts ambient channel colours,
 // and scans each material's user-data block for an item whose name matches a
 // known constant, accumulating its S32 value into a 16-bit table.
-void CMdlMaterial::func_804E54B8(void* arg) {
+void CMdlMaterial::setupFromModel(void* arg) {
     field_0x04 = arg;
 
     // Build a local ResMdl from the model data pointer embedded in arg.
@@ -343,11 +343,11 @@ void CMdlMaterial::func_804E54B8(void* arg) {
     }
 }
 
-// func_804E5990 - scan a scene-node's user-data block. An item named via the
+// scanNodeUserData - scan a scene-node's user-data block. An item named via the
 // lbl_eu_80663C34 pointer whose name is 8 chars ending in a digit sets the
 // group id (digit value); items named via lbl_eu_80663C30 append their S32
 // values as bytes to the flag table.
-void func_804E5990(void* selfPtr, void* nodePtr, void* /*mtx*/) {
+void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
 
     // Pass the node handle straight through (no stack temporary).
@@ -431,10 +431,10 @@ void func_804E5990(void* selfPtr, void* nodePtr, void* /*mtx*/) {
     }
 }
 
-// func_804E5E38: for each entry in the material value table whose group id
+// applyCullByGroup: for each entry in the material value table whose group id
 // (value / 10) matches the requested value, copy that material's cull mode
 // from the model resource into the scene model.
-void func_804E5E38(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
+void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
     MdlMatContext* ctx = reinterpret_cast<MdlMatContext*>(self->field_0x04);
 
@@ -485,9 +485,9 @@ void func_804E5E38(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
     }
 }
 
-// func_804E5FD4: apply a colour (built from an RGB float triple scaled by
+// applyAmbientAll: apply a colour (built from an RGB float triple scaled by
 // 255.0f) as ambient colour on all four channels of every material.
-bool func_804E5FD4(MdlMatApplier* ap, const f32* rgb) {
+bool applyAmbientAll(MdlMatApplier* ap, const f32* rgb) {
     if (ap->colors == NULL) {
         return false;
     }
@@ -521,10 +521,10 @@ bool func_804E5FD4(MdlMatApplier* ap, const f32* rgb) {
     return true;
 }
 
-// func_804E6158: like func_804E5FD4, but restricted to materials whose light
+// applyAmbientByLight: like applyAmbientAll, but restricted to materials whose light
 // set index matches the requested one (all materials when lightSet == -1).
 // Returns whether any material was updated.
-bool func_804E6158(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
+bool applyAmbientByLight(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
     bool applied = false;
 
     if (ap->colors == NULL) {
@@ -579,9 +579,9 @@ bool func_804E6158(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
     return applied;
 }
 
-// func_804E6358: apply per-channel ambient colours taken sequentially from
+// applyAmbientArray: apply per-channel ambient colours taken sequentially from
 // the applier's colour array to every material of the model.
-bool func_804E6358(MdlMatApplier* ap) {
+bool applyAmbientArray(MdlMatApplier* ap) {
     if (ap->colors == NULL) {
         return false;
     }
@@ -611,10 +611,10 @@ bool func_804E6358(MdlMatApplier* ap) {
     return true;
 }
 
-// func_804E64B0: for each flag byte whose group id (byte / 10) equals the
+// notifyGroupChain: for each flag byte whose group id (byte / 10) equals the
 // owner material's accumulated value, invoke the chain-notify helper with
 // the byte's sub-index (byte % 10).
-void func_804E64B0(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
+void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
     for (u32 i = 0; i < self->field_0x30; i++) {
         s32 b = self->field_0x28[i];

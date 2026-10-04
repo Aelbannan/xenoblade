@@ -80,7 +80,7 @@ extern u32 lbl_eu_80663E28;
 // return is ABI-compatible, value in r3).
 extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
 extern "C" void CSkipTimerTick(CSkipTimer* self);
-extern "C" void func_8029FBE0(CSkipTimer* self);
+extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
 extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
@@ -104,7 +104,7 @@ extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
 extern "C" void CSkipTimerNextKey(CSkipTimer* self);
 extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
 extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
-extern "C" int func_8029FF1C(CSkipTimer* self);
+extern "C" int isSkipActive(CSkipTimer* self);
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);

@@ -5,12 +5,12 @@
 
 namespace cf {
 
-// Trivial flag reset; kept before func_802B8398 to mirror retail TU order.
+// Trivial flag reset; kept before isLearnArtsReady to mirror retail TU order.
 void CHelp_LearnArts::isHelpAvailable() {
     mLearnArtsFlag = 0;
 }
 
-bool CHelp_LearnArts::func_802B8398() {
+bool CHelp_LearnArts::isLearnArtsReady() {
     int bound;
     const char* colName;
     s16 threshold;

@@ -145,7 +145,7 @@ body:
         CMenuTutorialList_PhaseAdvance(this);
         break;
     case 2:
-        func_802AC5E8(this);
+        CMenuTutorialList_PhaseConfirm(this);
         break;
     case 3:
         CMenuTutorialList_PhaseClose(this);
@@ -167,7 +167,7 @@ body:
     BgTex_Tick_3D54(&mBgTex);
     updateHelp(&mTitleAHelp);
     TutorialList_UpdatePerFrame(reinterpret_cast<CTutorialList*>(mTutorialList));
-    func_8029AB28(reinterpret_cast<CTutorial*>(mTutorial));
+    Tutorial_Move(reinterpret_cast<CTutorial*>(mTutorial));
 }
 
 void CMenuTutorialList::cbRenderBefore() {
@@ -240,7 +240,7 @@ void CMenuTutorialList_PhaseAdvance(CMenuTutorialList* self) {
     }
 }
 
-void func_802AC5E8(CMenuTutorialList* self) {}
+void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self) {}
 
 // Close: same idle+ready guard as CMenuTutorialList_PhaseAdvance, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
@@ -272,7 +272,7 @@ void CMenuTutorialList_PhaseOpenSeq(CMenuTutorialList* self) {
 void CMenuTutorialList_PhaseTurnPage(CMenuTutorialList* self) {
     if (Tutorial_GetField47Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
         self->mFlag = 6;
-        u8 phase = func_8029AE5C(reinterpret_cast<CTutorial*>(self->mTutorial));
+        u8 phase = Tutorial_GetPageState(reinterpret_cast<CTutorial*>(self->mTutorial));
         switch (phase) {
         default:
             break;
@@ -309,16 +309,16 @@ void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self) {
             second = (pad->mPressedButtonFlags >> 5) & 1;
         }
         if (first) {
-            func_8029AD88(reinterpret_cast<CTutorial*>(self->mTutorial));
+            Tutorial_NextPage(reinterpret_cast<CTutorial*>(self->mTutorial));
             if (Tutorial_GetField52Mark(reinterpret_cast<CTutorial*>(self->mTutorial)) != 0) {
                 Tutorial_AdvanceState3To4(reinterpret_cast<CTutorial*>(self->mTutorial));
                 self->mFlag = 7;
             }
         } else if (second) {
-            func_8029ADF8(reinterpret_cast<CTutorial*>(self->mTutorial));
+            Tutorial_PrevPage(reinterpret_cast<CTutorial*>(self->mTutorial));
         }
 
-        u8 phase = func_8029AE5C(reinterpret_cast<CTutorial*>(self->mTutorial));
+        u8 phase = Tutorial_GetPageState(reinterpret_cast<CTutorial*>(self->mTutorial));
         switch (phase) {
         default:
             break;

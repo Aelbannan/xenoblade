@@ -666,7 +666,7 @@ extern "C" __declspec(noinline) void SymMark_Place(
             worldPos.y += lbl_eu_806670E8;
         }
     }
-    func_8049B59C(&screen, pose, &worldPos);
+    CamMan_ProjectToScreen(&screen, pose, &worldPos);
     // Hidden only when both projected coordinates exceed the bound.
     LytPaneFields* pane = ((LytLayoutFields*)entry->layout)->rootPane;
     if (screen.x <= lbl_eu_806670D4 || screen.y <= lbl_eu_806670D4) {
@@ -682,7 +682,7 @@ extern "C" __declspec(noinline) void SymMark_Place(
         t.z = lbl_eu_806670D4;
         VEC3TransformNormal(&t, (const nw4r::math::MTX34*)&pose->mtx9C, &t);
         edge = worldPos + t;
-        func_8049B59C(&screen, pose, &edge);
+        CamMan_ProjectToScreen(&screen, pose, &edge);
         f32 scaleX = lbl_eu_806670E8 / __fabs(screen.x - t.x);
         f32 scaleY = lbl_eu_806670E8 / __fabs(screen.y - t.y);
         if (!CDeviceVI::isWideAspectRatio()) {

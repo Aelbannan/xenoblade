@@ -2790,8 +2790,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         if (ArtsTable_getRowValue((SArts322BC*)&self->mList174, key) >= 10) {
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, 0x35);
-            func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-            func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+            sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+            sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
             sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         } else if (ArtsTable_isRowSelectable((SArts322BC*)&self->mList174, key) != 0) {
             // Selectable entry: pick the help id from the learn-state table.
@@ -2807,8 +2807,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
             }
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, id);
-            func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-            func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+            sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+            sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
             sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         } else {
             u16 pct = artsGetRowPct((SArts322BC*)&self->mList174, key);
@@ -2819,8 +2819,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
             } else {
                 char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                            lbl_eu_8050AC70 + 0x5b, 0x34);
-                func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-                func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+                sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+                sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
                 sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
             }
         }
@@ -2831,8 +2831,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
     if (ArtsTable_getRowValue((SArts322BC*)&self->mList174, -1) >= 10) {
         char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                    lbl_eu_8050AC70 + 0x5b, 0x35);
-        func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-        func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+        sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+        sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
         sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     } else if (ArtsTable_isRowSelectable((SArts322BC*)&self->mList174, -1) != 0) {
         u16 id;
@@ -2847,8 +2847,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         }
         char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                    lbl_eu_8050AC70 + 0x5b, id);
-        func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-        func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+        sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+        sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
         sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     } else {
         u16 pct = artsGetRowPct((SArts322BC*)&self->mList174, -1);
@@ -2857,8 +2857,8 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         } else {
             char* name = BdatTouchStringCell(lbl_eu_8050AC70 + 0x50,
                                        lbl_eu_8050AC70 + 0x5b, 0x34);
-            func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-            func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+            sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+            sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
             sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         }
     }
@@ -2972,8 +2972,8 @@ extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CMenuArtsSet* self) 
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     char* base = lbl_eu_8050AC70;
     char* name = BdatTouchStringCell(base + 0x50, base + 0x5b, 0x3c);
-    func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
-    func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+    sysWinSetKindContent((CSysWin*)&self->mSubObjE8, name, 0);
+    sysWinApplyKind((CSysWin*)&self->mSubObjE8, 1);
     sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
     self->field_0x2A6 = 1;
 }

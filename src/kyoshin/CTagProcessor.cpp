@@ -2890,7 +2890,7 @@ u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
 // alpha is forced to 0xFF), then write the <2, hi, lo> block.
 // -O4,s save shape (stmw r28).
 #pragma optimize_for_size on
-u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
+u16* TagParseColor(void* a, u16* out, wchar_t* str) {
     WcsToUpperInPlace((u16*)str);
     u32 v = 0;
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)

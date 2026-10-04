@@ -4,11 +4,11 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Declared BEFORE the monolib includes: functions.hpp (pulled in via
-// monolib/scn/CScnNw4r.hpp) declares func_8004302C as a plain C++ function,
+// monolib/scn/CScnNw4r.hpp) declares CTaskGame_setLoadScreen as a plain C++ function,
 // and a later extern "C" redeclaration is an MWCC error. Declaring the C
 // linkage first makes the plain redeclaration inherit it, so the call sites
 // in CTaskGame_moveFadeTick / CTaskGame_moveWaitPad emit the flat retail reloc.
-extern "C" void func_8004302C(int a, int b);
+extern "C" void CTaskGame_setLoadScreen(int a, int b);
 
 #include "monolib/core.hpp"
 #include "monolib/scn.hpp"
@@ -229,8 +229,8 @@ extern "C" void CTaskGame_resetStream();
 // Retail per-mode cf::CTaskGameCf start helpers are FLAT C symbols
 // (0x800448B8 / 0x800448D8, no member mangling); the instance returned by
 // getInstance() flows through r3.
-extern "C" void func_8004431C(cf::CTaskGameCf* instance);
-extern "C" void func_8004433C(cf::CTaskGameCf* instance);
+extern "C" void startMode1New(cf::CTaskGameCf* instance);
+extern "C" void startMode2Con(cf::CTaskGameCf* instance);
 // Sound-state reset helper (flat retail name; defined in code_80187F14.cpp).
 // Retail CTaskGame_resetStream calls it behind the unk68 bit 0x80 gate.
 extern "C" void MenuSnd_ResetFadeTargetB_9C7C();
@@ -515,7 +515,7 @@ struct CTaskGameFlag39 {
 // the result.
 extern "C" int CTaskGame_padConfirm(CTaskGame* self);
 // Effect/particle reset helpers (flat retail names; defined in
-// CfResPcImpl.cpp / code_804C8684.cpp). func_8004302C is declared before the
+// CfResPcImpl.cpp / code_804C8684.cpp). CTaskGame_setLoadScreen is declared before the
 // monolib includes above (functions.hpp declares it plain C++).
 extern "C" void EffCtl_StoreFlagAndParams(int a, int b);
 // Battle/script-time gate (flat retail name; stub body in
@@ -527,7 +527,7 @@ extern "C" int EvtSeqGetStateBit19();
 extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, f32 f);
 // Vision streaming-open helper (flat retail name; defined in this TU). Retail
 // CTaskGame_moveTitleTick / CTaskGame_openVision call it out of line with the path/handle set.
-extern "C" void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume);
+extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume);
 // Play-time gate (flat retail name; defined in this TU).
 extern "C" int CTaskGame_playTimeGate();
 // CRI volume/seek helper (flat retail name; defined in this TU).
@@ -550,7 +550,7 @@ extern "C" void CTaskGame_fadeStream(int frames, float volume);
 // site (retail cmpwi/mr/beq/addi adjusted-this shape).
 extern "C" void* __ct__CMenuTitle(CTaskGame* self, CScnNw4r* scene, ITitleMenu* titleMenu);
 
-// Caller-shape imports for the CTaskGame_moveTitleTick / func_80043738 /
+// Caller-shape imports for the CTaskGame_moveTitleTick / CTaskGame_openStream /
 // CTaskGame_openVision / CTaskGame_moveStartMission call sites (same scheme as the CLibCri
 // caller-shape imports above). Flat retail names; the defining TUs emit
 // C-linkage symbols.
@@ -559,10 +559,10 @@ extern "C" int EvtSeqGetStateBit10();
 extern "C" void CUICfManager_openSaveMenu();
 extern "C" void CUICfManager_queueOptionMenu(u32 value);
 extern "C" u32 Scn_GetUnk80Resource(CScnNw4r* scene);
-extern "C" int func_802A0CB8(char* buffer, int index, int value);
+extern "C" int formatVoiceFilePath(char* buffer, int index, int value);
 extern "C" int dispatchFilePlayback__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
 extern "C" u32 calcStreamBufferSize__7CLibCriFv(int arg);
-extern "C" int func_804DE010();
+extern "C" int hasPackFile();
 extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
 extern "C" void MenuSnd_ResetFadeTargetA_9C70();

@@ -136,7 +136,7 @@ void TitleMenuAdvanceProgress(CMenuTitleInput* self) {
     }
 }
 
-void func_802B60CC(CMenuTitleInput* self) {
+void TitleMenuHandleInput(CMenuTitleInput* self) {
     // Only accept input while enabled (field_e9) and not in the transient
     // field_ea state (e.g. during an animation/transition). The || guard
     // makes MWCC emit the retail branch-over-branch on the last disjunct

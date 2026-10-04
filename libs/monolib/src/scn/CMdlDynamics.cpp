@@ -125,7 +125,7 @@ extern const char lbl_eu_80570208[]; // panic message (shape payload checks)
 extern "C" void* scnImN4PoolAlloc(void* heap, u32 size);
 extern "C" s32 scnImN4PoolHasSpc(void* heap, u32 size); // heap space query
 extern "C" u32 Scn_CallUnk8C_V8(void* scene); // scene -> mtl::ALLOC_HANDLE
-extern "C" void func_80482DF4(CScnItemModel* self, u32 param);
+extern "C" void simMarkTree100000(CScnItemModel* self, u32 param);
 
 // CMdlDynamics retail vtable (3 entries, 0xC bytes) lives in retail .data.
 struct CMdlDynamicsVtbl {
@@ -2673,7 +2673,7 @@ extern "C" __declspec(noinline) void MdlDyn_BuildLists(CMdlDynamics* self,
         }
     }
 
-    func_80482DF4((CScnItemModel*)self->field_0x4, 0);
+    simMarkTree100000((CScnItemModel*)self->field_0x4, 0);
     for (CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
          it != (CMdlDynList**)self->buf08.field_0x0 +
                            self->buf08.field_0x4;

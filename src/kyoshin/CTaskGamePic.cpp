@@ -55,7 +55,7 @@ void CTTask<CTaskGamePic>::Draw() {
 extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* pThis, int arg) {
     __ct__8CProcessFv(pThis);
 
-    char* vtbl = lbl_eu_80538AD8;      // final CTaskGamePic vtable region
+    char* vtbl = lbl_eu_80538AD8;
     u32 v54 = (u32)(vtbl + 0x24);      // field_54 sub-vtable
     u32 v58 = (u32)(vtbl + 0xac);      // IScnRender member vtable
 
@@ -315,7 +315,7 @@ void CTaskGamePic::cbRenderBefore() {
     // (s16) casts on the u16 render-mode fields fold the sign extension
     // into lha loads, matching retail.
     ml::CRect rectA;
-    func_8043EA88__5CViewFRQ22ml5CRectP5CView(rectA, view);
+    fitRectToView__5CViewFRQ22ml5CRectP5CView(rectA, view);
     if (CDeviceVI::isWideAspectRatio()) {
         // Signed /2 (round toward zero): MWCC lowers to srawi+addze.
         rectA.mPos.x = (rectA.mSize.x - (s32)(tex->mWidth * 75 / 100)) / 2;
@@ -342,7 +342,7 @@ void CTaskGamePic::cbRenderBefore() {
         dgx0.setCol(col);
         reinterpret_cast<CDrawGXFlagWord*>(&dgx0)->mFlags &= ~0x10u;
         ml::CRect16 rectB;
-        func_8043EA88__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
+        fitRectToView__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
         dgx0.renderRect(rectB);
         dgx0.setTex(&mTexObj, tex->mWidth, tex->mHeight);
         dgx0.begin(6, 4);

@@ -119,4 +119,4 @@ void RootNw4r_FreeBuf(CScnRootNw4r* allocator, void* block);
 
 // Second-stage bloom constructor (defined in CScnBloom.cpp).
 #include "libs/monolib/src/scn/CScnBloom.hpp"
-CScnBloom* func_80499FD0(CScnBloom* self, CView* view);
+CScnBloom* CScnBloom_InitWithView(CScnBloom* self, CView* view);

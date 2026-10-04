@@ -101,14 +101,14 @@ void CUICfManager::dtorThunk54() {
 }
 
 // us-80136aa0
-// Vtable thunk for the secondary-subobject slot of func_80133324: the retail
+// Vtable thunk for the secondary-subobject slot of eventDispatch: the retail
 // symbol mangles the thunk as a no-arg member (`Fv`) but the vtable entry
 // passes its three hidden args (r4/r5/r6) straight through to the Fiii
 // callee after adjusting `this` by -0x58. Emitted under the extern "C" flat
 // name so the exact retail symbol is produced (OnFileEvent precedent); the
 // in-class no-arg declaration stays declared-only.
 extern "C" void eventDispatchThunk__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
-    func_80133324__12CUICfManagerFiii((CUICfManager*)((char*)self - 0x58), id, a1, a2);
+    eventDispatch__12CUICfManagerFiii((CUICfManager*)((char*)self - 0x58), id, a1, a2);
 }
 
 // us-80136aa8
@@ -237,7 +237,7 @@ void CUICfManager::Term() {
 }
 
 // ---------------------------------------------------------------------------
-// func_80133324__12CUICfManagerFv
+// eventDispatch__12CUICfManagerFv
 //
 // Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
 // reads r4/r5/r6 as real event-dispatch arguments and never touches `this`
@@ -255,7 +255,7 @@ int SearchThresholdIdx(int);
 u32 code80135FDC_setByte_6407F(u8);
 int CMenuGetItem_CreateMulti(void*, u32, u8, int);
 // Menu factories used by the CUICfManager_queueQuestLogMenu-family create helpers below.
-u32 func_8029BB24(CUICfUnk144*, u32, u32);
+u32 createOptionMenu(CUICfUnk144*, u32, u32);
 u32 CMenuGetItem_CreateVariant(CUICfUnk144*, u32, u32);
 u32 createQuestLogMenu(CUICfUnk144*, u32, u32);
 u32 CMenuTutorialList_Create(CUICfUnk144*, u32, u32);
@@ -264,24 +264,24 @@ u32 __ct__CMenuItem(CUICfUnk144*, u32, u32, u32);
 u32 __ct__CMenuPause(CUICfUnk144*, u32);
 // 6-arg factory: (ctx, scene, a, b, y, x) - CUICfManager_queueFadeMenu forwards its two
 // dead int params as args 3/4 (retail materializes them in the prologue).
-u32 func_80113C84(CUICfUnk144*, u32, u32, u32, f32, f32);
-u32 func_802514D4(CUICfUnk144*, u32);
+u32 createFadeMenu(CUICfUnk144*, u32, u32, u32, f32, f32);
+u32 MapSelectSCCreate(CUICfUnk144*, u32);
 // Menu factories used by the CUICfManager_queueSkipTimerMenu-family queue helpers below.
 // Local flat decls (same caller-shape as the defining TUs' headers:
 // CMenuSkipTimer.hpp / CMenuShopSell.hpp / CMenuPTState.cpp /
 // CMenuMakeCrystal.cpp); including those headers here would pull
 // conflicting flat decls into this TU.
 u32 SkipTimer_CreateInstance(u32, u32);
-u32 func_8018B324(u32, u32);
-u32 func_8018C104(u32, u32, u32);
+u32 MenuShopSellCreateSingleton(u32, u32);
+u32 ShopBuy_CreateMenu(u32, u32, u32);
 void* __ct__CMenuPTState(u32, u32);
-u32 func_8021240C(CUICfUnk144*, u32);
+u32 MakeCrystalCreate(CUICfUnk144*, u32);
 void* __ct__CMenuArtsSet(u32, u32);
 // Factories for the remaining queue helpers (CUICfManager_queueMapSelectMenu family); same
 // caller-shape as the defining TUs' flat decls.
 u32 __ct__CMenuMapSelect(CUICfUnk144*, u32);
 u32 KizunagramCreateSingleton(CUICfUnk144*, u32, u32);
-u32 func_80252C60(CUICfUnk144*, u32);
+u32 CollepediaCreateSingleton(CUICfUnk144*, u32);
 u32 createPassiveSkillMenu(CUICfUnk144*, u32);
 u32 PlayAward_CreateMenu(CUICfUnk144*, u32);
 u32 KizunaList_Create(CUICfUnk144*, u32);
@@ -378,7 +378,7 @@ u16 lbl_eu_804FFFDC[];
 // C++ mangling -> retail `incrementEventCounter__FUl`.
 void incrementEventCounter(u32);
 
-void CUICfManager::func_80133324(int id, int a1, int a2) {
+void CUICfManager::eventDispatch(int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
     volatile int savedRet;
     CUICfIdTable idTable;
@@ -2476,7 +2476,7 @@ slot_found:
 // ---------------------------------------------------------------------------
 // Menu-create + event-queue push helpers (CUICfManager_queueQuestLogMenu family).
 //
-// Shared skeleton (same slot walk as func_80133324's queue push):
+// Shared skeleton (same slot walk as eventDispatch's queue push):
 //   1) null-check the lbl_eu_80664054 singleton,
 //   2) call a menu factory; the result is kept in volatile savedRet@0x8
 //      (spilled right after the call, reloaded for the setItem store and
@@ -2502,7 +2502,7 @@ u32 CUICfManager_queueOptionMenu(u32 arg) {
         return 0;
     }
     {
-        u32 tempRet = func_8029BB24(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = createOptionMenu(inst->field_0x144, inst->field_0x11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3061,7 +3061,7 @@ u32 CUICfManager_queueShopBuyMenu(u32 param) {
         return 0;
     }
     {
-        u32 tempRet = func_8018C104(inst->field_144, inst->field_11C, param);
+        u32 tempRet = ShopBuy_CreateMenu(inst->field_144, inst->field_11C, param);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3122,7 +3122,7 @@ u32 CUICfManager_queueShopSellMenu() {
         return 0;
     }
     {
-        u32 tempRet = func_8018B324(inst->field_144, inst->field_11C);
+        u32 tempRet = MenuShopSellCreateSingleton(inst->field_144, inst->field_11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3239,7 +3239,7 @@ u32 CUICfManager_queueMakeCrystalMenu() {
         return 0;
     }
     {
-        u32 tempRet = func_8021240C(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = MakeCrystalCreate(inst->field_0x144, inst->field_0x11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3398,7 +3398,7 @@ slot_found:
     return savedRet;
 }
 // us-8013500c: probe CUICfManager_isWorldMapBusy, then create the world-map menu via
-// func_802514D4 and queue it.
+// MapSelectSCCreate and queue it.
 u32 CUICfManager_queueWorldMapMenu() {
     CUICfManagerCreateView* inst;
     volatile u32 savedRet;
@@ -3416,7 +3416,7 @@ u32 CUICfManager_queueWorldMapMenu() {
     }
     inst = (CUICfManagerCreateView*)lbl_eu_80664054;
     {
-        u32 tempRet = func_802514D4(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = MapSelectSCCreate(inst->field_0x144, inst->field_0x11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3568,7 +3568,7 @@ slot_found:                                                                    \
         startNode->prev = temp2;                                               \
     }                                                                          \
     return savedRet;
-u32 CUICfManager_queueCollepediaMenu() { CF_QUEUE_EXPLICIT(func_80252C60) }
+u32 CUICfManager_queueCollepediaMenu() { CF_QUEUE_EXPLICIT(CollepediaCreateSingleton) }
 // us-801352c0: create + queue the CMenuKizunagram-style menu. Same body as
 // CUICfManager_queueMapSelectMenu above; only the factory differs (this helper's own argument
 // becomes the factory's third parameter, materialized in the prologue).
@@ -4035,7 +4035,7 @@ slot_found:
     }
     return savedRet;
 }
-// us-80135f38: create the fade menu via func_80113C84 and queue it. The two
+// us-80135f38: create the fade menu via createFadeMenu and queue it. The two
 // dead int params are forwarded as the factory's args 3/4 (retail materializes
 // them with mr r5,r3 / mr r6,r4 at the prologue) and the float params are
 // swapped (retail fmr f0,f1 / f1=f2 / f2=f0).
@@ -4052,7 +4052,7 @@ u32 CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y) {
         return 0;
     }
     {
-        u32 tempRet = func_80113C84(inst->field_0x144, inst->field_0x11C, a, b, y, x);
+        u32 tempRet = createFadeMenu(inst->field_0x144, inst->field_0x11C, a, b, y, x);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -4313,7 +4313,7 @@ CUICfManager::~CUICfManager() {
 //
 // The retail symbol is the no-arg member `OnFileEvent__12CUICfManagerFv` but
 // the body reads r4 as the CEventFile* from the IWorkEvent dispatcher (same
-// hidden-arg ABI as func_80133324; the onFileEventThunk thunk passes r4
+// hidden-arg ABI as eventDispatch; the onFileEventThunk thunk passes r4
 // through). The body is emitted under the extern "C" free function declared
 // in the .hpp so the exact Fv symbol name is produced; the class's member
 // `void OnFileEvent()` stays declared-only and the thunk's bl binds here.

@@ -60,14 +60,14 @@ extern "C" {
 
     // Camera / selector helpers
     void* Selector_GetInstance();
-    void func_800FE96C(void* cam, void* target);
+    void Selector_UpdateFilter(void* cam, void* target);
     void setRequestParams(void* cam, u32 a, u32 b, u32 c);
 
     // Vision
     void routeVisionSlotFx(void* vision, void* visionList, int a, int b, int c);
 
     // Voice / action helpers
-    void* func_8016FE34(void* source);
+    void* MapFx_ResolveOwner(void* source);
     void aiRebootAction(void* self);
     void aiActionClearBits0006(void* self);
 
@@ -207,7 +207,7 @@ int attackEne(VMThread* pThread) {
     startEnumObjects(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
     // Count is re-read via the holder accessor every iteration (retail shape).
     for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder) + 0x620); i++) {
-        void* unit = func_8016FE34(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
+        void* unit = MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
         if (targetId == *(u16*)((u8*)unit + 0x3F28)) {
             registerBattleActor(cf::CBattleManager::getInstance(), unit);
         }
@@ -229,7 +229,7 @@ int selectTgt(VMThread* pThread) {
         void* slot = ArtsSelect_Lookup(mgr, *(u32*)((u8*)ocObj + 4));
         if (slot != 0) {
             void* cam = Selector_GetInstance();
-            func_800FE96C(cam, *(void**)((u8*)slot + 0x74));
+            Selector_UpdateFilter(cam, *(void**)((u8*)slot + 0x74));
         }
     } else {
         u8 holder[8];
@@ -246,7 +246,7 @@ int selectTgt(VMThread* pThread) {
         setRequestParams(cam, 0x80000003, 0, 0);
         void* val = findFirstCleanObjectId(CTaskGame_enumListGet((CfMoveEnumHolder*)holder));
         cam = Selector_GetInstance();
-        func_800FE96C(cam, val);
+        Selector_UpdateFilter(cam, val);
         __dt__80043E88((CfMoveEnumHolder*)holder, -1);
     }
     return 0;
@@ -317,7 +317,7 @@ int setTensionLv(VMThread* pThread) {
     }
     for (int i = 0; i < 3; i++) {
         void* player = cf::CfGameManager::getPlayer(i);
-        void* action = func_8016FE34(player);
+        void* action = MapFx_ResolveOwner(player);
         if (action != 0) {
             ((cf::CActorParam*)action)->CActorParam_resetTensionState(level - 1);
         }
@@ -350,7 +350,7 @@ int setTP(VMThread* pThread) {
     // into f31 across the loop.
     const double cvtBias = lbl_eu_80667978;
     for (int i = 0; i < 3; i++) {
-        void* action = func_8016FE34(cf::CfGameManager::getPlayer(i));
+        void* action = MapFx_ResolveOwner(cf::CfGameManager::getPlayer(i));
         if (action != 0) {
             if (idx == 0 || *(u16*)((u8*)action + 0x3F28) == idx) {
                 // Built per-iteration so the words round-trip through the
@@ -378,7 +378,7 @@ int breakVision(VMThread* pThread) {
     void* visionList = CBattleMan_FetchVisionObj(bm);
     if (visionList != 0) {
         void* actor = findObjectById__Fi(*(u32*)((u8*)visionList + 0));
-        void* voiceAction = func_8016FE34(actor);
+        void* voiceAction = MapFx_ResolveOwner(actor);
         // Retail re-fetches the manager here instead of caching it across the
         // intervening calls (keeps the frame small).
         bm = cf::CBattleManager::getInstance();

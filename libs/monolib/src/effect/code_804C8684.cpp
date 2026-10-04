@@ -24,10 +24,10 @@ extern "C" void EffCtl_EmptyStub8C(void) {}
 struct CEffectParam {
     u64 pair;          // 0x00
     u32 field_0x08;    // 0x08
-};
+}; struct SInitBlk;  // complete below (sinit block); fwd for the FC08 extern.
 
 extern u8 lbl_eu_806659A0;
-extern CEffectParam lbl_eu_8065FC08;
+extern SInitBlk lbl_eu_8065FC08;
 
 void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
@@ -69,7 +69,7 @@ struct SInitBlk {
     SInitV3 tail;
 };
 
-extern SInitBlk lbl_eu_8065FBE8[3];
+extern SInitBlk lbl_eu_8065FBE8[2];
 extern f32 lbl_eu_8066B088;  // 1.0f
 extern f32 lbl_eu_8066B08C;  // 0.0f
 extern f32 lbl_eu_8066B090;  // 0.8f
@@ -83,7 +83,7 @@ void sinit_804C86C0() {
     // (See the KNOWN RESIDUAL note above for the retail base-register split.)
     lbl_eu_8065FBE8[0].head = lbl_eu_8066B088;
     lbl_eu_8065FBE8[1].head = lbl_eu_8066B088;
-    lbl_eu_8065FBE8[2].head = lbl_eu_8066B094;
+    lbl_eu_8065FC08.head = lbl_eu_8066B094;
 
     SInitBlk* p = lbl_eu_8065FBE8;
     p->tail.x = lbl_eu_8066B08C;
@@ -103,11 +103,10 @@ void sinit_804C86C0() {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x8065FBE8-0x8065FCA0 (0xB8 = 184B) zero-fill. Retail splits this
 // contiguous zero block into lbl_eu_8065FBE8(32B) + lbl_eu_8065FC08(16B) +
-// lbl_eu_8065FC18(136B); the first two are contiguous (sinit writes 12 floats
-// from 8065FBE8 across both). We emit 48B from 8065FBE8 + 136B at 8065FC18 so
-// the total bss sits at the retail 184B; lbl_eu_8065FC08 stays an extern alias
-// into the 8065FBE8 tail (resolved at link to the same bss region).
-SInitBlk lbl_eu_8065FBE8[3];   // 48B covers retail 8065FBE8(32) + 8065FC08(16)
+// lbl_eu_8065FC18(136B); FC08 is one SInitBlk (16B), written by sinit as the
+// third table block (retail sinit references both FBE8 and FC08).
+SInitBlk lbl_eu_8065FBE8[2];   // 32B: table blocks 0-1
+SInitBlk lbl_eu_8065FC08;      // 16B @0x20: table block 2 (also the 12B copy dst)
 u8 lbl_eu_8065FC18[136];   // 136B
 // [.sbss] 0x806659A0-0x806659A8 (8B)
 u8 lbl_eu_806659A0;   // sbss byte 0

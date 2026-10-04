@@ -14,7 +14,7 @@ extern char lbl_eu_80505DE8[];
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
-// (CBaseCur now carries the real virtuals; func_801D202C dispatches
+// (CBaseCur now carries the real virtuals; Cur_Update dispatches
 // checkDeactivate() at +0x14 directly.)
 
 // ============================================================================
@@ -55,9 +55,9 @@ extern "C" __declspec(noinline) void Cur_ActivateTail(CBaseCur* cur) {
 }
 
 // ============================================================================
-// func_801D202C: Per-frame cursor update
+// Cur_Update: Per-frame cursor update
 // ============================================================================
-extern "C" void func_801D202C(CBaseCur* cur) {
+extern "C" void Cur_Update(CBaseCur* cur) {
     if (cur->mpLayout == nullptr) {
         return;
     }
@@ -418,10 +418,10 @@ void CCur22::initLayout() {
 }
 
 // ============================================================================
-// func_801D2BFC: Set pane visibility for all 4 sub-panes by index
+// Cur_HighlightPane: Set pane visibility for all 4 sub-panes by index
 // Highlights the pane at `index` by setting it visible and hiding others.
 // ============================================================================
-extern "C" void func_801D2BFC(CBaseCur* cur, u8 index) {
+extern "C" void Cur_HighlightPane(CBaseCur* cur, u8 index) {
     for (u8 i = 0; i < 4; i++) {
         // Branch form: retail emits li 0 / cmpl / bne / li 1, not select-arithmetic
         u8 visible = 0;
@@ -447,9 +447,9 @@ extern "C" void Cur_PlacePaneByIndex(CBaseCur* cur, const nw4r::math::VEC3* tran
 }
 
 // ============================================================================
-// func_801D2CF4: Show pane by index (0-3 only)
+// Cur_ShowPane: Show pane by index (0-3 only)
 // ============================================================================
-extern "C" void func_801D2CF4(CBaseCur* cur, u8 index) {
+extern "C" void Cur_ShowPane(CBaseCur* cur, u8 index) {
     if (index >= 4) return;
     nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80534828[index], true);
     setPaneVisible(pane, 1);

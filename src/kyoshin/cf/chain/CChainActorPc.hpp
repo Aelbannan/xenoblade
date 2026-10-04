@@ -59,7 +59,7 @@ extern "C" void CChain_setFieldAndClear(void*, int);
 extern "C" void chainClearTwoWords(void*);
 extern "C" void chainTeardownLinkClear(void*);
 extern "C" void CChainActor_ClearTargetRef(void*);
-extern "C" int func_80148778(void*, int);
+extern "C" int isBattleStatusActive(void*, int);
 extern "C" int CChainActor_CheckReady(void*, void*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 

@@ -22,15 +22,15 @@ class UnkClass_8046A530 {
 public:
     /* 8046AADC */ void updateLodPositions();
     /* 8046CFB4 */ void checkLodFlagState();
-    /* 8046E500 */ UnkClass_8046A530* func_8046A530();
-    /* 8046E594 */ void func_8046A5C4();
+    /* 8046E500 */ UnkClass_8046A530* initLod();
+    /* 8046E594 */ void initLodState();
     /* 8046EAA8 */ void updateSimple();
     /* 8046EAAC */ void setVariation();
-    /* 8046EB24 */ void func_8046AB54();
-    /* 8046ECFC */ void func_8046AD2C();
-    /* 8046F07C */ void func_8046B0AC();
-    /* 8046FAB0 */ void func_8046BAE0();
-    /* 80470550 */ void func_8046C580();
+    /* 8046EB24 */ void advanceLodAnim();
+    /* 8046ECFC */ void updateLodWalk();
+    /* 8046F07C */ void updateLodBatch0();
+    /* 8046FAB0 */ void updateLodBatch1();
+    /* 80470550 */ void updateLodBatch2();
     /* 80470F84 */ void setStateFlag();
     /* 80470FA8 */ void forwardToMem();
 

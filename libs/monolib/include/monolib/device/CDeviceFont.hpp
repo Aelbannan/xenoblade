@@ -21,7 +21,7 @@ public:
     virtual u32 getMode();       // 0x14
     virtual u32 getBufferSize(); // 0x18
     virtual u16 getLineHeight(); // 0x1C
-    virtual void func_80453468();// 0x20
+    virtual void getCharGlyph();// 0x20
     virtual void* getFont();     // 0x24
     virtual void* getFontConst();// 0x28
     virtual void advanceState(); // 0x2C

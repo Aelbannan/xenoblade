@@ -13,4 +13,4 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" UNKWORD MakeCrystalIsCreated();
-extern "C" UNKWORD func_80212490();
+extern "C" UNKWORD MakeCrystalGetWinData();

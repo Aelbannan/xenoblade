@@ -10,8 +10,8 @@ public:
     // Decodes the first (possibly double-byte) character of pStr to UTF-16,
     // fetches its glyph from the embedded font and copies out its metrics.
     // NOTE: matched as the retail-mangled free symbol
-    // func_80453468__18CDeviceFontInfoExtFv in CDeviceFontInfoExt.cpp.
-    const char* func_80453468(const char* pStr, u32** ppTexture, u32* pCellX,
+    // getCharGlyph__18CDeviceFontInfoExtFv in CDeviceFontInfoExt.cpp.
+    const char* getCharGlyph(const char* pStr, u32** ppTexture, u32* pCellX,
                               u32* pCellY, u32* pGlyphWidth);
     void create();
     void advanceState();

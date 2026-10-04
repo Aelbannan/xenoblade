@@ -65,7 +65,7 @@ int OcMsgSetValue1(VMThread* pThread, OcMsgTwoValueObj* target);
 s32 OcMsgRingReset(void*, OcMsgRingHdr* list);
 
 /* Typeof-style probes on the value at target+0x10. */
-int func_8003A68C(VMThread* pThread, OcMsgRingHdr* target);
+int OcMsgRingProbeOverflow(VMThread* pThread, OcMsgRingHdr* target);
 int OcMsgRingProbeIsPow2(VMThread* pThread, OcMsgRingHdr* target);
 
 /* Push/pop one 8-byte slot between the ring and obj+0x64/0x68. */

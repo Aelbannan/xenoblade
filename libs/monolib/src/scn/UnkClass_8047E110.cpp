@@ -15,7 +15,7 @@ using ml::CVec3;
 // scratch bitmap allocator (coli unit); retail symbol is C-linkage
 extern "C" void* Coli_GetBitTable_5A68();
 
-// stride-8 threshold slot overlaid at 0x24 by func_8047EEB0
+// stride-8 threshold slot overlaid at 0x24 by scanNeighbors
 struct ScnSlot8 {
     f32 value;
     f32 pad;
@@ -78,7 +78,7 @@ extern const char lbl_eu_80526324[];
 extern const Fe48Table lbl_eu_80658540; // walk-table locator block (+0x8 pointer)
 extern u32 lbl_eu_8056DC68[3];    // default reference block (defined below)
 // Walk-box waypoint table (3 x 12-byte blocks, initialized on first use by
-// func_8047F658) and its init-once flag. Defined in UnkClass_8047CD0C.cpp.
+// fetchWalkTarget) and its init-once flag. Defined in UnkClass_8047CD0C.cpp.
 extern u8 lbl_eu_80658608[0x30];
 extern s8 lbl_eu_806658D0[8]; // init-once flag (read as signed char)
 extern ScnPtmf lbl_eu_8056DC74;   // default 12-byte reference block
@@ -113,15 +113,15 @@ static inline f32 scaleNodeCoord(s32 v) {
     return (f32)(lbl_eu_8066A898 * v);
 }
 
-// Real-signature views of the func_8047E390 member stub
+// Real-signature views of the findClosestNeighbor member stub
 // (retail Fv mangling; signatures recovered from caller register setup).
-extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
-extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos, s32 index, f32 clearance);
-extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
+extern "C" s32 findNodeContaining__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
+extern "C" s32 findClosestNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos, s32 index, f32 clearance);
+extern "C" s32 buildCandidateList__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, u16* out, s32 a, s32 b, s32 mode);
-extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
+extern "C" s32 floodFillWalkTable__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, u16* out, s32 count1, s32 count2);
-extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkQueryInfo* info, s32 value, s32 slotSel);
 
 static inline void setWalkRect(CVec3& min, CVec3& max, const ScnWalkNode& node) {
@@ -185,7 +185,7 @@ extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     self->callback.field_0x8 = w2;
 }
 
-// func_8047E1B0 -- point-in-walk-region lookup: validate the position against
+// findNodeContaining -- point-in-walk-region lookup: validate the position against
 // the open interval of the bounds block pointed to by 0x3C (strict compares),
 // then walk the kd-tree (node pool at 0x40, projection slots at 0x44, lists at
 // 0x14 offset by bounds word 5) down to a leaf and scan its quantized waypoint
@@ -193,7 +193,7 @@ extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // Retail mangles this member as Fv (empty parameter list) even though the
 // body consumes the caller-supplied position in r4, so the definition keeps
 // the verbatim retail symbol via C linkage (self/pos ABI).
-extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 findNodeContaining__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* pos) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const f32* bnd = (const f32*)m.field_0x3C;
@@ -255,11 +255,11 @@ extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return -1;
 }
 
-// func_8047E390 -- neighbour search around a walk cell: scan the second
+// findClosestNeighbor -- neighbour search around a walk cell: scan the second
 // candidate list of record `index` (stride-10 pool at 0x8), apply the box/
 // flag visibility gate, expand each node's s16 rect by `clearance` and track
 // the closest node to `pos`, with a priority scheme for flagged nodes.
-extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 findClosestNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* pos, s32 index, f32 clearance) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     f32 pxLo = pos->x - clearance; // f6
@@ -367,16 +367,16 @@ gEnd:
     return best;
 }
 
-// Real-signature views of the func_8047E1B0 / func_8047E390 member stubs
+// Real-signature views of the findNodeContaining / findClosestNeighbor member stubs
 // (retail Fv mangling; signatures recovered from caller register setup).
 // func_8047E62C -- two-stage segment solve: E1B0 (point-in-box) then E390
 // (neighbour search with clearance); both results stored, 1 on success.
 extern "C" s32 findNode__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32* outSeg,
     u32* outNode, const ml::CVec3* pos, f32 clearance) {
-    s32 seg = ::func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
+    s32 seg = ::findNodeContaining__17UnkClass_8047E110Fv(self, pos);
     *outSeg = seg;
     if (seg != -1) {
-        s32 node = ::func_8047E390__17UnkClass_8047E110Fv(self, pos, seg, clearance);
+        s32 node = ::findClosestNeighbor__17UnkClass_8047E110Fv(self, pos, seg, clearance);
         *outNode = node;
         if (node != -1)
             return 1;
@@ -384,10 +384,10 @@ extern "C" s32 findNode__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32* out
     return 0;
 }
 
-// func_8047E6C4 -- resolve the walk node under `pos`: test node `idx`'s cell
+// resolveNodeAtPos -- resolve the walk node under `pos`: test node `idx`'s cell
 // (expanded by clearance, then strictly), otherwise scan idx's edge list for
-// the closest visible flagged neighbour and re-probe through func_8047E1B0.
-extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+// the closest visible flagged neighbour and re-probe through findNodeContaining.
+extern "C" s32 resolveNodeAtPos__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u32* outValue, u32* outNode, s32 value, s32 idx, const ml::CVec3* pos,
     f32 clearance) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
@@ -428,7 +428,7 @@ extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     for (u16 k = 0; k < cnt; ++k) {
         const ScnWalkNode& nb = m.nodes[ep[k]];
         u32 flags = m.field_0x38;
-        // visibility gate (same shape as func_8047E390)
+        // visibility gate (same shape as findClosestNeighbor)
         if (!(flags & 1)) {
             if (nb.reserved8 & 2)
                 continue;
@@ -466,7 +466,7 @@ extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         }
     }
     if (best != -1) {
-        s32 hit = ::func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
+        s32 hit = ::findNodeContaining__17UnkClass_8047E110Fv(self, pos);
         *outValue = hit;
         if (hit != -1) {
             *outNode = best;
@@ -481,13 +481,13 @@ extern "C" s32 func_8047E6C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return 0;
 }
 
-// func_8047EAD4 -- build a candidate node list for record pair (a,b). When
+// buildCandidateList -- build a candidate node list for record pair (a,b). When
 // node b's low flag is set, filter the edge list selected by walk-table record
 // a: keep entries whose group byte (found by locating b in the candidate
 // slots) matches a's slot for the requested side. Otherwise breadth-first
 // expand from b through EEB0-vetted neighbours until a flagged node yields a
 // filtered sublist.
-extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
+extern "C" s32 buildCandidateList__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, u16* out, s32 a, s32 b, s32 mode) {
     UnkClass_8047E110& m = *self;
     const ScnWalkNode& nb = m.nodes[b];
@@ -545,7 +545,7 @@ extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
                 u16 nEnt = ep[k];
                 if (bitmap[nEnt >> 5] & (1 << (nEnt & 31)))
                     continue;
-                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                if (!::scanNeighbors__17UnkClass_8047E110Fv(self,
                         (const WalkQueryInfo*)&nodes[nEnt], id, mode))
                     continue;
                 if (nodes[nEnt].reserved8 & 1) {
@@ -587,17 +587,17 @@ extern "C" s32 func_8047EAD4__17UnkClass_8047E110Fv(
 }
 
 // Stride-8 threshold slot overlay of the region starting at 0x24, indexed by
-// func_8047EEB0.
+// scanNeighbors.
 struct ScnSlotView {
     u8 pad[0x24];
     ScnSlot8 slots8[4];
 };
 
-// func_8047EEB0 -- neighbour scan with per-slot distance thresholds. When the
+// scanNeighbors -- neighbour scan with per-slot distance thresholds. When the
 // walk box is inactive only the flag bits decide; otherwise every neighbour of
 // info's edge list (except `value`) must pass a distance test whose threshold
 // slot is selected by `slotSel`.
-extern "C" bool func_8047EEB0__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkQueryInfo* info, s32 value, s32 slotSel) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     u32 flags = m.field_0x38;
@@ -651,13 +651,13 @@ fail:
     return false;
 }
 
-// func_8047EFBC -- expand a walk path from `seed` in `dir` directions: each
+// expandWalkPath -- expand a walk path from `seed` in `dir` directions: each
 // pass picks the neighbour whose table value (low 14 bits) beats the running
 // threshold, carries the pass flag (0x8000 backwards / 0x4000 forwards),
 // matches threshold groups and is already marked in the scratch visit bitmap,
 // writing ids into consecutive output slots. Retail mangles this member as
 // Fv although it consumes four arguments (self/out/seed/dir ABI).
-extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 expandWalkPath__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* out, s32 seed, s32 dir = 0) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const u16* tbl = (const u16*)m.field_0x94;
@@ -741,11 +741,11 @@ extern "C" s32 func_8047EFBC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return cur[0] + cur[1] + 1;
 }
 
-// func_8047F214 -- compute the walking direction from `pos` toward node idxB
+// computeWalkDirection -- compute the walking direction from `pos` toward node idxB
 // (relative to node idxA) into `out`, y forced to zero. When idxB is in
 // idxA's edge list the direction aims at the midpoint of the shared portal
 // edge (whichever side matches), otherwise straight at idxB's center.
-extern "C" void func_8047F214__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" void computeWalkDirection__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     ml::CVec3* out, const ml::CVec3* pos, s32 idxA, s32 idxB) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const ScnWalkNode& na = m.nodes[idxA];
@@ -838,11 +838,11 @@ extern "C" void func_8047F214__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     }
 }
 
-// func_8047F658 -- fetch the walk-target point for node `idx`: validates the
+// fetchWalkTarget -- fetch the walk-target point for node `idx`: validates the
 // walk box, the node flag bits and a distance test against node `idx2`, then
 // copies the selected 12-byte waypoint block into `out`. The 0x30-byte
 // waypoint table is filled in on first use.
-extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, ScnVecWords* out,
+extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, ScnVecWords* out,
     s32 idx, s32 idx2) {
     UnkClass_8047E110& m = *self;
     const ScnWalkNode& node = m.nodes[idx];
@@ -883,14 +883,14 @@ extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, Scn
     return 0;
 }
 
-// func_8047F730 -- flood-fill the walk table from the FE48 candidate lists:
+// floodFillWalkTable -- flood-fill the walk table from the FE48 candidate lists:
 // the first `count1` entries of the 0x98 buffer are seeded with the 0x8000
 // flag and `count2` more with 0x4000 (all marked visited in the scratch
 // bitmap). Each pass expands every listed node's edge lists into the swap
 // buffer, assigning child distances (parent + 1); when an expansion touches
 // a node whose phase flag differs from its parent's, the opposite frontier
-// was met and func_8047EFBC backfills the path. Returns its result, or 0.
-extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
+// was met and expandWalkPath backfills the path. Returns its result, or 0.
+extern "C" s32 floodFillWalkTable__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, u16* out, s32 count1, s32 count2) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     u16* dist = (u16*)m.field_0x94;
@@ -948,7 +948,7 @@ extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
                         orFlags |= dist[nEnt];
                     } else if ((dist[nEnt] ^ dist[id]) & 0x8000) {
                         // phases met: backfill the path
-                        return ::func_8047EFBC__17UnkClass_8047E110Fv(self,
+                        return ::expandWalkPath__17UnkClass_8047E110Fv(self,
                             out, id);
                     }
                 }
@@ -964,21 +964,21 @@ extern "C" s32 func_8047F730__17UnkClass_8047E110Fv(
     return 0;
 }
 
-// func_8047FE48 -- query the walk table: fetch two candidate lists via
-// func_8047EAD4 (modes 0/1), report the first common entry, falling back to
-// func_8047F730 when the lists share nothing.
-extern "C" s32 func_8047FE48__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+// queryWalkTable -- query the walk table: fetch two candidate lists via
+// buildCandidateList (modes 0/1), report the first common entry, falling back to
+// floodFillWalkTable when the lists share nothing.
+extern "C" s32 queryWalkTable__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* outResult, u16* outValue, s32 p1, s32 p2, s32 p3, s32 p4) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     u32 wpTable = lbl_eu_80658540.field_0x8;
     m.field_0x94 = wpTable;
     const WalkSpawnDesc* desc = (const WalkSpawnDesc*)m.field_0x0;
     m.field_0x98 = wpTable + desc->field_0x10 * 2;
-    s32 count1 = ::func_8047EAD4__17UnkClass_8047E110Fv(
+    s32 count1 = ::buildCandidateList__17UnkClass_8047E110Fv(
         self, (u16*)m.field_0x98, p1, p2, 0);
     if (count1 == 0)
         return 0;
-    s32 count2 = ::func_8047EAD4__17UnkClass_8047E110Fv(
+    s32 count2 = ::buildCandidateList__17UnkClass_8047E110Fv(
         self, (u16*)(m.field_0x98 + count1 * 2), p3, p4, 1);
     if (count2 == 0)
         return 0;
@@ -997,18 +997,18 @@ extern "C" s32 func_8047FE48__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
             }
         }
     }
-    u16 res = (u16)::func_8047F730__17UnkClass_8047E110Fv(
+    u16 res = (u16)::floodFillWalkTable__17UnkClass_8047E110Fv(
         self, outValue, count1, count2);
     *outResult = res;
     return res != 0;
 }
 
-// func_8047FF9C -- seed a path table from two candidate start nodes: the node
+// seedPathTable -- seed a path table from two candidate start nodes: the node
 // whose weight is below the 10000 cap seeds out[], its edge list fills the
 // preceding slots backwards (lighter-weight neighbours only, chaining sel),
 // then a forward walk appends heavy (>=10000, lighter than current) neighbours
 // into successive slots. Edge entries carry a flag in bit 15.
-extern "C" s32 func_8047FF9C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 seedPathTable__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* out, const u16* weights, const u32* bits, s32, s32, s32 startA,
     s32 startB, s32 limit) {
     s32 sel;
@@ -1071,11 +1071,11 @@ extern "C" s32 func_8047FF9C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return end + limit;
 }
 
-// func_80480140 -- for each of `count` outputs, walk the edge list of node
+// stepToBestNeighbor -- for each of `count` outputs, walk the edge list of node
 // `start` and pick the first neighbour that lies inside the [baseIndex,
 // limit) range, has its bit set in `bits`, and whose weight beats the current
 // node's weight; that neighbour becomes the next start.
-extern "C" void func_80480140__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u16* out,
+extern "C" void stepToBestNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u16* out,
     const u16* weights, const u32* bits, s32 start, s32 count, const WalkDistInfo& info) {
     // per-output greedy step: take the first lighter flagged neighbour of
     // `start` inside [base, base+limit) as the next node.
@@ -1103,12 +1103,12 @@ extern "C" void func_80480140__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u1
         ++i;
     } while (i < count);
 }
-// func_8048020C -- BFS path search between two walk records: resolve the start
+// findPathBfs -- BFS path search between two walk records: resolve the start
 // node from record `recIdx` (candidate slot matching `key`), then breadth-first
 // expand the graph (distance map + visited bitmap in the scratch area, frontier
-// queues in the FE48 work buffer) until `goal` is reached; func_80480140
+// queues in the FE48 work buffer) until `goal` is reached; stepToBestNeighbor
 // backfills the path into outBuf.
-extern "C" s32 func_8048020C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 findPathBfs__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* outFound, u16* outBuf, s32 limit, s32 key, s32 goal, s32 recIdx) {
     UnkClass_8047E110& m = *self;
     u32 recOff = recIdx * 10;
@@ -1156,14 +1156,14 @@ extern "C" s32 func_8048020C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                     continue;
                 if (bitmap[c >> 5] & (1 << (c & 31)))
                     continue;
-                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                if (!::scanNeighbors__17UnkClass_8047E110Fv(self,
                         (const WalkQueryInfo*)&m.nodes[nEnt], id, 1))
                     continue;
                 buf[c] = (u16)dist;
                 if (goal == nEnt) {
                     if (dist + 1 >= limit)
                         return 0;
-                    ::func_80480140__17UnkClass_8047E110Fv(self, outBuf, buf,
+                    ::stepToBestNeighbor__17UnkClass_8047E110Fv(self, outBuf, buf,
                         bitmap, goal, dist, *(const WalkDistInfo*)&wp);
                     outBuf[dist] = rec[selFlag];
                     *outFound = (u16)(dist + 1);
@@ -1182,12 +1182,12 @@ extern "C" s32 func_8048020C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return 0;
 }
 
-// func_804804DC -- bidirectional walk search: seed a combined queue with two
+// findPathBidirectional -- bidirectional walk search: seed a combined queue with two
 // start nodes in the FE48 work area, expand neighbours of whichever side has
 // remaining capacity (dist map capped at 10000), and when both sides added
-// nodes, swap the queue halves. func_8047FF9C backfills the path once a
+// nodes, swap the queue halves. seedPathTable backfills the path once a
 // connection is found.
-extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 findPathBidirectional__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* outPath, u16* outAux, s32 limit, s32 seedA, s32 seedB) {
     UnkClass_8047E110& m = *self;
     const ScnWalkNode* nodes = m.nodes;
@@ -1220,7 +1220,7 @@ extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                 u16 nEnt = ep[k];
                 if (bitmap[nEnt >> 5] & (1 << (nEnt & 31)))
                     continue;
-                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                if (!::scanNeighbors__17UnkClass_8047E110Fv(self,
                         (const WalkQueryInfo*)&nodes[nEnt], id, sel))
                     continue;
                 if (nextDist < 10000)
@@ -1231,7 +1231,7 @@ extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                 *dst++ = nEnt;
                 bitmap[nEnt >> 5] |= 1 << (nEnt & 31);
                 if (nextDist >= limit)
-                    return ::func_8047FF9C__17UnkClass_8047E110Fv(self,
+                    return ::seedPathTable__17UnkClass_8047E110Fv(self,
                         outPath, qB, bitmap, 0, 0, seedA, seedB, limit);
             }
         }
@@ -1246,7 +1246,7 @@ extern "C" s32 func_804804DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     return 0;
 }
 
-extern "C" bool func_804808A0__17UnkClass_8047E110Fv(
+extern "C" bool testPortalCrossing__17UnkClass_8047E110Fv(
     UnkClass_8047E110* self, const CVec3* position, s32 startNode,
     s32 goalNode, f32 clearance) {
     if (startNode == goalNode) return true;
@@ -1486,11 +1486,11 @@ end:
     m.field_0x20 = m.field_0x1C + c;
 }
 
-// func_80481074 -- walker contact probe: build the world position of the
+// probeWalkerContact -- walker contact probe: build the world position of the
 // queried grid cell, reject it when it leaves the box (radius 0x7C, direction
 // dot test); otherwise normalize the offset and record either the farthest
 // miss (flags bit 0) or the best forward projection (bit 1).
-extern "C" s32 func_80481074__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 probeWalkerContact__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const WalkHitQuery* q) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     f32 wx = lbl_eu_8066A8A8 * (f32)(q->gxCell + 1)
@@ -1596,10 +1596,10 @@ fail:
     return false;
 }
 
-// func_804814DC -- rebuild the walk box corners from two points, derive the
+// rebuildWalkBox -- rebuild the walk box corners from two points, derive the
 // travel direction (normalized, with degenerate handling), reset the visit
 // counter and refresh the reference block at 0x9C.
-extern "C" void func_804814DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" void rebuildWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* cornerA, const ml::CVec3* cornerB, f32 paramF) {
     UnkClass_8047E110& mgr = *self;
     mgr.field_0x90 = 0;
@@ -1695,13 +1695,13 @@ extern "C" void setWalkBoxBounds__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     m.field_0x9C.field_0x8 = w2;
 }
 
-// func_80481790 -- BFS over the walk graph from `startNode`: each pass scans
+// searchWalkGraph -- BFS over the walk graph from `startNode`: each pass scans
 // the frontier's edge lists, filters unvisited entries through the EEB0
 // neighbour test and the step callback (ptmf at 0x9C), marks visited entries
 // in a scratch bitmap and swaps double-buffered frontiers (work area comes
 // from the FE48 locator block). Returns 1 when the callback accepts a node or
 // the finish flags are set.
-extern "C" s32 func_80481790__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 searchWalkGraph__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     s32 startNode) {
     UnkClass_8047E110& mgr = *self;
     // the ptmf slot stays in memory; calls lower to __ptmf_scall with r12 =
@@ -1740,7 +1740,7 @@ extern "C" s32 func_80481790__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                     continue;
                 // entries re-read through ep/front after every call: the dst/
                 // bitmap stores may alias the queues, forcing the reloads
-                if (!::func_8047EEB0__17UnkClass_8047E110Fv(self,
+                if (!::scanNeighbors__17UnkClass_8047E110Fv(self,
                         (const WalkQueryInfo*)&mgr.nodes[ep[k]], front[i],
                         0))
                     continue;
@@ -1770,13 +1770,13 @@ extern "C" s32 isNodeBlocked__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32
     return (m.nodes[nodeIndex].reserved8 & 2) != 0;
 }
 
-// func_804819C4 -- step the walker from `idx`: run the 0x9C callback on the
+// stepWalker -- step the walker from `idx`: run the 0x9C callback on the
 // start node, then hop up to 90 times: each pass scans the current node's
 // edge list for a neighbour sharing a portal edge (x+, z+ or z- side) that
 // passes the per-axis distance threshold (0x88/0x8C scaled, gated by the
 // travel direction at 0x60/0x68); the callback runs on each accepted hop and
 // ends the walk with 1 when it accepts.
-extern "C" s32 func_804819C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     s32 idx) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     // the ptmf slot stays in memory; MWCC lowers calls through it to
@@ -1858,10 +1858,10 @@ extern "C" s32 func_804819C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056DC68-0x8056DCD8 (112B): three 12-byte reference blocks, the
 // CScnItemCameraNw4r vtable, and two RTTI base-lists.
-// The own-member symbols func_80481074/804812D8/804813E8 are the stub member
+// The own-member symbols probeWalkerContact/804812D8/804813E8 are the stub member
 // functions defined above (retail Fv mangling); the remaining slots are
 // foreign functions/locators.
-// (func_80481074__17UnkClass_8047E110Fv declared/defined above)
+// (probeWalkerContact__17UnkClass_8047E110Fv declared/defined above)
 extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node);
 extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
@@ -1879,7 +1879,7 @@ extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 lbl_eu_806638B0;   // .sdata RTTI locator (foreign unit)
 
 extern "C" u32 lbl_eu_8056DC68[3] = {
-    0x00000000, 0xFFFFFFFF, (u32)&func_80481074__17UnkClass_8047E110Fv,
+    0x00000000, 0xFFFFFFFF, (u32)&probeWalkerContact__17UnkClass_8047E110Fv,
 };
 // The default 12-byte reference block (also the retail symbol referenced by
 // func_8048163C). Defined as the ScnPtmf struct so the field copy compiles.

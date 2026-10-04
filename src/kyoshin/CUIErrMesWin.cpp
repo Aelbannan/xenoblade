@@ -14,16 +14,16 @@
 
 // Forward declarations (retail functions defined later in this TU).
 // func_802B5148 is declared extern "C" + noinline in CUIErrMesWin.hpp so its
-// call sites stay out-of-line. func_802B5254 is a noinline stub (matched in a
-// separate session) so ErrWin_UpdateSub_515C's call stays a direct `bl func_802B5254`.
+// call sites stay out-of-line. ErrWin_PlayVoice_5254 is a noinline stub (matched in a
+// separate session) so ErrWin_UpdateSub_515C's call stays a direct `bl ErrWin_PlayVoice_5254`.
 // All three keep C linkage so call-site relocs emit the retail unmangled names.
 extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag);
 extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self);
-extern "C" __declspec(noinline) void func_802B5254(CErrMesSub* self,
+extern "C" __declspec(noinline) void ErrWin_PlayVoice_5254(CErrMesSub* self,
                                                     CErrMesObjView* player,
                                                     void* candidate, void* d80);
 
-// ErrWin_PickOwnerRand_5AC8 is defined later in this TU; forward-declared so func_802B5970
+// ErrWin_PickOwnerRand_5AC8 is defined later in this TU; forward-declared so ErrWin_PlayBattleVoice_5970
 // (defined before it) can call it. C linkage: the retail symbol is the
 // unmangled global name ErrWin_PickOwnerRand_5AC8.
 extern "C" int ErrWin_PickOwnerRand_5AC8(CErrMesOwner* a, CErrMesOwner* b, CErrMesOwner* c);
@@ -146,13 +146,13 @@ void ErrWin_MarkReady_4F00(CUIErrMesWin* self) {
     }
 }
 
-// func_802B4F40 (us-802b79b0) - load the error message text for field_0x9E
+// ErrWin_LoadText_4F40 (us-802b79b0) - load the error message text for field_0x9E
 // from the string pool, hand it to the embedded CSysWin with the window kind
 // from field_0xA0, open it and advance the state byte to 3.
-void func_802B4F40(CUIErrMesWin* self) {
+void ErrWin_LoadText_4F40(CUIErrMesWin* self) {
     char* msg = BdatTouchStringCell(lbl_eu_805135E0, lbl_eu_805135E0 + 0xb, self->field_0x9E);
-    func_8022B9B4(&self->mSysWin[0], msg, 0);
-    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->field_0xA0);
+    sysWinSetKindContent(&self->mSysWin[0], msg, 0);
+    sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->field_0xA0);
     sysWinOpenPhase1(&self->mSysWin[0]);
     self->field_0x9C = 3;
 }
@@ -165,10 +165,10 @@ void ErrWin_MarkActive4_4FA8(CUIErrMesWin* self) {
     }
 }
 
-// func_802B4FE8 (us-802b7a58) - on a confirm press (A on Wii pads / X on the
+// ErrWin_OnConfirm_4FE8 (us-802b7a58) - on a confirm press (A on Wii pads / X on the
 // classic controller mask when isClassicController reports classic), close the
 // embedded CSysWin and advance the state byte to 5.
-void func_802B4FE8(CUIErrMesWin* self) {
+void ErrWin_OnConfirm_4FE8(CUIErrMesWin* self) {
     CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(getCurrentPad__Q22cf13CfGameManagerFv());
     // Button mask: 0x10 by default; the classic-controller path uses 0x20000000.
     u32 mask = 0x10;
@@ -204,7 +204,7 @@ void func_802B5148(CErrMesSub* self) {
 
 // ErrWin_UpdateSub_515C (us-802b7bcc) - per-frame error-message sub-object update.
 // With a non-zero `flag`, resolve the player's current action source and, when
-// a valid candidate is found, play its voice (func_802B5254); otherwise reset
+// a valid candidate is found, play its voice (ErrWin_PlayVoice_5254); otherwise reset
 // the active records (ErrWin_ClearAllLists_58A4). With flag == 0, reset when the
 // sub-object is active.
 extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
@@ -212,10 +212,10 @@ extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
         void* d80 = Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
         CErrMesObjView* p1 =
             reinterpret_cast<CErrMesObjView*>(
-                func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(0)));
+                MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)));
         CErrMesObjView* p2 =
             reinterpret_cast<CErrMesObjView*>(
-                func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(0)));
+                MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(0)));
         void* candidate;
         if (p2 == 0) {
             candidate = 0;
@@ -224,7 +224,7 @@ extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
             if (id == 0) {
                 candidate = 0;
             } else {
-                void* src = func_8016FE34(findObjectById(id));
+                void* src = MapFx_ResolveOwner(findObjectById(id));
                 if (src != 0) {
                     candidate = src;
                 } else {
@@ -233,7 +233,7 @@ extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
             }
         }
         if (p1 != 0 && candidate != 0) {
-            func_802B5254(self, p1, candidate, d80);
+            ErrWin_PlayVoice_5254(self, p1, candidate, d80);
         } else {
             ErrWin_ClearAllLists_58A4(self);
         }
@@ -244,9 +244,9 @@ extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
     }
 }
 
-// func_802B5254 (us-802b7cc4) - play the error-message voice. Stub (matched in
+// ErrWin_PlayVoice_5254 (us-802b7cc4) - play the error-message voice. Stub (matched in
 // a separate session); noinline keeps ErrWin_UpdateSub_515C's call a direct bl.
-extern "C" __declspec(noinline) void func_802B5254(CErrMesSub* self,
+extern "C" __declspec(noinline) void ErrWin_PlayVoice_5254(CErrMesSub* self,
                                                     CErrMesObjView* player,
                                                     void* candidate, void* d80) {}
 
@@ -277,18 +277,18 @@ extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self) {
     self->field_0 = 0;
 }
 
-// func_802B5970 (us-802b83e0) - play an error-message voice for a battle
+// ErrWin_PlayBattleVoice_5970 (us-802b83e0) - play an error-message voice for a battle
 // triple (owner, attacker, target). Resolves both actors' action sources,
 // requires both to exist and be voice-idle, picks a voice id via
 // ErrWin_PickOwnerRand_5AC8, verifies the arts-state gate (testActorStatus, mode 0x803)
 // and allocates a 0xA0 voice handle before playing through the attacker's
 // embedded +0x3E9C sub-object. Always returns 0.
-int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
+int ErrWin_PlayBattleVoice_5970(CErrMesOwner* owner, int actorA, int actorB) {
     // Retail keeps hA in r31, hB in r30; computed hA first (retail order).
     CErrMesVoiceHandle* hA = reinterpret_cast<CErrMesVoiceHandle*>(
-        func_8016FE34(findObjectById(actorA)));
+        MapFx_ResolveOwner(findObjectById(actorA)));
     CErrMesVoiceHandle* hB = reinterpret_cast<CErrMesVoiceHandle*>(
-        func_8016FE34(findObjectById(actorB)));
+        MapFx_ResolveOwner(findObjectById(actorB)));
     if (hA == 0 || hB == 0) return 0;
     if (reinterpret_cast<cf::CActorParam*>(hA)->CActorParam_isBattleLocked() != 0) return 0;
     if (reinterpret_cast<cf::CActorParam*>(hB)->CActorParam_isBattleLocked() != 0) return 0;
@@ -473,7 +473,7 @@ void ErrWin_RegEntryS2_4968(CErrMesEntry* self, CErrMesOwner* owner) {
     if (flag != 0) {
         if (owner->field_0x3F00 & 0x2) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
-                func_8016FE34(findObjectById(
+                MapFx_ResolveOwner(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
                         ->objectParam.CObjectParam_getSelfObjectId())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps
@@ -514,7 +514,7 @@ void ErrWin_RegEntryS3_4A68(CErrMesEntry* self, CErrMesOwner* owner) {
     if (flag != 0) {
         if (owner->field_0x3F00 & 0x2) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
-                func_8016FE34(findObjectById(
+                MapFx_ResolveOwner(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
                         ->objectParam.CObjectParam_getSelfObjectId())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps

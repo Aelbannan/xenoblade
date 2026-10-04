@@ -468,7 +468,7 @@ CUIWindowManager::CUIWindowManager(CScn* pScene, mtl::ALLOC_HANDLE mHandle)
     mWindowList2.reserve(Scn_CallUnk8C_V10(pScene), 8);
 
     Col6_ClearGlobals_D0B8();
-    func_80122460();
+    resetQuestWindow();
     GetItemMulti_ClearDoneLatch();
     TalkWin_ClearFlag_BDD0();
     lbl_eu_8066408C = 0;
@@ -486,7 +486,7 @@ extern "C" void* __dt__CTTask_CUIWindowManager(void* self, s32 flags) {
     return self;
 }
 // Window-creation dispatcher keyed on the request id. Each accepted range
-// creates a CMenuUpdate window via MenuUpdate_SpawnProcessForMode / func_80144EE4 and queues
+// creates a CMenuUpdate window via MenuUpdate_SpawnProcessForMode / createLandTelop and queues
 // it on the primary window list; the quest path (0x221..0x607) additionally
 // gates on flag-memory resources, the talk-event bit and the player's
 // current target.
@@ -702,7 +702,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
         // lookup runs even when the singleton/window is absent.
         CUIWindowManager* inst = lbl_eu_80664088;
         if (inst != NULL) {
-            u32 winRet = (u32)func_80144EE4((CProcess*)inst->unk9C,
+            u32 winRet = (u32)createLandTelop((CProcess*)inst->unk9C,
                                             inst->unk58,
                                             (u16)(id - 0x20c8), 0);
             slotWin = winRet;
@@ -1458,7 +1458,7 @@ extern "C" IUIWindow* UIWin_Create44EE4Win(u32 a1, u32 a2) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_80144EE4((CProcess*)inst->unk9C, inst->unk58,
+        u32 tempRet = (u32)createLandTelop((CProcess*)inst->unk9C, inst->unk58,
                                          (u16)a1, (u8)a2);
         savedRet = tempRet;
         if (tempRet == 0) {
@@ -1977,7 +1977,7 @@ extern "C" IUIWindow* UIWin_CreateKizunaTalk(u32 charId) {
     }
     {
         u32 tempRet =
-            (u32)func_801BCEBC((CProcess*)lbl_eu_80664088->unk9C,
+            (u32)createKizunaTalkSingleton((CProcess*)lbl_eu_80664088->unk9C,
                                lbl_eu_80664088->unk58, charId);
         savedRet = tempRet;
         if (tempRet == 0) {
@@ -2033,7 +2033,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog0(u32 a1, u32 a2, u32 a3, u32 a4) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_802269D8(
+        u32 tempRet = (u32)QstCnt_GetOrCreate(
             (CProcess*)inst->unk9C, inst->unk58,
             (u16)a1, (u16)a2, (u8)a3, (u8)a4, 0);
         savedRet = tempRet;
@@ -2089,7 +2089,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog1(u32 a1, u32 a2, u32 a3, u32 a4) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)func_802269D8(
+        u32 tempRet = (u32)QstCnt_GetOrCreate(
             (CProcess*)inst->unk9C, inst->unk58,
             (u16)a1, (u16)a2, (u8)a3, (u8)a4, 1);
         savedRet = tempRet;
@@ -2315,7 +2315,7 @@ extern "C" IUIWindow* UIWin_CreateAA2A0Win(u32 id) {
     }
     {
         u32 tempRet =
-            (u32)func_802AA2A0((CProcess*)inst->unk9C, inst->unk58, (u8)id);
+            (u32)createBattleChainMenu((CProcess*)inst->unk9C, inst->unk58, (u8)id);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;

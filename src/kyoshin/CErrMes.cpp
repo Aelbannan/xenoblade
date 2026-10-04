@@ -9,7 +9,7 @@ extern u8 lbl_eu_80513420[];
 
 // Loads the error-screen bdat table for the current (clamped) language, adds
 // it to CBdat index 6, and caches the table pointer for the column getters.
-void func_eu_802B12DC() {
+void loadErrMesTable() {
     u8 lang = CDeviceSC::getLanguage();
     if (lang > 5) {
         lang = 1;
@@ -101,10 +101,10 @@ extern "C" void* getErrMesLangTable1(void) { return (void*)lbl_eu_8053A458; }
 extern "C" void* getErrMesLangTable2(void) { return (void*)lbl_eu_8053A478; }
 
 // Language codes patched into the extended language-entry tables.
-extern "C" void func_eu_804E2340(char* pStr);
-extern "C" void func_804DDE3C(char* pStr, s32 flag);
+extern "C" void removePackFile(char* pStr);
+extern "C" void registerPackFile(char* pStr, s32 flag);
 
-void func_eu_802B14F8(s32 lang) {
+void setErrMesLanguage(s32 lang) {
     // The bdat-table array and the three language-entry arrays are contiguous
     // in .data; walk them all through one base pointer (retail codegen).
     ErrMesLangEntry** pEntries = (ErrMesLangEntry**)&lbl_eu_8053A420[6];
@@ -137,11 +137,11 @@ void func_eu_802B14F8(s32 lang) {
 
     if (changed) {
         char* pStr = (char*)lbl_eu_80513420;
-        func_eu_804E2340(pStr + 0xe);
-        func_eu_804E2340(pStr + 0x12);
+        removePackFile(pStr + 0xe);
+        removePackFile(pStr + 0x12);
         s32 flag = lang == 0 ? 1 : 0;
-        func_804DDE3C(pStr + 0x16, flag);
-        func_804DDE3C(pStr + 0x25, flag);
+        registerPackFile(pStr + 0x16, flag);
+        registerPackFile(pStr + 0x25, flag);
     }
 }
 

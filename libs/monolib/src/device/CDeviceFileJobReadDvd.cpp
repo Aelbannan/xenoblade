@@ -148,7 +148,7 @@ extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
 extern "C" void __dl__FPv(void*);
 // CDeviceFileCri.hpp pulls in CDeviceFileJobReadDvd.hpp (member collision), so
 // this sibling helper is declared directly under its retail mangled name.
-extern "C" void func_8044FC38__14CDeviceFileCriFv(void);
+extern "C" void abortRead__14CDeviceFileCriFv(void);
 
 extern "C" CDeviceFileJobReadDvdLayout* __ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
     CDeviceFileJobReadDvdLayout* self, const char* pName, CWorkThread* pParent) {
@@ -182,7 +182,7 @@ extern "C" bool cancel__21CDeviceFileJobReadDvdFPCc(CDeviceFileJobReadDvdLayout*
     if (!wt->wkIsCurrent()) {
         CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
     } else if (CDeviceFile::func_8044E768()) {
-        func_8044FC38__14CDeviceFileCriFv();
+        abortRead__14CDeviceFileCriFv();
     } else {
         CDeviceFileDvd::cancelCurrent();
     }
@@ -197,7 +197,7 @@ extern "C" bool cancel__21CDeviceFileJobReadDvdFP11CFileHandle(CDeviceFileJobRea
     if (!wt->wkIsCurrent()) {
         CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
     } else if (CDeviceFile::func_8044E768()) {
-        func_8044FC38__14CDeviceFileCriFv();
+        abortRead__14CDeviceFileCriFv();
     } else {
         CDeviceFileDvd::cancelCurrent();
     }

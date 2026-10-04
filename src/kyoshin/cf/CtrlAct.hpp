@@ -336,7 +336,7 @@ public:
     CVoiceOwnerIntfPc mSub3E9C;  // 0x3E9C embedded voice-owner interface
 };
 
-// Action-source view (func_8016FE34 result): only the 0x2BC gate is
+// Action-source view (MapFx_ResolveOwner result): only the 0x2BC gate is
 // dispatched through here in ctrlActDispatchEntry.
 class CtrlActSrcReal {
 public:
@@ -593,7 +593,7 @@ struct CtrlActPlayerView {
     f32 mField44D8;              // 0x44D8 (proximity radius, scanPlayerTgt)
 };
 
-// Action-source object (func_8016FE34 result): vtable slots 0x2BC (usable
+// Action-source object (MapFx_ResolveOwner result): vtable slots 0x2BC (usable
 // gate) and 0x5B4 (base facing), +0x04 sub-object, +0x3E9C voice-owner.
 struct SrcTable {
     void* p00[0x2BC / 4];
@@ -773,14 +773,14 @@ struct CtrlActRotFrame {
     ml::CVec3 mAxisZ;   // 0x24 (sin, 0, cos)
 };
 
-// View of the action-source object (func_8016FE34 result): the embedded
+// View of the action-source object (MapFx_ResolveOwner result): the embedded
 // voice-owner region sits at +0x3E9C (mirror of CtrlRemote's sweep view).
 struct CtrlActSweepView {
     u8 _00[0x3E9C];
     u8 mOwner3E9C[0x10];  // 0x3E9C voice-owner region (opaque)
 };
 
-// 0x20-byte action entry pulled by func_8014B8BC (battle-list action record).
+// 0x20-byte action entry pulled by aiFetchAction (battle-list action record).
 struct CtrlActActionEntry {
     u32 mField0;             // 0x00 actor id
     u8 _04[0xD - 0x04];
@@ -840,9 +840,9 @@ struct CtrlActChainObj {
 // ---------------------------------------------------------------------------
 extern "C" long testActorStatus(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
 extern "C" void requestItemLoad(void* obj, u32 flag);
-extern "C" void* func_8016FE34(void* r3);       // voice/battle-list resolve
+extern "C" void* MapFx_ResolveOwner(void* r3);       // voice/battle-list resolve
 extern "C" int getAnimModelId(void* battleObj);  // battle-state page id
-extern "C" int func_80148778(void* obj, int id);
+extern "C" int isBattleStatusActive(void* obj, int id);
 // updateActMain / tickTargetAct extra imports (retail C-ABI names).
 extern "C" f32 CfCmd_GetThreshold();                    // battle-list fallback height
 // Chain-start gate (chain/CChain.cpp); retail call site uses the plain name.
@@ -864,7 +864,7 @@ extern "C" int isBattleEventKind3(int val);
 // requests and the chain/battle helpers.
 extern "C" void aiActionUpdateEntriesDelta(void* obj, f32 val);
 extern "C" void aiActionClearBlockADC(void* obj);
-extern "C" int func_8014B8BC(void* obj, void* out);
+extern "C" int aiFetchAction(void* obj, void* out);
 extern "C" void CBattleMan_RunBattleEvent(void* bm, void* player, void* req, int flag);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b);

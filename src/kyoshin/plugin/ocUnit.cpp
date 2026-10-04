@@ -1285,10 +1285,10 @@ extern "C" int invin(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003eef0: func_8003E974
+// us-8003eef0: sendBattleEvent
 // Reads up to 5 VM args (arg 1 always present, 2..5 optional/omittable), looks
 // up the handle's object as a CfObjectActor and queues a battle event for it.
-extern "C" int func_8003E974(VMThread* pThread, int handle) {
+extern "C" int sendBattleEvent(VMThread* pThread, int handle) {
     // Sequential omittable-arg reader: idx is a running counter shared by
     // all blocks (each block advances it whether or not its arg was omitted).
     int idx;
@@ -1464,11 +1464,11 @@ extern "C" int setGameFlag(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003f45c: func_8003EEE0
+// us-8003f45c: spawnParty
 // Spawns a battle party object: reads (partyId[, arg2[, arg3]]), toggles the
 // 0x40000 bit of the global flag word around the spawn, throws a VM exception
 // when the spawn fails, and returns the spawned context as a VM object.
-extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
+extern "C" int spawnParty(VMThread* pThread, int handle, int r5) {
     void* ctx;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int partyId = vmArgIntGet(2, ptr);
@@ -1733,9 +1733,9 @@ extern "C" int followUnit(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-8003fdec: func_8003F870
+// us-8003fdec: bindFollow
 // Sets a follow relationship with parent/child lookup
-extern "C" int func_8003F870(VMThread* pThread, int handle) {
+extern "C" int bindFollow(VMThread* pThread, int handle) {
     int targetOC;
     if (vmArgOmitChk(pThread, 1)) {
         targetOC = 0;
@@ -1856,9 +1856,9 @@ extern "C" int pointOffC(VMThread* pThread, int handle) {
     return 0;
 }
 
-// us-80040194: func_8003FC18
+// us-80040194: moveByOffset
 // Moves an object by a fixed-point offset in its local X direction
-extern "C" int func_8003FC18(VMThread* pThread, int handle) {
+extern "C" int moveByOffset(VMThread* pThread, int handle) {
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     int distX = vmArgFixedGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);

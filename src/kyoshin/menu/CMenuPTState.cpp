@@ -1,6 +1,6 @@
 // kyoshin/menu/CMenuPTState -- PT (photo/theater?) state menu TU.
 // FULL_MATCH: menuPTStateIsActive, menuPTStateRenderBeforeThunk58/BEC (vtable adjustor thunks),
-// __ct__80192C10, func_80192C2C, func_80192CB0.
+// __ct__80192C10, refreshPtStateAccum, updatePtStateTimer.
 // __ct__CMenuPTState: 94.3% static, residual = 4 pure r6/r7 reg-swaps
 // (register-color ceiling; witness-certified equivalent).
 
@@ -8,7 +8,7 @@
 #include <cstddef>
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / func_80148778)
+#include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / isBattleStatusActive)
 
 // Retail CProcess / mem-manager / win-ctor imports (defined in other TUs).
 // Retail exports these under their verbatim-mangled spellings, so C linkage is
@@ -31,7 +31,13 @@ extern CMenuPTState* lbl_eu_80664300;    // singleton pointer
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];           // CProcess primary vtable
 extern char lbl_eu_80532A38[];           // CMenuPTState final vtable
-extern const f32 lbl_eu_80667AA8;        // float pool: timer decay multiplier
+// sdata2 float pair: timer decay multiplier + emitted zero word (retail
+// section is 0x10; no code reads the second word). Non-const (a const def
+// makes MWCC const-propagate and emit a dead literal pool beside the array,
+// cf. code_80213488.cpp) - verify updatePtStateTimer stays matched.
+//TMPEXP2// extern f32 lbl_eu_80667AA8[2];
+extern const f32 lbl_eu_80667AA8;
+//TMPEXP// (sdata2 def commented for baseline experiment)
 
 // Singleton factory constructor.
 // MWCC allocating-ctor: not a real C++ ctor -- a free function that allocates a
@@ -99,7 +105,7 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
     return result;
 }
 
-// Singleton-existence query (retail-unmangled symbol; see func_80192C2C).
+// Singleton-existence query (retail-unmangled symbol; see refreshPtStateAccum).
 extern "C" unsigned long menuPTStateIsActive() { return lbl_eu_80664300 != 0; }
 // FULL_MATCH: vtable adjustor thunks (IScnRender secondary base at offset +0x58).
 // Called through the IScnRender subobject vtable slot, `this` points at
@@ -131,7 +137,7 @@ cf::UnkClass_80192BF4::UnkClass_80192BF4() {
 }
 
 // Initializes a UnkClass_80192BF4-like struct at offsets 0x00/0x04/0x08.
-// Retail-unmangled symbol name (see func_80192C2C).
+// Retail-unmangled symbol name (see refreshPtStateAccum).
 extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
     self->field_0x00 = 0;
     self->field_0x04 = 0.0f;
@@ -142,13 +148,13 @@ extern const f32 lbl_eu_80667A98;         // float pool: zero threshold
 extern const f32 lbl_eu_80667A9C;         // float pool: reset value (-1.0f)
 extern const double lbl_eu_80667AA0;       // double pool: 0x4330000080000000 magic
 
-// us-80194348 - func_80192C2C.
+// us-80194348 - refreshPtStateAccum.
 // If the accumulator is still positive, bump the counter, then query the
 // passed actor (vtable slot 0x308) for a count and store (count*2+6) into both
 // the value and the timer fields.
 // Retail-unmangled symbol: MWCC would mangle a plain free function here, so
 // C linkage keeps the exact linker name.
-extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, cf::CMenuPtStateActor* obj) {
+extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self, cf::CMenuPtStateActor* obj) {
     if (self->field_0x04 > lbl_eu_80667A98) {
         self->field_0x00++;
     }
@@ -165,7 +171,7 @@ extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, cf::CMenuPtStateActor
 }
 
 // ---------------------------------------------------------------------------
-// func_80192CB0: continuous PT-state timer update
+// updatePtStateTimer: continuous PT-state timer update
 // ---------------------------------------------------------------------------
 
 // Opaque list holder/list views (CPartyStateWin.hpp declares the shared
@@ -180,14 +186,14 @@ struct CEnumListHolder {
     u32 handle; // 0x4
 };
 
-// us-801943cc - func_80192CB0.
+// us-801943cc - updatePtStateTimer.
 // If the timer is still running (>threshold), scan the battle object list for any
 // actor carrying status 0x10 or 0xf. If none is found, decay the timer by the
 // per-frame delta; when it crosses zero reset the whole block.
 // NOTE: the element address is (elem - 0x3e9c) + 8, i.e. the status getter is
 // invoked on a fixed header offset within the battle-actor record.
-// Retail-unmangled symbol (see func_80192C2C).
-extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
+// Retail-unmangled symbol (see refreshPtStateAccum).
+extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self) {
     // Written as a '>' guard so MWCC tests the GT bit (plain bge-style skip),
     // matching retail; '<' forms emit an extra cror.
     if (self->field_0x04 > lbl_eu_80667A98) {
@@ -206,8 +212,8 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
             if (actor != nullptr) {
                 actor -= 0x3e9c;
             }
-            if (func_80148778(actor + 8, 0x10) != 0 ||
-                func_80148778(actor + 8, 0xf) != 0) {
+            if (isBattleStatusActive(actor + 8, 0x10) != 0 ||
+                isBattleStatusActive(actor + 8, 0xf) != 0) {
                 __dt__80043E88(&holder, -1);
                 found = 1;
                 goto after;
@@ -232,3 +238,35 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
         }
     }
 }
+// Retail tables owned by this unit.
+// .rodata (0x10): "CMenuPTState" class-name string (read by the sdata locator
+// below). [0x10] folds the 3 section-pad bytes inside (splitter says 0xD).
+//TMP3// extern const char lbl_eu_80503BD8[0x10] = "CMenuPTState";
+// .sdata (0x8): locator pair {class-name, vtable-trailer} (retail rela.sdata).
+//TMP3// sdata off
+// .sdata2 (0x8): 1/30 per-frame timer decay multiplier + emitted zero word.
+// (0x3D088889 = 0.033333335f; cf. CfObjectPoint's 5.0f pair.)
+//TMPEXP// extern __declspec(section ".sdata2") f32 lbl_eu_80667AA8[2] = { 0.033333335f, 0.0f };
+// .data (0x70): CMenuPTState final vtable (14 slots) + lbl_eu_80532A70 trailer
+// (14 slots: 6 RTTI words + zeros). Slot targets come from the retail
+// rela.data (all addends +0). Real references where nameable: the sdata
+// locator, the dtor/cbRender/Init/Term/Move (canonical extern "C" decls merge
+// with the in-scope members, as the existing dtor/cbRender decls above do),
+// and the 6 RTTI sdata words from other units. Zero slots (file bytes are
+// still retail-identical since reloc sites read as zeros; only the linked
+// addresses differ): Reset (inline - referencing it would emit a weak stub
+// here and blow the 0-spare .text budget), Draw (template-id unspellable
+// under extern "C"), Tail (no exact-name definition in tree), and the two
+// IScnRender thunks (member addresses are PMFs, not plain addresses, and the
+// retail short names have no definition to resolve to).
+extern "C" void Init__12CMenuPTStateFv(CMenuPTState* self);
+extern "C" void Term__12CMenuPTStateFv(CMenuPTState* self);
+extern "C" void Move__12CMenuPTStateFv(CMenuPTState* self);
+extern u32 lbl_eu_80661940[];
+extern u32 lbl_eu_80661958[];
+extern u32 lbl_eu_80661950[];
+extern u32 lbl_eu_80661948[];
+extern u32 lbl_eu_80661DE8[];
+extern u32 lbl_eu_80661DE0[];
+//TMP3// vtable+tail off
+

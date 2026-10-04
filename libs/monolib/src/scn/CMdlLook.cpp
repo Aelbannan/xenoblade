@@ -32,7 +32,7 @@ public:
     ~CMdlLook();
 };
 
-// Model-side object queried by func_804E8AAC.
+// Model-side object queried by aimMdlLook.
 struct MdlLookWork {
     u8 field_0x00[0x04];
     void* field_0x04;          // handle fed to the frame-delta query
@@ -67,10 +67,10 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" u32 lbl_eu_805701E0[0x4];
 
 // Stripped retail placeholder symbols need C linkage to emit matching
-// reloc names; noinline keeps MWCC from folding them into func_804E8290.
+// reloc names; noinline keeps MWCC from folding them into syncMdlLookSlots.
 extern void scnImN4AddFrameId(u8* model);
-extern "C" void func_804E830C(CMdlLook* look, u8* unk, u32 a, u32 b);
-extern "C" void func_804E8AAC(CMdlLook* look, u8* unk, u32 a, u32 b);
+extern "C" void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b);
+extern "C" void aimMdlLook(CMdlLook* look, u8* unk, u32 a, u32 b);
 
 // Model-look controller ctor: vtable + zeroed vectors, cleared slots.
 CMdlLook::CMdlLook() {
@@ -85,11 +85,11 @@ CMdlLook::CMdlLook() {
 
 CMdlLook::~CMdlLook() {}
 
-void func_804E7B38() {}
+void buildMdlLookMatrices() {}
 
 // If any component of the tracked vector differs from the input vector,
 // reset the z scale, then adopt the new vector.
-void func_804E8220(CMdlLook* look, const ml::CVec3* vec) {
+void setMdlLookTarget(CMdlLook* look, const ml::CVec3* vec) {
     if (look->field_0x34 != *vec) {
         look->field_0x58.z = lbl_eu_8066B37C;
     }
@@ -100,20 +100,20 @@ extern "C" void setMdlLookAngles(u8* self, float a, float b) { *(float*)(self + 
 
 // Re-syncs the model-look slots: when either slot index matches the given
 // index, refresh that slot's transform/vector state.
-void func_804E8290(CMdlLook* look, u8* unk, u32 idx1, u32 idx2) {
+void syncMdlLookSlots(CMdlLook* look, u8* unk, u32 idx1, u32 idx2) {
     if (look->field_0x6c == idx1) {
-        func_804E830C(look, unk, idx1, idx2);
+        markMdlLookFrame(look, unk, idx1, idx2);
     }
     if (look->field_0x70 == idx1) {
-        func_804E8AAC(look, unk, idx1, idx2);
+        aimMdlLook(look, unk, idx1, idx2);
     }
 }
 
 // Stripped retail placeholder symbols need C linkage to emit matching
-// reloc names; noinline keeps MWCC from folding them into func_804E8290.
+// reloc names; noinline keeps MWCC from folding them into syncMdlLookSlots.
 extern void scnImN4AddFrameId(u8* model);
 
-extern "C" __declspec(noinline) void func_804E830C(CMdlLook* look, u8* unk, u32 a, u32 b) {
+extern "C" __declspec(noinline) void markMdlLookFrame(CMdlLook* look, u8* unk, u32 a, u32 b) {
     scnImN4AddFrameId(unk);
 }
 
@@ -121,7 +121,7 @@ extern "C" __declspec(noinline) void func_804E830C(CMdlLook* look, u8* unk, u32 
 // local-space aim vector, blends per-axis angles toward it while accumulating
 // quaternion deltas, converts back to euler angles, then writes
 // (rotation * base) into the output matrix.
-extern "C" __declspec(noinline) void func_804E8AAC(CMdlLook* look, u8* unkBytes,
+extern "C" __declspec(noinline) void aimMdlLook(CMdlLook* look, u8* unkBytes,
                                                   u32 arg2, u32 arg3) {
     MdlLookWork* unk = reinterpret_cast<MdlLookWork*>(unkBytes);
     Mtx* outMtx = *reinterpret_cast<Mtx**>(arg3);

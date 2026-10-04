@@ -137,7 +137,7 @@ extern "C" void __dt___reslist_base_IScnEnvCtl(void* self, int flag);
 
 int getScnHandle__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
-int func_804BC9F4(void* outStruct, u32 data) {
+int Coli_ParseChunks(void* outStruct, u32 data) {
     *(u32*)outStruct = 0;
     initColiMover(&lbl_eu_8065F32C);
 
@@ -252,11 +252,11 @@ void ScnData_FwdB80CC() {
 }
 
 // Retail saves/restores GPRs via _savegpr_14/_restgpr_14 helpers here while
-// func_804BC9F4 uses inline stmw/lmw - reproduce with a per-function pragma.
+// Coli_ParseChunks uses inline stmw/lmw - reproduce with a per-function pragma.
 #pragma use_lmw_stmw off
-void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
+void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
     // Retail structure (fully decoded from build/us/asm reference; see
-    // attempts.jsonl "func_804BCC78 ANALYZED"):
+    // attempts.jsonl "Coli_RenderChunks ANALYZED"):
     //  - viewData (r4): view matrix, 12 f32 (cam pos at [3],[7],[11])
     //  - renderParams (r5): Mtx44 projection, 16 f32
     ScnResDataEx* res = (ScnResDataEx*)&lbl_eu_8065F32C;

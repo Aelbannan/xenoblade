@@ -83,7 +83,7 @@ extern const char lbl_eu_80530EE0[];   // fmt
 // MWCC reproduces the retail inter-string gap words; the 5-byte section
 // tail is restored by pad_data_section.
 extern "C" void __dt__16CVirtualLightObjFv();
-extern "C" void func_804947EC();
+extern "C" void getVirtualLightColor();
 extern "C" void getVirtualLightSentinel();
 extern "C" void __dt__4CScnFv();
 extern "C" void Reset__14CChildListNodeFv();
@@ -133,7 +133,7 @@ extern "C" u32 lbl_eu_80663990[];
 extern "C" u32 lbl_eu_8056E8B8[6] = {
     (u32)&lbl_eu_806639D0, 0x00000000,
     (u32)&__dt__16CVirtualLightObjFv,
-    (u32)&func_804947EC,
+    (u32)&getVirtualLightColor,
     (u32)&getVirtualLightSentinel,
     0x00000000,
 };
@@ -269,7 +269,7 @@ struct CScnAnmChr80496B0C {
     virtual ~CScnAnmChr80496B0C() {}
 };
 
-// Model/owner object passed to func_80496F14: ResMdl data pointer at +0x146C
+// Model/owner object passed to scn80496SetupChildren: ResMdl data pointer at +0x146C
 // and the animation object at +0x147C.
 struct CScnModel80496B0C {
     char field_0x0[0x7A4];                 // +0x00
@@ -335,17 +335,17 @@ struct CScn80496B0C {
 
 // In-unit helpers (bodies recovered later; noinline keeps the call sites as
 // real `bl` relocs).
-__declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
+__declspec(noinline) void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
                                         ml::CVec3* outDelta, ml::CVec3* vecB,
                                         ml::CVec3* vecC, u32 arg);
-u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
+u32 scn80496CrossfadeStep(CScn80496B0C* self, CScnItemAnim* anim, int index,
                   unsigned int frame, u32 g);
 
-extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate);
+extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate);
 // Scene lookup used by the blend-weight updates (retail free function).
 // Character-animation setup helper (retail keeps an unmangled linker name,
 // so it is declared and defined with C linkage).
-extern "C" __declspec(noinline) u32 func_80497544(
+extern "C" __declspec(noinline) u32 scn80496SetupChrAnim(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, int f);
 
@@ -448,7 +448,7 @@ u32 scn80496ChildIdsDiffer(CScn80496B0C* self) {
 
 // Returns whether both chains are complete (nodes present, no +0x88 child),
 // the two nodes share a +0x18 tag, and their +0x14 ids match.
-u32 func_80497914(CScn80496B0C* self) {
+u32 scn80496IsComplete(CScn80496B0C* self) {
     CScnChild80496B0C* a = self->field_0x8;
     CScnChild80496B0C* b = self->field_0xC;
     CScnNode80496B0C* na;
@@ -466,7 +466,7 @@ extern "C" u32 scn80496HasChild2Node(u8* self) { return *(u32*)(*(u32*)((u8*)sel
 // the translate output receives the node's position (or zero when the node is
 // absent), and the other two outputs are zeroed. When a node is already bound,
 // the child is released instead and the outputs are left untouched.
-void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
+void scn80496RefreshTRS(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
                    ml::CVec3* outC, u32 nodeIdx) {
     // Volatile view of field_0x8: forces the second read (below the calls)
     // to be a fresh load, matching retail.
@@ -495,13 +495,13 @@ void func_804979A4(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
         return;
     }
     // Retail re-reads field_0x8 here instead of reusing the earlier load.
-    func_80498A5C(childRef, outA, outB, outC, nodeIdx);
+    scn80496AdvanceChrAnims(childRef, outA, outB, outC, nodeIdx);
 }
 
 // Per-frame cross-fade update: advances both children's animations toward the
 // shared frame counter, then when the two heads belong to the same item anim
 // releases the fading child completely and re-arms the model release.
-void func_80497AA8(CScn80496B0C* self) {
+void scn80496UpdateCrossfade(CScn80496B0C* self) {
     // No scene local: MWCC keeps the first load in a volatile reg and
     // rematerializes self->field_0x0 after intervening calls.
     if (self->field_0x0 == NULL) {
@@ -602,7 +602,7 @@ void func_80497AA8(CScn80496B0C* self) {
         }
     }
 
-    func_804986F8(self->field_0x8, weight);
+    scn80496StepBlendWeight(self->field_0x8, weight);
 
     // When both heads reference the same item anim, retire the fading child.
     CScnNode80496B0C* h2 = fade->field_0x84[0];
@@ -657,7 +657,7 @@ void func_80497AA8(CScn80496B0C* self) {
             wk = (CScnChild80496B0C*)((u8*)wk + 4);
         }
     }
-    func_804986F8(fade, lbl_eu_8066AAC4 - weight);
+    scn80496StepBlendWeight(fade, lbl_eu_8066AAC4 - weight);
 }
 
 // Child-object initializer: zeroes the three node-binding slots and the
@@ -770,7 +770,7 @@ extern "C" __declspec(noinline) void scn80496RefreshChildTag(CScnChild80496B0C* 
 // bindings, evicts the oldest overflow binding when full, fills the slot from
 // the animation resource, attaches it to the chr blend, then shifts the
 // slot-stack and notifies the model listeners.
-u32 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
+u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
                   CScnItemAnim* tag, u32 value, u32 flag) {
     if (value == 0) {
         // Release every current binding of this child. The slot view is a
@@ -922,7 +922,7 @@ u32 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
 // growth state, sorts the two overflow bindings by weight, redistributes the
 // remaining weight over them, and pushes the per-slot weights into the chr
 // blend scaled by `rate`.
-extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
+extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
     CScnNode80496B0C* node = self->field_0x84[0];
     if (node == NULL) {
         return;
@@ -1050,7 +1050,7 @@ extern "C" void func_804986F8(CScnChild80496B0C* self, f32 rate) {
 // slots only accumulate y into vecC (nodes flagged +0x2 bit0) or the full
 // translate otherwise. Finally produces a delta against the stored position
 // when the first slot's node is flagged.
-__declspec(noinline) void func_80498A5C(CScnChild80496B0C* child,
+__declspec(noinline) void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
                                         ml::CVec3* outDelta, ml::CVec3* vecB,
                                         ml::CVec3* vecC, u32 arg) {
     nw4r::g3d::ChrAnmResult result;
@@ -1296,7 +1296,7 @@ Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34n
 
 extern "C" { extern const double lbl_eu_8066AAD0; }
 
-extern "C" __declspec(noinline) u32 func_80497544(
+extern "C" __declspec(noinline) u32 scn80496SetupChrAnim(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, int f) {
     nw4r::g3d::ResMdl mdl(self->field_0x1D0);
@@ -1325,7 +1325,7 @@ extern "C" __declspec(noinline) u32 func_80497544(
     }
 
     nw4r::g3d::ResAnmChr bind(*anmRes);
-    u32 result = func_80498288(child, (s32*)&bind, (VTarget*)anmObj, anim, c, e);
+    u32 result = scn80496BindChrAnim(child, (s32*)&bind, (VTarget*)anmObj, anim, c, e);
 
     if (self->field_0x17E == 0) {
         ((AnmObjResVt80497544*)self->field_0x1D4)->attachObj(self->field_0x1CC, 6);
@@ -1356,10 +1356,10 @@ u32 scn80496BindChrAnmPack(CScn80496B0C* self, CScnItemAnim* anim, int index, u3
     if (self->field_0x1D8 != 0xFFFFFFFF && self->field_0xC->field_0x84[0] != 0 &&
         e != 0) {
         nw4r::g3d::ResAnmChr t = ItemAnim_GetChr_E708(anim, index);
-        result = func_80497544(self, self->field_0xC, anim, &t, c, 0, f) << 16;
+        result = scn80496SetupChrAnim(self, self->field_0xC, anim, &t, c, 0, f) << 16;
     }
     nw4r::g3d::ResAnmChr t2 = ItemAnim_GetChr_E708(anim, index);
-    result |= func_80497544(self, self->field_0x8, anim, &t2, c, d, f) & 0xFFFF;
+    result |= scn80496SetupChrAnim(self, self->field_0x8, anim, &t2, c, d, f) & 0xFFFF;
     if (self->field_0xC->field_0x84[0] != 0) {
         CScnChild80496B0C* child = self->field_0x8;
         u32 target = self->field_0x1D8;
@@ -1421,7 +1421,7 @@ void scn80496SetNodeIdByName(CScn80496B0C* self, const char* name) {
 // Sets up both child slots from the model: stores the scene/model handles,
 // copies the ResMdl and animation object out of the model, constructs the
 // chr-blend with the scene allocator, then wires both children to it.
-void func_80496F14(CScn80496B0C* self, CScn* scn, CScnModel80496B0C* model,
+void scn80496SetupChildren(CScn80496B0C* self, CScn* scn, CScnModel80496B0C* model,
                    u16 slot) {
     self->field_0x0 = scn;
     self->field_0x4 = model;
@@ -1457,7 +1457,7 @@ void func_80496F14(CScn80496B0C* self, CScn* scn, CScnModel80496B0C* model,
 // into it (phase 1), then re-evaluates the active child (phase 2) and packs
 // both setup results into the returned u32. Marks the newly bound node with
 // flag bit 2.
-u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
+u32 scn80496CrossfadeStep(CScn80496B0C* self, CScnItemAnim* anim, int index,
                   unsigned int frame, u32 g) {
     u32 result = 0;
     self->field_0x170 = (f32)frame;
@@ -1477,7 +1477,7 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
         // temp's address).
         nw4r::g3d::ResAnmChr anmTmp(
             (void*)self->field_0x8->field_0x84[0]->field_0x14);
-        result = func_80497544(
+        result = scn80496SetupChrAnim(
                      self, self->field_0xC,
                      self->field_0x8->field_0x84[0]->field_0x18, &anmTmp, 0,
                      0, -1)
@@ -1520,7 +1520,7 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
     if ((node != 0 ? ((node->field_0x2 >> 2) & 1) : 0) != 0) {
         nw4r::g3d::ResAnmChr t2 = ItemAnim_GetChr_E708(anim, index);
         result |=
-            func_80497544(self, self->field_0x8, anim, &t2, frame, 0, g) &
+            scn80496SetupChrAnim(self, self->field_0x8, anim, &t2, frame, 0, g) &
             0xFFFF;
         // Mark the freshly bound head so the next call skips phase 1.
         CScnNode80496B0C* hit = self->field_0x8->field_0x84[0];
@@ -1529,7 +1529,7 @@ u32 func_804972E8(CScn80496B0C* self, CScnItemAnim* anim, int index,
         }
     } else {
         nw4r::g3d::ResAnmChr t = ItemAnim_GetChr_E708(anim, index);
-        result = func_80497544(self, self->field_0xC, anim, &t, frame, 0, g)
+        result = scn80496SetupChrAnim(self, self->field_0xC, anim, &t, frame, 0, g)
                  << 16;
     }
     return result;

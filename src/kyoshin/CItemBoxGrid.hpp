@@ -8,35 +8,35 @@ class AnimTransform; class Layout; class ArcResourceAccessor; class DrawInfo;
 } }
 
 // Retail vtable (lbl_eu_80534818): dtor at +0x08, Rebuild at +0x0C
-// (retail func_801C4BB4). novtable: the table lives in the data blob and
+// (retail RegisterTeachableItems). novtable: the table lives in the data blob and
 // the ctor stores the label manually, so no TU emits a __vt__ (same shape
 // as CBaseCur/CItemBoxObjVt08 delete sites); Rebuild has no body here -
 // virtual calls land on the blob's slot.
 class __declspec(novtable) CQuestItem {
 public:
     virtual ~CQuestItem();  // +0x08
-    virtual void Rebuild();  // +0x0C - retail func_801C4BB4
+    virtual void Rebuild();  // +0x0C - retail RegisterTeachableItems
 
     // TODO: add fields
 };
 
 // Retail vtable (lbl_eu_805347F8): dtor at +0x08, Rebuild at +0x0C
-// (retail func_801C5254). novtable, no Rebuild body (see CQuestItem).
+// (retail PushGatedTypeIds). novtable, no Rebuild body (see CQuestItem).
 class __declspec(novtable) CVisionItem {
 public:
     virtual ~CVisionItem();  // +0x08
-    virtual void Rebuild();  // +0x0C - retail func_801C5254
+    virtual void Rebuild();  // +0x0C - retail PushGatedTypeIds
 
     // TODO: add fields
 };
 
 // Retail vtable (lbl_eu_805347D8): dtor at +0x08, Rebuild at +0x0C
-// (retail func_801C53D8). novtable, no Rebuild body (see CQuestItem).
+// (retail RegisterLearnedSkills). novtable, no Rebuild body (see CQuestItem).
 class __declspec(novtable) CArtsBookItem {
 public:
     CArtsBookItem();
     virtual ~CArtsBookItem();  // +0x08
-    virtual void Rebuild();  // +0x0C - retail func_801C53D8
+    virtual void Rebuild();  // +0x0C - retail RegisterLearnedSkills
 
     // TODO: add fields
 };
@@ -47,7 +47,7 @@ struct CItemPriceScaleRow {
     float v[7];
 };
 
-// 7-word per-language slot-name table copied wholesale by func_801C6A44's
+// 7-word per-language slot-name table copied wholesale by FormatCellItemName's
 // '$2' tag handler; retail lowers the assignment as a 3x8-byte word-copy
 // loop plus a trailing word (a 28-byte struct assignment).
 struct CItemBoxLangWordTable {
@@ -132,7 +132,7 @@ struct CibgTexData {
 // (Fake-vtable cleanup: CibgSysWinVt0C deleted - texture lookups are now
 // ArcResourceAccessor::GetResource.)
 
-// 24-byte category-filter row copied around by value in func_801C56D8
+// 24-byte category-filter row copied around by value in PopulateGridEntries
 // (MWCC lowers the struct copies to unrolled lwz/lwzu pairs).
 struct GridFilter24 {
     u32 w[6];
@@ -208,10 +208,10 @@ extern "C" u32 BdatGetItemId(u32);
 extern "C" u32 sortMenuIsVisible28(void*);
 extern "C" void CItemData_initFromFamily(void*, u32);
 extern "C" u32 GridSubMenu_IsOpenedFlag(void*);
-extern "C" void func_80208760(void*, void*);
+extern "C" void GridSubMenu_GetCursorPos(void*, void*);
 extern "C" void getPresentPaneWorldPos(void*, void*);
 extern "C" void ExWin_CopyPanePair(void*, void*, u8);
-extern "C" u32 func_801D32DC(void*);
+extern "C" u32 sortMenuIsScrollbarVisible(void*);
 extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
 extern "C" u32 NumSel_GetField2D_B018(void*);
 extern "C" u32 CSysWin_isReady(void*);
@@ -221,24 +221,24 @@ extern "C" u32 isPresentActive(void*);
 extern "C" void advanceItemBoxState__FP12CItemBoxInfo(void*);
 extern "C" void NumSel_ApplyPaneVis_B410(void*, int);
 extern "C" void NumSel_EnterState1Close_B0D4(void*);
-extern "C" void func_801D0328(void*);
-extern "C" void func_801CFFEC(void*);
+extern "C" void RefreshSelectedCellText(void*);
+extern "C" void RebuildGridUI(void*);
 extern "C" u32 GetCatLabelMsg(void*);
-extern "C" char* func_801C6A44(void*, u16);
-extern "C" void func_801D05D4(void*, int);
+extern "C" char* FormatCellItemName(void*, u16);
+extern "C" void MoveTabPage(void*, int);
 extern "C" void playUISound__FUl(u32);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" u32 sortMenuGetFlag2B(void*);
 extern "C" void sortMenuFormatPaneText(void*, void*);
 extern "C" void sortMenuSetLayoutPos(void*, void*);
-extern "C" void func_801D353C(void*, u8);
+extern "C" void sortMenuSetPage(void*, u8);
 extern "C" void sortMenuOpenInit(void*);
 extern "C" u32 formatItemBoxName(void*, u32);
 extern "C" void setItemCounts(void*, u32, u32);
-extern "C" void func_801D3620(void*);
-extern "C" void func_801D3698(void*);
-extern "C" void func_801D3724(void*);
+extern "C" void sortMenuScrollUp(void*);
+extern "C" void sortMenuScrollDown(void*);
+extern "C" void sortMenuPageUpStep(void*);
 extern "C" void sortMenuPageDownStep(void*);
 extern "C" void sortMenuToState4Page(void*);
 extern "C" u32 NumSel_GetField2E_B028(void*);
@@ -248,7 +248,7 @@ extern "C" u32 NumSel_ShowPaneA_B218(void*);
 extern "C" u32 NumSel_ShowPaneB_B314(void*);
 extern "C" void NumSel_EnterState3Open_B178(void*);
 extern "C" void GridSubMenu_MoveSelectionNext(void*);
-extern "C" u32 func_802087B8(void*);
+extern "C" u32 GridSubMenu_GetOptionCount(void*);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" int* CtrlObjectParam_GetSlotTableBase(void);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
@@ -293,7 +293,7 @@ extern "C" void* CTaskGame_enumListGet(void*);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
-extern "C" void func_800BFDE0(void*, u32);
+extern "C" void CfObjectPc_setupFrame(void*, u32);
 extern "C" void func_80043E88(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
@@ -303,7 +303,7 @@ extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" void PaneMatSetTevColorsByName(void*, void*, void*, void*);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int);
-extern "C" void func_801C5158(void*, u32);
+extern "C" void PushUniqueItemId(void*, u32);
 extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" u32 LookupItemTypeTable(u32);
 extern "C" int Counter_TestBit(void*, u32);
@@ -322,18 +322,18 @@ extern "C" char* getErrMesText15(void);
 extern "C" int HasSlotIdMatch(void* obj, u32 id);
 extern "C" u8 CountMarkedCells(CItemBoxGridFull* self);
 extern "C" void sysWinSwitchKindPane(void*, int);
-extern "C" void func_8022B9B4(void*, u32, int);
-extern "C" void func_8022BFC8(void*, int);
+extern "C" void sysWinSetKindContent(void*, u32, int);
+extern "C" void sysWinApplyKind(void*, int);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 hideItemBoxPanes(void*, u8);
 extern "C" void func_801D0BD8(void*);
-extern "C" void func_801CFD2C(void*);
+extern "C" void RefreshCategoryTabs(void*);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" void FinishCloseAnim(void*);
-extern "C" float func_801C9F88(void*, void*);
+extern "C" float GetItemValueFloat(void*, void*);
 extern "C" u32 HasEquippedSlot(void*, void*);
-extern "C" u32 func_801C7958(void*, void*);
+extern "C" u32 GetItemBasePrice(void*, void*);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" char* CopyEntry9Bytes(char*, const char*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
@@ -347,17 +347,17 @@ extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, 
 extern "C" void renderItemBox(void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void func_801D31F8(void*, void*);
+extern "C" void sortMenuDraw(void*, void*);
 extern "C" void GridSubMenu_DrawLayoutGated(void*, int);
 extern "C" void ExWin_DrawLayout(void*, int);
 extern "C" void sysWinDrawLayout(void*, void*);
 extern "C" void drawPresentWin(void*, int);
 extern "C" void NumSel_DrawLayout_AF7C(void*, void*);
-extern "C" void func_801D202C(void*);
+extern "C" void Cur_Update(void*);
 extern "C" void sortMenuDispatchState(void*);
 extern "C" void updateItemBoxAnims(void*);
 extern "C" void NumSel_DispatchState_AED4(void*);
-extern "C" void func_80208260(void*);
+extern "C" void GridSubMenu_Move(void*);
 extern "C" void ExWin_TickUpdate(void*);
 extern "C" void updatePresentWin(void*);
 extern "C" void sysWinDispatchPhase(void*);
@@ -368,7 +368,7 @@ extern "C" void ExWin_LoadFile(void*);
 extern "C" void sortMenuTermCleanup(void*);
 extern "C" void closeItemBox1(void*);
 extern "C" void NumSel_Teardown_AF9C(void*);
-extern "C" void func_802082F0(void*);
+extern "C" void GridSubMenu_TermLayout(void*);
 extern "C" void ExWin_Teardown(void*);
 extern "C" void termPresentWin(void*);
 extern "C" void* getFP__FPCc(const char*);
@@ -377,7 +377,7 @@ extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
 extern "C" unsigned char* SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);  // returns p (retail ctor reuses caller-preserved r3)
 extern "C" void CopyGridEntry9(void*, void*);
-extern "C" void func_801C7EF0(CItemBoxGridFull*, u32);
+extern "C" void SortGridEntries(CItemBoxGridFull*, u32);
 extern "C" void GroupBySlotStat(CItemBoxGridFull*, u32);
 extern "C" void GroupBySlotAlt(CItemBoxGridFull*, u32);
 extern "C" void GroupByCapKey(CItemBoxGridFull*, u32);
@@ -394,10 +394,10 @@ extern "C" u32 sortMenuGetSubPageIdx(void*);
 extern "C" void ExWin_RequestOpen(void*);
 extern "C" void ExWin_SetTwoTexts(void*, char*, u32);
 extern "C" void GridSubMenu_BeginOpenAnim(void*);
-extern "C" void func_802084D4(void*, u32);
+extern "C" void GridSubMenu_SetupOptions(void*, u32);
 extern "C" void DispatchItemEvt(void*, void*, int);
 extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
-extern "C" u32 func_801D12D4(void*, u32);
+extern "C" u32 IsItemTeachable(void*, u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void UIWin_BuildFlagBuf(u32, u32, u32);
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
@@ -441,7 +441,7 @@ extern "C" void __ct__CExchangeWin(void*);
 extern "C" void __ct__CPresentWin(void*);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void*, void*);
-extern "C" void func_8016742C(void*, void*);
+extern "C" void InfoCfCopySysWin(void*, void*);
 extern "C" void ItemBlockSetDefaultFlags();
 extern "C" void* __ct__801C5514(void*);
 extern "C" CBaseCur* __ct__CCur09(void*, void*);
@@ -461,23 +461,23 @@ extern "C" void __dt__10CNumSelectFv(void*, int);
 extern "C" void __dt__12CItemBoxInfoFv(void*, int);
 extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void func_8018B0FC(void*, void*);
-extern "C" void func_8018B130(void*, void*);
+extern "C" void MenuShopSellCopyCursor(void*, void*);
+extern "C" void MenuShopSellCopyData(void*, void*);
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void Cur_SetTwoPanes09(void*, CibgVec3, CibgVec3);
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);
-extern "C" void func_80207FC8(void*, void*);
+extern "C" void GridSubMenu_InitLayout(void*, void*);
 extern "C" CEquipBoxFourShorts PaneMatGetS16Quad(void*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 
-// ---- func_801D0E88 imports/helpers ----
+// ---- UnequipPartyItem imports/helpers ----
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 extern "C" void __dt__80043E88(void*, int);
 
-// Stack-scene enum-list holder used by func_801D0E88's camera block: the
+// Stack-scene enum-list holder used by UnequipPartyItem's camera block: the
 // 12-byte name table at +0x10 is written before the CTaskGame_enumListCtor ctor call.
 struct CItemBoxGridEnumHolder {
     void* field_00;

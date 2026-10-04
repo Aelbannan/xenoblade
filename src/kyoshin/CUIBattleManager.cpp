@@ -236,7 +236,7 @@ void CUIBattleManager::Move() {
 
     if ((unk82 & 1) != 0 && getPackedFont() != 0) {
         unk82 &= ~1;
-        func_8012F5F8();
+        UIBattleCreatePlayerState();
     }
 
     if ((unk82 & 2) != 0 && getPackedFont() != 0) {
@@ -413,7 +413,7 @@ void CUIBattleManager::Move() {
         if (isGlobalCamFlagSet__Fi(0x10000000) == 0) {
             player = cf::CfGameManager::getPlayer(0);
             if (player != NULL) {
-                actor = static_cast<CUIBattleActor*>(func_8016FE34(NULL));
+                actor = static_cast<CUIBattleActor*>(MapFx_ResolveOwner(NULL));
                 vcallRes = *vslot<GetU32Fn>(actor->field_04, 0x30)(actor->field_04);
                 if (testActorStatus(actor, &vcallRes, 0x803) != 0) {
                     if (CMenuArtsSelect_isCreated() == 0) {
@@ -528,7 +528,7 @@ void CUIBattleManager::Move() {
     unk81 = 0;
 }
 
-int func_8012E6DC() {
+int UIBattleHasPendingLoads() {
     CUIBattleManager* self = lbl_eu_80664048;
     int i;
 
@@ -553,12 +553,12 @@ extern "C" void UIBattleMarkFlags82() {
         reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
     }
 }
-// Retail func_8012F87C: remove-request processor. arg != 0 defers removal to
+// Retail UIBattleRemoveAll: remove-request processor. arg != 0 defers removal to
 // a mark-all (unk81); arg == 0 unlinks every child from the list immediately.
 // Do NOT cache the singleton in a local: retail re-spells lbl_eu_80664048 for
 // the null check, every walk-condition test, and the final clear, and a cached
 // local collapses those into one SDA21 load (reloc drift).
-extern "C" void func_8012F87C(u32 arg) {
+extern "C" void UIBattleRemoveAll(u32 arg) {
     _reslist_node<CUIBattleChild*>* removed[16];
     int count;
     _reslist_node<CUIBattleChild*>* node;
@@ -596,13 +596,13 @@ extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
 void __dt__16CUIBattleManagerFv(void*);
-extern "C" void func_8012FF6C(void* p) {
+extern "C" void UIBattleDelete(void* p) {
     __dt__16CUIBattleManagerFv((char*)p - 0x54);
 }
 
 // noinline: the retail ctor is a real 0x1FC-byte function with a stripped
 // (no length/params) symbol; without this the empty same-TU stub is IPA'd away
-// and func_8012F558 loses its ctor call.
+// and UIBattleGetOrCreate loses its ctor call.
 // Returns this (like retail), so callers can reuse r3 instead of preserving
 // the pointer across the call in a callee-saved register.
 // Body mirrors the retail store order exactly: interim/final vtables at 0x10,
@@ -833,17 +833,17 @@ void* __dt__reslist_IUIBattle(ResListIUIBattle* self, int mode) {
     return self;
 }
 
-// File-event descriptor passed to func_8012F2C0 (OnFileEvent worker).
+// File-event descriptor passed to UIBattleOnFileEvent (OnFileEvent worker).
 struct CUIBattleFileEvt {
     s32 unk00;              // 0x0 - completion kind (1 = party arts arc; retail compares SIGNED cmpi)
     CFileHandle* unk04;     // 0x4 - completed file handle
 };
 
-// Retail func_8012F2C0: dispatches a completed file load. Elem/sys arcs get an
+// Retail UIBattleOnFileEvent: dispatches a completed file load. Elem/sys arcs get an
 // ArcResourceAccessor attached immediately; per-party arts arcs (kind 1) also
 // pull the three face 'timg' textures out of the face accessor. getData()
 // detaches the arc buffer (reads +4, stores NULL back).
-int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
+int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
     int i;
     u32 partyId;
     void* tex;
@@ -921,7 +921,7 @@ int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt) {
     }
     return 0;
 }
-CUIBattleManager* func_8012F558(CProcess* pParent, CScnNw4r* pScene,
+CUIBattleManager* UIBattleGetOrCreate(CProcess* pParent, CScnNw4r* pScene,
                                 mtl::ALLOC_HANDLE handle) {
     CUIBattleManager* mgr;
 
@@ -940,10 +940,10 @@ CUIBattleManager* func_8012F558(CProcess* pParent, CScnNw4r* pScene,
     mgr->Regist(pParent, false);
     return lbl_eu_80664048;
 }
-// Retail func_8012F5F8: create/bind request for the main battle window.
+// Retail UIBattleCreatePlayerState: create/bind request for the main battle window.
 // Returns the created child, or NULL (re-arming the unk82 bit 1 request on
-// any failure path). Same savedRet stack-home idiom as func_8012F750.
-extern "C" CUIBattleChild* func_8012F5F8() {
+// any failure path). Same savedRet stack-home idiom as UIBattleCreateVisionMenu.
+extern "C" CUIBattleChild* UIBattleCreatePlayerState() {
     void* savedRet;
     int i;
     int byteOff;
@@ -993,12 +993,12 @@ extern "C" CUIBattleChild* func_8012F5F8() {
     return (CUIBattleChild*)savedRet;
 }
 
-// Retail func_8012F750: create/bind request variant using bit 3 of unk82 and
-// the createVisionMenu factory (no assets-ready gating, unlike func_8012F5F8).
+// Retail UIBattleCreateVisionMenu: create/bind request variant using bit 3 of unk82 and
+// the createVisionMenu factory (no assets-ready gating, unlike UIBattleCreatePlayerState).
 // Same shape as the bit-2/bit-8 blocks in Move(): the call result lives in a
 // function-top savedRet local so MWCC stack-homes it across the setItem
 // try/catch region, matching the retail spill/reload/EH-save block.
-extern "C" CUIBattleChild* func_8012F750(u32 arg) {
+extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg) {
     void* savedRet;
     int i;
     int byteOff;
@@ -1040,10 +1040,10 @@ extern "C" CUIBattleChild* func_8012F750(u32 arg) {
     return (CUIBattleChild*)savedRet;
 }
 
-// Retail func_8012FAA8: full battle-UI release. Waits for draw done, cancels
+// Retail UIBattleReleaseAll: full battle-UI release. Waits for draw done, cancels
 // pending reads, removes the active move's mark window, then destroys the
 // face/party accessors and re-arms the create request.
-extern "C" void func_8012FAA8() {
+extern "C" void UIBattleReleaseAll() {
     CDeviceVI::waitForDrawDone();
     if (lbl_eu_80664048 == NULL) {
         return;
@@ -1110,7 +1110,7 @@ extern "C" void func_8012FAA8() {
     }
     lbl_eu_80664048->unkE9 = 0;
     lbl_eu_80664048->unkE8 = 0;
-    func_8012F5F8();
+    UIBattleCreatePlayerState();
 }
 // Check the arts-sys arc accessor (0x90) for a named 'timg' texture resource.
 // Returns the resource pointer, or NULL if the accessor is not ready / missing.
@@ -1158,10 +1158,10 @@ void* UIBattleFindPartyTimg(const char* name) {
 // the inlined empty CTTask<CUIBattleManager> dtor's __dt__8CProcessFv call.
 CUIBattleManager::~CUIBattleManager() {}
 
-// This-adjusting thunk: subi r3, r3, 0x54; b func_8012F2C0
+// This-adjusting thunk: subi r3, r3, 0x54; b UIBattleOnFileEvent
 // MWCC does not generate this automatically for non-dtor virtual overrides.
 // Accepting as-is; may need DECOMP_ASM_INSN for exact match.
 extern "C" void OnFileEvent__16CUIBattleManagerFP10CEventFile(void* self, void* file) {
-    func_8012F2C0(reinterpret_cast<CUIBattleManager*>((char*)self - 0x54),
+    UIBattleOnFileEvent(reinterpret_cast<CUIBattleManager*>((char*)self - 0x54),
                   static_cast<CUIBattleFileEvt*>(file));
 }

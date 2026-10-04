@@ -18,32 +18,32 @@ class __declspec(novtable) CREvtModel : public cf::CREvtObj {
 public:
     CREvtModel(void* pData, void* pArg);
     /* vtable 0x00 */ virtual ~CREvtModel(); // slot +0x00: __ct__80172668 (overrides __dt__Q22cf8CREvtObjFv)
-    /* vtable 0x04 */ virtual void vfunc_04();           // slot +0x04: func_801728F8 (overrides base pure slot)
+    /* vtable 0x04 */ virtual void vfunc_04();           // slot +0x04: EvtModelResetPose (overrides base pure slot)
     /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: releaseEvtAnim28 (overrides CREvtObjVfunc08Default)
     /* vtable 0x0C */ virtual void vfunc_0C();           // slot +0x0C: getField20, cross-TU (overrides EvtObj_ConstFalse)
     /* vtable 0x10 */ virtual void vfunc_10();           // slot +0x10: isEvtFlagBit4Set, tests (mFlags>>4)&1 (overrides CREvtObjVfunc10Default)
     /* vtable 0x14 */ virtual void vfunc_14();           // slot +0x14: isEvtFlagBit0Set, tests mFlags&1 (overrides REvtCam_AlwaysTrue1)
     /* vtable 0x18 */ virtual bool isBusy(); // slot +0x18: CREvtObjIsBusyDefault, same as base = inherited, cross-TU
-    /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: func_801727DC (overrides EvtObj_RunCallback)
+    /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: EvtModelUpdate (overrides EvtObj_RunCallback)
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
     /* vtable 0x24 */ virtual void CREvtObjVfunc24Default();
     /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28
-    /* vtable 0x2C */ virtual void func_801729F0(void* pData, void* pModelData);
+    /* vtable 0x2C */ virtual void EvtModelSetEventData(void* pData, void* pModelData);
     /* vtable 0x30 */ virtual void onEvent(unsigned int visible); // vfunc_30
     /* vtable 0x34 */ virtual bool reset(); // vfunc_34
-    /* vtable 0x38 */ virtual void func_80172768();
+    /* vtable 0x38 */ virtual void EvtModelReleaseAnims();
 
     // Non-virtual methods
-    int func_801726DC();
+    int EvtModelReleaseAnimsOnce();
     void* evtModelDataPtr();
-    void func_801727DC();
-    void func_801728F8();
+    void EvtModelUpdate();
+    void EvtModelResetPose();
     void releaseEvtAnim28();
     int isEvtDataFlagSet();
     void emptyEvtModelHook();
-    void func_80172CC4();
-    void func_80172CE4(CScnItemModel* pModel);
-    void func_80172EA4(void* pData, CScnItemModel* pModel, int flag);
+    void EvtModelSetVisible();
+    void EvtModelSetupShadow(CScnItemModel* pModel);
+    void EvtModelApplyHideParts(void* pData, CScnItemModel* pModel, int flag);
     void* createEvtModelObj();
     int isEvtFlagBit0Set();
     int isEvtFlagBit4Set();
@@ -61,7 +61,7 @@ public:
     /* 0x34 */ int mField34;            // animation index counter
 };
 
-// Pose block returned by simGetLeafActData and filled by func_801728F8:
+// Pose block returned by simGetLeafActData and filled by EvtModelResetPose:
 // translation at 0x00, rotation at 0x0C.
 struct Vec3 {
     float a[3];
@@ -72,5 +72,5 @@ struct CREvtModelPose {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_80172EA4(void* self, void* animData, void* model, int flag);
-extern "C" void func_80172CE4(void* self, void* model);
+extern "C" void EvtModelApplyHideParts(void* self, void* animData, void* model, int flag);
+extern "C" void EvtModelSetupShadow(void* self, void* model);

@@ -11,7 +11,7 @@
 // Tail-call trampoline: sets error bdat index 6 and forwards to CBdat.
 extern "C" void touchErrMesEntry();
 
-// Small language-entry record patched by func_eu_802B14F8. Only bytes +4..+6
+// Small language-entry record patched by setErrMesLanguage. Only bytes +4..+6
 // are written by the retail code (two-char language code then '/' separator);
 // the leading bytes are unknown/padding.
 struct ErrMesLangEntry {
@@ -28,7 +28,7 @@ struct ErrMesLangEntry {
 extern u32 lbl_eu_8053A420[];
 
 // Extended language-entry pointer tables (split-1 .data). Each element points
-// to an ErrMesLangEntry record mutated by func_eu_802B14F8.
+// to an ErrMesLangEntry record mutated by setErrMesLanguage.
 extern ErrMesLangEntry* lbl_eu_8053A438[];
 extern ErrMesLangEntry* lbl_eu_8053A458[];
 extern ErrMesLangEntry* lbl_eu_8053A478[];

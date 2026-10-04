@@ -100,7 +100,7 @@ void CMenuShopSell::Init() {}
 // loads before the stores (retail load-all/store-all shape). Declared extern
 // "C" in CItemBoxGrid.hpp (retail keeps the bare func_ name; CMenuShopBuy's
 // item-box-line copy passes &cursors[i]).
-void func_8018B0FC(void* dst, void* src) {
+void MenuShopSellCopyCursor(void* dst, void* src) {
     ShopSellCursor18* d = static_cast<ShopSellCursor18*>(dst);
     const volatile ShopSellCursor18* s = static_cast<const volatile ShopSellCursor18*>(src);
     u32 v4 = s->field_0x4;
@@ -126,7 +126,7 @@ void func_8018B0FC(void* dst, void* src) {
 // -ipa/-func_align variants (same ABI-boundary class as reslistCount;
 // witness rejects: r6/r7 and r3/r4 both swap, no consistent bijection).
 // The loop body and tail are otherwise byte-identical.
-void func_8018B130(void* dst, void* src) {
+void MenuShopSellCopyData(void* dst, void* src) {
     ShopSellData* d = static_cast<ShopSellData*>(dst);
     const ShopSellData* s = static_cast<const ShopSellData*>(src);
     d->mItems = s->mItems;
@@ -166,13 +166,13 @@ void CMenuShopSell::Move() {
         MenuShopSellHandlePhase0(this);
         break;
     case 1:
-        func_8018B420(this);
+        MenuShopSellHandlePhase1(this);
         break;
     case 2:
-        func_8018B470(this);
+        MenuShopSellHandlePhase2(this);
         break;
     case 3:
-        func_8018B658(this);
+        MenuShopSellHandlePhase3(this);
         break;
     default:
         break;
@@ -208,7 +208,7 @@ void CMenuShopSell::cbRenderBefore() {
  * from the work heap, construct the CMenuShopSell, publish it to the
  * singleton flag and register it as a CProcess child of `parent`. Returns the
  * singleton (or 0 when one already exists). */
-extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene) {
+extern "C" CMenuShopSell* MenuShopSellCreateSingleton(CProcess* parent, CScn* scene) {
     if (lbl_eu_806642F0 != 0)
         return 0;
 
@@ -234,7 +234,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* sel
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
         IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         func_801C412C(&self->mTitleAHelp);
-        func_801CB28C(&self->mItemBoxGrid);
+        InitItemDisplay(&self->mItemBoxGrid);
         self->mState = 1;
         playUISound__FUl(0x6d);
     }
@@ -243,7 +243,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* sel
 // Phase transition: once the title bar is idle and the item grid is ready,
 // advance the state byte at 0x4AC4 to 2 (the CMenuGCItem::Move case-1 check,
 // kept as a separate helper here).
-extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self) {
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self) {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
@@ -255,7 +255,7 @@ extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self) {
 // Phase 2 (interaction): poll the pad and drive the item-box grid. The two
 // branches differ only in the button-bit layout (pointer-input controller vs
 // plain pad); each handler ends by jumping to the shared focus refresh.
-extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* self) {
     if (MenuTutorialIsCreated() != 0) return;
 
     ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -286,17 +286,17 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
                 self->mState = 3;
             }
         } else if (t8004) {
-            func_801CB5F0(&self->mItemBoxGrid);
+            GridMoveCursorLeft(&self->mItemBoxGrid);
         } else if (t10008) {
-            func_801CBA04(&self->mItemBoxGrid);
+            GridMoveCursorRight(&self->mItemBoxGrid);
         } else if (t2001) {
-            func_801CBDE8(&self->mItemBoxGrid);
+            GridMoveCursorDown(&self->mItemBoxGrid);
         } else if (t4002) {
-            func_801CC0EC(&self->mItemBoxGrid);
+            GridMoveCursorUp(&self->mItemBoxGrid);
         } else if (p1000000) {
             OpenSortMenu(&self->mItemBoxGrid);
         } else if (p200) {
-            func_801CDC40(&self->mItemBoxGrid);
+            TickItemBoxGrid(&self->mItemBoxGrid);
         } else if (p400) {
             SelectCatRow(&self->mItemBoxGrid);
         }
@@ -325,17 +325,17 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
                 self->mState = 3;
             }
         } else if (t8004) {
-            func_801CB5F0(&self->mItemBoxGrid);
+            GridMoveCursorLeft(&self->mItemBoxGrid);
         } else if (t10008) {
-            func_801CBA04(&self->mItemBoxGrid);
+            GridMoveCursorRight(&self->mItemBoxGrid);
         } else if (t2001) {
-            func_801CBDE8(&self->mItemBoxGrid);
+            GridMoveCursorDown(&self->mItemBoxGrid);
         } else if (t4002) {
-            func_801CC0EC(&self->mItemBoxGrid);
+            GridMoveCursorUp(&self->mItemBoxGrid);
         } else if (p800) {
             OpenSortMenu(&self->mItemBoxGrid);
         } else if (p200) {
-            func_801CDC40(&self->mItemBoxGrid);
+            TickItemBoxGrid(&self->mItemBoxGrid);
         } else if (p40) {
             SelectCatRow(&self->mItemBoxGrid);
         }
@@ -347,7 +347,7 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
 // Phase transition: once the title bar is idle and the item grid is ready,
 // set the closing-state flag at 0x54 (the CMenuGCItem::Move case-3 check,
 // kept as a separate helper here).
-extern "C" __declspec(noinline) void func_8018B658(CMenuShopSell* self) {
+extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self) {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&

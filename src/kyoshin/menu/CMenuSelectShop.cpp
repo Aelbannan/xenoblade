@@ -239,7 +239,7 @@ void CMenuSelectShop::Move() {
     }
 
     driveShopWinAnim(&mSelShop);
-    func_801D202C(&mCursor[0]);
+    Cur_Update(&mCursor[0]);
 }
 
 // ---------------------------------------------------------------------------

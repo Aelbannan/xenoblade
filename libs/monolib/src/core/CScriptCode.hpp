@@ -44,8 +44,8 @@ public:
 // arguments in registers. That shape cannot be expressed as a C++ member
 // declaration, so they are declared as free functions carrying their exact
 // retail symbol names.
-s16 func_8043A2F8__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn);
-int func_8043A390__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int doSecondary);
-void func_8043A1DC__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize);
-void func_8043A57C__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget);
-void func_8043A70C__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue);
+s16 splitSegments__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn);
+int dispatchCommand__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int doSecondary);
+void parseLines__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize);
+void unregisterCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget);
+void registerCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue);

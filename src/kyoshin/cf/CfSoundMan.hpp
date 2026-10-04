@@ -6,15 +6,15 @@
 
 // FX-slot record (0x4FC bytes): two of these sit at CfSoundManGlobal +0x04
 // (mFxSlots). The full field layout lives in code_801C2C14.cpp; this TU only
-// forwards the array base to func_801C34B0, so opaque storage is enough here.
+// forwards the array base to clearFxSlotEffect, so opaque storage is enough here.
 struct FxSoundSlot {
     u8 mData[0x4FC];
 };
 
-// FX-slot effect setter (retail func_801C34B0, defined in code_801C2C14.cpp).
+// FX-slot effect setter (retail clearFxSlotEffect, defined in code_801C2C14.cpp).
 // extern "C" keeps the call reloc bound to the retail-unmangled name (a plain
 // C++ declaration would have MWCC append the parameter mangling).
-extern "C" int func_801C34B0(FxSoundSlot* slots, int index, int frame);
+extern "C" int clearFxSlotEffect(FxSoundSlot* slots, int index, int frame);
 
 // FX-slot pair constructor (retail FxPair_Init, defined in
 // code_801C2C14.cpp): constructs the two 0x4FC-byte FX slots. extern "C" so
@@ -28,7 +28,7 @@ extern "C" FxSoundSlot* FxPair_Init(FxSoundSlot* self);
 extern "C" void* __dt__801C3340(FxSoundSlot* self, int flag);
 
 // FX effect applicator (retail func_801C358C, defined in code_801C2C14.cpp):
-// tail-calls func_801C30BC and passes its bool result through in r3 (the
+// tail-calls applyFxSlotEffect and passes its bool result through in r3 (the
 // fork's definition returns void; the bool declaration lets callers test it).
 // extern "C" keeps the call reloc bound to the retail-unmangled name.
 extern "C" bool func_801C358C(FxSoundSlot* slots, int idx, int fxType, u32 memSize, u32 size);
@@ -79,7 +79,7 @@ namespace cf {
 
     // Sound manager singleton (retail lbl_eu_80664430, .sbss). Layout:
     // 0x00 header word, 0x04 the two FX slots (2 x 0x4FC = 0x9F8), 0x9FC the
-    // record array (CfSoundMan_ClearFxEffect hands the FX-slot array to func_801C34B0).
+    // record array (CfSoundMan_ClearFxEffect hands the FX-slot array to clearFxSlotEffect).
     struct CfSoundManGlobal {
         /* 0x00 */ u16 field_0x00;
         u8 field_0x02[0x02];
@@ -334,7 +334,7 @@ struct CfSndCamView {
 };
 
 // Opaque pose block returned by Scn_FindCamItem(scene, -1); passed straight
-// through to func_8049B834.
+// through to CamMan_ComputeViewFalloff.
 struct CfSndPoseBlock {
     u8 data[0x20];
 };
@@ -360,7 +360,7 @@ extern "C" int CfRes_getD80Flag();
 // Computes a distance-based pan/volume pair from the actor position against
 // the pose block; the two trailing floats are the near/far distance pair
 // (near constant and near + slot range).
-extern "C" void func_8049B834(f32* outPan, f32* outVol, CfSndPoseBlock* pose,
+extern "C" void CamMan_ComputeViewFalloff(f32* outPan, f32* outVol, CfSndPoseBlock* pose,
                               CfSoundPos3* pos, f32 nearDist, f32 farDist);
 
 // nw4r math/db helpers and assert strings (retail symbols).

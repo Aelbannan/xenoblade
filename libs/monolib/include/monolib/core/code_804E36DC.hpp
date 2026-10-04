@@ -36,11 +36,11 @@ extern "C" void SchedFx_ReleaseHandle(s16 handle);    // release object handle
 extern "C" CEffectObj* SchedFx_FetchByHandle(s16 handle); // object pool lookup
 extern "C" s16 SchedFx_ClaimConstruct(ScheduleEntry* entries, CItemEntry* entry,
                              CSchedule* sched, s32 slotVal, u32 index);
-extern "C" void* func_804CB5FC(CEffectObj* obj);
+extern "C" void* EffObj_GetPriority(CEffectObj* obj);
 extern "C" void SchedElem_ClaimNode(CSchedule* sched, void* arg, CEffectObj* obj, f32 delta);
-extern "C" void func_804C8D90(CEffectObj* obj, f32 delta);
+extern "C" void EffObj_Update(CEffectObj* obj, f32 delta);
 extern "C" void EffSys_AdvanceChain(CEffectObj* obj);
-extern "C" void func_804C9D30(CEffectObj* obj);
+extern "C" void EffFrame_Update(CEffectObj* obj);
 extern "C" void EffObj_StepNode(CEffectObj* obj);
 
 // ScheduleList callbacks / lookup
@@ -52,5 +52,5 @@ extern "C" f64 lbl_eu_8066B2F0;
 extern "C" f64 lbl_eu_8066B2E8;
 
 // Functions defined in this TU (forward declarations)
-extern "C" void func_804E39E8(CSchedule* self, f32 delta);
+extern "C" void schedStepEntries(CSchedule* self, f32 delta);
 extern "C" void schedReleaseItemObjects(CScheduleItem* item);

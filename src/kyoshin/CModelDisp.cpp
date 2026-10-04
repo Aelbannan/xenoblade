@@ -21,16 +21,16 @@
 #undef getPlayer__Q22cf13CfGameManagerFi
 
 // Cross-TU calls (retail unmangled symbols; declared in CModelDisp.hpp)
-extern "C" void func_801FC3B0(CModelDisp* self);
+extern "C" void ModelDispUpdateSlots(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self);
 extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self);
 
-// Sub-object ctor/dtor stubs (retail func_801FBEB8 / __dt__801FBF0C). Their
+// Sub-object ctor/dtor stubs (retail ModelDispConstructSub / __dt__801FBF0C). Their
 // bodies are separate match targets; they exist here only so the constructor's
 // __construct_array call carries the exact retail reloc names.
 // (CActParamAnimGame ctor/dtor declared in CModelDispEquip.hpp.)
-extern "C" void* func_801FBEB8(CModelDispSub* sub) {
+extern "C" void* ModelDispConstructSub(CModelDispSub* sub) {
     __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((u8*)sub + 0xC));
     __construct_array((CModelDispSub*)((u8*)sub + 0x550), (void*)__ct__Q22cf17CActParamAnimGameFv,
                       (void*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
@@ -92,7 +92,7 @@ struct CModelDispCtorWords {
 CModelDisp::CModelDisp(u8* initParam) {
     mVtbl = lbl_eu_80535390;
     mInitParam = initParam;
-    __construct_array(&mSubs[0], (void*)func_801FBEB8, (void*)__dt__801FBF0C, 0xff0, 3);
+    __construct_array(&mSubs[0], (void*)ModelDispConstructSub, (void*)__dt__801FBF0C, 0xff0, 3);
 
     // Both .sdata2 floats are loaded into registers up front, then stored
     // after the flag-byte initialisation (retail load/store grouping).
@@ -125,16 +125,16 @@ CModelDisp::CModelDisp(u8* initParam) {
 #pragma pop
 
 // Bind the three 0xFF0-strided slot sub-objects (+8 payload) via
-// func_801FC2B4 (retail stmw frame + indexed loop).
+// ModelDispTeardownSlot (retail stmw frame + indexed loop).
 // extern "C" keeps the call-site relocs at the retail unmangled name;
 // noinline keeps -ipa from folding the body into its callers.
-extern "C" __declspec(noinline) void func_801FC2B4(void* self, CActParamHolder* h);
+extern "C" __declspec(noinline) void ModelDispTeardownSlot(void* self, CActParamHolder* h);
 #pragma push
 #pragma optimize_for_size on
 // Tears down one 0xFF0-stride holder payload: releases both animation-model
 // slots and their controllers, unbinds the two act params, flushes the main
 // act param, frees all held objects and clears the owner pointer.
-extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
+extern "C" void ModelDispTeardownSlot(void* self, CActParamHolder* h) {
     if (h->field_0x00 == NULL) {
         return;
     }
@@ -162,9 +162,9 @@ extern "C" void func_801FC2B4(void* self, CActParamHolder* h) {
 }
 #pragma pop
 #pragma optimize_for_size on  // -O4,s keeps the stmw frame and the rolled loop
-extern "C" void func_801FC0C4(CModelDisp* self) {
+extern "C" void ModelDispTeardownAll(CModelDisp* self) {
     for (u8 i = 0; i < 3; i++)
-        func_801FC2B4(self, (CActParamHolder*)((u8*)self + i * 0xFF0 + 8));
+        ModelDispTeardownSlot(self, (CActParamHolder*)((u8*)self + i * 0xFF0 + 8));
 }
 #pragma optimize_for_size off
 
@@ -253,7 +253,7 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeIn(CModelDisp* self) {
 // each slot's actor from the enum list, validates it through the actor's
 // controller vtable chain, (re)builds the display model + two animation
 // objects, applies per-slot colors, and rearms the slot timer (150 frames).
-extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
+extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
     // Declaration order steers MWCC's callee-saved allocation (retail:
     // nameBase pair above the names-array base).
     char* nameBase = lbl_eu_80507CF4; // NUL-separated name strings at +0/+4/+8/+C
@@ -270,7 +270,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
         CTaskGame_enumListCtor(&holder);
         startEnumObjects((CModelDispEnumList*)CTaskGame_enumListGet(&holder), names[i], 0);
         if (((CModelDispEnumList*)CTaskGame_enumListGet(&holder))->field_620 == 0) {
-            func_801FC2B4(self, h);
+            ModelDispTeardownSlot(self, h);
             __dt__80043E88(&holder, -1);
             continue;
         }
@@ -326,7 +326,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j) != 0) {
                     CModelDispParamSlot* ps = &table2[j];
                     CModelDispNameParam* p = reinterpret_cast<CModelDispNameParam*>(ps->field_2C->getResourceBase(ps, actor->field_3F28));
-                    func_804831C4((CScnItemModel*)h->field_0x00, p);
+                    simAttachModel((CScnItemModel*)h->field_0x00, p);
                     u32 bits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j);
                     // Slot words are addressed word-wise off the holder base.
                     ((CModelDispSub*)((u32*)h + j))->mFlagFD0 = (bits >> 12) & 0x3FF;
@@ -434,7 +434,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             ((CScnItemModel*)h->field_0x00)->vfunc9C(3, 0);
             ModelDispFlushSlotAnims(self);
         } else if (h->field_0x00 != NULL && ok == false) {
-            func_801FC2B4(self, h);
+            ModelDispTeardownSlot(self, h);
         }
         __dt__80043E88(&holder, -1);
     }
@@ -443,7 +443,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
 
 // Retail 0x801FBFD8: fetches the pose block for this display's init param,
 // builds two vec3 temps with writeVec3f, applies them to the pose via
-// ScnCamPointAt, then runs the fade-in state (func_801FC3B0).
+// ScnCamPointAt, then runs the fade-in state (ModelDispUpdateSlots).
 // optimize_for_size gives the retail _savegpr_29/_restgpr_29 helper frame
 // (-O4,p would emit individual stw/lwz pairs).
 #pragma push
@@ -459,7 +459,7 @@ extern "C" void ModelDispInitPoseSlots(CModelDisp* self) {
     pVecA = writeVec3f(&vecA[0], lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
     pVecB = writeVec3f(&vecB[0], lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
     ScnCamPointAt(pose, lbl_eu_806681EC, pVecB, pVecA);
-    func_801FC3B0(self);
+    ModelDispUpdateSlots(self);
 }
 #pragma pop
 
@@ -489,18 +489,18 @@ extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self) {
 
 #pragma push
 #pragma optimize_for_size on
-// Slot rebind scan (func_801FCB4C caller): finds the sub-object whose bound
+// Slot rebind scan (ModelDispRebindSlot caller): finds the sub-object whose bound
 // model pointer matches param->field_0x3A0, enumerates the object list
 // filtered by the per-slot type table, and rebinds the matched actor's
-// animation slot via func_801FCB4C. Returns after the first match.
-// Defined BEFORE func_801FCB4C and declared noinline so -ipa does not
+// animation slot via ModelDispRebindSlot. Returns after the first match.
+// Defined BEFORE ModelDispRebindSlot and declared noinline so -ipa does not
 // fold the callee's body into this dispatch (retail keeps a bl).
-// Defined BEFORE func_801FCB4C and declared noinline so -ipa does not
+// Defined BEFORE ModelDispRebindSlot and declared noinline so -ipa does not
 // fold the callee's body into this dispatch (retail keeps a bl).
-extern "C" __declspec(noinline) void func_801FCB4C(CModelDisp* self, s32 enable,
+extern "C" __declspec(noinline) void ModelDispRebindSlot(CModelDisp* self, s32 enable,
                                                    s32 idx, void* arg,
                                                    s32 slotIdx);
-void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
+void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                    s32 slotIdx) {
     for (u8 i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
@@ -536,7 +536,7 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
                             break;
                         }
                         if (res != NULL) {
-                            func_801FCB4C(self, (s32)actor, i, res, flag);
+                            ModelDispRebindSlot(self, (s32)actor, i, res, flag);
                         }
                         break;
                     case 1:
@@ -551,7 +551,7 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
                             break;
                         }
                         if (res != NULL) {
-                            func_801FCB4C(self, (s32)actor, i, res, flag);
+                            ModelDispRebindSlot(self, (s32)actor, i, res, flag);
                         }
                         break;
                     }
@@ -569,7 +569,7 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
 // model interface (+0xC8 reset, then +0xC4 with the new pointer).
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_801FCB4C(CModelDisp* self, s32 enable, s32 idx, void* arg, s32 slotIdx) {
+extern "C" __declspec(noinline) void ModelDispRebindSlot(CModelDisp* self, s32 enable, s32 idx, void* arg, s32 slotIdx) {
     if (enable == 0)
         return;
     if (CfModel_UpdateBdat(arg) <= 0)
@@ -593,7 +593,7 @@ int simVtableFalse4(void* self) { return 0; }
 #pragma optimize_for_size on
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
 // then dispatches getNextChainObj / setParam calls for active slots.
-void func_801FCDB4(CModelDisp* self, void* param, void* chainArg) {
+void ModelDispDispatchChain(CModelDisp* self, void* param, void* chainArg) {
     for (u8 i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
         if ((u32)sub->mpController == *(u32*)((u8*)param + 0x3A0)) {
@@ -628,7 +628,7 @@ extern "C" void ModelDispTickState(CModelDisp* self) {
         ModelDispDriveFadeOut(self);
         break;
     case 2:
-        func_801FC3B0(self);
+        ModelDispUpdateSlots(self);
         ModelDispFlushSlotAnims(self);
         break;
     case 3:

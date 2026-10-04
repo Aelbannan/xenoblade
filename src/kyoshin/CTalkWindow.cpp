@@ -106,13 +106,13 @@ CTalkWindow* __ct__CTalkWindow(CTalkWindow* _this, u32 arg1, u32 arg2,
 }
 
 // ---------------------------------------------------------------------------
-// func_8012D8C0 (us-8012e390)
+// driveTalkIntro (us-8012e390)
 // Window-state 1 driver: play the intro anim (field_88); when the talk-enable
 // flag (field_B4) is set, run the character-voice playback through the talk
 // source (with the page-id / talk-source checks), then switch the enabled
 // animations to state 2.
 // ---------------------------------------------------------------------------
-void func_8012D8C0(CTalkWindow* self) {
+void driveTalkIntro(CTalkWindow* self) {
     f32 frame = lbl_eu_80667284;
     if (advanceAnimTransform(self->field_88, frame) == 0) return;
     if (self->field_B4 != 0) {
@@ -155,13 +155,13 @@ skip_b9d4:;
 }
 
 // ---------------------------------------------------------------------------
-// func_8012DA6C (us-8012e53c)
+// driveTalkMessage (us-8012e53c)
 // Window-state 2 driver: find the three page panes, blend the tag-processor
 // animation (TagProcPumpMessage / TagProcStepMessage depending on the confirm button),
 // then dispatch the result: state 4 accepts the selection, otherwise the
 // voice/page logic runs (or the page-loop flag flips).
 // ---------------------------------------------------------------------------
-void func_8012DA6C(CTalkWindow* self) {
+void driveTalkMessage(CTalkWindow* self) {
     nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
     nw4r::lyt::Pane* p1 =
         root->FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
@@ -260,12 +260,12 @@ void func_8012DA6C(CTalkWindow* self) {
 }
 
 // ---------------------------------------------------------------------------
-// func_8012D3D8 (us-8012dea8)
+// layoutTalkPanes (us-8012dea8)
 // Place the four corner message panes around the reference pane (0xb0) and
 // lay out the remaining page panes with scale-derived offsets, using the
 // page-name table (lbl_eu_8052DF70) for the final pane.
 // ---------------------------------------------------------------------------
-void func_8012D3D8(CTalkWindow* self) {
+void layoutTalkPanes(CTalkWindow* self) {
     nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
     nw4r::lyt::Pane* ref =
         root->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1);
@@ -357,7 +357,7 @@ extern "C" bool TalkWin_IsActive_CD24() {
     return ((-v) & ~v) >> 31;
 }
 
-extern "C" void func_8012CD38(CTalkWindow* self) {
+extern "C" void updateTalkWindow(CTalkWindow* self) {
     cf::CfObject* src =
         reinterpret_cast<cf::CfObject*>(findObjectById(self->field_68));
     if (src == 0) {
@@ -414,7 +414,7 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
 
     // Project the world anchor through the scene camera into screen space.
     CTalkWinPose* pose = Scn_FindCamItem(self->mScene, -1);
-    func_8049B59C(&screen, pose, &world);
+    CamMan_ProjectToScreen(&screen, pose, &world);
 
     screen.z = lbl_eu_80667280;
     screen.y = (screen.y - lbl_eu_8066728C) * lbl_eu_8066727C;
@@ -687,8 +687,8 @@ void CTalkWindow::Init() {
                       mpLayout->GetRootPane()->FindPaneByName(
                           &lbl_eu_804FFCA4[0xb0], 1), 0);
 
-        func_8012CD38(this);
-        func_8012D3D8(this);
+        updateTalkWindow(this);
+        layoutTalkPanes(this);
 
         // Hide the arrow panes, then reveal the active side.
         reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
@@ -804,7 +804,7 @@ void CTalkWindow::Init() {
 // ---------------------------------------------------------------------------
 // CTalkWindow::Move (us-8012d374)
 // Per-frame driver: gate on the task/global flags, run the shared
-// func_8012CD38 update, dispatch the state machine (1..5), then always
+// updateTalkWindow update, dispatch the state machine (1..5), then always
 // advance the layout animations.
 // ---------------------------------------------------------------------------
 void CTalkWindow::Move() {
@@ -812,15 +812,15 @@ void CTalkWindow::Move() {
     if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     if (cf::CfGameManager::isSceneLoading() != 0) return;
-    func_8012CD38(this);
+    updateTalkWindow(this);
 
     // Signed switch: retail emits a beq dispatch chain with signed cmpwi.
     switch ((int)field_B0) {
     case 1:
-        func_8012D8C0(this);
+        driveTalkIntro(this);
         break;
     case 2:
-        func_8012DA6C(this);
+        driveTalkMessage(this);
         break;
     case 3:
         if (advanceAnimTransform(field_90, lbl_eu_80667284) != 0) {
@@ -852,7 +852,7 @@ void CTalkWindow::Move() {
         nw4r::lyt::Pane* p3 = mpLayout->GetRootPane()->FindPaneByName(
             &lbl_eu_804FFCA4[0xb0], 1);
         TagProcResetPage(field_5C, p1, p2, p3);
-        func_8012D3D8(this);
+        layoutTalkPanes(this);
         field_B0 = 5;
         break;
     }

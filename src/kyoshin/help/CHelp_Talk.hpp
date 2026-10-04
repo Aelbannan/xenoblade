@@ -4,7 +4,7 @@
 #include "kyoshin/help/CHelp.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* func_8016FE34(void* source);
+extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void* CfObjectMove_getSelfIfActive(void* objParam);
 
@@ -74,7 +74,7 @@ struct CTalkActor : public CParamSub4C {
     u16 field_8C; // 0x8C
 };
 
-// Result of func_8016FE34: sub-object pointer at +0x04 whose vtable slot
+// Result of MapFx_ResolveOwner: sub-object pointer at +0x04 whose vtable slot
 // 0x30 yields the word queried by testActorStatus.
 struct CVoiceSub30 {
     virtual void* f00();
@@ -106,7 +106,7 @@ struct CPlayerTalkRec {
 class __declspec(novtable) CHelp_Talk : public CHelpSwitch {
 public:
     void resetTalkHelp();
-    bool func_802B86F0();
+    bool isTalkHelpReady();
 
     s32 field_0x10;  // 0x10 - compared (signed cmp) against a u16 from another object
     u8 field_0x14;   // 0x14 - flag checked before CtrlRemote_TouchBitByArg call

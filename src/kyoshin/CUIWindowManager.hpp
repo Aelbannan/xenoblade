@@ -78,12 +78,12 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* __ct__802944D8(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* ItemEx_Create(CProcess* pParent, CScn* pScene, u32 id);
-extern "C" IUIWindow* func_801BCEBC(CProcess* pParent, CScn* pScene, u32 charId);
+extern "C" IUIWindow* createKizunaTalkSingleton(CProcess* pParent, CScn* pScene, u32 charId);
 extern "C" IUIWindow* create__11CSysWinBuffFv(CProcess* pParent, CScn* pScene, u16 id);
 extern "C" IUIWindow* createBattleEndMenu(CProcess* pParent, CScn* pScene, u32 type, u32 id);
-extern "C" IUIWindow* func_802AA2A0(CProcess* pParent, CScn* pScene, u8 id);
+extern "C" IUIWindow* createBattleChainMenu(CProcess* pParent, CScn* pScene, u8 id);
 extern "C" IUIWindow* SysWinSelectCreate(CProcess* pParent, CScn* pScene, u32 a2, u32 a3, u32 a4);
-extern "C" IUIWindow* func_80144EE4(CProcess* pParent, CScn* pScene, u16 a3, u8 a4);
+extern "C" IUIWindow* createLandTelop(CProcess* pParent, CScn* pScene, u16 a3, u8 a4);
 
 // C-ABI factory/guard imports used by the remaining window creators in this
 // TU (retail unmangled symbols; owning TUs: CQuestWindow / CSystemWindow /
@@ -118,7 +118,7 @@ IUIWindow* PTNotice_Create_3B9C(CProcess* pParent, CScn* pScene);
 
 // Quest-log menu factory (owning TU: CMenuQstCnt). The trailing entry bytes
 // come from the caller's (masked) args plus a literal.
-IUIWindow* func_802269D8(CProcess* pParent, CScn* pScene, u16 a3, u16 a4,
+IUIWindow* QstCnt_GetOrCreate(CProcess* pParent, CScn* pScene, u16 a3, u16 a4,
                           u8 a5, u8 a6, u8 a7);
 
 // Quest-menu open guard (owning TU: CMenuQstCnt): nonzero blocks creation.
@@ -164,7 +164,7 @@ void UIWin_SetTableFlag(void* flagBuf, void* entry, u32 value);
 // literal retail names.
 mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr); // void* param: must match CUIBattleManager.hpp (10197)
 void Col6_ClearGlobals_D0B8();
-void func_80122460();
+void resetQuestWindow();
 void GetItemMulti_ClearDoneLatch();
 void TalkWin_ClearFlag_BDD0();
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);

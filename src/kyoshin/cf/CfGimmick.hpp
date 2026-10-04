@@ -76,7 +76,7 @@ struct CfGimmickReg {
     CfGimmickObject* field_00;
 };
 
-// Object spawned by func_8020A6B0 via spawnMaskedObject.  The vtable is used to
+// Object spawned by CfGimmick_UpdateProximity via spawnMaskedObject.  The vtable is used to
 // invoke slots 0x158 (activate) and 0x9C (set position); field_90 is the
 // spawned/active flag.
 struct CfGimmickObject : public cf::CfObject {
@@ -117,7 +117,7 @@ struct CfGimmickList {
 };
 
 // Player sub-object (base at getPlayer(i)-0x3E9C) used for the per-player
-// eligibility checks in func_802098EC.
+// eligibility checks in CfGimmick_QueryTrigger.
 struct CfPlayerSub3F60 {
     u8 pad[0x4EC];
     u32 field_4EC;              // 0x4EC
@@ -223,7 +223,7 @@ typedef int (*CfGimmickChecker)(cf::CfGimmick*, const CfGimmickVec3*, const CfGi
 extern "C" CfGimmickChecker jumptable_eu_80535830[];
 extern "C" CfGimmickList* getReslistB48();
 extern "C" CfGimmickList* getReslistB68();
-// Fixed rotation angle used by func_802098EC's mask-0x4 occlusion test.
+// Fixed rotation angle used by CfGimmick_QueryTrigger's mask-0x4 occlusion test.
 extern "C" f32 lbl_eu_806646B0;
 
 // Height-offset pair (1.5, 0.0) for spawned objects; [0] is the live offset.

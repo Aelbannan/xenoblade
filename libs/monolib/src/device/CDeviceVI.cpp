@@ -267,7 +267,7 @@ bool CDeviceVI::checkFlag2(){
     return spInstance->checkFlag(VI_FLAG_2);
 }
 
-bool CDeviceVI::func_804482DC(){
+bool CDeviceVI::isRunningNoFlag2(){
     return spInstance->isRunning() && !checkFlag2();
 }
 

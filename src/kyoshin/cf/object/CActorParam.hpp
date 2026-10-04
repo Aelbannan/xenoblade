@@ -22,7 +22,7 @@ extern const double lbl_eu_806677F8; // sdata2: 0x4330000080000000 u32->double m
 extern float lbl_eu_80667830; // sdata2: scale constant (CActorParam_applyStatusHeal)
 extern const double lbl_eu_806677F0; // sdata2: u8/u16->double magic 0x4330000000000000 (Func10/159)
 extern const float lbl_eu_80667818; // sdata2: arts-magnitude scale (Func10)
-extern const float lbl_eu_806677EC; // sdata2: 30.0f gauge divisor (Func140 / func_801765A4; const so it hoists above the frame stores)
+extern const float lbl_eu_806677EC; // sdata2: 30.0f gauge divisor (Func140 / CActorParam_updateTick; const so it hoists above the frame stores)
 extern const float lbl_eu_80667868; // sdata2: SP/exp gain scale (CActorParam_applyEventStatus)
 extern const float lbl_eu_8066786C; // sdata2: arts-gauge threshold (CActorParam_applyEventStatus)
 extern const float lbl_eu_80667800; // sdata2: 2.0f arts-slot default (Func140; const so the load is scheduled before the unk0 store)
@@ -51,8 +51,8 @@ namespace cf {
     // Per-actor status/parameter table (the +0x3534 subobject of the
     // CtrlObjectParam_GetCharEntry character record; CfObjectPc.cpp writes it to +0x15E0).
     // ID-keyed parameter entries + bitmap/counters, read through the
-    // code_8025FB10 accessor family (func_80260264 / Counter_TestBit /
-    // func_80260A6C). UnkClass_CActorParam15E0 is kept as a compat alias:
+    // code_8025FB10 accessor family (IdTable_GetSum / Counter_TestBit /
+    // IdTable_GetSumMax). UnkClass_CActorParam15E0 is kept as a compat alias:
     // CfObjectPc.hpp / CfGameManager.cpp spell the old name (other owners).
     class CActorParamStatusTable;
     typedef CActorParamStatusTable UnkClass_CActorParam15E0;
@@ -419,7 +419,7 @@ namespace cf {
     };
 
     // Target-object view for CActorParam_addHate (retail ABI r4):
-    // CBattleState subobject at +8 (probed with func_80148778), actor id at
+    // CBattleState subobject at +8 (probed with isBattleStatusActive), actor id at
     // +0x3F10.
     struct CActorParam140Target {
         u8 _pad8[0x8];

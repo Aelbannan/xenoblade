@@ -21,7 +21,7 @@ extern "C" u8 CSysWin_getUnk34(CSysWinFull* self) { return self->field_34; }
 extern "C" u8 CSysWin_isActive(CSysWinFull* self) { return self->field_36; }
 
 // nw4r::lyt::Pane::mSize (2 floats at +0x4C) is protected; overlay struct for
-// the label-pane size reads in func_8022B9B4 (offset == absolute pane offset).
+// the label-pane size reads in sysWinSetKindContent (offset == absolute pane offset).
 struct CSysWinPaneOverlay {
     u8 _pad[0x4C];
     f32 size[2];  // +0x4C - Pane::mSize (width, height)
@@ -104,7 +104,7 @@ extern "C" void sysWinSetTwoTextValues(CSysWin* self, char* a, char* b) {
 }
 #pragma pop
 
-// Stub for us-8022dec0 (func_8022BFC8) - declared in CSysWin.hpp (C-linkage).
+// Stub for us-8022dec0 (sysWinApplyKind) - declared in CSysWin.hpp (C-linkage).
 // No definition here: an empty body would be inlined into callers and drop the
 // call; the matcher for us-8022dec0 will provide the real body.
 
@@ -143,7 +143,7 @@ extern "C" void sysWinPhase1To2Advance(CSysWin* self) {
 extern "C" void sysWinSyncKindAdvance(CSysWin* self) {
     if (self->field_38 >= 5) return;
     if (self->field_39 == (u32)isClassicController__Q22cf13CfGameManagerFv(-1)) return;
-    func_8022BFC8(self, self->field_38);
+    sysWinApplyKind(self, self->field_38);
 }
 #pragma dont_inline off
 
@@ -168,7 +168,7 @@ extern "C" void sysWinRewindToPhase0(CSysWin* self) {
 // base for the 2 callee-saved regs (r30-r31) under the unit's -O4,p flags.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8022C348(CSysWin* self) {
+extern "C" void sysWinSetupAfterLoad(CSysWin* self) {
     if (self->mLayout == 0) return;
     self->field_28 = 1;
     self->field_2C = reinterpret_cast<u32>(
@@ -229,7 +229,7 @@ extern "C" void func_8022C348(CSysWin* self) {
 // us-8022e43c - build the System window layout from the loaded arc
 // file (the mFileHandle match gate). Mirrors the CSelShopWin load path: mem
 // region, tag processor, resource accessor, layout + anim transform, font
-// binding, then hand off to func_8022C348 and release the handle/region. The
+// binding, then hand off to sysWinSetupAfterLoad and release the handle/region. The
 // Class_8045F858 stack guard destructs at scope end (after validateHeap).
 // optimize_for_size matches the retail stmw/lmw prologue (r29-r31).
 #pragma push
@@ -258,7 +258,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     ApplyFontToTxtPanes(rootPane, fontRes);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
-        func_8022C348(this);
+        sysWinSetupAfterLoad(this);
         mFileHandle = 0;
         mMemRegion.validateHeap();
         return true;
@@ -376,7 +376,7 @@ extern "C" void sysWinSwitchKindPane(CSysWin* self, int kind) {
 // label texts (cases 0/2/3 use the incoming strings), binds the tag processor
 // into the label pane(s), sizes the icon pane from the label pane's height
 // (threshold ladder), and repositions the icon pane.
-extern "C" void func_8022B9B4(CSysWin* self, char* textA, char* textB) {
+extern "C" void sysWinSetKindContent(CSysWin* self, char* textA, char* textB) {
     nw4r::lyt::Pane* pane0 =
         self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x13], true);
     // Goto-chain dispatch (cf. sysWinDispatchPhase): retail's linear equality chain
@@ -538,7 +538,7 @@ end:
 // arc 'timg' resource) and size the two icon panes to the texture dims. The
 // 5-byte label index table is built from the two .sdata2 globals (word + byte).
 #pragma dont_inline on
-extern "C" void func_8022BFC8(CSysWin* self, u8 kind) {
+extern "C" void sysWinApplyKind(CSysWin* self, u8 kind) {
     if (kind >= 5) return;
     u8 labelIdx[5];
     memcpy(labelIdx, &lbl_eu_806685DC, 4);

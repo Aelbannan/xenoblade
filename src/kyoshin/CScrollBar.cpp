@@ -17,6 +17,50 @@
 extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 void closeFileHandle(CFileHandle**);
+
+// Retail data externs for the hand-built tables at the bottom of this TU.
+// Free-function spellings name the exact retail (link) symbols; the .text
+// never calls them (11/17 matched), they only feed ADDR32 relocs. The dtor
+// and OnFileEvent name this TU's own members (member scope defines them).
+// __RTTI__10IWorkEvent follows the CMCEffStart RTTIExterns workaround.
+namespace RTTIExterns {
+extern "C" const void* __RTTI__10IWorkEvent[];
+}
+extern "C" {
+void __dt__10CScrollBarFv(void*, int); // ABI deleting dtor
+void OnFileEvent__10CScrollBarFP10CEventFile(void);
+void WorkEvent1__10IWorkEventFPvPCc(void);
+void WorkEvent3__10IWorkEventFPv(void);
+void WorkEvent4__10IWorkEventFv(void);
+void OnPauseTrigger__10IWorkEventFb(void);
+void WorkEvent6__10IWorkEventFv(void);
+void WorkEvent7__10IWorkEventFv(void);
+void WorkEvent8__10IWorkEventFv(void);
+void WorkEvent9__10IWorkEventFv(void);
+void WorkEvent10__10IWorkEventFv(void);
+void WorkEvent11__10IWorkEventFv(void);
+void WorkEvent12__10IWorkEventFv(void);
+void WorkEvent13__10IWorkEventFv(void);
+void WorkEvent14__10IWorkEventFv(void);
+void WorkEvent15__10IWorkEventFv(void);
+void WorkEvent16__10IWorkEventFv(void);
+void WorkEvent17__10IWorkEventFv(void);
+void WorkEvent18__10IWorkEventFv(void);
+void WorkEvent19__10IWorkEventFv(void);
+void WorkEvent20__10IWorkEventFv(void);
+void WorkEvent21__10IWorkEventFv(void);
+void WorkEvent22__10IWorkEventFv(void);
+void WorkEvent23__10IWorkEventFv(void);
+void WorkEvent24__10IWorkEventFv(void);
+void WorkEvent25__10IWorkEventFv(void);
+void WorkEvent26__10IWorkEventFv(void);
+void WorkEvent27__10IWorkEventFv(void);
+void WorkEvent28__10IWorkEventFv(void);
+void WorkEvent29__10IWorkEventFv(void);
+void WorkEvent30__10IWorkEventFv(void);
+void WorkEvent31__10IWorkEventFv(void);
+}
+extern void* lbl_eu_80534E60[]; // .data RTTI base, defined below
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (CScrollBar_UpdateThumb) reuse it as the returned pointer for Cur_SetPaneTranslate.
 extern "C" float* code80135FDC_setVec3(float*, float, float, float);
@@ -283,3 +327,90 @@ __attribute__((noinline)) void CScrollBar_MarkLayoutReady(CScrollBar* bar) {
 /* Retail symbol is unmangled CScrollBar_isVisible(void*); typed here. */
 extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
 
+
+// --- hand-built retail data (splits: .data 80534DA8-80534E70,
+// .rodata 80507998-80507B3C, .sdata 806626F8-80662700, .sdata2 80668138-58) ---
+// .rodata pane-name strings (each sized content+retail pad, MWCC packs them
+// in order; the .data tables below take their addresses).
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507998[0x0C] = "nul_scr00";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079A4[0x0C] = "nul_scr01";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079B0[0x0C] = "nul_scr02";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079BC[0x0C] = "nul_scr03";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079C8[0x0C] = "nul_scr04";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079D4[0x0C] = "nul_scr05";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079E0[] = "pic_scr00_bar";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805079F0[] = "pic_scr01_bar";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A00[] = "pic_scr02_bar";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A10[] = "pic_scr03_bar";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A20[] = "pic_scr04_bar";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A30[] = "pic_scr05_bar";
+// RTTI class-name string (referenced by the .sdata pair below).
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A40[0x0C] = "CScrollBar";
+// Arc/path table read by OnFileEvent/loadLayoutArc as path+0x16/+0x21/+0x25/+0x36.
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507A4C[0x54] = "menu/jp/ScrollBar.arc\0CScrollBar\0arc\0mf00_scr00.brlyt\0mf00_scr00_info_in.brlan\0";
+// bdat column-name strings (cross-unit readers; sizes content+retail pad).
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AA0[] = "r1_quest_FLG";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AB0[] = "r1_quest_STFLG";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AC0[] = "r1_S_FLG_MIN";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AD0[] = "r1_S_FLG_MAX";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AE0[0x0C] = "r1_gimID";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AEC[] = "r1_named_FLG";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507AFC[] = "r1_item_lost";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B0C[0x0C] = "s1pcwait";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B18[0x0C] = "s1LODtype";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B24[0x0C] = "s1LODsub";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_80507B30[0x0C] = "s1LODSTOP";
+// .sdata RTTI pair (classname + RTTI base), referenced by the vtable head.
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+void* lbl_eu_806626F8[2] = { lbl_eu_80507A40, lbl_eu_80534E60 };
+// .data pane-pointer tables (nul names / pic names).
+__declspec(section ".data") __attribute__((used, aligned(4)))
+const char* lbl_eu_80534DA8[6] = {
+    lbl_eu_80507998, lbl_eu_805079A4, lbl_eu_805079B0,
+    lbl_eu_805079BC, lbl_eu_805079C8, lbl_eu_805079D4,
+};
+__declspec(section ".data") __attribute__((used, aligned(4)))
+const char* lbl_eu_80534DC0[6] = {
+    lbl_eu_805079E0, lbl_eu_805079F0, lbl_eu_80507A00,
+    lbl_eu_80507A10, lbl_eu_80507A20, lbl_eu_80507A30,
+};
+// .data vtable (RTTI, null, dtor, IWorkEvent/CScrollBar virtuals).
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_80534DD8[34] = {
+    lbl_eu_806626F8, 0, (void*)__dt__10CScrollBarFv,
+    (void*)WorkEvent1__10IWorkEventFPvPCc,
+    (void*)OnFileEvent__10CScrollBarFP10CEventFile,
+    (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv,
+    (void*)OnPauseTrigger__10IWorkEventFb, (void*)WorkEvent6__10IWorkEventFv,
+    (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv,
+    (void*)WorkEvent9__10IWorkEventFv, (void*)WorkEvent10__10IWorkEventFv,
+    (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv,
+    (void*)WorkEvent13__10IWorkEventFv, (void*)WorkEvent14__10IWorkEventFv,
+    (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv,
+    (void*)WorkEvent17__10IWorkEventFv, (void*)WorkEvent18__10IWorkEventFv,
+    (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv,
+    (void*)WorkEvent21__10IWorkEventFv, (void*)WorkEvent22__10IWorkEventFv,
+    (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv,
+    (void*)WorkEvent25__10IWorkEventFv, (void*)WorkEvent26__10IWorkEventFv,
+    (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv,
+    (void*)WorkEvent29__10IWorkEventFv, (void*)WorkEvent30__10IWorkEventFv,
+    (void*)WorkEvent31__10IWorkEventFv,
+};
+// .data RTTI base (IWorkEvent typeinfo + zeros; the +0xB8 __RTTI reloc).
+__declspec(section ".data") __attribute__((used, aligned(4)))
+void* lbl_eu_80534E60[4] = { (void*)RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0 };
+// .sdata2 float table. Offsets map to 80668138(zero) 13C(4.0) 140/148(2^52
+// conversion doubles) 150(1.0) 154(32.0); the frozen rule externs .sdata2
+// and retargets the two magic-double loads, so this only feeds the raw gate.
+struct Sdata2_CScrollBar {
+    u32 zero;
+    float f4;
+    double d52a;
+    double d52b;
+    float f1;
+    float f32;
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+struct Sdata2_CScrollBar sbar_sdata2_pool = {
+    0, 4.0f, 4503599627370496.0, 4503601774854144.0, 1.0f, 32.0f
+};

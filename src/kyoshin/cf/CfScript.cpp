@@ -11,7 +11,7 @@
 #include <string.h>
 
 // ml::FixStr<128>::format is defined below (inside namespace ml).  NOTE: MWCC
-// mangles the in-TU member call at func_80068ECC to the generic-template name
+// mangles the in-TU member call at CfScript_LoadScript to the generic-template name
 // format__Q22ml11FixStr<128>FPCce instead of the retail specialization name
 // (...10FixStr...) regardless of declaration order or scope - open item.
 
@@ -81,7 +81,7 @@ void CfScript_LoadSlot0(const char* name) {
 
 // CfScriptManager::func_80068B20 - forward slot 0 (== this) + name to loader
 __declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
-    func_80068ECC(&mScripts[0], name);
+    CfScript_LoadScript(&mScripts[0], name);
 }
 
 // CfScript_LoadSlot1 - get singleton and call CfScript_PutSlot1 (free function: loads
@@ -95,7 +95,7 @@ void CfScript_LoadSlot1(const char* name) {
 // CfScript_PutSlot1 - load script into slot 1
 __declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name) {
     CfScript* script = &mgr->mScripts[1];
-    func_80068ECC(script, name);
+    CfScript_LoadScript(script, name);
 }
 
 // CfScript_LoadSlot2 - get singleton and call CfScript_PutSlot2
@@ -107,7 +107,7 @@ void CfScript_LoadSlot2(const char* name) {
 // CfScriptManager::CfScript_PutSlot2 - load script into slot 2
 __declspec(noinline) void CfScriptManager::CfScript_PutSlot2(const char* name) {
     CfScript* script = &mScripts[2];
-    func_80068ECC(script, name);
+    CfScript_LoadScript(script, name);
 }
 
 // CfScript_FlagSlot0 - get singleton and call CfScript_SetFlag0
@@ -263,8 +263,8 @@ extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2
     }
 }
 
-// func_80068ECC - main script loading function
-extern "C" bool func_80068ECC(CfScript* script, const char* name) {
+// CfScript_LoadScript - main script loading function
+extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     // Ctor-less raw storage laid out by declaration order (sp+0x08/0x4C/0xD0);
     // retail inlines the FixStr ctors/clear() rather than calling them.
     CfScriptNameBuffer extBuffer;   // 0x08: FixStr<64>-shaped

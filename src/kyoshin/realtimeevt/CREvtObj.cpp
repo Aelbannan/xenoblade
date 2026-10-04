@@ -72,13 +72,13 @@ extern "C" void EvtObj_RunCallback(cf::CREvtObj* self) {
 
 // ============================================================================
 // EvtObj_AllocBlock (0x80186BD0)
-// Allocates a realtime-ev block of `ptr` bytes via func_80167F6C (4-byte
+// Allocates a realtime-ev block of `ptr` bytes via allocEvtMemAligned (4-byte
 // aligned, MEM1 heap). Called by the CREvtModel factory with the derived
 // class sizes (0x1F0 / 0xB4 / 0x88) before running the derived ctor.
 // ============================================================================
 extern "C" void* EvtObj_AllocBlock(u32 size) {
     // First arg is a byte count (callers pass 0x1F0/0xB4/0x88), not a pointer.
-    return func_80167F6C((void*)size, 4, 1);
+    return allocEvtMemAligned((void*)size, 4, 1);
 }
 
 // ============================================================================

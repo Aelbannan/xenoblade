@@ -63,7 +63,7 @@ void appendEnumEntries(void* dst, void* src);
 // Selector request worker (defined below); bare C-linkage name matches
 // retail (PLAN.md 17.6 approved rename fix).
 namespace cf { class CfSelectorUnit; }
-extern "C" void func_800FD774(cf::CfSelectorUnit* list);
+extern "C" void Selector_RunRequest(cf::CfSelectorUnit* list);
 
 // Layout view over an inner enum-list element slot.
 struct SelEnumSlotView {
@@ -437,7 +437,7 @@ cf::CfObjectSelectorObj* Selector_GetInstance() {
 // Common selector-request sequence: point 0xC178 at the primary inner list,
 // mark the request active (0xC180 low byte = 2), carry over the adjusted
 // handle, flag 0x9108 as pending, run the list walk, report result arrival.
-bool func_800FE6A4(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b, unsigned int c) {
+bool Selector_IssueRequest(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b, unsigned int c) {
     cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
     u32 sel = self->fieldC180 & 0xFFFFFF00;
     u32 handle = self->fieldC17C;
@@ -453,12 +453,12 @@ bool func_800FE6A4(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b,
     self->mInner1.w3044 = c;
     self->mInner1.w3048 = a;
     self->mInner1.w304C = b;
-    func_800FD774(&self->mInner1);
+    Selector_RunRequest(&self->mInner1);
     return self->mInner1.w3044 != 0;
 }
 
 // Re-issues the current filter values (0x608C/0x6094/0x6098) as a request.
-bool func_800FE738(cf::CfObjectSelectorObj* obj, unsigned int) {
+bool Selector_ReissueRequest(cf::CfObjectSelectorObj* obj, unsigned int) {
     cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
     u32 sel = self->fieldC180 & 0xFFFFFF00;
     u32 val6098 = self->field6098;
@@ -477,11 +477,11 @@ bool func_800FE738(cf::CfObjectSelectorObj* obj, unsigned int) {
     self->mInner1.w3044 = val6098;
     self->mInner1.w3048 = val608C;
     self->mInner1.w304C = val6094;
-    func_800FD774(&self->mInner1);
+    Selector_RunRequest(&self->mInner1);
     return self->mInner1.w3044 != 0;
 }
 
-u32 func_800FE7D8(cf::CfObjectSelectorObj* obj) {
+u32 Selector_FetchResult(cf::CfObjectSelectorObj* obj) {
     cf::CfSelectorLayout* self = reinterpret_cast<cf::CfSelectorLayout*>(obj);
     u32 zero = 0;
     if (self->field_0x90E4 == 0) return zero;
@@ -511,7 +511,7 @@ u32 func_800FE7D8(cf::CfObjectSelectorObj* obj) {
 }
 
 // Stores the new third filter into 0x6098 before re-issuing the request.
-bool func_800FE96C(cf::CfObjectSelectorObj* obj, unsigned int c) {
+bool Selector_UpdateFilter(cf::CfObjectSelectorObj* obj, unsigned int c) {
     cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
     u32 sel = self->fieldC180;
     u32 val608C;
@@ -533,7 +533,7 @@ bool func_800FE96C(cf::CfObjectSelectorObj* obj, unsigned int c) {
     // Stores are re-issued here because mInner1's address escapes below.
     self->mInner1.w3048 = val608C;
     self->mInner1.w304C = val6094;
-    func_800FD774(&self->mInner1);
+    Selector_RunRequest(&self->mInner1);
     return self->mInner1.w3044 != 0;
 }
 
@@ -543,13 +543,13 @@ void sinit_800FEA14() {
 }
 
 // ---------------------------------------------------------------------
-// func_800FD774 (selector request worker).
+// Selector_RunRequest (selector request worker).
 // Rebuilds the inner enum list for the pending request, then optionally
 // applies the distance/cone filter pass (w304C bit 0x4000), and finally
 // resolves the requested object id via the projected rebuild + search
 // helpers.  Result lands in w3044; status bits land in w3068.
 // ---------------------------------------------------------------------
-extern "C" void func_800FD774(cf::CfSelectorUnit* self) {
+extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
     if (!(self->w3068 & 1)) {
         return;
     }
@@ -790,12 +790,12 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
 }
 
 // ---------------------------------------------------------------------
-// func_800FE860 (retail 0x800FF348, size 0xB0).
+// Selector_SetActive (retail 0x800FF348, size 0xB0).
 // Toggles the 0x40 "selected" bits on both selector-target states and the
 // 0x100 "active" bit, but only when the request direction matches the
 // current activation state.
 // ---------------------------------------------------------------------
-void func_800FE860(cf::CfObjectSelectorData* obj, u32 arg4) {
+void Selector_SetActive(cf::CfObjectSelectorData* obj, u32 arg4) {
     // Proceed only when the request direction differs from the active state.
     u32 flag = obj->fieldC180 & 0x100;
     // Redundant-looking nested guards are preserved because MWCC keeps the
@@ -822,7 +822,7 @@ void func_800FE860(cf::CfObjectSelectorData* obj, u32 arg4) {
 }
 
 // ---------------------------------------------------------------------
-// func_800FE104: per-frame selector update. Refreshes both inner request
+// Selector_FrameUpdate: per-frame selector update. Refreshes both inner request
 // lists, honours pending clear flags on the 0xC174 / 0x9108 state words,
 // then rebuilds the candidate list (mList2) and either confirms the
 // current selection, scans for it, or resets the singleton's primary
@@ -889,13 +889,13 @@ struct SelOwnerView {
     SelMgrDispatch* mpMgr;     // 0x3ED4
 };
 
-void func_800FE104(cf::CfObjectSelectorData* self) {
+void Selector_FrameUpdate(cf::CfObjectSelectorData* self) {
     // Early guards: owner pointer only lives in a scratch register here.
     SelOwnerView* probe = reinterpret_cast<SelOwnerView*>(self->fieldC17C);
     if (probe == NULL || probe->mpMgr == NULL) return;
 
-    func_800FD774(&self->mInner1);
-    func_800FD774(&self->mInner2);
+    Selector_RunRequest(&self->mInner1);
+    Selector_RunRequest(&self->mInner2);
 
     // Pending-clear flag A: bit 29 of 0xC180 gates the 0xC174 clear word.
     if (self->fieldC180 & 0x4) {
@@ -1002,7 +1002,7 @@ l_fee90:
             s->mInner1.w3044 = (u32)cur;
             s->mInner1.w3048 = 0x80000004;
             s->mInner1.w304C = 0x4002;
-            func_800FD774(&s->mInner1);
+            Selector_RunRequest(&s->mInner1);
             reinterpret_cast<SelOwnerView*>(self->fieldC17C)->mpMgr->g030(4, 1);
         }
         reinterpret_cast<SelOwnerView*>(self->fieldC17C)->mpMgr->g030(2, 1);

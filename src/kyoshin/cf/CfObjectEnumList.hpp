@@ -304,7 +304,7 @@ extern u8 lbl_eu_8052BD80[0xC];
 
 // .sdata2 float constants (shared sdata2 pool, loaded via sda21).
 // lbl_eu_80666EB8 / lbl_eu_80666EBC are declared in the cpp's extern "C"
-// block: their declaration position keeps func_800F4B5C's reloc pairing.
+// block: their declaration position keeps runEnumObjects's reloc pairing.
 extern const float lbl_eu_80666EC8;   // 0.2f
 extern const float lbl_eu_80666ECC;   // 0.1f
 extern const float lbl_eu_80666EF0;   // -1.0f (sdata2 word)

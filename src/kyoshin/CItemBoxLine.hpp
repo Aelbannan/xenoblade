@@ -29,7 +29,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int); // typed d
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void sysWinSwitchKindPane(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
-extern "C" void func_8022BFC8(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
+extern "C" void sysWinApplyKind(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
 
 /* 8-byte r3:r4 copy unit (mirrored from CEquipItemBox.hpp; see include note). */
 struct CEquipBoxFourShorts {
@@ -362,7 +362,7 @@ extern "C" char* CUICfManager_getPackedFont9C(void);                      // lin
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
 extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
-extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor temp into member
+extern "C" void MenuShopSellCopyCursor(void*, void*);               // copy stack cursor temp into member
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // ItemBoxLine_ResetCursorB8 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void Cur_ShowTwoSubPanes(void*, u32);
@@ -402,7 +402,7 @@ extern "C" void NumSel_LoadArchive_AE8C(void*);
 extern "C" void CScrollBar_loadLayoutArc(void*);
 extern "C" void CScrollBar_PlaceThumb(void*, u32);
 // per-frame update helpers (external retail symbols, same merged unit)
-extern "C" void func_801D202C(void*);            // cursor per-frame update (CCur)
+extern "C" void Cur_Update(void*);            // cursor per-frame update (CCur)
 extern "C" void updateItemBox2Anims(void*);            // item-box info2 per-frame update
 extern "C" void NumSel_DispatchState_AED4(void*);            // num-select per-frame update
 extern "C" void CScrollBar_UpdateDispatch(void*);            // scrollbar per-frame update
@@ -517,7 +517,7 @@ extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
 // Syswin content-setter helpers (defined in CSysWin.cpp) + item-name provider
 // (defined in CItemBoxInfo.cpp): C-linkage so calls bind to the retail names.
-extern "C" void func_8022B9B4(void*, u32, int);
+extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" u32 formatItemBoxName(void*, u32);
 
@@ -580,7 +580,7 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void ItemBoxLine_DrawTabRowText(void*, u32, u32);   // pane texture refresh (external overload)
 extern "C" void ItemBoxLine_DrawTabRowIcon(void*, u32, u32);   // pane texture refresh (external overload)
-extern "C" void func_801EF954(void*, u32, s8, u32); // item-slot name format (external overload)
+extern "C" void ItemBoxLine_FormatName(void*, u32, s8, u32); // item-slot name format (external overload)
 extern "C" void ItemBoxLine_SetPaneVisible(void*, u32, u8);    // pane visibility toggle (external overload)
 extern "C" FourShorts PaneMatGetS16QuadByName(void*, void*, u32);  // animation color fetch
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)

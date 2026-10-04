@@ -9,13 +9,13 @@
 extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
 
 // This-unit phase handlers (retail-unmangled func_ names), referenced by
-// func_80252DD8 before their definitions below. extern "C" keeps the call
+// Colle_HandleInput before their definitions below. extern "C" keeps the call
 // relocs bare (retail keeps the unmangled names at these call sites).
 extern "C" void Colle_NavigateBack(CMenuCollepedia* self);
 extern "C" void Colle_CloseMenu(CMenuCollepedia* self);
-extern "C" void func_80252CE4(CMenuCollepedia* self);
+extern "C" void Colle_BeginOpen(CMenuCollepedia* self);
 extern "C" void Colle_OpenMenu(CMenuCollepedia* self);
-extern "C" void func_80252DD8(CMenuCollepedia* self);
+extern "C" void Colle_HandleInput(CMenuCollepedia* self);
 extern "C" void Colle_MarkClosing(CMenuCollepedia* self);
 extern "C" void clpDoFrameUpd(CCollepedia* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
@@ -145,7 +145,7 @@ void CMenuCollepedia::Init() {
     mCollepedia.field_50 = *(u8*)(tempCollepedia + 0x50);
     mCollepedia.field_51 = *(u8*)(tempCollepedia + 0x51);
     // Copy the 0x54 sub-object region via the 0x10-byte copy helper.
-    func_8018B0FC((u8*)&mCollepedia + 0x54, tempCollepedia + 0x54);
+    MenuShopSellCopyCursor((u8*)&mCollepedia + 0x54, tempCollepedia + 0x54);
     // Region inside the 0x54 sub-object pad: copied as raw words/bytes.
     *(u32*)((u8*)&mCollepedia + 0x70) = *(u32*)(tempCollepedia + 0x70);
     *(u32*)((u8*)&mCollepedia + 0x74) = *(u32*)(tempCollepedia + 0x74);
@@ -154,7 +154,7 @@ void CMenuCollepedia::Init() {
     *(u8*)((u8*)&mCollepedia + 0x80) = *(u8*)(tempCollepedia + 0x80);
     *(u8*)((u8*)&mCollepedia + 0x81) = *(u8*)(tempCollepedia + 0x81);
     // Copy the 0x84 sub-object region via the same helper.
-    func_8018B0FC((u8*)&mCollepedia + 0x84, tempCollepedia + 0x84);
+    MenuShopSellCopyCursor((u8*)&mCollepedia + 0x84, tempCollepedia + 0x84);
     __ct__UnkClass_8011C974((u8*)&mCollepedia + 0xA0, tempCollepedia + 0xA0);
     // Tail of the pre-loop region (+0xB0..+0xE9), then the sub-array loop.
     *(u32*)((u8*)&mCollepedia + 0xB0) = *(u32*)(tempCollepedia + 0xB0);
@@ -235,13 +235,13 @@ void CMenuCollepedia::Term() {
 void CMenuCollepedia::Move() {
     switch (mState) {
     case 0:
-        func_80252CE4(this);
+        Colle_BeginOpen(this);
         break;
     case 1:
         Colle_OpenMenu(this);
         break;
     case 2:
-        func_80252DD8(this);
+        Colle_HandleInput(this);
         break;
     case 3:
         Colle_MarkClosing(this);
@@ -256,11 +256,11 @@ void CMenuCollepedia::Move() {
 
 void CMenuCollepedia::cbRenderBefore() {}
 
-void func_80252C60(){}
+void CollepediaCreateSingleton(){}
 
 void stub_us_80254f10() {}
 
-void func_80252CE4(){}
+void Colle_BeginOpen(){}
 
 // Advance the collepedia menu: once the title bar is idle and the collepedia
 // core is ready, open the menu (state 2).
@@ -272,11 +272,11 @@ void Colle_OpenMenu(CMenuCollepedia* self) {
     }
 }
 
-// Advance the collepedia menu input (retail func_80252DD8): once the menu is
+// Advance the collepedia menu input (retail Colle_HandleInput): once the menu is
 // open, tick the open timer (clamped to 10s), then read the pad and dispatch
 // to the collepedia core / menu handlers. Classic-controller (co-op) and
 // Wiimote pad layouts map the same actions to different button bits.
-extern "C" void func_80252DD8(CMenuCollepedia* self) {
+extern "C" void Colle_HandleInput(CMenuCollepedia* self) {
     if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }

@@ -201,6 +201,69 @@ extern "C" int blank1__17CVS_THREAD_REVIVEFv() {
     return CVS_THREAD_REVIVE::BUFFER_SIZE;
 }
 
+// Retail section reconstruction (measured in
+// .scratch/dlabels/a2/CVS_THREAD_REVIVE.txt): the .rodata typeinfo name
+// (sized to absorb the retail pad), three .data init-state triples
+// ({0, -1, callback}), the 7-word thread vtable ({typeinfo, 0, play,
+// remove, blank1, alwaysTrue, nullDispatch}), the trailing typeinfo-base
+// word plus padding, and the .sdata typeinfo object ({name, trailing}).
+// Global-scope data symbols: MWCC does not mangle them.
+//
+// NOTE (frozen-rule residual): this TU carries a UNIT_RULES
+// extern_data_sections=(".data", ".rodata", ".sdata") entry that
+// zeroes these sections in the link-time reloc.o. The retail split object
+// genuinely carries them (0x50/0x18/0x8, reconstructed byte-identical
+// below), so that rule entry is stale and should be removed; until then
+// the link keeps resolving these labels as UNDEF. lbl_eu_80662CC0 lives in
+// the CCharVoiceMan range and is referenced, not defined, here.
+extern "C" void PlayThreadVoice();
+extern "C" bool CCharVoiceMan_AlwaysTrue();
+extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
+extern u32 lbl_eu_80662CC0[2];
+extern u32 lbl_eu_80662D28[2];
+
+extern const char lbl_eu_805107E8[0x18] = "cf::CVS_THREAD_REVIVE";
+
+u32 lbl_eu_80539C98[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)ReviveVxPlaySlot1,
+};
+
+u32 lbl_eu_80539CA4[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)ReviveVxPlaySlot2,
+};
+
+u32 lbl_eu_80539CB0[3] = {
+    0,
+    0xFFFFFFFF,
+    (u32)ReviveVxOnComplete,
+};
+
+u32 lbl_eu_80539CBC[7] = {
+    (u32)lbl_eu_80662D28,
+    0,
+    (u32)PlayThreadVoice,
+    (u32)ReviveVxRemoveVoice,
+    (u32)blank1__17CVS_THREAD_REVIVEFv,
+    (u32)CCharVoiceMan_AlwaysTrue,
+    (u32)CCharVoiceMan_NullVoiceDispatch,
+};
+
+u32 lbl_eu_80539CD8[4] = {
+    (u32)lbl_eu_80662CC0,
+    0,
+    0,
+    0,
+};
+
+__declspec(section ".sdata") extern u32 lbl_eu_80662D28[2] = {
+    (u32)lbl_eu_805107E8,
+    (u32)lbl_eu_80539CD8,
+};
+
 // us-802ab1fc (ReviveVxInitVoice6E)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x6E-byte
 // handle buffer, then play voice (arg + 0x1005) via RequestVoicePlayback.

@@ -29,6 +29,10 @@ struct BattleManagerLayout {
 // C-ABI import from the CVS voice-thread family (retail .text:0x802A6488,
 // unmangled name; the CVS_THREAD_* classes declare the same parameter list).
 extern "C" int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
+// C++-linkage helper defined in CCharVoiceMan.cpp (mangled
+// CCharVoiceMan_DispatchById__Fii; the CVS header that declares it is not
+// included here).
+int CCharVoiceMan_DispatchById(int a, int b);
 
 // Retail symbol is the unmangled BattleGaugeTierVoiceGate (C linkage) - CCharVoiceMan
 // and other TUs reference it via extern "C"; without this the mangled

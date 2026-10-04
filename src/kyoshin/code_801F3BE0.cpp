@@ -84,8 +84,8 @@ class CActorParam;
 }
 extern "C" void GimmickElv_SetLodVisible(CfGimmickElvData* self, int show);
 extern "C" void gimmickLockClearBinding(cf::CfGimmickLock* self);
-extern "C" void func_8026E5C0(cf::CfGimmickEne* self, cf::CActorParam* actor);
-extern "C" void func_8026E678(cf::CfGimmickEne* self, cf::CActorParam* actor);
+extern "C" void gimmickEneResolveArts(cf::CfGimmickEne* self, cf::CActorParam* actor);
+extern "C" void gimmickEneStopSound(cf::CfGimmickEne* self, cf::CActorParam* actor);
 extern "C" int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target);
 
 // Teardown / spawn helpers used by the lifecycle functions below.
@@ -146,13 +146,13 @@ extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
 // Gimmick object list accessor (testActorStatus comes from CChainTimer.hpp).
 extern "C" CGimmickList* getReslistB48();
 
-// Sibling spawn / lifecycle functions defined later in this TU (func_801F3CCC
+// Sibling spawn / lifecycle functions defined later in this TU (GimSpawnAll
 // sits before their definitions and calls them). C linkage keeps the call
 // relocs on the unmangled retail names (GimSpawnObjects, ...).
 extern "C" bool GimSpawnObjects(CGimmickGlobal* self);
-extern "C" bool func_801F3F98(CGimmickGlobal* self);
-extern "C" bool func_801F4078(CGimmickGlobal* self);
-extern "C" bool func_801F4158(CGimmickGlobal* self);
+extern "C" bool GimSpawnLocks(CGimmickGlobal* self);
+extern "C" bool GimSpawnElevators(CGimmickGlobal* self);
+extern "C" bool GimSpawnWarps(CGimmickGlobal* self);
 extern "C" bool GimSpawnJumps(CGimmickGlobal* self);
 extern "C" bool GimSpawnItems(CGimmickGlobal* self);
 extern "C" bool GimSpawnEnemies(CGimmickGlobal* self);
@@ -199,13 +199,13 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
     return self;
 }
 
-// func_801F3CCC: (re)initialize the gimmick container. Tears down every stored
+// GimSpawnAll: (re)initialize the gimmick container. Tears down every stored
 // gimmick (dispatch slot 0x08 with 1) and resets the counters/state, then
 // re-spawns the object/lock/elevator/warp/jump/item families from their bdat
 // tables in order, stopping at the first failure. The save-off family is
 // spawned inline from lbl_eu_80664140 (0x88-byte objects); the enemy family
 // (GimSpawnEnemies) runs only when every other family fit in the 0x80 slots.
-void func_801F3CCC(CGimmickGlobal* self) {
+void GimSpawnAll(CGimmickGlobal* self) {
     self->mFlags = 0;
     self->field_0x200 = 0;
     self->field_0x21C = lbl_eu_80668158;
@@ -224,11 +224,11 @@ void func_801F3CCC(CGimmickGlobal* self) {
     CfGimmick_InitPartyGlobals();
     if (!GimSpawnObjects(self))
         return;
-    if (!func_801F3F98(self))
+    if (!GimSpawnLocks(self))
         return;
-    if (!func_801F4078(self))
+    if (!GimSpawnElevators(self))
         return;
-    if (!func_801F4158(self))
+    if (!GimSpawnWarps(self))
         return;
     if (!GimSpawnJumps(self))
         return;
@@ -297,9 +297,9 @@ bool GimSpawnObjects(CGimmickGlobal* self) {
     return true;
 }
 
-// func_801F3F98: spawn the lock gimmicks from the lock bdat table. Returns
+// GimSpawnLocks: spawn the lock gimmicks from the lock bdat table. Returns
 // false if the 0x80-slot container fills up mid-spawn.
-bool func_801F3F98(CGimmickGlobal* self) {
+bool GimSpawnLocks(CGimmickGlobal* self) {
     void* bdat = lbl_eu_8066412C;
     if (bdat == NULL)
         return true;
@@ -320,9 +320,9 @@ bool func_801F3F98(CGimmickGlobal* self) {
     return true;
 }
 
-// func_801F4078: spawn the elevator gimmicks from the elevator bdat table;
-// same shape as func_801F3F98 with the 0x400 flag and 0x1d8-byte objects.
-bool func_801F4078(CGimmickGlobal* self) {
+// GimSpawnElevators: spawn the elevator gimmicks from the elevator bdat table;
+// same shape as GimSpawnLocks with the 0x400 flag and 0x1d8-byte objects.
+bool GimSpawnElevators(CGimmickGlobal* self) {
     void* bdat = lbl_eu_80664130;
     if (bdat == NULL)
         return true;
@@ -343,9 +343,9 @@ bool func_801F4078(CGimmickGlobal* self) {
     return true;
 }
 
-// func_801F4158: spawn the warp gimmicks from the warp bdat table; same shape
-// as func_801F3F98 with the 0x800 flag and 0x10c-byte objects.
-bool func_801F4158(CGimmickGlobal* self) {
+// GimSpawnWarps: spawn the warp gimmicks from the warp bdat table; same shape
+// as GimSpawnLocks with the 0x800 flag and 0x10c-byte objects.
+bool GimSpawnWarps(CGimmickGlobal* self) {
     void* bdat = lbl_eu_80664134;
     if (bdat == NULL)
         return true;
@@ -367,7 +367,7 @@ bool func_801F4158(CGimmickGlobal* self) {
 }
 
 // GimSpawnJumps: spawn the jump gimmicks from the jump bdat table; same
-// shape as func_801F3F98 with the 0x1000 flag and 0x170-byte objects.
+// shape as GimSpawnLocks with the 0x1000 flag and 0x170-byte objects.
 bool GimSpawnJumps(CGimmickGlobal* self) {
     u8* bdat = lbl_eu_80664138;
     if (bdat == NULL)
@@ -391,7 +391,7 @@ bool GimSpawnJumps(CGimmickGlobal* self) {
 }
 
 // GimSpawnItems: spawn the item gimmicks from the item bdat table; same shape
-// as func_801F3F98 with the 0x2000 flag and 0xa4-byte objects.
+// as GimSpawnLocks with the 0x2000 flag and 0xa4-byte objects.
 bool GimSpawnItems(CGimmickGlobal* self) {
     u8* bdat = lbl_eu_8066413C;
     if (bdat == NULL)
@@ -469,7 +469,7 @@ void GimTeardownAll(CGimmickGlobal* self) {
     CfGimmick_InitPartyGlobals();
 }
 
-void func_801F45B4(){}
+void GimUpdateGlobal(){}
 
 void GimNoopA(void) {}
 
@@ -574,7 +574,7 @@ void GimBindEnemyActor(CGimmickGlobal* self, cf::CActorParam* actor) {
             CGimmickEntry* g = self->mGimmicks[i];
             if (g->typeId != 7)
                 break;
-            func_8026E5C0((cf::CfGimmickEne*)g, actor);
+            gimmickEneResolveArts((cf::CfGimmickEne*)g, actor);
         }
     }
 }
@@ -587,7 +587,7 @@ void GimUnbindEnemyActor(CGimmickGlobal* self, cf::CActorParam* actor) {
             CGimmickEntry* g = self->mGimmicks[i];
             if (g->typeId != 7)
                 break;
-            func_8026E678((cf::CfGimmickEne*)g, actor);
+            gimmickEneStopSound((cf::CfGimmickEne*)g, actor);
         }
     }
 }

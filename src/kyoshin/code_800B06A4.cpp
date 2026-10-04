@@ -29,13 +29,16 @@ void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
 void CPartsChange_TeardownContainer(void* container, int flags);
 extern "C" void UIWin_Create44EE4Win(u32 a, u32 b);
 extern "C" int CollObjTestResIdReady(void* item);
+extern "C" unsigned long CollObjSetResIdReady(void* self, int flag);
+void CollObjLerpVecPair(void* out, void* item);
+extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount);
 extern "C" int CollObjLoadResourceTimed(void* obj, void* arg, int flag, float range);
 extern "C" void copyVec3Words(void* dst, const B47Vec3* src);
 extern "C" void noopAnimVec3(void* dst);
 extern "C" void CfRes_releaseCachedBase(int flag);
 extern "C" void CPartsChange_FlushChangeList(unsigned long a, void* b);
-extern "C" void func_801F3CCC(unsigned long a, void* b);
-extern "C" void func_801F45B4(unsigned long a, void* b);
+extern "C" void GimSpawnAll(unsigned long a, void* b);
+extern "C" void GimUpdateGlobal(unsigned long a, void* b);
 extern "C" void mineUpdateAll(unsigned long a, void* b);
 extern "C" void CPartsChange_InitChangeRecord(unsigned long a, void* b);
 extern "C" void CPartsChange_LoadBdatTables(unsigned long a, void* b);
@@ -651,9 +654,9 @@ extern "C" void releasePadObjects(UnkClass_805764CC* self) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
-extern "C" void notifyObjCFCccc(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC, obj);}}
+extern "C" void notifyObjCFCccc(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){GimSpawnAll(self->field_0xCFC, obj);}}
 #pragma pop
-extern "C" void notifyObjCFC5b4(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC, obj);}}
+extern "C" void notifyObjCFC5b4(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){GimUpdateGlobal(self->field_0xCFC, obj);}}
 // TEST_FUNC_205C
 #pragma push
 #pragma auto_inline off
@@ -1700,7 +1703,7 @@ extern "C" void* lookupCA0BySelf(void* self) {
 // Target us-800b94b0 / us-800b9594: findObjB28ById / findObjB48ById
 // Walk an object list (head via firstReslistB28/firstReslistB48, advance via
 // nextReslistB28/nextReslistB48); when an entry's +0x8C id matches, resolve it
-// through func_8016FE34 and return. Each step re-runs the inlined singleton
+// through MapFx_ResolveOwner and return. Each step re-runs the inlined singleton
 // init guard.
 extern "C" void* firstReslistB28();
 extern "C" void* firstReslistB48();
@@ -1717,7 +1720,7 @@ void* findObjB28ById(s32 id) {
     B8B94Obj* obj = (B8B94Obj*)firstReslistB28();
     while (obj != 0) {
         if (id == obj->field_8C) {
-            return func_8016FE34(obj);
+            return MapFx_ResolveOwner(obj);
         }
         if (!lbl_eu_80663EE8) {
             __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
@@ -1742,7 +1745,7 @@ void* findObjB48ById(s32 id) {
     while (obj != 0) {
         // Operand order (id first) matches retail's cmpw r26, r0.
         if (id == obj->field_8C) {
-            return func_8016FE34(obj);
+            return MapFx_ResolveOwner(obj);
         }
         if (!lbl_eu_80663EE8) {
             __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
@@ -2033,7 +2036,7 @@ void selectSortEntries(SortEntry* start, SortEntry* end, SortEntryCompare compar
 
 // us-800b7a1c - walkListByItemId
 // Walks the item-manager list via the CfGameManager iterator primitives; for
-// every node whose type id matches arg1, raises func_800BFDE0 with the node's
+// every node whose type id matches arg1, raises CfObjectPc_setupFrame with the node's
 // container base (the raw node pointer sits at +0x3E9C inside the container).
 void walkListByItemId(u32 arg1, u32 arg2) {
     getGlobalU32_40F4();
@@ -2060,7 +2063,7 @@ void walkListByItemId(u32 arg1, u32 arg2) {
         }
         u16 id = getItemId__Q22cf13CfGameManagerFv((void*)(node + 0x3E9C));
         if (arg1 == id) {
-            func_800BFDE0((void*)node, arg2);
+            CfObjectPc_setupFrame((void*)node, arg2);
         }
         linkItemNode__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&dest, &outerIter, 0);
     }
@@ -2549,6 +2552,7 @@ extern "C" bool CfRes_checkFlags_2000400();
 extern "C" void CPartsChange_SetLoadFlag(int arg);
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(void* arg);
 extern "C" int testResInfoFlag(unsigned long mask);
+extern "C" unsigned long CfT_DispatchFrameCounts();
 extern "C" bool CfRes_getE24Bit18();
 
 // us-800b25a8 - syncPlayerSubMgr
@@ -2907,7 +2911,7 @@ void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
     int small = testResInfoFlag(0x100) != 0;
     if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 || big != 0) {
         if (small == 0) {
-        void* ctx = CfT_DispatchFrameCounts();
+        void* ctx = (void*)CfT_DispatchFrameCounts();
         getInstance__Q22cf14CBattleManagerFv();
         // Retail keeps three distinct iterator slots (init / step-back / end).
         F8C0IteratorNode outer;
@@ -3064,12 +3068,12 @@ extern "C" void refreshPartyStatus() {
                     chr->m17c.unk2D(1);
                     chr->m17c.unk2E();
                     chr->m17c.unk30();
-                } else if (func_80148778(&chr->m184, 0x35) == 0) {
+                } else if (isBattleStatusActive(&chr->m184, 0x35) == 0) {
                     chr->m184.unk05(0x35);
                 }
                 CfRes_getD80Flag();
                 Scn_GetFrameDelta();
-                func_801765A4(&chr->m17c, 1);
+                CActorParam_updateTick(&chr->m17c, 1);
             }
             it++;
         }
@@ -3764,7 +3768,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
     }
     syncPlayerSubMgr(self);
     if (probe != 0) {
-        func_800B9C14(probe);
+        CfObjectMap_refreshRegion(probe);
     }
     if (instField != 0) {
         if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 &&
@@ -5196,7 +5200,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     float bv = cfCam_absFloat();
                     rec.w = lbl_eu_80666A00 * bv + tmp20;
                 }
-                void* r15c = func_8016FE34(obj);
+                void* r15c = MapFx_ResolveOwner(obj);
                 if (r15c != 0 &&
                     testMode15F0Range((UnkClass_805764CC*)r15c) != 0) {
                     rec.w *= lbl_eu_80666A04;
@@ -5353,7 +5357,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
 
     // Optional payload refresh: copy an oversized 0x803-byte span seeded with
     // the child record's leading word.
-    void* rec = func_8016FE34(arg);
+    void* rec = MapFx_ResolveOwner(arg);
     void* r23 = 0;
     if (rec != 0) {
         IB7ArgChild* child = *(IB7ArgChild**)((u8*)rec + 4);

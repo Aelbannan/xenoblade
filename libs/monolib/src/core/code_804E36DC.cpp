@@ -70,7 +70,7 @@ extern "C" int schedInitItemFromData(CScheduleItem* item, u8* base,
 }
 
 // us-804e844c: load the entry blob into slots (once).
-extern "C" void func_804E3FB0(CScheduleItem* item, ScheduleEntry* entries,
+extern "C" void schedLoadItemSlots(CScheduleItem* item, ScheduleEntry* entries,
                               CSchedule* sched) {
     CItemEntry* entry = (CItemEntry*)item->mEntryData;
     u32 count = 0;
@@ -100,7 +100,7 @@ extern "C" void func_804E3FB0(CScheduleItem* item, ScheduleEntry* entries,
 }
 
 // us-804e8530: advance all slots; drop finished objects.
-extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
+extern "C" void schedStepItemSlots(CScheduleItem* item, f32 delta) {
     if (item->mCount == 0) {
         return;
     }
@@ -108,7 +108,7 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
         CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
             if (obj->mFlags1C & 0x8000) {
-                func_804C8D90(obj, delta);
+                EffObj_Update(obj, delta);
             } else {
                 int referenced = 0;
                 for (int j = 0; j < item->mCount; j++) {
@@ -136,11 +136,11 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
     }
 }
 
-// us-804e8390: per-frame item step used by CSchedule::func_804E39E8.
+// us-804e8390: per-frame item step used by CSchedule::schedStepEntries.
 extern "C" DECOMP_DONT_INLINE int schedTickItemLifetime(CScheduleItem* item, f32 time, f32 delta,
                              ScheduleEntry* entries, CSchedule* sched) {
     if (!((item->mFlags >> 7) & 1)) {
-        func_804E3FB0(item, entries, sched);
+        schedLoadItemSlots(item, entries, sched);
         item->mFlags |= 0x80;
     }
     if (item->mLifetime != 0) {
@@ -148,7 +148,7 @@ extern "C" DECOMP_DONT_INLINE int schedTickItemLifetime(CScheduleItem* item, f32
             return 1;
         }
     }
-    func_804E4094(item, delta);
+    schedStepItemSlots(item, delta);
     return item->mCount != 0;
 }
 
@@ -160,7 +160,7 @@ extern "C" DECOMP_DONT_INLINE void schedReleaseItemObjects(CScheduleItem* item) 
     for (int i = 0; i < 32; i++) {
         CEffectObj* obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL) {
-            func_804C9D30(obj);
+            EffFrame_Update(obj);
         }
     }
     for (int i = 0; i < 32; i++) {
@@ -172,7 +172,7 @@ extern "C" DECOMP_DONT_INLINE void schedReleaseItemObjects(CScheduleItem* item) 
 }
 
 // us-804e86e8: feed distance feedback into renderable slot objects.
-extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta, CSchedule* sched) {
+extern "C" DECOMP_DONT_INLINE void schedFeedDistance(CScheduleItem* item, f32 delta, CSchedule* sched) {
     if (item->mCount == 0) {
         return;
     }
@@ -180,7 +180,7 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
     for (int i = 0; i < 32; i++) {
         obj = SchedFx_FetchByHandle(item->mSlots[i]);
         if (obj != NULL && obj->mField2E > 0) {
-            void* arg = func_804CB5FC(obj);
+            void* arg = EffObj_GetPriority(obj);
             SchedElem_ClaimNode(sched, arg, obj, delta);
         }
     }
@@ -191,7 +191,7 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
 // ---------------------------------------------------------------------------
 
 // us-804e7b78: main update: transform flags, fixed-timestep stepping.
-extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
+extern "C" void schedUpdate(CSchedule* self, f32 dt) {
     CScheduleFlags* flags = (CScheduleFlags*)&self->field_0x00;
     if (flags->b8) {
         return;
@@ -237,7 +237,7 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
             count--;
         }
         for (s32 i = 0; i < count; i++) {
-            func_804E39E8(self, (f32)denom);
+            schedStepEntries(self, (f32)denom);
             if (self->mEntryCount != 0) {
                 for (int j = 0; j < 32; j++) {
                     CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[j]);
@@ -251,11 +251,11 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
         self->field_0x94 = 1.0f;
     }
 
-    func_804E39E8(self, step);
+    schedStepEntries(self, step);
 }
 
 // us-804e7e84: step all resolved entries once; retire when none remain active.
-extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
+extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
     if (self->mEntryCount == 0) {
         return;
     }
@@ -297,7 +297,7 @@ extern "C" void schedReleaseAllItems(CSchedule* self) {
 }
 
 // us-804e8008: compute distance to the schedule target and feed it to items.
-extern "C" void func_804E3B6C(CSchedule* self) {
+extern "C" void schedFeedTargetDist(CSchedule* self) {
     if (self->mEntryCount == 0) {
         return;
     }
@@ -316,7 +316,7 @@ extern "C" void func_804E3B6C(CSchedule* self) {
     for (int i = 0; i < 32; i++) {
         CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
         if (item != NULL) {
-            func_804E424C(item, dist, self);
+            schedFeedDistance(item, dist, self);
         }
     }
 }

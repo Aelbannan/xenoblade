@@ -4,7 +4,7 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/util/FixStr.hpp"  // ml::FixStr<64> for func_800AA33C (matches IResInfo.hpp)
+#include "monolib/util/FixStr.hpp"  // ml::FixStr<64> for Tok_FormatStr (matches IResInfo.hpp)
 class CResLookup;
 class CScnEnvLgtCtrlListItem;
 
@@ -80,7 +80,7 @@ extern "C" {
     void resetMpfInstance__17UnkClass_8047BB54Fv(void* self);
 
     // ---- embedded UnkClass_8047CD0C node-pool manager (at +0x2F2C) ----
-    void func_8047CD0C__17UnkClass_8047CD0CFv(void* self, void* r4);
+    void initFromConfig__17UnkClass_8047CD0CFv(void* self, void* r4);
     void initNodePool__17UnkClass_8047CD0CFv(void* self, void* r4, u32 r5, u32 r6);
     void clearPoolData__17UnkClass_8047CD0CFv(void* self);
     void resetPoolState__17UnkClass_8047CD0CFv(void* self);
@@ -94,7 +94,7 @@ extern "C" {
     // ---- CTaskCulling statics ----
     void* func_801A2C04__Q22cf12CTaskCullingFv();
     void clearOccFrustums__Q22cf12CTaskCullingFv();
-    void func_801A2CAC__Q22cf12CTaskCullingFv();
+    void reloadOccFrustums__Q22cf12CTaskCullingFv();
 
     // ---- scene / resource helpers ----
     void Scn_IsAnimActiveOrNull(void* ptr);
@@ -130,7 +130,7 @@ extern "C" {
     void* KyoshinHeap_GetField40();
     void CfRes_tryUpdateSlot16C(void* r3);
     u32 Tok_Pack08(u32 a, u32 b);
-    int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+    int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
     void CfSoundMan_ClearFxEffect(u32 r3, u32 r4);
     // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp.
@@ -138,9 +138,9 @@ extern "C" {
 
     // ---- this TU's own retail symbols (Fv-annotated / unmangled) ----
     void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task);
-    int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b);
-    void func_800BA440(cf::CfObjectMap* self);
-    void func_800B9E4C(cf::CfObjectMap* self);
+    int CfObjectMap_resolveResource(cf::CfObjectMap* self, u32 a, u32 b);
+    void CfObjectMap_updateFrame(cf::CfObjectMap* self);
+    void CfObjectMap_updateEvents(cf::CfObjectMap* self);
 }
 
 // ---- data symbols (global scope: no mangling, plain extern is enough) ----

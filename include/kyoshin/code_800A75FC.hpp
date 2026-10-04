@@ -35,7 +35,7 @@ extern "C" void CtrlObjectParam_MergeArtsListNode(void*, void*);
 extern "C" int func_800A3594(void*, int, int);
 extern "C" int func_800A36A4(void*, int, int);
 extern "C" u32 CtrlObjectParam_GetArtsListTotalSize(void*);
-extern "C" void func_800A76EC(GlobalStruct_80572B94*);
+extern "C" void KyoshinHeap_CreateRegions(GlobalStruct_80572B94*);
 extern "C" int func_800A39E8(void*, void*, void*, void*);
 extern "C" void CtrlObjectParam_InitArtsListEntry(void*, int, int, int);
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);

@@ -1404,7 +1404,7 @@ extern "C" void setupEIBPageCur(CEIBCur* self) {
 // memory regions, the zeroed handle/layout/state fields, the three cursors,
 // sort menu and both system windows. The member CSortMenu is populated from
 // a destroyed stack temp (sub-object copy + scalar copies), as are both
-// system windows (via func_8016742C). The grid is initialized in place and
+// system windows (via InfoCfCopySysWin). The grid is initialized in place and
 // then overwritten with a fresh stack grid via a whole-struct assignment;
 // finally seven CItemBlock_setFlag120EC preload calls run.
 #pragma push
@@ -1479,13 +1479,13 @@ CEquipItemBox::CEquipItemBox() {
     {
         u8 tempWin[0x44];
         __ct__CSysWin(tempWin, 2);
-        func_8016742C(&_padSysWin1[0], tempWin);
+        InfoCfCopySysWin(&_padSysWin1[0], tempWin);
         __dt__7CSysWinFv(tempWin, -1);
     }
     {
         u8 tempWin[0x44];
         __ct__CSysWin(tempWin, 0);
-        func_8016742C(&_padSysWin2[0], tempWin);
+        InfoCfCopySysWin(&_padSysWin2[0], tempWin);
         __dt__7CSysWinFv(tempWin, -1);
     }
     ItemBlockSetDefaultFlags();
@@ -1558,7 +1558,7 @@ extern "C" void updateEIBBox(CEquipItemBox* self) {
         self->field_38->Animate(0);
         updateEIBCur((CEIBCur*)&self->_pad44[0]);
         updateEIBCur((CEIBCur*)&self->pagecur[0]);
-        func_801D202C(&self->ccur18[0]);
+        Cur_Update(&self->ccur18[0]);
         sortMenuDispatchState(&self->_padSortMenu[0]);
         sysWinDispatchPhase(&self->_padSysWin1[0]);
         sysWinDispatchPhase(&self->_padSysWin2[0]);
@@ -1574,7 +1574,7 @@ extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->unk_40 == 0) return;
     if (self->unk_41 == 0) return;
     drawLayout(self->field_38, drawInfo, 0, 1);
-    func_801D31F8(&self->_padSortMenu[0], drawInfo);
+    sortMenuDraw(&self->_padSortMenu[0], drawInfo);
     u8 v = self->field_2026[0x35b];
     u8 x = (v != 0) ? v : 1;
     if (x > 1) {
@@ -1623,7 +1623,7 @@ extern "C" void closeEIBBox(CEquipItemBox* self) {
 
 // Check the sort menu and both system windows are ready; return unk_42.
 extern "C" u8 eibWindowsReady(CEquipItemBox* self) {
-    if (func_801D32DC(self->_padSortMenu) == 0) return 0;
+    if (sortMenuIsScrollbarVisible(self->_padSortMenu) == 0) return 0;
     if (CSysWin_isReady(self->_padSysWin1) == 0) return 0;
     // Inverted form: retail's last check falls through to the unk_42 return
     // and branches to the li 0 block (beq -> li0; fall -> lbz).
@@ -1713,7 +1713,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         // Sort menu busy: close it and move cursor
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
-        func_801D3620(&self->_padSortMenu[0]);
+        sortMenuScrollUp(&self->_padSortMenu[0]);
         char tmp[0xC];
         sortMenuFormatPaneText(tmp, &self->_padSortMenu[0]);
         ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
@@ -1770,7 +1770,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
     }
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) != 0) {
-            func_801D3698(&self->_padSortMenu[0]);
+            sortMenuScrollDown(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
@@ -1817,7 +1817,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) != 0) {
-            func_801D3724(&self->_padSortMenu[0]);
+            sortMenuPageUpStep(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
@@ -1999,7 +1999,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
                   root->FindPaneByName(&lbl_eu_8050EFDC[0x193], true),
                   root);
     sortMenuSetLayoutPos(&self->_padSortMenu[0], &result);
-    func_801D353C(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
+    sortMenuSetPage(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     self->unk_58 = 0;
     sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
     ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
@@ -2182,8 +2182,8 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
                                      &lbl_eu_8050EFDC[0x1a2], v);
             }
             sysWinSwitchKindPane(&self->_padSysWin2[0], 0);
-            func_8022B9B4(&self->_padSysWin2[0], text, 0);
-            func_8022BFC8(&self->_padSysWin2[0], 1);
+            sysWinSetKindContent(&self->_padSysWin2[0], text, 0);
+            sysWinApplyKind(&self->_padSysWin2[0], 1);
             sysWinOpenPhase1(&self->_padSysWin2[0]);
             self->unk_58 = 0;
             return;
@@ -2939,7 +2939,7 @@ extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
     u8 page = self->unk_36c[(s8)self->unk_373];
     // The 3rd/4th args are the two count bytes this function later re-reads;
     // MWCC hoists their address constants (r5/r6) into the prologue.
-    func_801D3818(&self->_padSortMenu[0], page, &self->unk_379, &self->unk_37a);
+    sortMenuValueToPage(&self->_padSortMenu[0], page, &self->unk_379, &self->unk_37a);
     int buf[12];
     memset(buf, 0, 0x30);
     switch (page) {
@@ -2965,7 +2965,7 @@ extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
     u16 idx = CItemBlock_getFlag120EC(page);
     char* name = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36], (u32)buf[idx]);
     LayoutSetTextBoxFmtValue(self->field_38, &lbl_eu_8050EFDC[0x2d4], name, 0);
-    if (func_801D32DC(&self->_padSortMenu[0]) != 0) {
+    if (sortMenuIsScrollbarVisible(&self->_padSortMenu[0]) != 0) {
         sortMenuResetCount(&self->_padSortMenu[0]);
         u8 i = 0;
         while (1) {
@@ -2974,7 +2974,7 @@ extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
                           BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36], (u32)buf[i]));
             i++;
         }
-        func_801D353C(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
+        sortMenuSetPage(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     }
 }
 #pragma pop
@@ -3773,7 +3773,7 @@ extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
                     case 8: CtrlObjectParam_SetEquipSlot4(owner, -1); break;
                     }
                     CtrlObjectParam_SyncParamFromActor(owner);
-                    func_800BFDE0(moveObj, 0);
+                    CfObjectPc_setupFrame(moveObj, 0);
                 }
             }
         }

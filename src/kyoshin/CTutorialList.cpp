@@ -137,7 +137,7 @@ extern "C" void TutorialList_OpenListInit(CTutorialList* self) {
     CScrollBar_InitRootPane(&self->mScrollBar, v);
     CScrollBar_UpdateThumb(&self->mScrollBar, 0xa, self->mField280);
     CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
-    func_802ADCE8(self);
+    TutorialList_UpdateRowTexts(self);
     TutorialList_MoveCursorToRow(self);
 }
 
@@ -163,7 +163,7 @@ extern "C" void TutorialList_PageUpIdle(CTutorialList* self) {
         if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0)
             return;
         nw4r::math::VEC3 pos;
-        func_801D3620(&self->mSortMenu84[0]);
+        sortMenuScrollUp(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
         ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
@@ -190,7 +190,7 @@ extern "C" void TutorialList_PageUpIdle(CTutorialList* self) {
                 }
             }
         }
-        func_802ADCE8(self);
+        TutorialList_UpdateRowTexts(self);
         TutorialList_MoveCursorToRow(self);
         CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
     }
@@ -204,7 +204,7 @@ extern "C" void TutorialList_PageUpWrap(CTutorialList* self) {
         if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0)
             return;
         nw4r::math::VEC3 pos;
-        func_801D3698(&self->mSortMenu84[0]);
+        sortMenuScrollDown(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
         ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
@@ -228,7 +228,7 @@ extern "C" void TutorialList_PageUpWrap(CTutorialList* self) {
                 self->mField17A = 0;
             }
         }
-        func_802ADCE8(self);
+        TutorialList_UpdateRowTexts(self);
         TutorialList_MoveCursorToRow(self);
         CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
     }
@@ -242,7 +242,7 @@ extern "C" void TutorialList_PageDownStep(CTutorialList* self) {
         if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0)
             return;
         nw4r::math::VEC3 pos;
-        func_801D3724(&self->mSortMenu84[0]);
+        sortMenuPageUpStep(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
         ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
@@ -263,7 +263,7 @@ extern "C" void TutorialList_PageDownStep(CTutorialList* self) {
         self->mField178 = 0;
         self->mField17A = 0;
     }
-    func_802ADCE8(self);
+    TutorialList_UpdateRowTexts(self);
     TutorialList_MoveCursorToRow(self);
     CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
     }
@@ -303,7 +303,7 @@ extern "C" void TutorialList_PageDownBlock(CTutorialList* self) {
             if ((s8)(u8)last < 0)
                 self->mField178 = 0;
         }
-        func_802ADCE8(self);
+        TutorialList_UpdateRowTexts(self);
         TutorialList_MoveCursorToRow(self);
         CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
     }
@@ -318,14 +318,14 @@ extern "C" u16 TutorialList_GetSelectedEntryId(CTutorialList* self) {
                          (u16)((s8)self->mField178 + (s16)self->mField17A));
 }
 
-// func_802ADCE8 (retail 0x130 bytes, recovered): per-frame tutorial list
+// TutorialList_UpdateRowTexts (retail 0x130 bytes, recovered): per-frame tutorial list
 // upkeep.  For each of the 10 rows: format the icon pane name ("pic_icon%02d")
 // and the title pane name ("txt_tit%02d"), resolve the icon pane through the
 // layout root-pane vtable call, and either push the title text directly
 // (empty string) or walk the text-lookup path keyed on the window-id table.
 extern "C" void setPaneVisible(void*, u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
+extern "C" __declspec(noinline) void TutorialList_UpdateRowTexts(CTutorialList* self) {
     for (u32 i = 0; i < 10; i++) {
         char buf[0x20];
         // Retail computes the window-id index early (live across the layout
@@ -355,7 +355,7 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         }
     }
 }
-extern "C" void TutorialList_RefreshRowTexts(void* self) { func_802ADCE8((CTutorialList*)self); }
+extern "C" void TutorialList_RefreshRowTexts(void* self) { TutorialList_UpdateRowTexts((CTutorialList*)self); }
 
 // TutorialList_ConfirmOpenMenu - confirm/open: while the sort menu is animating just refresh
 // cursor/page text; on first open resolve the two anchor panes around the
@@ -417,13 +417,13 @@ extern "C" void TutorialList_RebuildAfterLoad(CTutorialList* self) {
     if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0) return;
     s32 page = sortMenuGetPageIdx(&self->mSortMenu84[0]);
     self->mField17E = (s8)page;
-    func_802ACC30(self->mSubObj180, 0, (u8)page);
+    TutorialList_RebuildIdTable(self->mSubObj180, 0, (u8)page);
     self->mField178 = 0;
     self->mField17A = 0;
     CScrollBar_UpdateThumb(&self->mScrollBar, 0xa, self->mField280);
     CScrollBar_PlaceThumb(&self->mScrollBar, self->mField17A);
     TutorialList_AdvanceSelection(self, 1);
-    func_802ADCE8(self);
+    TutorialList_UpdateRowTexts(self);
     playUISound(3);
 }
 
@@ -510,7 +510,7 @@ extern "C" __declspec(noinline) void TutorialList_RebuildSortEntries(CTutorialLi
                   BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x27));
     func_801D3518(&self->mSortMenu84[0],
                   BdatTouchStringCell(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x28));
-    func_801D353C(&self->mSortMenu84[0], self->mField17E);
+    sortMenuSetPage(&self->mSortMenu84[0], self->mField17E);
 }
 
 extern "C" __declspec(noinline) void TutorialList_UpdateTitleText(CTutorialList* self) {
@@ -526,10 +526,10 @@ extern "C" __declspec(noinline) void TutorialList_OpenAfterFilesReady(CTutorialL
     if (self->mField1C == 0 || self->mField18 != 0) return;
     self->mField176 = 1;
     self->mField174 = 1;
-    func_802ACC30(self->mSubObj180, self->mField17C, 0);
+    TutorialList_RebuildIdTable(self->mSubObj180, self->mField17C, 0);
     self->mField178 = (s8)self->mField282;
     self->mField17A = (u16)(s32)self->mField284;
-    func_802ADCE8(self);
+    TutorialList_UpdateRowTexts(self);
 }
 
 // Destructor (retail __dt__13CTutorialListFv): tear down the embedded
@@ -727,13 +727,13 @@ extern "C" void TutorialList_UpdatePerFrame(CTutorialList* self) {
         break;
     }
     self->mLayout20->Animate(0);
-    func_801D202C(&self->mGap2C[0]);
+    Cur_Update(&self->mGap2C[0]);
     CScrollBar_UpdateDispatch(&self->mScrollBar);
     sortMenuDispatchState(&self->mSortMenu84[0]);
 }
 
 extern "C" void CScrollBar_draw(void*, void*);
-extern "C" void func_801D31F8(void*, void*);
+extern "C" void sortMenuDraw(void*, void*);
 extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
 
 // Render the tutorial list when the visible gate byte is set: draw the
@@ -744,7 +744,7 @@ extern "C" void TutorialList_DrawVisible(CTutorialList* self,
     if (self->mField174 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
         CScrollBar_draw(&self->mScrollBar, drawInfo);
-        func_801D31F8(&self->mSortMenu84[0], drawInfo);
+        sortMenuDraw(&self->mSortMenu84[0], drawInfo);
         Cur_DrawLayout(&self->mGap2C[0], drawInfo);
     }
 }
@@ -776,7 +776,7 @@ struct CTutorialWindowIds {
     s16 mScrollBase;  // 0x104: scroll offset of the selected entry's page
 };
 
-// func_802ACC30 - rebuild the tutorial id table in the +0x180 sub-object:
+// TutorialList_RebuildIdTable - rebuild the tutorial id table in the +0x180 sub-object:
 // collect every active tutorial whose BDAT category matches the filter
 // (all of them when filter==0), sort ascending by name key, then locate the
 // target id to derive the row/scroll split stored after the table.
@@ -784,7 +784,7 @@ struct CTutorialWindowIds {
 // (same codegen class as the constructor above).
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_802ACC30(u8* self, u16 target, int filter) {
+__declspec(noinline) void TutorialList_RebuildIdTable(u8* self, u16 target, int filter) {
     if (lbl_eu_80664BF0 == 0) return;
     CTutorialWindowIds* list = (CTutorialWindowIds*)self;
     list->mCount = 0;
@@ -852,7 +852,7 @@ u8 CTutorialList::TutorialList_IsListVisible() {
     // Inner test written as != so MWCC emits beq-forward + li-tail like retail.
     if (CScrollBar_isVisible(&mScrollBar) == 0)
         return 0;
-    if (func_801D32DC(mSortMenu84) != 0)
+    if (sortMenuIsScrollbarVisible(mSortMenu84) != 0)
         return mField176;
     return 0;
 }

@@ -283,10 +283,10 @@ extern "C" void GimmickElv_SetLodVisible(CfGimmickElvData* self, int show) {
 // GimmickElv_CopyVectors (0x68 bytes) - copy sub-objects
 // ============================================================
 extern "C" void GimmickElv_CopyVectors(CfGimmickElvData* self) {
-    func_802089BC(&self->vec2, &self->vec0, &self->vec1);
-    func_802089BC(&self->elvVec6, &self->elvVec0, &self->elvVec3);
-    func_802089BC(&self->elvVec7, &self->elvVec1, &self->elvVec4);
-    func_802089BC(&self->elvVec8, &self->elvVec2, &self->elvVec5);
+    CfGimmick_BuildColliderMtx(&self->vec2, &self->vec0, &self->vec1);
+    CfGimmick_BuildColliderMtx(&self->elvVec6, &self->elvVec0, &self->elvVec3);
+    CfGimmick_BuildColliderMtx(&self->elvVec7, &self->elvVec1, &self->elvVec4);
+    CfGimmick_BuildColliderMtx(&self->elvVec8, &self->elvVec2, &self->elvVec5);
 }
 
 // ============================================================
@@ -321,9 +321,9 @@ extern "C" void GimmickElv_InitSubObjects(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B474 (0x150 bytes) - activation check
+// GimmickElv_CheckActivate (0x150 bytes) - activation check
 // ============================================================
-extern "C" void func_8020B474(CfGimmickElvData* self) {
+extern "C" void GimmickElv_CheckActivate(CfGimmickElvData* self) {
     if ((self->flags & 0x2000) == 0) {
         // Latch the "starting" flag group (proximity + travel request bits)
         self->flags |= 0x1E00100;
@@ -351,7 +351,7 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
             }
 
             if (ready) {
-                func_8020A484(self->unk6A);
+                CfGimmick_PostGimmickName(self->unk6A);
                 self->flags |= 0x200;
                 return;
             }
@@ -365,9 +365,9 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B5C4 (0x280 bytes) - main update (movement)
+// GimmickElv_UpdateMove (0x280 bytes) - main update (movement)
 // ============================================================
-extern "C" void func_8020B5C4(CfGimmickElvData* self) {
+extern "C" void GimmickElv_UpdateMove(CfGimmickElvData* self) {
     u32 f = self->flags | 0x100;
     self->flags = f;
 
@@ -481,9 +481,9 @@ extern "C" void GimmickElv_SetDir1(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020B89C (0x1FC bytes) - LOD fade update (single axis)
+// GimmickElv_FadeSingleAxis (0x1FC bytes) - LOD fade update (single axis)
 // ============================================================
-extern "C" void func_8020B89C(CfGimmickElvData* self) {
+extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
     f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
     self->val1C8 += dt;
 
@@ -549,9 +549,9 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020BA98 (0x210 bytes) - LOD fade update (both axes loop)
+// GimmickElv_FadeBothAxes (0x210 bytes) - LOD fade update (both axes loop)
 // ============================================================
-extern "C" void func_8020BA98(CfGimmickElvData* self) {
+extern "C" void GimmickElv_FadeBothAxes(CfGimmickElvData* self) {
     self->val1C8 += Scn_GetFrameDelta(lbl_eu_80663E14);
 
     // Per-axis LOD fade driver (direction bits 0x20/0x40, latch bits 0x100/0x200)
@@ -625,11 +625,11 @@ extern "C" void func_8020BA98(CfGimmickElvData* self) {
 }
 
 // ============================================================
-// func_8020BCA8 (0x5CC bytes) - main elevator state update
+// GimmickElv_UpdateState (0x5CC bytes) - main elevator state update
 // Handles: fade-in timer, LOD travel toward target, arrival, sound
 // playback/positioning, and per-axis auto-return distance check.
 // ============================================================
-extern "C" void func_8020BCA8(CfGimmickElvData* self) {
+extern "C" void GimmickElv_UpdateState(CfGimmickElvData* self) {
     return;
 }
 

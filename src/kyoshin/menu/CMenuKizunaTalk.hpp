@@ -122,7 +122,7 @@ struct KizunaCurFields {
     u8 f_15;
 };
 
-// func_801BCF48 stack scratch laid out like the retail frame:
+// kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
     u8 mCur[0x18];
@@ -131,7 +131,7 @@ struct KizunaScratch {
 };
 
 /*
- * Kizuna (friendship) talk screen - singleton, created by func_801BCEBC.
+ * Kizuna (friendship) talk screen - singleton, created by createKizunaTalkSingleton.
  *
  * Retail layout (ctor / dtor / Term):
  *   0x00  IUIWindow base (0x6C)
@@ -143,7 +143,7 @@ struct KizunaScratch {
  *   0x90  nw4r::lyt::ArcResourceAccessor*
  *   0x94  nw4r::lyt::AnimTransform*
  *   0x98  character id (BDAT affinity index)
- *   0x9C  page byte (signed; clamps in func_801BD2F8)
+ *   0x9C  page byte (signed; clamps in driveKizunaTalkPad)
  *   0xA0  move state
  *   0xA4  window state (switch in pollKizunaTalkReady)
  *   0xA8  CCur18 cursor storage (0x18 bytes)

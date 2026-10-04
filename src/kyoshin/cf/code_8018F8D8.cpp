@@ -8,13 +8,13 @@
 // identifier out of the way per include group (this TU never uses it).
 #define lbl_eu_8066A1FC cf_ptstate_2pi_a
 
-// func_801F941C's shared header declares it with (self, u32, u32), but the
+// PartyStateWin_OpenWindow's shared header declares it with (self, u32, u32), but the
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
-#define func_801F941C func_801F941C_3arg_unused
+#define PartyStateWin_OpenWindow PartyStateWin_OpenWindow_3arg_unused
 #define create__8CScnNw4rFv create__8CScnNw4rFv_party_shadow
 #include "kyoshin/cf/code_8018F8D8.hpp"
-#undef func_801F941C
+#undef PartyStateWin_OpenWindow
 #undef create__8CScnNw4rFv
 
 #include "kyoshin/CTaskGame.hpp"
@@ -40,7 +40,7 @@
 #include "monolib/math/CVec3.hpp"
 #undef lbl_eu_8066A1FC
 
-// Imports used only by func_80190940.
+// Imports used only by CfCmd_PickChain.
 extern float lbl_eu_80667A94;
 extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 
@@ -49,7 +49,7 @@ extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
     // Defined later in this TU (state-blob copy used by Init).
-    void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src);
+    void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src);
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80664300;
     extern float lbl_eu_80667A70;
@@ -64,8 +64,8 @@ extern "C" {
     void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
     bool isGlobalCamFlagSet__Fi(int mask);
     u32  CtrlRemote_TouchBitByArg(u32 resource);
-    int  func_80148778(void* obj, int id);
-    int  func_8027E018(volatile s16* obj, FuncActorRef* arg);
+    int  isBattleStatusActive(void* obj, int id);
+    int  ChainTmr_StartUsable_E018(volatile s16* obj, FuncActorRef* arg);
     void __dt__80043E88(void* holder, int flag);
     int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
@@ -81,7 +81,7 @@ extern "C" {
     int  scanBattleObjects();
     int  NandQueueBusy();
     int  UIBattleGetFlagE8();
-    void func_8012FAA8();
+    void UIBattleReleaseAll();
     int  CfRes_lookupLocalIndex(s32 arg);
     int  CCharVoiceMan_IsNodeActive(u32 value);
     void CUICfManager_setTimeout30();
@@ -100,7 +100,7 @@ extern "C" {
     void processEffectList__Q22cf13CfGameManagerFv();
     void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate);
 
-    long func_8017FD44();
+    long GetZealObjPtr();
     // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
     int CBattleMan_FetchVisionObj();
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
@@ -113,8 +113,8 @@ extern "C" {
 namespace cf {}
 using namespace cf;
 
-// 1-arg view of func_801F941C for Move's call site (r4/r5 unset in retail).
-extern "C" void func_801F941C(CPartyStateWin* self);
+// 1-arg view of PartyStateWin_OpenWindow for Move's call site (r4/r5 unset in retail).
+extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
 
 int CfCmd_Gate8000Fwd(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (lbl_eu_80663E24 & 0x8000) {
@@ -146,7 +146,7 @@ int CfCmd_ClearOrFwd25(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 1;
 }
 
-// View of the manager object behind CFuncHost::manager for func_8018FA2C:
+// View of the manager object behind CFuncHost::manager for CfCmd_PartyRebuild:
 // only the +0xC data region and the +0x24 float are read.
 struct FuncHostMgrView {
     u8 _0[0xc];
@@ -156,7 +156,7 @@ struct FuncHostMgrView {
 
 // Party-rebuild event: reposition/notify all players from the shared offset
 // table, refresh the nine party slots, then raise the rebuild task events.
-int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
+int CfCmd_PartyRebuild(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     // Selector byte defaults to 0 and is only loaded when bit20 is set.
     u32 selectId = 0;
     if (lbl_eu_80663E24 & 0x100000) {
@@ -237,7 +237,7 @@ int CfCmd_LookupResKeys(void* p0, void* p1, cf::CfGameManager* gm, u32* p3) {
     return 0;
 }
 
-int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
+int CfCmd_PartyMove(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     // The manager pointer is intentionally re-read from self (+0x408) at every
     // use site; retail reloads it each time rather than caching it in one
     // register, which is what fixes the callee-saved register allocation.
@@ -366,7 +366,7 @@ int CfCmd_RefreshUI(void* p0, int a, int b) {
 int CfCmd_Fwd1FOrFlush(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
     if (UIBattleGetFlagE8() != 0) {
-        func_8012FAA8();
+        UIBattleReleaseAll();
     } else {
         pushBackwards(p0, 0x1f, p1, p2, p3, p4);
         r = 1;
@@ -383,7 +383,7 @@ int CfCmd_Call86778(CFuncHost* self) {
 // floats (byte * scale) and hand them to the scene vec4 setter when bit 7 of
 // the mode word is clear. Retail leaves arg2 (r4) unset at the call site, so
 // the local is intentionally uninitialized.
-int func_801901A4(u32 p0, u32 p1, u32 color) {
+int CfCmd_FadeColor(u32 p0, u32 p1, u32 color) {
     const float scale = lbl_eu_80667A78;
     u8* c = reinterpret_cast<u8*>(&color);
     float cr = c[0] * scale;
@@ -641,7 +641,7 @@ static int probeGate90940(FuncActorRef* actor, u32 gate) {
 // against a long chain of state gates, then sweeps the enum-list of nearby
 // actors (tracking distance to each candidate), and finally runs a
 // mode-specific selection pass over the closest candidates.
-int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
+int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
                   FuncActorRef* filter) {
     self->field_0004 = 0;
     self->field_0008 = 0;
@@ -652,7 +652,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     cf::CfGameManager::getInstance();
     if (!isGlobalCamFlagSet__Fi(0x100)) return 0;
     if (CtrlRemote_TouchBitByArg(0x335f) != 0) return 0;
-    if (func_8017FD44() != 0) return 0;
+    if (GetZealObjPtr() != 0) return 0;
     if (!isGlobalCamFlagSet__Fi(0x400)) return 0;
     if (!isGlobalCamFlagSet__Fi(0x1000)) return 0;
     if (probeGate90940(actor, 0x1f) == 0) return 0;
@@ -674,16 +674,16 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
 
     u8* tags = actor->field_0008;
     // None of the busy/exclusion tags may be present; tag 0xB must be.
-    if (func_80148778(tags, 0x9) != 0) return 0;
-    if (func_80148778(tags, 0xf) != 0) return 0;
-    if (func_80148778(tags, 0x10) != 0) return 0;
-    if (func_80148778(tags, 0xa) != 0) return 0;
-    if (func_80148778(tags, 0xb) == 0) return 0;
+    if (isBattleStatusActive(tags, 0x9) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xf) != 0) return 0;
+    if (isBattleStatusActive(tags, 0x10) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xa) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xb) == 0) return 0;
     // None of the event-lockout tags may be present either.
-    if (func_80148778(tags, 0xeb) != 0) return 0;
-    if (func_80148778(tags, 0xf0) != 0) return 0;
-    if (func_80148778(tags, 0xf1) != 0) return 0;
-    if (func_80148778(tags, 0xf8) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xeb) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xf0) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xf1) != 0) return 0;
+    if (isBattleStatusActive(tags, 0xf8) != 0) return 0;
     if (probeGate90940(actor, 0xa) == 0) return 0;
     if (probeGate90940(actor, 0xb) == 0) return 0;
     if (probeGate90940(actor, 0x1a) == 0) return 0;
@@ -785,9 +785,9 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() != 0)
                 continue;
             u8* tags2 = cand->field_0008;
-            if (!(func_80148778(tags2, 0xf) != 0 ||
-                  func_80148778(tags2, 0x9) != 0 ||
-                  func_80148778(tags2, 0xb) != 0))
+            if (!(isBattleStatusActive(tags2, 0xf) != 0 ||
+                  isBattleStatusActive(tags2, 0x9) != 0 ||
+                  isBattleStatusActive(tags2, 0xb) != 0))
                 continue;
             if (dists[k] > thr) continue;
             if (filter != NULL && filter != cand) continue;
@@ -801,7 +801,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             FuncActorRef* cand = cands[k];
             if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() != 0)
                 continue;
-            if (func_80148778(cand->field_0008, 0x10) == 0) continue;
+            if (isBattleStatusActive(cand->field_0008, 0x10) == 0) continue;
             if (probeGate90940(cand, 0x16) != 0) continue;
             if (dists[k] > thr) continue;
             if (filter != NULL && filter != cand) continue;
@@ -844,7 +844,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
                     continue;
                 if (dists[k] > thr) continue;
                 if (cand->field_3388 & 0x10) continue;
-                if (func_8027E018(&bm->field_0x20c8, cand) == 0) continue;
+                if (ChainTmr_StartUsable_E018(&bm->field_0x20c8, cand) == 0) continue;
                 ACCEPT(4, true);
             }
         }
@@ -934,11 +934,11 @@ void CMenuPTState::Init() {
     d->v0058 = s->v0058;
     d->v005c = s->v005c;
     d->v0060 = s->v0060;
-    // func_80191C88 is imported under C linkage with opaque u8* parameters
+    // CopyPTSubBlob is imported under C linkage with opaque u8* parameters
     // (see CPartyStateWin.hpp); call sites pass the blob sub-objects.
-    func_80191C88((u8*)&d->blob0064, (const u8*)&s->blob0064);
-    func_80191C88((u8*)&d->blob05a8, (const u8*)&s->blob05a8);
-    func_80191C88((u8*)&d->blob0ae4, (const u8*)&s->blob0ae4);
+    CopyPTSubBlob((u8*)&d->blob0064, (const u8*)&s->blob0064);
+    CopyPTSubBlob((u8*)&d->blob05a8, (const u8*)&s->blob05a8);
+    CopyPTSubBlob((u8*)&d->blob0ae4, (const u8*)&s->blob0ae4);
     d->v1020 = s->v1020;
     d->v1024 = s->v1024;
     d->v1028 = s->v1028;
@@ -952,11 +952,11 @@ void CMenuPTState::Init() {
     d->v1048 = s->v1048;
     d->v104c = s->v104c;
     d->v1050 = s->v1050;
-    func_80191C88((u8*)&d->blob1054, (const u8*)&s->blob1054);
+    CopyPTSubBlob((u8*)&d->blob1054, (const u8*)&s->blob1054);
     d->v1590 = s->v1590;
     d->v1594 = s->v1594;
-    func_80191C88((u8*)&d->blob1598, (const u8*)&s->blob1598);
-    func_80191C88((u8*)&d->blob1ad4, (const u8*)&s->blob1ad4);
+    CopyPTSubBlob((u8*)&d->blob1598, (const u8*)&s->blob1598);
+    CopyPTSubBlob((u8*)&d->blob1ad4, (const u8*)&s->blob1ad4);
     d->v2010 = s->v2010;
     d->v2014 = s->v2014;
     d->v2018 = s->v2018;
@@ -970,11 +970,11 @@ void CMenuPTState::Init() {
     d->v2038 = s->v2038;
     d->v203c = s->v203c;
     d->v2040 = s->v2040;
-    func_80191C88((u8*)&d->blob2044, (const u8*)&s->blob2044);
+    CopyPTSubBlob((u8*)&d->blob2044, (const u8*)&s->blob2044);
     d->v2580 = s->v2580;
     d->v2584 = s->v2584;
-    func_80191C88((u8*)&d->blob2588, (const u8*)&s->blob2588);
-    func_80191C88((u8*)&d->blob2ac4, (const u8*)&s->blob2ac4);
+    CopyPTSubBlob((u8*)&d->blob2588, (const u8*)&s->blob2588);
+    CopyPTSubBlob((u8*)&d->blob2ac4, (const u8*)&s->blob2ac4);
     d->v3000 = s->v3000;
     d->v3004 = s->v3004;
     d->v3008 = s->v3008;
@@ -1020,11 +1020,11 @@ void CMenuPTState::Init() {
     d->v30a0 = s->v30a0;
     d->v30a4 = s->v30a4;
     d->v30a8 = s->v30a8;
-    func_80191C88((u8*)&d->blob30ac, (const u8*)&s->blob30ac);
+    CopyPTSubBlob((u8*)&d->blob30ac, (const u8*)&s->blob30ac);
     d->v35e8 = s->v35e8;
     d->v35ec = s->v35ec;
-    func_80191C88((u8*)&d->blob35f0, (const u8*)&s->blob35f0);
-    func_80191C88((u8*)&d->blob3b2c, (const u8*)&s->blob3b2c);
+    CopyPTSubBlob((u8*)&d->blob35f0, (const u8*)&s->blob35f0);
+    CopyPTSubBlob((u8*)&d->blob3b2c, (const u8*)&s->blob3b2c);
     {
         // 15-word run, fully unrolled (retail emits lwz/stw per element).
         d->v4068[0] = s->v4068[0];
@@ -1111,8 +1111,8 @@ void CMenuPTState::Init() {
     d->opack41e8.v41e9 = s->opack41e8.v41e9;
     d->opack41e8.v41ea = s->opack41e8.v41ea;
     d->opack41e8.v41ee = s->opack41e8.v41ee;
-    func_80166F80(&d->f41f4, &s->f41f4);
-    func_80192268(&d->blob4400, &s->blob4400);
+    InfoCfCopyObjF80(&d->f41f4, &s->f41f4);
+    CopyPTStateBlob(&d->blob4400, &s->blob4400);
     // Tail run (CSysWin flags + window timer float).
     d->v6bac = s->v6bac;
     d->v6bb0 = s->v6bb0;
@@ -1156,7 +1156,7 @@ void CMenuPTState::Init() {
 // under the unit default -O4,p the runs unroll and bloat .text by ~0x2E8).
 // The vu*/vf* volatile field types force the retail load/store program order.
 #pragma optimize_for_size on
-void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
+void CopyPTSubBlob(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->f_04 = src->f_04;
     dst->f_08 = src->f_08;
     dst->f_0c = src->f_0c;
@@ -1305,12 +1305,12 @@ void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
 // Per-field copy of a large (~0x27A8-byte) state blob from src to dst, in the
 // exact order retail reads them. The five runs of 8-byte elements compile to
 // mtctr/bdnz lwzu+stwu copy loops (loop counts: 16, 18, 16, 0x400, 0x80).
-// Same size story as func_80191C88 above: retail keeps the runs rolled, so
+// Same size story as CopyPTSubBlob above: retail keeps the runs rolled, so
 // this function also compiles with optimize_for_size (saves ~0x400 .text).
 // __declspec(noinline): retail Init keeps a real bl to this symbol; without
 // it MWCC inlines the shrunken body into Init's single call site (+0x5C8).
 #pragma optimize_for_size on
-__declspec(noinline) void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
+__declspec(noinline) void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_04 = src->f_04; dst->f_08 = src->f_08;
     dst->f_0c = src->f_0c; dst->f_10 = src->f_10;
     dst->f_14 = src->f_14; dst->f_18 = src->f_18;
@@ -1541,7 +1541,7 @@ void CMenuPTState::Move() {
             // Background layout finished loading -> start the window open-in.
             if (BgTex_IsLoaded_3E34(&field_0x60) != 0) {
                 // Retail leaves arg2/arg3 (r4/r5) unset at this call site.
-                func_801F941C(&field_0x80);
+                PartyStateWin_OpenWindow(&field_0x80);
                 field_0x6C6C = 1;
             }
             break;

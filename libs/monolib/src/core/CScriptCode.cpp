@@ -115,8 +115,8 @@ CScriptCode::~CScriptCode() {
 
 // us-8043cb74: line parser (retail symbol is Fv-mangled but takes arguments).
 // Copies whitespace-delimited lines from pData into a local buffer, calls
-// func_8043A390 on each, then skips to the next line.
-void func_8043A1DC__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize) {
+// dispatchCommand on each, then skips to the next line.
+void parseLines__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize) {
     int offset = 0;
 
     if (pData == NULL) return;
@@ -140,7 +140,7 @@ void func_8043A1DC__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize) 
 
         // Null-terminate the line and process it
         lineBuf[count] = 0;
-        func_8043A390__11CScriptCodeFv((CCmdDispatcher*)self, (const char*)lineBuf, 1);
+        dispatchCommand__11CScriptCodeFv((CCmdDispatcher*)self, (const char*)lineBuf, 1);
 
         // Skip forward to the end of the line
         while (1) {
@@ -162,7 +162,7 @@ void func_8043A1DC__11CScriptCodeFv(CScriptCode* self, u8* pData, u32 dataSize) 
 // Register-shape notes: seg/pos are s16 (re-sign-extended on use) and base
 // accumulates the segment offset; addresses are formed base-first so MWCC
 // emits add rBase, rPtr in retail operand order.
-s16 func_8043A2F8__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn) {
+s16 splitSegments__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn) {
     s16 seg = 0;
     s16 pos = 0;
     int base = 0;
@@ -195,7 +195,7 @@ s16 func_8043A2F8__11CScriptCodeFv(CScriptCode* self, u8* pOut, u8* pIn) {
 // arguments). Registers a (key, handler) pair in the global ScriptCode
 // singleton's primary slot array. Does nothing if the key is already
 // registered.
-void func_8043A70C__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue) {
+void registerCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pValue) {
     CScriptCode* inst = lbl_eu_806655B0[0];
     s16 cnt = inst->m_cnt0;
 
@@ -252,9 +252,9 @@ CScriptCode* CScriptCode::create(CWorkThread* pParent) {
 // doSecondary) for an entry whose key string matches the segment, and
 // dispatches to the matched handler(s) through vtable slot 3 with the token.
 // Returns 1 when no command matched.
-int func_8043A390__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int doSecondary) {
+int dispatchCommand__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int doSecondary) {
     u8 buf[0x800];
-    s16 segCount = func_8043A2F8__11CScriptCodeFv(lbl_eu_806655B0[0], buf, (u8*)pData);
+    s16 segCount = splitSegments__11CScriptCodeFv(lbl_eu_806655B0[0], buf, (u8*)pData);
 
     for (s16 s = 0; s < segCount; s++) {
         const u8* seg = &buf[s * 0x100];
@@ -262,7 +262,7 @@ int func_8043A390__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int 
         // Search the secondary slot array (m_slot1)
         for (s16 i = 0; i < lbl_eu_806655B0[0]->m_cnt1; i++) {
             CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot1[i];
-            if (lbl_eu_806655B0[0]->m_token.func_8043ABD4(entry->key, (const char*)seg)) {
+            if (lbl_eu_806655B0[0]->m_token.matchKeyWords(entry->key, (const char*)seg)) {
                 int r = 0;
                 if (self != NULL) {
                     r = self->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
@@ -278,7 +278,7 @@ int func_8043A390__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int 
             // Search the primary slot array (m_slot0)
             for (s16 i = 0; i < lbl_eu_806655B0[0]->m_cnt0; i++) {
                 CScriptCodeEntry* entry = lbl_eu_806655B0[0]->m_slot0[i];
-                if (lbl_eu_806655B0[0]->m_token.func_8043ABD4(entry->key, (const char*)seg)) {
+                if (lbl_eu_806655B0[0]->m_token.matchKeyWords(entry->key, (const char*)seg)) {
                     int r = 0;
                     if (self != NULL) {
                         r = self->cmdHandler(lbl_eu_806655B0[0]->m_token, entry->key);
@@ -301,7 +301,7 @@ int func_8043A390__11CScriptCodeFv(CCmdDispatcher* self, const char* pData, int 
 // frees the entry object, then compacts the array by shifting all later
 // entries down one slot and decrements the count. Searches the primary slot
 // array first, falling back to the secondary slot array.
-void func_8043A57C__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget) {
+void unregisterCmd__11CScriptCodeFv(const char* pKey, CCmdDispatcher* pTarget) {
     const char* key = pKey;
 
     // Primary slot array: find first entry whose key matches, free + compact.

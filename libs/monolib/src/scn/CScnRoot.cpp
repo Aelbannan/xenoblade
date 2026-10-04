@@ -225,7 +225,7 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     // Bloom object (handled by the scene-root allocator).
     void* mem = mtl::MemManager::allocate(0x94, s->vtable->mVf8(obj));
     if (mem != NULL) {
-        mem = func_80499FD0((CScnBloom*)mem, (CView*)mgr);
+        mem = CScnBloom_InitWithView((CScnBloom*)mem, (CView*)mgr);
     }
     s->mBloom = mem;
 

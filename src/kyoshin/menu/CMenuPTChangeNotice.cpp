@@ -74,10 +74,10 @@ void CMenuPTChangeNotice::Term() {}
 void CMenuPTChangeNotice::Move() {}
 
 // ---------------------------------------------------------------------------
-// func_8029348C - async file-load completion: build the notice layout from the
+// PTNotice_BuildLayout_348C - async file-load completion: build the notice layout from the
 // freshly loaded arc. Returns 1 on success.
 // ---------------------------------------------------------------------------
-extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
+extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     // Build the notice layout from the freshly loaded arc when the event's
     // handle matches the load we issued.
     if (self->mFileHandle == (u32)evt->mFileHandle) {
@@ -307,7 +307,7 @@ extern "C" void PTNotice_Advance_3C20(CMenuPTChangeNotice* self) {
     }
 }
 
-void func_80293C64(){}
+void PTNotice_HandleInput_3C64(){}
 
 // ---------------------------------------------------------------------------
 // PTNotice_Rewind_3D2C - advance the notice animation; once it reaches its target
@@ -319,7 +319,7 @@ extern "C" void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* self) {
     }
 }
 
-void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))func_8029348C)((char*)self - 0x6c); }
+void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))PTNotice_BuildLayout_348C)((char*)self - 0x6c); }
 
 void PTNotice_DtorThunkA_3D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
 

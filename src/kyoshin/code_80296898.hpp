@@ -28,4 +28,4 @@ void updateConfig(u8* src);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // External function referenced by both init() and updateConfig.
 // Takes a boolean (0 or 1) derived from mConfigData[0x0C].
-extern "C" void func_eu_802B14F8(u8);
+extern "C" void setErrMesLanguage(u8);

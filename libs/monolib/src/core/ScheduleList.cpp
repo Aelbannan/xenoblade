@@ -15,10 +15,10 @@
 // linkage; the canonical declarations live in headers that are out of this
 // TU's writable scope).
 extern "C" void schedReleaseAllItems(CSchedule* self);
-extern "C" void func_804E3B6C(CSchedule* self);
-extern "C" void func_804E36DC(CSchedule* self, f32 dt);
+extern "C" void schedFeedTargetDist(CSchedule* self);
+extern "C" void schedUpdate(CSchedule* self, f32 dt);
 extern "C" void __ct__CSchedule(CSchedule* self);
-extern "C" int func_804E3434(CSchedule* self, ScheduleEntry* entries,
+extern "C" int Sched_Init(CSchedule* self, ScheduleEntry* entries,
                              u8* field_0x08_ptr, u8* field_0x0c_ptr,
                              u32 flags_a, u32 flags_b, u8* field_0x10_ptr);
 extern "C" void __dt__9CScheduleFv(void* self, int flag);
@@ -113,7 +113,7 @@ extern "C" SLList* __dt__12ScheduleListFv(SLList* self, int flag);
 extern "C" void SchedList_StepAll(SLList* self, f32 dt);
 extern "C" void SchedList_SweepAll(SLList* self);
 extern "C" void SchedList_SweepMatched(SLList* self, u8* x);
-extern "C" CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
+extern "C" CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
                                     u8* p8, u8* pc, u32 fa, u32 fb, u8* p10);
 extern "C" void SchedList_DropItem(SLList* self, CSchedule* x);
 extern "C" void SchedList_DropByField14(SLList* self, u32 x);
@@ -125,7 +125,7 @@ extern "C" __declspec(align(8)) u32 lbl_eu_80570078[12] __attribute__((weak)) = 
     (u32)&lbl_eu_80663C10, 0x00000000,
     (u32)&__dt__12ScheduleListFv, (u32)&SchedList_StepAll,
     (u32)&SchedList_SweepAll, (u32)&SchedList_SweepMatched,
-    (u32)&func_804E4830, (u32)&SchedList_DropItem,
+    (u32)&SchedList_AddItem, (u32)&SchedList_DropItem,
     (u32)&SchedList_DropByField14, (u32)&SchedList_ClearMatchTags,
     (u32)&SchedList_TallyItems, (u32)&SchedList_RingHead,
 };
@@ -248,7 +248,7 @@ static u32 slAllocHandle(void) {
     } while (0)
 
 // ---------------------------------------------------------------------------
-// SchedList_StepAll: step every schedule (func_804E36DC with a delta), then
+// SchedList_StepAll: step every schedule (schedUpdate with a delta), then
 // remove-and-destroy any schedule whose flags select the removal path
 // (bit 10 set, bit 15 clear).
 // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ void SchedList_StepAll(SLList* self, f32 dt) {
     if (count != 0) {
         node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr && node != 0) {
-            func_804E36DC((CSchedule*)node->mItem, dt);
+            schedUpdate((CSchedule*)node->mItem, dt);
             node = node->mNext;
         }
         do {
@@ -323,7 +323,7 @@ void SchedList_SweepAll(SLList* self) {
     }
 }
 
-// SchedList_SweepMatched: func_804E3B6C on each schedule whose field_0x10 matches x.
+// SchedList_SweepMatched: schedFeedTargetDist on each schedule whose field_0x10 matches x.
 void SchedList_SweepMatched(SLList* self, u8* x) {
     SLNode* node;
     u32 count = 0;
@@ -339,7 +339,7 @@ void SchedList_SweepMatched(SLList* self, u8* x) {
         while (node != self->mRes.mStartNodePtr) {
             CSchedule* item = (CSchedule*)node->mItem;
             if (x == item->field_0x10) {
-                func_804E3B6C(item);
+                schedFeedTargetDist(item);
             }
             node = node->mNext;
         }
@@ -347,10 +347,10 @@ void SchedList_SweepMatched(SLList* self, u8* x) {
 }
 
 // ---------------------------------------------------------------------------
-// func_804E4830: allocate a CSchedule, initialize it with the six forwarded
+// SchedList_AddItem: allocate a CSchedule, initialize it with the six forwarded
 // arguments, and push it onto the ring's first free slot.
 // ---------------------------------------------------------------------------
-CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
+CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
                          u8* p8, u8* pc, u32 fa, u32 fb, u8* p10) {
     SLNode* sentinel;
     SLNode* temp;
@@ -371,7 +371,7 @@ CSchedule* func_804E4830(SLList* self, ScheduleEntry* entries,
     if (p == 0) {
         return 0;
     }
-    if (func_804E3434(p, entries, p8, pc, fa, fb, p10) == 0) {
+    if (Sched_Init(p, entries, p8, pc, fa, fb, p10) == 0) {
         if (p != 0) {
             if (p != 0) {
                 scheduleDestroy(p);

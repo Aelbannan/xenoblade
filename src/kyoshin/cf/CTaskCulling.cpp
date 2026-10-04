@@ -53,7 +53,7 @@ extern const char lbl_eu_80503F58[];
 // Retail symbols are C-linkage (unmangled); declared here because the declaring
 // header code_800AA008.hpp uses C++ mangling that drifts the reloc names.
 extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 
 namespace cf{
     //unused
@@ -107,7 +107,7 @@ bool CTaskCulling::isOccluded(const ml::CVec3& r4, float r5){
 
 bool CTaskCulling::isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
         if(lbl_eu_80664328 == nullptr) return false;
-        return mOccCulling.func_801A1550(r4, r5, r6);
+        return mOccCulling.isRayOccluded(r4, r5, r6);
     }
 
 void CTaskCulling::clearOccFrustums(){
@@ -116,7 +116,7 @@ void CTaskCulling::clearOccFrustums(){
     instance->mOccCulling.clear();
 }
 
-    void CTaskCulling::func_801A2CAC(){
+    void CTaskCulling::reloadOccFrustums(){
         if(lbl_eu_80664328 == nullptr) return;
 
         clearOccFrustums();
@@ -125,8 +125,8 @@ void CTaskCulling::clearOccFrustums(){
         u32 outA, outB, outC, outD;
 
         Tok_Unpack(gm->unk70, &outA, &outB, &outC, &outD);
-        func_800AA33C(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
-        func_800AA33C(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
+        Tok_FormatStr(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
+        Tok_FormatStr(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
 
         // Cached after the last external call.
         ml::FixStr<64>* path = &lbl_eu_80664328->unkDC;

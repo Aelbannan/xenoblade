@@ -1278,11 +1278,11 @@ extern "C" CScnCameraItem* CamMan_FindItemA_B158(CScnEnvLgtCtrlCamWork* cam, s32
 
 // Cross-TU light-env helpers used by scnLgtDispatchEnv. The full declarations
 // live in CScnVirtualLight.hpp, which cannot be included here (its
-// func_804C03A0 signature differs from this header's); these identical
+// LightCtlSetAttnMode signature differs from this header's); these identical
 // redeclarations keep the call relocs flat.
-extern "C" void func_80495644(CLightEnv* self, u32 idx);
+extern "C" void selectLightSlot(CLightEnv* self, u32 idx);
 extern "C" void resetLightSlotIndex(void* self);
-extern "C" void func_804952C4(CLightEnv* self, const ml::CVec3* v);
+extern "C" void blendSlotAmbient(CLightEnv* self, const ml::CVec3* v);
 extern "C" void scnVlApplyDir4C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
 extern "C" void scnVlApplyDir6C(CScnVirtualLight* self, const ml::CVec4* src, f32 value);
 
@@ -1448,10 +1448,10 @@ extern "C" void ScnFilterMan_toggleFilter(u8* man, CScnEnvLgtBlend* filter);
 // Light-render helpers called by scnLgtApplyLightCmdScaled / scnLgtApplyLightCmd /
 // scnLgtApplyLightCmdEx (defined in the TU before this one; only the call-site ABI
 // is needed here).
-extern "C" void func_804C03A0(CScnEnvLgtLightView* view, u32 flag);
-extern "C" void func_804C0454(CScnEnvLgtLightView* view, const u8* p);
-extern "C" void func_804C0484(CScnEnvLgtLightView* view, const u8* p);
-extern "C" void func_804C07F0(CScnEnvLgtLightView* view, CScnEnvLgtCtrlLgtVec4* out);
+extern "C" void LightCtlSetAttnMode(CScnEnvLgtLightView* view, u32 flag);
+extern "C" void LightCtlSetPos(CScnEnvLgtLightView* view, const u8* p);
+extern "C" void LightCtlSetDir(CScnEnvLgtLightView* view, const u8* p);
+extern "C" void LightCtlSetColor(CScnEnvLgtLightView* view, CScnEnvLgtCtrlLgtVec4* out);
 extern "C" void LightCtlSetEnable(CScnEnvLgtLightView* view, u32 flag);
 extern "C" void LightCtlInitDistAttn(CScnEnvLgtLightView* view, u32 a, f32 b, f32 c);
 extern "C" void LightCtlInitSpot(CScnEnvLgtLightView* view, u32 a, f32 b);

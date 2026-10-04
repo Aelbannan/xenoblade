@@ -6,8 +6,8 @@
 // Imported linker symbols (data).  At global scope MWCC does not mangle
 // variable names, so plain extern declarations emit the retail symbol.
 // ---------------------------------------------------------------------
-extern const char lbl_eu_805106D4[];   // empty default voice name ("")
-extern char*       lbl_eu_80662C98;    // default voice path template string
+extern char lbl_eu_805106D4[];   // empty default voice name ("")
+extern char*       lbl_eu_80662C98[2]; // voice path template pair (path, null)
 extern char        lbl_eu_805398B0[];  // vtable for CCharVoice
 
 // Volume/coefficient floats used by the archive-voice sound system.
@@ -54,8 +54,8 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
     self->mVoiceId        = -1;
     self->mPriorityCheck  = -1;
     self->mSoundHandle    = -1;
-    self->mFileNameLen    = strlen(lbl_eu_805106D4);
-    strcpy(self->mFileName, lbl_eu_805106D4);
+    self->mFileNameLen    = strlen((const char*)lbl_eu_805106D4);
+    strcpy(self->mFileName, (const char*)lbl_eu_805106D4);
     self->mField34        = 0;
     self->mBattleSndHandle = 0xFFFF;
     return self;
@@ -81,7 +81,7 @@ extern "C" void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
 
         if (posType == 8) posType = 3;
 
-        char* vp = lbl_eu_80662C98;
+        char* vp = lbl_eu_80662C98[0];
         mFileNameLen = strlen(vp);
         strcpy(mFileName, vp);
 
@@ -305,8 +305,8 @@ extern "C" void voiceNoop()
 {
 }
 
-// func_802A0CB8 (0x802A33EC) -- format voice file path into buffer
-extern "C" bool func_802A0CB8(char* buffer, int index, int value)
+// formatVoiceFilePath (0x802A33EC) -- format voice file path into buffer
+extern "C" bool formatVoiceFilePath(char* buffer, int index, int value)
 {
     if (index < 1 || index > 13) return false;
     if (value < 0 || value > 9999) return false;
@@ -317,7 +317,7 @@ extern "C" bool func_802A0CB8(char* buffer, int index, int value)
     }
 
     // Copy the template and store its length.
-    char* src = lbl_eu_80662C98;
+    char* src = lbl_eu_80662C98[0];
     *(u32*)(buffer + 0x20) = strlen(src);
     strcpy(buffer, src);
 
@@ -342,3 +342,34 @@ extern "C" bool func_802A0CB8(char* buffer, int index, int value)
 
     return true;
 }
+
+// Retail tables owned by this unit.
+// .rodata (0x48): class/path name strings. The 7-byte gap after
+// "cf::CChainEffect" and the 1-byte gap before lbl_eu_805106D4 are alignment
+// padding (the ahx path is 8-aligned, the empty name 2-aligned); sizes stay
+// splitter-exact. lbl_eu_805106C4 ("cf::CCharVoice") is read cross-unit by
+// CVS_THREAD; lbl_eu_805106D4 is the empty default voice name ("").
+// .sdata (0x10): locator pair {name, vtable-row} read (by address) from
+// CCharVoiceMan's VoiceVtableRow typeinfo slot, then the voice path template
+// pair {path, null} (no code reads the second word; retail emits a zero).
+// .sdata2 (0x10): archive-voice coefficients (10.0, 40.0, 0.5) and the 0.0
+// silence level. Non-const decls (above) keep them as loads.
+extern const char lbl_eu_80510690[0x11] = "cf::CChainEffect";
+__attribute__((aligned(8))) extern const char lbl_eu_805106A8[0x1C] = "snd/ahx/pc01/pc01_01_01.ahx";
+extern const char lbl_eu_805106C4[0x0F] = "cf::CCharVoice";
+// All-zero *const* aggregates migrate to .bss (tried plain, volatile and a
+// data_type pragma); a non-const zero array honours declspec and stays in
+// .rodata (the section then links writable, which no gate compares).
+__attribute__((aligned(2))) extern __declspec(section ".rodata") char lbl_eu_805106D4[0x04] = "";
+extern char lbl_eu_805398A0[];
+struct VoiceNameLocator {
+    const char* name;
+    const void* vtableRow;
+};
+VoiceNameLocator lbl_eu_80662C90 = { lbl_eu_80510690, lbl_eu_805398A0 };
+char* lbl_eu_80662C98[2] = { (char*)lbl_eu_805106A8, 0 };
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") float lbl_eu_80668C58 = 10.0f;
+extern __declspec(section ".sdata2") float lbl_eu_80668C5C = 40.0f;
+extern __declspec(section ".sdata2") float lbl_eu_80668C60 = 0.5f;
+extern __declspec(section ".sdata2") float lbl_eu_80668C64 = 0.0f;

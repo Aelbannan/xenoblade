@@ -1,5 +1,5 @@
 {
- "baseline_count": 413,
+ "baseline_count": 406,
  "entries": {
   "AX.o": {
    "class": "rename",
@@ -807,9 +807,6 @@
   "CChainActorPc.o": {
    "class": "rename",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -823,9 +820,6 @@
   "CChainCombo.o": {
    "class": "rename",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -1516,10 +1510,7 @@
   "CDrawGX.o": {
    "class": "rename",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".sdata2"
-    ],
+    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -9416,7 +9407,6 @@
     "extern_data_sections": [
      ".data",
      ".rodata",
-     ".sdata",
      ".sdata2"
     ],
     "pool_patterns": [
@@ -9547,10 +9537,7 @@
   "CMenuGetItemMulti.o": {
    "class": "rename",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".sdata2"
-    ],
+    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9941,9 +9928,6 @@
   "CMenuVision.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data"
-    ],
     "retarget_relocs": [
      [
       ".text",
@@ -10437,12 +10421,7 @@
   "CPartsChange.o": {
    "class": "rename",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
-    ],
+    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -12176,25 +12155,13 @@
   },
   "CVS_THREAD_BATTLE_BEGIN.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
   "CVS_THREAD_BATTLE_END_SP.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
@@ -12228,13 +12195,7 @@
   },
   "CVS_THREAD_FAINT.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
@@ -12271,25 +12232,13 @@
   },
   "CVS_THREAD_REVIVE.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
   "CVS_THREAD_SUDDEN.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
@@ -16152,9 +16101,6 @@
       "hex:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80536CF8"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-a",
@@ -17039,11 +16985,7 @@
   },
   "g3d_3dsmax.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".rodata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
@@ -17064,10 +17006,7 @@
       "lbl_eu_80569438"
      ]
     ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata"
-    ]
+    "extern_data_sections": ".rodata"
    },
    "owner": "category-a",
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
@@ -17179,11 +17118,7 @@
       "lbl_eu_805692E8"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data",
-     ".rodata"
-    ],
+    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:00000000",
@@ -17474,11 +17409,7 @@
   },
   "g3d_maya.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".rodata"
-    ]
-   },
+   "fields": {},
    "owner": "unassigned",
    "reason": ""
   },
@@ -18151,10 +18082,7 @@
       "lbl_eu_805690C0"
      ]
     ],
-    "extern_data_sections": [
-     ".rodata",
-     ".sdata2"
-    ]
+    "extern_data_sections": ".sdata2"
    },
    "owner": "category-a",
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
@@ -18168,10 +18096,7 @@
       "lbl_eu_805697A0"
      ]
     ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata"
-    ]
+    "extern_data_sections": ".rodata"
    },
    "owner": "category-a",
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
@@ -20330,9 +20255,6 @@
       "hex:000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80568F10"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-a",
@@ -21114,9 +21036,6 @@
       "__vt__Q34nw4r3snd12SoundArchive",
       "lbl_eu_8056ABC0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-a",

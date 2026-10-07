@@ -91,7 +91,7 @@ extern CMenuBattleChain* lbl_eu_80664A60;
 // Temp (CProcess) vtable written before the PMF copy; composite vtable with
 // the IWorkEvent sub-vtable at +0x24 and IScnRender sub-vtable at +0xac.
 extern char lbl_eu_8052D238[];
-extern u32 lbl_eu_80539E48[48];
+extern char lbl_eu_80539E48[];
 // Null pointer-to-member-function constant (3 words, copied into +0x3C..0x53).
 extern u32 __ptmf_null[3];
 

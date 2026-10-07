@@ -2208,7 +2208,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x4222F983), "lbl_eu_8066A474"),              # 128/pi
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8066A478"),      # int->f64 magic
         ),
-        extern_data_sections=(".data", ".sdata2"),
+    extern_data_sections=(".sdata2"),
     ),
     "code_802B9064.o": UnitRules(
         pool_patterns=(
@@ -2319,7 +2319,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         data_pool_patterns=(
             (".data", bytes(0x30), "jumptable_eu_80536CF8"),
         ),
-        extern_data_sections=(".data",),
     ),
     "CMapSel.o": UnitRules(
         # __ct__CMapSel dispatch jumptable ships from split1.s
@@ -2442,7 +2441,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668AF8"),
         ),
-        extern_data_sections=(".sdata2",),
     ),
 "CChain.o": UnitRules(
         # func_80276D30 / func_80277B38 dispatch jumptables ship from
@@ -2625,7 +2623,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x1010, "lbl_eu_80667AF0"),
             (".text", 0x1BA4, "lbl_eu_80667AF0"),
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    extern_data_sections=(".sdata2"),
     ),
     "CtrlMovePC.o": UnitRules(
         # Data dissolve: 0.0f -> lbl_eu_80667B60, int->float magic ->
@@ -2666,7 +2664,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x165A, "jumptable_eu_805334A0"),
             (".text", 0x1662, "jumptable_eu_805334A0"),
         ),
-        extern_data_sections=(".data",),
     ),
     "CPcEffect07.o": UnitRules(
         # Data dissolve: single magic double -> lbl_eu_80667DF8.
@@ -2697,7 +2694,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x47C6, "jumptable_eu_80533898"),
             (".text", 0x47CE, "jumptable_eu_80533898"),
         ),
-        extern_data_sections=(".data", ".sdata2"),
+    extern_data_sections=(".sdata2"),
     ),
     "CSuddenCommu.o": UnitRules(
         # Data dissolve: lone magic double has no unit-referenced blob label
@@ -3974,7 +3971,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80668B98"),
         ),
-        extern_data_sections=(".sdata2",),
     ),
     "lyt_texMap.o": UnitRules(
         # TexMap::Get(GXTexObj*): MWCC @N pools vs retail SDA labels.
@@ -5191,7 +5187,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q34nw4r3g3d13AnmObjChrNode", "lbl_eu_805693E0"),
             ("__vt__Q34nw4r3g3d9AnmObjChr", "lbl_eu_80569438"),
         ),
-        extern_data_sections=(".data", ".rodata"),
+    extern_data_sections=(".rodata"),
     ),
 
     # g3d_gpu: MWCC pools the per-function local const fifo pointer literals
@@ -5216,7 +5212,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("dlsize$9750", "lbl_eu_8051D4C0"),  # CallDisplayList dlsize
             ("r2c$9823", "lbl_eu_805690C0"),   # GXSetTevOrder r2c
         ),
-        extern_data_sections=(".rodata", ".sdata2"),
+    extern_data_sections=(".sdata2"),
     ),
 
     # g3d_resanmscn: the five ResName pascal-string lookup keys
@@ -5696,7 +5692,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Retail split carries NO data: the SoundArchive vtable ships from
         # nw4r_data.s @lbl_eu_8056ABC0 (loaded by __ct via lis/addi).
         exact_renames=(("__vt__Q34nw4r3snd12SoundArchive", "lbl_eu_8056ABC0"),),
-        extern_data_sections=(".data",),
     ),
     "snd_StrmPlayer.o": UnitRules(
         # Retail split carries NO data: StrmPlayer vtable @lbl_eu_8056AC78
@@ -6256,7 +6251,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q34nw4r3g3d15AnmObjTexSrtRes", "lbl_eu_805692A0"),
             ("__vt__Q34nw4r3g3d12AnmObjTexSrt", "lbl_eu_805692E8"),
         ),
-        extern_data_sections=(".sdata2", ".data", ".rodata"),
+    extern_data_sections=(".sdata2"),
     ),
     "g3d_anmscn.o": UnitRules(
         pool_patterns=(
@@ -6326,12 +6321,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     # blob definitions at link (g3d_anmclr vtable pattern); the data gate sees
     # empty-vs-empty. Verified byte-neutral for every function including
     # CalcTexMtx_* (hexdiff --all identical to the stub-based build).
-    "g3d_maya.o": UnitRules(
-        extern_data_sections=(".rodata",),
-    ),
-    "g3d_3dsmax.o": UnitRules(
-        extern_data_sections=(".rodata",),
-    ),
 
     "g3d_scnroot.o": UnitRules(
         # Retail split is .text-only: ScnObjGather/ScnRoot vtables ship from
@@ -6351,7 +6340,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         # @lbl_eu_805697A0; ResName strings already retail-named
         # (lbl_eu_8051D7C0 / lbl_eu_8051D610). Strip .data/.rodata.
         exact_renames=(("__vt__Q34nw4r3g3d6ScnMdl", "lbl_eu_805697A0"),),
-        extern_data_sections=(".data", ".rodata"),
+    extern_data_sections=(".rodata"),
     ),
 
     "g3d_scnmdlexpand.o": UnitRules(
@@ -6747,28 +6736,13 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CVS_THREAD_BUF.o": UnitRules(
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
-    "CVS_THREAD_FAINT.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
     "CVS_THREAD_HAGE.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
-    "CVS_THREAD_REVIVE.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
-    "CVS_THREAD_SUDDEN.o": UnitRules(
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CVS_THREAD_TENSION_UP.o": UnitRules(
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CVS_THREAD_VISION_TELL.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
-    "CVS_THREAD_BATTLE_END_SP.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata"),
-    ),
-    "CVS_THREAD_BATTLE_BEGIN.o": UnitRules(
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CMCGetItemBox.o": UnitRules(
@@ -7256,7 +7230,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         data_pool_patterns=((".data", bytes(0x24), "jumptable_eu_80568F10"),),
         # globalize_symbols retired 2026-09-28 (category A): see
         # globalize_local_undefs (generic LOCAL UNDEF promotion).
-        extern_data_sections=(".data",),
     ),
     "sfx_zmv.o": UnitRules(
         drop_data_range=((".rodata", 0x8, 0x38),),
@@ -7426,7 +7399,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, 0x00000000), "lbl_eu_80666F88"),
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    extern_data_sections=(".data", ".rodata", ".sdata2"),
     ),
     "CMenuBattlePlayerState_ct.o": UnitRules(
         # Shared CTTask<IUICf> vtable copy for this split -> lbl_eu_8052C1C0

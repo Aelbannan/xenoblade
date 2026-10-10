@@ -371,15 +371,15 @@ extern "C" __declspec(noinline) void PartyStateWin_CopyEquipChange(CEquipChange*
 }
 #pragma optimize_for_size off
 
-extern "C" void PartyStateWin_CopySlotRec(u8* r3, const u8* r4) {
-    unsigned int* destWords = (unsigned int*)(r3 + 4);
-    const unsigned int* srcWords = (const unsigned int*)(r4 + 4);
+extern "C" void PartyStateWin_CopySlotRec(u8* dst, const u8* src) {
+    unsigned int* destWords = (unsigned int*)(dst + 4);
+    const unsigned int* srcWords = (const unsigned int*)(src + 4);
     destWords[0] = srcWords[0];
     destWords[1] = srcWords[1];
     destWords[2] = srcWords[2];
     destWords[3] = srcWords[3];
-    char* destBytes = (char*)r3;
-    const char* srcBytes = (const char*)r4;
+    char* destBytes = (char*)dst;
+    const char* srcBytes = (const char*)src;
     destBytes[0x14] = srcBytes[0x14];
     destBytes[0x15] = srcBytes[0x15];
 }

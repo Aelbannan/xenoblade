@@ -96,12 +96,12 @@ void CDrawGX::setCol(const ml::CCol4& col){
     setFlag(FLAG_INITIALIZED, false);
 }
 
-void CDrawGX::setZCompare(int r4){
-    CDeviceGX::getCacheInstance()->setZCompareMD(r4, 0);
+void CDrawGX::setZCompare(int mode){
+    CDeviceGX::getCacheInstance()->setZCompareMD(mode, 0);
 }
 
-void CDrawGX::setZWriteEnable(int r4){
-    CDeviceGX::getCacheInstance()->setZWriteMode(r4, 0);
+void CDrawGX::setZWriteEnable(int enable){
+    CDeviceGX::getCacheInstance()->setZWriteMode(enable, 0);
 }
 
 void CDrawGX::setTex(GXTexObj* pTexObj, u16 width, u16 height){
@@ -226,41 +226,41 @@ void CDrawGX::setupGX(){
     }
 }
 
-void CDrawGX::begin(u32 primType, u32 r5){
+void CDrawGX::begin(u32 primType, u32 vertCount){
     if(mDrawPrim != primType){
         setPrimType(primType);
     }
 
     switch(primType){
         case PRIM_POINTS:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_LINES:
-            mVerts = r5 * 2;
+            mVerts = vertCount * 2;
             break;
         case PRIM_QUADS:
-            mVerts = r5 * 4;
+            mVerts = vertCount * 4;
             break;
         case PRIM_10:
-            mVerts = r5 * 5;
+            mVerts = vertCount * 5;
             break;
         case PRIM_4:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_TRIANGLESTRIP:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_TRIANGLEFAN:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_LINES_DIRECT_COLOR:
-            mVerts = r5 * 2;
+            mVerts = vertCount * 2;
             break;
         case PRIM_LINESTRIP_DIRECT_COLOR:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_TRIANGLESTRIP_DIRECT_COLOR:
-            mVerts = r5;
+            mVerts = vertCount;
             break;
         case PRIM_REPEAT:
             break;
@@ -278,50 +278,50 @@ void CDrawGX::begin(u32 primType, u32 r5){
     setFlag(FLAG_INITIALIZED, true);
 }
 
-void CDrawGX::add(const ml::CRect16& r4, const ml::CRect16& r5){
-    GXPosition3s16(r4.mPos.x, r4.mPos.y, mZPos);
-    GXTexCoord2s16(r5.mPos.x, r5.mPos.y);
+void CDrawGX::add(const ml::CRect16& posRect, const ml::CRect16& texRect){
+    GXPosition3s16(posRect.mPos.x, posRect.mPos.y, mZPos);
+    GXTexCoord2s16(texRect.mPos.x, texRect.mPos.y);
 
-    GXPosition3s16(r4.mPos.x + r4.mSize.x, r4.mPos.y, mZPos);
-    GXTexCoord2s16(r5.mPos.x + r5.mSize.x, r5.mPos.y);
+    GXPosition3s16(posRect.mPos.x + posRect.mSize.x, posRect.mPos.y, mZPos);
+    GXTexCoord2s16(texRect.mPos.x + texRect.mSize.x, texRect.mPos.y);
 
-    GXPosition3s16(r4.mPos.x + r4.mSize.x, r4.mPos.y + r4.mSize.y, mZPos);
-    GXTexCoord2s16(r5.mPos.x + r5.mSize.x, r5.mPos.y + r5.mSize.y);
+    GXPosition3s16(posRect.mPos.x + posRect.mSize.x, posRect.mPos.y + posRect.mSize.y, mZPos);
+    GXTexCoord2s16(texRect.mPos.x + texRect.mSize.x, texRect.mPos.y + texRect.mSize.y);
 
-    GXPosition3s16(r4.mPos.x, r4.mPos.y + r4.mSize.y, mZPos);
-    GXTexCoord2s16(r5.mPos.x, r5.mPos.y + r5.mSize.y);
+    GXPosition3s16(posRect.mPos.x, posRect.mPos.y + posRect.mSize.y, mZPos);
+    GXTexCoord2s16(texRect.mPos.x, texRect.mPos.y + texRect.mSize.y);
 
     mVertCount += 4;
 }
 
-void CDrawGX::add(const ml::CRect16& r4){
+void CDrawGX::add(const ml::CRect16& rect){
     if(checkFlag(FLAG_LINES)){
-        GXPosition3s16(r4.mPos.x,r4.mPos.y,mZPos);
-        GXPosition3s16(r4.mPos.x + r4.mSize.x,r4.mPos.y,mZPos);
-        GXPosition3s16(r4.mPos.x + r4.mSize.x,r4.mPos.y + r4.mSize.y,mZPos);
-        GXPosition3s16(r4.mPos.x,r4.mPos.y + r4.mSize.y,mZPos);
-        GXPosition3s16(r4.mPos.x,r4.mPos.y,mZPos);
+        GXPosition3s16(rect.mPos.x,rect.mPos.y,mZPos);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x,rect.mPos.y,mZPos);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x,rect.mPos.y + rect.mSize.y,mZPos);
+        GXPosition3s16(rect.mPos.x,rect.mPos.y + rect.mSize.y,mZPos);
+        GXPosition3s16(rect.mPos.x,rect.mPos.y,mZPos);
 
         mVertCount += 5;
     }else{
-        GXPosition3s16(r4.mPos.x,r4.mPos.y,mZPos);
-        GXPosition3s16(r4.mPos.x + r4.mSize.x,r4.mPos.y,mZPos);
-        GXPosition3s16(r4.mPos.x + r4.mSize.x,r4.mPos.y + r4.mSize.y,mZPos);
-        GXPosition3s16(r4.mPos.x,r4.mPos.y + r4.mSize.y,mZPos);
+        GXPosition3s16(rect.mPos.x,rect.mPos.y,mZPos);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x,rect.mPos.y,mZPos);
+        GXPosition3s16(rect.mPos.x + rect.mSize.x,rect.mPos.y + rect.mSize.y,mZPos);
+        GXPosition3s16(rect.mPos.x,rect.mPos.y + rect.mSize.y,mZPos);
 
         mVertCount += 4;
     }
 }
 
-void CDrawGX::add(s16 x, s16 y, s16 r6, s16 r7){
+void CDrawGX::add(s16 x, s16 y, s16 x2, s16 y2){
     if(checkFlag(FLAG_USE_TEX)){
         GXPosition3s16(x, y, mZPos);
-        GXTexCoord2s16(r6, r7);
+        GXTexCoord2s16(x2, y2);
 
         mVertCount++;
     }else{
         GXPosition3s16(x, y, mZPos);
-        GXPosition3s16(r6, r7, mZPos);
+        GXPosition3s16(x2, y2, mZPos);
 
         mVertCount += 2;
     }
@@ -338,10 +338,10 @@ void CDrawGX::add(const ml::CVec3& vec){
     mVertCount++;
 }
 
-void CDrawGX::add(s16 x, s16 y, const ml::CCol4& r6){
+void CDrawGX::add(s16 x, s16 y, const ml::CCol4& col){
     GXPosition3s16(x, y, mZPos);
-    u32 color = ((u8)(lbl_eu_8066A470 * r6.r) << 24) | ((u8)(lbl_eu_8066A470 * r6.g) << 16) |
-                ((u8)(lbl_eu_8066A470 * r6.b) << 8) | (u8)(lbl_eu_8066A470 * r6.a);
+    u32 color = ((u8)(lbl_eu_8066A470 * col.r) << 24) | ((u8)(lbl_eu_8066A470 * col.g) << 16) |
+                ((u8)(lbl_eu_8066A470 * col.b) << 8) | (u8)(lbl_eu_8066A470 * col.a);
     GXColor1u32(color);
 
     mVertCount++;
@@ -362,16 +362,16 @@ void CDrawGX::end(){
     }
 }
 
-void CDrawGX::renderRect(const ml::CRect16& r4){
+void CDrawGX::renderRect(const ml::CRect16& rect){
     setFlag(FLAG_PERSPECTIVE, false);
     setFlag(FLAG_USE_TEX, false);
 
     begin(PRIM_TRIANGLESTRIP, 4);
 
-    add(r4.mPos.x,r4.mPos.y);
-    add(r4.mPos.x + r4.mSize.x,r4.mPos.y);
-    add(r4.mPos.x,r4.mPos.y + r4.mSize.y);
-    add(r4.mPos.x + r4.mSize.x,r4.mPos.y + r4.mSize.y);
+    add(rect.mPos.x,rect.mPos.y);
+    add(rect.mPos.x + rect.mSize.x,rect.mPos.y);
+    add(rect.mPos.x,rect.mPos.y + rect.mSize.y);
+    add(rect.mPos.x + rect.mSize.x,rect.mPos.y + rect.mSize.y);
 
     end();
 }

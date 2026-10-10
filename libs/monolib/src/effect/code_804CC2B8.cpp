@@ -1296,8 +1296,8 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
             keep = 0;
         }
     }
-    s32 r29 = 1;
-    if (keep == 0 && sub->field_0x00 != 1) r29 = 0;
+    s32 applyInvConcat = 1;
+    if (keep == 0 && sub->field_0x00 != 1) applyInvConcat = 0;
     switch (tp) {
     case 0:
     case 1:
@@ -1388,7 +1388,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
         PSMTXConcat(mtx1a0, *a, m110);
         *(MtxCopy*)a = *(MtxCopy*)&m110;
     }
-    if (r29) {
+    if (applyInvConcat) {
         Mtx mB0;
         *(MtxCopy*)&mB0 = *(MtxCopy*)&self->field_0x130;
         mB0[0][3] = lbl_eu_8066B0DC;
@@ -1405,7 +1405,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
     Mtx m80;
     PSMTXConcat(self->field_0x130, *a, m80);
     *(MtxCopy*)a = *(MtxCopy*)&m80;
-    if (r29) {
+    if (applyInvConcat) {
         Mtx m50;
         PSMTXConcat(self->field_0x130, *spA, m50);
         *(MtxCopy*)b = *(MtxCopy*)&m50;
@@ -4153,9 +4153,9 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
     case 2: GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR); break;
     case 3: GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_SRCCLR, GX_LO_CLEAR); break;
     }
-    s32 r30 = self->field_0x10->field_0x5c;
-    if (self->field_0x18 != r30) {
-        switch (r30) {
+    s32 swapMode = self->field_0x10->field_0x5c;
+    if (self->field_0x18 != swapMode) {
+        switch (swapMode) {
         case 0:
             GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
             GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -4181,7 +4181,7 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
             GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             break;
         }
-        self->field_0x18 = r30;
+        self->field_0x18 = swapMode;
     }
     q = self->field_0x14->field_0x114;
     s32 tp = 0;
@@ -4261,9 +4261,9 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
     case 2: GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR); break;
     case 3: GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_SRCCLR, GX_LO_CLEAR); break;
     }
-    s32 r30 = self->field_0x10->field_0x5c;
-    if (self->field_0x18 != r30) {
-        switch (r30) {
+    s32 swapMode = self->field_0x10->field_0x5c;
+    if (self->field_0x18 != swapMode) {
+        switch (swapMode) {
         case 0:
             GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
             GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -4289,7 +4289,7 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
             GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             break;
         }
-        self->field_0x18 = r30;
+        self->field_0x18 = swapMode;
     }
     q = self->field_0x14->field_0x114;
     u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;

@@ -147,8 +147,8 @@ extern "C" CScn* __ct__CScn(CScn* self) {
 // Retail thunk: the IWorkEvent subobject at +0x54 delegates back to the
 // complete-object destructor with this-0x54.
 extern "C" void* __dt__4CScnFv(CScn* self, int flags);
-extern "C" void Scn_DtorThunk54(void* pThis, int r4) {
-    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), r4);
+extern "C" void Scn_DtorThunk54(void* pThis, int flags) {
+    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), flags);
 }
 
 extern "C" {

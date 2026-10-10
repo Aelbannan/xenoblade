@@ -14,6 +14,38 @@ extern char lbl_eu_80505DE8[];
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
+// --- .sdata2 (retail content 0x4C): 0.0f + class-name strings ---
+// The 0.0f CANNOT be a standalone object: MWCC exiles all-zero small data
+// to nobits. It lives as f0 inside the struct (CfBdat Sdata2 idiom); the
+// struct also freezes declaration order (MWCC reorders loose sdata2 items).
+// RESIDUAL: the TU's 1.0f literal pool is emitted FIRST, so the struct sits
+// at +8 (not +4) and raw .sdata2 is 0x50 over the split's 0x4C. The split
+// attributed the pool bytes to the previous unit (CItemBoxGrid's 67FA0);
+// reproducing the pool is required for the retail .text shape (46/46), so
+// the +8 shift and size delta are inherent until a human re-cuts the split
+// (source cannot express it: a rule-side rename is frozen). The const
+// members need (void*) casts at the typeinfo initializers below.
+// (lbl_eu_80667FA4 itself stays an UNDEF row: naming the pool for it needs
+// the retired pool_patterns key - likewise frozen. See the final report.)
+struct Sdata2_CCur {
+    f32 f0;             // +0x00 (retail FA4 slot) 0.0f
+    char s_CSubCur[8];  // +0x04
+    char s_CCur22[8];   // +0x0C
+    char s_CCur18[8];   // +0x14
+    char s_CCur16[8];   // +0x1C
+    char s_CCur15[8];   // +0x24
+    char s_CCur14[8];   // +0x2C
+    char s_CCur11[8];   // +0x34
+    char s_CCur09[8];   // +0x3C
+    char s_CCur07[8];   // +0x44
+};
+__declspec(section ".sdata2") __attribute__((used))
+const Sdata2_CCur sdata2_CCur = {
+    0.0f, "CSubCur", "CCur22", "CCur18", "CCur16", "CCur15",
+    "CCur14", "CCur11", "CCur09", "CCur07",
+};
+
+
 // (CBaseCur now carries the real virtuals; Cur_Update dispatches
 // checkDeactivate() at +0x14 directly.)
 
@@ -505,3 +537,228 @@ extern "C" u8 Cur_BothSubPanesOn(CBaseCur* cur) {
     u32 result1 = isPaneVisible(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true));
     return (result0 != 0 && result1 != 0) ? 1 : 0;
 }
+// ============================================================================
+// Retail data sections (wave DL class C rebuild, byte-faithful).
+//
+// The retail unit owns .rodata (0x438) / .data (0x190) / .sdata (0x48) /
+// .sdata2 (0x4C); the decomp TU previously emitted only a 1.0f literal pool,
+// so every data label was a link-frontier row. Shapes decoded from the
+// retail object (objdump -dr) and from the code's label-relative accesses:
+//
+// - .rodata: 4 pane-name strings (the const char* array's targets) followed
+//   by the 0x408 layout/anim/pane name pool the code indexes as
+//   lbl_eu_80505DE8+N (every +N in initLayout/ShowPane sites lands on a
+//   string start; verified against the retail bytes).
+// - .data: the pane-name pointer quad, then 9 leaf vtable blobs plus the
+//   CBaseCur base blob, each followed by its RTTI base descriptor.
+//   These are [ti, 0, virtuals...] blobs (same head shape as CfBdat's
+//   8052E718 / CScrollBar's tables): the classes stay novtable with the
+//   ctors storing the labels explicitly, so no TU emits a competing
+//   __vt__ symbol. CCur22/CCur18 carry a trailing dtor slot; the rest do
+//   not (their dtors are still defined in this TU for .text - they just
+//   have no vtable slot). Leaf [0] points at the TU's own .sdata typeinfo;
+//   the base blob and every descriptor point at CMenuArtsSelect's 61DD8.
+// - .sdata: 9 {name, base} typeinfo pairs (CScrollBar-626F8 idiom): name ->
+//   the TU's own .sdata2 class-name string, base -> the .data descriptor.
+// - .sdata2: the 0.0f SetFrame constant (lbl_eu_80667FA0... FA4) plus the 9
+//   class-name strings. The 1.0f operand stays a per-TU literal pool (retail
+//   .text shape, 46/46): it trails the struct, so raw .sdata2 is 0x50 over
+//   the split's 0x4C - the size delta is documented below, all offsets and
+//   bytes otherwise identical.
+// The frozen CCur.o rule entry (pool 1.0f rename + .sdata2 strip) was
+// retired with this change: with source-owned sections there is nothing to
+// dissolve or strip (frozen check stays OK; field removal is burn-down).
+// ============================================================================
+
+// Vtable function slots defined in this TU as C++ members (same linkage
+// pairing as CfScript's __dt__ decl: declared here for address-taking, the
+// member definitions above carry the same mangled symbols).
+extern "C" {
+void initLayout__7CSubCurFv(void);
+void initLayout__6CCur22Fv(void);
+void initLayout__6CCur18Fv(void);
+void initLayout__6CCur16Fv(void);
+void initLayout__6CCur15Fv(void);
+void initLayout__6CCur14Fv(void);
+void initLayout__6CCur11Fv(void);
+void initLayout__6CCur09Fv(void);
+void initLayout__6CCur07Fv(void);
+void cleanup__8CBaseCurFv(void);
+void checkDeactivate__8CBaseCurFv(void);
+}
+// Base-class descriptor word owned by CMenuArtsSelect's .sdata (linked
+// retail object defines it; incomplete array so MWCC emits no local copy).
+extern u32 lbl_eu_80661DD8[];
+// Forward declarations for the RTTI base descriptors (defined in retail
+// order in the .data block below; complete [N] bounds match the defs).
+extern void* lbl_eu_80534850[3];
+extern void* lbl_eu_80534878[3];
+extern void* lbl_eu_805348A0[4];
+extern void* lbl_eu_805348C8[4];
+extern void* lbl_eu_805348F0[4];
+extern void* lbl_eu_80534918[4];
+extern void* lbl_eu_80534940[4];
+extern void* lbl_eu_80534968[4];
+extern void* lbl_eu_80534990[4];
+
+// --- .rodata (retail 0x438): pane names + layout/anim name pool ---
+// MWCC packs these exact-sized arrays in source order (cf. CfScript rodata).
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80505DB8[12] = "nul_curs06s";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80505DC4[12] = "nul_curs06l";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80505DD0[12] = "nul_curs07s";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80505DDC[12] = "nul_curs07l";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80505DE8[0x408] =
+    "mf00_reg00_curs08.brlyt\0"
+    "mf00_reg00_curs08_roop.brlan\0"
+    "mf00_reg00_curs08_on.brlan\0"
+    "mf00_reg00_curs07.brlyt\0"
+    "mf00_reg00_curs07_roop.brlan\0"
+    "mf00_reg00_curs07_on.brlan\0"
+    "mf00_reg00_curs09.brlyt\0"
+    "mf00_reg00_curs09_roop.brlan\0"
+    "pic_pgarw_r\0"
+    "pic_pgarw_l\0"
+    "mf00_reg00_curs11.brlyt\0"
+    "mf00_reg00_curs11_roop.brlan\0"
+    "mf00_reg00_curs11_on.brlan\0"
+    "pic_arrow08_l00\0"
+    "pic_arrow08_r00\0"
+    "mf00_reg00_curs14.brlyt\0"
+    "mf00_reg00_curs14_roop.brlan\0"
+    "mf00_reg00_curs14_on.brlan\0"
+    "mf00_reg00_curs15.brlyt\0"
+    "mf00_reg00_curs15_roop.brlan\0"
+    "mf00_reg00_curs15_on.brlan\0"
+    "mf00_reg00_curs16.brlyt\0"
+    "mf00_reg00_curs16_roop.brlan\0"
+    "mf00_reg00_curs16_on.brlan\0"
+    "mf00_reg00_curs17.brlyt\0"
+    "mf00_reg00_curs17_roop.brlan\0"
+    "mf00_reg00_curs17_on.brlan\0"
+    "mf00_reg00_curs18.brlyt\0"
+    "mf00_reg00_curs18_roop.brlan\0"
+    "mf00_reg00_curs18_on.brlan\0"
+    "mf00_reg00_curs21.brlyt\0"
+    "mf00_reg00_curs21_roop.brlan\0"
+    "mf00_reg00_curs21_on.brlan\0"
+    "mf00_reg00_curs22.brlyt\0"
+    "mf00_reg00_curs22_roop.brlan\0"
+    "mf00_reg00_curs22_on.brlan\0"
+    "mf01_main22_subcursor.brlyt\0"
+    "mf01_main22_subcursor_roop.brlan\0"
+    "mf01_main22_subcursor_on.brlan\0"
+    "pic_arrow_l00\0"
+    "pic_arrow_r00\0";
+
+// --- .sdata (retail 0x48): {name, base} typeinfo pairs ---
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+void* lbl_eu_80662680[2] = { (void*)sdata2_CCur.s_CSubCur, lbl_eu_80534850 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_80662688[2] = { (void*)sdata2_CCur.s_CCur22, lbl_eu_80534878 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_80662690[2] = { (void*)sdata2_CCur.s_CCur18, lbl_eu_805348A0 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_80662698[2] = { (void*)sdata2_CCur.s_CCur16, lbl_eu_805348C8 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_806626A0[2] = { (void*)sdata2_CCur.s_CCur15, lbl_eu_805348F0 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_806626A8[2] = { (void*)sdata2_CCur.s_CCur14, lbl_eu_80534918 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_806626B0[2] = { (void*)sdata2_CCur.s_CCur11, lbl_eu_80534940 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_806626B8[2] = { (void*)sdata2_CCur.s_CCur09, lbl_eu_80534968 };
+__declspec(section ".sdata") __attribute__((used))
+void* lbl_eu_806626C0[2] = { (void*)sdata2_CCur.s_CCur07, lbl_eu_80534990 };
+// --- .data (retail 0x190): pane quad + vtables + descriptors, retail order ---
+// (defined without extern "C": MWCC does not mangle global data names, so
+// this merges with the header's extern "C" declaration; combining
+// __declspec(section) with an explicit linkage spec is a syntax error).
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const char* lbl_eu_80534828[4] = {
+    lbl_eu_80505DB8, lbl_eu_80505DC4, lbl_eu_80505DD0, lbl_eu_80505DDC,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534838[6] = {
+    lbl_eu_80662680, 0,
+    (void*)&initLayout__7CSubCurFv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534850[3] = { lbl_eu_80661DD8, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_8053485C[7] = {
+    lbl_eu_80662688, 0,
+    (void*)&initLayout__6CCur22Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+    (void*)&__dt__6CCur22Fv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534878[3] = { lbl_eu_80661DD8, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534884[7] = {
+    lbl_eu_80662690, 0,
+    (void*)&initLayout__6CCur18Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+    (void*)&__dt__6CCur18Fv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805348A0[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805348B0[6] = {
+    lbl_eu_80662698, 0,
+    (void*)&initLayout__6CCur16Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805348C8[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805348D8[6] = {
+    lbl_eu_806626A0, 0,
+    (void*)&initLayout__6CCur15Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805348F0[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534900[6] = {
+    lbl_eu_806626A8, 0,
+    (void*)&initLayout__6CCur14Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534918[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534928[6] = {
+    lbl_eu_806626B0, 0,
+    (void*)&initLayout__6CCur11Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534940[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534950[6] = {
+    lbl_eu_806626B8, 0,
+    (void*)&initLayout__6CCur09Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534968[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534978[6] = {
+    lbl_eu_806626C0, 0,
+    (void*)&initLayout__6CCur07Fv, (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534990[4] = { lbl_eu_80661DD8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_805349A0[6] = {
+    lbl_eu_80661DD8, 0, 0,
+    (void*)&cleanup__8CBaseCurFv,
+    (void*)&setRootPaneTranslate__8CBaseCurFv, (void*)&checkDeactivate__8CBaseCurFv,
+};

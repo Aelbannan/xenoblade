@@ -328,13 +328,13 @@ int checkArtsFull(void* param, void* actor, int flags) {
                     if (p->unk5C != 2) {
                         f32 f30;
                         f32 f31 = p->unk60;
-                        int r28 = p->unk5E;
+                        int splashKind = p->unk5E;
                         f32 f27 = 0.0f;
                         u8 holder[8];
                         CTaskGame_enumListCtor(holder);
                         f30 = (f32)p->unk64 * lbl_eu_8066A210;
                         int idx = (obj->field_3F00 & 2) ? 0 : 4;
-                        int r29 = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
+                        int tblWord = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
                         if (obj->v163() != 0) {
                             int sv;
                             if (IdTable_GetSum(obj->v163(), 0x77, &sv) != 0) {
@@ -349,7 +349,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         if (!(p->unk78 & 2)) {
                             void* entry = lookupBattleStatusEntry((u8*)obj + 8, 0x95);
                             if (entry != 0) {
-                                r28 = 1;
+                                splashKind = 1;
                                 f30 = (f32)*(u32*)((u8*)entry + 0x10) * lbl_eu_8066A210;
                             }
                         }
@@ -391,66 +391,66 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             vec70[1] = ((f32*)obj->mSub.s41())[4];
                             vec70[2] = ((f32*)obj->mSub.s41())[8];
                         }
-                        int r27 = 8;
-                        if (!(obj->field_3F00 & 2)) r27 = 0;
+                        int dmgKind = 8;
+                        if (!(obj->field_3F00 & 2)) dmgKind = 0;
                         if (obj->field_3F00 & 4) {
                             switch (obj->field_3F28) {
                             case 0x8b3: case 0x8b4: case 0x8a0: case 0x6c5:
                             case 0x5f2: case 0x607: case 0x60b: case 0x11c:
                             case 0x9c5:
-                                r27 = 0;
+                                dmgKind = 0;
                                 break;
                             default:
                                 break;
                             }
                         }
-                        switch (r28) {
+                        switch (splashKind) {
                         case 1: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             f32 f28 = obj->v364();
                             list = CTaskGame_enumListGet(holder);
-                            rebuildByDistanceCone(list, vec70, f31, f30, f28, r27);
+                            rebuildByDistanceCone(list, vec70, f31, f30, f28, dmgKind);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 2: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             f32 f28 = obj->v364() + lbl_eu_8066A1F8;
                             list = CTaskGame_enumListGet(holder);
-                            rebuildByDistanceCone(list, vec70, f31, f30, f28, r27);
+                            rebuildByDistanceCone(list, vec70, f31, f30, f28, dmgKind);
                             break;
                         }
                         case 3: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             f32 v1 = obj->v364();
                             f32 f28 = v1 + lbl_eu_8066A1F8 * lbl_eu_8066746C;
                             f32 f29 = v1 - lbl_eu_8066A1F8 * lbl_eu_8066746C;
                             list = CTaskGame_enumListGet(holder);
-                            rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, r27);
+                            rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, dmgKind);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
                         }
                         case 4: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             list = CTaskGame_enumListGet(holder);
-                            __ct__800FB044(list, f31, vec70, r27);
+                            __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
                         case 5: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             f32 f27b = (f32)p->unk64 / lbl_eu_8066747C;
                             f32 f28 = obj->v364();
                             list = CTaskGame_enumListGet(holder);
-                            __ct__800FBA18(list, f31, f27b, f28, r27);
+                            __ct__800FBA18(list, f31, f27b, f28, dmgKind);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
                             break;
@@ -458,32 +458,32 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         case 6: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
                                 void* list = CTaskGame_enumListGet(holder);
-                                startEnumObjects(list, r29, 0x1000);
+                                startEnumObjects(list, tblWord, 0x1000);
                             } else {
-                                void* r28b = obj->mSub.s17();
+                                void* idObj = obj->mSub.s17();
                                 void* list = CTaskGame_enumListGet(holder);
-                                appendObjectById(list, (int)r28b);
+                                appendObjectById(list, (int)idObj);
                             }
                             void* list = CTaskGame_enumListGet(holder);
-                            __ct__800FB044(list, f31, vec70, r27);
+                            __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
                         case 7: {
                             void* list = CTaskGame_enumListGet(holder);
-                            startEnumObjects(list, r29, 0x1000);
+                            startEnumObjects(list, tblWord, 0x1000);
                             break;
                         }
                         default: {
                             if (p->unk5C == 3 || p->unk5C == 0xb) {
                                 void* list = CTaskGame_enumListGet(holder);
-                                startEnumObjects(list, r29, 0x1000);
+                                startEnumObjects(list, tblWord, 0x1000);
                             } else {
-                                void* r28b = obj->mSub.s17();
+                                void* idObj = obj->mSub.s17();
                                 void* list = CTaskGame_enumListGet(holder);
-                                appendObjectById(list, (int)r28b);
+                                appendObjectById(list, (int)idObj);
                             }
                             void* list = CTaskGame_enumListGet(holder);
-                            __ct__800FB044(list, f31, vec70, r27);
+                            __ct__800FB044(list, f31, vec70, dmgKind);
                             break;
                         }
                         }
@@ -501,13 +501,13 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             void* list = CTaskGame_enumListGet(holder);
                             __ct__800FAE3C(list, sum, 0);
                         }
-                        int r29b = 0;
-                        int r23 = 0;
-                        int r22 = 0;
+                        int validCount = 0;
+                        int reject = 0;
+                        int i = 0;
                         void* list = CTaskGame_enumListGet(holder);
-                        while (r22 < *(u32*)((u8*)list + 0x620)) {
+                        while (i < *(u32*)((u8*)list + 0x620)) {
                             void* list2 = CTaskGame_enumListGet(holder);
-                            void* target = getObjectAt(list2, r22);
+                            void* target = getObjectAt(list2, i);
                             if (target != 0 && MapFx_ResolveOwner(target) != 0) {
                                 if (!(p->unk78 & 2)) {
                                     f32 f27b = nw4r::math::Atan2FIdx(
@@ -522,28 +522,28 @@ int checkArtsFull(void* param, void* actor, int flags) {
                                         if (-(lim * lbl_eu_8066746C) <= f27b && f27b <= lim * lbl_eu_8066746C) {
                                             // in range
                                         } else {
-                                            r23 = 1;
+                                            reject = 1;
                                         }
                                     }
                                 }
                                 if (p->unk5C == 0xb) {
-                                    if (target != obj && a->v173() == 0) r29b++;
+                                    if (target != obj && a->v173() == 0) validCount++;
                                 } else if (p->unk5C == 3) {
                                     if (a->v173() == 0) {
-                                        r23 = 1;
-                                        r29b++;
+                                        reject = 1;
+                                        validCount++;
                                     }
                                 } else {
-                                    if (obj->mSub.s17() == *(void**)((u8*)target + 0x3f10)) r23 = 1;
-                                    r29b++;
+                                    if (obj->mSub.s17() == *(void**)((u8*)target + 0x3f10)) reject = 1;
+                                    validCount++;
                                 }
                             }
-                            r22++;
+                            i++;
                         }
-                        if ((obj->field_3F00 & 4) && r23 == 0 && p->unk5C != 0xb) {
+                        if ((obj->field_3F00 & 4) && reject == 0 && p->unk5C != 0xb) {
                             result |= 0x20;
                         }
-                        if (r29b == 0) result |= 0x20;
+                        if (validCount == 0) result |= 0x20;
                         __dt__80043E88(holder, -1);
                     }
                 }

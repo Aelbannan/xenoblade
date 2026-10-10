@@ -289,8 +289,8 @@ CScnCameraItem* CamMan_FindViewItemB(CScnCameraMan* cam, CScnCameraParam* param)
 // NOTE (byte-matching): routing the scan through findCamById lets MWCC inline
 // its return-inside-loop shape, carrying the matched item in the volatile r3
 // with the NULL fallback sunk after the loop (retail layout).
-bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
-    CScnCameraEvent* ev = (CScnCameraEvent*)r4;
+bool CScnCameraMan::WorkEvent3(UNKTYPE* event) {
+    CScnCameraEvent* ev = (CScnCameraEvent*)event;
     if (ev->mId == 0x15) {
         s32 camId = mCamId;
         if (camId < 0) {
@@ -323,9 +323,9 @@ bool CScnCameraMan::WorkEvent3(UNKTYPE* r4) {
 //   no source idiom found that folds to a bare dead compare.
 // - reloc names for ScnCamDepthUp/F6D4/F824 are C++-mangled until those
 //   definitions adopt their plain retail symbol names.
-bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
+bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* cmd) {
     CEvent1* ev = (CEvent1*)payload;
-    if (r5 != (const char*)lbl_eu_80663A08) {
+    if (cmd != (const char*)lbl_eu_80663A08) {
         return false;
     }
 

@@ -1468,7 +1468,7 @@ extern "C" int setGameFlag(VMThread* pThread, int handle) {
 // Spawns a battle party object: reads (partyId[, arg2[, arg3]]), toggles the
 // 0x40000 bit of the global flag word around the spawn, throws a VM exception
 // when the spawn fails, and returns the spawned context as a VM object.
-extern "C" int spawnParty(VMThread* pThread, int handle, int r5) {
+extern "C" int spawnParty(VMThread* pThread, int handle, int retType) {
     void* ctx;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int partyId = vmArgIntGet(2, ptr);
@@ -1511,7 +1511,7 @@ extern "C" int spawnParty(VMThread* pThread, int handle, int r5) {
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
-    retVal.unk2 = (u16)r5;
+    retVal.unk2 = (u16)retType;
     retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
@@ -1550,7 +1550,7 @@ extern "C" int gravity(VMThread* pThread, int handle) {
 
 // us-8003f78c: findParty
 // Battle party lookup by name, returns OC handle
-extern "C" int findParty(VMThread* pThread, int handle, int r5) {
+extern "C" int findParty(VMThread* pThread, int handle, int retType) {
     int param;
     int hadFlag;
     const char* name;
@@ -1590,7 +1590,7 @@ extern "C" int findParty(VMThread* pThread, int handle, int r5) {
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
-    retVal.unk2 = (u16)r5;
+    retVal.unk2 = (u16)retType;
     retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
@@ -1625,7 +1625,7 @@ extern "C" int pointOffA(VMThread* pThread, int handle) {
 // us-8003fa14: findBattleActor
 // Battle party member lookup by name/type. Saves event-flag bit 0x40000
 // aside, forces it per arg3 around the lookup, then restores it.
-extern "C" int findBattleActor(VMThread* pThread, int handle, int r5) {
+extern "C" int findBattleActor(VMThread* pThread, int handle, int retType) {
     int hadFlag;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
@@ -1664,7 +1664,7 @@ extern "C" int findBattleActor(VMThread* pThread, int handle, int r5) {
     *(u32*)((char*)result + 0x68) |= 0x40000000;
     VMArg retVal;
     retVal.type = 9;
-    retVal.unk2 = (u16)r5;
+    retVal.unk2 = (u16)retType;
     retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
@@ -1798,7 +1798,7 @@ extern "C" int setUnitTarget(VMThread* pThread, int handle) {
 
 // us-8003ff98: startBattle
 // Sets up a battle encounter by name
-extern "C" int startBattle(VMThread* pThread, int handle, int r5) {
+extern "C" int startBattle(VMThread* pThread, int handle, int retType) {
     void* ctx;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
@@ -1824,7 +1824,7 @@ extern "C" int startBattle(VMThread* pThread, int handle, int r5) {
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
-    retVal.unk2 = (u16)r5;
+    retVal.unk2 = (u16)retType;
     retVal.value.pointerVal = entry;
     vmRetValSet(pThread, &retVal);
     return 1;

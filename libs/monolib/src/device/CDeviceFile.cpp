@@ -934,9 +934,9 @@ bool CDeviceFile::wkStandbyLogout() {
     return false;
 }
 
-extern "C" void func_eu_804520B0(void* r3) {
+extern "C" void func_eu_804520B0(void* fileName) {
     int idx = (int)lbl_eu_80665664;
-    lbl_eu_80657580[idx] = r3;
+    lbl_eu_80657580[idx] = fileName;
     lbl_eu_80665664 = idx + 1;
 }
 

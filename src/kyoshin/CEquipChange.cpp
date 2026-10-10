@@ -790,8 +790,8 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     int v = EquipChange_MapCursorToSlot(self);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         v = findEIBEquipSlot(&self->mEquipItemBox);
-    u8 r4 = (u8)v;
-    u8 slot = self->_pad9A[r4 - 1];
+    u8 cursor = (u8)v;
+    u8 slot = self->_pad9A[cursor - 1];
     if (slot == 0)
         return 0;
     if (slot == 1)
@@ -800,14 +800,14 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         playUISound__FUl(5);
         return 2;
     }
-    int r29;
-    switch (r4) {
-    case 1: case 2: case 3: r29 = 2; break;
-    case 4: r29 = 4; break;
-    case 5: r29 = 5; break;
-    case 6: r29 = 6; break;
-    case 7: r29 = 7; break;
-    case 8: r29 = 8; break;
+    int kind;
+    switch (cursor) {
+    case 1: case 2: case 3: kind = 2; break;
+    case 4: kind = 4; break;
+    case 5: kind = 5; break;
+    case 6: kind = 6; break;
+    case 7: kind = 7; break;
+    case 8: kind = 8; break;
     default: break;
     }
     if ((u8)v == 2)
@@ -815,7 +815,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     else
         v = ((int)(u8)v - 3 > 0) ? 2 : 0;
     s16 id = -1;
-    switch (r29) {
+    switch (kind) {
     case 2: id = obj->field_26; break;
     case 4: id = obj->field_1C; break;
     case 5: id = obj->field_1E; break;
@@ -824,10 +824,10 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     case 8: id = obj->field_24; break;
     default: break;
     }
-    r29 = (int)CItem_kindPtr((u8)r29, id);
-    if (r29 != 0 && *(u32*)r29 != 0) {
-        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)r29);
-        inst->vf44((CItemData*)r29, (u8)v, -1);
+    kind = (int)CItem_kindPtr((u8)kind, id);
+    if (kind != 0 && *(u32*)kind != 0) {
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)kind);
+        inst->vf44((CItemData*)kind, (u8)v, -1);
     }
     EquipChange_RebuildCursorList(self);
     hideItemBoxPanes((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));

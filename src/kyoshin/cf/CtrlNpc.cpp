@@ -815,16 +815,16 @@ void func_80094E44(cf::CtrlNpc* self, u32 val) {
 // and arm the action fields (kind 5); the 0x16E/0x170 ids are clamped into
 // [0, 0x68) (out-of-range ids become 0).
 #undef lbl_eu_80666698
-void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self, int r4, int r5, int r6) {
+void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self, int animMain, int animAlt1, int animAlt2) {
     self->field_14 = lbl_eu_80666698;
 #define lbl_eu_80666698 sdata2_CtrlNpc.f0
     self->field_BE = 0;
     self->field_C0 = 5;
-    self->field_16C = r4;
-    int ok5 = (r5 >= 0) && !(r5 >= 0x68);
-    self->field_16E = ok5 ? r5 : 0;
-    int ok6 = (r6 >= 0) && !(r6 >= 0x68);
-    self->field_170 = ok6 ? r6 : 0;
+    self->field_16C = animMain;
+    int ok5 = (animAlt1 >= 0) && !(animAlt1 >= 0x68);
+    self->field_16E = ok5 ? animAlt1 : 0;
+    int ok6 = (animAlt2 >= 0) && !(animAlt2 >= 0x68);
+    self->field_170 = ok6 ? animAlt2 : 0;
     cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 y = pos->y;
     u32 x = pos->x;

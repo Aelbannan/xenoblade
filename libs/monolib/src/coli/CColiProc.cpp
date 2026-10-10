@@ -39,16 +39,16 @@ extern "C" const f32 lbl_eu_8066AEA8;
 extern "C" void ColiProc_ProcessSegments();
 extern "C" void __ct__CColiProc(CColiProc* self);
 
-extern "C" void ColiProc_InitTriple(CColiProc* self, CColiProcTarget* r4, u32 r5) {
-    self->field_0x0 = r4;
-    self->field_0x4 = r5;
+extern "C" void ColiProc_InitTriple(CColiProc* self, CColiProcTarget* target, u32 a) {
+    self->field_0x0 = target;
+    self->field_0x4 = a;
     self->field_0xC = 0;
 }
 
-extern "C" void ColiProc_InitQuad(CColiProc* self, CColiProcTarget* r4, u32 r5, u32 r6) {
-    self->field_0x0 = r4;
-    self->field_0x4 = r5;
-    self->field_0x8 = r6;
+extern "C" void ColiProc_InitQuad(CColiProc* self, CColiProcTarget* target, u32 a, u32 b) {
+    self->field_0x0 = target;
+    self->field_0x4 = a;
+    self->field_0x8 = b;
     self->field_0xC = 0;
 }
 

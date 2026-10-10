@@ -207,9 +207,12 @@ __attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
 // at the retail offsets) + .sdata2 anim-frame floats + "CLoad" tag string.
 // Appended here so no code line numbers shift (-ipa file sensitivity).
 // NOT defined here: .data vtables (80525E98/80525EF8 analogues 8053A2A8/
-// 8053A340) + .sdata descriptors — those reference locally-defined functions
+// 8053A340) + .sdata descriptors -- those reference locally-defined functions
 // (CLoad dtor/OnFileEvent) whose .text offsets do not match retail (code
 // 12/15, +0xAC over), so their relocs cannot gate-match; see residual.
+// (wave DL-r4: defined below after all -- the gate is bytes-only and the
+// in-file bytes are zeros either way; the extern "C" merge idiom names the
+// real slots. If the merge ever breaks the build, fall back to zeros.)
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
     "menu/jp/Load.arc\0"
     "CLoad\0"
@@ -223,3 +226,129 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80668DF8[8] = "CLoad";
+
+// [.sdata]/[.data] vtable pair + RTTI blocks (retail .data 0x130, all zeros
+// in-file; reloc slots read as zeros). 8053A2A8 is CTutorialList's vtable
+// (read by CTutorialList code), 8053A340 is CLoad's own. Layout per table:
+// [0] sdata descriptor, [1] null, [2] dtor, [3] W1, [4] OnFileEvent,
+// [5..33] W3..W31, then a 4-word RTTI block (RTTI word + zeros; the RTTI
+// symbol is unspellable in source, cf. CFade, so the word stays zero).
+// Cross-TU vtable slots (flat retail names; CFade vtable idiom).
+extern "C" void __dt__13CTutorialListFv();
+extern "C" void OnFileEvent__13CTutorialListFP10CEventFile();
+extern "C" void __dt__5CLoadFv();
+extern "C" bool OnFileEvent__5CLoadFP10CEventFile(CLoad* self, CEventFile* ev);
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern char lbl_eu_80510B68[];  // CTutorialList class-name (defined in CTutorialList.cpp)
+extern u32 lbl_eu_8053A330[];
+extern u32 lbl_eu_8053A3C8[];
+#pragma section data_type ".sdata" ".sdata"
+extern __declspec(section ".sdata") u32 lbl_eu_80662DF0[2] = {
+    (u32)&lbl_eu_80510B68, (u32)&lbl_eu_8053A330,
+};
+extern __declspec(section ".sdata") u32 lbl_eu_80662DF8[2] = {
+    (u32)&lbl_eu_80668DF8, (u32)&lbl_eu_8053A3C8,
+};
+#pragma section data_type ".data" ".data"
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_8053A2A8[34] = {
+    (void*)&lbl_eu_80662DF0, (void*)0,
+    (void*)&__dt__13CTutorialListFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
+    (void*)&OnFileEvent__13CTutorialListFP10CEventFile,
+    (void*)&WorkEvent3__10IWorkEventFPv,
+    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
+    (void*)&WorkEvent6__10IWorkEventFv,
+    (void*)&WorkEvent7__10IWorkEventFv,
+    (void*)&WorkEvent8__10IWorkEventFv,
+    (void*)&WorkEvent9__10IWorkEventFv,
+    (void*)&WorkEvent10__10IWorkEventFv,
+    (void*)&WorkEvent11__10IWorkEventFv,
+    (void*)&WorkEvent12__10IWorkEventFv,
+    (void*)&WorkEvent13__10IWorkEventFv,
+    (void*)&WorkEvent14__10IWorkEventFv,
+    (void*)&WorkEvent15__10IWorkEventFv,
+    (void*)&WorkEvent16__10IWorkEventFv,
+    (void*)&WorkEvent17__10IWorkEventFv,
+    (void*)&WorkEvent18__10IWorkEventFv,
+    (void*)&WorkEvent19__10IWorkEventFv,
+    (void*)&WorkEvent20__10IWorkEventFv,
+    (void*)&WorkEvent21__10IWorkEventFv,
+    (void*)&WorkEvent22__10IWorkEventFv,
+    (void*)&WorkEvent23__10IWorkEventFv,
+    (void*)&WorkEvent24__10IWorkEventFv,
+    (void*)&WorkEvent25__10IWorkEventFv,
+    (void*)&WorkEvent26__10IWorkEventFv,
+    (void*)&WorkEvent27__10IWorkEventFv,
+    (void*)&WorkEvent28__10IWorkEventFv,
+    (void*)&WorkEvent29__10IWorkEventFv,
+    (void*)&WorkEvent30__10IWorkEventFv,
+    (void*)&WorkEvent31__10IWorkEventFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+u32 lbl_eu_8053A330[4] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_8053A340[34] = {
+    (void*)&lbl_eu_80662DF8, (void*)0,
+    (void*)&__dt__5CLoadFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
+    (void*)&OnFileEvent__5CLoadFP10CEventFile,
+    (void*)&WorkEvent3__10IWorkEventFPv,
+    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
+    (void*)&WorkEvent6__10IWorkEventFv,
+    (void*)&WorkEvent7__10IWorkEventFv,
+    (void*)&WorkEvent8__10IWorkEventFv,
+    (void*)&WorkEvent9__10IWorkEventFv,
+    (void*)&WorkEvent10__10IWorkEventFv,
+    (void*)&WorkEvent11__10IWorkEventFv,
+    (void*)&WorkEvent12__10IWorkEventFv,
+    (void*)&WorkEvent13__10IWorkEventFv,
+    (void*)&WorkEvent14__10IWorkEventFv,
+    (void*)&WorkEvent15__10IWorkEventFv,
+    (void*)&WorkEvent16__10IWorkEventFv,
+    (void*)&WorkEvent17__10IWorkEventFv,
+    (void*)&WorkEvent18__10IWorkEventFv,
+    (void*)&WorkEvent19__10IWorkEventFv,
+    (void*)&WorkEvent20__10IWorkEventFv,
+    (void*)&WorkEvent21__10IWorkEventFv,
+    (void*)&WorkEvent22__10IWorkEventFv,
+    (void*)&WorkEvent23__10IWorkEventFv,
+    (void*)&WorkEvent24__10IWorkEventFv,
+    (void*)&WorkEvent25__10IWorkEventFv,
+    (void*)&WorkEvent26__10IWorkEventFv,
+    (void*)&WorkEvent27__10IWorkEventFv,
+    (void*)&WorkEvent28__10IWorkEventFv,
+    (void*)&WorkEvent29__10IWorkEventFv,
+    (void*)&WorkEvent30__10IWorkEventFv,
+    (void*)&WorkEvent31__10IWorkEventFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+u32 lbl_eu_8053A3C8[4] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+#pragma section data_type ".data" ".data"

@@ -324,8 +324,8 @@ void EffFxSetupSceneXforms(void* self, const void* src);
 int ScnRes_VertRayForward_E398(Vec* v, u32 a, u32 b, u32 c, f32 f1, f32 f2);
 void ScnRes_CopyEntryHead(void* dst, int index);
 CEffectObj* SchedFx_FetchByHandle(s16 handle);
-void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
-                   const ml::CVec3* in, const ml::CVec3* r8);
+void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 emitScale,
+                   const ml::CVec3* in, const ml::CVec3* refPos);
 s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node);
 struct EffSceneRef;
 struct EffMtx;
@@ -1632,11 +1632,11 @@ static inline double s32ToF64_b0b0(s32 v) {
 // (1.0 - r6/maxScale) is computed up front and stays in f1 as the 4th
 // argument of the 4-arg callees (cerandRandArc ignores it). When the object
 // type is 0xe the y component is post-processed.
-void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
-                   const ml::CVec3* in, const ml::CVec3* r8) {
+void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 emitScale,
+                   const ml::CVec3* in, const ml::CVec3* refPos) {
     // Radius stays in double precision end-to-end (no frsp); the signed
     // argument converts through the shared 2^52+2^31 magic (helper above).
-    double t = s32ToF64_b0b0(r6);
+    double t = s32ToF64_b0b0(emitScale);
     double div = t / lbl_eu_8066B0A8;
     double radius = lbl_eu_8066B0A4 - div;
     switch (mode) {
@@ -1645,18 +1645,18 @@ void EffType_PickEmitVec(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
         *out = ml::CVec3::zero;
         break;
     case 0:
-        cerandRandDir(out, in, r8, radius);
+        cerandRandDir(out, in, refPos, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(out->y);
         break;
     case 2:
-        cerandRandBox(out, in, r8, radius);
+        cerandRandBox(out, in, refPos, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
         break;
     case 4:
-        cerandRandArc(out, in, r8);
+        cerandRandArc(out, in, refPos);
         break;
     case 3:
-        cerandRandCylinder(out, in, r8, radius);
+        cerandRandCylinder(out, in, refPos, radius);
         if (self->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
         break;
     }

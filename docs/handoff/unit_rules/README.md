@@ -10,6 +10,15 @@ residual table is the authoritative list of what is left (source, B/C, D).
 Categories B/C/D are live; their prompts carry a status note where A's outcome
 changed them.
 
+**A-residual batch (2026-10-10):** the 13 pure-`exact_renames` entries left by A were re-triaged;
+**9 are inert and retired** (6 `NonMatching` units + 3 whose old symbols are absent from the current
+source object: `g3d_resanmscn.o`, `lyt_resourceAccessor.o#Q34nw4r3lyt`, `lyt_bounding.o`), and
+**4 remain active/load-bearing** (`CArtsSet.o`, `CtrlMoveNpc.o`, `CLibCriMoviePlay.o`,
+`ut_Font.o`). Evidence + next angles:
+`docs/evidence/decomp/unit_rules_category_a_residual_2026-10-10.md`. Same day, `PLAN.md` §17.6
+dropped the "Relocation name drift" exception: do **not** add `extern "C" lbl_eu_*` spellings;
+existing ones are cleanup debt.
+
 **Category B progress (2026-09-28):** `docs/evidence/decomp/unit_rules_category_b.md`
 records 16 retirements (7 provably bit-identical no-ops + 9 stale source-pad/
 size repairs; 7 units moved raw-gate MISMATCH→MATCH), 25 payload-field

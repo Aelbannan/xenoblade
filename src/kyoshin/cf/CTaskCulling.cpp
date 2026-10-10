@@ -77,11 +77,11 @@ namespace cf{
         lbl_eu_80664328 = nullptr;
     }
 
-void CTaskCulling::setOccDisabled(unsigned long r3){
+void CTaskCulling::setOccDisabled(unsigned long disable){
     CTaskCulling* instance = lbl_eu_80664328;
     
     if(instance != nullptr){
-        if(r3 != 0){
+        if(disable != 0){
             instance->unk120 |= 8;
         }else{
             instance->unk120 &= ~8;
@@ -94,20 +94,20 @@ void CTaskCulling::setOccDisabled(unsigned long r3){
         return lbl_eu_80664328->unk94;
     }
 
-    bool CTaskCulling::update(ml::CFrustum* r4){
+    bool CTaskCulling::update(ml::CFrustum* frustum){
         if(lbl_eu_80664328 == nullptr) return false;
-        return mOccCulling.update(r4);
+        return mOccCulling.update(frustum);
     }
 
-bool CTaskCulling::isOccluded(const ml::CVec3& r4, float r5){
+bool CTaskCulling::isOccluded(const ml::CVec3& intersectPoint, float distance){
         if(lbl_eu_80664328 == nullptr) return false;
         if(unk120 & 8) return false;
-        return mOccCulling.isOccluded(r4, r5);
+        return mOccCulling.isOccluded(intersectPoint, distance);
     }
 
-bool CTaskCulling::isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
+bool CTaskCulling::isRayOccluded(const ml::CVec3& rayStartPos, const ml::CVec3& rayEndPos, int flags){
         if(lbl_eu_80664328 == nullptr) return false;
-        return mOccCulling.isRayOccluded(r4, r5, r6);
+        return mOccCulling.isRayOccluded(rayStartPos, rayEndPos, flags);
     }
 
 void CTaskCulling::clearOccFrustums(){

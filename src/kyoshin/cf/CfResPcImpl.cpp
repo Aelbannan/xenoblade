@@ -554,8 +554,8 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
     }
     int v034_0 = (self)->CfResPcImpl_getSlotTableEntry(0);
     int v034_6 = (self)->CfResPcImpl_getSlotTableEntry(6);
-    int r29 = 1;
-    int r25 = 0;
+    int runSync = 1;
+    int reloadReady = 0;
     if (self->field_00->field_64 & 0x80000000) {
         if (inst != 0) {
             int ret;
@@ -564,25 +564,25 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
             } else {
                 ret = CfRes_tryDelegateLoad0(v034_0);
             }
-            r29 = 0;
+            runSync = 0;
             if (ret != 0) {
                 u32 sp18;
                 u32 sp14;
                 cf::CfResPcFindEntry* found = findResEntry(inst, (u32)v034_0, &sp18, &sp14);
                 if (found != 0) {
                     self->field_38 = (u16)sp14;
-                    r25 = 1;
+                    reloadReady = 1;
                     found->field_0C = 0;
                 }
                 if (v034_6 != 0 &&
                     ((self->field_00->field_6C & 0x80000) || (self->field_00->field_6C & 0x100000))) {
-                    r25 = 1;
-                    r29 = 1;
+                    reloadReady = 1;
+                    runSync = 1;
                 }
             }
         }
     }
-    if (r25 == 0) {
+    if (reloadReady == 0) {
         return;
     }
     if (self->field_00->field_64 & 0x2) {
@@ -628,17 +628,17 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
         int v = (self)->CfResPcImpl_getSlotTableEntry(i);
-        u32 r5;
+        u32 slotRes;
         if (self->field_00->field_64 & 0x8) {
-            r5 = (u32)func_8009E120(charData, (u16)(i - 1));
+            slotRes = (u32)func_8009E120(charData, (u16)(i - 1));
         } else if (self->field_40 != 0) {
-            r5 = (u32)v;
+            slotRes = (u32)v;
         } else {
-            r5 = bdatPcPartsRes(self->field_00->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
+            slotRes = bdatPcPartsRes(self->field_00->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
         }
-        if ((u32)v != r5) {
-            v = (int)r5;
-            (self)->CfResPcImpl_setSlotTableEntry(i, r5);
+        if ((u32)v != slotRes) {
+            v = (int)slotRes;
+            (self)->CfResPcImpl_setSlotTableEntry(i, slotRes);
         }
         CfResPcImpl_requestResourceByBits((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
@@ -646,7 +646,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         CfObjectMove_setModelListLock(self->field_00, 1);
     }
     (self)->CfResPcImpl_probeAndDispatch0(v034_0);
-    if (r29 != 0) {
+    if (runSync != 0) {
         if (self->field_00->field_6C & 0x100000) {
             cf::CfResPcLoadBuffer buf;
             func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, self->field_00->field_64 >> 31, 0);
@@ -674,7 +674,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         if (token != 0) {
             (self)->CfResPcImpl_probeAndCapHandler(token);
         }
-    } else if ((self->field_00->field_64 & 0x80000000) && r29 != 0 &&
+    } else if ((self->field_00->field_64 & 0x80000000) && runSync != 0 &&
                (lbl_eu_80663E24 & 0x40000) && inst != 0 && token != 0) {
         u32 sp10 = 0xFFFFFFFF;
         u8* res = 0;

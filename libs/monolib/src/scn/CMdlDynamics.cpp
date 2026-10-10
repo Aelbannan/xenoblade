@@ -853,9 +853,9 @@ extern "C" __declspec(noinline) u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b
 
 extern "C" __declspec(noinline) void MdlDyn_StoreLensHolder(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-__declspec(noinline) void MdlDyn_AppendRec(void *r3, void *r4) {
-    int *p = (int *)r3;
-    int *src = (int *)r4;
+__declspec(noinline) void MdlDyn_AppendRec(void *pRec, void *pSrc) {
+    int *p = (int *)pRec;
+    int *src = (int *)pSrc;
     int idx = p[1];
     int base = p[0];
     int off = idx * 12;

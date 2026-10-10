@@ -164,8 +164,8 @@ void CPadManager::destroy(){
     }
 }
 
-void CPadManager::updateLongHoldTimerThreshold(u32 r3){
-    lbl_eu_80665630[0]->mConfig.longHoldTimerThreshold = r3;
+void CPadManager::updateLongHoldTimerThreshold(u32 threshold){
+    lbl_eu_80665630[0]->mConfig.longHoldTimerThreshold = threshold;
 }
 
 void CPadManager::setRightStickDeadzoneDefault(){

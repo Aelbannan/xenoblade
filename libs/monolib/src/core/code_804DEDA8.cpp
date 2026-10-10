@@ -217,7 +217,7 @@ extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 // extern "C" keeps the call-site reloc name matching retail (SchedRes_ZeroEntry).
 // Definition sits below SchedRes_AllocEntries so MWCC's same-TU IPA cannot inline it
 // into the allocation loop at -O4,p.
-extern "C" void SchedRes_ZeroEntry(void* r3);
+extern "C" void SchedRes_ZeroEntry(void* pEntry);
 
 // Destructor of the static schedule-resource manager (object at 0x804DF068):
 // release the two heap arrays and the MemManager block, then zero the object.
@@ -433,8 +433,8 @@ void* SchedRes_AllocEntries(u32 size, u32 count) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void SchedRes_ZeroEntry(void* r3) {
-    char* base = (char*)r3;
+extern "C" void SchedRes_ZeroEntry(void* pEntry) {
+    char* base = (char*)pEntry;
     base[0] = 0;
     base[2] = 0;
     base[3] = 0;
@@ -1290,15 +1290,15 @@ extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem
         f32 conv = (f32)lim;
         u8 useMask = 0;
         if (conv <= item->mField00) {
-            s8 r9 = (s8)((u8*)ret)[2];
-            if (r9 >= 0) {
-                u8 r8 = ((u8*)ret)[3];
+            s8 entryVal = (s8)((u8*)ret)[2];
+            if (entryVal >= 0) {
+                u8 entryMask = ((u8*)ret)[3];
                 u8 take = 1;
-                if (r8 != 0) {
+                if (entryMask != 0) {
                     s8 m = (s8)*(u8*)(obj + 0x59);
                     u8 hit = 0;
                     if (m != 0) {
-                        if ((r8 & (1 << (m - 1))) != 0) {
+                        if ((entryMask & (1 << (m - 1))) != 0) {
                             hit = 1;
                         }
                     }
@@ -1312,7 +1312,7 @@ extern "C" CEntryElem* SchedEntry_ResolveElem(CScheduleItem* itemArg, CEntryElem
             }
             if (useMask != 0) {
                 // accepted: quantize and loop again
-                item->mField05 = (u8)r9;
+                item->mField05 = (u8)entryVal;
                 u8* ret2 = SchedEntry_PickRandom(base, stride, ((u8*)ret)[2],
                                          &item->mField05, &item->mField07);
                 u16 lim2 = *(u16*)ret2;

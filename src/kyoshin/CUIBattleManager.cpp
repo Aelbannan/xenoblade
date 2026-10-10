@@ -138,7 +138,7 @@ int func_801042B4();
 int CMainMenu_IsOpen();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
-bool isGlobalCamFlagSet__Fi(UNKWORD r3);
+bool isGlobalCamFlagSet__Fi(UNKWORD flag);
 void* CUICfManager_getArcResourceAccessor();
 }
 

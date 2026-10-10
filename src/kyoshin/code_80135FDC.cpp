@@ -1122,7 +1122,7 @@ extern "C" void PaneSetTexPalette(void* a, void* palette) {
 }
 
 void func_80138078__FUl(u32 arg) {
-    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
+    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 channel, u32 soundId, u32 volume, u32 flag, float f1); // play SE
     extern f32 lbl_eu_80667300;
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
 }
@@ -2544,9 +2544,9 @@ extern "C" void RevealMinimapArea() {
     const u8* t2src = &tbl[0x378];
     const u8* t3src = &tbl[0x2F0];
     for (u16 i2 = 0; i2 < 0x240; i2++) {
-        u16 r5 = i2 % 24;
+        u16 cellCol = i2 % 24;
         u16 q2 = i2 / 24;
-        f32 dx = (f32)(s32)(r5 - rem) * cell - sx;
+        f32 dx = (f32)(s32)(cellCol - rem) * cell - sx;
         f32 dz = (f32)(s32)(q2 - q) * cell - sz;
         if (dx * dx + dz * dz <= R2) {
             XBMapTable2 t2 = *(const XBMapTable2*)t2src;

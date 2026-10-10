@@ -17,7 +17,7 @@ struct S {
     unsigned char f;
 };
 
-extern "C" void MapSelectSCCopyWidgetState(S* r3, const S* r4);
+extern "C" void MapSelectSCCopyWidgetState(S* dst, const S* src);
 
 // Retail constructor (unmangled global) with an explicit arg, mirroring the
 // CMenuOption ctor pattern: base CProcess ctor, temp vtable store, null PMF

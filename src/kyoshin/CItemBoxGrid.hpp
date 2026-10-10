@@ -399,7 +399,7 @@ extern "C" void DispatchItemEvt(void*, void*, int);
 extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
 extern "C" u32 IsItemTeachable(void*, u32);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
-extern "C" void UIWin_BuildFlagBuf(u32, u32, u32);
+extern "C" void UIWin_BuildFlagBufRec(u32, u32, u32);
 extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(void*, u8);
 extern "C" u32 GetU16PairEntry(u16);

@@ -289,8 +289,8 @@ extern "C" void CSLCur_tickAnim(UnkPtrHolder* self) {
 }
 #pragma dont_inline off
 
-void CSLSub_init(CSLCur* data, int r4) {
-    data->mField0 = (void*)(uintptr_t)r4;
+void CSLSub_init(CSLCur* data, int initVal) {
+    data->mField0 = (void*)(uintptr_t)initVal;
     data->mField4 = 0;
     data->mField8 = 0;
     data->mFieldC = 0;
@@ -1089,8 +1089,8 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
         DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
-        char* r5 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
+        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
@@ -1099,8 +1099,8 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
         lbl_eu_80662AD0 = 0;
     } else if (self->mField129 != 0) {
         // Load path
-        char* r5 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
+        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
@@ -1124,8 +1124,8 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
         DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
-        char* r5 = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
-        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
+        LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
 
@@ -1689,10 +1689,10 @@ extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
 // r3 and r4 are unused params - they exist so r5/r6 are in the correct register slots.
 // No local variable for the global pointer - access lbl_eu_806649F4 directly
 // to force MWCC to reload after each function call, matching retail's repeated @sda21 loads.
-void CSaveLoad_onFile(int, int, int r5, int r6) {
+void CSaveLoad_onFile(int, int, int completed, int msgKind) {
     if (lbl_eu_806649F4 == nullptr) return;
 
-    if (r5 != 0) {
+if (completed != 0) {
         if (lbl_eu_806649F4->mField12C != 0) {
             lbl_eu_806649F4->mField121 = 0xc;
             // Cast call prevents MWCC from inlining CSLCur_bindSlots's body
@@ -1718,7 +1718,7 @@ void CSaveLoad_onFile(int, int, int r5, int r6) {
         q->mField11C = 3;
         q->mField11E = 0;
         lbl_eu_806649F4->mField12E = 1;
-        lbl_eu_806649F4->mField12F = (u8)r6;
+lbl_eu_806649F4->mField12F = (u8)msgKind;
     }
 }
 

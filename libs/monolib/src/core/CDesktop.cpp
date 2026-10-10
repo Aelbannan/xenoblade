@@ -280,12 +280,12 @@ void CDesktop::entryTable(DesktopIcon* pIcon, bool state){
     lbl_eu_806656B0 = state;
 }
 
-void CDesktop::setAppException(int r3){
+void CDesktop::setAppException(int enable){
     CDesktop* desktop = getInstance();
 
     if(desktop == nullptr) return;
 
-    desktop->wkSetEvent(r3 != 0 ? EVT_APPEXCEPTION_ON : EVT_APPEXCEPTION_OFF);
+    desktop->wkSetEvent(enable != 0 ? EVT_APPEXCEPTION_ON : EVT_APPEXCEPTION_OFF);
 }
 
 // optimize_for_size on: retail saves r30+r31 via stmw, not stw.

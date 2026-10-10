@@ -2366,7 +2366,7 @@ def main() -> int:
         help="Reloc name-drift detection + map miner (tools/coop/reloc_map.py, MWCC_PATTERNS.md)",
     )
     p_reloc_sub = p_reloc.add_subparsers(dest="reloc_cmd", required=True)
-    p_reloc_diff = p_reloc_sub.add_parser("diff", help="Per-function reloc drift + approved source fixes")
+    p_reloc_diff = p_reloc_sub.add_parser("diff", help="Per-function reloc drift + policy-aware source hints")
     p_reloc_diff.add_argument("unit", help="objdiff unit hint or source path")
     p_reloc_diff.add_argument("-s", "--symbol", required=True, help="function symbol (mangled name or unique substring)")
     p_reloc_diff.add_argument("--no-build", action="store_true", help="do not build the decomp object first")

@@ -2047,7 +2047,7 @@ void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* 
 // Every appended element shares the id halfword (add + field_0x40) and the
 // p7/p8 word fields. The angle-pair body is duplicated below exactly as
 // retail duplicates it (a helper would add a call).
-void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r6,
+void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* aimVec,
                    int p7, int p8, f32 p1) {
     // Retail zero-extends the truncated sum into a u32 (clrlwi r31); the
     // element stores narrow it back to a halfword.
@@ -2067,9 +2067,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
         // Scale the r6 aim vector and normalize it; all three tables get it.
         CamTripletLocals sv;
         f32 k = lbl_eu_8066A210;
-        f32 sx = r6->x * k;
-        f32 sy = r6->y * k;
-        f32 sz = r6->z * k;
+        f32 sx = aimVec->x * k;
+        f32 sy = aimVec->y * k;
+        f32 sz = aimVec->z * k;
         sv.x = sx;
         sv.y = sy;
         sv.z = sz;
@@ -2149,16 +2149,16 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
-                e->x0 = r6->x;
-                e->x4 = r6->y;
-                e->x8 = r6->z;
+                e->x0 = aimVec->x;
+                e->x4 = aimVec->y;
+                e->x8 = aimVec->z;
                 e->id = id;
                 e->c = (u16)p7;
                 e->d = 0;
                 if (cnt0 == 0) {
-                    self->tab0.baseX = r6->x;
-                    self->tab0.baseY = r6->y;
-                    self->tab0.baseZ = r6->z;
+                    self->tab0.baseX = aimVec->x;
+                    self->tab0.baseY = aimVec->y;
+                    self->tab0.baseZ = aimVec->z;
                 }
                 self->tab0.count = cnt0 + 1;
                 convB.w[1] = id;
@@ -2205,9 +2205,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             // One-shot clear path: table0 gets the raw r6 vector, table1 the
             // yaw/pitch angles of the (p5 - r6) difference.
             CamTripletLocals d;
-            d.x = p5->x - r6->x;
-            d.y = p5->y - r6->y;
-            d.z = p5->z - r6->z;
+            d.x = p5->x - aimVec->x;
+            d.y = p5->y - aimVec->y;
+            d.z = p5->z - aimVec->z;
             f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
             CamTripletLocals out;
             out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
@@ -2224,16 +2224,16 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
-                e->x0 = r6->x;
-                e->x4 = r6->y;
-                e->x8 = r6->z;
+                e->x0 = aimVec->x;
+                e->x4 = aimVec->y;
+                e->x8 = aimVec->z;
                 e->id = id;
                 e->c = (u16)p7;
                 e->d = 0;
                 if (cnt0 == 0) {
-                    self->tab0.baseX = r6->x;
-                    self->tab0.baseY = r6->y;
-                    self->tab0.baseZ = r6->z;
+                    self->tab0.baseX = aimVec->x;
+                    self->tab0.baseY = aimVec->y;
+                    self->tab0.baseZ = aimVec->z;
                 }
                 self->tab0.count = cnt0 + 1;
                 convA.w[1] = id;
@@ -2283,9 +2283,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
     } else if (state == 0xA) {
         // Same angle pair as state 8's clear path.
         CamTripletLocals d;
-        d.x = p5->x - r6->x;
-        d.y = p5->y - r6->y;
-        d.z = p5->z - r6->z;
+        d.x = p5->x - aimVec->x;
+        d.y = p5->y - aimVec->y;
+        d.z = p5->z - aimVec->z;
         f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
         CamTripletLocals out;
         out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
@@ -2302,16 +2302,16 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
         s16 cnt0 = self->tab0.count;
         if (cnt0 < 0x10) {
             CfCamEventElem* e = &self->tab0.elems[cnt0];
-            e->x0 = r6->x;
-            e->x4 = r6->y;
-            e->x8 = r6->z;
+            e->x0 = aimVec->x;
+            e->x4 = aimVec->y;
+            e->x8 = aimVec->z;
             e->id = id;
             e->c = (u16)p7;
             e->d = 0;
             if (cnt0 == 0) {
-                self->tab0.baseX = r6->x;
-                self->tab0.baseY = r6->y;
-                self->tab0.baseZ = r6->z;
+                self->tab0.baseX = aimVec->x;
+                self->tab0.baseY = aimVec->y;
+                self->tab0.baseZ = aimVec->z;
             }
             self->tab0.count = cnt0 + 1;
             convA.w[1] = id;
@@ -2369,12 +2369,12 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             CamTripletLocals t0, t1;
             if (lbl_eu_80570C90.h00 != 0) {
                 CamTripletLocals d;
-                d.x = p5->x - r6->x;
-                d.y = p5->y - r6->y;
-                d.z = p5->z - r6->z;
-                t0.x = r6->x;
-                t0.y = r6->y;
-                t0.z = r6->z;
+                d.x = p5->x - aimVec->x;
+                d.y = p5->y - aimVec->y;
+                d.z = p5->z - aimVec->z;
+                t0.x = aimVec->x;
+                t0.y = aimVec->y;
+                t0.z = aimVec->z;
                 f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
                 t1.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
                 t1.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
@@ -2390,9 +2390,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
                 t0.x = p5->x;
                 t0.y = p5->y;
                 t0.z = p5->z;
-                t1.x = r6->x;
-                t1.y = r6->y;
-                t1.z = r6->z;
+                t1.x = aimVec->x;
+                t1.y = aimVec->y;
+                t1.z = aimVec->z;
             }
             s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {

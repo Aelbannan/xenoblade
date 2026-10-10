@@ -567,3 +567,332 @@ void sinit_800696C8() {
 }
 
 } // namespace cf
+
+// ============================================================================
+// Retail data sections (wave DL class C rebuild, byte-faithful).
+//
+// The retail unit owns .rodata (0x50) / .data (0x350) / .bss (0x15C) /
+// .sdata (0x18) / .sbss (0x8); the decomp TU previously emitted none of
+// them, so every data label was a link-frontier row. Shapes decoded from
+// the retail object (objdump -dr) and from the consumers:
+// - .data 0x50 tables: hand-rolled resource-descriptor tables (NOT C++
+//   vtables: all 19 function slots point at CfRes/IResInfo externals, and
+//   the TU defines no key function). IResInfo.cpp stores their ADDRESSES
+//   into its ctor slots ("resource-object vtable") and CfRes.o's own
+//   .data tables point at the companion 0x10 descriptors, so the honest
+//   shape is arrays of pointers (same idiom as CfBdat/CfGimmickItem).
+// - .data 0x18: the CfScript waitLoad/update PMF pair (2 x 12 bytes:
+//   {0, -1, func}) dispatched by updateScript via __ptmf_scall.
+// - .data 0x88: the CfScript IWorkEvent vtable blob [ti, 0, dtor, ...]
+//   (same [ti, 0, ...] head shape as CfBdat's 8052E718); the class stays
+//   novtable with the ctor storing the label explicitly, so no TU emits
+//   a competing __vt__ symbol.
+// - .data 0x10 tail (80526E70): {__RTTI__10IWorkEvent, 0, 0, 0}, the
+//   base-descriptor the .sdata typeinfo points at (CfBdat 8052E7A0 shape).
+// - .rodata head: "/script/jp/" (sdata pointer target) + "cf::CfScript"
+//   (typeinfo name, referenced by the .sdata typeinfo), then the 0x34
+//   script-name/extension string pool the code indexes as lbl_eu_804FB3A4+N.
+// - .sdata: script-dir string pointer (8-byte slot: pointer + pad so the
+//   typeinfo pair lands at +8), {name, base} typeinfo pair, "." separator.
+// - .bss: path buffer (0x48), manager storage (0x108 = 3 x 0x58 CfScript),
+//   camera-default Vec3 (0xC, copied as 3 words into CfCam's 80570A2C by
+//   resetCamConsts).
+// - .sbss: singleton-init flag.
+// - .ctors: {sinit_800696C8} (retail static-init entry).
+// ============================================================================
+
+extern "C" {
+// Resource-table function slots (all defined in the linked CfRes.o /
+// IResInfo.o retail objects under these bare names; signatures are opaque
+// to the tables, so plain void(void) declarations carry the relocs).
+void CfRes_getLazyField50(void);
+void CfRes_getLimit512b(void);
+void isResFlag1(void);
+void resNoop(void);
+void CfRes_stubFalse_64388(void);
+void CfRes_stubFalse_643A8(void);
+void isResFlag4(void);
+void CfRes_stubFalse_643E8(void);
+void CfRes_stubFalse_643C8(void);
+void isResFlag3(void);
+void isResFlag2(void);
+void CfRes_stub_63C2C(void);
+void CfRes_stub_63C78(void);
+void CfRes_isField40NonZero(void);
+void CfRes_checkObjState(void);
+void CfRes_cmpField4Eq(void);
+void CfRes_isEntryValid(void);
+void isResFlag0(void);
+void CfRes_dispatchTypeA(void);
+void CfRes_getLimit512c(void);
+void CfRes_dispatchTypeB(void);
+void CfRes_cacheSoundBase(void);
+void CfRes_getLazyFieldAC(void);
+void CfRes_getLimit32(void);
+void CfRes_getField24(void);
+void CfRes_stub_65D8C(void);
+void CfRes_cacheEffectBase(void);
+void CfRes_getLazyField18(void);
+void CfRes_getLimit512d(void);
+void CfRes_getLazyField20b(void);
+void CfRes_getLimit512e(void);
+void CfRes_getLazyDeviceBuf(void);
+void CfRes_getLimit512f(void);
+void CfRes_stub_65D78(void);
+void CfRes_stub_65D7C(void);
+void CfRes_getLazyField10b(void);
+void CfRes_checkEntryReady(void);
+void CfRes_vcall16(void);
+void getResMaxCount(void);
+// CfScript vtable slots owned by other TUs (defined in linked CGame.o).
+void WorkEvent1__10IWorkEventFPvPCc(void);
+void WorkEvent3__10IWorkEventFPv(void);
+void WorkEvent4__10IWorkEventFv(void);
+void OnPauseTrigger__10IWorkEventFb(void);
+void WorkEvent6__10IWorkEventFv(void);
+void WorkEvent7__10IWorkEventFv(void);
+void WorkEvent8__10IWorkEventFv(void);
+void WorkEvent9__10IWorkEventFv(void);
+void WorkEvent10__10IWorkEventFv(void);
+void WorkEvent11__10IWorkEventFv(void);
+void WorkEvent12__10IWorkEventFv(void);
+void WorkEvent13__10IWorkEventFv(void);
+void WorkEvent14__10IWorkEventFv(void);
+void WorkEvent15__10IWorkEventFv(void);
+void WorkEvent16__10IWorkEventFv(void);
+void WorkEvent17__10IWorkEventFv(void);
+void WorkEvent18__10IWorkEventFv(void);
+void WorkEvent19__10IWorkEventFv(void);
+void WorkEvent20__10IWorkEventFv(void);
+void WorkEvent21__10IWorkEventFv(void);
+void WorkEvent22__10IWorkEventFv(void);
+void WorkEvent23__10IWorkEventFv(void);
+void WorkEvent24__10IWorkEventFv(void);
+void WorkEvent25__10IWorkEventFv(void);
+void WorkEvent26__10IWorkEventFv(void);
+void WorkEvent27__10IWorkEventFv(void);
+void WorkEvent28__10IWorkEventFv(void);
+void WorkEvent29__10IWorkEventFv(void);
+void WorkEvent30__10IWorkEventFv(void);
+void WorkEvent31__10IWorkEventFv(void);
+// Deleting dtor: defined in this TU as cf::CfScript::~CfScript (member
+// definition, C++ linkage, same mangled symbol); declared here so the
+// vtable below can take its address (same idiom as the TU's existing
+// member-decl + extern "C"-def pairing for setRootPaneTranslate).
+void __dt__Q22cf8CfScriptFv(void);
+// RTTI base (defined in linked CGame.o; CfBdat-8052E7A0 idiom).
+// Declared as an incomplete array: a scalar `extern u32` tentative-defines
+// into our .sbss under MWCC, while an array bound MWCC cannot size stays a
+// pure UNDEF reference.
+extern "C" u32 __RTTI__10IWorkEvent[];
+} // extern "C"
+
+// CfRes-owned .sdata descriptor words referenced by the tables below
+// (8-byte objects; array-of-u32 is the neutral spelling, cf. IResInfo.cpp).
+extern u32 lbl_eu_80661A80[2];
+extern u32 lbl_eu_80661A88[2];
+extern u32 lbl_eu_80661A90[2];
+extern u32 lbl_eu_80661A98[2];
+extern u32 lbl_eu_80661AA0[2];
+extern u32 lbl_eu_80661AA8[2];
+extern u32 lbl_eu_80661AB0[2];
+extern u32 lbl_eu_80661AB8[2];
+// Forward declaration for the .sdata typeinfo initializer below
+// (defined in the .data block, retail order).
+extern u32 lbl_eu_80526E70[4];
+
+// --- .rodata (retail 0x50): dir prefix + typeinfo name + string pool ---
+// NOTE: no aligned() attributes here: an alignment attribute rounds the
+// object's footprint up (the 0x0C head would occupy 0x10 and shift the
+// typeinfo name off its retail offset). MWCC packs these in source order.
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FB388[0x0C] = "/script/jp/";
+// MWCC packs .rodata by size tier (16-byte arrays go 8/16-aligned, smaller
+// ones pack tight): exact-sized [13] lands at +0x0C, and the [0x34] pool
+// 4-aligns to +0x1C with its 3 lead bytes as section pad (all zero, matching
+// retail). No aligned() attributes: they can only widen the footprint.
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FB394[13] = "cf::CfScript";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FB3A4[0x34] =
+    "%02d%02df\0"
+    "eventView\0"
+    "abcd_00\0"
+    "%s%s\0"
+    ".sb\0"
+    "am.sb\0"
+    "pm.sb\0";
+
+// --- .sdata (retail 0x18) ---
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+char* lbl_eu_80661AC0 = (char*)lbl_eu_804FB388;
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+void* lbl_eu_80661AC8[2] = { lbl_eu_804FB394, lbl_eu_80526E70 };
+__declspec(section ".sdata") __attribute__((used))
+// Sized [8]: the 2-byte "." string plus the section's 6-byte tail fill
+// (retail sh_size 0x18 over 0x12 content; same tail-fill idiom as
+// CfGimmickItem's rodata pad). Auditor is offset-only; the gate needs.
+char lbl_eu_80661AD0[8] = ".";
+
+// --- .data (retail 0x350): descriptor tables in retail order ---
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_80526B30[20] = {
+    lbl_eu_80661A80, 0,
+    (void*)&CfRes_getLazyField50, (void*)&CfRes_getLimit512b,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_stub_63C2C,
+    (void*)&CfRes_stub_63C78, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526B80[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526B90[20] = {
+    lbl_eu_80661A88, 0,
+    (void*)&CfRes_dispatchTypeA, (void*)&CfRes_getLimit512c,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_dispatchTypeB,
+    (void*)&CfRes_cacheSoundBase, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526BE0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526BF0[20] = {
+    lbl_eu_80661A90, 0,
+    (void*)&CfRes_getLazyFieldAC, (void*)&CfRes_getLimit32,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&CfRes_getField24,
+    (void*)&isResFlag2, (void*)&CfRes_stub_65D8C,
+    (void*)&CfRes_cacheEffectBase, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526C40[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526C50[20] = {
+    lbl_eu_80661A98, 0,
+    (void*)&CfRes_getLazyField18, (void*)&CfRes_getLimit512d,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_stub_63C2C,
+    (void*)&CfRes_stub_63C78, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526CA0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526CB0[20] = {
+    lbl_eu_80661AA0, 0,
+    (void*)&CfRes_getLazyField20b, (void*)&CfRes_getLimit512e,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_stub_63C2C,
+    (void*)&CfRes_stub_63C78, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526D00[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526D10[20] = {
+    lbl_eu_80661AA8, 0,
+    (void*)&CfRes_getLazyDeviceBuf, (void*)&CfRes_getLimit512f,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_stub_65D78,
+    (void*)&CfRes_stub_65D7C, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkObjState, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_isEntryValid, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526D60[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526D70[20] = {
+    lbl_eu_80661AB0, 0,
+    (void*)&CfRes_getLazyField10b, (void*)&getResMaxCount,
+    (void*)&isResFlag1, (void*)&resNoop,
+    (void*)&CfRes_stubFalse_64388, (void*)&CfRes_stubFalse_643A8,
+    (void*)&isResFlag4, (void*)&CfRes_stubFalse_643E8,
+    (void*)&CfRes_stubFalse_643C8, (void*)&isResFlag3,
+    (void*)&isResFlag2, (void*)&CfRes_stub_63C2C,
+    (void*)&CfRes_stub_63C78, (void*)&CfRes_isField40NonZero,
+    (void*)&CfRes_checkEntryReady, (void*)&CfRes_cmpField4Eq,
+    (void*)&CfRes_vcall16, (void*)&isResFlag0,
+};
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526DC0[4] = { lbl_eu_80661AB8, 0, 0, 0 };
+// PMF dispatch pair selected by mWaitCount (retail bytes {0,-1,func} x2).
+__declspec(section ".data") __attribute__((used))
+CfScriptPMF lbl_eu_80526DD0[2] = { &cf::CfScript::waitLoad, &cf::CfScript::update };
+// CfScript IWorkEvent vtable blob [ti, 0, dtor, ...] (retail 0x88).
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80526DE8[34] = {
+    lbl_eu_80661AC8, 0,
+    (void*)&__dt__Q22cf8CfScriptFv,
+    (void*)&WorkEvent1__10IWorkEventFPvPCc,
+    (void*)&OnFileEvent__8CfScriptFP10CEventFile,
+    (void*)&WorkEvent3__10IWorkEventFPv, (void*)&WorkEvent4__10IWorkEventFv,
+    (void*)&OnPauseTrigger__10IWorkEventFb,
+    (void*)&WorkEvent6__10IWorkEventFv, (void*)&WorkEvent7__10IWorkEventFv,
+    (void*)&WorkEvent8__10IWorkEventFv, (void*)&WorkEvent9__10IWorkEventFv,
+    (void*)&WorkEvent10__10IWorkEventFv, (void*)&WorkEvent11__10IWorkEventFv,
+    (void*)&WorkEvent12__10IWorkEventFv, (void*)&WorkEvent13__10IWorkEventFv,
+    (void*)&WorkEvent14__10IWorkEventFv, (void*)&WorkEvent15__10IWorkEventFv,
+    (void*)&WorkEvent16__10IWorkEventFv, (void*)&WorkEvent17__10IWorkEventFv,
+    (void*)&WorkEvent18__10IWorkEventFv, (void*)&WorkEvent19__10IWorkEventFv,
+    (void*)&WorkEvent20__10IWorkEventFv, (void*)&WorkEvent21__10IWorkEventFv,
+    (void*)&WorkEvent22__10IWorkEventFv, (void*)&WorkEvent23__10IWorkEventFv,
+    (void*)&WorkEvent24__10IWorkEventFv, (void*)&WorkEvent25__10IWorkEventFv,
+    (void*)&WorkEvent26__10IWorkEventFv, (void*)&WorkEvent27__10IWorkEventFv,
+    (void*)&WorkEvent28__10IWorkEventFv, (void*)&WorkEvent29__10IWorkEventFv,
+    (void*)&WorkEvent30__10IWorkEventFv, (void*)&WorkEvent31__10IWorkEventFv,
+};
+// RTTI base descriptor (CfBdat-8052E7A0 idiom).
+__declspec(section ".data") __attribute__((used))
+u32 lbl_eu_80526E70[4] = { (u32)__RTTI__10IWorkEvent, 0, 0, 0 };
+
+// --- .bss (retail 0x15C) ---
+// NOTE: no aligned() attribute on the path/manager buffers: an alignment
+// attribute on the definition perturbs MWCC's scheduling of the users
+// (sinit_800696C8, CfScript_LoadScript) away from retail. Section align 8
+// is held by the camera vector below (0x150 is 8-aligned, so it is free).
+__attribute__((used))
+char lbl_eu_805708D0[0x48];
+__attribute__((used))
+char lbl_eu_80570918[0x108];
+// Camera-default vector (copied as 3 words into CfCam's 80570A2C).
+__attribute__((used, aligned(8)))
+f32 lbl_eu_80570A20[3];
+
+// --- .sbss (retail 0x8): singleton-init flag + section-fill reservation ---
+// The file-static sort experiment showed MWCC emits sbss statics ahead of
+// globals, so the fill is a plain global (source order kept, offset 0 kept).
+__attribute__((used))
+s8 lbl_eu_80663D88;
+// MWCC 4-aligns sbss items: this lands at +4 (bytes +1..+3 are alignment
+// fill) and closes the section at exactly 0x8.
+__attribute__((used))
+u8 cfscript_sbss_fill[4];
+
+// --- .ctors (retail 1 entry): static-init entry point ---
+__declspec(section ".ctors") __attribute__((used))
+static void (*cfscript_ctors_entry)() = cf::sinit_800696C8;

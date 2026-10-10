@@ -51,8 +51,8 @@ public:
 
     void ScnFilterList_destroyItem(T* item){}
 
-    void ScnFilterList_freeNode(_reslist_node<T>* r4){
-        r4->mNext = nullptr;
+    void ScnFilterList_freeNode(_reslist_node<T>* node){
+        node->mNext = nullptr;
     }
 
     int findFirstEmptySlotIndex(){
@@ -241,14 +241,14 @@ public:
     void pop_front();
 
     void erase(iterator& it){
-        _reslist_node<T>* r5;
-        _reslist_node<T>* r4;
+        _reslist_node<T>* next;
+        _reslist_node<T>* prev;
         _reslist_node<T>* node = it.mNode;
         
-        r4 = node->mPrev;
-        r5 = node->mNext;
-        r4->mNext = r5;
-        r5->mPrev = r4;
+        prev = node->mPrev;
+        next = node->mNext;
+        prev->mNext = next;
+        next->mPrev = prev;
         node->mNext = nullptr;
     }
 
@@ -270,13 +270,13 @@ public:
 
 template <typename T>
 __declspec(noinline) void _reslist_base<T>::clearList(){
-    _reslist_node<T>* r5 = mStartNodePtr->mNext;
+    _reslist_node<T>* cur = mStartNodePtr->mNext;
     
-    while (r5 != mStartNodePtr) {
-        _reslist_node<T>* r4 = r5;
-        r5 = r5->mNext;
-        ScnFilterList_destroyItem(&r4->mItem);
-        ScnFilterList_freeNode(r4);
+    while (cur != mStartNodePtr) {
+        _reslist_node<T>* victim = cur;
+        cur = cur->mNext;
+        ScnFilterList_destroyItem(&victim->mItem);
+        ScnFilterList_freeNode(victim);
     }
 
     mStartNodePtr->mNext = mStartNodePtr;

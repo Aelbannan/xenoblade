@@ -58,31 +58,31 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
     if (self->field_14 == 0) return;
 
     cf::CfImplEneBattleObj* battleObj;
-    int r29 = 0;
-    int r28 = 0;
-    int r27 = 0;
-    int r26 = 0;
+    int syncOk = 0;
+    int subOk = 0;
+    int stateOk = 0;
+    int actorOk = 0;
     cf::CfObjectImplEneFlag* flags = (cf::CfObjectImplEneFlag*)getEffOwner____FPv(self->field_14);
     if ((flags->field_45CA & 2) == 0) {
         battleObj = (cf::CfImplEneBattleObj*)self->field_18;
         int id = *(int*)battleObj->field_04->bf30();
-        if (testActorStatus(battleObj, &id, 0x803) == 0) r26 = 1;
+if (testActorStatus(battleObj, &id, 0x803) == 0) actorOk = 1;
     }
-    if (r26 != 0) {
+    if (actorOk != 0) {
         cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
-        if (battleObj->bhBC() == 0) r27 = 1;
+        if (battleObj->bhBC() == 0) stateOk = 1;
     }
-    if (r27 != 0) {
+    if (stateOk != 0) {
         cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
-        if (battleObj->mSub.sf4C() == 0) r28 = 1;
+        if (battleObj->mSub.sf4C() == 0) subOk = 1;
     }
-    if (r28 != 0) {
+    if (subOk != 0) {
         cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
-        if (!(battleObj->field_3374 & 0x08000000)) r29 = 1;
+        if (!(battleObj->field_3374 & 0x08000000)) syncOk = 1;
     }
 
-    MoveImplSyncEffectState(self, r29);
-    if (r29 != 0 || ((cf::CfObjectImplEne14*)self->field_14)->field_C4 == 0) {
+    MoveImplSyncEffectState(self, syncOk);
+    if (syncOk != 0 || ((cf::CfObjectImplEne14*)self->field_14)->field_C4 == 0) {
         if (self->field_36C != 0) {
             schedClearFlag15Update((void*)self->field_36C);
             self->field_36C = 0;
@@ -113,11 +113,11 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
     MoveImplNoopA(self);
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
 
-    int r31 = 0;
-    int r4 = 0;
-    if (!(battleObj->field_3374 & 0x100) && battleObj->field_3F60 != 0) r4 = 1;
-    if (r4 != 0 && (((cf::CfImplEneField3F60*)(u32)battleObj->field_3F60)->field_4EC & 0x80)) r31 = 1;
-    if (r31 != 0) {
+    int doReset = 0;
+    int resetOk = 0;
+    if (!(battleObj->field_3374 & 0x100) && battleObj->field_3F60 != 0) resetOk = 1;
+    if (resetOk != 0 && (((cf::CfImplEneField3F60*)(u32)battleObj->field_3F60)->field_4EC & 0x80)) doReset = 1;
+    if (doReset != 0) {
         battleObj->bg18(lbl_eu_80666CE4);
     }
     if (battleObj->bg2C() == lbl_eu_80666CE4) return;
@@ -215,7 +215,7 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
         CBattleMan_BumpUnk94Key(cf::CBattleManager::getInstance(), battleObj->field_3F28);
         spreadChainArtsHits(cf::CBattleManager::getInstance(), battleObj, 0, 0);
         unregisterBattleActor(cf::CBattleManager::getInstance(), battleObj);
-        CPartsChange_ResetBattleEntry(battleObj, r31, ((battleObj->field_3374 >> 5) & 1) ^ 1);
+CPartsChange_ResetBattleEntry(battleObj, doReset, ((battleObj->field_3374 >> 5) & 1) ^ 1);
     }
 
     // Death id 0x968: refresh every tracked unit in the enum list.

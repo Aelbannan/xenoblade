@@ -1890,9 +1890,9 @@ extern "C" __declspec(noinline) void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self
 // constant, scale the outputs by f2 and blend in the previous row (r8-1)
 // scaled by f1 (fmadds).
 void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32* out6,
-                   f32 f1, f32 f2, u32 r7, u32 r8) {
+                   f32 f1, f32 f2, u32 col, u32 rowIdx) {
     f32 v = lbl_eu_8066B010;
-    f32* row = (f32*)((u8*)self->alt2.field_0x50 + r7 * 4 + r8 * 0x14);
+    f32* row = (f32*)((u8*)self->alt2.field_0x50 + col * 4 + rowIdx * 0x14);
     f32 x = row[0];
     f32 y;
     f32 z;
@@ -1906,7 +1906,7 @@ void scnLgtBlendRow5(CScnEnvLgtCtrl* self, f32* out4, f32* out5, f32* out6,
     if (v == f1) return;
     // computed before the output rescale so the base/offset math schedules
     // with the first blend block (retail subi/mulli/add right after beqlr)
-    f32* prev = (f32*)((u8*)self->alt2.field_0x50 + r7 * 4 + (r8 - 1) * 0x14);
+    f32* prev = (f32*)((u8*)self->alt2.field_0x50 + col * 4 + (rowIdx - 1) * 0x14);
     out5[0] *= f2;
     out6[0] *= f2;
     out4[0] *= f2;
@@ -2143,20 +2143,20 @@ extern "C" bool scnLgtReadLightDataWords(CScnEnvLgtCtrlLgtView* self, CScnEnvLgt
     return false;
 }
 
-extern "C" bool scnLgtReadLightDataRaw(void* r3, void* r4) {
-    if ((*(unsigned int*)((char*)r3 + 4) & 0x400)) {
+extern "C" bool scnLgtReadLightDataRaw(void* view, void* out) {
+    if ((*(unsigned int*)((char*)view + 4) & 0x400)) {
         unsigned int t2;
         unsigned int t1;
         unsigned int t0;
         unsigned int t3;
-        t0 = *(unsigned int*)((char*)r3 + 0x64);
-        t1 = *(unsigned int*)((char*)r3 + 0x68);
-        t2 = *(unsigned int*)((char*)r3 + 0x6c);
-        t3 = *(unsigned int*)((char*)r3 + 0x70);
-        *(unsigned int*)((char*)r4 + 0xc) = t3;
-        *(unsigned int*)((char*)r4 + 8) = t2;
-        *(unsigned int*)((char*)r4 + 4) = t1;
-        *(unsigned int*)((char*)r4 + 0) = t0;
+        t0 = *(unsigned int*)((char*)view + 0x64);
+        t1 = *(unsigned int*)((char*)view + 0x68);
+        t2 = *(unsigned int*)((char*)view + 0x6c);
+        t3 = *(unsigned int*)((char*)view + 0x70);
+        *(unsigned int*)((char*)out + 0xc) = t3;
+        *(unsigned int*)((char*)out + 8) = t2;
+        *(unsigned int*)((char*)out + 4) = t1;
+        *(unsigned int*)((char*)out + 0) = t0;
         return true;
     }
     return false;
@@ -2189,16 +2189,16 @@ extern "C" void scnLgtCopyAmbBase(CScnEnvLgtCtrlLgtView* view, CScnEnvLgtData* d
 // return value is the recomputed slot field, or the original r6 when no
 // recompute ran.
 extern "C" u32 scnLgtRefreshSlot(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtEnv484* env,
-                  const u32* r5, u32 r6, float f1) {
-    if (self->alt5.field_0xAC <= (s32)r6) {
+                  const u32* color, u32 index, float f1) {
+    if (self->alt5.field_0xAC <= (s32)index) {
         return self->field_0xE4;
     }
-    u32 ret = r6;
+    u32 ret = index;
     self->field_0xEC = f1;
-    self->field_0xE4 = r6;
-    self->field_0xD0 = r5[0];
-    self->field_0xD4 = r5[1];
-    self->field_0xD8 = r5[2];
+    self->field_0xE4 = index;
+    self->field_0xD0 = color[0];
+    self->field_0xD4 = color[1];
+    self->field_0xD8 = color[2];
     if (env->field_0x484 & 1) {
         if (self->field_0x30 != 0) {
             if (self->field_0x04 & 0x1000) {
@@ -2473,13 +2473,13 @@ extern "C" int scnLgtBindType3Entry(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarge
 // 1.0 constant).
 extern "C" __declspec(noinline) void scnLgtRefreshLightRows(CScnEnvLgtCtrl* self);
 
-extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int r4, int r5, float f1) {
-    if (r4 != 0) {
-        if (r5 >= 2) r5 = 1;
+extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int enable, int slot, float f1) {
+    if (enable != 0) {
+        if (slot >= 2) slot = 1;
         u32 flags = self->field_0x04;
         if (flags & 0x40) {
             if (flags & 0x8) {
-                if (r5 != self->lgt2.field_0xBE) {
+                if (slot != self->lgt2.field_0xBE) {
                     scnLgtRefreshLightRows(self);
                 }
             } else {
@@ -2488,7 +2488,7 @@ extern "C" void scnLgtSetFlashSlot(CScnEnvLgtCtrl* self, int r4, int r5, float f
         } else {
             self->lgt2.field_0xC0 = lbl_eu_8066B014;
         }
-        self->lgt2.field_0xBE = r5;
+        self->lgt2.field_0xBE = slot;
         self->field_0x04 |= 0x8;
     } else {
         u32 flags = self->field_0x04;
@@ -2531,23 +2531,23 @@ extern "C" void scnLgtSetLightBit(CScnEnvLgtCtrl* self, int bit, int clear) {
 // Otherwise store the new slot index, dispatch v26((s16)r4, 1), reset the
 // +0xB0/+0xB4/+0xB8 timers and record the direction bit (0x2000 when
 // r5 != 0, else 0x4000).
-extern "C" void scnLgtStartFlash(CScnEnvLgtCtrl* self, int r4, int r5, float f1) {
+extern "C" void scnLgtStartFlash(CScnEnvLgtCtrl* self, int slot, int dir, float f1) {
     if (self->field_0x04 & 0x4000) {
         ((CScnEnvLgtCtrlVt*)self)->v26(self->field_0xBC, 0);
     }
     f32 v = lbl_eu_8066B010;
     self->field_0x04 &= ~0x6000;
     if (f1 <= v) {
-        ((CScnEnvLgtCtrlVt*)self)->v26(r4, r5);
+        ((CScnEnvLgtCtrlVt*)self)->v26(slot, dir);
         self->field_0xBC = -1;
     } else {
-        self->field_0xBC = r4;
-        ((CScnEnvLgtCtrlVt*)self)->v26((s16)r4, 1);
+        self->field_0xBC = slot;
+        ((CScnEnvLgtCtrlVt*)self)->v26((s16)slot, 1);
         f32 w = lbl_eu_8066B010;
         self->alt3.field_0xB0 = w;
         self->alt3.field_0xB4 = f1;
         self->field_0xB8 = w;
-        if (r5 != 0) {
+        if (dir != 0) {
             self->field_0x04 |= 0x2000;
         } else {
             self->field_0x04 |= 0x4000;
@@ -2576,15 +2576,15 @@ extern "C" void scnLgtGetFogCount(void* self, unsigned int* out) {
 // scnLgtSetSlotBits (us-804c9efc): set/clear one of two light-control flag bits
 // on the controller (0x1000 when r5 != 0, else 0x800); r4 selects set vs
 // clear. No-op while the light-slot array at +0x24 is not yet allocated.
-extern "C" void scnLgtSetSlotBits(CScnEnvLgtCtrl* self, int r4, int r5) {
+extern "C" void scnLgtSetSlotBits(CScnEnvLgtCtrl* self, int set, int bit) {
     if (self->field_0x24 == 0) return;
-    if (r5 != 0) {
-        if (r4 != 0)
+    if (bit != 0) {
+        if (set != 0)
             self->field_0x04 |= 0x1000;
         else
             self->field_0x04 &= ~0x1000;
     } else {
-        if (r4 != 0)
+        if (set != 0)
             self->field_0x04 |= 0x800;
         else
             self->field_0x04 &= ~0x800;
@@ -2596,16 +2596,16 @@ extern "C" void scnLgtSetSlotBits(CScnEnvLgtCtrl* self, int r4, int r5) {
 // the slot's +0x28 flags: set bit 0, clear bit 1. The member accesses are
 // written as self->field_0x24[r5] each time: the stores through the slot
 // alias the field, so MWCC reloads the base after each (as retail does).
-extern "C" void scnLgtWriteSlotVecs(CScnEnvLgtCtrl* self, int r4, int r5,
-                   const CScnEnvLgtCtrlLgtVec3* r6,
-                   const CScnEnvLgtCtrlLgtVec3* r7) {
+extern "C" void scnLgtWriteSlotVecs(CScnEnvLgtCtrl* self, int unit, int sub,
+                   const CScnEnvLgtCtrlLgtVec3* pos,
+                   const CScnEnvLgtCtrlLgtVec3* base) {
     if (self->field_0x24 == 0) return;
-    if (r5 > 1) r5 = 0;
-    r5 += ((-r4 | r4) >> 31) & 2;
-    self->field_0x24[r5].field_0x00 = *r7;
-    self->field_0x24[r5].field_0x18 = *r6;
-    self->field_0x24[r5].field_0x28 |= 0x1;
-    self->field_0x24[r5].field_0x28 &= ~0x2;
+    if (sub > 1) sub = 0;
+    sub += ((-unit | unit) >> 31) & 2;
+    self->field_0x24[sub].field_0x00 = *base;
+    self->field_0x24[sub].field_0x18 = *pos;
+    self->field_0x24[sub].field_0x28 |= 0x1;
+    self->field_0x24[sub].field_0x28 &= ~0x2;
 }
 
 // scnLgtWriteSlotScale (us-804c9ff8): same slot-index math as scnLgtWriteSlotVecs with a
@@ -2614,19 +2614,19 @@ extern "C" void scnLgtWriteSlotVecs(CScnEnvLgtCtrl* self, int r4, int r5,
 // word receives f1 and the +0x28 flags get bits 0 and 1 set. Each
 // float->u32 bit copy goes through its own stack temp, so MWCC emits the
 // retail lfs/stfs-to-stack/lwz roundtrip per element.
-extern "C" void scnLgtWriteSlotScale(CScnEnvLgtCtrl* self, int r4, int r5,
-                   const CScnEnvLgtCtrlLgtVec3* r6, float f1) {
+extern "C" void scnLgtWriteSlotScale(CScnEnvLgtCtrl* self, int unit, int sub,
+                   const CScnEnvLgtCtrlLgtVec3* base, float f1) {
     if (self->field_0x24 == 0) return;
-    if (r5 > 1) r5 = 0;
+    if (sub > 1) sub = 0;
     f32 v = lbl_eu_8066B010;
-    r5 += ((-r4 | r4) >> 31) & 2;
+    sub += ((-unit | unit) >> 31) & 2;
     // explicit base refetch per member block: the stores through the slot
     // alias field_0x24, so retail reloads and re-adds the stride each time
-    CScnEnvLgtCtrlLgtSlot* slot = &self->field_0x24[r5];
-    slot->field_0x00 = *r6;
-    slot = &self->field_0x24[r5];
-    slot->field_0x0C.w = *r6;
-    slot = &self->field_0x24[r5];
+    CScnEnvLgtCtrlLgtSlot* slot = &self->field_0x24[sub];
+    slot->field_0x00 = *base;
+    slot = &self->field_0x24[sub];
+    slot->field_0x0C.w = *base;
+    slot = &self->field_0x24[sub];
     // Each bit-cast uses its own float local so MWCC gives it a dedicated
     // stack temp (retail: x->sp+0x8, y->sp+0xc, z->sp+0x10).
     f32 tz = v;
@@ -2641,45 +2641,45 @@ extern "C" void scnLgtWriteSlotScale(CScnEnvLgtCtrl* self, int r4, int r5,
     slot->field_0x18.x = *(u32*)&t.x;
     slot->field_0x18.y = *(u32*)&t.y;
     slot->field_0x18.z = *(u32*)&t.z;
-    slot = &self->field_0x24[r5];
+    slot = &self->field_0x24[sub];
     slot->field_0x24 = f1;
-    slot = &self->field_0x24[r5];
+    slot = &self->field_0x24[sub];
     slot->field_0x28 |= 0x1;
-    slot = &self->field_0x24[r5];
+    slot = &self->field_0x24[sub];
     slot->field_0x28 |= 0x2;
 }
 
 // Clear bit 0 of a light slot's +0x28 flags. Slot index: r5 clamped to 0..1,
 // plus 2 when r4 is non-zero (the (r4 | -r4) >> 31 idiom yields -1 iff r4 != 0).
-extern "C" void scnLgtClearSlotEn(CScnEnvLgtCtrl* self, int r4, int r5) {
+extern "C" void scnLgtClearSlotEn(CScnEnvLgtCtrl* self, int unit, int sub) {
     CScnEnvLgtCtrlLgtSlot* slot = self->field_0x24;
     if (slot == 0) return;
-    if (r5 > 1) r5 = 0;
-    r5 += ((-r4 | r4) >> 31) & 2;
-    slot[r5].field_0x28 &= 0xFFFE;
+    if (sub > 1) sub = 0;
+    sub += ((-unit | unit) >> 31) & 2;
+    slot[sub].field_0x28 &= 0xFFFE;
 }
 
 // Set bit 2 of a light slot's +0x28 flags and write the three u16 params at
 // +0x2A..+0x2E (curve values: base + idx*60, base + idx*60, and a raw u16).
-extern "C" void scnLgtSetSlotCurve(CScnEnvLgtCtrl* self, int r4, int r5, int r6, int r7, int r8, int r9, int r10) {
+extern "C" void scnLgtSetSlotCurve(CScnEnvLgtCtrl* self, int unit, int sub, int base0, int idx0, int base1, int idx1, int raw) {
     CScnEnvLgtCtrlLgtSlot* slot = self->field_0x24;
     if (slot == 0) return;
-    if (r5 > 1) r5 = 0;
-    r5 += ((-r4 | r4) >> 31) & 2;
-    CScnEnvLgtCtrlLgtSlot* s = &slot[r5];
+    if (sub > 1) sub = 0;
+    sub += ((-unit | unit) >> 31) & 2;
+    CScnEnvLgtCtrlLgtSlot* s = &slot[sub];
     s->field_0x28 |= 0x4;
-    s->field_0x2A = (u16)(r7 + r6 * 0x3C);
-    s->field_0x2C = (u16)(r9 + r8 * 0x3C);
-    s->field_0x2E = (u16)r10;
+    s->field_0x2A = (u16)(idx0 + base0 * 0x3C);
+    s->field_0x2C = (u16)(idx1 + base1 * 0x3C);
+    s->field_0x2E = (u16)raw;
 }
 
 // Clear bit 2 of a light slot's +0x28 flags (same slot-index math as scnLgtClearSlotEn).
-extern "C" void scnLgtClrSlotCurve(CScnEnvLgtCtrl* self, int r4, int r5) {
+extern "C" void scnLgtClrSlotCurve(CScnEnvLgtCtrl* self, int unit, int sub) {
     CScnEnvLgtCtrlLgtSlot* slot = self->field_0x24;
     if (slot == 0) return;
-    if (r5 > 1) r5 = 0;
-    r5 += ((-r4 | r4) >> 31) & 2;
-    slot[r5].field_0x28 &= 0xFFFB;
+    if (sub > 1) sub = 0;
+    sub += ((-unit | unit) >> 31) & 2;
+    slot[sub].field_0x28 &= 0xFFFB;
 }
 
 // scnLgtToggleItemBit (us-804ca1b0): walk the 0x3C-stride parameter array at
@@ -3027,11 +3027,11 @@ extern "C" void scnLgtSetFlag30(void* ptr, int flag) {
         *word &= ~0x40000000;
 }
 
-extern "C" void scnLgtSetFlag31(void* r3, int r4) {
-    if (r4 != 0) {
-        *(unsigned int*)((char*)r3 + 4) |= 0x80000000u;
+extern "C" void scnLgtSetFlag31(void* ptr, int flag) {
+    if (flag != 0) {
+        *(unsigned int*)((char*)ptr + 4) |= 0x80000000u;
     } else {
-        *(unsigned int*)((char*)r3 + 4) &= ~0x80000000u;
+        *(unsigned int*)((char*)ptr + 4) &= ~0x80000000u;
     }
 }
 

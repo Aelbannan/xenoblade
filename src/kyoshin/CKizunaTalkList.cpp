@@ -910,10 +910,10 @@ void sinit_80274458() {
     setGXColorS10(&lbl_eu_806648D8, 0x48, 0x3a, 0x21, 0xff);
 }
 
-extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 r4) {
+extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 idx) {
     // Use signed compare to match retail cmpwi
-    if ((s32)r4 >= 0x100) return 0;
-    return (u8*)self + r4 * 0x14;
+    if ((s32)idx >= 0x100) return 0;
+    return (u8*)self + idx * 0x14;
 }
 
 // Rebuild-pending flag (retail func_8027355C): the pending-rebuild byte at

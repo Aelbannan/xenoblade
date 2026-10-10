@@ -787,35 +787,35 @@ __declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         int val = (int)CtrlRemote_TouchBitByArg(v4 + 0x29) + v28;
                         if (val < 0)
                             val = 0;
-                        s32 r21;
+                        s32 bitIdx;
                         if (val > 0x1388) {
-                            r21 = v28 - (val - 0x1388);
-                            if (r21 < 0)
-                                r21 = 0;
+                            bitIdx = v28 - (val - 0x1388);
+                            if (bitIdx < 0)
+                                bitIdx = 0;
                         } else {
-                            r21 = v28;
+                            bitIdx = v28;
                         }
-                        r21 += code80135FDC_getWord_6405C();
+                        bitIdx += code80135FDC_getWord_6405C();
                         code80135FDC_setPair_6405C_64060(
-                            r21, code80135FDC_getWord_64060() + v28);
+                            bitIdx, code80135FDC_getWord_64060() + v28);
                     }
                 }
                 u32 v24 = 0;
                 if (type == 1) {
                     if (v7 != CtrlRemote_TouchBitByArg(v6 + 0x608)) {
-                        s32 r21 = v4 + 0x21;
-                        int val = (int)CtrlRemote_TouchBitByArg(r21) + v28;
+                        s32 bitIdx = v4 + 0x21;
+                        int val = (int)CtrlRemote_TouchBitByArg(bitIdx) + v28;
                         if (val < 0)
                             val = 0;
                         if (val > 0x2710)
                             val = 0x2710;
-                        CtrlRemote_SetSharedBit(r21, val);
+                        CtrlRemote_SetSharedBit(bitIdx, val);
                     } else {
                         v24 = 1;
                     }
                 } else if (type == 2) {
-                    s32 r21 = v4 + 0x29;
-                    int val = (int)CtrlRemote_TouchBitByArg(r21) + v28;
+                    s32 bitIdx = v4 + 0x29;
+                    int val = (int)CtrlRemote_TouchBitByArg(bitIdx) + v28;
                     if (val < 0)
                         val = 0;
                     if (val > 0x1388) {
@@ -825,7 +825,7 @@ __declspec(noinline) int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                             v28 = 0;
                         val = 0x1388;
                     }
-                    CtrlRemote_SetSharedBit(r21, val);
+                    CtrlRemote_SetSharedBit(bitIdx, val);
                 }
                 if (v26 != 0)
                     v28 = v26;

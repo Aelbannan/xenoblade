@@ -104,3 +104,16 @@ CTaskGameEffAfter* __ct__CTaskGameEffAfter(CProcess* parent) {
     obj->Regist(parent, false);
     return obj;
 }
+
+
+// NOTE (wave DL-r4, verified): the retail .data/.rodata/.sdata tables for
+// this TU (labels 80526608/650 in .data, 80661A08 in .sdata) were rebuilt
+// byte-exact in source and then REVERTED. The TU's C++ classes emit
+// __vt__17CTaskGameEffAfter + __RTTI__ weak pairs + RTTI strings that retail
+// does not carry here, so un-stripping the frozen extern_data_sections rule
+// fails the data gate (.data 0x10C vs 0x88) and risks a duplicate __vt__ at
+// link. Landing needs either devirtualizing the TU (breaks the 8/8 code
+// match) or a rule-side selective strip (frozen). Table shape, for reference:
+// .data = two 9-word vtables + 9-word/7-word trailer blocks (template
+// Move27/Draw27/dtor27 slots unspellable, zeros), .sdata = 3 locator pairs
+// (first pair's labels belong to pluginPad's unlanded sections).

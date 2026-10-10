@@ -27,7 +27,7 @@ extern void ScnEnvLgt_EnableFlag100(void* ptr, int flag);
 extern void* simGetLeafActData(void* model);
 extern void simSetFlag2OnTree(void* model, int flag);
 extern void simMarkTree100000(void* model, int flag);
-extern void simBindChrAnim(void* model, u32 r4, void* r5, u32 r6, u32 r7, u32 r8, u32 r9);
+extern void simBindChrAnim(void* model, u32 resId, void* animIdx, u32 frame, u32 gateBit, u32 flag, u32 half);
 extern void simSetValue7E8(void* model, int value);
 extern void simMarkTree80000(void* model, int flag);
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);

@@ -1678,21 +1678,21 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* s
     u32 c8 = lbl_eu_806667C8;
     u32 cc = lbl_eu_806667CC;
     u8* rows = reinterpret_cast<u8*>(self) + rowIdx * 0x49 + 0xE8;
-    for (int r19 = 0; r19 < 3; r19++) {
-        u8 rowCh = (u8)(r19 + 0x31);
-        for (int r18 = 0; r18 < 8; r18++) {
+    for (int gridRow = 0; gridRow < 3; gridRow++) {
+        u8 rowCh = (u8)(gridRow + 0x31);
+        for (int gridCol = 0; gridCol < 8; gridCol++) {
             cf::CtrlObjectParamColName col;
             col.words[0] = c8;
             col.words[1] = cc;
             col.bytes[4] = rowCh;
-            col.bytes[5] = (u8)(r18 + 0x31);
+            col.bytes[5] = (u8)(gridCol + 0x31);
             u32 c = getBdatStringColumnValue(itemBdat, reinterpret_cast<const char*>(&col), rowKey);
             u8 artsId = (u8)c;
             if (artsId == 0) continue;
             u32 v = getBdatStringColumnValue(fp, &strBase[0x109], artsId);
             u8 col2 = (u8)v;
             u8* slotRow = rows + col2 * 2;
-            if (self->field_00 == 8 && r19 == 2) {
+            if (self->field_00 == 8 && gridRow == 2) {
                 u16 level = CItem_getNameIdFromFam(self->field_0A);
                 void* armorBdat = reinterpret_cast<void*>(lbl_eu_806640F8);
                 if ((u16)level == 0) {
@@ -1710,9 +1710,9 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* s
             if (*slotRow != 0) continue;
             u32 v3 = getBdatStringColumnValue(fp, &strBase[0x243], artsId);
             u32 v4 = getBdatStringColumnValue(fp, &strBase[0x24C], artsId);
-            u32 r16 = (u8)v4;
+            u32 reqLevel = (u8)v4;
             if ((u8)v3 != 1) continue;
-            if (self->mParam.CActorParam_getArtsLevel() < r16) continue;
+            if (self->mParam.CActorParam_getArtsLevel() < reqLevel) continue;
             learnFlag = 1;
             // Build contiguous copies of both offset tables before the scan.
             u32 slotA[8];
@@ -1735,9 +1735,9 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* s
             slotB[7] = tblB7;
             *slotRow = 1;
             for (int k = 0; k < 8; k++) {
-                int sel = (r19 == 2) ? 2 : 0;
-                u32 off = (r19 == 2) ? slotA[k] : slotB[k];
-                if (self->field_00 == 1) sel = r19;
+                int sel = (gridRow == 2) ? 2 : 0;
+                u32 off = (gridRow == 2) ? slotA[k] : slotB[k];
+                if (self->field_00 == 1) sel = gridRow;
                 u8* slot = rows + sel * 8 + off + 0x31;
                 if (*slot == 0) {
                     *slot = artsId;
@@ -1884,14 +1884,14 @@ extern "C" __declspec(noinline) void CtrlObjectParam_ApplyArtsRankUp(void* selfV
     for (;;) {
         void* artsBdat = reinterpret_cast<void*>(lbl_eu_806640DC);
         u32 level = self->mParam.CActorParam_getArtsLevel();
-        int r28;
+        int deficit;
         if ((u32)(level + 1) > 0x63) {
-            r28 = 1;
+            deficit = 1;
         } else {
             u32 col = getBdatStringColumnValue(artsBdat, &strBase[0x263], (u32)(level + 1));
-            r28 = (int)col - (int)self->mParam.CActorParam_getSpentCurrency();
+            deficit = (int)col - (int)self->mParam.CActorParam_getSpentCurrency();
         }
-        if (r28 > 0) break;
+        if (deficit > 0) break;
         cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
             self->mParam.CActorParam_getArtsDataBlock());
         u16 target = (u16)(v94->word0 + 1);
@@ -1924,7 +1924,7 @@ extern "C" __declspec(noinline) void CtrlObjectParam_ApplyArtsRankUp(void* selfV
             }
         }
         u32 v1E8 = self->mParam.CActorParam_getSpentCurrency();
-        self->mParam.CActorParam_addAccumCurrency(r28 + v1E8);
+        self->mParam.CActorParam_addAccumCurrency(deficit + v1E8);
         u16 type = self->field_00;
         int found = 0;
         if (type < 9) {
@@ -1943,7 +1943,7 @@ extern "C" __declspec(noinline) void CtrlObjectParam_ApplyArtsRankUp(void* selfV
                 Counter884_AddClamped(&self->big[0], 1);
             }
         }
-        self->mParam.CActorParam_setSpentCurrency(-r28);
+        self->mParam.CActorParam_setSpentCurrency(-deficit);
         repeat = 1;
     }
     if (repeat != 0) {

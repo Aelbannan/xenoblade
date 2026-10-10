@@ -4062,7 +4062,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
         p.y += s->field3D0;
         p.z += s->field3D4;
 
-        int r4 = 0;
+        int blendActive = 0;
         if ((s->field0C & 0x04000000) != 0) {
             // Blend countdown: after it hits zero, clear the flag and skip.
             u8 c = s->field4DA;
@@ -4071,10 +4071,10 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             if ((s32)(s8)n2 <= 0) {
                 s->field0C &= ~0x04000000;
             } else {
-                r4 = 1;
+                blendActive = 1;
             }
         }
-        if (r4 != 0 && (s->field0C & 0x1000) != 0) {
+        if (blendActive != 0 && (s->field0C & 0x1000) != 0) {
             // Ground-alignment probe: kill the horizontal components when the
             // normalized delta faces the ground normal (3FC/400/404).
             if (p.x != lbl_eu_80665EA0 || p.z != lbl_eu_80665EA0) {

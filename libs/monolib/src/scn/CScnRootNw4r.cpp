@@ -109,7 +109,7 @@ void RootNw4r_FreeBuf(CScnRootNw4r* self, u8* p) {
 
 // us-80493f4c: advance the frame counter and dispatch to every registered
 // (callback, id) pair whose id matches the current frame counter.
-extern "C" void RootNw4r_DispatchFrame(CScnRootNw4r* self, u32 r4,
+extern "C" void RootNw4r_DispatchFrame(CScnRootNw4r* self, u32 frame,
                               nw4r::g3d::G3dObj* obj) {
     if (obj != NULL) {
         obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788));

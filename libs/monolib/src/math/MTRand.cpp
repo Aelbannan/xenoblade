@@ -57,12 +57,12 @@ namespace ml{
         left--;
         if(left <= 0) nextMt();
 
-        u32 r4 = *pNext++;
-        r4 ^= (r4 >> 0xB);
-        r4 ^= (r4 << 7) & 0x9D2C5680;
-        r4 ^= (r4 << 0xF) & 0xEFC60000;
-        r4 ^= r4 >> 0x12;
-        return r4;
+        u32 x = *pNext++;
+        x ^= (x >> 0xB);
+        x ^= (x << 7) & 0x9D2C5680;
+        x ^= (x << 0xF) & 0xEFC60000;
+        x ^= x >> 0x12;
+        return x;
     }
 
     u32 MTRand::rand31(){

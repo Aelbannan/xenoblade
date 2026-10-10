@@ -98,9 +98,9 @@ void CLibStaticData::saveStaticFileArray(StaticArcFileData* pList){
     lbl_eu_8066571C = pList;
 }
 
-bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHandle, u32* r5){
-    if(r5 != nullptr){
-        *r5 = 0;
+bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHandle, u32* pLength){
+    if(pLength != nullptr){
+        *pLength = 0;
     }
 
     pHandle->data = nullptr;
@@ -113,8 +113,8 @@ bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHan
         if(std::strcmp(item->mFileData->mName, pName) == 0){
             pHandle->data = item->mData;
 
-            if(r5 != nullptr){
-                *r5 = (*it)->mLength;
+            if(pLength != nullptr){
+                *pLength = (*it)->mLength;
             }
 
             bool result = false;

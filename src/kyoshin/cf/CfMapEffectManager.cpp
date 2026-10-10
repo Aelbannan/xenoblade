@@ -483,12 +483,12 @@ void MapFx_PushFlash(float first, float second) {
 
 extern "C" void MapFx_SetGlobalFloat(float val) { lbl_eu_806623E8 = val; }
 
-extern "C" void* MapFx_ResolveOwner(void* r3) {
-    if (r3 == 0) return 0;
-    int word = *(int*)((char*)r3 + 0x64);
+extern "C" void* MapFx_ResolveOwner(void* effectObj) {
+    if (effectObj == 0) return 0;
+    int word = *(int*)((char*)effectObj + 0x64);
     if ((word & 0x2) != 0 || (word & 0x4) != 0) {
-        if (r3 != 0)
-            return (char*)r3 - 0x3e9c;
+        if (effectObj != 0)
+            return (char*)effectObj - 0x3e9c;
     }
     return 0;
 }

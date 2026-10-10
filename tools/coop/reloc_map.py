@@ -618,8 +618,10 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             )
         else:
             lines.append(
-                f"  retail references a linker symbol decomp resolved INLINE — add an "
-                f"extern reference to that retail name so MWCC emits the reloc"
+                f"  retail references a linker symbol decomp resolved INLINE — fix only "
+                f"if a real source shape keeps the reference (do NOT add an extern "
+                f"retail-name spelling; PLAN.md §17.6 no longer approves relocation-name "
+                f"spellings)"
             )
         lines.append(
             f"  NOT reloc-NAME fixable; check the expression/operand shape "
@@ -636,10 +638,11 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
         return [
             f"decomp emits a section-symbol reloc {drift.decomp_symbol}; retail names it "
             f"{retail}  [{drift.type_name}]",
-            f"  fix (approved): give the referenced data a named variable in source so "
-            f"MWCC emits the symbol instead of a section reloc (access via the retail "
-            f"name), or accept at EQUIVALENT_MATCH — postprocess reloc patching is "
-            f"deprecated (PLAN.md §17.6)",
+            f"  fix: give the referenced data a named variable in source so MWCC emits "
+            f"the symbol instead of a section reloc. Reloc names are ignored by the "
+            f"comparator (functionRelocDiffs=data_value / tools/coop/lib/reloc_canon.py); "
+            f"do NOT add an `extern \"C\"` retail-name spelling for this, and do not "
+            f"post-process objects to rename symbols (PLAN.md §17.6).",
         ]
 
     lines: list[str] = []
@@ -651,15 +654,16 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
         if entry:
             lines.append(f"  (repo map: {entry['count']}× in {len(entry['units'])} units)")
         lines.append(
-            f"  fix (approved, PLAN.md §17.6): declare `extern \"C\" <TYPE> {retail};` "
-            f"in source and reference it (docs/MWCC_PATTERNS.md SDA globals / "
-            f"§1b float pools / §1h string pools)"
+            f"  reloc-name drift does not affect acceptance or the comparator "
+            f"(functionRelocDiffs=data_value / tools/coop/lib/reloc_canon.py). Do NOT "
+            f"add an `extern \"C\"` retail-name spelling for it (PLAN.md §17.6 no longer "
+            f"approves relocation-name spellings), and do not post-process objects to "
+            f"rename symbols."
         )
         lines.append(
-            f"  if the symbol is an implicit MWCC pool/magic constant that cannot be "
-            f"named in source: accept at EQUIVALENT_MATCH — binary reloc patching "
-            f"(postprocess_reloc_names.py rules / objcopy --redefine-sym) is deprecated "
-            f"(PLAN.md §17.6)"
+            f"  fix only if a real source shape removes the drift (named variable / "
+            f"declaration order / pool ownership); otherwise accept at "
+            f"EQUIVALENT_MATCH and record the residual."
         )
     else:  # addend
         lines.append(
@@ -668,9 +672,9 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
         )
         lines.append(
             f"  source symbol sits {delta:+d} bytes from the retail label; "
-            f"declare `extern \"C\" <TYPE> {retail};` and access at "
-            f"{retail} {f'+ {delta}' if delta and delta > 0 else f'- {-delta}' if delta and delta < 0 else '+ 0'}"
-            f" (or adjust the source declaration so the addend is 0)"
+            f"adjust the source declaration/layout so the addend is 0 (do NOT add an "
+            f"`extern \"C\"` retail-name spelling — PLAN.md §17.6 no longer approves "
+            f"relocation-name spellings)"
         )
         lines.append(
             f"  same acceptance note as pure name drift: no postprocess reloc patching "

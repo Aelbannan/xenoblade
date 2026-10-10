@@ -87,11 +87,11 @@ __attribute__((never_inline)) void SysCacheDecLoginRef(CCacheItem* ths);
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
 __attribute__((never_inline)) void SysCacheClearListLinks(CacheList* list) {
-    CacheListNode* r5 = list->mStartNodePtr->mNext;
-    while (r5 != list->mStartNodePtr) {
-        CacheListNode* r4 = r5;
-        r5 = r5->mNext;
-        r4->mNext = 0;
+    CacheListNode* walk = list->mStartNodePtr->mNext;
+    while (walk != list->mStartNodePtr) {
+        CacheListNode* node = walk;
+        walk = walk->mNext;
+        node->mNext = 0;
     }
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }

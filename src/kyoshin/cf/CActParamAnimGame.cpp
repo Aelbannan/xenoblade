@@ -2325,10 +2325,10 @@ void cf::CActParamAnimGame::syncYawToLink() {
     region->CfObject_setMoveHeadAngle(value);
 }
 
-extern "C" bool pushYawToLink(void* r3) {
-    int v0 = *(int*)((char*)r3 + 0x270);
+extern "C" bool pushYawToLink(void* obj) {
+    int v0 = *(int*)((char*)obj + 0x270);
     bool f = false;
-    if (((v0 & 0x800000) != 0) || ((*(int*)((char*)r3 + 0x2f0) & 0x800000) != 0))
+    if (((v0 & 0x800000) != 0) || ((*(int*)((char*)obj + 0x2f0) & 0x800000) != 0))
         f = true;
     return f;
 }

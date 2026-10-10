@@ -48,7 +48,7 @@ u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 __declspec(noinline) void CPartsChange_RemoveBattleEntry(void* mgr, void* obj);
 __declspec(noinline) void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b);
 void CPartsChange_NotifySlotStates(u8* self);
-__declspec(noinline) void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* r5, int r6);
+__declspec(noinline) void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* pRecord, int flags);
 
 // Slot-name format string ("%s%s") and the "_ppp" name prefix pointer.
 extern const char lbl_eu_80503BFC[];
@@ -872,7 +872,7 @@ void CPartsChange_UpdatePartyState(){}
 
 // Not yet decompiled (0x6d8): manager spawn helper reached from
 // CPartsChange_SpawnById. Kept as a stub so the call site resolves.
-void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* r5, int r6){}
+void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* pRecord, int flags){}
 
 bool CompareSortKey(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
     return a->sortKey < b->sortKey;
@@ -1292,19 +1292,19 @@ extern "C" void CPartsChange_RemoveListNode(u8* self, void** key) {
     }
 }
 
-void CfPartyInfo::InitRecord(void* r4, float f1, int r5, int r6, float f2, float f3) {
-    int r8 = *(int*)((char*)r4 + 0);
-    int r7 = *(int*)((char*)r4 + 4);
-    int r0 = *(int*)((char*)r4 + 8);
-    field_00 = r8;
-    field_04 = r7;
+void CfPartyInfo::InitRecord(void* pSrc, float f1, int poseIdx, int count, float f2, float f3) {
+    int val00 = *(int*)((char*)pSrc + 0);
+    int val04 = *(int*)((char*)pSrc + 4);
+    int r0 = *(int*)((char*)pSrc + 8);
+    field_00 = val00;
+    field_04 = val04;
     field_08 = r0;
     field_18 = f1;
-    field_0C = r5;
-    field_14 = r6;
+    field_0C = poseIdx;
+    field_14 = count;
     field_1C = f2;
     field_20 = f3;
-    if (r6 <= 0) {
+    if (count <= 0) {
         field_14 = 1;
     }
     field_28 = lbl_eu_80667B28;

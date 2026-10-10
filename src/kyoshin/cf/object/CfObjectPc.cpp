@@ -725,10 +725,10 @@ void finalizePcCleanup__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt_
 // Returns the object only when its flags word at +0x64 has bit 0x4000 set
 // (the "valid" mark); otherwise returns NULL. The C++ name mangles to the
 // retail symbol getValidObject__FPv.
-UNKTYPE* getValidObject(UNKTYPE* r3) {
-    if (r3 != NULL) {
-        if (((FlagsObj800C1228*)r3)->field_0x64 & 0x4000) {
-            return r3;
+UNKTYPE* getValidObject(UNKTYPE* obj) {
+    if (obj != NULL) {
+        if (((FlagsObj800C1228*)obj)->field_0x64 & 0x4000) {
+            return obj;
         }
     }
     return NULL;

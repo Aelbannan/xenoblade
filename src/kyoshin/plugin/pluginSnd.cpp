@@ -43,7 +43,7 @@ struct SndVec3 {
 extern "C" {
     extern void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void BattleWork_ApplyVolumeStore(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
-    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
+    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 channel, u32 soundId, u32 volume, u32 flag, float f1); // play SE
     extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
     extern void BattleWork_CopyPairToWork(SndVec3* pos, SndVec3* target);              // set map camera position
 }

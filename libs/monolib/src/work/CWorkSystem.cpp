@@ -10,8 +10,8 @@
 extern void resetScriptCode();
 extern void execScriptCode();
 extern UNKTYPE* getScnHandle();
-extern void resetScnData(UNKTYPE* r3);
-extern void Coli_ParseChunks(UNKTYPE* r3, u32 r4);
+extern void resetScnData(UNKTYPE* scn);
+extern void Coli_ParseChunks(UNKTYPE* scn, u32 flags);
 
 // ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
 // rodata 0x80522790 (0xC): RTTI class-name string. rodata 0x8052279C (0x7C):
@@ -177,8 +177,8 @@ bool CWorkSystem::wkStandbyLogin(){
     s64 time = CDeviceClock::getTimeNow();
     ml::math::mtInit(time & 0xFFFFFFFF);
 
-    UNKTYPE* r3 = getScnHandle();
-    Coli_ParseChunks(r3, 0);
+UNKTYPE* scn = getScnHandle();
+    Coli_ParseChunks(scn, 0);
 
     //Call base
     return CWorkThread::wkStandbyLogin();
@@ -195,8 +195,8 @@ bool CWorkSystem::wkStandbyLogout(){
 
     if(!hasChild(this)){
         CTaskManager::Release();
-        UNKTYPE* r3 = getScnHandle();
-        resetScnData(r3); //probably class function
+UNKTYPE* scn = getScnHandle();
+        resetScnData(scn); //probably class function
 
         mMemHandle = mtl::INVALID_HANDLE;
 

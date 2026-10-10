@@ -871,7 +871,7 @@ extern "C" void ChainCounter_Drain(cf::CChainCounter* self) {
 // marks it enabled.
 void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
     cf::CArtsSet* arts = (cf::CArtsSet*)(cf::CArtsSet*)reinterpret_cast<cf::CChainBattleObj*>(owner)->v157();
-    float fallback = lbl_eu_80668A80;
+    float fallback = lbl_eu_80668A80[0];
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 8; j++) {
             if (getArtsSlotRC(arts, (short)i, (short)j) != 0) {
@@ -897,3 +897,12 @@ void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
     }
     self->mEnabled = 0;
 }
+// --- hand-built retail data (splits: .sdata2 80668A80-80668A88) ---
+// .sdata2 zero-float pair (retail lbl_eu_80668A80, 8 bytes). Defined at EOF
+// so the const value cannot propagate into the functions above (their lfs
+// loads stay symbolic, as retail). Zero-initialized: needs the section
+// pragma (declspec alone sinks to nobits); the writable flag is immaterial
+// (cf. code_80213488's floats, same recipe).
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") float lbl_eu_80668A80[2] = { 0.0f, 0.0f };
+#pragma section data_type ".data" ".data"

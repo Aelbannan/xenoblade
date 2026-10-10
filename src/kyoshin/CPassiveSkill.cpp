@@ -525,7 +525,7 @@ extern "C" void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self, 
 // skill-grid cell. Each state uses a different BDAT table set and ends with
 // the shared summary refresh (CPassiveSkillLine_refreshSP + a grid-slot setter).
 extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, int state, int id,
-                              int row, int col, int r8) {
+                              int row, int col, int spId) {
     char buf3[0x20];  // slot-name buffer (sp+0x68)
     char buf2[0x20];  // slot-name buffer (sp+0x48)
     char buf1[0x20];  // slot-name buffer (sp+0x28)
@@ -644,7 +644,7 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             CPassiveSkillLine_refreshSP(self, id);
             CPassiveSkillLine_setCellMessage(self, id, row, col);
         } else {
-            CPassiveSkillLine_refreshSP(self, r8);
+            CPassiveSkillLine_refreshSP(self, spId);
             CPassiveSkill_linearizeGridSlot(reinterpret_cast<UI_CPassiveSkill*>(self), (u8)id, (u8)row, (u8)col);
         }
         break;
@@ -664,7 +664,7 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             char* t18 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x18);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x183], t18, 0);
             void* res = 0;
-            switch (r8) {
+            switch (spId) {
             case 0: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x289], 0); break;
             case 1: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2a1], 0); break;
             case 2: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2b9], 0); break;
@@ -1792,7 +1792,7 @@ extern "C" u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_enterStateD(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_enterStateA(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, int state, int id,
-                            int row, int col, int r8);
+                            int row, int col, int spId);
 // Kizuna-chart helpers (defined in CPcKizunagram.cpp) called with the
 // character skill blob. KizunagramClearChartEntry's trailing argument registers are left
 // unset by retail, so only the blob pointer is passed.
@@ -2786,7 +2786,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
     self->field_FC = 0;
     u32 t16 = (u32)((u8)entry2 - 1);
     u8 r0 = (u8)(t16 * 5 + 4);
-    u8 r19 = (u8)(entry2 * 5);
+    u8 nextRow = (u8)(entry2 * 5);
     u8 vv = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r0);
     if (CtrlRemote_TouchBitByArg((u8)vv + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
@@ -2802,7 +2802,7 @@ __declspec(noinline) void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLin
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], res3);
         }
     }
-    u8 vv2 = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r19);
+    u8 vv2 = BdatGetU8Direct((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], nextRow);
     if (CtrlRemote_TouchBitByArg((u8)vv2 + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);

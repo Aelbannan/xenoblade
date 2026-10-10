@@ -104,8 +104,8 @@ extern "C" void capdatatouch() {
 }
 
 namespace cf {
-    CActorParam::CActorParam(UNKTYPE* r4, UNKTYPE* r5) : CActorState(r4),
-    unk15DC(r4), unk15E0(reinterpret_cast<cf::CActorParamStatusTable*>(r5)), unk1648(0), unk164A(0), unk164C(0) {
+    CActorParam::CActorParam(UNKTYPE* stateData, UNKTYPE* statusTable) : CActorState(stateData),
+    unk15DC(stateData), unk15E0(reinterpret_cast<cf::CActorParamStatusTable*>(statusTable)), unk1648(0), unk164A(0), unk164C(0) {
         *(u32*)((u32)unk3298.unk8 + 4) = 0;
         std::memset(unk335C, 0, sizeof(unk335C));
         *(u32*)((u32)unk3298.unk8 + 8) = 0;
@@ -828,8 +828,8 @@ unk28_done:
                 float f15 = (float)e->unk10;
                 if (f15 < 1.0f) f15 = 1.0f;
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) f15 = 0.0f;
-                int r4 = (f15 < 0.0f) ? 3 : 1;
-                self->CActorParam_applyDamage((float)(-(int)f15), r4, 0, 0);
+                int dmgKind = (f15 < 0.0f) ? 3 : 1;
+                self->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
                 SysWinLog_GateDevice(self);
                 break;
             }
@@ -955,8 +955,8 @@ unk28_done:
                     }
                 }
                 }
-                int r4 = (f15 < 0.0f) ? 3 : 1;
-                self->CActorParam_applyDamage((float)(-(int)f15), r4, 0, 0);
+                int dmgKind = (f15 < 0.0f) ? 3 : 1;
+                self->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
                 SysWinLog_GateDevice(self);
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
                 break;
@@ -1072,8 +1072,8 @@ unk28_done:
                 }
                 if (a <= 0) break;
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) a = 0;
-                int r4 = (a >= 0) ? 2 : 3;
-                self->CActorParam_applyDamage((float)(-a), r4, 0, 0);
+                int dmgKind = (a >= 0) ? 2 : 3;
+                self->CActorParam_applyDamage((float)(-a), dmgKind, 0, 0);
                 SysWinLog_GateDevice(self);
                 int code;
                 switch (classifyBattleCommand(e->unk0C)) {
@@ -1124,8 +1124,8 @@ unk28_done:
                 break;
             }
             case 0xC6: {
-                void* r16 = self->CActorParam_getActor();
-                broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), r16, e->unk10, e->unk14, e->unk16, 0, 0);
+                void* dmgSrc = self->CActorParam_getActor();
+                broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), dmgSrc, e->unk10, e->unk14, e->unk16, 0, 0);
                 break;
             }
             default: break;
@@ -1252,14 +1252,14 @@ unk28_done:
                 std::memset(&st, 0, sizeof(st));
                 st.unk00 = *(u32*)((u8*)self->CActorParam_getActor() + 0x3F10);
                 st.unk20 = 1.0f;
-                int r19 = 0;
+                int slotId = 0;
                 switch (e->unk0C) {
-                case 0x125: st.unk0C = 0x5A; r19 = 6; st.unk10 = e->unk10; break;
-                case 0x126: st.unk0C = 0x58; r19 = 4; st.unk10 = e->unk10; break;
-                case 0x127: st.unk0C = 0x45; r19 = 7; st.unk10 = e->unk10; break;
-                case 0x128: st.unk0C = 0x59; r19 = 8; st.unk10 = e->unk10; break;
-                case 0x129: st.unk0C = 0x44; r19 = 9; st.unk10 = e->unk10; break;
-                case 0x12A: st.unk0C = 0x34; r19 = 5; st.unk10 = e->unk10; st.unk24 = 4.0f; st.unk20 = 4.0f; break;
+                case 0x125: st.unk0C = 0x5A; slotId = 6; st.unk10 = e->unk10; break;
+                case 0x126: st.unk0C = 0x58; slotId = 4; st.unk10 = e->unk10; break;
+                case 0x127: st.unk0C = 0x45; slotId = 7; st.unk10 = e->unk10; break;
+                case 0x128: st.unk0C = 0x59; slotId = 8; st.unk10 = e->unk10; break;
+                case 0x129: st.unk0C = 0x44; slotId = 9; st.unk10 = e->unk10; break;
+                case 0x12A: st.unk0C = 0x34; slotId = 5; st.unk10 = e->unk10; st.unk24 = 4.0f; st.unk20 = 4.0f; break;
                 default: break;
                 }
                 st.unk04 = ((u32)e->unk0C << 16) | st.unk0C;
@@ -1270,7 +1270,7 @@ unk28_done:
                     void* actor = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i2));
                     cf::CBattleStateEntry* found = (cf::CBattleStateEntry*)matchBattleStatusEntry((u8*)actor + 8, st.unk0C, st.unk00, st.unk04, 0);
                     if (found) {
-                        int nv = countPcEffectSlots(r19) * st.unk10;
+                        int nv = countPcEffectSlots(slotId) * st.unk10;
                         found->unk20 = st.unk20;
                         if (found->unk10 != nv) {
                             found->unk10 = nv;
@@ -1278,7 +1278,7 @@ unk28_done:
                             releaseVisionSlot((void*)actor, 0);
                         }
                     } else {
-                        if (countPcEffectSlots(r19)) {
+                        if (countPcEffectSlots(slotId)) {
                             CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
                         }
                     }
@@ -2626,12 +2626,12 @@ void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
     }
     float f26 = lbl_eu_806677E4;
-    for (int r29 = 0; r29 < 3; r29++) {
-        for (int r28 = 0; r28 < 8; r28++) {
+    for (int artsRow = 0; artsRow < 3; artsRow++) {
+        for (int artsCol = 0; artsCol < 8; artsCol++) {
             void* arts = self->CActorParam_getArtsSet();
-            if (!getArtsSlotRC(arts, r29, r28)) continue;
+            if (!getArtsSlotRC(arts, artsRow, artsCol)) continue;
             void* arts2 = self->CActorParam_getArtsSet();
-            cf::CAttackParam* p = (cf::CAttackParam*)getArtsParamRC2(arts2, r29, r28);
+            cf::CAttackParam* p = (cf::CAttackParam*)getArtsParamRC2(arts2, artsRow, artsCol);
             u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData()) & 0x3F;
             if (t == 0x16 || t == 0x17 || t == 0xF) {
                 // no unk7C decay for these actor states
@@ -2832,10 +2832,10 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
     }
 
     if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x37)) {
-        u32 r26 = 0;
+        u32 dmgBonus = 0;
         if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xa1)) {
             cf::CBattleStateEntry* ea = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0xa1);
-            r26 = ea->unk10;
+            dmgBonus = ea->unk10;
         }
         cf::CBattleStateEntry* e37 = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x37);
         if (e37 != NULL) {
@@ -2845,7 +2845,7 @@ void CActorParam_applyEventStatus__Q22cf11CActorParamFv(cf::CActorParam* self, c
                     u32 unk8 = e37->unk08;
                     int unk1A = e37->unk1A;
                     if (unk8 == 0x2000) {
-                        unk1A += r26;
+                        unk1A += dmgBonus;
                     }
                     if (arg->field_0xA8 % 100 < unk1A) {
                         s32 unk10 = e37->unk10;

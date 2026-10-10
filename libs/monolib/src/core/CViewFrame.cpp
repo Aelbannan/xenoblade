@@ -30,13 +30,13 @@ void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void popScissorRects__9CViewRootFv();
 // CFontLayer method imports (retail Fv names; the args flow through the
 // tail-call stubs into CDeviceFont).
-void printFormatted__10CFontLayerFv(CFontLayer* layer, int r4, int r5, void* r6, ...);
+void printFormatted__10CFontLayerFv(CFontLayer* layer, int posX, int posY, void* text, ...);
 int resetCursor__10CFontLayerFv(CFontLayer* layer);
-void clearBuffer__10CFontLayerFv(CFontLayer* layer, void* r4);
+void clearBuffer__10CFontLayerFv(CFontLayer* layer, void* buf);
 void updateLayout__10CFontLayerFv(CFontLayer* layer, float f1, float f2);
-void drawText__10CFontLayerFv(CFontLayer* layer, u32 r4);
-void flushBuffer__10CFontLayerFv(CFontLayer* layer, u32 r4);
-void fontFlush__10CFontLayerFi(CFontLayer* layer, int r4);
+void drawText__10CFontLayerFv(CFontLayer* layer, u32 flags);
+void flushBuffer__10CFontLayerFv(CFontLayer* layer, u32 flags);
+void fontFlush__10CFontLayerFi(CFontLayer* layer, int mode);
 
 // Retail sdata2 constants used by the frame drawing (imports; the definitions
 // live in the monolib shared data blob, not this TU).
@@ -58,7 +58,7 @@ void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos);
 void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect);
 int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
 int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
-int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int r4);
+int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int threadType);
 }
 
 // Retail sdata2 float constants + vtable used by the ctor (imports; the
@@ -1071,21 +1071,21 @@ int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread
 }
 
 // Map a work-thread type to a render-list index (see detachRenderWork).
-extern "C" int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int r4) {
-    if (r4 == 0 || r4 == 3) {
+extern "C" int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int threadType) {
+    if (threadType == 0 || threadType == 3) {
         return 1;
     }
-    if ((u32)(r4 - 1) <= 1u) {
+    if ((u32)(threadType - 1) <= 1u) {
         return 2;
     }
-    if (r4 == 4 || r4 == 5 || r4 == 0xb) {
+    if (threadType == 4 || threadType == 5 || threadType == 0xb) {
         return 3;
     }
-    if (r4 == 6 || r4 == 7 || r4 == 0xa) {
+    if (threadType == 6 || threadType == 7 || threadType == 0xa) {
         return 4;
     }
     int v = 0;
-    if (r4 == 9) {
+    if (threadType == 9) {
         v = 5;
     }
     return v;

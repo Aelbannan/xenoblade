@@ -159,7 +159,7 @@ extern "C" void* RootNw4r_Ptr49C(void* self);
 
 // WorkEvent thunk callees (CScn TU).
 extern "C" void Scn_CallUnk60_V4(void* self);
-extern "C" void Scn_CallUnk68_V3(void* self, void* r4);
+extern "C" void Scn_CallUnk68_V3(void* self, void* param);
 extern "C" void __dt__8CScnNw4rFv(void* self, int deleteFlag);
 
 // Member ctors.
@@ -209,7 +209,7 @@ extern "C" void* getScnRoot49C(CScn* self) { return RootNw4r_Ptr49C(self->mUnk8C
 
 extern "C" void WorkEvent4__4CScnFv(void* self) { ((void(*)(void*))Scn_CallUnk60_V4)((char*)self - 0x54); }
 
-extern "C" void WorkEvent3__4CScnFPv(void* self, void* r4) { ((void(*)(void*))Scn_CallUnk68_V3)((char*)self - 0x54); }
+extern "C" void WorkEvent3__4CScnFPv(void* self, void* param) { ((void(*)(void*))Scn_CallUnk68_V3)((char*)self - 0x54); }
 
 extern "C" void fwdScnMemDtor(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
 

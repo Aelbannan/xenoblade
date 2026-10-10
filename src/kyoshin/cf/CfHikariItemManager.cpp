@@ -731,7 +731,7 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
     // Hoisted base pointers mirror the retail prologue (lis/addi up front).
     u32* g = lbl_eu_80577680;
     u16 flags = self->field_42;
-    int r30 = (flags & 0x40) != 0; // spawn flag gates the sbss counters
+    int flagClear = (flags & 0x40) != 0; // spawn flag gates the sbss counters
     self->field_42 = flags & 0xFFF0; // retail mask 16,27 = clear low 4 bits
 
     if (!(flags & 0x40)) {
@@ -746,7 +746,7 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
                 lbl_eu_80513588, 2);
             self->field_42 |= 0x100;
         }
-        if (r30 != 0) {
+        if (flagClear != 0) {
             self->field_42 |= 0x3;
             lbl_eu_80664C18++;
             lbl_eu_80664C1C++;
@@ -762,7 +762,7 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
                 src,
                 rows + (s16)self->field_40 * 8,
                 lbl_eu_80513598, 2);
-            if (r30 != 0) {
+            if (flagClear != 0) {
                 self->field_42 = (u16)(self->field_42 | (0x4 << i));
                 lbl_eu_80664C20++;
             }
@@ -1112,78 +1112,78 @@ extern "C" void hikariEmitGradQuad(CfHikariItemRecord* self, const CfHikariQuadC
 void sinit_802B46E0() {
     f32* t = (f32*)lbl_eu_80577680;
 
-    f32* r5 = t + 0x50 / 4;
-    f32* r3 = t + 0xD0 / 4;
-    f32* r6 = t + 0x10 / 4;
-    f32* r4 = t + 0x90 / 4;
+    f32* row50 = t + 0x50 / 4;
+    f32* rowD0 = t + 0xD0 / 4;
+    f32* row10 = t + 0x10 / 4;
+    f32* row90 = t + 0x90 / 4;
 
     t[0x10 / 4] = lbl_eu_80668F70;
-    r6[1] = lbl_eu_80668F74;
-    r6[2] = lbl_eu_80668F78;
-    r6[3] = lbl_eu_80668F7C;
-    r6[4] = lbl_eu_80668F70;
-    r6[5] = lbl_eu_80668F80;
-    r6[6] = lbl_eu_80668F84;
-    r6[7] = lbl_eu_80668F7C;
-    r6[8] = lbl_eu_80668F88;
-    r6[9] = lbl_eu_80668F8C;
-    r6[10] = lbl_eu_80668F70;
-    r6[11] = lbl_eu_80668F90;
-    r6[12] = lbl_eu_80668F94;
-    r6[13] = lbl_eu_80668F98;
-    r6[14] = lbl_eu_80668F70;
-    r6[15] = lbl_eu_80668F90;
+    row10[1] = lbl_eu_80668F74;
+    row10[2] = lbl_eu_80668F78;
+    row10[3] = lbl_eu_80668F7C;
+    row10[4] = lbl_eu_80668F70;
+    row10[5] = lbl_eu_80668F80;
+    row10[6] = lbl_eu_80668F84;
+    row10[7] = lbl_eu_80668F7C;
+    row10[8] = lbl_eu_80668F88;
+    row10[9] = lbl_eu_80668F8C;
+    row10[10] = lbl_eu_80668F70;
+    row10[11] = lbl_eu_80668F90;
+    row10[12] = lbl_eu_80668F94;
+    row10[13] = lbl_eu_80668F98;
+    row10[14] = lbl_eu_80668F70;
+    row10[15] = lbl_eu_80668F90;
 
     t[0x50 / 4] = lbl_eu_80668F70;
-    r5[1] = lbl_eu_80668F9C;
-    r5[2] = lbl_eu_80668F98;
-    r5[3] = lbl_eu_80668F70;
-    r5[4] = lbl_eu_80668F70;
-    r5[5] = lbl_eu_80668FA0;
-    r5[6] = lbl_eu_80668FA4;
-    r5[7] = lbl_eu_80668F70;
-    r5[8] = lbl_eu_80668FA8;
-    r5[9] = lbl_eu_80668F70;
-    r5[10] = lbl_eu_80668F70;
-    r5[11] = lbl_eu_80668F70;
-    r5[12] = lbl_eu_80668F98;
-    r5[13] = lbl_eu_80668F70;
-    r5[14] = lbl_eu_80668F70;
-    r5[15] = lbl_eu_80668F70;
+    row50[1] = lbl_eu_80668F9C;
+    row50[2] = lbl_eu_80668F98;
+    row50[3] = lbl_eu_80668F70;
+    row50[4] = lbl_eu_80668F70;
+    row50[5] = lbl_eu_80668FA0;
+    row50[6] = lbl_eu_80668FA4;
+    row50[7] = lbl_eu_80668F70;
+    row50[8] = lbl_eu_80668FA8;
+    row50[9] = lbl_eu_80668F70;
+    row50[10] = lbl_eu_80668F70;
+    row50[11] = lbl_eu_80668F70;
+    row50[12] = lbl_eu_80668F98;
+    row50[13] = lbl_eu_80668F70;
+    row50[14] = lbl_eu_80668F70;
+    row50[15] = lbl_eu_80668F70;
 
     t[0x90 / 4] = lbl_eu_80668F70;
-    r4[1] = lbl_eu_80668F74;
-    r4[2] = lbl_eu_80668F78;
-    r4[3] = lbl_eu_80668EF8;
-    r4[4] = lbl_eu_80668F70;
-    r4[5] = lbl_eu_80668F74;
-    r4[6] = lbl_eu_80668F78;
-    r4[7] = lbl_eu_80668FAC;
-    r4[8] = lbl_eu_80668F88;
-    r4[9] = lbl_eu_80668F8C;
-    r4[10] = lbl_eu_80668F70;
-    r4[11] = lbl_eu_80668EF8;
-    r4[12] = lbl_eu_80668F88;
-    r4[13] = lbl_eu_80668F8C;
-    r4[14] = lbl_eu_80668F70;
-    r4[15] = lbl_eu_80668FAC;
+    row90[1] = lbl_eu_80668F74;
+    row90[2] = lbl_eu_80668F78;
+    row90[3] = lbl_eu_80668EF8;
+    row90[4] = lbl_eu_80668F70;
+    row90[5] = lbl_eu_80668F74;
+    row90[6] = lbl_eu_80668F78;
+    row90[7] = lbl_eu_80668FAC;
+    row90[8] = lbl_eu_80668F88;
+    row90[9] = lbl_eu_80668F8C;
+    row90[10] = lbl_eu_80668F70;
+    row90[11] = lbl_eu_80668EF8;
+    row90[12] = lbl_eu_80668F88;
+    row90[13] = lbl_eu_80668F8C;
+    row90[14] = lbl_eu_80668F70;
+    row90[15] = lbl_eu_80668FAC;
 
     t[0xD0 / 4] = lbl_eu_80668F70;
-    r3[1] = lbl_eu_80668FB0;
-    r3[2] = lbl_eu_80668F90;
-    r3[3] = lbl_eu_80668EF8;
-    r3[4] = lbl_eu_80668F70;
-    r3[5] = lbl_eu_80668FA0;
-    r3[6] = lbl_eu_80668FA4;
-    r3[7] = lbl_eu_80668F70;
-    r3[8] = lbl_eu_80668F88;
-    r3[9] = lbl_eu_80668FB4;
-    r3[10] = lbl_eu_80668F70;
-    r3[11] = lbl_eu_80668EF8;
-    r3[12] = lbl_eu_80668F98;
-    r3[13] = lbl_eu_80668FAC;
-    r3[14] = lbl_eu_80668F70;
-    r3[15] = lbl_eu_80668F70;
+    rowD0[1] = lbl_eu_80668FB0;
+    rowD0[2] = lbl_eu_80668F90;
+    rowD0[3] = lbl_eu_80668EF8;
+    rowD0[4] = lbl_eu_80668F70;
+    rowD0[5] = lbl_eu_80668FA0;
+    rowD0[6] = lbl_eu_80668FA4;
+    rowD0[7] = lbl_eu_80668F70;
+    rowD0[8] = lbl_eu_80668F88;
+    rowD0[9] = lbl_eu_80668FB4;
+    rowD0[10] = lbl_eu_80668F70;
+    rowD0[11] = lbl_eu_80668EF8;
+    rowD0[12] = lbl_eu_80668F98;
+    rowD0[13] = lbl_eu_80668FAC;
+    rowD0[14] = lbl_eu_80668F70;
+    rowD0[15] = lbl_eu_80668F70;
 }
 
 // absorb: retail data (generated)

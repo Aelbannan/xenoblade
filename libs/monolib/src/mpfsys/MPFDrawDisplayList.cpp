@@ -1298,8 +1298,8 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     scanBillboard__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)item, arena, &countA, &countB);
                     prevLayer = layer;
                     u32 fv = item->flags;
-                    u32 r22 = (fv & 1) ? 0 : 1;   // odd flag word selects the alternate entry
-                    (void)r22;
+                    u32 altEntry = (fv & 1) ? 0 : 1;   // odd flag word selects the alternate entry
+                    (void)altEntry;
                 }
 
                 // Inner walk over the slot's probe array (0x10-byte stride).
@@ -1309,7 +1309,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 s32 k = 0;
                 u16 probeCount = slot->field_0x28;
                 while (k < probeCount) {
-                    s32 r19;
+                    s32 shade;
                     MPFDispEntryFull* entry;
                     if (slot->field_0xe & 4) {
                         if (probe->counter != 0) {
@@ -1327,7 +1327,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                     probe->counter = 0;
                                 } else {
                                     probe->counter--;
-                                    r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                                    shade = ((u8)probe->counter << 4) + (u8)probe->counter;
                                     slot->field_0xe |= 8;
                                     goto emit;
                                 }
@@ -1358,9 +1358,9 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             // depth-shaded alpha from the ring distance.
                             if (probe->counter < 15) {
                                 probe->counter++;
-                                r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                                shade = ((u8)probe->counter << 4) + (u8)probe->counter;
                             } else {
-                                r19 = 0xff;
+                                shade = 0xff;
                             }
                             if (f29 >= f24) {
                                 goto emit;
@@ -1379,7 +1379,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                 sq = f29 * nw4r::math::FrSqrt(f29);
                             }
                             f0 = sq;
-                            r19 = (s32)(f20 * f25 * (f0 - f26));
+                            shade = (s32)(f20 * f25 * (f0 - f26));
                             goto emit;
                         } else {
                             // Outside the outer ring: decay the counter.
@@ -1397,7 +1397,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                                         probe->counter = 0;
                                     } else {
                                         probe->counter--;
-                                        r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                                        shade = ((u8)probe->counter << 4) + (u8)probe->counter;
                                         goto emit;
                                     }
                                 }
@@ -1409,7 +1409,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 emit:
                     // Acquire the pending entry (main or alternate) for this
                     // alpha class, then write one quad.
-                    if (r19 == 0xff && (item->flags & 1) == 0) {
+                    if (shade == 0xff && (item->flags & 1) == 0) {
                         if (pendingA != 0) {
                             entry = pendingA;
                         } else {
@@ -1460,7 +1460,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         u8 pg = probe->g;
                         u8 pb = probe->b;
                         s32 idx = (pg + k) + (pb + pr);
-                        u32 color = ((u32)(pr >> 2) << 26) | ((u32)pg << 18) | ((u32)pb << 12) | (((u32)r19 & 0xFFFFFF) << 6);
+                        u32 color = ((u32)(pr >> 2) << 26) | ((u32)pg << 18) | ((u32)pb << 12) | (((u32)shade & 0xFFFFFF) << 6);
                         union { u32 w; u8 b[4]; } col;
                         s32 aidx = (countB & ((idx % countA) << 1)) + 2;
                         Vec* pos = (Vec*)entry->field_0x10;
@@ -1486,7 +1486,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         entry->field_0x8 += 0xc;
                         if (entry->field_0x4 >= 0xfc) {
                             setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)entry);
-                            if (r19 == 0xff && (item->flags & 1) == 0) {
+                            if (shade == 0xff && (item->flags & 1) == 0) {
                                 pendingA = 0;
                             } else {
                                 pendingB = 0;
@@ -1588,23 +1588,23 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
     f32 f27 = norm * lbl_eu_8066A810;
 
-    s32 r22 = ((s32)(scale / f26) + 4) * 2;
+    s32 gridDim = ((s32)(scale / f26) + 4) * 2;
     f32 f25 = (scale + f27) * (scale + f27);
-    s32 r23 = span * span;
-    s32 r7 = spacing * (r22 / 2);
-    s32 r5 = ix / 10;
+    s32 scatterCount = span * span;
+    s32 halfExtent = spacing * (gridDim / 2);
+    s32 tileX = ix / 10;
     s32 rz = iz / 10;
-    s32 r6 = ix - r7;
-    s32 r4 = iz - r7;
-    s32 rhalf = (r22 * step) / 2;
-    s32 r14 = r5 + 0x2710 - rhalf;
-    s32 r25 = rz + 0x2710 - rhalf;
-    f32 f24 = s32ToF32_a808(r6, &cvtB);
-    f32 f23 = s32ToF32_a808(r4, &cvtA);
+    s32 startX = ix - halfExtent;
+    s32 startZ = iz - halfExtent;
+    s32 halfRange = (gridDim * step) / 2;
+    s32 baseCellX = tileX + 0x2710 - halfRange;
+    s32 baseCellZ = rz + 0x2710 - halfRange;
+    f32 f24 = s32ToF32_a808(startX, &cvtB);
+    f32 f23 = s32ToF32_a808(startZ, &cvtA);
 
     // Bit array of grid positions claimed by surviving slots.
     u32* bits = (u32*)Coli_GetBitTable_5A68();
-    DCZeroRange((void*)bits, (((r22 * r22) >> 5) + 1) * 4);
+    DCZeroRange((void*)bits, (((gridDim * gridDim) >> 5) + 1) * 4);
 
     // Claim every in-range slot's grid position, then deactivate the slots
     // whose probe disc falls inside the refreshed radius.
@@ -1620,9 +1620,9 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 if (d2 <= rr * rr) {
                     slot->field_0xe &= (u8)~one;
                 }
-                s32 bx = (r14 - slot->field_0x10) / step;
-                s32 bz = (r25 - slot->field_0x12) / step;
-                s32 bit = r22 * bx + bz;
+                s32 bx = (baseCellX - slot->field_0x10) / step;
+                s32 bz = (baseCellZ - slot->field_0x12) / step;
+                s32 bit = gridDim * bx + bz;
                 bits[bit >> 5] |= one << (bit & 31);
             }
             slot = slot->next;
@@ -1634,18 +1634,18 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f28 = lbl_eu_8066A814;
     f32 f30 = lbl_eu_8066A820;
     f32 f29 = lbl_eu_8066A81C;
-    s32 r28 = 0;
-    s32 r29 = 0;
-    s32 r20 = 0;
-    s32 r26 = 0;
+    s32 bitBase = 0;
+    s32 slotVal = 0;
+    s32 drawCount = 0;
+    s32 gridZOff = 0;
     s32 rowOff = 0;
 
-    for (s32 row = 0; row < r22; row++) {
+    for (s32 row = 0; row < gridDim; row++) {
         f32 f20 = s32ToF32_a808(row, &cvtA) * f26 + f24;
         f32 f19 = f28 * f26 + f20 - lbl_eu_80658410.x;
-        s32 rowBase = r28;
-        s32 vx = r14 + rowOff;
-        for (s32 col = 0; col < r22; col++) {
+        s32 rowBase = bitBase;
+        s32 vx = baseCellX + rowOff;
+        for (s32 col = 0; col < gridDim; col++) {
             f32 f18 = s32ToF32_a808(col, &cvtB) * f26 + f23;
             f32 dz = f28 * f26 + f18 - lbl_eu_80658410.z;
             s32 bitOff = col + rowBase;
@@ -1657,7 +1657,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             }
             {
                 MPFDrawSlot* slot = allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(
-                    self, r23, index, 0, (u16)vx, (u16)(r25 + r26), f20, f18);
+                    self, scatterCount, index, 0, (u16)vx, (u16)(baseCellZ + gridZOff), f20, f18);
                 d->field_0x50 = slot;
                 if (slot == 0) {
                     goto failReset;
@@ -1683,7 +1683,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         // Jittered scatter: two draws per billboard, the jitter
                         // scaled by the span-normalized step.
                         f32 f31 = f30 * (f28 * f22);
-                        for (s32 i = 0; i < r23; i++) {
+                        for (s32 i = 0; i < scatterCount; i++) {
                             s32 rv = rand();
                             f32 base = f22 * s32ToF32_a808(i % span, &cvtB) + f20 - f21;
                             d->field_0x14->x = f31 * s32ToF32_a808(rv % 100, &cvtA) + (base - f29 * f22);
@@ -1697,7 +1697,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     } else if (kind == 2) {
                         // Uniform random scatter across the quad.
                         f32 f31 = f30 * f22;
-                        for (s32 i = 0; i < r23; i++) {
+                        for (s32 i = 0; i < scatterCount; i++) {
                             d->field_0x14->x = f31 * s32ToF32_a808(rand() % (span * 100), &cvtA) + f20 - f21;
                             d->field_0x14->z = f31 * s32ToF32_a808(rand() % (span * 100), &cvtB) + f18 - f21;
                             if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
@@ -1706,7 +1706,7 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         }
                     } else {
                         // Deterministic sweep along the span diagonal.
-                        for (s32 i = 0; i < r23; i++) {
+                        for (s32 i = 0; i < scatterCount; i++) {
                             d->field_0x14->x = f22 * s32ToF32_a808(i % span, &cvtA) + f20 - f21;
                             d->field_0x14->z = f22 * s32ToF32_a808(i / span, &cvtB) + i - f21;
                             if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
@@ -1720,8 +1720,8 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     if (d->field_0x50->field_0x28 == 0 && d->field_0x54 != 0) {
                         MPFDrawSlot* cur = d->field_0x50;
                         MPFDrawSlot* best = d->field_0x54;
-                        best->field_0x28 = (u16)r29;
-                        best->field_0x2a = (u16)r29;
+                        best->field_0x28 = (u16)slotVal;
+                        best->field_0x2a = (u16)slotVal;
                         best->field_0xc = cur->field_0xc;
                         best->field_0xd = cur->field_0xd;
                         best->field_0x10 = cur->field_0x10;
@@ -1738,8 +1738,8 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     // Walk missed: splice in the best-fit slot and advance it.
                     if (d->field_0x54 != 0) {
                         MPFDrawSlot* best = d->field_0x54;
-                        best->field_0x28 = (u16)r29;
-                        best->field_0x2a = (u16)r29;
+                        best->field_0x28 = (u16)slotVal;
+                        best->field_0x2a = (u16)slotVal;
                         best->field_0xc = slot->field_0xc;
                         best->field_0xd = slot->field_0xd;
                         best->field_0x10 = slot->field_0x10;
@@ -1753,15 +1753,15 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     }
                     createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                 }
-                r20++;
-                if (r20 > 0x14 && d->field_0x3c == 0) {
+                drawCount++;
+                if (drawCount > 0x14 && d->field_0x3c == 0) {
                     goto failReset;
                 }
             }
         nextCol:
-            r26 += step;
+            gridZOff += step;
         }
-        r28 += r22;
+        bitBase += gridDim;
         rowOff += step;
     }
 
@@ -1820,57 +1820,57 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 
     // Density step selection from the scale/fallback comparison.
-    s32 r22;
+    s32 subSteps;
     if (f22 <= lbl_eu_8066A7E8) {
-        r22 = 2;
+        subSteps = 2;
     } else if (f22 <= lbl_eu_8066A830) {
-        r22 = (mode > 8) ? 4 : 3;
+        subSteps = (mode > 8) ? 4 : 3;
     } else if (f18 <= lbl_eu_8066A834) {
-        r22 = (mode > 8) ? 5 : 4;
+        subSteps = (mode > 8) ? 5 : 4;
     } else {
         s32 v = mode ^ 6;
-        r22 = 4 + (((v >> 1) - (v & mode)) < 0 ? 1 : 0);
+        subSteps = 4 + (((v >> 1) - (v & mode)) < 0 ? 1 : 0);
     }
 
     // Probe spacing factor for the step-count rows.
     f32 f21 = lbl_eu_8066A7E8;
-    if (r22 >= 3) {
-        f21 = lbl_eu_8066A814 * s32ToF32_a808(r22, &cvtA) /
-              s32ToF32_a808(r22 - 2, &cvtB);
+    if (subSteps >= 3) {
+        f21 = lbl_eu_8066A814 * s32ToF32_a808(subSteps, &cvtA) /
+              s32ToF32_a808(subSteps - 2, &cvtB);
     }
 
-    s32 r23 = ((s32)(f18 / f27) + 1) * 2;
-    s32 r24 = mode * mode;
-    s32 r28 = mode * 100;
+    s32 gridDim = ((s32)(f18 / f27) + 1) * 2;
+    s32 modeSq = mode * mode;
+    s32 randRange = mode * 100;
     f32 f15 = lbl_eu_8066A808;
-    s32 r14b = ix - ix % 10;
-    s32 r17b = iz - iz % 10;
-    s32 r18b = ix % 10;
-    s32 r19b = iz % 10;
+    s32 snapX = ix - ix % 10;
+    s32 snapZ = iz - iz % 10;
+    s32 fracX = ix % 10;
+    s32 fracZ = iz % 10;
 
     // Bit array of already-placed quads (size in bytes, rounded up to a word).
     u32* bits = (u32*)Coli_GetBitTable_5A68();
-    s32 bitBytes = (((r22 * r23 * r23) >> 5) + 1) * 4;
+    s32 bitBytes = (((subSteps * gridDim * gridDim) >> 5) + 1) * 4;
     DCZeroRange((void*)bits, bitBytes);
     // Scatter stride/count for the index chain below.
-    s32 r29 = mode * (mode / 2 + 1) + 1;
+    s32 pickStride = mode * (mode / 2 + 1) + 1;
 
     // Clear existing slots inside the new probe radius.
     {
         MPFDrawSlot* slot = lbl_eu_80665870;
         while (slot != 0) {
             if ((slot->field_0xe & 2) && slot->field_0xc == (u8)index) {
-                s32 u = slot->field_0x10 - r14b;
-                s32 v = slot->field_0x12 - r17b;
-                if (u >= 0 && v >= 0 && u < r23 && v < r23) {
+                s32 u = slot->field_0x10 - snapX;
+                s32 v = slot->field_0x12 - snapZ;
+                if (u >= 0 && v >= 0 && u < gridDim && v < gridDim) {
                     if (slot->field_0xe & 0x10) {
-                        s32 n = r22;
+                        s32 n = subSteps;
                         for (s32 i = 0; i < n; i++) {
-                            s32 bit = (v + i * r23) * r23 + u;
+                            s32 bit = (v + i * gridDim) * gridDim + u;
                             bits[bit >> 5] |= 1u << (bit & 31);
                         }
                     } else {
-                        s32 bit = v * r23 + u;
+                        s32 bit = v * gridDim + u;
                         bits[bit >> 5] |= 1u << (bit & 31);
                     }
                     // Probe the quad distance and clear the slot if inside.
@@ -1893,30 +1893,30 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f16 = lbl_eu_8066A820;
     f32 f14 = lbl_eu_8066A81C;
     f32 f31 = lbl_eu_8066A814;
-    f32 f40 = f31 * f27 + (f32)r14b;
-    f32 f25 = f31 * f27 + (f32)(r17b - r23 / 2 * 10);
-    f32 f26 = (f32)r17b;
-    f32 f24 = f27 / (f32)(r17b - r23 / 2 * 10);
+    f32 f40 = f31 * f27 + (f32)snapX;
+    f32 f25 = f31 * f27 + (f32)(snapZ - gridDim / 2 * 10);
+    f32 f26 = (f32)snapZ;
+    f32 f24 = f27 / (f32)(snapZ - gridDim / 2 * 10);
     f32 f23 = -(f31 * f24) + f27;
-    s32 xb = r14b / 10 + 10000 - r23 / 2;
-    s32 zb = r17b / 10 + 10000 - r23 / 2;
-    s32 t0 = r24 >> 1;
+    s32 xb = snapX / 10 + 10000 - gridDim / 2;
+    s32 zb = snapZ / 10 + 10000 - gridDim / 2;
+    s32 t0 = modeSq >> 1;
     s32 placed = 0;
 
-    for (s32 zz = 0; zz < r23; zz++) {
+    for (s32 zz = 0; zz < gridDim; zz++) {
         cvtA.w[1] = (u32)zz ^ 0x80000000u;
         f32 f20 = (f32)(cvtA.d - f15) * f27 + f40;
-        f32 f29 = f20 - (f32)r14b;
+        f32 f29 = f20 - (f32)snapX;
         s32 s60 = xb + zz;
-        for (s32 xx = 0; xx < r23; xx++) {
+        for (s32 xx = 0; xx < gridDim; xx++) {
             cvtB.w[1] = (u32)xx ^ 0x80000000u;
             f32 f19 = (f32)(cvtB.d - f15) * f27 + f25;
             f32 f28 = f19 - f26;
             s32 s5c = zb + xx;
-            s32 r14c = 0;
-            s32 r26 = 0;
-            for (s32 s = 0; s < r22; s++) {
-                s32 bit = (zz + r14c) * r23 + xx;
+            s32 bitRow = 0;
+            s32 extraIdx = 0;
+            for (s32 s = 0; s < subSteps; s++) {
+                s32 bit = (zz + bitRow) * gridDim + xx;
                 if (bits[bit >> 5] & (1u << (bit & 31))) {
                     goto next_step;
                 }
@@ -1924,7 +1924,7 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 f32 f17;
                 if (s == 0) {
                     f17 = f18;
-                } else if (s == r22 - 1) {
+                } else if (s == subSteps - 1) {
                     f17 = lbl_eu_8066A82C;
                 } else {
                     cvtA.w[1] = (u32)(s - 1) ^ 0x80000000u;
@@ -1938,25 +1938,25 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     // squared density mode produce the quad index pair.
                     s32 rr;
                     s32 rv;
-                    if (s == r22 - 1) {
-                        rr = r24;
+                    if (s == subSteps - 1) {
+                        rr = modeSq;
                         s32 t = t0;
-                        for (s32 i = 1; i < r22; i++) {
+                        for (s32 i = 1; i < subSteps; i++) {
                             t >>= 1;
                             rr -= t;
                         }
-                        rv = r24 - rr;
+                        rv = modeSq - rr;
                     } else {
-                        rr = r24;
+                        rr = modeSq;
                         rv = 0;
-                        for (s32 i = s; i < r22; i++) {
+                        for (s32 i = s; i < subSteps; i++) {
                             rr >>= 1;
                             rv += rr;
                         }
                         rv = rr + t0 - rv;
                     }
                     MPFDrawSlot* slot = allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(
-                        self, rr, index, r26, (u16)s60,
+                        self, rr, index, extraIdx, (u16)s60,
                         (u16)s5c, f20, f19);
                     d->field_0x50 = slot;
                     if (slot == 0) {
@@ -2006,8 +2006,8 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             // its /mode and %mode parts give the z/x offsets.
                             s32 cnt = 0;
                             while (cnt < rr) {
-                                s32 v = s60 + (cnt + rv) * r29;
-                                s32 m = v % r24;
+                                s32 v = s60 + (cnt + rv) * pickStride;
+                                s32 m = v % modeSq;
                                 d->field_0x14->x = f24 * (m % mode) + f20 - f23;
                                 d->field_0x14->z = f24 * (m / mode) + f19 - f23;
                                 if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
@@ -2021,8 +2021,8 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             f32 ramp = f16 * f31 * f24;
                             s32 cnt = 0;
                             while (cnt < rr) {
-                                s32 v = s60 + (cnt + rv) * r29;
-                                s32 m = v % r24;
+                                s32 v = s60 + (cnt + rv) * pickStride;
+                                s32 m = v % modeSq;
                                 s32 q = m % mode;
                                 s32 rnd1 = rand() % 100;
                                 d->field_0x14->x = f24 * q + f20 - f23 - f14 * f24 +
@@ -2040,9 +2040,9 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             f32 ramp = f16 * f24;
                             s32 cnt = 0;
                             while (cnt < rr) {
-                                s32 rnd1 = rand() % r28;
+                                s32 rnd1 = rand() % randRange;
                                 d->field_0x14->x = ramp * s32ToF_a808(rnd1) + f20 - f23;
-                                s32 rnd2 = rand() % r28;
+                                s32 rnd2 = rand() % randRange;
                                 d->field_0x14->z = ramp * s32ToF_a808(rnd2) + f19 - f23;
                                 if (walkDrawCells__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                                     break;

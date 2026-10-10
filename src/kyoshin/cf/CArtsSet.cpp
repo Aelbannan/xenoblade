@@ -122,7 +122,7 @@ extern "C" cf::CArtsParam* getArtsParamAtCnt(cf::CArtsSet* set, unsigned int ind
         reinterpret_cast<unsigned char*>(set) + 0x38 + count * 0x460 + index * 0x8c);
 }
 
-extern cf::CArtsParam lbl_eu_80573D88;
+extern u8 lbl_eu_80573D88[0x90];
 
 extern "C" cf::CArtsParam* lookupArtsParamById(cf::CArtsSet* self, int id) {
     unsigned char* outer = reinterpret_cast<unsigned char*>(self);
@@ -146,7 +146,7 @@ extern "C" cf::CArtsParam* lookupArtsParamById(cf::CArtsSet* self, int id) {
         row++;
         outer += 0x460;
     } while (row < 3);
-    return &lbl_eu_80573D88;
+    return reinterpret_cast<cf::CArtsParam*>(lbl_eu_80573D88);
 }
 
 namespace cf {
@@ -185,3 +185,11 @@ extern "C" cf::CAttackParam* getAtkParam(cf::CAttackSet* set, int index) {
     return reinterpret_cast<cf::CAttackParam*>(
         reinterpret_cast<char*>(set) + index * 0x88 + 0x10);
 }
+
+// [.bss] 0x80573D18-0x80573E18 (0x100): retail storage owned by this TU.
+// 73D18 is a 28-entry pointer table (CFloorMap.hpp declares it as
+// void*[0x1C]); 73D88 is a 0x90-byte record returned by lookupArtsParamById
+// (spelled as raw bytes: a CArtsParam object definition would emit a static
+// vptr initializer + .ctors, which retail does not have).
+void* lbl_eu_80573D18[0x1C];
+u8 lbl_eu_80573D88[0x90];

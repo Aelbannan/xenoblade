@@ -22,7 +22,7 @@ extern "C" {
     const wchar_t* getErrMesText06();
     const wchar_t* getErrMesText07();
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
-    void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5);
+    void setPad__Q22cf13CfGameManagerFv(int padIdx, CPad* pPad, u32 systemType);
     // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
     extern cf::CfPadTask* lbl_eu_80664448;
     // Retail sbss battery slot; mangled sWiimoteBattery fails reloc name match.

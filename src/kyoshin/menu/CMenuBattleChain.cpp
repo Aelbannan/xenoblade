@@ -71,9 +71,9 @@ extern "C" CMenuBattleChain* __ct__CMenuBattleChain(CMenuBattleChain* obj,
     obj->mField67 = 1;
     obj->mField68 = 0;
 
-    obj->mProcessVt = (u32)lbl_eu_80539E48;
-    obj->mIWorkEventVt = (u32)lbl_eu_80539E48 + 0x24;
-    obj->mIScnRenderVt = (u32)lbl_eu_80539E48 + 0xac;
+    obj->mProcessVt = (u32)&lbl_eu_80539E48[0];
+    obj->mIWorkEventVt = (u32)&lbl_eu_80539E48[9];
+    obj->mIScnRenderVt = (u32)&lbl_eu_80539E48[43];
     obj->mScn = parent;
 
     __ct__17UnkClass_8045F564Fv(&obj->mRegion);
@@ -932,8 +932,129 @@ extern "C" void sinit_802AAF24() {
 // trailer word stays zero: it would reference lbl_eu_80539F08, but that
 // object dies with the frozen .data strip (extern_data_sections), so naming
 // it here would open a new link row for a symbol nothing can provide.
-const void* lbl_eu_80662DD0[2] = { lbl_eu_80510878, 0 };
+// (wave DL-r4: 9F08 is now defined below and the strip is removed, so the
+// trailer names it.)
+extern void* lbl_eu_80539F08[16];
+const void* lbl_eu_80662DD0[2] = { lbl_eu_80510878, lbl_eu_80539F08 };
 // NOTE: the retail .data (jump tables + vtable + RTTI trailer) is
 // fully reconstructed in the residual notes below, but the frozen
 // CMenuBattleChain.o rule strips .data at RELOCPOST, so defining it here
 // only creates phantom link rows. Landed when the strip shrinks.
+#pragma section data_type ".data" ".data"
+// [.data] switch tables (0x00-0x47) stay compiler-pooled (@7782/@7835,
+// renamed to the jumptable labels by the unit rule); the vtable + RTTI
+// trailer below are explicit. In-file bytes are zeros at every reloc site.
+// Slots that have no C++ spelling stay zero (CFade/CMenuEnemyState idiom):
+// member-function+addend case slots, the short-named adjustor thunks
+// (dtorAdj6C/70, renderBeforeAdj70), the template Draw slot, and RTTI.
+extern "C" void Reset__14CChildListNodeFv();
+extern "C" void Tail__8CProcessFv();
+extern "C" void Init__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void Term__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void Move__16CMenuBattleChainFv(CMenuBattleChain* self);
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern u32 lbl_eu_80661940[];
+extern u32 lbl_eu_80661958[];
+extern u32 lbl_eu_80661950[];
+extern u32 lbl_eu_80661948[];
+extern u32 lbl_eu_80661ED0[];
+extern u32 lbl_eu_80661EC8[];
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_80539E48[48] = {
+    (void*)lbl_eu_80662DD0,
+    (void*)0,
+    (void*)__dt__16CMenuBattleChainFv,
+    (void*)Reset__14CChildListNodeFv,
+    (void*)Init__16CMenuBattleChainFv,
+    (void*)Term__16CMenuBattleChainFv,
+    (void*)Move__16CMenuBattleChainFv,
+    (void*)0, // Draw__18CTTask<9IUIWindow>Fv: template-id unspellable
+    (void*)Tail__8CProcessFv,
+    (void*)lbl_eu_80662DD0,
+    (void*)0xFFFFFF94, // -108 this-adjustor
+    (void*)0, // CMenuBattleChain_dtorAdj6C: short name, link-provided nowhere
+    (void*)WorkEvent1__10IWorkEventFPvPCc,
+    (void*)OnFileEvent__10IWorkEventFP10CEventFile,
+    (void*)WorkEvent3__10IWorkEventFPv,
+    (void*)WorkEvent4__10IWorkEventFv,
+    (void*)OnPauseTrigger__10IWorkEventFb,
+    (void*)WorkEvent6__10IWorkEventFv,
+    (void*)WorkEvent7__10IWorkEventFv,
+    (void*)WorkEvent8__10IWorkEventFv,
+    (void*)WorkEvent9__10IWorkEventFv,
+    (void*)WorkEvent10__10IWorkEventFv,
+    (void*)WorkEvent11__10IWorkEventFv,
+    (void*)WorkEvent12__10IWorkEventFv,
+    (void*)WorkEvent13__10IWorkEventFv,
+    (void*)WorkEvent14__10IWorkEventFv,
+    (void*)WorkEvent15__10IWorkEventFv,
+    (void*)WorkEvent16__10IWorkEventFv,
+    (void*)WorkEvent17__10IWorkEventFv,
+    (void*)WorkEvent18__10IWorkEventFv,
+    (void*)WorkEvent19__10IWorkEventFv,
+    (void*)WorkEvent20__10IWorkEventFv,
+    (void*)WorkEvent21__10IWorkEventFv,
+    (void*)WorkEvent22__10IWorkEventFv,
+    (void*)WorkEvent23__10IWorkEventFv,
+    (void*)WorkEvent24__10IWorkEventFv,
+    (void*)WorkEvent25__10IWorkEventFv,
+    (void*)WorkEvent26__10IWorkEventFv,
+    (void*)WorkEvent27__10IWorkEventFv,
+    (void*)WorkEvent28__10IWorkEventFv,
+    (void*)WorkEvent29__10IWorkEventFv,
+    (void*)WorkEvent30__10IWorkEventFv,
+    (void*)WorkEvent31__10IWorkEventFv,
+    (void*)lbl_eu_80662DD0,
+    (void*)0xFFFFFF90, // -112 this-adjustor
+    (void*)0, // CMenuBattleChain_dtorAdj70: short name
+    (void*)0, // CMenuBattleChain_renderBeforeAdj70: short name
+    (void*)cbRenderBefore__16CMenuBattleChainFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+void* lbl_eu_80539F08[16] = {
+    (void*)&lbl_eu_80661940,
+    (void*)0x70, // 112: trailer count
+    (void*)0, // __RTTI__10IWorkEvent: unspellable in source
+    (void*)0x6C, // 108: trailer size
+    (void*)&lbl_eu_80661958,
+    (void*)0,
+    (void*)&lbl_eu_80661950,
+    (void*)0,
+    (void*)&lbl_eu_80661948,
+    (void*)0,
+    (void*)&lbl_eu_80661ED0,
+    (void*)0,
+    (void*)&lbl_eu_80661EC8,
+    (void*)0, (void*)0, (void*)0,
+};
+#pragma section data_type ".data" ".data"

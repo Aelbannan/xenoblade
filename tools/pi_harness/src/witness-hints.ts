@@ -25,11 +25,12 @@ export function witnessHintForGate(gate: string, reason?: string): string {
     case "reloc":
       return (
         "Reloc name drift: decomp emits a different reloc symbol than retail. " +
-        "Run `hexdiff <unit> <symbol>` and look at the Reloc-drift suggestions — " +
-        "approved fixes are usually `extern \"C\" <TYPE> <retail-symbol>;` in the " +
-        "declaring header/.cpp (PLAN.md §17.6). If a conflicting non-extern-C " +
-        "declaration already exists, REMOVE/CONVERT it — two declarations with " +
-        "different linkage cause an illegal-overload build error."
+        "Run `hexdiff <unit> <symbol>` and look at the Reloc-drift suggestions. " +
+        "Reloc names are ignored by the comparator (functionRelocDiffs=data_value / " +
+        "tools/coop/lib/reloc_canon.py) — do NOT add `extern \"C\"` retail-name " +
+        "spellings (PLAN.md §17.6 no longer approves relocation-name spellings). " +
+        "Fix only with a real source shape (named variable / declaration order / " +
+        "pool ownership), or accept at EQUIVALENT_MATCH and record the residual."
       );
     case "rho":
       return (

@@ -2331,14 +2331,14 @@ renderView_frame_call:
 
 #endif
 
-void CView::setDisp(bool r4, bool r5) {
-    if (!r4) {
+void CView::setDisp(bool show, bool dropCurrent) {
+    if (!show) {
         unk278 |= 0x40;
     } else {
         unk278 &= ~0x40;
     }
 
-    if (r5 && !r4) {
+    if (dropCurrent && !show) {
         CView* current = getCurrent__9CViewRootFv();
         if (current == this) {
             invalidCurrent__9CViewRootFP5CView(this);

@@ -671,7 +671,7 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
         // deep walk #1: leaf of the tree below self. E(base, 3) descent
         // (simQueryLeafAnim shape, one level shallower than the helper: the
         // depth-3 handle calls simQueryLeafAnim itself; H budgets 0..2).
-        u32 r22;
+        u32 leafAnim;
         CScnItemModel* base = self->field_0x7C4;
         if (base != 0) {
             CScnItemModel* e1 = base->field_0x7C4;
@@ -680,25 +680,25 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                 if (e2 != 0) {
                     CScnItemModel* e3 = e2->field_0x7C4;
                     if (e3 != 0) {
-                        r22 = simQueryLeafAnim(e3);
+                        leafAnim = simQueryLeafAnim(e3);
                     } else if (e2->field_0x7C8 != 0) {
-                        r22 = simQueryLeafAnim(e2->field_0x7C8);
+                        leafAnim = simQueryLeafAnim(e2->field_0x7C8);
                     } else {
-                        r22 = scn80496HasChild1Node(e2->field_0xC);
+                        leafAnim = scn80496HasChild1Node(e2->field_0xC);
                     }
                 } else {
                     CScnItemModel* m1 = e1->field_0x7C8;
                     if (m1 != 0) {
                         CScnItemModel* d1 = m1->field_0x7C4;
                         if (d1 != 0) {
-                            r22 = simQueryLeafAnim(d1);
+                            leafAnim = simQueryLeafAnim(d1);
                         } else if (m1->field_0x7C8 != 0) {
-                            r22 = simQueryLeafAnim(m1->field_0x7C8);
+                            leafAnim = simQueryLeafAnim(m1->field_0x7C8);
                         } else {
-                            r22 = scn80496HasChild1Node(m1->field_0xC);
+                            leafAnim = scn80496HasChild1Node(m1->field_0xC);
                         }
                     } else {
-                        r22 = scn80496HasChild1Node(e1->field_0xC);
+                        leafAnim = scn80496HasChild1Node(e1->field_0xC);
                     }
                 }
             } else {
@@ -708,29 +708,29 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                     if (d1 != 0) {
                         CScnItemModel* d2 = d1->field_0x7C4;
                         if (d2 != 0) {
-                            r22 = simQueryLeafAnim(d2);
+                            leafAnim = simQueryLeafAnim(d2);
                         } else if (d1->field_0x7C8 != 0) {
-                            r22 = simQueryLeafAnim(d1->field_0x7C8);
+                            leafAnim = simQueryLeafAnim(d1->field_0x7C8);
                         } else {
-                            r22 = scn80496HasChild1Node(d1->field_0xC);
+                            leafAnim = scn80496HasChild1Node(d1->field_0xC);
                         }
                     } else {
                         CScnItemModel* m2 = m1->field_0x7C8;
                         if (m2 != 0) {
                             CScnItemModel* e1b = m2->field_0x7C4;
                             if (e1b != 0) {
-                                r22 = simQueryLeafAnim(e1b);
+                                leafAnim = simQueryLeafAnim(e1b);
                             } else if (m2->field_0x7C8 != 0) {
-                                r22 = simQueryLeafAnim(m2->field_0x7C8);
+                                leafAnim = simQueryLeafAnim(m2->field_0x7C8);
                             } else {
-                                r22 = scn80496HasChild1Node(m2->field_0xC);
+                                leafAnim = scn80496HasChild1Node(m2->field_0xC);
                             }
                         } else {
-                            r22 = scn80496HasChild1Node(m1->field_0xC);
+                            leafAnim = scn80496HasChild1Node(m1->field_0xC);
                         }
                     }
                 } else {
-                    r22 = scn80496HasChild1Node(base->field_0xC);
+                    leafAnim = scn80496HasChild1Node(base->field_0xC);
                 }
             }
         } else {
@@ -742,25 +742,25 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                     if (e2 != 0) {
                         CScnItemModel* e3 = e2->field_0x7C4;
                         if (e3 != 0) {
-                            r22 = simQueryLeafAnim(e3);
+                            leafAnim = simQueryLeafAnim(e3);
                         } else if (e2->field_0x7C8 != 0) {
-                            r22 = simQueryLeafAnim(e2->field_0x7C8);
+                            leafAnim = simQueryLeafAnim(e2->field_0x7C8);
                         } else {
-                            r22 = scn80496HasChild1Node(e2->field_0xC);
+                            leafAnim = scn80496HasChild1Node(e2->field_0xC);
                         }
                     } else {
                         CScnItemModel* m1 = e1->field_0x7C8;
                         if (m1 != 0) {
                             CScnItemModel* d1 = m1->field_0x7C4;
                             if (d1 != 0) {
-                                r22 = simQueryLeafAnim(d1);
+                                leafAnim = simQueryLeafAnim(d1);
                             } else if (m1->field_0x7C8 != 0) {
-                                r22 = simQueryLeafAnim(m1->field_0x7C8);
+                                leafAnim = simQueryLeafAnim(m1->field_0x7C8);
                             } else {
-                                r22 = scn80496HasChild1Node(m1->field_0xC);
+                                leafAnim = scn80496HasChild1Node(m1->field_0xC);
                             }
                         } else {
-                            r22 = scn80496HasChild1Node(e1->field_0xC);
+                            leafAnim = scn80496HasChild1Node(e1->field_0xC);
                         }
                     }
                 } else {
@@ -770,37 +770,37 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         if (d1 != 0) {
                             CScnItemModel* d2 = d1->field_0x7C4;
                             if (d2 != 0) {
-                                r22 = simQueryLeafAnim(d2);
+                                leafAnim = simQueryLeafAnim(d2);
                             } else if (d1->field_0x7C8 != 0) {
-                                r22 = simQueryLeafAnim(d1->field_0x7C8);
+                                leafAnim = simQueryLeafAnim(d1->field_0x7C8);
                             } else {
-                                r22 = scn80496HasChild1Node(d1->field_0xC);
+                                leafAnim = scn80496HasChild1Node(d1->field_0xC);
                             }
                         } else {
                             CScnItemModel* m2 = m1->field_0x7C8;
                             if (m2 != 0) {
                                 CScnItemModel* e1b = m2->field_0x7C4;
                                 if (e1b != 0) {
-                                    r22 = simQueryLeafAnim(e1b);
+                                    leafAnim = simQueryLeafAnim(e1b);
                                 } else if (m2->field_0x7C8 != 0) {
-                                    r22 = simQueryLeafAnim(m2->field_0x7C8);
+                                    leafAnim = simQueryLeafAnim(m2->field_0x7C8);
                                 } else {
-                                    r22 = scn80496HasChild1Node(m2->field_0xC);
+                                    leafAnim = scn80496HasChild1Node(m2->field_0xC);
                                 }
                             } else {
-                                r22 = scn80496HasChild1Node(m1->field_0xC);
+                                leafAnim = scn80496HasChild1Node(m1->field_0xC);
                             }
                         }
                     } else {
-                        r22 = scn80496HasChild1Node(base2->field_0xC);
+                        leafAnim = scn80496HasChild1Node(base2->field_0xC);
                     }
                 }
             } else {
-                r22 = scn80496HasChild1Node(self->field_0xC);
+                leafAnim = scn80496HasChild1Node(self->field_0xC);
             }
         }
         result = scn80496BindChrAnmPack(self->field_0xC, resFile, index, c, f, g, h);
-        if (r22 == 0) {
+        if (leafAnim == 0) {
             // deep walk #2: re-walk when the first leaf was null.
             u32 w2;
             CScnItemModel* base = self->field_0x7C4;

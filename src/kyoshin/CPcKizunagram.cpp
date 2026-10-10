@@ -288,15 +288,15 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                 lb9 = 0;
                 lb8 = 0;
                 FetchRelatePair(&lb9, &lb8, rnd);
-                int r21 = 0;
+                int visible = 0;
                 if (KizunagramCheckMappedRowValid(self, table, lb9) != 0 && KizunagramCheckMappedRowValid(self, table, lb8) != 0) {
-                    r21 = 1;
+                    visible = 1;
                 }
                 int id = (e8 & 0xff) + 1;
                 char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
-                if (p != 0) setPaneVisible(p, r21);
-                if (r21 != 0) {
+                if (p != 0) setPaneVisible(p, visible);
+                if (visible != 0) {
                     u32 tex = (u32)self->mArcRes->GetResource(
                         (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
                     if (tex != 0) PaneSetTexPalette(p, tex);
@@ -312,8 +312,8 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
             // --- deselected row ---
             if (pane != 0) setPaneVisible(pane, 0);
             if ((u8)n == 5) {
-                u16 r25 = (u16)BdatGetU16ByTableKey(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
-                if (CtrlRemote_TouchBitByArg(0x20) >= r25) {
+                u16 touchThreshold = (u16)BdatGetU16ByTableKey(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
+                if (CtrlRemote_TouchBitByArg(0x20) >= touchThreshold) {
                     for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
@@ -782,9 +782,9 @@ extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self) {
     return self;
 }
 
-void KizunagramSetActiveSlot(CPcKizunagramBig* self, int r4) {
-    if (self->field_0x89C != r4) {
-        self->field_0x89C = r4;
+void KizunagramSetActiveSlot(CPcKizunagramBig* self, int slotIdx) {
+    if (self->field_0x89C != slotIdx) {
+        self->field_0x89C = slotIdx;
         KizunagramRebuildSlotList(self);
     }
 }

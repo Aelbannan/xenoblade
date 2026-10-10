@@ -556,12 +556,12 @@ extern "C" __declspec(noinline) float cfCam_vecLength(const void* v) {
 extern "C" float cfCam_vecMag(const float* v) {
     return PSVECMag(reinterpret_cast<const Vec*>(v));
 }
-extern "C" void cfCam_setOrClearUnk04Bits(cf::CfCamFollow* r3, int r4, int r5) {
-    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(r3);
-    if (r5) {
-        self->field_0x04 |= r4;
+extern "C" void cfCam_setOrClearUnk04Bits(cf::CfCamFollow* cam, int mask, int doSet) {
+    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(cam);
+    if (doSet) {
+        self->field_0x04 |= mask;
     } else {
-        self->field_0x04 &= ~r4;
+        self->field_0x04 &= ~mask;
     }
 }
 void cf::CfCamFollow::clearUnk04Bits(unsigned int mask) {
@@ -794,9 +794,9 @@ extern "C" __declspec(noinline) void cfCam_quatToMat33(ml::CMat33* out, const ml
     out->m[1][2] = YZ - XW;
     out->m[2][1] = YZ + XW;
 }
-extern "C" void cfCam_copy4Words(void *r3, const void *r4) {
-    const unsigned int *src = (const unsigned int *)r4;
-    unsigned int *dst = (unsigned int *)r3;
+extern "C" void cfCam_copy4Words(void *dest, const void *source) {
+    const unsigned int *src = (const unsigned int *)source;
+    unsigned int *dst = (unsigned int *)dest;
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -2390,13 +2390,13 @@ void frameDriver(cf::CfCamFollow* self, float argF) {
     }
     if (route == 0) {
         // Route A: zoom/aim reset driven by the game-manager state.
-        int r29 = 1;
+        int doReset = 1;
         if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x404000) != 0) {
             if (cfCam_artsGateClr(self->cfCam_loadUnk164()) != 0) {
-                r29 = 0;
+                doReset = 0;
             }
         }
-        if (r29 != 0) {
+        if (doReset != 0) {
             if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x404000) == 0) {
                 if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x800000) == 0 &&
                     cfCam_maskUnk1D4(reinterpret_cast<int>(self), 0x200000) != 0) {
@@ -2744,12 +2744,12 @@ int cfCam_selectCamTarget(cf::CfCamFollow* self, void* arg, float* out1, float* 
     }
     int flags = CfRes_getE24Bit22() | (int)cfCam_testGlobalE24() |
                 (int)cfCam_getE28Bit24();
-    int r31 = 1;
+    int uiBusy = 1;
     if (battleCommuIsActive() == 0 && GetZealObjPtr() == 0) {
-        r31 = 0;
+        uiBusy = 0;
     }
     if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x400) == 0 && flags == 0 &&
-        r31 == 0) {
+        uiBusy == 0) {
         if (camPadPress12(self) != 0 && cfCam_getBit9_04(self) == 0 &&
             cfCam_testUnk04M(reinterpret_cast<int>(self), 0x800) == 0) {
             self->unk254 = 15;
@@ -2771,7 +2771,7 @@ int cfCam_selectCamTarget(cf::CfCamFollow* self, void* arg, float* out1, float* 
     }
     int flags2 = CfRes_getE24Bit22() | (int)isGlobalCamFlagSet__Fi(0xABA40000) |
                  (int)cfCam_getE28Bit24();
-    if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0xC10) == 0 && r31 == 0) {
+    if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0xC10) == 0 && uiBusy == 0) {
         if (self->unk254 != 0) {
             self->unk254 -= 1;
         } else if (flags2 == 0) {
@@ -3332,14 +3332,14 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
     copyVec3Words(self->unk1C + 0x3C, &stack90);
     copyVec3Words(self->unk1C + 0x48, &stack90);
     self->unk228 = lbl_eu_806662A0;
-    int r31 = 0;
+    int hasUnk80 = 0;
     if (CfRes_getD80Flag() != 0) {
         cfCam_copyBlock16(&stack68, Scn_QueryUnk80State());
         if (stack68.w >= lbl_eu_8066638C) {
-            r31 = 1;
+            hasUnk80 = 1;
         }
     }
-    if (r31 == 0) {
+    if (hasUnk80 == 0) {
         copyVec3f(&stack5C, reinterpret_cast<const ml::CVec3*>(self->unk1C + 0x0C));
         cfCam_nop07C0(self, &stack5C, &stack90);
     } else {

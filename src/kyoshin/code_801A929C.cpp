@@ -1077,13 +1077,13 @@ extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
     if (p) *(unsigned char*)((u8*)p + 0x1b) = v;
 }
 
-void BattleWork_CopyPairToWork(unsigned int* r3, unsigned int* r4) {
+void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {
     extern unsigned char lbl_eu_80664330;
     unsigned int *p = (unsigned int *)&lbl_eu_80664330;
     if (!*p) return;
     unsigned int *dst = (unsigned int *)*p;
-    unsigned int *src1 = r3;
-    unsigned int *src2 = r4;
+    unsigned int *src1 = pSrcA;
+    unsigned int *src2 = pSrcB;
     dst[0] = src1[0];
     dst[1] = src1[1];
     dst[2] = src1[2];

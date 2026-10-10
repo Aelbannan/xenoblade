@@ -87,55 +87,55 @@ CToken::~CToken() {
 u32 CToken::parseHexToken() {
     // Parses a hex string (with "0x" prefix) into a u32.
     // Reads bytes directly from the this pointer.
-    char* r3 = reinterpret_cast<char*>(this);
-    u32 r6 = 0;
-    int r7 = 2;
-    u32 r8 = 1;
-    char* r4;
+    char* cursor = reinterpret_cast<char*>(this);
+    u32 value = 0;
+    int digits = 2;
+    u32 place = 1;
+    char* p;
     u32 r0;
 
-    if (r3[0] != '0') goto end;
-    if (r3[1] != 'x') goto end;
+    if (cursor[0] != '0') goto end;
+    if (cursor[1] != 'x') goto end;
 
-    r4 = r3 + 2;
+    p = cursor + 2;
     do {
-        char r5 = *r4;
-        r0 = static_cast<u8>(r5 - '0');
+        char ch = *p;
+        r0 = static_cast<u8>(ch - '0');
         if (r0 <= 9) {
-            r7++;
-            r4++;
+            digits++;
+            p++;
             continue;
         }
-        r0 = static_cast<u8>(r5 - 'a');
+        r0 = static_cast<u8>(ch - 'a');
         if (r0 <= 5) {
-            r7++;
-            r4++;
+            digits++;
+            p++;
             continue;
         }
         break;
     } while (1);
 
     {
-        int r4i = r7 - 1;
-        r0 = r4i - 1;
-        r3 = r3 + r4i;
-        if (r4i < 2) goto end;
+        int hexLen = digits - 1;
+        r0 = hexLen - 1;
+        cursor = cursor + hexLen;
+        if (hexLen < 2) goto end;
         while (r0-- > 0) {
-            char r4c = *r3;
+            char hexDigit = *cursor;
             u32 digit;
-            if (static_cast<u8>(r4c - '0') <= 9) {
-                digit = r4c - '0';
+            if (static_cast<u8>(hexDigit - '0') <= 9) {
+                digit = hexDigit - '0';
             } else {
-                digit = static_cast<s8>(r4c) - 0x57;
+                digit = static_cast<s8>(hexDigit) - 0x57;
             }
-            r6 += digit * r8;
-            r8 *= 16;
-            r3--;
+            value += digit * place;
+            place *= 16;
+            cursor--;
         }
     }
 
 end:
-    return r6;
+    return value;
 }
 
 void CToken::clear() {

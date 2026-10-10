@@ -106,14 +106,14 @@ extern "C" __declspec(noinline) void* __ct__IUIWindow(IUIWindow* self) {
 }
 
 // CMenuUpdate ctor - MWCC ctors return 'this' in r3
-extern "C" void* __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u32 r8) {
+extern "C" void* __ct__CMenuUpdate(void* self, u32 pScene, u32 type, u32 arg1, u32 arg2, u32 arg3) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     __ct__IUIWindow((IUIWindow*)self);
     __ct__IWorkEvent((u8*)self + 0x6C);
     __ct__IScnRender((u8*)self + 0x70);
 
     u32* vtable = lbl_eu_8052E7B0;
-    obj->mScene = (CScn*)r4;
+obj->mScene = (CScn*)pScene;
     *(u32*)((u8*)obj + 0x10) = (u32)vtable;
     *(u32*)((u8*)obj + 0x6C) = (u32)(vtable + 9);
     *(u32*)((u8*)obj + 0x70) = (u32)(vtable + 43);
@@ -140,7 +140,7 @@ extern "C" void* __ct__CMenuUpdate(void* self, u32 r4, u32 r5, u32 r6, u32 r7, u
     memset(obj->mEntries, 0, 0x80);
     memset(&obj->mEntries[8], 0, 0x10);
 
-    MenuUpdate_UpsertEntry(obj, r5, r6, r7, r8);
+MenuUpdate_UpsertEntry(obj, type, arg1, arg2, arg3);
     return obj;
 }
 
@@ -293,28 +293,28 @@ extern "C" __declspec(noinline) void MenuUpdate_CopyQuadWord(u32* dest, const u3
 // save-flag resource and marks it dirty. Reuses the existing process if one is
 // registered, otherwise allocates a CMenuUpdate (0x130 bytes from work mem).
 // The ctor result redefines obj so the pointer stays in r3 across the call.
-extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 r4, int r5, int r6, int r7, int r8) {
-    if (r5 == 2) { MenuUpdate_MarkByte15Ready(getGlobalA10()); }
-    if (r5 == 6) {
+extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode, int arg1, int arg2, int arg3) {
+    if (mode == 2) { MenuUpdate_MarkByte15Ready(getGlobalA10()); }
+    if (mode == 6) {
         int val = getGlobal0E0();
-        u16 result = BdatGetU16Direct((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), r6);
+        u16 result = BdatGetU16Direct((void*)val, (const char*)((u32)lbl_eu_805013C8 + 0x64), arg1);
         if (!result) return 0;
-        if (CtrlRemote_TouchBitByArg(r6 + 0x3214)) {
+        if (CtrlRemote_TouchBitByArg(arg1 + 0x3214)) {
             if (GetSysStateFlag22()) {
                 return 0;
             }
         } else {
-            CtrlRemote_SetSharedBit(r6 + 0x3214, 1);
+            CtrlRemote_SetSharedBit(arg1 + 0x3214, 1);
         }
     }
     if (lbl_eu_80664198 != 0) {
-        MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, r5, r6, r7, r8);
+MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, mode, arg1, arg2, arg3);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
     void* obj = allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem);
     if (obj != 0) {
-        obj = __ct__CMenuUpdate(obj, r4, r5, r6, r7, r8);
+obj = __ct__CMenuUpdate(obj, pScene, mode, arg1, arg2, arg3);
     }
     lbl_eu_80664198 = (u32)obj;
     Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);

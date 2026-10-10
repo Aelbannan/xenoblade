@@ -190,4 +190,4 @@ extern "C" void code80135FDC_postIncByte_64080();
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];    // CProcess primary vtable (pre-PMF copy)
-extern char lbl_eu_8052CC38[];    // CMenuQuestLog composite vtable
+extern void* lbl_eu_8052CC38[];    // CMenuQuestLog composite vtable

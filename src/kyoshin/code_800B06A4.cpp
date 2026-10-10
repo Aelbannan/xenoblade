@@ -43,7 +43,7 @@ extern "C" void mineUpdateAll(unsigned long a, void* b);
 extern "C" void CPartsChange_InitChangeRecord(unsigned long a, void* b);
 extern "C" void CPartsChange_LoadBdatTables(unsigned long a, void* b);
 extern "C" void CPartsChange_UpdatePartyState(unsigned long a, float b);
-
+extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
 extern "C" void mineScanPoints(CfMapMineManager* self);  // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
@@ -51,9 +51,10 @@ extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg); // retail un
 extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count);
-
+extern "C" void CfObjectMap_refreshRegion(void* self);
 void clearResourceStack(void* self);
 void setResourceField04(void* self, cf::CfObject* obj);
+extern "C" int isBattleStatusActive(void* obj, int id);
 
 // us-800b0f70 - Store float and its square to several globals.
 // Retail emits frsp f2,f1 for `float sq` - the float->double->float round-trip

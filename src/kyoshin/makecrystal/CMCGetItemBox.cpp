@@ -1216,16 +1216,16 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItem
 #pragma optimize_for_size on
 // noinline + C linkage: called out-of-line from refreshMCGetItemBoxSlots in retail
 // (unmangled reloc).
-__declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int r4, u32 r5) {
+__declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind, u32 idx) {
     char buf1[0x20];   // sp+0x28
     char buf2[0x20];   // sp+0x08
-    sprintf(buf1, &lbl_eu_8050FF8C[0x16e], r5 + 1);
-    if ((s8)r4 == 0) {
+    sprintf(buf1, &lbl_eu_8050FF8C[0x16e], idx + 1);
+    if ((s8)kind == 0) {
         sprintf(buf2, &lbl_eu_8050FF8C[0x17a]);
     } else {
         sprintf(buf2, &lbl_eu_8050FF8C[0],
                 BdatTouchStringCell(&lbl_eu_8050FF8C[0x3], &lbl_eu_8050FF8C[0xc],
-                              0x1e - ((s8)r4 - 1)));
+0x1e - ((s8)kind - 1)));
     }
     LayoutSetTextBoxText(self->layout40, buf1, buf2, 0);
 }

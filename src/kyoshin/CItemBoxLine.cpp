@@ -25,7 +25,7 @@
 u8 ItemBoxGetTab(const CIBLTabCur* self, unsigned int index);
 u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
 extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
-extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7);
+extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready);
 u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
 u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 void ItemBoxLine_ResetTabBytes(CItemBoxLine* self);
@@ -2770,11 +2770,11 @@ void sinit_801F32EC() {
 // noinline: retail ItemBoxLine_InitTabFormat calls these as EXTERNAL relocs (they live in
 // a different retail object of this merged unit); without it MWCC -inline auto
 // inlines the same-TU definitions and the call-site relocs disappear.
-extern "C" __declspec(noinline) CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 r4, u32 r5, u8 r6, u8 r7) {
-    self->f0 = r4;
-    self->f4 = r5;
-    self->f8 = r6;
-    self->f9 = r7;
+extern "C" __declspec(noinline) CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready) {
+    self->f0 = item;
+    self->f4 = value;
+    self->f8 = lock;
+    self->f9 = ready;
     return self;
 }
 

@@ -133,8 +133,8 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     }
 }
 
-bool COccCulling::update(CFrustum* r4){
-    unk24 = r4;
+bool COccCulling::update(CFrustum* viewFrustum){
+    unk24 = viewFrustum;
 
     for(CCullFrustum** it = mFrustumList1.begin(); it != mFrustumList1.end(); it++){
         CCullFrustum* frustum = *it;
@@ -264,7 +264,7 @@ bool COccCulling::isOccluded(const ml::CVec3& intersectPoint, float distance){
     return false;
 }
 
-bool COccCulling::isRayOccluded(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
+bool COccCulling::isRayOccluded(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD flagBits){
     CVec3 rayDir = rayEndPos - rayStartPos;
     
     //Looks like the normalize inline but isn't? (isZero inlined with retail epsilon label)
@@ -282,7 +282,7 @@ bool COccCulling::isRayOccluded(const CVec3& rayStartPos, const CVec3& rayEndPos
     //Iterate through all entries of the second list
     for(CCullFrustum** it = mFrustumList2.begin(); it != mFrustumList2.end(); it++){
         CCullFrustum* frustum = *it;
-        if(frustum->mFlags & r6){
+        if(frustum->mFlags & flagBits){
             //Check if the ray intersects the plane (start/end point are on opposide sides)
             if(frustum->mPlane0.isDifferentSide(rayStartPos, rayEndPos)){
                 //TODO: Why does this use two CVec3 variables? Maybe used an inline?

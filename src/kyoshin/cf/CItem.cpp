@@ -2788,7 +2788,7 @@ extern "C" s32 CItem_rollThreeCol(CItemFour* self, u32 a, u32 unused, void* c, u
         union {
             u32 v;
             u8 b[4];
-        } r3v;
+        } col3Val;
         // Only the first column pointer is held in a register (shared by
         // its store and lookup); the other two are re-read per use.
         lbl_eu_806622B4[idx] = (char)ch;
@@ -2797,9 +2797,9 @@ extern "C" s32 CItem_rollThreeCol(CItemFour* self, u32 a, u32 unused, void* c, u
         r1v.v = getBdatStringColumnValue(c, col1, a);
         r2v.v = getBdatStringColumnValue(c, lbl_eu_806622B4, a);
         int v2b = r2v.b[0] * 100;
-        r3v.v = getBdatStringColumnValue(c, lbl_eu_806622B8, a);
+        col3Val.v = getBdatStringColumnValue(c, lbl_eu_806622B8, a);
         // Retail reads the amount byte before rolling.
-        int v3b = r3v.b[0];
+        int v3b = col3Val.b[0];
         int r = ml::math::mtRand(10000);
         if (r1v.h[0] != 0 && (u32)r < (u32)v2b) {
             CItemData_initFromFamily((CItemData*)&local, r1v.h[0], 1);
@@ -2851,13 +2851,13 @@ s32 CItem_rollThreeColAlt(CItemFour* self, u32 a, u32 unused, void* c, u32 d) {
         union {
             u32 v;
             u8 b[4];
-        } r3v;
+        } col3Val;
         r1v.v = getBdatStringColumnValue(c, col1, a);
         r2v.v = getBdatStringColumnValue(c, col2, a);
         int v2b = r2v.b[0];
-        r3v.v = getBdatStringColumnValue(c, col3, a);
+        col3Val.v = getBdatStringColumnValue(c, col3, a);
         // Retail reads the amount byte before rolling.
-        int v3b = r3v.b[0];
+        int v3b = col3Val.b[0];
         int r = ml::math::mtRand(100);
         if (r1v.h[0] != 0 && r < v2b) {
             CItemData_initFromFamily((CItemData*)&local, r1v.h[0], 1);

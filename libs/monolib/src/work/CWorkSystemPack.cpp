@@ -127,22 +127,22 @@ extern "C" {
 
 // _reslist_base<CPackItem*>::clearList() - unlink every node (retail func_804DDADC).
 __attribute__((never_inline)) void func_804DDADC(PackItemList* list) {
-    PackItemListNode* r5 = list->mStartNodePtr->mNext;
-    while (r5 != list->mStartNodePtr) {
-        PackItemListNode* r4 = r5;
-        r5 = r5->mNext;
-        r4->mNext = 0;
+    PackItemListNode* walk = list->mStartNodePtr->mNext;
+    while (walk != list->mStartNodePtr) {
+        PackItemListNode* node = walk;
+        walk = walk->mNext;
+        node->mNext = 0;
     }
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }
 
 // _reslist_base<CArcItem*>::clearList() (retail clearArcItemList).
 __attribute__((never_inline)) void clearArcItemList(ArcItemList* list) {
-    ArcItemListNode* r5 = list->mStartNodePtr->mNext;
-    while (r5 != list->mStartNodePtr) {
-        ArcItemListNode* r4 = r5;
-        r5 = r5->mNext;
-        r4->mNext = 0;
+    ArcItemListNode* walk = list->mStartNodePtr->mNext;
+    while (walk != list->mStartNodePtr) {
+        ArcItemListNode* node = walk;
+        walk = walk->mNext;
+        node->mNext = 0;
     }
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }

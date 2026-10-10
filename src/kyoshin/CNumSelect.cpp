@@ -252,8 +252,8 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
 CNumSelect::~CNumSelect() {}
 #pragma optimize_for_size off
 
-extern "C" void NumSel_SetCaptionNum_B04C(CNumSelect* self, u8 r4) {
-    setLayoutTextBoxNumber(self->mpLayout, &lbl_eu_80506C14[0x20], r4);
+extern "C" void NumSel_SetCaptionNum_B04C(CNumSelect* self, u8 captionNum) {
+    setLayoutTextBoxNumber(self->mpLayout, &lbl_eu_80506C14[0x20], captionNum);
 }
 
 // Loads the number-select brlyt archive into the MEM2 scratch region and

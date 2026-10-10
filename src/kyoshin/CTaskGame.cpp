@@ -67,7 +67,7 @@ extern "C" __declspec(noinline) void CTaskGame_setVisionParam(Fields* self, u8 a
     f.field18 = a7;
 }
 
-CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
+CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int initFlag) :
     unk68(0),
     unk6C(pThread),
     unk70(pView),
@@ -84,7 +84,7 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
     unk90(0),
     unkA0(0),
     unkA4(),
-    unkC8(r6),
+    unkC8(initFlag),
     unkCC(0),
     unkD0(0),
     unkD4(0),
@@ -284,9 +284,9 @@ void CTaskGame::Init(){
 // callee-saved saves only under optimize_for_size, same as the CTTask / reslist
 // dtors in this TU).
 #pragma optimize_for_size on
-CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
+CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int initFlag){
     mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
-    CTaskGame* taskGame = new (handle) CTaskGame(pView, pThread, r5);
+    CTaskGame* taskGame = new (handle) CTaskGame(pView, pThread, initFlag);
     //Register CTaskGame under the root game process
     CProcess* gameProcess = CTaskManager::GetRootProcGame();
     taskGame->Regist(gameProcess, false);
@@ -445,22 +445,22 @@ void CTaskGame::requestGameExit() {
 }
 extern "C" int CTaskGame_checkBusy7C(CTaskGame* self) {
     int ret = 1;
-    int r5 = 1;
+    int busy = 1;
     u32 f = self->unk7C;
-    int r4 = 0;
+    int cond = 0;
     if ((f & 0x80) && (f & 0x40)) {
-        r4 = 1;
+        cond = 1;
     }
-    if (r4 == 0) {
-        r4 = 0;
+    if (cond == 0) {
+        cond = 0;
         if ((f & 0x200) && !(f & 0x100)) {
-            r4 = 1;
+            cond = 1;
         }
-        if (r4 == 0) {
-            r5 = 0;
+        if (cond == 0) {
+            busy = 0;
         }
     }
-    if (r5 == 0 && !(f & 0x400)) {
+    if (busy == 0 && !(f & 0x400)) {
         ret = 0;
     }
     return ret;
@@ -1019,11 +1019,11 @@ void CTaskGame::Term() {
 // with a single stmw (MWCC merges the callee-saved saves only under size
 // optimization).
 #pragma optimize_for_size on
-__declspec(noinline) void CTaskGame::setLoadingCaption(u16 r4, u16 r5, const char* r6, s16 r7) {
-    unk86 = r4;
-    unk88 = r5;
-    if (r6 != nullptr) {
-        unkA4 = r6;
+__declspec(noinline) void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, const char* caption, s16 capMode) {
+    unk86 = titleId;
+    unk88 = textId;
+    if (caption != nullptr) {
+        unkA4 = caption;
     } else {
         // Hold the default caption in a local: retail materializes the full
         // &lbl_eu_804FA890[0x6D] address in r31 once and copies it with mr
@@ -1032,7 +1032,7 @@ __declspec(noinline) void CTaskGame::setLoadingCaption(u16 r4, u16 r5, const cha
         const char* s = &lbl_eu_804FA890[0x6D];
         unkA4 = s;
     }
-    unk8A = r7;
+    unk8A = capMode;
     unk68 |= 2;
     unk128 = 3;
     if (unkD4 != nullptr) {

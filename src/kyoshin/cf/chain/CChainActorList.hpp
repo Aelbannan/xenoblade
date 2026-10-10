@@ -133,8 +133,8 @@ extern "C" u32 UIWin_GetInstance();
 extern "C" void UIWin_Create6F8B0Win(int);
 extern "C" int lbl_eu_80662A80;
 extern "C" float lbl_eu_8050EDE0[4];
-// Retail .sdata2 object (8 bytes); defined in another TU.
-extern float lbl_eu_80668A80;
+// Retail .sdata2 zero-float pair (this TU defines it); code reads element [0].
+extern float lbl_eu_80668A80[2];
 
 // Tuning-pool constants used by Chain_CheckChanceRoll plus its u16 id table.
 extern unsigned short lbl_eu_8050EDD0[0x40];

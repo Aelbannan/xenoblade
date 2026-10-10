@@ -77,7 +77,7 @@ extern "C" __declspec(noinline) u8 GetCategoryCap(CItemBoxGridFull* self);
 extern "C" __declspec(noinline) u8 CountMarkedCells(CItemBoxGridFull* self);
 extern "C" u32 GetCellSellPrice(CItemBoxGridFull* self, u16 idx);  // retail symbols are unmangled
 extern "C" s32 CheckCellState(CItemBoxGridFull* self, u16 idx);
-u32 GetScaledItemValue(void* self, u32 id, void* item, int r6);
+u32 GetScaledItemValue(void* self, u32 id, void* item, int reserved);
 void ResortGridEntries(CItemBoxGridFull* self, u16 idx);
 int LookupIndexedByte(char* obj);
 extern "C" {
@@ -113,7 +113,7 @@ void sysWinTermLayout(void*);
 extern "C" void ShowCellIcon(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
 extern "C" void ShowCellBadge(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
 extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx);
-extern "C" void ShowCellCount(void* self, u32 r4, void* r5, void* r6, u32 r7);
+extern "C" void ShowCellCount(void* self, u32 kind, void* flag2, void* flag3, u32 idx);
 extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx);
 extern "C" u32 CalcGridRowCount(void* self);
 char* FormatCellItemName(void* self, u16 idx);
@@ -298,7 +298,7 @@ exit:
 
 // C linkage: retail exports this helper under its plain address-name symbol.
 // C linkage: retail exports this helper under its plain address-name symbol.
-extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int r5, int r6, int r7) {
+extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int ownerIdx, int refItemId, int valueMode) {
     u8* p = (u8*)self;
     u32 i;
     *(u16*)(p + 0x2800) = 0;
@@ -322,10 +322,10 @@ extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int r5, int 
         void* item = CItem_kindPtr(cat, id);
         if (!item) continue;
         if (!*(u32*)item) continue;
-        if (r6) {
-            u32 v1 = GetScaledItemValue((CItemBoxGridFull*)self, r6, 0, (int)r7);
+        if (refItemId) {
+            u32 v1 = GetScaledItemValue((CItemBoxGridFull*)self, refItemId, 0, (int)valueMode);
             u32 kind = (*(u32*)item) >> 20;
-            u32 v2 = GetScaledItemValue((CItemBoxGridFull*)self, kind, item, (int)r7);
+            u32 v2 = GetScaledItemValue((CItemBoxGridFull*)self, kind, item, (int)valueMode);
             if (v1 > v2) continue;
         }
         u16 count = *(u16*)(p + 0x2800);
@@ -386,7 +386,7 @@ extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int r5, int 
             goto entry_done;
         }
         if (cat >= 2 && cat <= 8) {
-            if (r5) {
+            if (ownerIdx) {
                 u32 ownerTbl;
                 switch (cat) {
                     case 2: ownerTbl = (u32)lbl_eu_806640F4; break;
@@ -396,7 +396,7 @@ extern "C" void PopulateGridEntries(CItemBoxGridFull* self, u8 cat, int r5, int 
                 u32 shortKind = BdatGetItemId(kindId);
                 char nameBuf[64];
                 const char* fmt = (cat == 2) ? &lbl_eu_8050566C[0x132] : &lbl_eu_8050566C[0x13d];
-                sprintf(nameBuf, fmt, r5);
+                sprintf(nameBuf, fmt, ownerIdx);
                 if (!BdatGetU8Direct(ownerTbl, nameBuf, shortKind & 0xFFFF)) {
                     *(s16*)entry = -1;
                     count = *(u16*)(p + 0x2800);
@@ -616,7 +616,7 @@ extern "C" __declspec(noinline) long RoundHalfAway0(double f) {
 // equipment-skill bonus when a concrete item (not a bare kind) is passed.
 // The category is a conditional dereference: retail keeps `obj = item ?
 // item : 0` and re-tests item for the load, so both branches stay separate.
-u32 GetScaledItemValue(void* self, u32 id, void* item, int r6) {
+u32 GetScaledItemValue(void* self, u32 id, void* item, int reserved) {
     void* obj = item ? item : 0;
     u32 cat;
     if (item) {
@@ -2649,7 +2649,7 @@ extern "C" void* __dt__12CItemBoxGridFv(void* self, int mode) {
 // optimize_for_size: retail uses stmw r29/lmw r29 block saves.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void LoadItemBoxFiles(void* self, int r4) {
+extern "C" void LoadItemBoxFiles(void* self, int reserved) {
     u8* p = (u8*)self;
     const char* strs;
     void* allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -2696,7 +2696,7 @@ extern "C" void LoadItemBoxFiles(void* self, int r4) {
 // Per-frame state machine update for the item-box grid: gate on the ready
 // byte at +0x54 and the state word at +0x58, dispatch through MWCC's
 // computed-jump switch, then run the common per-frame update tail.
-extern "C" void UpdateItemBox(void* self, int r4) {
+extern "C" void UpdateItemBox(void* self, int reserved) {
     u8* p = (u8*)self;
     if (!p[0x54]) return;
     u32 state = *(u32*)(p + 0x58);
@@ -2797,31 +2797,31 @@ extern "C" void UpdateItemBox(void* self, int r4) {
 // layout and all sub-panels. optimize_for_size merges the r30/r31 saves
 // into retail's stmw prologue.
 #pragma optimize_for_size on
-extern "C" void DrawItemBoxGrid(void* self, int r4) {
+extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
     u8* p = (u8*)self;
     if (!p[0x54]) return;
     if (!*(u32*)(p + 0x58)) return;
 
     renderItemBox(p + 0x1d8);
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii((nw4r::lyt::Layout*)*(void**)(p + 0x44), (nw4r::lyt::DrawInfo*)r4, 0, 1);
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii((nw4r::lyt::Layout*)*(void**)(p + 0x44), (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 
     u8 r = p[0x2d4f];
     u8 v = (r != 0) ? r : 1;
     if ((u32)v > 1) {
-        Cur_DrawLayout(p + 0x88, (void*)r4);
+        Cur_DrawLayout(p + 0x88, (void*)drawInfo);
     }
 
-    sortMenuDraw(p + 0xe8, (void*)r4);
-    GridSubMenu_DrawLayoutGated(p + 0x418, r4);
-    ExWin_DrawLayout(p + 0x440, r4);
-    sysWinDrawLayout(p + 0x4ac, (void*)r4);
-    sysWinDrawLayout(p + 0x4e8, (void*)r4);
-    drawPresentWin(p + 0x468, r4);
-    Cur_DrawLayout(p + 0xd0, (void*)r4);
-    Cur_DrawLayout(p + 0x70, (void*)r4);
-    Cur_DrawLayout(p + 0xa0, (void*)r4);
-    Cur_DrawLayout(p + 0xb8, (void*)r4);
-    NumSel_DrawLayout_AF7C(p + 0x3e4, (void*)r4);
+    sortMenuDraw(p + 0xe8, (void*)drawInfo);
+    GridSubMenu_DrawLayoutGated(p + 0x418, drawInfo);
+    ExWin_DrawLayout(p + 0x440, drawInfo);
+    sysWinDrawLayout(p + 0x4ac, (void*)drawInfo);
+    sysWinDrawLayout(p + 0x4e8, (void*)drawInfo);
+    drawPresentWin(p + 0x468, drawInfo);
+    Cur_DrawLayout(p + 0xd0, (void*)drawInfo);
+    Cur_DrawLayout(p + 0x70, (void*)drawInfo);
+    Cur_DrawLayout(p + 0xa0, (void*)drawInfo);
+    Cur_DrawLayout(p + 0xb8, (void*)drawInfo);
+    NumSel_DrawLayout_AF7C(p + 0x3e4, (void*)drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -2830,7 +2830,7 @@ extern "C" void DrawItemBoxGrid(void* self, int r4) {
 // merges the r30/r31 saves into retail's stmw prologue, and the delete-style
 // releases reproduce the double null test (if + delete's own guard).
 #pragma optimize_for_size on
-extern "C" void UnloadItemBox(void* self, int r4) {
+extern "C" void UnloadItemBox(void* self, int reserved) {
     u8* p = (u8*)self;
 
     if (p[0x543]) {
@@ -3571,7 +3571,7 @@ void OpenSortMenu(void* self) {
 // handled arms fall into the single shared r4-check tail (keeps MWCC from
 // duplicating the tail per return path).
 #pragma optimize_for_size on
-void HandleCancelBtn(void* self, int r4) {
+void HandleCancelBtn(void* self, int confirmed) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (!CSysWin_isActive(p + 0x4ac)) goto exit;
@@ -3598,7 +3598,7 @@ void HandleCancelBtn(void* self, int r4) {
         *(u32*)(p + 0x58) = 8;
         p[0x528] = 0;
         // retail inlines the r4-check tail here (copy 1 of 3)
-        if (!r4) playUISound__FUl(6);
+        if (!confirmed) playUISound__FUl(6);
         goto exit;
     }
     if (isPresentActive(p + 0x468)) {
@@ -3622,7 +3622,7 @@ void HandleCancelBtn(void* self, int r4) {
             Cur_SetVisible(p + 0xd0, 0);
         }
         // tail copy 2
-        if (!r4) playUISound__FUl(6);
+        if (!confirmed) playUISound__FUl(6);
         goto exit;
     }
     if (p[0x528]) {
@@ -3658,7 +3658,7 @@ void HandleCancelBtn(void* self, int r4) {
     }
 check_tail:
     // tail copy 3 (shared by the p[0x528]/p[0x544]/final arms)
-    if (!r4) playUISound__FUl(6);
+    if (!confirmed) playUISound__FUl(6);
 exit:;
 }
 #pragma optimize_for_size off
@@ -4000,7 +4000,7 @@ void func_801CCAF0(void* self) {
                 BdatGetItemType(*(u16*)(p + 0x52e));
                 BdatGetItemId(*(u16*)(p + 0x52e));
                 CItem_thunkAllocRecord(*(u16*)(p + 0x52e), 1);
-                UIWin_BuildFlagBuf(2, *(u16*)(p + 0x52e), 0);
+                UIWin_BuildFlagBufRec(2, *(u16*)(p + 0x52e), 0);
                 incrementEventCounter__FUl(0xbb);
                 incrementEventCounter__FUl(0xbc);
                 incrementEventCounter__FUl(0xbd);
@@ -4831,27 +4831,27 @@ extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx) {
 // (overridden by the category-specific label when kind is 1 or 2, and by the
 // flag-driven overlay labels), then hand the buffer to the layout via
 // PaneSetTexPaletteByName.
-extern "C" void ShowCellCount(void* self, u32 r4, void* r5, void* r6, u32 r7) {
+extern "C" void ShowCellCount(void* self, u32 kind, void* flag2, void* flag3, u32 idx) {
     u8* p = (u8*)self;
     char buf[0x20];
-    sprintf(buf, (const char*)&lbl_eu_8050566C[0x3b0], r7 + 1);
+    sprintf(buf, (const char*)&lbl_eu_8050566C[0x3b0], idx + 1);
 
     void* acc;
     void* pane;
     acc = *(void**)(p + 0x3c);
     pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
-    if (r4 == 1) {
+    if (kind == 1) {
         acc = *(void**)(p + 0x3c);
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3bb], 0);
-    } else if (r4 == 2) {
+    } else if (kind == 2) {
         acc = *(void**)(p + 0x3c);
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3cf], 0);
     }
-    if (r6) {
+    if (flag3) {
         acc = *(void**)(p + 0x3c);
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3e3], 0);
     }
-    if (r5) {
+    if (flag2) {
         acc = *(void**)(p + 0x3c);
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3f7], 0);
     }
@@ -4871,13 +4871,13 @@ extern "C" void ShowCellCount(void* self, u32 r4, void* r5, void* r6, u32 r7) {
 // the exit (cases 0 and 1 skip the label lookup buffer), slots 2..13 map to
 // the twelve label formats 0x40b..0x4f2.
 #pragma optimize_for_size on
-extern "C" void SetTabHeader(void* self, int r4, int r5) {
+extern "C" void SetTabHeader(void* self, int cat, int idx) {
     u8* p = (u8*)self;
     char buf[32];
     char tmp[32];
     int result;
-    if (r4 != 0) {
-        switch (r4) {
+    if (cat != 0) {
+        switch (cat) {
         case 1: break;
         case 2: sprintf(buf, (const char*)&lbl_eu_8050566C[0x40b]); break;
         case 3: sprintf(buf, (const char*)&lbl_eu_8050566C[0x420]); break;
@@ -4900,7 +4900,7 @@ extern "C" void SetTabHeader(void* self, int r4, int r5) {
         result = (int)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     }
     if (result) {
-        sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], r5 + 1);
+        sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], idx + 1);
         PaneSetTexPaletteByName(*(void**)(p + 0x44), tmp, (void*)result);
     }
 }

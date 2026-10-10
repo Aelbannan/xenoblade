@@ -144,15 +144,15 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
         }
         int r28 = 0;
         if (f60 != 0) {
-            int r31 = 1;
+            int actorStateOk = 1;
             u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
             if (testActorStatus(obj, &w, 0xA) == 0) {
                 u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                 if (testActorStatus(obj, &w2, 0x9) == 0) {
-                    r31 = 0;
+                    actorStateOk = 0;
                 }
             }
-            CtrlMoveEne_CheckActorState(self, obj, 1, r31);
+            CtrlMoveEne_CheckActorState(self, obj, 1, actorStateOk);
             u32 f180 = self->field_0x180;
             if ((f180 & 0x1C000000u) != 0) {
                 if ((f180 & 0x8u) != 0) {
@@ -267,7 +267,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                     view->field_0x192 = 0x3C;
                                 }
                             }
-                            if (r31 != 0) r27 = 1;
+                            if (actorStateOk != 0) r27 = 1;
                             if (r27 != 0) {
                                 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector()
                                           ->y;
@@ -292,7 +292,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             f32 f29 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
             f32 f31 = Scn_GetFrameDelta(lbl_eu_80663E14) * f29;
             int r27 = 0;
-            if (r31 != 0) {
+            if (actorStateOk != 0) {
                 obj->field_4550 |= 0x200;
                 void* sub2 = actor->CActorParam_getMoveRecord();
                 if (sub2 != 0) {
@@ -331,7 +331,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     lbl_eu_806665F0 *
                         (view->field_0x170 - view->field_0x174) +
                     view->field_0x174;
-                if (r31 != 0) {
+                if (actorStateOk != 0) {
                     view->field_0x19C = lbl_eu_806665C0;
                     ml::CVec3* pp =
                         reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector();
@@ -413,8 +413,8 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             } else if ((f60->field_4EC & 0x100u) == 0 ||
                        (obj->field_3374 & 0x100000u) != 0) {
                 if ((view->field_0x17C & 0x4u) != 0) {
-                    void* r23 = lookupCA0ById(obj->field_45C0);
-                    if (r23 != 0 && CPartsChange_ResolveLinkedObj() != 0) {
+                    void* b89 = lookupCA0ById(obj->field_45C0);
+                    if (b89 != 0 && CPartsChange_ResolveLinkedObj() != 0) {
                         cf::CFunc8008B580Obj* ro =
                             (cf::CFunc8008B580Obj*)CPartsChange_ResolveLinkedObj();
                         if (ro->field_3F60 != 0) {
@@ -645,14 +645,14 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             }
             if (r28 == 0 && (view->field_0x17C & 0x4u) != 0) {
                 // Mark the party targets with the +0x08000000 flag.
-                void* r23 = lookupCA0ById(obj->field_45C0);
-                if (r23 != 0) {
-                    s16 cnt = *(s16*)((u8*)r23 + 0xA2);
+                void* b89 = lookupCA0ById(obj->field_45C0);
+                if (b89 != 0) {
+                    s16 cnt = *(s16*)((u8*)b89 + 0xA2);
                     for (int i = 0; i < cnt; i++) {
-                        void* r3 = (void*)CPartsChange_GetEnemySlotAt(r23, i);
-                        if (r3 != 0) {
+                        void* cand = (void*)CPartsChange_GetEnemySlotAt(b89, i);
+                        if (cand != 0) {
                             cf::CFunc8008B580Obj* ro =
-                                (cf::CFunc8008B580Obj*)r3;
+                                (cf::CFunc8008B580Obj*)cand;
                             void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
                                             ->CfObject_getCurrentTarget();
                             if (tgt != 0) {
@@ -1691,34 +1691,34 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
         view->field_0x58 = 0;
         view->field_0x5A = (u16)(ml::math::mtRand() & 0xF);
         view->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
-        void* r28b = lookupCA0ById(obj->field_45C0);
-        if (r28b != 0) {
-            cf::CFunc8008E760BattleObj* r31b =
+        void* b89 = lookupCA0ById(obj->field_45C0);
+        if (b89 != 0) {
+            cf::CFunc8008E760BattleObj* player =
                 (cf::CFunc8008E760BattleObj*)CPartsChange_ResolveLinkedObj();
-            if (r31b != 0) {
+            if (player != 0) {
                 // +0x5B4 = CfObjectActor::UVF6 -> float; +0xC4 = CfObject::UVF29(float).
                 // First call leaves f1 live into UVF29 (retail Fv on both).
                 {
                     f32 h = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                                reinterpret_cast<cf::CfObjectActor*>(r31b));
+                                reinterpret_cast<cf::CfObjectActor*>(player));
                     reinterpret_cast<cf::CfObject*>(&obj->mSub)
                         ->CfObject_setMoveHeadAngle(h);
                 }
-                u16 r27 = obj->field_45C4;
-                if (r27 == 0) r27 = 1;
-                f32 f31 = ((cf::CFunc8008E760B89*)r28b)->field_8C;
-                u32 r28v = obj->field_45C6;
-                if (r27 == 1) {
-                    r28v = view->field_0x5C;
+                u16 esc = obj->field_45C4;
+                if (esc == 0) esc = 1;
+                f32 f31 = ((cf::CFunc8008E760B89*)b89)->field_8C;
+                u32 seedOrCount = obj->field_45C6;
+                if (esc == 1) {
+                    seedOrCount = view->field_0x5C;
                 } else {
                     f31 += obj->field_44D8;
                 }
-                ml::CVec3 tmp20 = *reinterpret_cast<cf::CfObject*>(&r31b->mSub)->CfObject_getPosVector();
+                ml::CVec3 tmp20 = *reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
                 f32 f1 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                             reinterpret_cast<cf::CfObjectActor*>(r31b));
-                f32 sum = obj->field_44D8 + r31b->field_44D8;
+                             reinterpret_cast<cf::CfObjectActor*>(player));
+                f32 sum = obj->field_44D8 + player->field_44D8;
                 cf::CFunc8008E760PartyInfo info;
-                InitRecord(&info, &tmp20, f1, r27, r28v, f31, sum);
+                InitRecord(&info, &tmp20, f1, esc, seedOrCount, f31, sum);
                 if ((self->field_0x180 & 1) != 0) info.field_2D = 0;
                 int r = CPartsChange_ProcessPartyInfo(&info, &view->field_0C);
                 if ((obj->field_3374 & 0x100u) != 0) {

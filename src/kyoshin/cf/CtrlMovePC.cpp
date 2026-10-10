@@ -1704,8 +1704,8 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         cf::CfObjWrap* obj2 = (cf::CfObjWrap*)self->mObject;
         u32 y;
         void* sub3 = obj2->mField04;
-        void* r3 = ((cf::CObjectState*)sub3)->CObjectState_getStateData();
-        y = *(u32*)r3;
+        void* stateData = ((cf::CObjectState*)sub3)->CObjectState_getStateData();
+        y = *(u32*)stateData;
         if (testActorStatus(obj2, (int*)&y, 8) != 0) {
             ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
             return 0;

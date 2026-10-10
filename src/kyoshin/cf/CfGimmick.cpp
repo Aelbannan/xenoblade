@@ -34,8 +34,6 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508634[0
 extern "C" {
 __declspec(section ".sdata") __attribute__((used)) float lbl_eu_80662784 = 1.0f;
 __declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662788[2] = { lbl_eu_80508628, nullptr };
-__declspec(section ".sdata") __attribute__((used)) float _test_f = 1.0f;
-__declspec(section ".sdata") __attribute__((used)) unsigned int _test_a[2] = { 1, 0 };
 }
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668320[0x08] = "A_posX";
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668328[0x08] = "A_posY";
@@ -799,9 +797,7 @@ extern "C" CfGimmickObject* CfGimmick_SpawnNamedObject(const char* name, int oth
         }
 
         // Activate, then reposition the object above the requested point.
-        obj->activate(1);
-        // FPR temp order x,y,z drives the retail f0/f1/f2 colors; reversed
-        // assignment keeps retail's load order, forward stores the struct.
+        obj->setPointEnabled(1);
         f32 x, y, z;
         z = point->z;
         y = lbl_eu_80668378[0] + point->y;

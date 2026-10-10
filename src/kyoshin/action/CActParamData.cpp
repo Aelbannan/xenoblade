@@ -1348,12 +1348,12 @@ body9:
                 if (h)
                     t2 = 1;
             }
-            int r6 = 0;
+            int keepArm = 0;
             if (t2 != 0) {
                 if (member->mField58 < 1)
-                    r6 = 1;
+                    keepArm = 1;
             }
-            if (r6 == 0)
+            if (keepArm == 0)
                 arm = 0;
         }
         if (arm == 0) {
@@ -2984,24 +2984,24 @@ int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         if (t > vals->mFloat54) {
             g2 = 1;
         } else {
-            int r5 = 0;
+            int gate2Ok = 0;
             if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                    r5 = 1;
+                    gate2Ok = 1;
                 }
             }
-            g2 = r5;
+            g2 = gate2Ok;
         }
         if (g2 == 0) {
             int g3 = 0;
             if (t == vals->mFloat54) {
-                int r6 = 0;
+                int gate3Ok = 0;
                 if (t == vals->mFloat50) {
                     if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                        r6 = 1;
+                        gate3Ok = 1;
                     }
                 }
-                if (r6 != 0) {
+                if (gate3Ok != 0) {
                     g3 = 1;
                 }
             }

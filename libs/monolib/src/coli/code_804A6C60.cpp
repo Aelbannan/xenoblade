@@ -3168,17 +3168,17 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
     pts[2] = &base[rec->field_0x08];
     VEC3Sub(&o[2], &P, pts[2]);
 
-    int r28 = 0;
+    int insideEdge = 0;
     if (VEC3Dot(&o[0], &quad[0]) > gate) {
-        r28 = 1;
+        insideEdge = 1;
         if (VEC3Dot(&o[1], &quad[1]) > gate) {
-            r28 = 2;
+            insideEdge = 2;
             if (VEC3Dot(&o[2], &quad[2]) > gate) {
-                r28 = 3;
+                insideEdge = 3;
             }
         }
     }
-    if (r28 != 3) {
+    if (insideEdge != 3) {
         // Sweep the axis point along the triangle edges; P is dead here so
         // it doubles as the per-edge scratch (edge diff then closest point).
         f32 lo = lbl_eu_8066AE44;

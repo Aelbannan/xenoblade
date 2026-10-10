@@ -7,7 +7,7 @@
 // needed - global-scope data names are not mangled).
 extern char lbl_eu_804FB3A4[];   // .data:0x804FB3A4 script-name / extension string table
 extern char lbl_eu_805708D0[];   // .data:0x805708D0 current-dir path buffer
-extern char lbl_eu_80661AD0[2];  // .sdata:0x80661AD0 extension separator "."
+extern char lbl_eu_80661AD0[8];  // .sdata:0x80661AD0 extension separator "." (+ section-tail fill to 0x18)
 extern char* lbl_eu_80661AC0;    // .sdata:0x80661AC0 current-dir string pointer
 extern char lbl_eu_80570918[];   // .bss  manager instance storage
 extern s8 lbl_eu_80663D88;       // .sdata singleton-init flag

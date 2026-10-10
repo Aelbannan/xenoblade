@@ -376,14 +376,14 @@ PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amou
 
 // Clear the caller's +0xB0 slot, then scan the 3-entry table at the global
 // bank's +0x10 (24-byte stride) for the entry pointing at r4 and wipe it.
-extern "C" void clearPcEffect(void* a1, void* r4) {
+extern "C" void clearPcEffect(void* a1, void* pEffect) {
     if (lbl_eu_80664398 == 0)
         return;
-    *(u32*)((u8*)r4 + 0xB0) = 0;
+    *(u32*)((u8*)pEffect + 0xB0) = 0;
     PcEffectData* g = lbl_eu_80664398;
     for (int i = 0; i < 3; i++) {
         PcEffectEntry* e = &g->entries[i];
-        if (*(void**)e == r4) {
+        if (*(void**)e == pEffect) {
             *(u32*)e = 0;
             *(u16*)((u8*)e + 4) = 0;
             *(u16*)((u8*)e + 6) = 0;

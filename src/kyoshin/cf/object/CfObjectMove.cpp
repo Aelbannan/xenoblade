@@ -180,10 +180,10 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
             self->CfObjectModel_bindModelTo((cf::CfObject*)b4, (const char*)((cf::CfObjectMoveB4View*)self)->field_B8);
         }
     }
-    int r30 = 0;
+    int pointEnable = 0;
     int cond = 0;
-    int r28 = 0;
-    int r27 = 0;
+    int effReady = 0;
+    int scaleHi = 0;
     if (self->mSubObj38 != 0) {
         // Global-mode gate: the two flag reads are kept separate (volatile
         // casts; the extern itself is non-volatile to match CSystemWindow.hpp
@@ -203,19 +203,19 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
         }
         if ((self->unk64 & 0x2) != 0 || (self->unk64 & 0x4) != 0) {
             if (self->mSubObj98 != 0) {
-                r28 = (self->mSubObj98->field_7A4 & 0x04000000) == 0;
+                effReady = (self->mSubObj98->field_7A4 & 0x04000000) == 0;
             }
             if (((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect() != 0) {
                 if (self->mSubObj98 != 0) {
                     if (((CScnItemModel*)self->mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
-                        r27 = 1;
+                        scaleHi = 1;
                     }
                 }
-if (cond == 0 && self->CfObject_checkSubReady() != 0 && r28 != 0 && r27 == 0) {
-                    r30 = 1;
+if (cond == 0 && self->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi == 0) {
+                    pointEnable = 1;
                 }
                 int q = ((cf::CfObject*)self->mSubObj38)->CfObject_getCharEffect();
-                CharEffSetPointEnabled((void*)q, r30);
+                CharEffSetPointEnabled((void*)q, pointEnable);
             }
         }
     }

@@ -341,10 +341,10 @@ extern "C" __declspec(noinline) void stepPresentCounterBack(CPresentWin* self) {
     }
 }
 
-extern "C" __declspec(noinline) u8 lookupPresentRank(CPresentWin* self, u32 r4) {
+extern "C" __declspec(noinline) u8 lookupPresentRank(CPresentWin* self, u32 index) {
     u8 limit = self->mDataCount;
-    if (r4 >= limit) return 0;
-    return self->mDataArray[r4];
+    if (index >= limit) return 0;
+    return self->mDataArray[index];
 }
 
 #pragma push

@@ -108,7 +108,7 @@ struct CDrawCtx {
     u8    field_0x08;   // 0x08 copy flag
 };
 
-extern "C" void* getScnRootSlot10(void* r3);
+extern "C" void* getScnRootSlot10(void* sceneEnv);
 extern "C" void* GetFog__Q34nw4r3g3d7ScnRootFi(void* self, int idx);
 
 // Retail: lwz r3,0x6C(r3); b TexMan_SnapCursor_0314 / TexMan_RestoreCursor_032C — load the

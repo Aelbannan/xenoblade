@@ -7,7 +7,7 @@ void vmBuiltinOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524BF8;
 }
 
-int isExistProperty(VMThread* pThread, int r4, OCData* pOC) {
+int isExistProperty(VMThread* pThread, int handle, OCData* pOC) {
     VMArg arg;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr);
@@ -17,7 +17,7 @@ int isExistProperty(VMThread* pThread, int r4, OCData* pOC) {
     return 1;
 }
 
-int isExistSelector(VMThread* pThread, int r4, OCData* pOC) {
+int isExistSelector(VMThread* pThread, int handle, OCData* pOC) {
     VMArg arg;
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr);
@@ -27,7 +27,7 @@ int isExistSelector(VMThread* pThread, int r4, OCData* pOC) {
     return 1;
 }
 
-int getOCName(VMThread* pThread, int r4, OCData* pOC) {
+int getOCName(VMThread* pThread, int handle, OCData* pOC) {
     VMArg arg;
     arg.type = VM_TYPE_STRING;
     arg.unk2 = strlen(pOC->name);

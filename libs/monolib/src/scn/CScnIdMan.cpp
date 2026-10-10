@@ -6,14 +6,14 @@
 extern "C" {
     extern void __dl__FPv(void* ptr);
     extern u32 lbl_eu_8056EC80[];   // CScnIdMan vtable (defined below in this TU)
-    extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* r3, u32 r4, u32 r5, u32 r6);
-    extern void removeRenderCB__4CScnFP10IScnRender(void* r3, u32 r4);
-    extern CScnIdPoolSlot* CScnItemPool_lookupSubPool(void* r3, int r4);
-    extern void* Scn_FindCamItem(void* r3, u32 r4);
-    extern void* Scn_GetCamItem9C(void* r3, u32 r4);
-    extern void CamMan_BuildPerspective(void* r3, void* r4);
+    extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* pOwner, u32 scnId, u32 renderKind, u32 renderFlags);
+    extern void removeRenderCB__4CScnFP10IScnRender(void* pOwner, u32 scnId);
+    extern CScnIdPoolSlot* CScnItemPool_lookupSubPool(void* pPool, int slotIdx);
+    extern void* Scn_FindCamItem(void* pParam, u32 camIdx);
+    extern void* Scn_GetCamItem9C(void* pParam, u32 camIdx);
+    extern void CamMan_BuildPerspective(void* pOut, void* pCamItem);
     extern void* getScnHandle__Fv();
-    extern void Coli_RenderChunks(void* r3, void* r4, void* r5);
+    extern void Coli_RenderChunks(void* pScnHandle, void* pCamItem, void* pStack);
 }
 
 extern "C" CScnIdMan* __ct__CScnIdMan(CScnIdMan* self, void* param) {

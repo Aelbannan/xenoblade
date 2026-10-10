@@ -271,7 +271,7 @@ public:
     virtual void v14();
     virtual void v18();
     virtual void v1C();
-    virtual void v20(u32 r4);   // 0x20
+    virtual void v20(u32 flags);   // 0x20
     // Filler slots keep the named entry at its retail vtable offset
     // (declared index N -> vtable offset (N+2)*4).
     virtual void f024(); virtual void f028(); virtual void f02C(); virtual void f030();
@@ -1445,7 +1445,7 @@ extern "C" void runVisionTierWindows(CVision* self) {
 // us-801a6b64: Match the vision sub-object's model against `obj`; when it
 // matches one of the callback identities, install the associated vision FX
 // callback on the vision slots.
-void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* r5) {
+void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* other) {
     // Identity/callback table base (retail anchors it in a saved GPR).
     u32* tbl = lbl_eu_80533128;
     CVisionPtmf cur = self->mPtmf;
@@ -1554,7 +1554,7 @@ void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattl
             }
         }
     }
-    if (r5->vf2BC() != 0 || (obj->vf298()->w_74pair[1] & 0x1000)) {
+    if (other->vf2BC() != 0 || (obj->vf298()->w_74pair[1] & 0x1000)) {
         sub->field_824 |= 0x400;
     }
 
@@ -1905,7 +1905,7 @@ void evalVisionTrigger(CVision* self) {
 // the matching battle slot (timing/rounding/state checks) and re-engage FX via
 // routeVisionSlotFx; with `slot` null, walk the four 0x834-strided vision slots,
 // run the gate/flag machinery, and refresh or clear each slot's effect.
-void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
+void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
     if (slot != 0) {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
@@ -1932,7 +1932,7 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
         if (fu->vf298()->w_04 != 0) {
             u32 v26 = bs->w_828;
             u32 v25 = bs->w_82C;
-            CVision* r27 = (CVision*)ScMain_GetSummedInt(bs);
+            CVision* summed = (CVision*)ScMain_GetSummedInt(bs);
             // Out-params land in stack locals (retail reads sp+0x50 back).
             f32 outF;
             s32 outI;
@@ -1943,34 +1943,34 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
             f32 f1 = outF;
             f64 adj = (f1 > lbl_eu_80667CD4) ? lbl_eu_80667D18 : lbl_eu_80667D20;
             int r = (int)(f1 + adj);
-            if ((u32)r27 != (u32)r || ((bs->w_824 >> 10) & 1) != ((bs->w_88 >> 12) & 1) ||
+            if ((u32)summed != (u32)r || ((bs->w_824 >> 10) & 1) != ((bs->w_88 >> 12) & 1) ||
                 v26 != bs->w_828 || v25 != bs->w_82C) {
                 // Retail recomputes the rounded value and derives the rounding
                 // direction via the sign-bit abs-diff idiom.
                 int rc = (int)outF;
-                u32 xorv = (u32)r27 ^ (u32)rc;
-                u32 r25v = ((u32)((s32)xorv >> 1) - (xorv & (u32)r27)) >> 31;
-                routeVisionSlotFx(&CBattleManager::getInstance()->mVision, bs, 2, r25v, 0);
+                u32 xorv = (u32)summed ^ (u32)rc;
+                u32 bump = ((u32)((s32)xorv >> 1) - (xorv & (u32)summed)) >> 31;
+                routeVisionSlotFx(&CBattleManager::getInstance()->mVision, bs, 2, bump, 0);
                 return;
             }
             if ((void*)fu != slot) {
                 return;
             }
-            if (r28 == 0) {
+            if (dataArg == 0) {
                 return;
             }
-            if (*(u16*)((u8*)r28 + 0xc) == 0x10) {
+            if (*(u16*)((u8*)dataArg + 0xc) == 0x10) {
                 if (isBattleStatusActive((u8*)slot + 8, 0x10) != 0) {
                     routeVisionSlotFx(&CBattleManager::getInstance()->mVision, bs, 1, 1, 0);
                     return;
                 }
-                if (*(f32*)((u8*)r28 + 0x20) > lbl_eu_80667CD4) {
+                if (*(f32*)((u8*)dataArg + 0x20) > lbl_eu_80667CD4) {
                     routeVisionSlotFx(&CBattleManager::getInstance()->mVision, bs, 1, 1, 0);
                     return;
                 }
             }
-        } else if ((void*)fu == slot && r28 != 0 &&
-                   *(u16*)((u8*)r28 + 0xc) == 0x9 &&
+        } else if ((void*)fu == slot && dataArg != 0 &&
+                   *(u16*)((u8*)dataArg + 0xc) == 0x9 &&
                    isBattleStatusActive((u8*)slot + 8, 0x9) != 0) {
             routeVisionSlotFx(&CBattleManager::getInstance()->mVision, bs, 4, 1, 0);
             return;
@@ -2042,11 +2042,11 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
         }
         // Effect-kind accumulator reuses the third argument's register in
         // retail (the slot path's dataArg is dead by now).
-        r28 = (void*)0;
+        dataArg = (void*)0;
         if (!(p->w_824 & 1) && ((CVisionBattleObj*)slot)->vf2BC() != 0) {
-            r28 = (void*)5;
+            dataArg = (void*)5;
         }
-        if (!(p->w_824 & 2) && r28 == 0) {
+        if (!(p->w_824 & 2) && dataArg == 0) {
             // Nine gate reads, each fetched and tested immediately (each
             // result lives in its own stack word); all passing selects 4.
 #define VOBJ ((CVisionBattleObj*)slot)
@@ -2068,7 +2068,7 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
                                         if (testActorStatus(VOBJ, (int*)&n7, 0x12) == 0) {
                                             u32 n8 = VISION_VT30(VOBJ->field_04);
                                             if (testActorStatus(VOBJ, (int*)&n8, 0x19) == 0) {
-                                                r28 = (void*)4;
+                                                dataArg = (void*)4;
                                             }
                                         }
                                     }
@@ -2083,17 +2083,17 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
         if (isBattleStatusActive((u8*)slot + 8, 0xf) != 0 ||
             isBattleStatusActive((u8*)slot + 8, 0x9) != 0 ||
             isBattleStatusActive((u8*)slot + 8, 0xb) != 0) {
-            r28 = (void*)4;
+            dataArg = (void*)4;
         }
         if (isBattleStatusActive((u8*)slot + 8, 0xc) != 0 &&
             (CfCode_GetSubObject(p) == 0 || !(((CVisionRefObj*)CfCode_GetSubObject(p))->w_78 & 1))) {
-            r28 = (void*)4;
+            dataArg = (void*)4;
         }
-        if (!(p->w_824 & 4) && r28 == 0) {
+        if (!(p->w_824 & 4) && dataArg == 0) {
             // Fusion hand-off: run the embedded sub-object's slot-0x4C call
             // and feed the result plus both actors to the battle manager.
             if (ScMain_IsDistinctFrom(p, (CVisionBattleObj*)slot) != 0 && !(p->w_824 & 0x20000)) {
-                r28 = (void*)3;
+                dataArg = (void*)3;
                 void* emb = *(void**)((u8*)slot + 0x3E9C);
                 u32 res = ((u32 (*)(void*))(*(void***)emb)[0x4C / 4])(emb);
                 p->w_04 = res;
@@ -2109,15 +2109,15 @@ void manageVisionSlotFx(CVision* self, void* slot, void* r28) {
         if ((p->w_824 & 2) && (p->w_824 & 0x40)) {
             p->w_824 &= 0xE7;
         }
-        if ((p->w_824 & 8) && r28 != 0 && (p->w_824 & 0x100)) {
+        if ((p->w_824 & 8) && dataArg != 0 && (p->w_824 & 0x100)) {
             p->w_824 &= 0x39C;
         }
-        if ((p->w_824 & 0x10) && r28 != 0 && (p->w_824 & 0x200)) {
+        if ((p->w_824 & 0x10) && dataArg != 0 && (p->w_824 & 0x200)) {
             p->w_824 &= 0x738;
         }
 #undef VISION_VT30
-        if (r28 != 0) {
-            routeVisionSlotFx(self, p, (u32)(uintptr_t)r28, 1, 0);
+        if (dataArg != 0) {
+            routeVisionSlotFx(self, p, (u32)(uintptr_t)dataArg, 1, 0);
         }
     }
 }
@@ -2299,7 +2299,7 @@ int installVisionStateCallback(CVision* self, CVisionObj* obj) {
 // us-801a82ec: Guard chain deciding whether a vision cutscene may engage on
 // `obj` (with `r5` supplying the target actor), then HP/damage timing checks
 // and the vision-callback install via vt_14. Returns 1 on success.
-int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
+int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* targetObj) {
     if ((obj->field_3F00 & 0x4) == 0) {
         return 0;
     }
@@ -2372,8 +2372,8 @@ int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
     }
 
     // Target fusion from `r5` (+4 id, +0x50 actor requirement).
-    CVisionActor50* actor = r5->field_50;
-    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById__Fi(r5->field_04));
+    CVisionActor50* actor = targetObj->field_50;
+    CVisionFusionV* target = (CVisionFusionV*)MapFx_ResolveOwner((void*)findObjectById__Fi(targetObj->field_04));
     if (target == NULL || actor == NULL) {
         return 0;
     }
@@ -2772,7 +2772,7 @@ void driveVisionFxUpdates(CVision* self) {
 }
 
 
-void teardownVisionFx(CVision* self, void* r4) {
+void teardownVisionFx(CVision* self, void* releaseFx) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -2797,7 +2797,7 @@ void teardownVisionFx(CVision* self, void* r4) {
         getGlobalSda()[0xa8] = 0;
     }
     self->vt_30(1);
-    if (r4 != 0) {
+    if (releaseFx != 0) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
         cfCam_pushStateToActive();
     }
@@ -2866,18 +2866,18 @@ void clearAllVisionEffects(CVision* self) {
 // fall-through (tier N also re-arms every lower tier). `stage` tracks how
 // many element-array pushes have happened so far; each push appends a
 // {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
-void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
-    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)r25)->w_00));
-    MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)r25)->w_04));
+void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled, int voiceArg) {
+    CVisionBattleObj* fu = (CVisionBattleObj*)MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_00));
+    MapFx_ResolveOwner((void*)findObjectById__Fi(((CVisionBtlSlot*)slotPtr)->w_04));
     if (fu == 0) {
         self->vt_20(1);
         return;
     }
     int engaged = 0;
     int stage = 0;
-    CVisionBtlSlot* slot = (CVisionBtlSlot*)r25;
+    CVisionBtlSlot* slot = (CVisionBtlSlot*)slotPtr;
     // Tier gate: modes 1-3 refuse to re-engage while their flag bit is set.
-    switch (r26) {
+    switch (mode) {
     case 1:
         if (slot->w_824 & 0x8) return;
         break;
@@ -2888,11 +2888,11 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
         if (slot->w_824 & 0x40) return;
         break;
     }
-    if (r26 != 0) {
+    if (mode != 0) {
         self->unk261C4.field_68 = 0;
         self->unk261C4.field_64 = 0;
     }
-    if (r26 != 0) {
+    if (mode != 0) {
         u8 vdlist[8];
         CTaskGame_enumListCtor(vdlist);
         startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
@@ -2906,17 +2906,17 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
         }
         __dt__80043E88(vdlist, -1);
     }
-    if (r26 != 0) {
-        if (r27 != 0) {
-            CCharVoiceMan_EnqueuePendingActionVoice(r26, r28, fu);
+    if (mode != 0) {
+        if (voiceEnabled != 0) {
+            CCharVoiceMan_EnqueuePendingActionVoice(mode, voiceArg, fu);
         }
-        SysWinLog_AdvanceTiers(r26);
+        SysWinLog_AdvanceTiers(mode);
     }
 
     // Per-mode FX routing. Cases fall through; each block sets its flag bit
     // (and clears the bit the next tier owns), lazily engages the gauge once,
     // then pushes a ring entry while r26 < 4.
-    switch (r26) {
+    switch (mode) {
     case 5:
         slot->w_824 |= 0x1;
         restartVisionSlots(1);
@@ -2940,7 +2940,7 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x19, 0);
             engaged = 1;
         }
-        if (r26 < 4) {
+        if (mode < 4) {
             u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
@@ -2966,7 +2966,7 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1a, 0);
             engaged = 1;
         }
-        if (r26 < 4) {
+        if (mode < 4) {
             u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
@@ -2990,9 +2990,9 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
             // vtable +0x34: fade the vision gauge by mode/8 seconds.
             ((void (*)(void*, u32, f32, f32))(*(void***)bm)[0x34 / 4])(
                 bm, 0x13, lbl_eu_80667D54,
-                lbl_eu_80667CE4 * (double)r26);
+                lbl_eu_80667CE4 * (double)mode);
         }
-        if (r26 < 4) {
+        if (mode < 4) {
             u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
@@ -3008,7 +3008,7 @@ void routeVisionSlotFx(CVision* self, void* r25, int r26, int r27, int r28) {
     }
 
     lbl_eu_80663E28 |= 0x8;
-    if (r26 != 5) {
+    if (mode != 5) {
         return;
     }
     // Full-tier engage: fire vf1E8 on the slot and spawn a vision effect for
@@ -3157,8 +3157,8 @@ void releaseVisionEffect(CVision* self, u32 value) {
     }
 }
 
-void cf::CVision::setEffectScale(u32 r4) {
-    f32 scl = (r4 != 0) ? lbl_eu_80667CD4 : lbl_eu_80667CF0;
+void cf::CVision::setEffectScale(u32 active) {
+    f32 scl = (active != 0) ? lbl_eu_80667CD4 : lbl_eu_80667CF0;
     for (int i = 0; i < 4; i++) {
         if (effectArray[i] != 0) {
             setChildF50G_(effectArray[i], scl);

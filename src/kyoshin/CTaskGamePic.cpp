@@ -384,3 +384,17 @@ void CTaskGamePic::cbRenderBefore() {
 
 // Preserve empty Draw member (retail 4-byte body).
 void CTaskGamePic::Draw() {}
+// NOTE (wave DL-r4, verified): the five data labels for this TU (80538AD8/
+// 80538BC0 in .data, 80668BB0/BB4/BB8 in .sdata2) cannot land in source this
+// wave. .data/.rodata/.sdata: the TU's C++ classes emit __vt__12CTaskGamePic
+// (global) + __RTTI__ weak pairs + string/float pools that retail does not
+// carry here, so removing the frozen extern_data_sections strip fails the
+// gate and risks a duplicate __vt__ at link (same structural block as
+// CTaskGameEffAfter). .sdata2: the int->f32 casts in Move pool MWCC's magic
+// double locally while retail reads the shared BC0 slot; hand-spelling the
+// casts to name BC0 perturbs Move's schedule (+16B, re-verified), and any
+// named definition without killing the pool misplaces the section (pool +
+// named = 0x20 vs retail 0x18 either order). Landing needs devirtualizing
+// the TU (breaks the 19/19 code match) or rule-side selective strips/pool
+// naming (frozen). Code use sites: vtbl/address-takes (58/65), float loads
+// (89-93/134-136/234/339).

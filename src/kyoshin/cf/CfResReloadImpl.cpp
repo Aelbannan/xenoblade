@@ -832,19 +832,19 @@ extern "C" void clearReloadGlobals() {
     lbl_eu_80664288 = 0;
 }
 
-extern "C" void updateReloadTypeState(u16 r3, u16 r4) {
+extern "C" void updateReloadTypeState(u16 areaId, u16 subId) {
     extern u16 lbl_eu_8066427A;
     extern u16 lbl_eu_8066427C;
     extern u16 lbl_eu_80664288;
     extern float lbl_eu_806676C8;
-    if (lbl_eu_8066427A == r3 && lbl_eu_8066427C == r4) {
+if (lbl_eu_8066427A == areaId && lbl_eu_8066427C == subId) {
         lbl_eu_80664288 &= 0xFFFE;
     } else {
         lbl_eu_80664288 |= 0x1;
     }
     *(volatile float*)&lbl_eu_80664284 = lbl_eu_806676C8;
-    *(volatile u16*)&lbl_eu_8066427A = r3;
-    *(volatile u16*)&lbl_eu_8066427C = r4;
+*(volatile u16*)&lbl_eu_8066427A = areaId;
+*(volatile u16*)&lbl_eu_8066427C = subId;
 }
 
 // Position vector view with the loop-operator -= so MWCC PS-vectorizes the

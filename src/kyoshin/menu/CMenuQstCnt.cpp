@@ -569,29 +569,29 @@ void QstCnt_RefreshRecords(QstData* self) {
         for (; i < end; i++) {
             u8 kind = (u8)CtrlRemote_TouchBitByArg(i + 0x220);
             if (kind == 0 || kind == 0xC8) continue;
-            int r22;
+            int kindClass;
             if (kind >= 0xFE) {
-                r22 = 3;
+                kindClass = 3;
             } else if (kind == 1) {
-                r22 = 1;
+                kindClass = 1;
             } else {
-                r22 = 2;
+                kindClass = 2;
             }
             u32 v = SearchThresholdIdx(i);
             u32 tbl = lbl_eu_80573D18[v];
             u32 res = BdatGetU8Direct(tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;
-            u32 r21 = (res & 0xff) == 1;
-            if (r22 == 3) r21 = 0;
+            u32 showFlag = (res & 0xff) == 1;
+            if (kindClass == 3) showFlag = 0;
             u8 x = (u8)BdatGetU8Direct((u32)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
             u16 idx = self->field_2000;
             self->field_2000 = idx + 1;
             QstInfo src;
             src.f0 = i;
-            src.f2 = r22;
+            src.f2 = kindClass;
             src.f3 = cat;
             src.f4 = kind;
-            src.f5 = r21;
+            src.f5 = showFlag;
             src.f6 = (u8)res;
             src.f7 = x;
             copyQstInfo(&self->mList[idx], &src);

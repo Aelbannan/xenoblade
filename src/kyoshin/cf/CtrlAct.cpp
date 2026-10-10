@@ -79,8 +79,8 @@ extern "C" void updateActMain(CtrlActView* self) {
     // matches retail: src->r31, r30->r30, r29->r29, self->r28 (param),
     // player-cache->r27. The gate flag below stays volatile (r0).
     CtrlActSrc* src;
-    int r30;
-    int r29;
+    int srcFlag;
+    int stuckFlag;
     // Battle-state gate: when the battle-manager range byte is outside
     // [1, 0x18], the action is only kept alive while the voice-owner height
     // probe reads exactly 0 (otherwise the source resolution below runs).
@@ -100,7 +100,7 @@ extern "C" void updateActMain(CtrlActView* self) {
     // 0x3388 bit 4 latch make the source the player itself (r30=0), else the
     // source is resolved from the voice-owner handle and the latch cleared.
     // Retail initializes the flag register here (li r30,1 before the test).
-    r30 = 1;
+    srcFlag = 1;
     if (self->mField74 & 0x10) {
         self->mField7A++;
         if ((self->mPlayer->mField3388 & 0x10) && (u8)self->mField7A <= 0x1e) {
@@ -109,7 +109,7 @@ extern "C" void updateActMain(CtrlActView* self) {
                 p = (u8*)p - 0x3E9C;
             }
             src = (CtrlActSrc*)p;
-            r30 = 0;
+            srcFlag = 0;
         } else {
             src = (CtrlActSrc*)MapFx_ResolveOwner(
                 findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
@@ -123,7 +123,7 @@ extern "C" void updateActMain(CtrlActView* self) {
     if (src == 0) {
         return;
     }
-    r29 = 0;
+    stuckFlag = 0;
     // Probe the player state words; any failure latches r29 (the "stuck"
     // flag that clears the state value at the end). Retail re-caches the
     // player pointer into r27 at each testActorStatus probe site (lwz r27,
@@ -132,16 +132,16 @@ extern "C" void updateActMain(CtrlActView* self) {
         CtrlActPlayerView* player = self->mPlayer;
         u32 local18 = *player->mField4->vf30();
         if (testActorStatus(player, &local18, 0x4000) != 0) {
-            r29 = 1;
+            stuckFlag = 1;
         } else {
             CtrlActPlayerView* player2 = self->mPlayer;
             u32 local14 = *player2->mField4->vf30();
             if (testActorStatus(player2, &local14, 0xa) != 0) {
-                r29 = 1;
+                stuckFlag = 1;
             } else if (isBattleStatusActive(&self->mPlayer->mField8, 6) != 0) {
-                r29 = 1;
+                stuckFlag = 1;
             } else if (isBattleStatusActive(&self->mPlayer->mField8, 0xcd) != 0) {
-                r29 = 1;
+                stuckFlag = 1;
             }
         }
     }
@@ -157,14 +157,14 @@ extern "C" void updateActMain(CtrlActView* self) {
         f32 f30 = lbl_eu_80666D00;
         f32 pf;
         f32 f27;
-        if (r30 != 0) {
+        if (srcFlag != 0) {
             if (self->mPlayer->mField3594 != 0) {
                 // Retail reuses the source-flag register (r30) as the battle
                 // list loop counter, so both roles share one variable here.
-                for (r30 = 0; r30 < self->mPlayer->mField3594; r30++) {
+                for (srcFlag = 0; srcFlag < self->mPlayer->mField3594; srcFlag++) {
                     CtrlActBattleEntry* e =
                         (CtrlActBattleEntry*)((u8*)self->mPlayer->mField358C +
-                            ((self->mPlayer->mField3590 + r30) %
+                            ((self->mPlayer->mField3590 + srcFlag) %
                              self->mPlayer->mField3598) *
                                 0x20);
                     if (e->mField18 != 0) {
@@ -273,7 +273,7 @@ extern "C" void updateActMain(CtrlActView* self) {
                 self->mField74 &= ~0x8000;
                 self->mField76 = 0;
             }
-            r30 = 0;
+            srcFlag = 0;
         } else {
             f27 = f28 - lbl_eu_80666D14 * (f30 + f31);
         }
@@ -369,7 +369,7 @@ extern "C" void updateActMain(CtrlActView* self) {
                         }
                     }
                     // .L_800D253C: restart the 0x8000 countdown.
-                    if (r30 != 0) {
+                    if (srcFlag != 0) {
                         self->mField76 = 0x1e;
                         self->mField74 |= 0x8000;
                     }
@@ -394,7 +394,7 @@ extern "C" void updateActMain(CtrlActView* self) {
         if (doAim != 0) {
             if (self->mPlayer->mField3F00 & 2) {
                 CVoicePos* p = src->mOwner3E9C.getPosition();
-                tickTargetAct(self, (ml::CVec3*)p, src, r29);
+                tickTargetAct(self, (ml::CVec3*)p, src, stuckFlag);
             } else {
                 CVoicePos* p = src->mOwner3E9C.getPosition();
                 scanPlayerTgt(self, (ml::CVec3*)p);
@@ -423,7 +423,7 @@ extern "C" void updateActMain(CtrlActView* self) {
         f32 cur = self->mField14;
         f32 scaled = cur * self->mPlayer->table->method23C(self->mPlayer);
         self->mField14 = scaled;
-        if (r29 != 0) {
+        if (stuckFlag != 0) {
             self->mField14 = lbl_eu_80666CF8;
         } else if (scaled != lbl_eu_80666CF8) {
             if (self->mPlayer->mField3F00 & 4) {
@@ -2311,37 +2311,37 @@ extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src) {
     f32 f3 = f1 + f31;
     while (lbl_eu_8066A1F8 <= f3) f3 -= lbl_eu_8066A1FC;
     while (f3 < -lbl_eu_8066A1F8) f3 += lbl_eu_8066A1FC;
-    int r6 = 0;
-    int r5 = 0;
-    int r4 = 0;
-    int r3 = 0;
+    int band800 = 0;
+    int band400 = 0;
+    int band2000 = 0;
+    int band1000 = 0;
     f32 f1b = f31 * lbl_eu_8066A20C;
     self->mFieldC = f3;
-    if (f1b > lbl_eu_80666D94 && f1b < lbl_eu_80666D98) r6 = 1;
-    if (f1b < lbl_eu_80666D9C && f1b > lbl_eu_80666DA0) r5 = 1;
-    if (f1b < lbl_eu_80666D9C && f1b >= lbl_eu_80666D94) r4 = 1;
-    if (f1b < lbl_eu_80666D98 || f1b > lbl_eu_80666DA0) r3 = 1;
-    if (r6) {
+    if (f1b > lbl_eu_80666D94 && f1b < lbl_eu_80666D98) band800 = 1;
+    if (f1b < lbl_eu_80666D9C && f1b > lbl_eu_80666DA0) band400 = 1;
+    if (f1b < lbl_eu_80666D9C && f1b >= lbl_eu_80666D94) band2000 = 1;
+    if (f1b < lbl_eu_80666D98 || f1b > lbl_eu_80666DA0) band1000 = 1;
+    if (band800) {
         self->mField4 |= 0x800;
     } else {
         self->mField4 &= ~0x800;
     }
-    if (r5) {
+    if (band400) {
         self->mField4 |= 0x400;
     } else {
         self->mField4 &= ~0x400;
     }
-    if (r4) {
+    if (band2000) {
         self->mField4 |= 0x2000;
     } else {
         self->mField4 &= ~0x2000;
     }
-    if (r3) {
+    if (band1000) {
         self->mField4 |= 0x1000;
     } else {
         self->mField4 &= ~0x1000;
     }
-    if (r6 || r5) {
+    if (band800 || band400) {
         self->mFlags58.mBit13 = 1;
     } else {
         self->mFlags58.mBit13 = 0;
@@ -2367,14 +2367,14 @@ extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src) {
     if (self->ctrlActProbeTargetReset(&sum, 1) == 0) {
         ml::CVec3 offset(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probe = sum + offset;
-        int r29 = 1;
+        int probeClear = 1;
         if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80666D84,
                           lbl_eu_8066AF20) != 0) {
             if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
-                r29 = 0;
+                probeClear = 0;
             }
         }
-        if (r29 != 0) {
+        if (probeClear != 0) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
             requestItemLoad(self->mPlayer, 0x40);
@@ -2572,7 +2572,7 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
             f32 f28 = lbl_eu_80666DB8;
             f64 magic = lbl_eu_80666D50;
             u32 magicHi = 0x43300000;
-            int r22 = 1;
+            int missFlag = 1;
             for (int i = 0; i < 2; i++) {
                 f32 dir = (i & 1) ? lbl_eu_80666CFC : lbl_eu_80666D68;
                 F64Conv conv;
@@ -2596,7 +2596,7 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
                                   &probe, 0, 0, 0) == 0) {
                     if (self->ctrlActProbeTargetReset(&probe, 1) != 0) {
                         self->mField7B = 0;
-                        r22 = 0;
+                        missFlag = 0;
                         self->mField74 = (self->mField74 & ~0x200) | 0x100;
                         self->mPos60 = probe;
                         break;
@@ -2604,7 +2604,7 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
                 }
             }
             src->mField455A = save455A;
-            if (r22 != 0) {
+            if (missFlag != 0) {
                 self->mField7B++;
                 if ((u8)self->mField7B >= 2) {
                     self->mField7B = 0;
@@ -2761,13 +2761,13 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
 }
 
 extern "C" void scanPlayerTgt(CtrlActView* self, ml::CVec3* pos) {
-    int r31 = 0;
+    int segProbe = 0;
     ml::CVec3 out;
     f32 x8;
     if ((self->mPlayer->mField3374 & 0x100) != 0) {
         // Probe countdown: tick the 0x78 counter; on expiry reset it and cast
         // an up-offset segment probe between the player and the target.
-        r31 = 1;
+        segProbe = 1;
         u8 c = self->mField78;
         self->mField78 = c - 1;
         if ((s8)c > 0) {
@@ -2802,7 +2802,7 @@ probe_done:
         goto finish;
     }
     self->mField74 |= 0x20;
-    if (r31 == 0) {
+    if (segProbe == 0) {
         f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         f32 f29 = lbl_eu_80666D0C * cos + ppos->f[2];

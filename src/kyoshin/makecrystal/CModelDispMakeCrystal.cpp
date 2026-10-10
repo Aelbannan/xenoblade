@@ -1428,16 +1428,16 @@ void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* sel
     if (v < lbl_eu_806684DC) return;
     *f2dcc = lbl_eu_806684A4;
     u8 n = base[0x2dc8] + 1;
-    int r30 = 0;
+    int charged = 0;
     base[0x2dc8] = n;
     if (n >= base[0x2dc7]) {
-        r30 = 1;
+        charged = 1;
     } else if (n >= base[0x2dc6]) {
         // Retail calls getInstance() before each rand31(); divisor math stays
         // on signed ints so -O4,s keeps the literal divw/mullw/subf sequence.
-        if ((s8)((int)ml::MTRand::getInstance()->rand31() % 5) == 0) r30 = 1;
+        if ((s8)((int)ml::MTRand::getInstance()->rand31() % 5) == 0) charged = 1;
     }
-    if (r30 == 0) {
+    if (charged == 0) {
         // Delta drawn first, then the char-state lookup (retail order).
         s8 delta = (s8)((int)ml::MTRand::getInstance()->rand31() % 11);
         delta += 0x14;
@@ -1561,8 +1561,8 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (!crystalListIsActive(base + 0xc18)) return;
-    u16 r31 = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
-    if (r31 >= 0x64) {
+    u16 crystalCount = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
+    if (crystalCount >= 0x64) {
         // Success: full crystal count reached.
         base[0xbdd] = 9;
         reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->startIn();
@@ -1577,7 +1577,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
         }
         playUISound__FUl(0x91);
         // Then-block laid out first: >= 0xc8 falls through into rank 6.
-        if (r31 >= 0xc8) {
+        if (crystalCount >= 0xc8) {
             MakeCrystal_SpawnCrystalItem(self, 6, 0);
         } else {
             MakeCrystal_SpawnCrystalItem(self, 5, 0);
@@ -2778,9 +2778,9 @@ extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal* self, u8 arg4)
 extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    u8 r31 = GetCollectedFlagByte(base[0x5f0]);
-    u8 r30 = GetCollectedFlagByte(base[0xbbc]);
-    u16 val = LookupRelateValue(r31, r30);
+    u8 flagA = GetCollectedFlagByte(base[0x5f0]);
+    u8 flagB = GetCollectedFlagByte(base[0xbbc]);
+    u16 val = LookupRelateValue(flagA, flagB);
     s16 iv = (s16)(lbl_eu_806684FC * val + lbl_eu_806684F8);
     *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
     base[0x2dc8] = 0;
@@ -2797,12 +2797,12 @@ extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal* self)
     base[0x13b8 + (s8)base[0x5f0]] = 0;
     base[0x13b8 + (s8)base[0xbbc]] = 0;
     base[0x2dd3] = 0;
-    u8* a = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(r31));
+    u8* a = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(flagA));
     u8* b = a + 0x3534;
     if (Counter_TestBit(b, 0x90)) {
         base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b, 0x90));
     }
-    u8* a2 = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(r30));
+    u8* a2 = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(flagB));
     u8* b2 = a2 + 0x3534;
     if (Counter_TestBit(b2, 0x90)) {
         base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b2, 0x90));
@@ -3786,7 +3786,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
 }
 
 #pragma optimize_for_size on
-void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 r4, u8 r5)
+void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
 {
     u8* base = reinterpret_cast<u8*>(self);
     loadMCGetItemBoxFiles(base + 0xecc);
@@ -3805,12 +3805,12 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     for (u8 k = 0; k < 2; k++) {
         MakeCrystal_ReleaseAnimObj(self, base + (u32)k * 0x5cc + 0x44);
     }
-    base[0x5f0] = r4;
-    base[0xbbc] = r5;
+    base[0x5f0] = slotA;
+    base[0xbbc] = slotB;
     base[0x60c] = 0;
     base[0xbd8] = 0;
-    GetCollectedFlagByte(r4);
-    GetCollectedFlagByte(r5);
+    GetCollectedFlagByte(slotA);
+    GetCollectedFlagByte(slotB);
     CtrlRemote_SetSharedBit(0xbd, 0);
     CtrlRemote_SetSharedBit(0xbf, 0);
 }

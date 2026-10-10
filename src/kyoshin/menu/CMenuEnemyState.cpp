@@ -639,7 +639,7 @@ extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 extern const f32 lbl_eu_8066702C; // indicator pane y reset value
 extern const f64 lbl_eu_80667030; // damage-text double bias
 
-extern "C" void* MapFx_ResolveOwner(void* r3);
+extern "C" void* MapFx_ResolveOwner(void* obj);
 // sdata2 member aliases (after the last local decl, before later uses).
 #define lbl_eu_80666FE8 (sdata2_MESPool.fE8)
 #define lbl_eu_80666FEC (sdata2_MESPool.fEC)
@@ -667,8 +667,8 @@ extern "C" void* MapFx_ResolveOwner(void* r3);
 #define lbl_eu_80667050 (sdata2_MESPool.f50)
 #define lbl_eu_80667054 (sdata2_MESPool.f54)
 int GetSysStateFlag23();
-void CfModel_NotifyReady(void* r3);
-void CfModel_GetSpeedRate(void* r3);
+void CfModel_NotifyReady(void* model);
+void CfModel_GetSpeedRate(void* model);
 int CheckViewAngle60(void* a, void* b, void* c);
 
 

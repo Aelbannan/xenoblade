@@ -689,9 +689,9 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x1a) == 0) return 0;
     if (getAnimModelId(actor->field_3f60) == 0x31) return 0;
 
-    int r190 = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGaugeMax();
-    int r18c = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGauge();
-    if (r190 == r18c) return 0;
+    int gaugeMax = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGaugeMax();
+    int gauge = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGauge();
+    if (gaugeMax == gauge) return 0;
 
     // While in state 5 the actor's voice-height must stay below the cap.
     if (actor->field_3f28 == 5 &&

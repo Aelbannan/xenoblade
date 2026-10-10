@@ -324,10 +324,10 @@ extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 
 #pragma push
 #pragma optimize_for_size on
-void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
+void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneIdx)
 {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_80508DF8[0x13e], r5 + 1);
+    sprintf(buf, &lbl_eu_80508DF8[0x13e], paneIdx + 1);
     nw4r::lyt::Pane* r1 =
         (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))->FindPaneByName(buf, true);
     // Retail reloads other->mLayout and its root pane for every lookup.

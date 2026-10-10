@@ -8,8 +8,8 @@
 // Opaque retail helper functions resolved by the symbol map (C linkage so the
 // emitted relocations keep the exact retail symbol names).
 extern "C" {
-    void* Scn_CallUnk8C_V8(void* r3);
-    void constructLightEnv(u8* self, void* r4);
+    void* Scn_CallUnk8C_V8(void* item);
+    void constructLightEnv(u8* self, void* src);
     void __dt__80495200(u8* self, int deleting);
     void scnVlPushFrame(void* a, void* b, void* c);
 }

@@ -46,7 +46,7 @@ extern "C" {
     extern s32 lbl_eu_80663CD4;
     extern u32 lbl_eu_80663CD8[2];
     extern u32 lbl_eu_80570368[4];
-    extern u8 lbl_eu_80661850[40];     // static FixStr<32> banner path buffer (.bss)
+    extern u8 lbl_eu_80661850[0x24];     // static FixStr<32> banner path buffer (.bss)
     extern const char lbl_eu_80524894[0x1C];
     extern const char lbl_eu_805248A8[];  // "%s%s" format string (.rodata, +0x14 in blob)
 
@@ -308,6 +308,11 @@ extern "C" __declspec(noinline) void sinit_804F5140() {
 // === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
 // short format string stays in .rodata instead of being pooled to .sdata2).
 // lbl_eu_805248A8 is the "%s%s" label at +0x14 (extern-only; reloc name).
+// NOTE (wave DL r5): splitting this blob into per-label arrays cannot reproduce
+// retail: a bare "%s%s" literal pools to .sdata2 (aliasing the symbol at the
+// wrong offset); byte-array splits pack tight and end the section at 0x19
+// (MWCC never pads a trailing char[5]); a [8] array 8-aligns to +0x18.
+// A8 needs rule-side naming (add_symbols over its UNDEF slot) -- frozen, reported.
 extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x1C] = {
     0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,0x65,0x42,0x61,0x6E,
     0x6E,0x65,0x72,0x00,
@@ -328,8 +333,8 @@ extern "C" u32 lbl_eu_80570368[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
 };
 
-// === .bss 0x28: banner path string cache (FixStr<32> storage, no ctor) ===
-u8 lbl_eu_80661850[40];
+// === .bss 0x24: banner path string cache (FixStr<32> = 32 + 4, no ctor) ===
+u8 lbl_eu_80661850[0x24];
 
 // === .sbss 8: task vtable pointer (4B) + banner-path cache init flag (1B
 // signed + 3B pad) so the section totals retail's 8 bytes ===

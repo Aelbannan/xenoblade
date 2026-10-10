@@ -694,8 +694,8 @@
      ]
     ]
    },
-   "owner": "category-b",
-   "reason": "FIELD PRUNE 2026-09-28: zero_data_range redundant \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
+   "owner": "coordinator-a-residual",
+   "reason": "inert: unit NonMatching (retail-linked), rule never applied"
   },
   "CCamUtil.o": {
    "class": "rename",

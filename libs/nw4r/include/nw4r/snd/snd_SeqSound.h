@@ -42,7 +42,8 @@ public:
     NW4R_UT_RTTI_DECL(SeqSound);
 
 public:
-    explicit SeqSound(SoundInstanceManager<SeqSound>* pManager);
+    SeqSound(SoundInstanceManager<SeqSound>* pManager, int priority,
+             int ambientPriority);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
@@ -148,8 +149,7 @@ private:
     ut::FileStream* mFileStream;                     // at 0x20C
     char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0x210
 
-    SeqLoadTask mSeqLoadTask; // at 0x410
-    mutable OSMutex mMutex;   // at 0x434
+    SeqLoadTask mSeqLoadTask; // at 0x4AC
 };
 
 } // namespace detail

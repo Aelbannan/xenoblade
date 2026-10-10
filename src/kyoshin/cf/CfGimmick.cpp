@@ -31,12 +31,12 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508610[0
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050861C[0x0C] = "quest_STFLG";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508628[0x0C] = "MESS ERR";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508634[0x34] = "cl_area_x\0cl_area_py\0cl_area_my\0cl_area_z\0%s";
-__declspec(section ".sdata") __attribute__((used, aligned(4))) struct Sdata_CfGimmick {
-    float f;            // 80662784 1.0 fill (written by CfGimmick_InitPartyGlobals)
-    const void* t[2];   // 80662788 fallback message table
-} sdata_CfGimmick = { 1.0f, { lbl_eu_80508628, nullptr } };
-#define lbl_eu_80662784 sdata_CfGimmick.f
-#define lbl_eu_80662788 sdata_CfGimmick.t
+extern "C" {
+__declspec(section ".sdata") __attribute__((used)) float lbl_eu_80662784 = 1.0f;
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662788[2] = { lbl_eu_80508628, nullptr };
+__declspec(section ".sdata") __attribute__((used)) float _test_f = 1.0f;
+__declspec(section ".sdata") __attribute__((used)) unsigned int _test_a[2] = { 1, 0 };
+}
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668320[0x08] = "A_posX";
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668328[0x08] = "A_posY";
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668330[0x08] = "A_posZ";
@@ -893,14 +893,14 @@ extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
             // bound > index keeps the retail cmp r0(bound), r28(index) / ble form.
             if ((int)(cap + cnt) > index) {
                 // Patch the column-name prefix, then read the requested row.
-                u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
+                u8* col = *(u8**)((char*)lbl_eu_805357E8 + 0x44);
                 col[4] = (u8)(mod + 0x31);
                 return (void*)getBdatStringColumnValue(
-                    bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
+                    bdat, *(char**)((char*)lbl_eu_805357E8 + 0x44), index);
             }
         }
     }
-    return lbl_eu_80662788;
+    return (void*)lbl_eu_80662788[0];
 }
 
 void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,

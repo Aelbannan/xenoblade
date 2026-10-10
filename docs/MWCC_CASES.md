@@ -11241,3 +11241,17 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       single-return shape: `uint32_t ret; if (sum > limit) { ret = 0; } else { ...; ret = b; } return ret;` — the `ret` local coalesces with `b` (no extra move).
 - Result:    FULL_MATCH us-803a4108 (cycle `equivalence: full_match`, 13/13 insns, size PASS)
 - Evidence:  libs/CriWare/src/sofdec/mwply/mwsfdcre.c
+
+## __ct__Q44nw4r3snd6detail8SeqSoundF...ii / nw4r/src/snd/snd_SeqSound — 3-arg retail ctor + flags-first store order (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   target stuck at COMPILES/0% — the TU defined only `SeqSound(SoundInstanceManager<SeqSound>*)` (wrong mangled name, no `ii` suffix), and an assignment-inside-cast init-list fakematch existed to force retail's store order
+- Cause:     retail ctor is `SeqSound(SoundInstanceManager<SeqSound>*, int priority, int ambientPriority)` forwarding to `BasicSound(priority, ambientPriority)` (same shape as WaveSound); retail stores `mLoadingFlag`/`mPreparedFlag` BEFORE the temp-handle/manager/startOffset block. MWCC Wii/1.1 emits member-init stores in *declaration* order (probe: `struct S : d(g),c(3),b(2),a(x)` -> stores a,b,c,d), so a plain list yields 87.2% / 4 structural
+- Fix:       declare+define the 3-arg ctor; drop the phantom `mutable OSMutex mMutex` (retail .text has no OSInitMutex; allocator stride 0x4d0 == sizeof without it); KEEP the side-effecting `mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(mPreparedFlag = mLoadingFlag = false))` initializer (natural-rewrite test: plain list 87.2%, side-effect 100%). Removed the obsolete `extern "C"` wrapper in snd_SoundArchivePlayer.cpp (its `IQ...Eii` spelling never matched retail's `<...>ii`); the construction site now uses `new (pBuffer) detail::SeqSound(...)`
+- Result:    FULL_MATCH (0x9c/0x9c, cycle `equivalence: full_match`); unit 22/23 (only unwritten `Setup`)
+- Evidence:  us-8041cf20 / libs/nw4r/src/snd/snd_SeqSound.cpp
+
+## `#pragma schedule` fakematch audit — no-op `on` lines removed, ResetTimer off/on bracket load-bearing (Wii/1.1 -O4,p, verified)
+- Symptom:   CODE_SMELLS flagged 6 `#pragma schedule` lines across 2 TUs; natural-rewrite test = delete the pragma, whole-unit `hexdiff --all`
+- Cause:     compiler probe (`mwcceppc -O4,p`: A scheduled default, B after `schedule off` unscheduled, C after `off`+`on` scheduled): default is ON, `#pragma schedule on` is a no-op, `off` is sticky until re-enabled
+- Fix:       removed 3 no-op `on` lines in CBattleManager.cpp (695/8412/10512) and 1 no-op `on` in monolib/src/coli/code_804A6C60.cpp (676) — per-function tables byte-identical (50/78 and 56/108 unchanged). CBattleMan_ResetTimer's `off`/`on` bracket is kept: deleting it regresses 100% -> 60.0% (lfs f1 before lwz r4), so it is NOT a fakematch
+- Result:    verified; schedule-pragma count 6 -> 2
+- Evidence:  us-800eaf58 / src/kyoshin/cf/CBattleManager.cpp; libs/monolib/src/coli/code_804A6C60.cpp

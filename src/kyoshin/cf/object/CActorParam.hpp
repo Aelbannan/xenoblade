@@ -251,14 +251,29 @@ namespace cf {
 #pragma pack(pop)
 
     //size: 0x52
+#pragma pack(push, 1)
     struct CActorParam_UnkStruct4 {
         CActorParam_UnkStruct4() {
             std::memset(this, 0, sizeof(*this)); //wtf??
         }
 
-        u8 unk0[0x4E];
+        union {
+            u8 unk0[0x4E];
+            struct {
+                s16 field_00; s16 field_02; s16 field_04; s16 field_06;
+                s16 field_08; s16 field_0A; s16 field_0C; s16 field_0E;
+                s16 field_10; s16 field_12; s16 field_14; s16 field_16;
+                s16 field_18; s16 field_1A; s16 field_1C; s16 field_1E;
+                s16 field_20; s16 field_22; s16 field_24; s16 field_26;
+                s16 field_28; s16 field_2A; s16 field_2C; s16 field_2E;
+                s16 field_30; s16 field_32; s16 field_34; s16 field_36;
+                s16 field_38; s16 field_3A; s16 field_3C;
+                u32 field_3E; u32 field_42; u32 field_46; u32 field_4A;
+            };
+        };
         CActorParam_UnkStruct6 unk4E[4];
     };
+#pragma pack(pop)
 
     //TODO: related to above struct?
     //size: 0x78
@@ -273,16 +288,79 @@ namespace cf {
             unk3A = 5;
         }
 
-        u8 unk0[0x38];
-        u16 unk38;
-        u16 unk3A;
-        u8 unk3C[0x44 - 0x3C];
+        // 0x00..0x37: scalar view. The opaque byte arm stays for
+        // CtrlObjectParam.cpp (`unk17E4.unk0[4]` float cast).
+        union {
+            u8 unk0[0x38];
+            struct {
+                u32 field_00;
+                float field_04;
+                float field_08;
+                float field_0C;
+                float field_10;
+                float field_14;
+                float field_18;
+                s16 field_1C;
+                s16 field_1E;
+                s16 field_20;
+                u8  field_22[2];
+                float field_24;
+                float field_28;
+                s16 field_2C;
+                s16 field_2E;
+                s16 field_30;
+                s16 field_32;
+                s16 field_34;
+                s16 field_36;
+            };
+        };
+        // s16 (retail reads the two entry counters sign-extended).
+        s16 unk38;
+        s16 unk3A;
+        union {
+            u8 unk3C[0x44 - 0x3C];
+            struct {
+                u8 field_3C;
+                u8 field_3D[3];
+                float field_40;
+            };
+        };
         float unk44;
-        u8 unk48[4];
+        union {
+            u8 unk48[4];
+            float field_48;
+        };
         float unk4C;
-        u8 unk50[0x5C - 0x50];
+        // 0x50..0x5B: float + five state bytes (retail accesses the bytes).
+        union {
+            u8 unk50[0x5C - 0x50];
+            struct {
+                float field_50;
+                u8  field_54;
+                u8  field_55;
+                u8  field_56;
+                u8  field_57;
+                u8  field_58;
+                u8  field_59[3];
+            };
+        };
         float unk5C;
-        u8 unk60[0x70 - 0x60];
+        // 0x60..0x6F: s16 pair + four tail words (0x60 is read as both).
+        union {
+            u8 unk60[0x70 - 0x60];
+            struct {
+                union {
+                    struct {
+                        s16 field_60;
+                        s16 field_62;
+                    };
+                    u32 field_60w;
+                };
+                u32 field_64;
+                u32 field_68;
+                u32 field_6C;
+            };
+        };
         CActorParam_UnkStruct6 unk70[4];
         u32 unk74;
     };
@@ -784,7 +862,10 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         u32 unk336C;
         u32 unk3370;
         u32 unk3374;
-        u8 unk3378[4];
+        union {
+            u8 unk3378[4];
+            s16 field_3378; // 0x3378: retail reads/writes this sign-extended
+        };
         float unk337C;
     CActorParam();
     void CBattleState_UnkVirtualFunc17();

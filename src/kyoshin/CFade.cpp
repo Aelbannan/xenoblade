@@ -431,10 +431,12 @@ char lbl_eu_8050B788[0x10] = {
 extern __declspec(section ".sdata") u32 lbl_eu_806628E8[2] = { 0x00000000, 0x00000000 };
 #pragma section data_type ".data" ".data"
 
-// [.sdata2] 0x80668750-0x80668760 (16B): 1.0f frame target (the "CFade" pool
-// tail carries no label and has no references; only the float rebuilds here).
-// [.sdata2] 1.0f frame target stays UNDEF (rule-side pool naming): defining
-// it in-TU reschedules the StepFadeIn/Out float loads (100% -> 73.7%), and a
-// scalar sdata2 def collides with this declaration (10322); an array def
-// needs [0] reads with the same scheduling cost. The "CFade" pool tail
-// carries no label and has no references.
+// [.sdata2] 0x80668750-0x80668760 (16B): 1.0f frame target + "CFade" pool
+// tail (80668754, 6B, unreferenced) + 2 pad + 4 zero gap = retail bytes.
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") const f32 lbl_eu_80668750 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(1)))
+char lbl_eu_80668754[6] = "CFade";
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 CFade_sdata2_tail[1] = { 0x00000000 };
+#pragma section data_type ".data" ".data"

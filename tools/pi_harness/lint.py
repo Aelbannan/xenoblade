@@ -179,9 +179,10 @@ def lint_delta(path: str, old_text: str | None,
             add("unit_rules_frozen", line_no, raw,
                 "new UNIT_RULES entries are forbidden (the §17.6 reshape table "
                 "is shrink-only; see tools/check_unit_rules_frozen.py)")
-        if _RE_EXTERN_C.search(raw) and "lbl_" not in raw:
+        if _RE_EXTERN_C.search(raw):
             add("no_extern_c", line_no, raw,
-                'extern "C" is only allowed for lbl_* reloc names')
+                'extern "C" is legacy debt — PLAN §17.6 no longer approves '
+                'reloc-name spellings; use real C++ entities or comparator evidence')
 
         # C++-only: constructors/destructors must be member functions, never
         # C-style free functions taking `* self` (extern "C" or not). The

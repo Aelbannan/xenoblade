@@ -2219,11 +2219,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # both slots resolve to monolibdata floats at link. Strip.
         extern_data_sections=(".sdata2",),
     ),
-    "CChainTime.o": UnitRules(
-        exact_renames=(
-            ("__vt__Q22cf10CChainTime", "lbl_eu_8052BD74"),
-        ),
-    ),
     "g3d_resfile.o": UnitRules(
         # Retail g3d_resfile.o carries NO data: the ResName pascal-string data
         # for the file resource groups lives in nw4r_data.s (lbl_eu_80568F60..
@@ -3653,11 +3648,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
-    "CBattleState.o": UnitRules(
-        exact_renames=(
-            ("__vt__Q22cf12CBattleState", "lbl_eu_8052E9B0"),
-        ),
-    ),
     "CTaskCulling.o": UnitRules(
         # Retail split omits IWorkEvent/IScnRender weak default virtuals (+0x170);
         # keep ICulling/CTTask dtors, CTTask Move/Draw, sinit, MI thunks.
@@ -4115,12 +4105,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
-    "lyt_resourceAccessor.o#Q34nw4r3lyt": UnitRules(
-        # Vtable lbl_eu_80569CA0 is TU-owned (source defines it retail-named
-        # with retail bytes+relocs); the exact_renames is a no-op and .data
-        # must ship so the definition resolves TU-locally at link.
-        exact_renames=(("__vt__Q34nw4r3lyt16ResourceAccessor", "lbl_eu_80569CA0"),),
-    ),
     "lyt_animation.o": UnitRules(
         # MWCC emits the weak inline-virtual base dtor
         # __dt__Q36nw4hbm3lyt13AnimTransformFv (0x40 deleting wrapper) in this
@@ -4188,18 +4172,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
 
-    "lyt_drawInfo.o": UnitRules(
-        # drop_text_symbols retired: the orphan weak `__dt__Rect` copy no longer
-        # exists in the source object — retail's ut::Rect is trivially
-        # destructible (no __dt__Rect anywhere in the DOL), so the bogus
-        # inline-empty dtor was removed from both ut_Rect.h headers and MWCC no
-        # longer emits the 0x40 wrapper (object .text 0x100 -> 0xC0 = retail).
-        # See docs/evidence/decomp/unit_rules_category_b.md §7.7.
-        # Reloc-name drift on byte-identical .data: retail's anon local at
-        # +0xC is split-local "@230"; decomp numbers it @5093. @N numbering
-        # drifts with source edits.
-        exact_renames=(("@5093", "@230"),),
-    ),
     "lyt_group.o": UnitRules(
         # MWCC emits unreferenced weak in-charge dtors for the instantiated
         # ut::LinkList<Group,4> (GroupContainer::mGroupList) and
@@ -5221,30 +5193,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     # owned by this TU (source defines them retail-named with retail bytes,
     # so the exact_renames below are no-ops); keep .data so the definitions
     # ship and the .text relocs resolve TU-locally at link.
-    "g3d_resanmscn.o": UnitRules(
-        exact_renames=(
-            (
-                "ResNameData_LightSet__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-                "lbl_eu_805690E0",
-            ),
-            (
-                "ResNameData_AmbLights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-                "lbl_eu_80569100",
-            ),
-            (
-                "ResNameData_Lights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-                "lbl_eu_80569120",
-            ),
-            (
-                "ResNameData_Fog__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-                "lbl_eu_80569140",
-            ),
-            (
-                "ResNameData_Camera__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-                "lbl_eu_80569160",
-            ),
-        ),
-    ),
 
     # g3d_anmtexpat: same shape as g3d_anmclr — retail split is .text-only;
     # vtables ship from nw4r_data.s (lbl_eu_80569210/lbl_eu_80569258) and the
@@ -5426,19 +5374,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     # the retail names, so zero_nobits strips only the storage and the
     # GetRuntimeTypeInfo/__sinit_ SDA21 relocs resolve to the shared pool at
     # link.
-    "lyt_bounding.o": UnitRules(
-        # Reloc-name drift on byte-identical .data: retail names the anon
-        # locals at +0x64/+0x7C/+0x98/+0xAC/+0xC0 under split-local lbl_ names
-        # (typeinfo-name strings / vtable stubs). @N numbering drifts with
-        # source edits.
-        exact_renames=(
-            ("@5114", "lbl_8054D71C"),
-            ("@5115", "lbl_8054D734"),
-            ("@5116", "lbl_8054D750"),
-            ("@5117", "lbl_8054D764"),
-            ("@5118", "lbl_8054D778"),
-        ),
-    ),
 
     # ut_Font: InitReaderFunc's 0x30 .data member-function-pointer pool
     # ({0,-1,fn} x4, ADDR32 relocs to ReadNextChar*) is compiler-generated
@@ -5493,9 +5428,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             # CDeviceFile.cpp imports.
             ("__ct__14CDeviceFileCriFPCcP11CWorkThreadi", "__ct__CDeviceFileCri"),
         ),
-    ),
-    "CDeviceFileJob.o": UnitRules(
-        exact_renames=(("__vt__14CDeviceFileJob", "lbl_eu_8056C4D8"),),
     ),
     "CDeviceVI.o": UnitRules(
         # NEW angle (weak-dtor kill, CDeviceSC pattern): MWCC emits a weak local
@@ -5688,11 +5620,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".data", 0x88),),
         extern_data_sections=(".sdata2",),
     ),
-    "snd_SoundArchive.o": UnitRules(
-        # Retail split carries NO data: the SoundArchive vtable ships from
-        # nw4r_data.s @lbl_eu_8056ABC0 (loaded by __ct via lis/addi).
-        exact_renames=(("__vt__Q34nw4r3snd12SoundArchive", "lbl_eu_8056ABC0"),),
-    ),
     "snd_StrmPlayer.o": UnitRules(
         # Retail split carries NO data: StrmPlayer vtable @lbl_eu_8056AC78
         # and its two load-task vtables (@lbl_eu_8056ACC0 / @lbl_eu_8056ACD8)
@@ -5742,13 +5669,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@GUARD@instance$", "lbl_eu_80665530"),
             ("instance$", "lbl_eu_80653E6C"),
         ),
-        extern_data_sections=(),
-    ),
-    "snd_WaveSound.o": UnitRules(
-        # Retail split carries NO data: WaveSound vtable @lbl_eu_8056AD70
-        # ships from nw4r_data.s; the GetRuntimeTypeInfo cache pointer is
-        # already source-named lbl_eu_80665538.
-        exact_renames=(("__vt__Q44nw4r3snd6detail9WaveSound", "lbl_eu_8056AD70"),),
         extern_data_sections=(),
     ),
     "snd_Voice.o": UnitRules(
@@ -5958,13 +5878,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@GUARD@instance$", "lbl_eu_806654C0"),
         ),
         extern_data_sections=(".bss", ".sbss"),
-    ),
-    "snd_AxfxImpl.o": UnitRules(
-        # Retail split carries NO sbss: mCurrentFx/mAllocatedSize live in
-        # nw4r_data.s @lbl_eu_806654C8/806654CC - the source already refs them
-        # by name (see the extern decls in snd_AxfxImpl.cpp); just strip the
-        # TU-local storage.
-        extern_data_sections=(".sbss",),
     ),
     "snd_BasicPlayer.o": UnitRules(
         # Retail split carries NO data: the BasicPlayer vtable ships from

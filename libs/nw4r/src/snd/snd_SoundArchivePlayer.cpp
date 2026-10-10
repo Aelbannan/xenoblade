@@ -112,17 +112,9 @@ PrepareStrmImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9StrmSoundPC
     nw4r::snd::SoundStartable::StartInfo::StartOffsetType startType,
     int startOffset);
 
-// Retail-named SeqSound/StrmSound constructors take (manager*, int, int);
-// the locked headers declare only the single-argument form and the defining
-// TUs are outside this session's writable scope, so the three-argument retail
-// symbols are provided here as thin wrappers over the declared ctors.
-extern "C" nw4r::snd::detail::SeqSound*
-__ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
-    nw4r::snd::detail::SeqSound* self,
-    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
-        pManager,
-    int priority, int ambientPriority);
-
+// The retail-named StrmSound constructor takes (manager*, int, int); the
+// locked header declares only the single-argument form, so the three-argument
+// retail symbol is provided here as a thin wrapper over the declared ctor.
 extern "C" nw4r::snd::detail::StrmSound*
 __ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44nw4r3snd6detail9StrmSoundEii(
     nw4r::snd::detail::StrmSound* self,
@@ -1160,12 +1152,10 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
                                 ->AllocImpl();
 
             if (pBuffer != NULL) {
-                pSeqSound =
-                    __ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
-                        static_cast<detail::SeqSound*>(pBuffer),
-                        reinterpret_cast<detail::SoundInstanceManager<
-                            detail::SeqSound>*>(pMgr),
-                        startPriority, ambientPriority);
+                pSeqSound = new (pBuffer) detail::SeqSound(
+                    reinterpret_cast<detail::SoundInstanceManager<
+                        detail::SeqSound>*>(pMgr),
+                    startPriority, ambientPriority);
             } else {
                 // Pool exhausted: consider stopping the lowest-priority
                 // sound and retrying.
@@ -2111,19 +2101,6 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
 // Retail-named symbols the locked headers cannot declare (see declarations at
 // the top of this file).
 // ---------------------------------------------------------------------------
-
-extern "C" nw4r::snd::detail::SeqSound*
-__ct__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail49SoundInstanceManagerIQ44nw4r3snd6detail8SeqSoundEii(
-    nw4r::snd::detail::SeqSound* self,
-    nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
-        pManager,
-    int priority, int ambientPriority) {
-    // Delegates to the declared single-argument constructor; the extra retail
-    // parameters are stored by the real ctor in its own TU once it lands.
-    (void)priority;
-    (void)ambientPriority;
-    return new (self) nw4r::snd::detail::SeqSound(pManager);
-}
 
 extern "C" nw4r::snd::detail::StrmSound*
 __ct__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail50SoundInstanceManagerIQ44nw4r3snd6detail9StrmSoundEii(

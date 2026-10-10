@@ -203,10 +203,16 @@ u8* getEvtMemSlot(u32 idx) {
 
 // [.sbss] 0x80664260-0x80664268 (8B): event-memory singleton pointer + 4
 // retail pad bytes (label spans 0x8; only the pointer is ever referenced).
-// NOTE (wave DL): the sdata2 zero-double (lbl_eu_80667650) stays UNDEF here:
-// defining the 8-byte zero slot in-TU (non-const + section-forced, the only
-// type-correct shape) lets -ipa reschedule the ctor's stfs early (100% ->
-// 35.3%). It needs rule-side pool naming (zero-double pattern, as in
-// CScnFogMan.o's sdata2 pool_patterns) -- frozen, reported.
+// The sdata2 zero-double (lbl_eu_80667650, const f32 0.0f + zero tail word)
+// is defined below; the const-f32 spelling keeps the ctor's lfs/stfs order
+// at 100%.
 cf::CREvtMem* lbl_eu_80664260 = nullptr;
 u8 gap_10_80664264_sbss[4];
+
+// [.sdata2] 0x80667650-0x80667658 (8B): zero double read as f32 0.0 by the
+// ctor (lfs). Spelled as const f32 0.0f + a 4-byte zero tail word.
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667650 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 CREvtMem_sdata2_tail[1] = { 0x00000000 };
+#pragma section data_type ".data" ".data"

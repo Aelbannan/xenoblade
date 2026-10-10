@@ -401,12 +401,10 @@ __declspec(section ".rodata") __attribute__((used, aligned(8)))
 char lbl_eu_80508798[0x14] = "cf::CfGimmickItem";
 // .rodata BDAT column-name pool. Offsets match every lbl_eu_805087AC+N site
 // in the ctor (0x00 rectype .. 0x57 quest_Min); tail zero-pads to 0x64.
-// NOTE: this stays an UNREFERENCED pad object with exact retail bytes.
-// Defining the code-referenced lbl_eu_805087AC locally perturbs MWCC's
-// whole-function scheduling for the ctor (92.1% -> 21.4% with ANY local
-// def, even zero-init; re-verified this wave) while the unreferenced pad
-// is codegen-neutral. lbl_eu_805087AC itself stays extern (header decl);
-// closing that row needs a rule-side add_symbols entry (frozen) -- reported.
+// NOTE: lbl_eu_805087AC itself stays an unreferenced static pad object:
+// renaming it onto the retail label reschedules the ctor 92.1% -> 21.4%
+// (+4 bytes, re-verified this wave). Closing that row needs a rule-side
+// add_symbols entry (frozen) -- reported.
 __declspec(section ".rodata") __attribute__((used, aligned(4)))
 static char gimmickitem_rodata_87AC_pad[0x64] =
     "rectype\0"
@@ -486,24 +484,15 @@ __declspec(section ".sdata") __attribute__((used, aligned(8)))
 u32 lbl_eu_806627B0[2] = { (u32)lbl_eu_80508728, (u32)lbl_eu_80535A3C };
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 char* lbl_eu_806627B8[2] = { lbl_eu_80668438, lbl_eu_80668440 };
-// .sdata2 float pool as a struct (Eve/Elv recipe): individual scalars would
-// dedup (two 0.0f) and exile zero mutable scalars to .sbss2. CONST (Elv
-// precedent): struct members keep exact offsets; code loads stay pool loads.
-// Only this TU uses these names.
-// NOTE (wave DL): giving 80668448/44C/450/454 real per-label definitions was
-// tried and REJECTED -- any TU-visible definition of the code-read labels
-// reschedules the ctor 92.1% -> 21.4% (+4 bytes), and the unreferenced const
-// scalars fold while zero arrays/non-const zeros exile to .sbss2. The bytes
-// are retail-identical through this struct; closing the four name rows needs
-// a rule-side add_symbols entry (frozen table) -- see unit report.
-struct Sdata2_GimmickItem {
-    float lod;    // 80668448 0.0f LOD constant
-    float dist;   // 8066844C 5.0f spawn distance
-    float unk50;  // 80668450 0.0f
-    float unk54;  // 80668454 20.0f
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_GimmickItem sdata2_GimmickItem = {0.0f, 5.0f, 0.0f, 20.0f};
-#define lbl_eu_80668448 sdata2_GimmickItem.lod
-#define lbl_eu_8066844C sdata2_GimmickItem.dist
+// .sdata2 float pool as four named non-const scalars (header declares them
+// extern f32, so const would collide with 10563). Non-const cannot fold and
+// __declspec(section) pins them to .sdata2; MWCC keeps the two 0.0f slots
+// separate and codegen is unchanged (ctor stays 92.1%). Landed this wave;
+// the struct + macro it replaces is gone.
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") f32 lbl_eu_80668448 = 0.0f;
+extern __declspec(section ".sdata2") f32 lbl_eu_8066844C = 5.0f;
+extern __declspec(section ".sdata2") f32 lbl_eu_80668450 = 0.0f;
+extern __declspec(section ".sdata2") f32 lbl_eu_80668454 = 20.0f;
+#pragma section data_type ".data" ".data"
 // ----- end typified retail data -----

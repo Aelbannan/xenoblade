@@ -61,8 +61,10 @@ monitor.log, reports/<batch>.txt). Override with `PASEO_HARNESS_STATE` or
   at `--hard-batch-size 14` instead of 30 so a wall hit wastes fewer tokens.
 
 Each batch gets a thinking tier (leaf-only + small → `medium`, leaf-heavy →
-`high`, else `max` — one notch lower than before) and optionally a hard-batch
-model (`--hard-model`). Known stalls from attempts.jsonl are carried into the
+`high`, else `max` — one notch lower than before; on models without `max`,
+e.g. the default `opencode-go/muse-spark-1.3-contributor`, the top tier
+launches as `xhigh`) and optionally a hard-batch
+model (`--hard-model`).
 batch table (targets with prior `stall_note`s are flagged so agents don't repeat
 ruled-out experiments), and a per-batch **KB digest** (`state/digests/<batch>.md`,
 skip with `--no-kb-digest`) lists the top MWCC_CASES records for the batch's
@@ -107,7 +109,7 @@ you can see whether `medium`/`high`-thinking batches accept at the same rate as
 | Relaunch budget | `--max-relaunch 3` | cap per batch; batches that exhaust it are `gave_up`, not marked done |
 | Relaunch variant | — | relaunches continue the same branch, **lower thinking one notch** per attempt, optional `--fallback-model`, **seeded with the dead agent's report** (no re-exploration) |
 | Agent-hour budget | `--max-agent-hours 24` | stops launching new batches once cumulative agent-hours are spent; `report` shows the running total |
-| Tiered thinking | plan output | `medium`/`high` by default, `max` only for majority-non-leaf batches; `--hard-model` routes hard batches to a stronger model |
+| Tiered thinking | plan output | default model `opencode-go/muse-spark-1.3-contributor`; `medium`/`high` by default, `max` only for majority-non-leaf batches (launched as the model's top tier, e.g. `xhigh`); `--hard-model` routes hard batches to a stronger model |
 | Hard-batch sizing | `--hard-batch-size 14` | pooled hard batches are smaller → less to re-explore on failure/wall |
 | Lazy docs | prompt | agents read AGENTS.md once; MWCC_CASES/PLAN.md only on demand via `mwcc_kb` — big docs are no longer re-billed every turn |
 | Prewarm | `--prewarm` | configure + build batch units before the agent starts (saves wall-clock, not tokens) |

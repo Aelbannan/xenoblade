@@ -239,11 +239,9 @@ int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
 // ============================================================================
 // Retail data owned by this TU (dissolved blob; decomp emitted .text only).
 // Defined here at EOF so -ipa codegen for the functions above is unaffected.
-// NOTE (wave DL): the .sdata2 float/double trio (F08/F0C/F10) stays UNDEF:
-// consecutive named pure-constant objects are 8-aligned by this toolchain
-// (F0C needs +0x4), and F10's 8-byte slot cannot be spelled as the f32 the
-// code reads without rescheduling AngleState. All three need rule-side pool
-// naming (two f32 + one f64, as in CScnFogMan.o's sdata2 pool_patterns).
+// The .sdata2 float trio (F08/F0C/F10) is defined below with exact retail
+// bytes (F10 as f32 2.0f + a 4-byte zero tail word); consecutive const f32
+// objects pack at 4-align with no padding, and codegen is unchanged.
 // ============================================================================
 
 // Cross-TU vtable slots (flat retail names).
@@ -274,4 +272,14 @@ char lbl_eu_80505360[0x10] = {
 // [.sdata] 0x80662648-0x80662650 (8B): null word pair referenced by vtable[0].
 #pragma section data_type ".sdata" ".sdata"
 extern __declspec(section ".sdata") u32 lbl_eu_80662648[2] = { 0x00000000, 0x00000000 };
+#pragma section data_type ".data" ".data"
+
+// [.sdata2] 0x80667F08-0x80667F18 (16B): lfs-read float trio + 4 zero tail
+// (section 8-align pad). F08 = pi/128 angle factor, F0C = 60.0, F10 = 2.0.
+#pragma section data_type ".sdata2" ".sdata2"
+extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F08 = 0.024543693f;
+extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F0C = 60.0f;
+extern "C" __declspec(section ".sdata2") const f32 lbl_eu_80667F10 = 2.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 CREvtLight_sdata2_tail[1] = { 0x00000000 };
 #pragma section data_type ".data" ".data"

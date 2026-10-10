@@ -26,6 +26,13 @@ struct CItemBoxSubRecord {
 };
 
 
+// 8-byte colour quad at 0x9C/0xA4 in CItemBoxInfoState: the delta-colour path
+// stages it as two u32 words, the selected-colour path reads the alpha s16.
+union CItemBoxQuadColorView {
+    s16 s[4];
+    u32 w[2];
+};
+
 struct CItemBoxInfoState {
     u8 _00[0x04];
     UnkClass_8045F564 memRegion1;   // 0x04
@@ -44,7 +51,14 @@ struct CItemBoxInfoState {
     s32 state;
     u8 current;
     u8 visible;
-    u8 _9A[0x26];
+    u8 field_9A;                  // 0x9A: ctor arg2 (item-box kind)
+    u8 _9B;
+    CItemBoxQuadColorView quadA;  // 0x9C: colour pair (w[2] / s[3] = alpha)
+    CItemBoxQuadColorView quadB;  // 0xA4
+    u16 field_AC;                 // 0xAC: ctor arg3
+    u8 field_AE;                  // 0xAE
+    u8 _AF;
+    u8 _B0[0x10];                 // 0xB0..0xBF: per-slot item values (raw view)
     s16 values[12];
 };
 

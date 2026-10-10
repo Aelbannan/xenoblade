@@ -1009,8 +1009,8 @@ void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         // Default vertex colours carry data only in the alpha channel
         // (info+0xA2 / info+0xAA); the selected-slot pair comes from
         // info+0x9C/0xA4 when the slot is active.
-        s16 vA2 = *(s16*)((u8*)info + 0xA2);
-        s16 vAA = *(s16*)((u8*)info + 0xAA);
+        s16 vA2 = info->state.quadA.s[3];
+        s16 vAA = info->state.quadB.s[3];
         // Loop-scope slots descend: args (sp+0x18) > defA2 (sp+0x10) >
         // defAA (sp+0x08); POD types keep the builds as bare halfword stores.
         u32 args[4];
@@ -1031,8 +1031,8 @@ void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         // Selected colour is staged through the named temp then reloaded into
         // the sprintf argument block (retail stores to sp+0xf8/sp+0x100 first).
         if (flag != 0) {
-            selA.w[0] = *(u32*)((u8*)info + 0x9C);
-            selA.w[1] = *(u32*)((u8*)info + 0xA0);
+            selA.w[0] = info->state.quadA.w[0];
+            selA.w[1] = info->state.quadA.w[1];
         } else {
             selA.w[0] = *(u32*)&defA2.r;
             selA.w[1] = *(u32*)&defA2.a;
@@ -1040,8 +1040,8 @@ void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         args[0] = selA.w[0];
         args[1] = selA.w[1];
         if (flag != 0) {
-            selB.w[0] = *(u32*)((u8*)info + 0xA4);
-            selB.w[1] = *(u32*)((u8*)info + 0xA8);
+            selB.w[0] = info->state.quadB.w[0];
+            selB.w[1] = info->state.quadB.w[1];
         } else {
             selB.w[0] = *(u32*)&defAA.r;
             selB.w[1] = *(u32*)&defAA.a;
@@ -1196,16 +1196,16 @@ void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4)
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
         // two vertex colours: filled slots use the info stat words, empty ones
         // fall back to transparent-black quads built member-wise here.
-        cB.r = 0; cB.g = 0; cB.b = 0; cB.a = *(s16*)((u8*)info + 0xA2);
-        cA.r = 0; cA.g = 0; cA.b = 0; cA.a = *(s16*)((u8*)info + 0xAA);
+        cB.r = 0; cB.g = 0; cB.b = 0; cB.a = info->state.quadA.s[3];
+        cA.r = 0; cA.g = 0; cA.b = 0; cA.a = info->state.quadB.s[3];
         quadCol[0].r = 0; quadCol[0].g = 0; quadCol[0].b = 0; quadCol[0].a = 0;
         quadCol[1].r = 0; quadCol[1].g = 0; quadCol[1].b = 0; quadCol[1].a = 0;
         // filled slots take the raw stat word pair from info; empty slots fall
         // back to the (zero) RGB halves of the member-wise colour locals.
         u32 w0, w1, w2, w3;
         if (flag != 0) {
-            w0 = *(u32*)((u8*)info + 0x9C);
-            w1 = *(u32*)((u8*)info + 0xA0);
+            w0 = info->state.quadA.w[0];
+            w1 = info->state.quadA.w[1];
         } else {
             w0 = *(u32*)&cB.r;
             w1 = *(u32*)&cB.b;
@@ -1213,8 +1213,8 @@ void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4)
         *(u32*)&quadCol[0].r = w0;
         *(u32*)&quadCol[0].b = w1;
         if (flag != 0) {
-            w2 = *(u32*)((u8*)info + 0xA4);
-            w3 = *(u32*)((u8*)info + 0xA8);
+            w2 = info->state.quadB.w[0];
+            w3 = info->state.quadB.w[1];
         } else {
             w2 = *(u32*)&cA.r;
             w3 = *(u32*)&cA.b;
@@ -1525,8 +1525,8 @@ void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
         if (((u8*)&local)[(u8)i + 1] != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
-        s16 vA2 = *(s16*)((u8*)info + 0xA2);
-        s16 vAA = *(s16*)((u8*)info + 0xAA);
+        s16 vA2 = info->state.quadA.s[3];
+        s16 vAA = info->state.quadB.s[3];
         // zero via a variable: MWCC materializes it in a register and cannot
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
@@ -1541,8 +1541,8 @@ void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
         out[2] = 0;
         out[3] = 0;
         if (flag != 0) {
-            stage1Lo = *(u32*)((u8*)info + 0x9C);
-            stage1Hi = *(u32*)((u8*)info + 0xA0);
+            stage1Lo = info->state.quadA.w[0];
+            stage1Hi = info->state.quadA.w[1];
         } else {
             stage1Lo = *(u32*)c0lo;
             stage1Hi = *(u32*)c0hi;
@@ -1550,8 +1550,8 @@ void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
         out[0] = stage1Lo;
         out[1] = stage1Hi;
         if (flag != 0) {
-            stage2Lo = *(u32*)((u8*)info + 0xA4);
-            stage2Hi = *(u32*)((u8*)info + 0xA8);
+            stage2Lo = info->state.quadB.w[0];
+            stage2Hi = info->state.quadB.w[1];
         } else {
             stage2Lo = *(u32*)c1lo;
             stage2Hi = *(u32*)c1hi;
@@ -1633,7 +1633,7 @@ void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
                       : BuildItemNameStr(arg2),
                   0);
 
-    if (*(u8*)((u8*)info + 0x9A) != 4) {
+    if (info->state.field_9A != 4) {
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x472, true);
         nw4r::lyt::Pane* pane2 =
@@ -1679,10 +1679,10 @@ void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         cols.w[1] = 0;
         cols.w[2] = 0;
         cols.w[3] = 0;
-        cols.w[0] = *(u32*)((u8*)info + 0x9C);
-        cols.w[1] = *(u32*)((u8*)info + 0xA0);
-        cols.w[2] = *(u32*)((u8*)info + 0xA4);
-        cols.w[3] = *(u32*)((u8*)info + 0xA8);
+        cols.w[0] = info->state.quadA.w[0];
+        cols.w[1] = info->state.quadA.w[1];
+        cols.w[2] = info->state.quadB.w[0];
+        cols.w[3] = info->state.quadB.w[1];
         sprintf(caption.mString, base + 0x161, idx);
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textStorage, true);
@@ -1843,14 +1843,14 @@ void setupItemBoxSlotPanes(CItemBoxInfo* info) {
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
-        s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
         // All-zero pairs: retail stores the halfwords in DESCENDING element
         // order; the four colour words are copied to args[] in ASCENDING
         // slot order (see resetItemBox2RowPanes finding).
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -1909,9 +1909,9 @@ void resetItemBoxRowPanes(CItemBoxInfo* info) {
         // fold the {zero, zero} s16-pair arrays to a constant, keeping the
         // retail stack build of the four u32 colour args.
         s16 zero = 0;
-        s16 c0hi[2] = {0, *(s16*)((u8*)info + 0xA2)};
+        s16 c0hi[2] = {0, info->state.quadA.s[3]};
         s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, *(s16*)((u8*)info + 0xAA)};
+        s16 c1hi[2] = {0, info->state.quadB.s[3]};
         s16 c1lo[2] = {0, 0};
         args[1] = *(u32*)c0hi;
         args[0] = *(u32*)c0lo;
@@ -1977,11 +1977,11 @@ void applyItemBoxSelColors(CItemBoxInfo* info) {
         // and +0xAA; retail stages the four arrays at sp+0x08..0x17 and the
         // u32 varargs copy at sp+0x18..0x27.
         s16 zero = 0;
-        s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -2088,12 +2088,12 @@ extern "C" void stampItemBoxSlotTex(CItemBoxInfo* info) {
                 PaneSetTexPalette(pane2, found);
                 PaneSetVtxColorAll(pane2, 0x777777ffu);
                 s16 zero = 0;
-                s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+                s16 c0hi[2] = {zero, info->state.quadA.s[3]};
                 // All-zero pairs stored DESCENDING (retail order).
                 s16 c0lo[2];
                 c0lo[1] = zero;
                 c0lo[0] = zero;
-                s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+                s16 c1hi[2] = {zero, info->state.quadB.s[3]};
                 s16 c1lo[2];
                 c1lo[1] = zero;
                 c1lo[0] = zero;
@@ -2252,7 +2252,7 @@ static inline void applyItemBoxDeltaColorAt(CItemBoxInfo* info, u32 valueIndex,
         __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
         __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
     }
-    nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+    nw4r::lyt::Pane** panes = info->state.slotPanes;
     PaneMatSetTevColors(panes[valueIndex], &valueTop, &valueBottom);
     PaneMatSetTevColors(panes[labelIndex], &labelTop, &labelBottom);
 }
@@ -2379,13 +2379,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) — 3-arg.
     // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
     // so immediates stay plain +0x139, not parent+0x54+imm.
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4D7],
+    LayoutSetTextBoxFmtValue(info->state.layout, &base[0x4D7],
         ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, &base[0x139], member), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4E3], stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4F0], stats->CActorParam_getTotalCurrency());
-    LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
-    LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
-    SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
+    setLayoutTextBoxNumber(info->state.layout, &base[0x4E3], stats->CActorParam_getActorLevel());
+    setLayoutTextBoxNumber(info->state.layout, &base[0x4F0], stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxInt(info->state.slotPanes[0], hp1);
+    LayoutSetTextBoxInt(info->state.slotPanes[2], hp2);
+    SetLayoutSelfText(info->state.slotPanes[3], BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
@@ -2449,49 +2449,49 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
+                SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
             }
 
             // ---- numbers ----
             if (barC <= 0) barC = 1;
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)barB);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)barC);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)barA);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)bar5);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)bar3);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hpStat);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)barB);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)barC);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], (s16)barA);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)bar5);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)bar3);
+            LayoutSetTextBoxInt(info->state.slotPanes[2], hpStat);
             char* percentSuffix = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
             ((ml::FixStr<32>*)&textBufferB)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBufferB.mString, 0);
+            SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
+            SetLayoutSelfText(info->state.slotPanes[18], textBufferB.mString, 0);
 
             // ---- 20x color application ----
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
             D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
         }
     }
 
@@ -2508,7 +2508,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
             s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2524,8 +2524,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
         }
 
         // row B: 0x1 -> panes 0x50/0x54
@@ -2533,7 +2533,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
             s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
             dB = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2549,8 +2549,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
         }
 
         s32 comparisonArtsSum = (s32)sumItemBoxTypeCounts(info, member, NULL);
@@ -2571,7 +2571,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 (f32)(oldAgilityBase + getItemBoxEffect(
                     info, (void*)(u32)member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2587,8 +2587,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
         }
 
         // row D: 0x11 + RoundHalfAway0 -> panes 0x40/0x48
@@ -2599,9 +2599,9 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+                LayoutSetTextBoxInt(info->state.slotPanes[0], nb);
             }
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[2], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
@@ -2617,10 +2617,10 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
@@ -2689,18 +2689,18 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             char* rangeSeparator = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)disp1);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)disp2);
+            SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)disp1);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)disp2);
             char* percentSuffix2 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
+            SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
             char* percentSuffix3 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E],
                            (s32)stA->b55 + (s32)d3, percentSuffix3);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.mString, 0);
+            SetLayoutSelfText(info->state.slotPanes[18], textBuffer.mString, 0);
             // delta colors (5 rows)
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2718,8 +2718,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2737,8 +2737,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2756,8 +2756,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2775,8 +2775,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2794,8 +2794,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
             }
         } else {
             // ---- armor block (0x801E7DA0) ----
@@ -2947,7 +2947,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
                 ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newPercent,
                                    percentSuffix);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16],
+                SetLayoutSelfText(info->state.slotPanes[16],
                               textBuffer.mString, 0);
 
                 d1 = (s16)(c_new.etherDefense - c_cur.etherDefense);
@@ -2982,13 +2982,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
+                SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
 
             }
             // numbers
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], c_new.physicalDefense);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], c_new.etherDefense);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], c_new.physicalDefense);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], c_new.etherDefense);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)b14);
             // delta colors (4 rows)
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -3006,8 +3006,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -3025,8 +3025,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -3044,8 +3044,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
             }
             {
                 D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -3063,8 +3063,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
             }
             {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
@@ -3082,7 +3082,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(8)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(9)], &labelTop, &labelBottom);
 }
@@ -3099,7 +3099,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         s16 oldStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL)))));
         s16 newStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x21, arg3, slot)))));
         s16 strengthDelta = (s16)(newStrength - oldStrength);
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], newStrength);
+        LayoutSetTextBoxInt(info->state.slotPanes[8], newStrength);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3116,7 +3116,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(8)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(9)], &labelTop, &labelBottom);
 }
@@ -3124,7 +3124,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         s16 oldPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (getItemBoxEffect(info, (void*)(u32)member, 0x01, NULL)))));
         s16 newPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x01, arg3, slot)))));
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], newPhysical);
+        LayoutSetTextBoxInt(info->state.slotPanes[4], newPhysical);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3141,7 +3141,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(4)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(5)], &labelTop, &labelBottom);
 }
@@ -3156,9 +3156,9 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         if (newHp > 9999) newHp = 9999;
         s16 hpDelta = (s16)(newHp - oldHp);
         if (stats->CActorParam_getHp() > (f32)newHp) {
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], newHp);
+            LayoutSetTextBoxInt(info->state.slotPanes[0], newHp);
         }
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], newHp);
+        LayoutSetTextBoxInt(info->state.slotPanes[2], newHp);
         {
             D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
             D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3175,20 +3175,20 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0],
+            PaneMatSetTevColors(info->state.slotPanes[0],
                           &valueTop, &valueBottom);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1],
+            PaneMatSetTevColors(info->state.slotPanes[1],
                           &labelTop, &labelBottom);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2],
+            PaneMatSetTevColors(info->state.slotPanes[2],
                           &valueTop, &valueBottom);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3],
+            PaneMatSetTevColors(info->state.slotPanes[3],
                           &labelTop, &labelBottom);
         }
 
         s16 oldEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL)))));
         s16 newEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x31, arg3, slot)))));
         s16 etherDelta = (s16)(newEther - oldEther);
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], newEther);
+        LayoutSetTextBoxInt(info->state.slotPanes[12], newEther);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3205,7 +3205,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(12)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(13)], &labelTop, &labelBottom);
 }
@@ -3226,7 +3226,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 
         s16 newAgility = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x41, arg3, slot)))));
         s16 agilityDelta = (s16)(newAgility - oldAgility);
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], newAgility);
+        LayoutSetTextBoxInt(info->state.slotPanes[6], newAgility);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3243,7 +3243,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(6)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(7)], &labelTop, &labelBottom);
 }
@@ -3251,7 +3251,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         s16 oldDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL)))));
         s16 newDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x51, arg3, slot)))));
         s16 defenseDelta = (s16)(newDefense - oldDefense);
-        LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], newDefense);
+        LayoutSetTextBoxInt(info->state.slotPanes[14], newDefense);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
         D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
@@ -3268,7 +3268,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(14)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(15)], &labelTop, &labelBottom);
 }
@@ -3279,7 +3279,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
         ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
                               percentSuffix);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
+        SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
         s16 resistanceDelta = (s16)(newResistance - oldResistance);
         {
         D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
@@ -3297,7 +3297,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(16)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(17)], &labelTop, &labelBottom);
 }
@@ -3345,7 +3345,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], displayLow,
                               rangeSeparator, newAttackHigh);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10],
+            SetLayoutSelfText(info->state.slotPanes[10],
                           textBuffer.mString, 0);
         }
         {
@@ -3364,7 +3364,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
             __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
         }
-        nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+        nw4r::lyt::Pane** panes = info->state.slotPanes;
         PaneMatSetTevColors(panes[(10)], &valueTop, &valueBottom);
         PaneMatSetTevColors(panes[(11)], &labelTop, &labelBottom);
 }
@@ -3404,18 +3404,18 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL);
             s16 bA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], (s16)bA);
             getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
             s16 bB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)bB);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)bB);
             RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL)));
             s32 r6158 = RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+                LayoutSetTextBoxInt(info->state.slotPanes[0], nb);
             }
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[2], nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct(
                 (u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
@@ -3543,37 +3543,37 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
                 ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
+                SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
             }
             // numbers
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], c_new.physicalDefense);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], c_new.etherDefense);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], c_new.physicalDefense);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], c_new.etherDefense);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
             D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
             D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
             D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
 
         }
         // ---- simple path ----
@@ -3581,34 +3581,34 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
         D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
         D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[0], &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText(info->state.slotPanes[2], &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText(info->state.slotPanes[3], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[4], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[6], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[8], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[10], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[12], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[14], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[16], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[18], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
     }
 
     // ---- common tail: two 8-entry item lists (live in highFrame) ----
@@ -4012,14 +4012,14 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
         }
 
         // per-slot render
@@ -4034,8 +4034,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf1, true);
-            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
+            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf1, true);
+            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10)));
             // Transpose alternating UI rows into the two four-slot columns.
             s32 idx = (s32)(0.5f * (f32)i);
             if (((s8)i % 2) != 0) idx += 4;
@@ -4058,9 +4058,9 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 copyVEC3((void*)((u8*)info + 0xC8 + (u8)idx * 12),
                          (void*)dstWords);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
             if (val == 0) {
-                LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+                LayoutSetTextBoxFmtValue(info->state.layout,
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             u8 rvs = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8,
@@ -4076,12 +4076,12 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             } else {
                 ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x422], (s32)val);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+            LayoutSetTextBoxFmtValue(info->state.layout,
                           buf2, textBuffer.mString, 0);
             if (arg3 != NULL && arg4 == 0 &&
                 (cf != 0 || type == 2 || !testItemBoxBdatFlag(info, member, arg3))) {
                 cf = 0;
-                LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+                LayoutSetTextBoxFmtValue(info->state.layout,
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -4111,8 +4111,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_806645C8);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_806645D0);
             }
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, &q1, &q2);
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &q3, &q4);
+            PaneMatSetTevColorsByName(info->state.layout, buf1, &q1, &q2);
+            PaneMatSetTevColorsByName(info->state.layout, buf2, &q3, &q4);
         }
     }
 }
@@ -4796,42 +4796,42 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
 #pragma optimize_for_size on
 CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     *(void**)info = (void*)lbl_eu_80534B28;
-    __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
-    __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
-    *(u32*)((u8*)info + 0x24) = 0;
-    *(u32*)((u8*)info + 0x28) = 0;
-    *(u32*)((u8*)info + 0x2C) = 0;
-    *(u32*)((u8*)info + 0x30) = 0;
-    *(u32*)((u8*)info + 0x34) = 0;
-    *(u32*)((u8*)info + 0x38) = 0;
-    *(u32*)((u8*)info + 0x3C) = 0;
-    *(u32*)((u8*)info + 0x40) = 0;
-    *(u32*)((u8*)info + 0x44) = 0;
-    *(u32*)((u8*)info + 0x48) = 0;
-    *(u32*)((u8*)info + 0x4C) = 0;
-    *(u32*)((u8*)info + 0x50) = 0;
-    *(u32*)((u8*)info + 0x54) = 0;
-    *(u32*)((u8*)info + 0x58) = 0;
-    *(u32*)((u8*)info + 0x5C) = 0;
-    *(u32*)((u8*)info + 0x60) = 0;
-    *(u32*)((u8*)info + 0x64) = 0;
-    *(u32*)((u8*)info + 0x68) = 0;
-    *(u32*)((u8*)info + 0x6C) = 0;
-    *(u32*)((u8*)info + 0x70) = 0;
-    *(u32*)((u8*)info + 0x74) = 0;
-    *(u32*)((u8*)info + 0x78) = 0;
-    *(u32*)((u8*)info + 0x7C) = 0;
-    *(u32*)((u8*)info + 0x80) = 0;
-    *(u32*)((u8*)info + 0x84) = 0;
-    *(u32*)((u8*)info + 0x88) = 0;
-    *(u32*)((u8*)info + 0x8C) = 0;
-    *(u8*)((u8*)info + 0x90) = 0;
-    *(u32*)((u8*)info + 0x94) = 0;
-    *(u8*)((u8*)info + 0x98) = 0;
-    *(u8*)((u8*)info + 0x99) = 1;
-    *(u8*)((u8*)info + 0x9A) = arg2;
-    *(u16*)((u8*)info + 0xAC) = arg3;
-    *(u8*)((u8*)info + 0xAE) = 0;
+    __ct__17UnkClass_8045F564Fv(&info->state.memRegion1);
+    __ct__17UnkClass_8045F564Fv(&info->state.memRegion2);
+    info->state.fileHandle1 = 0;
+    info->state.fileHandle2 = 0;
+    info->state.arcResourceAccessor = 0;
+    info->state.resource = 0;
+    info->state.layout = 0;
+    info->state.animTransform1 = 0;
+    info->state.animTransform2 = 0;
+    info->state.slotPanes[0] = 0;
+    info->state.slotPanes[1] = 0;
+    info->state.slotPanes[2] = 0;
+    info->state.slotPanes[3] = 0;
+    info->state.slotPanes[4] = 0;
+    info->state.slotPanes[5] = 0;
+    info->state.slotPanes[6] = 0;
+    info->state.slotPanes[7] = 0;
+    info->state.slotPanes[8] = 0;
+    info->state.slotPanes[9] = 0;
+    info->state.slotPanes[10] = 0;
+    info->state.slotPanes[11] = 0;
+    info->state.slotPanes[12] = 0;
+    info->state.slotPanes[13] = 0;
+    info->state.slotPanes[14] = 0;
+    info->state.slotPanes[15] = 0;
+    info->state.slotPanes[16] = 0;
+    info->state.slotPanes[17] = 0;
+    info->state.slotPanes[18] = 0;
+    info->state.slotPanes[19] = 0;
+    info->state.active = 0;
+    info->state.state = 0;
+    info->state.current = 0;
+    info->state.visible = 1;
+    info->state.field_9A = arg2;
+    info->state.field_AC = arg3;
+    info->state.field_AE = 0;
     // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
     // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
     // the extra-arg setup and then fold to the direct bl of the Fv symbol.
@@ -4860,41 +4860,41 @@ extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
 #pragma optimize_for_size on
 CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
     *(void**)info = (void*)lbl_eu_80534A90;
-    __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
-    __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
-    *(u32*)((u8*)info + 0x24) = 0;
-    *(u32*)((u8*)info + 0x28) = 0;
-    *(u32*)((u8*)info + 0x2C) = 0;
-    *(u32*)((u8*)info + 0x30) = 0;
-    *(u32*)((u8*)info + 0x34) = 0;
-    *(u32*)((u8*)info + 0x38) = 0;
-    *(u32*)((u8*)info + 0x3C) = 0;
-    *(u32*)((u8*)info + 0x40) = 0;
-    *(u32*)((u8*)info + 0x44) = 0;
-    *(u32*)((u8*)info + 0x48) = 0;
-    *(u32*)((u8*)info + 0x4C) = 0;
-    *(u32*)((u8*)info + 0x50) = 0;
-    *(u32*)((u8*)info + 0x54) = 0;
-    *(u32*)((u8*)info + 0x58) = 0;
-    *(u32*)((u8*)info + 0x5C) = 0;
-    *(u32*)((u8*)info + 0x60) = 0;
-    *(u32*)((u8*)info + 0x64) = 0;
-    *(u32*)((u8*)info + 0x68) = 0;
-    *(u32*)((u8*)info + 0x6C) = 0;
-    *(u32*)((u8*)info + 0x70) = 0;
-    *(u32*)((u8*)info + 0x74) = 0;
-    *(u32*)((u8*)info + 0x78) = 0;
-    *(u32*)((u8*)info + 0x7C) = 0;
-    *(u32*)((u8*)info + 0x80) = 0;
-    *(u32*)((u8*)info + 0x84) = 0;
-    *(u32*)((u8*)info + 0x88) = 0;
-    *(u32*)((u8*)info + 0x8C) = 0;
-    *(u8*)((u8*)info + 0x90) = 0;
-    *(u32*)((u8*)info + 0x94) = 0;
-    *(u8*)((u8*)info + 0x98) = 0;
-    *(u8*)((u8*)info + 0x99) = 1;
-    *(u8*)((u8*)info + 0x9A) = arg2;
-    *(u16*)((u8*)info + 0xAC) = arg3;
+    __ct__17UnkClass_8045F564Fv(&info->state.memRegion1);
+    __ct__17UnkClass_8045F564Fv(&info->state.memRegion2);
+    info->state.fileHandle1 = 0;
+    info->state.fileHandle2 = 0;
+    info->state.arcResourceAccessor = 0;
+    info->state.resource = 0;
+    info->state.layout = 0;
+    info->state.animTransform1 = 0;
+    info->state.animTransform2 = 0;
+    info->state.slotPanes[0] = 0;
+    info->state.slotPanes[1] = 0;
+    info->state.slotPanes[2] = 0;
+    info->state.slotPanes[3] = 0;
+    info->state.slotPanes[4] = 0;
+    info->state.slotPanes[5] = 0;
+    info->state.slotPanes[6] = 0;
+    info->state.slotPanes[7] = 0;
+    info->state.slotPanes[8] = 0;
+    info->state.slotPanes[9] = 0;
+    info->state.slotPanes[10] = 0;
+    info->state.slotPanes[11] = 0;
+    info->state.slotPanes[12] = 0;
+    info->state.slotPanes[13] = 0;
+    info->state.slotPanes[14] = 0;
+    info->state.slotPanes[15] = 0;
+    info->state.slotPanes[16] = 0;
+    info->state.slotPanes[17] = 0;
+    info->state.slotPanes[18] = 0;
+    info->state.slotPanes[19] = 0;
+    info->state.active = 0;
+    info->state.state = 0;
+    info->state.current = 0;
+    info->state.visible = 1;
+    info->state.field_9A = arg2;
+    info->state.field_AC = arg3;
     // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
     // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
     // the extra-arg setup and then fold to the direct bl of the Fv symbol.
@@ -4990,7 +4990,7 @@ extern "C" void renderItemBox2ByKind(CItemBoxInfo2* info, u16 arg2, void* arg3, 
     setupItemBox2Detail(info, arg2, arg3, arg4, arg5);
     u16 id = arg3 ? (u16)(*(u32*)arg3 >> 20) : 0;
     u16 idFinal = arg2;
-    if (*(u8*)((u8*)info + 0x9A) == 4) idFinal = id;
+    if (info->state.field_9A == 4) idFinal = id;
     u32 r = (u8)(u32)BdatGetItemType((u32)idFinal);
     if (arg3 != NULL && (IsSkillItem(arg3) != 0 || isItemBoxType9Flagged(arg3) != 0)) r = 9;
     if (r - 4 <= 4) {
@@ -5053,9 +5053,9 @@ void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
 #pragma auto_inline off
 extern "C" void openItemBox2Phase1(CItemBoxInfo2* info) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), lbl_eu_80668010) != 0) {
-        ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
-        ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
-        *(u32*)((u8*)info + 0x94) = 2;
+        (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
+        (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
+        info->state.state = 2;
     }
 }
 
@@ -5616,8 +5616,8 @@ void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
         // Default vertex colours carry data only in the alpha channel
         // (info+0xA2 / info+0xAA); the selected-slot pair comes from
         // info+0x9C/0xA4 when the slot is active.
-        s16 vA2 = *(s16*)((u8*)info + 0xA2);
-        s16 vAA = *(s16*)((u8*)info + 0xAA);
+        s16 vA2 = info->state.quadA.s[3];
+        s16 vAA = info->state.quadB.s[3];
         // defAA declared first: retail keeps the vAA colour in the lower
         // frame slot pair (sp+0x08) and the vA2 colour above it (sp+0x10).
         CItemBoxQuadColor defAA;
@@ -5636,15 +5636,15 @@ void renderItemBox2Kind2(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
         args[2] = 0;
         args[3] = 0;
         if (flag != 0) {
-            args[0] = *(u32*)((u8*)info + 0x9C);
-            args[1] = *(u32*)((u8*)info + 0xA0);
+            args[0] = info->state.quadA.w[0];
+            args[1] = info->state.quadA.w[1];
         } else {
             args[0] = *(u32*)&defA2.r;
             args[1] = *(u32*)&defA2.a;
         }
         if (flag != 0) {
-            args[2] = *(u32*)((u8*)info + 0xA4);
-            args[3] = *(u32*)((u8*)info + 0xA8);
+            args[2] = info->state.quadB.w[0];
+            args[3] = info->state.quadB.w[1];
         } else {
             args[2] = *(u32*)&defAA.r;
             args[3] = *(u32*)&defAA.a;
@@ -5740,8 +5740,8 @@ void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
-        s16 vA2 = *(s16*)((u8*)info + 0xA2);
-        s16 vAA = *(s16*)((u8*)info + 0xAA);
+        s16 vA2 = info->state.quadA.s[3];
+        s16 vAA = info->state.quadB.s[3];
         // Retail builds cols[1] first, then cols[0], each as three zero
         // halfwords plus the alpha from the info block.
         cols[1].r = 0; cols[1].g = 0; cols[1].b = 0; cols[1].a = vA2;
@@ -5753,16 +5753,16 @@ void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         // Selected colour is staged through the named temp then reloaded into
         // the sprintf argument block (retail stores to sp+0xa8/sp+0xb0 first).
         if (flag != 0) {
-            selA.w[0] = *(u32*)((u8*)info + 0x9C);
-            selA.w[1] = *(u32*)((u8*)info + 0xA0);
+            selA.w[0] = info->state.quadA.w[0];
+            selA.w[1] = info->state.quadA.w[1];
         } else {
             selA = *(CItemBoxColorBlock*)&cols[1];
         }
         args[0] = selA.w[0];
         args[1] = selA.w[1];
         if (flag != 0) {
-            selB.w[0] = *(u32*)((u8*)info + 0xA4);
-            selB.w[1] = *(u32*)((u8*)info + 0xA8);
+            selB.w[0] = info->state.quadB.w[0];
+            selB.w[1] = info->state.quadB.w[1];
         } else {
             selB = *(CItemBoxColorBlock*)&cols[0];
         }
@@ -5842,15 +5842,15 @@ void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2) {
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell(base + 0x130, base + 0x139, rowHeight);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), base + 0x44f, label, 0);
+    LayoutSetTextBoxFmtValue(info->state.layout, base + 0x44f, label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = ((u8*)&local)[(u8)i + 1];
         u32 color = 0x777777ff;
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
-        PaneSetVtxColorByName((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, color);
-        s16 vA2 = *(s16*)((u8*)info + 0xA2);
-        s16 vAA = *(s16*)((u8*)info + 0xAA);
+        PaneSetVtxColorByName(info->state.layout, buf, color);
+        s16 vA2 = info->state.quadA.s[3];
+        s16 vAA = info->state.quadB.s[3];
         // Retail builds cols[1] first, then cols[0], each as three zero
         // halfwords plus the alpha from the info block.
         cols[1].r = 0; cols[1].g = 0; cols[1].b = 0; cols[1].a = vA2;
@@ -5861,12 +5861,12 @@ void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2) {
         out[1].w[1] = 0;
         // Aggregate ternaries: selected 8-byte colour is staged through a
         // stack temp then copied as one block (retail lwz/stw pairs).
-        out[0] = (flag != 0) ? *(CItemBoxColorBlock*)((u8*)info + 0x9C)
+        out[0] = (flag != 0) ? *(CItemBoxColorBlock*)&info->state.quadA
                              : *(CItemBoxColorBlock*)&cols[1];
-        out[1] = (flag != 0) ? *(CItemBoxColorBlock*)((u8*)info + 0xA4)
+        out[1] = (flag != 0) ? *(CItemBoxColorBlock*)&info->state.quadB
                              : *(CItemBoxColorBlock*)&cols[0];
         sprintf(buf, base + 0x161, (u8)i + 1, cols[0]);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
@@ -5967,10 +5967,10 @@ void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         // Row colour pair: zeroed memberwise, then filled from the info
         // selection block; passed to sprintf as one 0x10-byte vararg.
         cols.w[0] = 0; cols.w[1] = 0; cols.w[2] = 0; cols.w[3] = 0;
-        cols.w[0] = *(u32*)((u8*)info + 0x9C);
-        cols.w[1] = *(u32*)((u8*)info + 0xA0);
-        cols.w[2] = *(u32*)((u8*)info + 0xA4);
-        cols.w[3] = *(u32*)((u8*)info + 0xA8);
+        cols.w[0] = info->state.quadA.w[0];
+        cols.w[1] = info->state.quadA.w[1];
+        cols.w[2] = info->state.quadB.w[0];
+        cols.w[3] = info->state.quadB.w[1];
         sprintf(textBuf, base + 0x161, idx, cols);
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textBuf, true);
@@ -6111,13 +6111,13 @@ void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
         sprintf(buf, &lbl_eu_805063BC[0x303], idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
         u32 args[4];
-        s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
         // All-zero pairs stored DESCENDING; colour words copied to args[]
         // ASCENDING (retail order - see resetItemBox2RowPanes finding).
         s16 c0lo[2];
         c0lo[1] = zero;
         c0lo[0] = zero;
-        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
         s16 c1lo[2];
         c1lo[1] = zero;
         c1lo[0] = zero;
@@ -6169,14 +6169,14 @@ void resetItemBox2RowPanes(CItemBoxInfo2* info) {
         sprintf(text, &lbl_eu_805063BC[0x303], slot);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, text, 0x777777ff);
         u32 args[4];
-        s16 hiA[2] = {shade, *(s16*)((u8*)info + 0xA2)};
+        s16 hiA[2] = {shade, info->state.quadA.s[3]};
         // All-shade pairs: retail emits the two halfword stores in DESCENDING
         // address order (element 1 before element 0); explicit assignments
         // reproduce that order where the initializer list emits ascending.
         s16 loA[2];
         loA[1] = shade;
         loA[0] = shade;
-        s16 hiB[2] = {shade, *(s16*)((u8*)info + 0xAA)};
+        s16 hiB[2] = {shade, info->state.quadB.s[3]};
         s16 loB[2];
         loB[1] = shade;
         loB[0] = shade;
@@ -6214,12 +6214,12 @@ void clearItemBox2TripleRows(CItemBoxInfo2* info) {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
+        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue(info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        LayoutSetTextBoxFmtValue(info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
 #pragma pop
@@ -6242,9 +6242,9 @@ void applyItemBox2SelColors(CItemBoxInfo2* info) {
         // zero via a variable: MWCC materializes it in a register and cannot
         // fold the {zero, zero} s16-pair arrays to a constant,
         // keeping the retail stack build of the four u32 colour args.
-        s16 c0hi[2] = {0, *(s16*)((u8*)info + 0xA2)};
+        s16 c0hi[2] = {0, info->state.quadA.s[3]};
         s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, *(s16*)((u8*)info + 0xAA)};
+        s16 c1hi[2] = {0, info->state.quadB.s[3]};
         s16 c1lo[2] = {0, 0};
         args[0] = *(u32*)c0lo;
         args[1] = *(u32*)c0hi;
@@ -6353,11 +6353,11 @@ extern "C" void stampItemBox2SlotTex(CItemBoxInfo2* info) {
                 // and +0xAA. All-zero pairs: retail stores the halfwords in
                 // DESCENDING element order (see resetItemBox2RowPanes finding).
                 s16 zero = 0;
-                s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+                s16 c0hi[2] = {zero, info->state.quadA.s[3]};
                 s16 c0lo[2];
                 c0lo[1] = zero;
                 c0lo[0] = zero;
-                s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+                s16 c1hi[2] = {zero, info->state.quadB.s[3]};
                 s16 c1lo[2];
                 c1lo[1] = zero;
                 c1lo[0] = zero;
@@ -6496,12 +6496,12 @@ extern "C" void setupItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
-    LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
-    LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
-    SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
+    LayoutSetTextBoxFmtValue(info->state.layout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+    setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
+setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxInt(info->state.slotPanes[0], hp1);
+    LayoutSetTextBoxInt(info->state.slotPanes[2], hp2);
+    SetLayoutSelfText(info->state.slotPanes[3], BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
     E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
@@ -6548,48 +6548,48 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 if (atk1 > atk2) atk1 = atk2;
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], atk1, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atk2);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText(info->state.slotPanes[10], fmtBuf.c_str(), 0);
             }
 
             // ---- numbers ----
             if (barC <= 0) barC = 1;
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)barB);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)barC);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)barA);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)bar5);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)bar3);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)barB);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)barC);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], (s16)barA);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)bar5);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)bar3);
             ml::FixStr<32> fmtBuf2;
             fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)bar6, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], fmtBuf2.c_str(), 0);
+            SetLayoutSelfText(info->state.slotPanes[16], fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
             fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], fmtBuf3.c_str(), 0);
+            SetLayoutSelfText(info->state.slotPanes[18], fmtBuf3.c_str(), 0);
 
             // ---- 20x color application ----
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
             E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
         }
     }
 
@@ -6606,7 +6606,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6622,8 +6622,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
         }
 
         // row B: 0x1 -> panes 0x50/0x54
@@ -6631,7 +6631,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
             dB = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6647,8 +6647,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
         }
 
         // row C: 0x41 -> panes 0x58/0x5C
@@ -6656,7 +6656,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) * (f32)(dB + getItemBox2Effect(info, (void*)(u32)member, 0x41, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + getItemBox2Effect(info, (void*)(u32)member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6672,8 +6672,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
         }
 
         // row D: 0x11 + RoundHalfAway0 -> panes 0x40/0x48
@@ -6684,9 +6684,9 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+                LayoutSetTextBoxInt(info->state.slotPanes[0], nb);
             }
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[2], nb);
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
             E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
@@ -6702,10 +6702,10 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                 __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
             }
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
@@ -6765,7 +6765,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             }
             ml::FixStr<32> fmtBuf;
             fmtBuf.format(&lbl_eu_805063BC[0x254], atkD, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atkC);
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+            SetLayoutSelfText(info->state.slotPanes[10], fmtBuf.c_str(), 0);
             s16 disp1 = v610;
             s16 disp2 = v612;
             s16 disp3 = v614;
@@ -6774,14 +6774,14 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 disp2 = snap646;
                 disp3 = v648;
             }
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)disp1);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)disp2);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)disp1);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)disp2);
             ml::FixStr<32> fmtBuf2;
             fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)disp3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], fmtBuf2.c_str(), 0);
+            SetLayoutSelfText(info->state.slotPanes[16], fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
             fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s32)stA->b55 + (s32)d3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
-            SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], fmtBuf3.c_str(), 0);
+            SetLayoutSelfText(info->state.slotPanes[18], fmtBuf3.c_str(), 0);
             // delta colors (5 rows)
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6799,8 +6799,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6818,8 +6818,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6837,8 +6837,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6856,8 +6856,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -6875,8 +6875,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
             }
         } else {
             // ---- armor block (0x801E7DA0) ----
@@ -6991,12 +6991,12 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 dW = (s16)(wd - wa);
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText(info->state.slotPanes[10], fmtBuf.c_str(), 0);
             }
             // numbers
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)(u16)c_new.w04);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)c_new.w14);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)(u16)c_new.w04);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)c_new.w14);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)b14);
             // delta colors (4 rows)
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -7014,8 +7014,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -7033,8 +7033,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -7052,8 +7052,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
             }
             {
                 E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
@@ -7071,8 +7071,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                     __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
                     __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
                 }
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-                PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+                PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+                PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
             }
         }
 
@@ -7106,18 +7106,18 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             if (testItemBox2Equip(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
             getItemBox2Effect(info, (void*)(u32)member, 0x21, NULL);
             s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBox2Effect(info, (void*)(u32)member, 0x21, arg3))));
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
+            LayoutSetTextBoxInt(info->state.slotPanes[8], (s16)bA);
             getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
             s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)bB);
+            LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)bB);
             RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL)));
             s32 r6158 = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBox2Effect(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
-                LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+                LayoutSetTextBoxInt(info->state.slotPanes[0], nb);
             }
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            LayoutSetTextBoxInt(info->state.slotPanes[2], nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
             if (arm1 == 3) {
@@ -7209,37 +7209,37 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 s32 wmin = wc < wd ? wc : wd;
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
-                SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+                SetLayoutSelfText(info->state.slotPanes[10], fmtBuf.c_str(), 0);
             }
             // numbers
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)(u16)c_new.w04);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)c_new.w14);
-            LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)(u16)c_new.w04);
+            LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)c_new.w14);
+            LayoutSetTextBoxInt(info->state.slotPanes[6], (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
             E43Quad q1 = *(E43Quad*)&lbl_eu_806645A8;
             E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
             E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
             E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-            PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[0], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[2], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[3], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+            PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+            PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
 
         }
         // ---- simple path ----
@@ -7247,34 +7247,34 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
         E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
         E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
         E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
-        SetLayoutSelfText(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &lbl_eu_805063BC[0x2AA], 0);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
-        PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[0], &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText(info->state.slotPanes[2], &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText(info->state.slotPanes[3], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[1], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[4], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[4], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[5], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[6], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[6], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[7], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[8], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[8], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[9], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[10], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[10], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[11], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[12], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[12], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[13], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[14], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[14], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[15], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[16], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[16], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[17], &q1, &q2);
+        SetLayoutSelfText(info->state.slotPanes[18], &lbl_eu_805063BC[0x2AA], 0);
+        PaneMatSetTevColors(info->state.slotPanes[18], &q3, &q4);
+        PaneMatSetTevColors(info->state.slotPanes[19], &q1, &q2);
     }
 
     // ---- common tail: two 8-entry item lists ----
@@ -7544,14 +7544,14 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, &lbl_eu_805063BC[0x2AA], 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
         }
 
         // per-slot render
@@ -7565,10 +7565,10 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             char buf2[0x20];
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf1, true);
-            nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf2, true);
+            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf1, true);
+            nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf2, true);
             CItemBoxQuad quad;
-            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
+            ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10)));
             // slot index transposition: idx = (s32)(0.5f * i) + ((i & 1) ? 4 : 0)
             s32 idx = (s32)(0.5f * (f32)i) + ((i & 1) ? 4 : 0);
             if (idx < 12) {
@@ -7590,23 +7590,23 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 f32 dst[3] = {v0, v1, v2};
                 copyVEC3((void*)((u8*)info + 0xC8 + idx * 12), (void*)dst);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+            LayoutSetTextBoxFmtValue(info->state.layout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
             if (val == 0) {
-                LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
             } else {
                 u8 rvs = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, &lbl_eu_805063BC[0x3], id);
                 if (rvs != 0 && (rvs == 0xFF || rvs == 0xFE)) {
                     ml::FixStr<32> fmtBuf;
                     fmtBuf.format(&lbl_eu_805063BC[0x13E], (s32)val, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
-                    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, fmtBuf.c_str(), 0);
+                    LayoutSetTextBoxFmtValue(info->state.layout, buf2, fmtBuf.c_str(), 0);
                 } else {
                     ml::FixStr<32> fmtBuf;
                     fmtBuf.format(&lbl_eu_805063BC[0x422], (s32)val);
-                    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, fmtBuf.c_str(), 0);
+                    LayoutSetTextBoxFmtValue(info->state.layout, buf2, fmtBuf.c_str(), 0);
                 }
             }
             if (arg5 == 0) {
-                LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(info->state.layout, buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
             E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
             E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
@@ -8276,8 +8276,8 @@ void hideItemBoxPanes(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     SET_PANE(0x10b, 0x0);
     SET_PANE(0x113, 0x0);
     SET_PANE(0x121, 0x0);
-    if (*(u8*)((u8*)info + 0x9A) == 4) {
-        if (*(u8*)((u8*)info + 0xAE) == 0) {
+    if (info->state.field_9A == 4) {
+        if (info->state.field_AE == 0) {
             SET_PANE(0xfe, 0x1);
             SET_PANE(0x121, 0x1);
         } else {
@@ -8324,13 +8324,13 @@ void hideItemBoxPanes(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
 
 void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     initItemBoxVecTable((u8*)info + 0xB0);
-    if (*(u8*)((u8*)info + 0x9A) == 4) {
+    if (info->state.field_9A == 4) {
         setupItemBoxDetail(info, arg2, arg3, arg4);
     }
     void* item2 = arg3 != 0 ? arg3 : 0;
     u16 category = item2 != 0 ? (u16)(*(u32*)item2 >> 20) : 0;
     u16 slot = arg2;
-    if (*(u8*)((u8*)info + 0x9A) == 4) {
+    if (info->state.field_9A == 4) {
         slot = category;
     }
     u8 kind = (u8)BdatGetItemType((u32)slot);
@@ -8341,13 +8341,13 @@ void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     // detail view and each of the 2/3/9/0xA/0xD cases picks a renderer.
     if ((u32)kind - 4 <= 4) {
         renderItemBoxDetail(info, slot, arg3,
-                      (*(u8*)((u8*)info + 0x9A) > 2) ? arg2 : (u16)-1);
+                      (info->state.field_9A > 2) ? arg2 : (u16)-1);
     } else if (kind == 2) {
         renderItemBoxKind2(info, slot, arg3,
-                      (*(u8*)((u8*)info + 0x9A) > 2) ? (u32)arg2 : 0xFFFF);
+                      (info->state.field_9A > 2) ? (u32)arg2 : 0xFFFF);
     } else if (kind == 3) {
         renderItemBoxKind3(info, slot, arg3,
-                      (*(u8*)((u8*)info + 0x9A) > 2) ? arg2 : (u16)-1);
+                      (info->state.field_9A > 2) ? arg2 : (u16)-1);
     } else if (kind == 9) {
         renderItemBoxSlotList(info, slot, arg3);
     } else if (kind == 0xA) {

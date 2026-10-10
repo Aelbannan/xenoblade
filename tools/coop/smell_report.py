@@ -84,8 +84,10 @@ METRICS = (
     ("goto_count", "goto"),
     # Fakematch-candidate families (source reproduces retail codegen, not
     # retail source; each hit is a candidate for the natural-rewrite hexdiff
-    # test). schedule_pragma is 0 today: the one known instance lives in
-    # libs/PowerPC_EABI_Support (out of the game-code roots, `.cp` suffix).
+    # test). Audited 2026-10-10: the remaining schedule pragmas (the
+    # CBattleMan_ResetTimer off/on bracket) and the SeqSound ctor
+    # side-effect initializer were both natural-rewrite verified as
+    # load-bearing; natural forms regress them (60% / 87.2%).
     ("asm_insn_shim", "asm-shim"),
     ("schedule_pragma", "schedule-pragma"),
     ("init_side_effect", "init-side-effect"),

@@ -23,7 +23,7 @@ from .common import (ROOT, TARGETS, VENV_PY, now_iso, save_json, sh, slug,
                    state_dir, utc_age_minutes)
 from .prompt import build_prompt
 
-MODEL_DEFAULT = "openrouter/deepseek/deepseek-v4-flash-0731"
+MODEL_DEFAULT = "opencode-go/muse-spark-1.3-contributor"
 THINKING_LADDER = ["max", "high", "medium", "medium"]
 GRACE_MIN = 12           # error grace period before treating an agent as dead
 FRESH_MIN = 5            # activity younger than this => alive regardless of status

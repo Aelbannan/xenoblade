@@ -34,9 +34,15 @@ Read only the routing doc for the residual you're chasing (see **Routing**).
   objects; `--postprocess` is a diagnostic and never counts for promotion. The linked-bytes proof
   fallback refuses units with `UNIT_RULES`. Burn-down handoffs live in `docs/handoff/unit_rules/`.
 - **Matching is always possible.** A plateau = the current angle is exhausted, not impossible.
-  Angles in order: source/declaration/expression shape → `mw_version`/unit flags → reloc naming
-  (`extern "C" lbl_eu_*`) → register witness → tooling → §17.6 exception. Mark `BLOCKED` only for a
+  Angles in order: source/declaration/expression shape → `mw_version`/unit flags → reloc-name drift
+  (`functionRelocDiffs=data_value`, `reloc_canon.py`) → register witness → tooling → §17.6 exception. Mark `BLOCKED` only for a
   concrete external/tooling limit. Never say a target is impossible; record the residual + next angle.
+- **Never call `objcopy` with one file operand (hard).** GNU objcopy treats a missing output as
+  *in-place conversion*: `objcopy -O binary --only-section=.text foo.o` rewrites `foo.o` as a raw
+  section dump. That destroyed 86 objects once and read as a ~600-symbol link regression. Always
+  pass an explicit output, or use `tools/coop/lib/objread.py` (`section_bytes` / `text_bytes` /
+  `require_elf`); `tools/coop/check_script_hazards.py` + `tests/test_objcopy_hazard.py` enforce it
+  over `tools/` and `.scratch/`.
 - **Callee gate:** if any callee isn't `FULL`/`EQUIVALENT_MATCH`, witness certification closes and
   only `FULL_MATCH` works — push for it, don't default to moving on.
 - **`tools/coop/targets.json` is the sole source** of function identity/state — use
@@ -254,7 +260,7 @@ and the `getBdatStringColumnValue` rule (copy the definition's spelling verbatim
 ## Policy exceptions
 
 The only allowed escapes from high-level C/C++ are listed in **PLAN.md §17.6**: the `DECOMP_PPC_*`
-builtins (`decomp.h`), `extern "C" lbl_eu_*` reloc naming, goto-gate chains, the isolated Gekko
+builtins (`decomp.h`), goto-gate chains, the isolated Gekko
 paired-single backend, and the Wii boot-entry vectors (`InitMetroTRK*`). **Read §17.6 for the
 authoritative boundaries before using any.** Every use must be logged in `attempts.jsonl` with
 `"policy_exception": true`.
@@ -276,7 +282,7 @@ bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 | `reg_swap` (pure color diff) | `docs/register_mapping.md` (declaration-order allocator contract) |
 | `structural` (scheduling / loop) | `docs/scheduling.md` (`-O4,p` vs `-O4,s`) |
 | `mr`/`addi`/`lbzu` / load selection | `docs/instruction_selection.md` |
-| reloc name drift (bytes match, names differ) | `tools/coop/reloc_map.py diff/mine` (→ `extern "C"`) |
+| reloc name drift (bytes match, names differ) | `tools/coop/reloc_map.py diff/mine` (detection only — the comparator ignores names; do not chase them) |
 | unknown type / name | symbol recovery above |
 | plateau ~97-99.9% | `MWCC_CASES` "Quick diagnostic" |
 | `#define … _hidden` shield / MWCC 10197+10505 cascade | "Declaration drift" section above + `MWCC_CASES` "Shield-clearing batch" |

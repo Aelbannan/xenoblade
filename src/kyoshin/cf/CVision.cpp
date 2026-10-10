@@ -101,12 +101,48 @@ extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 
 using namespace cf;
 
-// Named .sdata2 conversion magics: defining them lets MWCC's constant pool
-// reuse the retail symbols for the (double) casts instead of emitting TU-local
-// @N labels (CMiniMap / CfResReloadImpl idiom). 80667D28 is the signed
-// int->float magic (2^52 + 2^31); 80667D58 the unsigned one (2^52).
-extern "C" const double lbl_eu_80667D28 = 0x4330000080000000ll;
-extern "C" const double lbl_eu_80667D58 = 0x4330000000000000ll;
+// Retail .sdata2 (0x94, 32 labels): floats/doubles read via sda21 (lfs) for
+// vision timers/decay/thresholds (e.g. CD4 zero, CDC frame-step, CF0 1.0).
+// Values from `objdump -s -j .sdata2 build/us/obj/kyoshin/cf/CVision.o`;
+// order is retail offset order (MWCC pads 4 bytes before 8-aligned D18/D20).
+// All non-const except CD4 zero (which needs const to stay in .sdata2,
+// not .sbss2); non-const prevents MWCC constant-folding uses into pools.
+// `used` ensures emission (code_80135FDC idiom).
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CD0 = -2.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80667CD4 = 0.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CD8 = -1.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CDC = 0.033333335f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CE0 = 0.6f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CE4 = 0.5f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CE8 = 0.8333334f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CEC = 0.01f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CF0 = 1.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CF4 = 2.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CF8 = 0.9f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CFC = 3.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D00 = 4.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D04 = 0.33333334f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D08 = 0.16666667f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D0C = 1.3333334f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D10 = 10.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D18 = 0.5;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D20 = -0.5;
+// Signed int->float magic (2^52 + 2^31 = 4503601774854144.0); lets MWCC reuse
+// the retail symbol for (double) casts instead of emitting TU-local @N labels.
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D28 = 4503601774854144.0;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D30 = 0.25f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D34 = 0.415f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D38 = 8.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D3C = 12.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D40 = 300.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D44 = 0.6666667f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D48 = 2.5f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D4C = 0.15f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D50 = 2500.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D54 = 0.1f;
+// Unsigned int->float magic (2^52 = 4503599627370496.0).
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D58 = 4503599627370496.0;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D60 = 1.0f;
 
 // Most C-linkage pseudo-imports for this TU now live in the "C-linkage
 // imports" section of kyoshin/cf/CVision.hpp (real imports). The few kept

@@ -226,9 +226,22 @@ The most valuable future feature is not a generic chatbot over the file. It is a
 - Confidence: repo_proven
 - Applies to/a.k.a.: sdata2 doubles, dest-as-FRC fmul, commute peephole
 
+## Member-init list stores emit in *declaration* order, not written order (Wii/1.1 -O4,p)
+
+- Symptom:   a ctor whose member-init list is written flags-first still emits the flag stores in
+  declaration order (after the pointer/word stores); retail has them first
+- Cause:     MWCC Wii/1.1 ignores written list order for the scalar stores (probe:
+  `struct S { int a,b,c,d; S(int x) : d(g),c(3),b(2),a(x) {} }` -> stores a,b,c,d)
+- Fix:       when retail's store order differs from declaration order, the order must be forced
+  through expression evaluation (e.g. a side-effecting initializer expression that assigns the
+  earlier-stored members); reordering the written list alone is a no-op
+- Result:    explains the SeqSound ctor case (natural list 87.2% / 4 structural vs side-effect
+  initializer 100%); see MWCC_CASES `__ct__...SeqSound`
+- Confidence: repo_proven
+- Applies to/a.k.a.: member-init order, store scheduling, side-effect-in-initializer fakematch candidates
 
 
-### Never declare `__RTTI__*` symbols in a TU with novtable-predeclared anonymous-namespace classes (CDesktop, -ipa file ICE)
+### Never declare `__RTTI__*` symbols
 
 Declaring `extern u32 __RTTI__10IWorkEvent[];` (any type, inside or outside `extern "C"`) in a
 TU that (a) forward-declares classes with `__declspec(novtable)` and (b) defines
@@ -1094,6 +1107,8 @@ ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 ### Core patterns — the 5 things that fix 90% of gaps
 
 ### 1. Relocation name drift (99.3–99.9%, instructions identical)
+
+**SUPERSEDED (2026-10-10):** PLAN.md §17.6 no longer approves relocation-name spellings. Do not add `extern "C" lbl_eu_*` (or pool renames) to line up reloc names; the comparator ignores names where it can (`functionRelocDiffs=data_value`, `tools/coop/lib/reloc_canon.py`). Read this section for diagnosis only; existing spellings are cleanup debt. Object post-processing to rename symbols remains forbidden.
 
 The #1 cause of near-misses: instructions are byte-identical but relocation **symbol names** differ.
 

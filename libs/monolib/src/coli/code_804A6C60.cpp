@@ -673,10 +673,9 @@ extern "C" void ColiBuildAxisFrameMixed(CColiObject* self, CColiObject* src, CCo
     self->field_0x00[2].y = src->field_0x00[0].y + other->field_0x00[1].x;
     self->field_0x00[3].z = src->field_0x00[0].z + other->field_0x00[1].y;
 }
-#pragma schedule on
 
 
-// Euler rotation composition (Rx * Ry * Rz): each non-zero angle is applied
+// Euler rotation composition (Rx * Ry * Rz)
 // by premultiplying the running matrix with the corresponding rotation matrix
 // (PSMTXConcat), except the first non-zero angle which is written directly
 // into out (retail's direct-write vs concat split). When every angle is zero

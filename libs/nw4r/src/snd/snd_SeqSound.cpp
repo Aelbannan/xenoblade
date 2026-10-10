@@ -16,17 +16,18 @@ SeqSound::GetRuntimeTypeInfo() const {
     return &lbl_eu_806654F8;
 }
 
-SeqSound::SeqSound(SoundInstanceManager<SeqSound>* pManager)
-    // TODO(kiwi) Fakematch
-    : BasicSound(0, 0),
+// Retail stores mLoadingFlag/mPreparedFlag before the temp-handle/manager
+// block. A plain member-init list emits declaration order instead (natural-
+// rewrite hexdiff test: 87.2%, 4 structural), so the side-effecting
+// initializer below is kept: it is the shape that reproduces retail (100%).
+SeqSound::SeqSound(SoundInstanceManager<SeqSound>* pManager, int priority,
+                   int ambientPriority)
+    : BasicSound(priority, ambientPriority),
       mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(
           mPreparedFlag = mLoadingFlag = false)),
       mManager(pManager),
       mStartOffset(0),
-      mFileStream(NULL) {
-
-    OSInitMutex(&mMutex);
-}
+      mFileStream(NULL) {}
 
 void SeqSound::InitParam() {
     BasicSound::InitParam();

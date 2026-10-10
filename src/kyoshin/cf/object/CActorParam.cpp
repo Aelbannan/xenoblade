@@ -182,8 +182,8 @@ extern "C" void CActorParam_applyDamage__Q22cf11CActorParamFv(
 // Retail symbol is Fv; the real ABI passes (self, delta). Adds a signed
 // delta to the gauge at 0x160C, clamping to [0, 0x160E].
 void CActorParam_addGauge__Q22cf11CActorParamFv(cf::CActorParam* self, int delta) {
-    s16 cur = *(s16*)((u8*)self + 0x160C);
-    s16 max = *(s16*)((u8*)self + 0x160E);
+    s16 cur = (s16)self->unk160C;
+    s16 max = (s16)self->unk160E;
     // Explicit (s16) truncation of the int param -> retail's extsh r0, r4.
     int sum = cur + (s16)delta;
     self->unk160C = (u16)sum;
@@ -197,8 +197,8 @@ void CActorParam_addGauge__Q22cf11CActorParamFv(cf::CActorParam* self, int delta
 // Retail symbol is Fv; the real ABI passes (self, delta). Same gauge update
 // as CActorParam_addGauge but on 0x1614/[0, 0x1616].
 void CActorParam_addSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self, int delta) {
-    s16 cur = *(s16*)((u8*)self + 0x1614);
-    s16 max = *(s16*)((u8*)self + 0x1616);
+    s16 cur = (s16)self->unk1614;
+    s16 max = (s16)self->unk1616;
     int sum = cur + (s16)delta;
     self->unk1614 = (u16)sum;
     if ((s16)sum < 0) {
@@ -371,8 +371,8 @@ void* cf::CActorParam::CActorParam_findMinGaugeEntry() {
     }
     return best;
 }
-s16 CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x3358); }
-s16 CActorParam_getStatusCount__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x335a); }
+s16 CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(void* self) { return (s16)((cf::CActorParam*)self)->unk3358; }
+s16 CActorParam_getStatusCount__Q22cf11CActorParamFv(void* self) { return (s16)((cf::CActorParam*)self)->unk335A; }
 void cf::CActorParam::CActorParam_initStatusCounter() {
     // 0x335A = 2 is stored first; the rate byte (0x335E) is widened to
     // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
@@ -381,8 +381,8 @@ void cf::CActorParam::CActorParam_initStatusCounter() {
     float max = *(volatile float*)((u8*)this + 0x3368);
     *(u16*)((u8*)this + 0x3358) = (u16)((int)(max * (float)(u32)*(volatile u8*)((u8*)this + 0x335E)) / 2);
 }
-float CActorParam_getScale__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }
-void CActorParam_setScale__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15e8) = val; }
+float CActorParam_getScale__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk15E8; }
+void CActorParam_setScale__Q22cf11CActorParamFv(void* self, float val) { ((cf::CActorParam*)self)->unk15E8 = val; }
 
 
 namespace {
@@ -1170,7 +1170,7 @@ unk28_done:
                 if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x117)) break;
                 void* p = self->CActorParam_getActor();
                 if (!p) break;
-                if (*(u32*)((u8*)self + 0x3374) & 0x40000) {
+                if (self->unk3374 & 0x40000) {
                     u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
                     if ((t & 0x3F) == 0x16) break;
                 }
@@ -2391,7 +2391,7 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
     // Absolute field offsets (the 0x17E4 block predates the layout shift and
     // 0x3374/0x3378 are past it; raw addresses keep retail codegen, so every
     // access below folds base+displacement onto self with no extra saved reg).
-    *(s16*)((u8*)self + 0x3378) = 0;
+    self->field_3378 = 0;
     // Hoisted conversion magics (retail keeps them in f29/f30 across the loop).
     double sm = lbl_eu_806677F8;
     double um = lbl_eu_806677F0;
@@ -2399,20 +2399,20 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
     bool flag = true;
     for (int i = 0; i <= 5; i++) {
             cf::CActorParamArtsRow* row = (cf::CActorParamArtsRow*)CtrlObjectParam_GetArtsStatsRow(&arg->field_0x1C, i);
-        *(float*)((u8*)self + 0x1828) += row->field_0x0;
-        u32 masked = *(u32*)((u8*)self + 0x3374) & 0xFFFC0000;
-        *(float*)((u8*)self + 0x182C) += row->field_0x4;
-        *(float*)((u8*)self + 0x1808) += (float)(s16)row->field_0xC;
-        *(float*)((u8*)self + 0x180C) += (float)(s16)row->field_0xE;
-        *(u8*)((u8*)self + 0x1820) = (u8)(*(u8*)((u8*)self + 0x1820) + (u8)row->field_0x10);
-        *(float*)((u8*)self + 0x1824) += row->field_0x8;
-        *(s16*)((u8*)self + 0x3378) = (s16)(*(s16*)((u8*)self + 0x3378) + row->field_0x12);
-        *(u8*)((u8*)self + 0x1839) = (u8)(*(u8*)((u8*)self + 0x1839) + (u8)row->field_0x14);
-        *(s16*)((u8*)self + 0x1812) = (s16)(*(s16*)((u8*)self + 0x1812) + row->field_0x16);
-        *(s16*)((u8*)self + 0x1816) = (s16)(*(s16*)((u8*)self + 0x1816) + row->field_0x18);
-        *(u32*)((u8*)self + 0x3374) = masked;
-        if (row->field_0x1E & 1) *(u32*)((u8*)self + 0x3374) |= 0x4000;
-        if (row->field_0x1E & 2) *(u32*)((u8*)self + 0x3374) |= 0x8000;
+        self->unk17E4.unk44 += row->field_0x0;
+        u32 masked = self->unk3374 & 0xFFFC0000;
+        self->unk17E4.field_48 += row->field_0x4;
+        self->unk17E4.field_24 += (float)(s16)row->field_0xC;
+        self->unk17E4.field_28 += (float)(s16)row->field_0xE;
+        self->unk17E4.field_3C = (u8)(self->unk17E4.field_3C + (u8)row->field_0x10);
+        self->unk17E4.field_40 += row->field_0x8;
+        self->field_3378 = (s16)(self->field_3378 + row->field_0x12);
+        self->unk17E4.field_55 = (u8)(self->unk17E4.field_55 + (u8)row->field_0x14);
+        self->unk17E4.field_2E = (s16)(self->unk17E4.field_2E + row->field_0x16);
+        self->unk17E4.field_32 = (s16)(self->unk17E4.field_32 + row->field_0x18);
+        self->unk3374 = masked;
+        if (row->field_0x1E & 1) self->unk3374 |= 0x4000;
+        if (row->field_0x1E & 2) self->unk3374 |= 0x8000;
         if (self->CActorParam_getStatusTable() != NULL && i != 5) {
             int sv;
             cf::CActorParamF64Conv ux;
@@ -2421,36 +2421,36 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
                 if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0xD, &sv)) {
                     float f1 = (float)sv;
                     float f2 = (float)(u16)row->field_0x16;
-                    float f0 = (float)(s16)*(s16*)((u8*)self + 0x1812);
-                    *(s16*)((u8*)self + 0x1812) = (s16)(int)(f2 * (f1 / scale) + f0);
+                    float f0 = (float)(s16)self->unk17E4.field_2E;
+                    self->unk17E4.field_2E = (s16)(int)(f2 * (f1 / scale) + f0);
                     float g2 = (float)(u16)row->field_0x18;
-                    float g0 = (float)(s16)*(s16*)((u8*)self + 0x1816);
-                    *(s16*)((u8*)self + 0x1816) = (s16)(int)(g2 * (f1 / scale) + g0);
+                    float g0 = (float)(s16)self->unk17E4.field_32;
+                    self->unk17E4.field_32 = (s16)(int)(g2 * (f1 / scale) + g0);
                 }
                 if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x24, &sv)) {
-                    *(s16*)((u8*)self + 0x1816) = (s16)(*(s16*)((u8*)self + 0x1816) + (s16)sv);
+                    self->unk17E4.field_32 = (s16)(self->unk17E4.field_32 + (s16)sv);
                 }
                 break;
             case 2:
                 if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0xC, &sv)) {
                     float f1 = (float)sv;
                     float f2 = (float)(u16)row->field_0x16;
-                    float f0 = (float)(s16)*(s16*)((u8*)self + 0x1812);
-                    *(s16*)((u8*)self + 0x1812) = (s16)(int)(f2 * (f1 / scale) + f0);
+                    float f0 = (float)(s16)self->unk17E4.field_2E;
+                    self->unk17E4.field_2E = (s16)(int)(f2 * (f1 / scale) + f0);
                     float g2 = (float)(u16)row->field_0x18;
-                    float g0 = (float)(s16)*(s16*)((u8*)self + 0x1816);
-                    *(s16*)((u8*)self + 0x1816) = (s16)(int)(g2 * (f1 / scale) + g0);
+                    float g0 = (float)(s16)self->unk17E4.field_32;
+                    self->unk17E4.field_32 = (s16)(int)(g2 * (f1 / scale) + g0);
                 }
                 break;
             case 1:
                 if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0xB, &sv)) {
                     float f1 = (float)sv;
                     float f2 = (float)(u16)row->field_0x16;
-                    float f0 = (float)(s16)*(s16*)((u8*)self + 0x1812);
-                    *(s16*)((u8*)self + 0x1812) = (s16)(int)(f2 * (f1 / scale) + f0);
+                    float f0 = (float)(s16)self->unk17E4.field_2E;
+                    self->unk17E4.field_2E = (s16)(int)(f2 * (f1 / scale) + f0);
                     float g2 = (float)(u16)row->field_0x18;
-                    float g0 = (float)(s16)*(s16*)((u8*)self + 0x1816);
-                    *(s16*)((u8*)self + 0x1816) = (s16)(int)(g2 * (f1 / scale) + g0);
+                    float g0 = (float)(s16)self->unk17E4.field_32;
+                    self->unk17E4.field_32 = (s16)(int)(g2 * (f1 / scale) + g0);
                 }
                 break;
             default: break;
@@ -2458,28 +2458,28 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
         if (row->field_0x1A != 0) flag = false;
     }
-    *(u32*)((u8*)self + 0x3374) &= 0xFFFFFE00;
+    self->unk3374 &= 0xFFFFFE00;
     if (self->CActorParam_getStatusTable() != NULL) {
         if (flag) {
             int sv;
             if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x1A, &sv)) {
-                *(s16*)((u8*)self + 0x181A) = (s16)(*(s16*)((u8*)self + 0x181A) + (s16)sv);
+                self->unk17E4.field_36 = (s16)(self->unk17E4.field_36 + (s16)sv);
             }
             if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x99, &sv)) {
-                *(s16*)((u8*)self + 0x174E) = (s16)(*(s16*)((u8*)self + 0x174E) + (s16)sv);
+                self->unk1740.field_0E = (s16)(self->unk1740.field_0E + (s16)sv);
             }
-            *(u32*)((u8*)self + 0x3374) |= 0x00200000;
+            self->unk3374 |= 0x00200000;
         }
         int sv;
         if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x97, &sv)) {
-            s16 nv = (s16)(*(s16*)((u8*)self + 0x3378) - (s16)sv);
-            *(s16*)((u8*)self + 0x3378) = nv;
+            s16 nv = (s16)(self->field_3378 - (s16)sv);
+            self->field_3378 = nv;
             if (nv < 0) {
-                *(s16*)((u8*)self + 0x3378) = 0;
+                self->field_3378 = 0;
             } else if (nv > 100) {
-                *(s16*)((u8*)self + 0x3378) = 100;
+                self->field_3378 = 100;
             }
-            *(s16*)((u8*)self + 0x181A) = (s16)(*(s16*)((u8*)self + 0x181A) + *(s16*)((u8*)self + 0x3378));
+            self->unk17E4.field_36 = (s16)(self->unk17E4.field_36 + self->field_3378);
         }
     }
     cf::CActorParamArtsRow* row5 = (cf::CActorParamArtsRow*)CtrlObjectParam_GetArtsStatsRow(&arg->field_0x1C, 5);
@@ -2491,9 +2491,9 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
         cf::CAttackParam* atk = (cf::CAttackParam*)getAtkParam(arts2, i);
         atk->unk40 = row5->field_0x1D;
         atk->unk3C = (u16)getArtsTier(row5->field_0x1D);
-        float gauge = *(float*)((u8*)self + 0x182C);
+        float gauge = self->unk17E4.field_48;
         if (gauge == def) {
-            gauge = *(float*)((u8*)self + 0x1828);
+            gauge = self->unk17E4.unk44;
         }
         atk->unk60 = gauge;
     }
@@ -3003,18 +3003,18 @@ void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // (Func33/41); with flag==0 to slots 0x11C/0x13C (Func34/42).
 void CActorParam_commitArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, int flag) {
     if (flag != 0) {
-        self->CActorParam_setHp(*(float*)((u8*)self + 0x17f4));
-        self->CActorParam_setHitCharge(*(float*)((u8*)self + 0x17f8));
+        self->CActorParam_setHp(self->unk17E4.field_10);
+        self->CActorParam_setHitCharge(self->unk17E4.field_14);
     } else {
-        self->CActorParam_addHp(*(float*)((u8*)self + 0x17f4));
-        self->CActorParam_addHitCharge(*(float*)((u8*)self + 0x17f8));
+        self->CActorParam_addHp(self->unk17E4.field_10);
+        self->CActorParam_addHitCharge(self->unk17E4.field_14);
     }
 }
 // us-8017e644: retail symbol is Fv; the real ABI passes (self, val).
 // Clears the bit-25 status flag at 0x3374, then with val==0 triggers the
 // battle-start cue Func5(1), otherwise feeds val (as float) to Func34.
 void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(cf::CActorParam* self, int val) {
-    *(u32*)((u8*)self + 0x3374) &= ~0x02000000;
+    self->unk3374 &= ~0x02000000;
     if (val == 0) {
         self->CActorParam_commitArtsStatus(1);
     } else {
@@ -3077,13 +3077,13 @@ extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorPara
 void CActorParam_addArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self, float delta) {
     float b;
     float a = self->CActorParam_getArtsGauge();
-    float cur = *(float*)((u8*)self + 0x17F0) + delta;
-    float max = *(float*)((u8*)self + 0x17FC);
-    *(float*)((u8*)self + 0x17F0) = cur;
+    float cur = self->unk17E4.field_0C + delta;
+    float max = self->unk17E4.field_18;
+    self->unk17E4.field_0C = cur;
     if (cur < lbl_eu_806677E4) {
-        *(float*)((u8*)self + 0x17F0) = lbl_eu_806677E4;
+        self->unk17E4.field_0C = lbl_eu_806677E4;
     } else if (cur > max) {
-        *(float*)((u8*)self + 0x17F0) = max;
+        self->unk17E4.field_0C = max;
     }
     b = self->CActorParam_getArtsGauge();
     self->CActorParam_getActor();
@@ -3311,7 +3311,7 @@ void CActorParam_accumulateTension__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // Raises the 0x3358 status field up to val, unless the actor (Func2) exists
 // and reports an active blocker (isBattleStatusActive at obj+8 with id 0xBF).
 void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, int val) {
-    if (val < (s16)*(u16*)((u8*)self + 0x3358)) {
+    if (val < (s16)self->unk3358) {
         void* obj = self->CActorParam_getActor();
         if (obj != NULL) {
             void* obj2 = self->CActorParam_getActor();
@@ -3320,7 +3320,7 @@ void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, 
             }
         }
     }
-    *(u16*)((u8*)self + 0x3358) = (s16)val;
+    self->unk3358 = (s16)val;
 }
 // us-8017f67c: retail symbol is Fv; the real ABI passes (self, arg). Sets the
 // 0x335A status counter to (s16)arg clamped to [0, 4], zeroes 0x3358, then
@@ -3328,7 +3328,7 @@ void CActorParam_raiseTensionValue__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // actor (isBattleStatusActive id 0xBF) aborts the update; the id-0x73 arts scan
 // (arg <= 0) cancels it for dead arts.
 void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, int arg) {
-    s16 orig = *(s16*)((u8*)self + 0x335A);
+    s16 orig = (s16)self->unk335A;
     if (arg < orig) {
         void* obj = self->CActorParam_getActor();
         if (obj != NULL) {
@@ -3360,15 +3360,15 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
         }
     }
     s16 s = (s16)arg;
-    *(s16*)((u8*)self + 0x335A) = (u16)arg;
+    self->unk335A = (u16)arg;
     if (s < 0) {
-        *(s16*)((u8*)self + 0x335A) = 0;
+        self->unk335A = 0;
     } else if (s > 4) {
-        *(s16*)((u8*)self + 0x335A) = 4;
+        self->unk335A = 4;
     }
     SysWinLog_TickCounter2C(arg);
-    *(u16*)((u8*)self + 0x3358) = 0;
-    s16 clamped = *(s16*)((u8*)self + 0x335A);
+    self->unk3358 = 0;
+    s16 clamped = (s16)self->unk335A;
     u8* obj = (u8*)self->CActorParam_getActor();
     if (obj != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
@@ -3379,18 +3379,18 @@ void CActorParam_resetTensionState__Q22cf11CActorParamFv(cf::CActorParam* self, 
 // then if the actor (Func2) exists forwards (actor, clamped, original) to
 // CCharVoiceMan_EnqueueGaugeClampVoice.
 void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, int delta) {
-    s16 cur = *(s16*)((u8*)self + 0x335A);
+    s16 cur = (s16)self->unk335A;
     s16 orig = *(volatile s16*)((u8*)self + 0x335A);
     s16 sum = (s16)(cur + (s16)delta);
-    *(s16*)((u8*)self + 0x335A) = (u16)sum;
+    self->unk335A = (u16)sum;
     if (sum < 0) {
-        *(s16*)((u8*)self + 0x335A) = 0;
+        self->unk335A = 0;
     } else if (sum > 4) {
-        *(s16*)((u8*)self + 0x335A) = 4;
+        self->unk335A = 4;
     }
     SysWinLog_TickCounter2C(delta);
-    *(u16*)((u8*)self + 0x3358) = 0;
-    s16 clamped = *(s16*)((u8*)self + 0x335A);
+    self->unk3358 = 0;
+    s16 clamped = (s16)self->unk335A;
     u8* obj = (u8*)self->CActorParam_getActor();
     if (obj != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)obj, clamped, orig);
@@ -3410,20 +3410,20 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
             return;
         }
     }
-    s16 cur = *(s16*)((u8*)self + 0x335A);
+    s16 cur = (s16)self->unk335A;
     s16 orig = *(volatile s16*)((u8*)self + 0x335A); // un-CSE'd dual load (vf158 pattern)
     int raw = cur - (s16)arg;
     s16 sum = (s16)raw;
-    *(s16*)((u8*)self + 0x335A) = (u16)raw;
+    self->unk335A = (u16)raw;
     if (sum < 0) {
-        *(s16*)((u8*)self + 0x335A) = 0;
+        self->unk335A = 0;
     } else if (sum > 4) {
-        *(s16*)((u8*)self + 0x335A) = 4;
+        self->unk335A = 4;
     }
     SysWinLog_TickCounter2C(arg);
     s16 idx = *(volatile s16*)((u8*)self + 0x335A); // un-CSE'd third counter read (retail lha at +0xa8)
-    *(u16*)((u8*)self + 0x3358) = (u16)(int)(*(float*)((u8*)self + 0x3368) * (float)self->unk335C[idx]);
-    if (*(s16*)((u8*)self + 0x335A) <= 0) {
+    self->unk3358 = (u16)(int)(self->unk3368 * (float)self->unk335C[idx]);
+    if ((s16)self->unk335A <= 0) {
         if (self->CActorParam_getStatusTable() != NULL) {
             void* o = self->CActorParam_getActor();
             if (*(u32*)((u8*)o + 0x3F00) & 2) {
@@ -3437,14 +3437,14 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
                         if (*(u16*)((u8*)actor + 0x3F28) == 1) {
                             static s16 sv;
                             sv = 1;
-                            *(s16*)((u8*)self + 0x335A) = (u16)sv;
+                            self->unk335A = (u16)sv;
                             if (sv < 0) {
-                                *(s16*)((u8*)self + 0x335A) = 0;
+                                self->unk335A = 0;
                             } else if (sv > 4) {
-                                *(s16*)((u8*)self + 0x335A) = 4;
+                                self->unk335A = 4;
                             }
                             SysWinLog_TickCounter2C(1);
-                            *(u16*)((u8*)self + 0x3358) = 0;
+                            self->unk3358 = 0;
                             __dt__80043E88(&holder, -1);
                             return;
                         }
@@ -3454,7 +3454,7 @@ void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv(cf::CActorParam* self, 
             }
         }
     }
-    s16 clamped = *(s16*)((u8*)self + 0x335A);
+    s16 clamped = (s16)self->unk335A;
     u8* o = (u8*)self->CActorParam_getActor();
     if (o != NULL) {
         CCharVoiceMan_EnqueueGaugeClampVoice((int)o, clamped, orig);
@@ -3631,15 +3631,15 @@ extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(cf::CActorPar
 
 // us-8017e9xx family: thin float-forwarders onto owned gauge slots.
 extern "C" void CActorParam_applyStoredHp__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addHp(*(float*)((u8*)self + 0x17f4));
+    self->CActorParam_addHp(self->unk17E4.field_10);
 }
 
 extern "C" void CActorParam_applyStoredHitCharge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addHitCharge(*(float*)((u8*)self + 0x17f8));
+    self->CActorParam_addHitCharge(self->unk17E4.field_14);
 }
 
 extern "C" void CActorParam_applyStoredArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addArtsGauge(*(float*)((u8*)self + 0x17fc));
+    self->CActorParam_addArtsGauge(self->unk17E4.field_18);
 }
 
 // .rodata 0x10: BDAT column-name block with a leading NUL (the name is

@@ -131,6 +131,34 @@ def _branch_exists_git(branch):
     return gitutil.branch_exists(branch)
 
 
+# Harness thinking tiers are model-agnostic ("max" = the model's top tier).
+# Models expose different thinking ids, so map the requested tier onto what
+# the selected model actually accepts.
+THINKING_ORDER = ["off", "minimal", "low", "medium", "high", "xhigh", "max"]
+MODEL_THINKING = {
+    "opencode-go/muse-spark-1.3-contributor":
+        ("minimal", "low", "medium", "high", "xhigh"),
+    "opencode-go/deepseek-v4.1-flash": ("low", "high", "max"),
+}
+
+
+def resolve_thinking(model, thinking):
+    """Translate a harness thinking tier to a level the model supports.
+
+    Prefers the strongest supported level at or below the request (so
+    "max" -> "xhigh" on Muse, "medium" -> "low" on DeepSeek); models we
+    don't know pass through unchanged.
+    """
+    supported = MODEL_THINKING.get(model)
+    if not supported or thinking in supported or thinking not in THINKING_ORDER:
+        return thinking
+    idx = THINKING_ORDER.index(thinking)
+    below = [s for s in supported if THINKING_ORDER.index(s) <= idx]
+    if below:
+        return max(below, key=THINKING_ORDER.index)
+    return min(supported, key=THINKING_ORDER.index)
+
+
 def launch(prompt, *, model, thinking, title, workspace_id=None, cwd=None, labels=None,
            wait_seconds=90):
     """Launch a background agent into an existing workspace (or a local cwd).
@@ -140,7 +168,7 @@ def launch(prompt, *, model, thinking, title, workspace_id=None, cwd=None, label
     Returns (agent_id, stdout).
     """
     cmd = ["run", "--background", "--provider", "pi",
-           "--model", model, "--thinking", thinking, "--title", title]
+           "--model", model, "--thinking", resolve_thinking(model, thinking), "--title", title]
     if workspace_id:
         cmd += ["--workspace", workspace_id]
     elif cwd:

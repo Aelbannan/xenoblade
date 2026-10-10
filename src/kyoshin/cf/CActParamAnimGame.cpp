@@ -2326,15 +2326,9 @@ void cf::CActParamAnimGame::syncYawToLink() {
 }
 
 extern "C" bool pushYawToLink(void* r3) {
-    int r0 = *(int*)((char*)r3 + 0x270);
-    int r4 = 0;
-    if ((r0 & 0x800000) != 0) {
-        r4 = 1;
-    } else {
-        r0 = *(int*)((char*)r3 + 0x2f0);
-        if ((r0 & 0x800000) != 0) {
-            r4 = 1;
-        }
-    }
-    return r4 != 0;
+    int v0 = *(int*)((char*)r3 + 0x270);
+    bool f = false;
+    if (((v0 & 0x800000) != 0) || ((*(int*)((char*)r3 + 0x2f0) & 0x800000) != 0))
+        f = true;
+    return f;
 }

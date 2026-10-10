@@ -692,7 +692,6 @@ CBattleManager* CBattleManager::getInstance() {
     }
 
 }
-#pragma schedule on
 
 bool CBattleMan_ListHasValue(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
 void cf::CBattleManager::CBattleMan_ClearStateMask(u32 mask) {
@@ -8409,9 +8408,8 @@ struct E2A9C_BattleMoveData {
 // vtable dispatch helpers (r23/r24 are CfObjectActor-derived; every slot
 // below goes through the owning-class real virtual directly)
 // ---------------------------------------------------------------------------
-#pragma schedule on
 
-// (Former e_vf/vf/subVf manual-dispatch helpers removed: every slot now
+// (Former e_vf/vf/subVf manual-dispatch helpers removed
 // goes through the owning-class real virtual directly at the call site.)
 
 
@@ -10509,7 +10507,6 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     if (*outDamage < lbl_eu_80666DDC) *outDamage = lbl_eu_80666DDC;  // 0x800E9CCC
 }
 
-#pragma schedule on
 // ---- spreadChainArtsHits (0x800EA63C) --------------------------------------------
 // Chain-arts hit spread: refreshes the arts rows, then for each player action
 // found in the (0x20, 0x800) enum list emits chain events (0x35 arts / 0x13

@@ -561,7 +561,7 @@ struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
 extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
 
 // sdata2 float constants used by setEffectScale / vision state checks.
-extern "C" f32 lbl_eu_80667CD4;
+extern "C" const f32 lbl_eu_80667CD4;
 extern "C" f32 lbl_eu_80667CF0;
 extern "C" f32 lbl_eu_80667CD0;
 extern "C" f32 lbl_eu_80667CE4;
@@ -575,7 +575,7 @@ extern "C" f32 lbl_eu_80667CE0;
 extern "C" f32 lbl_eu_80667D08;
 extern "C" f32 lbl_eu_80667D0C;
 extern "C" f32 lbl_eu_80667D10;
-extern "C" const f64 lbl_eu_80667D28;
+extern "C" f64 lbl_eu_80667D28;
 extern "C" f32 lbl_eu_80667D30;
 extern "C" f32 lbl_eu_80667D34;
 extern "C" f32 lbl_eu_80667D38;
@@ -641,7 +641,7 @@ extern "C" f32 lbl_eu_80667CDC;
 extern "C" f32 lbl_eu_80667CD8;
 extern "C" f32 lbl_eu_80667D50;
 extern "C" f32 lbl_eu_80667D54;
-extern "C" const f64 lbl_eu_80667D58;
+extern "C" f64 lbl_eu_80667D58;
 
 // Mode-dispatch helpers used by routeVisionSlotFx's per-mode FX setup.
 extern "C" void restartVisionSlots(u32 a);

@@ -38,10 +38,20 @@ The goal is to match the original source shape! No cheating, temporary hacks, or
   working-tree files.
 - Submit LLM-assisted matching upstream; commit `orig/`, `main.dol`, RELs, or disc assets; or decompile to asm/registers outside the §17.6 PS backend.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so launch it outside the restricted process.
+- Call `objcopy` with a single file operand — GNU objcopy treats a missing output as in-place
+  conversion and rewrites the input file (`objcopy -O binary --only-section=.text foo.o` dumps
+  `foo.o` raw). Always pass an output; use `tools/coop/lib/objread.py` for reads. Enforced by
+  `tools/coop/check_script_hazards.py` and `tools/coop/tests/test_objcopy_hazard.py`.
 - **Treat the repo root as sacred** — do not dump scratch files, downloads, binaries, zip archives,
   ad-hoc scripts, notes, or other tmp junk into `/` (e.g. `ninja`, `ninja.zip`, one-off logs).
   Use `/tmp`, a gitignored scratch dir, or delete when done. Leave the root layout unchanged unless
   the task explicitly requires a root-level project file.
+
+## Subagents (paseo)
+
+**Read `.agents/skills/paseo-subagents/SKILL.md` before launching or steering subagents** — paseo
+launch/interaction workflow plus the approved provider/model (`pi` +
+`opencode-go/muse-spark-1.3-contributor`) and thinking tiers.
 
 ## More commands
 

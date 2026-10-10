@@ -452155,8 +452155,8 @@
       "size": "0x9C",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
       "called_functions": [
@@ -452169,8 +452169,8 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SeqSound.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8041cfbc",

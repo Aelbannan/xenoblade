@@ -80,8 +80,8 @@ void __ct__80088904(cf::CCtrlMoveBase* ths);
 long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
-// initial state-function ptmf constant.
-extern int (CCtrlMoveNpc::*const lbl_eu_80532DA8)();
+// initial state-function ptmf triple (retail .data 0x80532DA8, 12 bytes).
+extern u32 lbl_eu_80532DA8[3];
 
 // bdat helpers / task helpers / movement helper (unmangled global symbols).
 // Bdat_GetTable_AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
@@ -138,11 +138,13 @@ extern const f32 lbl_eu_80667C68;
 extern const f32 lbl_eu_80667C6C;
 extern const f32 lbl_eu_80667C70;
 extern const f32 lbl_eu_80667C74;
-extern const f32 lbl_eu_80667C78;
+extern const f32 lbl_eu_80667C78[2];
 extern const f32 lbl_eu_8066A210;   // pi/2
 
-// bdat column string table + row bitmap + other globals.
-extern const char lbl_eu_80503D30[];
+// bdat column string table (mutable decl: defining it const would let MWCC
+// fold the known bytes into isNpcRowUsable and reschedule it; the section
+// is still .rodata via the definition below).
+extern char lbl_eu_80503D30[];
 extern u32 lbl_eu_805757E0[];
 extern void* lbl_eu_806640B4;   // active table bdat data
 extern u32 lbl_eu_80663D90;     // global value copied into mField78
@@ -218,7 +220,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
 
     maskMoveChildFlags((cf::CCtrlMoveBase*)ths);
     ths->mVec18 = ml::CVec3::zero;
-    ths->mStateFunc = lbl_eu_80532DA8;
+    ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(lbl_eu_80532DA8);
 }
 }
 
@@ -364,7 +366,7 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
     // Idle tail: clear the approach rate; when paramB allows it, also run the
     // turn-rate helper before dropping back to the idle state function.
     ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
-    if (ths->mField6C < lbl_eu_80667C78) {
+    if (ths->mField6C < lbl_eu_80667C78[0]) {
         CtrlMoveEne_CommitHeadAngle(ths->mBaseData,
                       ths->mField6C * lbl_eu_8066A210);
         ths->mStateFunc = __ptmf_null;
@@ -381,14 +383,8 @@ extern "C" void NpcMove_ClearRowBmp() {
     memset(lbl_eu_805757E0, 0, 0x10);
 }
 // ============================================================================
-// Retail data owned by this TU (dissolved blob; decomp emitted .text only).
-// Defined here at EOF so -ipa codegen for the functions above is unaffected.
-// NOTE (wave DL): the .sdata2 float table (9 labels) stays UNDEF -- consecutive
-// named floats 8-align (odd-offset labels need +0x4) and the WIP fp code that
-// reads them would reschedule (cf. CFade/CREvtMem). All nine need rule-side
-// pool naming (eight f32: 0.1/0.0/0.2/3.6/1.0/~0.04/4.0/0.5 + f64 360.0).
-// The 2DA8 ptmf triple stays UNDEF for the same reason (a member-pointer
-// constant for a free function is unsourcable); its bytes rebuild below.
+// Retail data owned by this TU. Defined here at EOF so -ipa codegen for
+// the functions above is unaffected.
 // ============================================================================
 
 // Cross-TU data slots (flat retail names).
@@ -397,9 +393,9 @@ extern u32 lbl_eu_80661C18;
 extern u32 lbl_eu_80662548[];  // sdata word pair (defined below).
 
 // [.data] 0x80532DA8-0x80532DB4 (12B): ptmf-shaped triple {0, -1, tickNpcMove}.
-// Kept under a gap name: the TU declares 2DA8 as a member-pointer (used by
-// beginNpcMove) which cannot be defined from a free-function address.
-u32 gap_0C_80532DA8_data[3] = {
+// Named with the retail label: the word-typed declaration above round-trips
+// the 12-byte copy into mStateFunc with identical codegen.
+u32 lbl_eu_80532DA8[3] = {
     0x00000000, 0xFFFFFFFF, (u32)&cf::tickNpcMove,
 };
 
@@ -429,7 +425,7 @@ char lbl_eu_80503D20[0x10] = {
     0x63,0x66,0x3A,0x3A,0x43,0x74,0x72,0x6C,0x4D,0x6F,0x76,0x65,0x4E,0x70,0x63,0x00,
 };
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
-char gap_40_80503D30_rodata[0x40] = {
+char lbl_eu_80503D30[0x40] = {
     0x65,0x72,0x61,0x73,0x65,0x00,0x71,0x75,0x65,0x73,0x74,0x49,0x44,0x00,0x71,0x73,
     0x74,0x5F,0x73,0x66,0x6C,0x67,0x00,0x71,0x73,0x74,0x5F,0x65,0x66,0x6C,0x67,0x00,
     0x73,0x66,0x6C,0x67,0x31,0x00,0x65,0x66,0x6C,0x67,0x31,0x00,0x73,0x66,0x6C,0x67,
@@ -440,3 +436,20 @@ char gap_40_80503D30_rodata[0x40] = {
 #pragma section data_type ".sdata" ".sdata"
 extern __declspec(section ".sdata") u32 lbl_eu_80662548[2] = { (u32)&lbl_eu_80503D20, (u32)&lbl_eu_80532DC0 };
 #pragma section data_type ".data" ".data"
+
+// [.sdata2] 0x80667C58-0x80667C80 (40B): movement float table in retail order
+// (splits .sdata2 80667C58-80): 0.1/0.0/0.2/3.6/1.0/~0.04/4.0/0.5/360.0+0.0.
+// The ~0.04 slot uses the 0.040000003f spelling (same as CtrlNpc's table:
+// plain 0.04f rounds to ...70A, retail is ...70B). lbl_eu_80667C78 is an
+// 8-byte object (symbols.txt size 0x8), defined as an f32 pair; the code
+// reads element [0]. Defined at EOF so the const values cannot propagate
+// into the functions above (their lfs loads stay symbolic, as retail).
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C58 = 0.1f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C5C = 0.0f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C60 = 0.2f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C64 = 3.6f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C68 = 1.0f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C6C = 0.040000003f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C70 = 4.0f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C74 = 0.5f;
+extern __declspec(section ".sdata2") const f32 lbl_eu_80667C78[2] = { 360.0f, 0.0f };

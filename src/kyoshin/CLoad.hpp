@@ -34,7 +34,8 @@ struct CLoadVtblBase {
 // while a file request completes, driven by CEventFile callbacks.
 class CLoad : public CLoadVtblBase {
 public:
-    CLoad(u8 arg);
+    // (no ctor declaration: the ctor __ct__CLoad is provided by CLoad.cpp
+    // as an extern "C" retail-symbol function.)
     ~CLoad();
     bool OnFileEvent(CEventFile* pEventFile);
 

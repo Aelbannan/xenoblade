@@ -113,7 +113,7 @@ extern "C" void* __ct__CMenuUpdate(void* self, u32 pScene, u32 type, u32 arg1, u
     __ct__IScnRender((u8*)self + 0x70);
 
     u32* vtable = lbl_eu_8052E7B0;
-obj->mScene = (CScn*)pScene;
+    obj->mScene = (CScn*)pScene;
     *(u32*)((u8*)obj + 0x10) = (u32)vtable;
     *(u32*)((u8*)obj + 0x6C) = (u32)(vtable + 9);
     *(u32*)((u8*)obj + 0x70) = (u32)(vtable + 43);
@@ -140,7 +140,7 @@ obj->mScene = (CScn*)pScene;
     memset(obj->mEntries, 0, 0x80);
     memset(&obj->mEntries[8], 0, 0x10);
 
-MenuUpdate_UpsertEntry(obj, type, arg1, arg2, arg3);
+    MenuUpdate_UpsertEntry(obj, type, arg1, arg2, arg3);
     return obj;
 }
 
@@ -308,13 +308,13 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
         }
     }
     if (lbl_eu_80664198 != 0) {
-MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, mode, arg1, arg2, arg3);
+        MenuUpdate_UpsertEntry((CMenuUpdate*)(void*)(u32)lbl_eu_80664198, mode, arg1, arg2, arg3);
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
     void* obj = allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem);
     if (obj != 0) {
-obj = __ct__CMenuUpdate(obj, pScene, mode, arg1, arg2, arg3);
+        obj = __ct__CMenuUpdate(obj, pScene, mode, arg1, arg2, arg3);
     }
     lbl_eu_80664198 = (u32)obj;
     Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);

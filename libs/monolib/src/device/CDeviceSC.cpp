@@ -135,7 +135,7 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-bool func_eu_8044A600(){
+extern "C" bool func_eu_8044A600(){
     return SCGetLanguage() == 0;
 }
 

@@ -369,103 +369,103 @@ shared:
         ml::CVec3 vecB(lbl_eu_80666040, lbl_eu_80666064, lbl_eu_80666040);
         ml::CVec3 vec4C = self->pos3A8 + vecB;
         ml::CVec3 vec124 = vec4C;
-        int r31v = 1;
+        int needDefault = 1;
         if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec124, 0xa04, 0, 1, lbl_eu_80666060, lbl_eu_80666040)) {
             int count = ScnRes_GetEntryCount_E4AC();
             f32 f30 = lbl_eu_80666068 + self->pos3A8.y;
-            int r30v = -1;
+            int lowerIdx = -1;
             f32 f29 = lbl_eu_8066606C + self->pos3A8.y;
-            int r29v = -1;
+            int upperIdx = -1;
             f32 f28 = f30 - lbl_eu_80666070;
             f32 f24 = lbl_eu_80666050;
-            int r28v = -1;
+            int selIdx = -1;
             f32 f27 = lbl_eu_80666074 + f30;
-            int r27v = -1;
+            int refIdx = -1;
             f32 f26 = f30 - f24;
-            int r26v = -1;
+            int secIdx = -1;
             f32 f23 = f28;
-            int r25v;
-            for (r25v = 0; r25v < count; r25v++) {
+            int faceFlag;
+            for (faceFlag = 0; faceFlag < count; faceFlag++) {
                 ml::CVec3 vec208;
-                ScnRes_CopyEntryHead(&vec208, r25v);
-                if (ScnRes_EntryFlagThunk_E5A4(0x40000, r25v)) {
+                ScnRes_CopyEntryHead(&vec208, faceFlag);
+                if (ScnRes_EntryFlagThunk_E5A4(0x40000, faceFlag)) {
                     f32 y = vec208.y;
                     if (y >= f29) {
-                        if (f27 > y) { f27 = y; r29v = r25v; }
+                        if (f27 > y) { f27 = y; upperIdx = faceFlag; }
                     } else {
                         if (f24 + self->pos3A8.y > y) {
-                            if (f26 < y) { f26 = y; r27v = r25v; }
-                            if (f23 < y) { f23 = y; r26v = r25v; }
+                            if (f26 < y) { f26 = y; refIdx = faceFlag; }
+                            if (f23 < y) { f23 = y; secIdx = faceFlag; }
                         }
                     }
                 } else {
-                    CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(r25v);
+                    CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(faceFlag);
                     f32 y = vec208.y;
                     if (obj->y > 0.0f) {
                         if (f30 > y) {
-                            if (f28 < y) { f28 = y; r30v = r25v; }
-                            if (f23 < y) { f23 = y; r26v = -1; }
+                            if (f28 < y) { f28 = y; lowerIdx = faceFlag; }
+                            if (f23 < y) { f23 = y; secIdx = -1; }
                         }
                     } else {
                         if (f29 > y) {
-                            if (f28 < y) { f28 = y; r30v = r25v; }
-                            if (f23 < y) { f23 = y; r26v = -1; }
+                            if (f28 < y) { f28 = y; lowerIdx = faceFlag; }
+                            if (f23 < y) { f23 = y; secIdx = -1; }
                         }
                     }
                 }
             }
-            if (r30v != -1) {
-                r28v = r30v;
+            if (lowerIdx != -1) {
+                selIdx = lowerIdx;
                 if (self->vel3C0.y <= 0.0f) {
                     if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_8066606C) {
                         if ((self->flags4EC & 4) == 0) {
                             ml::CVec3 vec1fc;
-                            if (ScnRes_FetchScaleRow_E53C(&vec1fc, r30v)) {
+                            if (ScnRes_FetchScaleRow_E53C(&vec1fc, lowerIdx)) {
                                 f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                                 vec1fc *= fr;
                                 *(u32*)&self->move3F0.x = *(u32*)&vec1fc.x;
                                 *(u32*)&self->move3F0.y = *(u32*)&vec1fc.y;
                                 *(u32*)&self->move3F0.z = *(u32*)&vec1fc.z;
-                                r31v = 0;
+                                needDefault = 0;
                             }
                         }
                     }
                 }
                 self->f47C = f28;
             }
-            if (r29v != -1) {
-                r25v = 0;
+            if (upperIdx != -1) {
+                faceFlag = 0;
                 self->f4FC = f27;
-                if (r30v != -1) self->f4F8 = f27 - f28;
-                r28v = r29v;
+                if (lowerIdx != -1) self->f4F8 = f27 - f28;
+                selIdx = upperIdx;
                 if ((self->flags4EC & 4) == 0) {
                     ml::CVec3 vec1f0;
-                    if (ScnRes_FetchScaleRow_E53C(&vec1f0, r29v)) {
+                    if (ScnRes_FetchScaleRow_E53C(&vec1f0, upperIdx)) {
                         f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                         vec1f0 *= fr;
                         *(u32*)&self->move3F0.x = *(u32*)&vec1f0.x;
                         *(u32*)&self->move3F0.y = *(u32*)&vec1f0.y;
                         *(u32*)&self->move3F0.z = *(u32*)&vec1f0.z;
-                        r31v = 0;
+                        needDefault = 0;
                     }
                 }
                 if (self->f4F8 > self->f508) {
                     f23 = lbl_eu_80666044 + self->pos3A8.y;
-                    int r22v = -1;
+                    int bandIdx = -1;
                     f27 = lbl_eu_8066607C;
                     f29 = lbl_eu_80666040;
                     f24 = lbl_eu_80666078 + f23;
-                    int r21v;
-                    for (r21v = 0; r21v < count; r21v++) {
-                        if (((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(r21v))->y < 0.0f
-                            && ((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(r21v))->y >= f27) {
-                            f32 g = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r21v))->y;
-                            if (f23 < g && f24 > g) { f24 = g; r22v = r21v; }
+                    int cand;
+                    for (cand = 0; cand < count; cand++) {
+                        if (((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(cand))->y < 0.0f
+                            && ((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(cand))->y >= f27) {
+                            f32 g = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(cand))->y;
+                            if (f23 < g && f24 > g) { f24 = g; bandIdx = cand; }
                         }
                     }
-                    if (r22v != -1) {
+                    if (bandIdx != -1) {
                         ml::CVec3 vec1e4;
-                        ScnRes_CopyEntryMid(&vec1e4, r22v);
+                        ScnRes_CopyEntryMid(&vec1e4, bandIdx);
                         if (vec1e4.x * self->face3CC.x + vec1e4.z * self->face3CC.z <= 0.0f) {
                             ml::CVec3 vec1d8;
                             vec1d8.x = vec1e4.x;
@@ -496,18 +496,18 @@ shared:
                             *(u32*)&self->move3F0.x = *(u32*)&vec1d8.x;
                             *(u32*)&self->move3F0.y = *(u32*)&vec1d8.y;
                             *(u32*)&self->move3F0.z = *(u32*)&vec1d8.z;
-                            r25v = 1;
-                            r31v = 0;
+                            faceFlag = 1;
+                            needDefault = 0;
                         }
                     }
                 }
             }
-            if (r28v != -1) {
-                CActParamAnimGameBeObj* o = (CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r28v);
+            if (selIdx != -1) {
+                CActParamAnimGameBeObj* o = (CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(selIdx);
                 *(u32*)&self->tgt3E4.x = *(u32*)&o->x;
                 *(u32*)&self->tgt3E4.y = *(u32*)&o->y;
                 *(u32*)&self->tgt3E4.z = *(u32*)&o->z;
-                CActParamAnimGameBeObj* o2 = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(r28v);
+                CActParamAnimGameBeObj* o2 = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(selIdx);
                 *(u32*)&self->hit3D8.x = *(u32*)&o2->x;
                 *(u32*)&self->hit3D8.y = *(u32*)&o2->y;
                 *(u32*)&self->hit3D8.z = *(u32*)&o2->z;
@@ -519,7 +519,7 @@ shared:
                     vec.z = self->tgt3E4.z;
                     ((CActParam7ECTarget*)sub)->func14(&vec);
                 }
-                if ((self->flags4EC & 0x20000000) && r25v == 0) {
+                if ((self->flags4EC & 0x20000000) && faceFlag == 0) {
                     f32 dot = self->hit3D8.x * self->face3CC.x + self->tgt3E4.z * self->face3CC.z;
                     if (dot <= 0.0f) {
                         ml::CVec3 v1c0(self->hit3D8.x, 0.0f, self->tgt3E4.z);
@@ -542,46 +542,46 @@ shared:
                     }
                 }
                 u32 local8 = 0;
-                if (r30v != -1) {
-                    if (ScnRes_EntryFlagThunk_E5A4(0x10000, r30v)) {
-                        ScnRes_TableByteThunk_E5A8(&local8, 0x10000, r30v, 0);
+                if (lowerIdx != -1) {
+                    if (ScnRes_EntryFlagThunk_E5A4(0x10000, lowerIdx)) {
+                        ScnRes_TableByteThunk_E5A8(&local8, 0x10000, lowerIdx, 0);
                     }
-                } else if (r29v != -1) {
-                    if (ScnRes_EntryFlagThunk_E5A4(0x10000, r29v)) {
-                        ScnRes_TableByteThunk_E5A8(&local8, 0x10000, r29v, 0);
+                } else if (upperIdx != -1) {
+                    if (ScnRes_EntryFlagThunk_E5A4(0x10000, upperIdx)) {
+                        ScnRes_TableByteThunk_E5A8(&local8, 0x10000, upperIdx, 0);
                     }
                 }
                 self->field4AC = local8;
-                if (ScnRes_IsEntryValued_E604(r28v)) {
+                if (ScnRes_IsEntryValued_E604(selIdx)) {
                     self->flags4EC |= 0x1000000;
                 }
-                if (ScnRes_EntryFlagThunk_E5A4(0x4000, r28v)) {
+                if (ScnRes_EntryFlagThunk_E5A4(0x4000, selIdx)) {
                     if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_80666050) {
                         self->flags4EC |= 0x80;
                     }
                 }
-                if (r27v != -1 && r29v == -1) {
-                    if (f26 < f28) r27v = r28v;
+                if (refIdx != -1 && upperIdx == -1) {
+                    if (f26 < f28) refIdx = selIdx;
                 } else {
-                    r27v = r28v;
+                    refIdx = selIdx;
                 }
-                if (ScnRes_EntryFlagThunk_E5A4(0x20000, r27v)) {
-                    f32 objY = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r27v))->y;
+                if (ScnRes_EntryFlagThunk_E5A4(0x20000, refIdx)) {
+                    f32 objY = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(refIdx))->y;
                     if (self->pos3A8.y - objY <= lbl_eu_80666044) {
                         self->flags4EC |= 0x1000000;
-                        ScnRes_TableByteThunk_E5A8(&local8, 0x20000, r27v, 1);
+                        ScnRes_TableByteThunk_E5A8(&local8, 0x20000, refIdx, 1);
                         self->id4B0 = local8;
                     }
                 }
-                if (ScnRes_EntryFlagThunk_E5A4(0x8000, r28v)) {
+                if (ScnRes_EntryFlagThunk_E5A4(0x8000, selIdx)) {
                     self->flags4EC |= 0x800000;
                 } else {
                     self->flags4EC &= ~0x800000;
                 }
-                if (ScnRes_EntryFlagThunk_E5A4(0x400, r28v)) {
+                if (ScnRes_EntryFlagThunk_E5A4(0x400, selIdx)) {
                     if ((self->flags0C & 2) != 0 && (self->flags270 & 0x20) == 0) {
                         ml::CVec3 vec1a8;
-                        ScnRes_CopyEntryMid(&vec1a8, r28v);
+                        ScnRes_CopyEntryMid(&vec1a8, selIdx);
                         ml::CVec3 vec19c = self->move3F0;
                         f32 f5 = self->f390 * getSecPerFrame__9CDeviceVIFv();
                         ml::CVec3 tmp = self->vel3C0 * f5;
@@ -642,7 +642,7 @@ shared:
                 } else {
                     self->flags0C &= ~0x40000;
                 }
-                if (r26v != -1) {
+                if (secIdx != -1) {
                     self->flags4EC |= 0x8000000;
                 }
                 if (self->flags530 & 0x400) {
@@ -656,7 +656,7 @@ shared:
                         }
                     }
                 }
-                if (r31v != 0) {
+                if (needDefault != 0) {
                     ml::CVec3 v = self->move3F0 * f31v;
                     *(u32*)&self->move3F0.x = *(u32*)&v.x;
                     *(u32*)&self->move3F0.y = *(u32*)&v.y;
@@ -1867,7 +1867,7 @@ bool __declspec(noinline) probeWallPair(cf::CActParamAnimGame* selfV) {
 int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
     ml::CVec3 moveV(*move);
     ml::CVec3 v134(0.0f, 0.0f, 0.0f);
-    int r31v = 0;
+    int groundOk = 0;
 
     if (field_4E8 != 0) {
         if (field_4EC & 0x8) {
@@ -1918,7 +1918,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         if (ColiResolveNodeMove(&field_4E8->f60C, &v134, pos, move)) {
             if (v134.y > lbl_eu_8066606C) {
                 field_47C = pos->y + v134.y;
-                r31v = 1;
+                groundOk = 1;
             }
         } else {
             if (v134.y > lbl_eu_8066606C) {
@@ -1944,26 +1944,26 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         if (((BE398Fn)ScnRes_VertRayForward_E398)(&va4, field_4A8 & ~0x2000, 0, 1, lbl_eu_80666130, lbl_eu_8066AF20)) {
             if (field_4EC & 0x8) {
                 f32 f29v = lbl_eu_80666134;
-                int r27v = -1;
+                int topIdx = -1;
                 f32 f31v = 0.0f;
-                int r26v;
-                for (r26v = 0; r26v < ScnRes_GetEntryCount_E4AC(); r26v++) {
-                    if (((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(r26v))->y >= f31v) {
-                        if (f29v < ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r26v))->y) {
-                            f29v = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r26v))->y;
-                            r27v = r26v;
+                int idx;
+                for (idx = 0; idx < ScnRes_GetEntryCount_E4AC(); idx++) {
+                    if (((CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(idx))->y >= f31v) {
+                        if (f29v < ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(idx))->y) {
+                            f29v = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(idx))->y;
+                            topIdx = idx;
                         }
                     }
                 }
-                if (r27v >= 0) {
-                    if (ScnRes_EntryFlagThunk_E5A4(0x40000, r27v)) {
+                if (topIdx >= 0) {
+                    if (ScnRes_EntryFlagThunk_E5A4(0x40000, topIdx)) {
                         f32 f30v = f29v - lbl_eu_80666138;
-                        int r26v2;
-                        for (r26v2 = 0; r26v2 < ScnRes_GetEntryCount_E4AC(); r26v2++) {
-                            if (r27v != r26v2) {
-                                f32 g = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r26v2))->y;
+                        int alt;
+                        for (alt = 0; alt < ScnRes_GetEntryCount_E4AC(); alt++) {
+                            if (topIdx != alt) {
+                                f32 g = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(alt))->y;
                                 if (f29v > g && f30v < g) {
-                                    f30v = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(r26v2))->y;
+                                    f30v = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(alt))->y;
                                 }
                             }
                         }
@@ -2038,7 +2038,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
 
     if (field_4EC & 0x1000) {
         field_488 = pos->y;
-        r31v = 1;
+        groundOk = 1;
         field_4EC &= ~0x1000;
         ml::CVec3 zz(0.0f, 0.0f, 0.0f);
         setAnimPosVec(this, &zz);
@@ -2062,12 +2062,12 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         }
         if (field_530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            r31v = (r31v | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
                         (field_0C & 0x10000) != 0, 1,
                         field_494, field_490, f29v, lbl_eu_8066AF20, field_484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            r31v = (r31v | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
                         (field_0C & 0x10000) != 0, 1,
                         field_494, field_490, f29v, lbl_eu_8066AF20, field_484)) != 0;
         }
@@ -2095,10 +2095,10 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
             setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
         }
         if (pos->y - field_464 <= lbl_eu_80666098 && field_3C0.y > 0.0f && !(field_4EC & 0x1000000)) {
-            r31v = 0;
+            groundOk = 0;
         }
         field_534 = 0;
-        if (field_4EC & 2) r31v = 1;
+        if (field_4EC & 2) groundOk = 1;
         goto l60418;
     }
 
@@ -2107,7 +2107,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         f32 f30v;
         if (field_4EC & 2) {
             f30v = 0.0f;
-            r31v = 1;
+            groundOk = 1;
         } else if (field_0C & 0x10000) {
             f30v = 0.0f;
         } else {
@@ -2127,16 +2127,16 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         ml::CVec3 vE0 = *pos;
         if (field_530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            r31v = (r31v | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
                         (field_0C & 0x10000) != 0, 1,
                         field_494, field_490, f30v, lbl_eu_8066AF20, field_484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            r31v = (r31v | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
                         (field_0C & 0x10000) != 0, 1,
                         field_494, field_490, f30v, lbl_eu_8066AF20, field_484)) != 0;
         }
-        if (r31v != 0) {
+        if (groundOk != 0) {
             field_4EC |= 0x8000;
         } else {
             field_4EC &= ~0x8000;
@@ -2149,14 +2149,14 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         if (moveV.y < 0.0f && pos->y - f29v <= lbl_eu_806660D4 && field_3C0.y <= lbl_eu_80666128) {
             setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
         }
-        if (r31v == 0) {
+        if (groundOk == 0) {
             if (field_4EC & 0x40000) {
                 if (field_4EC & 0x1000) {
                     if (field_4EC & 0x800) {
                         if (v134.x == 0.0f && v134.z == 0.0f) {
                             if (vE0.y + moveV.y < pos->y) {
                                 field_534 = 0;
-                                r31v = 1;
+                                groundOk = 1;
                             } else {
                                 s16 a = (s16)field_534;
                                 s16 b = (s16)field_536;
@@ -2164,14 +2164,14 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                                 if (a > b) {
                                     field_534 = (u16)(b + 1);
                                 } else {
-                                    r31v = 1;
+                                    groundOk = 1;
                                 }
                             }
                         } else {
                             *pos = vE0;
                             field_534 = 0;
                             field_4EC |= 0x400;
-                            r31v = 1;
+                            groundOk = 1;
                         }
                     } else {
                         s16 a = (s16)field_534;
@@ -2180,7 +2180,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                         if (a > b) {
                             field_534 = (u16)(b + 1);
                         } else {
-                            r31v = 1;
+                            groundOk = 1;
                         }
                     }
                 } else {
@@ -2192,7 +2192,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         } else {
             field_534 = 0;
         }
-        if (field_3C0.y > 0.0f) r31v = 0;
+        if (field_3C0.y > 0.0f) groundOk = 0;
     }
 
 l60418:
@@ -2201,7 +2201,7 @@ l60418:
     } else {
         field_4EC &= ~0x80000000;
     }
-    if (r31v == 0) {
+    if (groundOk == 0) {
         if (!(field_0C & 0x10000)) {
             if (field_4EC & 0x40000) {
                 field_4EC = (field_4EC & 0xFFF5FFFF) | 0x40000;
@@ -2278,7 +2278,7 @@ l60418:
             }
         }
     }
-    return r31v;
+    return groundOk;
 }
 
 

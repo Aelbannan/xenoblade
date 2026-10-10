@@ -40,7 +40,7 @@ class CfObjectPc;
 // resource allocation behind a __dynamic_cast check (the cast succeeds only
 // when the object already carries the resource impl, in which case the
 // 0x1C-byte allocation is skipped).
-cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
+extern "C" cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
     __ct__Q22cf12CfObjectMoveFv(ths);
     // Manual vptr store (novtable); typed as u32* to match lbl array.
     *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
@@ -91,22 +91,22 @@ void cf::CfObjectObj::reset() {}
 // us-800c04f8  - init helper: two vtable init calls, clears two flags,
 // dispatches two helper-ids through the 0x144 virtual, then sets bit-derived
 // flags on arg4/arg5. Returns 1.
-int cf::CfObjectObj::ObjObj_ReleaseModels_FAB0(u32 arg4, u32 arg5) {
+extern "C" int ObjObj_ReleaseModels_FAB0(cf::CfObjectObj* ths, u32 arg4, u32 arg5) {
     // 0x17c then 0x178 virtual init calls on the model.
-    this->CfObjectModel_releaseModelList();
-    this->CfObjectModel_releaseModelSub();
+    ths->CfObjectModel_releaseModelList();
+    ths->CfObjectModel_releaseModelSub();
     // Clear helper-id / dispatch flags (0x90, 0x94 live in locked base padding).
-    cf::CfObjectMove90View* flags90 = (cf::CfObjectMove90View*)this;
+    cf::CfObjectMove90View* flags90 = (cf::CfObjectMove90View*)ths;
     flags90->field_90 = 0;
     flags90->field_94 = 0;
     // vtable+0x144 helper dispatch (CfObject_setAnimSlotEntry, retail
     // 2-arg slot); genuine virtual dispatch reproduces the r12
     // double-load with args-then-dispatch ordering.
-    this->CfObject_setAnimSlotEntry(1, arg4);
-    this->CfObject_setAnimSlotEntry(0, arg5);
+    ths->CfObject_setAnimSlotEntry(1, arg4);
+    ths->CfObject_setAnimSlotEntry(0, arg5);
     // Mark the sub-object active (+0xB0 is CfResObjImpl*; field_08 is u16).
-    ((ObjB0View*)this)->mSubObjB0->field_08 = 1;
-    cf::CfObjectMoveFlags6C* flags6C = (cf::CfObjectMoveFlags6C*)this;
+    ((ObjB0View*)ths)->mSubObjB0->field_08 = 1;
+    cf::CfObjectMoveFlags6C* flags6C = (cf::CfObjectMoveFlags6C*)ths;
     if (arg4 != 0)
         flags6C->field_6C |= 0x20;
     if (arg5 != 0)
@@ -128,7 +128,7 @@ void cf::CfObjectObj::update() {
 // us-800c063c  - dispatch a helper id, or store it if not dispatchable.
 // Retail branches straight to the epilogue when mSubObj38 is null (no store
 // then); the id is stored only when mSubObj38 != 0 but the virtual check fails.
-void ObjObj_SetMoveId_FBF4(cf::CfObjectObj* ths, u16 id) {
+extern "C" void ObjObj_SetMoveId_FBF4(cf::CfObjectObj* ths, u16 id) {
     if (ths->mSubObj38 != 0) {
         if (ths->CfObject_isMoveActiveNow() != 0) {
             ObjImplSyncSlotState(ths->mSubObj38, id);

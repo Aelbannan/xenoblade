@@ -764,7 +764,7 @@ extern "C" void initVisionSlots(CVision* self) {
 // (shifting whichever half of the ring is shorter), then the installed
 // callback is dispatched and its fade progress advanced.
 // ---------------------------------------------------------------------------
-void driveVisionRingFx(CVision* self) {
+extern "C" void driveVisionRingFx(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
     if (sub == 0) {
         // Null path goes through CVision's own members (each address is
@@ -1590,7 +1590,7 @@ public:
     u8 b_44;                // 0x44 (retail lbz: unsigned byte)
 };
 
-void gateVisionByFusionParam(CVision* self) {
+extern "C" void gateVisionByFusionParam(CVision* self) {
     // Reverse-declaration coloring (see forwardVisionShowRequests): the parameter is
     // consumed before the first calls and dies into cv, which is assigned
     // only after them - so no callee-saved home is needed for the parameter
@@ -1787,7 +1787,7 @@ void forwardVisionShowRequests(CVision* self) {
     }
 }
 
-void runVisionResetWindows(CVision* self) {
+extern "C" void runVisionResetWindows(CVision* self) {
     // Retail hoists the first threshold into an FPR before anything else.
     f32 t1 = lbl_eu_80667CD4;
     // Materialized timer-window check (retail evaluates the condition into r0).
@@ -1905,7 +1905,7 @@ void evalVisionTrigger(CVision* self) {
 // the matching battle slot (timing/rounding/state checks) and re-engage FX via
 // routeVisionSlotFx; with `slot` null, walk the four 0x834-strided vision slots,
 // run the gate/flag machinery, and refresh or clear each slot's effect.
-void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
+extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
     if (slot != 0) {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
@@ -2253,7 +2253,7 @@ void driveSubVisionFx(CVision* self) {
 // us-801a819c: Validate a battle object / slot and, when it passes, install
 // the state-change callback (retail installVisionStateCallback).
 // ---------------------------------------------------------------------------
-int installVisionStateCallback(CVision* self, CVisionObj* obj) {
+extern "C" int installVisionStateCallback(CVision* self, CVisionObj* obj) {
     if (__ptmf_test(&self->mPtmf) == 0) {
         return 0;
     }
@@ -3081,7 +3081,7 @@ cf::CVision::~CVision() {
 extern "C" void pollVisionSlots() {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
-        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, 0, 0);
+        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, (void*)0, (void*)0);
     }
 }
 
@@ -3092,7 +3092,7 @@ extern "C" void pollVisionSlots() {
 void releaseVisionSlot(void* a, int b) {
     if (CBattleManager::getInstance() &&
         &CBattleManager::getInstance()->mVision) {
-        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, (int)a, b);
+        manageVisionSlotFx(&CBattleManager::getInstance()->mVision, a, (void*)b);
     }
 }
 

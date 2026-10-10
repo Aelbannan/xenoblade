@@ -9,6 +9,11 @@
 // String table for cursor layout/anim resource names
 // (declared in include/lbls_kyoshin.hpp; keep local extern for MWCC relocs)
 extern char lbl_eu_80505DE8[];
+// Retail 1.0f pool owned by CItemBoxGrid's .sdata2 tail (split
+// 0x80667F30-0x80667FA4); this TU's .text loads it as an extern symbol
+// (retail .text relocs), so no local pool is emitted and our .sdata2 is
+// exactly the split's 0x4C.
+extern const f32 lbl_eu_80667FA0;
 
 // Pane visibility helper (retail bare symbol; canonical extern "C" decl).
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
@@ -16,17 +21,16 @@ extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // --- .sdata2 (retail content 0x4C): 0.0f + class-name strings ---
 // The 0.0f CANNOT be a standalone object: MWCC exiles all-zero small data
-// to nobits. It lives as f0 inside the struct (CfBdat Sdata2 idiom); the
-// struct also freezes declaration order (MWCC reorders loose sdata2 items).
-// RESIDUAL: the TU's 1.0f literal pool is emitted FIRST, so the struct sits
-// at +8 (not +4) and raw .sdata2 is 0x50 over the split's 0x4C. The split
-// attributed the pool bytes to the previous unit (CItemBoxGrid's 67FA0);
-// reproducing the pool is required for the retail .text shape (46/46), so
-// the +8 shift and size delta are inherent until a human re-cuts the split
-// (source cannot express it: a rule-side rename is frozen). The const
-// members need (void*) casts at the typeinfo initializers below.
-// (lbl_eu_80667FA4 itself stays an UNDEF row: naming the pool for it needs
-// the retired pool_patterns key - likewise frozen. See the final report.)
+// to nobits (verified: non-const/volatile-const 0.0f -> .sbss2 despite
+// __declspec(section ".sdata2"); const 0.0f stays file-backed but MWCC
+// constant-propagates the uses into its own trailing pool, growing the
+// section past 0x4C). It lives as f0 inside the struct (CfBdat Sdata2
+// idiom); the struct also freezes declaration order (MWCC reorders loose
+// sdata2 items). The 1.0f operand loads CItemBoxGrid's lbl_eu_80667FA0 as
+// extern (retail .text reloc shape), so no local pool is emitted and the
+// section is byte-exact at 0x4C. lbl_eu_80667FA4 itself stays an UNDEF row:
+// naming f0's slot needs a rule-side define_symbols entry (frozen table).
+// The const members need (void*) casts at the typeinfo initializers below.
 struct Sdata2_CCur {
     f32 f0;             // +0x00 (retail FA4 slot) 0.0f
     char s_CSubCur[8];  // +0x04
@@ -102,7 +106,7 @@ extern "C" void Cur_Update(CBaseCur* cur) {
         goto animate;
     }
 zero:
-    advanceAnimTransform(cur->mpAnimTrans0, 1.0f);
+    advanceAnimTransform(cur->mpAnimTrans0, lbl_eu_80667FA0);
     goto animate;
 one:
     cur->checkDeactivate();
@@ -158,7 +162,7 @@ extern "C" void Cur_SetActive(CBaseCur* cur) {
 // CBaseCur::checkDeactivate: Check anim finish and deactivate
 // ============================================================================
 void CBaseCur::checkDeactivate() {
-    if (advanceAnimTransform(mpAnimTrans1, 1.0f) != 0) {
+    if (advanceAnimTransform(mpAnimTrans1, lbl_eu_80667FA0) != 0) {
         mActive = 0;
         Cur_DeactivateTail(this);
     }
@@ -560,11 +564,10 @@ extern "C" u8 Cur_BothSubPanesOn(CBaseCur* cur) {
 //   the base blob and every descriptor point at CMenuArtsSelect's 61DD8.
 // - .sdata: 9 {name, base} typeinfo pairs (CScrollBar-626F8 idiom): name ->
 //   the TU's own .sdata2 class-name string, base -> the .data descriptor.
-// - .sdata2: the 0.0f SetFrame constant (lbl_eu_80667FA0... FA4) plus the 9
-//   class-name strings. The 1.0f operand stays a per-TU literal pool (retail
-//   .text shape, 46/46): it trails the struct, so raw .sdata2 is 0x50 over
-//   the split's 0x4C - the size delta is documented below, all offsets and
-//   bytes otherwise identical.
+// - .sdata2: the 0.0f SetFrame constant (retail lbl_eu_80667FA4 slot) plus
+//   the 9 class-name strings (0x4C, byte-exact). The 1.0f operand loads
+//   CItemBoxGrid's lbl_eu_80667FA0 as extern (retail .text reloc shape), so
+//   no local pool is emitted.
 // The frozen CCur.o rule entry (pool 1.0f rename + .sdata2 strip) was
 // retired with this change: with source-owned sections there is nothing to
 // dissolve or strip (frozen check stays OK; field removal is burn-down).

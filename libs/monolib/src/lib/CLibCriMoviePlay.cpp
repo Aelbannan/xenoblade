@@ -85,13 +85,19 @@ struct CLibCriMoviePlayVptrView {
 // Both bases are __declspec(novtable), so the hand-spelled retail vtable
 // (lbl_eu_8056CF48) is installed explicitly into both base slots.
 // ============================================================================
-CLibCriMoviePlay::CLibCriMoviePlay(const char* pName, CWorkThread* pParent)
-    : CWorkThread(pName, pParent, 0), CDeviceVICb() {
+// Retail-evidence shadows: __ct__CLibCriMoviePlay bls the two base ctors
+// directly (retail relocs at +0x1c/+0x24), so the TU calls them by their
+// retail mangled names (placement new would emit null-guard branches).
+extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* self, const char* name, CWorkThread* parent, int arg);
+extern "C" void __ct__11CDeviceVICbFv(CDeviceVICb* self);
+extern "C" CLibCriMoviePlay* __ct__CLibCriMoviePlay(CLibCriMoviePlay* mem, const char* pName, CWorkThread* pParent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(mem, pName, pParent, 0);
+    __ct__11CDeviceVICbFv((CDeviceVICb*)((char*)mem + 0x1C4));
     // Mark entries 1..3 inactive before the bulk clear below (retail keeps
     // these stores even though memset overwrites them).
     // Install the vtables into the CWorkThread slot (offset 0) and the
     // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
-    CLibCriMoviePlayVptrView* vp = (CLibCriMoviePlayVptrView*)this;
+    CLibCriMoviePlayVptrView* vp = (CLibCriMoviePlayVptrView*)mem;
     vp->vtPrimary = &lbl_eu_8056CF48[0];
     vp->vtViCb = (u32*)((char*)&lbl_eu_8056CF48 + 0xA0);
 
@@ -104,34 +110,35 @@ CLibCriMoviePlay::CLibCriMoviePlay(const char* pName, CWorkThread* pParent)
 
     // Entry 0 explicitly, then walk entries 1..3 (retail keeps these stores
     // even though memset below overwrites them).
-    mEntries[0].mActive = false;
-    mEntries[0].mFilenameLen = 0;
+    mem->mEntries[0].mActive = false;
+    mem->mEntries[0].mFilenameLen = 0;
 
-    MovieEntry* entry = &mEntries[1];
-    while (entry < &mEntries[4]) {
+    MovieEntry* entry = &mem->mEntries[1];
+    while (entry < &mem->mEntries[4]) {
         entry->mActive = false;
         entry->mFilenameLen = 0;
         entry++;
     }
 
-    mStreamIdCounter = 0;
-    mPlaybackState = false;
-    mPauseCounter = 0;
+    mem->mStreamIdCounter = 0;
+    mem->mPlaybackState = false;
+    mem->mPauseCounter = 0;
 
     // Register singleton
-    sInstance = this;
+    sInstance = mem;
 
     // Thread type: THREAD_CLIBCRIMOVIEPLAY
-    mType = (CWorkThread::ThreadType)0x10;
+    mem->mType = (CWorkThread::ThreadType)0x10;
 
     // Clear all movie entries
-    memset(&mEntries[0], 0, 0x490); // 4 * sizeof(MovieEntry)
+    memset(&mem->mEntries[0], 0, 0x490); // 4 * sizeof(MovieEntry)
 
     // Initialize entry flags
-    mEntries[0].mFlags = 0;
-    mEntries[1].mFlags = 1;
-    mEntries[2].mFlags = 2;
-    mEntries[3].mFlags = 3;
+    mem->mEntries[0].mFlags = 0;
+    mem->mEntries[1].mFlags = 1;
+    mem->mEntries[2].mFlags = 2;
+    mem->mEntries[3].mFlags = 3;
+    return mem;
 }
 
 // ============================================================================

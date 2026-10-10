@@ -12,7 +12,7 @@
 // handle's embedded character matches player 0 (and the data source is
 // ready), computes a phase count from the handle/data sizes (0, 1 or 2),
 // then allocates and initialises a new CVS_THREAD_BATTLE_BEGIN object.
-CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
+extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
     CVoiceHandle* h = handle;
     // Bias the handle to its embedded character voice (or keep NULL).
     CCharVoice* biased = (CCharVoice*)h;
@@ -221,7 +221,7 @@ extern "C" int BtlBeg_PlayGate_033C() {
 // us-802b2db4 (BtlBeg_PlayLine_0344)
 // Play a battle-start line: when the manager flags are active, compute the
 // embedded voice pointer and play the 0x1E-byte voice for the current ID.
-int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
+extern "C" int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 0x04)) return 0;
     CVoiceHandle* h = self;
     CCharVoice* vp = (CCharVoice*)h;
@@ -233,7 +233,7 @@ int BtlBeg_PlayLine_0344(CVoiceHandle* self) {
 // us-802b2e14 (BtlBeg_IsVoiceBit_03A4)
 // Bit test on the shared voice-ID helper: report whether its second-lowest
 // bit is set.
-int BtlBeg_IsVoiceBit_03A4() {
+extern "C" int BtlBeg_IsVoiceBit_03A4() {
     int x = BmVoice_FindPoolA();
     return (int)((((u32)(-x) & (u32)(~x)) >> 31) & 1);
 }

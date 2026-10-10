@@ -56,7 +56,7 @@ extern "C" const f32 lbl_eu_8066A210;  // pi/2
 // r3 = this, r4 = arg
 // Calls CREvtObj(this, 2), sets own vtable, initializes fields
 // ============================================================================
-CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
+extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
     __ct__cf_CREvtObj((cf::CREvtObj*)self, 2);
     *(u32**)self = (u32*)((u32*)lbl_eu_80533D90);
     self->field_14 = 0;
@@ -114,7 +114,7 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
 // Releases old resource if present, loads new resource if name != null,
 // stores field_value at +0x1C.
 // ============================================================================
-void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fieldValue) {
+extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
     if (self->field_20 != nullptr) {
         void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
@@ -166,7 +166,7 @@ void CREvtLight_noop7C8(void) {}
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
+extern "C" f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
@@ -188,7 +188,7 @@ f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
 // Computes horizontal angle from this to target, returns state (1, 2, or 4)
 // based on angle thresholds.
 // ============================================================================
-int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
+extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
     // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);

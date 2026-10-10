@@ -175,24 +175,24 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
         void* fp = getFP__FPCc(names.v[n - 1]);
         u8 v = (u8)MapValueToRank6(n);
         u16 id = CtrlRemote_TouchBitByArg(v + 0x21);
-        u8 r26v;
+        u8 rowIdx;
         if (id >= 0x1f40) {
-            r26v = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x2f], arg3);
+            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x2f], arg3);
         } else if (id >= 0x1770) {
-            r26v = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x37], arg3);
+            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x37], arg3);
         } else if (id >= 0xfa0) {
-            r26v = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x3f], arg3);
+            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x3f], arg3);
         } else if (id >= 0x7d0) {
-            r26v = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x47], arg3);
+            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x47], arg3);
         } else {
-            r26v = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x4f], arg3);
+            rowIdx = (u8)BdatGetU8Direct(lbl_eu_80664098, &lbl_eu_805071B0[0x4f], arg3);
         }
         struct TabKindTable { const char* v[28]; };
         TabKindTable kinds = *(const TabKindTable*)&lbl_eu_80506D90[0x2f8];
         CItemBlock_getPtr20E8();
         for (int j = 0; j < 2; j++) {
             if (kinds.v[self->field92 * 2 + j] == 0) return;
-            u16 result = BdatGetU16Direct((u32)fp, kinds.v[self->field92 * 2 + j], r26v);
+            u16 result = BdatGetU16Direct((u32)fp, kinds.v[self->field92 * 2 + j], rowIdx);
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
             entry->f0 = result;

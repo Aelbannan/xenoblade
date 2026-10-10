@@ -432,7 +432,7 @@ body:
 // ---------------------------------------------------------------------------
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool b);
 
-CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
+extern "C" CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80663FC0[0] != 0) {
         return 0;
     }

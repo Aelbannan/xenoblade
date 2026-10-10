@@ -412,7 +412,7 @@ void CTaskLOD::syncLODTask() {
 // (retail `mr r8,r3; mr r0,r4; mr r6,r5` sets up this/a/b for the delegate).
 // c is unused (dropped).  Defined as a global function carrying the retail
 // `.Fv` symbol name (see note above).
-void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
+extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
     if (lbl_eu_80665730[0]) {
         setTimeParams__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a, b);
     }
@@ -474,7 +474,7 @@ extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b
 
 // Same delegate-shape as dispatchLODArgs: forwards `self` + first arg `a` to the
 // active LODMemMan (tail-call `b`).  `b` is unused in retail.
-void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
+extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         setElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
@@ -498,19 +498,19 @@ float CTaskLOD::getLODDistance() {
     }
     return lbl_eu_8066A5BC;
 }
-void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
+extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         updateElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
+extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         setElementFlag80__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
+extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         linkTaskElements__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }

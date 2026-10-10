@@ -225,8 +225,8 @@ void CPadManager::kpadConnectCallback(s32 chan, s32 result){
     if(lbl_eu_80665630[0] == nullptr) return;
 
     if(lbl_eu_80665630[0]->mConfig.unk1C & 1){
-        CPad* r31 = getPadData(0, chan);
-        r31->setExtensionCB(chan, result);
+        CPad* pad = getPadData(0, chan);
+        pad->setExtensionCB(chan, result);
 
         Unk511CFunc func = lbl_eu_80665630[0]->unk511C;
         if(func != nullptr){
@@ -239,8 +239,8 @@ void CPadManager::wpadExtensionCallback(s32 chan, s32 dev){
     if(lbl_eu_80665630[0] == nullptr) return;
 
     if(lbl_eu_80665630[0]->mConfig.unk1C & 1){
-        CPad* r31 = getPadData(0, chan);
-        r31->setWiiPadType(dev);
+        CPad* pad = getPadData(0, chan);
+        pad->setWiiPadType(dev);
     }
 }
 
@@ -249,8 +249,8 @@ void CPadManager::updatePadExtensions(){
         for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){
             KPADChannel channel = (KPADChannel)i; //Required for matching
             WPADSetExtensionCallback(channel, wpadExtensionCallback);
-            CPad* r31 = getPadData(0, channel);
-            r31->checkExtension(channel);
+            CPad* pad = getPadData(0, channel);
+            pad->checkExtension(channel);
         }
     }
 }
@@ -447,11 +447,11 @@ void CPad::updateFlagValues(u32 buttonFlags){
         bit <<= 1;
     }
 
-    CPadData_UnkStruct2* r30 = lbl_eu_80665630[0]->mConfig.unk0;
+    CPadData_UnkStruct2* node = lbl_eu_80665630[0]->mConfig.unk0;
 
-    while(r30 != nullptr){
-        r30->UnkVirtualFunc1(this);
-        r30 = r30->mNext;
+    while(node != nullptr){
+        node->UnkVirtualFunc1(this);
+        node = node->mNext;
     }
 }
 

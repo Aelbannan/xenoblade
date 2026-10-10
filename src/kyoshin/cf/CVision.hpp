@@ -553,7 +553,7 @@ extern "C" void __dl__FPv(void* ptr);
 
 // Same-TU siblings (defined in CVision.cpp; C linkage keeps the call relocs
 // and definitions at the unmangled retail names - CSuddenCommu.hpp idiom).
-extern "C" void manageVisionSlotFx(cf::CVision* self, int slot, int r28);
+extern "C" void manageVisionSlotFx(cf::CVision* self, void* slot, void* r28);
 extern "C" void routeVisionSlotFx(cf::CVision* self, void* r25, int r26, int r27, int r28);
 
 // Class-spec table (8-byte stride, only low word used) for createVisionEffect.

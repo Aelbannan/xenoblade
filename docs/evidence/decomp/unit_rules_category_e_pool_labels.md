@@ -589,3 +589,164 @@ Workable next targets are therefore per-unit matching passes, biggest first:
 `CMenuBattleChain` (77), `CVision` (63), `UnkClass_80466348` (36),
 `CfScript` (30), `CScrollBar` (27), `CtrlMoveNpc` (17), `CChainActorList` (15),
 `CFade` (13), `CCur` (13), `CCharVoice` (13).
+
+## Session update 11 — linkage wave: 360 -> 248 undefineds, 0 new missing (2026-10-10)
+
+Worktree `paseo-unitrules-e`. Instrument: `tools/coop/link_undefs.py`
+(mwldeppc's own list is capped at ~100 error blocks). Frontier measured
+**360 missing** at session start (docs said 762 on 2026-09-29; the worktree
+snapshot postdates further burn-down elsewhere), **248 missing** at session
+end. **112 cleared, 0 new missing symbols.** No `UNIT_RULES` changes
+(`check_unit_rules_frozen.py --check` green, baseline 406 throughout), no
+`configure.py` / `symbols.txt` / `splits.txt` edits, no new rule fields.
+Every cleared symbol is a source-side linkage or data definition in
+`src/**` / `libs/**`.
+
+### The pattern (three sub-classes)
+
+Almost all cleared symbols were *defined in our objects but under C++
+linkage* while retail (and every referrer) wants the flat literal name.
+The bodies were already byte-identical; only the emitted name differed:
+
+* **(A) free function, retail-spelling identifier** — add `extern "C"` to the
+  definition (and to any same-signature forward declaration in the TU).
+  Zero codegen change by construction (same signature, same body); every
+  converted unit's `hexdiff --all` table is unchanged. ~70 symbols.
+* **(B) member function, short name** (CFade/CCharVoice/CfGimmick/CfObjectObj
+  pilot class) — convert to `extern "C"` free function with explicit `self`
+  param; `this` -> `self`, member decls removed from the class. `this` in r3
+  and a first `self` param in r3 generate identically; verified 100% holds
+  per function (CFade 8/8, CCharVoice 5/5 incl. the `(u32)this` idiom,
+  CfGimmick 2/2, CfObjectObj 1/1).
+* **(C) member/global ctor under a flat `__ct__` name** — same conversion;
+  member/base-ctor calls that retail performs as plain `bl` need the
+  retail-mangled-name shadow declaration (see the placement-new finding).
+
+Callers overwhelmingly already reference the flat names (their headers carry
+`extern "C"` blocks, or they are NonMatching retail placeholders), so the
+definition-side conversion completes the circuit with no caller edits. Where
+a same-TU or header declaration contradicted (10505/10197), the fix was to
+align the declaration to the definition (authority = definition) or use the
+documented `#define <sym>_<reason>_hidden` shield (one case:
+`CChainActorList.cpp` vs `CChainTimer.hpp`'s `(void*,void*)` decls).
+
+### Reusable findings (PROVEN this session)
+
+* **MWCC placement new always emits a null guard** (`cmpi`/`addic.` + `bc`
+  around the ctor `bl`), with `-Cpp_exceptions on` AND off (probe:
+  `.scratch/probe/p_on.o` vs `p_off.o`, identical guards). Retail `__ct__`
+  free functions never have the guard, so original sources cannot have used
+  placement new here.
+* **The guard-free spelling is an `extern "C"` shadow declaration of the
+  member ctor by its mangled name**, e.g.
+  `extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);`
+  then a plain call. Probe `.scratch/probe/r.cpp`/`r.o` verifies a bare
+  `addi`+`bl` with no guard; MWCC accepts the shadow alongside the member
+  declaration. Used for CFade, CLoad, CLibCriStreamingPlay
+  (base-ctor shadows), CfResObjImpl (member-ctor shadow). Per SKILL.md
+  declaration-drift §(d) these stay TU-local with retail evidence in the
+  comment until the owning headers are converged.
+* **TU-local data definitions reschedule their users** (two independent
+  cases): naming CFade's rodata pool base moves the `lis`/`addi` above the
+  first `bl` in `OnFileEvent` (100% -> 94.3%, reverted); defining the
+  `.sdata2` 1.0f moves the `lfs` late in StepFadeIn/Out (100% -> 73.7%,
+  reverted — non-const decl AND volatile reads both tried). Mechanism:
+  an `extern`-UNDEF symbol is call-clobbered-opaque, so its materialization
+  stays put; a TU-local definition is freely schedulable/foldable. Same
+  family as the `code_80213488` float ceiling (update 10).
+* **Flat-name `bl` targets need no caller changes when the machine signature
+  matches** (pointer-for-pointer, `(u8,int)` vs `(CTaskLOD*,int,int)` at the
+  `bl` level); the drift is recorded, not "fixed", where call bytes already
+  match.
+* **`link_undefs.py` does not account for `configure.py link_transform`
+  renames**: `CHelp_refreshPartyMenu` and `__ct__Q22cf5CHelpFv` are "missing"
+  in its report but provided in the real link via CHelp.cpp's
+  `objcopy --redefine-sym` copy (verified: the real `ninja` link never
+  reports them). 2 phantoms; no other transform target is currently missing.
+
+### Per-unit record (cleared counts; all hexdiff tables unchanged or better)
+
+| unit | cleared | note |
+|---|---|---|
+| CFade.cpp | 9 | 8 member->free + `__ct__CFade`; 13/14 @100%, split PASS, data MATCH except pre-existing `.sdata2` gap |
+| makecrystal/code_80213488.cpp | 8 | 11/11 FULL_MATCH holds, split PASS, data MATCH |
+| CfResObjImpl.cpp | 8 | 7 free + `__ct__cf_CfResObjImpl` (returns self, still 100%); 14/14, split PASS, data MATCH |
+| CfGimmick.cpp (+ CfResTboxImpl.cpp vtable slot) | 7 | 5 free + 2 member->free; 38/51 unchanged; Tbox vtable slot switched mangled->flat (data still MATCH) |
+| CfScript.cpp | 6 | 38/40, split PASS |
+| CVision.cpp | 5 | bodies open (14.9-88.1%, unchanged); names defined; one `(int,int)`->`(void*,void*)` decl unification + 2 cast-only call edits (callers still 100%) |
+| CCharVoice.cpp | 5 | member->free incl. `(u32)this`; 7/8, split PASS |
+| CTaskLOD.cpp | 5 | 38/38 holds, split PASS, data MATCH |
+| bta_dm_act.c | 4 | 4 data defs from retail bytes (uuid u16[24], btm u8[96], security zero-rodata via non-const+declspec, compress_srvcs bss + recovered 9th struct byte from 0x2D BSS/memset-45 evidence); 13/56 unchanged; `.rodata`/`.bss` now byte-exact (section is WA-flagged, bytes identical) |
+| CREvtLight.cpp | 4 | 3 free + `__ct__CREvtLight`; 5/7 unchanged |
+| CChainActorList.cpp | 3 | 31/40 unchanged; `void_hidden` shield for CChainTimer decls |
+| CfObjectEne.cpp (+ include/.../CfObjectEne.hpp decl) | 3 | 129/137 unchanged |
+| CfObjectObj.cpp | 3 | 1 member->free + 2 free; 8/8, split PASS |
+| CVS_THREAD_{BATTLE_BEGIN (3), CHAIN (3), REVIVE (3), PARTY_GAGE (2), VISION_BREAK (2), BATTLE_END/BATTLE_END_SP/DOWN/FAINT/SUDDEN (1 each)} | 14 | all build, tables unchanged |
+| code_804C8684.cpp | 3 | 4/5 (sinit open, pre-existing) |
+| CMdlAnmEye.cpp | 3 | 4/5 (RegisterMats reg-swap-only, pre-existing) |
+| synenv.c | 2 | RunVolumeEnvelope 100%; SetupVolumeEnvelope open (pre-existing) |
+| CNReqtaskSave.cpp | 2 | 33/34; `CNReqSaveConfigSave` NOT converted (see residuals) |
+| CScnFogMan.cpp | 2 | 7/8 (ApplyFog open, pre-existing) |
+| CLoad.cpp | 1 | `__ct__CLoad` 0% -> 40.0% (vtbl store + member bl added); 12/15 unchanged |
+| CSystemWindow.cpp (+ hpp decl) | 1 | 8/8 |
+| CtrlMoveNpc.cpp | 1 | refreshNpcRowFlags |
+| CMenuQuestLog.cpp | 1 | 22/23; createQuestLogMenu |
+| CREvtMem.cpp | 1 | 6/7; member->free |
+| CDeviceSC.cpp | 1 | 10/10 (split +0x58 overrun pre-existing) |
+| CLibCriMoviePlay.cpp | 1 | ctor 96.5% preserved (2 pre-existing displacement diffs = entry-stride layout drift) |
+| CLibCriStreamingPlay.cpp | 1 | ctor still open (2.8%); name defined |
+| CScnBlend.cpp | 1 | 5/5 |
+| CScnFilter.cpp | 1 | 3/3 |
+| snd_SeqFile.cpp | 1 | 2/3; ReadOffsetByLabel |
+
+### Residuals (owner + next angle)
+
+* **Linker-synthesized family (no object defines them; retail link gets them
+  from the linker script/extab synthesis):** `_SDA_BASE_`, `_SDA2_BASE_`,
+  `_stack_addr`, `_stack_end`, `_db_stack_end`, `__ArenaHi`, `__ArenaLo`
+  (acknowledged linker-provided), plus `_eti_init_info` (extabindex:0x80039568
+  size 0x20 per symbols.txt; retail `__init_cpp_exceptions.o` also refs it as
+  UNDEF — needs the `.lcf`/extab route), `_ctors`/`_dtors`
+  (`.ctors$00`/`.dtors$00` linker tables), `_bss_init_info`/`_rom_copy_info`
+  (linker copy tables), `__end__catch`, `__mftb`. Route: `bake_linker_addrs`
+  table entries — human sign-off (table change).
+* **`__ct__CFade` (42.3%) / `__ct__CLoad` (40.0%) near-miss:** residual is the
+  dead `or r3,r30` this-restore plus r4-vs-r3 zero coloring. Member-`this`
+  codegen emits both; no free-function spelling found in 2-3 attempts each
+  (placement new guards; direct stores recolor). Next angle: none obvious —
+  genuine MWCC `this`-handling idiom; record as ceiling unless a member-shaped
+  formulation with a flat name is discovered.
+* **CFade `lbl_eu_8050B5A0` + `lbl_eu_80668750`:** defining either in-TU
+  reschedules its users (measured, reverted twice). Needs the rule-side
+  `add_symbols` route — CFade has no UNIT_RULES key, so this is a sign-off
+  item, not a unilateral change. Proposed: extend `g3d_resmat`-style
+  `add_symbols` for CFade (`lbl_eu_8050B5A0` @.rodata+0, `lbl_eu_80668750`
+  @.sdata2+0) — coordinator decision.
+* **`CNReqSaveConfigSave`:** 6-arg extern-"C" def overloads the deliberate
+  1-arg in-TU decl (10197, probed). The file's own angle: full-signature
+  in-TU decl with leftover-register call (the NandLoadConfigure pattern
+  below it). Caller-matching work, not linkage.
+* **`format__Q22ml10FixStr<128>FPCce`:** MWCC emits the generic-template
+  mangling regardless (documented open item in CfScript.cpp). Needs a
+  template/specialization angle.
+* **CScrollBar 5 bodies, CHelp 2 bodies (split-exact blocks the 0xC
+  setHelpFlag), `func_8045C700` 0x1B0 body, CTaskGamePic/CfGimmickItem/CCur/
+  CtrlMoveNpc/CChainActorList/CVision/CfScript/g3d_resmat data labels:** real
+  per-unit matching/data passes (update-10 class: data lands with code).
+* **`__vt__*` (5) + `@N` (~25) + `cbRenderBefore__13CSysWinSelectFv`:**
+  `extern_data_sections` residue of unreconstructed units (update-9
+  analysis); land with those units' data passes.
+
+### Hygiene / coordination notes
+
+* Skipped-unit check: none of the touched units overlap the live-sibling WIP
+  list (CItemBoxInfo/CActorParam/CBattleManager/snd_SoundArchivePlayer/
+  snd_SeqSound). (`CActorParam_*` symbol names touched live in CfObjectEne.cpp
+  and code_800C17DC.cpp, not CActorParam.o.)
+* `orig/us/files` in this worktree was a broken symlink (sandbox); replaced
+  with a local empty dir (gitignored `orig/*/*`) so `dtk dol split` proceeds
+  DOL-only. No REL work was needed for `main.elf`.
+* Toolchain symlinks (`build/tools`, `build/compilers`, `build/binutils`)
+  were wired centrally mid-session; `run.py configure` re-ran clean.
+* No attempts.jsonl appends made (single-writer rule); candidate lines are
+  listed in the subagent final report for the coordinator.

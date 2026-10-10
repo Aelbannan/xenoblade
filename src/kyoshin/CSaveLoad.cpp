@@ -1089,7 +1089,7 @@ extern "C" __declspec(noinline) void CSaveLoad_execOp(CSaveLoad* self) {
         DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
-char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
+        char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
         LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
@@ -1099,7 +1099,7 @@ char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*
         lbl_eu_80662AD0 = 0;
     } else if (self->mField129 != 0) {
         // Load path
-char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
+        char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
         LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
@@ -1124,7 +1124,7 @@ char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*
         DevFile_SetByteA9(0);
         CLibHbm::setHbmStopFlag(true);
 
-char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
+        char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
         LayoutSetTextBoxFmtValue(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], msgText, 0u);
 
         CSLSub_setBusy((CSLCur*)((u8*)self + 0x110));
@@ -1692,7 +1692,7 @@ extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
 void CSaveLoad_onFile(int, int, int completed, int msgKind) {
     if (lbl_eu_806649F4 == nullptr) return;
 
-if (completed != 0) {
+    if (completed != 0) {
         if (lbl_eu_806649F4->mField12C != 0) {
             lbl_eu_806649F4->mField121 = 0xc;
             // Cast call prevents MWCC from inlining CSLCur_bindSlots's body
@@ -1718,7 +1718,7 @@ if (completed != 0) {
         q->mField11C = 3;
         q->mField11E = 0;
         lbl_eu_806649F4->mField12E = 1;
-lbl_eu_806649F4->mField12F = (u8)msgKind;
+        lbl_eu_806649F4->mField12F = (u8)msgKind;
     }
 }
 

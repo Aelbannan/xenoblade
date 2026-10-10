@@ -36,11 +36,11 @@ extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
     extern void __ct__80172668(void* self, int);
     extern void __dt__80185754(void* self);
-extern void EvtModelSetEventData(void* self, void* pData, void* pModelData);
+    extern void EvtModelSetEventData(void* self, void* pData, void* pModelData);
     extern void EvtModelReleaseAnimsOnce(void* self);
     extern void EvtModelReleaseAnims(void* self);
     extern void EvtSeqInsertRtEvent(void* self);
-extern int EvtSeqProbeEvtSlot(void* self, void* pSlot);
+    extern int EvtSeqProbeEvtSlot(void* self, void* pSlot);
     extern int EvtSeqIsSameNameType3Busy(void* self);
     extern void* EvtSeqFindSameNameType3(void* self);
     extern int EvtSeqGetCounter100(void* self);
@@ -54,10 +54,10 @@ extern int EvtSeqProbeEvtSlot(void* self, void* pSlot);
     extern void* allocEvtMemAligned(int, int, int);
     extern void* KyoshinHeap_AllocNode(int, int);
     extern void KyoshinHeap_Free78(void*, int);
-extern void Tok_Unpack(void* packed, void* out0, void* out1, void* out2, void* out3);
-extern char* Tok_FormatRes(void* handle);
-extern void CfRes_tryResolveToken(void* packed, void* out);
-extern int CfRes_tryDelegateLoad1(void* handle, int);
+    extern void Tok_Unpack(void* packed, void* out0, void* out1, void* out2, void* out3);
+    extern char* Tok_FormatRes(void* handle);
+    extern void CfRes_tryResolveToken(void* packed, void* out);
+    extern int CfRes_tryDelegateLoad1(void* handle, int);
     extern void schedClearFlag15Update(void*);
     extern void schedAttachChildSlot(void*, void*);
     extern void schedSetStepIntervals(void*, float, float);
@@ -234,10 +234,10 @@ extern "C" void EvtObj_SetupPlayer(CREvtModelObj* self, void* pData, void* pMode
         self->mFileHandle3 = 0;
     }
 
-EvtModelSetEventData(self, pData, pModelData);
+    EvtModelSetEventData(self, pData, pModelData);
 
     if ((int)self->mState84 == 1) {
-if (lbl_eu_806642B8 != 0 && self->mModel != 0 && pData != 0 &&
+        if (lbl_eu_806642B8 != 0 && self->mModel != 0 && pData != 0 &&
             self->mFileHandle3 == 0 && self->mCount80 != 0) {
             // Open a per-player event file slot (player index = count-1)
             CFileHandle* handle = (CFileHandle*)EffRoot_AddSchedReq(
@@ -473,10 +473,10 @@ extern "C" void EvtObj_StartLoad(void* self) {
 
     // Parse resource info
     u32 resourceId = FLD(u32, s, 0x5C);
-int resKind, charIdx, subId, extKind;
-Tok_Unpack((void*)resourceId, &resKind, &charIdx, &subId, &extKind);
+    int resKind, charIdx, subId, extKind;
+    Tok_Unpack((void*)resourceId, &resKind, &charIdx, &subId, &extKind);
 
-if (resKind == 3) {
+    if (resKind == 3) {
         if (extKind == 9) {
             u32 combined = (resKind << 27) | (charIdx << 20) | (subId << 10) | 1;
             FLD(u32, s, 0x5C) = combined;
@@ -485,7 +485,7 @@ if (resKind == 3) {
         }
     }
 
-if (resKind == 5) {
+    if (resKind == 5) {
         u32 resId = FLD(u32, s, 0x5C);
         u32 newResId = (u32)EvtSeqResolvePackedResId((void*)resId);
         if (newResId != resId) {
@@ -495,7 +495,7 @@ if (resKind == 5) {
         void* parent3 = FLD(void*, s, 0x1C);
         char* charStr = (char*)parent3 + 0x48;
         if (charStr[0] != 0) {
-int charId = charIdx;
+            int charId = charIdx;
             int index = (int)((unsigned int)(charId * 0xCCCD) >> 19);
             void* result = evtLookupEntryWord(charStr, index);
             if (result != 0) {
@@ -693,15 +693,15 @@ extern "C" void EvtObj_SetupModel(void* self) {
 
             // Parse resource info
             u32 resId = FLD(u32, s, 0x5C);
-            int r18b, r14b, r10b, r0cb;
-            Tok_Unpack((void*)resId, &r18b, &r14b, &r10b, &r0cb);
+            int resKindB, charIdxB, subIdB, variantB;
+            Tok_Unpack((void*)resId, &resKindB, &charIdxB, &subIdB, &variantB);
 
-            u32 r18u = (u32)r18b;
-            if (r18u == 2 || r18u == 3) {
+            u32 resKindU = (u32)resKindB;
+            if (resKindU == 2 || resKindU == 3) {
                 FLD(u32, s, 0x50) = 1;
-            } else if (r18u == 4) {
+            } else if (resKindU == 4) {
                 FLD(u32, s, 0x50) = 2;
-            } else if (r18u == 6) {
+            } else if (resKindU == 6) {
                 FLD(u32, s, 0x50) = 3;
             }
         }
@@ -732,9 +732,9 @@ extern "C" void EvtObj_SetupModel(void* self) {
     } else {
         // Other path: parse resource info and handle
         u32 resId = FLD(u32, s, 0x5C);
-        int r18c, r14c, r10c, r0cc;
-        Tok_Unpack((void*)resId, &r18c, &r14c, &r10c, &r0cc);
-        int r0cVal = r0cc;
+        int resKindC, charIdxC, subIdC, variantC;
+        Tok_Unpack((void*)resId, &resKindC, &charIdxC, &subIdC, &variantC);
+        int r0cVal = variantC;
 
         if (r0cVal == -1) {
             FLD(u32, s, 0x18) |= 0x11;
@@ -746,7 +746,7 @@ extern "C" void EvtObj_SetupModel(void* self) {
         FLD(u32, s, 0x18) |= 0x11;
 
         // Check if data is KYP archive
-        u8* bytes = (u8*)r18c;
+        u8* bytes = (u8*)resKindC;
         // Wait, r18c is the result from CfRes_tryResolveToken...
         // Actually, CfRes_tryResolveToken takes the resource ID and returns a pointer
 

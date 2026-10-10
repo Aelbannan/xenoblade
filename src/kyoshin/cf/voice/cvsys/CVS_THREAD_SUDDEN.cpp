@@ -56,7 +56,7 @@ void SuddenVxPlayVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceI
 // Factory for CVS_THREAD_SUDDEN. Allocates the handle buffer (1, 0 - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539CE8.
-CVS_THREAD_SUDDEN* __ct__802A8C04() {
+extern "C" CVS_THREAD_SUDDEN* __ct__802A8C04() {
     // Allocate the (effectively discarded) handle buffer, then the 0x24-byte
     // thread object. Allocation failures return NULL directly (bypassing the
     // construction try/catch cleanup, matching retail's return-NULL jumps).

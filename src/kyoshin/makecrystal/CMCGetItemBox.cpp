@@ -1225,7 +1225,7 @@ __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind
     } else {
         sprintf(buf2, &lbl_eu_8050FF8C[0],
                 BdatTouchStringCell(&lbl_eu_8050FF8C[0x3], &lbl_eu_8050FF8C[0xc],
-0x1e - ((s8)kind - 1)));
+                              0x1e - ((s8)kind - 1)));
     }
     LayoutSetTextBoxText(self->layout40, buf1, buf2, 0);
 }

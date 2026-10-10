@@ -12,9 +12,8 @@
 // Retail .data/.sdata2/.sbss externs for the hand-built tables below.
 // Free-function spellings name the exact retail (link) symbols; the
 // .text of this TU never calls them (10/10 matched), they only feed
-// ADDR32 relocs. CfGimmick_DetachManager uses OUR mangled member: the
-// retail unmangled name has no provider in the link (it is a missing
-// function row owned by kyoshin/cf/CfGimmick.cpp, a different wave).
+// ADDR32 relocs. CfGimmick_DetachManager now uses the flat retail name
+// (defined by kyoshin/cf/CfGimmick.cpp since the linkage wave).
 extern "C" {
 void __dt__Q22cf12CfObjectTboxFv(void*, int); // ABI deleting dtor
 void __dt__Q22cf15CfGimmickObjectFv(void*, int); // ABI deleting dtor
@@ -36,7 +35,7 @@ void CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv(void);
 void CObjectState_setStateBitMask__Q22cf12CObjectStateFv(void);
-void CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager(void);
+void CfGimmick_DetachManager(void);
 void CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv(void);
 void CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv(void);
 void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void);
@@ -287,7 +286,7 @@ void func_801F92B0(unsigned char* base, int idx1, int idx2, int idx3) {
 __declspec(section ".data") __attribute__((used, aligned(8)))
 const void* lbl_eu_80534F70[9] = {
     lbl_eu_80662700, 0, (const void*)__dt__Q22cf15CfGimmickObjectFv,
-    (const void*)CfGimmick_DetachManager__Q22cf9CfGimmickFPQ22cf13CfGameManager,
+    (const void*)CfGimmick_DetachManager,
     (const void*)GimObjDriveStepMachine, (const void*)GimObjSetBusyBit,
     (const void*)GimObjClearStepBits, (const void*)GimObjFinishStep,
     (const void*)GimObjRebuildColliders,

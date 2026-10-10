@@ -48,7 +48,7 @@ void VisBreak_RemoveVoiceSlot(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePt
 // Standalone voice selector for vision-break. Finds a free voice handle via
 // HpVoice_FindBySubState(1), allocates a 0x32-byte buffer, and plays a voice ID chosen
 // based on the current game-manager frame count. Always returns 0.
-int VisBreak_AllocVoiceHandle() {
+extern "C" int VisBreak_AllocVoiceHandle() {
     CVoiceHandle* handle = HpVoice_FindBySubState(1);
     if (handle == NULL) {
         return 0;
@@ -90,7 +90,7 @@ int VisBreak_AllocVoiceHandle() {
 // constructor and derived-vtable/slot stores inside an EH region (retail
 // guards them with a try block whose catch rethrows via __throw(0,0,0)),
 // then copies the init-state triple outside the try. Returns NULL on failure.
-CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
+extern "C" CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     // Parameter must be positive.
     if (param <= 0) {
         return NULL;

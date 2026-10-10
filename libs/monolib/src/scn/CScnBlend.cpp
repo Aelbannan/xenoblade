@@ -144,7 +144,7 @@ extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
     return ths;
 }
 
-void func_80498D98(CScnBlend* blend, int enable) {
+extern "C" void func_80498D98(CScnBlend* blend, int enable) {
     if (enable != 0) {
         blend->mFlags |= 1;
     } else {

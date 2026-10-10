@@ -106,21 +106,21 @@ public:
 } // namespace cf
 
 // Builds/inverts the gimmick collider placement matrix (see definition below).
-void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
+extern "C" void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
 
 using namespace cf;
 
 namespace cf {
-    void CfGimmick::CfGimmick_DetachManager(CfGameManager* other) {
-        CfGameManager* cur = field_78;
+    extern "C" void CfGimmick_DetachManager(CfGimmick* self, CfGameManager* other) {
+        CfGameManager* cur = self->field_78;
         if (cur != other) return;
         cur->unkB0 = 0;
-        field_78 = 0;
+        self->field_78 = 0;
     }
 
-    void CfGimmick::CfGimmick_UpdateColliderMatrix() {
-        CfGimmick_BuildColliderMtx((CfGimmick*)((char*)this + 0x1c), (const f32*)((char*)this + 4),
-                      (const CfGimmickVec3*)((char*)this + 0x10));
+    extern "C" void CfGimmick_UpdateColliderMatrix(CfGimmick* self) {
+        CfGimmick_BuildColliderMtx((CfGimmick*)((char*)self + 0x1c), (const f32*)((char*)self + 4),
+                      (const CfGimmickVec3*)((char*)self + 0x10));
     }
 
     int CfGimmick::CfGimmick_CheckerKind0Always() { return 1; }
@@ -155,7 +155,7 @@ cf::CfGimmick::~CfGimmick() {}
 // invert it in place.  field_44 records which placement shape was selected.
 // Retail never CSEs the float-pool constants: every test reloads lbl_eu_80668350
 // via lfs, so the source references the globals directly (no zero/one locals).
-void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
+extern "C" void CfGimmick_BuildColliderMtx(CfGimmick* self, const f32* basis, const CfGimmickVec3* point) {
     f32* m = ((nw4r::math::MTX34*)self)->m[0];
 
     if (self->field_38 > lbl_eu_80668350)
@@ -242,6 +242,26 @@ extern "C" void CfGimmick_StopManagedSound(cf::CfGimmick* self) {
     }
 }
 
+// 0-arg view of CfObject slot 0x160 (retail passes dead r4; header has optional vec). Dummies pin +0x160.
+struct CfObjectCheck0View {
+    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04(); virtual void d05();
+    virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09(); virtual void d10(); virtual void d11();
+    virtual void d12(); virtual void d13(); virtual void d14(); virtual void d15(); virtual void d16(); virtual void d17();
+    virtual void d18(); virtual void d19(); virtual void d20(); virtual void d21(); virtual void d22(); virtual void d23();
+    virtual void d24(); virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28(); virtual void d29();
+    virtual void d30(); virtual void d31(); virtual void d32(); virtual void d33(); virtual void d34(); virtual void d35();
+    virtual void d36(); virtual void d37(); virtual void d38(); virtual void d39(); virtual void d40(); virtual void d41();
+    virtual void d42(); virtual void d43(); virtual void d44(); virtual void d45(); virtual void d46(); virtual void d47();
+    virtual void d48(); virtual void d49(); virtual void d50(); virtual void d51(); virtual void d52(); virtual void d53();
+    virtual void d54(); virtual void d55(); virtual void d56(); virtual void d57(); virtual void d58(); virtual void d59();
+    virtual void d60(); virtual void d61(); virtual void d62(); virtual void d63(); virtual void d64(); virtual void d65();
+    virtual void d66(); virtual void d67(); virtual void d68(); virtual void d69(); virtual void d70(); virtual void d71();
+    virtual void d72(); virtual void d73(); virtual void d74(); virtual void d75(); virtual void d76(); virtual void d77();
+    virtual void d78(); virtual void d79(); virtual void d80(); virtual void d81(); virtual void d82(); virtual void d83();
+    virtual void d84(); virtual void d85();
+    virtual int checkSubReady0();
+};
+
 // Party-feature state update: re-anchor the gimmick reference point to the
 // player's target-map position (or clear it when no player is loaded), and
 // set the party/kicking flag bits.  Called on party joins/leaves.
@@ -272,7 +292,7 @@ extern "C" void CfGimmick_UpdatePartyAnchorState(u32 partyId, s32 flagA, s32 fla
         lbl_eu_806646B4 = partyId;
         if (flagA) lbl_eu_806646BC |= 0x20;
         if (flagB) lbl_eu_806646BC |= 0x40;
-        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && player->CfObject_checkSubReady() &&
+        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && ((CfObjectCheck0View*)player)->checkSubReady0() &&
             (lbl_eu_80663E24 & 0x80) != 0) {
             lbl_eu_806646BC |= 0x2;
         }
@@ -313,30 +333,30 @@ extern "C" void CfGimmick_LoadBdatAreaPos(CfGimmick* self, float* out, void* unu
     // Read three adjacent bdat columns starting at each +2 prefix, converting
     // each integer cell to a scaled float written into the output vector.
     out[0] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x00) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[0] + 2, self->field_64);
     out[1] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x04) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[1] + 2, self->field_64);
     out[2] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x08) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[2] + 2, self->field_64);
 }
 
 extern "C" void CfGimmick_LoadBdatAreaExtents(CfGimmick* self, CfGimmick* out, void* unused, void** holder) {
     u32 rawA = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x0C) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[3] + 2, self->field_64);
     out->field_30 = lbl_eu_80668364 * (f32)*(const u16*)&rawA;
     u32 rawB = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x10) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[4] + 2, self->field_64);
     out->field_34 = lbl_eu_80668364 * (f32)*(const u16*)&rawB;
     u32 rawC = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x14) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[5] + 2, self->field_64);
     out->field_38 = lbl_eu_80668364 * (f32)*(const u16*)&rawC;
     u32 rawD = getBdatStringColumnValue(
-        *holder, *(char**)(lbl_eu_805357E8 + 0x18) + 2, self->field_64);
+        *holder, ((char**)lbl_eu_805357E8)[6] + 2, self->field_64);
     out->field_3C = lbl_eu_80668364 * (f32)*(const u16*)&rawD;
 }
 
 extern "C" void CfGimmick_LoadBdatClAreaExtents(CfGimmick* self, CfGimmick* out, void* unused, void** holder) {
-    // Retail truncates each column cell to u16 through its stack home
+    // Retail truncates
     // (stw + lhz, not rlwinm); writing the truncation as a deref of the
     // call result's storage reproduces the memory-load idiom.  The f32 cast
     // then uses MWCC's 2^52 double-trick (lfd + fsubs).
@@ -354,13 +374,13 @@ extern "C" void CfGimmick_LoadBdatAreaRotation(CfGimmick* self, f32* out, void* 
     // Address-taking forces the call result to spill; the s16 deref reload
     // emits retail's stw + lha memory truncation idiom.
     s32 rawA = getBdatStringColumnValue(
-        *table, *(char**)(lbl_eu_805357E8 + 0x1C) + 2, self->field_64);
+        *table, ((char**)lbl_eu_805357E8)[7] + 2, self->field_64);
     out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
     s32 rawB = getBdatStringColumnValue(
-        *table, *(char**)(lbl_eu_805357E8 + 0x20) + 2, self->field_64);
+        *table, ((char**)lbl_eu_805357E8)[8] + 2, self->field_64);
     out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
     s32 rawC = getBdatStringColumnValue(
-        *table, *(char**)(lbl_eu_805357E8 + 0x24) + 2, self->field_64);
+        *table, ((char**)lbl_eu_805357E8)[9] + 2, self->field_64);
     out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
 }
 
@@ -435,7 +455,7 @@ extern "C" void CfGimmick_TriggerSound2CC8(u32 id) { CtrlRemote_SetSharedBit(id 
 // then is the per-gimmick jumptable checker invoked (mirrors CfGimmick_QueryTrigger's
 // guarded section).  The scaled angle is recomputed per Sin/Cos call (no
 // local) to match retail's caller-saved FPR budget (f29-f31 only).
-int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
+extern "C" int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId) {
     // Party-scoped guard.  Retail keeps the (bc&1)==0 return-0 inline (block
     // A) but shares ONE return-0 block for the b4==0 / id-mismatch fails;
@@ -492,7 +512,7 @@ rotation:
 // scan, 0x00800000 enable player scan after it, 0x01000000 player 0 only
 // (otherwise all players minus the 0x10<<i presence bits).  When neither the
 // fight-list nor the bc&4 enemy-list path runs, players are scanned alone.
-int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
+extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId) {
     int partyValid = 0;
     if (mask & 0x21) {
@@ -820,7 +840,7 @@ extern "C" void CfGimmick_UnregisterSpawnedObject(CfGimmickReg* self) {
 }
 
 // Message-format gate shared by CfGimmick_PostGimmickName / CfGimmick_UpdateProximity.
-unsigned int CfGimmick_IsMessageSystemBusy();
+extern "C" unsigned int CfGimmick_IsMessageSystemBusy();
 
 // Look up a gimmick name from the bdat table: resolve the column for the
 // requested row (prefixing the column string with '3'), format it into the
@@ -870,7 +890,7 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
 }
 
 // Returns 1 if SysWinGetSingleton() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
-unsigned int CfGimmick_IsMessageSystemBusy() {
+extern "C" unsigned int CfGimmick_IsMessageSystemBusy() {
     unsigned int x = SysWinGetSingleton();
     /* (-x | x) >> 31: nonzero => 1, zero => 0 */
     return ((unsigned int)-(int)x | x) >> 31;
@@ -899,7 +919,7 @@ extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     return (void*)lbl_eu_80662788[0];
 }
 
-void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
+extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
                    s32 index, s32 mod, s32 arg7) {
     // Distance from the fixed reference point to the requested position.
     // VEC3Sub's paired-single kernel reproduces retail's psq_l/ps_sub/psq_st

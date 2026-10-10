@@ -5,8 +5,8 @@
 
 #include <harness_catalog.h>
 
-void EffCtl_EmptyStub84(void) {}
-void EffCtl_EmptyStub88(void) {}
+extern "C" void EffCtl_EmptyStub84(void) {}
+extern "C" void EffCtl_EmptyStub88(void) {}
 extern "C" void EffCtl_EmptyStub8C(void) {}
 
 // ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ struct CEffectParam {
 extern u8 lbl_eu_806659A0;
 extern SInitBlk lbl_eu_8065FC08;
 
-void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
+extern "C" void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
     if (src) {
         // 2+1 word split: load both pair words before the dst base addi and

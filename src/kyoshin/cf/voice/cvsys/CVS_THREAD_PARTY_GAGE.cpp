@@ -43,7 +43,7 @@ void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePt
 // Voice-ID init helper.  If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
 // party-gauge voice (base 0x385) through the sound system.
-int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
+extern "C" int PartyGage_InitVoiceId_8628(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 2) == 0) return 0;
     if (((CVoiceVTV*)self)->idle() != 0) return 0;
     if (CCharVoiceMan_DispatchById(0xc8, 1) == NULL) return 0;
@@ -178,7 +178,7 @@ int PartyGage_GetBufSize_8620() {
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
 // the base constructor, sets vtable/owner fields, and copies init data.
-CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
+extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     if (owner1 <= owner2) return NULL;
     if (HpVoice_CountActiveVoices(NULL) < 2) return NULL;
 

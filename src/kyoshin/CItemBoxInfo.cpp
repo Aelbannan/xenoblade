@@ -3409,8 +3409,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             s16 bB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
             LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)bB);
             RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL)));
-            s32 r6158 = RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
+            s32 statValue = RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)statValue);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
                 LayoutSetTextBoxInt(info->state.slotPanes[0], nb);
@@ -7111,8 +7111,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
             LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)bB);
             RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + getItemBox2Effect(info, (void*)(u32)member, 0x11, NULL)));
-            s32 r6158 = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBox2Effect(info, (void*)(u32)member, 0x11, arg3)));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
+            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBox2Effect(info, (void*)(u32)member, 0x11, arg3)));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)statValue);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
                 LayoutSetTextBoxInt(info->state.slotPanes[0], nb);

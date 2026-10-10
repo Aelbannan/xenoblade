@@ -1321,10 +1321,10 @@ extern "C" int CPartsChange_ProcessPartyInfo(cf::CfPartyInfo* info, void* arg) {
     return (info->*tbl[info->field_0C])(arg);
 }
 
-extern "C" void CPartsChange_ProbePartyCollisions(u32* src, u32* dst);
+extern "C" __declspec(noinline) void CPartsChange_ProbePartyCollisions(u32* src, u32* dst);
 // 0x320: not decoded yet -- every pose variant tail-calls it, so the stub
 // keeps the symbol resolvable for the TU link.
-extern "C" void CPartsChange_ProbePartyCollisions(u32* src, u32* dst) {}
+extern "C" __declspec(noinline) void CPartsChange_ProbePartyCollisions(u32* src, u32* dst) {}
 
 // Pose records consumed/produced by the spawn-pose helpers: a 12-byte
 // position followed by the 0x0C..0x1C scalars.

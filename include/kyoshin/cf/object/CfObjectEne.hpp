@@ -667,10 +667,9 @@ extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
 extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
 extern "C" void loadEnemyParams__Q22cf11CfObjectEneFv(void* self);
-// Verbatim `__`-named free function (the retail class is not a polymorphic
-// MI hierarchy per the headers; see the CfObjectActor dtor note in
-// CfObjectEne.cpp). Plain C++ declaration keeps the verbatim name.
-int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
+// Verbatim `__`-named free function (retail emits the literal name with C
+// linkage; the def in CfObjectEne.cpp carries extern "C").
+extern "C" int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
 extern "C" void CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);

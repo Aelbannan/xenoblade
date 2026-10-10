@@ -147,7 +147,7 @@ int CVSBattleEndSPGetBufSize() {
 // (discarded) and a 0x34-byte object, initialises it, and returns it.
 // The construction tail sits in a try block whose catch rethrows via the
 // runtime __throw(0,0,0); retail guards it with a redundant null re-check.
-CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
+extern "C" CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
     // Collect inactive voice handles from the voice-manager list. The loop
     // condition reloads the sentinel each iteration, as retail does.
     CVoiceManager* mgr = (CVoiceManager*)getListB28();

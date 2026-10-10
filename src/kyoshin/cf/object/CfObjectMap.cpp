@@ -246,7 +246,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
         *reinterpret_cast<void**>(self->field_0x90) = CfRes_getLazyField10(resB->field_0x2C, resB);
         self->field_0xDC = CfRes_getLazyField20(resC->field_0x2C, resC);
-void* sub = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
+        void* sub = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
         CfModel_InstallSub(self, sub);
         clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {

@@ -2498,18 +2498,17 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CMenuPTState.o": UnitRules(
         # Data dissolve: ctor/Move float pools; retail refs lbl_eu_80667A98
-        # (0.0f) and the magic double lbl_eu_80667AA0. The TU's -1.0f has no
-        # unit-referenced blob label (source drift vs retail's 1.0f loads,
-        # resolved during function matching); retarget to a value-exact blob
-        # label so the link stays live.
+        # (0.0f) and the magic double lbl_eu_80667AA0, both owned by
+        # code_8018F8D8's retail object. The source now loads all three pool
+        # words (A98/A9C/AA0) as externs, so no local 0.0f/-1.0f pools are
+        # emitted; the magic pool is renamed by content below and .sdata2
+        # stays stripped (the int->float builtin pools locally; landing the
+        # AA8 decay pair needs a rule-side define_symbols entry - frozen).
+        # (retired 2026-10-10: retarget_relocs to the 65DB8 blob is obsolete -
+        # the -1.0f literals were source drift, retail loads 1.0f from A9C.)
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80667A98"),
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80667AA0"),
-        ),
-        retarget_relocs=(
-            (".text", 0x144, "lbl_eu_80665DB8"),   # -1.0f placeholder
-            (".text", 0x160, "lbl_eu_80665DB8"),
-            (".text", 0x2FC, "lbl_eu_80665DB8"),
         ),
         extern_data_sections=(".sdata2",),
     ),

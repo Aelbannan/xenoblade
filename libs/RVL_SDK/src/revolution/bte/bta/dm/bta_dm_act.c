@@ -204,6 +204,9 @@ struct bta_dm_compress_srvc_t {
     unsigned char in_use;
     unsigned char bd_addr[6];
     unsigned char server_id;
+    // +0x08: unnamed in recovered sources; retail strides elements by 9
+    // (BSS holds 0x2d = 5*9, and the init memset covers 0x2d).
+    unsigned char unk8;
 };
 
 union bta_dm_sec_t {
@@ -225,7 +228,7 @@ struct bta_dm_cfg_t {
 extern struct bta_dm_cfg_t bta_dm_cfg;
 extern unsigned char bta_dm_conn_srvcs[];
 extern struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
-extern const unsigned char bta_security[];
+extern unsigned char bta_security[];
 extern const unsigned char bta_service_id_to_btm_srv_id_lkup_tbl[];
 extern unsigned char *p_bta_dm_rm_cfg;
 extern unsigned char appl_trace_level;
@@ -1016,3 +1019,24 @@ void bta_dm_keep_acl(void) {}
 int bta_dm_set_dev_name(void) { return 0; }
 void bta_dm_set_visibility(void) {}
 void bta_dm_compress_cback(void) {}
+
+// Retail data owned by this TU (link undefineds; contents from the retail
+// split object). .rodata order matches retail: uuid table, btm table,
+// security block (nm offsets 0x00/0x30/0x90).
+const unsigned short bta_service_id_to_uuid_lkup_tbl[24] = {
+    0x1200, 0x1101, 0x1103, 0x1111, 0x1102, 0x1108, 0x111e, 0x1105,
+    0x1106, 0x1109, 0x1110, 0x1104, 0x1118, 0x111b, 0x1115, 0x1116,
+    0x1117, 0x112d, 0x110b, 0x110e, 0x1124, 0x1304, 0x112f, 0x0000,
+};
+const unsigned char bta_service_id_to_btm_srv_id_lkup_tbl[96] = {
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 11,
+    0, 0, 0, 2, 0, 0, 0, 12, 0, 0, 0, 29, 0, 0, 0, 6,
+    0, 0, 0, 7, 0, 0, 0, 9, 0, 0, 0, 10, 0, 0, 0, 4,
+    0, 0, 0, 22, 0, 0, 0, 35, 0, 0, 0, 25, 0, 0, 0, 27,
+    0, 0, 0, 26, 0, 0, 0, 40, 0, 0, 0, 37, 0, 0, 0, 39,
+    0, 0, 0, 32, 0, 0, 0, 37, 0, 0, 0, 44, 0, 0, 0, 0,
+};
+// All-zero const aggregates migrate to .sbss2; the non-const zero array
+// honours declspec and stays in .rodata (CCharVoice lbl_eu_805106D4 recipe).
+extern __declspec(section ".rodata") unsigned char bta_security[0x18] = { 0 };
+struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];

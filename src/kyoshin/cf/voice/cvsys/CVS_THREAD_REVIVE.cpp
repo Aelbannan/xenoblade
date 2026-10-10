@@ -12,7 +12,7 @@
 // buffer (0xE6 bytes, discarded) and the object itself (0x28 bytes), calls
 // the base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539C98.
-CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+extern "C" CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;
@@ -267,7 +267,7 @@ __declspec(section ".sdata") extern u32 lbl_eu_80662D28[2] = {
 // us-802ab1fc (ReviveVxInitVoice6E)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x6E-byte
 // handle buffer, then play voice (arg + 0x1005) via RequestVoicePlayback.
-int ReviveVxInitVoice6E(CVoiceHandle* self, int arg) {
+extern "C" int ReviveVxInitVoice6E(CVoiceHandle* self, int arg) {
     // Handle must have its 0x3F00 field's bit 1 set
     if (!(self->field_0x3F00 & 2)) return 0;
 
@@ -288,7 +288,7 @@ int ReviveVxInitVoice6E(CVoiceHandle* self, int arg) {
 // us-802ab2a0 (ReviveVxInitVoice3C)
 // Voice-ID init helper: if the handle is active-gated, allocate a 0x3C-byte
 // handle buffer, then play voice 0x100E via RequestVoicePlayback.
-int ReviveVxInitVoice3C(CVoiceHandle* self) {
+extern "C" int ReviveVxInitVoice3C(CVoiceHandle* self) {
     // Handle must have its 0x3F00 field's bit 1 set
     if (!(self->field_0x3F00 & 2)) return 0;
 

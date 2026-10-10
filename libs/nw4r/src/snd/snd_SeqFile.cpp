@@ -84,7 +84,7 @@ const void* SeqFileReader::GetBaseAddress() const {
                               Util::ReadBigEndian(mDataBlock->baseOffset));
 }
 
-bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
+extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     const SeqFileReaderView* pReader, const char* label, u32* outOffset) {
     const SeqFile::Header* pHeader = pReader->mHeader;
     const SeqLabelBlock* pLabelBlock =

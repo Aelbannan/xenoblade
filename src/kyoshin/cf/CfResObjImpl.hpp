@@ -104,7 +104,6 @@ struct CfResObjImplVtbl {
 // lbl_eu_80530F44 at +0x10 like CToken / CHelp.
 class __declspec(novtable) CfResObjImpl : public CfResObjImplPrefix {
 public:
-    CfResObjImpl(CfResObjParent* parent);
     virtual ~CfResObjImpl();                // 0x08
     virtual void ResObj_DispatchState_CCE0();           // 0x0C
     virtual void CfResObj_noop10();           // 0x10

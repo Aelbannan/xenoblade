@@ -21,7 +21,6 @@ namespace cf {
         void reset();
         int initialize();
         void update();
-        int ObjObj_ReleaseModels_FAB0(u32 arg4, u32 arg5);
 
         // Declared but NOT defined in this fork: retail's CfObjectObj ctor
         // exists under the forced flat name __ct__cf_CfObjectObj (defined as

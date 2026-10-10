@@ -62,7 +62,7 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 }
 
 // attachOwner (0x802A32C0)
-extern "C" void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
+extern "C" void attachOwner(CCharVoice* self, CVoiceOwnerIntf* owner)
 {
     if (owner == nullptr) return;
 
@@ -70,7 +70,7 @@ extern "C" void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
 
     // Normal/battle profile selector: bit0(MSB)=0x80000000, bit30=2, bit29=4.
     if ((flags & 2) || (flags & 0x80000000)) {
-        mOwner = owner;
+        self->mOwner = owner;
 
         float py;
         float px;
@@ -82,36 +82,36 @@ extern "C" void CCharVoice::attachOwner(CVoiceOwnerIntf* owner)
         if (posType == 8) posType = 3;
 
         char* vp = lbl_eu_80662C98[0];
-        mFileNameLen = strlen(vp);
-        strcpy(mFileName, vp);
+        self->mFileNameLen = strlen(vp);
+        strcpy(self->mFileName, vp);
 
-        mFileName[0x0A] = '0' + (posType / 10);
-        mFileName[0x0B] = '0' + (posType % 10);
-        mFileName[0x0F] = '0' + (posType / 10);
-        mFileName[0x10] = '0' + (posType % 10);
+        self->mFileName[0x0A] = '0' + (posType / 10);
+        self->mFileName[0x0B] = '0' + (posType % 10);
+        self->mFileName[0x0F] = '0' + (posType / 10);
+        self->mFileName[0x10] = '0' + (posType % 10);
 
-        mField34     = 0x12;
-        mSoundHandle = -1;
+        self->mField34     = 0x12;
+        self->mSoundHandle = -1;
 
     } else if (flags & 4) {
-        mOwner           = owner;
-        mBattleSndHandle = 0xFFFF;
+        self->mOwner           = owner;
+        self->mBattleSndHandle = 0xFFFF;
     }
 }
 
 // updatePosition (0x802A353C)
-extern "C" void CCharVoice::updatePosition()
+extern "C" void updatePosition(CCharVoice* self)
 {
-    if (mOwner == nullptr) return;
+    if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)mOwner + 0x64);
+    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
 
     if ((flags & 2) || (flags & 0x80000000)) {
-        if (mSoundHandle == -1) return;
+        if (self->mSoundHandle == -1) return;
 
-        if (MenuSnd_QuerySlotLive_89A04(mFileName) != 0) {
-            mVoiceId     = -1;
-            mSoundHandle = -1;
+        if (MenuSnd_QuerySlotLive_89A04(self->mFileName) != 0) {
+            self->mVoiceId     = -1;
+            self->mSoundHandle = -1;
             return;
         }
 
@@ -120,8 +120,8 @@ extern "C" void CCharVoice::updatePosition()
         // Model position fetch: getModelPos is called twice by retail
         // (once for the null test, once in the body) -- mirror that.
         CVoicePos pos;
-        if (mOwner->getModelPos() != nullptr) {
-            CVoiceModelPos* mp = mOwner->getModelPos();
+        if (self->mOwner->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = self->mOwner->getModelPos();
             float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
             z = mp->z;       // retail loads z, y, x but stores x, y, z
             y = mp->y;
@@ -130,24 +130,24 @@ extern "C" void CCharVoice::updatePosition()
             pos.f[1] = y;
             pos.f[2] = z;
         } else {
-            pos = *mOwner->getPosition();
+            pos = *self->mOwner->getPosition();
         }
 
-        MenuSnd_SetSlotPan_9C40(mSoundHandle, &pos, ch,
+        MenuSnd_SetSlotPan_9C40(self->mSoundHandle, &pos, ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
-        if (mBattleSndHandle == 0xFFFF) return;
+        if (self->mBattleSndHandle == 0xFFFF) return;
 
-        if (CfSoundMan_TouchSlotById(mBattleSndHandle) == 0) {
-            mVoiceId          = -1;
-            mBattleSndHandle  = 0xFFFF;
+        if (CfSoundMan_TouchSlotById(self->mBattleSndHandle) == 0) {
+            self->mVoiceId          = -1;
+            self->mBattleSndHandle  = 0xFFFF;
             return;
         }
 
         CVoicePos pos;
-        if (mOwner->getModelPos() != nullptr) {
-            CVoiceModelPos* mp = mOwner->getModelPos();
+        if (self->mOwner->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = self->mOwner->getModelPos();
             float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
             z = mp->z;       // retail loads z, y, x but stores x, y, z
             y = mp->y;
@@ -156,78 +156,78 @@ extern "C" void CCharVoice::updatePosition()
             pos.f[1] = y;
             pos.f[2] = z;
         } else {
-            pos = *mOwner->getPosition();
+            pos = *self->mOwner->getPosition();
         }
 
-        CfSoundMan_WriteSlotParam(mBattleSndHandle, &pos);
+        CfSoundMan_WriteSlotParam(self->mBattleSndHandle, &pos);
     }
 }
 
 // stopVoiceA (0x802A371C)
-extern "C" void CCharVoice::stopVoiceA()
+extern "C" void stopVoiceA(CCharVoice* self)
 {
-    if (mOwner == nullptr) return;
+    if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)mOwner + 0x64);
+    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
 
     if ((flags & 2) || (flags & 0x80000000)) {
-        if (mSoundHandle != -1) {
-            MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
-            mVoiceId     = -1;
-            mSoundHandle = -1;
+        if (self->mSoundHandle != -1) {
+            MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+            self->mVoiceId     = -1;
+            self->mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        u16 bh = mBattleSndHandle;
+        u16 bh = self->mBattleSndHandle;
         if (bh != 0xFFFF) {
-            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
+            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
             CfSoundMan_ApplySlotStop(obj, bh, 0);
-            mVoiceId          = -1;
-            mBattleSndHandle  = 0xFFFF;
+            self->mVoiceId          = -1;
+            self->mBattleSndHandle  = 0xFFFF;
         }
     }
 }
 
 // playGated (0x802A37D0)
-extern "C" bool CCharVoice::playGated(float volume,
+extern "C" bool playGated(CCharVoice* self, float volume,
                                 int voiceId, int priority)
 {
-    if (mOwner == nullptr) return false;
-    if (mVoiceId < 0) mPriorityCheck = -1;
+    if (self->mOwner == nullptr) return false;
+    if (self->mVoiceId < 0) self->mPriorityCheck = -1;
     // Gate: reject if the stored check priority is <= the new one (higher
     // priority = smaller number in this system).  Retail tests the > case
     // and branches past the reject.
-    if (priority >= 0 && mPriorityCheck >= 0
-        && mPriorityCheck <= priority)
+    if (priority >= 0 && self->mPriorityCheck >= 0
+        && self->mPriorityCheck <= priority)
         return false;
 
-    mPriorityCheck = priority;
+    self->mPriorityCheck = priority;
 
-    if (mOwner != 0) {
-        u32 flags = *(u32*)((char*)mOwner + 0x64);
+    if (self->mOwner != 0) {
+        u32 flags = *(u32*)((char*)self->mOwner + 0x64);
 
         if ((flags & 2) || (flags & 0x80000000)) {
-            if (mSoundHandle != -1) {
-                MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
-                mVoiceId     = -1;
-                mSoundHandle = -1;
+            if (self->mSoundHandle != -1) {
+                MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+                self->mVoiceId     = -1;
+                self->mSoundHandle = -1;
             }
         } else if (flags & 4) {
-            u16 bh = mBattleSndHandle;
+            u16 bh = self->mBattleSndHandle;
             if (bh != 0xFFFF) {
-                CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
+                CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
                 CfSoundMan_ApplySlotStop(obj, bh, 0);
-                mVoiceId          = -1;
-                mBattleSndHandle  = 0xFFFF;
+                self->mVoiceId          = -1;
+                self->mBattleSndHandle  = 0xFFFF;
             }
         }
     }
 
-    u32 flags2 = *(u32*)((char*)mOwner + 0x64);
+    u32 flags2 = *(u32*)((char*)self->mOwner + 0x64);
 
     if ((flags2 & 2) || (flags2 & 0x80000000)) {
         // Format the voice id (0..9999) into the file name as four digits at
-        // indices mField34+{0,1,3,4} (skipping the separator at +2).  Retail
-        // reloads mField34 for each store, so reference the member raw, and
+        // indices self->mField34+{0,1,3,4} (skipping the separator at +2).  Retail
+        // reloads self->mField34 for each store, so reference the member raw, and
         // hoists the MenuSnd_TryPlayGated_97A0 volume arg load to the top of the block.
         float sndLevel = lbl_eu_80668C64;
         int v100 = voiceId / 100;
@@ -236,40 +236,40 @@ extern "C" bool CCharVoice::playGated(float volume,
         int b    = (u32)v100 % 10;                       // hundreds
         int c    = (u32)rem / 10;                        // tens
         int d    = (u32)rem % 10;                        // ones
-        mFileName[mField34 + 0] = '0' + a;
+        self->mFileName[self->mField34 + 0] = '0' + a;
         // Stores b/c/d use integer-domain addressing: adding the loaded
-        // mField34 value to `this` as u32 (not pointer arithmetic) makes
+        // self->mField34 value to `this` as u32 (not pointer arithmetic) makes
         // MWCC emit `add rD, r0, r30` (loaded value in rA) exactly like
         // retail; the pointer+subscript form would emit `add rD, r30, r0`.
         // The +0x11/+0x13/+0x14 constant is folded into the stb displacement
-        // (= mFileName offset 0x10 + index {1,3,4}).
-        *((char*)((u32)mField34 + (u32)this) + 0x11) = '0' + b;
-        *((char*)((u32)mField34 + (u32)this) + 0x13) = '0' + c;
-        *((char*)((u32)mField34 + (u32)this) + 0x14) = '0' + d;
+        // (= self->mFileName offset 0x10 + index {1,3,4}).
+        *((char*)((u32)self->mField34 + (u32)self) + 0x11) = '0' + b;
+        *((char*)((u32)self->mField34 + (u32)self) + 0x13) = '0' + c;
+        *((char*)((u32)self->mField34 + (u32)self) + 0x14) = '0' + d;
 
-        s32 h = MenuSnd_TryPlayGated_97A0(mFileName, sndLevel, 1);
-        mSoundHandle = h;
+        s32 h = MenuSnd_TryPlayGated_97A0(self->mFileName, sndLevel, 1);
+        self->mSoundHandle = h;
 
         if (h != -1) {
-            mVoiceId = voiceId;
+            self->mVoiceId = voiceId;
             return true;
         }
-        mVoiceId = -1;
+        self->mVoiceId = -1;
         return false;
     }
     else if (flags2 & 4) {
-        CVoiceBattleSndMgr* man = CfObjectMove_relaySubB0Slot60(mOwner);
+        CVoiceBattleSndMgr* man = CfObjectMove_relaySubB0Slot60(self->mOwner);
         if ((s32)man < 0) return false;
 
         u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             man, voiceId, 0, 0, volume);
-        mBattleSndHandle = h;
+        self->mBattleSndHandle = h;
 
         if (h != 0xFFFF) {
-            mVoiceId = voiceId;
+            self->mVoiceId = voiceId;
             return true;
         }
-        mVoiceId = -1;
+        self->mVoiceId = -1;
         return false;
     }
 
@@ -277,25 +277,25 @@ extern "C" bool CCharVoice::playGated(float volume,
 }
 
 // stopVoiceB (0x802A3A38)
-extern "C" void CCharVoice::stopVoiceB()
+extern "C" void stopVoiceB(CCharVoice* self)
 {
-    if (mOwner == nullptr) return;
+    if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)mOwner + 0x64);
+    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
 
     if ((flags & 2) || (flags & 0x80000000)) {
-        if (mSoundHandle != -1) {
-            MenuSnd_SilenceByName_8986C(mFileName, lbl_eu_80668C64);
-            mVoiceId     = -1;
-            mSoundHandle = -1;
+        if (self->mSoundHandle != -1) {
+            MenuSnd_SilenceByName_8986C(self->mFileName, lbl_eu_80668C64);
+            self->mVoiceId     = -1;
+            self->mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        u16 bh = mBattleSndHandle;
+        u16 bh = self->mBattleSndHandle;
         if (bh != 0xFFFF) {
-            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(mOwner);
+            CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
             CfSoundMan_ApplySlotStop(obj, bh, 0);
-            mVoiceId          = -1;
-            mBattleSndHandle  = 0xFFFF;
+            self->mVoiceId          = -1;
+            self->mBattleSndHandle  = 0xFFFF;
         }
     }
 }

@@ -434,13 +434,13 @@ extern "C" char* CNReqSaveFormatTempPath(u32 a1, u8 a2) {
 #pragma optimize_for_size off
 
 // Set the NAND error message string for error code -4 / -64
-void setGeneralNandErrorMessage__FPCw(const wchar_t* msg) {
+extern "C" void setGeneralNandErrorMessage__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B60;
     lbl_eu_80663B60 = msg;
 }
 
 // Set the NAND error message string for error code -3
-void setSaveNandErrorMessage__FPCw(const wchar_t* msg) {
+extern "C" void setSaveNandErrorMessage__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B64;
     lbl_eu_80663B64 = msg;
 }

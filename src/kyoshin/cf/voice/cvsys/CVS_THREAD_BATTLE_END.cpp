@@ -311,7 +311,7 @@ store:
 // allocation result guarding the EH region; the catch rethrows via
 // __throw(0,0,0) so MWCC elides the __end__catch epilogue.  The init-state
 // triple is copied outside the try.
-CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
+extern "C" CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
     // handleBuf is validated then discarded (retail leaks it here).
     if (CCharVoiceMan_DispatchById(0x46, 1) == NULL) {
         return NULL;

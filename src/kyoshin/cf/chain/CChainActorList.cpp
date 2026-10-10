@@ -1,5 +1,12 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+// Shield: CChainTimer.hpp declares ChainMusic_SaveSlots/RestoreSlots as
+// (void*, void*) for its callers; this TU defines them with full types
+// (retail bodies access typed members). The hidden names keep both decls.
+#define ChainMusic_SaveSlots ChainMusic_SaveSlots_void_hidden
+#define ChainMusic_RestoreSlots ChainMusic_RestoreSlots_void_hidden
 #include "kyoshin/cf/chain/CChainTimer.hpp"
+#undef ChainMusic_SaveSlots
+#undef ChainMusic_RestoreSlots
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/CVision.hpp"
@@ -389,7 +396,7 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     }
 }
 
-void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other,
+extern "C" void Chain_CollectChainable(cf::CChainActorList* self, cf::CChainList* other,
                    cf::CfObjectActor* target) {
     // 1. Activate the resident actor whose unk0 references @p target.
     cf::CChainActor* found = findActorByTarget((u32)target, self);
@@ -869,7 +876,7 @@ extern "C" void ChainCounter_Drain(cf::CChainCounter* self) {
 }
 // Copies the owner's arts-param tuning values into the 3x8 slot table and
 // marks it enabled.
-void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
+extern "C" void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
     cf::CArtsSet* arts = (cf::CArtsSet*)(cf::CArtsSet*)reinterpret_cast<cf::CChainBattleObj*>(owner)->v157();
     float fallback = lbl_eu_80668A80[0];
     for (int i = 0; i < 3; i++) {
@@ -885,7 +892,7 @@ void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
 }
 // Writes the 3x8 slot table back into the owner's arts-param tuning values
 // and clears the enable flag.
-void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
+extern "C" void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner){
     if (self->mEnabled == 0) return;
     cf::CArtsSet* arts = (cf::CArtsSet*)(cf::CArtsSet*)reinterpret_cast<cf::CChainBattleObj*>(owner)->v157();
     for (int i = 0; i < 3; i++) {

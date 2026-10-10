@@ -61,7 +61,7 @@ typedef struct HBMSYNVolParams {
 // "unset") into a tick count: ms = mulMs * pow(powBase, linear combination of
 // the decoded values divided by the divisor). Values are decoded through a
 // 0x43300000-prefixed double and rebased by the rodata bias constant.
-void __HBMSYNSetupVolumeEnvelope(void* voice)
+extern "C" void __HBMSYNSetupVolumeEnvelope(void* voice)
 {
     HBMSYNVoice* v = (HBMSYNVoice*)voice;
     HBMSYNEnvConsts const* tbl = &lbl_80518B58;
@@ -148,7 +148,7 @@ void __HBMSYNSetupVolumeEnvelope(void* voice)
     v->release = ((HBMSYNVolParams*)v->params)->release;
 }
 
-void __HBMSYNRunVolumeEnvelope(void* voice)
+extern "C" void __HBMSYNRunVolumeEnvelope(void* voice)
 {
     HBMSYNVoice* v = (HBMSYNVoice*)voice;
     u32 phase = (u32)v->volPhase;

@@ -48,6 +48,7 @@ extern "C" {
     void CTaskGame_setLoadScreen(int, int);
     void CTaskGame_callCGameInit();
     void CtrlObjectParam_RefreshAllEquipImpls();
+    void CtrlObjectParam_WriteEquipSlotValue(void*, unsigned long, void*);
     void CItemBlock_clearSlotCnt();
     void UIBattleReleaseAll();
     int CItemBlock_addSlotCount(int);

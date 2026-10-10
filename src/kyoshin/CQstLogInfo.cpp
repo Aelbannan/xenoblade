@@ -428,9 +428,9 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo
         setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xe7], true), 1);
         u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
-void* queryBuf = UIWin_BuildFlagBuf(key);
+        void* queryBuf = UIWin_BuildFlagBuf(key);
         u32 notOdd = !odd;
-if (UIWin_QueryItemAvail((CItemQuery*)queryBuf, notOdd, 0) != 0) {
+        if (UIWin_QueryItemAvail((CItemQuery*)queryBuf, notOdd, 0) != 0) {
             setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                               &lbl_eu_8050A0B4[0xf2], true), 1);
         }
@@ -465,7 +465,7 @@ if (UIWin_QueryItemAvail((CItemQuery*)queryBuf, notOdd, 0) != 0) {
                         idx++;
                     }
                 } else {
-if (UIWin_QueryItemAvail((CItemQuery*)queryBuf, notOdd, i + 1) != 0) {
+                    if (UIWin_QueryItemAvail((CItemQuery*)queryBuf, notOdd, i + 1) != 0) {
                         sprintf(buf48, &lbl_eu_8050A0B4[0x14b], idx + 1);
                         setPaneVisible(self->mUnk20->GetRootPane()->FindPaneByName(
                                           buf48, true), 1);

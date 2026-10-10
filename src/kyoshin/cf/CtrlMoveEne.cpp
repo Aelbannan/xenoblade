@@ -142,7 +142,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             }
             return;
         }
-        int r28 = 0;
+        int skipMark = 0;
         if (f60 != 0) {
             int actorStateOk = 1;
             u32 w = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
@@ -171,27 +171,27 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                         void* src = (void*)findObjectById__Fi(
                             reinterpret_cast<cf::CObjectParam*>(A2C8Sub(obj))
                                 ->CObjectParam_getSelfObjectId());
-                        cf::CFunc8008B580Obj* r26 =
+                        cf::CFunc8008B580Obj* owner =
                             (cf::CFunc8008B580Obj*)MapFx_ResolveOwner(src);
-                        if (r26 != 0) {
+                        if (owner != 0) {
                             ml::CVec3* p =
-                                reinterpret_cast<cf::CfObject*>(&r26->mSub2)->CfObject_getPosVector();
+                                reinterpret_cast<cf::CfObject*>(&owner->mSub2)->CfObject_getPosVector();
                             f32 f31 = lbl_eu_806665D0 + p->y;
                             u16 d74 =
                                 ((cf::CFunc8008E760Data*)self->field_0x34)
                                     ->field_74;
-                            int r27 = 0;
+                            int usePosY = 0;
                             if ((d74 & 1u) != 0) {
                                 cf::CFunc8008A2C8F60* f3 =
                                     (cf::CFunc8008A2C8F60*)
-                                        r26->field_3F60;
+                                        owner->field_3F60;
                                 if (f3 != 0) {
                                     if ((f3->field_4EC & 0x2u) != 0) {
                                         f31 = lbl_eu_806665D4 +
-                                              reinterpret_cast<cf::CfObject*>(&r26->mSub2)->CfObject_getPosVector()
+                                              reinterpret_cast<cf::CfObject*>(&owner->mSub2)->CfObject_getPosVector()
                                                   ->y;
                                     } else if ((f3->field_C & 0x2u) == 0) {
-                                        r27 = 1;
+                                        usePosY = 1;
                                     }
                                 }
                                 view->field_0x164 = f31;
@@ -199,7 +199,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                             } else {
                                 // Collision height-band scan.
                                 ml::CVec3* pa =
-                                    reinterpret_cast<cf::CfObject*>(&r26->mSub2)->CfObject_getPosVector();
+                                    reinterpret_cast<cf::CfObject*>(&owner->mSub2)->CfObject_getPosVector();
                                 ml::CVec3* pb =
                                     reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector();
                                 f32 f30 = pb->y - lbl_eu_806665E0;
@@ -221,7 +221,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                             &probe, 0x4A11, 0, 1,
                                             lbl_eu_806665DC,
                                             lbl_eu_806665DC) != 0) {
-                                        int r24 = 0;
+                                        int probeHit = 0;
                                         for (int i = 0;
                                              i < ScnRes_GetEntryCount_E4AC(); i++) {
                                             if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(
@@ -251,11 +251,11 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                                 ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))
                                                     ->y;
                                             if (cy > f30 && cy < f28) {
-                                                r24 = 1;
+                                                probeHit = 1;
                                                 f30 = cy;
                                             }
                                         }
-                                        if (r24 != 0) {
+                                        if (probeHit != 0) {
                                             view->field_0x164 =
                                                 lbl_eu_806665E4 + f30;
                                         } else {
@@ -267,8 +267,8 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                     view->field_0x192 = 0x3C;
                                 }
                             }
-                            if (actorStateOk != 0) r27 = 1;
-                            if (r27 != 0) {
+                            if (actorStateOk != 0) usePosY = 1;
+                            if (usePosY != 0) {
                                 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector()
                                           ->y;
                             }
@@ -291,7 +291,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             // Heading / pursuit gates.
             f32 f29 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
             f32 f31 = Scn_GetFrameDelta(lbl_eu_80663E14) * f29;
-            int r27 = 0;
+            int resetTimer = 0;
             if (actorStateOk != 0) {
                 obj->field_4550 |= 0x200;
                 void* sub2 = actor->CActorParam_getMoveRecord();
@@ -299,7 +299,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     u32* w50 = *(u32**)((u8*)sub2 + 0x50);
                     if (w50 != 0) {
                         u16 w = *(u16*)((u8*)w50 + 0x3C);
-                        r27 = (w == 1 || w == 2) ? 1 : 0;
+                        resetTimer = (w == 1 || w == 2) ? 1 : 0;
                     }
                 }
             } else {
@@ -405,11 +405,11 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                 r0 = (f4ec & 0x40000u) != 0 ? 1 : 0;
             }
             if (r0 != 0) return;
-            int r26 = 1;
+            int commitMove = 1;
             if ((view->field_0x17C & 0x04000000u) != 0) {
                 view->field_0x17C &= 0xFC7FFFFF;
-                r26 = 0;
-                r28 = 1;
+                commitMove = 0;
+                skipMark = 1;
             } else if ((f60->field_4EC & 0x100u) == 0 ||
                        (obj->field_3374 & 0x100000u) != 0) {
                 if ((view->field_0x17C & 0x4u) != 0) {
@@ -448,11 +448,11 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                     r0b = 0;
                                 }
                                 if (r0b != 0) return;
-                                r26 = 0;
+                                commitMove = 0;
                             } else {
                                 s16 t = (s16)(view->field_0x196 + 1);
                                 view->field_0x196 = t;
-                                if (t >= 0x1E) r26 = 0;
+                                if (t >= 0x1E) commitMove = 0;
                             }
                         }
                     }
@@ -476,11 +476,11 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     u32* c4 = *(u32**)((u8*)pl + 0xC4);
                     if (c4 != 0 &&
                         (*(u16*)((u8*)c4 + 0x530) & 1u) != 0) {
-                        r26 = 0;
+                        commitMove = 0;
                     }
                 }
                 if ((self->field_0x180 & 0x40u) != 0) {
-                    if (r27 != 0) {
+                    if (resetTimer != 0) {
                         view->field_0x168 = lbl_eu_806665C0;
                     } else {
                         cf::CFunc8008B580Obj* obj2 =
@@ -492,9 +492,9 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                         if (isBattleStatusActive((u8*)obj2 + 8, 6) != 0 ||
                             isBattleStatusActive((u8*)obj2 + 8, 7) != 0 ||
                             isBattleStatusActive((u8*)obj2 + 8, 0xC) != 0) {
-                            r27 = 1;
+                            resetTimer = 1;
                         }
-                        if (r27 == 0) {
+                        if (resetTimer == 0) {
                             f32 f1 = view->field_0x168 + f28;
                             view->field_0x168 = f1;
                             if (f1 >= lbl_eu_80666600) {
@@ -502,18 +502,18 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                 *(u32*)&view->mVec144W.y =
                                     reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector()
                                             ->y;
-                                r26 = 0;
+                                commitMove = 0;
                             }
                         }
                     }
                 } else {
-                    if (r27 == 0 &&
+                    if (resetTimer == 0 &&
                         (((cf::CFunc8008E760Data*)self->field_0x34)
                              ->field_74 &
                          0x20u) != 0) {
                         f32 f1 = view->field_0x168 + f28;
                         view->field_0x168 = f1;
-                        if (f1 >= lbl_eu_806665FC) r26 = 0;
+                        if (f1 >= lbl_eu_806665FC) commitMove = 0;
                     } else {
                         view->field_0x168 = lbl_eu_806665C0;
                     }
@@ -522,9 +522,9 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
             if (((cf::CFunc8008A2C8Global*)getUnk80664658())
                     ->field_214 &
                 0x10000u) {
-                r26 = 0;
+                commitMove = 0;
             }
-            if (r26 != 0) {
+            if (commitMove != 0) {
                 // Commit the +0x144 target / proximity decision.
                 ml::CVec3* pos =
                     reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getPosVector();
@@ -551,7 +551,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     }
                 }
                 if ((self->field_0x180 & 0x4u) != 0 || d2 >= th) {
-                    r26 = 0;
+                    commitMove = 0;
                     if (sel != 1) {
                         if ((self->field_0x180 & 0x100u) != 0) {
                             sel = 2;
@@ -576,14 +576,14 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                             f32 pdx = pa->x - pb->x;
                             f32 pdz = pa->z - pb->z;
                             if (pdx * pdx + pdz * pdz < f28) {
-                                r26 = 1;
+                                commitMove = 1;
                                 break;
                             }
                         }
-                        if (r26 == 0) {
+                        if (commitMove == 0) {
                             f32 f30 = cf::lbl_eu_804FB9C8[0];
                             f32 f31b = cf::lbl_eu_804FB9C8[1];
-                            int r23 = 0;
+                            int timerActive = 0;
                             for (int i = 1; i < 3; i++) {
                                 void* p =
                                     getPlayer__Q22cf13CfGameManagerFi(i);
@@ -602,17 +602,17 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                                 f32 pdz = pa->z - pb->z;
                                 f32 pd2 = pdx * pdx + pdz * pdz;
                                 if (pd2 < f30) {
-                                    r26 = 1;
-                                    r23 = 0;
+                                    commitMove = 1;
+                                    timerActive = 0;
                                     break;
                                 }
-                                if (pd2 < f31b) r26 = 1;
+                                if (pd2 < f31b) commitMove = 1;
                             }
-                            if (r23 != 0) {
+                            if (timerActive != 0) {
                                 view->field_0x190 =
                                     view->field_0x190 + 1;
                                 if (view->field_0x190 >= 0x1C2) {
-                                    r26 = 0;
+                                    commitMove = 0;
                                 }
                             } else {
                                 view->field_0x190 = 0;
@@ -621,7 +621,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     }
                 }
             }
-            if (r26 != 0) {
+            if (commitMove != 0) {
                 int r0b = 0;
                 if ((self->field_0x180 & 0x40u) != 0) {
                     if (f60->field_4F8 > lbl_eu_806665C0) {
@@ -643,7 +643,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                 }
                 if (r0b != 0) return;
             }
-            if (r28 == 0 && (view->field_0x17C & 0x4u) != 0) {
+            if (skipMark == 0 && (view->field_0x17C & 0x4u) != 0) {
                 // Mark the party targets with the +0x08000000 flag.
                 void* b89 = lookupCA0ById(obj->field_45C0);
                 if (b89 != 0) {
@@ -1175,10 +1175,10 @@ __declspec(noinline) int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self) {
             ? (u8*)self->field_0x34->field_0x28 - 0x3E9C
             : 0);
     cf::CfObj3F60View* f60 = obj->field_3F60;
-    int r28 = 1;
+    int keepMoving = 1;
     if ((view->field_0x17C & 0x8u) != 0 && f60 != 0) {
         if (getAnimModelId((u32)f60) == 0x66) {
-            r28 = 0;
+            keepMoving = 0;
         } else {
             view->field_0x17C &= ~0x8u;
         }
@@ -1217,7 +1217,7 @@ __declspec(noinline) int CtrlMoveEne_CheckKeepMoving(cf::CCtrlMoveEne* self) {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
         }
-        r28 = 0;
+        keepMoving = 0;
         goto d51c_97c;
     }
     // Bit-2 clear: run the approach / close-range logic.
@@ -1340,7 +1340,7 @@ d51c_780:
 
 d51c_918:
     reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
-    r28 = 0;
+    keepMoving = 0;
     goto d51c_97c;
 
 d51c_938:
@@ -1376,9 +1376,9 @@ d51c_97c:
                 func_8004B9D4(f60, 1, 0, 0, 0);
             }
         }
-        r28 = 0;
+        keepMoving = 0;
     }
-    return r28;
+    return keepMoving;
 }
 
 
@@ -2264,7 +2264,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
     f32 dist2 = dx * dx + dz * dz;
     f32 th = (sub->field_63C <= lbl_eu_806665C4) ? lbl_eu_80666670
                                                  : lbl_eu_806665E4;
-    int r29 = (dist2 > th);
+    int beyondReach = (dist2 > th);
     ml::CVec3 dir74(lbl_eu_806665C0, lbl_eu_806665C0, lbl_eu_806665C0);
     if ((self->field_0x180 & 0x8u) != 0 ||
         (view->field_0x70 & 0x40u) != 0) {
@@ -2350,7 +2350,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
     } else {
         setMoveFacing(self, &dir74, view->field_0x6C);
     }
-    if (r29 != 0) {
+    if (beyondReach != 0) {
         if ((self->field_0x180 & 0x8u) != 0) {
             // Keep the sub within reach of the controller.
             if (sub->field_C4 == 0 || sub->field_98 == 0) {

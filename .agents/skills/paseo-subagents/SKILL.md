@@ -11,6 +11,8 @@ description: >-
 
 Delegate independent work (parallel investigations, batch matching waves) to paseo subagents.
 `AGENTS.md` only points here — this skill is the launch/interaction surface.
+Upstream reference: the `paseo` skill (`getpaseo/paseo` → `skills/paseo/SKILL.md`) and
+https://paseo.sh/docs/orchestration.md.
 
 ## Required runtime
 
@@ -39,7 +41,13 @@ Delegate independent work (parallel investigations, batch matching waves) to pas
 
 ## Interact
 
-- Find: `paseo_list_agents`. Poll: `paseo_get_agent_status` / `paseo_get_agent_activity`.
-- Steer: `paseo_send_agent_prompt`. Unblock: `paseo_respond_to_permission`.
+- **Finish notifications are automatic** — agent-scoped `paseo_create_agent` /
+  `paseo_send_agent_prompt` default `notifyOnFinish: true`; the subagent's finish, error, or
+  permission request arrives on its own. Leave it on and move on to other work — do **not** poll
+  `paseo_list_agents` / `paseo_get_agent_status` just to check a running agent. (Top-level/human
+  callers have no parent callback: poll, or `paseo wait <id>` / `paseo attach <id>`.)
+- Steer: `paseo_send_agent_prompt`. Unblock: `paseo_respond_to_permission` (see
+  `paseo_list_pending_permissions`).
 - Stop: `paseo_cancel_agent` (interrupt, session kept) vs `paseo_kill_agent` (terminate).
-- Clean up: `paseo_archive_agent`. CLI equivalents: `paseo inspect <id> --json`, `paseo logs <id>`.
+- Check only when needed: `paseo_get_agent_status` / `paseo_get_agent_activity`; CLI
+  `paseo inspect <id> --json`, `paseo logs <id>`. Clean up: `paseo_archive_agent`.

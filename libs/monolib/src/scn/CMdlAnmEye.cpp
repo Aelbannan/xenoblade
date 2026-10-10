@@ -38,7 +38,7 @@ extern "C" u32 lbl_eu_805701D0[];
 
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
-void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
+extern "C" void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
     self->field_04 = model;
     u32 num = nw4r::g3d::ResMdl(model->field_0x146C)
                   .GetResMatNumEntries();
@@ -91,7 +91,7 @@ void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
 }
 
 // Eye-anim state setter (called from CScnItemModelNw4r.cpp).
-void EyeAnm_SetState(CMdlAnmEye* self, u32 val) {
+extern "C" void EyeAnm_SetState(CMdlAnmEye* self, u32 val) {
     self->value2C = val;
 }
 
@@ -99,7 +99,7 @@ void EyeAnm_SetState(CMdlAnmEye* self, u32 val) {
 // anim offset, run the blink state machine, then push the resulting eye
 // offset (per-eye angle table indexed by field_20) into each registered
 // eye's texture SRT effect matrix.
-void EyeAnm_TickBlink(CMdlAnmEye* self) {
+extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
     if (self->value2C == 4) return;
     if (self->field_1C == 0) return;
     f32 scale = simGetLeafDist7B0(self->field_04);

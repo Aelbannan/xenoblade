@@ -119,6 +119,7 @@ extern "C" void gmFileObject(void* object);
 // that passes r4 through, so the 1-arg form is intentional here. The retail
 // 2-arg form (data + index) is declared in pluginCfs.cpp.
 extern "C" void CtrlObjectParam_ResolveEquipItem(CfGameManagerData1C* data);
+extern "C" void CtrlObjectParam_WriteEquipSlotValue(void* self, unsigned long index, void* value);
 
 // --- imports for the func_8007xxxx / func_8008xxxx target bodies ---
 // (retail C-linkage names; signature params are informational, the emitted

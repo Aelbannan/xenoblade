@@ -328,8 +328,8 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
         return;
     }
     cf::CfResReloadParent* pB = self->field_00;
-    int r5 = (pB->field_64 >> 16) & 1;
-    if (r5 == 0) {
+    int altLoad = (pB->field_64 >> 16) & 1;
+    if (altLoad == 0) {
         // Two independent SDA reads, both hoisted above the tests (retail
         // issues lwz r3/lwz r4 back to back). Empty then-branch keeps
         // MWCC's beq-next/b-exit pair.
@@ -346,11 +346,11 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
         p = 3;
     } else if (pB->field_68 & 0x04000000) {
         p = 3;
-    } else if (r5 != 0) {
+    } else if (altLoad != 0) {
         p = 4;
     }
     int ret;
-    if (r5 != 0) {
+    if (altLoad != 0) {
         // retail hardcodes 4 here (li r4,0x4), overriding p
         ret = CfRes_tryDelegateLoad1(v, 4);
     } else {
@@ -571,11 +571,11 @@ extern "C" void tickReloadState(cf::CfResReloadImpl* self) {
 eee4:
     // r5: parent +0x64 bit 27, forced to 1 when the +0xC4 sub-object's +0x0C
     // has bit 16 or bit 6 set.
-    int r5 = (self->field_00->field_64 >> 27) & 1;
+    int skipReload = (self->field_00->field_64 >> 27) & 1;
     if (self->field_00->field_C4 != 0) {
         u32 f = self->field_00->field_C4->field_0C;
         if ((f & 0x10000) || (f & 0x40)) {
-            r5 = 1;
+            skipReload = 1;
         }
     }
     if (obj == 0) {
@@ -584,7 +584,7 @@ eee4:
     if (!(self->field_00->field_68 & 0x100000)) {
         goto effc;
     }
-    if (r5 != 0) {
+    if (skipReload != 0) {
         goto effc;
     }
     // volatile read: retail re-loads 45CA before the clear (first load is
@@ -837,14 +837,14 @@ extern "C" void updateReloadTypeState(u16 areaId, u16 subId) {
     extern u16 lbl_eu_8066427C;
     extern u16 lbl_eu_80664288;
     extern float lbl_eu_806676C8;
-if (lbl_eu_8066427A == areaId && lbl_eu_8066427C == subId) {
+    if (lbl_eu_8066427A == areaId && lbl_eu_8066427C == subId) {
         lbl_eu_80664288 &= 0xFFFE;
     } else {
         lbl_eu_80664288 |= 0x1;
     }
     *(volatile float*)&lbl_eu_80664284 = lbl_eu_806676C8;
-*(volatile u16*)&lbl_eu_8066427A = areaId;
-*(volatile u16*)&lbl_eu_8066427C = subId;
+    *(volatile u16*)&lbl_eu_8066427A = areaId;
+    *(volatile u16*)&lbl_eu_8066427C = subId;
 }
 
 // Position vector view with the loop-operator -= so MWCC PS-vectorizes the

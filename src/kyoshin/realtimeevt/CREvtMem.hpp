@@ -20,8 +20,8 @@ struct CREvtMem {
     /* 0x20 */ u32 arenaSize;
     /* 0x24 */ u32 currentPos;
     /* 0x28 */ f32 someFloat;
-
-    CREvtMem();
+    // (no ctor declaration: the ctor __ct__cf_CREvtMem is provided by
+    // CREvtMem.cpp as an extern "C" retail-symbol function.)
     // Frees any pending MEM2 allocations, clears the singleton pointer and,
     // when the compiler-generated destruction flag requests it, deletes the
     // object (retail __dt__Q22cf8CREvtMemFv / __dl__FPv epilogue).

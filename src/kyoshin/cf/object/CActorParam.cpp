@@ -1590,14 +1590,14 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             int r = IdTable_SumValues(self->CActorParam_getStatusTable(), 114);
             if (r != 0) *(s16*)((u8*)self + 0x177C) += (s16)r;
         }
-        int r45 = 0;
+        int stat45 = 0;
         if (Counter_TestBit(self->CActorParam_getStatusTable(), 45) != 0) {
-            r45 = IdTable_SumValues(self->CActorParam_getStatusTable(), 45);
-            if (r45 != 0) {
+            stat45 = IdTable_SumValues(self->CActorParam_getStatusTable(), 45);
+            if (stat45 != 0) {
                 float f2 = *(float*)((u8*)self + 0x1808) *
-                           (lbl_eu_806677E8 + (float)r45 / lbl_eu_80667818);
+                           (lbl_eu_806677E8 + (float)stat45 / lbl_eu_80667818);
                 float f0 = *(float*)((u8*)self + 0x180C) *
-                           (lbl_eu_806677E8 + (float)r45 / lbl_eu_80667818);
+                           (lbl_eu_806677E8 + (float)stat45 / lbl_eu_80667818);
                 *(float*)((u8*)self + 0x1808) = f2;
                 *(float*)((u8*)self + 0x180C) = f0;
                 if (f2 > f0) *(float*)((u8*)self + 0x1808) = f0;
@@ -1651,7 +1651,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         *(s16*)((u8*)self + 0x18F0) = *(s16*)((u8*)self + 0x175C);
         *(s16*)((u8*)self + 0x18DA) = *(s16*)((u8*)self + 0x1746);
 
-        s16 t45 = (s16)r45;
+        s16 t45 = (s16)stat45;
         float floorMul = lbl_eu_80667858; // 0.7f
         if ((float)t45 < floorMul * (float)*(s16*)((u8*)self + 0x166C)) {
             *(s16*)((u8*)self + 0x1878) =

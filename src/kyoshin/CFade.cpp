@@ -11,10 +11,10 @@
 #include "monolib/util.hpp"
 #include "monolib/work/CEventFile.hpp"
 
-u8 CFade::CFade_IsReady() { return mReady; }
+extern "C" int CFade_IsReady(CFade* self) { return self->mReady; }
 
 
-u8 CFade::CFade_IsVisible() { return mVisible; }
+extern "C" int CFade_IsVisible(CFade* self) { return self->mVisible; }
 
 
 // Retail marks the fade overlay loaded/ready once the layout is attached.
@@ -96,15 +96,23 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
 }
 #pragma pop
 
-CFade::CFade() : CFadeVtblBase(), mMemRegion() {
-    mFileHandle = nullptr;
-    mArcResAcc = nullptr;
-    mLayout = nullptr;
-    mAnimTrans = nullptr;
-    mIsLoaded = 0;
-    mFadeState = 0;
-    mReady = 0;
-    mVisible = 1;
+// Retail C-linkage ctor (unmangled __ct__CFade): store the shared vtable,
+// construct the embedded memory region, then zero the fields (mVisible=1).
+// Returns self (retail keeps it in r3 across the stores); callers declare
+// it void and ignore the result (same idiom as __ct__CSortMenu).
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+extern "C" CFade* __ct__CFade(CFade* self) {
+    self->mVtbl = lbl_eu_80536EA8;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mFileHandle = nullptr;
+    self->mArcResAcc = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans = nullptr;
+    self->mIsLoaded = 0;
+    self->mFadeState = 0;
+    self->mReady = 0;
+    self->mVisible = 1;
+    return self;
 }
 
 // destructor (member region + conditional delete are compiler-emitted).
@@ -114,65 +122,65 @@ CFade::~CFade() {}
 #pragma pop
 
 // start an async read of the fade layout arc.
-void CFade::CFade_StartLoad() {
-    mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
-        lbl_eu_8050B5A0, reinterpret_cast<IWorkEvent*>(this), 0, 0);
-    CDeviceFile::setHandleFlag2(mFileHandle);
+extern "C" void CFade_StartLoad(CFade* self) {
+    self->mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
+        lbl_eu_8050B5A0, reinterpret_cast<IWorkEvent*>(self), 0, 0);
+    CDeviceFile::setHandleFlag2(self->mFileHandle);
 }
 
 // per-frame update. Drive the fade-in/out animations, then refresh
 // the layout's animation once loaded and not idle. The s32 copy of the byte
 // state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
 // beq/fallthrough dispatch shape (if/else-if would invert the branches).
-void CFade::CFade_Update() {
-    if (mIsLoaded == 0) return;
-    s32 state = mFadeState;
+extern "C" void CFade_Update(CFade* self) {
+    if (self->mIsLoaded == 0) return;
+    s32 state = self->mFadeState;
     if (state == 0) return;
     switch (state) {
     case 1:
-        CFade_StepFadeIn(this);
+        CFade_StepFadeIn(self);
         break;
     case 3:
-        CFade_StepFadeOut(this);
+        CFade_StepFadeOut(self);
         break;
     }
-    mLayout->Animate(0);
+    self->mLayout->Animate(0);
 }
 
 // render the fade layout once loaded and fading.
-void CFade::CFade_Draw(nw4r::lyt::DrawInfo* drawInfo) {
-    if (mIsLoaded == 0) return;
-    if (mFadeState == 0) return;
-    drawLayout(mLayout, drawInfo, 0, 1);
+extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mIsLoaded == 0) return;
+    if (self->mFadeState == 0) return;
+    drawLayout(self->mLayout, drawInfo, 0, 1);
 }
 
 // unload, freeing the file handle, layout and arc resources.
-void CFade::CFade_Unload() {
-    closeFileHandle(&mFileHandle);
-    nw4r::lyt::Layout* layout = mLayout;
-    mIsLoaded = 0;
+extern "C" void CFade_Unload(CFade* self) {
+    closeFileHandle(&self->mFileHandle);
+    nw4r::lyt::Layout* layout = self->mLayout;
+    self->mIsLoaded = 0;
     if (layout != nullptr) {
         delete layout;
-        mLayout = nullptr;
+        self->mLayout = nullptr;
     }
-    releaseArcResourceAccessor(mArcResAcc);
-    mArcResAcc = nullptr;
-    mMemRegion.deleteRegion();
+    releaseArcResourceAccessor(self->mArcResAcc);
+    self->mArcResAcc = nullptr;
+    self->mMemRegion.deleteRegion();
 }
 
 // start fading in if currently idle.
-void CFade::CFade_FadeIn() {
-    if (mFadeState == 0) {
-        mFadeState = 1;
-        mVisible = 0;
+extern "C" void CFade_FadeIn(CFade* self) {
+    if (self->mFadeState == 0) {
+        self->mFadeState = 1;
+        self->mVisible = 0;
     }
 }
 
 // start fading out if fully faded in.
-void CFade::CFade_FadeOut() {
-    if (mFadeState == 2) {
-        mFadeState = 3;
-        mVisible = 0;
+extern "C" void CFade_FadeOut(CFade* self) {
+    if (self->mFadeState == 2) {
+        self->mFadeState = 3;
+        self->mVisible = 0;
     }
 }
 // ============================================================================

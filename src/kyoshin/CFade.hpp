@@ -45,26 +45,15 @@ public:
     u8 mReady;      // 0x26 - true after layout is attached and visible
     u8 mVisible;    // 0x27 - visibility flag (toggled during fade animation)
 
-    CFade();
     ~CFade();
     bool OnFileEvent(CEventFile* pEventFile);
-
-    void CFade_StartLoad();
-    void CFade_Update();
-    void CFade_Draw(nw4r::lyt::DrawInfo* drawInfo);
-    void CFade_Unload();
-    u8 CFade_IsReady();
-    u8 CFade_IsVisible();
-    void CFade_FadeIn();
-    void CFade_FadeOut();
 };
 
-// Retail-unmangled fade helpers: the US retail build keeps these as standalone
-// C-linkage-style symbols (verbatim CFade_StepFadeIn/CFade_StepFadeOut/CFade_MarkLoaded,
-// PLAN.md §17.6); linkage is provided by code_80135FDC.hpp.
+// Retail-unmangled fade helpers
+// C-linkage symbols (verbatim CFade_StepFadeIn/CFade_StepFadeOut/CFade_MarkLoaded).
 // Mark the overlay loaded/ready once the layout is attached.
-void CFade_MarkLoaded(CFade* self);
+extern "C" void CFade_MarkLoaded(CFade* self);
 // Animation-end handlers: fade-in reached target -> faded-in;
 // fade-out rewound -> idle.
-void CFade_StepFadeIn(CFade* self);
-void CFade_StepFadeOut(CFade* self);
+extern "C" void CFade_StepFadeIn(CFade* self);
+extern "C" void CFade_StepFadeOut(CFade* self);

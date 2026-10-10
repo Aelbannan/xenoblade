@@ -128,25 +128,25 @@ void CMenuPTState::menuPTStateDtorThunk58() {
 // UnkClass_80192BF4: PT-state FX/timer accumulator
 // ---------------------------------------------------------------------------
 
+extern const f32 lbl_eu_80667A98;         // float pool: zero threshold (owned by code_8018F8D8)
+extern const f32 lbl_eu_80667A9C;         // float pool: reset value (1.0f, retail bytes)
+extern const double lbl_eu_80667AA0;      // double pool: 0x4330000080000000 magic
+
 // us-80194310 - FUNC_80192BF4 constructor.
 // Initializes the counter/timer/wealth block. Byte-identical (implicit float pool).
 cf::UnkClass_80192BF4::UnkClass_80192BF4() {
     field_0x00 = 0;
-    field_0x04 = 0.0f;
-    field_0x08 = -1.0f;
+    field_0x04 = lbl_eu_80667A98;
+    field_0x08 = lbl_eu_80667A9C;
 }
 
 // Initializes a UnkClass_80192BF4-like struct at offsets 0x00/0x04/0x08.
 // Retail-unmangled symbol name (see refreshPtStateAccum).
 extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
     self->field_0x00 = 0;
-    self->field_0x04 = 0.0f;
-    self->field_0x08 = -1.0f;
+    self->field_0x04 = lbl_eu_80667A98;
+    self->field_0x08 = lbl_eu_80667A9C;
 }
-
-extern const f32 lbl_eu_80667A98;         // float pool: zero threshold
-extern const f32 lbl_eu_80667A9C;         // float pool: reset value (-1.0f)
-extern const double lbl_eu_80667AA0;       // double pool: 0x4330000080000000 magic
 
 // us-80194348 - refreshPtStateAccum.
 // If the accumulator is still positive, bump the counter, then query the
@@ -163,8 +163,11 @@ extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self, cf::CMenuPtStat
     // through r12 for real member virtual calls.
     int count = obj->getCount();
 
-    // Signed int->float conversion (MWCC 0x4330000080000000 magic; the
-    // builtin conversion is the only frsp-free byte-exact shape).
+    // Signed int->float conversion (MWCC builtin; the magic double pools
+    // locally and is renamed to lbl_eu_80667AA0 by the frozen rule's
+    // pool_patterns. Spelling it explicitly through the extern magic word
+    // adds an frsp + spills (verified 100% -> 61.8%), so the builtin stays:
+    // landing AA8 needs a rule-side define_symbols entry (frozen, reported).
     f32 val = (f32)(count * 2 + 6);
     self->field_0x08 = val;
     self->field_0x04 = val;
@@ -261,13 +264,14 @@ const void* lbl_eu_806624E0[2] = { lbl_eu_80503BD8, lbl_eu_80532A70 };
 // under extern "C"), Tail (no exact-name definition in tree), and the two
 // IScnRender thunks (member addresses are PMFs, not plain addresses, and the
 // retail short names have no definition to resolve to).
-// (.sdata2 lbl_eu_80667AA8 deliberately NOT defined here: this TU's int->float
-// conversion pool (0x10 local @-words, pre-existing - the pristine tree
-// already emits it) sits ahead of any definition, so the label would land
-// MISPLACED at +0x10 and the section would stay 0x18 vs retail 0x8. Landing
-// it needs refreshPtStateAccum's conversion re-spelled with an explicit
-// lbl_eu_80667AA0 load (retail's lfd references that external word); the
-// builtin (f32) cast always pools locally. See residual.)
+// (.sdata2 lbl_eu_80667AA8 deliberately NOT defined here: the int->float
+// conversion's magic pool (8B) is the only local .sdata2 object, so the
+// label would land MISPLACED at +0x8 and the section would stay 0x10 vs
+// retail 0x8. Re-spelling the conversion with an explicit lbl_eu_80667AA0
+// load was tried (union bit-formation + chained double stores): the magic
+// reloc matched but MWCC adds an frsp and spills (refreshPtStateAccum
+// 100% -> 61.8%, +4 bytes), so the builtin stays. Landing AA8 needs a
+// rule-side define_symbols entry (frozen table). See residual.)
 extern "C" void Init__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void Term__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void Move__12CMenuPTStateFv(CMenuPTState* self);

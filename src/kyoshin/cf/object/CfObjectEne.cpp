@@ -258,7 +258,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // sibling dtor __dt__Q22cf11CfObjectEneFv matches only because it has a
 // single explicit expression (its other use is the folded virtual-dispatch
 // adjustment, which GVN does not model).
-int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
+extern "C" int initEnemyBattleState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     // Free-function bl to Model UVF2 (CfObject_initEventState slot +0x58).
     // Member alias form inlines to bctrl and grows the frame (reverted).
     // Keep Class_/Unk Fv linker name: retail uses bl, not vdispatch.
@@ -779,9 +779,9 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
         arts->field_0x5C = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x237, slot);
         arts->field_0x5E = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x23B, slot);
         u16 w246 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x246, slot);
-        f32 r44 = ((cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock())->field_0x44;
+        f32 rateBonus = ((cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock())->field_0x44;
         cvA.w[1] = (u32)w246;
-        arts->field_0x60 = (f32)(cvA.d - subA) / divC + r44;
+        arts->field_0x60 = (f32)(cvA.d - subA) / divC + rateBonus;
         arts->field_0x64 = (u16)getBdatStringColumnValue(bdat2, tbl + 0x24C, slot);
         arts->field_0x76 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x25E, slot);
         arts->field_0x77 = (u8)getBdatStringColumnValue(bdat2, tbl + 0x262, slot);
@@ -1016,7 +1016,7 @@ extern "C" void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorP
 // the six 0x88-byte CAttackParam records at self+0x2750 stores strlen at
 // +0x20, strcpy's the +0x00 name and copies the +0x24..+0x80 typed fields
 // (the +0x84 vtable word is skipped).
-void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
+extern "C" void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneAttackData* src) {
     cf::CfEneAttackArea* dst = (cf::CfEneAttackArea*)self;
     const cf::CfEneAttackEntry* s = &src->records[0];
@@ -1089,7 +1089,7 @@ extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorP
 // each of the 24 0x8C-byte CArtsParam records at self+0x1A20 stores
 // strlen at +0x20, strcpy's the name and copies the +0x24..+0x80 fields
 // plus the +0x88 word (the +0x84 vtable word is skipped).
-void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
+extern "C" void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneArtsData* src) {
     cf::CfEneArtsArea* dst = (cf::CfEneArtsArea*)self;
     const volatile cf::CfEneArtsEntry* s = &src->records[0];

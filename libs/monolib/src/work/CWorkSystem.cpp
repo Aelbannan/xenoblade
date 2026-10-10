@@ -177,7 +177,7 @@ bool CWorkSystem::wkStandbyLogin(){
     s64 time = CDeviceClock::getTimeNow();
     ml::math::mtInit(time & 0xFFFFFFFF);
 
-UNKTYPE* scn = getScnHandle();
+    UNKTYPE* scn = getScnHandle();
     Coli_ParseChunks(scn, 0);
 
     //Call base
@@ -195,7 +195,7 @@ bool CWorkSystem::wkStandbyLogout(){
 
     if(!hasChild(this)){
         CTaskManager::Release();
-UNKTYPE* scn = getScnHandle();
+        UNKTYPE* scn = getScnHandle();
         resetScnData(scn); //probably class function
 
         mMemHandle = mtl::INVALID_HANDLE;

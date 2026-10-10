@@ -12,21 +12,21 @@
 // Constructor: __ct__cf_CREvtMem
 // Initializes all fields to 0, stores a float, sets singleton
 // ============================================================================
-cf::CREvtMem::CREvtMem() {
+extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
     u8* vt = &lbl_eu_80530A30[0];
     const f32 ps = lbl_eu_80667650;
-    flags = 0;
-    vtable = vt;
-    field_08 = 0;
-    field_0C = 0;
-    arenaStart = 0;
-    arenaEnd = 0;
-    arenaSize = 0;
-    currentPos = 0;
-    someFloat = ps;
-    lbl_eu_80664260 = this;
-    ptr1 = nullptr;
-    ptr2 = nullptr;
+    self->flags = 0;
+    self->vtable = vt;
+    self->field_08 = 0;
+    self->field_0C = 0;
+    self->arenaStart = 0;
+    self->arenaEnd = 0;
+    self->arenaSize = 0;
+    self->currentPos = 0;
+    self->someFloat = ps;
+    lbl_eu_80664260 = self;
+    self->ptr1 = nullptr;
+    self->ptr2 = nullptr;
 }
 
 // ============================================================================

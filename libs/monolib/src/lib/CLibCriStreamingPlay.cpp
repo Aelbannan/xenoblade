@@ -195,9 +195,12 @@ static StreamEntry* findFreeSlot() {
 }
 
 // Constructor - initializes streaming audio manager
-CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pParent)
-    : CLibCri(pName, pParent) {
-    u8* base = (u8*)this;
+// Retail-evidence shadow: the ctor bls the CLibCri base ctor directly
+// (retail reloc), so the TU calls it by its retail mangled name.
+extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* name, CWorkThread* parent);
+extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay* mem, const char* pName, CWorkThread* pParent) {
+    __ct__7CLibCriFPCcP11CWorkThread(mem, pName, pParent);
+    u8* base = (u8*)mem;
     // novtable: install retail vtables by hand (primary at +0x0,
     // CDeviceVICb secondary at +0x1C4)
     *(volatile void**)base = (void*)&lbl_eu_8056D028;
@@ -213,7 +216,7 @@ CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pPare
     *(u32*)(base + 0x4B0) = 0;
     
     // Store global instance
-    lbl_eu_806656E8 = this;
+    lbl_eu_806656E8 = mem;
     
     // Set work type
     *(u32*)(base + 0x50) = 0x11;
@@ -234,6 +237,7 @@ CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pPare
     
     // Initialize exception handler
     ((CException*)(base + 0x1C4))->AddToGlobalArray(nullptr);
+    return mem;
 }
 
 // Destructor (retail deleting-dtor form: null-this guard, flag > 0 frees).

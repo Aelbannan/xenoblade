@@ -122,7 +122,7 @@ void downVoiceAdvanceSlot2(CVS_THREAD_DOWN* self) {
 // throwaway handle buffer (0xF0 bytes) and the object itself (0x28 bytes),
 // runs the base constructor, overrides the vtable and owner slots, then
 // copies the init-state triple from lbl_eu_80539A68.
-CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+extern "C" CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set.
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;

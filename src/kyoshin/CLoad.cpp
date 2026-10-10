@@ -84,18 +84,23 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
 // retail frame: stmw/lmw size form
 #pragma push
 #pragma optimize_for_size on
-CLoad::CLoad(u8 arg) {
-    mFileHandle = nullptr;
-    mAccessor = nullptr;
-    mLayout = nullptr;
-    mAnimTrans0 = nullptr;
-    mAnimTrans1 = nullptr;
-    mIsLoaded = 0;
-    field_29 = 1;
-    mAnimStep = 0;
-    field_2B = 0;
-    field_2C = 1;
-    field_2D = arg;
+// Retail-evidence shadow: __ct__CLoad bls the member ctor directly with no
+// placement-new null guard, so the TU calls it by its retail mangled name.
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+extern "C" void __ct__CLoad(CLoad* self, u8 arg) {
+    self->mVtbl = lbl_eu_8053A340;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mFileHandle = nullptr;
+    self->mAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans0 = nullptr;
+    self->mAnimTrans1 = nullptr;
+    self->mIsLoaded = 0;
+    self->field_29 = 1;
+    self->mAnimStep = 0;
+    self->field_2B = 0;
+    self->field_2C = 1;
+    self->field_2D = arg;
 }
 #pragma pop
 

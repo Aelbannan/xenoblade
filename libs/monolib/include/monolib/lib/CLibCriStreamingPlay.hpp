@@ -10,7 +10,9 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
 //size: 0x540 (estimated based on CLibCri + streaming fields)
 class CLibCriStreamingPlay : public CLibCri {
 public:
-    CLibCriStreamingPlay(const char* pName, CWorkThread* pParent);
+    // (no ctor declaration: the ctor __ct__CLibCriStreamingPlay is provided
+    // by CLibCriStreamingPlay.cpp as an extern "C" retail-symbol function;
+    // declaring it here would collide with that definition under MWCC)
     // (no virtual dtor declaration: the deleting dtor __dt__20CLibCriStreamingPlayFv
     // is provided by CLibCriStreamingPlay.cpp as an extern "C" retail-symbol function;
     // declaring it here would collide with that definition under MWCC)

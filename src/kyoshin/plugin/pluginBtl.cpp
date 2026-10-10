@@ -25,7 +25,7 @@ struct BtlRingNode {
 class CBattleManager : public IFactoryEvent {
 public:
     static CBattleManager* getInstance();
-virtual void setPartyMaskFlag(u32 mask, u32 value); // +0x1C
+    virtual void setPartyMaskFlag(u32 mask, u32 value); // +0x1C
     virtual void CBattleMan_ClearStateMask(u32 mask);          // +0x20
 };
 }

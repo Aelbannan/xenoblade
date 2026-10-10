@@ -38,7 +38,7 @@ void FixStr<128>::format(const char* fmt, ...) {
 namespace cf {
 
 // Forward declarations for functions in this TU
-__declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
+extern "C" __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
 __declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name);
 
 // CfScript_InitPath - initializer for path string
@@ -47,7 +47,7 @@ extern "C" void CfScript_InitPath() {
 }
 
 // CfScript_CopyName - copy string with length tracking; returns dest
-__declspec(noinline) char* CfScript_CopyName(char* dest, const char* src) {
+extern "C" __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src) {
     u32 len = strlen(src);
     CfScriptNameBuffer* buf = (CfScriptNameBuffer*)dest;
     buf->mLength = len;
@@ -68,13 +68,13 @@ extern "C" void CfScript_UpdateMgr() {
 }
 
 // CfScript_ResetMgr - get singleton and call func_8006953C
-void CfScript_ResetMgr() {
+extern "C" void CfScript_ResetMgr() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->resetScripts();
 }
 
 // CfScript_LoadSlot0 - get singleton and load slot 0
-void CfScript_LoadSlot0(const char* name) {
+extern "C" void CfScript_LoadSlot0(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->loadSlotZero(name);
 }
@@ -87,7 +87,7 @@ __declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
 // CfScript_LoadSlot1 - get singleton and call CfScript_PutSlot1 (free function: loads
 // slot 1 by offsetting the singleton base, mirroring the retail split where
 // slot 1 has no member thunk).
-void CfScript_LoadSlot1(const char* name) {
+extern "C" void CfScript_LoadSlot1(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     CfScript_PutSlot1(mgr, name);
 }
@@ -99,7 +99,7 @@ __declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* na
 }
 
 // CfScript_LoadSlot2 - get singleton and call CfScript_PutSlot2
-void CfScript_LoadSlot2(const char* name) {
+extern "C" void CfScript_LoadSlot2(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->CfScript_PutSlot2(name);
 }
@@ -241,7 +241,7 @@ __declspec(noinline) void CfScriptManager::CfScript_ClearSlot2() {
 }
 
 // CfScript_TestMask - get singleton and call CfScript_TestFlags
-void CfScript_TestMask(int mask) {
+extern "C" void CfScript_TestMask(int mask) {
     CfScript_TestFlags(CfScriptManager::getInstance(), 2, mask);
 }
 

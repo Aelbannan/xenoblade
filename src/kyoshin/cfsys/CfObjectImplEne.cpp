@@ -66,7 +66,7 @@ void MoveImplEne_TickBattleAI(cf::CfObjectImplEneObj* self) {
     if ((flags->field_45CA & 2) == 0) {
         battleObj = (cf::CfImplEneBattleObj*)self->field_18;
         int id = *(int*)battleObj->field_04->bf30();
-if (testActorStatus(battleObj, &id, 0x803) == 0) actorOk = 1;
+        if (testActorStatus(battleObj, &id, 0x803) == 0) actorOk = 1;
     }
     if (actorOk != 0) {
         cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
@@ -215,7 +215,7 @@ void MoveImplEne_TickBattleState(cf::CfObjectImplEneObj* self) {
         CBattleMan_BumpUnk94Key(cf::CBattleManager::getInstance(), battleObj->field_3F28);
         spreadChainArtsHits(cf::CBattleManager::getInstance(), battleObj, 0, 0);
         unregisterBattleActor(cf::CBattleManager::getInstance(), battleObj);
-CPartsChange_ResetBattleEntry(battleObj, doReset, ((battleObj->field_3374 >> 5) & 1) ^ 1);
+        CPartsChange_ResetBattleEntry(battleObj, doReset, ((battleObj->field_3374 >> 5) & 1) ^ 1);
     }
 
     // Death id 0x968: refresh every tracked unit in the enum list.

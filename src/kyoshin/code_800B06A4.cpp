@@ -43,7 +43,7 @@ extern "C" void mineUpdateAll(unsigned long a, void* b);
 extern "C" void CPartsChange_InitChangeRecord(unsigned long a, void* b);
 extern "C" void CPartsChange_LoadBdatTables(unsigned long a, void* b);
 extern "C" void CPartsChange_UpdatePartyState(unsigned long a, float b);
-extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
+
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
 extern "C" void mineScanPoints(CfMapMineManager* self);  // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
@@ -51,10 +51,9 @@ extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg); // retail un
 extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count);
-extern "C" void CfObjectMap_refreshRegion(void* self);
+
 void clearResourceStack(void* self);
 void setResourceField04(void* self, cf::CfObject* obj);
-extern "C" int isBattleStatusActive(void* obj, int id);
 
 // us-800b0f70 - Store float and its square to several globals.
 // Retail emits frsp f2,f1 for `float sq` - the float->double->float round-trip
@@ -4981,21 +4980,21 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
     float f23 = f24;                        // current multiplier
     isTimerActive__Q22cf13CfGameManagerFv();
 
-    s32 r20 = gflagHasMask(0x20);
-    int r21 = (isGlobalCamFlagSet(0x200) != 0);
-    int r22 = (testResInfoFlag(0x10) != 0);
-    int r23 = (testResInfoFlag(0x40) != 0);
-    void* r24 = 0;
+    s32 gFlag20 = gflagHasMask(0x20);
+    int camFlag200 = (isGlobalCamFlagSet(0x200) != 0);
+    int resFlag10 = (testResInfoFlag(0x10) != 0);
+    int resFlag40 = (testResInfoFlag(0x40) != 0);
+    void* camBit15 = 0;
     if (getUnk80664658() != 0) {
-        r24 = testCamBit15(getUnk80664658());
+        camBit15 = testCamBit15(getUnk80664658());
     }
-    void* r27 = scaleAboveZero();
-    int r26 = (testResInfoFlag(0x20) != 0);
-    int r25 = CfRes_getE24Bit22();
+    void* scaleBase = scaleAboveZero();
+    int resFlag20 = (testResInfoFlag(0x20) != 0);
+    int resE24 = CfRes_getE24Bit22();
 
     // Ramp counter: counts up while the speed-up gates hold, then drains
     // driving the reslist speed side effects.
-    if ((r22 != 0 && r23 == 0) || r26 != 0) {
+    if ((resFlag10 != 0 && resFlag40 == 0) || resFlag20 != 0) {
         u32 d04 = self->field_0xD04 + 1;
         self->field_0xD04 = d04;
         if ((s32)d04 > 4 && self->field_0xD10 == 0) {
@@ -5020,17 +5019,17 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
     }
 
     // Multiplier selection ladder.
-    if (r22 != 0 && r23 != 0) {
+    if (resFlag10 != 0 && resFlag40 != 0) {
         f23 = lbl_eu_806669F4;
-    } else if (r27 != 0) {
+    } else if (scaleBase != 0) {
         f23 = lbl_eu_806669F8;
-    } else if (r24 != 0) {
+    } else if (camBit15 != 0) {
         f23 = f24 * lbl_eu_806669EC;
-    } else if (r22 != 0) {
+    } else if (resFlag10 != 0) {
         f23 = f24 * lbl_eu_806669EC;
-    } else if (r26 != 0 && r23 != 0) {
+    } else if (resFlag20 != 0 && resFlag40 != 0) {
         f23 = lbl_eu_806669F8;
-    } else if (r26 != 0) {
+    } else if (resFlag20 != 0) {
         f23 = f24 * lbl_eu_806669EC;
     }
 
@@ -5043,11 +5042,11 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
         if (testObj68bit6(obj) == 0) {
             float f17 = f23;
             float f22 = f23;
-            int r18 = 0, r17 = 0, r16 = 0, r24f = 0;
+            int boosted = 0, bit8Flag = 0, bit2Flag = 0, atMaxLevel = 0;
 
             if (testFlag64b3(obj) != 0) {
                 if (obj->lvl174() == lbl_eu_806669D8) {
-                    r24f = 1;
+                    atMaxLevel = 1;
                 }
             }
             if (cfCam_getBit2_64(obj) != 0) {
@@ -5055,26 +5054,26 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 // bits 4/3/1 of the result select the per-object branches.
                 u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
                 u8 b18 = (u8)getEneBdatColumn(minus, lbl_eu_804FC4D8 + 0x3e);
-                if (r22 == 0) {
+                if (resFlag10 == 0) {
                     f22 = f17;
                     if ((b18 & 0x10) != 0) {
                         f22 = f23 * lbl_eu_806669E4;
-                        r18 = 1;
+                        boosted = 1;
                         f17 = f22;
                     }
                 }
                 if ((b18 & 0x08) != 0) {
-                    r17 = 1;
+                    bit8Flag = 1;
                 }
                 if ((b18 & 0x02) != 0) {
-                    r16 = 1;
+                    bit2Flag = 1;
                 }
             }
             if (testObj68mask(obj, 8) != 0 || testObj64bit16(obj) != 0) {
                 setObj6Cbit0(obj);
                 goto next;
             }
-            if (r21 != 0) {
+            if (camFlag200 != 0) {
                 if (andObj6Cmask((u8*)obj, 2) != 0) {
                     goto next;
                 }
@@ -5084,48 +5083,48 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             if (anchor == 0) {
                 goto next;
             }
-            int sel = (r17 != 0 || r16 != 0) ? 1 : 0;
-            float f18v = (r17 != 0 || r16 != 0) ? f24 : f23;
+            int sel = (bit8Flag != 0 || bit2Flag != 0) ? 1 : 0;
+            float f18v = (bit8Flag != 0 || bit2Flag != 0) ? f24 : f23;
             s32 df = cfCam_getBit2_64(obj);
             B47Vec3* pos = obj->pos2B();
             float tmp20 = 0;               // sp+0x20 out-param of B47A8
-            s32 r15res = ((B47Fn)checkAudibleDistance)(0, f18v, pos,
+            s32 audible = ((B47Fn)checkAudibleDistance)(0, f18v, pos,
                                                 (const B47Vec3*)(unsigned long)df,
-                                                r18, &tmp20, 0);
-            if (r17 != 0) {                r15res = 1;
-            } else if (r16 != 0) {
+                                                boosted, &tmp20, 0);
+            if (bit8Flag != 0) {                audible = 1;
+            } else if (bit2Flag != 0) {
                 B47Vec3* pos2 = obj->pos2B();
                 volatile float t14 = base30.y - pos2->y;   // sp+0x14
                 (void)t14;
                 if (cfCam_absFloat() < lbl_eu_80663ED0) {
-                    r15res = 1;
+                    audible = 1;
                 }
             }
-            if (r24f != 0) {
-                r15res = 0;
+            if (atMaxLevel != 0) {
+                audible = 0;
             }
-            if (r15res != 0) {
+            if (audible != 0) {
                 goto big15;
             }
             // r15==0 path: controller-view status walk.
             if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x800) != 0) {
                 goto ctrl_tail;
             }
-            if (cfCam_getBit2_64(obj) == 0 || r15res != 0) {
+            if (cfCam_getBit2_64(obj) == 0 || audible != 0) {
                 goto ctrl_tail;
             }
             {
-                u8* r15d = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
-                int r16b = 0;
-                if (((IDispB4CA0*)r15d)->unkAF() != 0 ||
-                    testObj6Cbit27(r15d + 0x3e9c) != 0) {
-                    r16b = 1;
+                u8* ctrlView = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
+                int slotBusy = 0;
+                if (((IDispB4CA0*)ctrlView)->unkAF() != 0 ||
+                    testObj6Cbit27(ctrlView + 0x3e9c) != 0) {
+                    slotBusy = 1;
                 }
-                if (r16b != 0) {
+                if (slotBusy != 0) {
                     goto loop_end;
                 }
-                if (r22 != 0 && r23 != 0) {
-                    if (testMode15F0Range((UnkClass_805764CC*)r15d) == 0) {
+                if (resFlag10 != 0 && resFlag40 != 0) {
+                    if (testMode15F0Range((UnkClass_805764CC*)ctrlView) == 0) {
                         goto bc8;
                     }
                     if (testObj6Cmask(obj, 2) != 0) {
@@ -5140,12 +5139,12 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     goto loop_end;
                 }
             bc8:
-                r16b = (int)hudCtrlSlot46((Func4CA0Obj*)r15d);
-                if (r16b != 0) {
+                slotBusy = (int)hudCtrlSlot46((Func4CA0Obj*)ctrlView);
+                if (slotBusy != 0) {
                     goto loop_end;
                 }
-                if ((u16)getObjU16_45C0(r15d) != 0) {
-                    u8* obj2 = r15d + 0x3e9c;
+                if ((u16)getObjU16_45C0(ctrlView) != 0) {
+                    u8* obj2 = ctrlView + 0x3e9c;
                     if (testObj64bit26(obj2) != 0) {
                         removeManagedObject(self, obj2);
                     } else if (lookupCA0BySelf(obj2) == 0) {
@@ -5153,11 +5152,11 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     }
                     goto loop_end;
                 }
-                if (r16b != 0) {
+                if (slotBusy != 0) {
                     goto loop_end;
                 }
-                if (r25 != 0) {
-                    removeManagedObject(self, r15d + 0x3e9c);
+                if (resE24 != 0) {
+                    removeManagedObject(self, ctrlView + 0x3e9c);
                 } else {
                     orObj68bits5_6(obj);
                 }
@@ -5180,15 +5179,15 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     goto next;
                 }
                 if (testObj6Cmask(obj, 1) == 0) {
-                    if (r17 != 0 || r16 != 0) {
+                    if (bit8Flag != 0 || bit2Flag != 0) {
                         setObj6Cbit0(obj);
                     }
                 }
                 SpdRec rec;
                 rec.id = (u32)obj;
-                if (r17 != 0 || r16 != 0) {
+                if (bit8Flag != 0 || bit2Flag != 0) {
                     rec.w = lbl_eu_806669FC;
-                } else if (r18 != 0) {
+                } else if (boosted != 0) {
                     B47Vec3* p = obj->pos2B();
                     volatile float t10 = p->y - base30.y;      // sp+0x10
                     (void)t10;
@@ -5201,20 +5200,20 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     float bv = cfCam_absFloat();
                     rec.w = lbl_eu_80666A00 * bv + tmp20;
                 }
-                void* r15c = MapFx_ResolveOwner(obj);
-                if (r15c != 0 &&
-                    testMode15F0Range((UnkClass_805764CC*)r15c) != 0) {
+                void* owner = MapFx_ResolveOwner(obj);
+                if (owner != 0 &&
+                    testMode15F0Range((UnkClass_805764CC*)owner) != 0) {
                     rec.w *= lbl_eu_80666A04;
-                    if (CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c) != 0) {
-                        if (CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c) >= 5 &&
-                            testMode15F0Eq((UnkClass_805764CC*)r15c, 5) != 0) {
+                    if (CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c) != 0) {
+                        if (CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c) >= 5 &&
+                            testMode15F0Eq((UnkClass_805764CC*)owner, 5) != 0) {
                             rec.w = rec.w / lbl_eu_806669F4;
                             goto emit;
                         }
                         // Raw 64-bit bit-cast of {r27, fc7c-result} minus D0.
                         B6C8F64Conv conv;
-                        conv.w[0] = (u32)(unsigned long)r27;
-                        conv.w[1] = CfObjectMove_relaySubB0Slot68((u8*)r15c + 0x3e9c);
+                        conv.w[0] = (u32)(unsigned long)scaleBase;
+                        conv.w[1] = CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c);
                         rec.w = rec.w / (float)(conv.d - lbl_eu_806669D0);
                     }
                 }
@@ -5252,11 +5251,11 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             }
             {
                 float f17n = f22 - tmp20;
-                if (r20 != 0 && cfCam_getBit2_64(obj) != 0 && obj->q74() != 0) {
+                if (gFlag20 != 0 && cfCam_getBit2_64(obj) != 0 && obj->q74() != 0) {
                     CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
                     goto loop_end;
                 }
-                if (r17 != 0 || r16 != 0) {
+                if (bit8Flag != 0 || bit2Flag != 0) {
                     if (cfCam_getBit2_64(obj) != 0 &&
                         obj->lvl16C() > lbl_eu_806669D8) {
                         CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
@@ -5310,14 +5309,14 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     int t9 = (flags & 0x00400000) != 0;
     u32 gate69 = ((mA | (flags & 0x00400000)) != 0) ? 1 : 0;
     u32 gate13 = (mB != 0) ? 1 : 0;
-    u8 r24 = 1;
+    u8 eligible = 1;
     {
         int cond = 1;
         if (!t9 && gate13 == 0) {
             cond = 0;
         }
         if (cond == 0 && gate69 == 0) {
-            r24 = 0;
+            eligible = 0;
         }
     }
     u8 b65 = (flags & 0x40) == 0 ? 1 : 0;
@@ -5359,17 +5358,17 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     // Optional payload refresh: copy an oversized 0x803-byte span seeded with
     // the child record's leading word.
     void* rec = MapFx_ResolveOwner(arg);
-    void* r23 = 0;
+    void* statusObj = 0;
     if (rec != 0) {
         IB7ArgChild* child = *(IB7ArgChild**)((u8*)rec + 4);
         u32 word = *(u32*)child->p0C();
-        r23 = (void*)(unsigned long)testActorStatus(rec, &word, 0x803);
+        statusObj = (void*)(unsigned long)testActorStatus(rec, &word, 0x803);
     }
 
     float minDistSq = lbl_eu_80666A14;
-    u32 r28 = isPlayerInEventRange__Q22cf13CfGameManagerFv(gm);
+    u32 inEventRange = isPlayerInEventRange__Q22cf13CfGameManagerFv(gm);
     void* bestObj = 0;
-    int r17 = 0;
+    int found = 0;
 
     while (node != *(CfReslistNode**)((u8*)list + 4)) {
         B7AF0Obj* item = (B7AF0Obj*)((CfReslistNode*)node->mItem);
@@ -5379,7 +5378,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
             int keep = 1;
             s32 t = item->type94;
             if (t == 4) {
-                if (r28 == 0) {
+                if (inEventRange == 0) {
                     keep = 0;
                 }
             } else if (t == 5) {
@@ -5388,10 +5387,10 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                     if (CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669D8)) {
                         minDistSq = lbl_eu_806669D8;
                         bestObj = item;
-                        r17 = 1;
+                        found = 1;
                         flagR19 = 1;
                     } else {
-                        if (r23 == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_80666A18)) {
+                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_80666A18)) {
                             B47Vec3 pa = *obj->unk2B();
                             B47Vec3 pb = *arg->unk2A();
                             float dx = pa.x - pb.x;
@@ -5407,8 +5406,8 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                                 bestObj = item;
                             }
                         }
-                        if (r23 == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669F4)) {
-                            if (r24 == 0 && sp6C != 0) {
+                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669F4)) {
+                            if (eligible == 0 && sp6C != 0) {
                                 flagR19 = 1;
                             }
                         }
@@ -5425,14 +5424,14 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                 u32 f9c = item->field9C;
                 s32 ty = item->type94;
                 if (ty == 3) {
-                    if (r24 == 0) {
+                    if (eligible == 0) {
                         func_8008372C__Q22cf13CfGameManagerFv(
                             item->buf120, item->buf120 + 0x14, item->field74);
                     }
                     b62 = 1;
                 }
                 ty = item->type94;
-                if (ty == 4 && r24 == 0 && sp68 == 0 && r28 != 0 && r17 == 0) {
+                if (ty == 4 && eligible == 0 && sp68 == 0 && inEventRange != 0 && found == 0) {
                     if ((item->flags68 & 0x80000) == 0) {
                         item->flags68 |= 0x80000;
                         if ((item->h158 & 0x300) == 0) {
@@ -5550,7 +5549,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     }
 
     int fired = 0;
-    if (b63 == 0 && r24 == 0 && sp6C != 0 && bestObj != 0) {
+    if (b63 == 0 && eligible == 0 && sp6C != 0 && bestObj != 0) {
         func_8008360C__Q22cf13CfGameManagerFv(gm);
         fired = 1;
     }
@@ -5558,7 +5557,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
         // Retail masks the word down to bits 9-11 rather than clearing one.
         lbl_eu_80663E28 = lbl_eu_80663E28 & 0xe00;
     }
-    if (b61 == 0 && r24 == 0 && sp68 == 0) {
+    if (b61 == 0 && eligible == 0 && sp68 == 0) {
         setEventCounterA__Q22cf13CfGameManagerFv(0);
     }
     if (b63 == 0) {

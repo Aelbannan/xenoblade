@@ -43,7 +43,7 @@ struct CScnFilterCallback {
 
 static BOOL check_over(CScnFilter* self);
 
-void FilterUpdateIntensity(CScnFilter* self, CScnFilterHost* host) {
+extern "C" void FilterUpdateIntensity(CScnFilter* self, CScnFilterHost* host) {
     // proceed only while the filter is active and not yet saturated
     if (*(volatile u32*)&self->mUnk0C == 0) {
         return;

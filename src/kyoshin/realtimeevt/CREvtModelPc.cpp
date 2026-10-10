@@ -45,7 +45,7 @@ extern "C" {
     // CREvtModel helpers
     extern void EvtModelReleaseAnimsOnce(void* self);
     extern void EvtModelReleaseAnims(void* self);
-extern void EvtModelSetEventData(void* self, int pData, int pModelData);
+    extern void EvtModelSetEventData(void* self, int pData, int pModelData);
 
     // Memory
     extern void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
@@ -798,12 +798,12 @@ extern "C" void EvtModelPc_Dispatch(void* self, int pData, int pModelData) {
 
     if (FLD(void*, s, 0x3C) == 0) return;
 
-if (pData != 0 && FLD(u8, s, 0xAC) == 0) {
+    if (pData != 0 && FLD(u8, s, 0xAC) == 0) {
         EvtModelPc_CreateModel(self);
     }
 
     if (FLD(u8, s, 0xAC) != 0) {
-EvtModelSetEventData(self, pData, pModelData);
+        EvtModelSetEventData(self, pData, pModelData);
     }
 }
 

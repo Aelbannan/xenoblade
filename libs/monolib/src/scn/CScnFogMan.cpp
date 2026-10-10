@@ -127,11 +127,11 @@ extern "C" void FogManSetValue08(u8* self, u32 val) {
 // Retail symbol is unmangled (C linkage); other TUs' relocs target
 // `FogManApplyFog` directly.
 extern "C" bool FogManApplyFog(CScnFogMan* self);
-bool FogManIsFogEnabled(CScnFogMan* self) {
+extern "C" bool FogManIsFogEnabled(CScnFogMan* self) {
     return FogManApplyFog(self);
 }
 
-void FogManSetNearFar(u8* self, float a, float b) {
+extern "C" void FogManSetNearFar(u8* self, float a, float b) {
     CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
     fog->field_0x20 = a;
     fog->field_0x1c = b;

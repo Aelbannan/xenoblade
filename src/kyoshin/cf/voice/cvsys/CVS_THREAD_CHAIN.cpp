@@ -67,7 +67,7 @@ int chainVoicePlayById(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voi
 // flag (bit 1 of the 0x3F00 manager word) set; a thread buffer (0xA) is
 // reserved, then a random chain voice (mtRand(2) + 0x321) is played. Always
 // returns 0.
-int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
+extern "C" int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
@@ -86,7 +86,7 @@ int chainVoiceActorTrigger(CVoiceHandle* self, int flag) {
 // Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
-cf::CVS_THREAD_CHAIN* __ct__802A5830() {
+extern "C" cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     CVoiceHandle* handleBuf = CCharVoiceMan_DispatchById(1, 0);
     if (handleBuf == nullptr) {
         return nullptr;
@@ -132,7 +132,7 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
 // voice is not already active (vtable[0x2BC/4]), and that the previous sound
 // is not the chain-stop marker; then reserves a 0x12C buffer and plays either
 // a random chain voice (flag==0) or a fixed chain voice (flag!=0). Returns 0.
-int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
+extern "C" int chainVoiceLifetimeHandler(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }

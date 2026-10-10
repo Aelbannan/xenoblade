@@ -4,6 +4,11 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+
+// Unmangled retail symbols called by code_800B06A4.cpp.
+extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
+extern "C" void CfObjectMap_refreshRegion(void* self);
+extern "C" int isBattleStatusActive(void* obj, int id);
 namespace cf {
 struct CfObject { char _pad[4]; };
 struct TboxInfo { char _pad[4]; };

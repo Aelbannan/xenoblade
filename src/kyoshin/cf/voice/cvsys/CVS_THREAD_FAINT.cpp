@@ -135,7 +135,7 @@ extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
 // base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539B58.
-CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+extern "C" CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;

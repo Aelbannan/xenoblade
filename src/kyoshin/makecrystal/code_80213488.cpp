@@ -69,7 +69,7 @@ extern "C" __declspec(noinline) void MakeCrystal_CopyEntry(MakeCrystalEntry* dst
                                                   const MakeCrystalEntry* src);
 
 // Returns the table pointer (retail mr r3,r28 on the way out).
-MakeCrystalTable* MakeCrystal_ResetTable(MakeCrystalTable* d) {
+extern "C" MakeCrystalTable* MakeCrystal_ResetTable(MakeCrystalTable* d) {
     // Rolled do-while pointer walk (sth/stb per entry); bound kept inline in
     // the condition.
     MakeCrystalEntry* p = d->entries;
@@ -115,7 +115,7 @@ extern "C" MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
 // Retail 0x80213570: rebuild the crystal table. Resets every entry, walks the
 // item category and keeps the rows whose item id matches `target`, computes
 // the row count (limit) as ceil(filled-count / 30), then refreshes/sorts.
-void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
+extern "C" void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
     d->count = 0;
     for (u16 i = 0; i < 0x400; ++i) {
         MakeCrystalEntry tmp;
@@ -157,7 +157,7 @@ void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
 }
 
 // Retail 0x802136E0: set the flag byte of the entry at the adjusted index.
-void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
+extern "C" void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj >= d->count) return;
     d->entries[adj].flag = val;
@@ -165,7 +165,7 @@ void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
 
 // Retail 0x80213710: return the flag of the entry at the adjusted index
 // (0 when out of range).
-u8 MakeCrystal_GetFlag(MakeCrystalTable* d, u8 idx) {
+extern "C" u8 MakeCrystal_GetFlag(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count)
         return d->entries[adj].flag;
@@ -176,7 +176,7 @@ u8 MakeCrystal_GetFlag(MakeCrystalTable* d, u8 idx) {
 // NOTE: retail exports an unmangled `MakeCrystal_AllFlagsSet`; the mangled definition
 // here is mapped back to the retail name by the symbol-recovery tooling
 // (same mechanism as copyCrystalEntry -> MakeCrystal_CopyEntry).
-int MakeCrystal_AllFlagsSet(MakeCrystalTable* d) {
+extern "C" int MakeCrystal_AllFlagsSet(MakeCrystalTable* d) {
     // Retail caches count before the loop (read once into a register).
     u16 count = d->count;
     for (u16 i = 0; i < count; ++i) {
@@ -189,7 +189,7 @@ int MakeCrystal_AllFlagsSet(MakeCrystalTable* d) {
 
 // Retail 0x80213788: advance the current row cursor, wrapping to 0 when it
 // reaches the row limit.
-void MakeCrystal_AdvanceCursor(MakeCrystalTable* d) {
+extern "C" void MakeCrystal_AdvanceCursor(MakeCrystalTable* d) {
     u8 v = d->current + 1;
     d->current = v;
     if ((s8)v < d->limit) return;
@@ -197,7 +197,7 @@ void MakeCrystal_AdvanceCursor(MakeCrystalTable* d) {
 }
 
 // Retail 0x802137B4: step the row cursor back one, wrapping to limit - 1 at 0.
-void func_802137B4(MakeCrystalTable* d) {
+extern "C" void func_802137B4(MakeCrystalTable* d) {
     d->current = d->current - 1;
     if ((s8)d->current < 0)
         d->current = d->limit - 1;
@@ -205,7 +205,7 @@ void func_802137B4(MakeCrystalTable* d) {
 
 // Retail 0x802137DC: resolve the item at the adjusted index, return its
 // sub-category (bits 20..31) or 0 when out of range / unresolvable.
-u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
+extern "C" u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =
@@ -220,7 +220,7 @@ u32 MakeCrystal_GetSubCategory(MakeCrystalTable* d, u8 idx) {
 
 // Retail 0x8021384C: resolve the item at the adjusted index and return the
 // object pointer (0 when out of range or unresolvable).
-MakeCrystalItemObj* MakeCrystal_GetItemObject(MakeCrystalTable* d, u8 idx) {
+extern "C" MakeCrystalItemObj* MakeCrystal_GetItemObject(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
         MakeCrystalItemObj* obj =

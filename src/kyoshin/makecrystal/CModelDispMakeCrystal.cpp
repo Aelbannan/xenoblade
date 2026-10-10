@@ -1441,8 +1441,8 @@ void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* sel
         // Delta drawn first, then the char-state lookup (retail order).
         s8 delta = (s8)((int)ml::MTRand::getInstance()->rand31() % 11);
         delta += 0x14;
-        int r56 = (u8)GetCollectedFlagByte(base[0x5f0]);
-        if (r56 == 6) delta = (s8)((s8)delta * 2);
+        int collectVal = (u8)GetCollectedFlagByte(base[0x5f0]);
+        if (collectVal == 6) delta = (s8)((s8)delta * 2);
         s16 nv = *reinterpret_cast<s16*>(base + 0x2dc4) - (s8)delta;
         *reinterpret_cast<s16*>(base + 0x2dc4) = nv;
         if (nv > 0) {

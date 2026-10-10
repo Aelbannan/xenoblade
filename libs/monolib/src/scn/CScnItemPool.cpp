@@ -30,12 +30,12 @@ public:
     }
 
     void ScnFilterList_destroyItem(T* item) {}
-void ScnFilterList_freeNode(_reslist_node<T>* node) { node->mNext = nullptr; }
+    void ScnFilterList_freeNode(_reslist_node<T>* node) { node->mNext = nullptr; }
 
     // Shared-reslist.hpp clearList shape (proven FULL_MATCH in CWorkThread/
     // CDeviceVI/CView): walker declared first, cur copy inside the body.
     void clearList() {
-_reslist_node<T>* walker = mStartNodePtr->mNext;
+        _reslist_node<T>* walker = mStartNodePtr->mNext;
         while (walker != mStartNodePtr) {
             _reslist_node<T>* cur = walker;
             walker = walker->mNext;

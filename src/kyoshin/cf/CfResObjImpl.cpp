@@ -21,25 +21,26 @@ static const s16 RES_STATE_INVALID = -1;
 // Retail ctor: stores the parent ref first, seeds the constant fields
 // (0.0f float, state halfwords), installs the manual vtable at +0x10 and
 // zeroes the 2-word work area at +0x14 via memset.
-cf::CfResObjImpl::CfResObjImpl(cf::CfResObjParent* parent) {
-    field_00 = parent;
-    field_04 = *(const float*)&lbl_eu_80667690;
+extern "C" cf::CfResObjImpl* __ct__cf_CfResObjImpl(cf::CfResObjImpl* self, cf::CfResObjParent* parent) {
+    self->field_00 = parent;
+    self->field_04 = *(const float*)&lbl_eu_80667690;
     // Dead zero-store: MWCC eliminates the store but its (merged) constant
     // node is born before the -1, which flips the r7/r8 constant coloring.
-    field_08 = 0;
-    field_0A = -1;
-    field_0C = 0;
-    field_0E = -1;
-    vtbl() = &lbl_eu_80530F44;
-    field_08 = 1;
-    memset(&field_14, 0, sizeof(field_14));
+    self->field_08 = 0;
+    self->field_0A = -1;
+    self->field_0C = 0;
+    self->field_0E = -1;
+    self->vtbl() = &lbl_eu_80530F44;
+    self->field_08 = 1;
+    memset(&self->field_14, 0, sizeof(self->field_14));
+    return self;
 }
 
 // Arithmetic booleanization of the u16 "state >= 2" test on the halfword
 // at +0x08 (MWCC's value-first `>=` idiom: subi(v-2)/orc(v|~2)/srwi(1)/
 // subf/srwi(31)). Also reachable as vtable slot +0x14 of the manual vtable
 // (ResObj_PollActive_C950 dispatches it).
-int ResObj_IsInUse_C860(CfResObjImpl* self) {
+extern "C" int ResObj_IsInUse_C860(CfResObjImpl* self) {
     return (u32)self->field_08 >= 2;
 }
 
@@ -50,7 +51,7 @@ int ResObj_DefaultParam_C880(CfResObjImpl* /*self*/) { return 128; }
 // holds a live sound object and arg4 is nonzero, set its player priority to
 // arg4. f1/f2 pass through to CfSoundMan_PlayActorParam; arg3 (r5) is an unused
 // register-slot parameter (retail never reads it).
-void ResObj_NotifySound_C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
+extern "C" void ResObj_NotifySound_C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
     if (self->ResObj_IsInUse_C860() != 0) {
         int id = self->ResObj_PollActive_C950();
         cf::SoundSlotEntry* slot =
@@ -139,7 +140,7 @@ f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
 }
 
 // Indexed read of the 2-word work area at +0x14 (index must be < 2).
-u32 ResObj_GetWork_CCBC(CfResObjImpl* self, int index) {
+extern "C" u32 ResObj_GetWork_CCBC(CfResObjImpl* self, int index) {
     if (index < 2) {
         return self->field_14[index];
     }
@@ -168,14 +169,14 @@ void ResObj_DispatchState_CCE0(CfResObjImpl* self) {
 // Weak-style stubs (retail keeps these symbols unmangled; ResObj_Noop_CD64 is
 // empty). Defined here only - no other TU references them.
 
-int ResObj_ZeroStubA_CD54(CfResObjImpl* self) { return 0; }
+extern "C" int ResObj_ZeroStubA_CD54(CfResObjImpl* self) { return 0; }
 
-int ResObj_ZeroStubB_CD5C(CfResObjImpl* self) { return 0; }
+extern "C" int ResObj_ZeroStubB_CD5C(CfResObjImpl* self) { return 0; }
 
-void ResObj_Noop_CD64(void) {}
+extern "C" void ResObj_Noop_CD64(void) {}
 
 // Indexed write of the 2-word work area at +0x14 (index must be < 2).
-void ResObj_SetWork_CD68(CfResObjImpl* self, int index, int value) {
+extern "C" void ResObj_SetWork_CD68(CfResObjImpl* self, int index, int value) {
     if (index < 2) {
         self->field_14[index] = value;
     }

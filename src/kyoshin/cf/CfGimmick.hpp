@@ -40,9 +40,9 @@ public:
     /* 0x7C */ u32 field_7C;
     /* 0x80 */ u16 field_80;
 
+    int CfGimmick_CheckerKind0Always();
     void CfGimmick_DetachManager(CfGameManager* other);
     void CfGimmick_UpdateColliderMatrix();
-    int CfGimmick_CheckerKind0Always();
 };
 
 } // namespace cf

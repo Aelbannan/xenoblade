@@ -229,7 +229,7 @@ void CSystemWindow::cbRenderBefore() {
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a
 // CProcess under `parent`. Returns 0 if the singleton already exists.
-CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
+extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2) {
     if (lbl_eu_80663FD8 != 0) return 0;
 

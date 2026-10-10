@@ -82,7 +82,6 @@ struct MovieEntry {
 
 class __declspec(novtable) CLibCriMoviePlay : public CWorkThread, public CDeviceVICb {
 public:
-    CLibCriMoviePlay(const char* pName, CWorkThread* pParent);
     virtual ~CLibCriMoviePlay();
 
     // CWorkThread virtual overrides

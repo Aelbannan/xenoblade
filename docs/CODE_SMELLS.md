@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 19078 |
+| extern "C" (total lines) | 19081 |
 | extern "C" declarations (non-lbl_*, imports) | 8742 |
-| extern "C" definitions (forced names) | 5084 |
+| extern "C" definitions (forced names) | 5087 |
 | `self`/register-style params | 13556 |
 | `void*` (params + locals) | 7939 |
 | raw pointer offset arithmetic | 7323 |
@@ -315,7 +315,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CEquipItemBox.cpp | 10 | 110 | 150 | 34 | 54 | 0 | 0 | 0 | 23 | 0 | 0 | 0 |
 | src/kyoshin/CErrMes.cpp | 2 | 18 | 0 | 3 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CExchangeWin.cpp | 3 | 11 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CFade.cpp | 31 | 9 | 16 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CFade.cpp | 31 | 12 | 16 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 18 | 10 | 93 | 104 | 75 | 18 | 0 | 0 | 20 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGrid.cpp | 54 | 71 | 475 | 237 | 343 | 78 | 0 | 0 | 50 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 1 | 4 | 9 | 8 | 15 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -3329,7 +3329,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CFade.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 31,
-  "extern_c_nonlbl_def": 9,
+  "extern_c_nonlbl_def": 12,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 16,

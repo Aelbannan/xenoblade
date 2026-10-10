@@ -21,7 +21,7 @@ extern "C" int CFade_IsVisible(CFade* self) { return self->mVisible; }
 // noinline: retail keeps these as standalone `bl` targets (CFade_MarkLoaded is
 // called from OnFileEvent; the others from CFade_Update). C linkage comes
 // from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
-__declspec(noinline) void CFade_MarkLoaded(CFade* self) {
+extern "C" __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
     if (self->mLayout != nullptr) {
         self->mReady = 1;
         self->mIsLoaded = 1;
@@ -32,13 +32,13 @@ __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
 // once the fade-out animation rewinds, return to idle.
 // noinline keeps the retail `bl` instead of inlining the body into
 // CFade_Update. C linkage via CFade.hpp declarations (see above).
-__declspec(noinline) void CFade_StepFadeIn(CFade* self) {
+extern "C" __declspec(noinline) void CFade_StepFadeIn(CFade* self) {
     if (advanceAnimTransform(self->mAnimTrans, lbl_eu_80668750) == 0) return;
     self->mFadeState = 2;
     self->mVisible = 1;
 }
 
-__declspec(noinline) void CFade_StepFadeOut(CFade* self) {
+extern "C" __declspec(noinline) void CFade_StepFadeOut(CFade* self) {
     if (AnimRewindFrame(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;

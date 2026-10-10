@@ -26,6 +26,15 @@
   excluded; addendum records the live-gate `rfc_*` disproval.
 - **D ported:** `unit_rules_category_d_decision.md` + `unit_rules_category_d_inventory.md`
   (decision packet: Option C recommended, 279-row inventory, 5-batch plan; 0 deletions).
+- **E ported + merged:** 41 files copied + 11 three-way merges (10 auto; `CVision.cpp` manual;
+  `CFade.cpp` manual after the checkpoint commit); commits `2b3691f1a` + `5eb5d84ef`. E clears 112
+  link undefineds (360 → 248 in its worktree), 0 UNIT_RULES changes, no matching flips. Re-verified
+  in main: `CFade` 14/14 @100% incl. `StepFadeIn/Out` (better than E's 13/14), all other merged
+  units identical to E's worktree tables — no regressions (`CLoad` split FAIL and `CtrlMoveNpc` 3/7
+  are pre-existing). Fixed two missing `CtrlObjectParam_WriteEquipSlotValue` declarations left by
+  `22082e1ff`; appended 7 E evidence lines; `CODE_SMELLS.md` regenerated. A full link A/B is still
+  blocked by 5 pre-existing sibling build breaks (`COption`, `CMenuBattlePlayerState`,
+  `CfCollCircleImpl`, `CfGameManager`, `CfObjectModel`).
 - **Claims + metadata:** B/C/D claims applied centrally (B groups: 29 deleted / 38 pruned / 4 align /
   3 WIP; D: all 279 inventory rows that are still EDS — 5 rows no longer EDS in main:
   `CCur.o`, `CMenuBattleChain.o`, `CMenuQuestLog.o`, `pluginEve.o`, `snd_AxfxImpl.o`; C: 28 keys).
@@ -77,13 +86,18 @@ Merge note: B's branch still carries the base value `CMCCylinderGauge.o extern_d
 | B | `paseo/unitrules/b` | finished; 29 keys + 74 fields applied + build-verified; run doc ported | **do not merge** — the mechanical delta is already in main; a merge would replay B's older prose over newer main comments (keep main's table) |
 | C | `paseo/unitrules/c` | finished; 0 deletions; run doc + `.scratch/catc/` ported | **do not merge** — `coop.json` `./ninja` tweak must not land; doc already ported |
 | D | `paseo/unitrules/d` | finished; 0 deletions; decision + inventory docs ported | **do not merge** — docs already ported; branch has nothing else |
-| E | `paseo/unitrules/e` | running (toolchain wired via paseo terminal) | port after it finishes, with the harvest → configure → link-A/B treatment |
+| E | `paseo/unitrules/e` | finished; **ported + merged** (`2b3691f1a`, `5eb5d84ef`): 112 undefineds cleared, 0 rule changes; per-unit re-verified in main (CFade 14/14) | **no branch merge needed** — ported |
 
 Everything valuable from B/C/D is now in main; the branches are archival. The human still owns any
 git operations (coordinator must not run git).
 
 ## Open items carried forward
 
+- **Pre-existing sibling build breaks block the full link A/B:** `COption` (array = int),
+  `CMenuBattlePlayerState` (syntax error), `CfCollCircleImpl` / `CfGameManager` (missing
+  declarations), `CfObjectModel` (10197 overloading). These are mid-refactor sibling work, not from
+  the E port (all E units compile). Until they are fixed, `main.elf` cannot be relinked and the
+  undefined-count delta must come from E's worktree measurement (360 → 248).
 - A-residual kept 4 (`CArtsSet.o`, `CtrlMoveNpc.o`, `CLibCriMoviePlay.o`, `ut_Font.o`) need a green
   tree for `ninja diff` / link proof.
 - `ut_Font.o` data-ownership anomaly: `nw4r/ut/ut_CharStrmReader` (Matching) already defines

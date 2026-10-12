@@ -2480,11 +2480,11 @@ extern "C" void toggleFlag10__Q22cf13CfGameManagerFv(u32 first, u32 second,
 }
 
 // Padding between CActorParam and the CfObjectMove subobject so Move sits at
-// retail +0x3E9C (sizeof(CActorParam)≈0x3384 → ExtraData = 0x3E9C-0x3384 =
-// 0xAE8). The previous 0xB1C pad made static_cast<CfPlayerComposite*>(Move*)
-// emit subi -0x3ED0 instead of -0x3E9C.
+// retail +0x3E9C (sizeof(CActorParam)=0x3380 → ExtraData = 0x3E9C-0x3380 =
+// 0xB1C). When CActorParam measured 0x33B4 the 0xAE8 pad was correct; after
+// it shrank by 0x34 the cast emitted subi -0x3E68, so the pad grew by 0x34.
 struct CfPlayerExtraData {
-    u8 field_0x0[0xAE8];
+    u8 field_0x0[0xB1C];
 };
 
 class CfPlayerComposite : public cf::CActorParam,

@@ -151,20 +151,14 @@ extern "C" CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* o
         }
     }
 
-    // Copy the init-state triple (bytes 0x00-0x08), same form as the
+    // Copy the init-state triple (bytes 0x00-0x08) as the base's ptmf
+    // member (VoiceCb is 12 bytes): member-typed access, same form as the
     // CVS_THREAD_CHAIN factory.
     // NOTE (plateau): every reshaping tried (single/double temps, const ptr,
     // named struct views, whole-struct copy, direct stores) either merges the
     // ascending loads into lwzu or rotates {base,w1,w0} registers. This form
     // is the closest: only r0/r4 swapped on the two value loads/stores.
-    u32 hi;
-    u32 lo;
-    u32* src = (u32*)(u32)lbl_eu_80539A68;
-    hi = src[1];
-    lo = src[0];
-    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)lo;
-    ((CVS_THREAD_DOWN_raw*)self)->state1 = hi;
-    ((CVS_THREAD_DOWN_raw*)self)->state2 = src[2];
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539A68)->unk0;
 
     return self;
 }

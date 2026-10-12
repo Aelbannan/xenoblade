@@ -25,7 +25,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern u8 lbl_eu_806659D8[8];                // save-task "open" flag block (byte 0 read)
     extern const wchar_t* lbl_eu_80663B60;       // NAND error message for -4 / -64
     extern const wchar_t* lbl_eu_80663B64;       // NAND error message for -3 / -2
-    extern const char lbl_eu_80524608[];         // "%s%s" format string (.rodata)
+    extern char lbl_eu_80524608[];         // "%s%s" format string (.rodata)
     extern char* lbl_eu_80663B80;                // save path prefix (.sdata)
     extern s8 lbl_eu_806659E4;                   // path-buffer initialized flag (retail 1B @sda21)
     extern u8 lbl_eu_80660000[40];               // static FixStr<32> path buffer (.bss)
@@ -413,7 +413,7 @@ extern "C" int sprintf(char*, const char*, ...);
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) const char* CNReqSaveBuildTempPath(u8 id) {
     extern char lbl_eu_8065FF78[];
-    extern const char lbl_eu_805245D4[];
+    extern char lbl_eu_805245D4[];
     long st = NANDGetHomeDir(lbl_eu_8065FF78);
     CNReqSaveDispatchError((s32)st);
     if (id != 0)
@@ -427,7 +427,7 @@ __declspec(noinline) const char* CNReqSaveBuildTempPath(u8 id) {
 #pragma optimize_for_size on  // -O4,s stmw frame
 extern "C" char* CNReqSaveFormatTempPath(u32 a1, u8 a2) {
     extern char lbl_eu_8065FFBC[];
-    extern const char lbl_eu_805245D4[];
+    extern char lbl_eu_805245D4[];
     sprintf(lbl_eu_8065FFBC, (char*)lbl_eu_805245D4 + 7, CNReqSaveBuildTempPath(a2), a1);
     return lbl_eu_8065FFBC;
 }
@@ -703,7 +703,7 @@ extern "C" void CNReqSaveDeallocIfOpen();
 }
 extern "C" u32 lbl_eu_80663B70;   // foreign .sdata
 extern "C" u32 lbl_eu_80663B88[2]; // this unit's sdata
-extern "C" const char lbl_eu_805245F8[]; // rodata sub-string (sdata reloc target)
+extern "C" char lbl_eu_805245F8[]; // rodata sub-string (sdata reloc target)
 
 // [.data] 0x8056FD68-0x8056FD88 (32B): CNReqtaskSave vtable pair
 extern "C" u32 lbl_eu_8056FD68[4] = {
@@ -714,21 +714,47 @@ extern "C" u32 lbl_eu_8056FD78[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
 };
 
-// [.rodata] 0x805245D4-0x80524610 (60B) -- one block (referenced by .text);
-// the sub-string labels stay extern for the sdata reloc name (lbl_eu_805245F8).
-// NOTE (wave DL): splitting this blob into per-label arrays cannot reproduce
-// the retail 4-packed offsets (E8@0x14 F8@0x24 608@0x34): this toolchain
-// 8-aligns consecutive named pure-constant objects (12/12 probes in
-// .scratch/dlabels/probe/ t1-t12), and const defs additionally fold
-// CNReqSaveBuildSavePath into a base+offset form (100% -> 57.1%).
-// The three labels need rule-side naming (add_symbols for F8/608 over their
-// UNDEF slots, define_symbols for the unreferenced E8) -- frozen, reported.
-extern "C" __declspec(align(4)) const char lbl_eu_805245D4[60] = {
+// [.rodata] 0x805245D4-0x80524610 (60B) -- split per-label objects.
+// MWCC 8-aligns objects >= 8 bytes but packs <8-byte objects tight, so the
+// 10-byte "CNRequest" and 14-byte "CNReqtaskSave" strings are each split
+// into <8-byte pieces (names on the first piece; interior gaps are MWCC's
+// own zero padding). All objects are non-const + section-forced (Banner /
+// CFade rodata idiom): const defs fold the .text uses into base+offset form
+// (BuildSavePath 100% -> 57.1%, verified) and const pools get discarded.
+// A prior note claimed this split impossible (const-only probes); the
+// non-const form reproduces every byte and offset exactly.
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_805245D4[20] = {
     0x2F,0x73,0x68,0x61,0x72,0x65,0x00,0x25,0x73,0x2F,0x25,0x73,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x43,0x4E,0x52,0x65,0x71,0x75,0x65,0x73,0x74,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,
-    0x65,0x00,0x00,0x00,0x25,0x73,0x25,0x73,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,
 };
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_805245E8[4] = {
+    0x43,0x4E,0x52,0x65,
+};
+// E8 tail: "quest\0" + 6 zeros (C zero-fill to [12]); [12] sits at +0x18
+// under either alignment rule and ends exactly at +0x24, so MWCC emits no
+// gap before F8. A single [10]/[16] cannot: >=8-byte objects 8-align.
+__declspec(section ".rodata") __attribute__((used))
+char cnreqsave_rodata_E8b[12] = {
+    0x71,0x75,0x65,0x73,0x74,0x00,
+};
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_805245F8[7] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,
+};
+// F8 mid/tail (<8-byte pieces so they 4-pack): 'a' at +0x2B, "skSave" at
+// +0x2C; MWCC's own 2-byte pad (NUL at +0x32) precedes 608 at +0x34.
+__declspec(section ".rodata") __attribute__((used))
+char cnreqsave_rodata_F8a2 = 0x73;
+__declspec(section ".rodata") __attribute__((used))
+char cnreqsave_rodata_F8b[6] = {
+    0x6B,0x53,0x61,0x76,0x65,0x00,
+};
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_80524608[7] = {
+    0x25,0x73,0x25,0x73,0x00,0x00,0x00,
+};
+// Tail pad byte (retail +0x3B); 2..7-byte objects 4-align, so only a 1-byte
+// global packs here (Banner precedent).
+__declspec(section ".rodata") __attribute__((used))
+char cnreqsave_rodata_pad0 = 0x00;
 
 // [.sdata] 0x80663B88-0x80663B90 (8B)
 extern "C" u32 lbl_eu_80663B88[2] = { (u32)&lbl_eu_805245F8, (u32)&lbl_eu_8056FD78 };

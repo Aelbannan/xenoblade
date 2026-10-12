@@ -103,7 +103,7 @@ extern u32 __ptmf_null[3];
 extern cf::CfResTboxImplVtbl lbl_eu_80535204;
 extern float lbl_eu_806681D0;
 extern float lbl_eu_806681D4;
-extern "C" void func_801F92B0(u8* base, int idx1, int idx2, int idx3);
+extern "C" void ResTbox_SetCellBit40(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* CfRes_getInstPtr29C();
 extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);

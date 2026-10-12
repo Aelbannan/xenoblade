@@ -275,7 +275,7 @@ extern "C" void ResTbox_SetCellBit80(unsigned char* base, int idx1, int idx2, in
     p[1] |= 0x80;
 }
 
-void func_801F92B0(unsigned char* base, int idx1, int idx2, int idx3) {
+void ResTbox_SetCellBit40(unsigned char* base, int idx1, int idx2, int idx3) {
     unsigned char* p = base + idx1 * 73 + idx2 * 16 + idx3 * 2;
     p[1] |= 0x40;
 }

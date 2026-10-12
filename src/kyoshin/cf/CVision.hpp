@@ -561,7 +561,7 @@ struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
 extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
 
 // sdata2 float constants used by setEffectScale / vision state checks.
-extern "C" const f32 lbl_eu_80667CD4;
+extern "C" f32 lbl_eu_80667CD4;
 extern "C" f32 lbl_eu_80667CF0;
 extern "C" f32 lbl_eu_80667CD0;
 extern "C" f32 lbl_eu_80667CE4;
@@ -675,7 +675,7 @@ extern "C" u32 lbl_eu_805331E8[3];
 extern "C" u32 lbl_eu_805331E0[3];
 extern "C" u32 lbl_eu_805331CC[3];
 // ptmf-triplet table: entries used at byte offsets 0x114/0x120/0x12c.
-extern "C" u32 lbl_eu_80533128[0x4E];
+extern "C" u32 lbl_eu_80533128[3];
 // 80533170/80533140/8053314C are 12-byte callback triplets installed in
 // checkSecondFusionVision / manageVisionPlayerCallbacks.
 extern "C" cf::CVisionPtmf lbl_eu_80533170;
@@ -685,7 +685,7 @@ extern "C" cf::CVisionPtmf lbl_eu_8053314C;
 extern "C" cf::CVisionPtmf lbl_eu_805331DC;
 extern "C" cf::CVisionPtmf lbl_eu_805331C4;
 extern "C" u32 lbl_eu_80533164[3];
-extern "C" u32 lbl_eu_80533230[3];
+extern "C" u32 lbl_eu_80533230[40];
 extern "C" u32 lbl_eu_80533134[3];
 extern "C" u32 lbl_eu_80533158[3];
 extern "C" u32 lbl_eu_80533224[3];

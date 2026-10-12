@@ -28,30 +28,54 @@ extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
 extern "C" void aiResetTables(u8* obj);
 extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);
 
-// .sdata2 pool (retail 0x70) as one struct: freezes retail declaration
-// order and keeps the code-orphaned slots live without a touch function.
-// Code uses labels via the defines below; the hpp extern decls stay
-// (parsed before the defines, never referenced).
+// .sdata2 pool (retail 0x70): head float struct, the ene1Lv tag string
+// (lbl_eu_80666974, retail size 7), eight mid float scalars, tail struct.
+// Split (not one struct) so the tag carries its retail label; the pieces'
+// natural alignment reproduces the retail padding exactly (1 pad byte
+// after the tag, 4 before the tail). Mid scalars are extern: MWCC
+// const-propagates local const scalars into anonymous pool slots and the
+// named definitions vanish; externals are emitted in order (same idiom
+// as lbl_eu_806669C8/D0 below). Code uses labels via the defines below;
+// the hpp extern decls stay (parsed before the defines, never referenced).
 // Tail f13/d4 are real
 // retail-named objects below (both orphans: .text + relocs verified
 // byte-identical with and without that split; the literal pool tail the
-// rule trims past 0x70 is unaffected). 974 stays inside tag: carving it
-// out forces the float block off its retail offset (aggregates align to
-// 8) and index/global access reschedules two functions, so that row
-// needs a rule-side define_symbols entry (frozen table) -- see report.
-struct Sdata2_Ene {
+// rule trims past 0x70 is unaffected).
+struct Sdata2_EneHead {
     float f0, f1, f2;
-    char tag[8];
-    float f3, f4, f5, f6, f7, f8, f9, f10;
+};
+// Mid floats as eight scalars, not a struct: MWCC places aggregate
+// objects at 8-alignment (mid struct landed at 0x18, retail needs 0x14)
+// while 4-aligned scalars pack tightly after the tag's single pad byte.
+struct Sdata2_EneTail {
     double d0, d1;
     float f11, f12;
     double d2, d3;
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_Ene sdata2_Ene = {
+const Sdata2_EneHead sdata2_EneHead = {
     0.0f, 0.6f, 1.8f,
-    "ene1Lv",
-    10.0f, 1.0f, 4.0f, 2.0f, 3.0f, 180.0f, 100.0f, 0.1f,
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(1)))
+extern const char lbl_eu_80666974[] = "ene1Lv";
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f3 = 10.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f4 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f5 = 4.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f6 = 2.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f7 = 3.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f8 = 180.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f9 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+extern const float ene_f10 = 0.1f;
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_EneTail sdata2_EneTail = {
     4503599627370496.0, 4503601774854144.0,
     0.01f, 10000.0f,
     0.5, -0.5
@@ -60,23 +84,23 @@ __declspec(section ".sdata2") __attribute__((used, aligned(4)))
 extern const float lbl_eu_806669C8 = 180.0f;
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 extern const double lbl_eu_806669D0 = 4503599627370496.0;
-#define lbl_eu_80666968 sdata2_Ene.f0
-#define lbl_eu_8066696C sdata2_Ene.f1
-#define lbl_eu_80666970 sdata2_Ene.f2
-#define lbl_eu_8066697C sdata2_Ene.f3
-#define lbl_eu_80666980 sdata2_Ene.f4
-#define lbl_eu_80666984 sdata2_Ene.f5
-#define lbl_eu_80666988 sdata2_Ene.f6
-#define lbl_eu_8066698C sdata2_Ene.f7
-#define lbl_eu_80666990 sdata2_Ene.f8
-#define lbl_eu_80666994 sdata2_Ene.f9
-#define lbl_eu_80666998 sdata2_Ene.f10
-#define lbl_eu_806669A0 sdata2_Ene.d0
-#define lbl_eu_806669A8 sdata2_Ene.d1
-#define lbl_eu_806669B0 sdata2_Ene.f11
-#define lbl_eu_806669B4 sdata2_Ene.f12
-#define lbl_eu_806669B8 sdata2_Ene.d2
-#define lbl_eu_806669C0 sdata2_Ene.d3
+#define lbl_eu_80666968 sdata2_EneHead.f0
+#define lbl_eu_8066696C sdata2_EneHead.f1
+#define lbl_eu_80666970 sdata2_EneHead.f2
+#define lbl_eu_8066697C ene_f3
+#define lbl_eu_80666980 ene_f4
+#define lbl_eu_80666984 ene_f5
+#define lbl_eu_80666988 ene_f6
+#define lbl_eu_8066698C ene_f7
+#define lbl_eu_80666990 ene_f8
+#define lbl_eu_80666994 ene_f9
+#define lbl_eu_80666998 ene_f10
+#define lbl_eu_806669A0 sdata2_EneTail.d0
+#define lbl_eu_806669A8 sdata2_EneTail.d1
+#define lbl_eu_806669B0 sdata2_EneTail.f11
+#define lbl_eu_806669B4 sdata2_EneTail.f12
+#define lbl_eu_806669B8 sdata2_EneTail.d2
+#define lbl_eu_806669C0 sdata2_EneTail.d3
 
 
 // Global gimmick-settings singleton accessor (defined in code_801F3BE0.cpp);

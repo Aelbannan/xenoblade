@@ -31,11 +31,11 @@ extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceH
     // MWCC evaluates comparison operands right-to-left, so the handle's call
     // is written as the right operand to land its +/-6 boundary between the
     // two virtual calls.
-    s16 count;
-    if (((CVoiceHandleSizeView*)A)->getSize() > ((CVoiceHandleSizeView*)h)->getSize() - 6)
-        count = (s16)((((CVoiceHandleSizeView*)A)->getSize() < ((CVoiceHandleSizeView*)h)->getSize() + 6) + 2);
-    else
+    int count;
+    if (((CVoiceHandleSizeView*)A)->getSize() <= ((CVoiceHandleSizeView*)h)->getSize() - 6)
         count = 0;
+    else
+        count = (int)(((CVoiceHandleSizeView*)A)->getSize() < ((CVoiceHandleSizeView*)h)->getSize() + 6 ? 1 : 2);
 
     // Allocate the (discarded) handle buffer and the object itself.
     if (CCharVoiceMan_DispatchById(0x1e, 1) == NULL) {
@@ -47,6 +47,10 @@ extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceH
     }
 
     // Construct the object (inside the exception handler, matching retail).
+    // The redundant `obj != NULL` re-check reproduces retail's `beq` guard on
+    // the EH region (CHAIN precedent); the catch rethrows via the runtime
+    // __throw(0,0,0) so MWCC elides the __end__catch epilogue.
+    if (obj != NULL) {
     try {
         __ct__cf_CVS_THREAD(obj);
         ((CVSThreadVtableView*)obj)->vtable = (u32*)lbl_eu_8053ACB8;
@@ -57,12 +61,14 @@ extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceH
         obj->field_0x38 = 0;
         obj->field_0x3a = (u8)(ml::math::mtRand(2) != 0);
     } catch (...) {
-        throw;
+        __throw(0, 0, 0);
+    }
     }
 
-    // Final base-state triple: whole-struct copy so MWCC emits the retail
-    // load-descending/store-ascending word-move pattern.
-    *(CVSThreadStateTriple*)obj = *(CVSThreadStateTriple*)lbl_eu_8053AC88;
+    // Final base-state triple:
+    // MWCC emits the retail load-descending/store-ascending word-move
+    // pattern (DOWN precedent).
+    ((CVS_THREAD*)obj)->unk0 = ((CVS_THREAD*)lbl_eu_8053AC88)->unk0;
     return obj;
 }
 

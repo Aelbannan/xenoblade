@@ -248,12 +248,35 @@ def render_report(rows: dict[str, Stats]) -> str:
     lines.append("## Notes")
     lines.append("")
     lines.append(
-        "- **extern \"C\" is not uniformly a smell.** ~80% of extern \"C\" names are "
-        "retail-reloc-mandated (`func_8004B0B0`, `__ct__cf_CfCamFollow`, `lbl_eu_*`, "
-        "`func_eu_*`): the retail objects reference those exact names, so the source must "
-        "reproduce them. The cleanable subset is the decomp-invented names that appear in "
-        "no retail object (`cfCam_*`, `fn`, `getInstance`, ...) — those can become "
-        "`static`/member/anonymous-namespace helpers freely."
+        "- **extern \"C\" is name-table-mandated, not retail-mandated.** The US retail "
+        "`main.dol` is stripped — `grep -a` finds no occurrence of `wkRender`, "
+        "`__ct__cf_CfCamFollow`, `func_8004B0B0` or `lbl_eu_*` (the only `CDeviceGX` bytes "
+        "are a `.rodata` class-name string), so retail carries no names to reproduce. "
+        "Every name comes from `config/<region>/symbols.txt`, the dtk-built table that "
+        "`dtk dol split` also uses to name the synthetic target objects; `extern \"C\"` "
+        "only forces MWCC to emit that literal string. `extc.py`'s \"retail-exact\" "
+        "therefore means only \"this string is in our own table\" (circular), and PLAN.md "
+        "§17.6 classes these spellings as **legacy cleanup debt to retire**, not a floor. "
+        "Three buckets, cheapest first:"
+    )
+    lines.append(
+        "  1. **data/array decls — free.** MWCC does not mangle namespace-scope "
+        "variables, so `extern \"C\" u32 lbl_eu_x[];` and `extern u32 lbl_eu_x[];` emit "
+        "the same symbol. A/B on `libs/monolib/src/math/FloatUtils.cpp`: 93 definition "
+        "decls de-`extern \"C\"`ed **in place** (line-neutral — no `-ipa file` shift), "
+        "`hexdiff --all` still 1/1 FULL_MATCH with a byte-identical reloc list and "
+        "`run.py data diff` still MATCH (`.sdata2` 488 bytes identical)."
+    )
+    lines.append(
+        "  2. **hand-spelled mangled names** (`__ct__…`, `name__Class…`) are the rename "
+        "shields — move the declaration to the owning header and `#include` it (SKILL "
+        "\"Declaration drift\" path), keeping the edit line-neutral."
+    )
+    lines.append(
+        "  3. **placeholder / short-form names** (`func_*`, `lbl_eu_*`, `__ct__CBgTex`) "
+        "need symbol recovery: normal C++ mangles them differently, so keep `extern \"C\"` "
+        "until the real class/member is known, then `symbols rename-plan` + `rename-all` "
+        "(the one case that changes the emitted symbol)."
     )
     lines.append(
         "- **`self` is legit when it is the ABI** (plugin callbacks: `VMThread* self`). "
@@ -266,9 +289,10 @@ def render_report(rows: dict[str, Stats]) -> str:
         "verify with `hexdiff` per function."
     )
     lines.append(
-        "- Converting retail-mandated extern \"C\" functions into real C++ members "
-        "changes the emitted symbol name and requires a `symbols rename-plan` + "
-        "`symbols rename-all` + re-verification ceremony per TU."
+        "- Converting an extern \"C\" *function* into a real C++ member changes the "
+        "emitted (mangled) symbol name, so it needs the `symbols rename-plan` + "
+        "`symbols rename-all` + re-verification ceremony per TU — unlike the data/array "
+        "case above, which is symbol-identical."
     )
     lines.append("")
     lines.append(BEGIN_BASELINE)

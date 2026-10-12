@@ -20,17 +20,16 @@ extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // --- .sdata2 (retail content 0x4C): 0.0f + class-name strings ---
-// The 0.0f CANNOT be a standalone object: MWCC exiles all-zero small data
-// to nobits (verified: non-const/volatile-const 0.0f -> .sbss2 despite
-// __declspec(section ".sdata2"); const 0.0f stays file-backed but MWCC
-// constant-propagates the uses into its own trailing pool, growing the
-// section past 0x4C). It lives as f0 inside the struct (CfBdat Sdata2
-// idiom); the struct also freezes declaration order (MWCC reorders loose
-// sdata2 items). The 1.0f operand loads CItemBoxGrid's lbl_eu_80667FA0 as
-// extern (retail .text reloc shape), so no local pool is emitted and the
-// section is byte-exact at 0x4C. lbl_eu_80667FA4 itself stays an UNDEF row:
-// naming f0's slot needs a rule-side define_symbols entry (frozen table).
-// The const members need (void*) casts at the typeinfo initializers below.
+// Retail FA4 slot is the first word of this TU's .sdata2 (symbols.txt:
+// float at FA4), immediately followed by the class-name strings with no
+// padding, so the honest source shape is a single object: a struct whose
+// first member is the 0.0f. The struct itself carries the retail name
+// (linker/frontier care about offset+section, not the C++ type); code
+// reads the float as lbl_eu_80667FA4.f0, which MWCC loads via sda21
+// exactly like a standalone extern float. The struct is non-const so the
+// .f0 reads cannot be const-folded into a trailing pool (verified trap).
+// A standalone loose float does NOT work: MWCC 8-aligns a following
+// aggregate, inserting 4 pad bytes (measured 0x50 vs retail 0x4C).
 struct Sdata2_CCur {
     f32 f0;             // +0x00 (retail FA4 slot) 0.0f
     char s_CSubCur[8];  // +0x04
@@ -44,7 +43,7 @@ struct Sdata2_CCur {
     char s_CCur07[8];   // +0x44
 };
 __declspec(section ".sdata2") __attribute__((used))
-const Sdata2_CCur sdata2_CCur = {
+Sdata2_CCur lbl_eu_80667FA4 = {
     0.0f, "CSubCur", "CCur22", "CCur18", "CCur16", "CCur15",
     "CCur14", "CCur11", "CCur09", "CCur07",
 };
@@ -72,7 +71,7 @@ extern "C" __declspec(noinline) void Cur_DeactivateTail(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
-    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4);
+    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4.f0);
     cur->mpLayout->Animate(0);
 }
 
@@ -86,7 +85,7 @@ extern "C" __declspec(noinline) void Cur_ActivateTail(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
-    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4);
+    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4.f0);
     cur->mpLayout->Animate(0);
 }
 
@@ -660,23 +659,23 @@ char lbl_eu_80505DE8[0x408] =
 
 // --- .sdata (retail 0x48): {name, base} typeinfo pairs ---
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-void* lbl_eu_80662680[2] = { (void*)sdata2_CCur.s_CSubCur, lbl_eu_80534850 };
+void* lbl_eu_80662680[2] = { (void*)lbl_eu_80667FA4.s_CSubCur, lbl_eu_80534850 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662688[2] = { (void*)sdata2_CCur.s_CCur22, lbl_eu_80534878 };
+void* lbl_eu_80662688[2] = { (void*)lbl_eu_80667FA4.s_CCur22, lbl_eu_80534878 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662690[2] = { (void*)sdata2_CCur.s_CCur18, lbl_eu_805348A0 };
+void* lbl_eu_80662690[2] = { (void*)lbl_eu_80667FA4.s_CCur18, lbl_eu_805348A0 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_80662698[2] = { (void*)sdata2_CCur.s_CCur16, lbl_eu_805348C8 };
+void* lbl_eu_80662698[2] = { (void*)lbl_eu_80667FA4.s_CCur16, lbl_eu_805348C8 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626A0[2] = { (void*)sdata2_CCur.s_CCur15, lbl_eu_805348F0 };
+void* lbl_eu_806626A0[2] = { (void*)lbl_eu_80667FA4.s_CCur15, lbl_eu_805348F0 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626A8[2] = { (void*)sdata2_CCur.s_CCur14, lbl_eu_80534918 };
+void* lbl_eu_806626A8[2] = { (void*)lbl_eu_80667FA4.s_CCur14, lbl_eu_80534918 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626B0[2] = { (void*)sdata2_CCur.s_CCur11, lbl_eu_80534940 };
+void* lbl_eu_806626B0[2] = { (void*)lbl_eu_80667FA4.s_CCur11, lbl_eu_80534940 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626B8[2] = { (void*)sdata2_CCur.s_CCur09, lbl_eu_80534968 };
+void* lbl_eu_806626B8[2] = { (void*)lbl_eu_80667FA4.s_CCur09, lbl_eu_80534968 };
 __declspec(section ".sdata") __attribute__((used))
-void* lbl_eu_806626C0[2] = { (void*)sdata2_CCur.s_CCur07, lbl_eu_80534990 };
+void* lbl_eu_806626C0[2] = { (void*)lbl_eu_80667FA4.s_CCur07, lbl_eu_80534990 };
 // --- .data (retail 0x190): pane quad + vtables + descriptors, retail order ---
 // (defined without extern "C": MWCC does not mangle global data names, so
 // this merges with the header's extern "C" declaration; combining

@@ -11255,3 +11255,70 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       removed 3 no-op `on` lines in CBattleManager.cpp (695/8412/10512) and 1 no-op `on` in monolib/src/coli/code_804A6C60.cpp (676) — per-function tables byte-identical (50/78 and 56/108 unchanged). CBattleMan_ResetTimer's `off`/`on` bracket is kept: deleting it regresses 100% -> 60.0% (lfs f1 before lwz r4), so it is NOT a fakematch
 - Result:    verified; schedule-pragma count 6 -> 2
 - Evidence:  us-800eaf58 / src/kyoshin/cf/CBattleManager.cpp; libs/monolib/src/coli/code_804A6C60.cpp
+
+## Move__9CCol6HintFv / kyoshin/CCol6System — duplicated requestScrollIn is retail (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   32.0%, 113 structural, size 0x32c/0x324: retail issues `CScrollBar_requestScrollIn` TWICE in case 1 (bls at +0x0124/+0x012c); decomp called it once (sibling cleanup removed the "duplicate").
+- Cause:     The duplicate is genuine retail behavior, not a decomp artifact — reloc tables show two consecutive R_PPC_REL24 to the same symbol.
+- Fix:       restore the second `CScrollBar_requestScrollIn(&mScrollBar);` with a comment citing the retail reloc evidence.
+- Result:    FULL_MATCH (0x32c/0x32c, 0 structural, 0 reg_swap); unit 27/45 -> 28/45, split PASS
+- Evidence:  scope v4 / src/kyoshin/CCol6System.cpp
+
+## ArtsSlotCursor_refresh + ArtsBusyPane_refreshCursor / kyoshin/menu/CMenuArtsSet — 9-entry vec table, 654-pair at index 4 (Wii/1.1 -O4,p, FULL_MATCH x2)
+- Symptom:   both 18.4%, 53 structural, size 0x150/0x15c: decomp emitted a `li r0,9 / stwu / bdnz` zero-fill loop before the unrolled stores; retail is fully unrolled stfs.
+- Cause:     Source declared `SArtsVec2 vecs[9]` with only 7 initializers (654-pair at index 2); MWCC loops the zero tail. Retail stores 18 words: 650-pair everywhere except index 4 (654-pair).
+- Fix:       give all 9 initializers with `{lbl_eu_80668654, lbl_eu_80668654}` at index 4.
+- Result:    both FULL_MATCH (0x150/0x150); unit 92/110 -> 94/110 (split overflow pre-existing, shrank 24 B)
+- Evidence:  scope v4 / src/kyoshin/menu/CMenuArtsSet.cpp
+
+## CREvtLight_DistToTarget / CREvtLight_AngleState — pinned VEC3Sub FPR colors (Wii/1.1 -O4,p, negative result)
+- Symptom:   DistToTarget 36.4% (extra `or` from late `addi r3,sp,8` vs retail early `addi r0,sp,8` + `or`), AngleState 91.8% pure FPR reg_swap (work0/work2 f2/f0 vs f0/f2); copy block + tails identical.
+- Cause:     MWCC Wii/1.1 pins the inlined-`VEC3Sub` `register f32 work0/work1/work2` to (f2,f1,f0) for this shape regardless of statement order, local count, or size-opt pragma (verified with a scratch compiler probe that reproduces decomp byte-for-byte).
+- Fix:       none found; ruled out: decl-reorder (worse 33.3%), local collapse (no-op), `#pragma optimize_for_size` (no-op), named `Vec* dp` (propagated away, no-op).
+- Result:    OPEN near-miss; AngleState is 0-structural (witness-EQUIVALENT candidate); probe kept at `.scratch/dlabels6/v4/probeV.cpp`
+- Evidence:  scope v4 / src/kyoshin/realtimeevt/CREvtLight.cpp (unchanged)
+
+## CREvtLight_DistToTarget / CREvtLight_AngleState — VEC3::operator- + tmp + Vec copy (Wii/1.1 -O4,p, UPDATE: AngleState FULL_MATCH)
+- Symptom:   prior negative result above (manual `VEC3Sub(&delta,...)` + `Vec d` element copy gave work-reg colors f2/f1/f0 vs retail f0/f1/f3; DistToTarget also had a late-`addi r3,sp,8` vs retail early `addi r0,sp,8` + `or`).
+- Cause:     the manual-VEC3Sub shape creates FPR virtuals in an order that colors target/delta f2/f0; spelling the subtraction as `VEC3::operator-` (`VEC3 tmp = *pos - *self->pos()`, which inlines the same 8-PS-instruction VEC3Sub block) renumbers the FPR virtuals so target/self/delta land on retail's f0/f1/f3 (verified byte-identical PS schedule, stack layout, and lfs/stfs copy trio).
+- Fix:       `nw4r::math::VEC3 tmp = *pos - *self->pos();` then element-copy to a `Vec` (`dp->x = tmp.x; ...`, `dp` folds away) and call through it. Line-count-neutral rewrites (pad with comments) so `-ipa file` line sensitivity does not reschedule later functions.
+- Result:    AngleState 91.8% -> FULL_MATCH (0x124/0x124, 0 structural, 0 reg_swap); unit 5/7 -> 6/7. DistToTarget 36.4% -> 39.4% (FPRs/stack/trio/calls all byte-identical; residual is exactly one scheduler-placed instruction: retail early `addi r0,sp,8` + `or r3,r0` vs decomp late `addi r3,sp,8`; dp-pointer, decl-swap (breaks layout+colors), single-alias, copy-assign (loses colors) all ruled out).
+- Evidence:  scope w4 / src/kyoshin/realtimeevt/CREvtLight.cpp
+
+## CMenuSkipTimer::Init / kyoshin/menu/CMenuSkipTimer — temp-widget offset copies -> typed members (Wii/1.1 -O4,p, FULL_MATCH, match-neutral cleanup)
+- Symptom:   109 ptr/deref-arith smell lines (58 `(u8*)this + N` / `*(u32*)(temp + N)` expressions) in the
+             TU's biggest accepted function, all inside the CBgTex / CTitleAHelp / CSkipTimer temp-rebuild
+             blocks.
+- Cause:     the temps are `u8[]` because retail's widget ctors are C-linkage free functions
+             (`__ct__CBgTex`); the copy was written with raw offsets instead of the typed members that
+             `CBgTex.hpp` / `CTitleAHelp.hpp` / `CSkipTimer.hpp` already declare at those offsets.
+- Fix:       destination -> typed member access; temp -> per-statement `reinterpret_cast<T*>(temp)->field`.
+             A named temp-view local regressed Init to 5.9% (extra callee-saved register, `stmw` prologue)
+             and was reverted. `mField2E` kept as `s16` (retail `lha`, not `lhz`). Constructor and all
+             retail free-function calls untouched.
+- Result:    FULL_MATCH (Init 0x298/0x298, 0 structural, 0 reg_swap); unit 14/14; 58 raw-offset lines -> 0;
+             split FAIL +0x11C pre-existing. hexdiff --all before/after tables identical.
+- Evidence:  src/kyoshin/menu/CMenuSkipTimer.cpp
+
+## CItemBoxGrid + CItemBoxInfo — void* -> typed params on C-linkage fns (Wii/1.1 -O4,p, match-neutral cleanup)
+- Symptom:   51 `void*` detector hits in CItemBoxGrid.cpp, 14 in CItemBoxInfo.cpp, all in accepted functions.
+- Cause:     legacy `void* self` params on TU-local `extern "C"` functions; callers pass the concrete object.
+- Fix:       retype 18 CItemBoxGrid fns to `CItemBoxGrid*` (line-neutral forward-decl blocks + definitions)
+             and 4 CItemBoxInfo leading params to `CItemBoxInfo*` / `CItemBoxInfo2*`; add same-line explicit
+             casts at call sites (MWCC 1.1 rejects implicit void*->T*). Left the mangled-`Pv` and header-owned
+             hits (CTagProcessor 40, CActParamData 16) for the rename ceremony.
+- Result:    void* 51->10 and 14->13; all touched functions still 100%; unit totals unchanged (106/144, 54/110).
+- Evidence:  src/kyoshin/CItemBoxGrid.cpp, src/kyoshin/CItemBoxInfo.cpp
+
+## func_801F92B0 / func_802136E0 / func_802A5828 -> ResTbox_SetCellBit40 / MakeCrystal_SetFlag / BufVxAllocSize (symbol recovery)
+- Symptom:   22 placeholder-named accepted functions (`func_*` / `UnkClass_*`) across 16 TUs.
+- Cause:     US retail strips mangling for func_ names, so a rename needs retail-grounded evidence, not a role guess.
+- Fix:       3 renames accepted on shaped evidence — (a) ResTbox_SetCellBit40 from the identical-shape accepted
+             sibling ResTbox_SetCellBit80 + adjacent identical-arg calls in unlockMonadoArts (bits 0x80/0x40);
+             (b) MakeCrystal_SetFlag as the exact setter complement of accepted MakeCrystal_GetFlag;
+             (c) BufVxAllocSize mirrors accepted EndVoice_AllocSize in the BATTLE_END vtable allocSize slot.
+             Applied via `symbols rename-plan --verbose` (confirm no skip-file intersection) -> `rename-all --force`
+             -> `sync-symbols` (dry-run then apply). The other 19 refused: arity/decl drift, interpretive verbs,
+             or stub bodies (guessing forbidden).
+- Result:    total_kyoshin_mangled 22 -> 19; all 3 units' hexdiff --all unchanged (10/10, 11/11, 3/6); renamed
+             symbols at 100%.
+- Evidence:  src/kyoshin/cf/CfResTboxImpl.cpp, src/kyoshin/makecrystal/code_80213488.cpp, src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp

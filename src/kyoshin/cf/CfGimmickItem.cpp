@@ -58,7 +58,7 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
     volatile BdatCol c66;
-    c66.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC, rowId);
+    c66.w = getBdatStringColumnValue((void*)bdat, "rectype", rowId);
     self->field_66 = c66.b;
     for (int i = 0; i < 3; ++i) {
         char c = (char)('A' + i);
@@ -75,40 +75,40 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     }
 
     volatile BdatCol c8A;
-    c8A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x08, rowId);
+    c8A.w = getBdatStringColumnValue((void*)bdat, "geItem", rowId);
     self->field_8A = c8A.h;
     volatile BdatCol c6A;
-    c6A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x0F, rowId);
+    c6A.w = getBdatStringColumnValue((void*)bdat, "MSG1", rowId);
     self->field_6A = c6A.h;
     volatile BdatCol c8C;
-    c8C.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x14, rowId);
+    c8C.w = getBdatStringColumnValue((void*)bdat, "MSG2", rowId);
     self->field_8C = c8C.h;
     volatile BdatCol c98;
-    c98.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x19, rowId);
+    c98.w = getBdatStringColumnValue((void*)bdat, "time", rowId);
     self->field_98 = c98.b;
     volatile BdatCol c70;
-    c70.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x1E, rowId);
+    c70.w = getBdatStringColumnValue((void*)bdat, "LODObj", rowId);
     self->field_70 = c70.b;
     volatile BdatCol c99;
-    c99.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x25, rowId);
+    c99.w = getBdatStringColumnValue((void*)bdat, "LODSub", rowId);
     self->field_99 = c99.b;
     volatile BdatCol c9A;
-    c9A.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x2C, rowId);
+    c9A.w = getBdatStringColumnValue((void*)bdat, "LODType", rowId);
     self->field_9A = c9A.b;
     volatile BdatCol c9B;
-    c9B.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x34, rowId);
+    c9B.w = getBdatStringColumnValue((void*)bdat, "EFF", rowId);
     self->field_9B = c9B.b;
     volatile BdatCol c92;
-    c92.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x38, rowId);
+    c92.w = getBdatStringColumnValue((void*)bdat, "camID", rowId);
     self->field_92 = c92.h;
     volatile BdatCol c8E;
-    c8E.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x3E, rowId);
+    c8E.w = getBdatStringColumnValue((void*)bdat, "swtSE", rowId);
     self->field_8E = c8E.h;
     volatile BdatCol c90;
-    c90.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x44, rowId);
+    c90.w = getBdatStringColumnValue((void*)bdat, "finSE", rowId);
     self->field_90 = c90.h;
     volatile BdatCol c9C;
-    c9C.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x4A, rowId);
+    c9C.w = getBdatStringColumnValue((void*)bdat, "ct", rowId);
     self->field_9C = c9C.b;
     volatile BdatCol c6C;
     c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[13], rowId);
@@ -120,10 +120,10 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     c94.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[15], rowId);
     self->field_94 = c94.h;
     volatile BdatCol c96;
-    c96.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x4D, rowId);
+    c96.w = getBdatStringColumnValue((void*)bdat, "quest_Max", rowId);
     self->field_96 = c96.b;
     volatile BdatCol c97;
-    c97.w = getBdatStringColumnValue((void*)bdat, lbl_eu_805087AC + 0x57, rowId);
+    c97.w = getBdatStringColumnValue((void*)bdat, "quest_Min\0\0\0", rowId);
     self->field_97 = c97.b;
 
     // vtable slot 0x20 virtual call.
@@ -396,32 +396,19 @@ void GimItem_LodFxUpdate(cf::CfGimmickItem* self) {
 extern "C" void GimItem_Noop() {}
 
 // ----- typified retail data (replaces copy_data_sections) -----
-// .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_805087AC.
+// .rodata RTTI class-name (0x12) + 2-byte pad gap to the column-name pool.
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
 char lbl_eu_80508798[0x14] = "cf::CfGimmickItem";
-// .rodata BDAT column-name pool. Offsets match every lbl_eu_805087AC+N site
-// in the ctor (0x00 rectype .. 0x57 quest_Min); tail zero-pads to 0x64.
-// NOTE: lbl_eu_805087AC itself stays an unreferenced static pad object:
-// renaming it onto the retail label reschedules the ctor 92.1% -> 21.4%
-// (+4 bytes, re-verified this wave). Closing that row needs a rule-side
-// add_symbols entry (frozen) -- reported.
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
-static char gimmickitem_rodata_87AC_pad[0x64] =
-    "rectype\0"
-    "geItem\0"
-    "MSG1\0"
-    "MSG2\0"
-    "time\0"
-    "LODObj\0"
-    "LODSub\0"
-    "LODType\0"
-    "EFF\0"
-    "camID\0"
-    "swtSE\0"
-    "finSE\0"
-    "ct\0"
-    "quest_Max\0"
-    "quest_Min\0";
+// .rodata BDAT column-name pool: the ctor passes plain string literals
+// ("rectype" .. "quest_Min"); MWCC pools them in first-use order, which
+// reproduces the retail layout byte-exactly. A prior revision kept
+// these bytes as a static pad + extern lbl_eu_805087AC refs; naming the pad
+// reschedules the ctor (92.1% -> 21.4%, verified), and the label has no rule
+// entry (frozen), so the honest original shape -- literals pooled by MWCC
+// -- is used and the synthetic row dissolves (no references remain).
+// MWCC does not pad section tails and named objects sort before the literal
+// pool, so retail's three trailing zero bytes ride inside the last pooled
+// literal ("quest_Min" + three explicit NULs; strcmp semantics identical).
 // .data vtable-shaped blocks as real pointer tables (in-file bytes are
 // zero at reloc sites, matching retail; all-zero char blobs would be exiled
 // to .bss by MWCC). 80535A18 is referenced by CfGimmickJump's code; 80535A3C

@@ -655,7 +655,7 @@ extern "C" __declspec(noinline) void initCrystalPageLabels(CMCCrystalBox* self);
 extern "C" void MakeCrystal_AdvanceCursor(void* self);
 extern "C" void loadCrystalBoxArchive(CMCCrystalBox* self);
 extern "C" void func_802137B4(void* self);
-extern "C" void func_802136E0(void*, int, unsigned char);
+extern "C" void MakeCrystal_SetFlag(void*, int, unsigned char);
 extern "C" int getCrystalSelectEntry(void*);
 extern "C" void releaseCrystalBoxSlot(CMCCrystalBox* self);
 extern "C" void placeCrystalBoxSlots(CMCCrystalBox* self);

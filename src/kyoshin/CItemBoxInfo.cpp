@@ -239,15 +239,15 @@ extern "C" u32 getItemBoxCondStatById(void*, u32, u32);
 extern "C" u32 getItemBox2Effect(void*, void*, u32, void*);
 extern "C" s32 calcItemBox2Bonus1(void*, void*, s32, void*);
 extern "C" s32 calcItemBox2Bonus2(void*, void*, s32, void*);
-extern "C" u32 testItemBox2BdatFlag(void*, u32, u32);
+extern "C" u32 testItemBox2BdatFlag(CItemBoxInfo2*, u32, u32);
 char* BuildItemNameStr(u32);
 u32 sumItemBox2TypeCounts(void*, u16, void*);
 bool testItemBox2Equip(void*, u16, void*);
 extern "C" u32 getItemBoxCondStat(void*, void*, u32);
-extern "C" u32 testItemBoxBdatFlag(void*, u32, void*);
+extern "C" u32 testItemBoxBdatFlag(CItemBoxInfo*, u32, void*);
 extern "C" u32 getItemBoxEffect(void*, void*, u32, void*);
-extern "C" u32 sumItemBoxTypeCounts(void*, u16, void*);
-extern "C" u32 checkItemBoxGemChain(void*, u16, void*, void*);
+extern "C" u32 sumItemBoxTypeCounts(CItemBoxInfo*, u16, void*);
+extern "C" u32 checkItemBoxGemChain(CItemBoxInfo*, u16, void*, void*);
 extern "C" s32 calcItemBoxBonus1(void*, void*, s32, void*);
 extern "C" s32 calcItemBoxBonus2(void*, void*, s32, void*);
 u32 getItemBoxCondStat2D(void*, void*);
@@ -4416,7 +4416,7 @@ u32 getItemBoxCondStat2D(void* dummy, void* arg1) {
 
 #pragma push
 #pragma optimize_for_size on
-u32 testItemBoxBdatFlag(void* dummy, u32 arg1, void* arg2) {
+u32 testItemBoxBdatFlag(CItemBoxInfo* dummy, u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -4425,7 +4425,7 @@ u32 testItemBoxBdatFlag(void* dummy, u32 arg1, void* arg2) {
     return result != 0;
 }
 #pragma pop
-u32 sumItemBoxTypeCounts(void* global, u16 arg2, void* arg3) {
+u32 sumItemBoxTypeCounts(CItemBoxInfo* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : 0;
@@ -4456,7 +4456,7 @@ u32 sumItemBoxTypeCounts(void* global, u16 arg2, void* arg3) {
     }
     return result;
 }
-u32 checkItemBoxGemChain(void* unused, u16 lookup_key, void* arg3, void* unused2) {
+u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void* unused2) {
     void* lookup = CtrlObjectParam_GetCharEntry(lookup_key);
     CItemBoxSlotBytes bytes;
     s16 ids[6];
@@ -7772,7 +7772,7 @@ u32 getItemBox2Effect(void* a, void* b, u32 c, void* d) {
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-u32 testItemBox2BdatFlag(void* dummy, u32 arg1, u32 arg2) {
+u32 testItemBox2BdatFlag(CItemBoxInfo2* dummy, u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);

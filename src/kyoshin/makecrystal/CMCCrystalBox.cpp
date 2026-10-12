@@ -1223,7 +1223,7 @@ void advanceCrystalBoxSortMenu(CMCCrystalBox* self, int a) {
                 u8 col;
                 for (col = 0; col < 30; col++) {
                     if (MakeCrystal_GetItemObject(d, col) == sel) {
-                        func_802136E0((void*)d, col, 0);
+                        MakeCrystal_SetFlag((void*)d, col, 0);
                         self->unk2CD = col != 0 ? col / 10 : 0;
                         self->unk2CC = col != 0 ? col - self->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors(self);
@@ -1256,7 +1256,7 @@ void advanceCrystalBoxSortMenu(CMCCrystalBox* self, int a) {
                 u8 col;
                 for (col = 0; col < 30; col++) {
                     if (MakeCrystal_GetItemObject(d, col) == sel) {
-                        func_802136E0((void*)d, col, 0);
+                        MakeCrystal_SetFlag((void*)d, col, 0);
                         self->unk2CD = col != 0 ? col / 10 : 0;
                         self->unk2CC = col != 0 ? col - self->unk2CD * 10 : 0;
                         refreshCrystalBoxCursors(self);

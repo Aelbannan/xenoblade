@@ -78,7 +78,7 @@ extern "C" {
     // Monado arts unlock
     void* CtrlObjectParam_GetCharEntry(u32 index);
     void ResTbox_SetCellBit80(void* self, int, int, int);
-    void func_801F92B0(void* self, int, int, int);
+    void ResTbox_SetCellBit40(void* self, int, int, int);
 
     // Game state / flags
     bool isGlobalCamFlagSet__Fi(s32 mask);
@@ -303,7 +303,7 @@ int unlockMonadoArts(VMThread* pThread) {
     void* ptr = (u8*)data + 0xE8;
     for (int i = 0; i < 8; i++) {
         ResTbox_SetCellBit80(ptr, 0, 1, i);
-        func_801F92B0(ptr, 0, 1, i);
+        ResTbox_SetCellBit40(ptr, 0, 1, i);
     }
     return 0;
 }

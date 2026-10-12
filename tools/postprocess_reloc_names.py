@@ -1911,6 +1911,12 @@ UNIT_RULES: dict[str, UnitRules] = {
             # compiler-generated base-list entries -> retail pool names
             ("__RTTI__11CDeviceVICb", "lbl_eu_80663618"),
             ("__RTTI__11CDeviceBase", "lbl_eu_806635F0"),
+            # MWCC's anonymous .data tail object @9131 (+0xC0, 0x28: RTTI
+            # base-list bytes, retail-identical) carries the retail base-list
+            # label: rename it in place so the TU defines lbl_eu_8056CA20
+            # (the source's extern decl + .sdata ref supply the UNDEF slot;
+            # rename_exact redefines the local slot, bytes/relocs untouched).
+            ("@9131", "lbl_eu_8056CA20"),
         ),
         # Retail .data/.sbss are align 8; MWCC emits 4 for this TU.
         # 2026-09-28: set_data_align retired here — the object's `.data`/`.sbss`
@@ -1920,6 +1926,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, 0), "lbl_eu_8066A440"),
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8066A448"),
+            # Local 0.0f/1.0f/2.0f literal pools -> CGXCache shared pool words
+            # (retail .text sites 0x40/0xD0 load A430, 0xCC loads A434,
+            # 0xE4 loads A438; same bytes, CGXCache retail object defines them).
+            (struct.pack(">I", 0x00000000), "lbl_eu_8066A430"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066A434"),
+            (struct.pack(">I", 0x40000000), "lbl_eu_8066A438"),
         ),
         # Weak IWorkEvent/CWorkThread stubs after setValues; retail .text ends at 0x8E8.
         trim_text_size=0x8E8,
@@ -2092,9 +2104,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
     "CTaskGameEffAfter.o": UnitRules(
-        # CTTask<CTaskGameEffAfter> vtable family ships from split1.s; no
-        # live .text refs to the local copies.
-        extern_data_sections=(".data", ".rodata", ".sdata"),
+        # DL8-x1: the unit's .data/.rodata/.sdata IS MWCC's native RTTI
+        # output (RTTI on), so the strip and the split1.s fallback are gone;
+        # exact_renames below map the compiler's __vt__/__RTTI__ names onto
+        # the retail split labels.
     ),
     "CActParamAnim.o": UnitRules(
         # CActParamAnim vtable/RTTI ship from split1.s lbl_eu_805261C8. Pool:
@@ -2377,18 +2390,23 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2", ".data", ".rodata", ".sdata"),
     ),
     "CChainActorList.o": UnitRules(
-        # Vtables identified by their __dt__ slots (80538308 =
-        # CChainActorList, 80538314 = reslist<CChainActor*>, 8053832C =
-        # _reslist_base<CChainActor*>); RTTI name string @7307 =
-        # "_reslist_base<cf::CChainActor *>" -> lbl_eu_8050ED98. .sbss
-        # define is already spelled lbl_eu_80668A80 (resolves via blob).
+        # .data is typified in-source now (the four CChain* vtables at retail
+        # 0x00-0x9C of the section); MWCC's own vtable run for the
+        # CChainActorList/reslist vtables lands at retail 0x9C/0xA8 because
+        # that data is exactly 0x9C bytes, so the first two renames below map
+        # the ctor/dtor vptr stores onto the retail labels. The third
+        # (_reslist_base) is NOT renamed: with -RTTI off MWCC emits no RTTI
+        # base record, so its vtable sits one slot early at 0xB4, not 0xC0 --
+        # claiming 'lbl_eu_8053832C' for it would be a false placement (see
+        # the wave-DL7 report). .rodata/.sdata are typified in-source too (no
+        # __RTTI__/typeinfo emissions with -RTTI off; the old @7307 ->
+        # lbl_eu_8050ED98 rename is dead and gone), and the data sections are
+        # no longer stripped: .sbss never existed in the retail object or in
+        # ours, so the field was removed entirely with the .data strip.
         exact_renames=(
             ("__vt__Q22cf15CChainActorList", "lbl_eu_80538308"),
             ("__vt__28reslist<PQ22cf11CChainActor>", "lbl_eu_80538314"),
-            ("__vt__34_reslist_base<PQ22cf11CChainActor>", "lbl_eu_8053832C"),
-            ("@7307", "lbl_eu_8050ED98"),
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
     ),
     "CMenuMapSelectSC.o": UnitRules(
         # Move__16CMenuMapSelectSCFv dispatch jumptable ships from split1.s
@@ -2537,14 +2555,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CVision.o": UnitRules(
-        # Data dissolve: sdata2 magics resolve to lbl_eu_80667D28/D58; the TU
-        # also emits a local copy literally named lbl_eu_80667D28 which the
-        # strip converts to UNDEF (resolving to split1.s at link).
-        pool_patterns=(
-            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80667D28"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80667D58"),
-        ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+        # Burned down (wave DL4): .data/.rodata now byte-exact in source and
+        # .sdata2 carries all 32 retail labels at retail offsets, so no strip
+        # or pool rename is needed. The TU-local trailing pools (@13172 zero +
+        # conversion magics) self-resolve at link; only the sdata2 size delta
+        # remains as a documented MWCC const-fold residual.
     ),
     "pluginSnd.o": UnitRules(
         # Data dissolve: every VMThread Bgm/Se helper shares one int->float
@@ -2705,14 +2720,15 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".sdata2"),
     ),
     "CScrollBar.o": UnitRules(
-        # Data dissolve: both magic-double sites load lbl_eu_80668140/-48 in
-        # the corresponding retail functions.
+        # Data now lives in source: the six retail .sdata2 labels are defined
+        # at their retail offsets (+0x0..+0x1c) by the early const definitions;
+        # MWCC's own code pools (@N) trail the section (documented size delta).
+        # The two magic-double loads still bind to the retail labels.
         retarget_relocs=(
             (".text", 0x80, "lbl_eu_80668140"),
             (".text", 0x600, "lbl_eu_80668140"),
             (".text", 0x674, "lbl_eu_80668148"),
         ),
-        extern_data_sections=(".sdata2",),
     ),
     "CMenuBattleMode.o": UnitRules(
         # Data dissolve: no kept-section references; all data sections are
@@ -3081,6 +3097,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A3C0"),
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A388"),
+            # Local rand literal pools -> CGXCache shared pool words (retail
+            # .text loads the same values from these names at the same sites:
+            # 1.0f -> B248, -1.0f -> B24C, 0.5f -> B238, 2^31f -> B234).
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066B248"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_8066B24C"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_8066B238"),
+            (struct.pack(">I", 0x4F000000), "lbl_eu_8066B234"),
         ),
         # The TU hand-builds the retail vtable/RTTI layout (lbl_eu_80524658
         # strings, lbl_eu_8056FE08/20/30/48 data, lbl_eu_80663BB0/BB8/BC0
@@ -4636,33 +4659,23 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".sdata2"),
     ),
 
-    # g3d_scnobj: the retail split is .text-only; every data symbol (ScnObj/
-    # ScnGroup/ScnLeaf vtables, SetScnObjOption/GetScnObjOption switch jump
-    # tables, 0.0f/1.0f pool floats) is owned by nw4r_data.s. Retarget the
-    # .text relocs to the retail symbol names (UNDEF, mirroring the retail
-    # .o), drop the .data/.sdata2 sections, and drop the implicit ScnLeaf
-    # deleting-dtor the retail linker GC'd (its only referencer, the ScnLeaf
-    # vtable, is also retail-owned).
+    # g3d_scnobj: this TU owns its .data since the nw4r_data.s absorb
+    # (splits 2026-08-29: .data 0x805695F8-0x80569730). MWCC emits the two
+    # switch jumptables plus the ScnGroup/ScnLeaf/ScnObj vtables here with
+    # retail-identical bytes, so the .text vtable/jumptable uses resolve
+    # TU-locally (no retarget). Only the two .sdata2 pool-float sites still
+    # retarget to the external labels (their section is stripped below).
+    # lbl_eu_805696C0/F0 (ScnObjGather/ScnRoot vtables) cannot be emitted
+    # here: their key functions live in g3d_scnroot.cpp, and the header
+    # model lacks retail's CheckScnObj virtual. They are referenced only by
+    # the retail scnroot.o in the mixed RSP; decomp scnroot.o references
+    # nothing at those sites. Drop the implicit ScnLeaf deleting-dtor the
+    # retail linker GC'd (its only referencer, the ScnLeaf vtable, stays
+    # TU-local).
     "g3d_scnobj.o": UnitRules(
         retarget_relocs=(
-            (".text", 0xC6, "lbl_eu_80569688"),
-            (".text", 0xD6, "lbl_eu_80569688"),
-            (".text", 0x1CA, "lbl_eu_80569688"),
-            (".text", 0x1CE, "lbl_eu_80569688"),
-            (".text", 0x276, "jumptable_eu_805695F8"),
-            (".text", 0x27E, "jumptable_eu_805695F8"),
-            (".text", 0x41E, "jumptable_eu_80569620"),
-            (".text", 0x426, "jumptable_eu_80569620"),
-            (".text", 0xC02, "lbl_eu_80569648"),
-            (".text", 0xC0A, "lbl_eu_80569648"),
             (".text", 0x12C, "lbl_eu_80669CD8"),
             (".text", 0x858, "lbl_eu_80669CDC"),
-            (".text", 0x162E, "lbl_eu_80569648"),
-            (".text", 0x1632, "lbl_eu_80569648"),
-            (".text", 0x168E, "lbl_eu_80569648"),
-            (".text", 0x1692, "lbl_eu_80569648"),
-            (".text", 0x16D6, "lbl_eu_80569688"),
-            (".text", 0x16DA, "lbl_eu_80569688"),
         ),
         pad_data_section=((".data", 0x138), (".rodata", 0x10)),
         extern_data_sections=(".sdata2",),
@@ -6249,7 +6262,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CTaskGamePic.o": UnitRules(
         # Vtable/RTTI names/typeinfo strings are dead local copies (the ctor
         # stores blob vtables lbl_eu_80538AD8/BC0 directly); no reloc refs.
-        extern_data_sections=(".data", ".rodata", ".sdata"),
+        # DL8/x2: .rodata now ships from source (FDB0/FDC0 type-name strings,
+        # byte-identical 0x28); .data/.sdata still stripped (vtable rebuild
+        # blocked: BC0-data slots name <>-mangled CTTask functions).
+        extern_data_sections=(".data", ".sdata"),
     ),
     "CTaskGameEvt.o": UnitRules(
         # Same shape as CTaskGamePic: unreferenced vtable/RTTI/string copies.

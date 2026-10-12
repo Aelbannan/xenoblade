@@ -398,3 +398,28 @@ void CTaskGamePic::Draw() {}
 // the TU (breaks the 19/19 code match) or rule-side selective strips/pool
 // naming (frozen). Code use sites: vtbl/address-takes (58/65), float loads
 // (89-93/134-136/234/339).
+//
+// NOTE (wave DL5, re-verified with builds): BB0/BB4/BB8 cannot land in
+// source. Defining the three floats (any constness/position tried: const
+// pools anonymous copies MWCC actually uses, section 0x20; non-const
+// keeps uses named and the section byte-identical 0x18, but BB0 must be
+// non-const and then __ct__CTaskGamePic loses retail's early lfs hoist
+// (lfs f1,BB0 @+0x24): explicit-locals land the lfs @+0x20 (75.0%),
+// @+0x40 (78.1%) or late (54.7%), never @+0x24; __restrict on the
+// store pointers does not restore it. So: const = pools (uses detach),
+// non-const = ctor reschedule (54-78%), extern = UNDEF rows. Landing
+// needs rule-side pool naming (no pool_patterns field on this unit) or
+// devirtualizing the TU (breaks 19/19). Retail .sdata2 bytes for
+// reference: 00000000 3B800000 3F800000 00000000 | 43300000 80000000.
+//
+// Retail tables owned by this unit (wave DL8/x2 reconstruction).
+// .rodata (0x28): RTTI type-name strings. FDB0 "CTaskGamePic" (12 chars +
+// null + 3 pad = 0x10) and FDC0 "CTTask<CTaskGamePic>" (20 chars + null +
+// 3 pad = 0x18). Retail bytes: 435461736b47616d65506963 00000000 /
+// 43545461736b3c435461736b47616d655069633e 00000000. Unreferenced by code
+// (only the .sdata locator pairs point at them); defining them adds the
+// section byte-exact with no codegen impact. (.data/.sdata need the vtable
+// + RTTI-trailer rebuild: blocked (see residual notes above); .sdata2
+// needs BB0/BB4/BB8/BC0: blocked (ctor hoist + Move schedule).)
+extern const char lbl_eu_8050FDB0[0x10] = "CTaskGamePic";
+extern const char lbl_eu_8050FDC0[0x18] = "CTTask<CTaskGamePic>";

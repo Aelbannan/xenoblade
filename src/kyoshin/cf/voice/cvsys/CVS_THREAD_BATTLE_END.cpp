@@ -336,25 +336,15 @@ extern "C" CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
             self->field_0x30 = 0;
             self->field_0x34 = 0;
             self->field_0x39 = 0;
-            // Retail tests bit 0 only (rlwinm rotl-1 extract), not a full
-            // zero comparison.
-            self->field_0x38 = (u8)(ml::math::mtRand(2) & 1);
+            self->field_0x38 = (u8)(ml::math::mtRand(2) != 0);
         } catch (...) {
             __throw(0, 0, 0);
         }
     }
 
-    // Copy the init-state triple (outside try). Load base[1] before base[0]:
-    // retail colors the first-loaded value r0 and the second r4, storing r4
-    // to +0 and r0 to +4. Single pointer initialized directly from the
-    // symbol keeps lis/addi materialized once (retail r5).
-    u32 v1;
-    u32* p0;
-    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
-    v1 = (p0 = lbl_eu_80539958)[1];
-    head->word0 = p0[0];
-    head->word4 = v1;
-    head->word8 = p0[2];
+    // Copy the init-state triple (outside try) as the base's ptmf member
+    // (VoiceCb is 12 bytes; DOWN precedent).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539958)->unk0;
     return self;
 }
 

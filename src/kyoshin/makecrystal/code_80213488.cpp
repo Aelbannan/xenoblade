@@ -157,7 +157,7 @@ extern "C" void MakeCrystal_CollectByTarget(MakeCrystalTable* d, u8 target) {
 }
 
 // Retail 0x802136E0: set the flag byte of the entry at the adjusted index.
-extern "C" void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
+extern "C" void MakeCrystal_SetFlag(MakeCrystalTable* d, int idx, unsigned char val) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj >= d->count) return;
     d->entries[adj].flag = val;

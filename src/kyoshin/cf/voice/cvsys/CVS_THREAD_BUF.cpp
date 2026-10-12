@@ -1,5 +1,5 @@
 // CVS_THREAD_BUF: Voice thread buffer management.
-// FULL_MATCH: func_802A5828 -- buffer-size getter (virtual method override).
+// FULL_MATCH: BufVxAllocSize -- buffer-size getter (virtual method override).
 // Remaining functions are NOT_STARTED harness stubs.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.hpp"
@@ -94,9 +94,9 @@ int CVS_THREAD_BUF::blank1() {
     return BUFFER_SIZE;
 }
 
-// us-802a7f5c (func_802A5828): retail C-ABI buffer-size getter (0x8).
+// us-802a7f5c (BufVxAllocSize): retail C-ABI buffer-size getter (0x8).
 // Plain function returning BUFFER_SIZE; mirrors EndVoice_AllocSize pattern
 // in the sibling BATTLE_END TU (plain C function, not the virtual).
-extern "C" int func_802A5828() {
+extern "C" int BufVxAllocSize() {
     return 0x104;
 }

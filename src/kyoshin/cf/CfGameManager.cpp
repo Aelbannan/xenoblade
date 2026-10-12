@@ -369,6 +369,31 @@ extern const float lbl_eu_80666548;
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 // bindPadSubobjects: declared (s32) by CfGameManager.hpp - local u32 form conflicts (10197)
 extern "C" void UIBattleMarkFlags82();
+extern "C" void UIBattleRemoveAll(u32);
+// Retail C-linkage imports (signatures verbatim from the defining TUs /
+// CfGameManager.ctx.c; kept file-local so no shared header is pulled in).
+extern "C" void MenuSnd_RampMasterVol_889D0(u32 object);
+extern "C" void updateHelpManager(cf::CHelpManager* object);
+extern "C" void CCharVoiceMan_Tick();
+extern "C" void refreshNpcRowFlags();
+extern "C" void CfT_PlayClockUpdate();
+extern "C" void CfT_PlayClockAdvanceFrame();
+extern "C" void CfT_PlayClockAdvanceInt();
+extern "C" bool CfT_FrameInWindow();
+extern "C" void bdatTotalRows();
+extern "C" void bdatSetResRow(void*, void*);
+// CtrlObjectParam helpers: retail calls them by flat name (cf. CfObjectPc.cpp
+// calling RefreshCharEntry the same way); signatures match the defining TU.
+extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);
+extern "C" int CtrlObjectParam_ValidateSlotRange();
+extern "C" int CtrlObjectParam_InsertSlotEntry(void* self, int value, int type, int index);
+extern "C" void CtrlObjectParam_CompactSlotArrays(u8* self);
+extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* self, u16 val);
+extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* self, u32 value, u32 a, u32 b);
+extern "C" void CtrlObjectParam_WriteArtsCounter(void* self, u16 arg2);
+extern "C" void CollObjSetupVecsState4(void* self, const void* pA, const void* pB, float f);
+extern "C" void mineResetAll();
+extern "C" void resetHelpManager(cf::CHelpManager* object);
 extern "C" void setInputDisableTime__Q22cf9CfPadTaskFf(float value);
 extern float lbl_eu_806669C8;
 

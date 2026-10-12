@@ -20,11 +20,14 @@ extern "C" char lbl_eu_80507A4C[];
 extern "C" const char* lbl_eu_80534DC0[];
 extern "C" const char* lbl_eu_80534DA8[];
 
-// Sdata2 float constants for the scroll animation (split2 .sdata2).
+// Sdata2 constants for the scroll animation (split2 .sdata2 80668138-58).
+// Kept const: the TU's float uses schedule correctly only as const loads.
 extern const float lbl_eu_80668138; // 0.0 - zero / reset offset
-extern const float lbl_eu_8066813C; // 0.0 - scroll-stick ratio lower clamp
-extern const float lbl_eu_80668150; // scroll animation frame step
-extern const float lbl_eu_80668154; // entering-done threshold
+extern const float lbl_eu_8066813C; // 4.0 - scroll-stick ratio lower clamp
+extern const double lbl_eu_80668140; // 2^52 - u32->float debias magic
+extern const double lbl_eu_80668148; // 2^52+2^31 - s16->float debias magic
+extern const float lbl_eu_80668150; // 1.0 - scroll animation frame step
+extern const float lbl_eu_80668154; // 5.0 - entering-done threshold
 
 // Cross-TU layout helpers (kyoshin .text). Retail references these by their
 // unmangled C names (US split strips the C++ mangling), so they need C

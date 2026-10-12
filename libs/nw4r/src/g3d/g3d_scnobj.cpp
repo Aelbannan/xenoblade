@@ -15,10 +15,12 @@ extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const ::nw4
 namespace nw4r {
 namespace g3d {
 
-// TYPE_NAME (RTTI name data) and vtables for ScnObj/ScnLeaf/ScnGroup are
-// retail-owned by nw4r_data.s (lbl_eu_8051D768/788, lbl_eu_80569648/88); the
-// retail split of this TU contains no data sections, so nothing is defined
-// here.
+// This TU owns its .data since the nw4r_data.s absorb (splits 2026-08-29:
+// .data 0x805695F8-0x80569730). MWCC emits the switch jumptables and the
+// ScnGroup/ScnLeaf/ScnObj vtables here with retail-identical bytes; the
+// .text uses resolve TU-locally, so no lbl_eu_80569648/88 definitions are
+// needed here. lbl_eu_805696C0/F0 (ScnObjGather/ScnRoot vtables) cannot be
+// emitted by this TU (their key functions live in g3d_scnroot.cpp).
 
 /******************************************************************************
  *

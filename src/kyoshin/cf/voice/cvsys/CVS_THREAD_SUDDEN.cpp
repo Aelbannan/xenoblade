@@ -91,21 +91,9 @@ extern "C" CVS_THREAD_SUDDEN* __ct__802A8C04() {
     }
 
     // Copy the slot-state init triple into the base state words (outside
-    // try) via the raw layout view. The address is forced through an integer
-    // cast so the full base (lis+addi) is materialized once before any load.
-    // (Retail colors the loaded pair with the registers swapped relative to
-    // source order; certified equivalent by the register-renaming witness.)
-    CVS_THREAD_SUDDEN_raw* raw = (CVS_THREAD_SUDDEN_raw*)self;
-    u32 v0;
-    u32 v1;
-    u32 v2;
-    u32* src = (u32*)(u32)lbl_eu_80539CE8;
-    v1 = src[1];
-    v0 = src[0];
-    raw->state0 = (u32*)v0;
-    raw->state4 = v1;
-    v2 = src[2];
-    raw->state8 = v2;
+    // try) as the base's ptmf member (VoiceCb is 12 bytes; DOWN precedent:
+    // member-typed access colors the pair r0/r4 with the single r5 base).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539CE8)->unk0;
 
     return self;
 }

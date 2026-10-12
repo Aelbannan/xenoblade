@@ -4781,3 +4781,88 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Result:    MWSFCRE_SetSupplySj 95.3% to 97.7% (residual: one store-order pair, witness-gated by CODE_MATCH callee)
 - Confidence: repo_proven
 - Applies to/a.k.a.: any `x = y = C` zero-fill chain to adjacent struct slots; pairs with the sinit descending-stores note (same mechanism, opposite direction).
+
+## `extern "C"` on data/array definitions is a no-op (FloatUtils, Wii/1.1 `-O4,p`)
+- Symptom:   `docs/CODE_SMELLS.md` reports ~19k `extern "C"` lines; its generated note used
+             to claim ~80% were "retail-reloc-mandated" and therefore untouchable.
+- Cause:     wrong.  The retail `main.dol` is stripped — `grep -a` finds none of
+             `wkRender` / `__ct__cf_CfCamFollow` / `func_8004B0B0` / `lbl_eu_*` — so no name
+             is retail-mandated.  Every name comes from `config/<region>/symbols.txt` (the
+             table `dtk dol split` also uses to name the synthetic objdiff target objects),
+             and `extern "C"` merely forces MWCC to emit that literal string.  For *data* it
+             is not even needed: MWCC does not mangle namespace-scope variables, so
+             `extern "C" const float lbl_eu_x` and `extern const float lbl_eu_x` emit the
+             same symbol.  PLAN.md §17.6 already classes the spelling as cleanup debt.
+- Fix:       delete `extern "C" ` from data/array declarations in place — line-neutral, so
+             no `-ipa file` line-number shift.  A/B on `libs/monolib/src/math/FloatUtils.cpp`:
+             93 `extern "C" const …` definitions became `extern const …` (215-line file
+             unchanged); `hexdiff --all` still 1/1 FULL_MATCH with a byte-identical reloc
+             list, and `run.py data diff` still `VERDICT: MATCH` (`.sdata2` 488 bytes
+             identical).
+- Result:    that TU's `extern "C" (total lines)` 93 → 0, zero `.text`/data/reloc effect.
+- Confidence: repo_proven
+- Applies to/a.k.a.: `lbl_eu_*` / `data_*` / float-pool constants.  Do **not** apply blindly
+             to functions: a real C++ function (or member) mangles, so converting one
+             changes the emitted name and needs `symbols rename-plan` + `rename-all`.
+             Cross-ref: `docs/CODE_SMELLS.md` Notes; PLAN.md §17.6.
+
+## `__attribute__((aligned(8)))` on a data definition flips a *code* function's register allocation (CTaskGameEffAfter, Wii/1.1 -O4,p)
+- Symptom:   after moving a vtable/RTTI table into source as a definition referenced by
+             the TU's own ctor, that ctor drops 100.0% -> 76.7% (0 structural, 10 reg_swap,
+             same 0xac size).  The only diff is the color of the __ptmf_null base
+             (retail r5, decomp r4) and of the first loaded word (retail r4, decomp r5) -
+             pure Chaitin coloring, no opcode/immediate change.
+- Cause:     the definition carried `__attribute__((aligned(8)))`, which raises the
+             `.data` section alignment; MWCC then re-associates/load-schedules the
+             lis/addi address materialization of that symbol differently, changing the
+             allocator's tie-breaks for every other live value in the function.
+- Fix:       drop the alignment attribute from the definition (MWCC's default .data
+             alignment is already 8 here, so the section align and the bytes are unchanged);
+             hexdiff the *referencing* function, not just the data gate.
+- Result:    CTaskGameEffAfter ctor back to 100.0% (8/8) with the hand-built .data/
+             .rodata/.sdata slice byte-identical (data gate MATCH, labels placed).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any dissolve that introduces a source definition whose address a
+             matched function materializes; paired with the "Extern-data type change flips
+             call-site codegen" record above (same family: data-side attributes leak into
+             code allocation).  Note the *declaration* type change (const u8[] -> u32[9])
+             was proven innocent here - the definition's presence/alignment was the trigger.
+
+## void* -> typed pointer in matched code — retype is codegen-neutral, but MWCC 1.1 C++ needs explicit casts (Wii/1.1 -O4,p)
+- Symptom:   a legacy TU passes `void*` where callers/headers prove a concrete type (`CItemBoxGrid*`,
+             `CItemBoxInfo*`); leaving it costs smell count but changing the type looks risky.
+- Cause:     object-pointer types are erased at codegen, so the emitted loads/stores/registers are
+             identical. BUT MWCC 1.1 is a strict C++ front end: it rejects an implicit `void*`->`T*`
+             argument (probed: even `int*` fails), so every call site needs an explicit `(T*)` cast once
+             the callee parameter is retyped. The cast itself is free in codegen.
+- Fix:       retype the parameter/local to the true type and add same-line explicit casts at the call
+             sites (no new locals — see the temp-view record below). SAFE subset: locals, internal
+             casts, and parameters of C-linkage functions (`extern "C"` / `func_*`, whose emitted symbol
+             carries no type). UNSAFE without the rename ceremony: parameters of mangled C++ functions,
+             where the type is part of the mangled name (`...FPv`). Header-owned declarations are a
+             separate change (blast radius across every including TU).
+- Result:    CItemBoxGrid: 18 C-linkage fns retyped (41 `void*` lines removed, 19 casts added); all 18
+             still 100%, unit 106/144 unchanged. CItemBoxInfo: 4 leading params retyped, still 100%.
+- Confidence: repo_proven
+- Applies to/a.k.a.: matching-neutral cleanup of the `void*` smell family; classify each hit first
+             (C-linkage param / local / mangled-param / header-owned / id-as-pointer) before editing.
+
+## Pointer-arith -> typed member view — per-statement casts, never a named temp-view local (Wii/1.1 -O4,p)
+- Symptom:   a matched "copy fields out of a stack temp" block written as
+             `*(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);` — byte-exact, but ~100 raw-offset
+             lines in one function (CMenuSkipTimer::Init).
+- Cause:     the temp buffer is a `u8[]` because the retail ctor symbol is a C-linkage free function
+             (`__ct__CBgTex`, so there is no C++ ctor to construct a real object). Types are erased for
+             object pointers, so a typed view of the same bytes is codegen-identical; however, hoisting
+             that view into a named local (`CBgTex* t = reinterpret_cast<CBgTex*>(buf)`) keeps `t` live
+             across the whole straight-line block and costs one extra callee-saved register (`stmw`
+             prologue instead of `stw`) -> Init regresses to 5.9%.
+- Fix:       replace the destination with the real declared member (`mBgTex.mFileHandle = ...`) and view
+             the temp per statement: `reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle`. Keep the
+             retail free-function ctor/dtor calls verbatim. Keep field widths exact: a field retail loads
+             with `lha` must be `s16`, not `u16` (which emits `lhz`).
+- Result:    CMenuSkipTimer::Init 58 raw-offset lines -> 0, 100% (0x298/0x298); unit 14/14 unchanged.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any "temp widget rebuild" block (CMenuSave/CMenuCollepedia convention,
+             `__ct__UnkClass_8011C974` mem-region copy); the named-local register cost generalizes to
+             any view pointer that stays live across a long straight-line region.

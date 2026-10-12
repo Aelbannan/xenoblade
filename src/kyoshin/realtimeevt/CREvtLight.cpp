@@ -171,15 +171,15 @@ extern "C" f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
-    // diff = targetPos - thisPos; copied through a temporary so MWCC emits
-    // the same paired-single block plus element copy before PSVECMag.
-    nw4r::math::VEC3 delta;
-    nw4r::math::VEC3Sub(&delta, pos, self->pos());
-    Vec d;
-    d.x = delta.x;
-    d.y = delta.y;
-    d.z = delta.z;
-    return PSVECMag(&d);
+    // diff = targetPos - thisPos via VEC3::operator- (paired-single block),
+    // then element-copied to a Vec for the magnitude call (retail stages
+    // the sub result through a temporary before PSVECMag).
+    nw4r::math::VEC3 tmp = *pos - *self->pos();
+    Vec d, *dp = &d;
+    dp->x = tmp.x;
+    dp->y = tmp.y;
+    dp->z = tmp.z;
+    return PSVECMag(dp);
 }
 
 // ============================================================================
@@ -193,13 +193,13 @@ extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
     ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
-    // diff = targetPos - thisPos (paired-single ops)
-    nw4r::math::VEC3 delta;
-    nw4r::math::VEC3Sub(&delta, pos, self->pos());
+    // diff = targetPos - thisPos via VEC3::operator- (paired-single block),
+    // then element-copied to a Vec for the angle computation below.
+    nw4r::math::VEC3 tmp = *pos - *self->pos();
     Vec diff;
-    diff.x = delta.x;
-    diff.y = delta.y;
-    diff.z = delta.z;
+    diff.x = tmp.x;
+    diff.y = tmp.y;
+    diff.z = tmp.z;
 
     // Compute angle using Atan2FIdx
     f32 angle = nw4r::math::Atan2FIdx(diff.x, diff.z);

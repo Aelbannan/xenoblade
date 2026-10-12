@@ -59,13 +59,14 @@ extern "C" __declspec(noinline) void CFade_StepFadeOut(CFade* self) {
 #pragma optimize_for_size on
 bool CFade::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
-        // Cache the shared string pool base so MWCC keeps it in a callee-saved
-        // register across the bl calls (retail: r30 + per-use addi offsets).
+        // Retail evaluates the MEM2 handle call before materializing the
+        // string pool base (kept in r30 with per-use addi offsets below).
+        mtl::ALLOC_HANDLE memHandle = mtl::MemManager::getHandleMEM2();
         char* str = lbl_eu_8050B5A0;
 
         // Reserve a scratch region inside the memory handle for the layout build,
         // then RAII-register it with CLibLayout (frees on scope exit).
-        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x400,
+        mMemRegion.createRegion(memHandle, 0x400,
                                 &str[0x11], 0);
         Class_8045F858 sp8(&mMemRegion);
 
@@ -318,7 +319,7 @@ u32 lbl_eu_80536F40[28] = {
 // strings + marker-name table. Retail holds one label per string; every
 // start is 8-aligned so the toolchain places them with no padding.
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
-char gap_48_8050B5A0_rodata[0x48] = {
+char lbl_eu_8050B5A0[0x48] = {
     0x6D,0x65,0x6E,0x75,0x2F,0x6A,0x70,0x2F,0x46,0x61,0x64,0x65,0x2E,0x61,0x72,0x63,
     0x00,0x43,0x46,0x61,0x64,0x65,0x00,0x61,0x72,0x63,0x00,0x6D,0x66,0x30,0x30,0x5F,
     0x66,0x61,0x64,0x65,0x2E,0x62,0x72,0x6C,0x79,0x74,0x00,0x6D,0x66,0x30,0x30,0x5F,

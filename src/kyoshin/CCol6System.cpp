@@ -494,6 +494,9 @@ void CCol6Hint::Move() {
                 CScrollBar_InitRootPane(&mScrollBar, &vec3);
             }
             CScrollBar_UpdateThumb(&mScrollBar, 5, (u16)mField11C);
+            // Retail issues requestScrollIn twice in a row (two consecutive
+            // bls at +0x0124/+0x012c); not a cleanup candidate.
+            CScrollBar_requestScrollIn(&mScrollBar);
             CScrollBar_requestScrollIn(&mScrollBar);
             break;
 

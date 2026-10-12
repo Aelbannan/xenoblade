@@ -81,6 +81,33 @@ struct CScrollBarPane {
     f32 mDrag[2]; // +0x4C drag position (copied via TagCopyVec2f)
 };
 
+// .sdata2 retail table (splits: 80668138-80668158). Declaring the six
+// objects here — before any code — emits them in retail declaration order at
+// the retail offsets (+0x0 zero, +0x4 4.0, +0x8/+0x10 the 2^52 / 2^52+2^31
+// debias doubles, +0x18 1.0, +0x1c 5.0) so all six retail labels are defined
+// at their retail offsets. The code keeps the retail lfs schedule: MWCC may
+// route a const use through its own @N code pool, but the instruction stream
+// is byte-identical to the previous EOF-placement build (verified).
+// RESIDUAL (w4 probed, .scratch/dlabels7/w4/probe/): MWCC still emits its own
+// code-const pool (four float copies + u32/s16 debias doubles) after the six
+// objects, so the plain section is 0x48, not retail 0x20. Probe P1 proves
+// hidden-value `extern const` (no init) emits hoisted NAMED loads on the
+// exact retail schedule with no pool; probe P2 proves any visible/non-const
+// spelling sinks the loads and breaks the prologue interleave (StepScrollIn
+// fell to 68%, UpdateThumb to 36.3% when tried). Same-TU definitions always
+// expose their values, so the hoisted+named combination is unreachable in
+// source: reaching OK needs either the union conversion rewrite + a load
+// schedule MWCC will not produce, or post-link help. Still pooling: 0.0f /
+// 4.0f / 1.0f / 5.0f copies plus the 2^52 and 2^52+2^31 debias doubles.
+// The rule keeps retargeting the 3 magic loads onto lbl_eu_80668140/-48.
+#pragma section data_type ".sdata2" ".sdata2"
+extern __declspec(section ".sdata2") const float lbl_eu_80668138 = 0.0f;
+extern __declspec(section ".sdata2") const float lbl_eu_8066813C = 4.0f;
+extern __declspec(section ".sdata2") const double lbl_eu_80668140 = 4503599627370496.0;
+extern __declspec(section ".sdata2") const double lbl_eu_80668148 = 4503601774854144.0;
+extern __declspec(section ".sdata2") const float lbl_eu_80668150 = 1.0f;
+extern __declspec(section ".sdata2") const float lbl_eu_80668154 = 5.0f;
+
 u8 CScrollBar::isVisible() { return mVisible; }
 
 
@@ -399,18 +426,5 @@ void* lbl_eu_80534DD8[34] = {
 // .data RTTI base (IWorkEvent typeinfo + zeros; the +0xB8 __RTTI reloc).
 __declspec(section ".data") __attribute__((used, aligned(4)))
 void* lbl_eu_80534E60[4] = { (void*)RTTIExterns::__RTTI__10IWorkEvent, 0, 0, 0 };
-// .sdata2 float table. Offsets map to 80668138(zero) 13C(4.0) 140/148(2^52
-// conversion doubles) 150(1.0) 154(32.0); the frozen rule externs .sdata2
-// and retargets the two magic-double loads, so this only feeds the raw gate.
-struct Sdata2_CScrollBar {
-    u32 zero;
-    float f4;
-    double d52a;
-    double d52b;
-    float f1;
-    float f32;
-};
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-struct Sdata2_CScrollBar sbar_sdata2_pool = {
-    0, 4.0f, 4503599627370496.0, 4503601774854144.0, 1.0f, 32.0f
-};
+// .sdata2 retail table now lives just after the CScrollBarPane definition
+// above (retail order and offsets; pool-size residual documented there).

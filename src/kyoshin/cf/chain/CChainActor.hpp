@@ -15,7 +15,7 @@ namespace cf {
     // CChainActorData is 0x70 bytes (4 + 0x68 + 2 +2)
 
     struct CChainActorVtbl { void* slots[30]; };
-    extern "C" CChainActorVtbl lbl_eu_80538290;
+    extern "C" u32 lbl_eu_80538290[29];  // defined in CChainActorList.cpp (tail word: lbl_eu_80538290_slot29)
 
     class __declspec(novtable) CChainActor : public CChainActorData {
     public:

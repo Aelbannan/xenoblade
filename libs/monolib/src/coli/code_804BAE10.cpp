@@ -208,10 +208,10 @@ void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
     if (vB->x > lbl_eu_8065F3F0.x) v.x = vB->x;
     if (vB->y > lbl_eu_8065F3F0.y) v.y = vB->y;
     if (vB->z > lbl_eu_8065F3F0.z) v.z = vB->z;
-    f32 dx = v.x - lbl_eu_8065F3F0.x;
-    f32 dy = v.y - lbl_eu_8065F3F0.y;
-    f32 dz = v.z - lbl_eu_8065F3F0.z;
-    if (dx * dx + dy * dy + dz * dz < lbl_eu_80665960) {
+    nw4r::math::VEC3& vv = *reinterpret_cast<nw4r::math::VEC3*>(&v);
+    const nw4r::math::VEC3& gv = *reinterpret_cast<const nw4r::math::VEC3*>(&lbl_eu_8065F3F0);
+    nw4r::math::VEC3Sub(&vv, &vv, &gv);
+    if (nw4r::math::VEC3Dot(&vv, &vv) < lbl_eu_80665960) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {

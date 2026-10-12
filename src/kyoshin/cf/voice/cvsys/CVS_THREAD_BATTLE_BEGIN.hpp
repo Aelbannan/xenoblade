@@ -40,6 +40,11 @@ extern "C" {
     u8* CCharVoiceMan_AllocVoiceArena(int size);
     int BmVoice_HasEntry(CVoiceHandle* a);
     void __ct__cf_CVS_THREAD(CVS_THREAD_BATTLE_BEGIN* self);
+    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+    // (retail catch-all handlers end at the rethrow; CHAIN/DOWN precedent).
+    __declspec(noreturn) void __throw(char* throwtype, void* location,
+                                      void* dtor);
 }
 
 // Voice-playback state helper shared by the voice thread TUs (genuine

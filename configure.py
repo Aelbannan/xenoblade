@@ -452,7 +452,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CTimeLightGrp.cpp"),
             Object(NonMatching, "kyoshin/cf/CActParamAnimGame.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginCam.cpp"),
-            Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
+            Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp", extra_cflags=["-RTTI off"]),  # DL8-x1: class is __declspec(novtable); the TU's retail .data/.rodata/.sdata slice is hand-built in source with the retail lbl_eu_ names (CTaskEnvironment recipe); -RTTI off keeps MWCC from adding its own weak __RTTI__/type-name pools
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
             Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
@@ -580,7 +580,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/COccCulling.cpp"),
             Object(NonMatching, "kyoshin/CSimpleEveTalkWin.cpp"),
             Object(NonMatching, "kyoshin/cf/CTaskCulling.cpp"),
-            Object(Matching, "kyoshin/cf/CVision.cpp"),
+            Object(Matching, "kyoshin/cf/CVision.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI data in this TU (no __vt__/__RTTI__/type-name); -RTTI off drops the weak IObjectInfo vtable+RTTI so .data/.rodata/.sdata start empty for the retail tables
             Object(NonMatching, "kyoshin/code_801A929C.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginSnd.cpp"),
             Object(Matching, "kyoshin/plugin/pluginGame.cpp"),
@@ -696,7 +696,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_8027513C.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuLvUp.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChain.cpp"),
-            Object(Matching, "kyoshin/cf/chain/CChainActorList.cpp"),
+            Object(Matching, "kyoshin/cf/chain/CChainActorList.cpp", extra_cflags=["-RTTI off"]),  # DL4-t3 experiment: retail carries manual vtables/RTTI pairs, no __RTTI__; -RTTI off drops weak typeinfo so .rodata/.sdata start empty for hand-built tables
             Object(NonMatching, "kyoshin/cf/chain/CChainTime.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainTimer.cpp"),
             Object(NonMatching, "kyoshin/CSysWinScenarioLog.cpp"),
@@ -715,7 +715,7 @@ config.libs = [
             # the TU defines no data sections (same residual as promoted
             # kyoshin/realtimeevt/CREvtLight).
             Object(Matching, "kyoshin/realtimeevt/CREvtMovie.cpp"),
-            Object(Matching, "kyoshin/CTaskGamePic.cpp"),
+            Object(Matching, "kyoshin/CTaskGamePic.cpp", extra_cflags=["-RTTI off"]),  # retail has no __RTTI__/type-name pools in this TU (manual lbl_eu_ vtables ship from split-asm); -RTTI off drops the dead local RTTI so the stripped sections stop emitting @61xx pool UNDEFs
             Object(NonMatching, "kyoshin/CTaskGameEvt.cpp"),
             Object(NonMatching, "kyoshin/cf/CHelpManager.cpp"),
             Object(NonMatching, "kyoshin/code_80296898.cpp"),

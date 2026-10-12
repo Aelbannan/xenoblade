@@ -2382,15 +2382,31 @@ const unsigned char lbl_eu_80669D08[4] = {
     0x3F, 0x00, 0x00, 0x00,
 };
 
+// Retail defines eight 1-byte labels here (lbl_eu_80669D0C-D13, all 0xFF),
+// referenced by g3d_light via lbz @sda21; previously covered by two 4-byte fillers.
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_2A4[4] = {
-    0xFF, 0xFF, 0xFF, 0xFF,
-};
+const unsigned char lbl_eu_80669D0C = 0xFF;
 
 extern __declspec(section ".sdata2")
-const unsigned char sdata2_pool_g3d_resmat_gap_2A8[4] = {
-    0xFF, 0xFF, 0xFF, 0xFF,
-};
+const unsigned char lbl_eu_80669D0D = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D0E = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D0F = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D10 = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D11 = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D12 = 0xFF;
+
+extern __declspec(section ".sdata2")
+const unsigned char lbl_eu_80669D13 = 0xFF;
 
 extern __declspec(section ".sdata2")
 const unsigned char lbl_eu_80669D14[4] = {

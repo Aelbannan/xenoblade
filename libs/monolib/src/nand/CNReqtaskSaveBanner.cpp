@@ -47,8 +47,8 @@ extern "C" {
     extern u32 lbl_eu_80663CD8[2];
     extern u32 lbl_eu_80570368[4];
     extern u8 lbl_eu_80661850[0x24];     // static FixStr<32> banner path buffer (.bss)
-    extern const char lbl_eu_80524894[0x1C];
-    extern const char lbl_eu_805248A8[];  // "%s%s" format string (.rodata, +0x14 in blob)
+    extern char lbl_eu_80524894[];
+    extern char lbl_eu_805248A8[];  // "%s%s" format string (.rodata, +0x14 in blob)
 
     // Foreign data labels referenced by the banner vtable / RTTI locators
     // (owned by other units; referenced only here).
@@ -305,19 +305,24 @@ extern "C" __declspec(noinline) void sinit_804F5140() {
 // CNReqtaskSaveBanner_Step + a per-case offset), so only the two 16-byte vtables follow.
 // ============================================================================
 
-// === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
-// short format string stays in .rodata instead of being pooled to .sdata2).
-// lbl_eu_805248A8 is the "%s%s" label at +0x14 (extern-only; reloc name).
-// NOTE (wave DL r5): splitting this blob into per-label arrays cannot reproduce
-// retail: a bare "%s%s" literal pools to .sdata2 (aliasing the symbol at the
-// wrong offset); byte-array splits pack tight and end the section at 0x19
-// (MWCC never pads a trailing char[5]); a [8] array 8-aligns to +0x18.
-// A8 needs rule-side naming (add_symbols over its UNDEF slot) -- frozen, reported.
-extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x1C] = {
+// === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" + 3 pad bytes ===
+// Split blob so lbl_eu_805248A8 names the "%s%s" word at +0x14 (its own
+// object; the UNDEF slot the code already references resolves in place).
+// Non-const + forced section (CFade rodata idiom): const defs fold the
+// BuildPath use into a base+offset form (100% -> 57.1%, verified), and a
+// const A8 is discarded as dead. A8 is [7] (C zero-fills 2 pad bytes) plus
+// a 1-byte global tail so the section ends exactly at the retail 0x1C.
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_80524894[20] = {
     0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,0x65,0x42,0x61,0x6E,
     0x6E,0x65,0x72,0x00,
-    0x25,0x73,0x25,0x73,0x00,0x00,0x00,0x00,
 };
+extern "C" __declspec(section ".rodata") __attribute__((aligned(4))) char lbl_eu_805248A8[7] = {
+    0x25,0x73,0x25,0x73,0x00,
+};
+// Tail pad byte: MWCC aligns statics/large objects to >=4, so a static pad
+// lands at +0x1C (measured 0x1F); a 1-byte global packs at +0x1B (align 1).
+__declspec(section ".rodata") __attribute__((used))
+char banner_rodata_tail_pad = 0x00;
 
 // === .sdata 0x10: RTTI locators/probes ===
 extern "C" s32 lbl_eu_80663CD0 = (s32)&lbl_eu_8066B528;

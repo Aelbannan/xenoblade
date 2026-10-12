@@ -108,8 +108,9 @@ using namespace cf;
 // All non-const except CD4 zero (which needs const to stay in .sdata2,
 // not .sbss2); non-const prevents MWCC constant-folding uses into pools.
 // `used` ensures emission (code_80135FDC idiom).
+#pragma section data_type ".sdata2" ".sdata2"
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CD0 = -2.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80667CD4 = 0.0f;
+extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CD4 = 0.0f;
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CD8 = -1.0f;
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CDC = 0.033333335f;
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667CE0 = 0.6f;
@@ -420,15 +421,15 @@ struct CVisionFusion {
 
 extern "C" u32 lbl_eu_805332D0[];
 
-cf::CVision::CVision() {
+extern "C" void __ct__Q22cf7CVisionFv(cf::CVision* self) {
     // novtable class: store the retail vtable manually (MWCC's auto store
     // resolves to the IObjectInfo base vtable -> reloc name drift).
-    *(u32**)this = lbl_eu_805332D0;
+    *(u32**)self = lbl_eu_805332D0;
     // Initialise the four CVisionSub battle slots (0x4..0x20D4, 0x834 stride):
     // field stores, two memset regions, the 10 x 0xBC item array, then the
     // per-slot release callback. Retail hoists one sdata2 zero into a saved FPR.
     f32 zero = lbl_eu_80667CD4;
-    CVisionSub* p = &sub;
+    CVisionSub* p = &self->sub;
     CVisionSub* pEnd = p + 4;
     do {
         p->field_84 = 0;
@@ -477,17 +478,17 @@ cf::CVision::CVision() {
     } while (p < pEnd);
 
     // The eight 0x4818-byte vision slots, via the retail slot ctor/dtor.
-    __construct_array(&unk20D4[0], (void*)&__ct__801A33AC,
+    __construct_array(&self->unk20D4[0], (void*)&__ct__801A33AC,
                       (void*)&__dt__801A36D0, sizeof(CVisionSlot), 8);
 
     // unk261C4 head (u32/f32/u32 triplet) plus seven more at 0xC stride.
     // The entry-testing for-loop matches the retail cmplw/bge + mtctr/bdnz.
-    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)((u8*)this + 0x26224);
+    CVisionU32F32U32* upEnd = (CVisionU32F32U32*)((u8*)self + 0x26224);
     f32 zero261 = lbl_eu_80667CD4;
-    unk261C4.w0 = 0;
-    unk261C4.f4 = zero261;
-    unk261C4.w8 = 0;
-    for (CVisionU32F32U32* up = unk261C4.arr; up != upEnd; up++) {
+    self->unk261C4.w0 = 0;
+    self->unk261C4.f4 = zero261;
+    self->unk261C4.w8 = 0;
+    for (CVisionU32F32U32* up = self->unk261C4.arr; up != upEnd; up++) {
         up->a = 0;
         up->b = zero261;
         up->c = 0;
@@ -499,16 +500,16 @@ cf::CVision::CVision() {
 
     // unk261C4 tail (self pointer / count) then the vision field resets.
     f32 zeroFields = lbl_eu_80667CD4;
-    unk261C4.w6C = 8;
-    *(u32*)upEnd = (u32)&unk261C4; // w60: retail reuses the loop-end pointer
-    unk261C4.field_68 = 0;
-    unk261C4.field_64 = 0;
-    field_26194 = zeroFields;
-    field_26198 = zeroFields;
-    field_2619C = zeroFields;
-    field_261A0 = zeroFields;
-    field_261A4 = 0;
-    memset(effectArray, 0, sizeof(effectArray));
+    self->unk261C4.w6C = 8;
+    *(u32*)upEnd = (u32)&self->unk261C4; // w60: retail reuses the loop-end pointer
+    self->unk261C4.field_68 = 0;
+    self->unk261C4.field_64 = 0;
+    self->field_26194 = zeroFields;
+    self->field_26198 = zeroFields;
+    self->field_2619C = zeroFields;
+    self->field_261A0 = zeroFields;
+    self->field_261A4 = 0;
+    memset(self->effectArray, 0, sizeof(self->effectArray));
 
     // Install the null ptmf callback and hand it to __ptmf_test. The fader
     // reads/writes are interleaved with the callback copy in retail.
@@ -517,13 +518,13 @@ cf::CVision::CVision() {
     cb.mPfn = *np++;
     cb.mObj = *np++;
     cb.mDelta = *np;
-    f32 f194 = field_26194;
-    mPtmf.mPfn = cb.mPfn;
-    mPtmf.mObj = cb.mObj;
-    mPtmf.mDelta = cb.mDelta;
+    f32 f194 = self->field_26194;
+    self->mPtmf.mPfn = cb.mPfn;
+    self->mPtmf.mObj = cb.mObj;
+    self->mPtmf.mDelta = cb.mDelta;
     f32 zTail = lbl_eu_80667CD4;
-    field_2619C = zTail;
-    field_261A0 = f194;
+    self->field_2619C = zTail;
+    self->field_261A0 = f194;
     __ptmf_test(&cb);
 }
 // ---------------------------------------------------------------------------
@@ -978,7 +979,7 @@ extern "C" void openVisionPairEngage(CVision* self) {
 // ---------------------------------------------------------------------------
 // us-801a5c98: Per-player vision callback management (retail manageVisionPlayerCallbacks).
 // ---------------------------------------------------------------------------
-void manageVisionPlayerCallbacks(CVision* self) {
+extern "C" void manageVisionPlayerCallbacks(CVision* self) {
     CVisionFusion* p2;
     CVisionFusion* p1;
     CVisionSub* sub;
@@ -1062,7 +1063,7 @@ void manageVisionPlayerCallbacks(CVision* self) {
     }
 }
 
-void openVisionForPairs(CVision* self) {
+extern "C" void openVisionForPairs(CVision* self) {
     CVisionFusion* p2 = 0;
     CVisionFusion* p1 = 0;
     CVisionSub* sub;
@@ -1176,7 +1177,7 @@ void openVisionForPairs(CVision* self) {
     }
 }
 
-void runVisionIdleWindows(CVision* self) {
+extern "C" void runVisionIdleWindows(CVision* self) {
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
@@ -1208,7 +1209,7 @@ void runVisionIdleWindows(CVision* self) {
     }
 }
 
-void resumeVisionFromFader(CVision* self) {
+extern "C" void resumeVisionFromFader(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
     if (sub == 0) {
         self->vt_20(1);
@@ -1309,7 +1310,7 @@ void resumeVisionFromFader(CVision* self) {
 // cancel vision if the remaining time is short, then run the D08/CE4 timer
 // windows (retail checkSecondFusionVision).
 // ---------------------------------------------------------------------------
-void checkSecondFusionVision(CVision* self) {
+extern "C" void checkSecondFusionVision(CVision* self) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -1382,7 +1383,7 @@ void checkSecondFusionVision(CVision* self) {
     }
 }
 
-void func_801A5260(CVision* self) {
+extern "C" void func_801A5260(CVision* self) {
     // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D04 &&
@@ -1445,7 +1446,7 @@ extern "C" void runVisionTierWindows(CVision* self) {
 // us-801a6b64: Match the vision sub-object's model against `obj`; when it
 // matches one of the callback identities, install the associated vision FX
 // callback on the vision slots.
-void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* other) {
+extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* other) {
     // Identity/callback table base (retail anchors it in a saved GPR).
     u32* tbl = lbl_eu_80533128;
     CVisionPtmf cur = self->mPtmf;
@@ -1547,10 +1548,18 @@ void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattl
             } else {
                 r0c = 0;
             }
-            // Retail converts the int through the 0x4330 double magic
-            // (signed int -> double) before the single-precision add.
+            // Retail converts the int through the NAMED 0x4330 double magic
+            // lbl_eu_80667D28 (signed int -> double) before the
+            // single-precision add; the union keeps MWCC from emitting a
+            // TU-local @N pool copy of the magic.
             if (r0c > 0) {
-                sub->f_6C += r0c;
+                union {
+                    u32 w[2];
+                    double d;
+                } conv6C;
+                conv6C.w[0] = 0x43300000u;
+                conv6C.w[1] = (u32)r0c ^ 0x80000000u;
+                sub->f_6C += (f32)(conv6C.d - lbl_eu_80667D28);
             }
         }
     }
@@ -1707,7 +1716,7 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
 // state whether it should show, and forward it to CUICfManager_queueFactoryMenu (retail
 // forwardVisionShowRequests).
 // ---------------------------------------------------------------------------
-void forwardVisionShowRequests(CVision* self) {
+extern "C" void forwardVisionShowRequests(CVision* self) {
     // MWCC colors callee-saved GPRs in reverse declaration order (locals), so
     // the declaration sequence below reproduces the retail mapping
     // (convHi=r31, sub=r30, i=r29, p=r28, cv=r27); the parameter dies into the
@@ -1861,7 +1870,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
     }
 }
 
-void evalVisionTrigger(CVision* self) {
+extern "C" void evalVisionTrigger(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
     CVisionFusion* fr = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_00));
     CVisionFusion* fr2 = (CVisionFusion*)MapFx_ResolveOwner((void*)findObjectById__Fi(sub->field_04));
@@ -2128,7 +2137,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
 // otherwise the FX setup path drives the fusion's parameter block and either
 // finishes immediately (B8BC == 0) or programs the battle object state and
 // queues ring events 1..5 before falling into the same window check.
-void driveSubVisionFx(CVision* self) {
+extern "C" void driveSubVisionFx(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 != 0) ? &self->sub : 0;
     if (sub == 0) {
         self->vt_20(1);
@@ -2299,7 +2308,7 @@ extern "C" int installVisionStateCallback(CVision* self, CVisionObj* obj) {
 // us-801a82ec: Guard chain deciding whether a vision cutscene may engage on
 // `obj` (with `r5` supplying the target actor), then HP/damage timing checks
 // and the vision-callback install via vt_14. Returns 1 on success.
-int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* targetObj) {
+extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* targetObj) {
     if ((obj->field_3F00 & 0x4) == 0) {
         return 0;
     }
@@ -2465,7 +2474,7 @@ int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionObjV* target
     return 1;
 }
 
-int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
+extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
     if (obj == 0) {
         self->vt_20(1);
         return 0;
@@ -2626,7 +2635,7 @@ int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
 // 0x114 table entry, clear the vision field; otherwise branch on the 0x120
 // entry (retail checkVisionCallbackState).
 // ---------------------------------------------------------------------------
-void checkVisionCallbackState(CVision* self) {
+extern "C" void checkVisionCallbackState(CVision* self) {
     u32* tbl = &lbl_eu_80533128[0];
     CVisionPtmf cb114;
     cb114.mPfn = tbl[0x45];
@@ -2662,7 +2671,9 @@ void checkVisionCallbackState(CVision* self) {
             CtrlRemote_SetSharedBit(0x30e3, 1);
         }
         // Per-player: the fusion-state query runs twice (test then fetch);
-        // the stat is passed as a plain float (MWCC's int->float magic).
+        // the stat is passed as a plain float through the NAMED 0x4330
+        // double magic lbl_eu_80667D28 (union keeps MWCC from emitting a
+        // TU-local @N pool copy of the magic).
         int i = 0;
         do {
             void* p = MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
@@ -2671,7 +2682,13 @@ void checkVisionCallbackState(CVision* self) {
                     void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
                     s32 out;
                     if (IdTable_GetSum(r, 0x39, &out) != 0) {
-                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)out);
+                        union {
+                            u32 w[2];
+                            double d;
+                        } convOut;
+                        convOut.w[0] = 0x43300000u;
+                        convOut.w[1] = (u32)out ^ 0x80000000u;
+                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(convOut.d - lbl_eu_80667D28));
                     }
                 }
             }
@@ -2689,7 +2706,7 @@ void checkVisionCallbackState(CVision* self) {
 
 // us-801a8e38: Drive vision FX updates on the two sub-object fusions and on
 // every other in-play actor, then run the per-slot FX / flag management.
-void driveVisionFxUpdates(CVision* self) {
+extern "C" void driveVisionFxUpdates(CVision* self) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -2717,7 +2734,9 @@ void driveVisionFxUpdates(CVision* self) {
     u8 vdlist[8];
     CTaskGame_enumListCtor(vdlist);
     startEnumObjects(CTaskGame_enumListGet(vdlist), 0x20, 0);
-    u32 off = 0, i = 0;
+    u32 off, i;
+    i = 0;
+    off = 0;
     for (; i < ((CVisionEnumList*)CTaskGame_enumListGet(vdlist))->count; off += 0x4818, i++) {
         void* elem = getObjectAt(CTaskGame_enumListGet(vdlist), i);
         void* obj = __dynamic_cast(elem, 0, &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618F0, 0);
@@ -2772,7 +2791,7 @@ void driveVisionFxUpdates(CVision* self) {
 }
 
 
-void teardownVisionFx(CVision* self, void* releaseFx) {
+extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -2850,7 +2869,7 @@ extern "C" int* getNonZeroSlot1(int* param) {
 // ---------------------------------------------------------------------------
 // us-801a986c: Clear all four vision effect slots (retail clearAllVisionEffects).
 // ---------------------------------------------------------------------------
-void clearAllVisionEffects(CVision* self) {
+extern "C" void clearAllVisionEffects(CVision* self) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] != 0) {
             self->effectArray[i]->field_B0 = 0;
@@ -2945,8 +2964,14 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage3;
+            convStage3.w[0] = 0x43300000u;
+            convStage3.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 3;
-            e.b = lbl_eu_80667CE4 * (double)stage + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (convStage3.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -2971,8 +2996,14 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage4;
+            convStage4.w[0] = 0x43300000u;
+            convStage4.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 4;
-            e.b = lbl_eu_80667CE4 * (double)stage + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (convStage4.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -2988,17 +3019,32 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         {
             CBattleManager* bm = CBattleManager::getInstance();
             // vtable +0x34: fade the vision gauge by mode/8 seconds.
+            // (double)mode runs through the NAMED 0x4330 magic
+            // lbl_eu_80667D28; the union keeps MWCC from emitting a
+            // TU-local @N pool copy of the magic.
+            union {
+                u32 w[2];
+                double d;
+            } convMode;
+            convMode.w[0] = 0x43300000u;
+            convMode.w[1] = (u32)mode ^ 0x80000000u;
             ((void (*)(void*, u32, f32, f32))(*(void***)bm)[0x34 / 4])(
                 bm, 0x13, lbl_eu_80667D54,
-                lbl_eu_80667CE4 * (double)mode);
+                lbl_eu_80667CE4 * (convMode.d - lbl_eu_80667D28));
         }
         if (mode < 4) {
             u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
+            union {
+                u32 w[2];
+                double d;
+            } convStage5;
+            convStage5.w[0] = 0x43300000u;
+            convStage5.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 5;
-            e.b = lbl_eu_80667CE4 * (double)stage + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (convStage5.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -3022,7 +3068,16 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             if (Counter_TestBit((void*)pl->vf290(), 0x8c) == 0) continue;
             u16 objId = ((CVisionObjV*)pl)->field_3F28;
             u32 rv = (u32)fu->vf1E8(data);
-            s32 n = (s32)(data.f[4] * (double)rv);
+            // Unsigned int -> double through the NAMED 2^52 magic
+            // lbl_eu_80667D58 (no sign-bit xor); the union keeps MWCC from
+            // emitting a TU-local @N pool copy of the magic.
+            union {
+                u32 w[2];
+                double d;
+            } convRv;
+            convRv.w[0] = 0x43300000u;
+            convRv.w[1] = rv;
+            s32 n = (s32)(data.f[4] * (convRv.d - lbl_eu_80667D58));
             void* handle = CtrlObjectParam_GetCharEntry(objId);
             CtrlObjectParam_RunPartyArtsFlow(handle, n, 0, (int)fu->vf108(), 0, 0, 1);
         }
@@ -3100,7 +3155,7 @@ void releaseVisionSlot(void* a, int b) {
 // us-801a97c0: Lazily create the vision effect at `index` and record the
 // owning CVision back-pointer (retail createVisionEffect).
 // ---------------------------------------------------------------------------
-void createVisionEffect(CVision* self, int index) {
+extern "C" void createVisionEffect(CVision* self, int index) {
     // Scaled index materialized before the object base is referenced: MWCC
     // colors/creates the value nodes in statement order, which reproduces the
     // retail rlwinm-before-addis schedule.
@@ -3121,7 +3176,7 @@ void createVisionEffect(CVision* self, int index) {
 // ---------------------------------------------------------------------------
 // us-801a9830: Clear the vision effect at `index` (retail clearVisionEffect).
 // ---------------------------------------------------------------------------
-void clearVisionEffect(CVision* self, int index) {
+extern "C" void clearVisionEffect(CVision* self, int index) {
     if (self->effectArray[index] != 0) {
         self->effectArray[index]->field_B0 = 0;
         self->effectArray[index]->field_68 |= 0x40;
@@ -3133,7 +3188,7 @@ void clearVisionEffect(CVision* self, int index) {
 // us-801a9930: Null out the first effect whose object identity matches
 // `value` (retail detachVisionEffect).
 // ---------------------------------------------------------------------------
-void detachVisionEffect(CVision* self, u32 value) {
+extern "C" void detachVisionEffect(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] == (CVisionEffect*)value) {
             self->effectArray[i] = 0;
@@ -3146,7 +3201,7 @@ void detachVisionEffect(CVision* self, u32 value) {
 // us-801aa980: Like detachVisionEffect, but also clears the effect's owning
 // back-pointer before nulling the slot (retail releaseVisionEffect).
 // ---------------------------------------------------------------------------
-void releaseVisionEffect(CVision* self, u32 value) {
+extern "C" void releaseVisionEffect(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
         if (self->effectArray[i] == (CVisionEffect*)value) {
             CVisionEffect* e = self->effectArray[i];
@@ -3168,3 +3223,85 @@ void cf::CVision::setEffectScale(u32 active) {
         }
     }
 }
+// ===========================================================================
+// Retail section reconstruction (appended at EOF: -ipa file codegen is
+// line-sensitive, so no existing line above may shift).
+//
+// .data (0x2D0): 26 {0,-1,&func} condition triplets (lis/ori-read, e.g.
+// matchVisionModelCallback anchors tbl=lbl_eu_80533128 and compares entries
+// with __ptmf_cmpr), four more triplets + 14 {s32 id, u32 ptr} pairs under
+// 33230, the 14-word manual vtable 332D0 (novtable class: stored explicitly;
+// +4 is a zero word), the CMenuVision-read mixed block 33308, and two
+// {0,-1,&BattleWork_MarkSlotFFFF} triplets. Stored words match the retail
+// dump (0 at ADDR32 sites, -1 literals); MWCC emits R_PPC_ADDR32 for
+// &func/&data initializers (probe-verified in .scratch/dlabels4/probe).
+// .rodata (0x118): class table 3F60, five words 3F80, "cf::CVision" 3F94,
+// and the packed engine-string block 3FA0 (read by CMenuVision /
+// code_801A929C). Extern data pointers (ocUnit/CtrlMoveBase/CMenuVision
+// sdata) resolve to the retail-linked objects; BattleWork_MarkSlotFFFF to
+// retail code_801A929C.o (decomp copy is mangled and not linked).
+// ===========================================================================
+// Table words are u32 (addresses via (u32)& casts: MWCC emits R_PPC_ADDR32 with
+// a zero store for &func/&data initializers); the six hpp-declared CVisionPtmf
+// triplets keep their struct shape so .mPfn uses still compile.
+
+// Extern data slots referenced by the tables (u8 decl: only the address matters).
+extern "C" u8 lbl_eu_806618B8[];
+extern "C" u8 lbl_eu_806618C0[];
+extern "C" u8 lbl_eu_806618C8[];
+extern "C" u8 lbl_eu_806618D0[];
+extern "C" u8 lbl_eu_806618D8[];
+extern "C" u8 lbl_eu_806618E0[];
+extern "C" u8 lbl_eu_806618F8[];
+extern "C" u8 lbl_eu_80661900[];
+extern "C" u8 lbl_eu_80662578[];
+extern "C" u8 lbl_eu_80661BE0[];
+extern "C" void BattleWork_MarkSlotFFFF(void);
+// Address-of view of the member dtor for the vtable slot (cf. the
+// DEFINE_POD_DTOR idiom: same asm name, C linkage, defined by the member).
+extern "C" void __dt__Q22cf7CVisionFv(void);
+
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533128[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533134[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_80533140 = {0, 0xFFFFFFFF, (u32)&openVisionForPairs};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_8053314C = {0, 0xFFFFFFFF, (u32)&runVisionIdleWindows};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533158[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533164[3] = {0, 0xFFFFFFFF, (u32)&checkSecondFusionVision};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_80533170 = {0, 0xFFFFFFFF, (u32)&func_801A5260};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_8053317C[3] = {0, 0xFFFFFFFF, (u32)&runVisionTierWindows};
+static __declspec(section ".data") __attribute__((used)) u32 s3317C_p1[3] = {0, 0xFFFFFFFF, (u32)&runVisionTierWindows};
+static __declspec(section ".data") __attribute__((used)) u32 s3317C_p2[3] = {0, 0xFFFFFFFF, (u32)&gateVisionByFusionParam};
+static __declspec(section ".data") __attribute__((used)) u32 s3317C_p3[3] = {0, 0xFFFFFFFF, (u32)&gateVisionByFusionParam};
+static __declspec(section ".data") __attribute__((used)) u32 s3317C_p4[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+static __declspec(section ".data") __attribute__((used)) u32 s3317C_p5[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_805331C4 = {0, 0xFFFFFFFF, (u32)&forwardVisionShowRequests};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_805331D0 = {0, 0xFFFFFFFF, (u32)&runVisionResetWindows};
+extern "C" __declspec(section ".data") __attribute__((used)) CVisionPtmf lbl_eu_805331DC = {0, 0xFFFFFFFF, (u32)&evalVisionTrigger};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805331E8[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805331F4[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533200[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_8053320C[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533218[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533224[3] = {0, 0xFFFFFFFF, (u32)&manageVisionPlayerCallbacks};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_80533230[40] = {
+    0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 16028, (u32)lbl_eu_806618F8, 16028, (u32)&lbl_eu_806618F0, 16028, (u32)&lbl_eu_806618E8, 16028, (u32)lbl_eu_806618D8, 16028, (u32)lbl_eu_806618E0, 13184, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, (u32)lbl_eu_806618B8, 0, 0};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805332D0[14] = {
+    (u32)lbl_eu_80662578, 0, (u32)&__dt__Q22cf7CVisionFv, (u32)&releaseVisionEffect, (u32)&tryEngageVisionCutscene, (u32)&setupVisionEngagement, (u32)&driveVisionFxUpdates, (u32)&checkVisionCallbackState, (u32)&teardownVisionFx, (u32)&detachVisionEffect, (u32)&matchVisionModelCallback, (u32)&createVisionEffect, (u32)&clearVisionEffect, (u32)&clearAllVisionEffects};
+struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
+    u32 w30; u32 w34; u32 w38; u32 w3c; u32 w40; u32 w44; u32 w48; u32 w4c;
+    u32 w50; u32 w54; u32 w58; u32 w5c; u32 w60; u32 w64; u32 w68; u32 w6c;
+    u32 w70; u32 w74; u32 w78; u32 w7c; u32 w80; u32 w84; u32 w88; u32 w8c;
+    u32 w90; u32 w94; u32 w98; u32 w9c[15]; };
+extern "C" __declspec(section ".data") __attribute__((used)) VisionBlk33308 lbl_eu_80533308 = {
+    (u32)lbl_eu_80661BE0, {0, 0, 0, 0, 0, 0, 0}, (u32)lbl_eu_806618C0, 5596, (u32)lbl_eu_806618D0, 8, (u32)lbl_eu_806618C8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, (u32)&lbl_eu_806618E8, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, (u32)&lbl_eu_806618F0, 0, 0, (u32)lbl_eu_80661900, 0, (u32)lbl_eu_806618F8, 0, 0, (u32)lbl_eu_80661900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333E0[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
+extern "C" __declspec(section ".data") __attribute__((used)) u32 lbl_eu_805333EC[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
+
+// ---- .rodata ----
+extern "C" __declspec(section ".rodata") __attribute__((used)) CVisionClassTableEntry lbl_eu_80503F60[4] = {
+    {0xa1, 0xa2}, {0xa3, 0xa4}, {0xb8, 0xb8}, {0xbd, 0xbd}};
+extern "C" __declspec(section ".rodata") __attribute__((used)) u32 lbl_eu_80503F80[5] = {
+    0x3cf5c28f, 0x3d75c28f, 0x3db851ec, 0x3df5c28f, 0x3e19999a};
+extern "C" __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80503F94[12] = "cf::CVision";
+extern "C" __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80503FA0[0xD8] =
+    "\120\157\163\130\137\114\045\144\000\120\157\163\131\137\114\045\144\000\120\157\163\132\137\114\045\144\000\160\157\163\130\000\160\157\163\131\000\160\157\163\132\000\122\141\144\151\165\163\000\163\145\137\151\144\000\146\151\170\145\144\000\154\157\157\160\000\166\157\154\165\155\145\000\151\156\137\157\165\164\000\143\141\163\164\145\162\000\163\145\137\124\131\120\105\000\167\145\141\164\150\145\162\000\160\154\141\171\164\151\155\145\061\000\160\154\141\171\164\151\155\145\062\000\160\154\141\171\164\151\155\145\063\000\160\157\163\137\161\165\145\163\164\111\104\000\160\157\163\137\161\163\164\137\163\146\154\147\000\160\157\163\137\161\163\164\137\145\146\154\147\000\160\157\163\137\163\146\154\147\061\000\160\157\163\137\145\146\154\147\061\000\160\157\163\137\163\146\154\147\062\000\160\157\163\137\145\146\154\147\062\000\000\000\000\000";

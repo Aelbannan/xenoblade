@@ -913,3 +913,148 @@ extern "C" void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleO
 #pragma section data_type ".sdata2" ".sdata2"
 extern __declspec(section ".sdata2") float lbl_eu_80668A80[2] = { 0.0f, 0.0f };
 #pragma section data_type ".data" ".data"
+
+// --- hand-built retail tables (splits: .rodata 8050ED18-8050EE10,
+// .sdata 80662A40-80662A90) ---
+// Retail keeps RTTI name strings, two tuning tables, ten 8-byte typeinfo
+// pairs ({classname, base-or-0}, cf. CScrollBar's RTTI pair) and one s32
+// counter in this TU. The TU compiles -RTTI off (configure.py), so MWCC
+// emits no __RTTI__/typeinfo names of its own and these definitions own
+// .rodata/.sdata outright. .data stays rule-stripped: the compiler vtable
+// run for List/reslist/base cannot interleave with the manual vtables, and
+// the frozen rule cannot gain the renames; see the t3 report.
+// .rodata layout: 9 strings (sizes strlen+1+pad-to-4; MWCC packs
+// same-section char arrays in declaration order), then the u16 id table
+// (EDD0: indices selected by v192()), the float table (EDE0: 1.0/1.2/1.4/1.6
+// selected by mField0A in Chain_TickChanceCount), then the Flusher string.
+// Total: 0x18+0x10+0x18+0x10+0x14+0x1C+0x24+0x14+0x10+0x10+0x20 = 0xF8.
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED18[0x18] = "cf::CChainChance";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED30[0x10] = "cf::CChainTimer";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED40[0x18] = "cf::CChainMember";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED58[0x10] = "cf::CChainActor";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED68[0x14] = "cf::CChainActorList";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED7C[0x1C] = "reslist<cf::CChainActor *>";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050ED98[0x24] = "_reslist_base<cf::CChainActor *>";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDBC[0x14] = "cf::CChainTemp";
+__declspec(section ".rodata") __attribute__((used)) unsigned short lbl_eu_8050EDD0[8] = { 0, 15, 20, 25, 30, 0, 0, 0 };
+extern "C" __declspec(section ".rodata") __attribute__((used)) float lbl_eu_8050EDE0[4] = { 1.0f, 1.2f, 1.4f, 1.6f };
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_8050EDF0[0x20] = "cf::Flusher<cf::CfObjectActor>";
+// .sdata typeinfo pairs (retail order; E5's second word names the .data
+// triple lbl_eu_80538320, still rule-stripped, so it links UNDEF for now).
+extern u8 lbl_eu_80538320[];
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A40[2] = { lbl_eu_8050ED18, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A48[2] = { lbl_eu_8050ED30, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A50[2] = { lbl_eu_8050ED40, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A58[2] = { lbl_eu_8050ED58, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A60[2] = { lbl_eu_8050ED68, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A68[2] = { lbl_eu_8050ED7C, lbl_eu_80538320 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A70[2] = { lbl_eu_8050ED98, 0 };
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A78[2] = { lbl_eu_8050EDBC, 0 };
+// .sdata event counter (retail initial value 1; the trailing 4 bytes to
+// A88 are MWCC's alignment pad for the 8-byte pair that follows).
+extern "C" __declspec(section ".sdata") int lbl_eu_80662A80 = 1;
+__declspec(section ".sdata") __attribute__((used)) void* lbl_eu_80662A88[2] = { lbl_eu_8050EDF0, 0 };
+
+// --- hand-built retail .data (splits: .data 8053826C-80538358, 0xEC) ---
+// Retail .data is the CChain* vtable run, all zero bytes + ADDR32 slots:
+//   8053826C/78/84 (0xC) CChainChance/CChainTimer/CChainMember vtables
+//   80538290 (0x78)      CChainActor vtable (the +0x70 vptr the Pc/Ene ctors
+//                        store by hand)
+//   80538308 (0xC)       CChainActorList vtable
+//   80538314 (0xC)       reslist<CChainActor*> vtable
+//   80538320 (0xC)       reslist RTTI base record
+//   8053832C (0xC)       _reslist_base<CChainActor*> vtable
+//   80538338 (0x10)      CChainTemp vtable
+//   80538348 (0x10)      Flusher<CfObjectActor> vtable
+// The first four are typed here (word 0 = the .sdata RTTI pair above, word 1
+// the zero offset-to-top, then the dtor and -- for the actor table -- the 27
+// C-linkage virtual slots, all defined by CChain.o in the link). They occupy
+// exactly retail 0x00-0x9C, so MWCC's own vtable run for this TU (the
+// CChainActorList/reslist/_reslist_base vtables its ctor/dtor vptr stores
+// need) lands on retail 0x9C/0xA8/0xB4 and the rule renames the first two
+// back onto their retail labels; see below for the 0x2C residual.
+extern "C" void* __dt__Q22cf12CChainChanceFv(void*, int);
+extern "C" void* __dt__Q22cf11CChainTimerFv(void*, int);
+extern "C" void* __dt__Q22cf12CChainMemberFv(void*, int);
+extern "C" void* __dt__Q22cf11CChainActorFv(void*, int);
+extern "C" void CChain_setFieldAndClear(void*, int);
+extern "C" void CChainActor_CleanupVoiceEnd(void*);
+extern "C" void CChainActor_ClearTargetRef(void*);
+extern "C" void CChainActor_ToggleCancelVoice(void*, int);
+extern "C" void CChainActor_ToggleMoveFlag(void*, int);
+extern "C" int CChainActor_CheckReady(void*, int);
+extern "C" int CChainActor_ScanArtsSlots(void*, int);
+extern "C" int CChainActor_CheckFacing(void*);
+extern "C" int CChainActor_CheckVoice(void*);
+extern "C" void CChain_noop_AA0C(void*, void*, int);
+extern "C" void CChain_noop_795D0(void*);
+extern "C" void CChain_noop_78E00(void*, int, int);
+extern "C" int CChain_getZero_78E04(void*);
+extern "C" int CChain_getZero_AA04(void*);
+extern "C" int CChain_getZero_A9F4(void*, void*);
+extern "C" int CChain_getZero_A9FC(void*, void*);
+extern "C" int CChain_getZero_A9EC(void*);
+extern "C" void CChain_noop_A9E8(void*);
+extern "C" int CChain_getZero_A9E0(void*);
+extern "C" int CChain_getChainCount(void*);
+extern "C" int CChain_getZero_A584(void*);
+extern "C" int CChain_getZero_A9D8(void*);
+extern "C" void CChain_noop_79768(void*, int);
+extern "C" int CChainActor_FetchRunKey(void*);
+extern "C" void CChainActor_FwdRunKey(void*, int);
+extern "C" int CChainActor_NotifyBattleObj(void*);
+extern "C" int CChain_getZero_A9D0(void*);
+
+__declspec(section ".data") __attribute__((used, aligned(4)))
+void* lbl_eu_8053826C[3] = {
+    lbl_eu_80662A40, 0, (void*)__dt__Q22cf12CChainChanceFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(4)))
+void* lbl_eu_80538278[3] = {
+    lbl_eu_80662A48, 0, (void*)__dt__Q22cf11CChainTimerFv,
+};
+__declspec(section ".data") __attribute__((used, aligned(4)))
+void* lbl_eu_80538284[3] = {
+    lbl_eu_80662A50, 0, (void*)__dt__Q22cf12CChainMemberFv,
+};
+// CChainActor vtable (0x78): header [RTTI, 0] + 28 slots, retail order.
+// MWCC aligns an object whose size is a multiple of 8 to 8 bytes, so a single
+// 0x78 array would land at 0x28 (retail 0x24) and push the compiler's vtable
+// run off retail 0x9C/0xA8. Split 29 words + 1 word (both size%8 == 4) keeps
+// the table at 0x24 with all 29 relocs in retail order; the last word is the
+// same table's slot 29 (see the wave-DL7 report).
+extern "C" __declspec(section ".data") __attribute__((used, aligned(4)))
+u32 lbl_eu_80538290[29] = {
+    (u32)lbl_eu_80662A58, 0, (u32)&__dt__Q22cf11CChainActorFv,
+    (u32)CChain_setFieldAndClear,      // +0x0C  (slot 2)
+    (u32)CChainActor_CleanupVoiceEnd,  // +0x10
+    (u32)CChainActor_ClearTargetRef,   // +0x14
+    (u32)CChainActor_ToggleCancelVoice,// +0x18
+    (u32)CChainActor_ToggleMoveFlag,   // +0x1C
+    (u32)CChainActor_CheckReady,       // +0x20
+    (u32)CChainActor_ScanArtsSlots,    // +0x24
+    (u32)CChainActor_CheckFacing,      // +0x28
+    (u32)CChainActor_CheckVoice,       // +0x2C
+    (u32)CChain_noop_AA0C,             // +0x30
+    (u32)CChain_noop_795D0,            // +0x34
+    (u32)CChain_noop_78E00,            // +0x38
+    (u32)CChain_getZero_78E04,         // +0x3C
+    (u32)CChain_getZero_AA04,          // +0x40
+    (u32)CChain_getZero_A9F4,          // +0x44
+    (u32)CChain_getZero_A9FC,          // +0x48
+    (u32)CChain_getZero_A9EC,          // +0x4C
+    (u32)CChain_noop_A9E8,             // +0x50
+    (u32)CChain_getZero_A9E0,          // +0x54
+    (u32)CChain_getChainCount,         // +0x58
+    (u32)CChain_getZero_A584,          // +0x5C
+    (u32)CChain_getZero_A9D8,          // +0x60
+    (u32)CChain_noop_79768,            // +0x64
+    (u32)CChainActor_FetchRunKey,      // +0x68
+    (u32)CChainActor_FwdRunKey,        // +0x6C
+    (u32)CChainActor_NotifyBattleObj,  // +0x70
+};
+__declspec(section ".data") __attribute__((used, aligned(4)))
+u32 lbl_eu_80538290_slot29[1] = {
+    (u32)CChain_getZero_A9D0,          // +0x74 (table word 29)
+};
+

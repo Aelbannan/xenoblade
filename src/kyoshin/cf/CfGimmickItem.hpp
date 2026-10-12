@@ -136,5 +136,6 @@ extern u8 lbl_eu_80535A98[];           // CfGimmickItem vtable (0x24)
 extern char lbl_eu_80535A50[];         // 6-entry PTMF state table bytes
 extern u32 lbl_eu_8066413C;            // bdat table pointer (sdata)
 extern char* lbl_eu_806627B8[2];       // { "A_Item", "A_Lost" } name ptrs (sdata)
-extern char lbl_eu_805087AC[];         // bdat column name strings (rodata)
+// (lbl_eu_805087AC retired: the column names are plain literals pooled by
+// MWCC; no synthetic reference remains.)
 extern f32 lbl_eu_80668448;            // LOD float constant (sdata2)

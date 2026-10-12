@@ -81,27 +81,27 @@ u32 GetScaledItemValue(void* self, u32 id, void* item, int reserved);
 void ResortGridEntries(CItemBoxGridFull* self, u16 idx);
 int LookupIndexedByte(char* obj);
 extern "C" {
-void NextGridPage(void*);
-void PrevGridPage(void*);
-void OpenSortMenu(void*);
-void HandleCancelBtn(void*, int);
+void NextGridPage(CItemBoxGrid*);
+void PrevGridPage(CItemBoxGrid*);
+void OpenSortMenu(CItemBoxGrid*);
+void HandleCancelBtn(CItemBoxGrid*, int);
 void CopyTabSlotVec(u32*, void*, u32);
-void AdvanceOpenAnim(void*);
-void FinishOpenAnim(void*);
+void AdvanceOpenAnim(CItemBoxGrid*);
+void FinishOpenAnim(CItemBoxGrid*);
 void CheckState4_Animate(char*);
-void AdvanceCloseAnim(void*);
-void FinishNumSelect(void*);
-void ShowSubMenuCur(void*);
+void AdvanceCloseAnim(CItemBoxGrid*);
+void FinishNumSelect(CItemBoxGrid*);
+void ShowSubMenuCur(CItemBoxGrid*);
 void DispatchSubmenuConfirm(void*);
-void ShowExchangeCur(void*);
-void FinishExchange(void*);
-void ShowPresentCur(void*);
-void FinishPresent(void*);
-void OnSysWinOpen(void*);
-void HandleSysWinOK(void*);
-void FinishSysWin(void*);
-void SetGridReady(void*);
-void SetInfoMsgId(void*, u32);
+void ShowExchangeCur(CItemBoxGrid*);
+void FinishExchange(CItemBoxGrid*);
+void ShowPresentCur(CItemBoxGrid*);
+void FinishPresent(CItemBoxGrid*);
+void OnSysWinOpen(CItemBoxGrid*);
+void HandleSysWinOK(CItemBoxGrid*);
+void FinishSysWin(CItemBoxGrid*);
+void SetGridReady(CItemBoxGrid*);
+void SetInfoMsgId(CItemBoxGrid*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
 void GridMoveCursorRight(void*);
@@ -181,27 +181,27 @@ extern u32 lbl_eu_80664514;
 // lis/addi; void* keeps it SDA-eligible (EMB_SDA21 lwz like retail).
 extern void* lbl_eu_806640F4;
 // Forward declarations for later-defined functions
-void NextGridPage(void*);
-void PrevGridPage(void*);
-void OpenSortMenu(void*);
-void HandleCancelBtn(void*, int);
+void NextGridPage(CItemBoxGrid*);
+void PrevGridPage(CItemBoxGrid*);
+void OpenSortMenu(CItemBoxGrid*);
+void HandleCancelBtn(CItemBoxGrid*, int);
 void CopyTabSlotVec(u32*, void*, u32);
 void CheckState4_Animate(char*);
-void AdvanceOpenAnim(void*);
-void FinishOpenAnim(void*);
-void AdvanceCloseAnim(void*);
-void FinishNumSelect(void*);
-void ShowSubMenuCur(void*);
+void AdvanceOpenAnim(CItemBoxGrid*);
+void FinishOpenAnim(CItemBoxGrid*);
+void AdvanceCloseAnim(CItemBoxGrid*);
+void FinishNumSelect(CItemBoxGrid*);
+void ShowSubMenuCur(CItemBoxGrid*);
 void DispatchSubmenuConfirm(void*);
-void ShowExchangeCur(void*);
-void FinishExchange(void*);
-void ShowPresentCur(void*);
-void FinishPresent(void*);
-void OnSysWinOpen(void*);
-void HandleSysWinOK(void*);
-void FinishSysWin(void*);
-void SetGridReady(void*);
-void SetInfoMsgId(void*, u32);
+void ShowExchangeCur(CItemBoxGrid*);
+void FinishExchange(CItemBoxGrid*);
+void ShowPresentCur(CItemBoxGrid*);
+void FinishPresent(CItemBoxGrid*);
+void OnSysWinOpen(CItemBoxGrid*);
+void HandleSysWinOK(CItemBoxGrid*);
+void FinishSysWin(CItemBoxGrid*);
+void SetGridReady(CItemBoxGrid*);
+void SetInfoMsgId(CItemBoxGrid*, u32);
 void UnequipPartyItem(void*, int, int);
 
 
@@ -2707,16 +2707,16 @@ extern "C" void UpdateItemBox(void* self, int reserved) {
     // `if (state <= 0x1a)` wrapper would add a second range branch.
     switch (state) {
         case 1:
-            AdvanceOpenAnim(self);
+AdvanceOpenAnim((CItemBoxGrid*)self);
             break;
         case 2:
-            FinishOpenAnim(self);
+FinishOpenAnim((CItemBoxGrid*)self);
             break;
         case 3:
             CheckState4_Animate((char*)self);
             break;
         case 4:
-            AdvanceCloseAnim(self);
+AdvanceCloseAnim((CItemBoxGrid*)self);
             break;
         case 5:
             FinishCloseAnim(self);
@@ -2727,10 +2727,10 @@ extern "C" void UpdateItemBox(void* self, int reserved) {
             }
             break;
         case 8:
-            FinishNumSelect(self);
+FinishNumSelect((CItemBoxGrid*)self);
             break;
         case 9:
-            ShowSubMenuCur(self);
+ShowSubMenuCur((CItemBoxGrid*)self);
             break;
         case 11:
             DispatchSubmenuConfirm(self);
@@ -2746,22 +2746,22 @@ extern "C" void UpdateItemBox(void* self, int reserved) {
             }
             break;
         case 15:
-            ShowExchangeCur(self);
+ShowExchangeCur((CItemBoxGrid*)self);
             break;
         case 17:
-            FinishExchange(self);
+FinishExchange((CItemBoxGrid*)self);
             break;
         case 18:
-            ShowPresentCur(self);
+ShowPresentCur((CItemBoxGrid*)self);
             break;
         case 20:
-            FinishPresent(self);
+FinishPresent((CItemBoxGrid*)self);
             break;
         case 21:
-            OnSysWinOpen(self);
+OnSysWinOpen((CItemBoxGrid*)self);
             break;
         case 23:
-            HandleSysWinOK(self);
+HandleSysWinOK((CItemBoxGrid*)self);
             break;
         case 24:
             if (CSysWin_isActive(p + 0x4e8)) {
@@ -2769,7 +2769,7 @@ extern "C" void UpdateItemBox(void* self, int reserved) {
             }
             break;
         case 26:
-            FinishSysWin(self);
+FinishSysWin((CItemBoxGrid*)self);
             break;
     }
 
@@ -3368,7 +3368,7 @@ void GridMoveCursorDown(void* self) {
     }
     if ((s8)p[0x524] == 0) {
         p[0x524] = 9;
-        PrevGridPage(self);
+PrevGridPage((CItemBoxGrid*)self);
         UpdateCursors(self);
     } else {
         s8 col = (s8)p[0x524] - 1;
@@ -3455,7 +3455,7 @@ void GridMoveCursorUp(void* self) {
     }
     if ((s8)p[0x524] == 9) {
         p[0x524] = 0;
-        NextGridPage(self);
+NextGridPage((CItemBoxGrid*)self);
         UpdateCursors(self);
     } else {
         p[0x524]++;
@@ -3471,7 +3471,7 @@ void GridMoveCursorUp(void* self) {
 // optimize_for_size: retail uses stmw r30/lmw r30; sub (r31) is declared
 // before p (r30) so MWCC colors it to the higher saved register.
 #pragma optimize_for_size on
-__declspec(noinline) void NextGridPage(void* self) {
+__declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
     if (sortMenuIsVisible28(p + 0xe8)) return;
@@ -3497,7 +3497,7 @@ __declspec(noinline) void NextGridPage(void* self) {
 
 // Grid state update (decrement variant).
 #pragma optimize_for_size on
-__declspec(noinline) void PrevGridPage(void* self) {
+__declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
     if (sortMenuIsVisible28(p + 0xe8)) return;
@@ -3522,7 +3522,7 @@ __declspec(noinline) void PrevGridPage(void* self) {
 // Guard chain shares a single exit label in retail (every check branches to
 // the epilogue), so express the checks as one && chain.
 #pragma optimize_for_size on
-void OpenSortMenu(void* self) {
+void OpenSortMenu(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     // one shared stack buffer: the merge result lands in words [3] and is
     // consumed before sortMenuFormatPaneText overwrites the whole array (retail
@@ -3571,7 +3571,7 @@ void OpenSortMenu(void* self) {
 // handled arms fall into the single shared r4-check tail (keeps MWCC from
 // duplicating the tail per return path).
 #pragma optimize_for_size on
-void HandleCancelBtn(void* self, int confirmed) {
+void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (!CSysWin_isActive(p + 0x4ac)) goto exit;
@@ -3807,7 +3807,7 @@ void func_801CCAF0(void* self) {
             CItemBlock_setFlag120EC((p + (s8)p[0x6f])[0x62], val & 0xFF);
             p[0x547] = (u8)sortMenuGetPageIdx(p + 0xe8);
             p[0x548] = (u8)sortMenuGetSubPageIdx(p + 0xe8);
-            HandleCancelBtn(p, 1);
+HandleCancelBtn((CItemBoxGrid*)p, 1);
             p[0x524] = 0;
             if ((s8)p[0x525] > 0) p[0x525] = 0;
             UpdateCursors(p);
@@ -4075,7 +4075,7 @@ void func_801CCAF0(void* self) {
 #pragma optimize_for_size off
 
 // Store value and call helpers.
-void SetInfoMsgId(void* self, u32 val) {
+void SetInfoMsgId(CItemBoxGrid* self, u32 val) {
     *(u16*)((u8*)self + 0x52e) = (u16)val;
     void* res = BuildItemNameStr(val & 0xFFFF);
     setItemBoxNamedText((void*)((u8*)self + 0x1d8), 0, res);
@@ -4211,7 +4211,7 @@ extern "C" u32 GetPromptState(void* self) {
 }
 
 // Animate grid panels (alt variant).
-__declspec(noinline) void AdvanceOpenAnim(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void AdvanceOpenAnim(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x48), lbl_eu_80667F78)) return;
     ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 0);
@@ -4220,7 +4220,7 @@ __declspec(noinline) void AdvanceOpenAnim(void* self) { // noinline: dispatch ta
     *(u32*)(p + 0x58) = 2;
 }
 
-extern "C" __declspec(noinline) void FinishOpenAnim(void* self) { // noinline: dispatch table calls keep `bl`
+extern "C" __declspec(noinline) void FinishOpenAnim(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) {
         *(u32*)(p + 0x58) = 3;
@@ -4259,7 +4259,7 @@ __declspec(noinline) void CheckState4_Animate(char* self) { // noinline: dispatc
 
 
 // Animate grid panels.
-__declspec(noinline) void AdvanceCloseAnim(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void AdvanceCloseAnim(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!AnimRewindFrame((nw4r::lyt::AnimTransform*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) return;
     ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 0);
@@ -4279,7 +4279,7 @@ __declspec(noinline) void FinishCloseAnim(void* self) { // noinline: dispatch ta
     }
 }
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void FinishNumSelect(void* self) { // noinline: dispatch table calls keep `bl`
+extern "C" __declspec(noinline) void FinishNumSelect(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (NumSel_GetField2E_B028((void*)(p + 0x3e4))) {
         *(u32*)(p + 0x58) = 3;
@@ -4302,7 +4302,7 @@ extern "C" __declspec(noinline) void FinishNumSelect(void* self) { // noinline: 
 }
 #pragma optimize_for_size off
 // Handle sub-object activation.
-__declspec(noinline) void ShowSubMenuCur(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void ShowSubMenuCur(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!GridSubMenu_IsOpenedFlag(p + 0x418)) return;
     *(u32*)(p + 0x58) = 7;
@@ -4440,7 +4440,7 @@ __declspec(noinline) void DispatchSubmenuConfirm(void* self) { // noinline: disp
 }
 
 // Handle sub-object activation with copy.
-__declspec(noinline) void ShowExchangeCur(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void ShowExchangeCur(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
     *(u32*)(p + 0x58) = 0xd;
@@ -4452,7 +4452,7 @@ __declspec(noinline) void ShowExchangeCur(void* self) { // noinline: dispatch ta
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-__declspec(noinline) void FinishExchange(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void FinishExchange(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (((CExchangeWin*)(p + 0x440))->getField27()) {
         *(u32*)(p + 0x58) = 3;
@@ -4461,7 +4461,7 @@ __declspec(noinline) void FinishExchange(void* self) { // noinline: dispatch tab
 }
 
 // Handle sub-object activation (variant).
-__declspec(noinline) void ShowPresentCur(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void ShowPresentCur(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!isPresentSettled(p + 0x468)) return;
     *(u32*)(p + 0x58) = 0x10;
@@ -4472,7 +4472,7 @@ __declspec(noinline) void ShowPresentCur(void* self) { // noinline: dispatch tab
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-__declspec(noinline) void FinishPresent(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void FinishPresent(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (isPresentSettled(p + 0x468)) {
         *(u32*)(p + 0x58) = 3;
@@ -4481,7 +4481,7 @@ __declspec(noinline) void FinishPresent(void* self) { // noinline: dispatch tabl
 }
 
 // Check system window; if active, set state and call helpers.
-__declspec(noinline) void OnSysWinOpen(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void OnSysWinOpen(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (CSysWin_isActive(p + 0x4ac)) {
         *(u32*)(p + 0x58) = 0x16;
@@ -4491,7 +4491,7 @@ __declspec(noinline) void OnSysWinOpen(void* self) { // noinline: dispatch table
 }
 
 // Handle system window state change.
-void HandleSysWinOK(void* self) {
+void HandleSysWinOK(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!CSysWin_isActive(p + 0x4ac)) return;
     if (!((s8*)p)[0x540]) {
@@ -4514,7 +4514,7 @@ void HandleSysWinOK(void* self) {
 }
 
 // Handle system window activation.
-__declspec(noinline) void FinishSysWin(void* self) { // noinline: dispatch table calls keep `bl`
+__declspec(noinline) void FinishSysWin(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (!CSysWin_isActive(p + 0x4e8)) return;
     *(u32*)(p + 0x58) = 3;
@@ -4530,7 +4530,7 @@ __declspec(noinline) void FinishSysWin(void* self) { // noinline: dispatch table
 }
 
 // Check conditions; set flags.
-void SetGridReady(void* self) {
+void SetGridReady(CItemBoxGrid* self) {
     // Guard chain: the message object at +0x44 and the list at +0x40 must be
     // live, and the three global table pointers must all be non-null, before
     // the busy/dirty flags are set.  The exit label keeps retail's
@@ -5871,7 +5871,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
             break;
         }
     }
-    SetGridReady(self);
+SetGridReady((CItemBoxGrid*)self);
     *(u32*)(p + 0x28) = 0;
     validateHeap__17UnkClass_8045F564Fv(p + 8);
     __dt__14Class_8045F858Fv(regionBuf, -1);
@@ -5890,7 +5890,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         nw4r::lyt::ArcResourceAccessor* arcRes = createArcResourceAccessor__10CLibLayoutFv();
         *(nw4r::lyt::ArcResourceAccessor**)(p + 0x40) = arcRes;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
-        SetGridReady(self);
+SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x2c) = 0;
         validateHeap__17UnkClass_8045F564Fv(p + 0x18);
         __dt__14Class_8045F858Fv(regionBuf, -1);
@@ -5907,7 +5907,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
             setBdatEntry__5CBdatFUlPv(2, data);
         lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
         lbl_eu_8066450C = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2df]);
-        SetGridReady(self);
+SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x30) = 0;
         return 1;
     }
@@ -5920,7 +5920,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         if (getFP__FPCc(&lbl_eu_8050566C[0x2ee]) == NULL)
             setBdatEntry__5CBdatFUlPv(5, *(void**)(p + 0x38));
         lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
-        SetGridReady(self);
+SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x34) = 0;
         return 1;
     }

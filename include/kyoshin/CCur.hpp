@@ -18,9 +18,8 @@ extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*)
     __attribute__((never_inline));
 
-// Shared 0.0f constant in .sdata2 (retail .sdata2 label, owning TU or extern). Retail
-// code loads it via lfs @sda21 instead of pooling a local literal.
-extern f32 lbl_eu_80667FA4;
+// (lbl_eu_80667FA4 lives in CCur.cpp as the Sdata2_CCur struct object;
+// no header declaration -- the TU is its sole user.)
 
 extern "C" void* lbl_eu_80534978[];  // CCur07
 extern "C" void* lbl_eu_80534950[];  // CCur09

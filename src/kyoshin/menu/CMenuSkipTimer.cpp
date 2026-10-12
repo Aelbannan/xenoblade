@@ -100,15 +100,18 @@ void CMenuSkipTimer::Init() {
     setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
+    // NOTE: the temp is viewed through per-statement casts, not a named
+    // CBgTex* local: a persistent local costs MWCC an extra callee-saved
+    // register (stmw vs stw prologue) and breaks the match.
     u8 tempBgTex[0x20];
     __ct__CBgTex(tempBgTex, 0);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x64, tempBgTex + 0x4);
-    *(u32*)((u8*)this + 0x74) = *(u32*)(tempBgTex + 0x14);
-    *(u32*)((u8*)this + 0x78) = *(u32*)(tempBgTex + 0x18);
-    *(u8*)((u8*)this + 0x7c)  = *(u8*)(tempBgTex + 0x1c);
-    *(u8*)((u8*)this + 0x7d)  = *(u8*)(tempBgTex + 0x1d);
-    *(u8*)((u8*)this + 0x7e)  = *(u8*)(tempBgTex + 0x1e);
+    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
+    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
+    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tempBgTex)->mLayout;
+    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tempBgTex)->mLayoutReady;
+    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tempBgTex)->mLoaded;
+    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tempBgTex)->mPtmMode;
     __dt__6CBgTexFv(tempBgTex, -1);
 
     BgTex_Acquire_3C14(&mBgTex);
@@ -119,19 +122,19 @@ void CMenuSkipTimer::Init() {
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(tempTitle, name, 0x75);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x84, tempTitle + 0x4);
-    *(u32*)((u8*)this + 0x94) = *(u32*)(tempTitle + 0x14);
-    *(u32*)((u8*)this + 0x98) = *(u32*)(tempTitle + 0x18);
-    *(u32*)((u8*)this + 0x9c) = *(u32*)(tempTitle + 0x1c);
-    *(u32*)((u8*)this + 0xa0) = *(u32*)(tempTitle + 0x20);
-    *(u32*)((u8*)this + 0xa4) = *(u32*)(tempTitle + 0x24);
-    *(u8*)((u8*)this + 0xa8)  = *(u8*)(tempTitle + 0x28);
-    *(u32*)((u8*)this + 0xac) = *(u32*)(tempTitle + 0x2c);
-    *(u32*)((u8*)this + 0xb0) = *(u32*)(tempTitle + 0x30);
-    *(u8*)((u8*)this + 0xb4)  = *(u8*)(tempTitle + 0x34);
-    *(u8*)((u8*)this + 0xb5)  = *(u8*)(tempTitle + 0x35);
-    *(u8*)((u8*)this + 0xb6)  = *(u8*)(tempTitle + 0x36);
-    *(u8*)((u8*)this + 0xb7)  = *(u8*)(tempTitle + 0x37);
+    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
+    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
+    mTitleAHelp.mArcResourceAccessor = reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
+    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
+    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
+    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
+    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
+    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
+    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
+    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
+    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
+    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
+    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv(tempTitle, -1);
 
     CTitleAHelp_load(&mTitleAHelp);
@@ -140,54 +143,62 @@ void CMenuSkipTimer::Init() {
     u8 tempSkipTimer[0x98];
     __ct__CSkipTimer((CSkipTimer*)tempSkipTimer);
 
-    __ct__UnkClass_8011C974((u8*)this + 0xbc, tempSkipTimer + 0x4);
-    *(u32*)((u8*)this + 0xcc) = *(u32*)(tempSkipTimer + 0x14);
-    *(u32*)((u8*)this + 0xd0) = *(u32*)(tempSkipTimer + 0x18);
-    *(u32*)((u8*)this + 0xd4) = *(u32*)(tempSkipTimer + 0x1c);
-    *(u32*)((u8*)this + 0xd8) = *(u32*)(tempSkipTimer + 0x20);
-    *(u32*)((u8*)this + 0xdc) = *(u32*)(tempSkipTimer + 0x24);
-    *(u8*)((u8*)this + 0xe0)  = *(u8*)(tempSkipTimer + 0x28);
-    *(u8*)((u8*)this + 0xe1)  = *(u8*)(tempSkipTimer + 0x29);
-    *(u8*)((u8*)this + 0xe2)  = *(u8*)(tempSkipTimer + 0x2a);
-    *(u8*)((u8*)this + 0xe3)  = *(u8*)(tempSkipTimer + 0x2b);
-    *(s16*)((u8*)this + 0xe4) = *(s16*)(tempSkipTimer + 0x2c);
-    *(s16*)((u8*)this + 0xe6) = *(s16*)(tempSkipTimer + 0x2e);
-    *(u8*)((u8*)this + 0xe8)  = *(u8*)(tempSkipTimer + 0x30);
+    // NOTE: the temp is viewed through per-statement casts, not a named
+    // CSkipTimer* local: a persistent local costs MWCC an extra callee-saved
+    // register (stmw vs stw prologue) and breaks the match. The two opaque
+    // sub-blobs (CSysWin panel / CSkipTimer2 controller) are copied through
+    // member-rooted array indexing for the same reason.
+    __ct__UnkClass_8011C974(&mTimerData.mMemRegion, &reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mMemRegion);
+    mTimerData.mFileHandle = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mFileHandle;
+    mTimerData.mLayout = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mLayout;
+    mTimerData.mLayout2 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mLayout2;
+    mTimerData.mAnimTransform20 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mAnimTransform20;
+    mTimerData.mAnimTransform24 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mAnimTransform24;
+    mTimerData.mField28 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField28;
+    mTimerData.mField29 = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField29;
+    mTimerData.mField2A = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2A;
+    mTimerData.mField2B = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2B;
+    mTimerData.mField2C = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mField2C;
+    // s16 view: retail copies this halfword with a sign-extending load
+    // (lha), while the declared u16 field would emit lhz.
+    *(s16*)&mTimerData.mField2E = *(s16*)&tempSkipTimer[0x2e];
+    mTimerData.mActive = reinterpret_cast<CSkipTimer*>(tempSkipTimer)->mActive;
 
-    __ct__UnkClass_8011C974((u8*)this + 0xf0, tempSkipTimer + 0x38);
-    *(u32*)((u8*)this + 0x100) = *(u32*)(tempSkipTimer + 0x48);
-    *(u32*)((u8*)this + 0x104) = *(u32*)(tempSkipTimer + 0x4c);
-    *(u32*)((u8*)this + 0x108) = *(u32*)(tempSkipTimer + 0x50);
-    *(u32*)((u8*)this + 0x10c) = *(u32*)(tempSkipTimer + 0x54);
-    *(u32*)((u8*)this + 0x110) = *(u32*)(tempSkipTimer + 0x58);
-    *(u8*)((u8*)this + 0x114)  = *(u8*)(tempSkipTimer + 0x5c);
-    *(u32*)((u8*)this + 0x118) = *(u32*)(tempSkipTimer + 0x60);
-    *(u32*)((u8*)this + 0x11c) = *(u32*)(tempSkipTimer + 0x64);
-    *(u8*)((u8*)this + 0x120)  = *(u8*)(tempSkipTimer + 0x68);
-    *(u8*)((u8*)this + 0x121)  = *(u8*)(tempSkipTimer + 0x69);
-    *(u8*)((u8*)this + 0x122)  = *(u8*)(tempSkipTimer + 0x6a);
-    *(u8*)((u8*)this + 0x123)  = *(u8*)(tempSkipTimer + 0x6b);
-    *(u8*)((u8*)this + 0x124)  = *(u8*)(tempSkipTimer + 0x6c);
-    *(u8*)((u8*)this + 0x125)  = *(u8*)(tempSkipTimer + 0x6d);
+    __ct__UnkClass_8011C974(&mTimerData.mSysWinData[4], &tempSkipTimer[0x38]);
+    *(u32*)&mTimerData.mSysWinData[0x14] = *(u32*)&tempSkipTimer[0x48];
+    *(u32*)&mTimerData.mSysWinData[0x18] = *(u32*)&tempSkipTimer[0x4c];
+    *(u32*)&mTimerData.mSysWinData[0x1c] = *(u32*)&tempSkipTimer[0x50];
+    *(u32*)&mTimerData.mSysWinData[0x20] = *(u32*)&tempSkipTimer[0x54];
+    *(u32*)&mTimerData.mSysWinData[0x24] = *(u32*)&tempSkipTimer[0x58];
+    mTimerData.mSysWinData[0x28] = tempSkipTimer[0x5c];
+    *(u32*)&mTimerData.mSysWinData[0x2c] = *(u32*)&tempSkipTimer[0x60];
+    *(u32*)&mTimerData.mSysWinData[0x30] = *(u32*)&tempSkipTimer[0x64];
+    mTimerData.mSysWinData[0x34] = tempSkipTimer[0x68];
+    mTimerData.mSysWinData[0x35] = tempSkipTimer[0x69];
+    mTimerData.mSysWinData[0x36] = tempSkipTimer[0x6a];
+    mTimerData.mSysWinData[0x37] = tempSkipTimer[0x6b];
+    mTimerData.mSysWinData[0x38] = tempSkipTimer[0x6c];
+    mTimerData.mSysWinData[0x39] = tempSkipTimer[0x6d];
 
-    __ct__UnkClass_8011C974((u8*)this + 0x12c, tempSkipTimer + 0x74);
-    *(u32*)((u8*)this + 0x13c) = *(u32*)(tempSkipTimer + 0x84);
-    *(u32*)((u8*)this + 0x140) = *(u32*)(tempSkipTimer + 0x88);
-    *(u32*)((u8*)this + 0x144) = *(u32*)(tempSkipTimer + 0x8c);
-    *(u8*)((u8*)this + 0x148)  = *(u8*)(tempSkipTimer + 0x90);
-    *(u8*)((u8*)this + 0x149)  = *(u8*)(tempSkipTimer + 0x91);
-    *(u8*)((u8*)this + 0x14a)  = *(u8*)(tempSkipTimer + 0x92);
-    *(u8*)((u8*)this + 0x14b)  = *(u8*)(tempSkipTimer + 0x93);
-    *(u8*)((u8*)this + 0x14c)  = *(u8*)(tempSkipTimer + 0x94);
+    __ct__UnkClass_8011C974(&mTimerData.mSkipTimer2Data[4], &tempSkipTimer[0x74]);
+    *(u32*)&mTimerData.mSkipTimer2Data[0x14] = *(u32*)&tempSkipTimer[0x84];
+    *(u32*)&mTimerData.mSkipTimer2Data[0x18] = *(u32*)&tempSkipTimer[0x88];
+    *(u32*)&mTimerData.mSkipTimer2Data[0x1c] = *(u32*)&tempSkipTimer[0x8c];
+    mTimerData.mSkipTimer2Data[0x20] = tempSkipTimer[0x90];
+    mTimerData.mSkipTimer2Data[0x21] = tempSkipTimer[0x91];
+    mTimerData.mSkipTimer2Data[0x22] = tempSkipTimer[0x92];
+    mTimerData.mSkipTimer2Data[0x23] = tempSkipTimer[0x93];
+    mTimerData.mSkipTimer2Data[0x24] = tempSkipTimer[0x94];
     __dt__10CSkipTimerFv(tempSkipTimer, -1);
 
     CSkipTimer_BeginLoad(&mTimerData);
 
-    // Register the widget's render-callback subobject as an IScnRender render
-    // callback on its parent scene (retail null-checks `this`).
+    // Register the widget's IScnRenderCB subobject as an IScnRender render
+    // callback on its parent scene (retail null-checks `this`; the reference
+    // upcast keeps the address computation a plain addi).
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>((char*)this + 0x58);
+        renderCB = reinterpret_cast<IScnRender*>(&static_cast<IScnRenderCB&>(*this));
     }
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 0);
 }
@@ -197,7 +208,7 @@ void CMenuSkipTimer::Term() {
 
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>((char*)this + 0x58);
+        renderCB = reinterpret_cast<IScnRender*>(&static_cast<IScnRenderCB&>(*this));
     }
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 

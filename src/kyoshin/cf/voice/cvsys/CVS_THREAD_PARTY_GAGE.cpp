@@ -219,12 +219,9 @@ extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int ow
         }
     }
 
-    // Copy init data from the global table.
-    const u32* base = (const u32*)(u32)lbl_eu_80539C48;
-    u32 v1 = base[1], v0 = base[0];
-    raw->state0 = (u32*)v0;
-    raw->state1 = v1;
-    raw->state2 = base[2];
+    // Copy init data from the global table as the base's ptmf member
+    // (VoiceCb is 12 bytes; DOWN precedent).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C48)->unk0;
     return self;
 }
 

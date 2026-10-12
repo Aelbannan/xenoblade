@@ -137,7 +137,9 @@ extern "C" float lbl_eu_8050EDE0[4];
 extern float lbl_eu_80668A80[2];
 
 // Tuning-pool constants used by Chain_CheckChanceRoll plus its u16 id table.
-extern unsigned short lbl_eu_8050EDD0[0x40];
+// Retail object is 16 bytes (8 entries); the bound spells the retail size so
+// MWCC emits exactly one 0x10 object into .rodata (see the tables at EOF).
+extern unsigned short lbl_eu_8050EDD0[8];
 extern const float lbl_eu_80668A68;
 extern const float lbl_eu_80668A6C;
 extern const float lbl_eu_80668A70;
@@ -198,7 +200,7 @@ struct CChainVtblActor {
 struct CChainVtblSub {
     u8 bytes[0x10];
 };
-extern CChainVtblActor lbl_eu_80538290;
+extern "C" u32 lbl_eu_80538290[29];  // defined in CChainActorList.cpp (retail 0x78 table, 4-aligned form)
 extern CChainVtblActor lbl_eu_805384E0;
 extern CChainVtblActor lbl_eu_80538458;
 extern CChainVtblSub lbl_eu_80538338;

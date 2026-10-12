@@ -784,21 +784,7 @@
      [
       "__vt__28reslist<PQ22cf11CChainActor>",
       "lbl_eu_80538314"
-     ],
-     [
-      "__vt__34_reslist_base<PQ22cf11CChainActor>",
-      "lbl_eu_8053832C"
-     ],
-     [
-      "@7307",
-      "lbl_eu_8050ED98"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sbss"
     ]
    },
    "owner": "category-d",
@@ -1293,6 +1279,10 @@
      [
       "__RTTI__11CDeviceBase",
       "lbl_eu_806635F0"
+     ],
+     [
+      "@9131",
+      "lbl_eu_8056CA20"
      ]
     ],
     "extern_data_sections": [
@@ -1306,13 +1296,25 @@
      [
       "hex:4330000080000000",
       "lbl_eu_8066A448"
+     ],
+     [
+      "hex:00000000",
+      "lbl_eu_8066A430"
+     ],
+     [
+      "hex:3f800000",
+      "lbl_eu_8066A434"
+     ],
+     [
+      "hex:40000000",
+      "lbl_eu_8066A438"
      ]
     ],
     "repack_after_drop": 4,
     "trim_text_size": 2280
    },
-   "owner": "category-d",
-   "reason": "EDS code-only-data: FUSED-LAYOUT-live; batch 3"
+   "owner": "t5",
+   "reason": "pool 0/1/2f -> CGXCache A430/A434/A438 (DL4 t5)"
   },
   "CDeviceVI.o": {
    "class": "rename",
@@ -1419,6 +1421,22 @@
      [
       "hex:4330000080000000",
       "lbl_eu_8066A388"
+     ],
+     [
+      "hex:3f800000",
+      "lbl_eu_8066B248"
+     ],
+     [
+      "hex:bf800000",
+      "lbl_eu_8066B24C"
+     ],
+     [
+      "hex:3f000000",
+      "lbl_eu_8066B238"
+     ],
+     [
+      "hex:4f000000",
+      "lbl_eu_8066B234"
      ]
     ],
     "retarget_relocs": [
@@ -1434,8 +1452,8 @@
      ]
     ]
    },
-   "owner": "category-d",
-   "reason": "EDS code-only-data: FUSED-LAYOUT-live; batch 3"
+   "owner": "t5",
+   "reason": "pool 1/-1/0.5/2^31f -> CGXCache B248/B24C/B238/B234 (DL4 t5)"
   },
   "CETrail.o": {
    "class": "layout",
@@ -9536,23 +9554,6 @@
       "hex:4330000080000000",
       "lbl_eu_80667AA0"
      ]
-    ],
-    "retarget_relocs": [
-     [
-      ".text",
-      324,
-      "lbl_eu_80665DB8"
-     ],
-     [
-      ".text",
-      352,
-      "lbl_eu_80665DB8"
-     ],
-     [
-      ".text",
-      764,
-      "lbl_eu_80665DB8"
-     ]
     ]
    },
    "owner": "category-d",
@@ -10955,9 +10956,6 @@
   "CScrollBar.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "retarget_relocs": [
      [
       ".text",
@@ -11507,13 +11505,7 @@
   },
   "CTaskGameEffAfter.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
-    ]
-   },
+   "fields": {},
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-live; batch 2"
   },
@@ -11534,7 +11526,6 @@
    "fields": {
     "extern_data_sections": [
      ".data",
-     ".rodata",
      ".sdata"
     ]
    },
@@ -12100,24 +12091,7 @@
   },
   "CVision.o": {
    "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80667D28"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80667D58"
-     ]
-    ]
-   },
+   "fields": {},
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-live; batch 3"
   },
@@ -17571,56 +17545,6 @@
     "retarget_relocs": [
      [
       ".text",
-      198,
-      "lbl_eu_80569688"
-     ],
-     [
-      ".text",
-      214,
-      "lbl_eu_80569688"
-     ],
-     [
-      ".text",
-      458,
-      "lbl_eu_80569688"
-     ],
-     [
-      ".text",
-      462,
-      "lbl_eu_80569688"
-     ],
-     [
-      ".text",
-      630,
-      "jumptable_eu_805695F8"
-     ],
-     [
-      ".text",
-      638,
-      "jumptable_eu_805695F8"
-     ],
-     [
-      ".text",
-      1054,
-      "jumptable_eu_80569620"
-     ],
-     [
-      ".text",
-      1062,
-      "jumptable_eu_80569620"
-     ],
-     [
-      ".text",
-      3074,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      3082,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
       300,
       "lbl_eu_80669CD8"
      ],
@@ -17628,36 +17552,6 @@
       ".text",
       2136,
       "lbl_eu_80669CDC"
-     ],
-     [
-      ".text",
-      5678,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      5682,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      5774,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      5778,
-      "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      5846,
-      "lbl_eu_80569688"
-     ],
-     [
-      ".text",
-      5850,
-      "lbl_eu_80569688"
      ]
     ]
    },

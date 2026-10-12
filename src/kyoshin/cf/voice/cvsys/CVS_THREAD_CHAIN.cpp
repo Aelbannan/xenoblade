@@ -113,16 +113,10 @@ extern "C" cf::CVS_THREAD_CHAIN* __ct__802A5830() {
         }
     }
 
-    // Copy the init-state triple (bytes 0x00-0x08). Keeping both src and dst
-    // as named struct-pointer locals makes MWCC materialise the source address
-    // once (merged lis/addi, matching retail); the residual register rotation
-    // on {src,w0,w1} is an allocator fixed point.
-    CVS_THREAD_CHAIN_INIT* dst = (CVS_THREAD_CHAIN_INIT*)self;
-    CVS_THREAD_CHAIN_INIT* src = (CVS_THREAD_CHAIN_INIT*)lbl_eu_80539A30;
-    u32 w1 = src->word1;
-    dst->word0 = src->word0;
-    dst->word1 = w1;
-    dst->word2 = src->word2;
+    // Copy the init-state triple (bytes 0x00-0x08) as the base's ptmf
+    // member (VoiceCb is 12 bytes; DOWN precedent: member-typed access
+    // colors the pair r0/r4 with the single r5 base, matching retail).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539A30)->unk0;
 
     return self;
 }

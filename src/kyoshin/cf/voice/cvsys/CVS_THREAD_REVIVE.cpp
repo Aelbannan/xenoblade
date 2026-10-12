@@ -43,16 +43,10 @@ extern "C" CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle*
         }
     }
 
-    // Copy the init-state triple. Closest plateau: only r0/r4 swapped on the
-    // two value loads/stores (same residual as CVS_THREAD_DOWN ctor).
-    u32 hi;
-    u32 lo;
-    u32* src = (u32*)(u32)lbl_eu_80539C98;
-    hi = src[1];
-    lo = src[0];
-    raw->state0 = (u32*)lo;
-    raw->state1 = hi;
-    raw->state2 = src[2];
+    // Copy the init-state triple as the base's ptmf member (VoiceCb is
+    // 12 bytes; DOWN precedent: member-typed access colors the pair
+    // r0/r4 with the single r5 base, matching retail).
+    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C98)->unk0;
 
     return self;
 }

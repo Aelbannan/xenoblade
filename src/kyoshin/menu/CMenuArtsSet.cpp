@@ -1313,11 +1313,14 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* se
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
     tmp = lbl_eu_8050ABB4;
+    // Retail lays 9 fully-initialized entries (entry 4 is the 654 pair);
+    // a short list makes MWCC emit a zero-fill loop instead of stores.
     SArtsVec2 vecs[9] = {
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
-        {lbl_eu_80668654, lbl_eu_80668654}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
-        {lbl_eu_80668650, lbl_eu_80668650},
+        {lbl_eu_80668654, lbl_eu_80668654},
+        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
+        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
     };
     nw4r::lyt::Pane* pane =
         (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)
@@ -1405,11 +1408,14 @@ extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
     tmp = lbl_eu_8050ABD8;
+    // Retail lays 9 fully-initialized entries (entry 4 is the 654 pair);
+    // a short list makes MWCC emit a zero-fill loop instead of stores.
     SArtsVec2 vecs[9] = {
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
-        {lbl_eu_80668654, lbl_eu_80668654}, {lbl_eu_80668650, lbl_eu_80668650},
         {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
-        {lbl_eu_80668650, lbl_eu_80668650},
+        {lbl_eu_80668654, lbl_eu_80668654},
+        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
+        {lbl_eu_80668650, lbl_eu_80668650}, {lbl_eu_80668650, lbl_eu_80668650},
     };
     nw4r::lyt::Pane* pane =
         (nw4r::lyt::Pane*)((SArts3CObj*)((SArts3150CDriver*)self->field_0x00)->field_0x10)

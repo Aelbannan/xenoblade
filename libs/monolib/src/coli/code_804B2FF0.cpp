@@ -853,9 +853,12 @@ void ColiSetSphereMtx(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other
         src = (const CObjMtx*)mgr->mesh->boneTable[self->hd.index];
     }
 
-    const f32 pz = src->m[2][3];
-    const f32 px = src->m[0][3];
-    const f32 py = src->m[1][3];
+    f32 pz;
+    f32 px;
+    f32 py;
+    pz = src->m[2][3];
+    py = src->m[1][3];
+    px = src->m[0][3];
     self->pos[0] = px;
     self->pos[1] = py;
     self->pos[2] = pz;

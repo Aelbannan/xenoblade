@@ -13,8 +13,8 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 410 |
-| extern "C" declarations (non-lbl_*) | 97 |
+| extern "C" (total lines) | 412 |
+| extern "C" declarations (non-lbl_*) | 99 |
 | extern "C" definitions (forced names) | 22 |
 | `self`/register-style params | 11 |
 | `void*` (params + locals) | 761 |
@@ -37,7 +37,7 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 |---|---|---|---|---|---|---|
 | bte | 68 | 373 | 103 | 0 | 0 | 270 |
 | os | 34 | 118 | 3 | 0 | 0 | 115 |
-| hbm | 41 | 83 | 23 | 0 | 0 | 60 |
+| hbm | 41 | 83 | 25 | 0 | 0 | 58 |
 | gx | 15 | 45 | 3 | 0 | 0 | 42 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
 | ax | 10 | 32 | 0 | 0 | 0 | 32 |
@@ -190,7 +190,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/hbm/seq.c | 10 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synenv.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synenv.c | 2 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synmix.c | 6 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synpitch.c | 7 | 3 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1249,6 +1249,7 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/hbm/synenv.c": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 2,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 5

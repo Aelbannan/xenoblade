@@ -324,6 +324,20 @@ struct CMainMenuPlayer {
 };
 extern "C" CMainMenuPlayerSpot* getPlayer__Q22cf13CfGameManagerFi(int index);
 
+// Typed head views for the raw back-adjust thunks/recoveries in CMainMenu.cpp:
+// the +0x58/+0x5C sub-objects and the +0x3E9C player spot are addressed
+// through sized byte-head pointer arithmetic ((Head*)p - 1) instead of raw
+// (char*)-offset. Layout matches CMainMenu / CMainMenuPlayer exactly.
+struct CMainMenuHead58 {
+    u8 head_00[0x58];                // bytes preceding the +0x58 sub-object
+};
+struct CMainMenuHead5C {
+    u8 head_00[0x5C];                // bytes preceding the +0x5C sub-object
+};
+struct CMainMenuPlayerHead {
+    u8 head_00[0x3E9C];              // bytes preceding CMainMenuPlayer::spot
+};
+
 // cf::CBattleManager battle-list view (sentinel node at +0x8, nodes at +0x0).
 struct CMainMenuBattleNode {
     CMainMenuBattleNode* next;  // 0x00

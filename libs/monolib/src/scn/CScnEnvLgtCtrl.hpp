@@ -412,9 +412,9 @@ struct CScnEnvLgtCtrlLgtSrc {
 // here are modelled.
 struct CScnEnvLgtBlend {
     virtual void release(int flag) = 0;  // vtable slot 2 (0x08)
-    u8 mEnabled;   // +0x04
-    u8 pad_05[3];
-    u32 mFlags;    // +0x08
+    u8 mEnabled;   // +0x04 /* 0x04 */
+    u8 pad_05[3]; /* 0x05 */
+    u32 mFlags;    // +0x08 /* 0x08 */
 };
 
 // Minimal CScnBloom view for scnLgtSetBlendBloom. In retail the object's main
@@ -490,181 +490,181 @@ public:
     // +0x00: vtable pointer (dtor installs lbl_eu_8056F9B8); also used as a
     // flags word by scnLgtStepLightItems / scnLgtPushFogNone.
     union {
-        void* mVtable;                      // +0x00 vtable pointer
-        u32 flags;                          // +0x00 flags view
+        void* mVtable;                      // +0x00 vtable pointer /* 0x00 */
+        u32 flags;                          // +0x00 flags view /* 0x00 */
     };
     // +0x04: control flags (0x800/0x1000 light bits, scnLgtSetSlotBits) and the
     // scene-view pointer handed to Scn_GetFrameDelta / getScnRootSlot10.
     union {
-        u32 field_0x04;                     // +0x04 control flags
-        void* field_0x04_ptr;               // +0x04 view/owner pointer
+        u32 field_0x04;                     // +0x04 control flags /* 0x04 */
+        void* field_0x04_ptr;               // +0x04 view/owner pointer /* 0x04 */
     };
-    void* field_0x08;                       // +0x08 owned buffer (dtor deallocates)
-    CScnEnvLgtCtrlListNode* field_0x0C;     // +0x0C light-list ring sentinel
-    u16 field_0x10;                         // +0x10
-    u16 field_0x12;                         // +0x12 light count
+    void* field_0x08;                       // +0x08 owned buffer (dtor deallocates) /* 0x08 */
+    CScnEnvLgtCtrlListNode* field_0x0C;     // +0x0C light-list ring sentinel /* 0x0C */
+    u16 field_0x10;                         // +0x10 /* 0x10 */
+    u16 field_0x12;                         // +0x12 light count /* 0x12 */
     union {
-        u8 field_0x14[8];                            // +0x14
-        CScnEnvLgtCtrlLgtTypeEntry* field_0x14_ptr;  // +0x14 (0xd8-stride entry array)
+        u8 field_0x14[8];                            // +0x14 /* 0x14 */
+        CScnEnvLgtCtrlLgtTypeEntry* field_0x14_ptr;  // +0x14 (0xd8-stride entry array) /* 0x14 */
         struct {
-            u8 _14[0x04];                            // +0x14
-            void* field_0x18_buf;                    // +0x18 (0x14-stride item array, scnLgtDispatchFadeEntries)
+            u8 _14[0x04];                            // +0x14 /* 0x14 */
+            void* field_0x18_buf;                    // +0x18 (0x14-stride item array, scnLgtDispatchFadeEntries) /* 0x18 */
         } alt14;
     };
     union {
-        f32 field_0x1C;                       // +0x1C (value sampled by scnLgtSampleGradColor)
-        CScnEnvLgtCtrlListNode* field_0x1C_nodes;  // +0x1C 0xc-stride node array (scnLgtCreateEnvController)
+        f32 field_0x1C;                       // +0x1C (value sampled by scnLgtSampleGradColor) /* 0x1C */
+        CScnEnvLgtCtrlListNode* field_0x1C_nodes;  // +0x1C 0xc-stride node array (scnLgtCreateEnvController) /* 0x1C */
     };
     union {
-        u32 field_0x20;                        // +0x20 flags word (scnLgtStepWorkBlob test, scnLgtPtmfSetF18 family)
-        int field_0x20_count;                  // +0x20 node-array capacity (scnLgtCreateEnvController)
-        CScnEnvLgtCtrlLgtEntry40* field_0x20_ptr;  // +0x20 light-command base (scnLgtApplyLightCmdScaled)
+        u32 field_0x20;                        // +0x20 flags word (scnLgtStepWorkBlob test, scnLgtPtmfSetF18 family) /* 0x20 */
+        int field_0x20_count;                  // +0x20 node-array capacity (scnLgtCreateEnvController) /* 0x20 */
+        CScnEnvLgtCtrlLgtEntry40* field_0x20_ptr;  // +0x20 light-command base (scnLgtApplyLightCmdScaled) /* 0x20 */
     };
-    CScnEnvLgtCtrlLgtSlot* field_0x24;      // +0x24 light-slot array (0x30-byte entries)
+    CScnEnvLgtCtrlLgtSlot* field_0x24;      // +0x24 light-slot array (0x30-byte entries) /* 0x24 */
     union {
-        u32* field_0x28;                       // +0x28 light bit-array (>= 10 words)
-        CScnEnvLgtBlend* field_0x28_blend;     // +0x28 CScnBlend handle (scnLgtSetBlendBloom)
-    };
-    union {
-        u8* field_0x2C;                        // +0x2C base of the light-param array (scnLgtToggleItemBit)
-        CScnEnvLgtBloom* field_0x2C_bloom;     // +0x2C CScnBloom handle (scnLgtSetBlendBloom)
+        u32* field_0x28;                       // +0x28 light bit-array (>= 10 words) /* 0x28 */
+        CScnEnvLgtBlend* field_0x28_blend;     // +0x28 CScnBlend handle (scnLgtSetBlendBloom) /* 0x28 */
     };
     union {
-        CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (scnLgtToggleItemBit / null-check in scnLgtApplyAmbColor)
-        void* field_0x30_chk;                   // untyped view (CSE breaker for scnLgtDispatchFadeEntries's null check)
+        u8* field_0x2C;                        // +0x2C base of the light-param array (scnLgtToggleItemBit) /* 0x2C */
+        CScnEnvLgtBloom* field_0x2C_bloom;     // +0x2C CScnBloom handle (scnLgtSetBlendBloom) /* 0x2C */
     };
     union {
-        u8 field_0x34[4];                   // +0x34 byte view
-        f32 field_0x34_f;                   // +0x34 float view (scnLgtPushSlotBlend)
-        void* field_0x34_ptr;               // +0x34 pointer view (ctor: sub-blob base)
+        CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (scnLgtToggleItemBit / null-check in scnLgtApplyAmbColor) /* 0x30 */
+        void* field_0x30_chk;                   // untyped view (CSE breaker for scnLgtDispatchFadeEntries's null check) /* 0x30 */
+    };
+    union {
+        u8 field_0x34[4];                   // +0x34 byte view /* 0x34 */
+        f32 field_0x34_f;                   // +0x34 float view (scnLgtPushSlotBlend) /* 0x34 */
+        void* field_0x34_ptr;               // +0x34 pointer view (ctor: sub-blob base) /* 0x34 */
     };
     // +0x38 .. +0xB8: 4 rows of 8 floats at 0x38/0x58/0x78/0x98
     // (scnLgtCopyPrevRows copies rows 2,3 <- rows 0,1). +0x3C aliases row 0's
     // second word (scnLgtBindLightArg stores a light-data pointer there;
     // scnLgtPushSlotBlend reads it as a word).
     union {
-        f32 field_0x38[0x20];               // +0x38
+        f32 field_0x38[0x20];               // +0x38 /* 0x38 */
         struct {
-            u8 pad_0x38[0x04];              // +0x38
-            void* field_0x3C;               // +0x3C
+            u8 pad_0x38[0x04];              // +0x38 /* 0x38 */
+            void* field_0x3C;               // +0x3C /* 0x3C */
         } alt;
         struct {
-            u8 pad_0x3C[0x04];              // +0x38
-            u32 field_0x3C;                 // +0x3C word view (scnLgtPushSlotBlend)
+            u8 pad_0x3C[0x04];              // +0x38 /* 0x38 */
+            u32 field_0x3C;                 // +0x3C word view (scnLgtPushSlotBlend) /* 0x3C */
         } alt6;
         struct {
-            u8 pad_0x40[0x08];              // +0x38..+0x40
-            CScnEnvLgtCtrlFogGate* field_0x40;  // +0x40 fog-enable gate (scnLgtPushFogView0 / scnLgtPushFogView1)
-            u8 _44[0x04];                   // +0x44
-            CScnEnvLgtCtrlLgtCtl* field_0x48;  // +0x48 light-count control
-            CScnEnvLgtCtrlLgtLimit* field_0x4C;  // +0x4C light limit object
-            f32* field_0x50;                // +0x50 light-row array (scnLgtBlendRow5)
+            u8 pad_0x40[0x08];              // +0x38..+0x40 /* 0x38 */
+            CScnEnvLgtCtrlFogGate* field_0x40;  // +0x40 fog-enable gate (scnLgtPushFogView0 / scnLgtPushFogView1) /* 0x40 */
+            u8 _44[0x04];                   // +0x44 /* 0x44 */
+            CScnEnvLgtCtrlLgtCtl* field_0x48;  // +0x48 light-count control /* 0x48 */
+            CScnEnvLgtCtrlLgtLimit* field_0x4C;  // +0x4C light limit object /* 0x4C */
+            f32* field_0x50;                // +0x50 light-row array (scnLgtBlendRow5) /* 0x50 */
         } alt2;
         struct {
-            u8 pad_0xB0[0x78];              // +0x38..+0xB0
-            f32 field_0xB0;                 // +0xB0 (scnLgtFrameStep)
-            f32 field_0xB4;                 // +0xB4 (scnLgtFrameStep)
+            u8 pad_0xB0[0x78];              // +0x38..+0xB0 /* 0x38 */
+            f32 field_0xB0;                 // +0xB0 (scnLgtFrameStep) /* 0xB0 */
+            f32 field_0xB4;                 // +0xB4 (scnLgtFrameStep) /* 0xB4 */
         } alt3;
         struct {
-            u8 pad_0x90[0x58];              // +0x38..+0x90
-            f32 field_0x90;                 // +0x90 (scnLgtFillLightVec4 scaled vec3)
-            f32 field_0x94;                 // +0x94
-            f32 field_0x98;                 // +0x98
+            u8 pad_0x90[0x58];              // +0x38..+0x90 /* 0x38 */
+            f32 field_0x90;                 // +0x90 (scnLgtFillLightVec4 scaled vec3) /* 0x90 */
+            f32 field_0x94;                 // +0x94 /* 0x94 */
+            f32 field_0x98;                 // +0x98 /* 0x98 */
         } alt4;
 
         struct {
-            u8 pad_0x90b[0x58];             // +0x38..+0x90
-            CScnEnvLgtCtrlCtorCopy ctor;    // +0x90..+0xA8 (ctor 3-word blob copies)
+            u8 pad_0x90b[0x58];             // +0x38..+0x90 /* 0x38 */
+            CScnEnvLgtCtrlCtorCopy ctor;    // +0x90..+0xA8 (ctor 3-word blob copies) /* 0x90 */
         } ctor90;
         struct {
-            u8 pad_ctr[0x58];               // +0x38..+0x90
-            CScnEnvLgtCtrlV3 ctr;           // +0x90 flash-center triple (scnLgtRefreshEntryFade)
+            u8 pad_ctr[0x58];               // +0x38..+0x90 /* 0x38 */
+            CScnEnvLgtCtrlV3 ctr;           // +0x90 flash-center triple (scnLgtRefreshEntryFade) /* 0x90 */
         } ctrView;
         struct {
-            u8 pad_0x9C[0x64];              // +0x38..+0x9C
-            f32 fadeW0;                     // +0x9C per-channel fade weights
-            f32 fadeW1;                     // +0xA0
-            f32 fadeW2;                     // +0xA4
+            u8 pad_0x9C[0x64];              // +0x38..+0x9C /* 0x38 */
+            f32 fadeW0;                     // +0x9C per-channel fade weights /* 0x9C */
+            f32 fadeW1;                     // +0xA0 /* 0xA0 */
+            f32 fadeW2;                     // +0xA4 /* 0xA4 */
         } altFade;
         struct {
-            u8 pad_view[0x58];              // +0x38..+0x90
-            f32 ctrCenter[3];               // +0x90 flash-center triple
-            f32 fadeW[3];                   // +0x9C per-channel fade weights
+            u8 pad_view[0x58];              // +0x38..+0x90 /* 0x38 */
+            f32 ctrCenter[3];               // +0x90 flash-center triple /* 0x90 */
+            f32 fadeW[3];                   // +0x9C per-channel fade weights /* 0x9C */
         } lgtView;
         struct {
-            void* field_0x38;               // +0x38 (ctor: optional sub-blob base)
-            void* field_0x3C;               // +0x3C (ctor: optional sub-blob base)
+            void* field_0x38;               // +0x38 (ctor: optional sub-blob base) /* 0x38 */
+            void* field_0x3C;               // +0x3C (ctor: optional sub-blob base) /* 0x3C */
         } ctor38;
         struct {
-            CScnEnvLgtCtrlLgtGate* gate38;  // +0x38 light-ranking gate blob
+            CScnEnvLgtCtrlLgtGate* gate38;  // +0x38 light-ranking gate blob /* 0x38 */
         } altGate;
         struct {
-            u8 pad_0x38c[0x08];             // +0x38..+0x40
-            u32 flashCounter;               // +0x40 flash step counter (scnLgtUpdateSceneLights)
+            u8 pad_0x38c[0x08];             // +0x38..+0x40 /* 0x38 */
+            u32 flashCounter;               // +0x40 flash step counter (scnLgtUpdateSceneLights) /* 0x40 */
         } altCnt;
         struct {
-            u8 pad_0xAC[0x74];              // +0x38..+0xAC
-            s32 field_0xAC;                 // +0xAC light-count cap (scnLgtRefreshSlot)
+            u8 pad_0xAC[0x74];              // +0x38..+0xAC /* 0x38 */
+            s32 field_0xAC;                 // +0xAC light-count cap (scnLgtRefreshSlot) /* 0xAC */
         } alt5;
         struct {
-            u8 pad_0xA8[0x70];              // +0x38..+0xA8
-            s32 field_0xA8;                 // +0xA8 curve-blend bound (scnLgtBlendCurveSlots)
+            u8 pad_0xA8[0x70];              // +0x38..+0xA8 /* 0x38 */
+            s32 field_0xA8;                 // +0xA8 curve-blend bound (scnLgtBlendCurveSlots) /* 0xA8 */
         } alt7;
     };
     union {
-        u8 field_0xB8_bytes[0x18];          // +0xB8 .. +0xD0
+        u8 field_0xB8_bytes[0x18];          // +0xB8 .. +0xD0 /* 0xB8 */
         struct {
-            f32 field_0xB8;                 // +0xB8 (scnLgtFrameStep)
-            s16 field_0xBC;                 // +0xBC (scnLgtFrameStep stores -1 here)
-            u8 pad_0xBE[0x0A];              // +0xBE .. +0xC8
-            f32 field_0xC8;                 // +0xC8 (scnLgtStepWorkBlob / scnLgtGetTime)
-            f32 field_0xCC;                 // +0xCC (scnLgtFrameStep / scnLgtGetDelta)
+            f32 field_0xB8;                 // +0xB8 (scnLgtFrameStep) /* 0xB8 */
+            s16 field_0xBC;                 // +0xBC (scnLgtFrameStep stores -1 here) /* 0xBC */
+            u8 pad_0xBE[0x0A];              // +0xBE .. +0xC8 /* 0xBE */
+            f32 field_0xC8;                 // +0xC8 (scnLgtStepWorkBlob / scnLgtGetTime) /* 0xC8 */
+            f32 field_0xCC;                 // +0xCC (scnLgtFrameStep / scnLgtGetDelta) /* 0xCC */
         };
         // Second view used by scnLgtSetFlashSlot: the s16 slot index at +0xBE and
         // the f32 color pair at +0xC0/+0xC4 that the earlier struct leaves as
         // padding.
         struct {
-            f32 field_0xB8;                 // +0xB8
-            s16 field_0xBC;                 // +0xBC
-            s16 field_0xBE;                 // +0xBE (scnLgtSetFlashSlot stores the clamped slot)
-            f32 field_0xC0;                 // +0xC0 (scnLgtSetFlashSlot)
-            f32 field_0xC4;                 // +0xC4 (scnLgtSetFlashSlot)
-            f32 field_0xC8;                 // +0xC8
-            f32 field_0xCC;                 // +0xCC
+            f32 field_0xB8;                 // +0xB8 /* 0xB8 */
+            s16 field_0xBC;                 // +0xBC /* 0xBC */
+            s16 field_0xBE;                 // +0xBE (scnLgtSetFlashSlot stores the clamped slot) /* 0xBE */
+            f32 field_0xC0;                 // +0xC0 (scnLgtSetFlashSlot) /* 0xC0 */
+            f32 field_0xC4;                 // +0xC4 (scnLgtSetFlashSlot) /* 0xC4 */
+            f32 field_0xC8;                 // +0xC8 /* 0xC8 */
+            f32 field_0xCC;                 // +0xCC /* 0xCC */
         } lgt2;
     };
     // +0xD0 ambient color triple (scnLgtApplyAmbColor): word view for the writers,
     // float view for scnLgtPushSlotLights's paired-single reads.
     union {
         struct {
-            u32 field_0xD0;                 // +0xD0
-            u32 field_0xD4;                 // +0xD4
-            u32 field_0xD8;                 // +0xD8
+            u32 field_0xD0;                 // +0xD0 /* 0xD0 */
+            u32 field_0xD4;                 // +0xD4 /* 0xD4 */
+            u32 field_0xD8;                 // +0xD8 /* 0xD8 */
         };
         struct {
-            f32 mAmbX;                      // +0xD0
-            f32 mAmbY;                      // +0xD4
-            f32 mAmbZ;                      // +0xD8
+            f32 mAmbX;                      // +0xD0 /* 0xD0 */
+            f32 mAmbY;                      // +0xD4 /* 0xD4 */
+            f32 mAmbZ;                      // +0xD8 /* 0xD8 */
         };
     };
     union {
-        u8 field_0xDC[8];                   // +0xDC .. +0xE4
+        u8 field_0xDC[8];                   // +0xDC .. +0xE4 /* 0xDC */
         struct {
-            u32 field_0xDC_w;               // +0xDC accepted-entry mask (1 << slot)
-            u32 field_0xE0;                 // +0xE0 reset selector (scnLgtRecomputeSlotField)
+            u32 field_0xDC_w;               // +0xDC accepted-entry mask (1 << slot) /* 0xDC */
+            u32 field_0xE0;                 // +0xE0 reset selector (scnLgtRecomputeSlotField) /* 0xE0 */
         } dcw;
     };
-    u32 field_0xE4;                         // +0xE4 active light count / slot field
+    u32 field_0xE4;                         // +0xE4 active light count / slot field /* 0xE4 */
     union {
-        u8 field_0xE8[4];                   // +0xE8
-        u32 field_0xE8_count;               // +0xE8 saved count across scnLgtRankGateLights
+        u8 field_0xE8[4];                   // +0xE8 /* 0xE8 */
+        u32 field_0xE8_count;               // +0xE8 saved count across scnLgtRankGateLights /* 0xE8 */
     };
-    f32 field_0xEC;                         // +0xEC (light value, scnLgtApplyAmbColor)
-    CScnEnvLgtCtrlFogData mFog;             // +0xF0 (two per-view fog parameter sets)
-    f32 field_0x110[8];                     // +0x110 recorded light weights
-    f32 field_0x130[8];                     // +0x130 recorded light priorities
-    u16 field_0x150[8];                     // +0x150 recorded light row indices
-    u8 field_0x160[8];                      // +0x160 recorded light row selectors
+    f32 field_0xEC;                         // +0xEC (light value, scnLgtApplyAmbColor) /* 0xEC */
+    CScnEnvLgtCtrlFogData mFog;             // +0xF0 (two per-view fog parameter sets) /* 0xF0 */
+    f32 field_0x110[8];                     // +0x110 recorded light weights /* 0x110 */
+    f32 field_0x130[8];                     // +0x130 recorded light priorities /* 0x130 */
+    u16 field_0x150[8];                     // +0x150 recorded light row indices /* 0x150 */
+    u8 field_0x160[8];                      // +0x160 recorded light row selectors /* 0x160 */
 };
 
 // Retail vtable data blob installed at CScnEnvLgtCtrl+0x00 by the dtor.
@@ -1071,7 +1071,8 @@ struct CScnEnvLgtCtrlWorkTable {
 // word's bit 0 selects the refresh path, and the +0xE4 index selects a
 // 0x40-stride CLight slot.
 struct CScnEnvLgtCtrlLgtEnv484 {
-    u8 _00[0x484];       // +0x00
+    CLight mSlot0;            // +0x00 first light slot (base of the 0x40-stride CLight array)
+    u8 _40[0x484 - 0x40];     // +0x40
     u32 field_0x484;     // +0x484
 };
 

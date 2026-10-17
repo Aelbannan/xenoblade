@@ -131,7 +131,7 @@ extern "C" void MenuTutorialHandlePhase3(CMenuTutorial* self);
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
 void MenuTutorialRenderThunk58(IScnRender* sub);
-void MenuTutorialDtorThunk58(IScnRender* sub);
+void MenuTutorialDtorThunk58(IScnRender* sub, int flag);
 
 // Global (unmangled retail) accessors for the CMenuTutorial object.
 CMenuTutorial* MenuTutorialCreate(CProcess* self, CProcess* parent, u32 arg2);

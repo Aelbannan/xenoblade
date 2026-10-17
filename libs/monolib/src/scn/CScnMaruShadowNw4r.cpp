@@ -328,10 +328,17 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     }
 }
 
+// MaruShadowSetFlag40Store's `other` operand carries the stored float at
+// byte offset 4.
+struct MaruShadowFlag40Src {
+    u8 pad_0x00[4];
+    float field_0x04;
+};
+
 // us-80491bcc: MaruShadowSetFlag40Store (0x18 bytes)
 extern "C" void MaruShadowSetFlag40Store(u8* self, const void* other) {
-    *(u16*)((u8*)self + 0x28) |= 0x40;
-    *(float*)((u8*)self + 0x14) = *(float*)((u8*)other + 4);
+    ((CScnMaruShadowNw4r*)self)->field_0x28 |= 0x40;
+    ((CScnMaruShadowNw4r*)self)->field_0x14 = ((const MaruShadowFlag40Src*)other)->field_0x04;
 }
 
 // us-80491be4: MaruShadowStreamVerts (0x1A8 bytes)
@@ -750,19 +757,19 @@ float MaruShadowLoadGlobalFloat()
 // us-80492abc: MaruShadowSetFlag80Store (0x2C bytes) -- sets/clears flag 0x80 in halfword + stores float
 extern "C" void MaruShadowSetFlag80Store(u8* self, u32 enable, float v) {
     if (enable != 0) {
-        *(u16*)((u8*)self + 0x28) |= 0x80;
+        ((CScnMaruShadowNw4r*)self)->field_0x28 |= 0x80;
     } else {
-        *(u16*)((u8*)self + 0x28) &= ~0x80;
+        ((CScnMaruShadowNw4r*)self)->field_0x28 &= ~0x80;
     }
-    *(float*)((u8*)self + 0x24) = v;
+    ((CScnMaruShadowNw4r*)self)->field_0x24 = v;
 }
 
 // us-80492ae8: MaruShadowSetFlag100 (0x28 bytes) -- sets/clears flag 0x100 in halfword
 extern "C" void MaruShadowSetFlag100(u8* self, u32 enable) {
     if (enable != 0) {
-        *(u16*)((u8*)self + 0x28) |= 0x100;
+        ((CScnMaruShadowNw4r*)self)->field_0x28 |= 0x100;
     } else {
-        *(u16*)((u8*)self + 0x28) &= ~0x100;
+        ((CScnMaruShadowNw4r*)self)->field_0x28 &= ~0x100;
     }
 }
 

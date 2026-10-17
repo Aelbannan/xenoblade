@@ -110,13 +110,13 @@ void* __dt__800FED0C(void* _this, int flags) {
 // D2-inlined-into-D1 artifacts.
 extern "C" void* __dt__9CMainMenuFv(CMainMenu* _this, int flags) {
     if (_this) {
-        CBaseCur* subCur = (CBaseCur*)((char*)_this + 0xA8);
+        CBaseCur* subCur = (CBaseCur*)&_this->subCur;
         __dt__7CSubCurFv(subCur, -1);
-        CBaseCur* baseCur = (CBaseCur*)((char*)_this + 0x90);
+        CBaseCur* baseCur = (CBaseCur*)&_this->_90[0];
         if (baseCur) {
             __dt__8CBaseCurFv(baseCur, 0);
         }
-        __dt__17UnkClass_8045F564Fv((char*)_this + 0x60, -1);
+        __dt__17UnkClass_8045F564Fv(&_this->_60[0], -1);
         if (_this) {
             if (_this) {
                 __dt__8CProcessFv(_this, 0);
@@ -330,9 +330,9 @@ extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
     _this->mIWorkEventVtbl = evtVt;
     _this->field_0x5C = scnVt;
 
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<u8*>(_this) + 0x60);
+    __ct__17UnkClass_8045F564Fv(&_this->_60[0]);
 
-    CBaseCur* baseCur = reinterpret_cast<CBaseCur*>(reinterpret_cast<u8*>(_this) + 0x90);
+    CBaseCur* baseCur = (CBaseCur*)&_this->_90[0];
     _this->field_0x70 = scene;
     _this->field_0x74 = NULL;
     _this->field_0x78 = NULL;
@@ -343,7 +343,7 @@ extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
     _this->field_0x8C = NULL;
     __ct__8CBaseCurFv(baseCur, NULL);
     baseCur->vtbl() = (void*)lbl_eu_8052BF28;
-    __ct__CSubCur(reinterpret_cast<CBaseCur*>(reinterpret_cast<u8*>(_this) + 0xA8), NULL);
+    __ct__CSubCur((CBaseCur*)&_this->subCur, NULL);
 
     _this->field_0xC0 = 3;
 
@@ -391,7 +391,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
 
             // Bind the device font: ask the font object for its pane (vtable+0x24)
             // and push it onto the layout root.
-            nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+            nw4r::lyt::Pane* rootPane = self->field_0x7C->GetRootPane();
             ApplyFontToTxtPanes(
                 rootPane,
                 reinterpret_cast<CMainMenuFontView*>(
@@ -450,7 +450,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
             // null-check branch is the standard cross-cast idiom.
             IScnRender* render = reinterpret_cast<IScnRender*>(self);
             if (self != NULL) {
-                render = reinterpret_cast<IScnRender*>((char*)self + 0x5C);
+                render = reinterpret_cast<IScnRender*>(&self->field_0x5C);
             }
             self->field_0x70->addRenderCB(render, 0xa, 0);
 
@@ -495,8 +495,8 @@ void CMainMenu::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     drawLayout(field_0x7C, &drawInfo, 0, 1);
-    Cur_DrawLayout((char*)this + 0x90, &drawInfo);
-    Cur_DrawLayout((char*)this + 0xA8, &drawInfo);
+    Cur_DrawLayout(&this->_90[0], &drawInfo);
+    Cur_DrawLayout(&this->subCur, &drawInfo);
 }
 
 // Finds the "Param" pane in the layout's root pane and sets its translate
@@ -588,7 +588,7 @@ void CMainMenu::Init() {
     // Get IWorkEvent pointer at offset 0x58 (NULL-safe: if this is NULL, workEvent stays NULL)
     void* workEvent = this;
     if (this) {
-        workEvent = (char*)this + 0x58;
+        workEvent = &this->mIWorkEventVtbl;
     }
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     field_0x74 = CDeviceFile::readFile(handle, (const char*)lbl_eu_80661DC0, (IWorkEvent*)workEvent, 0, 0);
@@ -1261,7 +1261,7 @@ extern "C" int CMainMenu_IsInputBlocked(CMainMenu* self) {
     CMainMenuPlayer* player = (CMainMenuPlayer*)spot;
     if (spot != 0) {
         // De-bias the embedded +0x3E9C spot object back to the player base.
-        player = (CMainMenuPlayer*)((char*)spot - 0x3E9C);
+        player = (CMainMenuPlayer*)((CMainMenuPlayerHead*)spot - 1);
     }
     if (player != 0) {
         float hp = ((CfPlayerBaseReal*)player)->getHP();
@@ -1418,13 +1418,13 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     }
 }
 
-void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
+void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((CMainMenuHead58*)self - 1); }
 
-void CMainMenu_DtorThunk58(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
+void CMainMenu_DtorThunk58(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((CMainMenuHead58*)self - 1); }
 
-void CMainMenu_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
+void CMainMenu_RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((CMainMenuHead5C*)self - 1); }
 
-extern "C" void CMainMenu_DtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
+extern "C" void CMainMenu_DtorThunk5C(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((CMainMenuHead5C*)self - 1); }
 
 
 // CTTask<IUICf>::Move - test PTMF at +0x3C, call if non-null
@@ -1458,7 +1458,7 @@ void CMainMenu::Term() {
     CDeviceVI::waitForDrawDone();
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>((char*)this + 0x5C);
+        render = reinterpret_cast<IScnRender*>(&field_0x5C);
     }
     field_0x70->removeRenderCB(render);
     closeFileHandle(&field_0x74);

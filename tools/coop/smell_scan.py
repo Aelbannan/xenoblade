@@ -89,6 +89,18 @@ class Stats:
         self.void_ptr_cast = 0
         self.ptr_arith = 0
         self.deref_arith = 0
+        # Curated per-expression site counts (tools/coop/ptr_sites.py). These are
+        # informational spill-over fields: line-based ptr_arith/deref_arith above
+        # stay the CI-gated metrics. ``*_accepted`` counts sites whose enclosing
+        # function is already FULL_MATCH/EQUIVALENT_MATCH.
+        self.ptr_sites = 0
+        self.ptr_sites_accepted = 0
+        self.ptr_sites_by_cat: dict[str, int] = {}
+        self.ptr_acc_by_cat: dict[str, int] = {}
+        # Curated TU-local view-struct audit (tools/coop/view_audit.py).
+        self.view_total = 0
+        self.view_debt = 0
+        self.view_dup = 0
         self.asm_code = 0
         self.fake_stack = 0
         self.rn_params = 0

@@ -61,12 +61,17 @@ extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
     return self;
 }
 
+// Data-word view over the voice owner's flag/token area (+0x64/+0x70 live in
+// the concrete owner's data; the CVoiceOwnerIntf lens is vtable-only there).
+// Per-statement use only: never hoist into a named local.
+struct CVoiceOwnerData { u8 _00[0x64]; u32 flags64; u32 _pad68; u32 _pad6C; u32 token70; };
+
 // attachOwner (0x802A32C0)
 extern "C" void attachOwner(CCharVoice* self, CVoiceOwnerIntf* owner)
 {
     if (owner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)owner + 0x64);
+    u32 flags = ((CVoiceOwnerData*)owner)->flags64;
 
     // Normal/battle profile selector: bit0(MSB)=0x80000000, bit30=2, bit29=4.
     if ((flags & 2) || (flags & 0x80000000)) {
@@ -76,7 +81,7 @@ extern "C" void attachOwner(CCharVoice* self, CVoiceOwnerIntf* owner)
         float px;
         u32   posType;
         float pz;
-        Tok_Unpack(*(u32*)((char*)owner + 0x70),
+        Tok_Unpack(((CVoiceOwnerData*)owner)->token70,
                       &pz, &posType, &px, &py);
 
         if (posType == 8) posType = 3;
@@ -104,7 +109,7 @@ extern "C" void updatePosition(CCharVoice* self)
 {
     if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = ((CVoiceOwnerData*)self->mOwner)->flags64;
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (self->mSoundHandle == -1) return;
@@ -168,7 +173,7 @@ extern "C" void stopVoiceA(CCharVoice* self)
 {
     if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = ((CVoiceOwnerData*)self->mOwner)->flags64;
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (self->mSoundHandle != -1) {
@@ -203,7 +208,7 @@ extern "C" bool playGated(CCharVoice* self, float volume,
     self->mPriorityCheck = priority;
 
     if (self->mOwner != 0) {
-        u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+        u32 flags = ((CVoiceOwnerData*)self->mOwner)->flags64;
 
         if ((flags & 2) || (flags & 0x80000000)) {
             if (self->mSoundHandle != -1) {
@@ -222,7 +227,7 @@ extern "C" bool playGated(CCharVoice* self, float volume,
         }
     }
 
-    u32 flags2 = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags2 = ((CVoiceOwnerData*)self->mOwner)->flags64;
 
     if ((flags2 & 2) || (flags2 & 0x80000000)) {
         // Format the voice id (0..9999) into the file name as four digits at
@@ -281,7 +286,7 @@ extern "C" void stopVoiceB(CCharVoice* self)
 {
     if (self->mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = ((CVoiceOwnerData*)self->mOwner)->flags64;
 
     if ((flags & 2) || (flags & 0x80000000)) {
         if (self->mSoundHandle != -1) {

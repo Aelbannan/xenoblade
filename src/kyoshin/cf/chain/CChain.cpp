@@ -310,8 +310,8 @@ void CChain_UpdatePerFrame(cf::CChain* self) {
     if ((lbl_eu_80663E28 & 0x80000) != 0) return;
     Chain_SweepDeadActors(&self->mChainActorList);
     ChainList_SweepDead((cf::CChainList*)&self->mChainMember);
-    Chain_RebuildLinks((cf::CChainActorList*)((u8*)self + 0x18));
-    if (self->unk0[2] != 0) {
+    Chain_RebuildLinks(&self->mChainActorList);
+    if (reinterpret_cast<cf::CChainHeadView*>(self)->field_2 != 0) {
         ChainList_UpdateAll((cf::CChainList*)&self->mChainMember);
         if (self->mChainTimer1.unk0 > 0) self->mChainTimer1.unk0--;
         if (self->mChainTimer2.unk0 > 0) self->mChainTimer2.unk0--;
@@ -1477,10 +1477,10 @@ int CChain_TryActivateChain(cf::CChain* self, u32 param) {
             bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
             if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) {
                 result = 0;
-            } else if (self->unk0[2] != 0) {
+            } else if (reinterpret_cast<cf::CChainHeadView*>(self)->field_2 != 0) {
                 result = 0;
             } else {
-                result = Chain_CheckActivatable((cf::CChainActorList*)((u8*)self + 0x18), target);
+                result = Chain_CheckActivatable(&self->mChainActorList, target);
             }
         }
     }
@@ -1510,15 +1510,15 @@ int CChain_TryActivateChain(cf::CChain* self, u32 param) {
     Chain_LinkList((cf::CChainList*)&self->mChainMember, 0, -1);
     cf::CChainActor* actor = ChainList_FindKey((cf::CChainList*)&self->mChainMember, param);
     actor->CChain_noop_795D0();
-    ((s8*)self->unk0)[1] = -1;
-    self->unk0[0] = 0;
-    self->unk0[8] = (u8)((((cf::CChainFlag*)param)->field_0x3F00 >> 1) & 1);
+    reinterpret_cast<cf::CChainHeadView*>(self)->field_1 = -1;
+    reinterpret_cast<cf::CChainHeadView*>(self)->field_0 = 0;
+    reinterpret_cast<cf::CChainHeadView*>(self)->field_8 = (u8)((((cf::CChainFlag*)param)->field_0x3F00 >> 1) & 1);
     self->mChainChance.field_14 = 0;
     self->mChainCombo.func1();
     trackChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
     func_802B48A0((CErrMesEntry*)&self->unk1F0C[8]);
     Chain_EmitThresholdEvents((cf::CChainFlag*)param);
-    self->unk0[2] = 1;
+    reinterpret_cast<cf::CChainHeadView*>(self)->field_2 = 1;
     return 1;
 }
 // Chain-start validation: resolves the target battle object (explicit key, or
@@ -1536,8 +1536,8 @@ int CChain_CheckActivateReady(cf::CChain* self, u32 param) {
     if (bm->field_0x20C8 != 0) return 0;
     bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
     if (SuddenCommuIsStateActive(&bm->field_0x216C[0]) != 0) return 0;
-    if (self->unk0[2] != 0) return 0;
-    return Chain_CheckActivatable((cf::CChainActorList*)((u8*)self + 0x18), param);
+    if (reinterpret_cast<cf::CChainHeadView*>(self)->field_2 != 0) return 0;
+    return Chain_CheckActivatable(&self->mChainActorList, param);
 }
 
 // Dispatches a chain-state change to every registered actor: first the actor
@@ -2051,8 +2051,8 @@ int CChainActor_CheckVoice(cf::CChainVoiceHolder* self) {
 }
 
 extern "C" void CChain_setFieldAndClear(void* self, int val) {
-    *(int*)self = val;
-    *(u16*)((u8*)self + 0x6c) = 0;
+    ((cf::CChainActorData*)self)->unk0 = val;
+    ((cf::CChainActorData*)self)->unk6C = 0;
 }
 
 // Retail C wrapper (size 0x8): this-adjust +0x18 into the embedded actor list.

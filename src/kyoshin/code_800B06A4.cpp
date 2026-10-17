@@ -145,6 +145,20 @@ struct CfReslistLayout {
     int mCapacity;           // 0x18
     bool field_0x1C;         // 0x1C
 };
+// Typed word/byte views over otherwise-untyped buffers (per-statement use
+// only: never hoist into a named local, a live pointer costs a register).
+struct WordBufView { u32 w0; u32 w1; };                                    // copyWordAt4
+struct Obj6CView { u8 _00[0x6C]; u32 field_6C; u32 field_70; };             // setObj6Cbit1/0
+// FacPoolHeadView retired -> UnkClass_805764CC::field_0xC80.mStartNodePtr (include/kyoshin/code_800B06A4.hpp).
+struct ObjId74View { u8 _00[0x74]; u32 id74; };                             // lookupWorkAtAddr
+struct TypeId02View { u8 _00[2]; u8 typeId; };                              // isTypeId1to24
+struct Buf380View { u32 buf[0xE0]; u32 count380; };                            // pushWordToBuf
+struct EvtArgHeadView { u8 _00[0x3E9C]; };                                       // evtTypeSlot7E/80 (arg at +0x3E9C)
+struct Obj98View { u8 _00[0x98]; B5994Obj* field_98; };                          // getObjField98
+struct Obj620View { u8 _00[0x620]; int field_620; };                            // getObjField620
+struct Obj720View { u8 _00[0x720]; u32 field_720; };                            // setObjField720
+struct Obj734View { u8 _00[0x734]; u8* field_734; };                           // setObjField734
+struct Obj738View { u8 _00[0x738]; u16 field_738; };                            // setObjField738
 
 extern "C" void __ct__reslist_cf_IFactoryEvent(void* self) {
     extern void* lbl_eu_805290B8[];
@@ -247,7 +261,7 @@ void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
 // us-800b2398 - copyWordAt4: copy the second u32 of src into dst.
 extern "C" void copyWordAt4(void* a, void* b) {
-    *(u32*)a = ((u32*)b)[1];
+    ((WordBufView*)a)->w0 = ((WordBufView*)b)->w1;
 }
 void init_182C(){}
 #pragma push
@@ -387,7 +401,7 @@ void evictTboxOverflow() {
 extern "C" DECOMP_DONT_INLINE void clearReslistLinks(void* list) {
     u32 sentinel, cur, next, zero;
     u32* p;
-    sentinel = *(u32*)((u32*)list + 1);
+    sentinel = ((reslist<cf::CfObject*>*)list)->field_0x04;
     cur = *(u32*)sentinel;
     zero = 0;
     goto check;
@@ -396,7 +410,7 @@ loop:
     cur = *p;
     *p = zero;
 check:
-    sentinel = *(u32*)((u32*)list + 1);
+    sentinel = ((reslist<cf::CfObject*>*)list)->field_0x04;
     if (cur != sentinel) goto loop;
     *(u32*)sentinel = sentinel;
 }
@@ -706,7 +720,7 @@ extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc) {
     count = self->mCapacity;
     while (idx < count) {
         // Empty slot claimed by this insert: its link word is still null.
-        if (*(void**)((u8*)self->mList + off) == 0) {
+        if (((FactoryPoolEntry*)((u8*)self->mList + off))->next == 0) {
             break;
         }
         off += 0xC;
@@ -714,7 +728,7 @@ extern "C" void poolInsertBack(FactoryPoolList* self, void* payloadSrc) {
     }
     // Base is re-read after the search (retail reloads mList a third time).
     void* poolBase = self->mList;
-    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)poolBase + idx * 0xC);
+    FactoryPoolEntry* entry = (FactoryPoolEntry*)poolBase + idx;
     void** slot = &entry->data;
     if (slot != 0) {
         // reslist setItem wraps its store in try/catch; under C++ exceptions
@@ -865,7 +879,7 @@ extern "C" void poolInsertFront(FactoryPoolList* self, void* payloadSrc) {
     CfReslistNode* head = (CfReslistNode*)sentinel->mNext; // r9
     while (idx < count) {
         // Empty slot claimed by this insert: its link word is still null.
-        if (*(void**)((u8*)self->mList + off) == 0) {
+        if (((FactoryPoolEntry*)((u8*)self->mList + off))->next == 0) {
             break;
         }
         off += 0xC;
@@ -873,7 +887,7 @@ extern "C" void poolInsertFront(FactoryPoolList* self, void* payloadSrc) {
     }
     // Base is re-read after the search (retail reloads mList a third time).
     void* poolBase = self->mList;
-    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)poolBase + idx * 0xC);
+    FactoryPoolEntry* entry = (FactoryPoolEntry*)poolBase + idx;
     void** slot = &entry->data;
     if (slot != 0) {
         // reslist setItem wraps its store in try/catch; under C++ exceptions
@@ -906,9 +920,9 @@ void init_42E8(){}
 // field_0x64 mask intersects `mask`, invoke removeManagedObject. The head pointer
 // is re-read from memory every iteration (retail reloads self+4).
 extern "C" void walkReslistByMask(void* object, u32 mask) {
-    CfReslistNode* headCell = *(CfReslistNode**)((u8*)object + 4);
+    CfReslistNode* headCell = (CfReslistNode*)((reslist<cf::CfObject*>*)object)->field_0x04;
     CfReslistNode* cur = (CfReslistNode*)headCell->mNext;
-    while (cur != *(CfReslistNode**)((u8*)object + 4)) {
+    while (cur != (CfReslistNode*)((reslist<cf::CfObject*>*)object)->field_0x04) {
         CfObjFieldView* data = (CfObjFieldView*)((CfReslistNode*)cur->mItem);
         cur = (CfReslistNode*)cur->mNext;
         if (mask & data->field_0x64) {
@@ -923,9 +937,9 @@ extern "C" void walkReslistByMask(void* object, u32 mask) {
 // whose type id (field_0x94) is 5 and whose low 16 bits of field_0x9C equal
 // the search value.
 extern "C" void walkReslistByType(void* object, u32 value) {
-    CfReslistNode* headCell = *(CfReslistNode**)((u8*)object + 0xBCC);
+    CfReslistNode* headCell = (CfReslistNode*)((UnkClass_805764CC*)object)->field_0xBC8.field_0x04;
     CfReslistNode* cur = (CfReslistNode*)headCell->mNext;
-    while (cur != *(CfReslistNode**)((u8*)object + 0xBCC)) {
+    while (cur != (CfReslistNode*)((UnkClass_805764CC*)object)->field_0xBC8.field_0x04) {
         CfObjFieldView* data = (CfObjFieldView*)((CfReslistNode*)cur->mItem);
         cur = (CfReslistNode*)cur->mNext;
         if (data->field_0x94 == 5 && (s32)value == (s32)(u16)data->field_0x9C) {
@@ -942,20 +956,21 @@ extern "C" void walkReslistByType(void* object, u32 value) {
 #pragma push
 #pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE void walkReslistByName(UnkClass_805764CC* self, const char* name) {
-    u8* cur = *(u8**)(*(u8**)((u8*)self + 0xBCC));
+    CfReslistNode* cur = ((CfReslistNode*)self->field_0xBC8.field_0x04)->mNext;
 
-    while (cur != *(u8**)((u8*)self + 0xBCC)) {
-        u8* data = *(u8**)(cur + 8);
-        cur = *(u8**)cur;
+    while (cur != (CfReslistNode*)self->field_0xBC8.field_0x04) {
+        B7AF0Obj* data = (B7AF0Obj*)cur->mItem;
+        cur = cur->mNext;
 
-        if (*(s32*)(data + 0x94) == 2) {
-            if (name == NULL || strcmp((const char*)(data + 0x120), name) == 0) {
+        if (data->type94 == 2) {
+            if (name == NULL || strcmp((const char*)data->buf120, name) == 0) {
                 removeManagedObject(self, (cf::CfObject*)data);
             }
         }
     }
 }
 #pragma pop
+struct FindListNodeView { void* next; u32 field04; void* object; }; // ItemListNode-shaped (+0 next, +8 object)
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
 // node; store the found node to *out (retail findListNode).
@@ -963,9 +978,9 @@ extern "C" DECOMP_DONT_INLINE void walkReslistByName(UnkClass_805764CC* self, co
 #pragma push
 #pragma auto_inline off
 extern "C" void findListNode(void** out, void** headPtr, void** valA, void** valB) {
-    void* node;
-    while ((node = *headPtr) != *valA && *(void**)((u8*)node + 8) != *valB) {
-        *headPtr = *(void**)node;
+    FindListNodeView* node;
+    while ((node = (FindListNodeView*)*headPtr) != (FindListNodeView*)*valA && node->object != *valB) {
+        *headPtr = node->next;
     }
     *out = node;
 }
@@ -1134,8 +1149,8 @@ UnkClass_800B0AD8* __dt__800B0AF4(void* selfv, int flags) {
 // the rlwinm addr in r0 and the addi next in r4 (dead param reg) exactly like
 // retail; the two-statement form always emits the swapped colors (r0/r4).
 extern "C" void pushWordToBuf(UnkClass_805764CC* self, const u32* val) {
-    u32* cnt = (u32*)((u8*)self + 0x380);
-    ((u32*)self)[(*cnt)++] = *val;
+    u32* cnt = &((Buf380View*)self)->count380;
+    ((Buf380View*)self)->buf[(*cnt)++] = *val;
 }
 void init_5994(){}
 void init_6484(){}
@@ -1169,7 +1184,7 @@ void init_66BC(){}
 #pragma push
 #pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE int isTypeId1to24(void* self) {
-    u8 val = *(u8*)((u8*)self + 2);
+    u8 val = ((TypeId02View*)self)->typeId;
     int result = 0;
     if (val >= 1) {
         if (val <= 24) {
@@ -1291,7 +1306,7 @@ void init_75EC(){}
 #pragma auto_inline off
 extern "C" int reslistCount(void* self) {
     void* cur;
-    void* head = *(void**)((u8*)self + 4);
+    void* head = ((reslist<cf::TboxInfo>*)self)->mStartNodePtr;
     cur = *(void**)head;
     int count = 0;
     while (cur != head) { cur = *(void**)cur; count++; }
@@ -1394,17 +1409,17 @@ void init_8804(){}
 // `next` is declared before `node` so MWCC colors node=r7/next=r6 like
 // retail (the reverse declaration order swaps the registers).
 void unlinkFactoryById(u8* self, u32 targetId) {
-    u32* head = *(u32**)(self + 0xC84);
-    u32* sentinel = head;
-    u32* next;
-    u32* node = (u32*)*head;
+    CFactoryEventPoolNode* head = (CFactoryEventPoolNode*)((UnkClass_805764CC*)self)->field_0xC80.mStartNodePtr;
+    CFactoryEventPoolNode* sentinel = head;
+    CFactoryEventPoolNode* next;
+    CFactoryEventPoolNode* node = head->next;
     while (node != sentinel) {
-        next = (u32*)*node;
-        if (node[2] == targetId) {
-            u32* prev = (u32*)node[1];
-            *prev = (u32)next;
-            next[1] = (u32)prev;
-            *node = 0;
+        next = node->next;
+        if ((u32)node->data == targetId) {
+            CFactoryEventPoolNode* prev = node->prev;
+            prev->next = next;
+            next->prev = prev;
+            node->next = 0;
         }
         node = next;
     }
@@ -1622,7 +1637,7 @@ extern "C" int lookupWorkAtAddr(u32 addr) {
         return 0;
     }
 
-    u32 val = *(u32*)(addr + 0x74);
+    u32 val = ((ObjId74View*)addr)->id74;
     return findWorkById((UnkClass_805764CC*)inst, val) != 0;
 }
 // us-800b92e8 - lookupCA0ById
@@ -1650,7 +1665,7 @@ extern "C" void* lookupCA0ById(u32 id) {
         lbl_eu_80663EE8 = 1;
     }
 
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
+    void* ca0 = (void*)((UnkClass_805764CC*)(void*)lbl_eu_80572CD4)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorById(ca0, id);
     }
@@ -1664,7 +1679,7 @@ extern "C" void* lookupCA0ById(u32 id) {
 #pragma push
 #pragma auto_inline off
 extern "C" void* lookupCA0By45C0(void* self) {
-    u16 id = *(u16*)((u8*)self + 0x45C0);
+    u16 id = ((UnkClass_805764CC*)self)->get_u16_45C0();
     void* result = NULL;
 
     if (lbl_eu_80663EE8 == 0) {
@@ -1673,7 +1688,7 @@ extern "C" void* lookupCA0By45C0(void* self) {
         lbl_eu_80663EE8 = 1;
     }
 
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
+    void* ca0 = (void*)((UnkClass_805764CC*)(void*)lbl_eu_80572CD4)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorById(ca0, id);
     }
@@ -1693,7 +1708,7 @@ extern "C" void* lookupCA0BySelf(void* self) {
         lbl_eu_80663EE8 = 1;
     }
 
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
+    void* ca0 = (void*)((UnkClass_805764CC*)lbl_eu_80572CD4)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorByObj(ca0, self);
     }
@@ -2303,7 +2318,7 @@ extern "C" int iterWordsDiffer(void* a, void* b) {
 #pragma push
 #pragma auto_inline off
 extern "C" u32 getWordAt4(u8* self) {
-    return *(u32*)(self + 0x4);
+    return ((WordBufView*)self)->w1;
 }
 #pragma pop
 // us-800b3aa0 - extract bit 7 of field at +0x64
@@ -2312,7 +2327,7 @@ extern "C" u32 getWordAt4(u8* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" u32 testObj64bit7(u8* self) {
-    return (*(u32*)(self + 0x64) >> 7) & 1;
+    return (((CfObjFieldView*)self)->field_0x64 >> 7) & 1;
 }
 #pragma pop
 // testObj64bit8: sibling predicate, bit 7 of field at +0x64.
@@ -2321,7 +2336,7 @@ extern "C" u32 testObj64bit7(u8* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" int testObj64bit8(void* self) {
-    return (int)((*(u32*)((u8*)self + 0x64) >> 8) & 1);
+    return (int)((((CfObjFieldView*)self)->field_0x64 >> 8) & 1);
 }
 #pragma pop
 // testObj64bit15: sibling predicate, bit 15 of field at +0x64 (retail leaf:
@@ -2330,16 +2345,16 @@ extern "C" int testObj64bit8(void* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" int testObj64bit15(void* self) {
-    return (int)((*(u32*)((u8*)self + 0x64) >> 15) & 1);
+    return (int)((((CfObjFieldView*)self)->field_0x64 >> 15) & 1);
 }
 #pragma pop
 // us-800b4630 - return bit 31 of field at +0x64
 u32 testObj64bit31(u8* self) {
-    return (*(u32*)(self + 0x64) >> 31) & 1;
+    return (((CfObjFieldView*)self)->field_0x64 >> 31) & 1;
 }
 // us-800b463c - return bit 27 of field at +0x6C
 u32 testObj6Cbit27(u8* self) {
-    return (*(u32*)(self + 0x6C) >> 27) & 1;
+    return ((((Obj6CView*)self)->field_6C >> 27) & 1);
 }
 // Target us-800b5320: evtTypeSlot7E
 // Rejects null / non-enabled args, then checks whether the parent container's
@@ -2354,7 +2369,7 @@ extern "C" s32 evtTypeSlot7E(CEvtTypeArg* arg) {
             // retail keeps a redundant null guard on the fixup.
             UnkClass_805764CC* container = (UnkClass_805764CC*)arg;
             if (container != 0) {
-                container = (UnkClass_805764CC*)((u8*)container - 0x3E9C);
+                container = (UnkClass_805764CC*)((EvtArgHeadView*)container - 1);
             }
             // Retail presets four flags to 1, clearing each in cascade.
             // Declaration order drives MWCC's volatile coloring (free-list
@@ -2405,7 +2420,7 @@ extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
             // retail keeps a redundant null guard on the fixup.
             UnkClass_805764CC* container = (UnkClass_805764CC*)arg;
             if (container != 0) {
-                container = (UnkClass_805764CC*)((u8*)container - 0x3E9C);
+                container = (UnkClass_805764CC*)((EvtArgHeadView*)container - 1);
             }
             // Cascade identical to evtTypeSlot7E (declaration order drives
             // MWCC coloring: f0->r0, f3->r3, f4->r4, f5->r5, value->r6).
@@ -2438,27 +2453,27 @@ extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
 }
 // us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
 void setObj6Cbit1(u8* self) {
-    *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
+    ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~1u) | 2u;
 }
 // us-800b588c - clear bit 1 and set bit 0 of the field at +0x6C
 void setObj6Cbit0(u8* self) {
-    *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~2u) | 1u;
+    ((Obj6CView*)self)->field_6C = (((Obj6CView*)self)->field_6C & ~2u) | 1u;
 }
 // us-800b58a0 - accessor returning field at +0x70
 u32 getObjField70(u8* self) {
-    return *(u32*)(self + 0x70);
+    return ((Obj6CView*)self)->field_70;
 }
 // us-800b6dd8 - return pointer field at +0x98
 extern "C" B5994Obj* getObjField98(void* obj) {
-    return *(B5994Obj**)((u8*)obj + 0x98);
+    return ((Obj98View*)obj)->field_98;
 }
 // us-800ba2a0 - return word at +0x620
 extern "C" int getObjField620(void* obj) {
-    return *(int*)((u8*)obj + 0x620);
+    return ((Obj620View*)obj)->field_620;
 }
 // us-800b6dcc - return mask & field at +0x6C
 u32 andObj6Cmask(u8* self, u32 mask) {
-    return mask & *(u32*)(self + 0x6C);
+    return mask & ((Obj6CView*)self)->field_6C;
 }
 // us-800b3654 - poolInsertThunk
 // Thunk: copy arg to a stack local, then forward its address to poolInsertBack.
@@ -2613,7 +2628,7 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
         return 0;
     }
     UnkClass_805764CC* inst = getInstance();
-    void* ctx = (u8*)inst + 0x20;
+    AD8Wrapper* ctx = &inst->field_0x20;
     int lo = 0;
     unsigned long count = workBufCount(ctx);
     workBufSize(ctx);
@@ -2710,11 +2725,11 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned 
 
 // us-800b9fe0 - store arg at +0x734
 extern "C" void setObjField734(void* obj, void* arg) {
-    *(void**)((u8*)obj + 0x734) = arg;
+    ((Obj734View*)obj)->field_734 = (u8*)arg;
 }
 // us-800b9ffc - store low 16 bits of arg at +0x738
 extern "C" void setObjField738(void* obj, void* arg) {
-    *(u16*)((u8*)obj + 0x738) = (u16)(u32)arg;
+    ((Obj738View*)obj)->field_738 = (u16)(u32)arg;
 }
 
 // us-800b9e98 - spawnVoiceActor
@@ -2897,7 +2912,7 @@ void gmSpawnMask8000() {
 #pragma push
 #pragma auto_inline off
 void setObjField720(u8* self, u32 val) {
-    *(u32*)(self + 0x720) = val;
+    ((Obj720View*)self)->field_720 = val;
 }
 #pragma pop
 

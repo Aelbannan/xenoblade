@@ -507,7 +507,7 @@ range_312c_31f3: {
             capacity = inst->unk13C;
             goto slot_check;
         slot_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto slot_found;
             }
             byteOff += 0xc;
@@ -519,7 +519,7 @@ range_312c_31f3: {
         slot_found:
             {
                 // Expand setItem so temp lands in r4 before savedRet reload (addic. r3,r4,8).
-                CUICfListNode* temp = (CUICfListNode*)((u8*)inst->unk138 + i * 0xc);
+                CUICfListNode* temp = &inst->unk138[i];
                 u32* ptr = &temp->item;
                 if (ptr != 0) {
                     try {
@@ -795,7 +795,7 @@ void CUICfManager::Move() {
             capacity = inst->unk13C;
             goto push8_check;
         push8_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto push8_found;
             }
             byteOff += 0xc;
@@ -841,7 +841,7 @@ void CUICfManager::Move() {
             capacity = inst->unk13C;
             goto push10_check;
         push10_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto push10_found;
             }
             byteOff += 0xc;
@@ -887,7 +887,7 @@ void CUICfManager::Move() {
             capacity = inst->unk13C;
             goto push20_check;
         push20_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto push20_found;
             }
             byteOff += 0xc;
@@ -933,7 +933,7 @@ void CUICfManager::Move() {
             capacity = inst->unk13C;
             goto push40_check;
         push40_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto push40_found;
             }
             byteOff += 0xc;
@@ -979,7 +979,7 @@ void CUICfManager::Move() {
             capacity = inst->unk13C;
             goto push80_check;
         push80_body:
-            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                 goto push80_found;
             }
             byteOff += 0xc;
@@ -1074,7 +1074,7 @@ enum_next:
     enumIdx++;
 enum_check:
     list = CTaskGame_enumListGet(&holder);
-    if ((u32)enumIdx < *(u32*)((u8*)list + 0x620)) {
+    if ((u32)enumIdx < reinterpret_cast<CUICfEnumList620*>(list)->count) {
         goto enum_body;
     }
     __dt__80043E88(&holder, -1);
@@ -1205,7 +1205,13 @@ unlink_done:
 // w0 (retail lwzu/lwz + reversed stw pair + trailing word).
 extern u32 lbl_eu_8052E294[3];
 extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
-    if (*(void**)((u8*)self + 0x114) != 0) {
+    struct EvTripView {
+        u8 field_0x00[0x3C];
+        u32 field_0x3C[3];           // +0x3C event-triplet destination
+        u8 field_0x48[0x114 - 0x48];
+        void* field_0x114;          // +0x114 (mFileHandle)
+    };
+    if (((EvTripView*)self)->field_0x114 != 0) {
         return;
     }
     u32 w0;
@@ -1213,7 +1219,7 @@ extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
     const u32* src = (const u32*)lbl_eu_8052E294;
     w0 = src[0];
     w1 = src[1];
-    u32* dst = (u32*)((u8*)self + 0x3C);
+    u32* dst = ((EvTripView*)self)->field_0x3C;
     dst[1] = w1;
     dst[0] = w0;
     dst[2] = src[2];
@@ -1247,22 +1253,22 @@ extern "C" void CUICfManager_setTimeout30() {
     }
 }
 extern "C" void CUICfManager_setFlagState(int value) {
-    u8* base = (u8*)lbl_eu_80664054;
-    u8* reload;
+    CUICfManagerCreateView* base = (CUICfManagerCreateView*)lbl_eu_80664054;
+    CUICfManagerCreateView* reload;
     if (base == NULL) {
         return;
     }
     if (value != 0) {
-        base[0x149] = 1;
+        base->field_0x148[1] = 1;
     } else {
-        base[0x148] = 1;
+        base->field_0x148[0] = 1;
     }
-    reload = (u8*)lbl_eu_80664054;
-    *(u16*)(reload + 0xC90) = 0;
+    reload = (CUICfManagerCreateView*)lbl_eu_80664054;
+    reload->field_0xC90 = 0;
 }
 void* getPackedFont__Fv() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    return m == 0 ? 0 : (void*)((char*)m + 0x60);
+    return m == 0 ? 0 : reinterpret_cast<CUICfManagerCreateView*>(m)->field_0x60;
 }
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void* CUICfManager_getPackedFontD8() {
@@ -1349,7 +1355,7 @@ extern "C" int CUICfManager_hasInUseSlot() {
     }
     // Scan the init slots' unk04 flag for the "in use" value 4 (0x168 stride).
     // u8 counter: MWCC unrolls keeping li+mulli+lbzx per site (int folds to lbz).
-    CUICfSlotFlagView* slots = (CUICfSlotFlagView*)((u8*)inst + 0x14c);
+    CUICfSlotFlagView* slots = reinterpret_cast<CUICfManagerSlotView*>(inst)->slots;
     u8 i;
     for (i = 0; i < 8; i++) {
         if (slots[i].flag == 4) {
@@ -1455,7 +1461,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
                 capacity = inst->field_0x13C;
                 goto slot_check;
             slot_body:
-                if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+                if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
                     goto slot_found;
                 }
                 byteOff += 0xc;
@@ -1466,7 +1472,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
                 }
             slot_found:
                 {
-                    CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+                    CUICfListNode* temp = &inst->field_0x138[i];
                     u32* ptr = &temp->item;
                     if (ptr != 0) {
                         try {
@@ -2375,7 +2381,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2446,7 +2452,7 @@ extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2515,7 +2521,7 @@ u32 CUICfManager_queueOptionMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2570,7 +2576,7 @@ u32 CUICfManager_queueGetItemMenuById(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2625,7 +2631,7 @@ u32 CUICfManager_queueQuestLogMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2680,7 +2686,7 @@ u32 CUICfManager_queueBaseMenuItem() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2735,7 +2741,7 @@ u32 CUICfManager_queueTutorialListMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2800,7 +2806,7 @@ extern "C" u32 CUICfManager_queueEventMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2853,7 +2859,7 @@ slot_found:
     capacity = inst->field_13C;                                                \
     goto queue_check;                                                          \
 queue_body:                                                                    \
-    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {                        \
+    if (((_reslist_node<void*>*)inst->field_138 + i)->mNext == 0) {                        \
         goto queue_found;                                                      \
     }                                                                          \
     byteOff += 0xc;                                                            \
@@ -2863,7 +2869,7 @@ queue_check:                                                                   \
         goto queue_body;                                                       \
     }                                                                          \
 queue_found:                                                                   \
-    temp = (_reslist_node<void*>*)((u8*)inst->field_138 + i * 0xc);            \
+    temp = ((_reslist_node<void*>*)inst->field_138 + i);            \
     temp->setItem((void*)savedRet);                                            \
     temp->mNext = startNode;                                                   \
     temp->mPrev = startNode->mPrev;                                            \
@@ -2901,7 +2907,7 @@ u32 CUICfManager_queueSkipTimerMenu() {
     capacity = inst->field_13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2913,7 +2919,7 @@ slot_check:
 slot_found:
     {
         _reslist_node<void*>* temp =
-            (_reslist_node<void*>*)((u8*)inst->field_138 + i * 0xc);
+            (_reslist_node<void*>*)&((CUICfManagerCreateView*)inst)->field_0x138[i];
         void** ptr = &temp->mItem;
         if (ptr != 0) {
             try {
@@ -2959,7 +2965,7 @@ u32 CUICfManager_queuePauseItemMenu(CUICfManager* self, u32 arg1, u32 arg2) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3018,7 +3024,7 @@ u32 CUICfManager_queueFactoryMenu(u32 param) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3029,7 +3035,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        CUICfListNode* temp2 = &inst->field_0x138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3075,7 +3081,7 @@ u32 CUICfManager_queueShopBuyMenu(u32 param) {
     capacity = inst->field_13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3087,7 +3093,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3137,7 +3143,7 @@ u32 CUICfManager_queueShopSellMenu() {
     capacity = inst->field_13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3149,7 +3155,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3195,7 +3201,7 @@ u32 CUICfManager_queuePTStateMenu() {
     capacity = inst->field_13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3207,7 +3213,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3252,7 +3258,7 @@ u32 CUICfManager_queueMakeCrystalMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3264,7 +3270,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        CUICfListNode* temp2 = &inst->field_0x138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3309,7 +3315,7 @@ u32 CUICfManager_queueArtsSetMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3320,7 +3326,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        CUICfListNode* temp2 = &inst->field_0x138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3369,7 +3375,7 @@ u32 CUICfManager_queueMapSelectMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3381,7 +3387,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        CUICfListNode* temp2 = &inst->field_0x138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3429,7 +3435,7 @@ u32 CUICfManager_queueWorldMapMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3487,7 +3493,7 @@ u32 CUICfManager_queuePauseMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3541,7 +3547,7 @@ slot_found:
     capacity = inst->field_0x13C;                                              \
     goto slot_check;                                                           \
 slot_body:                                                                     \
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {                      \
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {                      \
         goto slot_found;                                                       \
     }                                                                          \
     byteOff += 0xc;                                                            \
@@ -3553,7 +3559,7 @@ slot_check:                                                                    \
 slot_found:                                                                    \
     {                                                                          \
         CUICfListNode* temp2 =                                                 \
-            (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);                \
+            &inst->field_0x138[i];                \
         u32* ptr = &temp2->item;                                               \
         if (ptr != 0) {                                                        \
             try {                                                              \
@@ -3598,7 +3604,7 @@ u32 CUICfManager_queueKizunagramMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3610,7 +3616,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        CUICfListNode* temp2 = &inst->field_0x138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3660,7 +3666,7 @@ u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3715,7 +3721,7 @@ u32 CUICfManager_openSaveMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3765,7 +3771,7 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
         if (inst == NULL) {
             reset = 0;
         } else {
-            reset = CUICfManager_claimFreeSlotByIndex((u8*)inst + 0x14c, (u8)a0);
+            reset = CUICfManager_claimFreeSlotByIndex(&inst->field_0x148[4], (u8)a0);
         }
         if (reset != 0) {
             return 0;
@@ -3787,7 +3793,7 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3843,7 +3849,7 @@ u32 CUICfManager_queueGameClearMenu() {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3898,7 +3904,7 @@ u32 CUICfManager_queueGCItemMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3953,7 +3959,7 @@ u32 CUICfManager_queueGetItemMenuNarrowed(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -4008,7 +4014,7 @@ u32 CUICfManager_queueMultiGetItemMenu(u32 arg) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -4065,7 +4071,7 @@ u32 CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y) {
     capacity = inst->field_0x13C;
     goto slot_check;
 slot_body:
-    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -4375,8 +4381,9 @@ void CUICfManager::onFileEventThunk() {
 // retail: lwz r3,lbl_eu_80664054; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
 // returns the process sub-object at +0x9C, or null when the process is absent.
 extern "C" void* CUICfManager_getPackedFont9C() {
-    if (lbl_eu_80664054 == 0) return 0;
-    return (u8*)lbl_eu_80664054 + 0x9C;
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    if (m == 0) return 0;
+    return m->getPackedFont9C();
 }
 
 // ---------------------------------------------------------------------------

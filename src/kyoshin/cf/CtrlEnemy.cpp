@@ -478,7 +478,7 @@ int CtrlEnemy_UnkFunc_80088800(cf::CtrlEnemy* self, ml::CVec3* out, u8* outFlag,
 
 extern f32 lbl_eu_80666590;
 extern "C" void cachedMoveReq(void* a, float f);
-extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq((char*)self + 132, lbl_eu_80666590); }
+extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq(((cf::CtrlEnemy*)self)->mSub84, lbl_eu_80666590); }
 
 void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway((char*)this + 0x84); }
 
@@ -528,11 +528,20 @@ extern "C" int CtrlEnemy_ret0_800888E8() { return 0; }
 extern "C" int CtrlEnemy_ret1_800888F4() { return 1; }
 extern "C" int CtrlEnemy_ret1_800888FC() { return 1; }
 
-extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { moveBaseSway((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { moveBaseRoute((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { moveBaseSway(((cf::CtrlEnemy*)self)->mSub84); }
+extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { moveBaseRoute(((cf::CtrlEnemy*)self)->mSub84); }
+extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd(((cf::CtrlEnemy*)self)->mSub84); }
+
+// Typed view of cf::CBattleManager's +0x84 flag word (real member at +0x84
+// in kyoshin/cf/CBattleManager.hpp). This TU only forward-declares
+// CBattleManager, so the view keeps the read typed without pulling the heavy
+// header (which could perturb inlining/codegen in this TU).
+struct CBattleManager84View {
+    u8 _pad00[0x84];               // 0x00-0x83 (vptr + lists)
+    u32 mFlags84;                  // 0x84 (flag word)
+};
 
 extern "C" int CBattleManager_CheckUnk84Flag(u8* self, u32 mask) {
-    return (*(u32*)((char*)self + 0x84) & mask) != 0;
+    return (((CBattleManager84View*)self)->mFlags84 & mask) != 0;
 }
 

@@ -57,14 +57,15 @@ u32 scnImN4GetWord4AC(u8* self) { return *(u32*)((u8*)self + 0x4ac); }
 extern "C" u32  scnImN4GetEffAct(u8* self) { return *(u32*)((u8*)self + 0x14c0); }
 
 extern "C" void scnImN4SetShadFlg(u8* self) {
-    *(u16*)((u8*)self + 0x17FA) |= 1;
-    *(u16*)((u8*)self + 0x181A) |= 1;
+    CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
+    m->shadowNodes[0].field_0x1E |= 1;
+    m->shadowNodes[1].field_0x1E |= 1;
 }
 
-void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic((u8*)self + 0x17a0); }
+void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic(((CScnItemModelNw4r*)self)->field_0x17A0); }
 
 void MdlDyn_AddVecAll(u8* self);
-void scnImN4DynStop(u8* self) { ((void(*)(void*))MdlDyn_AddVecAll)((char*)self + 0x17a0); }
+void scnImN4DynStop(u8* self) { ((void(*)(void*))MdlDyn_AddVecAll)(((CScnItemModelNw4r*)self)->field_0x17A0); }
 
 // scnImN4RefreshVis: refresh per-node visibility for this model's node table.
 // The +0x7A4 bit-30 (with bit-16 clear) enables the pass, further gated on
@@ -167,12 +168,12 @@ extern "C" void  scnImN4SetTevSwap(CScnItemModelNw4r* self, u32 enable) {
 }
 
 extern "C" void MdlMouthSetMode(u8* self);
-extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))MdlMouthSetMode)((char*)self + 0x1700); }
+extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))MdlMouthSetMode)(((CScnItemModelNw4r*)self)->field_0x1700); }
 
 extern "C" void MdlMouthSetValue(u8* self);
-extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))MdlMouthSetValue)((char*)self + 0x1700); }
+extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))MdlMouthSetValue)(((CScnItemModelNw4r*)self)->field_0x1700); }
 
-extern "C" u32  scnImN4GetMouth08(u8* self) { return *(u32*)((u8*)self + 0x1708); }
+extern "C" u32  scnImN4GetMouth08(u8* self) { return *(u32*)&((CScnItemModelNw4r*)self)->field_0x1700[8]; }
 
 // scnImN4FwdEyeAnim: forward `param` to the chain-last node's vtable-0x64
 // handler (when linked), then to the +0x1770 eye-anim state machine.
@@ -215,9 +216,10 @@ struct VTarget {
 };
 
 extern "C" void*  scnImN4GetChainV24(u8* self) {
-    void* obj = *(void**)((u8*)self + 0x7C4);
+    CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
+    void* obj = m->field_0x7C4;
     if (obj != 0) return ((VTarget*)obj)->v24();
-    return *(void**)((u8*)self + 0x179C);
+    return (void*)m->field_0x1770.value2C;
 }
 
 // Shared tail of scnImN4UpdateVis's flag-dispatch (retail inlines it three times):
@@ -430,8 +432,9 @@ void scnImN4PushXform(CScnItemModelNw4r* self) {
 }
 
 extern "C" u32 scnImN4HasAttach(u8* self) {
+    CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
     u32 r = 0;
-    if (*(u32*)((u8*)self + 0x7C8) != 0 || *(u32*)((u8*)self + 0x854) != 0 || (*(u32*)((u8*)self + 0x7A8) & 0x800)) {
+    if (m->field_0x7C8 != 0 || m->field_854 != 0 || (m->field_0x7A8 & 0x800)) {
         r = 1;
     }
     return r;
@@ -810,7 +813,7 @@ void scnImN4NotifyMat(CScnItemModelNw4r* self, u32 param, CScnItemModelNw4r* oth
 }
 
 extern "C" void applyCullByGroup(u8* self);
-extern "C" void scnImN4MatFn(u8* self) { ((void(*)(void*))applyCullByGroup)((char*)self + 0x16c8); }
+extern "C" void scnImN4MatFn(u8* self) { ((void(*)(void*))applyCullByGroup)((u8*)&((CScnItemModelNw4r*)self)->field_0x16C8); }
 
 // scnImN4OnMatArg: like scnImN4OnMatAct, but the chain notify carries an argument.
 extern "C" void  scnImN4OnMatArg(CScnItemModelNw4r* self, u32 param) {
@@ -1498,6 +1501,14 @@ CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
     return (CScnItemModelNw4r*)((CScnItemModelNw4rVtbl*)model)->v40();
 }
 
+// Act-data transform at +0x1F8 viewed by scnImN4LinkList2 (CScnItemModel's
+// field_0x1F8; CScnItemModelNw4r only mirrors that prefix, so the slot is
+// addressed through this view instead of the base member).
+struct CScnItemModelNw4rActView {
+    u8 _00[0x1F8];
+    ml::CAttrTransform act;  // 0x1F8
+};
+
 // scnImN4LinkList2: link `other` into this model's second reference list
 // (slots834) and push its scene object into the +0x1480 ScnMdlExpand group
 // at `priority`. When `mtx` is present, its matrix is copied into the
@@ -1518,11 +1529,11 @@ extern "C" bool  scnImN4LinkList2(CScnItemModelNw4r* self, CScnItemModelNw4r* ot
         (nw4r::g3d::ScnMdlExpand*)self->field_0x1480, scnObj, priority);
     if (pushed) {
         if (mtx != 0) {
-            ((ml::CAttrTransform*)((u8*)other + 0x1F8))->mMtx1 = *mtx;
-            ((ml::CAttrTransform*)((u8*)other + 0x1F8))->mFlags |=
+            ((CScnItemModelNw4rActView*)other)->act.mMtx1 = *mtx;
+            ((CScnItemModelNw4rActView*)other)->act.mFlags |=
                 ml::CAttrTransform::FLAG_0;
         } else {
-            ((ml::CAttrTransform*)((u8*)other + 0x1F8))->clear();
+            ((CScnItemModelNw4rActView*)other)->act.clear();
         }
         for (u32 i = 0; i < 4; i++) {
             if (self->slots834[i] == 0) {
@@ -1558,7 +1569,7 @@ extern "C" u32  scnImN4FwdByName(CScnItemModelNw4r* self, u32 param,
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
     }
     return ((CScnItemModelNw4rVtbl*)self)->v46(
-        param, node.ptr() != 0 ? *(u32*)((char*)node.ptr() + 12) : 0, arg6);
+        param, node.GetID(), arg6);
 }
 
 // scnImN4UnlinkOth: unlink `other` from this model. Returns false while the
@@ -1936,11 +1947,20 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
     simSetAndPropRate(self, param);
 }
 
+// +0x7EC maru-shadow pointer slot viewed by scnImN4SetMaruPtr (the header
+// leaves 0x7E4..0x7F0 as padding; the value stored is the +0x1650
+// sub-object, addressed through the class member).
+struct CScnItemModelNw4rMaruPtrView {
+    u8 _00[0x7EC];
+    void* maruPtr;  // 0x7EC
+};
+
 extern "C" void  scnImN4SetMaruPtr(u8* self, u32 mode) {
+    CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
     if ((s32)mode == 1) {
-        *(void**)((u8*)self + 0x7EC) = (u8*)self + 0x1650;
+        ((CScnItemModelNw4rMaruPtrView*)m)->maruPtr = m->field_0x1650;
     } else {
-        *(void**)((u8*)self + 0x7EC) = 0;
+        ((CScnItemModelNw4rMaruPtrView*)m)->maruPtr = 0;
     }
 }
 
@@ -2275,7 +2295,7 @@ extern "C" void  scnImN4SetNodeVis(CScnItemModelNw4r* self, u32 index, u32 value
                                   .GetResNode(entries[index].field_0);
     if (node.ptr() != 0) {
         CScnItemModel824Entry* entry =
-            &((CScnItemModel824Entry*)self->member824.field_0)[index];
+            ((CScnItemModel824Entry*)self->member824.field_0) + index;
         volatile u16* flagsPtr = &entry->flags;
         if (value ^ ((*flagsPtr >> 3) & 1)) {
             if (value != 0) {
@@ -2297,13 +2317,13 @@ extern "C" u32  scnImN4GetHidByIx(CScnItemModelNw4r* self, u32 index) {
         return 1;
     }
     CScnItemModel824Entry* entry =
-        &((CScnItemModel824Entry*)self->member824.field_0)[index];
+        ((CScnItemModel824Entry*)self->member824.field_0) + index;
     nw4r::g3d::ResNode node =
         nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(entry->field_0);
     if (node.ptr() != 0) {
-        return (((CScnItemModel824Entry*)self->member824.field_0)[index].flags >>
+        return (((((CScnItemModel824Entry*)self->member824.field_0) + index)->flags >>
                 3) &
-               1;
+               1);
     }
     return 0;
 }
@@ -2455,7 +2475,7 @@ extern "C" int  scnImN4NodeIdByNm(const CScnItemModelNw4r* self, const char* nam
 }
 
 extern "C" void scn80496FindChrAnm(u8* self);
-extern "C" void scnImN4AnimFn(u8* self) { ((void(*)(void*))scn80496FindChrAnm)((char*)self + 0xc); }
+extern "C" void scnImN4AnimFn(u8* self) { ((void(*)(void*))scn80496FindChrAnm)(((CScnItemModelNw4r*)self)->field_0xC); }
 
 // scnImN4SyncVisFlg: model-visible flag sync. Syncs the +0x7A4 bit-21 flag to
 // `param` (simSetFlag200000), then - when the "action" combination (bit 21 |
@@ -3258,7 +3278,7 @@ extern "C" void scnImN4StampShadNd(CScnItemModelNw4r* self, const char* name,
     if (node.ptr() == 0) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
     }
-    s32 nodeId = node.ptr() != 0 ? *(u32*)((char*)node.ptr() + 12) : 0;
+    s32 nodeId = node.GetID();
     for (int i = 0; i < 2; i++) {
         if (nodeId == (s16)self->shadowNodes[i].id) {
             f32 base = lbl_eu_8066A8F8;

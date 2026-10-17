@@ -63,9 +63,11 @@ struct CfActorAccessors {
     void* GetField30();
 };
 
-// Wrapper for CfObjectPc fields at 0x45C4+
+// Wrapper for CfObjectPc fields at 0x45C0+
 struct CfObjectPcExt {
-    u8 pad[0x45C4];
+    u8 pad[0x45C0];
+    /* 0x45C0 */ u16 mField45C0;
+    u8 pad_45C2[2];
     /* 0x45C4 */ u16 mField45C4;
     /* 0x45C6 */ u16 mField45C6;
     /* 0x45C8 */ u16 mField45C8;

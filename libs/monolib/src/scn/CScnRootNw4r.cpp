@@ -10,7 +10,25 @@
 
 extern "C" u32 lbl_eu_8056E768[23];  // CScnRootNw4r vtable group (.data, below)
 
-void* RootNw4r_Ptr44C(u8* self) { return (void*)((u8*)self + 0x44c); }
+// Fixed-offset words/blocks reached through an untyped object base
+// (RootNw4r_Ptr44C/45C/SelPtr46C/47C/Ptr49C, RootNw4r_GetField14). Only the
+// starts are significant; spans are explicit pads.
+struct CScnRootNw4rOffView {
+    u8 pad_0x00[0x14];
+    u32 word_0x14;                 // +0x14 (RootNw4r_GetField14)
+    u8 pad_0x18[0x44C - 0x18];
+    u8 block_0x44C[0x10];          // +0x44C
+    u8 block_0x45C[0x10];          // +0x45C
+    u8 block_0x46C[0x10];          // +0x46C
+    u8 block_0x47C[0x20];          // +0x47C
+    u8 block_0x49C[4];             // +0x49C word group start
+    u8 pad_0x4A0[0x4C4 - 0x4A0];
+    u32 word_0x4C4;                // +0x4C4 (RootNw4r_SelPtr46C gate)
+    u8 pad_0x4C8[0x4D0 - 0x4C8];
+    u32 word_0x4D0;                // +0x4D0 (RootNw4r_SelPtr47C gate)
+};
+
+void* RootNw4r_Ptr44C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x44C; }
 
 // us-804933ac: complete destructor. Restores both retail vptrs by hand
 // (primary + IScnObjCallback secondary at +0xC), drains every remaining
@@ -67,20 +85,20 @@ CScnRootNw4r::~CScnRootNw4r() {
 }
 
 
-extern "C" void* RootNw4r_Ptr45C(u8* self) { return (void*)((u8*)self + 0x45c); }
+extern "C" void* RootNw4r_Ptr45C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x45C; }
 
 
 extern "C" void* RootNw4r_SelPtr46C(u8* self) {
-    if (*(u32*)((u8*)self + 0x4C4) == 0xFFFFFFFF) return (u8*)self + 0x44C;
-    return (u8*)self + 0x46C;
+    if (((CScnRootNw4rOffView*)self)->word_0x4C4 == 0xFFFFFFFF) return ((CScnRootNw4rOffView*)self)->block_0x44C;
+    return ((CScnRootNw4rOffView*)self)->block_0x46C;
 }
 
 extern "C" void* RootNw4r_SelPtr47C(u8* self) {
-    if (*(u32*)((u8*)self + 0x4D0) == 0xFFFFFFFF) return (u8*)self + 0x44C;
-    return (u8*)self + 0x47C;
+    if (((CScnRootNw4rOffView*)self)->word_0x4D0 == 0xFFFFFFFF) return ((CScnRootNw4rOffView*)self)->block_0x44C;
+    return ((CScnRootNw4rOffView*)self)->block_0x47C;
 }
 
-extern "C" void* RootNw4r_Ptr49C(u8* self) { return (void*)((u8*)self + 0x49c); }
+extern "C" void* RootNw4r_Ptr49C(u8* self) { return ((CScnRootNw4rOffView*)self)->block_0x49C; }
 
 // us-80493ea8: allocate `size` bytes from the scene-root allocator.
 // Falls back to the MEM2 region when the current region cannot hold size*2.
@@ -144,7 +162,7 @@ extern "C" void RootNw4r_RemovePair(CScnRootNw4r* self, u32 a, s32 b) {
     }
 }
 
-extern "C" u32 RootNw4r_GetField14(u8* self) { return *(u32*)((u8*)self + 0x14); }
+extern "C" u32 RootNw4r_GetField14(u8* self) { return ((CScnRootNw4rOffView*)self)->word_0x14; }
 
 // us-804940b4: return the +0x4B8 alloc handle, creating it lazily through
 // the virtual at vtable+0x2C when it is still invalid (-1).

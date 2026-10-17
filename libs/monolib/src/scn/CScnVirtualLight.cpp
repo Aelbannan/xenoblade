@@ -898,24 +898,24 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
         count = (int)scnVlGetCount((void*)data);
         base = scnVlSlotAt((void*)data, 0);
         f31v = lbl_eu_8066AA74;
-        dst = (CLight*)((u8*)base + count * 64);
+        dst = (CLight*)base + count;
         i = 0;
         j = 0;
         while (true) {
-            if (((u32*)self->mExtraAlloc)[j] != 0) {
-                if (scnVlTestArmed((CScnVirtualLightData*)((u32*)self->mExtraAlloc)[j]) != 0 &&
-                    scnVlTestFlags((CScnVirtualLightData*)((u32*)self->mExtraAlloc)[j],
+            if (self->mExtraAlloc[j] != 0) {
+                if (scnVlTestArmed((CScnVirtualLightData*)self->mExtraAlloc[j]) != 0 &&
+                    scnVlTestFlags((CScnVirtualLightData*)self->mExtraAlloc[j],
                                   (u32)step) != 0 &&
                     count < 8) {
                     noopAnimVec3(&v8);
                     scnVlVecSub((Vec*)scnVlGetPad04(
-                                      (void*)((u32*)self->mExtraAlloc)[j]),
+                                      (void*)self->mExtraAlloc[j]),
                                   (Vec*)&v8, (const Vec*)vec);
                     f32 dist2 = cfCam_vecLenSq(&v8);
                     f32 range = f1 + scnVlGetRange(
-                                         (void*)((u32*)self->mExtraAlloc)[j]);
+                                         (void*)self->mExtraAlloc[j]);
                     if (range * range >= dist2) {
-                        LightCtlCopyObj(dst, ((u32*)self->mExtraAlloc)[j]);
+                        LightCtlCopyObj(dst, self->mExtraAlloc[j]);
                         f32 scaled = f31v * range;
                         if (scaled * scaled < dist2) {
                             LightCtlScaleColor(dst, (range - safeFSqrt(dist2)) /
@@ -923,7 +923,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
                         } else {
                             LightCtlScaleColor(dst, lbl_eu_8066AA18);
                         }
-                        dst = (CLight*)((u8*)dst + 0x40);
+                        dst++;
                         count++;
                     }
                 }

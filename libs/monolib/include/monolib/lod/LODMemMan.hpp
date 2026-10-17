@@ -94,10 +94,10 @@ public:
     void setArchiveReadyFlag();
     void driveArchiveLoadState();
 private:
-    u8  _00[0x7c];                    // unknown leading fields
-    f32 mFloat_7C;                    // offset 0x7c
-    u8  _80[0xabc - 0x80];            // unknown padding
-    UnkClass_8046A530 mSubObject;     // offset 0xabc (embedded sub-object)
+    u8  _00[0x7c];                    // unknown leading fields /* 0x00 */
+    f32 mFloat_7C;                    // 0x7C
+    u8  _80[0xabc - 0x80];            // unknown padding /* 0x80 */
+    UnkClass_8046A530 mSubObject;     // 0xABC (embedded sub-object)
 };
 
 } // namespace LOD

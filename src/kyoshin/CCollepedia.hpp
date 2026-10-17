@@ -105,17 +105,17 @@ struct CLPPageInfo {
 
 
 
-// CCollepedia is a non-virtual class in the decomp (layout is flat, no vtable ptr).
-// Virtual destructor semantics are handled by __dt__<addr> thunks.
-// The vtable pointer is stored at +0x00 as a regular field.
-// CCollepedia is a non-virtual class in the decomp (layout is flat, no vtable ptr).
-// Virtual destructor semantics are handled by __dt__<addr> thunks.
-// The vtable pointer is stored at +0x00 as a regular field.
-//
-// NOTE: offset 0x0C is used as both a 4-byte state machine (via individual byte
-// stores in state functions) and as a pointer in some rendering functions.
-// The struct exposes it as a pointer; state functions access individual bytes
-// via reinterpret_cast.
+// nw4r offset views (forbidden headers: views live here, not TU-local, for -ipa line stability).
+struct CLPLytRootView { // layout root-pane view (clpCalcCurPos)
+    u8 pad_00[0x10];
+    nw4r::lyt::Pane* rootPane; // +0x10
+};
+struct CLPPanePosView { // pane position view (clpInitLayout/clpSetPageVis)
+    u8 pad_00[0x2C];
+    f32 pos[3]; // +0x2C position triple
+};
+// NOTE: +0x00 vtable-ptr field, dtors via __dt__ thunks; +0x0C doubles as state bytes/AnimTransform*.
+// (flat non-virtual layout; see field_0/field_c_ptr.)
 struct CCollepedia {
     /* 0x00 */ int field_0; // vtable ptr (set by ctor)
     /* 0x04 */ nw4r::lyt::Layout* field_4;

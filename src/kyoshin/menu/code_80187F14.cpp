@@ -40,6 +40,15 @@ extern "C" s32 setStreamPanVolume__7CLibCriFv(s32, void*, s32, float, float, flo
 extern "C" void getInstance__7CLibCriFv();
 extern "C" s32 isSceneActive__Q22cf13CfGameManagerFv();
 
+// Shared name buffers (lbl_eu_80575798/BC): s32-typed words holding a
+// NUL-terminated string with its length stored as the s32 at index 8
+// (byte offset 32). Member access compiles to the same byte store as the
+// previous ((char *)lbl)[0] idiom.
+struct SndNameBuf {
+    char name[32];
+    s32 len; // +0x20 == s32 index 8
+};
+
 struct SoundSlot {
     s32 handle;              // 0x00
     char name[0x40];         // 0x04
@@ -80,7 +89,7 @@ struct SoundSlotTmp {
 static inline SoundSlot* sptr(s32 i) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + i * 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + i;
     else s = nullptr;
     return s;
 }
@@ -125,7 +134,7 @@ void MenuSnd_ResetFadeTargetB_9C7C() { lbl_eu_806642E4 = lbl_eu_80667A18; }
 s32 MenuSnd_IsSlotFree_9BF4(s32 index) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
     if (s != nullptr) {
         // Boolean-ize (handle == -1) so MWCC emits the addi/cntlzw/srwi idiom.
@@ -137,7 +146,7 @@ s32 MenuSnd_IsSlotFree_9BF4(s32 index) {
 s32 MenuSnd_IsSlotLive_892C(s32 index) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
     s32 result = 0;
     // (u32) compare: 0xFFFFFFFF cannot fit a signed 16-bit immediate, so MWCC
@@ -152,7 +161,7 @@ s32 MenuSnd_IsSlotLive_892C(s32 index) {
 s32 MenuSnd_SetSlotPan_9C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     SoundSlot* s;
     s32* b = lbl_eu_80663E60;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
     if (s == nullptr) return (s32)s;  // 0 - reuse the register so MWCC folds beq+{blr} into beqlr
     return setStreamPanVolume__7CLibCriFv(s->handle, pos, val, f1, f2, f3);
@@ -163,7 +172,7 @@ s32 MenuSnd_SetSlotPan_9C40(s32 index, f32* pos, s32 val, float f1, float f2, fl
 void MenuSnd_StopSlot1_9424(float vol) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + 1;
     else s = nullptr;
     if (s != nullptr) MenuSnd_StopSlot_882AC(s, vol, 2);
 }
@@ -174,7 +183,7 @@ void MenuSnd_StopAllSlots_8774(SoundSlot* slot) {
         // Volume is the global (reloaded every iteration - the call may
         // clobber it, which is why retail keeps the lfs inside the loop).
         MenuSnd_StopSlot_882AC(s, lbl_eu_80667A08, 2);
-        s = (SoundSlot*)((u8*)s + 0xB8);
+        s = s + 1;
     }
 }
 
@@ -209,7 +218,7 @@ void MenuSnd_StopSlot0Clear_9318(s32 clearName, float vol) {
     if (s != nullptr) MenuSnd_StopSlot_882AC(s, vol, 2);
     if (clearName != 0) {
         if (lbl_eu_80575798[8] != 0) {
-            ((char*)lbl_eu_80575798)[0] = '\0';
+            ((SndNameBuf*)lbl_eu_80575798)->name[0] = '\0';
             lbl_eu_80575798[8] = 0;
         }
     }
@@ -225,7 +234,7 @@ void MenuSnd_StopSlot0Store_9390(const char* name) {
         lbl_eu_80575798[8] = strlen(name);
         strcpy((char*)lbl_eu_80575798, name);
     } else {
-        ((char*)lbl_eu_80575798)[0] = '\0';
+        ((SndNameBuf*)lbl_eu_80575798)->name[0] = '\0';
         lbl_eu_80575798[8] = 0;
     }
 }
@@ -542,7 +551,7 @@ void* __dt__801886EC(SoundSlot* _this, int flags) {
         SoundSlot* s;
         for (i = 0, s = _this; i < 5u; i++) {
             MenuSnd_StopSlot_882AC(s, lbl_eu_80667A08, 2);
-            s = (SoundSlot*)((u8*)s + 0xB8);
+            s = s + 1;
         }
         if (flags > 0) {
             operator delete(_this);
@@ -1069,7 +1078,7 @@ void MenuSnd_PushSlotVolume_896C(s32 index, u32 type, float f1, float f2) {
     else vol = lbl_eu_80662498;
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
+    if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
     if (s != nullptr) MenuSnd_SetSlotVolume_88488(s, type, f1, vol, f2);
 }

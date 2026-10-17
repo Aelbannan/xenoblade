@@ -163,17 +163,16 @@ void VoiceManager::FreeVoice(Voice* pVoice) {
 
     BOOL enabled2 = OSDisableInterrupts();
 
-    // Compute node pointer using retail offset (0x11C within Voice)
-    ut::LinkListNode* pNode = reinterpret_cast<ut::LinkListNode*>(
-        reinterpret_cast<u8*>(pVoice) + 0x11C);
+    // Voice node lives at 0x11C within Voice (VoiceLayout mirror above).
+    ut::LinkListNode* pNode =
+        &reinterpret_cast<VoiceLayout*>(pVoice)->node;
 
     // Erase from priority list
     reinterpret_cast<LinkListImplAccess*>(&mPrioVoiceList)->Erase(pNode);
 
-    // Insert at back of free list (before sentinel node)
-    ut::LinkListNode* pSentinel = reinterpret_cast<ut::LinkListNode*>(
-        reinterpret_cast<u8*>(&mFreeVoiceList) + 0x4);
-    ut::detail::LinkListImpl::Iterator it(pSentinel);
+    // Insert at back of free list (before the list end iterator).
+    ut::detail::LinkListImpl::Iterator it =
+        reinterpret_cast<LinkListImplAccess*>(&mFreeVoiceList)->GetEndIter();
     reinterpret_cast<LinkListImplAccess*>(&mFreeVoiceList)->Insert(it, pNode);
 
     OSRestoreInterrupts(enabled2);
@@ -195,8 +194,8 @@ void VoiceManager::UpdateAllVoices() {
     while (pNode != pEnd) {
         ut::LinkListNode* pCurr = pNode;
         pNode = pNode->GetNext();
-        reinterpret_cast<Voice*>(
-            reinterpret_cast<u8*>(pCurr) - 0x11C)->StopFinished();
+        ToVoice(VoiceLayoutList::GetPointerFromNode(pCurr))
+            ->StopFinished();
     }
 
     // Second pass: Calc on all voices
@@ -206,8 +205,8 @@ void VoiceManager::UpdateAllVoices() {
     while (pNode != pEnd) {
         ut::LinkListNode* pCurr = pNode;
         pNode = pNode->GetNext();
-        reinterpret_cast<Voice*>(
-            reinterpret_cast<u8*>(pCurr) - 0x11C)->Calc();
+        ToVoice(VoiceLayoutList::GetPointerFromNode(pCurr))
+            ->Calc();
     }
 
     // Third pass: Update on all voices with interrupts disabled
@@ -224,8 +223,8 @@ void VoiceManager::UpdateAllVoices() {
         while (pUpdNode != pUpdEnd) {
             ut::LinkListNode* pCurr = pUpdNode;
             pUpdNode = pUpdNode->GetNext();
-            reinterpret_cast<Voice*>(
-                reinterpret_cast<u8*>(pCurr) - 0x11C)->Update();
+            ToVoice(VoiceLayoutList::GetPointerFromNode(pCurr))
+                ->Update();
         }
 
         OSRestoreInterrupts(enabled);
@@ -243,7 +242,7 @@ void VoiceManager::NotifyVoiceUpdate() {
     while (pNode != pEnd) {
         ut::LinkListNode* pCurr = pNode;
         pNode = pNode->GetNext();
-        reinterpret_cast<Voice*>(reinterpret_cast<u8*>(pCurr) - 0x11C)
+        ToVoice(VoiceLayoutList::GetPointerFromNode(pCurr))
             ->ResetDelta();
     }
 

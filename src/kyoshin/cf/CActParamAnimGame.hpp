@@ -157,11 +157,11 @@ struct CActParamAnimGameView {
     ml::CVec3 ground3B4;             // 0x3B4 ground-probe ref
     ml::CVec3 vel3C0;                // 0x3C0 velocity
     ml::CVec3 face3CC;               // 0x3CC facing dir
-    ml::CVec3 vec3D4;                // 0x3D4 accel dir
     ml::CVec3 hit3D8;                // 0x3D8 hit pos
     ml::CVec3 tgt3E4;                // 0x3E4 target pos
     ml::CVec3 move3F0;               // 0x3F0 move vec
-    u8 _3FC[0x444 - 0x3FC];
+    f32 f3FC;                        // 0x3FC
+    u8 _400[0x444 - 0x400];
     f32 f444;                        // 0x444 facing fidx
     f32 f448;                        // 0x448 normalized speed
     u8 _44C[0x47C - 0x44C];
@@ -176,7 +176,7 @@ struct CActParamAnimGameView {
     CActParamAnimGameLink* link4E8;  // 0x4E8 region/link pointer
     u32 flags4EC;                    // 0x4EC
     u32 flags4F0;                    // 0x4F0 snapshot
-    u8 _4F4[0x4F8 - 0x4F4];
+    CActParamAnimGameLink* link4F4;  // 0x4F4 second link slot
     f32 f4F8;                        // 0x4F8 air timer
     f32 f4FC;                        // 0x4FC ground height
     f32 f500;                        // 0x500
@@ -190,26 +190,27 @@ struct CActParamAnimGameView {
     ml::CVec3 probe520;              // 0x520 probe step vec
     s32 state52C;                    // 0x52C move state
     volatile u16 flags530;           // 0x530
+    u16 state532;                    // 0x532
+    u16 state534;                    // 0x534
+    u16 state536;                    // 0x536
+    u16 state538;                    // 0x538
 };
 
 } // namespace cf
 
-// Opaque object stored at the actor's +0x8 slot; its +0x4 word holds gate
-// flag bits consumed by isActionReady.
+// Opaque object stored at the actor's +0x8 slot; its +0x4 word holds gate flag bits consumed by isActionReady.
 struct CActParamAnimGameOwner {
     u32 _00;
     u32 flags04;
 };
 
-// Game-manager list container returned by getGimmickListHead; the +0x4 word is
-// the list head/sentinel walked by func_8005DB1C.
+// Game-manager list container returned by getGimmickListHead; the +0x4 word is the list head/sentinel walked by func_8005DB1C.
 struct CActParamAnimGameMgr {
     u8 _00[4];
     u32 head;  // +0x4
 };
 
-// Node of the manager list: +0x0 next pointer, +0x8 payload id fed to
-// MapFx_ResolveOwner.
+// Node of the manager list: +0x0 next pointer, +0x8 payload id fed to MapFx_ResolveOwner.
 struct CActParamAnimGameListNode {
     u32 next;      // +0x0
     u8 _04[4];
@@ -217,8 +218,7 @@ struct CActParamAnimGameListNode {
 };
 
 // Retail data symbols (global scope: variable names are not mangled).
-// const-qualified so MWCC treats the sdata2 loads as constants and schedules
-// them at retail's hoisted position (see MWCC_CASES SDA-const hoist).
+// const-qualified so MWCC treats the sdata2 loads as constants and schedules them at retail's hoisted position (see MWCC_CASES SDA-const hoist).
 extern const float lbl_eu_80666040;   // sdata2: 0.0f (field_4F8 initializer)
 extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 initializer)
 extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer

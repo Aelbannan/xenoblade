@@ -307,10 +307,10 @@ void tryActivateItemBox(CItemBoxInfo* info) {
 }
 
 u32 isItemBoxType9Flagged(void* arg) {
-    u32 v = *(u32*)arg;
+    u32 v = ((CItemData*)arg)->field_00;
     u32 result = 0;
     if (((v >> 16) & 0xF) == 9) {
-        u32 flags = ((u8*)arg)[7];
+        u32 flags = ((CItemData*)arg)->field_07;
         if ((flags & 3) == 3u) {
             result = 1;
         }
@@ -358,15 +358,33 @@ void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
 
 void func_80127BD8(void*, float*);
 
+// TU-local cast-only views (CItemBoxInfo.hpp is shared, so these live here):
+// - CItemBoxVecTable: the info+0xB0 table (the header keeps the raw _B0 u8
+//   view): 12 s16 ids followed by twelve 3-float VEC3 slots at +0x18.
+// - CItemBoxCharEntryView: the CtrlObjectParam_GetCharEntry record; the
+//   equip-slot ids are the s16[6] at +0x1C (cf. CtrlObjectParamEquipRow::
+//   shortArr in cf/CtrlObjectParam.hpp; shortArr[5] sits at +0x26), and the
+//   counter/arts area at +0x3534 feeds Counter_TestBit/IdTable_SumValues.
+struct CItemBoxVecTable {
+    s16 ids[12];       // +0x00 twelve slot ids
+    float vecs[12][3]; // +0x18 twelve VEC3 slots
+};
+struct CItemBoxCharEntryView {
+    u8 _00[0x1C];
+    s16 slotIds[6];        // +0x1C..+0x27 equipped-item ids by slot
+    u8 _28[0x3534 - 0x28];
+    u8 counterArea[0x8A0]; // +0x3534 counter/arts storage
+};
+
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
 void initItemBoxVecTable(void* sub) {
     float f = lbl_eu_8066800C;
     for (u8 i = 0; i < 12; i++) {
-        ((s16*)sub)[i] = 0;
+        ((CItemBoxVecTable*)sub)->ids[i] = 0;
         float temp[3] = {f, f, f};
-        copyVEC3((u8*)sub + i * 0xC + 0x18, temp);
+        copyVEC3(((CItemBoxVecTable*)sub)->vecs[i], temp);
     }
 }
 #pragma pop
@@ -4135,9 +4153,9 @@ void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
 }
 
 void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
-    *(u16*)self = a;
-    *(u32*)((u8*)self + 4) = b;
-    *(u8*)((u8*)self + 8) = c;
+    self->itemId = a;
+    self->value = b;
+    self->state = c;
 }
 
 s32 calcItemBoxBonus1(void* a, void* b, s32 arg2, void* d) {
@@ -4293,12 +4311,12 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
     // block at 0x1C..0x24 (retail load order).
-    ids[0] = *(s16*)((u8*)lookup + 0x26);
-    ids[1] = *(s16*)((u8*)lookup + 0x1C);
-    ids[2] = *(s16*)((u8*)lookup + 0x1E);
-    ids[3] = *(s16*)((u8*)lookup + 0x20);
-    ids[4] = *(s16*)((u8*)lookup + 0x22);
-    ids[5] = *(s16*)((u8*)lookup + 0x24);
+    ids[0] = ((CItemBoxCharEntryView*)lookup)->slotIds[5];
+    ids[1] = ((CItemBoxCharEntryView*)lookup)->slotIds[0];
+    ids[2] = ((CItemBoxCharEntryView*)lookup)->slotIds[1];
+    ids[3] = ((CItemBoxCharEntryView*)lookup)->slotIds[2];
+    ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
+    ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
     CItemBoxSlotBytes bytes;
     bytes.ab.a = lbl_eu_80668054;
@@ -4311,7 +4329,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
         s16 id = ids[(u8)i];
         if (id == -1) continue;
         void* item = CItem_kindPtr(bytes.bytes[(u8)i], id);
-        if (item == NULL || *(u32*)item == 0) continue;
+        if (item == NULL || ((CItemData*)item)->field_00 == 0) continue;
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         u8 count = inst->vf30((CItemData*)item);
         for (u32 j = 0; (u8)j < count; j++) {
@@ -4319,7 +4337,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
             s16 v = inst2->vf40((CItemData*)item, (u8)j);
             if (v == -1) continue;
             void* r = CItem_kindPtr(3, v);
-            if (r == NULL || *(u32*)r == 0) continue;
+            if (r == NULL || ((CItemData*)r)->field_00 == 0) continue;
             if (r == candidate) {
                 candidate = NULL;
                 found = 1;
@@ -4335,7 +4353,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
         if (id == -1) continue;
         u8 slotB = bytes.bytes[(u8)i];
         void* item = CItem_kindPtr(slotB, id);
-        if (item == NULL || *(u32*)item == 0) continue;
+        if (item == NULL || ((CItemData*)item)->field_00 == 0) continue;
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         u8 count = inst->vf30((CItemData*)item);
         for (u32 j = 0; (u8)j < count; j++) {
@@ -4351,7 +4369,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
                 s16 v = instC->vf40((CItemData*)item, (u8)j);
                 if (v != -1) {
                     void* r = CItem_kindPtr(3, v);
-                    if (r != NULL && *(u32*)r != 0) {
+                    if (r != NULL && ((CItemData*)r)->field_00 != 0) {
                         CItemImpl* instD = CItem_initItemImplInstances((CItemData*)r);
                         u16 cat2 = instD->vf54((CItemData*)r);
                         if (category == (u32)cat2) {
@@ -4397,7 +4415,7 @@ u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2) {
     // highest saved register); the result=0 init lands before the call.
     void* obj;
     u32 result = 0;
-    obj = (u8*)CtrlObjectParam_GetCharEntry(arg1) + 0x3534;
+    obj = ((CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry(arg1))->counterArea;
     if (Counter_TestBit(obj, arg2) != 0) {
         result = IdTable_SumValues(obj, arg2);
     }
@@ -4421,7 +4439,7 @@ u32 testItemBoxBdatFlag(CItemBoxInfo* dummy, u32 arg1, void* arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
     u32 g = (u32)lbl_eu_806640F8;
-    u8 result = BdatGetU8Direct(g, buf, (u16)BdatGetItemId(*(u32*)arg2 >> 20));
+    u8 result = BdatGetU8Direct(g, buf, (u16)BdatGetItemId(((CItemData*)arg2)->field_00 >> 20));
     return result != 0;
 }
 #pragma pop
@@ -4437,17 +4455,17 @@ u32 sumItemBoxTypeCounts(CItemBoxInfo* global, u16 arg2, void* arg3) {
         if (ii == v1) continue;
         s16 val = -1;
         switch (ii) {
-            case 4: val = *(s16*)((u8*)lookup + 0x1C); break;
-            case 5: val = *(s16*)((u8*)lookup + 0x1E); break;
-            case 6: val = *(s16*)((u8*)lookup + 0x20); break;
-            case 7: val = *(s16*)((u8*)lookup + 0x22); break;
-            case 8: val = *(s16*)((u8*)lookup + 0x24); break;
+            case 4: val = ((CItemBoxCharEntryView*)lookup)->slotIds[0]; break;
+            case 5: val = ((CItemBoxCharEntryView*)lookup)->slotIds[1]; break;
+            case 6: val = ((CItemBoxCharEntryView*)lookup)->slotIds[2]; break;
+            case 7: val = ((CItemBoxCharEntryView*)lookup)->slotIds[3]; break;
+            case 8: val = ((CItemBoxCharEntryView*)lookup)->slotIds[4]; break;
         }
         if (val == -1) continue;
         // Retail passes the slot id (u8)i and the slot value val (2-arg form).
         void* r = CItem_kindPtr((u8)i, val);
         if (r == NULL) continue;
-        u32 v = *(u32*)r;
+        u32 v = ((CItemData*)r)->field_00;
         if (v == 0) continue;
         result += (u8)BdatGetU8Direct((u32)g, (char*)&lbl_eu_805063BC[0x1e2], BdatGetItemId(v >> 20));
     }
@@ -4462,12 +4480,12 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
     // block at 0x1C..0x24 (retail load order).
-    ids[0] = *(s16*)((u8*)lookup + 0x26);
-    ids[1] = *(s16*)((u8*)lookup + 0x1C);
-    ids[2] = *(s16*)((u8*)lookup + 0x1E);
-    ids[3] = *(s16*)((u8*)lookup + 0x20);
-    ids[4] = *(s16*)((u8*)lookup + 0x22);
-    ids[5] = *(s16*)((u8*)lookup + 0x24);
+    ids[0] = ((CItemBoxCharEntryView*)lookup)->slotIds[5];
+    ids[1] = ((CItemBoxCharEntryView*)lookup)->slotIds[0];
+    ids[2] = ((CItemBoxCharEntryView*)lookup)->slotIds[1];
+    ids[3] = ((CItemBoxCharEntryView*)lookup)->slotIds[2];
+    ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
+    ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
     bytes.ab.a = lbl_eu_8066805C;
     bytes.ab.b = lbl_eu_80668060;
@@ -4478,8 +4496,8 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
             // Retail passes (slot, id): id already sits in r4 from the lhax,
             // so MWCC reuses it as the second argument (2-arg form).
             void* item = CItem_kindPtr(slot, id);
-            if (arg3 != NULL && slot == (s32)((*(u32*)arg3 >> 16) & 0xF)) item = arg3;
-            if (item != NULL && *(u32*)item != 0) {
+            if (arg3 != NULL && slot == (s32)((((CItemData*)arg3)->field_00 >> 16) & 0xF)) item = arg3;
+            if (item != NULL && ((CItemData*)item)->field_00 != 0) {
                 CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
                 u8 count = inst->vf30((CItemData*)item);
                 for (u8 j = 0; j < count; j++) {
@@ -4487,7 +4505,7 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
                     s16 v = inst2->vf40((CItemData*)item, j);
                     if (v != -1) {
                         void* r = CItem_kindPtr(3, v);
-                        if (r != NULL && *(u32*)r != 0) return 0;
+                        if (r != NULL && ((CItemData*)r)->field_00 != 0) return 0;
                     } else {
                         CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
                         CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst3->vf2C((CItemData*)item, j);
@@ -4500,8 +4518,8 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
                 // item defaults to NULL; retail places the init after the
                 // arg3 guard and only overwrites it on a category match.
                 void* item = NULL;
-                if (bytes.bytes[i] == (s32)((*(u32*)arg3 >> 16) & 0xF)) item = arg3;
-                if (item != NULL && *(u32*)item != 0) {
+                if (bytes.bytes[i] == (s32)((((CItemData*)arg3)->field_00 >> 16) & 0xF)) item = arg3;
+                if (item != NULL && ((CItemData*)item)->field_00 != 0) {
                     CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
                     u8 count = inst->vf30((CItemData*)item);
                     for (u8 j = 0; j < count; j++) {
@@ -4509,7 +4527,7 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
                         s16 v = inst2->vf40((CItemData*)item, j);
                         if (v != -1) {
                             void* r = CItem_kindPtr(3, v);
-                            if (r != NULL && *(u32*)r != 0) return 0;
+                            if (r != NULL && ((CItemData*)r)->field_00 != 0) return 0;
                         } else {
                             CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
                             CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst3->vf2C((CItemData*)item, j);
@@ -6455,9 +6473,9 @@ void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
 }
 
 void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
-    *(unsigned short*)self = a;
-    *(unsigned int*)((u8*)self + 4) = b;
-    *(unsigned char*)((u8*)self + 8) = c;
+    self->itemId = a;
+    self->value = b;
+    self->state = c;
 }
 extern const u32 lbl_eu_8066806C;
 extern const u8 lbl_eu_80668070;
@@ -7794,17 +7812,17 @@ u32 sumItemBox2TypeCounts(void* global, u16 arg2, void* arg3) {
         if (ii == v1) continue;
         s16 val = -1;
         switch (ii) {
-            case 4: val = *(s16*)((u8*)lookup + 0x1C); break;
-            case 5: val = *(s16*)((u8*)lookup + 0x1E); break;
-            case 6: val = *(s16*)((u8*)lookup + 0x20); break;
-            case 7: val = *(s16*)((u8*)lookup + 0x22); break;
-            case 8: val = *(s16*)((u8*)lookup + 0x24); break;
+            case 4: val = ((CItemBoxCharEntryView*)lookup)->slotIds[0]; break;
+            case 5: val = ((CItemBoxCharEntryView*)lookup)->slotIds[1]; break;
+            case 6: val = ((CItemBoxCharEntryView*)lookup)->slotIds[2]; break;
+            case 7: val = ((CItemBoxCharEntryView*)lookup)->slotIds[3]; break;
+            case 8: val = ((CItemBoxCharEntryView*)lookup)->slotIds[4]; break;
         }
         if (val == -1) continue;
         // Retail passes the slot id (u8)i and the slot value val (2-arg form).
         void* r = CItem_kindPtr((u8)i, val);
         if (r == NULL) continue;
-        u32 v = *(u32*)r;
+        u32 v = ((CItemData*)r)->field_00;
         if (v == 0) continue;
         result += (u8)BdatGetU8Direct((u32)g, (char*)&lbl_eu_805063BC[0x1e2], BdatGetItemId(v >> 20));
     }

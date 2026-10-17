@@ -1269,12 +1269,15 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         # then exact value match. This handles mangled decomp names and address shifts.
         dm = decomp_by_name.get(rf.name)
         if dm is None:
-            # Substring match (case-insensitive)
-            lowered = rf.name.lower()
-            for f in decomp_fn:
-                if lowered in f.name.lower():
-                    dm = f
-                    break
+            # Reuse the --symbol resolver (exact -> case-insensitive -> substring
+            # -> Itanium length-prefix digit-strip) so retail short names
+            # (`__ct__CNumSelect`) pair with decomp full manglings
+            # (`__ct__10CNumSelectFUc`). The plain-substring arm matches the old
+            # behavior; digit-strip is the new fallback that prevents an
+            # incorrect address-based pairing.
+            cands = _resolve_candidates(decomp_fn, rf.name)
+            if cands:
+                dm = cands[0]
         if dm is None:
             dm = decomp_by_value.get(rf.value)
         if dm is None:

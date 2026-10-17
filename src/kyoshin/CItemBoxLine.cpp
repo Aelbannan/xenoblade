@@ -44,11 +44,11 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 // sub-system (info2 state, num-select, scrollbar, syswin) reports active/ready.
 // ============================================================================
 u8 ItemBoxLine_GetSelectReady(void* self) {
-    unsigned char* p = (unsigned char*)self;
-    if (getItemBox2State__FP13CItemBoxInfo2(p + 0xd0) == 0) return 0;
-    if (NumSel_GetField2D_B018(p + 0x2dc) == 0) return 0;
-    if (CScrollBar_isVisible(p + 0x310) == 0) return 0;
-    if (CSysWin_isReady(p + 0x350) != 0) return p[0x58];
+    CItemBoxLine* p = (CItemBoxLine*)self;
+    if (getItemBox2State__FP13CItemBoxInfo2(p->mInfo2D0) == 0) return 0;
+    if (NumSel_GetField2D_B018(&p->mNumSel) == 0) return 0;
+    if (CScrollBar_isVisible(p->mScrollBar310) == 0) return 0;
+    if (CSysWin_isReady(&p->mSysWin) != 0) return p->field58;
     return 0;
 }
 
@@ -57,33 +57,33 @@ u8 ItemBoxLine_GetSelectReady(void* self) {
 // advance the item-box state machine, refresh scrollbar, and beep if armed.
 // ============================================================================
 void ItemBoxLine_LeaveState3(void* self) {
-    unsigned char* p = (unsigned char*)self;
-    if (*(int*)(p + 0x50) != 3) return;
-    *(unsigned int*)(p + 0x50) = 4;
-    p[0x59] = 0;
-    Cur_SetVisible(p + 0xb8, 0);
-    Cur_SetVisible(p + 0x70, 0);
-    Cur_SetVisible(p + 0xa0, 0);
-    advanceItemBox2State__FP13CItemBoxInfo2(p + 0xd0);
-    CScrollBar_requestScrollOut(p + 0x310);
-    if (!p[0x39e]) playUISound__FUl(6);
+    CItemBoxLine* p = (CItemBoxLine*)self;
+    if (p->field50 != 3) return;
+    p->field50 = 4;
+    p->unk59 = 0;
+    Cur_SetVisible(&p->mCurB8, 0);
+    Cur_SetVisible(&p->mCur70, 0);
+    Cur_SetVisible(&p->mCurA0, 0);
+    advanceItemBox2State__FP13CItemBoxInfo2(p->mInfo2D0);
+    CScrollBar_requestScrollOut(p->mScrollBar310);
+    if (!p->unk39E) playUISound__FUl(6);
 }
 
 // ============================================================================
 // ItemBoxLine_RefreshTabSelect: invoke the tab-left selection refresh if nothing is busy.
 // ============================================================================
 void ItemBoxLine_RefreshTabSelect(void* self) {
-    unsigned char* p = (unsigned char*)self;
-    if (*(short*)(p + 0x38c) == -1) return;
-    if (NumSel_GetActiveFlag_B020(p + 0x2dc)) return;
-    if (CSysWin_getUnk34(p + 0x350)) return;
-    if (p[0x3a0]) return;
-    *(short*)(p + 0x38c) = -1;
-    *(short*)(p + 0x38e) = 0;
+    CItemBoxLine* p = (CItemBoxLine*)self;
+    if (p->unk38C == -1) return;
+    if (NumSel_GetActiveFlag_B020(&p->mNumSel)) return;
+    if (CSysWin_getUnk34(&p->mSysWin)) return;
+    if (p->field3A0) return;
+    p->unk38C = -1;
+    p->unk38E = 0;
     ItemBoxLine_RefreshLineRows(self);
     ItemBoxLine_RefreshTabPanes(self);
     ItemBoxLine_RefreshPageList(self);
-    CScrollBar_PlaceThumb(p + 0x310, *(unsigned short*)(p + 0x38e));
+    CScrollBar_PlaceThumb(p->mScrollBar310, (u16)p->unk38E);
     playUISound__FUl(2);
 }
 
@@ -759,7 +759,7 @@ void CItemBoxLine::ItemBoxLine_PushTabByte(unsigned char val) {
     if (n >= 9) {
         return;
     }
-    *((unsigned char*)this + n + 0x5a) = val;
+    tabEntries[n] = val;
     reinterpret_cast<unsigned char*>(this)[0x63] = n + 1;
 }
 
@@ -1355,7 +1355,7 @@ void CItemBoxLine::ItemBoxLine_TouchTabEntryItem() {
     ItemBoxLine_GetTabEntryItem(&unk3A4, (unsigned char)(unk38C + unk38E));
 }
 
-void ItemBoxLine_ResetCursorB8(void* self) { ((void(*)(void*))Cur_ShowTwoSubPanes)((char*)self + 0xb8); }
+void ItemBoxLine_ResetCursorB8(void* self) { ((void(*)(void*))Cur_ShowTwoSubPanes)(&static_cast<CItemBoxLine*>(self)->mCurB8); }
 
 // ============================================================================
 // ItemBoxLine_Info2SelectPrev: step the tab cursor down one slot (wrap to count-1 when it
@@ -1381,16 +1381,16 @@ void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self) {
 // refresh the whole line and beep.
 // ============================================================================
 void ItemBoxLine_Info2SelectNext(void* self) {
-    unsigned char* p = (unsigned char*)self;
+    CItemBoxLine* p = (CItemBoxLine*)self;
     unsigned char maxPos = code80135FDC_getByte_64077();
-    unsigned char n = (unsigned char)(p[0x39f] + 1);
-    p[0x39f] = n;
+    unsigned char n = (unsigned char)(p->field39F + 1);
+    p->field39F = n;
     if ((signed char)n >= (int)maxPos) {
-        p[0x39f] = 0;
+        p->field39F = 0;
     }
     unsigned char tmp[16];
-    calcItemBox2PaneVec(tmp, p + 0xd0, p[0x39f]);
-    ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+    calcItemBox2PaneVec(tmp, p->mInfo2D0, p->field39F);
+    ((CBaseCur*)&p->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     ItemBoxLine_RefreshLineState(self);
     playUISound__FUl(0xa);
 }
@@ -1468,9 +1468,9 @@ void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
 // ============================================================================
 u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self) {
     if (self->field50 >= 6) return 0;
-    if (NumSel_GetActiveFlag_B020((char*)self + 0x2dc)) return 0;
-    if (CSysWin_getUnk34((char*)self + 0x350)) return 0;
-    if (Cur_BothSubPanesOn((CBaseCur*)((char*)self + 0xb8))) return 0xa;
+    if (NumSel_GetActiveFlag_B020(&self->mNumSel)) return 0;
+    if (CSysWin_getUnk34(&self->mSysWin)) return 0;
+    if (Cur_BothSubPanesOn(&self->mCurB8)) return 0xa;
     bool flag = code80135FDC_getByte_64077() > 1;
     if (self->field3A0 != 0) return 0xb;
     if (self->unk38C == -1) {
@@ -1536,8 +1536,8 @@ void ItemBoxLine_EnterState3(CItemBoxLine* self) {
     if (AnimRewindFrame(self->field44, lbl_eu_80668114) != 0) {
         self->unk59 = 1;
         self->field50 = 0;
-        Cur_SetVisible((u8*)self + 0x70, 0);
-        Cur_SetVisible((u8*)self + 0xa0, 0);
+        Cur_SetVisible(&self->mCur70, 0);
+        Cur_SetVisible(&self->mCurA0, 0);
         self->field4C = 0;
     }
 }
@@ -1938,9 +1938,9 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
             self->field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
         AccumPaneWorldPos(&pos, pane);
-        void* refPane =
+        nw4r::lyt::Pane* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
-        pos.x *= *(f32*)((u8*)refPane + 68);
+        pos.x *= refPane->GetScale().x;
         ((CBaseCur*)&self->mCurA0)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         Cur_SetVisible(&self->mCurA0, 1);
         Cur_SetVisible(&self->mCur70, 0);
@@ -1951,9 +1951,9 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
             self->field40->GetRootPane()->FindPaneByName(name, true);
         nw4r::math::VEC3 pos;
         AccumPaneWorldPos(&pos, pane);
-        void* refPane =
+        nw4r::lyt::Pane* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
-        pos.x *= *(f32*)((u8*)refPane + 68);
+        pos.x *= refPane->GetScale().x;
         ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         Cur_SetVisible(&self->mCur70, 1);
         Cur_SetVisible(&self->mCurA0, 0);

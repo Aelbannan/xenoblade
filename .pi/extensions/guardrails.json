@@ -14,6 +14,16 @@
       {
         "kind": "directory",
         "path": "~/projects/mwcc-wii-1.1"
+      },
+      {
+        "kind": "directory",
+        "path": "~/projects/xenoblade-recomp",
+        "description": "Sibling Xenoblade co-op recomp project (DolRecomp + ModernGekko scaffold)"
+      },
+      {
+        "kind": "file",
+        "path": "~/Downloads/Xenoblade Chronicles (USA Asia) (EnFrEs).zip",
+        "description": "User-provided disc image archive, for DOL/title-id/hash verification only"
       }
     ]
   },

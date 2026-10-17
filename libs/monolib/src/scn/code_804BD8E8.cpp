@@ -691,10 +691,10 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
-    u32 sel = *(u16*)((u8*)entries[index].field_0x18 + 0x12);
+    u32* table = ((u32**)lbl_eu_8065F32C)[10];
+    u32 sel = ((u16*)entries[index].field_0x18)[9];
     if (table[sel] & mask) {
-        *dst = *(u8*)((char*)&table[sel + 1] + offset);
+        *dst = ((u8*)&table[sel + 1])[offset];
         return 1;
     }
     return 0;
@@ -710,9 +710,9 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
     s32 count = lbl_eu_80665988;
     if (count != 0) {
         ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
-        u32* table = *(u32**)(lbl_eu_8065F32C + 40);
+        u32* table = ((u32**)lbl_eu_8065F32C)[10];
         for (; count > 0; --count) {
-            u32 sel = *(u16*)((u8*)p->field_0x18 + 0x12);
+            u32 sel = ((u16*)p->field_0x18)[9];
             if (flags & table[sel]) {
                 return 1;
             }
@@ -730,8 +730,8 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
 extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    u32* table = *(u32**)(lbl_eu_8065F32C + 40);
-    u32 sel = *(u16*)((u8*)entries[index].field_0x18 + 0x12);
+    u32* table = ((u32**)lbl_eu_8065F32C)[10];
+    u32 sel = ((u16*)entries[index].field_0x18)[9];
     return (flags & table[sel]) != 0 ? 1 : 0;
 }
 #pragma pop

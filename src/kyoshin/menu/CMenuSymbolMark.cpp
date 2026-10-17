@@ -533,8 +533,8 @@ cont:
     // Raw-storage DrawInfo built/destroyed via the pre-mangled ct/dt calls
     // (a C++ local would inline the empty ctor and virtual-dispatch the dtor).
     u8 drawInfo[0x54];
-    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo);
+    SetWideLocAdjust((nw4r::lyt::DrawInfo*)drawInfo);
     for (u32 i = 0; i < 16; i++) {
         if ((u8)i >= mEntryCount) {
             break;
@@ -542,10 +542,10 @@ cont:
         SymbolMarkEntry& entry = mEntries[(u8)i];
         if (entry.flag0 != 0) {
             drawLayout((nw4r::lyt::Layout*)entry.layout,
-                          (nw4r::lyt::DrawInfo*)&drawInfo[0], entry.flag2, 1);
+                          (nw4r::lyt::DrawInfo*)drawInfo, entry.flag2, 1);
         }
     }
-    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo, -1);
 }
 
 // ---------- SymMark_Create ----------
@@ -774,7 +774,7 @@ extern "C" void SymMark_RebuildEntryBuf(CMenuSymbolMark* self) {
         if (func_80138574(archive, id) == 0) {
             continue;
         }
-        if ((u8)BdatGetU8Direct((u32)archive, names + 0x96, id) == 0) {
+        if ((u8)BdatGetU8Direct((u32)archive, &names[0x96], id) == 0) {
             continue;
         }
         u32 n = self->mField_498;

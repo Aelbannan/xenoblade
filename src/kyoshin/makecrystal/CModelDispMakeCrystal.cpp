@@ -858,9 +858,9 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 // now use the owning class directly.)
 
 void CModelDispMakeCrystal::initCrystalSubStruct() {
-    *(unsigned long*)this = 0;
-    *(unsigned long*)((char*)this + 4) = 0;
-    ((unsigned char*)this)[8] = 0;
+    ((CMCrySubBuf*)this)->field_00 = 0;
+    ((CMCrySubBuf*)this)->field_04 = 0;
+    ((CMCrySubBuf*)this)->field_08 = 0;
 }
 
 // Retail 0x8021E348: constructor - builds the inline CActParamAnimGame at
@@ -3829,24 +3829,28 @@ int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
     return (state < 0x12) ? 0x3b : 0;
 }
 
+// Anim-callback slot: buffered ids at +0x10/+0x14 (+0x08 is address-taken
+// embedded data, still formed raw). Per-statement use only.
+struct MCCryAnimSlot { u8 _00[0x10]; u32 id10; u32 id14; };
+
 // Release a registered anim callback by id: if the id matches the buffered
 // object (+0x10 / +0x14), flush it with the anim wrapper (+0x8, or the object
 // itself when null) and clear the slot.
 void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
 {
-    u32 e1 = *reinterpret_cast<u32*>((u8*)obj + 0x10);
+    u32 e1 = ((MCCryAnimSlot*)obj)->id10;
     if (id == e1) {
         void* arg = obj;
         if (obj) arg = (u8*)obj + 8;
         schedDetachChildSlot(reinterpret_cast<void*>(e1), arg);
-        *reinterpret_cast<u32*>((u8*)obj + 0x10) = 0;
+        ((MCCryAnimSlot*)obj)->id10 = 0;
     } else {
-        u32 e2 = *reinterpret_cast<u32*>((u8*)obj + 0x14);
+        u32 e2 = ((MCCryAnimSlot*)obj)->id14;
         if (id == e2) {
             void* arg = obj;
             if (obj) arg = (u8*)obj + 8;
             schedDetachChildSlot(reinterpret_cast<void*>(e2), arg);
-            *reinterpret_cast<u32*>((u8*)obj + 0x14) = 0;
+            ((MCCryAnimSlot*)obj)->id14 = 0;
         }
     }
 }

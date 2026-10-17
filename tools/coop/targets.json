@@ -4770,8 +4770,8 @@
       "size": "0x1C",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -4782,8 +4782,6 @@
       "source": "src/kyoshin/plugin/ocUnit.cpp",
       "instruction_match": 96.714,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -15750,8 +15748,8 @@
       "size": "0x1C",
       "unit": "kyoshin/plugin/pluginCfs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -15762,8 +15760,6 @@
       "source": "src/kyoshin/plugin/pluginCfs.cpp",
       "instruction_match": 97.571,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -19686,8 +19682,8 @@
       "size": "0x30",
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -27125,8 +27121,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/CActParamAnimGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -27137,8 +27133,6 @@
       "source": "src/kyoshin/cf/CActParamAnimGame.cpp",
       "instruction_match": 53.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -35896,8 +35890,8 @@
       "size": "0x64",
       "unit": "kyoshin/cf/IResInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -35909,8 +35903,6 @@
       "claim": null,
       "instruction_match": 76.64,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -38193,8 +38185,8 @@
       "size": "0x38",
       "unit": "kyoshin/cf/CfTFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -38206,8 +38198,6 @@
       "claim": null,
       "instruction_match": 78.214,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -43270,8 +43260,8 @@
       "size": "0x24",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -43283,9 +43273,7 @@
       "claim": null,
       "instruction_match": 96.222,
       "source_present": false,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80072180",
@@ -46273,8 +46261,8 @@
       "size": "0x54",
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -46980,9 +46968,9 @@
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Meyer-style BSS singleton; s8 guard lbl_eu_80663E70; storage lbl_eu_80571758; __register_global_object + ctor/dtor",
-      "status": "EQUIVALENT_MATCH",
+      "status": "CODE_MATCH",
       "instruction_match": 98.2,
-      "workflow_status": "ACCEPTED",
+      "workflow_status": "REVALIDATION_REQUIRED",
       "called_functions": [
         "us-8007ce54",
         "us-802bc10c"
@@ -46993,8 +46981,6 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGameManager.s",
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -51504,8 +51490,8 @@
       "size": "0xE4",
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -63085,8 +63071,8 @@
       "size": "0x78",
       "unit": "kyoshin/cf/CtrlObjectParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -63097,8 +63083,6 @@
       "source": "src/kyoshin/cf/CtrlObjectParam.cpp",
       "instruction_match": 98.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -63526,8 +63510,8 @@
       "size": "0x14",
       "unit": "kyoshin/cf/CtrlObjectParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -63538,8 +63522,6 @@
       "source": "src/kyoshin/cf/CtrlObjectParam.cpp",
       "instruction_match": 96.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -69694,8 +69676,8 @@
       "size": "0x10",
       "unit": "kyoshin/cf/object/CfObjectColl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -69706,8 +69688,6 @@
       "source": "src/kyoshin/cf/object/CfObjectColl.cpp",
       "instruction_match": 97.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -70213,8 +70193,8 @@
       "size": "0x120",
       "unit": "kyoshin/cf/object/CfObjectEff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -70224,8 +70204,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 25.0,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-800ad258",
@@ -70314,8 +70295,8 @@
       "size": "0x20",
       "unit": "kyoshin/cf/object/CfObjectEff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -70325,8 +70306,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 37.5,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-800ad3d4",
@@ -70339,8 +70321,8 @@
       "size": "0x9C",
       "unit": "kyoshin/cf/object/CfObjectEff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -70350,8 +70332,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 28.2,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-800ad470",
@@ -78989,8 +78972,8 @@
       "size": "0x24",
       "unit": "kyoshin/code_800B06A4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -79001,8 +78984,6 @@
       "source": "src/kyoshin/code_800B06A4.cpp",
       "instruction_match": 73.889,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -86450,8 +86431,8 @@
       "size": "0x30",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -86463,8 +86444,6 @@
       "claim": null,
       "instruction_match": 60.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -105655,8 +105634,8 @@
       "size": "0x3C",
       "unit": "kyoshin/CMiniMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -105667,9 +105646,7 @@
       "source": "src/kyoshin/CMiniMap.cpp",
       "source_present": false,
       "instruction_match": 98.0,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801184f4",
@@ -128286,8 +128263,8 @@
       "size": "0x60",
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -128298,8 +128275,6 @@
       "source": "src/kyoshin/cf/CItem.cpp",
       "instruction_match": 54.125,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -133131,8 +133106,8 @@
       "size": "0x1C",
       "unit": "kyoshin/cf/CCharEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -133143,8 +133118,6 @@
       "source": "src/kyoshin/cf/CCharEffect.cpp",
       "instruction_match": 62.143,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -140349,8 +140322,8 @@
       "size": "0x20",
       "unit": "kyoshin/cf/CfResReloadImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -140361,8 +140334,6 @@
       "source": "src/kyoshin/cf/CfResReloadImpl.cpp",
       "instruction_match": 88.625,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -141936,8 +141907,8 @@
       "size": "0x34",
       "unit": "kyoshin/cf/CfMapEffectManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -141948,8 +141919,6 @@
       "source": "src/kyoshin/cf/CfMapEffectManager.cpp",
       "instruction_match": 79.231,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -142118,8 +142087,8 @@
       "size": "0x110",
       "unit": "kyoshin/cf/object/CfObjectActor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CfObjectActor.cpp",
       "called_functions": [
@@ -142132,8 +142101,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectActor.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 85.3,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80172ab4",
@@ -142146,8 +142116,8 @@
       "size": "0xB0",
       "unit": "kyoshin/cf/object/CfObjectActor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CfObjectActor.cpp",
       "called_functions": [
@@ -142159,8 +142129,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectActor.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 77.3,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80172b64",
@@ -144263,8 +144234,8 @@
       "size": "0x2A8",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [
@@ -144320,8 +144291,8 @@
       "size": "0x95C",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [
@@ -144987,8 +144958,8 @@
       "size": "0xDC",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [],
@@ -145012,8 +144983,8 @@
       "size": "0xDC",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [],
@@ -145253,8 +145224,8 @@
       "size": "0x54",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [],
@@ -151739,8 +151710,8 @@
       "size": "0x34",
       "unit": "kyoshin/menu/CMenuShopSell",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -151751,9 +151722,7 @@
       "source": "src/kyoshin/menu/CMenuShopSell.cpp",
       "source_present": true,
       "instruction_match": 81.077,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8018c6e4",
@@ -155362,8 +155331,8 @@
       "size": "0x1C",
       "unit": "kyoshin/menu/CMenuPTState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -155374,8 +155343,6 @@
       "source": "src/kyoshin/menu/CMenuPTState.cpp",
       "instruction_match": 98.571,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -155966,8 +155933,8 @@
       "size": "0x54",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -155978,9 +155945,7 @@
       "source": "src/kyoshin/cf/CPartsChange.cpp",
       "source_present": true,
       "instruction_match": 98.333,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80195220",
@@ -157559,8 +157524,8 @@
       "size": "0x5C",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -157571,8 +157536,6 @@
       "source": "src/kyoshin/cf/CPartsChange.cpp",
       "instruction_match": 99.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -159996,8 +159959,8 @@
       "size": "0x34",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [
@@ -160010,8 +159973,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.615,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -162279,8 +162240,8 @@
       "size": "0x4C",
       "unit": "kyoshin/code_801A929C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -162291,8 +162252,6 @@
       "source": "src/kyoshin/code_801A929C.cpp",
       "instruction_match": 91.053,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -164120,8 +164079,8 @@
       "size": "0x80",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164132,8 +164091,6 @@
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
       "instruction_match": 54.938,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -164200,8 +164157,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164212,8 +164169,6 @@
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
       "instruction_match": 86.045,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -164253,8 +164208,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164265,8 +164220,6 @@
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
       "instruction_match": 82.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -164280,8 +164233,8 @@
       "size": "0x44",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164292,8 +164245,6 @@
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
       "instruction_match": 76.176,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -170329,8 +170280,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -170341,8 +170292,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -171001,8 +170950,8 @@
       "size": "0x84",
       "unit": "kyoshin/realtimeevt/CREvtLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350cd0"
@@ -171014,8 +170963,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtLight.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 39.4,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-801c5214",
@@ -171111,8 +171061,8 @@
       "size": "0x1F0",
       "unit": "kyoshin/CBgTex",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CBgTex.cpp",
       "called_functions": [
@@ -171133,9 +171083,10 @@
       "callgraph_source": "build/us/asm/kyoshin/CBgTex.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
+      "instruction_match": 89.5,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-801c55d8",
@@ -171148,8 +171099,8 @@
       "size": "0x140",
       "unit": "kyoshin/CBgTex",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CBgTex.cpp",
       "called_functions": [
@@ -171163,9 +171114,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CBgTex.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 83.8,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-801c5718",
@@ -174821,8 +174773,8 @@
       "size": "0x20",
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -178482,8 +178434,8 @@
       "size": "0x24",
       "unit": "kyoshin/CSortMenu",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -178495,8 +178447,6 @@
       "claim": null,
       "instruction_match": 90.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -180383,8 +180333,8 @@
       "size": "0x2C",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -180396,8 +180346,6 @@
       "claim": null,
       "instruction_match": 90.455,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -188136,8 +188084,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/CfResTboxImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -188149,8 +188097,6 @@
       "claim": null,
       "instruction_match": 94.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -194618,8 +194564,8 @@
       "size": "0x14",
       "unit": "kyoshin/CEquipChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -194630,8 +194576,6 @@
       "source": "src/kyoshin/CEquipChange.cpp",
       "instruction_match": 57.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -200447,8 +200391,8 @@
       "size": "0x30",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -200460,8 +200404,6 @@
       "claim": null,
       "instruction_match": 89.167,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -200551,8 +200493,8 @@
       "size": "0x28",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -200564,8 +200506,6 @@
       "claim": null,
       "instruction_match": 90.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -201705,8 +201645,8 @@
       "size": "0x30",
       "unit": "kyoshin/makecrystal/CMCCrystalBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -201717,8 +201657,6 @@
       "source": "src/kyoshin/makecrystal/CMCCrystalBox.cpp",
       "instruction_match": 99.167,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -202957,8 +202895,8 @@
       "size": "0x1C",
       "unit": "kyoshin/makecrystal/CMCCrystalBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -202969,8 +202907,6 @@
       "source": "src/kyoshin/makecrystal/CMCCrystalBox.cpp",
       "instruction_match": 68.429,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -204139,8 +204075,8 @@
       "size": "0x2C",
       "unit": "kyoshin/makecrystal/CMCCrystalInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -204152,8 +204088,6 @@
       "claim": null,
       "instruction_match": 90.273,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -206869,8 +206803,8 @@
       "size": "0x5C",
       "unit": "kyoshin/makecrystal/CModelDispMakeCrystal",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bce4",
@@ -206883,9 +206817,10 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CModelDispMakeCrystal.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp",
-      "instruction_match": 100.0,
+      "instruction_match": 10.7,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80223c78",
@@ -211222,8 +211157,8 @@
       "size": "0x2C",
       "unit": "kyoshin/menu/CMenuQstCnt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -211235,8 +211170,6 @@
       "claim": null,
       "instruction_match": 78.545,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -212021,8 +211954,8 @@
       "size": "0x1C",
       "unit": "kyoshin/menu/CMenuQstCnt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -212034,8 +211967,6 @@
       "claim": null,
       "instruction_match": 75.714,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -222817,8 +222748,8 @@
       "size": "0x38",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -222829,8 +222760,6 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "instruction_match": 92.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -228322,8 +228251,8 @@
       "size": "0x6C",
       "unit": "kyoshin/CFloorMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -228374,8 +228303,8 @@
       "size": "0x64",
       "unit": "kyoshin/CFloorMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8022d6e0"
@@ -228477,8 +228406,8 @@
       "size": "0x58",
       "unit": "kyoshin/CFloorMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8022d6e0"
@@ -230907,8 +230836,8 @@
       "size": "0x18",
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -230920,8 +230849,6 @@
       "claim": null,
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -231010,8 +230937,8 @@
       "size": "0x48",
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -231023,8 +230950,6 @@
       "claim": null,
       "instruction_match": 98.611,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": false
     },
     {
@@ -234607,8 +234532,8 @@
       "size": "0x94",
       "unit": "kyoshin/CKizunagram",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137ea4"
@@ -234620,8 +234545,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CKizunagram.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 62.2,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-8025e528",
@@ -248507,8 +248433,8 @@
       "size": "0x5C",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -248520,8 +248446,6 @@
       "claim": null,
       "instruction_match": 59.174,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -258488,8 +258412,8 @@
       "size": "0xC0",
       "unit": "kyoshin/CSaveLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8022d6e0",
@@ -258503,8 +258427,6 @@
       "source": "src/kyoshin/CSaveLoad.cpp",
       "instruction_match": 0.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -271268,8 +271190,8 @@
       "size": "0x28C",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6378",
@@ -271283,8 +271205,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 23.3,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-802a7438",
@@ -274883,8 +274806,8 @@
       "size": "0x170",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6378",
@@ -274898,8 +274821,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 90.2,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-802ae1a8",
@@ -278581,8 +278505,8 @@
       "size": "0x1D4",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -278601,8 +278525,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 99.1,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-802b26c4",
@@ -278642,8 +278567,8 @@
       "size": "0x424",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6378",
@@ -278658,8 +278583,9 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-802b2b5c",
@@ -279886,8 +279812,8 @@
       "size": "0x34",
       "unit": "kyoshin/cf/CfHikariItemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -279898,9 +279824,7 @@
       "source": "src/kyoshin/cf/CfHikariItemManager.cpp",
       "source_present": true,
       "instruction_match": 96.538,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b61c0",
@@ -286922,8 +286846,8 @@
       "size": "0x28",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io.c",
       "called_functions": [],
@@ -286935,8 +286859,6 @@
       "instruction_match": 97.5,
       "equivalence_status": "equivalent",
       "declared_return": "void",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -301072,8 +300994,8 @@
       "size": "0xEC",
       "unit": "RVL_SDK/src/revolution/bte/hci/uusb_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dde30",
@@ -301091,8 +301013,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c",
       "instruction_match": 97.881,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -301231,8 +301151,8 @@
       "size": "0x20C",
       "unit": "RVL_SDK/src/revolution/bte/hci/uusb_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -301255,8 +301175,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c",
       "instruction_match": 99.237,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -301965,8 +301883,8 @@
       "size": "0xA0",
       "unit": "RVL_SDK/src/revolution/bte/bta/sys/bd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -301977,8 +301895,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/bta/sys/bd.c",
       "instruction_match": 93.8,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -303101,8 +303017,8 @@
       "size": "0x88",
       "unit": "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802e144c",
@@ -303114,9 +303030,10 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c",
-      "instruction_match": 100.0,
+      "instruction_match": 47.1,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-802e2504",
@@ -306130,8 +306047,8 @@
       "size": "0x8C",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_acl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -306142,8 +306059,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c",
       "instruction_match": 99.429,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -306294,8 +306209,8 @@
       "size": "0x9C",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_acl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c1250"
@@ -306308,8 +306223,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c",
       "instruction_match": 97.179,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -306438,8 +306351,8 @@
       "size": "0x44",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_acl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -306452,8 +306365,6 @@
       "instruction_match": 89.412,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -308076,8 +307987,8 @@
       "size": "0x108",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dde30",
@@ -308093,8 +308004,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 99.848,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -309326,8 +309235,8 @@
       "size": "0x70",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_sco",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -311535,8 +311444,8 @@
       "size": "0x1A0",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -311678,8 +311587,8 @@
       "size": "0x7C",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -311693,8 +311602,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 86.161,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -311792,8 +311699,8 @@
       "size": "0x7C",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -311807,8 +311714,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 86.161,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -311822,8 +311727,8 @@
       "size": "0x7C",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -311837,8 +311742,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 86.161,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -311852,8 +311755,8 @@
       "size": "0x7C",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -311867,8 +311770,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 86.161,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -312669,8 +312570,8 @@
       "size": "0x60",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -312684,8 +312585,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 91.167,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -312755,8 +312654,8 @@
       "size": "0x60",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -312783,8 +312682,8 @@
       "size": "0x7C",
       "unit": "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddd40",
@@ -312798,8 +312697,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c",
       "instruction_match": 86.161,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -319158,8 +319055,8 @@
       "size": "0x158",
       "unit": "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -319182,8 +319079,6 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c",
       "instruction_match": 99.884,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -327771,8 +327666,8 @@
       "size": "0xF8",
       "unit": "RVL_SDK/src/revolution/gx/GXFifo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80357b60"
@@ -327785,8 +327680,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFifo.c",
       "instruction_match": 99.194,
       "equivalence_status": "inconclusive_abstraction",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -327800,8 +327693,8 @@
       "size": "0x1E0",
       "unit": "RVL_SDK/src/revolution/gx/GXFifo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dd510",
@@ -327820,8 +327713,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFifo.c",
       "instruction_match": 95.633,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -329204,8 +329095,8 @@
       "size": "0x15C",
       "unit": "RVL_SDK/src/revolution/gx/GXFrameBuf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -329219,8 +329110,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c",
       "instruction_match": 91.046,
       "equivalence_status": "inconclusive_abstraction",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -329515,8 +329404,8 @@
       "size": "0x13C",
       "unit": "RVL_SDK/src/revolution/gx/GXFrameBuf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -329527,8 +329416,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c",
       "instruction_match": 99.051,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -329542,8 +329429,8 @@
       "size": "0x158",
       "unit": "RVL_SDK/src/revolution/gx/GXFrameBuf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -329554,8 +329441,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c",
       "instruction_match": 99.128,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -331424,8 +331309,8 @@
       "size": "0x15C",
       "unit": "RVL_SDK/src/revolution/gx/GXTev",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -331436,8 +331321,6 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXTev.c",
       "instruction_match": 98.046,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -336134,8 +336017,8 @@
       "size": "0x26C",
       "unit": "RVL_SDK/src/revolution/hbm/HBMBase",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp",
       "called_functions": [
@@ -336151,9 +336034,10 @@
         "_savegpr_20"
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 100.0,
+      "instruction_match": 96.1,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80327360",
@@ -346681,8 +346565,8 @@
       "size": "0xDC",
       "unit": "RVL_SDK/src/revolution/hbm/synctrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -346693,8 +346577,6 @@
       "source": "libs/RVL_SDK/src/revolution/hbm/synctrl.c",
       "instruction_match": 96.909,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -347095,8 +346977,8 @@
       "size": "0x214",
       "unit": "RVL_SDK/src/revolution/hbm/synsample",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -347107,8 +346989,6 @@
       "source": "libs/RVL_SDK/src/revolution/hbm/synsample.c",
       "instruction_match": 98.534,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -347201,8 +347081,8 @@
       "size": "0xA4",
       "unit": "RVL_SDK/src/revolution/hbm/synvoice",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80342800",
@@ -347217,8 +347097,6 @@
       "source": "libs/RVL_SDK/src/revolution/hbm/synvoice.c",
       "instruction_match": 94.756,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -348708,8 +348586,8 @@
       "size": "0xA0",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80347880"
@@ -348722,8 +348600,6 @@
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
       "instruction_match": 98.125,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -349374,8 +349250,8 @@
       "size": "0x1C",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -349387,8 +349263,6 @@
       "claim": null,
       "instruction_match": 98.571,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -353503,8 +353377,8 @@
       "size": "0x554",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [
@@ -353567,9 +353441,10 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/os/OS.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 100.0,
+      "instruction_match": 97.1,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80355510",
@@ -358497,8 +358372,8 @@
       "size": "0x284",
       "unit": "RVL_SDK/src/revolution/os/OSThread",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OSThread.c",
       "called_functions": [
@@ -358512,9 +358387,10 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/os/OSThread.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 100.0,
+      "instruction_match": 98.8,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-8035e340",
@@ -360113,8 +359989,8 @@
       "size": "0xB8",
       "unit": "RVL_SDK/src/revolution/os/OSNet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OSNet.c",
       "called_functions": [
@@ -360129,8 +360005,6 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 99.783,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -363087,8 +362961,8 @@
       "size": "0x548",
       "unit": "RVL_SDK/src/revolution/vi/vi",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80355970",
@@ -363113,9 +362987,10 @@
         "_savegpr_24"
       ],
       "source": "libs/RVL_SDK/src/revolution/vi/vi.c",
-      "instruction_match": 100.0,
+      "instruction_match": 4.8,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-80367f60",
@@ -364662,8 +364537,8 @@
       "size": "0x110",
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
       "called_functions": [],
@@ -364674,8 +364549,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.779,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -366973,8 +366846,8 @@
       "size": "0x1BC",
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -366985,8 +366858,6 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 84.874,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -367000,8 +366871,8 @@
       "size": "0x5C",
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -367012,8 +366883,6 @@
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 91.304,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -369695,8 +369564,8 @@
       "size": "0x208",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -369715,8 +369584,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.923,
       "equivalence_status": "inconclusive_unvalidated_callee",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -369828,8 +369695,8 @@
       "size": "0x12C",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -369844,8 +369711,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.533,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -370364,8 +370229,8 @@
       "size": "0xB4",
       "unit": "CriWare/src/adx/adxf/adx_fini",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -370379,8 +370244,6 @@
       "instruction_match": 95.2,
       "declared_return": "i32",
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -372918,8 +372781,8 @@
       "size": "0x4C",
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -372933,8 +372796,6 @@
       "declared_return": "i32",
       "instruction_match": 89.474,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -373191,8 +373052,8 @@
       "size": "0x28",
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -375280,8 +375141,8 @@
       "size": "0x94",
       "unit": "CriWare/src/adx/adxt/adx_tlk",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038cee4"
@@ -375295,8 +375156,6 @@
       "declared_return": "i32",
       "instruction_match": 88.595,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -375983,8 +375842,8 @@
       "size": "0x20",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -375998,8 +375857,6 @@
       "instruction_match": 74.25,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -376039,8 +375896,8 @@
       "size": "0x34",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -376065,8 +375922,8 @@
       "size": "0x34",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -376091,8 +375948,8 @@
       "size": "0x34",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -376142,8 +375999,8 @@
       "size": "0x18",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -376157,9 +376014,7 @@
       "instruction_match": 55.667,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "source_present": true,
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "source_present": true
     },
     {
       "id": "us-80388b7c",
@@ -376172,8 +376027,8 @@
       "size": "0x18",
       "unit": "CriWare/src/adx/adxt/adx_xpnd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -376766,8 +376621,8 @@
       "size": "0x1C",
       "unit": "CriWare/src/adx/adxt/adx_bsc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -376778,8 +376633,6 @@
       "source": "libs/CriWare/src/adx/adxt/adx_bsc.c",
       "instruction_match": 71.429,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -376944,8 +376797,8 @@
       "size": "0xAC",
       "unit": "CriWare/src/adx/adxt/adx_bsc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -377135,8 +376988,8 @@
       "size": "0xC",
       "unit": "CriWare/src/adx/adxt/adx_bsc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -378082,8 +377935,8 @@
       "size": "0x2C",
       "unit": "CriWare/src/adx/adxt/adx_crs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -378095,8 +377948,6 @@
       "instruction_match": 79.091,
       "declared_return": "i32",
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -378110,8 +377961,8 @@
       "size": "0x2C",
       "unit": "CriWare/src/adx/adxt/adx_crs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -378123,8 +377974,6 @@
       "instruction_match": 79.091,
       "declared_return": "i32",
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -380161,8 +380010,8 @@
       "size": "0x8C",
       "unit": "CriWare/src/adx/ahx/adx_hdr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -380174,8 +380023,6 @@
       "declared_return": "void",
       "instruction_match": 69.571,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -380514,8 +380361,8 @@
       "size": "0x14",
       "unit": "CriWare/src/adx/ahx/ahx_cmn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -380526,8 +380373,6 @@
       "source": "libs/CriWare/src/adx/ahx/ahx_cmn.c",
       "instruction_match": 59.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -380972,8 +380817,8 @@
       "size": "0xC",
       "unit": "CriWare/src/adx/ahx/ahx_dcd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -381606,8 +381451,8 @@
       "size": "0x34",
       "unit": "CriWare/src/adx/cvfs/cri_cvfs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -381619,8 +381464,6 @@
       "declared_return": "i32",
       "instruction_match": 69.231,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -381659,8 +381502,8 @@
       "size": "0x74",
       "unit": "CriWare/src/adx/gcci/gcci",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -381673,8 +381516,6 @@
       "source": "libs/CriWare/src/adx/gcci/gcci.c",
       "instruction_match": 85.31,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -381688,8 +381529,8 @@
       "size": "0x150",
       "unit": "CriWare/src/adx/gcci/gcci",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -382158,8 +381999,8 @@
       "size": "0x34",
       "unit": "CriWare/src/adx/lsc/lsc_err",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -382171,8 +382012,6 @@
       "claim": null,
       "instruction_match": 69.231,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -385300,8 +385139,8 @@
       "size": "0x58",
       "unit": "CriWare/src/adx/sj/sj_utl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -385313,8 +385152,6 @@
       "claim": null,
       "instruction_match": 99.227,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -385357,8 +385194,8 @@
       "size": "0x2C",
       "unit": "CriWare/src/adx/sj/sj_crs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/CriWare/src/adx/sj/sj_crs.c",
       "called_functions": [],
@@ -385371,8 +385208,6 @@
       "declared_return": "i32",
       "instruction_match": 81.818,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -385386,8 +385221,8 @@
       "size": "0x2C",
       "unit": "CriWare/src/adx/sj/sj_crs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/CriWare/src/adx/sj/sj_crs.c",
       "called_functions": [],
@@ -385400,8 +385235,6 @@
       "declared_return": "i32",
       "instruction_match": 81.818,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -386085,8 +385918,8 @@
       "size": "0xB8",
       "unit": "CriWare/src/adx/svm/svm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -386100,8 +385933,6 @@
       "declared_return": "i32",
       "instruction_match": 86.696,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -388916,8 +388747,8 @@
       "size": "0x1EC",
       "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -388929,8 +388760,6 @@
       "declared_return": "i32",
       "instruction_match": 0.813,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -392593,8 +392422,8 @@
       "size": "0x130",
       "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a1090",
@@ -392608,8 +392437,9 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/mwply/mwsfdsvr.c",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 85.5,
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-803a6298",
@@ -393235,8 +393065,8 @@
       "size": "0xFC",
       "unit": "CriWare/src/sofdec/mwply/mwsfdsst",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -393245,9 +393075,10 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/mwply/mwsfdsst.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/mwply/mwsfdsst.c",
-      "instruction_match": 100.0,
+      "instruction_match": 39.7,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-803a6f7c",
@@ -393676,8 +393507,8 @@
       "size": "0x58",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -393688,8 +393519,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cmc.c",
       "instruction_match": 76.273,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -393703,8 +393532,8 @@
       "size": "0x40",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -393716,8 +393545,6 @@
       "declared_return": "i32",
       "instruction_match": 86.812,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -393731,8 +393558,8 @@
       "size": "0x20",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -393743,8 +393570,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cmc.c",
       "instruction_match": 99.125,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395277,8 +395102,8 @@
       "size": "0x10",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803b2754"
@@ -395292,8 +395117,6 @@
       "instruction_match": 97.0,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395600,8 +395423,8 @@
       "size": "0xA4",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395612,8 +395435,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 95.122,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395727,8 +395548,8 @@
       "size": "0x22C",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395739,8 +395560,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 98.561,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395754,8 +395573,8 @@
       "size": "0x22C",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395766,8 +395585,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 98.561,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395781,8 +395598,8 @@
       "size": "0x49C",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395793,8 +395610,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 98.603,
       "equivalence_status": "inconclusive_unsupported",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395808,8 +395623,8 @@
       "size": "0x40C",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395820,8 +395635,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 98.363,
       "equivalence_status": "inconclusive_unsupported",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395835,8 +395648,8 @@
       "size": "0x290",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395847,8 +395660,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c",
       "instruction_match": 98.646,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395942,8 +395753,8 @@
       "size": "0xAC",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -395954,8 +395765,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c",
       "instruction_match": 98.837,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -395995,8 +395804,8 @@
       "size": "0x130",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -396007,8 +395816,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c",
       "instruction_match": 75.921,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -396667,8 +396474,8 @@
       "size": "0x18",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -396679,8 +396486,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpvabdec.c",
       "instruction_match": 91.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -397524,8 +397329,8 @@
       "size": "0x74",
       "unit": "CriWare/src/sofdec/sfdcore/mps/mps_del",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -397537,8 +397342,6 @@
       "instruction_match": 66.552,
       "declared_return": "i32",
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -397880,8 +397683,8 @@
       "size": "0x148",
       "unit": "CriWare/src/sofdec/sfdcore/mps/mps_lib",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d6b98"
@@ -397894,8 +397697,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mps/mps_lib.c",
       "instruction_match": 90.171,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -398077,8 +397878,8 @@
       "size": "0x54",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -398090,8 +397891,6 @@
       "declared_return": "i32",
       "instruction_match": 80.952,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -399418,8 +399217,8 @@
       "size": "0xE0",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -399430,8 +399229,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c",
       "instruction_match": 91.232,
       "equivalence_status": "inconclusive_timeout",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -399556,8 +399353,8 @@
       "size": "0x34",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -399569,8 +399366,6 @@
       "declared_return": "i32",
       "instruction_match": 94.615,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -399996,8 +399791,8 @@
       "size": "0x18",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -400008,8 +399803,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c",
       "instruction_match": 90.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -400155,8 +399948,8 @@
       "size": "0x24",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -400168,8 +399961,6 @@
       "instruction_match": 59.444,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -400183,8 +399974,8 @@
       "size": "0x18",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/code_803BFD20",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -400195,8 +399986,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/code_803BFD20.c",
       "instruction_match": 83.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -400635,8 +400424,8 @@
       "size": "0x28",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -400648,8 +400437,6 @@
       "claim": null,
       "instruction_match": 59.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -400663,8 +400450,8 @@
       "size": "0x34",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -400676,8 +400463,6 @@
       "claim": null,
       "instruction_match": 60.692,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -402040,8 +401825,8 @@
       "size": "0x118",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -402052,8 +401837,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c",
       "instruction_match": 99.743,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -403370,8 +403153,8 @@
       "size": "0x80",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -403383,8 +403166,6 @@
       "declared_return": "i32",
       "instruction_match": 84.062,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -403553,8 +403334,8 @@
       "size": "0x34",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34f8",
@@ -403568,8 +403349,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
       "instruction_match": 91.923,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -403935,8 +403714,8 @@
       "size": "0x5C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -403950,8 +403729,6 @@
       "declared_return": "i32",
       "instruction_match": 97.391,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -404074,8 +403851,8 @@
       "size": "0x80",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -404087,8 +403864,6 @@
       "declared_return": "i32",
       "instruction_match": 68.125,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -404601,8 +404376,8 @@
       "size": "0x9C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -404613,8 +404388,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf.c",
       "instruction_match": 93.846,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -404801,8 +404574,8 @@
       "size": "0x10",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -404813,8 +404586,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c",
       "instruction_match": 50.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -405459,8 +405230,8 @@
       "size": "0x44",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d1368"
@@ -405474,8 +405245,6 @@
       "declared_return": "i32",
       "instruction_match": 80.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406397,8 +406166,8 @@
       "size": "0xC",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_set",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -406410,8 +406179,6 @@
       "claim": null,
       "instruction_match": 96.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406532,8 +406299,8 @@
       "size": "0x9C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -406545,8 +406312,6 @@
       "declared_return": "i32",
       "instruction_match": 96.923,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406729,8 +406494,8 @@
       "size": "0xCC",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc",
@@ -406746,8 +406511,6 @@
       "declared_return": "i32",
       "instruction_match": 97.686,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406761,8 +406524,8 @@
       "size": "0x98",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d6c10"
@@ -406776,8 +406539,6 @@
       "declared_return": "i32",
       "instruction_match": 98.079,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406866,8 +406627,8 @@
       "size": "0x3C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -406878,8 +406639,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c",
       "instruction_match": 86.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -406943,8 +406702,8 @@
       "size": "0x44",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -406956,8 +406715,6 @@
       "claim": null,
       "instruction_match": 81.529,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -407316,8 +407073,8 @@
       "size": "0x40",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -407329,8 +407086,6 @@
       "declared_return": "i32",
       "instruction_match": 80.625,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -407458,8 +407213,8 @@
       "size": "0x1F8",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d6aa4"
@@ -407472,8 +407227,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c",
       "instruction_match": 95.151,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -407762,8 +407515,8 @@
       "size": "0x1CC",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cee4c",
@@ -407777,8 +407530,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_trn.c",
       "instruction_match": 99.791,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -407792,8 +407543,8 @@
       "size": "0x184",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cee4c"
@@ -407806,8 +407557,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_trn.c",
       "instruction_match": 99.753,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -409416,8 +409165,8 @@
       "size": "0x94",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -409431,8 +409180,6 @@
       "instruction_match": 99.676,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -410606,8 +410353,8 @@
       "size": "0x18",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -410618,8 +410365,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver1.c",
       "instruction_match": 65.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -410633,8 +410378,8 @@
       "size": "0x14",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -410645,8 +410390,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver1.c",
       "instruction_match": 60.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -411563,8 +411306,8 @@
       "size": "0x74",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -411576,8 +411319,6 @@
       "declared_return": "i32",
       "instruction_match": 99.655,
       "equivalence_status": "inconclusive_unsupported",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -411829,8 +411570,8 @@
       "size": "0x10",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -411841,8 +411582,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c",
       "instruction_match": 50.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -411856,8 +411595,8 @@
       "size": "0x10",
       "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -411868,8 +411607,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c",
       "instruction_match": 50.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -412739,8 +412476,8 @@
       "size": "0x30",
       "unit": "CriWare/src/sofdec/sfdcore/uty/cmptime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -412752,8 +412489,6 @@
       "instruction_match": 90.417,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -412819,8 +412554,8 @@
       "size": "0x58",
       "unit": "CriWare/src/sofdec/sfdcore/uty/muldiv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bcd14"
@@ -412834,8 +412569,6 @@
       "declared_return": "i32",
       "instruction_match": 76.364,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -412905,8 +412638,8 @@
       "size": "0x2C",
       "unit": "CriWare/src/sofdec/sfdcore/uty/uty_tmr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -412917,8 +412650,6 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/uty/uty_tmr.c",
       "instruction_match": 67.273,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -412932,8 +412663,8 @@
       "size": "0x44",
       "unit": "CriWare/src/sofdec/sfdcore/uty/uty_tmr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -412945,8 +412676,6 @@
       "declared_return": "u64",
       "instruction_match": 58.824,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -413249,8 +412978,8 @@
       "size": "0xB0",
       "unit": "CriWare/src/sofdec/sfx/sfx_set",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -413262,8 +412991,6 @@
       "declared_return": "void",
       "instruction_match": 59.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -414018,8 +413745,8 @@
       "size": "0x24",
       "unit": "CriWare/src/sofdec/sfx/sfx_alp",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -414031,8 +413758,6 @@
       "instruction_match": 77.778,
       "equivalence_status": "equivalent",
       "declared_return": "void",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -414203,8 +413928,8 @@
       "size": "0x24",
       "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -414216,8 +413941,6 @@
       "instruction_match": 77.778,
       "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -421621,8 +421344,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_anmclr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -421633,8 +421356,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmclr.cpp",
       "instruction_match": 95.385,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -421648,8 +421369,8 @@
       "size": "0x50",
       "unit": "nw4r/src/g3d/g3d_anmclr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -421660,8 +421381,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmclr.cpp",
       "instruction_match": 94.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -422244,8 +421963,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_anmtexpat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -422256,8 +421975,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmtexpat.cpp",
       "instruction_match": 95.385,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -422271,8 +421988,8 @@
       "size": "0x50",
       "unit": "nw4r/src/g3d/g3d_anmtexpat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -422283,8 +422000,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmtexpat.cpp",
       "instruction_match": 94.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -422880,8 +422595,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_anmtexsrt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -422892,8 +422607,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmtexsrt.cpp",
       "instruction_match": 95.385,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -422907,8 +422620,8 @@
       "size": "0x50",
       "unit": "nw4r/src/g3d/g3d_anmtexsrt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -422919,8 +422632,6 @@
       "source": "libs/nw4r/src/g3d/g3d_anmtexsrt.cpp",
       "instruction_match": 94.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -424043,8 +423754,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_anmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -424068,8 +423779,8 @@
       "size": "0x50",
       "unit": "nw4r/src/g3d/g3d_anmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -424195,8 +423906,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_anmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -425503,8 +425214,8 @@
       "size": "0x50",
       "unit": "nw4r/src/g3d/g3d_anmscn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_anmscn.cpp",
       "called_functions": [],
@@ -425515,8 +425226,6 @@
       "abi_helper_calls": [],
       "instruction_match": 94.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -425530,8 +425239,8 @@
       "size": "0x38",
       "unit": "nw4r/src/g3d/g3d_anmscn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_anmscn.cpp",
       "called_functions": [],
@@ -425542,8 +425251,6 @@
       "abi_helper_calls": [],
       "instruction_match": 92.143,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -425710,8 +425417,8 @@
       "size": "0x1C",
       "unit": "nw4r/src/g3d/g3d_obj",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_obj.cpp",
       "called_functions": [],
@@ -425722,8 +425429,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.571,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -425762,8 +425467,8 @@
       "size": "0xC",
       "unit": "nw4r/src/g3d/g3d_obj",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_obj.cpp",
       "called_functions": [],
@@ -425774,8 +425479,6 @@
       "abi_helper_calls": [],
       "instruction_match": 96.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -427114,8 +426817,8 @@
       "size": "0x30",
       "unit": "nw4r/src/g3d/g3d_state",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -427127,8 +426830,6 @@
       "claim": null,
       "instruction_match": 64.583,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -432581,8 +432282,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_scnroot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -432593,8 +432294,6 @@
       "source": "libs/nw4r/src/g3d/g3d_scnroot.cpp",
       "instruction_match": 95.769,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -433263,8 +432962,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_scnmdlsmpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -433275,8 +432974,6 @@
       "source": "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp",
       "instruction_match": 95.769,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -433340,8 +433037,8 @@
       "size": "0x48",
       "unit": "nw4r/src/g3d/g3d_scnmdl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -433353,8 +433050,6 @@
       "claim": null,
       "instruction_match": 76.944,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -433393,8 +433088,8 @@
       "size": "0x48",
       "unit": "nw4r/src/g3d/g3d_scnmdl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -433406,8 +433101,6 @@
       "claim": null,
       "instruction_match": 76.944,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -434034,8 +433727,8 @@
       "size": "0x80",
       "unit": "nw4r/src/g3d/g3d_scnmdl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -434046,8 +433739,6 @@
       "source": "libs/nw4r/src/g3d/g3d_scnmdl.cpp",
       "instruction_match": 96.562,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -434305,8 +433996,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_scnmdlexpand",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -434317,8 +434008,6 @@
       "source": "libs/nw4r/src/g3d/g3d_scnmdlexpand.cpp",
       "instruction_match": 95.769,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -437687,8 +437376,8 @@
       "size": "0x34",
       "unit": "nw4r/src/lyt/lyt_textBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_textBox.cpp",
       "called_functions": [],
@@ -437699,8 +437388,6 @@
       "abi_helper_calls": [],
       "instruction_match": 80.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -438247,8 +437934,8 @@
       "size": "0xC",
       "unit": "nw4r/src/lyt/lyt_textBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_textBox.cpp",
       "called_functions": [],
@@ -438259,8 +437946,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -438969,8 +438654,8 @@
       "size": "0xC",
       "unit": "nw4r/src/lyt/lyt_bounding",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_bounding.cpp",
       "called_functions": [],
@@ -438981,8 +438666,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -447117,8 +446800,8 @@
       "size": "0xC",
       "unit": "nw4r/src/snd/snd_BasicSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_BasicSound.cpp",
       "called_functions": [],
@@ -447129,8 +446812,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -448003,8 +447684,8 @@
       "size": "0x44",
       "unit": "nw4r/src/snd/snd_EnvGenerator",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_EnvGenerator.cpp",
       "called_functions": [],
@@ -448015,8 +447696,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.412,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -448030,8 +447709,8 @@
       "size": "0x40",
       "unit": "nw4r/src/snd/snd_EnvGenerator",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_EnvGenerator.cpp",
       "called_functions": [],
@@ -448043,8 +447722,6 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 99.375,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -450413,8 +450090,8 @@
       "size": "0x3C",
       "unit": "nw4r/src/snd/snd_MmlParser",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_MmlParser.cpp",
       "called_functions": [],
@@ -450425,8 +450102,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -450690,8 +450365,8 @@
       "size": "0x30",
       "unit": "nw4r/src/snd/snd_PlayerHeap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -450702,8 +450377,6 @@
       "source": "libs/nw4r/src/snd/snd_PlayerHeap.cpp",
       "instruction_match": 99.167,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -450775,8 +450448,8 @@
       "size": "0x30",
       "unit": "nw4r/src/snd/snd_PlayerHeap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -450787,8 +450460,6 @@
       "source": "libs/nw4r/src/snd/snd_PlayerHeap.cpp",
       "instruction_match": 99.167,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -458987,8 +458658,8 @@
       "size": "0xC",
       "unit": "nw4r/src/snd/snd_StrmSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_StrmSound.cpp",
       "called_functions": [],
@@ -458999,8 +458670,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -462041,8 +461710,8 @@
       "size": "0xC",
       "unit": "nw4r/src/snd/snd_WaveSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_WaveSound.cpp",
       "called_functions": [],
@@ -462053,8 +461722,6 @@
       "abi_helper_calls": [],
       "instruction_match": 98.333,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -468571,8 +468238,8 @@
       "size": "0x78",
       "unit": "monolib/src/math/CVec4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CVec4.cpp",
       "called_functions": [],
@@ -468583,8 +468250,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -468762,8 +468427,8 @@
       "size": "0xE0",
       "unit": "monolib/src/math/CCol3",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CCol3.cpp",
       "called_functions": [],
@@ -468774,8 +468439,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.821,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -468789,8 +468452,8 @@
       "size": "0x128",
       "unit": "monolib/src/math/CCol4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CCol4.cpp",
       "called_functions": [],
@@ -468801,8 +468464,6 @@
       "abi_helper_calls": [],
       "instruction_match": 99.865,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -472320,9 +471981,9 @@
       "unit": "monolib/src/core/CView",
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Source file not in public tree yet; trace via Ghidra first.",
-      "status": "EQUIVALENT_MATCH",
+      "status": "CODE_MATCH",
       "instruction_match": 78.191,
-      "workflow_status": "ACCEPTED",
+      "workflow_status": "REVALIDATION_REQUIRED",
       "called_functions": [],
       "unresolved_called_functions": [],
       "has_indirect_calls": false,
@@ -472330,8 +471991,6 @@
       "callgraph_source": "build/us/asm/monolib/src/core/CView.s",
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -473385,8 +473044,8 @@
       "size": "0xA8",
       "unit": "monolib/src/core/CViewFrame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "called_functions": [],
@@ -473397,8 +473056,6 @@
       "abi_helper_calls": [],
       "instruction_match": 96.548,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -482259,8 +481916,8 @@
       "size": "0x20",
       "unit": "monolib/src/device/CDeviceFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -482272,8 +481929,6 @@
       "claim": null,
       "instruction_match": 95.625,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -482343,8 +481998,8 @@
       "size": "0xC",
       "unit": "monolib/src/device/CDeviceFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -482356,8 +482011,6 @@
       "claim": null,
       "instruction_match": 99.667,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -502884,8 +502537,8 @@
       "size": "0x28",
       "unit": "monolib/src/mpfsys/MPFDrawMdlNoColor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -502896,8 +502549,6 @@
       "source": "libs/monolib/src/mpfsys/MPFDrawMdlNoColor.cpp",
       "instruction_match": 97.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -503110,8 +502761,8 @@
       "size": "0x28",
       "unit": "monolib/src/mpfsys/MPFDrawBillboard",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -503122,8 +502773,6 @@
       "source": "libs/monolib/src/mpfsys/MPFDrawBillboard.cpp",
       "instruction_match": 97.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -503162,8 +502811,8 @@
       "size": "0x28",
       "unit": "monolib/src/mpfsys/MPFDrawBillLayTex",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -503174,8 +502823,6 @@
       "source": "libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp",
       "instruction_match": 97.0,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -504077,8 +503724,8 @@
       "size": "0x20",
       "unit": "monolib/src/mpfsys/code_8047CA88",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -504089,8 +503736,6 @@
       "source": "libs/monolib/src/mpfsys/code_8047CA88.cpp",
       "instruction_match": 97.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -510398,8 +510043,8 @@
       "size": "0x34",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -510411,8 +510056,6 @@
       "claim": null,
       "instruction_match": 89.231,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -512309,8 +511952,8 @@
       "size": "0x20",
       "unit": "monolib/src/scn/CScnMaruShadowNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519931,8 +519574,8 @@
       "size": "0x28",
       "unit": "monolib/src/scn/CScnBlend",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519944,8 +519587,6 @@
       "claim": null,
       "instruction_match": 69.5,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -533429,8 +533070,8 @@
       "size": "0x38",
       "unit": "monolib/src/coli/code_804B59C8",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -533441,8 +533082,6 @@
       "source": "libs/monolib/src/coli/code_804B59C8.cpp",
       "instruction_match": 72.429,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -536160,8 +535799,8 @@
       "size": "0x64",
       "unit": "monolib/src/scn/CLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/scn/CLight.cpp",
       "called_functions": [],
@@ -536173,9 +535812,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 70.16,
       "equivalence_status": "equivalent",
-      "source_present": true,
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "source_present": true
     },
     {
       "id": "us-804c4440",
@@ -537858,8 +537495,8 @@
       "size": "0x3C",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -537870,8 +537507,6 @@
       "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
       "instruction_match": 70.4,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -544339,8 +543974,8 @@
       "size": "0x44",
       "unit": "monolib/src/nand/CNand",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -544351,8 +543986,6 @@
       "source": "libs/monolib/src/nand/CNand.cpp",
       "instruction_match": 98.235,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -545181,8 +544814,8 @@
       "size": "0x58",
       "unit": "monolib/src/nand/CNReqtaskSave",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c5014"
@@ -545194,8 +544827,9 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNReqtaskSave.cpp",
       "source_present": true,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 54.5,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-804deff0",
@@ -547215,8 +546849,8 @@
       "size": "0x78",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
       "called_functions": [
@@ -547227,9 +546861,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "legacy_status": "FULL_MATCH"
     },
     {
       "id": "us-804e2ea4",
@@ -552293,8 +551928,8 @@
       "size": "0x20",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552305,8 +551940,6 @@
       "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
       "instruction_match": 96.875,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -552370,8 +552003,8 @@
       "size": "0x34",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552383,8 +552016,6 @@
       "claim": null,
       "instruction_match": 65.769,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -552768,8 +552399,8 @@
       "size": "0x1C",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -552780,8 +552411,6 @@
       "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
       "instruction_match": 97.143,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -554004,8 +553633,8 @@
       "size": "0x90",
       "unit": "monolib/src/core/code_804EE558",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -554016,8 +553645,6 @@
       "source": "libs/monolib/src/core/code_804EE558.cpp",
       "instruction_match": 99.583,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -555195,8 +554822,8 @@
       "size": "0x48",
       "unit": "monolib/src/core/monolib_eu_804F9E98",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "workflow_status": "REVALIDATION_REQUIRED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c5014"
@@ -555209,8 +554836,6 @@
       "source": "libs/monolib/src/core/monolib_eu_804F9E98.cpp",
       "instruction_match": 99.722,
       "equivalence_status": "inconclusive_abstraction",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {

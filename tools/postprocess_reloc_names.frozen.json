@@ -1,32 +1,6 @@
 {
- "baseline_count": 366,
+ "baseline_count": 367,
  "entries": {
-  "AX.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "s_AXVersionStr",
-      "@339"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "AXCL.o": {
-   "class": "rename",
-   "fields": {
-    "set_data_align": [
-     [
-      ".bss",
-      32
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "AXFXChorusExp.o": {
    "class": "content",
    "fields": {
@@ -154,123 +128,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CActParamAnimGame.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_80666040"
-     ],
-     [
-      "hex:3f800000",
-      "lbl_eu_80666044"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_806660A8"
-     ],
-     [
-      "hex:3f000000",
-      "lbl_eu_80666080"
-     ],
-     [
-      "hex:40000000",
-      "lbl_eu_80666050"
-     ],
-     [
-      "hex:4222f983",
-      "lbl_eu_806660CC"
-     ],
-     [
-      "hex:3f99999a",
-      "lbl_eu_806660D0"
-     ],
-     [
-      "hex:3dcccccd",
-      "lbl_eu_806660D4"
-     ],
-     [
-      "hex:bfc00000",
-      "lbl_eu_806660D8"
-     ],
-     [
-      "hex:40400000",
-      "lbl_eu_806660DC"
-     ],
-     [
-      "hex:3f350481",
-      "lbl_eu_8066AF20"
-     ],
-     [
-      "hex:3cc90fdb",
-      "lbl_eu_806660E0"
-     ],
-     [
-      "hex:38d1b717",
-      "lbl_eu_806660E4"
-     ],
-     [
-      "hex:3e99999a",
-      "lbl_eu_80666068"
-     ],
-     [
-      "hex:3f860a92",
-      "lbl_eu_806660E8"
-     ],
-     [
-      "hex:bf860a92",
-      "lbl_eu_80663D6C"
-     ],
-     [
-      "hex:447a0000",
-      "lbl_eu_80666070"
-     ],
-     [
-      "hex:45610000",
-      "lbl_eu_806660F0"
-     ],
-     [
-      "hex:3c23d70a",
-      "lbl_eu_8066606C"
-     ],
-     [
-      "hex:3a83126f",
-      "lbl_eu_806660F4"
-     ],
-     [
-      "hex:3e800000",
-      "lbl_eu_806660F8"
-     ],
-     [
-      "hex:3bd1b717",
-      "lbl_eu_806660FC"
-     ],
-     [
-      "hex:3da3d70a",
-      "lbl_eu_80666100"
-     ],
-     [
-      "hex:3e4ccccd",
-      "lbl_eu_80666104"
-     ],
-     [
-      "hex:3ecccccd",
-      "lbl_eu_806660C0"
-     ],
-     [
-      "hex:3f666666",
-      "lbl_eu_806660C4"
-     ],
-     [
-      "hex:3fb33333",
-      "lbl_eu_80666108"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CActParamData.o": {
    "class": "layout",
    "fields": {
@@ -319,21 +176,6 @@
    },
    "owner": "category-b",
    "reason": "skipped-WIP 2026-10-10: live sibling work in main checkout"
-  },
-  "CArcItem.o": {
-   "class": "layout",
-   "fields": {
-    "repack_after_drop": 4,
-    "retarget_relocs": [
-     [
-      ".text",
-      10,
-      "lbl_eu_8056FFE0"
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "CArtsInfo.o": {
    "class": "layout",
@@ -684,19 +526,6 @@
    "owner": "category-b",
    "reason": "skipped-WIP 2026-10-10: live sibling work in main checkout"
   },
-  "CBattleState.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q22cf12CBattleState",
-      "lbl_eu_8052E9B0"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
-  },
   "CCamUtil.o": {
    "class": "layout",
    "fields": {
@@ -834,19 +663,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CChainTime.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q22cf10CChainTime",
-      "lbl_eu_8052BD74"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
-  },
   "CChainTimer.o": {
    "class": "layout",
    "fields": {
@@ -899,19 +715,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "CCol3.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "...bss.0",
-      "lbl_eu_80656C40"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only: LOCAL section symbol ...bss.0 -> lbl_eu_80656C40; no link input defines/references that name; unit not linked from source; retired 2026-09-28"
   },
   "CCol4.o": {
    "class": "rename",
@@ -1179,19 +982,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "CDeviceFileJob.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__14CDeviceFileJob",
-      "lbl_eu_8056C4D8"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
   },
   "CDeviceFont.o": {
    "class": "layout",
@@ -1547,31 +1337,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CErrorWii.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "spInstance__9CErrorWii",
-      "lbl_eu_80665A60"
-     ],
-     [
-      "sPowerCallbackCalled__9CErrorWii",
-      "lbl_eu_80665A64"
-     ],
-     [
-      "sResetCallbackCalled__9CErrorWii",
-      "lbl_eu_80665A65"
-     ],
-     [
-      "sUnkFlag__9CErrorWii",
-      "lbl_eu_80665A66"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CExchangeWin.o": {
    "class": "layout",
@@ -7506,41 +7271,6 @@
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
   },
-  "CGame.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "FORCEACTIVECGame_cpp_wkStandbyLogin__Fv"
-    ],
-    "pad_data_section": [
-     [
-      ".rodata",
-      120
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CHelpManager.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CHelp_Pg.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80669000"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CItem.o": {
    "class": "layout",
    "fields": {
@@ -8193,23 +7923,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "CItemBoxGridSubMenu.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:3f800000",
-      "lbl_eu_8066831C"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_806682F8"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CItemBoxInfo.o": {
    "class": "layout",
    "fields": {
@@ -8309,12 +8022,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "CKizunaTalkList.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CKizunagram.o": {
    "class": "layout",
    "fields": {
@@ -8379,23 +8086,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-live; batch 3"
-  },
-  "CLibCri.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "rtti_10IWorkEvent",
-      "__RTTI__10IWorkEvent"
-     ],
-     [
-      "rtti_11CWorkThread",
-      "__RTTI__11CWorkThread"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "retired whole key: source now declares __RTTI__10IWorkEvent/__RTTI__11CWorkThread inside namespace RTTIExterns (CView.cpp pattern); object sections byte-identical, symbols == retail"
   },
   "CLibCriMoviePlay.o": {
    "class": "rename",
@@ -8487,23 +8177,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-live; batch 3"
-  },
-  "CLibLayout.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "rtti_10IWorkEvent",
-      "__RTTI__10IWorkEvent"
-     ],
-     [
-      "rtti_11CWorkThread",
-      "__RTTI__11CWorkThread"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "retired whole key: same namespace RTTIExterns fix; sections byte-identical, symbols == retail"
   },
   "CLibStaticData.o": {
    "class": "layout",
@@ -8598,38 +8271,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CMCCrystalBox.o": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".sdata2",
-      "hex:4330000000000000",
-      "lbl_eu_80668460"
-     ],
-     [
-      ".data",
-      "hex:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-      "jumptable_eu_80535C20"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CMCCrystalInfo.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:3f800000",
-      "lbl_eu_80668498"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMCCrystalList.o": {
    "class": "layout",
@@ -9476,12 +9117,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CMenuMakeCrystal.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CMenuMapSelectSC.o": {
    "class": "layout",
    "fields": {
@@ -9570,12 +9205,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-latent; batch 1"
-  },
-  "CMenuPause.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CMenuPlayAward.o": {
    "class": "layout",
@@ -9681,45 +9310,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CMenuVision.o": {
-   "class": "layout",
-   "fields": {
-    "retarget_relocs": [
-     [
-      ".text",
-      834,
-      "jumptable_eu_80533504"
-     ],
-     [
-      ".text",
-      842,
-      "jumptable_eu_80533504"
-     ],
-     [
-      ".text",
-      4018,
-      "jumptable_eu_805334D0"
-     ],
-     [
-      ".text",
-      4026,
-      "jumptable_eu_805334D0"
-     ],
-     [
-      ".text",
-      5722,
-      "jumptable_eu_805334A0"
-     ],
-     [
-      ".text",
-      5730,
-      "jumptable_eu_805334A0"
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "CMiniMap.o": {
    "class": "layout",
@@ -10090,35 +9680,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "COption.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@8512",
-      "jumptable_eu_805394E8"
-     ],
-     [
-      "@8544",
-      "jumptable_eu_8053953C"
-     ],
-     [
-      "@8599",
-      "jumptable_eu_80539590"
-     ],
-     [
-      "@8700",
-      "jumptable_eu_805395E4"
-     ],
-     [
-      "@8793",
-      "jumptable_eu_805394BC"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CPackItem.o": {
    "class": "rename",
    "fields": {
@@ -10334,28 +9895,6 @@
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
   },
-  "CProcRoot.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__9CProcRoot",
-      "lbl_eu_8056B2A8"
-     ],
-     [
-      "__RTTI__9CProcRoot",
-      "lbl_eu_80663548"
-     ],
-     [
-      "@stringBase0",
-      "lbl_eu_80522514"
-     ]
-    ],
-    "trim_text_size": 456
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op (trim_text_size 0x1C8 == current .text; all three exact_renames targets absent)"
-  },
   "CProcess.o": {
    "class": "rename",
    "fields": {
@@ -10392,19 +9931,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CQstLogList.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80668588"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CQuat.o": {
    "class": "layout",
@@ -10475,19 +10001,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CREvtModelMap.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@3569",
-      "lbl_eu_806678C8"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CREvtModelObj.o": {
    "class": "layout",
    "fields": {
@@ -10519,51 +10032,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CRsrcData.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__ct__9CRsrcDataFPCcP11CWorkThread",
-      "__ct__CRsrcData"
-     ],
-     [
-      "__vt__9CRsrcData",
-      "lbl_eu_8056B360"
-     ],
-     [
-      "__RTTI__9CRsrcData",
-      "lbl_eu_80663550"
-     ],
-     [
-      "@stringBase0",
-      "lbl_eu_80522534"
-     ]
-    ],
-    "trim_text_size": 1068
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op (trim_text_size 0x42C == current .text; all four exact_renames targets absent)"
-  },
-  "CSaveLoad.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@11649",
-      "jumptable_eu_80538780"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CScn.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CScnBloom.o": {
    "class": "layout",
@@ -10693,26 +10161,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CScnItemCameraNw4r.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".data",
-      0
-     ]
-    ],
-    "retarget_relocs": [
-     [
-      ".text",
-      26,
-      "lbl_eu_8056DC90"
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "CScnItemPool.o": {
    "class": "layout",
    "fields": {
@@ -10825,31 +10273,6 @@
    "owner": "category-b",
    "reason": "inert-retail 2026-10-10: B-fields pruned (rule never fires); kept exact_renames"
   },
-  "CScnTexWorkMan.o": {
-   "class": "rename",
-   "fields": {
-    "symbol_sizes": [
-     [
-      "lbl_eu_8056E7F8",
-      38
-     ],
-     [
-      "lbl_eu_8056E820",
-      17
-     ],
-     [
-      "lbl_eu_8056E834",
-      26
-     ],
-     [
-      "lbl_eu_8056E850",
-      17
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CScn_80496B0C.o": {
    "class": "content",
    "fields": {
@@ -10932,27 +10355,6 @@
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
   },
-  "CScriptCode.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__11CScriptCode",
-      "lbl_eu_8056B418"
-     ],
-     [
-      "__RTTI__11CScriptCode",
-      "lbl_eu_80663558"
-     ],
-     [
-      "@stringBase0",
-      "lbl_eu_8052254C"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CScrollBar.o": {
    "class": "layout",
    "fields": {
@@ -10993,29 +10395,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CSimpleEveTalkWin.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CSkipTimer.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@7276",
-      "lbl_eu_80668C38"
-     ],
-     [
-      "@7278",
-      "lbl_eu_80668C40"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CSortMenu.o": {
    "class": "layout",
    "fields": {
@@ -11038,36 +10417,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "CStopwatchUtil.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      0
-     ]
-    ],
-    "retarget_relocs": [
-     [
-      ".text",
-      512,
-      "lbl_eu_8066A350"
-     ],
-     [
-      ".text",
-      520,
-      "lbl_eu_8066A348"
-     ],
-     [
-      ".text",
-      712,
-      "lbl_eu_8066A358"
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "CSuddenCommu.o": {
    "class": "layout",
@@ -11104,77 +10453,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CSysWinSave.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".sbss",
-      8,
-      12
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: removed the duplicate _pad_80664A0C static; .sbss is the retail 0x8 (unit keeps pre-existing .sdata2/.sbss2 drift); drop_nobits_range verified no-op after the fix"
-  },
-  "CSysWinScenarioLog.o": {
-   "class": "layout",
-   "fields": {
-    "add_symbols": [
-     [
-      "lbl_eu_80664908",
-      ".sbss",
-      0,
-      4
-     ],
-     [
-      "lbl_eu_8066490C",
-      ".sbss",
-      4,
-      4
-     ],
-     [
-      "lbl_eu_80664910",
-      ".sbss",
-      8,
-      1
-     ],
-     [
-      "lbl_eu_80664911",
-      ".sbss",
-      9,
-      1
-     ],
-     [
-      "lbl_eu_80664912",
-      ".sbss",
-      10,
-      1
-     ],
-     [
-      "lbl_eu_80664914",
-      ".sbss",
-      12,
-      4
-     ],
-     [
-      "lbl_eu_80664918",
-      ".sbss",
-      16,
-      8
-     ]
-    ],
-    "set_data_align": [
-     [
-      ".sbss",
-      8
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op (add_symbols/set_data_align change nothing; link uses the retail split object, linked False)"
-  },
   "CSysWinSelect.o": {
    "class": "rename",
    "fields": {
@@ -11187,19 +10465,6 @@
    },
    "owner": "category-b",
    "reason": "tooling-limit 2026-10-10: set_data_align LCF decision, audit \u00a75"
-  },
-  "CTagProcessor.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@7872",
-      "lbl_eu_80667200"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CTalkWindow.o": {
    "class": "layout",
@@ -11642,23 +10907,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CTitle.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__10CTitleLogo",
-      "lbl_eu_8053B368"
-     ],
-     [
-      "@7665",
-      "lbl_eu_80668FE8"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CTitleAHelp.o": {
    "class": "layout",
    "fields": {
@@ -11813,18 +11061,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CVS_THREAD_BATTLE_BEGIN.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
-  },
-  "CVS_THREAD_BATTLE_END_SP.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
-  },
   "CVS_THREAD_BATTLE_MAIN.o": {
    "class": "layout",
    "fields": {
@@ -11852,12 +11088,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-latent; batch 1"
-  },
-  "CVS_THREAD_FAINT.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
   },
   "CVS_THREAD_HAGE.o": {
    "class": "layout",
@@ -11890,18 +11120,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CVS_THREAD_REVIVE.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
-  },
-  "CVS_THREAD_SUDDEN.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
-  },
   "CVS_THREAD_TENSION_UP.o": {
    "class": "layout",
    "fields": {
@@ -11925,19 +11143,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-latent; batch 1"
-  },
-  "CVec4.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "...bss.0",
-      "zero__Q22ml5CVec4"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only: LOCAL section symbol ...bss.0 renamed to an existing same-object GLOBAL definition (duplicate name, no address change); unit not linked from source; retired 2026-09-28"
   },
   "CView.o": {
    "class": "content",
@@ -12041,37 +11246,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "CViewFrame.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CViewRoot.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".data",
-      184,
-      196
-     ],
-     [
-      ".sdata",
-      8,
-      16
-     ]
-    ],
-    "drop_data_tail": [
-     [
-      ".rodata",
-      24
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op on the current object (drop_data_range/drop_data_tail targets absent); link uses the retail split object (linked False)"
   },
   "CVirtualLightObj.o": {
    "class": "layout",
@@ -12237,35 +11411,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "CWorkThreadSystem.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "scRegionName__17CWorkThreadSystem",
-      "lbl_eu_80663518"
-     ],
-     [
-      "sAllocHandle__17CWorkThreadSystem",
-      "lbl_eu_8066351C"
-     ],
-     [
-      "sMemAvailable__17CWorkThreadSystem",
-      "lbl_eu_80665590"
-     ],
-     [
-      "sAllocFlags__17CWorkThreadSystem",
-      "lbl_eu_80665594"
-     ],
-     [
-      "sWorkThreads__17CWorkThreadSystem",
-      "lbl_eu_80665598"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfCam.o": {
    "class": "rename",
@@ -12763,45 +11908,6 @@
    "owner": "category-b",
    "reason": "inert-retail 2026-10-10: B-fields pruned (rule never fires); kept pool_patterns"
   },
-  "CfCollCircleImpl.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80666920"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfCollSphereImpl.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80666920"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfGameManager.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80666530"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CfGimmick.o": {
    "class": "layout",
    "fields": {
@@ -12827,131 +11933,6 @@
    },
    "owner": "category-b",
    "reason": "inert-retail 2026-10-10: B-fields pruned (rule never fires); kept pool_patterns"
-  },
-  "CfGimmickItem.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfGimmickJump.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      56
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CfGimmickLock.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfGimmickObject.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      48
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CfGimmickWarp.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_806683F0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfHikariItemManager.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@9335",
-      "lbl_eu_80668EF0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfMapItemManager.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      112
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CfMapMineManager.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_806682B0"
-     ],
-     [
-      "hex:4330000080000000",
-      "lbl_eu_806682B8"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_806682C0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfObjectActor.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".sdata2",
-      0,
-      8
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CfObjectColl.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q22cf12CfObjectColl",
-      "lbl_eu_80528600"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectEff.o": {
    "class": "layout",
@@ -12990,19 +11971,6 @@
    },
    "owner": "category-b",
    "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail | gate: FAIL | dropped: 6 referenced: 6"
-  },
-  "CfObjectEnumList.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80666EC0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "CfObjectImplEne.o": {
    "class": "layout",
@@ -13080,23 +12048,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CfObjectModel.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "modelVtable29318",
-      "lbl_eu_80529318"
-     ],
-     [
-      "modelVtable294E0",
-      "lbl_eu_805294E0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "CfObjectNpc.o": {
    "class": "layout",
    "fields": {
@@ -13112,20 +12063,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "CfObjectPc.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".sdata2",
-      0,
-      8
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "CfObjectTbox.o": {
    "class": "layout",
@@ -13152,56 +12089,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "CfPadTask.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q22cf9CfPadTask",
-      "lbl_eu_80533C90"
-     ],
-     [
-      "__vt__23CTask<Q22cf9CfPadTask>",
-      "lbl_eu_80533D08"
-     ]
-    ],
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_80667EA8"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "CfRes.o": {
-   "class": "layout",
-   "fields": {
-    "pad_data_section": [
-     [
-      ".data",
-      544
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CfResPcImpl.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".sdata2",
-      0,
-      8
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "CfResReloadImpl.o": {
    "class": "layout",
@@ -13381,32 +12268,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "CtrlNpc.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      128
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "CtrlObjectParam.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      96
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "CtrlRemote.o": {
    "class": "layout",
    "fields": {
@@ -13422,62 +12283,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "DSPCode.o": {
-   "class": "rename",
-   "fields": {
-    "set_data_align": [
-     [
-      ".data",
-      32
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "EXIBios.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@507",
-      "lbl_8054B610"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "FloatUtils.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "huge__2ml",
-      "lbl_eu_8066A214"
-     ],
-     [
-      "hugeminus__2ml",
-      "lbl_eu_8066A218"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "GXInit.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "s_GXVersionStr",
-      "lbl_8054B680"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "HBMAnmController.o": {
    "class": "layout",
@@ -13661,735 +12466,6 @@
    "owner": "category-b",
    "reason": "inert-retail 2026-10-10: B-fields pruned (rule never fires); kept data_pool_patterns"
   },
-  "HBMBase.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@7739",
-      "lbl_8054C924"
-     ],
-     [
-      "@7773",
-      "lbl_8054CBF4"
-     ],
-     [
-      "@7774",
-      "lbl_8054CC00"
-     ],
-     [
-      "@7775",
-      "lbl_8054CC10"
-     ],
-     [
-      "@7776",
-      "lbl_8054CC20"
-     ],
-     [
-      "@7777",
-      "lbl_8054CC30"
-     ],
-     [
-      "@7778",
-      "lbl_8054CC40"
-     ],
-     [
-      "@7779",
-      "lbl_8054CC4C"
-     ],
-     [
-      "@7780",
-      "lbl_8054CC5C"
-     ],
-     [
-      "@7781",
-      "lbl_8054CC68"
-     ],
-     [
-      "@7782",
-      "lbl_8054CC74"
-     ],
-     [
-      "@7783",
-      "lbl_8054CC80"
-     ],
-     [
-      "@7784",
-      "lbl_8054CC90"
-     ],
-     [
-      "@7785",
-      "lbl_8054CC9C"
-     ],
-     [
-      "@7786",
-      "lbl_8054CCAC"
-     ],
-     [
-      "@7787",
-      "lbl_8054CCBC"
-     ],
-     [
-      "@7740",
-      "lbl_8054C930"
-     ],
-     [
-      "@7741",
-      "lbl_8054C93C"
-     ],
-     [
-      "@7788",
-      "lbl_8054CD04"
-     ],
-     [
-      "@7789",
-      "lbl_8054CD18"
-     ],
-     [
-      "@7742",
-      "lbl_8054C948"
-     ],
-     [
-      "@7790",
-      "lbl_8054CD2C"
-     ],
-     [
-      "@7791",
-      "lbl_8054CD40"
-     ],
-     [
-      "@7792",
-      "lbl_8054CD54"
-     ],
-     [
-      "@7793",
-      "lbl_8054CD68"
-     ],
-     [
-      "@7794",
-      "lbl_8054CD7C"
-     ],
-     [
-      "@7795",
-      "lbl_8054CD94"
-     ],
-     [
-      "@7796",
-      "lbl_8054CDA8"
-     ],
-     [
-      "@7797",
-      "lbl_8054CDC0"
-     ],
-     [
-      "@7798",
-      "lbl_8054CDD4"
-     ],
-     [
-      "@7799",
-      "lbl_8054CDE8"
-     ],
-     [
-      "@7743",
-      "lbl_8054C954"
-     ],
-     [
-      "@7800",
-      "lbl_8054CE00"
-     ],
-     [
-      "@7801",
-      "lbl_8054CE18"
-     ],
-     [
-      "@7802",
-      "lbl_8054CE30"
-     ],
-     [
-      "@7803",
-      "lbl_8054CE48"
-     ],
-     [
-      "@7804",
-      "lbl_8054CE60"
-     ],
-     [
-      "@7805",
-      "lbl_8054CE70"
-     ],
-     [
-      "@7806",
-      "lbl_8054CE80"
-     ],
-     [
-      "@7807",
-      "lbl_8054CE98"
-     ],
-     [
-      "@7808",
-      "lbl_8054CEAC"
-     ],
-     [
-      "@7809",
-      "lbl_8054CEC8"
-     ],
-     [
-      "@7744",
-      "lbl_8054C970"
-     ],
-     [
-      "@7810",
-      "lbl_8054CF30"
-     ],
-     [
-      "@7811",
-      "lbl_8054CF3C"
-     ],
-     [
-      "@7812",
-      "lbl_8054CF48"
-     ],
-     [
-      "@7813",
-      "lbl_8054CF58"
-     ],
-     [
-      "@7745",
-      "lbl_8054C97C"
-     ],
-     [
-      "@7814",
-      "lbl_8054CF68"
-     ],
-     [
-      "@7815",
-      "lbl_8054CF74"
-     ],
-     [
-      "@7816",
-      "lbl_8054CF84"
-     ],
-     [
-      "@7817",
-      "lbl_8054CF98"
-     ],
-     [
-      "@7818",
-      "lbl_8054CFAC"
-     ],
-     [
-      "@7819",
-      "lbl_8054CFC0"
-     ],
-     [
-      "@7820",
-      "lbl_8054CFD4"
-     ],
-     [
-      "@7821",
-      "lbl_8054CFE8"
-     ],
-     [
-      "@7822",
-      "lbl_8054CFF8"
-     ],
-     [
-      "@7823",
-      "lbl_8054D008"
-     ],
-     [
-      "@7746",
-      "lbl_8054C988"
-     ],
-     [
-      "@7824",
-      "lbl_8054D018"
-     ],
-     [
-      "@7825",
-      "lbl_8054D028"
-     ],
-     [
-      "@7826",
-      "lbl_8054D038"
-     ],
-     [
-      "@7827",
-      "lbl_8054D050"
-     ],
-     [
-      "@7828",
-      "lbl_8054D060"
-     ],
-     [
-      "@7829",
-      "lbl_8054D070"
-     ],
-     [
-      "@7830",
-      "lbl_8054D080"
-     ],
-     [
-      "@7831",
-      "lbl_8054D090"
-     ],
-     [
-      "@7832",
-      "lbl_8054D098"
-     ],
-     [
-      "@7833",
-      "lbl_8054D0A0"
-     ],
-     [
-      "@7834",
-      "lbl_8054D0A8"
-     ],
-     [
-      "@7835",
-      "lbl_8054D0B0"
-     ],
-     [
-      "@7836",
-      "lbl_8054D0B8"
-     ],
-     [
-      "@7837",
-      "lbl_8054D0C0"
-     ],
-     [
-      "@7838",
-      "lbl_8054D0C8"
-     ],
-     [
-      "@7839",
-      "lbl_8054D0D0"
-     ],
-     [
-      "@7840",
-      "lbl_8054D0D8"
-     ],
-     [
-      "@7841",
-      "lbl_8054D0E0"
-     ],
-     [
-      "@7842",
-      "lbl_8054D0E8"
-     ],
-     [
-      "@7843",
-      "lbl_8054D0F0"
-     ],
-     [
-      "@7844",
-      "lbl_8054D0F8"
-     ],
-     [
-      "@7845",
-      "lbl_8054D18C"
-     ],
-     [
-      "@7846",
-      "lbl_8054D198"
-     ],
-     [
-      "@7847",
-      "lbl_8054D1A4"
-     ],
-     [
-      "@7848",
-      "lbl_8054D1B0"
-     ],
-     [
-      "@7849",
-      "lbl_8054D1BC"
-     ],
-     [
-      "@7850",
-      "lbl_8054D1DC"
-     ],
-     [
-      "@7851",
-      "lbl_8054D1E8"
-     ],
-     [
-      "@7852",
-      "lbl_8054D1F4"
-     ],
-     [
-      "@7853",
-      "lbl_8054D204"
-     ],
-     [
-      "@7854",
-      "lbl_8054D214"
-     ],
-     [
-      "@7855",
-      "lbl_8054D224"
-     ],
-     [
-      "@7856",
-      "lbl_8054D234"
-     ],
-     [
-      "@7857",
-      "lbl_8054D244"
-     ],
-     [
-      "@7858",
-      "lbl_8054D24C"
-     ],
-     [
-      "@7859",
-      "lbl_8054D254"
-     ],
-     [
-      "@7860",
-      "lbl_8054D288"
-     ],
-     [
-      "@7861",
-      "lbl_8054D294"
-     ],
-     [
-      "@7862",
-      "lbl_8054D2A0"
-     ],
-     [
-      "@7863",
-      "lbl_8054D2B8"
-     ],
-     [
-      "@7864",
-      "lbl_8054D2C8"
-     ],
-     [
-      "@7865",
-      "lbl_8054D2D8"
-     ],
-     [
-      "@7866",
-      "lbl_8054D2E8"
-     ],
-     [
-      "@7867",
-      "lbl_8054D2F8"
-     ],
-     [
-      "@7868",
-      "lbl_8054D308"
-     ],
-     [
-      "@7869",
-      "lbl_8054D318"
-     ],
-     [
-      "@7870",
-      "lbl_8054D328"
-     ],
-     [
-      "@7871",
-      "lbl_8054D338"
-     ],
-     [
-      "@7872",
-      "lbl_8054D348"
-     ],
-     [
-      "@7873",
-      "lbl_8054D358"
-     ],
-     [
-      "@7874",
-      "lbl_8054D368"
-     ],
-     [
-      "@7875",
-      "lbl_8054D378"
-     ],
-     [
-      "@7876",
-      "lbl_8054D388"
-     ],
-     [
-      "@7877",
-      "lbl_8054D398"
-     ],
-     [
-      "@7878",
-      "lbl_8054D3A8"
-     ],
-     [
-      "@9531",
-      "lbl_8054D500"
-     ],
-     [
-      "@9532",
-      "lbl_8054D524"
-     ],
-     [
-      "@7747",
-      "lbl_8054C9A8"
-     ],
-     [
-      "@7748",
-      "lbl_8054C9B8"
-     ],
-     [
-      "@7749",
-      "lbl_8054C9C8"
-     ],
-     [
-      "@7750",
-      "lbl_8054C9D8"
-     ],
-     [
-      "@7751",
-      "lbl_8054C9E8"
-     ],
-     [
-      "@7752",
-      "lbl_8054C9F4"
-     ],
-     [
-      "@7753",
-      "lbl_8054CA00"
-     ],
-     [
-      "@7754",
-      "lbl_8054CA0C"
-     ],
-     [
-      "@7755",
-      "lbl_8054CA38"
-     ],
-     [
-      "@7756",
-      "lbl_8054CA4C"
-     ],
-     [
-      "@7757",
-      "lbl_8054CA60"
-     ],
-     [
-      "@7734",
-      "lbl_8054C8C8"
-     ],
-     [
-      "@7735",
-      "lbl_8054C8D8"
-     ],
-     [
-      "@7736",
-      "lbl_8054C8E8"
-     ],
-     [
-      "@7758",
-      "lbl_8054CA80"
-     ],
-     [
-      "@7759",
-      "lbl_8054CA94"
-     ],
-     [
-      "@7737",
-      "lbl_8054C8F8"
-     ],
-     [
-      "@7760",
-      "lbl_8054CAA8"
-     ],
-     [
-      "@7761",
-      "lbl_8054CAC0"
-     ],
-     [
-      "@7762",
-      "lbl_8054CAD8"
-     ],
-     [
-      "@7763",
-      "lbl_8054CAF0"
-     ],
-     [
-      "@7764",
-      "lbl_8054CB04"
-     ],
-     [
-      "@7765",
-      "lbl_8054CB18"
-     ],
-     [
-      "@7766",
-      "lbl_8054CB2C"
-     ],
-     [
-      "@7767",
-      "lbl_8054CB40"
-     ],
-     [
-      "@7768",
-      "lbl_8054CB50"
-     ],
-     [
-      "@7769",
-      "lbl_8054CB68"
-     ],
-     [
-      "@7770",
-      "lbl_8054CB7C"
-     ],
-     [
-      "@7771",
-      "lbl_8054CB94"
-     ],
-     [
-      "@7772",
-      "lbl_8054CBA8"
-     ],
-     [
-      "@7738",
-      "lbl_8054C918"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "HBMCommon.o": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".data",
-      "hex:3c3c2052564c5f53444b202d2048424d200972656c65617365206275696c643a2046656220323420323031302031363a31393a303720283078343330325f31343529203e3e00",
-      "lbl_8054C878"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "HBMFrameController.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "lbl_80518668",
-      "@7006"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "HBMGUIManager.o": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a6775693a3a50616e65436f6d706f6e656e7400",
-      "homebutton_gui_PaneComponent_typestr"
-     ],
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a6775693a3a50616e654d616e6167657200",
-      "homebutton_gui_PaneManager_typestr"
-     ],
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a6775693a3a4d616e6167657200",
-      "homebutton_gui_Manager_typestr"
-     ],
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a6775693a3a436f6d706f6e656e7400",
-      "homebutton_gui_Component_typestr"
-     ],
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a6775693a3a496e7465726661636500",
-      "homebutton_gui_Interface_typestr"
-     ]
-    ],
-    "exact_renames": [
-     [
-      "__RTTI__Q310homebutton3gui13PaneComponent",
-      "__RTTI__homebutton_gui_PaneComponent"
-     ],
-     [
-      "__RTTI__Q310homebutton3gui9Interface",
-      "__RTTI__homebutton_gui_Interface"
-     ],
-     [
-      "__RTTI__Q310homebutton3gui9Component",
-      "__RTTI__homebutton_gui_Component"
-     ],
-     [
-      "__RTTI__Q310homebutton3gui11PaneManager",
-      "__RTTI__homebutton_gui_PaneManager"
-     ],
-     [
-      "__RTTI__Q310homebutton3gui7Manager",
-      "__RTTI__homebutton_gui_Manager"
-     ],
-     [
-      "@8080",
-      "homebutton_gui_PaneComponent_hierarchy"
-     ],
-     [
-      "@8082",
-      "homebutton_gui_PaneManager_hierarchy"
-     ],
-     [
-      "@8084",
-      "homebutton_gui_Manager_hierarchy"
-     ],
-     [
-      "@8086",
-      "homebutton_gui_Component_hierarchy"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "HBMRemoteSpk.o": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".data",
-      "hex:686f6d65627574746f6e3a3a52656d6f746553706b00",
-      "homebutton_RemoteSpk_typestr"
-     ]
-    ],
-    "exact_renames": [
-     [
-      "__RTTI__Q210homebutton9RemoteSpk",
-      "__RTTI__homebutton_RemoteSpk"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "IResInfo.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@5342",
-      "jumptable_eu_805268C8"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "KPAD.o": {
    "class": "content",
    "fields": {
@@ -14487,31 +12563,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "MPFDrawMdlColor.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv",
-      "drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv"
-     ],
-     [
-      "func_80479D40__Q26mpfsys15MPFDrawMdlColorFv",
-      "drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv"
-     ],
-     [
-      "func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv",
-      "drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv"
-     ],
-     [
-      "func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv",
-      "drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "MTRand.o": {
    "class": "layout",
    "fields": {
@@ -14564,195 +12615,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "NANDCheck.o": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".sdata",
-      "hex:2f6d65746100",
-      "lbl_80665B10"
-     ],
-     [
-      ".sdata",
-      "hex:2f7469636b657400",
-      "lbl_80665B18"
-     ],
-     [
-      ".data",
-      "hex:2f736861726564322f7469746c6500",
-      "lbl_80551240"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303000",
-      "lbl_805511D0"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303100",
-      "lbl_805511E0"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303300",
-      "lbl_805511F0"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303400",
-      "lbl_80551200"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303500",
-      "lbl_80551210"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303600",
-      "lbl_80551220"
-     ],
-     [
-      ".data",
-      "hex:2f7469746c652f303030313030303700",
-      "lbl_80551230"
-     ]
-    ],
-    "exact_renames": [
-     [
-      "s_nandUserAreaCallbackName",
-      "lbl_8055127C"
-     ],
-     [
-      "s_nandUserAreaCallbackFmt",
-      "lbl_80551294"
-     ]
-    ]
-   },
-   "owner": "unassigned",
-   "reason": ""
-  },
-  "NANDCore.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__NANDVersion",
-      "lbl_80551080"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "New.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "exceptionName__16@unnamed@New_cp@",
-      "@86"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "OS.o": {
-   "class": "content",
-   "fields": {
-    "bake_linker_addrs": [
-     [
-      "__ArenaLo",
-      2154288480
-     ],
-     [
-      "_db_stack_end",
-      2154280288
-     ]
-    ],
-    "exact_renames": [
-     [
-      "@1966",
-      "@851"
-     ],
-     [
-      "@2293",
-      "@1193"
-     ]
-    ],
-    "force_symbol_relocs": [
-     [
-      "OSInit",
-      [
-       [
-        264,
-        1015054336,
-        1015021568,
-        6,
-        "memcpy"
-       ],
-       [
-        380,
-        946094080,
-        946077696,
-        4,
-        "memcpy"
-       ]
-      ]
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
-  },
-  "OSContext.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".data",
-      475
-     ]
-    ]
-   },
-   "owner": "unassigned",
-   "reason": ""
-  },
-  "OSError.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".bss",
-      68,
-      80
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: removed oserror_bss_pad[12]; raw gate now MATCH (.bss 0x44); drop_nobits_range was a verified no-op after the fix"
-  },
-  "OSFont.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "OSNandbootInfo.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".data",
-      26
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: NandbootInfoPath[0x20]->[0x1A]; raw gate now MATCH (.data 0x1A); drop_data_tail verified no-op after the fix"
-  },
   "OSNet.o": {
    "class": "content",
    "fields": {
@@ -14797,60 +12659,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "OSReset.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".data",
-      12,
-      16
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "OSRtc.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".bss",
-      84,
-      88
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: OSScb no longer declares the unreferenced WORD_0x54 placeholder; raw gate MATCH (.bss 0x54); drop_nobits_range verified no-op after the fix"
-  },
-  "OSThread.o": {
-   "class": "content",
-   "fields": {
-    "bake_linker_addrs": [
-     [
-      "_stack_addr",
-      2154280288
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
-  },
-  "SIBios.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@1024",
-      "lbl_8055F138"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "UnkClass_80460C34.o": {
    "class": "rename",
@@ -14950,19 +12758,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "WPADEncrypt.o": {
-   "class": "layout",
-   "fields": {
-    "pad_data_section": [
-     [
-      ".data",
-      4904
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "WUD.o": {
    "class": "content",
    "fields": {
@@ -15027,25 +12822,6 @@
    },
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
-  },
-  "WUDHidHost.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "__start.o": {
-   "class": "content",
-   "fields": {
-    "bake_linker_addrs": [
-     [
-      "_stack_addr",
-      2154280288
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "linker absolute resolved by tools/coop/lib/reloc_canon.py; the honest link installs the same immediate (evidence: unit_rules_category_a.md)"
   },
   "adx_dcd.o": {
    "class": "layout",
@@ -15119,19 +12895,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-latent; batch 1"
   },
-  "ai.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@395",
-      "@364"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "ax_rna.o": {
    "class": "rename",
    "fields": {
@@ -15144,26 +12907,6 @@
    },
    "owner": "category-b",
    "reason": "inert-retail 2026-10-10: B-fields pruned (rule never fires); kept set_data_align"
-  },
-  "bta_dm_act.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".data",
-      315
-     ]
-    ],
-    "drop_nobits_range": [
-     [
-      ".bss",
-      45,
-      48
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: rule application is a bit-identical no-op on the current build/us/src object (drop_data_tail .data already 0x13B, drop_nobits_range .bss already 0x2D); see docs/evidence/decomp/unit_rules_category_b.md"
   },
   "bta_hh_utils.o": {
    "class": "layout",
@@ -15187,39 +12930,6 @@
    },
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
-  },
-  "bte_logmsg.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata",
-      4
-     ]
-    ],
-    "drop_nobits_range": [
-     [
-      ".bss",
-      2000,
-      2016
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: lbl_80665908[8]->[4] and removed bte_logmsg_bss_pad[16]; raw gate now MATCH (.sdata 0x4, .bss 0x7D0); both fields verified no-ops after the fix"
-  },
-  "bte_main.o": {
-   "class": "rename",
-   "fields": {
-    "set_data_align": [
-     [
-      ".bss",
-      32
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "btm_acl.o": {
    "class": "layout",
@@ -15399,23 +13109,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "code_80135FDC.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata2",
-      144
-     ],
-     [
-      ".data",
-      280
-     ]
-    ]
-   },
-   "owner": "unassigned",
-   "reason": ""
-  },
   "code_801862C0.o": {
    "class": "layout",
    "fields": {
@@ -15561,16 +13254,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STANDALONE-latent; batch 1"
-  },
-  "code_80296898.o": {
-   "class": "layout",
-   "fields": {
-    "zero_nobits": [
-     ".bss"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "code_802B9064.o": {
    "class": "layout",
@@ -16036,17 +13719,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "db_DbgPrintBase.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "dummy__Q24nw4r2dbFPQ34nw4r2ut10CharWriter",
-     "__dt__Q34nw4r2ut5ColorFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "db_assert.o": {
    "class": "rename",
    "fields": {
@@ -16134,19 +13806,6 @@
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,exact_renames | gate: FAIL | dropped: 0 referenced: 0"
   },
-  "dvd.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@592",
-      "@533"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "dvdDeviceError.o": {
    "class": "layout",
    "fields": {
@@ -16190,63 +13849,6 @@
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail,exact_renames | gate: FAIL | dropped: 0 referenced: 0"
   },
-  "dvdFatal.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@1863",
-      "@768"
-     ],
-     [
-      "@1864",
-      "@769"
-     ],
-     [
-      "@1865",
-      "@770"
-     ],
-     [
-      "@1866",
-      "@771"
-     ],
-     [
-      "@1867",
-      "@772"
-     ],
-     [
-      "@1868",
-      "@773"
-     ],
-     [
-      "@1869",
-      "@774"
-     ],
-     [
-      "@1870",
-      "@775"
-     ],
-     [
-      "@1871",
-      "@776"
-     ],
-     [
-      "@1872",
-      "@777"
-     ],
-     [
-      "@1873",
-      "@778"
-     ],
-     [
-      "@1874",
-      "@779"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "dvd_broadway.o": {
    "class": "layout",
    "fields": {
@@ -16261,31 +13863,6 @@
    "owner": "category-b",
    "reason": "HANDOFF/TOOL: weak-symbol emission vs retail linker GC; needs the IWorkEvent-style out-of-line pattern per unit (see evidence doc \u00a77.3 for the mwldeppc blocker) | fields: drop_text_symbols,repack_after_drop | gate: MATCH | dropped: 0 referenced: 0"
   },
-  "dvdfs.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".sbss",
-      32,
-      56
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: removed dvdfs_sbss_pad/2/3; raw gate now MATCH (.sbss 0x20); drop_nobits_range was a verified no-op after the fix"
-  },
-  "dw_Window.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "dummy__Q24nw4r2dwFPQ34nw4r2ut10CharWriter",
-     "__dt__Q34nw4r2ut5ColorFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "e_pow.o": {
    "class": "layout",
    "fields": {
@@ -16293,19 +13870,6 @@
    },
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: trim_sdata2_size | gate: FAIL | dropped: 1 referenced: 0"
-  },
-  "encutility.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@393",
-      "@366"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "fs.o": {
    "class": "layout",
@@ -16319,12 +13883,6 @@
    },
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
-  },
-  "g3d_3dsmax.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
   },
   "g3d_anmchr.o": {
    "class": "layout",
@@ -16477,27 +14035,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STRING-BUG; batch 0"
-  },
-  "g3d_basic.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:3f360b61",
-      "lbl_eu_80669C88"
-     ],
-     [
-      "hex:00000000",
-      "lbl_eu_80669C8C"
-     ],
-     [
-      "hex:3f800000",
-      "lbl_eu_80669C90"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "g3d_calcview.o": {
    "class": "layout",
@@ -16744,22 +14281,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "g3d_maya.o": {
-   "class": "layout",
-   "fields": {},
-   "owner": "unassigned",
-   "reason": ""
-  },
-  "g3d_resanm.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "__dt__Q34nw4r2ut5ColorFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op (__dt__Q34nw4r2ut5ColorFv not emitted by the current object)"
-  },
   "g3d_resanmamblight.o": {
    "class": "layout",
    "fields": {
@@ -16885,64 +14406,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "g3d_resanmscn.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "ResNameData_LightSet__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-      "lbl_eu_805690E0"
-     ],
-     [
-      "ResNameData_AmbLights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-      "lbl_eu_80569100"
-     ],
-     [
-      "ResNameData_Lights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-      "lbl_eu_80569120"
-     ],
-     [
-      "ResNameData_Fog__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-      "lbl_eu_80569140"
-     ],
-     [
-      "ResNameData_Camera__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
-      "lbl_eu_80569160"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: raw object already defines lbl_eu_805690E0.. (old ResNameData_* absent); rename_exact no-op"
-  },
-  "g3d_resfile.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "GetResMdl__Q34nw4r3g3d7ResFileCFUl",
-     "GetResPltt__Q34nw4r3g3d7ResFileCFUl",
-     "GetResPlttNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResTex__Q34nw4r3g3d7ResFileCFUl",
-     "GetResTexNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmChr__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmVis__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmVisNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmVis__Q34nw4r3g3d7ResFileCFi",
-     "GetResAnmClr__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmClrNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmTexPat__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmTexPatNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmTexSrt__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmTexSrtNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmShp__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmShpNumEntries__Q34nw4r3g3d7ResFileCFv",
-     "GetResAnmShp__Q34nw4r3g3d7ResFileCFi",
-     "GetResAnmScn__Q34nw4r3g3d7ResFileCFUl",
-     "GetResAnmScnNumEntries__Q34nw4r3g3d7ResFileCFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "g3d_resmat.o": {
    "class": "layout",
@@ -17545,6 +15008,56 @@
     "retarget_relocs": [
      [
       ".text",
+      198,
+      "lbl_eu_80569688"
+     ],
+     [
+      ".text",
+      214,
+      "lbl_eu_80569688"
+     ],
+     [
+      ".text",
+      458,
+      "lbl_eu_80569688"
+     ],
+     [
+      ".text",
+      462,
+      "lbl_eu_80569688"
+     ],
+     [
+      ".text",
+      630,
+      "jumptable_eu_805695F8"
+     ],
+     [
+      ".text",
+      638,
+      "jumptable_eu_805695F8"
+     ],
+     [
+      ".text",
+      1054,
+      "jumptable_eu_80569620"
+     ],
+     [
+      ".text",
+      1062,
+      "jumptable_eu_80569620"
+     ],
+     [
+      ".text",
+      3074,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
+      3082,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
       300,
       "lbl_eu_80669CD8"
      ],
@@ -17552,6 +15065,36 @@
       ".text",
       2136,
       "lbl_eu_80669CDC"
+     ],
+     [
+      ".text",
+      5678,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
+      5682,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
+      5774,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
+      5778,
+      "lbl_eu_80569648"
+     ],
+     [
+      ".text",
+      5846,
+      "lbl_eu_80569688"
+     ],
+     [
+      ".text",
+      5850,
+      "lbl_eu_80569688"
      ]
     ]
    },
@@ -17652,94 +15195,6 @@
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
   },
-  "g3d_xsi.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "MakeTexSrtMtx_R__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_R__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "MakeTexSrtMtx_T__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_T__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "MakeTexSrtMtx_SR__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_SR__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "MakeTexSrtMtx_RT__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_RT__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "MakeTexSrtMtx_ST__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_ST__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "MakeTexSrtMtx_SRT__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "MakeTexSrtMtx_SRT__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_S__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_S__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_R__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_R__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_T__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_T__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_SR__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_SR__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_RT__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_RT__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_ST__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_ST__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ],
-     [
-      "ProductTexSrtMtx_SRT__Q54nw4r3g3d6detail3dcc21@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt",
-      "ProductTexSrtMtx_SRT__Q54nw4r3g3d6detail3dcc22@unnamed@g3d_xsi_cpp@FPQ34nw4r4math5MTX34RCQ34nw4r3g3d6TexSrt"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "gap_utils.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".bss",
-      940,
-      944
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: tGAP_CB tail is 0x3AC-0x84 (retail size); raw gate now MATCH (.bss 0x3AC); drop_nobits_range verified no-op after the fix"
-  },
-  "gki_buffer.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".data",
-      322
-     ]
-    ]
-   },
-   "owner": "unassigned",
-   "reason": ""
-  },
   "gki_time.o": {
    "class": "layout",
    "fields": {
@@ -17747,19 +15202,6 @@
    },
    "owner": "category-b",
    "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_text_size | gate: MATCH | dropped: 0 referenced: 0"
-  },
-  "hcicmds.o": {
-   "class": "layout",
-   "fields": {
-    "pad_data_section": [
-     [
-      ".rodata",
-      16
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "hcisu_h2.o": {
    "class": "layout",
@@ -17773,63 +15215,6 @@
    },
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
-  },
-  "l2c_api.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "l2c_csm.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "locale.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@141",
-      "@140"
-     ],
-     [
-      "@142",
-      "@141"
-     ],
-     [
-      "@143",
-      "@142"
-     ],
-     [
-      "@144",
-      "@143"
-     ],
-     [
-      "@145",
-      "@144"
-     ],
-     [
-      "@146",
-      "@145"
-     ],
-     [
-      "@147",
-      "@146"
-     ],
-     [
-      "@148",
-      "@147"
-     ],
-     [
-      "@149",
-      "@148"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "lyt_animation.o": {
    "class": "layout",
@@ -17963,66 +15348,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "lyt_arcResourceAccessor.o#Q34nw4r3lyt": {
-   "class": "rename",
-   "fields": {
-    "data_pool_patterns": [
-     [
-      ".sdata",
-      "hex:2e00",
-      "lbl_eu_806634C8"
-     ],
-     [
-      ".sdata",
-      "hex:2e2e00",
-      "lbl_eu_806634CC"
-     ]
-    ],
-    "exact_renames": [
-     [
-      "__vt__Q34nw4r3lyt19ArcResourceAccessor",
-      "lbl_eu_80569CB8"
-     ]
-    ],
-    "pad_data_section": [
-     [
-      ".sdata",
-      8
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28: bit-identical no-op on the scoped nw4r twin (data_pool_patterns already named, pad_data_section 8 == current .sdata size, __vt__ absent)"
-  },
-  "lyt_bounding.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@5114",
-      "lbl_8054D71C"
-     ],
-     [
-      "@5115",
-      "lbl_8054D734"
-     ],
-     [
-      "@5116",
-      "lbl_8054D750"
-     ],
-     [
-      "@5117",
-      "lbl_8054D764"
-     ],
-     [
-      "@5118",
-      "lbl_8054D778"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: current object emits @5107..@5111; renamed @5114..@5118 absent; rename_exact no-op"
-  },
   "lyt_common.o#Q34nw4r": {
    "class": "layout",
    "fields": {
@@ -18066,19 +15391,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 4"
-  },
-  "lyt_drawInfo.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@5093",
-      "@230"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
   },
   "lyt_group.o": {
    "class": "layout",
@@ -18550,19 +15862,6 @@
    "owner": "category-b",
    "reason": "HANDOFF-CODE: rule drops content this TU's own (still unmatched) code emits | fields: drop_data_tail,retarget_relocs,zero_data_range | gate: FAIL | dropped: 1 referenced: 1"
   },
-  "lyt_resourceAccessor.o#Q34nw4r3lyt": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q34nw4r3lyt16ResourceAccessor",
-      "lbl_eu_80569CA0"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: raw object already defines lbl_eu_80569CA0 (old __vt__ absent); rename_exact no-op"
-  },
   "lyt_texMap.o": {
    "class": "layout",
    "fields": {
@@ -18978,30 +16277,6 @@
    "owner": "category-c",
    "reason": "content: see docs/evidence/decomp/unit_rules_category_c_run_2026-10-10.md \u00a72"
   },
-  "mwsfdcre.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".rodata",
-      1768,
-      1780
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "mwsfdply.o": {
-   "class": "rename",
-   "fields": {
-    "globalize_symbols": [
-     "lbl_eu_8051B198"
-    ]
-   },
-   "owner": "category-a",
-   "reason": "globalize_symbols no-op: the object already defines lbl_eu_8051B198 GLOBAL and nothing references it; retired 2026-09-28"
-  },
   "ocBdat.o": {
    "class": "layout",
    "fields": {
@@ -19142,26 +16417,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "pluginEve.o": {
-   "class": "rename",
-   "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:3f800000",
-      "@1254"
-     ],
-     [
-      "hex:00000000",
-      "@1255"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
-  },
   "pluginSnd.o": {
    "class": "layout",
    "fields": {
@@ -19263,186 +16518,6 @@
    "owner": "category-b",
    "reason": "HANDOFF-D: rule drops unreferenced weak vtables/RTTI the retail data objects own (category D) | fields: drop_data_tail | gate: FAIL | dropped: 0 referenced: 0"
   },
-  "scapi_prdinfo.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_tail": [
-     [
-      ".sdata",
-      13
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: ProductArea/GameRegionString[8]->[5] __attribute__((aligned(8))); raw gate now MATCH (.sdata 0xD); drop_data_tail verified no-op after the fix"
-  },
-  "scsystem.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@2098",
-      "@723"
-     ],
-     [
-      "@2099",
-      "@724"
-     ],
-     [
-      "@2100",
-      "@725"
-     ],
-     [
-      "@2101",
-      "@726"
-     ],
-     [
-      "@2102",
-      "@727"
-     ],
-     [
-      "@2103",
-      "@728"
-     ],
-     [
-      "@2104",
-      "@729"
-     ],
-     [
-      "@2105",
-      "@730"
-     ],
-     [
-      "@2106",
-      "@731"
-     ],
-     [
-      "@2107",
-      "@732"
-     ],
-     [
-      "@2108",
-      "@733"
-     ],
-     [
-      "@2109",
-      "@734"
-     ],
-     [
-      "@2110",
-      "@735"
-     ],
-     [
-      "@2111",
-      "@736"
-     ],
-     [
-      "@2112",
-      "@737"
-     ],
-     [
-      "@2113",
-      "@738"
-     ],
-     [
-      "@2114",
-      "@739"
-     ],
-     [
-      "@2115",
-      "@740"
-     ],
-     [
-      "@2116",
-      "@741"
-     ],
-     [
-      "@2117",
-      "@742"
-     ],
-     [
-      "@2118",
-      "@743"
-     ],
-     [
-      "@2119",
-      "@744"
-     ],
-     [
-      "@2120",
-      "@745"
-     ],
-     [
-      "@2121",
-      "@746"
-     ],
-     [
-      "@2122",
-      "@747"
-     ],
-     [
-      "@2123",
-      "@748"
-     ],
-     [
-      "@2124",
-      "@749"
-     ],
-     [
-      "@2125",
-      "@750"
-     ],
-     [
-      "@2126",
-      "@751"
-     ],
-     [
-      "@2127",
-      "@752"
-     ],
-     [
-      "@2128",
-      "@753"
-     ],
-     [
-      "@2129",
-      "@754"
-     ],
-     [
-      "@2130",
-      "@755"
-     ],
-     [
-      "@2131",
-      "@756"
-     ],
-     [
-      "@2132",
-      "@757"
-     ],
-     [
-      "@2133",
-      "@758"
-     ],
-     [
-      "@2134",
-      "@759"
-     ],
-     [
-      "@2135",
-      "@760"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "sdp_server.o": {
-   "class": "rename",
-   "fields": {},
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "sfd_adxt.o": {
    "class": "layout",
    "fields": {
@@ -19519,20 +16594,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "sfx_zmv.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".rodata",
-      8,
-      56
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "snd_AxManager.o": {
    "class": "layout",
@@ -19658,16 +16719,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "snd_AxfxImpl.o": {
-   "class": "layout",
-   "fields": {
-    "extern_data_sections": [
-     ".sbss"
-    ]
-   },
-   "owner": "unassigned",
-   "reason": ""
   },
   "snd_Bank.o": {
    "class": "layout",
@@ -19856,39 +16907,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "snd_EnvGenerator.o": {
-   "class": "rename",
-   "fields": {
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80669F48"
-     ],
-     [
-      "hex:477fff00",
-      "lbl_eu_80669F34"
-     ],
-     [
-      "hex:41c00000",
-      "lbl_eu_80669F50"
-     ],
-     [
-      "hex:3c000000",
-      "lbl_eu_80669F54"
-     ],
-     [
-      "hex:40a00000",
-      "lbl_eu_80669F58"
-     ],
-     [
-      "hex:42700000",
-      "lbl_eu_80669F5C"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "snd_FxChorusDpl2.o": {
    "class": "rename",
    "fields": {
@@ -19935,19 +16953,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "snd_FxReverbStdDpl2.o": {
-   "class": "layout",
-   "fields": {
-    "pad_data_section": [
-     [
-      ".data",
-      40
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "snd_Lfo.o": {
    "class": "layout",
@@ -20057,45 +17062,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "snd_MmlSeqTrack.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q44nw4r3snd6detail11MmlSeqTrack",
-      "lbl_eu_8056AAC0"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "snd_MmlSeqTrackAllocator.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".data",
-      0,
-      24
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "snd_PlayerHeap.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "__dt__Q34nw4r2ut12LinkListNodeFv",
-     "__dt__Q44nw4r2ut28@unnamed@snd_PlayerHeap_cpp@11NonCopyableFv",
-     "__dt__Q54nw4r3snd6detail11SoundThread8AutoLockFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "snd_RemoteSpeakerManager.o": {
    "class": "layout",
    "fields": {
@@ -20152,23 +17118,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "snd_SeqSound.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q44nw4r3snd6detail8SeqSound",
-      "lbl_eu_8056AB60"
-     ],
-     [
-      "__vt__Q54nw4r3snd6detail8SeqSound11SeqLoadTask",
-      "lbl_eu_8056AB98"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "snd_SeqTrack.o": {
    "class": "layout",
@@ -20236,19 +17185,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "snd_SoundArchive.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q34nw4r3snd12SoundArchive",
-      "lbl_eu_8056ABC0"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
   },
   "snd_SoundArchivePlayer.o": {
    "class": "layout",
@@ -20430,17 +17366,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
-  },
-  "snd_StrmChannel.o": {
-   "class": "layout",
-   "fields": {
-    "drop_text_symbols": [
-     "__dt__Q44nw4r2ut29@unnamed@snd_StrmChannel_cpp@11NonCopyableFv",
-     "__dt__Q34nw4r2ut17AutoInterruptLockFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
   },
   "snd_StrmPlayer.o": {
    "class": "layout",
@@ -20733,19 +17658,6 @@
    "owner": "category-b",
    "reason": "FIELD PRUNE 2026-09-28: pad_data_section + exact_renames redundant (prefix_renames is the whole effect) \u2014 removing the field leaves the postprocessed object bit-identical (field_prune.py criterion: apply(entry) == apply(entry minus field)), so it cannot affect the link."
   },
-  "snd_WaveSound.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q44nw4r3snd6detail9WaveSound",
-      "lbl_eu_8056AD70"
-     ]
-    ]
-   },
-   "owner": "coordinator-a-residual",
-   "reason": "inert: unit NonMatching (retail-linked); rule never applied in the link"
-  },
   "snd_WsdPlayer.o": {
    "class": "layout",
    "fields": {
@@ -20811,20 +17723,6 @@
    "owner": "category-b",
    "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
   },
-  "usb.o": {
-   "class": "layout",
-   "fields": {
-    "drop_nobits_range": [
-     [
-      ".sbss",
-      9,
-      16
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "RETIRED 2026-09-28 source fix: removed the unreferenced s_usb_sbss_pad[4] source pad; raw gate now MATCH (.sbss 0x9); drop_nobits_range was a verified no-op after the fix"
-  },
   "ut_ArchiveFontBase.o": {
    "class": "layout",
    "fields": {
@@ -20851,20 +17749,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
   },
-  "ut_DvdFileStream.o": {
-   "class": "layout",
-   "fields": {
-    "retarget_relocs": [
-     [
-      ".text",
-      4,
-      "lbl_eu_80665550"
-     ]
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
   "ut_Font.o": {
    "class": "rename",
    "fields": {
@@ -20877,19 +17761,6 @@
    },
    "owner": "category-a",
    "reason": "mixed entry: rename fields stay with the entry's content/layout burn-down (category B/C), not the A-only batch"
-  },
-  "ut_IOStream.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__sinit_ut_IOStream_cpp",
-      "__sinit_\\ut_IOStream_cpp"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_LockedCache.o": {
    "class": "rename",
@@ -20926,65 +17797,6 @@
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-LAYOUT-latent; batch 1"
   },
-  "ut_ResFont.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@2821",
-      "@2461"
-     ],
-     [
-      "@2822",
-      "@2462"
-     ],
-     [
-      "@2823",
-      "@2463"
-     ],
-     [
-      "@2824",
-      "@2464"
-     ],
-     [
-      "@2825",
-      "@2465"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
-  "ut_RomFont.o": {
-   "class": "layout",
-   "fields": {
-    "drop_data_range": [
-     [
-      ".data",
-      200,
-      292
-     ]
-    ],
-    "drop_text_symbols_as_undef": [
-     "__dt__Q34nw4r2ut4FontFv"
-    ]
-   },
-   "owner": "category-b",
-   "reason": "inert-retail 2026-10-10: unit links retail obj, rule never fires; key deleted"
-  },
-  "ut_TagProcessorBase.o": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q34nw4r2ut19TagProcessorBase<w>",
-      "lbl_eu_8056AE08"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
-  },
   "ut_TagProcessorBase.o#Q34nw4r": {
    "class": "layout",
    "fields": {
@@ -21011,23 +17823,6 @@
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: FUSED-RENAME-live; batch 4"
-  },
-  "ut_TagProcessorBase.o#Q36nw4hbm": {
-   "class": "rename",
-   "fields": {
-    "exact_renames": [
-     [
-      "@2839",
-      "@2491"
-     ],
-     [
-      "@2840",
-      "@2492"
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "ut_TextWriterBase.o#Q34nw4r2ut": {
    "class": "layout",
@@ -21157,19 +17952,6 @@
    },
    "owner": "category-b",
    "reason": "EXCEPTION CANDIDATE (owner approval needed): LCF/alignment or linker-padding emulation, not source-expressible | fields: pad_data_section | gate: FAIL | dropped: 0 referenced: 0"
-  },
-  "uusb_ppc.o": {
-   "class": "rename",
-   "fields": {
-    "set_data_align": [
-     [
-      ".bss",
-      32
-     ]
-    ]
-   },
-   "owner": "category-a",
-   "reason": "representation-only rename: TU-local/section-relative target; raw object records no resolution change (unit_rules_category_a.md)"
   },
   "vi.o": {
    "class": "content",

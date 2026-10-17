@@ -86,7 +86,9 @@ public:
     //0x054: vtable 2 (IWorkEvent)
     u8 unk58[0x68 - 0x058]; //0x058
     UnkScn68* mCamWork; //0x068
-    u8 unk6C[0x8C - 0x06C]; //0x06C
+    u8 unk6C[0x84 - 0x06C]; //0x06C
+    CScnFrame* mFrame84; //0x084 scene frame (mElapsed/mStep read by Scn_GetFrameDelta/SetTimeScale)
+    u8 unk88[0x8C - 0x088]; //0x088
     UnkScn8C* mUnk8C; //0x08C
     u8 unk90[0x0B4 - 0x090]; //0x090
     ICulling* unkB4; //0x0B4
@@ -99,6 +101,7 @@ public:
     u8 unk_3E6; //0x3E6
     u8 unk_3E7; //0x3E7
     u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9 PAL-fix flag (Scn_GetFrameDelta/Scn_SetPalFixFlag)
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
 

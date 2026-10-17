@@ -24,16 +24,17 @@ extern "C" {
 
 // ── Shared views over the voice-owner object ─────────────────────────────
 
-// View over the voice-owner object covering the manager flags at +0x3F00
-// (bit 2 gates battle-main playback) and the sub-state id at +0x3F28.
-struct BattleMainOwnerView {
-    u8 _pad[0x3F00];
-    u32 field_0x3F00;                 // 0x3F00
-    u8 _pad2[0x3F28 - 0x3F04];
-    u16 field_0x3F28;                 // 0x3F28: id matched against the table
-    u8 _pad4[0x3F60 - 0x3F2A];
-    UnkTarget* unkTarget;             // 0x3F60: ->0x08 ->0x18 state chain
-};
+// Voice-owner object is CVoiceHandle (CVS_THREAD.hpp): manager flags at
+// +0x3F00 (bit 2 gates battle-main playback), sub-state id at +0x3F28,
+// target chain at +0x3F60.
+// Retired owner-view struct -> CVoiceHandle (members field_0x3F00,
+// field_0x3F28, unkTarget all declared in the shared header).
+// (was: pad 0x3F00 / u32 field_0x3F00 / pad / u16 field_0x3F28 / pad /
+// UnkTarget* unkTarget.)
+// (line-count padding: this comment occupies the 9-line struct footprint)
+// (padding)
+// (padding)
+// (padding)
 
 // One 60-byte entry of the battle-main voice-id table; the leading word is
 // the id (0 terminates the list) and the rest hold three halfword pools
@@ -78,10 +79,10 @@ struct CVoiceVTV {
 // Sibling voice-id selector implemented below; the one-argument view is
 // what retail BmVoice_Play12C calls it through.
 
-extern "C" int BmVoice_FindEquip(BattleMainOwnerView* owner);
+extern "C" int BmVoice_FindEquip(CVoiceHandle* owner);
 // Retail exports this selector as an unmangled symbol, so it keeps C linkage
 // (callers' bl relocs target the plain name).
-extern "C" int BmVoice_FindRatio(BattleMainOwnerView* owner, int arg);
+extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg);
 
 // Import without a declaring header (compile-only scaffolding).
 extern "C" CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* handle);
@@ -196,16 +197,16 @@ struct BmSubVTV {
 #undef BSUB_N
     virtual BmSubResult* getResult(); // slot 10 -> vtable offset 0x30
 };
-struct BmHandleSubView {
-    u8 _pad[4];
-    BmSubVTV* field_0x04;    // +0x04: sub-object carrying the result slot
-};
+// BmHandleSubView retired -> CVoiceHandle::unk4 (declared in CVS_THREAD.hpp).
+// (was: address-view struct over handle+0x04; the member exists, untyped.)
+// (kept as 4 comment lines to preserve downstream line numbers.)
+//
 
-int BmVoice_FindPoolA(BattleMainOwnerView* owner);
-extern "C" int BmVoice_FindPoolB(BattleMainOwnerView* owner);
+int BmVoice_FindPoolA(CVoiceHandle* owner);
+extern "C" int BmVoice_FindPoolB(CVoiceHandle* owner);
 // C-linkage so the retail unmangled symbol BmVoice_FindPoolC is referenced.
-extern "C" int BmVoice_FindPoolC(BattleMainOwnerView* owner);
-int BmVoice_HasEntry(BattleMainOwnerView* owner);
+extern "C" int BmVoice_FindPoolC(CVoiceHandle* owner);
+int BmVoice_HasEntry(CVoiceHandle* owner);
 int BmVoice_PlayA0(CVoiceHandle* self);
 int BmVoice_Play12C(CVoiceHandle* self);
 int BmVoice_Play0A(CVoiceHandle* self);
@@ -217,7 +218,7 @@ int BmVoice_PlayGated(CVoiceHandle* self, int param, int size);
 // the owner's +0x3F28 sub-state, then draw a random voice from pool A.
 // Goto shapes pin MWCC's branch layout: two-way exit at 'top' (bne/b) and a
 // pre-tested walk loop whose counter is tested before each pool halfword.
-int BmVoice_FindPoolA(BattleMainOwnerView* owner) {
+int BmVoice_FindPoolA(CVoiceHandle* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
     int cur;
     // Structured scan: the shared 'cur' feeds both the terminator test and
@@ -268,7 +269,7 @@ int BmVoice_Play0A(CVoiceHandle* self) {
     // File-scope extern "C" decl (above) + __declspec(noinline) on the
     // definition keep this call a bl (matches retail); MWCC rejects
     // block-scope extern "C", so no local re-declaration here.
-    int voiceId = BmVoice_FindPoolB((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindPoolB((CVoiceHandle*)self);
     RequestVoicePlayback(voicePtr, voiceId, 0xA);
     return 0;
 }
@@ -278,7 +279,7 @@ int BmVoice_Play0A(CVoiceHandle* self) {
 // Same goto-shaped body as BmVoice_FindPoolA (pool B at +0x0C); inlining the
 // walk here instead of via the helper keeps MWCC's register colours equal
 // to retail.
-__declspec(noinline) int BmVoice_FindPoolB(BattleMainOwnerView* owner) {
+__declspec(noinline) int BmVoice_FindPoolB(CVoiceHandle* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses
@@ -323,7 +324,7 @@ wdone:
 // __declspec(noinline): retail keeps this selector outlined; without it
 // MWCC's -O4 inliner copies the body into BmVoice_Play32.
 // Same goto-shaped body as BmVoice_FindPoolA (pool C at +0x38).
-__declspec(noinline) int BmVoice_FindPoolC(BattleMainOwnerView* owner) {
+__declspec(noinline) int BmVoice_FindPoolC(CVoiceHandle* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses
@@ -371,7 +372,7 @@ wdone:
 // Same-TU inline search helper (btm_bda_to_acl pattern): the inlined
 // `return p` lowers to retail's branch-over-branch `bne next; b found`
 // split, which every direct loop form folds into a single beq.
-static __inline VoiceIdListEntry* bmFindEntry(BattleMainOwnerView* owner) {
+static __inline VoiceIdListEntry* bmFindEntry(CVoiceHandle* owner) {
     VoiceIdListEntry* p = lbl_eu_8053A4B8;
     int cur;
     while ((cur = p->id) != 0) {
@@ -382,7 +383,7 @@ static __inline VoiceIdListEntry* bmFindEntry(BattleMainOwnerView* owner) {
     return NULL;
 }
 
-int BmVoice_FindEquip(BattleMainOwnerView* owner) {
+int BmVoice_FindEquip(CVoiceHandle* owner) {
     VoiceIdListEntry* p = bmFindEntry(owner);
     if (p == NULL)
         return -1;
@@ -438,7 +439,7 @@ wdone:
 
 // Bit-2 gate on +0x3F00, then scan the 60-stride list at lbl_eu_8053A4B8 for
 // an entry matching the +0x3F28 id; returns whether a match was found.
-int BmVoice_HasEntry(BattleMainOwnerView* self) {
+int BmVoice_HasEntry(CVoiceHandle* self) {
     if (!(self->field_0x3F00 & 4))
         return 0;
     // Scan until the 0 terminator; on a match keep the entry pointer, else
@@ -472,7 +473,7 @@ int BmVoice_PlayA0(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = BmVoice_FindEquip((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindEquip((CVoiceHandle*)self);
     RequestVoicePlayback(voicePtr, voiceId, 0xA0);
     return 0;
 }
@@ -483,14 +484,14 @@ int BmVoice_PlayA0(CVoiceHandle* self) {
 int BmVoice_Play12C(CVoiceHandle* self) {
     // Retail calls the three-parameter selector passing only r3; mirror that
     // with a narrow local declaration so no r4/r5 setup is emitted.
-    extern int BmVoice_FindGated(BattleMainOwnerView* owner);
+    extern int BmVoice_FindGated(CVoiceHandle* owner);
     if (!(self->field_0x3F00 & 4))
         return 0;
     CCharVoice* voicePtr = (CCharVoice*)self;
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = BmVoice_FindGated((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindGated((CVoiceHandle*)self);
     RequestVoicePlayback(voicePtr, voiceId, 0x12C);
     return 0;
 }
@@ -503,8 +504,8 @@ int BmVoice_Play12C(CVoiceHandle* self) {
 // passes it probes pool +0x36 (cap 1) and only accepts a positive draw,
 // otherwise it falls through to the id-based pools (+0xA cap 1 for nonzero
 // id, +6 cap 2 for zero id).
-extern "C" int BmVoice_FindGated(BattleMainOwnerView* thread,
-                             BattleMainOwnerView* handle, int id) {
+extern "C" int BmVoice_FindGated(CVoiceHandle* thread,
+                             CVoiceHandle* handle, int id) {
     // Locate the table row whose id equals the thread's +0x3F28 sub-state.
     // Declaration order (table, id copy, handle copy) drives MWCC's prologue
     // scheduling; the shared `cur` keeps the row word in one register for
@@ -559,12 +560,12 @@ g36inc:
 g36chk:
         if (i >= 1)
             goto g36done;
-        if (*(s16*)(c + 0x36) > 0)
+        if (reinterpret_cast<VoiceIdListEntry*>(c)->valsB[21] > 0)
             goto g36inc;
 g36done:
         int n = i < 1 ? 1 : i;
         // Only accept a positive draw; otherwise fall through to the pools.
-        s16 pick = *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0x36);
+        s16 pick = *(s16*)((char*)&e->valsB[21] + ml::math::mtRand(n) * 2);
         if (pick > 0)
             return pick;
     }
@@ -580,11 +581,11 @@ ga_inc:
 ga_chk:
         if (i >= 1)
             goto ga_done;
-        if (*(s16*)(c + 0xA) > 0)
+        if (reinterpret_cast<VoiceIdListEntry*>(c)->valsA[3] > 0)
             goto ga_inc;
 ga_done:
         int n = i < 1 ? 1 : i;
-        return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 0xA);
+        return *(s16*)((char*)&e->valsA[3] + ml::math::mtRand(n) * 2);
     }
 
     // Walk the leading positive run of pool +6 (two steps max).
@@ -597,11 +598,11 @@ g06inc:
 g06chk:
     if (i >= 2)
         goto g06done;
-    if (*(s16*)(c + 6) > 0)
+    if (reinterpret_cast<VoiceIdListEntry*>(c)->valsA[1] > 0)
         goto g06inc;
 g06done:
     int n = i < 1 ? 1 : i;
-    return *(s16*)((char*)e + ml::math::mtRand(n) * 2 + 6);
+    return *(s16*)((char*)&e->valsA[1] + ml::math::mtRand(n) * 2);
 }
 
 // Playback helper gated on a negative request parameter: only when param < 0
@@ -617,7 +618,7 @@ int BmVoice_PlayReqB4(CVoiceHandle* self, int param) {
         voicePtr = &self->voice;
     }
     // Retail forwards the request parameter into the selector unchanged.
-    int voiceId = BmVoice_FindRatio((BattleMainOwnerView*)self, param);
+    int voiceId = BmVoice_FindRatio((CVoiceHandle*)self, param);
     RequestVoicePlayback(voicePtr, voiceId, 0xB4);
     return 0;
 }
@@ -629,7 +630,7 @@ int BmVoice_Play32(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = BmVoice_FindPoolC((BattleMainOwnerView*)self);
+    int voiceId = BmVoice_FindPoolC((CVoiceHandle*)self);
     RequestVoicePlayback(voicePtr, voiceId, 0x32);
     return 0;
 }
@@ -652,7 +653,7 @@ void* __ct__802AF5CC(int arg) {
     // The sub-object's slot-0x30 virtual returns a result node; its leading
     // word is the value captured into the frame local.
     u32 captured =
-        ((BmHandleSubView*)handle)->field_0x04->getResult()->word0;
+        ((BmSubVTV*)handle->unk4)->getResult()->word0;
     if (testActorStatus(handle, &captured, 0x803) == 0)
         return 0;
 
@@ -788,7 +789,7 @@ int BmVoice_Cap270() { return 270; }
 // entry+0x2E+bucket*2.
 // Same-TU inline search helper (bmFindEntry pattern): the inlined `return p`
 // lowers to retail's branch-over-branch `bne next; b found` split.
-static __inline VoiceIdListEntry* bmFindEntryBM(BattleMainOwnerView* owner) {
+static __inline VoiceIdListEntry* bmFindEntryBM(CVoiceHandle* owner) {
     VoiceIdListEntry* p = lbl_eu_8053A4B8;
     int cur;
     while ((cur = p->id) != 0) {
@@ -799,7 +800,7 @@ static __inline VoiceIdListEntry* bmFindEntryBM(BattleMainOwnerView* owner) {
     return NULL;
 }
 
-extern "C" int BmVoice_FindRatio(BattleMainOwnerView* owner, int arg) {
+extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg) {
     VoiceIdListEntry* p = bmFindEntryBM(owner);
     if (p == NULL)
         return -1;

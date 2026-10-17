@@ -178,7 +178,7 @@ public:
 // act-data region). Its destructor (__dt__804BF6F4) is defined in
 // code_804BF59C.cpp; this TU only needs a typed handle to destroy it.
 struct CScnItemModelEnvLight {
-    u8 data[0x420];
+    u8 data[0x420]; /* 0x00 */
 };
 
 // Cross-TU imports (retail C-ABI free functions defined in

@@ -217,7 +217,9 @@ extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 // extern "C" keeps the call-site reloc name matching retail (SchedRes_ZeroEntry).
 // Definition sits below SchedRes_AllocEntries so MWCC's same-TU IPA cannot inline it
 // into the allocation loop at -O4,p.
-extern "C" void SchedRes_ZeroEntry(void* pEntry);
+// Forward decl (full definition below, before SchedRes_AllocEntries).
+struct CResEntry;
+extern "C" void SchedRes_ZeroEntry(CResEntry* pEntry);
 
 // Destructor of the static schedule-resource manager (object at 0x804DF068):
 // release the two heap arrays and the MemManager block, then zero the object.
@@ -228,6 +230,7 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj);
 
 // Lookup-table object shared by SchedRes_LookupKeyIndexed / SchedRes_ResetAnimViaTable / SchedRes_FindValueByKey
 // (SchedRes_EntryByIndex reads the same object's res-table pointer at +0x10).
+struct ResTable;  // defined below; only the pointer at +0x10 is read here.
 struct CResLookupEntry {
     void* mValue; // 0x00
     void* mKey;   // 0x04
@@ -240,6 +243,7 @@ struct CResLookup {
     u32 _pad04;                // 0x04
     CResLookupEntry* mEntries; // 0x08: {value,key} entries, 8-byte stride
     u32* mTable;               // 0x0C: index -> u32 table (SchedRes_ResetAnimViaTable)
+    ResTable* mResTable;       // 0x10: res-table pointer (SchedRes_EntryByIndex)
 };
 
 // Indexed key accessor: index must be < 0x100 and within the entry count.
@@ -266,7 +270,9 @@ struct CResEntry {
     u8 mField03;                // 0x03
     u32 mKey;                   // 0x04 resource key
     CResLookupEntry* mEntries;  // 0x08 (CResLookup view)
-    u8 mRest[0x0C];             // 0x0C..0x18
+    u32 mField0C;               // 0x0C
+    u32 mField10;               // 0x10
+    u32 mField14;               // 0x14
 };
 
 extern u8 lbl_eu_806616B8[0x60]; // .bss buffer cleared by SchedRes_ClearBuf60
@@ -369,7 +375,7 @@ struct ResTable {
 };
 
 void* SchedRes_EntryByIndex(u8* self, int index) {
-    ResTable* base = *(ResTable**)((u8*)self + 0x10);
+    ResTable* base = ((CResLookup*)self)->mResTable;
     ResTableIndex* entries = (ResTableIndex*)((u8*)base + base->indexOffset);
     return (u8*)base + entries[index].offset;
 }
@@ -425,7 +431,7 @@ void* SchedRes_AllocEntries(u32 size, u32 count) {
     lbl_eu_80665A28[0] = 0;
     off = 0;
     for (i = 0; i < (s32)count; i++) {
-        SchedRes_ZeroEntry((u8*)lbl_eu_80665A20 + off);
+        SchedRes_ZeroEntry((CResEntry*)((u8*)lbl_eu_80665A20 + off));
         off += 0x18;
     }
     return end;
@@ -433,15 +439,14 @@ void* SchedRes_AllocEntries(u32 size, u32 count) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void SchedRes_ZeroEntry(void* pEntry) {
-    char* base = (char*)pEntry;
-    base[0] = 0;
-    base[2] = 0;
-    base[3] = 0;
-    *(int*)(base + 4) = 0;
-    *(int*)(base + 8) = 0;
-    *(int*)(base + 0x10) = 0;
-    *(int*)(base + 0xc) = 0;
+extern "C" void SchedRes_ZeroEntry(CResEntry* pEntry) {
+    pEntry->mField00 = 0;
+    pEntry->mCount = 0;
+    pEntry->mField03 = 0;
+    pEntry->mKey = 0;
+    pEntry->mEntries = 0;
+    pEntry->mField10 = 0;
+    pEntry->mField0C = 0;
 }
 #pragma pop
 
@@ -1214,8 +1219,9 @@ void* SchedNode_FetchSlotPtr(s32 arg) {
     if (arg < 0) {
         return NULL;
     }
-    s32 off = arg * 0x34;
-    return (void*)(*(u32*)&lbl_eu_80665A44 + off);
+    // Indexed 0x34-stride table: retail already multiplies (mulli), so the
+    // typed indexed access matches.
+    return ((u8(*)[0x34])lbl_eu_80665A44)[arg];
 }
 
 // Pick a random entry from a run of equal u16 values in a schedule entry
@@ -1258,6 +1264,13 @@ struct CEntryElem {
     s16 mField04;    // 0x04
     s16 mField06;    // 0x06
     u8 mRest[0x0E];  // 0x08
+};
+
+// 0x10-stride element kind with a vec3 at +0x04 (SchedAnim_LerpVec24 /
+// SchedAnim_RefreshScaleVec): 4 + 12 = 16 = the caller stride.
+struct CEntryVec10 {
+    u8 _00[4];     // 0x00
+    f32 mVec[3];   // 0x04 lerped triple
 };
 
 // Entry-blob interpreter (retail symbol SchedEntry_ResolveElem): resolves the element
@@ -2191,8 +2204,8 @@ void SchedAnim_LerpVec24(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f3
         if (rate < lbl_eu_8066B290) {
             return;
         }
-        CEVec3LerpPS(&item->mField24, (u8*)ret + 4,
-                      (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x10 + 4,
+        CEVec3LerpPS(&item->mField24, ((CEntryVec10*)ret)->mVec,
+                      ((CEntryVec10*)ret + ((item->mField06 - item->mField05) & 0xFF))->mVec,
                       rate);
         item->mField24 = item->mField24 * item->mField0C;
         item->mField28 = item->mField28 * item->mField10;
@@ -2576,8 +2589,8 @@ void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entries, u8* ar
     if (rate < lbl_eu_8066B290) {
         return;
     }
-    CEVec3LerpPS(&item->mField0C, (u8*)ret + 4,
-                  (u8*)ret + ((item->mField06 - item->mField05) & 0xFF) * 0x10 + 4,
+    CEVec3LerpPS(&item->mField0C, ((CEntryVec10*)ret)->mVec,
+                  ((CEntryVec10*)ret + ((item->mField06 - item->mField05) & 0xFF))->mVec,
                   rate);
     // flag starts cleared and is set only when the vector deviates from 1.0
     u8 flag = false;

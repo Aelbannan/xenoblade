@@ -384,26 +384,26 @@ f32 scn80496GetChild1V6(CScn80496B0C* self) {
 // (type definitions live at the top of the file)
 
 extern "C" void scn80496CallChild1V5(u8* self) {
-    void* p = *(void**)((u8*)self + 8);
-    if (p == 0) return;
-    p = *(void**)((u8*)p + 0x84);
-    if (p == 0) return;
-    ((VTarget*)*(void**)((u8*)p + 0x10))->v5();
+    CScnChild80496B0C* child = ((CScn80496B0C*)self)->field_0x8;
+    if (child == 0) return;
+    CScnNode80496B0C* node = child->field_0x84[0];
+    if (node == 0) return;
+    node->field_0x10->v5();
 }
 
 extern "C" float scn80496GetChild1Float(u8* self) {
-    void* p = *(void**)((u8*)self + 8);
-    if (p == 0) return lbl_eu_8066AAC0;
-    p = *(void**)((u8*)p + 0x84);
-    if (p != 0) return *(float*)((u8*)p + 0x1C);
+    CScnChild80496B0C* child = ((CScn80496B0C*)self)->field_0x8;
+    if (child == 0) return lbl_eu_8066AAC0;
+    CScnNode80496B0C* node = child->field_0x84[0];
+    if (node != 0) return node->field_0x1C;
     return lbl_eu_8066AAC0;
 }
 
 extern "C" float scn80496GetChild2Float(u8* self) {
-    void* p = *(void**)((u8*)self + 0xC);
-    if (p == 0) return lbl_eu_8066AAC0;
-    p = *(void**)((u8*)p + 0x84);
-    if (p != 0) return *(float*)((u8*)p + 0x1C);
+    CScnChild80496B0C* child = ((CScn80496B0C*)self)->field_0xC;
+    if (child == 0) return lbl_eu_8066AAC0;
+    CScnNode80496B0C* node = child->field_0x84[0];
+    if (node != 0) return node->field_0x1C;
     return lbl_eu_8066AAC0;
 }
 

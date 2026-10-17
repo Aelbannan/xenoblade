@@ -187,6 +187,24 @@ struct CActParamAnimFlagView {
     u32 flags;
 };
 
+// Embedded CActParamData base at +0x10 (same object, exact type).
+struct CActParamAnimDataView {
+    u8 pad_00[0x10];
+    CActParamData data10;
+};
+
+// Flag word at +0x260 (bit tests take/clear bits 5/13/16/18).
+struct CActParamAnimFlagWordView {
+    u8 pad_00[0x260];
+    u32 flags260;
+};
+
+// Untyped +0x10 float slot read by getOwnerFloat.
+struct CActParamAnimFloat10View {
+    u8 pad_00[16];
+    f32 field_10;
+};
+
 bool setAnimSubPos(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimData3* destination;
@@ -216,12 +234,14 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
 }
 
 extern "C" __declspec(noinline) void copyVec3Words(f32* dst, const f32* src) {
-    u32 a = *(u32*)((char*)src + 0);
-    *(u32*)((char*)dst + 0) = a;
-    u32 b = *(u32*)((char*)src + 4);
-    *(u32*)((char*)dst + 4) = b;
-    u32 c = *(u32*)((char*)src + 8);
-    *(u32*)((char*)dst + 8) = c;
+    const u32* s = reinterpret_cast<const u32*>(src);
+    u32* d = reinterpret_cast<u32*>(dst);
+    u32 a = s[0];
+    d[0] = a;
+    u32 b = s[1];
+    d[1] = b;
+    u32 c = s[2];
+    d[2] = c;
 }
 
 bool setAnimLastPos(CActParamAnim* self, const CActParamAnimData3* value) {
@@ -250,8 +270,7 @@ ret_end:
 }
 
 extern "C" bool setTurnAngle(CActParamAnim* self, f32 value) {
-    CActParamAnimOwner* owner =
-        *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
+    CActParamAnimOwner* owner = reinterpret_cast<CActParamAnimStateView*>(self)->owner08;
     if (owner != NULL && owner->v3() == 0) {
         return true;
     }
@@ -303,7 +322,7 @@ void CActParamAnim_copyRotation(void* dst, const void* src) {
 void vec3_set(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
 
 extern "C" f32 getTurnTarget(CActParamAnim* self) {
-    return *(f32*)((char*)self + 0x444);
+    return reinterpret_cast<CActParamAnimStateView*>(self)->field444;
 }
 
 extern "C" void attachAnimObj(CActParamAnim* self, void* object, void* state,
@@ -312,7 +331,7 @@ extern "C" void attachAnimObj(CActParamAnim* self, void* object, void* state,
     view->object3A0 = reinterpret_cast<u8*>(object);
     view->state3A4 = reinterpret_cast<u32>(state);
     view->field0C |= 8;
-    initActParamData(reinterpret_cast<CActParamData*>(reinterpret_cast<u8*>(self) + 0x10), self, self, state,
+    initActParamData(reinterpret_cast<CActParamData*>(view->mChildData10), self, self, state,
                   reinterpret_cast<void*>(param));
     func_8004B9D4(self, 1, 0, -1, 0);
 }
@@ -327,12 +346,12 @@ void CActParamAnim::updateSubAnim() {
 
 extern "C" void releaseAnimObj(CActParamAnim* self, void* object) {
     CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
-    if (view->objectState != 0 && lookupParamByKey(reinterpret_cast<u8*>(self) + 0x10)) {
+    if (view->objectState != 0 && lookupParamByKey(reinterpret_cast<CActParamAnimStateView*>(self)->mChildData10)) {
         if (view->objectState == reinterpret_cast<u32>(object)) {
-            view->objectState = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x1E0);
+            view->objectState = reinterpret_cast<u32>(((CActParamAnimDataView*)self)->data10.mKeys1D0[0]);
         }
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x374) = 0;
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x37C) = 0xFFFFFFFF;
+        reinterpret_cast<CActParamAnimStateView*>(self)->field374 = 0;
+        reinterpret_cast<CActParamAnimStateView*>(self)->field37C = -1;
     }
 }
 
@@ -362,7 +381,7 @@ float CActParamAnim::getAnimSpeed() const {
 }
 
 extern "C" f32 getAnimPlayRate(CActParamAnim* self) {
-    return *(f32*)((char*)self + 0x390);
+    return reinterpret_cast<CActParamAnimStateView*>(self)->field390;
 }
 
 void CActParamAnim::copyVec3To3C0(const float* src) {
@@ -401,14 +420,14 @@ extern "C" u32 testAnimMoveBit(const CActParamAnim* self) {
 
 float CActParamAnim::getAttachedAnimTime() {
     extern float simGetLeafAnimDist(void*);
-    void* obj = *(void**)((char*)this + 0x3A0);
+    void* obj = reinterpret_cast<CActParamAnimStateView*>(this)->object3A0;
     if (obj) return simGetLeafAnimDist(obj);
     return lbl_eu_80665EA0;
 }
 
 float CActParamAnim::getAttachedAnimRate() {
     extern float simGetLeafAnimDist2(void*);
-    void* obj = *(void**)((char*)this + 0x3A0);
+    void* obj = reinterpret_cast<CActParamAnimStateView*>(this)->object3A0;
     if (obj != 0) return simGetLeafAnimDist2(obj);
     return lbl_eu_80665EA0;
 }
@@ -421,28 +440,28 @@ void CActParamAnim::callObjUpdate() {
 
 float CActParamAnim::getAttachedAnimScale() {
     extern float simGetLeafDist7B0(void*);
-    void* obj = *(void**)((char*)this + 0x3A0);
+    void* obj = reinterpret_cast<CActParamAnimStateView*>(this)->object3A0;
     if (obj != 0) return simGetLeafDist7B0(obj);
     return lbl_eu_80665EA0;
 }
 
 extern "C" void setSnapFlags(CActParamAnim* self, u32 param1, u32 param2, f32 value) {
     if (param1 != 0) {
-        *(f32*)((u8*)self + 0x480) = value;
-        u32 flags = *(u32*)((u8*)self + 0xC);
+        reinterpret_cast<CActParamAnimStateView*>(self)->field480 = value;
+        u32 flags = reinterpret_cast<CActParamAnimStateView*>(self)->field0C;
         flags |= 0x10000;
-        *(u32*)((u8*)self + 0xC) = flags;
+        reinterpret_cast<CActParamAnimStateView*>(self)->field0C = flags;
         if (param2 != 0) {
             flags |= 0x20000;
-            *(u32*)((u8*)self + 0xC) = flags;
+            reinterpret_cast<CActParamAnimStateView*>(self)->field0C = flags;
         } else {
             flags &= ~0x20000;
-            *(u32*)((u8*)self + 0xC) = flags;
+            reinterpret_cast<CActParamAnimStateView*>(self)->field0C = flags;
         }
     } else {
-        u32 flags = *(u32*)((u8*)self + 0xC);
+        u32 flags = reinterpret_cast<CActParamAnimStateView*>(self)->field0C;
         flags &= ~0x30000;
-        *(u32*)((u8*)self + 0xC) = flags;
+        reinterpret_cast<CActParamAnimStateView*>(self)->field0C = flags;
     }
 }
 
@@ -1021,7 +1040,7 @@ extern "C" f32 cosAnimFIdx(f32 angle) {
     return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
-extern "C" int testAnimBit5(CActParamAnim* self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
+extern "C" int testAnimBit5(CActParamAnim* self) { return ((((CActParamAnimFlagWordView*)self)->flags260 >> 5) & 1); }
 
 extern "C" void updateLeafDist(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -1105,10 +1124,10 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         f32 v2 = (f32)(s32)simGetLeafAnimDist(view->object3A0);
         updateParamFloats(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
         f32 rate = view->field388;
-        f32 t = Scn_GetFrameDelta(*(void**)(view->object3A0 + 4));
+        f32 t = Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]);
         view->field390 = t * rate;
         view->field4B0 = 0;
-        if (Scn_GetFrameDelta(*(void**)(view->object3A0 + 4)) > lbl_eu_80665EA0 && view->field4D8 < 10) {
+        if (Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]) > lbl_eu_80665EA0 && view->field4D8 < 10) {
             view->field4D8++;
         }
     }
@@ -1529,15 +1548,15 @@ void CActParamAnim::clearEffObj() {
 
 
 extern "C" void* getAnimChild(CActParamAnim* self) {
-    return reinterpret_cast<u8*>(self) + 16;
+    return reinterpret_cast<CActParamAnimStateView*>(self)->mChildData10;
 }
 
 extern "C" f32 getAnimWalkKmh(CActParamAnim* self) {
-    return *(f32*)(reinterpret_cast<u8*>(self) + 0x43C);
+    return reinterpret_cast<CActParamAnimStateView*>(self)->field43C;
 }
 
 extern "C" void* getAnimOwner(CActParamAnim* self) {
-    return *(void**)(reinterpret_cast<u8*>(self) + 8);
+    return reinterpret_cast<CActParamAnimStateView*>(self)->owner08;
 }
 
 extern "C" u32 animAlwaysTrue() {
@@ -1545,24 +1564,24 @@ extern "C" u32 animAlwaysTrue() {
 }
 
 extern "C" void setAnimOwner(CActParamAnim* self, void* val) {
-    *(void**)(reinterpret_cast<u8*>(self) + 8) = val;
+    reinterpret_cast<CActParamAnimStateView*>(self)->owner08 = reinterpret_cast<CActParamAnimOwner*>(val);
 }
 
 extern "C" void setAnimHeight(CActParamAnim* self, f32 val) {
-    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = val;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field3C4 = val;
 }
 
 extern "C" void storeObjVec3(void* dstObj, const f32* srcVec) {
-    u8* base = reinterpret_cast<u8*>(dstObj);
-    *(u32*)(base + 12) = *(const u32*)&srcVec[0];
-    *(u32*)(base + 16) = *(const u32*)&srcVec[1];
-    *(u32*)(base + 20) = *(const u32*)&srcVec[2];
+    CActParamAnimObjVec* dst = reinterpret_cast<CActParamAnimObjVec*>(dstObj);
+    dst->x = *(const u32*)&srcVec[0];
+    dst->y = *(const u32*)&srcVec[1];
+    dst->z = *(const u32*)&srcVec[2];
 }
 
 extern "C" void writeVec3f(void* out, f32 a, f32 b, f32 c) {
-    *(f32*)(reinterpret_cast<u8*>(out) + 0) = a;
-    *(f32*)(reinterpret_cast<u8*>(out) + 4) = b;
-    *(f32*)(reinterpret_cast<u8*>(out) + 8) = c;
+    reinterpret_cast<f32*>(out)[0] = a;
+    reinterpret_cast<f32*>(out)[1] = b;
+    reinterpret_cast<f32*>(out)[2] = c;
 }
 
 extern "C" void clearFlagMask(u32* flags, u32 mask) {
@@ -1576,10 +1595,10 @@ extern "C" void copyVec3f(f32* out, const f32* src) {
 }
 
 extern "C" void setAnimPosVec(CActParamAnim* self, const u32* srcVec) {
-    u8* base = reinterpret_cast<u8*>(self);
-    *(u32*)(base + 0x3C0) = srcVec[0];
-    *(u32*)(base + 0x3C4) = srcVec[1];
-    *(u32*)(base + 0x3C8) = srcVec[2];
+    CActParamAnimPosView* view = reinterpret_cast<CActParamAnimPosView*>(self);
+    view->x = srcVec[0];
+    view->y = srcVec[1];
+    view->z = srcVec[2];
 }
 
 extern "C" int testFlagMask(u32* flags, u32 mask) {
@@ -1588,11 +1607,11 @@ extern "C" int testFlagMask(u32* flags, u32 mask) {
 }
 
 extern "C" void* getAnimChain(CActParamAnim* self) {
-    void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 8);
+    void* ptr = reinterpret_cast<CActParamAnimStateView*>(self)->owner08;
     if (ptr != NULL) {
-        return *(void**)(reinterpret_cast<u8*>(ptr) + 24);
+        return reinterpret_cast<void*>(reinterpret_cast<CActParamAnimOwner*>(ptr)->field18);
     }
-    return *(void**)(reinterpret_cast<u8*>(self) + 0x4B4);
+    return reinterpret_cast<void*>(reinterpret_cast<CActParamAnimStateView*>(self)->field4B4);
 }
 
 void CActParamAnim::func_8004DAE0() {}
@@ -3423,8 +3442,7 @@ void CActParamAnim::setActiveFlag(s32 param) {
 
 extern "C" int isSpeedInRange(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwner* owner =
-        *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
+    CActParamAnimOwner* owner = reinterpret_cast<CActParamAnimStateView*>(self)->owner08;
     if (owner == NULL) return 0;
     f32 animSpeed = view->field394;
     if (lbl_eu_80665EA0 == animSpeed) return 0;
@@ -3437,13 +3455,13 @@ extern "C" int isSpeedInRange(CActParamAnim* self) {
 }
 
 extern "C" int isSpeedAbove(CActParamAnim* self) {
-    void* owner = *(void**)((u8*)self + 8);
+    CActParamAnimOwner* owner = reinterpret_cast<CActParamAnimStateView*>(self)->owner08;
     if (owner == NULL) return 0;
-    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    f32 animSpeed = reinterpret_cast<CActParamAnimStateView*>(self)->field394;
     if (lbl_eu_80665EA0 == animSpeed) return 0;
-    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    f32 val = owner->field14 * reinterpret_cast<CActParamAnimStateView*>(self)->field430;
     // 1 while val exceeds the upper bound (mirror of isSpeedInRange's first condition).
-    return val > *(f32*)((u8*)self + 0x434) ? 1 : 0;
+    return val > reinterpret_cast<CActParamAnimStateView*>(self)->field434 ? 1 : 0;
 }
 
 void CActParamAnim::startAnimA() {
@@ -3475,11 +3493,12 @@ void CActParamAnim::startAnimC() {
 }
 
 extern "C" int isSpeedBelow(CActParamAnim* self) {
-    void* owner = *(void**)((u8*)self + 8);
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwner* owner = view->owner08;
     if (owner == NULL) return 1;
-    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    f32 animSpeed = view->field394;
     if (lbl_eu_80665EA0 == animSpeed) return 1;
-    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    f32 val = owner->field14 * view->field430;
     // 1 while val is below the lower bound (mirror of isSpeedInRange's second condition).
     return val < lbl_eu_80665ECC ? 1 : 0;
 }
@@ -3489,7 +3508,7 @@ extern "C" void shiftAnimPos(CActParamAnim* self) {
     // Copy 0x3A8..0x3B0 to 0x3B4..0x3BC, then flag juggling. The flag word is
     // shared state (retail re-loads it after each store), so access it through
     // a volatile pointer to keep MWCC from caching it in a register.
-    volatile u32* flagp = reinterpret_cast<volatile u32*>(reinterpret_cast<u8*>(self) + 0xC);
+    volatile u32* flagp = reinterpret_cast<volatile u32*>(&reinterpret_cast<CActParamAnimStateView*>(self)->field0C);
     u32 flags = *flagp;
     view->field3B4 = view->field3A8;
     view->field3B8 = view->field3AC;
@@ -3893,36 +3912,36 @@ void clampAnimMove(CActParamAnim* self) {
 
 
 extern "C" void startAnimModeA(CActParamAnim* self) {
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x4A8) = 0x00044A05;
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x0C) |= 0x00800000;
+    reinterpret_cast<CActParamAnimInitView*>(self)->field4A8 = 0x00044A05;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field0C |= 0x00800000;
 }
 
 extern "C" int testAnimBit13(CActParamAnim* self) {
-    return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 13) & 1;
+    return ((((CActParamAnimFlagWordView*)self)->flags260) >> 13) & 1;
 }
 
 extern "C" f32 getSnapScale(CActParamAnim* self) {
-    return *(f32*)(reinterpret_cast<u8*>(self) + 0x4A0);
+    return reinterpret_cast<CActParamAnimStateView*>(self)->field4A0;
 }
 
 extern "C" f32 getOwnerFloat(void* obj) {
-    return *(f32*)(reinterpret_cast<u8*>(obj) + 16);
+    return ((const CActParamAnimFloat10View*)obj)->field_10;
 }
 
 
 extern "C" int takeAnimBit18(void* data) {
     u8* base = reinterpret_cast<u8*>(data);
-    int result = (*(volatile u32*)(base + 0x260) >> 18) & 1;
-    *(u32*)(base + 0x260) &= ~0x40000;
+    int result = ((((volatile CActParamAnimFlagWordView*)base)->flags260) >> 18) & 1;
+    ((CActParamAnimFlagWordView*)base)->flags260 &= ~0x40000;
     return result;
 }
 
 extern "C" void mulAnimHeight(CActParamAnim* self, f32 param) {
-    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) *= param;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field3C4 *= param;
 }
 
 extern "C" int testAnimBit16(CActParamAnim* self) {
-    return (*(u32*)(reinterpret_cast<u8*>(self) + 0x260) >> 16) & 1;
+    return ((((CActParamAnimFlagWordView*)self)->flags260) >> 16) & 1;
 }
 
 void CActParamAnim::mulVec3Y(float param_2) {
@@ -4214,7 +4233,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
 // ScnRes_ResolveGroundHeight's (a, b) slots (forced-name global, same scheme as
 // CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv).
 void initAnimBlendVectors__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
-    ScnRes_ResolveGroundHeight(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
+    ScnRes_ResolveGroundHeight(a, b, reinterpret_cast<CActParamAnimInitView*>(self)->field4A8, 0, 0, 0,
                   lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,
                   lbl_eu_80665F70, lbl_eu_80665EA0);
 }
@@ -4383,28 +4402,28 @@ int CActParamAnim::getChainInt() {
 extern u8 lbl_eu_80663D4C;
 
 void clrAnimHeight(CActParamAnim* self) {
-    *(f32*)(reinterpret_cast<u8*>(self) + 0x3C4) = lbl_eu_80665EA0;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field3C4 = lbl_eu_80665EA0;
 }
 
 
 
 // Null-check guards: early return on null, otherwise dispatch into view pipeline
 extern "C" void setBlendGate(CActParamAnim* self, s32 param) {
-    u8* B = reinterpret_cast<u8*>(self);
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
-        u32 flags = *(u32*)(B + 12);
-        *(u8*)(B + 0x4DA) = 30;
-        *(u32*)(B + 12) = flags | 0x04000000u;
+        u32 flags = view->field0C;
+        view->field4DA = 30;
+        view->field0C = flags | 0x04000000u;
         return;
     }
-    *(u32*)(B + 12) &= ~0x04000000u;
+    view->field0C &= ~0x04000000u;
 }
 
 extern "C" void* getAnimModelId(void* self) {
-    void* p = *(void**)(reinterpret_cast<u8*>(self) + 0x2FC);
+    void* p = reinterpret_cast<void*>(reinterpret_cast<CActParamAnimStateView*>(self)->field2FC);
     if (p != 0)
         return p;
-    return *(void**)(reinterpret_cast<u8*>(self) + 0x27C);
+    return reinterpret_cast<void*>(reinterpret_cast<CActParamAnimStateView*>(self)->field27C);
 }
 
 extern "C" f32 atan2AnimFIdx(f32 a, f32 b) {
@@ -4412,48 +4431,48 @@ extern "C" f32 atan2AnimFIdx(f32 a, f32 b) {
 }
 
 extern "C" void setAnimCount(void* self, u32 value) {
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x374) = value;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field374 = value;
 }
 
 extern "C" void clrAnimEff(void* self) {
-    u8* B = reinterpret_cast<u8*>(self);
-    *(u8*)(B + 0x4BE) = 0;
-    *(u8*)(B + 0x4BF) = 0;
-    *(u32*)(B + 0x4C0) = 0;
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    view->field4BE = 0;
+    view->field4BF = 0;
+    view->field4C0 = 0;
 }
 
 extern "C" void stopAnimMove(CActParamAnim* self) {
-    u32 flags = *(u32*)(reinterpret_cast<u8*>(self) + 12);
+    u32 flags = reinterpret_cast<CActParamAnimStateView*>(self)->field0C;
     u32 masked = flags & ~0x10u;
-    *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field0C = masked;
     if ((flags & 2) == 0)
         return;
     masked &= ~0x80u;
-    *(u8*)(reinterpret_cast<u8*>(self) + 0x498) = 0;
-    *(u32*)(reinterpret_cast<u8*>(self) + 12) = masked;
+    reinterpret_cast<CActParamAnimInitView*>(self)->field498 = 0;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field0C = masked;
 }
 
 extern "C" void setAttachRate(CActParamAnim* self, f32 value) {
-    void* ptr = *(void**)(reinterpret_cast<u8*>(self) + 928);
+    void* ptr = reinterpret_cast<CActParamAnimStateView*>(self)->object3A0;
     if (ptr == 0)
         return;
     simRefreshFlag8(ptr, value);
 }
 
 extern "C" int callAttachFn(void* obj, u32 sel) {
-    if (*(void**)((u8*)obj + 928) == 0)
+    if (reinterpret_cast<CActParamAnimStateView*>(obj)->object3A0 == 0)
         return 0;
     if (sel != 0)
-        return simRefreshFadeDist2(*(u8**)((u8*)obj + 928), sel);
-    return simRefreshFadeDist(*(u8**)((u8*)obj + 928));
+        return simRefreshFadeDist2(reinterpret_cast<CActParamAnimStateView*>(obj)->object3A0, sel);
+    return simRefreshFadeDist(reinterpret_cast<CActParamAnimStateView*>(obj)->object3A0);
 }
 
 extern "C" void setActiveBit(CActParamAnim* self, u32 param) {
     if (param != 0) {
-        *(u32*)(reinterpret_cast<u8*>(self) + 12) |= 2;
+        reinterpret_cast<CActParamAnimStateView*>(self)->field0C |= 2;
         return;
     }
-    *(u32*)(reinterpret_cast<u8*>(self) + 12) &= ~2u;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field0C &= ~2u;
 }
 
 
@@ -4462,13 +4481,13 @@ extern "C" f32 getAnimMinSpeed() {
 }
 
 extern "C" u32 getAnimTick(ActParamData388* obj) {
-    u8* base = reinterpret_cast<u8*>(obj);
-    if (*(u32*)(base + 0x4C4) != 0)
-        return *(u32*)(base + 0x4C4);
-    void* ptr = *(void**)(base + 8);
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(obj);
+    if (view->field4C4 != 0)
+        return view->field4C4;
+    void* ptr = view->owner08;
     if (ptr != 0)
-        return *(u32*)(reinterpret_cast<u8*>(ptr) + 24);
-    return *(u32*)(base + 0x4B4);
+        return reinterpret_cast<CActParamAnimOwner*>(ptr)->field18;
+    return view->field4B4;
 }
 
 extern "C" void clrAnimGate() { lbl_eu_80663D4C = 0; }
@@ -4506,31 +4525,31 @@ extern "C" void sinit_800539E0() {
 }
 
 extern "C" void* getAnimEff(CActParamAnim* self) {
-    return *(void**)((char*)self + 0x4c0);
+    return reinterpret_cast<void*>(reinterpret_cast<CActParamAnimStateView*>(self)->field4C0);
 }
 
 extern "C" void pushAnimNode(CActParamAnim* self) {
-    if (*(int*)((char*)self + 0x3A4) != 0) {
-        pushParamNode((char*)self + 0x10);
+    if (reinterpret_cast<CActParamAnimStateView*>(self)->state3A4 != 0) {
+        pushParamNode(reinterpret_cast<CActParamAnimStateView*>(self)->mChildData10);
     }
 }
 
 extern "C" void startAnimModeA2(CActParamAnim* self) {
-    u32 v = *(u32*)((u8*)self + 0xC);
+    u32 v = reinterpret_cast<CActParamAnimStateView*>(self)->field0C;
     float f = lbl_eu_80665F18;
-    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A05;
-    *(volatile float*)((u8*)self + 0x484) = f;
-    *(u32*)((u8*)self + 0xC) = v | 0x00800000;
+    *(volatile u32*)&reinterpret_cast<CActParamAnimInitView*>(self)->field4A8 = 0x44A05;
+    *(volatile float*)&reinterpret_cast<CActParamAnimInitView*>(self)->field484 = f;
+    reinterpret_cast<CActParamAnimStateView*>(self)->field0C = v | 0x00800000;
 }
 
 extern "C" void startAnimModeB(CActParamAnim* self) {
     float f = lbl_eu_80665F18;
-    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A09;
-    *(volatile float*)((u8*)self + 0x484) = f;
+    *(volatile u32*)&reinterpret_cast<CActParamAnimInitView*>(self)->field4A8 = 0x44A09;
+    *(volatile float*)&reinterpret_cast<CActParamAnimInitView*>(self)->field484 = f;
 }
 
 extern "C" void startAnimModeC(CActParamAnim* self) {
     float f = lbl_eu_80665F18;
-    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A11;
-    *(volatile float*)((u8*)self + 0x484) = f;
+    *(volatile u32*)&reinterpret_cast<CActParamAnimInitView*>(self)->field4A8 = 0x44A11;
+    *(volatile float*)&reinterpret_cast<CActParamAnimInitView*>(self)->field484 = f;
 }

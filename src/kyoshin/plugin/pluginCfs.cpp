@@ -138,6 +138,20 @@ extern "C" {
     void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, int);
 }
 
+// ----------------------------------------------------------------------------
+// Typed views for raw byte-offset field access (matching-neutral cleanup).
+// These describe the exact retail layout of opaque blobs touched by the
+// script glue below; member access compiles to the same byte-offset
+// addresses as the previous explicit (u8 *)+N arithmetic.
+// ----------------------------------------------------------------------------
+struct CfsOcObjView { u8 pad_0[4]; int id; }; // +4 id word
+struct CfsArtsEntryView { u8 pad_0[0x64]; int flags; }; // +0x64 flags word
+struct CfsMapObjView { u8 pad_0[0xC4]; int field_C4; }; // +0xC4 word
+struct CfsGaugeView { u8 pad_0[0x194]; u8 field_194; }; // +0x194 byte
+struct CfsTaskView { u8 pad_0[0x8C]; u8 field_8C; }; // +0x8C byte
+struct CfsCharEntryView { u8 pad_0[0x0C]; u16 field_C; }; // +0x0C halfword
+struct CfsSysInstView { u8 pad_0[0x1C]; u8 field_1C; }; // +0x1C byte
+
 // ============================================================================
 // Batch 1: Plugin functions (pluginCfs.cpp)
 // ============================================================================
@@ -972,16 +986,16 @@ int setMapDispID(VMThread* pThread) {
         v30 = vmArgBoolGet(6, arg);
     }
     
-    void* gm = cf::CfGameManager::getGameSubManager();
+    UnkClass_80083298* gm = cf::CfGameManager::getGameSubManager();
     if (gm) {
         if (v27) {
             if (v28) activateLOD__8CTaskLODFv(v26);
             if (v29) { ScnData_FwdB7D9C(getScnHandle__Fv(), v26); }
-            if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
+            if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         } else {
             if (v28) deactivateLOD__8CTaskLODFv(v26);
             if (v29) { ScnData_FwdB7DD4(getScnHandle__Fv(), v26); }
-            if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
+            if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         }
     }
     return 0;
@@ -1207,8 +1221,12 @@ int makeParty(VMThread* pThread) {
     return 0;
 }
 
+// Data view for CfObject_getMoveHeadAngle: the head-angle float at +0x4C
+// (the TU's minimal cf::CfObject decl carries no fields; per-statement use).
+struct CfObjHeadAngleView { u8 _00[0x4C]; float headAngle4C; };
+
 float cf::CfObject::CfObject_getMoveHeadAngle() {
-    return *(float*)((u8*)this + 0x4C);
+    return ((CfObjHeadAngleView*)this)->headAngle4C;
 }
 
 // --- makeGuestParty (us-80049f84) ---
@@ -1638,7 +1656,7 @@ int setDispOffArea(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     int areaId = vmArgFixedGet(3, arg);
 
-    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), ((CfsOcObjView*)ocObj)->id);
 
     if (obj != NULL) {
         // The singleton from getInstance__Fv is passed as the callee's self.
@@ -1667,10 +1685,10 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg);
     }
 
-    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), *(int*)((u8*)ocObj + 4));
+    void* obj = ArtsSelect_Lookup(ArtsSelect_GetContainer(), ((CfsOcObjView*)ocObj)->id);
 
     if (obj != NULL) {
-        int flags = *(int*)((u8*)obj + 0x64);
+        int flags = ((CfsArtsEntryView*)obj)->flags;
         if (flags & 0x08) {
             CfObjectMove_forwardNpcSignal((int)obj, enable);
         }
@@ -1773,8 +1791,8 @@ int setActMapObj(VMThread* vmThread) {
 
     void* mapObj = ArtsSelect_GetEntry(mapObjId & 0xFFFF);
     if (mapObj != NULL) {
-        int* objPtr = (int*)((u8*)mapObj + 0xC4);
-        if (*objPtr != 0) {
+        CfsMapObjView* objView = (CfsMapObjView*)mapObj;
+        if (objView->field_C4 != 0) {
             CfObjectMove_setAnimModeArgs((u8*)mapObj, state, 0, -1, 1);
         }
     }
@@ -1814,7 +1832,7 @@ int partyMember(VMThread* vmThread) {
 
     int* partyData = CtrlObjectParam_GetSlotTableBase();
     int offset = (memberIdx - 1) * 4;
-    int memberVal = *(int*)((u8*)partyData + 4 + offset);
+    int memberVal = *(partyData + 1 + (memberIdx - 1));
     int clz = __cntlzw(memberVal);
 
     VMArg ret;
@@ -1828,7 +1846,7 @@ int clearPartyGauge(VMThread* vmThread) {
     void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
     if (battleMgr != NULL) {
         void* gauge = getInstance__Q22cf14CBattleManagerFv();
-        PartyGaugeSetClamped((u8*)gauge + 0x194, 0);
+        PartyGaugeSetClamped(&((CfsGaugeView*)gauge)->field_194, 0);
     }
     return 0;
 }
@@ -1856,7 +1874,7 @@ int partyWarp(VMThread* vmThread) {
         if (player != NULL) {
             void* task = player->getTask();
             if (task != NULL) {
-                movePcCondFullReset((u8*)task + 0x8C, 1);
+                movePcCondFullReset(&((CfsTaskView*)task)->field_8C, 1);
             }
         }
     }
@@ -1940,7 +1958,7 @@ int getWeaponID(VMThread* vmThread) {
 
     VMArg ret;
     ret.type = 3;
-    ret.value.intVal = *(u16*)((u8*)charData + 0x0C);
+    ret.value.intVal = ((CfsCharEntryView*)charData)->field_C;
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -2003,7 +2021,7 @@ int setIgnorePal(VMThread* vmThread) {
 // --- isVoiceJP (us-8004b5f4) ---
 int isVoiceJP(VMThread* vmThread) {
     void* instance = getInstance__14Class_80296898Fv();
-    int lang = *(u8*)((u8*)instance + 0x1C);
+    int lang = ((CfsSysInstView*)instance)->field_1C;
     int orVal = (1 - lang) | (lang - 1);
 
     VMArg ret;

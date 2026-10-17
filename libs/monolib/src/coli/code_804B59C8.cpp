@@ -139,7 +139,7 @@ struct ScnResData {
     u8 field_0x64[0x6C - 0x64];
     u32 field_0x6C;
     u32 field_0x70;
-    u8 field_0x74[0x78 - 0x74];
+    u32 field_0x74;  // 0x74 - relocated word (Coli_InstallDataPtrs w[4])
     int count;
 };
 extern ScnResData lbl_eu_8065F32C;
@@ -1212,17 +1212,43 @@ extern "C" void resolveHitBwd(CColiSrc* a, CColiMover* b) {
     }
 }
 
+// 16-byte raycast entry
+struct CColiEntry16 {
+    f32 field_0x00;  // 0x00 - plane offset
+    u16 field_0x04;  // 0x04
+    u16 field_0x06;  // 0x06 - second segment vertex index (field_0x50)
+    u16 field_0x08;  // 0x08
+    u16 field_0x0A;  // 0x0A - third segment vertex index (field_0x50)
+    u16 field_0x0C;  // 0x0C - matrix record index (field_0x58)
+    u16 field_0x0E;  // 0x0E - ray origin vertex index (field_0x54)
+};
+
+// 48-byte matrix record: four direction vectors (0x30-byte stride table).
+struct CColiMtx4 {
+    Vec3 v[4];
+};
+
+// Raycast-test object: two vertex tables, a 0x30-stride matrix table and
+// the 16-byte entry table.
+struct CColiObj2 {
+    u8 field_0x00[0x50];           // 0x00
+    Vec3* field_0x50;              // 0x50 - segment vertex table (12-byte stride)
+    Vec3* field_0x54;              // 0x54 - ray vertex table (12-byte stride)
+    CColiMtx4* field_0x58;         // 0x58 - matrix table (0x30-byte stride)
+    CColiEntry16* field_0x5C;      // 0x5C - entry table (16-byte stride)
+};
+
 // Coli_InstallDataPtrs_74F0 - relocate the raycast object's table pointers from a base
 // record whose first words are byte-offsets into the record itself.
 extern "C" void Coli_StoreRange(void* self, u32 a, u32 b);
 
-extern "C" void Coli_InstallDataPtrs_74F0(u32* self, u8* data) {
+extern "C" void Coli_InstallDataPtrs_74F0(ScnResData* self, u8* data) {
     u32* w = (u32*)data;
-    ((u32*)self)[0x50 / 4] = (u32)(data + w[0]);
-    ((u32*)self)[0x54 / 4] = (u32)(data + w[1]);
-    ((u32*)self)[0x58 / 4] = (u32)(data + w[2]);
-    ((u32*)self)[0x5C / 4] = (u32)(data + w[3]);
-    ((u32*)self)[0x74 / 4] = w[4];
+    ((CColiObj2*)self)->field_0x50 = (Vec3*)(data + w[0]);
+    ((CColiObj2*)self)->field_0x54 = (Vec3*)(data + w[1]);
+    ((CColiObj2*)self)->field_0x58 = (CColiMtx4*)(data + w[2]);
+    ((CColiObj2*)self)->field_0x5C = (CColiEntry16*)(data + w[3]);
+    self->field_0x74 = w[4];
     Coli_StoreRange(self, (u32)(data + w[5]), (u32)(data + w[6]));
 }
 
@@ -1420,32 +1446,6 @@ void setSeenBitLst(CColiBitObj* self, u16* list, int count) {
         }
     }
 }
-
-// 16-byte raycast entry
-struct CColiEntry16 {
-    f32 field_0x00;  // 0x00 - plane offset
-    u16 field_0x04;  // 0x04
-    u16 field_0x06;  // 0x06 - second segment vertex index (field_0x50)
-    u16 field_0x08;  // 0x08
-    u16 field_0x0A;  // 0x0A - third segment vertex index (field_0x50)
-    u16 field_0x0C;  // 0x0C - matrix record index (field_0x58)
-    u16 field_0x0E;  // 0x0E - ray origin vertex index (field_0x54)
-};
-
-// 48-byte matrix record: four direction vectors (0x30-byte stride table).
-struct CColiMtx4 {
-    Vec3 v[4];
-};
-
-// Raycast-test object: two vertex tables, a 0x30-stride matrix table and
-// the 16-byte entry table.
-struct CColiObj2 {
-    u8 field_0x00[0x50];           // 0x00
-    Vec3* field_0x50;              // 0x50 - segment vertex table (12-byte stride)
-    Vec3* field_0x54;              // 0x54 - ray vertex table (12-byte stride)
-    CColiMtx4* field_0x58;         // 0x58 - matrix table (0x30-byte stride)
-    CColiEntry16* field_0x5C;      // 0x5C - entry table (16-byte stride)
-};
 
 // rayBoxHitTest - raycast against a box: reserve the entry's seen-bit,
 // intersect the ray (manager offset 0x00 / direction 0x0C) with the entry's

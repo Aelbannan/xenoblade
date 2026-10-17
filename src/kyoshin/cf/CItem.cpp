@@ -310,6 +310,13 @@ extern char lbl_eu_80501C58[];
 struct ItemByte7 { u8 pad0 : 6; u8 b01 : 2; };
 struct ItemWord8 { u32 pad0 : 11; u32 f11 : 11; u32 pad1 : 3; u32 f7 : 7; };
 struct ItemHalf18 { u16 bit15 : 1; u16 low15 : 15; };
+// Opaque CItemInfo byte at +22 (CItemInfo_getByte22 and its two dups).
+struct CItemInfoByte22 { u8 _pad[22]; u8 byte22; };
+// Plain word at +8 of a byte buffer (CItem_getWord8Bits10).
+struct CItemWordAt8 { u8 _pad[8]; u32 word; };
+// 8-byte sub-record with the category/id halfword at +4
+// (CItemExt_getSubRecId reads p + idx*8 + 0xc, i.e. word+4 of entry idx).
+struct CItemSubRec8 { u8 _pad[4]; u16 catId; u16 _pad2; };
 
 extern "C" const char* CItem_cDefaultName(void) { return (const char*)lbl_eu_80501C58 + 0x63; }
 
@@ -670,7 +677,7 @@ void CItem_noop0() {}
 
 void CItem_noop1() {}
 
-u8 CItemInfo_getByte22(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22(u32, CItemInfo* obj) { return ((CItemInfoByte22*)obj)->byte22; }
 
 // Refresh an item slot from its BDAT row: query the per-category impl state
 // (vf78/vf0C/vf84), clear the u16 at +0x10, set the +0x16 byte, pack the
@@ -764,7 +771,7 @@ void CItem_refRow2(u32 unused, CItemData* self) {
 
 void CItem_noop2() {}
 
-u8 CItemInfo_getByte22_dup1(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22_dup1(u32, CItemInfo* obj) { return ((CItemInfoByte22*)obj)->byte22; }
 
 // Prepare an item slot for use: force a non-zero family/row id, clear the
 // slot flag word, refresh the per-category impl state (vf0C/vf84), re-derive
@@ -805,7 +812,7 @@ void CItem_rerank4(u32 unused, CItemData* self) {
     }
 }
 
-u8 CItemInfo_getByte22_dup2(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22_dup2(u32, CItemInfo* obj) { return ((CItemInfoByte22*)obj)->byte22; }
 
 // Pack the family/row ids into the slot word and refresh the per-index u16
 // record flags for a CItemData slot. When the row is 0, also refresh the
@@ -933,7 +940,7 @@ done:
 // Copy an item record to dst, sized by the category recorded in the source
 // word's bits 16-19 (CItem_catSize maps the category to the record stride).
 void* CItem_copyRecordByCat(void* dst, const void* src) {
-    u32 w = *(const u32*)src;
+    u32 w = static_cast<const CItemData*>(src)->field_00;
     int size = CItem_catSize((u16)((w >> 16) & 0xF));
     memcpy(dst, src, size);
     return dst;
@@ -942,7 +949,7 @@ void* CItem_copyRecordByCat(void* dst, const void* src) {
 // Copy an item record to dst, sized by the category recorded in the source
 // word's bits 16-19 (CItem_catSize maps the category to the record stride).
 void* CItem_copyRecMasked(void* dst, const void* src) {
-    u32 w = *(const u32*)src;
+    u32 w = static_cast<const CItemData*>(src)->field_00;
     int size = CItem_catSize((w >> 16) & 0xF);
     memcpy(dst, src, size);
     return dst;
@@ -999,7 +1006,7 @@ void CItem_AddBlockCountClamped(u32 value) {
     *w = v > 999999999 ? 999999999 : v;
 }
 
-extern "C" void* CItemBlock_getPtr20E8(void) { return *(void**)((u8*)lbl_eu_806641B8 + 0x10000 + 0x20e8); }
+extern "C" void* CItemBlock_getPtr20E8(void) { return (void*)((CItemBlockCounters*)lbl_eu_806641B8)->mCountE8; }
 
 // Enable/disable the family flag for kind v: set (or clear) bit (1<<v) in
 // the word at block+0x12108 when v matches one of the six u16 entries of
@@ -1192,20 +1199,20 @@ unsigned short CItemBlock_getFlag120EC(int index) {
 }
 
 void CItemBlock_setFlag120EC(int index, short value) {
-    ((short*)((char*)lbl_eu_806641B8 + 0x120EC))[index] = value;
+    ((unsigned short*)(lbl_eu_806641B8 + 0x120EC))[index] = value;
 }
 
 extern "C" __declspec(noinline) void* CItemBlock_getKindSlot(s32 kind, u32 idx, u32 sub) {
     extern char* lbl_eu_806641B8;
     if (idx - 1 > 0xa) return 0;
     switch (kind) {
-    case 2: return (u8*)lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x5a74;
-    case 4: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34;
-    case 5: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x211c;
-    case 6: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x4238;
-    case 7: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x6354;
-    case 8: return (u8*)lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x7b90;
-    case 3: return (u8*)lbl_eu_806641B8 + 0x10000 + ((sub + (idx - 1) * 8) << 4) + 0x1ab8;
+    case 2: return lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x5a74;
+    case 4: return lbl_eu_806641B8 + (idx + 0x96) * 0x34;
+    case 5: return lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x211c;
+    case 6: return lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x4238;
+    case 7: return lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x6354;
+    case 8: return lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x7b90;
+    case 3: return lbl_eu_806641B8 + 0x10000 + ((sub + (idx - 1) * 8) << 4) + 0x1ab8;
     }
     return 0;
 }
@@ -1260,14 +1267,14 @@ extern "C" void* CItemBlock_getKindList(u32 arg, s32* out1, s32* out2) {
 
     // Clamp the shared counter (block+0x2110) down to 30.
     char* cntBase = lbl_eu_806641B8 + 0x10000;
-    u32 cnt = *(u32*)(cntBase + 0x2110);
-    *(u32*)(cntBase + 0x2110) = cnt > 30 ? 30 : cnt;
+    u32 cnt = ((CItemBlockCounters*)(cntBase - 0x10000))->mCount10;
+    ((CItemBlockCounters*)(cntBase - 0x10000))->mCount10 = cnt > 30 ? 30 : cnt;
 
     // block stays live across the dispatch: cases address relative to
     // either the raw item-block pointer or block+0x10000.
     char* ptr = lbl_eu_806641B8;
-    u32 add = *(u32*)(ptr + 0x12110) + 60;
-    char* block = (char*)((u32)ptr + 0x10000);
+    u32 add = ((CItemBlockCounters*)ptr)->mCount10 + 60;
+    char* block = ptr + 0x10000;
 
     // Case order matches retail's body layout; cases 0/1 share the default
     // body (the arg > 13 bound check is generated by switch lowering).
@@ -2423,7 +2430,7 @@ s32 CItem_clearCharSubSlot(u32 charId, u32 sub, s16* pOut) {
     if (charId > 0xb) return 0;
     // Pointer into the shared per-character u16 slot table at block+0x12038
     // (inlined CItemBlock_getSlotU16-style addressing).
-    u8* slot = (u8*)lbl_eu_806641B8 + 0x10000 + ((sub + (charId - 1) * 8) << 1);
+    char* slot = lbl_eu_806641B8 + 0x10000 + ((sub + (charId - 1) * 8) << 1);
     CItemData* rec = (CItemData*)CItemBlock_getKindSlot(3, charId, sub);
     s32 added = 0;
     if (*(u32*)rec != 0) {
@@ -3387,17 +3394,17 @@ extern "C" u32 CItem_getWord8Low7(void* self, const void* p) { return *(const u3
 extern "C" void CItem_setWord8Field11(void* u, u8* p, u32 val) { ((ItemWord8*)(p + 8))->f11 = val; }
 
 extern "C" s16 CItem_getWord8Bits10(void* u, u8* p) {
-    u32 x = *(u32*)(p + 8);
+    u32 x = ((CItemWordAt8*)p)->word;
     return (s16)((x >> 10) & 0x7FF);
 }
 
-u32 CItemParam_getCategory(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 12) >> 1) & 7; }
+u32 CItemParam_getCategory(u32, CItemParam* obj) { return (obj->field_0C >> 1) & 7; }
 
-u32 CItemParam_getId(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 12) >> 4) & 0xFFF; }
+u32 CItemParam_getId(u32, CItemParam* obj) { return (obj->field_0C >> 4) & 0xFFF; }
 
-void* CItemData_getBuffer(u32, CItemData* obj) { return (void*)((char*)obj + 8); }
+void* CItemData_getBuffer(u32, CItemData* obj) { return obj->field_08; }
 
-u32 CItemData_getInvByte6(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6(u32, CItemData* obj) { return 1 - obj->field_06; }
 
 // Clear a size-bytes buffer; the size comes from the object's vtable slot 0x14.
 void CItem_clearVtblBuf(CItemVtblSize* obj, u8* buf) {
@@ -3406,11 +3413,11 @@ void CItem_clearVtblBuf(CItemVtblSize* obj, u8* buf) {
 
 int CItemData_getSize16(CItemData*) { return 16; }
 
-u32 CItemData_getBits7to9(u32, CItemData* obj) { return (*(u32*)((char*)obj + 8) >> 7) & 7; }
+u32 CItemData_getBits7to9(u32, CItemData* obj) { return (*(u32*)obj->field_08 >> 7) & 7; }
 
 extern "C" void CItem_setByte7Bits01(void* u, u8* p, u32 val) { ((ItemByte7*)(p + 7))->b01 = (u8)val; }
 
-u32 CItemData_getByte7Bits01(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
+u32 CItemData_getByte7Bits01(u32, CItemData* obj) { return obj->field_07 & 3; }
 
 void CItem_noop9() {}
 
@@ -3439,23 +3446,23 @@ int CItemParam_isFalse2(CItemParam*) { return 0; }
 
 int CItemParam_isFalse3(CItemParam*) { return 0; }
 
-u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { *(u16*)((char*)obj + 16) = val; return unused; }
+u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { obj->field_10 = val; return unused; }
 
-u16 CItemParam_getField16(u32, CItemParam* obj) { return *(u16*)((char*)obj + 16); }
+u16 CItemParam_getField16(u32, CItemParam* obj) { return obj->field_10; }
 
 extern "C" void CItem_setHalf18Bit15(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->bit15 = (u16)val; }
 
-u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 24) >> 15) & 1; }
+u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (obj->field_18 >> 15) & 1; }
 
 extern "C" void CItem_setHalf18Low15(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->low15 = (u16)val; }
 
-u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
+u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return obj->field_18 & 0x7FFF; }
 
 extern "C" void CItem_setByte7Low2Dup(void* u, u8* p, u32 val) { ((ItemByte7*)(p + 7))->b01 = (u8)val; }
 
-u32 CItemData_getByte7Bits01_dup(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
+u32 CItemData_getByte7Bits01_dup(u32, CItemData* obj) { return obj->field_07 & 3; }
 
-u32 CItemData_getInvByte6_dup(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6_dup(u32, CItemData* obj) { return 1 - obj->field_06; }
 
 extern "C" u8* CItem_setByteAtOff18(u32 unused, u8* obj, u32 idx, u8 val) {
     obj[idx + 18] = val;
@@ -3464,9 +3471,15 @@ extern "C" u8* CItem_setByteAtOff18(u32 unused, u8* obj, u32 idx, u8 val) {
 
 extern "C" u8 CItem_getByteAtOff18(u32 unused, u8* obj, u32 idx) { return obj[idx + 0x12]; }
 
-extern "C" u32 CItem_getIndexedCat(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 2 + 8) >> 1) & 7; }
+extern "C" u32 CItem_getIndexedCat(void* u, u8* p, u32 idx) {
+    u16* tab = (u16*)(p + 8);
+    return (tab[idx] >> 1) & 7;
+}
 
-extern "C" u32 CItem_getIndexedId(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 2 + 8) >> 4) & 0xFFF; }
+extern "C" u32 CItem_getIndexedId(void* u, u8* p, u32 idx) {
+    u16* tab = (u16*)(p + 8);
+    return (tab[idx] >> 4) & 0xFFF;
+}
 
 // Zero a buffer sized by the object's virtual size (vtable slot 0x14);
 // same shape as the matched CItem_clearVtblBuf.
@@ -3485,7 +3498,7 @@ extern "C" void CItem_packSlotValRank(void* a, u8* base, u32 index, u32 value) {
     *p = (u16)__rlwimi(*p, (u32)rank, 1, 28, 30);
 }
 
-u32 CItemData_getInvByte6_dup2(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6_dup2(u32, CItemData* obj) { return 1 - obj->field_06; }
 
 // Clear used item sub-records: for every entry whose index is below the
 // live count, reset the matching 8-byte record at 0x08 and, when the slot
@@ -3545,15 +3558,18 @@ s16 CItemExt_getEntry(u32 unused, CItemExt* obj, int idx) {
     return result;
 }
 
-extern "C" u32 CItemExt_getSubRecId(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 8 + 0xc) >> 4) & 0xFFF; }
+extern "C" u32 CItemExt_getSubRecId(void* u, u8* p, u32 idx) {
+    CItemSubRec8* tab = (CItemSubRec8*)(p + 8);
+    return (tab[idx].catId >> 4) & 0xFFF;
+}
 
-u32 CItemExt_setByte49(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 49) = val; return unused; }
+u32 CItemExt_setByte49(u32 unused, CItemExt* obj, u8 val) { obj->field_31 = val; return unused; }
 
-u8 CItemExt_getByte49(u32, CItemExt* obj) { return *(u8*)((char*)obj + 49); }
+u8 CItemExt_getByte49(u32, CItemExt* obj) { return obj->field_31; }
 
-u32 CItemExt_setByte48(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 48) = val; return unused; }
+u32 CItemExt_setByte48(u32 unused, CItemExt* obj, u8 val) { obj->mCount = val; return unused; }
 
-u8 CItemExt_getByte48(u32, CItemExt* obj) { return *(u8*)((char*)obj + 48); }
+u8 CItemExt_getByte48(u32, CItemExt* obj) { return obj->mCount; }
 
 extern "C" void* CItemExt_getSubRecPtr(void* u, u8* p, u32 idx) { return p + idx * 8 + 8; }
 
@@ -3564,7 +3580,7 @@ void CItem_zeroVtblBufC(CItemVtblSize* obj, u8* buf) {
 
 int CItemExt_getSize52(CItemExt*) { return 52; }
 
-u32 CItemExt_get99minusByte6(u32, CItemExt* obj) { return 99 - *(u8*)((char*)obj + 6); }
+u32 CItemExt_get99minusByte6(u32, CItemExt* obj) { return 99 - obj->field_06; }
 
 // Zero a buffer sized by the object's virtual size (vtable slot 0x14).
 void CItem_zeroVtblBufD(CItemVtblSize* obj, u8* buf) {
@@ -3573,7 +3589,7 @@ void CItem_zeroVtblBufD(CItemVtblSize* obj, u8* buf) {
 
 int CItemExt_getSize8(CItemExt*) { return 8; }
 
-u32 CItemExt_getInvByte6(u32, CItemExt* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemExt_getInvByte6(u32, CItemExt* obj) { return 1 - obj->field_06; }
 
 // Zero a buffer sized by the object's virtual size (vtable slot 0x14).
 void CItem_zeroVtblBufE(CItemVtblSize* obj, u8* buf) {

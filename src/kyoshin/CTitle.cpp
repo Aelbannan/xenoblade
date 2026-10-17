@@ -142,11 +142,11 @@ extern "C" void CTitleLogo_nop() {}
 // When the +0xC layout is visible, raise the +0x1A state to 2, run the
 // +0x6C hook, and set the +0x19 flag.
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
-extern "C" void CTitleLogo_onAnim0Done(void* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
-        *((u8*)self + 0x1A) = 2;
-        CTitleLogo_bindAnim1((CTitleLogo*)self);
-        *((u8*)self + 0x19) = 1;
+extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans0, lbl_eu_80668FE0)) {
+        self->field_0x1A = 2;
+        CTitleLogo_bindAnim1(self);
+        self->field_0x19 = 1;
     }
 }
 
@@ -310,13 +310,13 @@ extern "C" __declspec(noinline) void CTitleMenu_beginOutro(CTitleMenu* self) {
 }
 
 extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu*);
-extern "C" __declspec(noinline) void CTitleMenu_advanceToState4(void* self) {  // noinline: retail keeps bl from CTitle_showTitle
-    if (*(u8*)((u8*)self + 0x26) != 3)
+extern "C" __declspec(noinline) void CTitleMenu_advanceToState4(CTitleMenu* self) {
+    if (self->field_0x26 != 3)
         return;
-    *((u8*)self + 0x26) = 4;
-    CTitleMenu_bindAnim3((CTitleMenu*)self);
-    *((u8*)self + 0x24) = 1;
-    *((u8*)self + 0x25) = 0;
+    self->field_0x26 = 4;
+    CTitleMenu_bindAnim3(self);
+    self->field_0x24 = 1;
+    self->field_0x25 = 0;
 }
 
 extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu* self) {
@@ -361,11 +361,11 @@ extern "C" void CTitleMenu_nop() {}
 
 // Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
 // second phase.
-extern "C" void CTitleMenu_onAnim0Done(void* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
-        *((u8*)self + 0x26) = 2;
-        CTitleMenu_bindAnim1((CTitleMenu*)self);
-        *((u8*)self + 0x25) = 1;
+extern "C" void CTitleMenu_onAnim0Done(CTitleMenu* self) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans0, lbl_eu_80668FE0)) {
+        self->field_0x26 = 2;
+        CTitleMenu_bindAnim1(self);
+        self->field_0x25 = 1;
     }
 }
 
@@ -381,11 +381,11 @@ extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
 
 // Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
 // layout and the shared anim-visibility test.
-extern "C" void CTitleMenu_onAnim3Done(void* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
-        *((u8*)self + 0x26) = 5;
-        CTitleMenu_bindAnim4((CTitleLogo*)self);
-        *((u8*)self + 0x25) = 1;
+extern "C" void CTitleMenu_onAnim3Done(CTitleMenu* self) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans3, lbl_eu_80668FE0)) {
+        self->field_0x26 = 5;
+        CTitleMenu_bindAnim4(self);
+        self->field_0x25 = 1;
     }
 }
 
@@ -525,10 +525,10 @@ extern "C" void CTitle_update(CTitle* self) {
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
-extern "C" void CTitle_draw(void* self, void* drawInfo) {
-    CTitleLogo_draw((u8*)self + 0x2C, drawInfo);
-    CTitleMenu_draw((u8*)self + 0x48, drawInfo);
-    Cur_DrawLayout((u8*)self + 0x70, drawInfo);
+extern "C" void CTitle_draw(CTitle* self, void* drawInfo) {
+    CTitleLogo_draw(&self->mLogo, drawInfo);
+    CTitleMenu_draw(&self->mMenu, drawInfo);
+    Cur_DrawLayout(&self->mCur[0], drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -577,12 +577,12 @@ extern "C" void CTitle_showMenu(CTitle* self) {
 extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo*);
 extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu*);
 extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void CTitle_beginLogoOutro(void* self) {
-    if (*(u8*)((u8*)self + 0x24) == 5) {
-        *((u8*)self + 0x24) = 6;
-        CTitleLogo_beginOutro((CTitleLogo*)((u8*)self + 0x2C));
-        CTitleMenu_beginFinal((CTitleMenu*)((u8*)self + 0x48));
-        Cur_SetVisible((u8*)self + 0x70, 0);
+extern "C" void CTitle_beginLogoOutro(CTitle* self) {
+    if (self->field_0x24 == 5) {
+        self->field_0x24 = 6;
+        CTitleLogo_beginOutro(&self->mLogo);
+        CTitleMenu_beginFinal(&self->mMenu);
+        Cur_SetVisible(&self->mCur[0], 0);
     }
 }
 
@@ -644,9 +644,9 @@ extern "C" int CTitle_confirmSelection(CTitle* self) {
 }
 
 // us-802ba270 - init the embedded +0x2C and +0x48 sub-objects.
-extern "C" void CTitle_stepLogoMenu(void* self) {
-    CTitleLogo_stepState1((CTitleLogo*)((u8*)self + 0x2C));
-    CTitleMenu_stepState4((CTitleMenu*)((u8*)self + 0x48));
+extern "C" void CTitle_stepLogoMenu(CTitle* self) {
+    CTitleLogo_stepState1(&self->mLogo);
+    CTitleMenu_stepState4(&self->mMenu);
 }
 
 extern "C" void CTitle_nopA() {}
@@ -661,11 +661,11 @@ extern "C" void CTitle_setState2IfFlag(u8* thisPtr) {
 extern "C" void CTitle_nopB() {}
 
 // When the +0x6D flag is clear, set +0x24 = 4 and run the two state steps.
-extern "C" void CTitle_showTitle(CTitleMenu* self) {
-    if (*(u8*)((u8*)self + 0x6D) != 0) {
+extern "C" void CTitle_showTitle(CTitle* self) {
+    if (self->mMenu.field_0x25 != 0) {
         self->field_0x24 = 4;
-        CTitleLogo_activate((CTitleLogo*)((u8*)self + 0x2C));
-        CTitleMenu_advanceToState4((u8*)self + 0x48);
+        CTitleLogo_activate(&self->mLogo);
+        CTitleMenu_advanceToState4(&self->mMenu);
     }
 }
 
@@ -691,8 +691,8 @@ extern "C" void CTitle_resetState(CTitle* self) {
 
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v) {
     extern void* lbl_eu_80664C38;
-    void* p = lbl_eu_80664C38;
-    if (p) *(unsigned char*)((u8*)p + 0x25) = v;
+    CTitle* p = (CTitle*)lbl_eu_80664C38;
+    if (p) p->field_0x25 = v;
 }
 
 // File-event callback: the title layout arc finished loading. Open a scratch

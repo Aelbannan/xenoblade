@@ -87,12 +87,12 @@ void CMenuPlayAward::Init() {
     u8 tempBgTex[0x20];
     __ct__CBgTex((CBgTex*)tempBgTex, 0);
 
-    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, tempBgTex + 0x4);
-    mBgTex.mFileHandle = *(CFileHandle**)(tempBgTex + 0x14);
-    mBgTex.mLayout = *(nw4r::lyt::Layout**)(tempBgTex + 0x18);
-    mBgTex.mLayoutReady = *(bool*)(tempBgTex + 0x1c);
-    mBgTex.mLoaded = *(u8*)(tempBgTex + 0x1d);
-    mBgTex.mPtmMode = *(u8*)(tempBgTex + 0x1e);
+    __ct__UnkClass_8011C974(&mBgTex.mMemRegion, &reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion);
+    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
+    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tempBgTex)->mLayout;
+    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tempBgTex)->mLayoutReady;
+    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tempBgTex)->mLoaded;
+    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tempBgTex)->mPtmMode;
     __dt__6CBgTexFv((CBgTex*)tempBgTex, -1);
 
     BgTex_Acquire_3C14(&mBgTex);
@@ -103,20 +103,20 @@ void CMenuPlayAward::Init() {
     u8 tempTitle[0x38];
     __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x66);
 
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, tempTitle + 0x4);
-    mTitleAHelp.mFileHandle = *(CFileHandle**)(tempTitle + 0x14);
+    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
+    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
     mTitleAHelp.mArcResourceAccessor =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempTitle + 0x18);
-    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tempTitle + 0x1c);
-    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x20);
-    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x24);
-    mTitleAHelp.unk28 = *(u8*)(tempTitle + 0x28);
-    mTitleAHelp.unk2c = *(s32*)(tempTitle + 0x2c);
-    mTitleAHelp.mName = *(char**)(tempTitle + 0x30);
-    mTitleAHelp.unk34 = *(u8*)(tempTitle + 0x34);
-    mTitleAHelp.unk35 = *(u8*)(tempTitle + 0x35);
-    mTitleAHelp.unk36 = *(u8*)(tempTitle + 0x36);
-    mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
+        reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
+    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
+    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
+    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
+    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
+    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
+    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
+    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
+    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
+    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
+    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
     CTitleAHelp_load(&mTitleAHelp);
@@ -125,18 +125,18 @@ void CMenuPlayAward::Init() {
     u8 tempList[0x10A4];
     __ct__CPlayAwardList((CPlayAwardList*)tempList, 0);
 
-    __ct__UnkClass_8011C974(&mPlayAwardList.mMemRegion, tempList + 0x4);
-    mPlayAwardList.mFileHandle = *(CFileHandle**)(tempList + 0x14);
-    mPlayAwardList.mFileHandle2 = *(CFileHandle**)(tempList + 0x18);
+    __ct__UnkClass_8011C974(&mPlayAwardList.mMemRegion, &reinterpret_cast<CPlayAwardList*>(tempList)->mMemRegion);
+    mPlayAwardList.mFileHandle = reinterpret_cast<CPlayAwardList*>(tempList)->mFileHandle;
+    mPlayAwardList.mFileHandle2 = reinterpret_cast<CPlayAwardList*>(tempList)->mFileHandle2;
     mPlayAwardList.mArcAccessor1C =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempList + 0x1c);
-    mPlayAwardList.mLayout20 = *(nw4r::lyt::Layout**)(tempList + 0x20);
-    mPlayAwardList.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tempList + 0x24);
-    mPlayAwardList.mAnimTrans28 = *(nw4r::lyt::AnimTransform**)(tempList + 0x28);
-    mPlayAwardList.field_0x2C = *(u32*)(tempList + 0x2c);
+        reinterpret_cast<CPlayAwardList*>(tempList)->mArcAccessor1C;
+    mPlayAwardList.mLayout20 = reinterpret_cast<CPlayAwardList*>(tempList)->mLayout20;
+    mPlayAwardList.mAnimTrans24 = reinterpret_cast<CPlayAwardList*>(tempList)->mAnimTrans24;
+    mPlayAwardList.mAnimTrans28 = reinterpret_cast<CPlayAwardList*>(tempList)->mAnimTrans28;
+    mPlayAwardList.field_0x2C = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x2C;
     // Cursor body (+0x30..+0x45, skipping the +0x00 vtable pointer).
     CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mPlayAwardList.mCursor[0]);
-    CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tempList + 0x30);
+    CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(reinterpret_cast<CPlayAwardList*>(tempList)->mCursor);
     curDst->field_4 = curSrc->field_4;
     curDst->field_8 = curSrc->field_8;
     curDst->field_C = curSrc->field_C;
@@ -146,7 +146,7 @@ void CMenuPlayAward::Init() {
     // Scroll bar: 16-byte mem region via the helper, then the field body.
     __ct__UnkClass_8011C974(&mPlayAwardList.mScrollBar[4], tempList + 0x4c);
     CScrollBarData* barDst = reinterpret_cast<CScrollBarData*>(&mPlayAwardList.mScrollBar[0]);
-    CScrollBarData* barSrc = reinterpret_cast<CScrollBarData*>(tempList + 0x48);
+    CScrollBarData* barSrc = reinterpret_cast<CScrollBarData*>(reinterpret_cast<CPlayAwardList*>(tempList)->mScrollBar);
     barDst->mFileHandle = barSrc->mFileHandle;
     // Entry-array copy loop pointers (retail sets these up between the
     // scrollbar field copies and the tail-field copies).
@@ -167,13 +167,13 @@ void CMenuPlayAward::Init() {
     barDst->mContentHeight = barSrc->mContentHeight;
     barDst->mDirection = barSrc->mDirection;
     // List tail fields (state bytes + scroll halfwords + page byte).
-    mPlayAwardList.field_0x88 = *(u8*)(tempList + 0x88);
-    mPlayAwardList.field_0x89 = *(u8*)(tempList + 0x89);
-    mPlayAwardList.field_0x8A = *(u8*)(tempList + 0x8a);
-    mPlayAwardList.field_0x8B = *(u8*)(tempList + 0x8b);
-    mPlayAwardList.field_0x8C = *(s16*)(tempList + 0x8c);
-    mPlayAwardList.field_0x8E = *(s16*)(tempList + 0x8e);
-    mPlayAwardList.field_0x90 = *(u8*)(tempList + 0x90);
+    mPlayAwardList.field_0x88 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x88;
+    mPlayAwardList.field_0x89 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x89;
+    mPlayAwardList.field_0x8A = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8A;
+    mPlayAwardList.field_0x8B = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8B;
+    mPlayAwardList.field_0x8C = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8C;
+    mPlayAwardList.field_0x8E = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x8E;
+    mPlayAwardList.field_0x90 = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x90;
     // The 512-entry array, copied element by element (retail 8-byte loop).
     do {
         *dst = *src;
@@ -183,7 +183,7 @@ void CMenuPlayAward::Init() {
     // Trailing state fields (+0x1000..+0x100F) of the entry array.
     CPlayAwardEntryArray* arrDst = &mPlayAwardList.mEntryArray;
     CPlayAwardEntryArray* arrSrc =
-        reinterpret_cast<CPlayAwardEntryArray*>(tempList + 0x94);
+        &reinterpret_cast<CPlayAwardList*>(tempList)->mEntryArray;
     arrDst->field_1000 = arrSrc->field_1000;
     arrDst->field_1001 = arrSrc->field_1001;
     arrDst->field_1004 = arrSrc->field_1004;
@@ -567,7 +567,7 @@ void PlayAward_CopyEntry(CPlayAwardEntry* dst, const CPlayAwardEntry* src) { *ds
 // returns 0 when param >= 0x100.
 u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param) {
     if (param >= 256) return 0;
-    return (u8*)self + (self->mPageIndex << 11) + ((param & 0xFF) << 3);
+    return (u8*)&self->mEntries[0] + (self->mPageIndex << 11) + ((param & 0xFF) << 3);
 }
 
 // Retail ctor (unmangled US symbol). Builds the embedded widgets, constructs

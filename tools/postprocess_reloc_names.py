@@ -351,6 +351,19 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
+    "code_80213488.o": UnitRules(
+        # category-A representation-only rename, restored 2026-10-12 (human
+        # decision A): the u16->f32 and s32->f32 conversion magic doubles
+        # (2^52 and 2^52 + 2^31) are synthesised by MWCC and cannot be named
+        # from source, so the TU-local pool slots are renamed by content onto
+        # the retail labels. The source shape is untouched -- the bytes, their
+        # offsets and the .sdata2 size already match retail exactly; only the
+        # two names were missing after this key was retired.
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, 0x00000000), "lbl_eu_80668460"),  # 2^52
+            (struct.pack(">II", MAGIC_HI, 0x80000000), "lbl_eu_80668468"),  # 2^52 + 2^31
+        ),
+    ),
     "code_80468434.o": UnitRules(
         # monolibdata2 dissolve: retail .sbss slice align 4, MWCC emits 8.
         set_data_align=((".sbss", 4),),
@@ -4672,10 +4685,44 @@ UNIT_RULES: dict[str, UnitRules] = {
     # nothing at those sites. Drop the implicit ScnLeaf deleting-dtor the
     # retail linker GC'd (its only referencer, the ScnLeaf vtable, stays
     # TU-local).
+    # g3d_scnobj: the retail split is .text-only; every data symbol (ScnObj/
+    # ScnGroup/ScnLeaf vtables, SetScnObjOption/GetScnObjOption switch jump
+    # tables, 0.0f/1.0f pool floats) is owned by nw4r_data.s. Retarget the
+    # .text relocs to the retail symbol names (UNDEF, mirroring the retail
+    # .o), drop the .data/.sdata2 sections, and drop the implicit ScnLeaf
+    # deleting-dtor the retail linker GC'd (its only referencer, the ScnLeaf
+    # vtable, is also retail-owned).
+    #
+    # REVERTED 2026-10-12 (human decision: "revert g3d_scnobj"). A sibling
+    # wave shrank these 18 entries to 2 on the argument that the 2026-08-29
+    # splits hand this .data to this TU, so MWCC's vtables should stay
+    # TU-local definitions. That is true for the bytes, but it leaves the
+    # vtables under their compiler names, and `__vt__Q34nw4r3g3d8ScnGroup` is
+    # already a GLOBAL definition in CLibCri.o (retail's 0x20-byte blob at
+    # .data:0x8056CF28), so mwldeppc failed the link with
+    # "multiply-defined: 'nw4r::g3d::ScnGroup::__vt'". Retargeting to UNDEF
+    # keeps the retail byte layout AND avoids minting a second strong
+    # definition; the four frontier rows it re-opens are the honest cost.
     "g3d_scnobj.o": UnitRules(
         retarget_relocs=(
+            (".text", 0xC6, "lbl_eu_80569688"),
+            (".text", 0xD6, "lbl_eu_80569688"),
+            (".text", 0x1CA, "lbl_eu_80569688"),
+            (".text", 0x1CE, "lbl_eu_80569688"),
+            (".text", 0x276, "jumptable_eu_805695F8"),
+            (".text", 0x27E, "jumptable_eu_805695F8"),
+            (".text", 0x41E, "jumptable_eu_80569620"),
+            (".text", 0x426, "jumptable_eu_80569620"),
+            (".text", 0xC02, "lbl_eu_80569648"),
+            (".text", 0xC0A, "lbl_eu_80569648"),
             (".text", 0x12C, "lbl_eu_80669CD8"),
             (".text", 0x858, "lbl_eu_80669CDC"),
+            (".text", 0x162E, "lbl_eu_80569648"),
+            (".text", 0x1632, "lbl_eu_80569648"),
+            (".text", 0x168E, "lbl_eu_80569648"),
+            (".text", 0x1692, "lbl_eu_80569648"),
+            (".text", 0x16D6, "lbl_eu_80569688"),
+            (".text", 0x16DA, "lbl_eu_80569688"),
         ),
         pad_data_section=((".data", 0x138), (".rodata", 0x10)),
         extern_data_sections=(".sdata2",),

@@ -697,11 +697,16 @@ bool CBattleMan_ListHasValue(void* self, unsigned int value) { struct Node { Nod
 void cf::CBattleManager::CBattleMan_ClearStateMask(u32 mask) {
     unk84 &= ~mask;
 }
-void* CBattleMan_NextListItem(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
+void* CBattleMan_NextListItem(void* self) {
+    SimpleListNode* p = static_cast<Func800EA384_Self*>(self)->listHead;
+    if (p->next == p) return nullptr;
+    return static_cast<SimpleListNode*>(*reinterpret_cast<void* volatile*>(&static_cast<Func800EA384_Self*>(self)->listHead))->next->data;
+}
+struct ActorSub3E9CView { u8 _00[0x3e9c]; u8 sub; };
 void* CBattleMan_FindNextActorRef(void* self, void* val) {
     if (val == nullptr) return nullptr;
-    
-    SimpleListNode* sentinel = *(SimpleListNode**)((u8*)self + 0x08);
+
+    SimpleListNode* sentinel = static_cast<Func800EA384_Self*>(self)->listHead;
     void* data;
     SimpleListNode* cur = sentinel->next;
     
@@ -715,7 +720,7 @@ void* CBattleMan_FindNextActorRef(void* self, void* val) {
     
     data = cur->data;
     if (data != nullptr) {
-        data = (u8*)data + 0x3e9c;
+        data = &((ActorSub3E9CView*)data)->sub;
     }
     if (data != val) goto loop;
     
@@ -872,7 +877,7 @@ extern "C" void spreadChainArtsHits(void*, void*, void*, void*);
 extern "C" void emitBattleEvents(void*, void*, void*, void*);
 extern "C" s32 emitBattleMoveEvents(void*, void*, void*, void*, void*);
 extern "C" void unregisterBattleActor(void*, void*);   // canonical (void*,void*) form
-extern "C" f32 CBattleMan_ApplyStatusRate(u8*, void*);
+extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target);
 // Arts-data auxiliary dispatch (vtable pointer at sub+0x84, this = sub);
 // defined later in this file (owner: CAttackParam-compatible count slot).
 static inline s32 artsSubGetMax(void* sub);
@@ -3927,10 +3932,19 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_8052B790[3]
 // Thunk: dispatch through secondary vtable at +0x8, calling vtable[0x20] on
 // the sub-object, passing (subobj, arg).
 void CBattleMan_ClearActorStatus(void* ignored, void* self, void* arg) {
-    ((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId((u32)(uintptr_t)arg);
+    ((cf::CBattleState*)&static_cast<EC918_BattleObjAccessor*>(self)->subObject)->CBattleState_clearStatusId((u32)(uintptr_t)arg);
 }
 unsigned char CBattleMan_GetUnk94Count(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
-void CBattleMan_MarkList48Flag40(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
+void CBattleMan_MarkList48Flag40(void* this_) {
+    Func800F4004_Self* self = static_cast<Func800F4004_Self*>(this_);
+    SimpleListNode* anchor = self->listHead;
+    SimpleListNode* node = anchor->next;
+    while (node != self->listHead) {
+        unsigned char* object = static_cast<unsigned char*>(node->data);
+        *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40;
+        node = node->next;
+    }
+}
 void cf::CBattleManager::CBattleMan_ZeroStateMask() {
     unk84 = 0;
 }
@@ -4020,59 +4034,64 @@ extern f32 lbl_80666DD8; // 0.001f
 
 // Calculates accumulated damage/healing value from various status effects.
 // Returns a float clamped to >= 0.
+// Typed views over the battle-status operands of CBattleMan_ApplyStatusRate
+// (per-statement use only; the volatile reload below is load-bearing).
+struct StatusRateTargetView { u8 _00[0x5c]; f32 field_5c; u8 _60[0x18]; u32 flags78; };
+struct StatusEntry10View { u8 _00[0x10]; u32 field_10; };
+struct StatusRateObjView { u8 _00[0x1530]; u32 field_1530; u8 _34[0x3374 - 0x1534]; u32 field_3374; };
 extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target) {
     if (obj == nullptr || target == nullptr) return 1.0f;
 
     f32 result = 1.0f;
-    u32 targetFlags = *(u32*)((u8*)target + 0x78);
+    u32 targetFlags = ((StatusRateTargetView*)target)->flags78;
     u32 stackVal;
 
     if (targetFlags & 0x200) {
         if (isBattleStatusActive(obj + 8, 0xB4)) {
             void* entry = findBattleStatusEntry(obj + 8, 0xB4);
-            result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
+            result -= 0.001f * (f32)(s32)((StatusEntry10View*)entry)->field_10;
         }
     } else if (targetFlags & 0xC00) {
         if (isBattleStatusActive(obj + 8, 0xB5)) {
             void* entry = findBattleStatusEntry(obj + 8, 0xB5);
-            result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
+            result -= 0.001f * (f32)(s32)((StatusEntry10View*)entry)->field_10;
         }
     }
 
     if (isBattleStatusActive(obj + 8, 0xB3)) {
         void* entry = findBattleStatusEntry(obj + 8, 0xB3);
-        result += 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
+        result += 0.001f * (f32)(s32)((StatusEntry10View*)entry)->field_10;
     }
 
     if (isBattleStatusActive(obj + 8, 0xB6)) {
         void* entry = findBattleStatusEntry(obj + 8, 0xB6);
-        result -= 0.001f * (f32)(s32)*(u32*)((u8*)entry + 0x10);
+        result -= 0.001f * (f32)(s32)((StatusEntry10View*)entry)->field_10;
     }
 
     // Fetch the stat object through CActorParam_getStatusTable (vtable slot
     // 0x290); each IdTable_GetSum receives its return value as arg1
     if (((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable() != nullptr) {
         // Reload flags from target (retail: lwz r0, 0x78(r31))
-        if (*(volatile u32*)((u8*)target + 0x78) & 0xC00) {
+        if (((volatile StatusRateTargetView*)target)->flags78 & 0xC00) {
             if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x64, &stackVal)) {
                 result -= 0.001f * (f32)(s32)stackVal;
             }
         }
 
-        if (*(f32*)((u8*)target + 0x5c) > 0.0f) {
+        if (((StatusRateTargetView*)target)->field_5c > 0.0f) {
             if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x6F, &stackVal)) {
                 result += 0.001f * (f32)(s32)stackVal;
             }
         }
 
         if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x71, &stackVal)) {
-            if (*(u32*)((u8*)obj + 0x1530) != 0) {
+            if (((StatusRateObjView*)obj)->field_1530 != 0) {
                 result -= 0.001f * (f32)(s32)stackVal;
             }
         }
 
         if (IdTable_GetSum(((cf::CActorParam*)(void*)obj)->CActorParam_getStatusTable(), 0x70, &stackVal)) {
-            if (*(u32*)((u8*)obj + 0x3374) & 0x200000) {
+            if (((StatusRateObjView*)obj)->field_3374 & 0x200000) {
                 result += 0.001f * (f32)(s32)stackVal;
             }
         }
@@ -11849,20 +11868,25 @@ extern void BtlDmg_NotifyDamage(void* ptr, u32 val);
 // Handles battle event. Sets flags on arg4, checks arg3 conditions,
 // and updates the battle damage display.
 // Returns 0 always (retail: li r3, 0 before blr).
+// Typed views over the untyped arg3/arg4/sub-object operands of the
+// ApplyHitStop pair (per-statement use only).
+struct HitStopArg4View { u8 _00[0x50]; void* sub50; u8 _54[0x74 - 0x54]; u32 flags74; };
+struct HitStopArg3View { u8 _00[0x2e]; u16 field_2e; u32 field_30; };
+struct HitStopSubView { u8 _00[0x3c]; u16 field_3c; };
 extern "C" s32 CBattleMan_ApplyHitStop9(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     // arg1 (r3) is unused by the logic but was stored in r31 per retail
 
     if (arg4 != nullptr) {
-        u32* flags = (u32*)((u8*)arg4 + 0x74);
+        u32* flags = &((HitStopArg4View*)arg4)->flags74;
         *flags = *flags | 0x80000000 | 0x1000;
     }
 
-    u32 arg3Flags = *(u32*)((u8*)arg3 + 0x30);
+    u32 arg3Flags = ((HitStopArg3View*)arg3)->field_30;
     if (arg3Flags & 0x800) return 0;
     if (arg3Flags & 0x2000) return 0;
 
-    void* subObj = (arg4 != nullptr) ? *(void**)((u8*)arg4 + 0x50) : nullptr;
-    if (subObj == nullptr || (s32)*(u16*)((u8*)subObj + 0x3c) == 3) {
+    void* subObj = (arg4 != nullptr) ? ((HitStopArg4View*)arg4)->sub50 : nullptr;
+    if (subObj == nullptr || (s32)((HitStopSubView*)subObj)->field_3c == 3) {
         BtlDmg_SetField779(0);
         BtlDmg_SetByte778(0);
         BtlDmg_SetByte777(0);
@@ -11878,24 +11902,24 @@ extern "C" s32 CBattleMan_ApplyHitStop9(void* arg1, BattleObjAccessor* accessor,
 // Returns 0 always.
 extern "C" s32 CBattleMan_ApplyHitStop10(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     if (arg4 != nullptr) {
-        u32* flags = (u32*)((u8*)arg4 + 0x74);
+        u32* flags = &((HitStopArg4View*)arg4)->flags74;
         *flags = *flags | 0x80000000 | 0x10;
 
         // Check if bit 0x1000 is now set (retail: rlwinm. 0, 19, 19)
         if (*flags & 0x1000) return 0;
     }
 
-    u32 arg3Flags = *(u32*)((u8*)arg3 + 0x30);
+    u32 arg3Flags = ((HitStopArg3View*)arg3)->field_30;
     if (arg3Flags & 0x800) return 0;
     if (arg3Flags & 0x2000) return 0;
 
     // Check arg3->+0x2e: if non-zero AND 0x402 bits not set, skip to ret0
-    u16 val2e = *(u16*)((u8*)arg3 + 0x2e);
+    u16 val2e = ((HitStopArg3View*)arg3)->field_2e;
     if (val2e != 0 && (arg3Flags & 0x402) == 0) {
         // goto ret0 (skip function calls)
     } else {
-        void* subObj = (arg4 != nullptr) ? *(void**)((u8*)arg4 + 0x50) : nullptr;
-        if (subObj == nullptr || (s32)*(u16*)((u8*)subObj + 0x3c) == 3) {
+        void* subObj = (arg4 != nullptr) ? ((HitStopArg4View*)arg4)->sub50 : nullptr;
+        if (subObj == nullptr || (s32)((HitStopSubView*)subObj)->field_3c == 3) {
             BtlDmg_SetField779(0);
             BtlDmg_SetByte778(0);
             BtlDmg_SetByte777(0);
@@ -12189,7 +12213,10 @@ check:
 // Checks various battle state flags and performs cleanup.
 void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
     extern u8 lbl_eu_80573EEC[];
-    if (*(u32*)(lbl_eu_80573EEC + 0xd0) == 0) return;
+    struct EECView { u8 _pad[0xD0]; u32 field_d0; };
+    struct EnumList620View { u8 _00[0x620]; u32 field_620; };
+    struct Player8CView { u8 _00[0x8c]; u16 field_8c; };
+    if (reinterpret_cast<EECView*>(lbl_eu_80573EEC)->field_d0 == 0) return;
 
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(4)) goto early_return;
@@ -12213,7 +12240,7 @@ void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
         startEnumObjects(list, 0x20, 0x800);
 
         list = CTaskGame_enumListGet(&holder);
-        if (*(u32*)((u8*)list + 0x620) != 0) {
+        if (((EnumList620View*)list)->field_620 != 0) {
             UIWin_CreateB4790Win(lbl_eu_80573EEC, 0);
 
             CItem_clearSharedBox();
@@ -12222,7 +12249,7 @@ void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
                 extern void* getPlayer__Q22cf13CfGameManagerFi(int);
                 void* player = getPlayer__Q22cf13CfGameManagerFi(i);
                 if (player != nullptr) {
-                    if (*(u16*)((u8*)player + 0x8c) == 6) {
+                    if (((Player8CView*)player)->field_8c == 6) {
                         void* action = MapFx_ResolveOwner(player);
                         CCharVoiceMan_EnqueueItemVoice(action);
                         goto cleanup;

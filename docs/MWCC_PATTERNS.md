@@ -4866,3 +4866,34 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Applies to/a.k.a.: any "temp widget rebuild" block (CMenuSave/CMenuCollepedia convention,
              `__ct__UnkClass_8011C974` mem-region copy); the named-local register cost generalizes to
              any view pointer that stays live across a long straight-line region.
+
+## Raw-offset -> typed-field cleanup: byte-identical EXCEPT five load-bearing shapes (Wii/1.1 -O4,p, verified)
+- Symptom:    replacing `*(T*)((u8*)base + N)` / `((char*)self + N)` with typed member/struct-field access
+             normally leaves the object byte-identical (types erase at codegen), but a minority of shapes
+             change instruction selection/scheduling and regress the `hexdiff --all` table.
+- Cause:      MWCC lowers "running byte base, then deref" differently from "index*stride, then add"; and a
+             pointer `static_cast` across a nonzero base offset emits a null-guard the retail `subi`/`addi`
+             does not.
+- Fix:        classify each site first, and KEEP the raw form (with a comment recording why) for these five:
+                1. running-`byteOff` loops (`base = start + i*stride; ... base += stride;`) - any `arr[i]`
+                   form adds a per-iteration `mulli` (100% -> 86%).
+                2. `&arr[index]` / hoisted single-load reuse where retail performs two loads (no CSE) -
+                   100% -> 23-43%.
+                3. this-adjustment thunks / MI subobject recovery (`(char*)self - 0xNN`, `container_of`) -
+                   `static_cast` emits a null-guard or changes size 0x8 -> 0x10; the raw subtract is the
+                   function's purpose.
+                4. integer-pointer-add operand order `(T*)((u32)roff + (u32)base)` - any pointer spelling
+                   canonicalizes base-first and flips the add.
+                5. probing a TU-local view block as plain source can shift a later compiler-warning line
+                   citation in the `hexdiff --all` table -> declare views in the TU-local header instead.
+             A cast-at-use (`((View*)self)->field`) is NOT a new `self` param, but note the smell detector
+             counts it: `tools/coop/smell_report.py` `self`/`void*` rows are line-based and move with any
+             reformatting, so a byte-identical cleanup can *raise* those rows without adding real debt.
+- Result:     one wave converted ~360 accepted-function sites across 20+ TUs; every unit's `hexdiff --all`
+             table stayed byte-identical. The residual raw-offset sites in accepted functions are mostly
+             shapes 1-4 above.
+- Confidence: repo_proven
+- Applies to/a.k.a.: docs/CODE_SMELLS.md "Actionable pointer arithmetic" burn-down. `tools/coop/ptr_sites.py`
+             accepted/unmatched split is a heuristic (keys on the bare last name, so `Foo::Move` collides with
+             `Bar::Move`; `__declspec`/`;`-bearing one-liners are missed) - confirm the enclosing function's
+             own status in `tools/coop/targets.json`, not the heuristic.

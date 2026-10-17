@@ -79,13 +79,13 @@ extern "C" int isTalkBlocked(void* obj) {
         goto done;
     }
     // Booleanize the state byte's low bit (MWCC clrlwi/neg/or/srwi idiom).
-    bit = *(u8*)((u8*)cur + 0x6C9) & 1;
+    bit = ((cf::CfObjectMove*)cur)->mFlags6C9 & 1;
     talkable = (u32)(-bit | bit) >> 31;
     CfObjectMove_setFlag6C9Bit0(cur, 0);
     if (lbl_eu_80663E24 & 0x00400000) {
         goto done;
     }
-    if (!(*(u32*)((u8*)cur + 0x64) & 8)) {
+    if (!(((cf::CfObject*)cur)->unk64 & 8)) {
         goto done;
     }
     ca = (cf::CfObject*)cur;
@@ -193,7 +193,7 @@ extern "C" int getPosX(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)obj->CfObject_getPosVector());
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->x);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -205,7 +205,7 @@ extern "C" int getPosY(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)((u8*)obj->CfObject_getPosVector() + 4));
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->y);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -215,7 +215,7 @@ extern "C" int getPosZ(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)((u8*)obj->CfObject_getPosVector() + 8));
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->z);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -252,7 +252,7 @@ extern "C" int getObjId(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
-    retVal.value.uintVal = *(u16*)((u8*)obj + 0x8C);
+    retVal.value.uintVal = ((cf::CfObjectModel*)obj)->unk8C_3;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -263,7 +263,7 @@ extern "C" int getTalkObj(VMThread* pThread, int handle) {
     VMArg retVal;
     if (obj) {
         retVal.type = 3;
-        retVal.value.uintVal = *(u32*)((u8*)obj + 0x74);
+        retVal.value.uintVal = ((cf::CfObjectModel*)obj)->field_0x74;
     } else {
         retVal.type = 3;
         retVal.value.uintVal = 0;
@@ -290,7 +290,7 @@ int getUnitHp(VMThread* pThread, int handle) {
     return 1;
 }
 
-float cf::CActorParam::CActorParam_getHp() { return *(float*)((u8*)this + 0x17E8); }
+float cf::CActorParam::CActorParam_getHp() { return unk17E4.field_04; }
 
 // us-8003c9fc: read the OC property as a signed value scaled by
 // 1/lbl_eu_80665C30, overwrite the object position vector's X with it and
@@ -389,18 +389,18 @@ bool isValid() { return false; }
 extern "C" int applyPos(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    float* p = (float*)obj->CfObject_getPosVector();
+    ml::CVec3* p = obj->CfObject_getPosVector();
     struct {
         float x;
         float y;
         float z;
     } vec;
-    vec.x = p[0];
-    vec.y = p[1];
-    vec.z = p[2];
+    vec.x = p->x;
+    vec.y = p->y;
+    vec.z = p->z;
     obj->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&vec),
                                    lbl_eu_80665C40);
-    if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
+    if (!(lbl_eu_80663E24 & 0xAFA40000) && (obj->unk64 & 8)) {
         CfObjectMove_syncRegionToPos(obj);
     }
     if (obj != 0 && obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0) &&
@@ -483,7 +483,7 @@ int dispOff(VMThread* pThread, int handle) {
 // CObjectState_checkStateFlags8 body is the forced Unk Fv below (slot 0x24).
 
 int CObjectState_checkStateFlags__Q22cf12CObjectStateFv(void* self, int mask) {
-    return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
+    return ((((cf::CObjectState*)self)->unk4 & (u32)mask) != 0) ? 1 : 0;
 }
 
 extern "C" int hideUnit(VMThread* pThread, int handle) {
@@ -642,7 +642,7 @@ extern "C" int setNpcPath(VMThread* pThread, int handle) {
         angle = vmArgIntGet(5, vmArgPtrGet(pThread, 4));
     }
     obj = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), handle);
-    u16 count = *(u16*)((u8*)arr + 2);
+    u16 count = arr->unk2;
     // Element count must be a non-zero multiple of 3, at most 0x18.
     if ((count % 3) != 0 || (u32)(count - 3) > 0x18) {
         vmOCExceptionThrow(pThread);
@@ -963,13 +963,18 @@ extern "C" int setState10(VMThread* pThread, int handle) {
 }
 
 // us-8003e2c0: talkMsg
+// Plugin-side data view over CfObject-family words not declared in the real
+// class (+0x6C pad, +0x74 sub-field, +0x94 word): per-statement use only.
+struct CfObjPluginView { u8 _00[0x6C]; u32 field6C; u32 _pad70; void* field74; u8 _78[0x94 - 0x78]; u32 field94; };
+struct Selector90E4View { u8 _00[0x90E4]; u32 h90E4; };
+
 // Gets a string arg and calls UIWin_CreateTalkWin on the object's sub-field
 extern "C" int talkMsg(VMThread* pThread, int handle) {
     VMArg* arg1 = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg1);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    UIWin_CreateTalkWin(*(void**)((u8*)obj + 0x74), str, 1);
+    UIWin_CreateTalkWin(((CfObjPluginView*)obj)->field74, str, 1);
     return 0;
 }
 
@@ -993,7 +998,7 @@ extern "C" int sendNotify(VMThread* pThread, int handle) {
     str = vmArgStringGet(2, arg1);
     void* ctx = ArtsSelect_GetContainer();
     obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    UIWin_CreateEveTalkWin(*(void**)((u8*)obj + 0x74), str);
+    UIWin_CreateEveTalkWin(((CfObjPluginView*)obj)->field74, str);
     if (obj->unk64 & 0x8) {
         if (!((cf::CObjectState*)obj)->CObjectState_setStateBitMask0(1, 1)) {
             ((cf::CObjectState*)obj)->CObjectState_setStateBitMask(1);
@@ -1137,7 +1142,7 @@ extern "C" int flagUnit80000(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
-        *(u32*)((u8*)obj + 0x6C) |= 0x00080000;
+        ((CfObjPluginView*)obj)->field6C |= 0x00080000;
     }
     return 0;
 }
@@ -1148,7 +1153,7 @@ extern "C" int flagUnit100000(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     if (obj && (obj->unk64 & 0x80000000)) {
-        *(u32*)((u8*)obj + 0x6C) |= 0x00100000;
+        ((CfObjPluginView*)obj)->field6C |= 0x00100000;
     }
     return 0;
 }
@@ -1163,7 +1168,7 @@ extern "C" int getPartyHandle(VMThread* pThread, int handle) {
     ocHandle = obj->CObjectParam_getSelfObjectId();
     if (!ocHandle) {
         if (obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0)) {
-            ocHandle = *(u32*)((u8*)Selector_GetInstance() + 0x90E4);
+            ocHandle = ((Selector90E4View*)Selector_GetInstance())->h90E4;
         }
     }
     VMArg retVal;
@@ -1185,7 +1190,7 @@ extern "C" int getPartyHandle(VMThread* pThread, int handle) {
         retVal.type = type;
         u16 ocId = vmOCSearch(typeName);
         retVal.unk2 = ocId;
-        retVal.value.pointerVal = *(void**)((u8*)target + 0x74);
+        retVal.value.pointerVal = (void*)((cf::CfObjectModel*)target)->field_0x74;
     } else {
         vmOCExceptionThrow(pThread);
         return 0;
@@ -1205,7 +1210,7 @@ extern "C" int getTargetUnitId(VMThread* pThread, int handle) {
         u32 id = ((cf::CObjectParam*)obj)->CObjectParam_getSelfObjectId();
         void* target = ArtsSelect_Lookup(ArtsSelect_GetContainer(), id);
         retVal.type = 3;
-        retVal.value.uintVal = *(u16*)((u8*)target + 0x8C);
+        retVal.value.uintVal = ((cf::CfObjectModel*)target)->unk8C_3;
     }
     vmRetValSet(pThread, &retVal);
     return 1;
@@ -1425,12 +1430,12 @@ extern "C" int setUnitVisible(VMThread* pThread, int handle) {
         } else {
             obj->mFlags68 &= ~0x8000;
         }
-        void* model = *(void**)((u8*)obj + 0x98);
+        void* model = ((cf::CfObjectModel*)obj)->mSubObj98;
         if (model) {
             if (enable) {
-                *(u32*)((u8*)model + 0x7A8) |= 0x1000;
+                ((cf::CfObjectModelSub98*)model)->field_7A8 |= 0x1000;
             } else {
-                *(u32*)((u8*)model + 0x7A8) &= ~0x1000;
+                ((cf::CfObjectModelSub98*)model)->field_7A8 &= ~0x1000;
             }
         }
     }
@@ -1586,7 +1591,7 @@ extern "C" int findParty(VMThread* pThread, int handle, int retType) {
     // Retail chains these: the ctx flowing into the retval is the return
     // value of ArtsSelect_Insert (kept in r3 across the call).
     void* ctx = ArtsSelect_Insert(ArtsSelect_GetContainer(), result);
-    *(u32*)((u8*)result + 0x68) |= 0x40000000;
+    ((cf::CfObject*)result)->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
@@ -1654,14 +1659,14 @@ extern "C" int findBattleActor(VMThread* pThread, int handle, int retType) {
     }
     cf::CfGameManager::getInstance();
     if ((lbl_eu_80663E24 & 0x00040000) != 0) {
-        *(u32*)((char*)result + 0x64) |= 0x00010000;
+        ((cf::CfObject*)result)->unk64 |= 0x00010000;
     }
     lbl_eu_80663E24 = (hadFlag != 0) ? (lbl_eu_80663E24 | 0x00040000u)
                                      : (lbl_eu_80663E24 & ~0x00040000u);
     // Retail chains these: the ctx flowing into the retval is the return
     // value of ArtsSelect_Insert (kept in r3 across the call).
     void* ctx = ArtsSelect_Insert(ArtsSelect_GetContainer(), result);
-    *(u32*)((char*)result + 0x68) |= 0x40000000;
+    ((cf::CfObject*)result)->mFlags68 |= 0x40000000;
     VMArg retVal;
     retVal.type = 9;
     retVal.unk2 = (u16)retType;
@@ -1806,7 +1811,7 @@ extern "C" int startBattle(VMThread* pThread, int handle, int retType) {
     int param = vmArgIntGet(3, ptr2);
     void* battleMgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (battleMgr) {
-        *(u32*)((u8*)battleMgr + 0x94) = 5;
+        ((CfObjPluginView*)battleMgr)->field94 = 5;
         CollObjStoreResIdRaw(battleMgr, (u16)param);
         ((cf::CfObject*)battleMgr)->setPointEnabled(0);
     }
@@ -1820,7 +1825,7 @@ extern "C" int startBattle(VMThread* pThread, int handle, int retType) {
     // function-pointer cast so both argument registers are set up.
     typedef void* (*GetEntryFn)(void*, void*);
     void* entry = ((GetEntryFn)&ArtsSelect_Insert)(ctx, battleMgr);
-    *(u32*)((u8*)battleMgr + 0x68) |= 0x40000000;
+    ((cf::CfObject*)battleMgr)->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
     retVal.type = type;
@@ -1992,23 +1997,37 @@ extern "C" int chkEventRange(VMThread* pThread, int handle) {
 // OCData sub-objects in the shared plugin area (lbl_eu_80524E50).
 extern char lbl_eu_80524E50[];
 extern "C" void ocUnitRegist() {
-    void* base = (void*)&lbl_eu_80524E50;
+    // TU-local view of the shared plugin area (lbl_eu_80524E50): five
+    // OCData records at fixed offsets, registered in order.
+    struct PluginArea {
+        u8 _pad0[0x2D0];
+        OCData e0;
+        u8 _pad1[0x398 - 0x2D0 - sizeof(OCData)];
+        OCData e1;
+        u8 _pad2[0x488 - 0x398 - sizeof(OCData)];
+        OCData e2;
+        u8 _pad3[0x560 - 0x488 - sizeof(OCData)];
+        OCData e3;
+        u8 _pad4[0x638 - 0x560 - sizeof(OCData)];
+        OCData e4;
+    };
+    PluginArea* area = (PluginArea*)&lbl_eu_80524E50;
     ArtsSelect_Clear(ArtsSelect_GetContainer());
-    vmOCRegist((OCData*)((char*)base + 0x2D0));
-    vmOCRegist((OCData*)((char*)base + 0x398));
-    vmOCRegist((OCData*)((char*)base + 0x488));
-    vmOCRegist((OCData*)((char*)base + 0x560));
-    vmOCRegist((OCData*)((char*)base + 0x638));
+    vmOCRegist(&area->e0);
+    vmOCRegist(&area->e1);
+    vmOCRegist(&area->e2);
+    vmOCRegist(&area->e3);
+    vmOCRegist(&area->e4);
 }
 
 void CObjectState_setStateBitMask__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
-    *(unsigned long*)((char*)self + 4) |= bits;
+    ((cf::CObjectState*)self)->unk4 |= bits;
 }
 
 void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 
 void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
-    *(unsigned long*)((char*)self + 4) &= ~mask;
+    ((cf::CObjectState*)self)->unk4 &= ~mask;
 }
 
 void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { static_cast<cf::CfObjectModel*>(self)->field_BD = val; }
@@ -2028,7 +2047,7 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv(void* self, const v
 }
 
 void cf::CfObject::CfObject_setMoveBusyState(int flag) {
-    u32* field = (u32*)((char*)this + 0x68);
+    u32* field = &mFlags68;
     if (flag) {
         *field |= 0x01000000;
     } else {
@@ -2037,7 +2056,7 @@ void cf::CfObject::CfObject_setMoveBusyState(int flag) {
 }
 
 extern const float lbl_eu_8066A20C;
-extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x4c) * lbl_eu_8066A20C; }
+extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return ((cf::CfObject*)self)->mField4C * lbl_eu_8066A20C; }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(cf::CfObject* self, float value) {
     self->CfObject_setMoveHeadAngle(value);

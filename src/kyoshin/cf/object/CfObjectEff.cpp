@@ -91,14 +91,14 @@ bool CfObjectEff::initEffState_() {
     CfObject_notifyEventDone();
     return true;
 }
-extern "C" u32 hasChildEffs___Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)((u8*)self + 0x94) != 0; }
+extern "C" u32 hasChildEffs___Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)&self->mChildEff != 0; }
 void CfObjectEff::detachChildEf() {
     if (mChildEff != nullptr) {
         // Parent for the effect detach is this+0x90; retail null-guards the
         // offset so a null this passes 0 to schedDetachChildSlot.
         u8* parent = reinterpret_cast<u8*>(this);
         if (this != nullptr) {
-            parent = reinterpret_cast<u8*>(this) + 0x90;
+            parent = reinterpret_cast<u8*>(&this->mSubObj90);
         }
         schedDetachChildSlot(mChildEff, parent);
         schedClearFlag15Update(mChildEff);
@@ -425,6 +425,9 @@ void setChild5CFl_(char* obj, int flag) {
     eff->mChildEff->unk5C = (flag != 0);
 }
 
+// TU-local view anchoring the rotation vector at +0x48 (CfObject pad48 /
+// mField4C / +0x50 tail); used where the address alone is taken.
+struct EffRotVecView { u8 _pad48[0x48]; ml::CVec3 rot; };
 void createEffect_(cf::CfObjectEff* self) {
     // Gated by the game-manager flag; the effect type is packed in the top
     // 5 bits of mField70. The 0x10/0x11 types also require the source's +0xC
@@ -485,7 +488,7 @@ void createEffect_(cf::CfObjectEff* self) {
         if (self->mChildEff != 0) {
             self->CfObject_setMoveTargetVec(
                 reinterpret_cast<const ml::CVec3*>(&self->mPos3C));
-            self->CfObject_setRotVec(reinterpret_cast<const ml::CVec3*>(reinterpret_cast<u8*>(self) + 0x48));
+            self->CfObject_setRotVec(&reinterpret_cast<const EffRotVecView*>(self)->rot);
             self->CfObject_setObjScale(self->mFloat60);
             // The child may have been torn down by the slot calls above;
             // retail re-checks it before each partner write. The partner and
@@ -513,7 +516,7 @@ void createEffect_(cf::CfObjectEff* self) {
                 reinterpret_cast<const char*>(result));
             self->mFieldB4 = 1;
             u8* parent = reinterpret_cast<u8*>(self);
-            if (self != 0) parent = reinterpret_cast<u8*>(self) + 0x90;
+            if (self != 0) parent = reinterpret_cast<u8*>(&self->mSubObj90);
             schedAttachChildSlot(self->mChildEff, parent);
         } else {
             self->mFlags68 |= 0x40;

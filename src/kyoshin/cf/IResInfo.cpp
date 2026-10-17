@@ -407,14 +407,24 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
     base = self->field_0x2C->getResourceBase(self, 0);
     if (base != 0) {
         if (strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
-            u8* eb = (u8*)base + 0x10;
-            p = eb;
-            for (u32 i = 0; i < *(u32*)((u8*)base + 0x08); p += 16, i++) {
+            // TU-local view of the resource blob header: entry count at
+            // +0x08, entry words at +0x10 (16 bytes each; word 0 is the
+            // base-relative offset, word 2 (+8) the tag).
+            struct KypHdrA {
+                u8 _pad08[0x08];
+                u32 count;        // +0x08
+                u8 _pad0C[0x04];
+                u32 entryWords[]; // +0x10
+            };
+            KypHdrA* kb = (KypHdrA*)base;
+            u32* eb = kb->entryWords;
+            p = (u8*)eb;
+            for (u32 i = 0; i < kb->count; p += 16, i++) {
                 // Entry stride is 16 bytes: word 0 is the offset, word 2 (+8) a tag
                 // whose value 0xC..0x11 marks a match (unsigned compare after -0xC).
                 int val = Tok_GetPrefix(p + 8) - 0xC;
                 if ((u32)val <= 5) {
-                    result = (u8*)base + *(u32*)(eb + i * 16);
+                    result = (u8*)base + eb[i * 4];
                     break;
                 }
             }
@@ -433,9 +443,19 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u3
     void* result = 0;
     base = self->field_0x2C->getResourceBase(self, 0);
     if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
-        u32* eb = (u32*)((char*)base + 0x10);
+        // TU-local view of the resource blob header: entry count at +0x08,
+        // entry words at +0x10 (16 bytes each; word 0 is the base-relative
+        // offset, word 1 the index, word 2 (+8) the tag).
+        struct KypHdrB {
+            u8 _pad08[0x08];
+            u32 count;        // +0x08
+            u8 _pad0C[0x04];
+            u32 entryWords[]; // +0x10
+        };
+        KypHdrB* kb = (KypHdrB*)base;
+        u32* eb = kb->entryWords;
         p = (u8*)eb;
-        for (u32 i = 0; i < *(u32*)((char*)base + 0x08); p += 0x10, i++) {
+        for (u32 i = 0; i < kb->count; p += 0x10, i++) {
             // Entry stride is 16 bytes; word 2 (+8) is a tag whose value
             // 0x12..0x16 marks a match (unsigned compare after -0x12).
             if ((u32)(Tok_GetPrefix(p + 8) - 0x12) <= 4) {
@@ -472,9 +492,19 @@ extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
     }
     if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
         ml::FixStr<64> buf(true);
-        eb = (u32*)((char*)base + 0x10);
+        // TU-local view of the resource blob header: entry count at +0x08,
+        // entry words at +0x10 (16 bytes each; word 0 is the base-relative
+        // offset, word 2 (+8) the name tag).
+        struct KypBase {
+            u8 _pad08[0x08];
+            u32 count;      // +0x08
+            u8 _pad0C[0x04];
+            u32 entryWords[]; // +0x10
+        };
+        KypBase* kb = (KypBase*)base;
+        eb = kb->entryWords;
         Tok_FormatStr(buf, id, 0, 0);
-        cnt = *(u32*)((char*)base + 0x08);
+        cnt = kb->count;
         p = (char*)eb;
         for (u32 i = 0; i < cnt; p += 0x10, i++) {
             if (strncmp(buf.mString, p + 8, 8) == 0) {
@@ -688,25 +718,25 @@ extern "C" void* CfRes_findGridEntry(void* self, u32 id, u32* outIdx, u32* outVa
     *outVal = -1;
     if (id != 0) {
         ResGridEntry* p;
-        ResGridEntry* startEntry = (ResGridEntry*)((u8*)self + start * 0x3C);
+        ResGridEntry* startEntry = ((ResGridEntry*)self + start);
         p = startEntry;
         for (int i = start; i < end; p++, i++) {
             if (id == p->id) {
                 *outIdx = i;
-                *outVal = ((ResGridEntry*)((u8*)self + i * 0x3C))->value;
-                ((ResGridEntry*)((u8*)self + i * 0x3C))->field_0x10 = 0;
-                ((ResGridEntry*)((u8*)self + i * 0x3C))->field_0x3A = 0;
-                return (u8*)self + i * 0x3C + 4;
+                *outVal = (((ResGridEntry*)self + i)->value);
+                (((ResGridEntry*)self + i)->field_0x10 = 0);
+                (((ResGridEntry*)self + i)->field_0x3A = 0);
+                return &(((ResGridEntry*)self + i)->field_0x04);
             }
         }
         p = startEntry;
         for (int i = start; i < end; p++, i++) {
             if (p->id == 0) {
                 *outIdx = i;
-                *outVal = ((ResGridEntry*)((u8*)self + i * 0x3C))->value;
-                ((ResGridEntry*)((u8*)self + i * 0x3C))->field_0x10 = 0;
-                ((ResGridEntry*)((u8*)self + i * 0x3C))->field_0x3A = 0;
-                return (u8*)self + i * 0x3C + 4;
+                *outVal = (((ResGridEntry*)self + i)->value);
+                (((ResGridEntry*)self + i)->field_0x10 = 0);
+                (((ResGridEntry*)self + i)->field_0x3A = 0);
+                return &(((ResGridEntry*)self + i)->field_0x04);
             }
         }
     }
@@ -730,11 +760,12 @@ extern "C" void* CfRes_findMidEntry(u8* self, u32 id, u32* outIdx) {
     if (id != 0) {
         // 0x4D entries at self+0x2D0 (logical indices 0xC..0x58). Keep a
         // separate pointer IV so the id load uses +8(r6) (retail shape).
-        ResEntry* entries = (ResEntry*)((char*)self + 0x2D0);
+        ResEntry* entries = (ResEntry*)((ResInfoWork*)self)->entries;
+        ResEntry* grid = (ResEntry*)self;
         for (int i = 0xC; i < 0x4D + 0xC; entries++, i++) {
             if (id == entries->id) {
                 *outIdx = i;
-                return (char*)self + i * 0x3C + 4;
+                return grid[i].data;
             }
         }
     }
@@ -751,12 +782,13 @@ extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVa
         // 0x20-entry table at self+0x16BC (logical indices 0x61..0x80).
         // Pointer IV walks the table; the found path re-derives self+i*0x3C
         // from the index (retail shape: mulli + add).
-        ResEntry* entries = (ResEntry*)(self + 0x16BC);
+        ResEntry* entries = (ResEntry*)&((ResInfoContainer*)self)->grid[8];
+        ResEntry* grid = (ResEntry*)self;
         for (int i = 0x61; i < 0x81; entries++, i++) {
             if (id == entries->id) {
                 *outIdx = i;
-                *outVal = ((ResEntry*)self)[i].value;
-                return ((ResEntry*)self)[i].data;
+                *outVal = grid[i].value;
+                return grid[i].data;
             }
         }
     }
@@ -925,11 +957,12 @@ void CfRes_resetAllEntries(ResInfoEntry* entry) {
 // trailing state words.
 extern "C" void CfRes_initHighGrid(u8* self) {
     // Zero the trailing s16 state words of each gridLow record (they
-    // physically overlay the following record's first bytes). Written as an
-    // offset loop so MWCC unrolls to r3-relative halfword stores.
+    // physically overlay the following record's first bytes). Indexed
+    // through the container grid so MWCC unrolls to r3-relative halfword
+    // stores (retail).
     for (int k = 0; k < 8; k++) {
-        *(s16*)(self + 0x1518 + k * 0x3C) = 0;
-        *(s16*)(self + 0x151A + k * 0x3C) = 0;
+        ((ResGridEntryEx*)&((ResInfoContainer*)self)->grid[k])->field_0x3C = 0;
+        ((ResGridEntryEx*)&((ResInfoContainer*)self)->grid[k])->field_0x3E = 0;
     }
 
     ResGridEntry* target = (ResGridEntry*)(self + 0x16C0);
@@ -961,8 +994,8 @@ extern "C" void CfRes_updateHighGrid(u8* self, bool param) {
 // CfRes_updateHighGridFiltered (0xD0)
 extern "C" void CfRes_updateHighGridFiltered(void* self, bool param) {
     if (KyoshinHeap_HasActive54(self)) return;
-    ResGridEntry* target = (ResGridEntry*)((u8*)self + 0x16C0);
-    ResGridEntry* base = (ResGridEntry*)((u8*)self + 0x16BC);
+    ResGridEntry* target = (ResGridEntry*)&((ResInfoContainer*)self)->grid[8].field_0x04;
+    ResGridEntry* base = &((ResInfoContainer*)self)->grid[8];
     for (int i = 0x61; i < 0x81; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
@@ -1025,7 +1058,7 @@ extern "C" void CfRes_updateLowGrid(u8* self, bool param) {
     for (int i = 0x59; i < 0x61; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0 && KyoshinHeap_Contains38(r)) {
-            if (*(s16*)((u8*)base + 0x3E) == 0) {
+            if (((ResGridEntryEx*)base)->field_0x3E == 0) {
                 if (base->lookup->isInUse(target) != 0) {
                     u32 fl = base->field_0x04;
                     bool hasFlag2 = (fl & 0x200) || (fl & 0x400);
@@ -1055,7 +1088,7 @@ extern "C" void CfRes_updateFlaggedGrid(u8* self) {
     for (int i = 0x59; i < 0x81; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0 && KyoshinHeap_Contains38(r)) {
-            if (*(s16*)((u8*)base + 0x3E) == 0) {
+            if (((ResGridEntryEx*)base)->field_0x3E == 0) {
                 if (base->lookup->isInUse(target) != 0) {
                     bool hasFlag2 = true;
                     u32 fl = base->field_0x04;

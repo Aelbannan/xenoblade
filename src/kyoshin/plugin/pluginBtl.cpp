@@ -30,6 +30,14 @@ public:
 };
 }
 
+// TU-local data views over foreign words (no owning header in this pass):
+// battle-manager party-gauge word (+0x194), battle-object id half (+0x3F28),
+// lookup-slot pointer (+0x74), manager ring sentinel (+0x08). Per-statement use.
+struct BtlGaugeView { u8 _00[0x194]; u32 gauge194; };
+struct BtlUnitIdView { u8 _00[0x3F28]; u16 id3F28; };
+struct BtlSlot74View { u8 _00[0x74]; void* ptr74; };
+struct BtlRing8View { u8 _00[8]; cf::BtlRingNode* ring8; };
+
 // (Actor slots now fold onto their owners: tension 0x304 ->
 // cf::CActorParam::CActorParam_resetTensionState, TP 0x150 ->
 // CActorParam_setTensionPoints, attack flags +0x08/+0x10 ->
@@ -128,12 +136,11 @@ int isEnd(VMThread* pThread) {
     u8 holder[8];
     int result = 0;
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    // Intrusive ring list: bm+8 points at a sentinel node whose `next`
     // wraps back to itself when empty. Declaration order mirrors the matched
     // SysWinLog_PollBattleStart loop so MWCC colors the node r3 / sentinel r5.
     cf::BtlRingNode* node;
     int count;
-    cf::BtlRingNode* sentinel = *(cf::BtlRingNode**)((u8*)bm + 8);
+    cf::BtlRingNode* sentinel = ((BtlRing8View*)bm)->ring8;
     count = 0;
     node = sentinel->next;
     while (node != sentinel) {
@@ -145,7 +152,7 @@ int isEnd(VMThread* pThread) {
         void* list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
         __ct__800FC32C(list, 3, 4, 0);
         list = CTaskGame_enumListGet((CfMoveEnumHolder*)holder);
-        if (*(u32*)((u8*)list + 0x620) != 0) {
+        if (((CfMoveEnumList*)list)->field_620 != 0) {
             result = 1;
         }
         __dt__80043E88((CfMoveEnumHolder*)holder, -1);
@@ -206,9 +213,9 @@ int attackEne(VMThread* pThread) {
     CTaskGame_enumListCtor((CfMoveEnumHolder*)holder);
     startEnumObjects(CTaskGame_enumListGet((CfMoveEnumHolder*)holder), 0x100, 0);
     // Count is re-read via the holder accessor every iteration (retail shape).
-    for (u32 i = 0; i < *(u32*)((u8*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder) + 0x620); i++) {
+    for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder))->field_620; i++) {
         void* unit = MapFx_ResolveOwner(getObjectAt((CfMoveEnumList*)CTaskGame_enumListGet((CfMoveEnumHolder*)holder), i));
-        if (targetId == *(u16*)((u8*)unit + 0x3F28)) {
+        if (targetId == ((BtlUnitIdView*)unit)->id3F28) {
             registerBattleActor(cf::CBattleManager::getInstance(), unit);
         }
     }
@@ -229,7 +236,7 @@ int selectTgt(VMThread* pThread) {
         void* slot = ArtsSelect_Lookup(mgr, *(u32*)((u8*)ocObj + 4));
         if (slot != 0) {
             void* cam = Selector_GetInstance();
-            Selector_UpdateFilter(cam, *(void**)((u8*)slot + 0x74));
+            Selector_UpdateFilter(cam, ((BtlSlot74View*)slot)->ptr74);
         }
     } else {
         u8 holder[8];
@@ -377,7 +384,7 @@ int breakVision(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     void* visionList = CBattleMan_FetchVisionObj(bm);
     if (visionList != 0) {
-        void* actor = findObjectById__Fi(*(u32*)((u8*)visionList + 0));
+        void* actor = findObjectById__Fi(*(u32*)visionList);
         void* voiceAction = MapFx_ResolveOwner(actor);
         // Retail re-fetches the manager here instead of caching it across the
         // intervening calls (keeps the frame small).
@@ -399,7 +406,7 @@ int setPTG(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         bm = cf::CBattleManager::getInstance();
-        PartyGaugeSetClamped((u8*)bm + 0x194, ptg);
+        PartyGaugeSetClamped((u8*)&((BtlGaugeView*)bm)->gauge194, ptg);
     }
     return 0;
 }
@@ -409,7 +416,7 @@ int getPTG(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         bm = cf::CBattleManager::getInstance();
-        ptg = *(u32*)((u8*)bm + 0x194);
+        ptg = ((BtlGaugeView*)bm)->gauge194;
     }
     VMArg arg;
     arg.type = 3;

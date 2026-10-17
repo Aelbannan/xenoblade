@@ -240,8 +240,8 @@ void simSetFlag8000000(){}
 // Single-expression postfix form fixes the Chaitin colors (MWCC_CASES
 // array-push-with-counter, pushWordToBuf).
 extern "C" void simPushWordToBuf(void* self, u32 val) {
-    u32* cnt = (u32*)((char*)self + 0x820);
-    *(u32*)((char*)self + 0x7F0 + ((*cnt)++) * 4) = val;
+    CScnItemModel* m = (CScnItemModel*)self;
+    m->field_0x7F0[m->count820++] = val;
 }
 
 void simSetFlag2000000(){}
@@ -1279,7 +1279,7 @@ int simSyncBuf824Flags(CScnItemModel* self, u32 param) {
     }
     if (param == 0) {
         CScnItemModel824Entry* p = (CScnItemModel824Entry*)self->member824.field_0;
-        while (p != (CScnItemModel824Entry*)((u8*)self->member824.field_0 + self->member824.field_4 * 4)) {
+        while (p != (CScnItemModel824Entry*)(self->member824.field_0 + self->member824.field_4 * 4)) {
             p->flags |= 0x4;
             p++;
         }
@@ -1288,7 +1288,7 @@ int simSyncBuf824Flags(CScnItemModel* self, u32 param) {
     }
     {
         CScnItemModel824Entry* p = (CScnItemModel824Entry*)self->member824.field_0;
-        while (p != (CScnItemModel824Entry*)((u8*)self->member824.field_0 + self->member824.field_4 * 4)) {
+        while (p != (CScnItemModel824Entry*)(self->member824.field_0 + self->member824.field_4 * 4)) {
             // volatile: retail re-reads the u16 after the bit test in each
             // branch (MWCC CSE would otherwise reuse the test's loaded value).
             if (p->flags & 0x2) {
@@ -1499,7 +1499,7 @@ void simSetValue7E8(u8* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val;
 void simNopVfuncSlot(CScnItemModel* self, u32 param) { (void)self; (void)param; }
 
 extern "C" void simSetFlags7A8_12(u8* self, u32 a, u32 b) {
-    volatile u32* f = (volatile u32*)((u8*)self + 0x7A8);
+    volatile u32* f = (volatile u32*)&((CScnItemModel*)self)->flags7A8;
     if (a != 0) {
         *f |= 0x1;
     } else {
@@ -2026,13 +2026,13 @@ extern "C" void simSetLeafAnimTag(CScnItemModel* self, u32 tag) {
 }
 
 extern "C" void simSetFlag20Link(u8* self, u32 param) {
-    *(u32*)((u8*)self + 0x7A4) |= 0x20;
-    *(u32*)((u8*)self + 0x7C8) = param;
+    ((CScnItemModel*)self)->flags7A4 |= 0x20;
+    ((CScnItemModel*)self)->field_0x7C8 = (CScnItemModel*)param;
 }
 
 extern "C" void simSetFlag100Link(u8* self, u32 param) {
-    *(u32*)((u8*)self + 0x7A4) |= 0x100;
-    *(u32*)((u8*)self + 0x7C8) = param;
+    ((CScnItemModel*)self)->flags7A4 |= 0x100;
+    ((CScnItemModel*)self)->field_0x7C8 = (CScnItemModel*)param;
 }
 
 // simPropagateEnvLgt: propagate a light-environment to every live model in both
@@ -2360,33 +2360,33 @@ extern "C" u32 simGetValue7E4(u8* self) { return ((CScnItemModel*)self)->value7E
 
 extern "C" void simSetFlag200000(u8* self, u32 enable) {
     if (enable != 0) {
-        *(u32*)((u8*)self + 0x7A4) |= 0x200000;
+        ((CScnItemModel*)self)->flags7A4 |= 0x200000;
     } else {
-        *(u32*)((u8*)self + 0x7A4) &= ~0x200000;
+        ((CScnItemModel*)self)->flags7A4 &= ~0x200000;
     }
 }
 
 extern "C" void simSetFlag7A8_100(u8* self, u32 enable) {
     if (enable != 0) {
-        *(u32*)((u8*)self + 0x7A8) |= 0x100;
+        ((CScnItemModel*)self)->flags7A8 |= 0x100;
     } else {
-        *(u32*)((u8*)self + 0x7A8) &= ~0x100;
+        ((CScnItemModel*)self)->flags7A8 &= ~0x100;
     }
 }
 
 extern "C" void simSetFlag8000000(u8* self, u32 enable) {
     if (enable != 0) {
-        *(u32*)((u8*)self + 0x7A4) |= 0x08000000;
+        ((CScnItemModel*)self)->flags7A4 |= 0x08000000;
     } else {
-        *(u32*)((u8*)self + 0x7A4) &= ~0x08000000;
+        ((CScnItemModel*)self)->flags7A4 &= ~0x08000000;
     }
 }
 
 extern "C" void simSetFlag2000000(u8* self, u32 enable) {
     if (enable != 0) {
-        *(u32*)((u8*)self + 0x7A4) |= 0x02000000;
+        ((CScnItemModel*)self)->flags7A4 |= 0x02000000;
     } else {
-        *(u32*)((u8*)self + 0x7A4) &= ~0x02000000;
+        ((CScnItemModel*)self)->flags7A4 &= ~0x02000000;
     }
 }
 

@@ -95,36 +95,36 @@ void CMenuOption::Init() {
     u8 tempBgTex[0x20];
     __ct__CBgTex(reinterpret_cast<CBgTex*>(tempBgTex), 0);
 
-    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&mBgTex.mMemRegion), tempBgTex + 0x4);
-    mBgTex.mFileHandle = *(CFileHandle**)(tempBgTex + 0x14);
-    mBgTex.mLayout = *(nw4r::lyt::Layout**)(tempBgTex + 0x18);
-    mBgTex.mLayoutReady = *(bool*)(tempBgTex + 0x1c);
-    mBgTex.mLoaded = *(u8*)(tempBgTex + 0x1d);
-    mBgTex.mPtmMode = *(u8*)(tempBgTex + 0x1e);
+    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&mBgTex.mMemRegion), reinterpret_cast<u8*>(&reinterpret_cast<CBgTex*>(tempBgTex)->mMemRegion));
+    mBgTex.mFileHandle = reinterpret_cast<CBgTex*>(tempBgTex)->mFileHandle;
+    mBgTex.mLayout = reinterpret_cast<CBgTex*>(tempBgTex)->mLayout;
+    mBgTex.mLayoutReady = reinterpret_cast<CBgTex*>(tempBgTex)->mLayoutReady;
+    mBgTex.mLoaded = reinterpret_cast<CBgTex*>(tempBgTex)->mLoaded;
+    mBgTex.mPtmMode = reinterpret_cast<CBgTex*>(tempBgTex)->mPtmMode;
     __dt__6CBgTexFv(reinterpret_cast<CBgTex*>(tempBgTex), -1);
 
     BgTex_Acquire_3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
-    char* name = BdatTouchStringCell(lbl_eu_805103C4, lbl_eu_805103C4 + 9, 0x3b);
+    char* name = BdatTouchStringCell(lbl_eu_805103C4, &lbl_eu_805103C4[9], 0x3b);
 
     u8 tempTitle[0x38];
     __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x6c);
 
-    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&mTitleAHelp.unk4), tempTitle + 0x4);
-    mTitleAHelp.mFileHandle = *(CFileHandle**)(tempTitle + 0x14);
-    mTitleAHelp.mArcResourceAccessor =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempTitle + 0x18);
-    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tempTitle + 0x1c);
-    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x20);
-    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x24);
-    mTitleAHelp.unk28 = *(u8*)(tempTitle + 0x28);
-    mTitleAHelp.unk2c = *(s32*)(tempTitle + 0x2c);
-    mTitleAHelp.mName = *(char**)(tempTitle + 0x30);
-    mTitleAHelp.unk34 = *(u8*)(tempTitle + 0x34);
-    mTitleAHelp.unk35 = *(u8*)(tempTitle + 0x35);
-    mTitleAHelp.unk36 = *(u8*)(tempTitle + 0x36);
-    mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
+    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&mTitleAHelp.unk4), reinterpret_cast<u8*>(&reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4));
+    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
+    mTitleAHelp.mArcResourceAccessor = reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
+    // (per-statement temp views above keep the Init line count stable for -ipa file)
+    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
+    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
+    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
+    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
+    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
+    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
+    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
+    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
+    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
+    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(tempTitle), -1);
 
     CTitleAHelp_load(&mTitleAHelp);
@@ -137,78 +137,78 @@ void CMenuOption::Init() {
     // COption's early members - same overlay OnFileEvent uses.
     __ct__UnkClass_8011C974(
         reinterpret_cast<u8*>(&reinterpret_cast<COptionMem*>(&mOption)->mRegion),
-        tempOption + 0x4);
+        reinterpret_cast<u8*>(&reinterpret_cast<COptionMem*>(tempOption)->mRegion));
     reinterpret_cast<COptionMem*>(&mOption)->mFHandle =
-        *(CFileHandle**)(tempOption + 0x14);
+        reinterpret_cast<COptionMem*>(tempOption)->mFHandle;
     reinterpret_cast<COptionMem*>(&mOption)->mArcAcc =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempOption + 0x18);
+        reinterpret_cast<COptionMem*>(tempOption)->mArcAcc;
     reinterpret_cast<COptionMem*>(&mOption)->mpLayout =
-        *(nw4r::lyt::Layout**)(tempOption + 0x1c);
+        reinterpret_cast<COptionMem*>(tempOption)->mpLayout;
     reinterpret_cast<COptionMem*>(&mOption)->mAnim0 =
-        *(nw4r::lyt::AnimTransform**)(tempOption + 0x20);
+        reinterpret_cast<COptionMem*>(tempOption)->mAnim0;
     reinterpret_cast<COptionMem*>(&mOption)->mAnim1 =
-        *(nw4r::lyt::AnimTransform**)(tempOption + 0x24);
-    *(u8*)((u8*)&mOption + 0x28) = *(u8*)(tempOption + 0x28);
-    *(u8*)((u8*)&mOption + 0x29) = *(u8*)(tempOption + 0x29);
-    *(u8*)((u8*)&mOption + 0x2a) = *(u8*)(tempOption + 0x2a);
-    *(u8*)((u8*)&mOption + 0x2b) = *(u8*)(tempOption + 0x2b);
-    *(u8*)((u8*)&mOption + 0x2c) = *(u8*)(tempOption + 0x2c);
-    *(u8*)((u8*)&mOption + 0x2d) = *(u8*)(tempOption + 0x2d);
-    *(u8*)((u8*)&mOption + 0x2e) = *(u8*)(tempOption + 0x2e);
-    *(u8*)((u8*)&mOption + 0x2f) = *(u8*)(tempOption + 0x2f);
-    *(u8*)((u8*)&mOption + 0x30) = *(u8*)(tempOption + 0x30);
-    *(u8*)((u8*)&mOption + 0x31) = *(u8*)(tempOption + 0x31);
-    *(u8*)((u8*)&mOption + 0x32) = *(u8*)(tempOption + 0x32);
-    *(u8*)((u8*)&mOption + 0x33) = *(u8*)(tempOption + 0x33);
-    *(u8*)((u8*)&mOption + 0x34) = *(u8*)(tempOption + 0x34);
+        reinterpret_cast<COptionMem*>(tempOption)->mAnim1;
+    mOption.field_0x28 = reinterpret_cast<COption*>(tempOption)->field_0x28;
+    mOption.field_0x29 = reinterpret_cast<COption*>(tempOption)->field_0x29;
+    mOption.field_0x2A = reinterpret_cast<COption*>(tempOption)->field_0x2A;
+    mOption.field_0x2B = reinterpret_cast<COption*>(tempOption)->field_0x2B;
+    mOption.field_0x2C = reinterpret_cast<COption*>(tempOption)->field_0x2C;
+    mOption.field_0x2D = reinterpret_cast<COption*>(tempOption)->field_0x2D;
+    mOption.field_0x2E = reinterpret_cast<COption*>(tempOption)->field_0x2E;
+    mOption.field_0x2F = reinterpret_cast<COption*>(tempOption)->field_0x2F;
+    mOption.field_0x30 = reinterpret_cast<COption*>(tempOption)->field_0x30;
+    mOption.field_0x31 = reinterpret_cast<COption*>(tempOption)->field_0x31;
+    mOption.field_0x32 = reinterpret_cast<COption*>(tempOption)->field_0x32;
+    mOption.field_0x33 = reinterpret_cast<COption*>(tempOption)->field_0x33;
+    mOption.field_0x34 = reinterpret_cast<COption*>(tempOption)->field_0x34;
 
     // CScrollBar @ COption+0x38 (raw mScrollBar storage).
     __ct__UnkClass_8011C974(
-        reinterpret_cast<u8*>(&reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mMemRegion),
-        tempOption + 0x3c);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mFileHandle =
-        *(CFileHandle**)(tempOption + 0x4c);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mAccessor =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempOption + 0x50);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mLayout =
-        *(nw4r::lyt::Layout**)(tempOption + 0x54);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mAnimTransform =
-        *(nw4r::lyt::AnimTransform**)(tempOption + 0x58);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mReady = *(u8*)(tempOption + 0x5c);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mVisible = *(u8*)(tempOption + 0x5d);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mState = *(u8*)(tempOption + 0x5e);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mActive = *(u8*)(tempOption + 0x5f);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mAnimOffset = *(f32*)(tempOption + 0x60);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mScrollPosY = *(f32*)(tempOption + 0x64);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mScrollRatio = *(f32*)(tempOption + 0x68);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mThumbHeight = *(f32*)(tempOption + 0x6c);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mContentHeight = *(f32*)(tempOption + 0x70);
-    reinterpret_cast<CScrollBar*>((u8*)&mOption + 0x38)->mDirection = *(u8*)(tempOption + 0x74);
+        reinterpret_cast<u8*>(&reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mMemRegion),
+        reinterpret_cast<u8*>(&reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mMemRegion));
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mFileHandle =
+        reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mFileHandle;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mAccessor =
+        reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mAccessor;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mLayout =
+        reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mLayout;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mAnimTransform =
+        reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mAnimTransform;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mReady = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mReady;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mVisible = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mVisible;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mState = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mState;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mActive = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mActive;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mAnimOffset = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mAnimOffset;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mScrollPosY = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mScrollPosY;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mScrollRatio = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mScrollRatio;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mThumbHeight = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mThumbHeight;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mContentHeight = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mContentHeight;
+    reinterpret_cast<CScrollBar*>(mOption.mScrollBar)->mDirection = reinterpret_cast<CScrollBar*>(reinterpret_cast<COption*>(tempOption)->mScrollBar)->mDirection;
 
     // CBaseCur sub-cursors @ +0x78 / +0x90.
-    MenuShopSellCopyCursor((u8*)&mOption + 0x78, tempOption + 0x78);
-    MenuShopSellCopyCursor((u8*)&mOption + 0x90, tempOption + 0x90);
+    MenuShopSellCopyCursor(&mOption.mSubCur1, &reinterpret_cast<COption*>(tempOption)->mSubCur1);
+    MenuShopSellCopyCursor(&mOption.mSubCur2, &reinterpret_cast<COption*>(tempOption)->mSubCur2);
 
     // CSysWin @ +0xA8 (mem region at +4); remaining fields still option-relative.
-    __ct__UnkClass_8011C974((u8*)&mOption + 0xac, tempOption + 0xac);
-    *(u32*)((u8*)&mOption + 0xbc) = *(u32*)(tempOption + 0xbc);
-    *(u32*)((u8*)&mOption + 0xc0) = *(u32*)(tempOption + 0xc0);
-    *(u32*)((u8*)&mOption + 0xc4) = *(u32*)(tempOption + 0xc4);
-    *(u32*)((u8*)&mOption + 0xc8) = *(u32*)(tempOption + 0xc8);
-    *(u32*)((u8*)&mOption + 0xcc) = *(u32*)(tempOption + 0xcc);
-    *(u8*)((u8*)&mOption + 0xd0) = *(u8*)(tempOption + 0xd0);
-    *(u32*)((u8*)&mOption + 0xd4) = *(u32*)(tempOption + 0xd4);
-    *(u32*)((u8*)&mOption + 0xd8) = *(u32*)(tempOption + 0xd8);
-    *(u8*)((u8*)&mOption + 0xdc) = *(u8*)(tempOption + 0xdc);
-    *(u8*)((u8*)&mOption + 0xdd) = *(u8*)(tempOption + 0xdd);
-    *(u8*)((u8*)&mOption + 0xde) = *(u8*)(tempOption + 0xde);
-    *(u8*)((u8*)&mOption + 0xdf) = *(u8*)(tempOption + 0xdf);
-    *(u8*)((u8*)&mOption + 0xe0) = *(u8*)(tempOption + 0xe0);
-    *(u8*)((u8*)&mOption + 0xe1) = *(u8*)(tempOption + 0xe1);
+    __ct__UnkClass_8011C974(reinterpret_cast<u8*>(&reinterpret_cast<CSysWin*>(mOption.mSysWin)->mMemRegion), reinterpret_cast<u8*>(&reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mMemRegion));
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->mFileHandle = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mFileHandle;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->mTagProcessor = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mTagProcessor;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->mArcAccessor = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mArcAccessor;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->mLayout = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mLayout;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->mAnimTrans = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->mAnimTrans;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_28 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_28;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_2C = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_2C;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_30 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_30;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_34 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_34;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_35 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_35;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_36 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_36;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_37 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_37;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_38 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_38;
+    reinterpret_cast<CSysWin*>(mOption.mSysWin)->field_39 = reinterpret_cast<CSysWin*>(reinterpret_cast<COption*>(tempOption)->mSysWin)->field_39;
 
-    MenuShopSellCopyCursor((u8*)&mOption + 0xe4, tempOption + 0xe4);
-    *(u32*)((u8*)&mOption + 0xfc) = *(u32*)(tempOption + 0xfc);
-    *(u32*)((u8*)&mOption + 0x100) = *(u32*)(tempOption + 0x100);
+    MenuShopSellCopyCursor(&mOption.mSubCur3, &reinterpret_cast<COption*>(tempOption)->mSubCur3);
+    mOption.field_0xFC = reinterpret_cast<COption*>(tempOption)->field_0xFC;
+    mOption.field_0x100 = reinterpret_cast<COption*>(tempOption)->field_0x100;
     __dt__7COptionFv(reinterpret_cast<COption*>(tempOption), -1);
 
     COptionRebuildWidgets(&mOption);

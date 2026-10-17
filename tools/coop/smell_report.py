@@ -55,6 +55,8 @@ from tools.coop.smell_scan import (  # noqa: E402
     Stats,
     scan_file,
 )
+from tools.coop.ptr_sites import scan_roots as scan_ptr_sites  # noqa: E402
+from tools.coop.view_audit import scan_roots as scan_views  # noqa: E402
 
 REPORT = ROOT / "docs" / "CODE_SMELLS.md"
 RVL_REPORT = ROOT / "docs" / "CODE_SMELLS_RVL.md"
@@ -92,6 +94,22 @@ METRICS = (
     ("schedule_pragma", "schedule-pragma"),
     ("init_side_effect", "init-side-effect"),
 )
+
+# Curated per-expression site metrics (tools/coop/ptr_sites.py). Kept out of
+# METRICS so the RVL report and the strict regression gate are unchanged: the
+# accepted-function total is non-monotonic (a TU reaching acceptance moves
+# pre-existing sites into the accepted set), so it is informational only.
+SITE_METRICS = (
+    ("ptr_sites", "ptr-sites"),
+    ("ptr_sites_accepted", "ptr-acc"),
+)
+
+# Curated TU-local view-struct audit (informational; see view_audit.py).
+VIEW_METRICS = (
+    ("view_total", "views"),
+    ("view_debt", "view-debt"),
+    ("view_dup", "view-hack"),
+)
 SEVERITY_WEIGHTS = {  # cleanable-smell weight for the top-offenders list
     "extern_c_nonlbl_decl": 1,
     "extern_c_nonlbl_def": 2,
@@ -115,6 +133,25 @@ def scan_all() -> dict[str, Stats]:
         for f in sorted((ROOT / root).rglob("*.cpp")):
             rel = Path(f).relative_to(ROOT)
             rows[str(rel)] = scan_file(f)
+    # Curated per-expression sites, split by enclosing-function acceptance.
+    for rel, site in scan_ptr_sites(ROOTS).items():
+        s = rows.get(rel)
+        if s is None:
+            continue
+        s.ptr_sites = site.total
+        s.ptr_sites_accepted = site.accepted
+        s.ptr_sites_by_cat = dict(site.by_category)
+        s.ptr_acc_by_cat = dict(site.by_category_accepted)
+    # Curated TU-local view-struct debt audit.
+    for v in scan_views(ROOTS):
+        s = rows.get(v.file)
+        if s is None:
+            continue
+        s.view_total += 1
+        if v.klass in ("debt", "duplicate"):
+            s.view_debt += 1
+        if v.klass == "duplicate":
+            s.view_dup += 1
     return rows
 
 
@@ -125,7 +162,7 @@ def severity(s: Stats) -> int:
 def totals(rows: dict[str, Stats]) -> Stats:
     t = Stats()
     for s in rows.values():
-        for k, _ in METRICS:
+        for k, _ in METRICS + SITE_METRICS + VIEW_METRICS:
             setattr(t, k, getattr(t, k) + getattr(s, k))
         t.extern_c_total += s.extern_c_total
         t.extern_c_lbl += s.extern_c_lbl
@@ -147,12 +184,109 @@ NEW_METRIC_SEED = ("asm_insn_shim", "schedule_pragma", "init_side_effect")
 def baseline_json(rows: dict[str, Stats]) -> str:
     bl = {}
     for path, s in sorted(rows.items()):
-        metrics = {k: getattr(s, k) for k, _ in METRICS if getattr(s, k) > 0}
+        metrics = {k: getattr(s, k) for k, _ in METRICS + SITE_METRICS + VIEW_METRICS if getattr(s, k) > 0}
         for k in NEW_METRIC_SEED:
             metrics.setdefault(k, 0)
         if metrics:
             bl[path] = metrics
     return json.dumps(bl, sort_keys=True, indent=1)
+
+
+def _render_site_section(lines: list[str], rows: dict[str, Stats], tot: Stats) -> None:
+    """Curated per-expression pointer-arithmetic section (informational)."""
+    tot_sites = tot.ptr_sites
+    tot_acc = tot.ptr_sites_accepted
+    lines.append("## Actionable pointer arithmetic (curated, per-expression)")
+    lines.append("")
+    lines.append(
+        "The `ptr-arith`/`deref-arith` rows above are **line-based proxies**: a line "
+        "carrying a cast plus an offset bumps `ptr-arith`, and the same line's deref "
+        "independently bumps `deref-arith`, so one expression can move two counters. "
+        "This section counts individual expressions with "
+        "`tools/coop/detect_pointer_arithmetic.py` and splits every TU by whether the "
+        "enclosing function is already accepted (`targets.json`). Sites inside accepted "
+        "functions are the **actionable backlog** (typed field/pointer rewrites are "
+        "byte-identical and `hexdiff`-verifiable now); sites in unmatched functions are a "
+        "**churn budget** — those bodies get rewritten while matching, so cleaning them "
+        "early is wasted work plus `-ipa file` line-shift risk. **Target: `ptr-acc` -> 0; "
+        "`ptr-sites` follows as TUs reach acceptance.** These counts are informational and "
+        "not part of the strict regression gate: acceptance migration moves existing sites "
+        "into the accepted set, so the accepted total is not monotonic."
+    )
+    lines.append("")
+    lines.append(
+        f"- expression sites: {tot_sites}  |  inside accepted functions: **{tot_acc}**  |  "
+        f"unmatched: {tot_sites - tot_acc}"
+    )
+    lines.append("")
+    cat_tot: dict[str, int] = {}
+    cat_acc: dict[str, int] = {}
+    for s in rows.values():
+        for k, v in getattr(s, "ptr_sites_by_cat", {}).items():
+            cat_tot[k] = cat_tot.get(k, 0) + v
+        for k, v in getattr(s, "ptr_acc_by_cat", {}).items():
+            cat_acc[k] = cat_acc.get(k, 0) + v
+    if cat_tot:
+        lines.append("| expression shape | sites | accepted |")
+        lines.append("|---|---|---|")
+        for k in sorted(cat_tot, key=lambda c: -cat_tot[c]):
+            lines.append(f"| `{k}` | {cat_tot[k]} | {cat_acc.get(k, 0)} |")
+        lines.append("")
+    acc_rows = sorted(
+        ((p, s.ptr_sites_accepted) for p, s in rows.items() if s.ptr_sites_accepted),
+        key=lambda kv: (-kv[1], kv[0]),
+    )
+    if acc_rows:
+        lines.append("Top TUs by raw offsets inside accepted functions:")
+        lines.append("")
+        lines.append("| TU | accepted sites |")
+        lines.append("|---|---|")
+        for p, n in acc_rows[:15]:
+            lines.append(f"| {p} | {n} |")
+    else:
+        lines.append("No raw pointer arithmetic remains inside accepted functions.")
+    lines.append("")
+
+
+def _render_view_section(lines: list[str], rows: dict[str, Stats], tot: Stats) -> None:
+    """TU-local view-struct debt audit section (informational)."""
+    lines.append("## TU-local view structs (debt audit)")
+    lines.append("")
+    lines.append(
+        "A `struct XView` declared in a `.cpp` that types a raw offset into an object is an "
+        "**interim** idiom, not an end state: it duplicates layout knowledge outside the owning "
+        "class. `tools/coop/view_audit.py` resolves what each view wraps and classifies it - "
+        "**opaque** (`u8*`/`void*`/temp buffer/call result), **vendored** (header under `nw4r/`, "
+        "`revolution/`, `RVL_SDK/`, `CriWare/` - cannot be edited), **debt** (wraps a project "
+        "class whose header declares no member at that offset), **duplicate** (the class "
+        "ALREADY declares a member there - the view contradicts the header), **unconfirmed** "
+        "(owner header has no offset comments), **reverted** (an attempt log records that the "
+        "view was tested and kept - a view that cannot become a member without declaring a false "
+        "one). Migrate a debt view with a **line-neutral "
+        "in-place padding replacement** (`u8 pad_74[4];` -> `CFileHandle* mFileHandle;`): same "
+        "line count, same offset, so no includer `-ipa` re-baseline is needed. Counts are "
+        "informational (heuristic classification)."
+    )
+    lines.append("")
+    lines.append(
+        f"- views: {tot.view_total}  |  debt+duplicate: **{tot.view_debt}**  |  "
+        f"duplicate (hack): {tot.view_dup}"
+    )
+    lines.append("")
+    debt_rows = sorted(
+        ((p, s.view_debt, s.view_dup) for p, s in rows.items() if s.view_debt),
+        key=lambda kv: (-kv[1], kv[0]),
+    )
+    if debt_rows:
+        lines.append("Top TUs by view debt:")
+        lines.append("")
+        lines.append("| TU | debt+dup | duplicate |")
+        lines.append("|---|---|---|")
+        for p, d, h in debt_rows[:15]:
+            lines.append(f"| {p} | {d} | {h} |")
+    else:
+        lines.append("No view debt detected in the scanned roots.")
+    lines.append("")
 
 
 def render_report(rows: dict[str, Stats]) -> str:
@@ -167,7 +301,10 @@ def render_report(rows: dict[str, Stats]) -> str:
         "`self` free-function params, `void*`, raw pointer arithmetic, register-named "
         "params, inline asm, goto chains). New harness-produced code is already gated by "
         "`tools/pi_harness/lint.py`; this report makes the legacy backlog visible and "
-        "prevents it from growing. **Goal: every number in this table trends to 0.**"
+        "prevents it from growing. **Goal: every number in this table trends to 0.** "
+        "The curated pointer-arithmetic section below splits raw-offset sites by whether "
+        "the enclosing function is already accepted, so the *actionable* backlog (raw "
+        "offsets inside matched code) is explicit rather than buried in unmatched bodies."
     )
     lines.append(
         "The three `*shim`/`side-effect` rows are **fakematch-candidate** families: "
@@ -210,13 +347,15 @@ def render_report(rows: dict[str, Stats]) -> str:
     for path, s in top:
         lines.append(f"| {path} | {severity(s)} |")
     lines.append("")
+    _render_site_section(lines, rows, tot)
+    _render_view_section(lines, rows, tot)
     lines.append("## Per-TU metrics")
     lines.append("")
-    lines.append("| TU | " + " | ".join(disp for _, disp in METRICS) + " |")
-    lines.append("|" + "---|" * (len(METRICS) + 1))
+    lines.append("| TU | " + " | ".join(disp for _, disp in METRICS + SITE_METRICS) + " |")
+    lines.append("|" + "---|" * (len(METRICS + SITE_METRICS) + 1))
     for path in sorted(rows):
         s = rows[path]
-        vals = [str(getattr(s, k)) for k, _ in METRICS]
+        vals = [str(getattr(s, k)) for k, _ in METRICS + SITE_METRICS]
         if all(v == "0" for v in vals):
             continue
         lines.append(f"| {path} | " + " | ".join(vals) + " |")

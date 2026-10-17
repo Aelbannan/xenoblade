@@ -384,8 +384,8 @@ extern "C" void ColiLodBuildRecordMatrix(f32* self, CColiLodRecA6C60* obj) {
     buf[7] = obj->field_0x20[1];
     buf[8] = obj->field_0x20[2];
     while (i < count) {
-        LOD::CLODCacheManagerS* rec = (LOD::CLODCacheManagerS*)(
-            (u8*)lbl_eu_80665738 + (u32)pair[1] * 0xC);
+    LOD::CLODCacheManagerS* rec =
+            &((LOD::CLODCacheManagerS*)lbl_eu_80665738)[(u32)pair[1]];
         buf[rec->field_0x4] = rec->catmullRomBin();
         pair++;
         i++;
@@ -400,12 +400,18 @@ extern "C" void ColiLodBuildRecordMatrix(f32* self, CColiLodRecA6C60* obj) {
 // LOD cache-record lookup for the +4 index: entry table → pair table →
 // record table, then tail-call the member distance-bin lookup (retail
 // `b findCutBinIdx`).
+// LOD-record index lens for ColiLodLookupRecordBin: the pair-table index at
+// +0x04 of the LODRec1C record (cf. LODMemMan.cpp).
+struct CColiLodIdxView {
+    u8 _00[4]; // 0x00..0x03
+    u32 idx04; // 0x04
+};
 extern "C" s32 ColiLodLookupRecordBin(void* self) {
-    u32 idx = *(u32*)((u8*)self + 4);
+    u32 idx = ((CColiLodIdxView*)self)->idx04;
     u32 n = lbl_eu_8066574C[idx];
-    u16 h = *(u16*)((u8*)lbl_eu_80665750 + n * 2 + 2);
+    u16 h = lbl_eu_80665750[n + 1];
     LOD::CLODCacheManagerS* rec =
-        (LOD::CLODCacheManagerS*)((u8*)lbl_eu_80665738 + h * 0xC);
+        &((LOD::CLODCacheManagerS*)lbl_eu_80665738)[h];
     return rec->findCutBinIdx();
 }
 
@@ -1119,16 +1125,26 @@ void ColiRegisterSubObjects(u32 unused, CColiObject* self) {
 // p+4 into the sweep-control member-count, update the +0x8C flag from bit 1
 // of the u16 at p+2, and park the new node (p+16) plus the value into the
 // shared sweep-control globals.
+// Sweep-link record lens for ColiLinkSweepRecord: flag halfword at +0x02,
+// offset word at +0x04, embedded node at +0x10 (address taken).
+struct CColiSweepLinkView {
+    u8 _00[2];             // 0x00..0x01
+    u16 flag02;            // 0x02
+    u32 off04;             // 0x04..0x07
+    u8 _08[8];             // 0x08..0x0F
+    CColiSweepCtrl node10; // 0x10 embedded node
+};
 extern "C" void ColiLinkSweepRecord(CColiObject* self, u32 v, u8* p) {
-    u16 flag = *(u16*)(p + 2);
-    CColiSweepCtrl* ctrl = *(CColiSweepCtrl**)((u8*)self + 0x3C);
-    ctrl->field_0x08 = (u32)lbl_eu_80665930 + *(u32*)(p + 4);
+    CColiSweepLinkView* rec = (CColiSweepLinkView*)p;
+    u16 flag = rec->flag02;
+    CColiSweepCtrl* ctrl = (CColiSweepCtrl*)(uintptr_t)self->field_0x3c_u;
+    ctrl->field_0x08 = (u32)lbl_eu_80665930 + rec->off04;
     if (flag & 2) {
-        *(u32*)((u8*)self + 0x8C) |= 2;
+        self->field_0x8c |= 2;
     } else {
-        *(u32*)((u8*)self + 0x8C) &= ~2;
+        self->field_0x8c &= ~2;
     }
-    lbl_eu_80665934 = (CColiSweepCtrl*)(p + 16);
+    lbl_eu_80665934 = &rec->node10;
     lbl_eu_80665938 = v;
 }
 
@@ -2080,9 +2096,15 @@ FAIL:
 // object's sphere from its centre (+4) and band/radius (+16) fields.
 // Segment-sphere contact test (defined at the end of the file).
 extern "C" int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b);
+// Point-pair partner lens for ColiSweepPointPair: segment endpoints at +0x04/+0x10.
+struct CColiPointPairView {
+    u8 _00[4];      // 0x00..0x03
+    _VEC3 point04;  // 0x04..0x0F
+    _VEC3 point10;  // 0x10..0x1B
+};
 extern "C" int ColiSweepPointPair(CColiObject* self) {
-    return ColiCastSegmentSphere(self, (const _VEC3*)((u8*)self->field_0x00_obj + 4),
-                         (const _VEC3*)((u8*)self->field_0x00_obj + 16));
+    CColiPointPairView* partner = (CColiPointPairView*)self->field_0x00_obj;
+    return ColiCastSegmentSphere(self, &partner->point04, &partner->point10);
 }
 
 // Two-point clip sweep with contact write-back (defined at the end of the file).
@@ -2338,11 +2360,17 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
 // partner's +0x64 scalar list, +4 AABB matrix and +0x34 transform matrix.
 extern "C" int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b,
                              const Mtx c);
+// AABB-kind partner lens for ColiClipPartnerBox: ray scalar at +0x64 with the
+// two matrices at +0x04/+0x34 (contiguous 48-byte blocks).
+struct CColiAabbPartnerView {
+    u8 _00[4];  // 0x00..0x03
+    Mtx mat04;  // 0x04..0x33
+    Mtx mat34;  // 0x34..0x63
+    f32 f64;    // 0x64
+};
 extern "C" int ColiClipPartnerBox(CColiObject* self) {
-    CColiObject* partner = self->field_0x00_obj;
-    return ColiCastRayAabb(self, (const f32*)((u8*)partner + 0x64),
-                         (const f32(*)[4])((u8*)partner + 0x04),
-                         (const f32(*)[4])((u8*)partner + 0x34));
+    CColiAabbPartnerView* partner = (CColiAabbPartnerView*)self->field_0x00_obj;
+    return ColiCastRayAabb(self, &partner->f64, partner->mat04, partner->mat34);
 }
 
 // 16-byte collision registration record (full definition above
@@ -2845,9 +2873,9 @@ extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f)
 // Delegates to the contact clip helper, describing the partner object's
 // segment from its centre (+4) and radius (+0x10) fields.
 extern "C" int ColiClipCentreRadius(CColiObject* self) {
-    CColiObject* partner = self->field_0x00_obj;
-    f32 radius = partner->field_0x10_f;
-    const VEC3* seg = (const VEC3*)((u8*)partner + 4);
+    CColiCylinder804ABA68* partner = (CColiCylinder804ABA68*)self->field_0x00_obj;
+    f32 radius = partner->field_0x10;
+    const VEC3* seg = &partner->field_0x04;
     return ColiClipContactPoint((CColiContactObj*)self, seg, radius);
 }
 
@@ -4579,9 +4607,9 @@ void ColiNodeResetAll(CColiNode804B09C8* self) {
 }
 
 extern "C" void ColiNodeRebuildClassify(void* self);
-extern "C" void ColiNodeSetWord0Rebuild(void* self, u32 val) { *(u32*)((u8*)self + 0) = val; ColiNodeRebuildClassify(self); }
+extern "C" void ColiNodeSetWord0Rebuild(void* self, u32 val) { ((CColiNode804B09C8*)self)->field_0x00 = val; ColiNodeRebuildClassify(self); }
 
-extern "C" void ColiNodeSetWord8Rebuild(void* self, u32 val) { *(u32*)((u8*)self + 8) = val; ColiNodeRebuildClassify(self); }
+extern "C" void ColiNodeSetWord8Rebuild(void* self, u32 val) { ((CColiNode804B09C8*)self)->field_0x08 = val; ColiNodeRebuildClassify(self); }
 
 // Node reset: clear the +0x08/+0x00 words first, then release the owned
 // +0x04 buffer and null it. The doubled emptiness check on the saved buffer
@@ -5371,7 +5399,7 @@ fail:
 }
 
 void ColiSetMoveEnableFlag(u8* self, int arg) {
-    int* flags = (int*)((char*)self + 0xa8);
+    int* flags = (int*)&((CColiObject*)self)->field_0xa8;
     if (arg != 0) {
         *flags &= ~0x100;
     } else {
@@ -5677,6 +5705,13 @@ int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
 
 // Node query helper (sibling of ColiProcessSegmentPair): shared flag gate, then the
 // proc-seeded classify pass, then an argument-gated geometry dispatch -
+// Box-frame matrix lens for ColiQueryNodePoint: the +0x6c matrix of a box-kind
+// object (overlaps the segment-kind 0x68..0x90 fields, so it lives here rather
+// than in CColiObject).
+struct CColiBoxMtxView {
+    u8 _00[0x6c]; // 0x00..0x6c
+    Mtx mtx6c;    // 0x6c..0x9c
+};
 // behaviour bits 0x50 select the point-in-cylinder gate (ColiTestPointColumn)
 // and bit 0x20 the point-in-box gate (ColiTestPointInBoxHalf).
 extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
@@ -5707,14 +5742,14 @@ extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
     if (flag != 0) {
         u32 a8 = self->field_0xa8;
         if (a8 & 0x50) {
-            return ColiTestPointColumn(v, (const VEC3*)((u8*)self + 0x24),
+            return ColiTestPointColumn(v, (const VEC3*)&self->field_0x00[3],
                                  self->field_0x30.x, self->field_0x30.y);
         }
         if (a8 & 0x20) {
             return ColiTestPointInBoxHalf(v, (const VEC3*)&self->field_0x30,
-                                 *(const Mtx*)((u8*)self + 0x6c),
-                                 (const VEC3*)((u8*)self + 0xc),
-                                 (const VEC3*)((u8*)self + 0x18));
+                                 ((CColiBoxMtxView*)self)->mtx6c,
+                                 (const VEC3*)&self->field_0x00[1],
+                                 (const VEC3*)&self->field_0x00[2]);
         }
     }
     return 0;

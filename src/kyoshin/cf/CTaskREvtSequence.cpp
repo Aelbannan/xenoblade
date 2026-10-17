@@ -273,8 +273,8 @@ void EvtSeqPublishIdHalfwords() {
 }
 
 extern "C" u32 EvtSeqGetStateBit5(void) {
-    void* g = (void*)lbl_eu_80664268;
-    return (*(u32*)((u8*)g + 0x5c) >> 5) & 1;
+    UnkState_80664268* g = (UnkState_80664268*)lbl_eu_80664268;
+    return (g->field_0x5C >> 5) & 1;
 }
 
 extern "C" u32 EvtSeqGetSharedState() { return (u32)lbl_eu_80664268; }
@@ -828,8 +828,8 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     u32 scaled = 0;
     u32 n = 0;
     while (n < self->field_0xA8) {
-        UnkEvtListEntry* e =
-            *(UnkEvtListEntry**)((u8*)self->field_0xA4 + scaled);
+        u8* abase = (u8*)self->field_0xA4;
+        UnkEvtListEntry* e = *(UnkEvtListEntry**)&abase[scaled];
         e->vf_0x24();
         n++;
         scaled += 4;
@@ -848,8 +848,8 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
         u32 m = 0;
         scaled = 0;
         while (m < self->field_0xA8) {
-            UnkEvtListEntry* e =
-                *(UnkEvtListEntry**)((u8*)self->field_0xA4 + scaled);
+            u8* abase = (u8*)self->field_0xA4;
+            UnkEvtListEntry* e = *(UnkEvtListEntry**)&abase[scaled];
             if (e->vf_0x18() == 0) {
                 return;
             }
@@ -1785,8 +1785,8 @@ extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
                     ->field_0x20 +
                reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
                     ->field_0x28) {
-        entry = reinterpret_cast<UnkEvtListEntry*>(
-            *(u32*)((u8*)lbl_eu_80664268->field_0xA4 + scaled));
+        u8* abase = (u8*)lbl_eu_80664268->field_0xA4;
+        entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if ((u32)nameData == entry->field_0x1C->field_0x0C) {
             if (entry->vf_0x14() != 0) {
                 UnkEvtResolved* res =
@@ -1816,7 +1816,9 @@ u32 EvtSeqGetEntryLimit() {
     UnkStateTable_D0* arr = p->field_0xD0;
     u32 idx = p->field_0xF8;
     // Dynamic byte stride: entry address = arr + arr->field_0x4 * idx.
-    return ((UnkStateTable_D0*)((u8*)arr + arr->field_0x4 * idx))->field_0xC;
+    u8* bytes = (u8*)arr;
+    UnkStateTable_D0* entry = (UnkStateTable_D0*)(bytes + arr->field_0x4 * idx);
+    return entry->field_0xC;
 }
 
 u32 EvtSeqGetCounter104() {
@@ -2245,8 +2247,8 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
     scaled = i << 2;
     while (i < end) {
         UnkState_80664268* cur = lbl_eu_80664268;
-        entry = reinterpret_cast<UnkEvtListEntry*>(
-            *(u32*)((u8*)cur->field_0xA4 + scaled));
+        u8* abase = (u8*)cur->field_0xA4;
+        entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 &&
             entry != reinterpret_cast<UnkEvtListEntry*>(self)) {
             nameEntry = (const char*)evtModelDataPtr(entry);
@@ -2283,8 +2285,8 @@ int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
     scaled = i << 2;
     while (i < end) {
         UnkState_80664268* cur = lbl_eu_80664268;
-        entry = reinterpret_cast<UnkEvtListEntry*>(
-            *(u32*)((u8*)cur->field_0xA4 + scaled));
+        u8* abase = (u8*)cur->field_0xA4;
+        entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 && entry != self) {
             nameEntry = (const char*)evtModelDataPtr(entry);
             if (strcmp((const char*)evtModelDataPtr(self), nameEntry) == 0) {
@@ -2456,7 +2458,7 @@ int EvtSeqFindResFloat(u8* data, const char* name, f32* out) {
             nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
                             lbl_eu_80530CF0, lbl_eu_806623C4);
         }
-        u8* dic = reinterpret_cast<u8*>(userData) + 4;
+        u8* dic = userData + 4;
         nw4r::g3d::ResDic resDic(dic);
         if ((reinterpret_cast<u32>(dic) & 3) != 0) {
             nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
@@ -2524,7 +2526,7 @@ int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
             nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
                             lbl_eu_80530CF0, lbl_eu_806623C4);
         }
-        u8* dic = reinterpret_cast<u8*>(userData) + 4;
+        u8* dic = userData + 4;
         nw4r::g3d::ResDic resDic(dic);
         if ((reinterpret_cast<u32>(dic) & 3) != 0) {
             nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
@@ -2990,7 +2992,9 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
     while (node != getGimmickListHead__Q22cf13CfGameManagerFv()->field_0x4) {
         UnkContainer4594* container = (UnkContainer4594*)node->field_0x8;
         if (container != 0) {
-            container = (UnkContainer4594*)((u8*)container - 0x3E9C);
+            u8* cbytes = (u8*)container;
+            cbytes -= 0x3E9C;
+            container = (UnkContainer4594*)cbytes;
         }
         UnkObj4594* obj = container->field_0x4594;
         if (obj != 0) {
@@ -3267,7 +3271,8 @@ int EvtSeqCheckWalkGate(u8* gate) {
     }
     // Walk the 0xD0 table: entry address = table + stride * field_0xF8.
     table = p->field_0xD0;
-    entry = ((UnkStateTable_D0*)((u8*)table + table->field_0x4 * p->field_0xF8))->field_0xC;
+    u8* bytes = (u8*)table;
+    entry = ((UnkStateTable_D0*)(bytes + table->field_0x4 * p->field_0xF8))->field_0xC;
     // Retail falls through to `return 0`; the branch target returns 1.
     if (f100 >= entry - 3) {
         return 0;

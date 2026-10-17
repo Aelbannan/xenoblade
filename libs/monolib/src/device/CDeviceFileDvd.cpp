@@ -210,12 +210,12 @@ struct CFileHandle {
     u32 field_0x14;          //0x14 (alloc handle)
     u32 field_0x18[4];       //0x18 (fallback alloc handles)
     IWorkEvent* field_0x28;  //0x28 (event receiver)
-    u8 field_0x2C[0x30 - 0x2C];
+    u32 field_0x2C;          //0x2C
     s32* field_0x30;         //0x30 (out: data ptr)
     s32* field_0x34;         //0x34 (out: length)
     u32 field_0x38;          //0x38 (read offset)
     u32 field_0x3C;          //0x3C (file length)
-    u8 field_0x40[0x58 - 0x40];
+    u32 field_0x40[6];       //0x40-0x57 (init-cleared words)
     u32 field_0x58;
     char mName[0x100];       //0x5C
     u32 field_0x15C;
@@ -517,17 +517,17 @@ bool CDeviceFileDvd::wkStandbyLogout() {
 }
 
 int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
-    if (*(s32*)((u8*)this + 0x1C4) == 3) {
-        u8* p = *(u8**)((u8*)this + 0x60);
-        p = *(u8**)((u8*)p + 0x0);
-        p = *(u8**)((u8*)p + 0x8);
-        if (p == 0) {
-            p = 0;
-        } else if (*(s32*)((u8*)p + 0x50) != 0x44) {
-            p = 0;
+    if ((s32)field_0x1C4 == 3) {
+        // Walk the file-system job chain (singleton +0x60 list); the active
+        // job is the node after the sentinel (mirrors getActiveJob).
+        CDeviceFileJob* p = (*jobListSlot(this))->next->job;
+        if (p == nullptr) {
+            p = nullptr;
+        } else if (p->field_0x50 != 0x44) {
+            p = nullptr;
         }
-        *(u32*)(*(u32*)((u8*)p + 0x1C4) + 0x10) = 0;
-        *(u32*)((u8*)this + 0x1C4) = 4;
+        p->field_0x1C4->field_0x10 = 0;
+        field_0x1C4 = 4;
     }
     return 1;
 }
@@ -615,40 +615,40 @@ bool CFileHandle::call(CBM cbm) {
 }
 
 void CFileHandle::init(int param) {
-    u8* s = (u8*)this;
-    *(u32*)(s + 0x00) = (u32)param;
-    *(u32*)(s + 0x3C) = 0;
-    *(u32*)(s + 0x04) = 0;
-    *(u32*)(s + 0x08) = 0;
-    *(u32*)(s + 0x10) = 0;
-    *(u32*)(s + 0x14) = -1;
-    *(u32*)(s + 0x18) = -1;
-    *(u32*)(s + 0x1C) = -1;
-    *(u32*)(s + 0x20) = -1;
-    *(u32*)(s + 0x24) = -1;
-    *(u32*)(s + 0x28) = 0;
-    *(u32*)(s + 0x0C) = 0;
-    *(u32*)(s + 0x2C) = 0;
-    *(u32*)(s + 0x30) = 0;
-    *(u32*)(s + 0x34) = 0;
-    *(u32*)(s + 0x38) = 0;
-    *(u32*)(s + 0x40) = 0;
-    *(u32*)(s + 0x44) = 0;
-    *(u32*)(s + 0x4C) = 0;
-    *(u32*)(s + 0x50) = 0;
-    *(u32*)(s + 0x48) = 4;
-    *(u32*)(s + 0x54) = 0;
-    *(u32*)(s + 0x58) = 0;
+    field_0x00 = param;
+    field_0x3C = 0;
+    field_0x04 = 0;
+    field_0x08 = 0;
+    field_0x10 = 0;
+    field_0x14 = -1;
+    field_0x18[0] = -1;
+    field_0x18[1] = -1;
+    field_0x18[2] = -1;
+    field_0x18[3] = -1;
+    field_0x28 = 0;
+    field_0x0C = 0;
+    field_0x2C = 0;
+    field_0x30 = 0;
+    field_0x34 = 0;
+    field_0x38 = 0;
+    field_0x40[0] = 0;
+    field_0x40[1] = 0;
+    field_0x40[3] = 0;
+    field_0x40[4] = 0;
+    field_0x40[2] = 4;
+    field_0x40[5] = 0;
+    field_0x58 = 0;
+    // Store order mirrors the retail init sequence (0x48 after 0x50).
 }
 
 void CFileHandle::addFallbackHandle(unsigned long param) {
-    u8* p = (u8*)this;
     for (int i = 0; i < 4; i++) {
-        if (*(u32*)(p + 0x18) == 0xFFFFFFFF) {
-            *(u32*)((u8*)this + i * 4 + 0x18) = (u32)param;
+        if (field_0x18[i] == 0xFFFFFFFF) {
+            field_0x18[i] = param;
             return;
         }
-        p += 4;
+        // Next fallback slot (retail bumps a byte pointer by 4).
+        // (one slot per iteration; empty slots read 0xFFFFFFFF).
     }
 }
 
@@ -752,7 +752,7 @@ void CFileHandle::destroy(u32 size, u32 param_5, int param_6) {
 }
 
 int CFileHandle::advanceReadProgress(int param) {
-    *(s32*)((u8*)this + 0x10) += param;
+    field_0x10 += param;
     return 1;
 }
 

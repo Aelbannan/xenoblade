@@ -547,7 +547,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
             capacity = instQ->mWindowList1.mCapacity;
             goto quest_check;
         quest_body:
-            if (*(u32*)((u8*)instQ->mWindowList1.mList + byteOff) == 0) {
+            if (((WindowNode*)((u8*)instQ->mWindowList1.mList + byteOff))->mNext == 0) {
                 goto quest_found;
             }
             byteOff += 0xc;
@@ -557,7 +557,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 goto quest_body;
             }
         quest_found:
-            temp = (WindowNode*)((u8*)instQ->mWindowList1.mList + i * 0xc);
+            temp = &instQ->mWindowList1.mList[i];
             {
                 IUIWindow** ptr = &temp->mItem;
                 if (ptr != NULL) {
@@ -598,7 +598,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
             capacity = inst->mWindowList1.mCapacity;
             goto plain_check;
         plain_body:
-            if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+            if (((WindowNode*)((u8*)inst->mWindowList1.mList + byteOff))->mNext == 0) {
                 goto plain_found;
             }
             byteOff += 0xc;
@@ -608,7 +608,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 goto plain_body;
             }
         plain_found:
-            temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+            temp = &inst->mWindowList1.mList[i];
             {
                 IUIWindow** ptr = &temp->mItem;
                 if (ptr != NULL) {
@@ -663,7 +663,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
             capacity = inst->mWindowList1.mCapacity;
             goto talk_check;
         talk_body:
-            if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+            if (((WindowNode*)((u8*)inst->mWindowList1.mList + byteOff))->mNext == 0) {
                 goto talk_found;
             }
             byteOff += 0xc;
@@ -673,7 +673,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 goto talk_body;
             }
         talk_found:
-            temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+            temp = &inst->mWindowList1.mList[i];
             {
                 IUIWindow** ptr = &temp->mItem;
                 if (ptr != NULL) {
@@ -717,7 +717,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 capacity = inst->mWindowList1.mCapacity;
                 goto slot_check;
             slot_body:
-                if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+                if (((WindowNode*)((u8*)inst->mWindowList1.mList + byteOff))->mNext == 0) {
                     goto slot_found;
                 }
                 byteOff += 0xc;
@@ -922,7 +922,7 @@ extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
     capacity = inst->mWindowList2.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList2.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList2.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -932,12 +932,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList2.mList + i * 0xc);
+    temp = &inst->mWindowList2.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1007,7 +1007,7 @@ extern "C" IUIWindow* UIWin_CreateEveTalkWin(u32 text, const u8* msgSrc) {
     capacity = inst->mWindowList2.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList2.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList2.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1017,14 +1017,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList2.mList + i * 0xc);
+    temp = &inst->mWindowList2.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1073,7 +1073,7 @@ extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2)
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1083,14 +1083,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1134,7 +1134,7 @@ extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1144,14 +1144,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1191,7 +1191,7 @@ extern "C" IUIWindow* UIWin_CreateSysWinBuff(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1201,14 +1201,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1248,7 +1248,7 @@ int UIWin_CreateExtraWin() {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1258,12 +1258,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1300,7 +1300,7 @@ extern "C" IUIWindow* UIWin_Create25070Win(u32 a1, u32 a2, u32 a3) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1310,12 +1310,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1357,7 +1357,7 @@ extern "C" IUIWindow* UIWin_CreateQuestWin(u32 id, void* arg1, u32 arg2) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1367,14 +1367,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1423,7 +1423,7 @@ extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1433,12 +1433,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1475,7 +1475,7 @@ extern "C" IUIWindow* UIWin_Create44EE4Win(u32 a1, u32 a2) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1485,12 +1485,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1535,7 +1535,7 @@ extern "C" IUIWindow* UIWin_Create602F4Win() {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1545,12 +1545,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1589,7 +1589,7 @@ extern "C" IUIWindow* UIWin_Create5DCD0Win() {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1599,12 +1599,12 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1649,7 +1649,7 @@ extern "C" IUIWindow* UIWin_CreateCol6Invite(u32 a1, u32 a2, u32 a3) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1659,14 +1659,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1704,7 +1704,7 @@ int UIWin_CreateCol6Check() {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == NULL) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1714,14 +1714,14 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded node::setItem: reading the volatile savedRet inside the
         // guard keeps the reload after the addic./beq, as in retail.
-        u32* ptr = (u32*)&temp->mItem;
-        if (ptr != 0) {
+        IUIWindow** ptr = &temp->mItem;
+        if (ptr != NULL) {
             try {
-                *ptr = savedRet;
+                *ptr = (IUIWindow*)savedRet;
             } catch (...) {
                 throw;
             }
@@ -1760,7 +1760,7 @@ extern "C" IUIWindow* UIWin_CreateShopWin(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(void**)((u8*)inst->mWindowList1.mList + byteOff) != NULL) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext != NULL) {
         byteOff += 0xc;
         i++;
     } else {
@@ -1771,7 +1771,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded node::setItem: the volatile read inside the guard keeps
         // the window reload after the addic./beq, as in retail.
@@ -1818,7 +1818,7 @@ extern "C" IUIWindow* UIWin_CreateBEDE0Win(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1828,7 +1828,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         u32* ptr = (u32*)&temp->mItem;
         if (ptr != 0) {
@@ -1881,7 +1881,7 @@ extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1891,7 +1891,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         u32* ptr = (u32*)&temp->mItem;
         if (ptr != 0) {
@@ -1938,7 +1938,7 @@ extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -1948,7 +1948,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -1994,7 +1994,7 @@ extern "C" IUIWindow* UIWin_CreateKizunaTalk(u32 charId) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2004,7 +2004,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -2051,7 +2051,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog0(u32 a1, u32 a2, u32 a3, u32 a4) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2061,7 +2061,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -2107,7 +2107,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog1(u32 a1, u32 a2, u32 a3, u32 a4) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2117,7 +2117,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -2163,7 +2163,7 @@ extern "C" IUIWindow* UIWin_Create6F8B0Win(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2173,7 +2173,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -2222,7 +2222,7 @@ extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2232,7 +2232,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         // Expanded setItem: reading the volatile savedRet inside the guard
         // keeps the reload after the addic./beq, as in retail.
@@ -2278,7 +2278,7 @@ extern "C" IUIWindow* UIWin_CreateSaveWin() {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2288,7 +2288,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         u32* ptr = (u32*)&temp->mItem;
         if (ptr != 0) {
@@ -2331,7 +2331,7 @@ extern "C" IUIWindow* UIWin_CreateAA2A0Win(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (((WindowNode*)((u8*)&inst->mWindowList1.mList[0] + byteOff))->mNext == 0) {
         goto queue_found;
     }
     byteOff += 0xc;
@@ -2341,7 +2341,7 @@ queue_check:
         goto queue_body;
     }
 queue_found:
-    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    temp = &inst->mWindowList1.mList[i];
     {
         u32* ptr = (u32*)&temp->mItem;
         if (ptr != 0) {

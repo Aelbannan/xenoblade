@@ -221,22 +221,23 @@ extern "C" void MapFxStepMenuChannels(MenuFxObj* obj) {
 }
 
 void MenuFx_ClearSlotFlags(u8* base) {
-    base[0x0] = 0;
-    *(int *)(base + 0x4) = 0;
-    base[0x188] = 0;
-    *(int *)(base + 0x18c) = 0;
-    base[0x310] = 0;
-    *(int *)(base + 0x314) = 0;
-    base[0x498] = 0;
-    *(int *)(base + 0x49c) = 0;
-    base[0x620] = 0;
-    *(int *)(base + 0x624) = 0;
-    base[0x7a8] = 0;
-    *(int *)(base + 0x7ac) = 0;
-    base[0x930] = 0;
-    *(int *)(base + 0x934) = 0;
-    base[0xab8] = 0;
-    *(int *)(base + 0xabc) = 0;
+    MenuFxObj* entries = (MenuFxObj*)base;
+    entries[0].field_00 = 0;
+    entries[0].field_04 = 0;
+    entries[1].field_00 = 0;
+    entries[1].field_04 = 0;
+    entries[2].field_00 = 0;
+    entries[2].field_04 = 0;
+    entries[3].field_00 = 0;
+    entries[3].field_04 = 0;
+    entries[4].field_00 = 0;
+    entries[4].field_04 = 0;
+    entries[5].field_00 = 0;
+    entries[5].field_04 = 0;
+    entries[6].field_00 = 0;
+    entries[6].field_04 = 0;
+    entries[7].field_00 = 0;
+    entries[7].field_04 = 0;
 }
 
 // Advances the landmark FX for every active map point entry.
@@ -443,11 +444,11 @@ extern "C" void __dt__6CBgTexFv(void*, int);
 extern "C" void __dt__8CProcessFv(void*, int);
 extern "C" void* __dt__14CMenuMapSelectFv(CMenuMapSelect* _this, int flags) {
     if (_this) {
-        __dt__9CFloorMapFv((char*)_this + 0x194, -1);
-        __dt__5CFadeFv((char*)_this + 0x16C, -1);
-        __dt__7CMapSelFv((char*)_this + 0xB8, -1);
-        __dt__11CTitleAHelpFv((char*)_this + 0x80, -1);
-        __dt__6CBgTexFv((char*)_this + 0x60, -1);
+        __dt__9CFloorMapFv((char*)&_this->mFloorMap, -1);
+        __dt__5CFadeFv((char*)&_this->mFade, -1);
+        __dt__7CMapSelFv((char*)&_this->mMapSel, -1);
+        __dt__11CTitleAHelpFv((char*)&_this->mTitleHelp, -1);
+        __dt__6CBgTexFv((char*)&_this->mBgTex, -1);
         if (_this) {
             if (_this) {
                 __dt__8CProcessFv(_this, 0);

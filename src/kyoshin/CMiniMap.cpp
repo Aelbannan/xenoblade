@@ -317,7 +317,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             for (u8 i = 0; lbl_eu_8052C788[i] != 0; i++) {
                 nw4r::lyt::Pane* tb = (nw4r::lyt::Pane*)createTextbox__10CLibLayoutFv();
                 SetName__Q34nw4r3lyt4PaneFPCc(tb, lbl_eu_8052C788[i]);
-                *(u8*)((u8*)tb + 0xBB) = (*(u8*)((u8*)tb + 0xBB) & 0xFE) | 1;
+                ((CMMMapEntry*)tb)->field_BB = (u8)((((CMMMapEntry*)tb)->field_BB & 0xFE) | 1);
                 AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, tb);
             }
         }
@@ -333,16 +333,16 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             } else {
                 pic = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
                 SetName__Q34nw4r3lyt4PaneFPCc(pic, &lbl_eu_804FE1FC[0x202]);
-                *(f32*)((u8*)pic + 0x2C) = lbl_eu_80667090;
-                *(f32*)((u8*)pic + 0x30) = lbl_eu_80667090;
+                ((CMMMapEntry*)pic)->field_2C = lbl_eu_80667090;
+                ((CMMMapEntry*)pic)->field_30 = lbl_eu_80667090;
                 // Dead origin record (retail stores it to the frame).
                 ml::CVec3 pos;
                 pos.x = lbl_eu_80667090;
                 pos.y = lbl_eu_80667090;
                 pos.z = lbl_eu_80667090;
-                *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
+                ((CMMMapEntry*)pic)->field_34 = lbl_eu_80667090;
                 PaneSetVtxColorAll(pic, -1);
-                *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                ((CMMMapEntry*)pic)->field_BB = (u8)((((CMMMapEntry*)pic)->field_BB & 0xFE) | 1);
             }
         }
 
@@ -351,20 +351,20 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         f32 picW = *(f32*)((u8*)pic + 0x4C);
         f32 picH = *(f32*)((u8*)pic + 0x50);
         f32 scaleY = lbl_eu_806670B4 * picH;
-        *(f32*)((u8*)pic + 0x2C) = lbl_eu_80667090;
+        ((CMMMapEntry*)pic)->field_2C = lbl_eu_80667090;
         ml::CVec3 sizeKeep;   // dead frame records (retail stores them)
         sizeKeep.x = picW;
-        *(f32*)((u8*)pic + 0x30) = scaleY;
+        ((CMMMapEntry*)pic)->field_30 = scaleY;
         sizeKeep.y = picH;
         ml::CVec3 scaleKeep;
         scaleKeep.x = lbl_eu_80667090;
         scaleKeep.y = scaleY;
         scaleKeep.z = lbl_eu_80667090;
-        *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
+        ((CMMMapEntry*)pic)->field_34 = lbl_eu_80667090;
 
         nw4r::lyt::Pane* tb = (nw4r::lyt::Pane*)createTextbox__10CLibLayoutFv();
         SetName__Q34nw4r3lyt4PaneFPCc(tb, &lbl_eu_804FE1FC[0x20A]);
-        *(u8*)((u8*)tb + 0xBB) = (*(u8*)((u8*)tb + 0xBB) & 0xFE) | 1;
+        ((CMMMapEntry*)tb)->field_BB = (u8)((((CMMMapEntry*)tb)->field_BB & 0xFE) | 1);
         parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x1FA], true);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, tb);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(tb, pic);
@@ -380,16 +380,16 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
             } else {
                 clockPic = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
                 SetName__Q34nw4r3lyt4PaneFPCc(clockPic, &lbl_eu_804FE1FC[0x212]);
-                *(f32*)((u8*)clockPic + 0x2C) = lbl_eu_80667090;
-                *(f32*)((u8*)clockPic + 0x30) = lbl_eu_80667090;
+                ((CMMMapEntry*)clockPic)->field_2C = lbl_eu_80667090;
+                ((CMMMapEntry*)clockPic)->field_30 = lbl_eu_80667090;
                 // Dead origin record (retail stores it to the frame).
                 ml::CVec3 origin;
                 origin.x = lbl_eu_80667090;
                 origin.y = lbl_eu_80667090;
                 origin.z = lbl_eu_80667090;
-                *(f32*)((u8*)clockPic + 0x34) = lbl_eu_80667090;
+                ((CMMMapEntry*)clockPic)->field_34 = lbl_eu_80667090;
                 PaneSetVtxColorAll(clockPic, -1);
-                *(u8*)((u8*)clockPic + 0xBB) = (*(u8*)((u8*)clockPic + 0xBB) & 0xFE) | 1;
+                ((CMMMapEntry*)clockPic)->field_BB = (u8)((((CMMMapEntry*)clockPic)->field_BB & 0xFE) | 1);
             }
         }
         parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x281], true);
@@ -2445,30 +2445,30 @@ extern "C" void MiniMapResetLayoutAnims(void) {
     // keeps r3 live as the pending return and forces `li r4,3`.
     // First virtual call uses a block-local Layout*; later calls reload
     // from g so the pointer is not saved across bctrl (retail: r31 only).
-    u8* g = (u8*)lbl_eu_80663FB0;
+    CMenuMiniMap2* g = (CMenuMiniMap2*)lbl_eu_80663FB0;
     if (g != 0) {
-        g[0x8d4] = 3;
-        g[0x7c] = 3;
-        g[0x7d] = 0;
-        nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)*(void**)(g + 0x70);
+        g->mField8D4 = 3;
+        g->mClock.field_0x18 = 3;
+        g->mClock.field_0x19 = 0;
+        nw4r::lyt::Layout* lay = g->mClock.mLayout;
         if (lay != 0) {
             lay->SetAnimationEnable(
-                (nw4r::lyt::AnimTransform*)*(void**)(g + 0x78), false);
-            ((nw4r::lyt::Layout*)*(void**)(g + 0x70))
+                g->mClock.mAnimTrans1, false);
+            g->mClock.mLayout
                 ->SetAnimationEnable(
-                    (nw4r::lyt::AnimTransform*)*(void**)(g + 0x74), true);
-            ((nw4r::lyt::Layout*)*(void**)(g + 0x70))->Animate(0);
+                    g->mClock.mAnimTrans0, true);
+            g->mClock.mLayout->Animate(0);
         }
-        g[0xa8] = 3;
-        g[0xa9] = 0;
-        nw4r::lyt::Layout* lay2 = (nw4r::lyt::Layout*)*(void**)(g + 0x9c);
+        g->mMiniMap.field_0x18 = 3;
+        g->mMiniMap.field_0x19 = 0;
+        nw4r::lyt::Layout* lay2 = g->mMiniMap.mLayout0C;
         if (lay2 != 0) {
             lay2->SetAnimationEnable(
-                (nw4r::lyt::AnimTransform*)*(void**)(g + 0xa4), false);
-            ((nw4r::lyt::Layout*)*(void**)(g + 0x9c))
+                g->mMiniMap.mAnimTrans1, false);
+            g->mMiniMap.mLayout0C
                 ->SetAnimationEnable(
-                    (nw4r::lyt::AnimTransform*)*(void**)(g + 0xa0), true);
-            ((nw4r::lyt::Layout*)*(void**)(g + 0x9c))->Animate(0);
+                    g->mMiniMap.mAnimTrans0, true);
+            g->mMiniMap.mLayout0C->Animate(0);
         }
     }
 }
@@ -2481,7 +2481,7 @@ void MiniMapSetActiveFlag()
 {
     if (lbl_eu_80663FB0 != 0)
     {
-        *((unsigned char*)lbl_eu_80663FB0 + 0x54) = 1;
+        ((CMenuMiniMap2*)lbl_eu_80663FB0)->mField54 = 1;
     }
 }
 

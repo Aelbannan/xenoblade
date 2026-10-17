@@ -266,12 +266,21 @@ extern "C" __declspec(noinline) void CSLCur_destroy(UnkPtrHolder* self) {
     }
 }
 
+// Typed views over CSaveLoad's untyped sub-object slots (per-statement use
+// only: the views are never instantiated, only cast for address computation).
+struct Layout10View { u8 _00[0x10]; void* root; };
+struct Pos2CView { u8 _00[0x2c]; float pos[3]; };
+struct SaveCur28View { u8 _00[0x28]; CSLCur cur28; };
+// SaveCur40View retired -> CSaveLoad::mCur40 (declared in CSaveLoad.hpp).
+struct SaveHead04View { u8 _00[4]; UnkClass_8045F564 unk04; };
+struct SaveSub110View { u8 _00[0x110]; CSLCur sub110; };
+struct SysWinD440View { u8 _00[0x40]; nw4r::lyt::Layout* subLayout; };
 // Retail symbol is unmangled; C linkage required for correct call relocs.
 extern "C" void CSLCur_setPos(void* arg1, const void* arg2) {
-    void* ptr1 = *(void**)((char*)arg1 + 8);
-    void* ptr2 = *(void**)((char*)ptr1 + 0x10);
+    void* ptr1 = ((CSLCur*)arg1)->mField8;
+    void* ptr2 = ((Layout10View*)ptr1)->root;
     const float* src = (const float*)arg2;
-    float* dst = (float*)((char*)ptr2 + 0x2c);
+    float* dst = ((Pos2CView*)ptr2)->pos;
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -350,7 +359,7 @@ extern "C" void CSLSub_create(UnkED70_Struct* s) {
         s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
     
     // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
-    void* rootPane = *(void**)((char*)s->mLayout + 0x10);
+    void* rootPane = ((Layout10View*)s->mLayout)->root;
     void* fontObj = CDeviceFont::getFontInfo(1, s->mLayout);
     
     // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
@@ -473,7 +482,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
 
     __ct__CSLCur((CSLCur*)((u8*)self + 0x28), 0);
 
-    __ct__CCur18((u8*)self + 0x40, 0);
+    __ct__CCur18(self->mCur40, 0);
 
     __ct__CScrollBar(self->mScrollbar, 0);
 
@@ -591,15 +600,15 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
         CSysWin_getUnk34(&self->mSysWinD4) == 0 &&
         self->mField11D == 0 &&
         self->mField121 <= 5) {
-        CSLCur_draw((CSLCur*)((char*)self + 0x28), drawInfo);
+        CSLCur_draw(&((SaveCur28View*)self)->cur28, drawInfo);
     }
 
     sysWinDrawLayout(&self->mSysWin98, drawInfo);
-    Cur_DrawLayout((char*)self + 0x40, drawInfo);
+    Cur_DrawLayout(self->mCur40, drawInfo);
     sysWinDrawLayout(&self->mSysWinD4, drawInfo);
 
     // Sub-layout pointer stored inside the second CSysWin block (+0x114)
-    nw4r::lyt::Layout* subLayout = *(nw4r::lyt::Layout**)((char*)&self->mSysWinD4 + 0x40);
+    nw4r::lyt::Layout* subLayout = ((SysWinD440View*)&self->mSysWinD4)->subLayout;
     if (subLayout != nullptr) {
         drawLayout(subLayout, drawInfo, 0, 1);
     }
@@ -640,14 +649,14 @@ void CSaveLoad_reset(CSaveLoad* self) {
         self->mField138 = nullptr;
     }
     
-    CSLCur_destroy((UnkPtrHolder*)((char*)self + 0x28));
-    CScrollBar_Teardown((u8*)self + 0x58);
+    CSLCur_destroy((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
+    CScrollBar_Teardown(self->mScrollbar);
     sysWinTermLayout(&self->mSysWin98);
     // Virtual call at self+0x40 (CCur18), vtable slot 3 (offset 0x0C), no null check
-    ((CCur18Obj*)((char*)self + 0x40))->vf3();
+    ((CCur18Obj*)self->mCur40)->vf3();
     sysWinTermLayout(&self->mSysWinD4);
-    CSLSub_destroy((UnkSlot4Ptr*)((char*)self + 0x110));
-    ((UnkClass_8045F564*)((char*)self + 0x04))->deleteRegion();
+    CSLSub_destroy((UnkSlot4Ptr*)&((SaveSub110View*)self)->sub110);
+    (&((SaveHead04View*)self)->unk04)->deleteRegion();
     lbl_eu_806649F4 = nullptr;
 }
 
@@ -911,7 +920,7 @@ void CSaveLoad_confirm(CSaveLoad* self) {
                 self->mField12C = 0;
             }
             sysWinAdvancePhase3(&self->mSysWin98);
-            Cur_SetVisible((void*)((u8*)self + 0x40), 0);
+            Cur_SetVisible(self->mCur40, 0);
             self->mField121 = 7;
         }
         return;
@@ -970,7 +979,7 @@ void CSaveLoad_cancel(CSaveLoad* p) {
     if (CSysWin_isActive((void*)&p->mSysWin98) == 0) return;
 
     sysWinAdvancePhase3((void*)&p->mSysWin98);
-    Cur_SetVisible((char*)p + 0x40, 0);
+    Cur_SetVisible(p->mCur40, 0);
 
     p->mField121 = 7;
     p->mField128 = 1;
@@ -1063,7 +1072,7 @@ extern "C" __declspec(noinline) void CSaveLoad_tickCloseA(CSaveLoad* self) {
 extern "C" __declspec(noinline) void CSaveLoad_tickConf(CSaveLoad* self) {
     if (CSysWin_isActive((void*)&self->mSysWin98) != 0) {
         self->mField121 = 3;
-        Cur_SetVisible((char*)self + 0x40, 1);
+        Cur_SetVisible(self->mCur40, 1);
         {
             void (*fn)(CSaveLoad*) = CSaveLoad_refresh;
             fn(self);
@@ -1329,12 +1338,12 @@ void CSaveLoad_update(CSaveLoad* self) {
     }
 
     ((UnkVtblObj*)self->mLayout)->vf14(0);
-    CSLCur_update((UnkPtrHolder*)((char*)self + 0x28));
+    CSLCur_update((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
     CScrollBar_UpdateDispatch(self->mScrollbar);
     sysWinDispatchPhase(&self->mSysWin98);
-    Cur_Update((char*)self + 0x40);
+    Cur_Update(self->mCur40);
     sysWinDispatchPhase(&self->mSysWinD4);
-    CSLSub_update((CSLCur*)((char*)self + 0x110));
+    CSLSub_update(&((SaveSub110View*)self)->sub110);
 }
 #pragma optimize_for_size off
 
@@ -1389,7 +1398,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
         sysWinGetPaneScreenPos(btnBuf, &self->mSysWin98, self->mField128);
-        ((CCur18Obj*)((char*)self + 0x40))->vf4((int)btnBuf);
+        ((CCur18Obj*)self->mCur40)->vf4((int)btnBuf);
     } else {
         char* strBase = (char*)&lbl_eu_8050F7CC;
         char numBuf[0x18];
@@ -1397,11 +1406,11 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
 
         // Format the slot number text and set it on the root panes
         sprintf(numBuf, strBase + 0xb7, (s8)self->mField124 + 1);
-        void* paneA = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(numBuf, 1);
-        void* paneB = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(
+        void* paneA = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(numBuf, 1);
+        void* paneB = ((RootPaneProxy*)((Layout10View*)self->mLayout)->root)->vf15(
             strBase + 0xc4, 1);
-        ScalePaneWorldPos(paneBuf, paneA, paneB, *(void**)((char*)self->mLayout + 0x10));
-        CSLCur_setPos((char*)self + 0x28, paneBuf);
+        ScalePaneWorldPos(paneBuf, paneA, paneB, ((Layout10View*)self->mLayout)->root);
+        CSLCur_setPos(&((SaveCur28View*)self)->cur28, paneBuf);
     }
 }
 #pragma optimize_for_size reset
@@ -1626,6 +1635,9 @@ void CSaveLoad_renderSlots(CSaveLoad* self) {
 // Find the best save slot by comparing fields in priority order.
 // If global value >= 0, use it directly. Otherwise iterate slots 0-2
 // and find the one with the highest field values (lexicographic comparison).
+// TU-local view of the CSLCur_getSlot record (+0x20 into the slot object):
+// priority fields at +2/+3 (bytes), +4/+6 (halfwords), +8/+9 (bytes).
+struct SaveSlotView { u8 b00; u8 b01; u8 b02; u8 b03; u16 w04; u16 w06; u8 b08; u8 b09; };
 #pragma optimize_for_size on
 extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
     // Cast to function pointer to prevent MWCC from inlining CSLCur_getSlot
@@ -1640,32 +1652,32 @@ extern "C" void CSaveLoad_bestSlot(CSaveLoad* self) {
     s32 best = -1;
     u32 i;
     for (i = 0; i < 3; i++) {
-        u8* slot = ((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)i);
+        SaveSlotView* slot = (SaveSlotView*)((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)i);
         if (slot == nullptr) continue;
 
         // Compare fields in priority order: +4, +6, +9, +8, +2, +3
         if (best >= 0) {
-            u8* bestSlot = ((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)best);
-            if (*(u16*)(bestSlot + 4) < *(u16*)(slot + 4)) {
+            SaveSlotView* bestSlot = (SaveSlotView*)((GetSlotFn)CSLCur_getSlot)(&self->mCur, (u8)best);
+            if (bestSlot->w04 < slot->w04) {
                 best = i & 0xFF;
-            } else if (*(u16*)(bestSlot + 4) == *(u16*)(slot + 4)) {
-                if (*(u16*)(bestSlot + 6) < *(u16*)(slot + 6)) {
+            } else if (bestSlot->w04 == slot->w04) {
+                if (bestSlot->w06 < slot->w06) {
                     best = i & 0xFF;
-                } else if (*(u16*)(bestSlot + 6) == *(u16*)(slot + 6)) {
-                    if (bestSlot[9] < slot[9]) {
+                } else if (bestSlot->w06 == slot->w06) {
+                    if (bestSlot->b09 < slot->b09) {
                         best = i & 0xFF;
-                    } else if (bestSlot[9] == slot[9]) {
-                        if (bestSlot[8] < slot[8]) {
+                    } else if (bestSlot->b09 == slot->b09) {
+                        if (bestSlot->b08 < slot->b08) {
                             best = i & 0xFF;
-                        } else if (bestSlot[8] == slot[8]) {
-                            if (bestSlot[2] < slot[2]) {
+                        } else if (bestSlot->b08 == slot->b08) {
+                            if (bestSlot->b02 < slot->b02) {
                                 best = i & 0xFF;
                                 continue;
                             }
                             // Retail reuses the cr0 result here (bge) rather than
                             // testing equality, leaving the +3 check unreachable.
-                            if (bestSlot[2] >= slot[2]) continue;
-                            if (bestSlot[3] < slot[3]) {
+                            if (bestSlot->b02 >= slot->b02) continue;
+                            if (bestSlot->b03 < slot->b03) {
                                 best = i & 0xFF;
                             }
                         }

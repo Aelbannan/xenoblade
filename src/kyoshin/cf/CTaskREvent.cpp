@@ -157,14 +157,14 @@ extern "C" __declspec(noinline) cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::
         // modifies it).
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
         if (self != nullptr) {
-            render = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(self) + 0x5c);
+            render = reinterpret_cast<IScnRender*>(&self->mVtbl5C);
         }
         lbl_eu_80663E14->removeRenderCB(render);
 
         // Unregister the IFlagEvent subobject (same guarded shape).
         cf::IFlagEvent* flagEvent = reinterpret_cast<cf::IFlagEvent*>(self);
         if (self != nullptr) {
-            flagEvent = reinterpret_cast<cf::IFlagEvent*>(reinterpret_cast<u8*>(self) + 0x58);
+            flagEvent = reinterpret_cast<cf::IFlagEvent*>(&self->mVtbl58);
         }
         CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 

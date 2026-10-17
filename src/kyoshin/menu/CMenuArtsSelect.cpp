@@ -1411,7 +1411,7 @@ extern "C" void CMenuArtsSelect_CreateArtsRef() {
             // the loaded pointer itself as the NULL case (no separate li 0).
             void* p = lbl_eu_80663F20;
             if (p != NULL) {
-                p = reinterpret_cast<void*>(reinterpret_cast<char*>(p) + 0x60);
+                p = &reinterpret_cast<CMenuArtsSelect*>(p)->vtObjectInfo;
             }
             ref->unkB0 = p;
         }

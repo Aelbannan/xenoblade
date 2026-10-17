@@ -3,7 +3,13 @@
 #include <types.h>
 
 #include "kyoshin/CTitleAHelp.hpp"
+// Shield CLoad.hpp's u8 CLoadIsLoadReady: retail callers (here and
+// CMenuKizunagram) test the return with a full-word cmpi, matching an int
+// view (defining TU keeps u8; link-compatible via C linkage). MWCC 10197.
+#define CLoadIsLoadReady CLoadIsLoadReady_CLoadHdr
 #include "kyoshin/CLoad.hpp"
+#undef CLoadIsLoadReady
+extern "C" int CLoadIsLoadReady(CLoad* self);
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 #include "monolib/scn/IScnRender.hpp"

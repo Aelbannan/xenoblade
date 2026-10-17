@@ -140,7 +140,7 @@ extern "C" CScn* __ct__CScn(CScn* self) {
     self->unk_3E6 = 1;
     self->unk_3E7 = 0;
     self->unk_3E8 = 1;
-    ((u8*)self)[0x3E9] = 0;
+    self->unk_3E9 = 0;
     return self;
 }
 
@@ -187,24 +187,20 @@ void CScn::addRenderCB(IScnRender* cb, u32 prio, u32 flag) {
 
 void CScn::removeRenderCB(IScnRender* cb) {
     s32 count = mRenderCBCount;
-    CScn* p = this;
     u32 i = 0;
 
     for (; count > 0; count--) {
-        if (p->mRenderCBs[0].cb == cb) {
-            CScn* slot = (CScn*)((u8*)this + i * sizeof(ScnRenderCB));
+        if (mRenderCBs[i].cb == cb) {
             for (; (s32)i < (s32)(mRenderCBCount - 1);) {
-                IScnRender* nextCb = slot->mRenderCBs[1].cb;
+                IScnRender* nextCb = mRenderCBs[i + 1].cb;
                 i++;
-                slot->mRenderCBs[0].cb = nextCb;
-                slot->mRenderCBs[0].prio = slot->mRenderCBs[1].prio;
-                slot->mRenderCBs[0].flag = slot->mRenderCBs[1].flag;
-                slot = (CScn*)((u8*)slot + sizeof(ScnRenderCB));
+                mRenderCBs[i - 1].cb = nextCb;
+                mRenderCBs[i - 1].prio = mRenderCBs[i].prio;
+                mRenderCBs[i - 1].flag = mRenderCBs[i].flag;
             }
             mRenderCBCount = mRenderCBCount - 1;
             return;
         }
-        p = (CScn*)((u8*)p + sizeof(ScnRenderCB));
         i++;
     }
 }
@@ -226,13 +222,11 @@ void CScn::Draw() {
                     }
                 }
 
-                CScn* p = this;
                 s32 i = 0;
                 for (; i < (s32)mRenderCBCount;) {
-                    if (unk_3E5 != 0 || p->mRenderCBs[0].flag != 0) {
-                        reinterpret_cast<IScnRenderDraw*>(p->mRenderCBs[0].cb)->onRender(this);
+                    if (unk_3E5 != 0 || mRenderCBs[i].flag != 0) {
+                        reinterpret_cast<IScnRenderDraw*>(mRenderCBs[i].cb)->onRender(this);
                     }
-                    p = (CScn*)((u8*)p + sizeof(ScnRenderCB));
                     i += 1;
                 }
 
@@ -246,16 +240,29 @@ void CScn::Draw() {
 }
 
 
+// Owner/pool lens for Scn_IsAnimActiveOrNull / Scn_HasWorkItem: the item
+// carries its owner at +0x04 (CScnItemModel::field_04) and the owner carries
+// the pool at +0x60 (CScnItemModelOwner::pool). TU-local so this TU stays
+// free of the CScnItemModel header (whose Scn_SetupAnimDefault decl clashes
+// with this TU's definition under -W error).
+struct ScnOwnerPoolView {
+    u8 _00[0x60]; // 0x00..0x60
+    void* pool;   // 0x60
+};
+struct ScnItemOwnerView {
+    u8 _00[4];                 // 0x00..0x04
+    ScnOwnerPoolView* owner04; // 0x04
+};
 extern "C" bool Scn_IsAnimActiveOrNull(u8* self) {
     extern bool CScnItemPool_unlinkAndReleaseItem(void*, void*);
     if (self == 0) {
         return 1;
     }
-    return CScnItemPool_unlinkAndReleaseItem(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
+    return CScnItemPool_unlinkAndReleaseItem(((ScnItemOwnerView*)self)->owner04->pool, self);
 }
 extern "C" bool Scn_HasWorkItem(u8* self) {
     extern bool CScnItemPool_releaseItemByKey(void*);
-    return CScnItemPool_releaseItemByKey(*(void**)((char*)self + 0x60));
+    return CScnItemPool_releaseItemByKey(((ScnOwnerPoolView*)self)->pool);
 }
 extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);
@@ -273,40 +280,40 @@ extern "C" void Scn_InitGlobalB() {
     __ct__804820F8();
 }
 extern "C" void Scn_CallUnk8C_V6(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v6();
 }
 extern "C" void Scn_CallUnk8C_V7(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v7();
 }
 extern "C" void Scn_CallUnk8C_V9(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v9();
 }
 extern "C" void Scn_CallUnk8C_V10(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v10();
 }
 extern "C" void Scn_CallUnk8C_V8(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v8();
 }
 extern "C" void Scn_ReleaseUnk80(void* p) {
-    startFade(*(int*)((u8*)p + 0x80));
+    startFade((int)((CScnMoveView*)p)->fadeMan);
 }
 extern "C" void* Scn_GetUnk80Handle(void* _this) {
-    return isFadeIdle(*(void**)((char*)_this + 0x80));
+    return isFadeIdle(((CScnMoveView*)_this)->fadeMan);
 }
 extern "C" u32 Scn_QueryUnk80State(u8* self) {
     extern u32 getFadeColorPtr(u32);
-    return getFadeColorPtr(*(u32*)((char*)self + 0x80));
+    return getFadeColorPtr((u32)((CScnMoveView*)self)->fadeMan);
 }
 extern "C" bool Scn_IsDefaultScale(u8* self) {
     extern void* getFadeColorPtr(void*);
     bool result = false;
-    if (isFadeIdle(*(void**)((u8*)self + 0x80))) {
-        if (((ScnFloats*)getFadeColorPtr(*(void**)((u8*)self + 0x80)))->unk0C == lbl_eu_8066AAB4)
+    if (isFadeIdle(((CScnMoveView*)self)->fadeMan)) {
+        if (((ScnFloats*)getFadeColorPtr(((CScnMoveView*)self)->fadeMan))->unk0C == lbl_eu_8066AAB4)
             result = true;
     }
     return result;
@@ -315,17 +322,17 @@ extern "C" bool Scn_IsDefaultScale(u8* self) {
 extern "C" bool Scn_IsScaleAtLeastOne(u8* self) {
     extern void* getFadeColorPtr(void*);
     bool result = false;
-    if (isFadeIdle(*(void**)((u8*)self + 0x80))) {
-        if (((ScnFloats*)getFadeColorPtr(*(void**)((u8*)self + 0x80)))->unk0C >= lbl_eu_8066AAB8)
+    if (isFadeIdle(((CScnMoveView*)self)->fadeMan)) {
+        if (((ScnFloats*)getFadeColorPtr(((CScnMoveView*)self)->fadeMan))->unk0C >= lbl_eu_8066AAB8)
             result = true;
     }
     return result;
 }
 extern "C" void* Scn_GetUnk80Resource(u8* self) {
-    return isFadeSettled(*(void**)((char*)self + 0x80));
+    return isFadeSettled(((CScnMoveView*)self)->fadeMan);
 }
 extern "C" int Scn_GetCamWorkInt(void* _this) {
-    return CamMan_SwapViewParam_AED4(*(int*)((char*)_this + 0x68));
+    return CamMan_SwapViewParam_AED4((int)((CScn*)_this)->mCamWork);
 }
 // Fetches the camera item for `id` and copies its +0x194 projection matrix
 // (MTX44, 16 words) into dest. Per-slot coloring recipe (MWCC_CASES.md
@@ -394,39 +401,47 @@ extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
         dest->w[14] = l7;
     }
 }
+// Payload view of the camera item handed out by CamMan_FindItemB_B1CC:
+// Scn_GetCamItem9C/CC return the +0x9C/+0xCC words as untyped payloads.
+struct ScnCamItemPayloadView {
+    u8 _00[0x9C];         // 0x00..0x9C
+    void* item9C;         // 0x9C Scn_GetCamItem9C result
+    u8 _A0[0xCC - 0xA0];  // 0xA0..0xCC
+    void* itemCC;         // 0xCC Scn_GetCamItemCC result
+};
 // Get the camera item handle, lazily creating id -1 when missing; returns
 // the item payload +0x9C (the sibling +0xCC variant mirrors it).
 extern "C" void* CamMan_FindItemB_B1CC(void*);
 extern "C" void* Scn_GetCamItem9C(void* self) {
-    void* r = CamMan_FindItemB_B1CC(*(void**)((u8*)self + 0x68));
+    void* r = CamMan_FindItemB_B1CC(((CScn*)self)->mCamWork);
     if (!r)
-        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(*(void**)((u8*)self + 0x68), -1);
-    return (u8*)r + 0x9C;
+        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(((CScn*)self)->mCamWork, -1);
+    return (void*)&((ScnCamItemPayloadView*)r)->item9C;
 }
 
 // Sibling with the +0xCC payload offset.
 extern "C" void* Scn_GetCamItemCC(void* self) {
-    void* r = CamMan_FindItemB_B1CC(*(void**)((u8*)self + 0x68));
+    void* r = CamMan_FindItemB_B1CC(((CScn*)self)->mCamWork);
     if (!r)
-        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(*(void**)((u8*)self + 0x68), -1);
-    return (u8*)r + 0xCC;
+        r = ((void* (*)(void*, int))CamMan_FindItemB_B1CC)(((CScn*)self)->mCamWork, -1);
+    return (void*)&((ScnCamItemPayloadView*)r)->itemCC;
 }
 extern "C" int Scn_FindCamItem(void* _this) {
-    return CamMan_FindItemA_B158(*(int*)((char*)_this + 0x68));
+    return CamMan_FindItemA_B158((int)((CScn*)_this)->mCamWork);
 }
 extern "C" bool Scn_HasCamItem(void* _this) {
-    return CamMan_FindViewItemA(*(int*)((char*)_this + 0x68));
+    return CamMan_FindViewItemA((int)((CScn*)_this)->mCamWork);
 }
 extern "C" void* Scn_GetCamList(void* _this) {
-    return CamMan_FindViewItemB(*(void**)((char*)_this + 0x68));
+    return CamMan_FindViewItemB(((CScn*)_this)->mCamWork);
 }
-extern "C" void Scn_SetCamIndex(u8* self, int arg) { CamMan_GetViewThread(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
+extern "C" void Scn_SetCamIndex(u8* self, int arg) { CamMan_GetViewThread(((CScn*)self)->mCamWork, (short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
 float Scn_GetFrameDelta(void* self_) {
-    u8* self = (u8*)self_;
+    CScn* self = (CScn*)self_;
     int pal = 0;
     if (CDeviceVI::isTvFormatPal()) {
-        if (self[0x3E9] == 0)
+        if (self->unk_3E9 == 0)
             pal = 1;
     }
     float mul;
@@ -434,25 +449,24 @@ float Scn_GetFrameDelta(void* self_) {
         mul = lbl_eu_8066AABC;
     else
         mul = lbl_eu_8066AAB8;
-    ScnFloats* p = (ScnFloats*)*(void**)((u8*)self + 0x84);
-    float scale = p->unk08;
+    float scale = self->mFrame84->mElapsed;
     return scale * mul;
 }
 // retail: lwz r3,0x84(r3); stfs f1,0xC(r3); blr
 void Scn_SetTimeScale(CScn* self, float v) {
-    ((ScnFloats*)*(void**)((u8*)self + 0x84))->unk0C = v;
+    self->mFrame84->mStep = v;
 }
 extern "C" void Scn_SetPauseFlag(void* p, unsigned char v) {
-    ((unsigned char*)p)[0x3e5] = v;
+    ((CScn*)p)->unk_3E5 = v;
 }
 // retail: stb r4,0x3e6(r3); blr
 extern "C" void Scn_SetStopFlag(u8* self, u8 v) { self[0x3E6] = v; }
 extern "C" void Scn_CallUnk68_V3(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 104);
+    VTarget* obj = (VTarget*)((CScn*)self)->mCamWork;
     obj->v3();
 }
 extern "C" void Scn_CallUnk60_V4(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 96);
+    VTarget* obj = (VTarget*)((CScnMoveView*)self)->itemPool;
     obj->v4();
 }
 extern "C" void Scn_SetCurrentScene(u32 value) {
@@ -469,11 +483,11 @@ void resetScriptCode__Fv(void) { CamMan_EvalScript_B408(); }
 
 
 extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte) {
-    *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
+    ((CScn*)self)->unk_3E9 = byte;
 }
 
 extern "C" void Scn_CallUnk8C_V11(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 0x8C);
+    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v11();
 }
 

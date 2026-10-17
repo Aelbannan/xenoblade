@@ -612,7 +612,7 @@ u32 CfModel_GetEffOwner(cf::CfObjectModel* self) {
 // Height difference between the two positions the sub-object helper computes;
 // a fixed fallback constant when there is no sub-object.
 // const self (forced-name free function): MWCC hoists the mSubObj98 load
-// (lwz r3,0x98(r3)) above the LR save (stw r0,0x24(r1)) — the load-hoist
+// (lwz r3,0x98(r3)) above the LR save (stw r0,0x24(r1)) -- the load-hoist
 // family lever (CfObjectMove_queryNpcAdvance / CScnEffectActNw4r getters);
 // a non-const member emits stw-then-lwz (2 structural).
 extern "C" float CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv(const cf::CfObjectModel* self) {
@@ -1019,8 +1019,9 @@ const char* CfModel_GetBdatString(u16 index) {
 // (retail: two beq to the same block; plain early returns give bclr/duplicated
 // tails).
 cf::CfObject* func_800BBC0C(cf::CfObject* self) {
+    u32 flags;
     if (self == 0) goto ret0;
-    u32 flags = self->unk64;
+    flags = self->unk64;
     if ((flags & 0x2) != 0) goto found;
     if ((flags & 0x4) != 0) goto found;
     if ((flags & 0x8) != 0) goto found;
@@ -1057,7 +1058,7 @@ void CObjectState_getStateData__Q22cf12CObjectStateFv();
 void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
 void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
 void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
-void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
+void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel*);
 void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
 void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv();
 void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();

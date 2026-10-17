@@ -303,18 +303,21 @@ extern "C" __declspec(noinline) CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGa
     self->unk00[3] = f4;
     return self;
 }
+// Word view over the busy-flag object behind CTaskGame::unkCC (+0x64).
+struct CTaskGameCC64View { u8 _00[0x64]; u32 field64; };
+
 extern "C" void CTaskGame_moveWaitReady(CTaskGame* self) {
     self->unk100++;
     void* obj = reinterpret_cast<void*>(self->unkCC);
-    if (*(u32*)((u8*)obj + 0x64) != 0) {
+    if (((CTaskGameCC64View*)obj)->field64 != 0) {
         self->unk78 = 1;
         extern u32 lbl_eu_80525580[3];
         u32 v0;
         u32* p = reinterpret_cast<u32*>(lbl_eu_80525580);
         v0 = p[0];
-        *(u32*)((u8*)self + 0x40) = p[1];
-        *(u32*)((u8*)self + 0x3C) = v0;
-        *(u32*)((u8*)self + 0x44) = p[2];
+        ((CTaskGamePtmfWords*)self)->field_0x40 = p[1];
+        ((CTaskGamePtmfWords*)self)->field_0x3C = v0;
+        ((CTaskGamePtmfWords*)self)->field_0x44 = p[2];
     }
 }
 extern "C" void GamePicShiftTexParams(void* self, u32 index, const u32* src);
@@ -697,39 +700,39 @@ void IScnRender::handleEmptyRender() {}
 void Tail__8CProcessFv() {}
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
 extern "C" void CTaskGame_thunkIWorkDtor(void *self) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(self) - 0x54));
+    __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IWorkEvent*>(self)));
 }
 void cbRenderBefore__9CTaskGameFv(CTaskGame*, CScn*);
 // IWorkEvent::OnFileEvent(CEventFile*) override: retail emits a this-adjusting
 // thunk (subi r3,-0x54; b CTaskGame_fileEventStub) named OnFileEvent__9CTaskGameFP10CEventFile.
 class CEventFile;
 extern "C" void OnFileEvent__9CTaskGameFP10CEventFile(CEventFile* ev) {
-    CTaskGame_fileEventStub(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(ev) - 0x54));
+    CTaskGame_fileEventStub(&static_cast<CTaskGame&>(*reinterpret_cast<IWorkEvent*>(ev)));
 }
 extern "C" void CTaskGame_thunkRenderCB(void* self, void* scene) {
-    cbRenderBefore__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(self) - 0x58),
+    cbRenderBefore__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IScnRender*>(self)),
                                 static_cast<CScn*>(scene));
 }
 extern "C" void CTaskGame_thunkScnDtor(void* p) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(p) - 0x58));
+    __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IScnRender*>(p)));
 }
 extern "C" bool CTaskGame_thunkExcCB(void* ptr) {
-    return CTaskGame_alwaysTrue(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(ptr) - 0x5C));
+    return CTaskGame_alwaysTrue(&static_cast<CTaskGame&>(*reinterpret_cast<IGameException*>(ptr)));
 }
 extern "C" void CTaskGame_thunkExcDtor(void* p) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(p) - 0x5C));
+    __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IGameException*>(p)));
 }
 extern "C" void CTaskGame_thunkTitleVF(void* obj, int value) {
-    CTaskGame_enableFlag1000(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(obj) - 0x60), value);
+    CTaskGame_enableFlag1000(&static_cast<CTaskGame&>(*reinterpret_cast<ITitleMenu*>(obj)), value);
 }
 extern "C" void CTaskGame_thunkTitleDt(void* p) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(p) - 0x60));
+    __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<ITitleMenu*>(p)));
 }
 extern "C" void CTaskGame_thunkErrVF(void* p, int value) {
-    CTaskGame_setUnkF8(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(p) - 0x64), value);
+    CTaskGame_setUnkF8(&static_cast<CTaskGame&>(*reinterpret_cast<IErrMesWinSel*>(p)), value);
 }
 extern "C" void CTaskGame_thunkErrDtor(void* p) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(p) - 0x64));
+    __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IErrMesWinSel*>(p)));
 }
 
 // Retail cbRenderBefore__9CTaskGameFv: IScnRender render-callback. Dispatched
@@ -984,7 +987,7 @@ void CTaskGame::Term() {
     // removeRenderCB receiver idiom: null-this passes this(0), else this+0x58.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != nullptr) {
-        render = reinterpret_cast<IScnRender*>(reinterpret_cast<char*>(this) + 0x58);
+        render = &static_cast<IScnRender&>(*this);
     }
     removeRenderCB__4CScnFP10IScnRender(unk74, render);
     __dt__8009D72C();

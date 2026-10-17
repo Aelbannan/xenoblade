@@ -118,9 +118,9 @@ public:
 
 // Voice-config table entry used by requestOrderConfigVoice: {u32 key, s16 idx, s16 id}.
 struct OrderConfigEntry {
-    s32 key;      // +0x00 key matched against handle->field_3F28
-    s16 field_4;  // +0x04 index passed to HpVoice_FindBySubState
-    s16 field_6;  // +0x06 voice id passed to RequestVoicePlayback
+    s32 key;      // +0x00 key matched against handle->field_3F28 /* 0x00 */
+    s16 field_4;  // +0x04 index passed to HpVoice_FindBySubState /* 0x04 */
+    s16 field_6;  // +0x06 voice id passed to RequestVoicePlayback /* 0x06 */
 };
 
 // ── Data imports (plain globals: MWCC does not mangle global data names) ──

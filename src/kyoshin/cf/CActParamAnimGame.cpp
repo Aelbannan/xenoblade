@@ -58,23 +58,23 @@ bool probeWallPair(cf::CActParamAnimGame* self);
 
 void cf::CActParamAnimGame::resetAnimGame() {
     CActParamAnim::initAnimState();
-    // sdata2 constants written inline (const-float globals hoist the loads at
-    // retail's position and allocate retail's FPR coloring, MWCC_CASES
-    // SDA-const hoist / FPR-coloring rules). Use raw offsets for retail
-    // layout (+0x36C larger base in decomp would shift class-member
-    // displacements).
-    *(void**)((u8*)this + 0x4E8) = 0;
-    *(void**)((u8*)this + 0x4F4) = 0;
-    *(f32*)((u8*)this + 0x4F8) = lbl_eu_80666040;
-    *(f32*)((u8*)this + 0x500) = lbl_eu_80666044;
-    *(f32*)((u8*)this + 0x508) = lbl_eu_80666044;
-    *(f32*)((u8*)this + 0x50C) = lbl_eu_80666048;
-    *(u32*)((u8*)this + 0x52C) = 0;
-    *(f32*)((u8*)this + 0x504) = lbl_eu_80666048;
-    *(u16*)((u8*)this + 0x532) = 0;
-    *(u16*)((u8*)this + 0x534) = 0;
-    *(u16*)((u8*)this + 0x536) = 2;
-    *(u16*)((u8*)this + 0x538) = 0;
+    // Retail-offset stores through the absolute view (the ::CActParamAnim base
+    // compiles 0x36C larger, so class-member displacements shift; per-statement
+    // view casts fold each retail offset into its store exactly like the raw
+    // form did).
+    CActParamAnimGameView* v = (CActParamAnimGameView*)this;
+    v->link4E8 = 0;
+    v->link4F4 = 0;
+    v->f4F8 = lbl_eu_80666040;
+    v->f500 = lbl_eu_80666044;
+    v->f508 = lbl_eu_80666044;
+    v->f50C = lbl_eu_80666048;
+    v->state52C = 0;
+    v->f504 = lbl_eu_80666048;
+    v->state532 = 0;
+    v->state534 = 0;
+    v->state536 = 2;
+    v->state538 = 0;
 }
 
 // Stubs for retail C-linkage functions that func_8005D2C4 tail-calls; kept

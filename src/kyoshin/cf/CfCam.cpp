@@ -3243,6 +3243,14 @@ void cfCam_tuneZoomDist(cf::CfCamFollow* self) {
 // cfCam_dirToAngles / cfCam_selectDistance / cfCam_buildOffset, fans the +0x90 vector out to
 // the +0x4C/+0x40/+0x58/+0x64 slots, and mirrors the +0x23C/+0x180/+0x184
 // values into the shared 0x80663DE4 / 0x80570A38 globals.
+// TU-local view over the +0x168 byte window: rotation quats at +0x168/+0x174
+// and the follow vector at +0x198 (spelled +0x30 from the window base).
+struct CamVec168View {
+    ml::CVec3 v0;
+    ml::CVec3 v1;
+    u8 _pad18[0x18];
+    ml::CVec3 v3;
+};
 void cfCam_updateFrame(cf::CfCamFollow* self) {
     self->unk200 += self->unk204;
     if (self->unk200 >= lbl_eu_806662D0) {
@@ -3260,9 +3268,9 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
     nopFunc(&stackD8);
     noopAnimQuat(&stackC8);
     noopAnimQuat(&stackB8);
-    stackC8.setRotZXY(reinterpret_cast<const ml::CVec3*>(self->unk168));
+    stackC8.setRotZXY(&reinterpret_cast<CamVec168View*>(self->unk168)->v0);
     cfCam_normQuat(&stackC8);
-    stackB8.setRotZXY(reinterpret_cast<const ml::CVec3*>(self->unk168 + 0xC));
+    stackB8.setRotZXY(&reinterpret_cast<CamVec168View*>(self->unk168)->v1);
     cfCam_normQuat(&stackB8);
     cfCam_quatSlerp(&stackA8, &stackC8, &stackB8, t);
     cfCam_normQuat(&stackA8);
@@ -3286,11 +3294,11 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
 
     f32 f31 = self->unk200 * (self->unk20C - self->unk208) + self->unk208;
     cfCam_getFollowSrc(&stack9C, self);
-    subVec3f(&stack44.x, &stack9C.x, reinterpret_cast<const f32*>(self->unk168 + 0x30));
+    subVec3f(&stack44.x, &stack9C.x, &reinterpret_cast<CamVec168View*>(self->unk168)->v3.x);
     scaleVec3f(&stack50.x, &stack44.x, self->unk200);
     cfCam_psAddVec3(reinterpret_cast<nw4r::math::VEC3*>(&stack90),
                   reinterpret_cast<nw4r::math::VEC3*>(&stack50),
-                  reinterpret_cast<nw4r::math::VEC3*>(self->unk168 + 0x30));
+                  reinterpret_cast<nw4r::math::VEC3*>(&reinterpret_cast<CamVec168View*>(self->unk168)->v3));
     self->cfCam_setFollowD(
         self->unk200 * (lbl_eu_80666300 - self->unk210) + self->unk210);
 
@@ -3299,9 +3307,9 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
                   writeVec3f(&stack2C, lbl_eu_806662DC, lbl_eu_806662DC, -f31));
     copyVec3Words(&stack84, &stack38);
 
-    *(f32*)(self->unk1C + 0x0C) = stack90.x - stack84.x;
-    *(f32*)(self->unk1C + 0x14) = stack90.z - stack84.z;
-    *(f32*)(self->unk1C + 0x10) = stack90.y + stack84.y;
+    self->field_0x28 = stack90.x - stack84.x;
+    self->field_0x30 = stack90.z - stack84.z;
+    self->field_0x2C = stack90.y + stack84.y;
     self->unk1F4 = lbl_eu_806662DC;
     self->unk1DC = lbl_eu_806662DC;
     cfCam_testUnk04M(reinterpret_cast<int>(self), 0x800);

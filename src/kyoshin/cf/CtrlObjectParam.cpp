@@ -2568,10 +2568,10 @@ extern "C" void CtrlObjectParam_RefreshAllEquipImpls() {
         vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(p + 0x41F0);
         for (j = 0; j <= 5; ++j) {
             inst = 0;
-            if (*(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C) > -1) {
+            if (reinterpret_cast<cf::CtrlObjectParamEquipRowSlots*>(vp)->entries[0] > -1) {
                 inst = CItem_kindPtr(
                     (u32)j > 4 ? 2 : j + 4,
-                    *(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C));
+                    vp->shortArr[0]);
             }
             if (inst != 0) {
                 CItem_initItemImplInstances(reinterpret_cast<CItemData*>(inst))->vf48(reinterpret_cast<CItemData*>(inst));

@@ -270,9 +270,9 @@ extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->fireAngleL
 
 
 int getParamRefS16A(CActParamData* self) {
-    u8* block = reinterpret_cast<u8*>(self) + 0x260;
-    if (*(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) == 0)
-        block = reinterpret_cast<u8*>(self) + 0x2E0;
+    u8* block = reinterpret_cast<u8*>(&self->mA260);
+    if (self->mField2D4 == 0)
+        block = reinterpret_cast<u8*>(&self->mField2E0);
     void* entry = *reinterpret_cast<void**>(block + 116);
     if (entry == NULL)
         return -1;
@@ -280,9 +280,9 @@ int getParamRefS16A(CActParamData* self) {
 }
 
 int getParamRefS16B(CActParamData* self) {
-    u8* block = reinterpret_cast<u8*>(self) + 0x260;
-    if (*(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) == 0)
-        block = reinterpret_cast<u8*>(self) + 0x2E0;
+    u8* block = reinterpret_cast<u8*>(&self->mA260);
+    if (self->mField2D4 == 0)
+        block = reinterpret_cast<u8*>(&self->mField2E0);
     void* entry = *reinterpret_cast<void**>(block + 116);
     if (entry == NULL)
         return -1;
@@ -310,9 +310,9 @@ void actParamNop0() {}
 
 int getParamByteSel(CActParamData* self, u32 sel) {
     if (sel != 0) {
-        return *(u8*)(reinterpret_cast<u8*>(self) + 0x344);
+        return self->mByte344;
     }
-    return *(u8*)(reinterpret_cast<u8*>(self) + 0x2C4);
+    return self->mA2C4;
 }
 
 unsigned char getActParamByteBySel(unsigned char* p, int sel) {
@@ -351,8 +351,8 @@ void getFloatFieldB(){}
 void resetBlockFields(){}
 
 extern "C" void* getSubObjPlus14(void* param) {
-    void* val = *(void**)((u32)param + 0x2F4);
-    return val ? (void*)((u32)val + 0x14) : 0;
+    void* val = static_cast<CActParamData*>(param)->mPtr2F4;
+    return val ? &static_cast<CActParamDataSub*>(val)->mPtr14 : 0;
 }
 
 void hasAnyFieldSet(){}
@@ -643,7 +643,7 @@ bool hasParamByteVal(CActParamByteList* list, u8 value) {
             idx++;                                                             \
             cnt--;                                                             \
         }                                                                      \
-        u16 val = *reinterpret_cast<u16*>(reinterpret_cast<u8*>(hit) + 4);     \
+        u16 val = *reinterpret_cast<u16*>(&hit->mSize04);                      \
         if (idx != 0)                                                          \
             val |= 0x8000;                                                     \
         (selfP)->mShorts218[(selfP)->mField258] = val;                         \
@@ -1244,10 +1244,10 @@ check:
     return 0;
 }
 extern "C" int checkParamBlks(void* self) {
-    int a = walkParamContext(static_cast<CActParamData*>(self),
-                          reinterpret_cast<u8*>(self) + 0x2E0);
-    int b = walkParamContext(static_cast<CActParamData*>(self),
-                          reinterpret_cast<u8*>(self) + 0x260);
+    CActParamData* data = static_cast<CActParamData*>(self);
+    // Walk the B reset block first, then the A block (retail order).
+    int a = walkParamContext(data, reinterpret_cast<u8*>(&data->mField2E0));
+    int b = walkParamContext(data, reinterpret_cast<u8*>(&data->mA260));
     return (b | a) != 0;
 }
 // Walk the record chain hanging off member+0x6C. Dispatch by record type:
@@ -1458,10 +1458,10 @@ check:
 }
 // walkParamBlkB: r4 = this+0x2E0, tail-branch to walkParamRecords (retail addi r4,r3,0x2e0; b)
 void walkParamBlkB(void* self) {
-    walkParamRecords(
-        static_cast<CActParamData*>(self),
-        reinterpret_cast<ActParamD3CMember*>(reinterpret_cast<u8*>(self) +
-                                             0x2E0));
+    CActParamData* data = static_cast<CActParamData*>(self);
+    // Tail-branch to walkParamRecords with the B reset block (retail addi).
+    walkParamRecords(data,
+        reinterpret_cast<ActParamD3CMember*>(&data->mField2E0));
 }
 // vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr).
 // A real C++ virtual call forces MWCC's r12 dispatch (fn-pointer form uses r4).
@@ -1972,8 +1972,8 @@ struct ActParamSelBlk {
     float mLimit54;                        // 0x54
 };
 void clearParamTags(CActParamData* self) {
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x2D4) = 0;
-    *(u32*)(reinterpret_cast<u8*>(self) + 0x354) = 0;
+    self->mField2D4 = 0;
+    self->mField354 = 0;
 }
 
 int getParamSelS16(CActParamData* self, int sel);
@@ -2629,12 +2629,16 @@ void CActParamData::initParamStatics() {
 
 // When bit 2 of the flag is set, convert the s16 at src+8 to a float via the
 // signed 2^52 double-magic and store it at dst+64. Always returns 0.
+// The callback receives untyped buffers, but retail reads an s16 at src+8
+// and stores an f32 at dst+0x40; the views below make that exact layout.
+struct CopyS16SrcView { u8 pad_00[8]; s16 field_8; };
+struct CopyS16DstView { u8 pad_00[0x40]; f32 field_40; };
 extern "C" u32 copyS16ToFlt(u32 flag, void* a2, void* dst, const void* src) {
     if ((flag & 4) != 0) goto convert;
     return 0;
 convert:
-    *(f32*)((u8*)dst + 0x40) =
-        (f32)(s16)*(const s16*)((const u8*)src + 8) * lbl_eu_8066A210;
+    ((CopyS16DstView*)dst)->field_40 =
+        (f32)((const CopyS16SrcView*)src)->field_8 * lbl_eu_8066A210;
     return 0;
 }
 

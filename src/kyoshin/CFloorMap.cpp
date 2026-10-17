@@ -71,13 +71,24 @@ u8 FloorMap_GetField40Flag(void* self) { return static_cast<CFloorMapFull*>(self
 // Refresh the 5 visible row panes for the current page: each row's text pane
 // (name built from the page index) gets its string from the merged marker
 // list, and its color dimmed when the marker is flagged or the region flag
+// Row-name lens over the marker list: retail addresses each row 8 bytes before
+// its CFloorMapMarkerEntry start, so the name pointer lands at +0x18 (= entry
+// unk@0x10) and the flag at +0x1C (= entry flag@0x14). Same formation, named derefs.
+struct FloorMapRowNameView { u8 _00[0x18]; char* name; u8 flag; };
+
+// 0x30C-stride floor-entry slots rooted at the cursor/full object itself:
+// entry i starts at slot[i] (field_09/field_205 index), viewed at the use
+// site as a CFloorMapFloorNameEntry / CFloorMapMarkerBlock / CFloorMapFloorBlock.
+struct FloorMapEntrySlot { u8 bytes[0x30C]; };
+
 // at 0x3212 is set.
 void FloorMap_RefreshCursorRows(void* self) {
     CFloorMapCursor* cur = (CFloorMapCursor*)self;
-    u8* base = (u8*)self + cur->field_09 * 0x30C;
+    FloorMapEntrySlot* slots = (FloorMapEntrySlot*)self;
+    u8* base = slots[cur->field_09].bytes;
     char buf[0x20];
     u32 color;
-    u8* rec;
+    FloorMapRowNameView* rec;
     char* tbl = lbl_eu_8050BEA8;
     u8* markers = base + 0x10;
     u8 count = base[0x318];
@@ -89,10 +100,10 @@ void FloorMap_RefreshCursorRows(void* self) {
             // No marker on this visible row: show the default blank label.
             LayoutSetTextBoxFmtValue(cur->mData, buf, tbl + 0x1C0, 0);
         } else {
-            rec = markers + row * 0x18;
-            LayoutSetTextBoxFmtValue(cur->mData, buf, *(char**)(rec + 0x18), 0);
+            rec = (FloorMapRowNameView*)(markers + row * 0x18);
+            LayoutSetTextBoxFmtValue(cur->mData, buf, rec->name, 0);
             color = -1;
-            if (rec[0x1C] != 0 || CtrlRemote_TouchBitByArg(0x3212) != 0)
+            if (rec->flag != 0 || CtrlRemote_TouchBitByArg(0x3212) != 0)
                 color = 0xC85050FF;
             PaneSetVtxColorByName(cur->mData, buf, color);
         }
@@ -223,13 +234,12 @@ void FloorMap_SetCursorState(void* self, u16 val) {
     u8 i;
     u8 oldA;
     u8 oldB;
-    int off;
     int roff;
     i = 0;
     oldA = cur->field_0A;
     oldB = cur->field_0B;
-    off = fi * 0x30C;
-    base = (u8*)self + off;
+    FloorMapEntrySlot* slots = (FloorMapEntrySlot*)self;
+    base = slots[fi].bytes;
     count = base[0x318];
 
     while (i < count) {
@@ -4198,13 +4208,15 @@ void FloorMap_SetMapTable(CFloorMap* self, u8 id) {
     }
 }
 
+struct FloorMapByte41View { u8 _00[0x41]; u8 b41; };
+
 extern "C" u32 FloorMap_ClassifyByte41(u8* self) {
-    u8 val = *(u8*)(self + 0x41);
+    u8 val = ((FloorMapByte41View*)self)->b41;
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return *(u16*)(self + 0x5A); }
+extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)->field_5A; }
 
 extern "C" u8 FloorMap_GetActiveFlag58(CFloorMapFull* self) { return self->field_58; }
 
@@ -4312,7 +4324,7 @@ u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
         val = 0;
     } else {
         CFloorMapFloorBlock* floor =
-            (CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C);
+            (CFloorMapFloorBlock*)((FloorMapEntrySlot*)p + (s8)p->field_205);
         val = floor->rows[(s8)p->field_207 + (s8)p->field_206].field_00;
     }
     return val != 0;

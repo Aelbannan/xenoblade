@@ -349,7 +349,7 @@ void cf::CfObjectMove::CfObjectMove_detachModelList() {
 void cf::CfObjectMove::CfObjectMove_dropMoveRequest() {
     // Forward to the +0xB0 sub-object's vtable slot +0x44, then clear the
     // two resource-request fields (retail stores 0 to +0x6DC / +0x6E0).
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfResObj_noop44();
+    reinterpret_cast<cf::CfResObjImpl*>(mSubObjB0)->CfResObj_noop44();
     mField6DC = 0;
     mField6E0 = 0;
 }
@@ -1104,9 +1104,10 @@ extern "C" void* CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv(cf::CfObje
 // (Old func_800BE898 forced-name label renamed onto the true retail method
 // name; CfObject.hpp decl return fixed void -> bool.)
 bool cf::CfObject::requestVoice(int a, u32 b, float c, float d) {
+    struct VoiceSub28View { u8 _00[0x28]; u8 sub28; };
     void* sub = mSubObj38;
     if (sub != 0) {
-        return playGated((char*)sub + 0x28);
+        return playGated(&((VoiceSub28View*)sub)->sub28);
     }
     return false;
 }
@@ -1142,7 +1143,7 @@ extern "C" void CfObjectMove_releaseVoiceHandle(cf::CfObjectMove* self)
 // (Old setSubFieldC method body moved verbatim onto the retail name.)
 extern "C" void CfObjectMove_setSubB0FieldC(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
-    *(unsigned short*)((char*)ptr + 0xc) = val;
+    ((cf::CfResObjImpl*)ptr)->field_0C = val;
 }
 
 // Retail CfObjectMove_getSubB0FieldA: sign-extended load of the +0xB0 sub-object's +0xA
@@ -1153,7 +1154,7 @@ extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* self) { return *(s1
 // (Old setSubFieldA method body moved onto the retail name.)
 extern "C" void CfObjectMove_setSubB0FieldA(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
-    *(unsigned short*)((char*)ptr + 0xa) = val;
+    ((cf::CfResObjImpl*)ptr)->field_0A = val;
 }
 
 // Retail CfObjectMove_getSubB0FieldE: sign-extended load of the +0xB0 sub-object's +0xE
@@ -1164,7 +1165,7 @@ extern "C" int CfObjectMove_getSubB0FieldE(cf::CfObjectMove* self) { return *(s1
 // (Old setSubFieldE method body moved onto the retail name.)
 extern "C" void CfObjectMove_setSubB0FieldE(cf::CfObjectMove* self, unsigned short val) {
     void* ptr = self->mSubObjB0;
-    *(unsigned short*)((char*)ptr + 0xe) = val;
+    ((cf::CfResObjImpl*)ptr)->field_0E = val;
 }
 
 extern "C" void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
@@ -1435,32 +1436,32 @@ void CfObject_UnkVirtualFunc45__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 void CfResObj_noop2C() {}
 
 extern "C" void CfObjectMove_relaySubB0Slot40(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop40();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->CfResObj_noop40();
 }
 // Retail symbol is a bcctr thunk that leaves the caller's r4/r5/r6/f1/f2 live
 // into CfResObjImpl::ResObj_NotifySound_C888 (slot +0x54).
 extern "C" void CfObjectMove_relaySubB0Slot54(void* self, int a, int b, int c, float f1, float f2) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_NotifySound_C888(a, b, c, f1, f2);
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->ResObj_NotifySound_C888(a, b, c, f1, f2);
 }
 extern "C" void CfObjectMove_relaySubB0Slot58(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop58();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->CfResObj_noop58();
 }
 extern "C" void CfObjectMove_relaySubB0Slot60(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_PollActive_C950();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->ResObj_PollActive_C950();
 }
 extern "C" void CfObjectMove_relaySubB0Slot28(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop28();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->CfResObj_noop28();
 }
 extern "C" void CfObjectMove_relaySubB0Slot2C(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_noop2C();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->CfResObj_noop2C();
 }
 extern "C" void CfObjectMove_relaySubB0Slot68(void* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->CfResObj_true68();
+    reinterpret_cast<cf::CfResObjImpl*>(((cf::CfObjectMove*)self)->mSubObjB0)->CfResObj_true68();
 }
 extern "C" void CfObjectMove_setSubB0ScaledRate(void* self, float v) {
     extern float lbl_eu_80666A90;
-    void* o = *(void**)((u8*)self + 0xb0);
-    *(float*)((u8*)o + 4) = lbl_eu_80666A90 * v;
+    cf::CfResObjImpl* o = (cf::CfResObjImpl*)((cf::CfObjectMove*)self)->mSubObjB0;
+    o->field_04 = lbl_eu_80666A90 * v;
 }
 
 

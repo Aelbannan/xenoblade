@@ -14,16 +14,20 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 BYTE_T = r'(?:char|u8|uint8_t|unsigned\s+char|s8|int8_t|byte)'
 INT_T  = r'(?:u32|uint32_t|unsigned\s+int|unsigned|uint|size_t|uintptr_t|s32|int32_t)'
+# Base of a pointer-arithmetic expression: an identifier/field chain, a
+# parenthesized simple group, or a call — but never a bare comma/semicolon, and
+# never an outer cast (those are matched by the cast-specific patterns).
+BASE_EXPR = r'(?:\([^()]*\)|[^(),;])+?'
 
 CAST_BYTE_DEREF = re.compile(
     r'\*\s*\(\s*([a-zA-Z_]\w*(?:\s*\*)+)\s*\)\s*'
     r'\(\s*\(\s*' + BYTE_T + r'\s*\*+\s*\)\s*'
-    r'([^)]+?)\)\s*[+\-]\s*'
-    r'([^)]+)\)', re.IGNORECASE)
+    r'(' + BASE_EXPR + r')\s*\)?\s*[+\-](?!>)\s*'
+    r'([^)]+?)\s*\)', re.IGNORECASE)
 
 CAST_BYTE_ARITH = re.compile(
     r'\(\s*' + BYTE_T + r'\s*\*+\s*\)\s*'
-    r'([^)]+)\)\s*[+\-]\s*'
+    r'(' + BASE_EXPR + r')\s*\)?\s*[+\-](?!>)\s*'
     r'([^;,)]+)', re.IGNORECASE)
 
 CAST_INT_ARITH = re.compile(
@@ -37,7 +41,7 @@ SUBSCRIPT_CAST = re.compile(
 
 PTR_OFFSET_DEREF = re.compile(
     r'\*\s*\(\s*([a-zA-Z_]\w*(?:\s*\*)+)\s*\)\s*'
-    r'\(\s*([a-zA-Z_]\w*)\s*[+\-]\s*'
+    r'\(\s*(' + BASE_EXPR + r')\s*[+\-](?!>)\s*'
     r'([^)]+?)\s*\)', re.IGNORECASE)
 
 REINTERPRET_ARITH = re.compile(
@@ -101,7 +105,11 @@ def scan_file(rel_path, abs_path, enabled):
 
     for lineno, line in enumerate(lines, 1):
         s = line.strip()
-        if not s or s.startswith('//') or s.startswith('/*') or s.startswith('*'):
+        if not s or s.startswith('//') or s.startswith('/*'):
+            continue
+        # Block-comment continuation (` * text`, ` */`) but NOT a deref statement
+        # (`*(u32*)(p + N) = ...`), which also starts with `*`.
+        if s.startswith('*') and (len(s) == 1 or s[1] in ' \t/'):
             continue
         if s.startswith('#') or s.startswith('"') or s.startswith("'"):
             continue

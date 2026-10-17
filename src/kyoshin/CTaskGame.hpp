@@ -67,10 +67,10 @@ extern "C" u32 getTargetFramerate__9CDeviceVIFv();
 // copies, so stores use named fields instead of raw offset arithmetic. The
 // pad places the fields at the absolute offsets retail writes (self+0x3C...).
 struct CTaskGamePtmfWords {
-    u8 pad[0x3C];
-    u32 field_0x3C;
-    u32 field_0x40;
-    u32 field_0x44;
+    u8 pad[0x3C]; /* 0x00 */
+    u32 field_0x3C; /* 0x3C */
+    u32 field_0x40; /* 0x40 */
+    u32 field_0x44; /* 0x44 */
 };
 
 class ITitleMenu{
@@ -88,13 +88,13 @@ public:
 struct UnkClass_8004041C{
     void CTaskGame_setVisionParam(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9);
 
-    u8 unk0;
-    float unk4;
-    int unk8;
-    u32 unkC;
-    u8 unk10;
-    u32 unk14;
-    u32 unk18;
+    u8 unk0; /* 0x00 */
+    float unk4; /* 0x04 */
+    int unk8; /* 0x08 */
+    u32 unkC; /* 0x0C */
+    u8 unk10; /* 0x10 */
+    u32 unk14; /* 0x14 */
+    u32 unk18; /* 0x18 */
 };
 
 // Minimal CBattery view (members used by cbRenderBefore). The full
@@ -165,52 +165,52 @@ public:
     //0x5C: vtable 4 (IGameException)
     //0x60: vtable 5 (ITitleMenu)
     //0x64: vtable 6 (IErrMesWinSel)
-    u32 unk68;
-    CWorkThread* unk6C;
-    CView* unk70;
-    CScnNw4r* unk74;
-    u32 unk78;
-    u32 unk7C;
-    u16 unk80;
-    u16 unk82;
-    s16 unk84;   // mission/save id; retail CTaskGame_moveStartMission sign-extends it (lha)
-    u16 unk86;
-    u16 unk88;
-    s16 unk8A;   // retail CTaskGame_moveStartMission sign-extends it (lha) into the format vararg
-    s16 unk8C;   // retail lha/sth/extsh (cbRenderBefore frame counter)
-    s16 unk8E;
-    u8 unk90;
-    u8 unk91[0xA0 - 0x91];
-    u32 unkA0;
-    ml::FixStr<32> unkA4;
-    u8 unkC8;
-    u8 unkC9[0xCC - 0xC9];
-    u32 unkCC;
-    u32 unkD0;
-    u32 unkD4;
-    int unkD8;
-    u32 unkDC;
-    float unkE0;
-    u32 unkE4;
-    int unkE8;
-    u32 unkEC;
-    u32 unkF0;
-    u32 unkF4;
-    int unkF8;
-    u32 unkFC;
-    u32 unk100;
-    u8 unk104;
-    u8 unk105[0x124 - 0x105];
-    u32 unk124;
-    u32 unk128;
-    u8 unk12C[0x130 - 0x12C];
-    u8 unk130;
-    u8 unk131[0x170 - 0x131];
-    u32 unk170;
-    CTaskGameSlotObj* unk174[5];
-    u8 unk188;
-    u8 unk189[0x18C - 0x189]; //padding?
-    UnkClass_8004041C unk18C;
+    u32 unk68; /* 0x68 */
+    CWorkThread* unk6C; /* 0x6C */
+    CView* unk70; /* 0x70 */
+    CScnNw4r* unk74; /* 0x74 */
+    u32 unk78; /* 0x78 */
+    u32 unk7C; /* 0x7C */
+    u16 unk80; /* 0x80 */
+    u16 unk82; /* 0x82 */
+    s16 unk84;   // mission/save id; retail CTaskGame_moveStartMission sign-extends it (lha) /* 0x84 */
+    u16 unk86; /* 0x86 */
+    u16 unk88; /* 0x88 */
+    s16 unk8A;   // retail CTaskGame_moveStartMission sign-extends it (lha) into the format vararg /* 0x8A */
+    s16 unk8C;   // retail lha/sth/extsh (cbRenderBefore frame counter) /* 0x8C */
+    s16 unk8E; /* 0x8E */
+    u8 unk90; /* 0x90 */
+    u8 unk91[0xA0 - 0x91]; /* 0x91 */
+    u32 unkA0; /* 0xA0 */
+    ml::FixStr<32> unkA4; /* 0xA4 */
+    u8 unkC8; /* 0xC8 */
+    u8 unkC9[0xCC - 0xC9]; /* 0xC9 */
+    u32 unkCC; /* 0xCC */
+    u32 unkD0; /* 0xD0 */
+    u32 unkD4; /* 0xD4 */
+    int unkD8; /* 0xD8 */
+    u32 unkDC; /* 0xDC */
+    float unkE0; /* 0xE0 */
+    u32 unkE4; /* 0xE4 */
+    int unkE8; /* 0xE8 */
+    u32 unkEC; /* 0xEC */
+    u32 unkF0; /* 0xF0 */
+    u32 unkF4; /* 0xF4 */
+    int unkF8; /* 0xF8 */
+    u32 unkFC; /* 0xFC */
+    u32 unk100; /* 0x100 */
+    u8 unk104; /* 0x104 */
+    u8 unk105[0x124 - 0x105]; /* 0x105 */
+    u32 unk124; /* 0x124 */
+    u32 unk128; /* 0x128 */
+    u8 unk12C[0x130 - 0x12C]; /* 0x12C */
+    u8 unk130; /* 0x130 */
+    u8 unk131[0x170 - 0x131]; /* 0x131 */
+    u32 unk170; /* 0x170 */
+    CTaskGameSlotObj* unk174[5]; /* 0x174 */
+    u8 unk188; /* 0x188 */
+    u8 unk189[0x18C - 0x189]; //padding? /* 0x189 */
+    UnkClass_8004041C unk18C; /* 0x18C */
 
 protected:
     CTaskGame();
@@ -356,17 +356,17 @@ extern u32 lbl_eu_80525568[];
 // CTaskGame_enumListCtor / CTaskGame_enumListGet / __dt__80043E88; other TUs declare their
 // own local holder equivalents around these flat symbols.
 struct CfEnumListHolder {
-    cf::CfObjEnumList* list;   // +0x00
-    u32 handle;                // +0x04
+    cf::CfObjEnumList* list;   // +0x00 /* 0x00 */
+    u32 handle;                // +0x04 /* 0x04 */
 };
 
 // Object-registry layout at CTaskGame +0x174: 4 object pointers (stride 4)
 // each paired with a busy byte at +0x184 (stride 1); CTaskGame_allocObjSlot and
 // CTaskGame_freeObjSlot scan it.
 struct CTaskGameObjSlots {
-    u8 pad[0x174];
-    u32 objs[4];   // +0x174
-    u8 busy[4];    // +0x184
+    u8 pad[0x174]; /* 0x00 */
+    u32 objs[4];   // +0x174 /* 0x174 */
+    u8 busy[4];    // +0x184 /* 0x184 */
 };
 
 // Field-offset view of the CfObjEnumList object. The shared
@@ -374,10 +374,10 @@ struct CTaskGameObjSlots {
 // so its member offsets compile 4 low; this view matches the retail layout
 // (mPtrCount at +0x620, mObjInfoCount at +0x3030).
 struct CfObjEnumListFields {
-    u8 pad[0x620];
-    u32 mPtrCount;          // +0x620
-    u8 pad2[0x3030 - 0x624];
-    u32 mObjInfoCount;      // +0x3030
+    u8 pad[0x620]; /* 0x00 */
+    u32 mPtrCount;          // +0x620 /* 0x620 */
+    u8 pad2[0x3030 - 0x624]; /* 0x624 */
+    u32 mObjInfoCount;      // +0x3030 /* 0x3030 */
 };
 
 // CfObjEnumList ctor called with the raw allocated buffer; returns the object
@@ -429,9 +429,9 @@ extern void* getInstance();
 // through this view makes MWCC materialize the entry address in a register
 // and load w1/w2 relative to it (retail addi rX,base,off / lwz 4(rX) shape).
 struct CTaskGamePtmfPool {
-    u32 w0;
-    u32 w1;
-    u32 w2;
+    u32 w0; /* 0x00 */
+    u32 w1; /* 0x04 */
+    u32 w2; /* 0x08 */
 };
 
 // C++ runtime delete / array-delete (flat retail names; used by the reslist
@@ -449,15 +449,15 @@ extern u8 lbl_eu_80663D2C;
 // Object pointed to by CTaskGame::unkD0 / unkCC: a busy/active flag byte at
 // +0x8C (CTaskGame_movePrepFade clears/sets it).
 struct CTaskGameFlag8C {
-    u8 pad[0x8C];
-    u8 field_0x8C;   // +0x8C
+    u8 pad[0x8C]; /* 0x00 */
+    u8 field_0x8C;   // +0x8C /* 0x8C */
 };
 
 // Raw view of the unk68 flag word for stores that must not CSE with earlier
 // gate reads (CTaskGame_moveErrWin56 reloads unk68 fresh before raising bit 0x2000).
 struct CTaskGameFlags68 {
-    u8 pad[0x68];
-    volatile u32 flags;   // +0x68
+    u8 pad[0x68]; /* 0x00 */
+    volatile u32 flags;   // +0x68 /* 0x68 */
 };
 
 // Float constant used by retail CTaskGame_moveFadeOut as the 4th arg of the first
@@ -469,8 +469,8 @@ extern const f32 lbl_eu_80665D74;
 // Object pointed to by CTaskGame::unkD4: flag word at +0x60 (setLoadingCaption
 // clears its bit 0x2).
 struct CTaskGameUnkD4Obj {
-    u8 pad[0x60];
-    u32 field_0x60;   // +0x60
+    u8 pad[0x60]; /* 0x00 */
+    u32 field_0x60;   // +0x60 /* 0x60 */
 };
 
 // FixStr<32> view of the caption buffer at CTaskGame +0x104 (mLength at
@@ -478,23 +478,23 @@ struct CTaskGameUnkD4Obj {
 // The declared CTaskGame fields at 0x104/0x124 stay byte/u32 so the ctor
 // init list is untouched.
 struct CTaskGameCaptionStr {
-    u8 pad[0x104];
-    ml::FixStr<32> str;   // +0x104 (mLength at +0x124)
+    u8 pad[0x104]; /* 0x00 */
+    ml::FixStr<32> str;   // +0x104 (mLength at +0x124) /* 0x104 */
 };
 
 // FixStr<64> view of the caption buffer at CTaskGame +0x130 (mString at
 // +0x130, mLength at +0x170); CTaskGame_resetStream re-seeds it with the default
 // caption (retail strlen+strcpy shape).
 struct CTaskGameCaption130 {
-    u8 pad[0x130];
-    ml::FixStr<64> str;   // +0x130 (mLength at +0x170)
+    u8 pad[0x130]; /* 0x00 */
+    ml::FixStr<64> str;   // +0x130 (mLength at +0x170) /* 0x130 */
 };
 
 // Byte-flag view of the cf::CTaskGameCf object at +0x39 (inside the CProcess
 // base; no named member in CTaskGameCf.hpp); CTaskGame_moveSetCaption sets it to 1.
 struct CTaskGameCfFlag39 {
-    u8 pad[0x39];
-    u8 field_0x39;   // +0x39
+    u8 pad[0x39]; /* 0x00 */
+    u8 field_0x39;   // +0x39 /* 0x39 */
 };
 
 // Byte-flag view of the objects pointed to by CTaskGame::unkCC / unkD0 /
@@ -502,8 +502,8 @@ struct CTaskGameCfFlag39 {
 // the pointers; the same busy-flag semantics as CTaskGameCfFlag39 but for the
 // task's own object slots).
 struct CTaskGameFlag39 {
-    u8 pad[0x39];
-    u8 field_0x39;   // +0x39
+    u8 pad[0x39]; /* 0x00 */
+    u8 field_0x39;   // +0x39 /* 0x39 */
 };
 
 // Flat retail imports used by the CTaskGame_moveFadeTick / CTaskGame_moveShowTitle /
@@ -592,10 +592,10 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene);
 
 // Camera/view object returned by Scn_QueryUnk80State (f32 at +0/+4/+8/+C).
 struct CTaskGameCamView {
-    f32 field_0;
-    f32 field_4;
-    f32 field_8;
-    f32 field_C;
+    f32 field_0; /* 0x00 */
+    f32 field_4; /* 0x04 */
+    f32 field_8; /* 0x08 */
+    f32 field_C; /* 0x0C */
 };
 // Scn_QueryUnk80State is declared once in libs/monolib/src/scn/CScn_8049603C.hpp
 // (owner: monolib CScn); include that header where the symbol is used.

@@ -11322,3 +11322,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    total_kyoshin_mangled 22 -> 19; all 3 units' hexdiff --all unchanged (10/10, 11/11, 3/6); renamed
              symbols at 100%.
 - Evidence:  src/kyoshin/cf/CfResTboxImpl.cpp, src/kyoshin/makecrystal/code_80213488.cpp, src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp
+
+## resetAndReload__Q23LOD9LODMemManFv / monolib/src/lod/LODMemMan — auto-inlined tiny member loses retail's out-of-line `bl` (Wii/1.1 -O4,p, 65.2% -> 82.4%)
+- Symptom:   65.2%, 22 structural, decomp 0x170 vs retail 0x16c; the diff showed retail `addi r3, r29, 2628` (self+0xA44) before a `bl` where the decomp had `or r3, r29, r29`.
+- Cause:     the base pointer was a red herring - the inlined body already accessed the +0xA44 sub-object (decomp `lwz r0, 2660(r29)` = 0xA44+0x20). The real difference is that MWCC auto-inlined the tiny member `setArchiveReadyFlag` (`field_0x20 |= 0x40000000`) into the caller, while retail keeps it out-of-line and only passes the sub-object as r3.
+- Fix:       (a) pass the embedded sub-object at the call, matching the sibling `cancelFileAndRelease` call: `((LOD::LODMemMan*)((u8*)self + 0xA44))->setArchiveReadyFlag();` and (b) wrap the definition in `#pragma auto_inline off` / `#pragma auto_inline on` so MWCC emits the `bl` (same recipe as CSkipTimer's siblings).
+- Result:    82.4% (6 structural, 10 reg_swap), size 0x16c/0x16c exact. Unit 62/80 unchanged; `verify_units` 61/61 accepted ok, 0 drift. Residual is statement-order scheduling around the field clears (flags load vs zero stores).
+- Evidence:  libs/monolib/src/lod/LODMemMan.cpp

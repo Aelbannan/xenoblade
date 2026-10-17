@@ -84,7 +84,7 @@ void clpInitLayout(CCollepedia* this_) {
     // Find first pane and copy position
     nw4r::lyt::Pane* pane1 = this_->field_8->GetRootPane()->FindPaneByName(
         &lbl_eu_8050C6E8[0x35], true);
-    copyVEC3((float*)((u8*)pane1 + 0x2C), vec1);
+    copyVEC3(((CLPPanePosView*)pane1)->pos, vec1);
 
     // Set up position for second pane
     float vec2[3];
@@ -93,7 +93,7 @@ void clpInitLayout(CCollepedia* this_) {
     // Find second pane and copy position
     nw4r::lyt::Pane* pane2 = this_->field_8->GetRootPane()->FindPaneByName(
         &lbl_eu_8050C6E8[0x41], true);
-    copyVEC3((float*)((u8*)pane2 + 0x2C), vec2);
+    copyVEC3(((CLPPanePosView*)pane2)->pos, vec2);
 
     // Call UnbindAllAnimation, then bind specific ones
     this_->field_8->UnbindAllAnimation();
@@ -334,9 +334,9 @@ extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
 extern "C" void clpCalcCurPos(CCollepedia* this_, LayoutContainer* container, int arg3) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050C6E8[0x14f], arg3 + 1);
-    nw4r::lyt::Pane* pane1 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
-    ScalePaneWorldPos((nw4r::math::VEC3*)this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
+    nw4r::lyt::Pane* pane1 = ((CLPLytRootView*)container->mpLayout)->rootPane->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pane2 = ((CLPLytRootView*)container->mpLayout)->rootPane->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
+    ScalePaneWorldPos((nw4r::math::VEC3*)this_, pane1, pane2, ((CLPLytRootView*)container->mpLayout)->rootPane);
 }
 #pragma pop
 
@@ -1372,7 +1372,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
 #pragma pop
 
 void clpCanClaim(CCollepediaFull* self) {
-    clpIsClaimabl((u8*)self + 0xE8, self->field_D9, self->field_D8);
+    clpIsClaimabl(&self->field_E8_start, self->field_D9, self->field_D8);
 }
 
 extern "C" u8 clpIsOverlay(CCollepedia* self) {
@@ -1620,7 +1620,7 @@ void clpSetPageVis(CCollepedia* this_) {
 
         if (i == count) {
             copyVEC3(this_->field_DC,
-                (float*)((u8*)this_->field_38->GetRootPane()->FindPaneByName(buf, true) + 0x2C));
+                ((CLPPanePosView*)this_->field_38->GetRootPane()->FindPaneByName(buf, true))->pos);
         }
     }
 

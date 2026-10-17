@@ -45,6 +45,13 @@ struct CLibCriStreamingPlayData {
     s32 pauseCount;         // 0x4B0
 }; // 0x4B4
 
+// Full-instance view: the stream slots live at +0x1C8 (the base
+// CLibCriStreamingPlay layout is otherwise unmodeled here).
+struct CLibCriStreamingPlayView {
+    u8 _00[0x1C8];
+    StreamEntry entries[5];  // 0x1C8
+};
+
 extern "C" {
     // ADXT streaming functions
     void* ADXT_Create(int channels, void* buffer, u32 bufSize);
@@ -474,8 +481,8 @@ extern "C" void stopStream__20CLibCriStreamingPlayFv(int id) {
 
 // stopAllStreams - Stop all streams
 void CLibCriStreamingPlay::stopAllStreams() {
-    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+    StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
+        lbl_eu_806656E8)->entries;
 
     for (u32 i = 0; i < 5; i++, entry++) {
         // Defensive per-entry null guard (retail keeps the check in-loop).
@@ -739,8 +746,8 @@ bool CLibCriStreamingPlay::wkStandbyLogout() {
     // Work queue must be empty (self-referencing list head) before logout.
     if (mChildren.mStartNodePtr->mNext == mChildren.mStartNodePtr) {
         u32 i = 0;
-        StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-            reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+        StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
+            lbl_eu_806656E8)->entries;
 
         for (; i < 5; i++, entry++) {
             // Defensive per-entry null guard (retail keeps the check in-loop).
@@ -1013,8 +1020,8 @@ extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* i
 // clearAllStreams - Stop all streams (alternate entry)
 void CLibCriStreamingPlay::clearAllStreams() {
     u32 i = 0;
-    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
-        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+    StreamEntry* entry = reinterpret_cast<CLibCriStreamingPlayView*>(
+        lbl_eu_806656E8)->entries;
 
     for (; i < 5; i++, entry++) {
         // Defensive per-entry null guard (retail keeps the check in-loop).

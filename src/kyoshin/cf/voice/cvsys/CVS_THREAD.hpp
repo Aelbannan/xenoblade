@@ -47,7 +47,9 @@ struct CVoiceHandle {
     CCharVoice voice;                    // 0x3E9C-0x3EDB: embedded voice object
     u8 _pad2[0x3F00 - 0x3EDC];          // 0x3EDC-0x3EFF
     u32 field_0x3F00;                    // 0x3F00: manager flags (bit 1 = factory active)
-    u8 _pad3[0x3F60 - 0x3F04];          // 0x3F04-0x3F5F
+    u8 _pad3a[0x3F28 - 0x3F04];         // 0x3F04-0x3F27
+    u16 field_0x3F28;                   // 0x3F28: sub-state id matched against voice tables
+    u8 _pad3b[0x3F60 - 0x3F2A];         // 0x3F2A-0x3F5F
     UnkTarget* unkTarget;                // 0x3F60
 };
 

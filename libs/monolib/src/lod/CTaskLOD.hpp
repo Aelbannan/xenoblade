@@ -10,8 +10,8 @@ struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 // +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
 // by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
-    u8 _00[0x7C];
-    CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head
+    u8 _00[0x7C]; /* 0x00 */
+    CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head /* 0x7C */
 };
 
 /*

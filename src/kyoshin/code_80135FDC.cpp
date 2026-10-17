@@ -220,7 +220,7 @@ void MenuStateSet6405A() {
 }
 
 u8 GetCollectedFlagByte(u32 idx) {
-    return *(u8*)((u32)(&lbl_eu_80664070) + idx);
+    return lbl_eu_80664070[idx];
 }
 
 // ---------- BDAT helpers ----------
@@ -2920,7 +2920,7 @@ int GetSysStateFlag21(){
 
 int GetSysStateFlag20() {
     void* inst = getInstance__14Class_80296898Fv();
-    u8 b = *(u8*)((u32)inst + 0x20);
+    u8 b = static_cast<u8*>(inst)[0x20];
     return (b != 0) ? 1 : 0;
 }
 

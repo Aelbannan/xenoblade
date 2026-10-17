@@ -45,7 +45,8 @@ public:
     nw4r::lyt::AnimTransform* mAnimTransB;              // 0x24 - animation transform B
     char _pad_28[0x3C - 0x28];                          // 0x28-0x3B
     u8 mField3C;                                         // 0x3C
-    char _pad_3D[0x58 - 0x3D];                          // 0x3D-0x57
+    char _pad_3D[0x40 - 0x3D];                          // 0x3D-0x3F
+    u8 mCur40[0x18];                                    // 0x40-0x57 - CCur18 cursor (opaque, cf. CTitle::mCur)
     u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (passed to CScrollBar_loadLayoutArc/CScrollBar_requestScrollOut)
     char mSysWin98[0xD4 - 0x98];                           // 0x98-0xD3 - first CSysWin-like object
     char mSysWinD4[0x11C - 0xD4];                          // 0xD4-0x11B - second CSysWin-like object

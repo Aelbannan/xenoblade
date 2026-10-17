@@ -110,20 +110,20 @@ void CMenuTutorial::Init() {
     u8 tempTitle[0x38];
     __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x6f);
 
-    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, tempTitle + 0x4);
-    mTitleAHelp.mFileHandle = *(CFileHandle**)(tempTitle + 0x14);
+    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
+    mTitleAHelp.mFileHandle = reinterpret_cast<CTitleAHelp*>(tempTitle)->mFileHandle;
     mTitleAHelp.mArcResourceAccessor =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempTitle + 0x18);
-    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tempTitle + 0x1c);
-    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x20);
-    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x24);
-    mTitleAHelp.unk28 = *(u8*)(tempTitle + 0x28);
-    mTitleAHelp.unk2c = *(s32*)(tempTitle + 0x2c);
-    mTitleAHelp.mName = *(char**)(tempTitle + 0x30);
-    mTitleAHelp.unk34 = *(u8*)(tempTitle + 0x34);
-    mTitleAHelp.unk35 = *(u8*)(tempTitle + 0x35);
-    mTitleAHelp.unk36 = *(u8*)(tempTitle + 0x36);
-    mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
+        reinterpret_cast<CTitleAHelp*>(tempTitle)->mArcResourceAccessor;
+    mTitleAHelp.mLayout = reinterpret_cast<CTitleAHelp*>(tempTitle)->mLayout;
+    mTitleAHelp.mAnimTrans20 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans20;
+    mTitleAHelp.mAnimTrans24 = reinterpret_cast<CTitleAHelp*>(tempTitle)->mAnimTrans24;
+    mTitleAHelp.unk28 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk28;
+    mTitleAHelp.unk2c = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk2c;
+    mTitleAHelp.mName = reinterpret_cast<CTitleAHelp*>(tempTitle)->mName;
+    mTitleAHelp.unk34 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk34;
+    mTitleAHelp.unk35 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk35;
+    mTitleAHelp.unk36 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk36;
+    mTitleAHelp.unk37 = reinterpret_cast<CTitleAHelp*>(tempTitle)->unk37;
     __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
     CTitleAHelp_load(&mTitleAHelp);
@@ -132,31 +132,31 @@ void CMenuTutorial::Init() {
     u8 tempTutorial[0x54];
     __ct__CTutorial((CTutorial*)tempTutorial, this->mType, 1);
 
-    __ct__UnkClass_8011C974(&mTutorial.mRegion0, tempTutorial + 0x4);
-    __ct__UnkClass_8011C974(&mTutorial.mRegion1, tempTutorial + 0x14);
+    __ct__UnkClass_8011C974(&mTutorial.mRegion0, &reinterpret_cast<CTutorial*>(tempTutorial)->mRegion0);
+    __ct__UnkClass_8011C974(&mTutorial.mRegion1, &reinterpret_cast<CTutorial*>(tempTutorial)->mRegion1);
 
-    mTutorial.mFileHandle0 = *(CFileHandle**)(tempTutorial + 0x24);
-    mTutorial.mFileHandle1 = *(CFileHandle**)(tempTutorial + 0x28);
-    mTutorial.mFileHandle2 = *(CFileHandle**)(tempTutorial + 0x2c);
+    mTutorial.mFileHandle0 = reinterpret_cast<CTutorial*>(tempTutorial)->mFileHandle0;
+    mTutorial.mFileHandle1 = reinterpret_cast<CTutorial*>(tempTutorial)->mFileHandle1;
+    mTutorial.mFileHandle2 = reinterpret_cast<CTutorial*>(tempTutorial)->mFileHandle2;
     mTutorial.mAccessor0 =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempTutorial + 0x30);
+        reinterpret_cast<CTutorial*>(tempTutorial)->mAccessor0;
     mTutorial.mAccessor1 =
-        *(nw4r::lyt::ArcResourceAccessor**)(tempTutorial + 0x34);
-    mTutorial.mpLayout = *(nw4r::lyt::Layout**)(tempTutorial + 0x38);
+        reinterpret_cast<CTutorial*>(tempTutorial)->mAccessor1;
+    mTutorial.mpLayout = reinterpret_cast<CTutorial*>(tempTutorial)->mpLayout;
     mTutorial.mpAnimTrans0 =
-        *(nw4r::lyt::AnimTransform**)(tempTutorial + 0x3c);
+        reinterpret_cast<CTutorial*>(tempTutorial)->mpAnimTrans0;
     mTutorial.mpAnimTrans1 =
-        *(nw4r::lyt::AnimTransform**)(tempTutorial + 0x40);
-    mTutorial.field_44 = *(u8*)(tempTutorial + 0x44);
-    mTutorial.field_45 = *(u8*)(tempTutorial + 0x45);
-    mTutorial.field_46 = *(u8*)(tempTutorial + 0x46);
-    mTutorial.field_47 = *(u8*)(tempTutorial + 0x47);
-    mTutorial.field_48 = *(u8*)(tempTutorial + 0x48);
-    mTutorial.field_4C = *(u8**)(tempTutorial + 0x4c);
-    mTutorial.field_50 = *(s8*)(tempTutorial + 0x50);
-    mTutorial.field_51 = *(s8*)(tempTutorial + 0x51);
-    mTutorial.field_52 = *(u8*)(tempTutorial + 0x52);
-    mTutorial.field_53 = *(u8*)(tempTutorial + 0x53);
+        reinterpret_cast<CTutorial*>(tempTutorial)->mpAnimTrans1;
+    mTutorial.field_44 = reinterpret_cast<CTutorial*>(tempTutorial)->field_44;
+    mTutorial.field_45 = reinterpret_cast<CTutorial*>(tempTutorial)->field_45;
+    mTutorial.field_46 = reinterpret_cast<CTutorial*>(tempTutorial)->field_46;
+    mTutorial.field_47 = reinterpret_cast<CTutorial*>(tempTutorial)->field_47;
+    mTutorial.field_48 = reinterpret_cast<CTutorial*>(tempTutorial)->field_48;
+    mTutorial.field_4C = reinterpret_cast<CTutorial*>(tempTutorial)->field_4C;
+    mTutorial.field_50 = reinterpret_cast<CTutorial*>(tempTutorial)->field_50;
+    mTutorial.field_51 = reinterpret_cast<CTutorial*>(tempTutorial)->field_51;
+    mTutorial.field_52 = reinterpret_cast<CTutorial*>(tempTutorial)->field_52;
+    mTutorial.field_53 = reinterpret_cast<CTutorial*>(tempTutorial)->field_53;
     __dt__9CTutorialFv((CTutorial*)tempTutorial, -1);
 
     Tutorial_LoadTutorialFiles(&mTutorial);
@@ -387,10 +387,10 @@ void MenuTutorialRenderThunk58(IScnRender* sub) {
 
 /**
  * IScnRender vtable this-adjusting thunk: subi r3, r3, 0x58; b __dt__.
- * Tail-calls the destructor, leaving r4 (delete flag) as caller leftover.
+ * Tail-calls the destructor, forwarding the caller delete flag in r4.
  */
-void MenuTutorialDtorThunk58(IScnRender* sub) {
-    __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58), -1);
+void MenuTutorialDtorThunk58(IScnRender* sub, int flag) {
+    __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58), flag);
 }
 
 unsigned long MenuTutorialIsCreated(void) { return lbl_eu_80664A28 != 0; }

@@ -1791,7 +1791,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
             slot->unk23C = slot->unk238;
             slot->unk260 = (lbl_eu_80663E24 >> 26) & 1;
         }
-    }
+    }}
 
     if (slot->unk25C & 0x40000000) {
         slot->unk25C = slot->unk25C | 0x400;

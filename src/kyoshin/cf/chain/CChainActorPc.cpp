@@ -23,6 +23,13 @@ struct ChainActorInnerData {
     u8 _pad00[0x3f28];
     unsigned short field_3f28;
 };
+// View of the party-gauge word inside cf::CBattleManager (+0x194, the
+// UnkClass_8018C5FC sub-object head): getInstance returns void*, so the
+// meter is reached through this TU-local view instead of raw u8 arithmetic.
+struct BattleMeterView {
+    u8 _pad00[0x194];
+    int meter;
+};
 
 extern "C" int translateChainActorState(void* self) {
     cf::CChainActor* actor = static_cast<cf::CChainActor*>(self);
@@ -333,11 +340,11 @@ extern "C" int isChainActorPlayer(cf::CChainActor* self) {
 }
 // Returns true if CBattleManager+0x194 >= 300.
 extern "C" int isChainMeterFull() {
-    return *(int*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194) >= 0x12c;
+    return reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter >= 0x12c;
 }
 extern "C" void resetChainMeter() {
     extern void PartyGaugeSetClamped(void* self, int a);
-    PartyGaugeSetClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
+    PartyGaugeSetClamped(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter, 0);
 }
 // Compares the halfword at this->unk0 + 0x3f28 against the result of
 // CtrlObjectParam_GetSlotTableBase() (a global config struct). Returns 0, 1, or 2 if the
@@ -345,7 +352,7 @@ extern "C" void resetChainMeter() {
 // otherwise.
 extern "C" int matchChainActorSlot(cf::CChainActorPc* self) {
     int* config = CtrlObjectParam_GetSlotTableBase();
-    u16 value = *(u16*)(self->unk0 + 0x3f28);
+    u16 value = reinterpret_cast<ChainActorInnerData*>(static_cast<uintptr_t>(self->unk0))->field_3f28;
     if (value == config[1]) return 0;
     if (value == config[2]) return 1;
     if (value == config[3]) return 2;

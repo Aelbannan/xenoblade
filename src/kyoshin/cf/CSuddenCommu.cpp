@@ -75,7 +75,21 @@ void SuddenCommuResetPairingState(CSuddenCommu* self) {
     *(u32*)&self->field_24 = 0;
 }
 
-extern "C" void SuddenCommuClearCueSlot(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
+// Typed views for this TU's raw spot arithmetic (retail layout):
+// - getPlayer()/getObjectAt() return &actor->moveSpot (CSuddenCommuActor's
+//   moveSpot member at +0x3E9C); the 0x3E9C-byte head view lets the
+//   spot->actor recovery use typed pointer arithmetic ((Head*)spot - 1)
+//   instead of raw (char*)-0x3E9C.
+// - Cue slots carry a u32 word at +0x20 (cleared by SuddenCommuClearCueSlot).
+struct CSuddenCommuActorHead {
+    u8 head_00[0x3E9C];              // bytes preceding moveSpot
+};
+struct CSuddenCommuCueSlot {
+    u8 pad_00[0x20];                 // 0x00-0x1F
+    u32 word_20;                     // 0x20 (cleared word)
+};
+
+extern "C" void SuddenCommuClearCueSlot(void* self) { ((CSuddenCommuCueSlot*)self)->word_20 = 0; }
 
 // Sudden-commu per-frame driver: only runs while the CfGameManager singleton
 // is absent (getInstance() == 0); otherwise just re-arms (SuddenCommuRearmTimer) and
@@ -94,7 +108,7 @@ void SuddenCommuDriveFrame(CSuddenCommu* self) {
 }
 
 unsigned long SuddenCommuIsStateActive(void* self) {
-    unsigned long v = *(unsigned long*)((char*)self + 0x14);
+    unsigned long v = ((CSuddenCommu*)self)->field_14;
     return !!v;
 }
 
@@ -112,7 +126,7 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
     if (global->field_214 & 2) return 0;
     if (GetZealObjPtr() != 0) return 0;
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(0);
-    if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
+    if (player != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)player - 1);
     if (player == 0) return 0;
     if (lbl_eu_806625E4 == player->field_3F28) {
         u32 vA = *player->field_4->vf30();
@@ -270,7 +284,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
 // otherwise just reset. A missing player also resets.
 __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(self->field_4);
-    if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
+    if (player != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)player - 1);
     if (player != 0) {
         s16 state = self->field_C;
         if (state == 4) {
@@ -411,7 +425,7 @@ void SuddenCommuDispatchPartner(CSuddenCommu* self, CSuddenCommuActor* attacker,
     for (int i = 0; i < 3; i++) {
         void* spot = cf::CfGameManager::getPlayer(i);
         CSuddenCommuActor* player = (CSuddenCommuActor*)spot;
-        if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
+        if (spot != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spot - 1);
         if (player == 0) continue;
         if (player != match) continue;
         SuddenCommuTryStart(self, i, mode, player, 0);
@@ -437,7 +451,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
         if (cf::CfGameManager::getPlayer(0) != 0) {
             void* spotP = cf::CfGameManager::getPlayer(0);
             player = (CSuddenCommuActor*)spotP;
-            if (spotP != 0) player = (CSuddenCommuActor*)((char*)spotP - 0x3E9C);
+            if (spotP != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spotP - 1);
             u32 v6, v5, v4, v3, v2, v1;
             int found = 0;
             if (testActorStatus(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
@@ -464,7 +478,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
             for (int i = 1; i < 3; i++) {
                 void* spot = cf::CfGameManager::getPlayer(i);
                 player = (CSuddenCommuActor*)spot;
-                if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
+                if (spot != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spot - 1);
                 if (player == 0) continue;
                 u32 w6, w5, w4, w3, w2, w1;
                 int found2 = 0;
@@ -491,7 +505,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (getUnk80664658()->field_214 & 2) goto commu_end;
                 void* spotG = cf::CfGameManager::getPlayer(0);
                 CSuddenCommuActor* pG = (CSuddenCommuActor*)spotG;
-                if (spotG != 0) pG = (CSuddenCommuActor*)((char*)spotG - 0x3E9C);
+                if (spotG != 0) pG = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spotG - 1);
                 if (pG == 0) goto commu_end;
                 if (lbl_eu_806625E4 == pG->field_3F28) {
                     u32 gvA;
@@ -507,7 +521,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 for (int i2 = 1; i2 < 3; i2++) {
                     void* spot2 = cf::CfGameManager::getPlayer(i2);
                     player = (CSuddenCommuActor*)spot2;
-                    if (spot2 != 0) player = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
+                    if (spot2 != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spot2 - 1);
                     if (player == 0) continue;
                     u32 av;
                     if (testActorStatus(player, (int*)&(av = *player->field_4->vf30()), 0x1c) == 0) {
@@ -518,7 +532,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (allFound != 0) {
                     void* spotA = cf::CfGameManager::getPlayer(0);
                     player = (CSuddenCommuActor*)spotA;
-                    if (spotA != 0) player = (CSuddenCommuActor*)((char*)spotA - 0x3E9C);
+                    if (spotA != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spotA - 1);
                     u32 pv;
                     if (testActorStatus(player, (int*)&(pv = *player->field_4->vf30()), 0x803) != 0) {
                         self->field_4 = 0;
@@ -980,7 +994,7 @@ void SuddenCommuMarkCommuVoices(CSuddenCommu* self) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             actor->voiceAct.field_3388 |= 0x2;
         }
         __dt__80043E88(&holder, -1);
@@ -993,7 +1007,7 @@ void SuddenCommuMarkCommuVoices(CSuddenCommu* self) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             actor->voiceAct.field_3388 |= 0x2;
         }
         __dt__80043E88(&holder, -1);
@@ -1019,7 +1033,7 @@ void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             aiActionClearBits0006(&actor->voiceAct);
         }
         __dt__80043E88(&holder, -1);
@@ -1032,7 +1046,7 @@ void SuddenCommuClearCommuVoices(CSuddenCommu* self) {
             cf::CfObjEnumList* list = (cf::CfObjEnumList*)CTaskGame_enumListGet(&holder);
             void* p = getObjectAt((CfMoveEnumList*)list, i);
             CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+            if (p != 0) actor = (CSuddenCommuActor*)((CSuddenCommuActorHead*)p - 1);
             aiActionClearBits0006(&actor->voiceAct);
         }
         __dt__80043E88(&holder, -1);

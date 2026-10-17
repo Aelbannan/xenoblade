@@ -745,7 +745,7 @@ int cf::CtrlObjectParamClear::clearStruct() {
 extern "C" int CtrlObjectParam_InitItemSlotArea(u8* self) {
     volatile u8* b = self;
     b[0] = 0;
-    volatile u32* w = reinterpret_cast<volatile u32*>(self + 4);
+    volatile u32* w = reinterpret_cast<volatile u32*>(reinterpret_cast<cf::CtrlObjectParamClear*>(self)->words);
     w[0] = 0;
     w[1] = 0;
     w[2] = 0;

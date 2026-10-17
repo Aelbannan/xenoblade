@@ -1555,7 +1555,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mps/mps_get.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mps/mps_lib.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c", mw_version = "Wii/1.1"),
+Object(Matching, "CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/code_803BFD20.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_con.c", mw_version = "Wii/1.1"),
@@ -1899,7 +1899,7 @@ config.libs = [
             # data-diff MATCH: retail .rodata/.sdata/.data/.sbss dissolved into the TU;
             # code residual: wkStandbyLogin + ctor vtable-store scheduling (see attempts.jsonl)
             Object(NonMatching, "monolib/src/core/CDesktop.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "monolib/src/core/CDrawGX.cpp"),
+Object(Matching, "monolib/src/core/CDrawGX.cpp"),
             Object(NonMatching, "monolib/src/core/CException.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/core/CViewRectDataCore.cpp"),
             Object(Matching, "monolib/src/lib/CLib.cpp", extra_cflags=["-RTTI off"]),

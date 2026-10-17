@@ -2882,7 +2882,7 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocMsg.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocMsg.cpp",
-      "instruction_match": 88.9,
+      "instruction_match": 99.444,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -305241,8 +305241,8 @@
       "size": "0x298",
       "unit": "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802ddba0",
@@ -305256,7 +305256,7 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c",
-      "instruction_match": 99.398,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -331319,8 +331319,8 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/gx/GXTev.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/gx/GXTev.c",
-      "instruction_match": 98.046,
-      "equivalence_status": "equivalent",
+      "instruction_match": 98.276,
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -398799,8 +398799,8 @@
       "size": "0x4C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_aoap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803cef8c"
@@ -398812,7 +398812,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c",
       "declared_return": "i32",
-      "instruction_match": 89.474,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -420456,8 +420456,8 @@
       "size": "0xAC",
       "unit": "nw4r/src/g3d/res/g3d_resanmscn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmscn.cpp",
       "called_functions": [
@@ -420468,7 +420468,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmscn.s",
       "abi_helper_calls": [],
-      "instruction_match": 99.674,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -455456,8 +455456,8 @@
       "size": "0x58",
       "unit": "nw4r/src/snd/snd_SoundPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SoundPlayer.cpp",
       "called_functions": [
@@ -455469,8 +455469,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SoundPlayer.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 0.0,
+      "source_present": true,
+      "claim": {
+        "owner": "agent-soundplayer",
+        "claimed_at": "2026-10-17T19:59:54.067918+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SoundPlayer.cpp"
+        ],
+        "note": ""
+      },
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80422898",
@@ -487793,8 +487802,8 @@
       "size": "0x3E8",
       "unit": "monolib/src/core/CDrawGX",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CDrawGX.cpp",
       "called_functions": [
@@ -487811,9 +487820,10 @@
         "_savegpr_27"
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 19.4,
+      "instruction_match": 100.0,
       "source_present": true,
-      "legacy_status": "OPEN_ITEM"
+      "legacy_status": "OPEN_ITEM",
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8045bc8c",
@@ -493943,8 +493953,8 @@
       "size": "0x34",
       "unit": "monolib/src/lod/CTaskLOD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80472fec"
@@ -493956,8 +493966,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CTaskLOD.cpp",
       "source_present": true,
-      "instruction_match": 99.231,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80466c18",

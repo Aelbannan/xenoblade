@@ -728,7 +728,7 @@ void CamEvtReleaseMappedSlot(CfCamEventManager* self, u32 idx) {
 }
 
 void* CamEvtFetchSlotPtr(void* self, unsigned long idx) {
-    return *(void**)((char*)self + (idx << 2));
+    return ((void**)self)[idx];
 }
 
 // Categorise an environment/prompt id (r4) into a 0/1/2 bucket. The
@@ -1386,7 +1386,7 @@ int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src, CamEventTarge
 }
 
 cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_getBattleStats() {
-    return (cf::CActorParam_UnkStruct1*)((u8*)this + *(u8*)((u8*)this + 0x3354) * 0xbc + 0x2a84);
+    return &this->unk2A84[this->unk3354];
 }
 
 // Set up the follow-cam state for one frame. Resolves the source object's
@@ -2918,9 +2918,10 @@ int CamEvtAdvanceBusy(CfCamEventManager* self) {
 }
 
 extern void CamEvtClearSlotBytes(u8* self) {
-    *(u8*)((u8*)self + 0x1de) = 0;
-    *(u8*)((u8*)self + 0x356) = 0;
-    *(u8*)((u8*)self + 0x4ce) = 0;
+    CfCamEventManager* m = reinterpret_cast<CfCamEventManager*>(self);
+    m->tab0.flag_active = 0;
+    m->shake[0].field_0x162 = 0;
+    m->shake[1].field_0x162 = 0;
 }
 
 // Forward shake state to the shared handler if the global cam state is alive.

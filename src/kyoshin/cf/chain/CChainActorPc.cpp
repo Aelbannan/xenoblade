@@ -11,7 +11,7 @@ namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(
 // retail: chainBindEffectLink(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
 extern "C" void bindChainEffect(void* self, void* a, void* b, int c, int d) {
     // retail arg order: r3=effect, r4=a, r5=0xAA, r6=self, r7=b, r8=cond
-    chainBindEffectLink((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)self,
+    chainBindEffectLink((cf::CChainEffect*)&((cf::CChainActorPc*)self)->mChainEffectRaw, (int)a, 0xAA, (int)self,
                   (int)b, (c != 0) ? 0x5F : 0);
 }
 extern "C" int chainResolveMemberFromSrc(int, int);
@@ -99,7 +99,7 @@ extern "C" void reloadChainVoice(void* self, void* a, void* b) {
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void resetChainActor(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
-    chainClearTwoWords((cf::CChainEffect*)((char*)self + 0x74));
+    chainClearTwoWords((cf::CChainEffect*)&self->mChainEffectRaw);
 }
 // Local struct for accessing known fields within the large object at self->unk0
 struct CChainBigObj {
@@ -192,7 +192,7 @@ tail_check:
 }
 // Resets the chain effect and calls CChainActor_ClearTargetRef on this actor.
 extern "C" void clearChainTarget(cf::CChainActorPc* self) {
-    chainTeardownLinkClear((cf::CChainEffect*)((char*)self + 0x74));
+    chainTeardownLinkClear((cf::CChainEffect*)&self->mChainEffectRaw);
     CChainActor_ClearTargetRef(self);
 }
 // External declarations specific to applyChainDamage

@@ -53,7 +53,7 @@ namespace cf {
 
     bool CChain::chkActorList() {
         extern bool Chain_FindOrCreateActor(void*);
-        return Chain_FindOrCreateActor((char*)this + 0x18);
+        return Chain_FindOrCreateActor(&mChainActorList);
     }
 
     // Retail plain empty+delete dtor: no base/member dtor calls (the actor's
@@ -1278,7 +1278,7 @@ void CChain_AdvanceChainLink(cf::CChain* self) {
     }
     ((cf::CChainBattleObj*)actor->unk0)->mSub8.s06(0xeb);
     u8* spot = (u8*)actor->unk0;
-    if (spot != 0) spot += 0x3e9c;
+    if (spot != 0) spot = (u8*)&((CChainBattleObjTail*)spot)->field_0x3E9C;
     syncBattleState__Q22cf13CfGameManagerFv(spot);
     if ((s8)self->unk0[1] != -1) {
         reinitChainPlayer((CBattleChainMenuState*)&self->unk1F0C[0]);
@@ -1737,7 +1737,7 @@ void CChainActor_ClearTargetRef(cf::CChainActor* self) {
         // Dead second null-check keeps the retail duplicated-branch shape
         // around the +0x3e9c re-bias.
         if (p != NULL) {
-            p = (CChainBattleObjTail*)((u8*)p + 0x3e9c);
+            p = (CChainBattleObjTail*)&p->field_0x3E9C;
         }
         if (lookupWorkAtAddr(p) != 0) {
             self->CChainActor_ToggleCancelVoice(0);

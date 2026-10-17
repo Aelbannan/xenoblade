@@ -430,11 +430,7 @@ void ScnRes_CopyEntryMid(ScnResHead* dst, int index) {
 }
 
 extern "C" { extern unsigned char lbl_eu_8065F428[]; }
-extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) {
-    extern unsigned char lbl_eu_8065F428[];
-    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    return &entries[idx];
-}
+extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
 
 void* ScnRes_GetEntryHead2_E520(int index) {
     extern unsigned char lbl_eu_8065F428[];

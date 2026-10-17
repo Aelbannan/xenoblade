@@ -4867,7 +4867,7 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
              `__ct__UnkClass_8011C974` mem-region copy); the named-local register cost generalizes to
              any view pointer that stays live across a long straight-line region.
 
-## Raw-offset -> typed-field cleanup: byte-identical EXCEPT five load-bearing shapes (Wii/1.1 -O4,p, verified)
+## Raw-offset -> typed-field cleanup: byte-identical EXCEPT six load-bearing shapes (Wii/1.1 -O4,p, verified)
 - Symptom:    replacing `*(T*)((u8*)base + N)` / `((char*)self + N)` with typed member/struct-field access
              normally leaves the object byte-identical (types erase at codegen), but a minority of shapes
              change instruction selection/scheduling and regress the `hexdiff --all` table.
@@ -4886,14 +4886,41 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
                    canonicalizes base-first and flips the add.
                 5. probing a TU-local view block as plain source can shift a later compiler-warning line
                    citation in the `hexdiff --all` table -> declare views in the TU-local header instead.
+                6. folding `&mFieldN + K` into a `field_0x(N+K)` member can split an `addi` that retail
+                   shares with the next call (CfCam `CleanupVoiceEnd`, 100% -> 97.5%) - keep the raw form.
              A cast-at-use (`((View*)self)->field`) is NOT a new `self` param, but note the smell detector
              counts it: `tools/coop/smell_report.py` `self`/`void*` rows are line-based and move with any
              reformatting, so a byte-identical cleanup can *raise* those rows without adding real debt.
-- Result:     one wave converted ~360 accepted-function sites across 20+ TUs; every unit's `hexdiff --all`
+- Result:     one wave converted ~465 accepted-function sites across 30 TUs; every unit's `hexdiff --all`
              table stayed byte-identical. The residual raw-offset sites in accepted functions are mostly
              shapes 1-4 above.
 - Confidence: repo_proven
 - Applies to/a.k.a.: docs/CODE_SMELLS.md "Actionable pointer arithmetic" burn-down. `tools/coop/ptr_sites.py`
-             accepted/unmatched split is a heuristic (keys on the bare last name, so `Foo::Move` collides with
-             `Bar::Move`; `__declspec`/`;`-bearing one-liners are missed) - confirm the enclosing function's
-             own status in `tools/coop/targets.json`, not the heuristic.
+             is now class-aware (`AcceptedIndex`: qualified/chain-suffix match, unqualified last-component
+             only for free functions) - the old bare-last-name lookup counted `CUICfManager::Move` (HIGH_MATCH)
+             as accepted via `CTTask<12CUICfManager>::Move`.
+
+## renderCircle-class trig loops: duplicate the angle expression per call instead of a shared idx local (CDrawGX FULL_MATCH, Wii/1.1 -O4,p)
+- Symptom:   single `float idx = (float)i * (TAU/(float)sides) * K;` local feeding both `SinFIdx(idx)` and `CosFIdx(idx)` keeps idx live across the first call in a nonvolatile FPR (+`fmr` to the call reg): +1 saved FPR, bigger frame (208 vs 192), ~1.6% with only reloc-name drift left; retail instead recomputes idx before EACH trig call (two `fdivs/fmuls` sequences, cos first = right-to-left ctor-arg evaluation)
+- Cause:     a named local's live range spans the call by construction so the allocator parks it nonvolatile; two textually-identical inline expressions cannot CSE-merge because the first call clobbers the volatile result reg, forcing recompute — exactly retail's shape
+- Fix:       inline the angle expression into each trig argument (`SinFIdx((float)i * (TAU/(float)sides) * K)` ... `CosFIdx((float)i * (TAU/(float)sides) * K)`); do NOT factor through a helper/local (re-merges into the nonvolatile home). Pair with builtin `(float)` casts (no `frsp`, matches retail's `fsubs`-into-`fdivs` fold) and spell 2*pi as the shared-pool extern (`lbl_eu_8066A1FC`), letting the pre-existing `pool_patterns` UNIT_RULES rename the locally-pooled conversion magic to the shared slot
+- Result:    CDrawGX::renderCircle 19.4% -> 100.0% FULL_MATCH (0 structural, size exact), TU 20/20 promoted to Matching
+- Confidence: repo_proven
+- Applies to/a.k.a.: any loop calling two trig/table functions of the same angle value where retail shows doubled angle-computation sequences; also confirms the s32ToF-union-helper deletion rule above (helper's `(float)(double)` return adds `frsp` + 2 FPRs vs the builtin fold)
+
+## subf result lands in the minuend's web (a-b result reuses b's register)
+- Symptom:   `d = a - b` (lowered `subf d,a,b`) colors `d` with the minuend `b`'s register across every
+  spelling tried (compound `t -= m`, reassigned `m = t - m`, single-def `m = t - (x&k)`, anonymous shift
+  `m = (x>>1) - m`): 6 shapes on OcMsgRingProbeOverflow, dest always the shift-web's reg. Getting dest
+  into the subtrahend's reg requires the mirror prefix (whole chain recolors r0<->r5).
+- Cause:     MWCC delivers the subtraction result into the minuend's web (dest reuses b's register), so
+  dest follows whichever web holds the minuend; flipping dest without flipping the minuend's color is
+  not source-steerable. The reversed source (`(x&k)-(x>>1)`) reproduces the byte stream but negates
+  the value (verified numerically: v=0 differs) - a semantic trap, not a fix.
+- Fix:       choose which web holds the minuend to place the subf dest (here: minuend must be the web
+  that ends in the subtrahend's dead register is impossible - accept the dilemma and bank the
+  prefix-correct draft); do not burn probes on reassignment-vs-compound - they color identically.
+- Result:    CODE_MATCH 88.9% near-miss banked (us-8003aa6c); EQUIVALENT_MATCH unreachable (witness
+  abi-boundary + bl gates), FULL_MATCH needs an allocator tie-break flip or version/flags angle.
+- Confidence: hypothesis
+- Applies to/a.k.a.: pure reg_swap residuals on `subf`/`subfc` where dest must reuse the dead operand.

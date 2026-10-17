@@ -28,6 +28,40 @@ struct WaveDataBlock {
 extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
     Channel* pChannel, const WaveDataBlock& rData, int length, u32 offset);
 
+// nw4r::snd::VoiceOutParam (6 floats, 0x18 bytes) - same shape as
+// StrmPlayer's VoiceOutParamRetail; the parameter of Voice::SetVoiceOutParam.
+struct VoiceOutParamRetail {
+    f32 volume;       // at 0x0
+    f32 pitch;        // at 0x4
+    f32 pan;          // at 0x8
+    f32 surroundPan;  // at 0xC
+    f32 lpfFreq;      // at 0x10
+    f32 remoteFilter; // at 0x14
+};                    // sizeof 0x18
+
+// Retail WsdPlayer::UpdateChannel reads BasicPlayer::mParam's biquad fields
+// (this+0x18/0x1C) and the voice-out-param table (this+0x70) directly, and
+// the Voice* out of its Channel (Channel+0xF0). mParam/mVoice are private,
+// so mirror the retail layout locally (same convention as WaveDataBlock
+// above and StrmPlayer's retail-layout views).
+struct BasicPlayerUpdateView {
+    u8 _pad0x00[0x18];                    // vtable + mVolume..mLpfFreq
+    f32 biquadValue;                      // at 0x18 (PlayerParamSet::mUnk0x14)
+    u8 biquadType;                        // at 0x1C (PlayerParamSet::mUnk0x18)
+    u8 _pad0x1D[0x70 - 0x1D];             // ..mRemoteFxSend
+    VoiceOutParamRetail voiceOutParam[4]; // at 0x70 (PlayerParamSet::mUnk0x6C)
+};
+
+struct ChannelVoiceView {
+    u8 _pad0x00[0xF0];
+    Voice* voice; // at 0xF0 (Channel::mVoice)
+};
+
+// Retail Voice::SetVoiceOutParam entry point (same convention as
+// snd_StrmPlayer.cpp); the locked headers declare no VoiceOutParam type.
+extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
+    Voice* pVoice, int index, const VoiceOutParamRetail& rParam);
+
 WsdPlayer::WsdPlayer() : mActiveFlag(false) {}
 
 void WsdPlayer::InitParam(int voices, const WsdCallback* pCallback,
@@ -243,14 +277,24 @@ void WsdPlayer::UpdateChannel() {
         return;
     }
 
-    f32 volume = 1.0f;
-    volume *= GetVolume();
+    // Declaration order drives saved-FPR color (first-declared takes the
+    // highest register); the initializations stay in computation order.
+    f32 volume;
+    f32 pitchRatio;
+    f32 pan;
+    f32 surroundPan;
+    f32 lpfFreq;
+    f32 biquadValue;
+    f32 mainSend;
 
-    f32 pitchRatio = 1.0f;
+    pitchRatio = 1.0f;
     pitchRatio *= GetPitch();
     pitchRatio *= mWaveSoundInfo.pitch;
 
-    f32 pan = 0.0f;
+    volume = 1.0f;
+    volume *= GetVolume();
+
+    pan = 0.0f;
     if (mWaveSoundInfo.pan <= 1) {
         pan += (mWaveSoundInfo.pan - 63) / 63.0f;
     } else {
@@ -260,7 +304,7 @@ void WsdPlayer::UpdateChannel() {
     pan *= GetPanRange();
     pan += GetPan();
 
-    f32 surroundPan = 0.0f;
+    surroundPan = 0.0f;
     if (mWaveSoundInfo.surroundPan <= 1) {
         surroundPan += (mWaveSoundInfo.surroundPan + 1) / 63.0f;
     } else {
@@ -270,15 +314,21 @@ void WsdPlayer::UpdateChannel() {
     surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
     surroundPan += GetSurroundPan();
 
-    f32 lpfFreq = 0.0f;
-    lpfFreq += GetLpfFreq();
+    const BasicPlayerUpdateView* pParamView =
+        reinterpret_cast<const BasicPlayerUpdateView*>(this);
+    biquadValue = pParamView->biquadValue;
 
-    int remoteFilter = 0;
-    remoteFilter += GetRemoteFilter();
-
-    f32 mainSend = 0.0f;
+    mainSend = 0.0f;
     mainSend += (mWaveSoundInfo.mainSend / 127.0f) - 1.0f;
     mainSend += GetMainSend();
+
+    lpfFreq = 0.0f;
+    lpfFreq += GetLpfFreq();
+
+    int remoteFilter;
+    int biquadType;
+    biquadType = pParamView->biquadType;
+    remoteFilter = GetRemoteFilter();
 
     u8 infoSend[AUX_BUS_NUM];
     infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
@@ -309,6 +359,7 @@ void WsdPlayer::UpdateChannel() {
     mChannel->SetUserPan(pan);
     mChannel->SetUserSurroundPan(surroundPan);
     mChannel->SetUserLpfFreq(lpfFreq);
+    mChannel->SetBiquadFilter(biquadType, biquadValue);
     mChannel->SetRemoteFilter(remoteFilter);
     mChannel->SetOutputLine(GetOutputLine());
     mChannel->SetMainOutVolume(GetMainOutVolume());
@@ -322,6 +373,13 @@ void WsdPlayer::UpdateChannel() {
         mChannel->SetRemoteOutVolume(i, GetRemoteOutVolume(i));
         mChannel->SetRemoteSend(i, remoteSend[i]);
         mChannel->SetRemoteFxSend(i, remoteFxSend[i]);
+    }
+
+    for (int i = 0; i < GetVoiceOutCount(); i++) {
+        Voice* pVoice =
+            reinterpret_cast<const ChannelVoiceView*>(mChannel)->voice;
+        SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
+            pVoice, i, pParamView->voiceOutParam[i]);
     }
 
     mChannel->SetLfoParam(mLfoParam);

@@ -10,18 +10,7 @@ extern "C" const float lbl_eu_8066A468;   // 1.0f
 extern "C" const float lbl_eu_8066A46C;   // 0.0f
 extern "C" const float lbl_eu_8066A470;   // 255.0f
 extern "C" const float lbl_eu_8066A474;   // 128/pi (nw4r RAD_TO_FIDX)
-extern "C" const double lbl_eu_8066A478;  // s32->f64 magic (0x4330000080000000)
-
-// s32 -> float through the shared magic constant (retail renderCircle shape).
-inline float CDrawGX_s32ToF(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (float)(c.d - lbl_eu_8066A478);
-}
+extern "C" const float lbl_eu_8066A1FC;   // 2*pi (tau)
 
 // nw4r trig entry points used by renderCircle (retail calls these directly,
 // passing rad * 128/pi from the shared pool constant).
@@ -455,8 +444,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            float idx = CDrawGX_s32ToF(i) * (ml::tau / CDrawGX_s32ToF(sides)) * lbl_eu_8066A474;
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf(idx), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf(idx)));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474)));
         }
 
         end();
@@ -468,8 +456,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            float idx = CDrawGX_s32ToF(i) * (ml::tau / CDrawGX_s32ToF(sides)) * lbl_eu_8066A474;
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf(idx), pos.y + r * CosFIdx__Q24nw4r4mathFf(idx), lbl_eu_8066A46C));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), lbl_eu_8066A46C));
         }
 
         end();

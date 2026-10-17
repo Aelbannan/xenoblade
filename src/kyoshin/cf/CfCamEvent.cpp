@@ -123,7 +123,7 @@ void CfCamEvt_DispatchSetDir(CfCamEvent* self, ml::CVec3* vec) {
 // direction vector (used as the camera "get direction" entry).
 ml::CVec3* CfCamEvt_RefreshCamVectors(CfCamEvent* self) {
     ml::CVec3* out = &self->unk25C;
-    cfCam_vecToAngles((ml::CVec3*)((u8*)out + 0x18), (ml::CVec3*)((u8*)out + 0xC), out);
+    cfCam_vecToAngles(&self->unk274, &self->mLookat, out);
     return out;
 }
 

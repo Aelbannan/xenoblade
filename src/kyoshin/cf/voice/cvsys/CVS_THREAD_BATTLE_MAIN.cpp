@@ -434,7 +434,7 @@ wchk:
         goto winc;
 wdone:
     int n = i < 1 ? 1 : i;
-    return *(s16*)((char*)p + ml::math::mtRand(n) * 2);
+    return ((s16*)p)[ml::math::mtRand(n)];
 }
 
 // Bit-2 gate on +0x3F00, then scan the 60-stride list at lbl_eu_8053A4B8 for
@@ -565,7 +565,7 @@ g36chk:
 g36done:
         int n = i < 1 ? 1 : i;
         // Only accept a positive draw; otherwise fall through to the pools.
-        s16 pick = *(s16*)((char*)&e->valsB[21] + ml::math::mtRand(n) * 2);
+        s16 pick = (&e->valsB[21])[ml::math::mtRand(n)];
         if (pick > 0)
             return pick;
     }
@@ -585,7 +585,7 @@ ga_chk:
             goto ga_inc;
 ga_done:
         int n = i < 1 ? 1 : i;
-        return *(s16*)((char*)&e->valsA[3] + ml::math::mtRand(n) * 2);
+        return (&e->valsA[3])[ml::math::mtRand(n)];
     }
 
     // Walk the leading positive run of pool +6 (two steps max).
@@ -602,7 +602,7 @@ g06chk:
         goto g06inc;
 g06done:
     int n = i < 1 ? 1 : i;
-    return *(s16*)((char*)&e->valsA[1] + ml::math::mtRand(n) * 2);
+    return (&e->valsA[1])[ml::math::mtRand(n)];
 }
 
 // Playback helper gated on a negative request parameter: only when param < 0
@@ -837,7 +837,7 @@ extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg) {
         return -1;
     if (4 <= idx)
         return -1;
-    return *(s16*)((char*)p + idx * 2 + 0x2E);
+    return (&p->valsB[17])[idx];
 }
 
 int BmVoice_PlayGated(CVoiceHandle* self, int param, int size) {

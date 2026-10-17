@@ -43,9 +43,9 @@ extern "C" CMenuPTChangeNotice* __ct__CMenuPTChangeNotice(CMenuPTChangeNotice* s
 extern "C" CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotice* self,
                                                               int flags) {
     if (self != 0) {
-        self->mVtab = (u32)lbl_eu_80538888;
-        self->mWorkEventVt = (u32)lbl_eu_80538888 + 0x24;
-        self->mScnRenderVt = (u32)lbl_eu_80538888 + 0xac;
+        self->mVtab = (u32)&lbl_eu_80538888[0];
+        self->mWorkEventVt = (u32)&lbl_eu_80538888[0x24 / 4];
+        self->mScnRenderVt = (u32)&lbl_eu_80538888[0xac / 4];
         setInputDisableTime__Q22cf9CfPadTaskFf(lbl_eu_80668B80);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);

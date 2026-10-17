@@ -388,16 +388,16 @@ void GimObjDriveStepMachine(cf::CfGimmickObject* self) {
 }
 
 void GimObjSetBusyBit(void* self) {
-    *(unsigned long*)((char*)self + 0x74) |= 0x10000;
+    ((cf::CfGimmickObject*)self)->field_74 |= 0x10000;
 }
 
 extern "C" void GimObjClearStepBits(u8* self) {
-    *(unsigned long*)((char*)self + 0x74) &= ~0x18000;
+    ((cf::CfGimmickObject*)self)->field_74 &= ~0x18000;
 }
 
 extern "C" void GimObjFinishStep(u8* self) {
-    *(unsigned short*)((char*)self + 0x188) = 6;
-    *(unsigned long*)((char*)self + 0x74) = 0;
+    ((cf::CfGimmickObject*)self)->field_188 = 6;
+    ((cf::CfGimmickObject*)self)->field_74 = 0;
 }
 
 // GimObjActivateStepRange - step-range activation. Re-seeds the step machine from the

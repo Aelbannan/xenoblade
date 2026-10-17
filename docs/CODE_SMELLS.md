@@ -14,10 +14,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 19122 |
 | extern "C" declarations (non-lbl_*, imports) | 8804 |
 | extern "C" definitions (forced names) | 5108 |
-| `self`/register-style params | 13758 |
+| `self`/register-style params | 13762 |
 | `void*` (params + locals) | 7931 |
-| raw pointer offset arithmetic | 5969 |
-| deref-through-cast arithmetic | 2468 |
+| raw pointer offset arithmetic | 5961 |
+| deref-through-cast arithmetic | 2463 |
 | inline asm / `register` | 108 |
 | rN-named params | 37 |
 | goto | 3434 |
@@ -45,15 +45,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 The `ptr-arith`/`deref-arith` rows above are **line-based proxies**: a line carrying a cast plus an offset bumps `ptr-arith`, and the same line's deref independently bumps `deref-arith`, so one expression can move two counters. This section counts individual expressions with `tools/coop/detect_pointer_arithmetic.py` and splits every TU by whether the enclosing function is already accepted (`targets.json`). Sites inside accepted functions are the **actionable backlog** (typed field/pointer rewrites are byte-identical and `hexdiff`-verifiable now); sites in unmatched functions are a **churn budget** — those bodies get rewritten while matching, so cleaning them early is wasted work plus `-ipa file` line-shift risk. **Target: `ptr-acc` -> 0; `ptr-sites` follows as TUs reach acceptance.** These counts are informational and not part of the strict regression gate: acceptance migration moves existing sites into the accepted set, so the accepted total is not monotonic.
 
-- expression sites: 8649  |  inside accepted functions: **655**  |  unmatched: 7994
+- expression sites: 8630  |  inside accepted functions: **643**  |  unmatched: 7987
 
 | expression shape | sites | accepted |
 |---|---|---|
-| `cast_byte_offset_deref` | 3215 | 139 |
-| `cast_byte_ptr_arith` | 2915 | 390 |
+| `cast_byte_offset_deref` | 3210 | 134 |
+| `cast_byte_ptr_arith` | 2905 | 382 |
 | `ptr_offset_deref` | 1681 | 28 |
-| `reinterpret_arith` | 441 | 59 |
-| `subscript_on_cast` | 373 | 33 |
+| `reinterpret_arith` | 436 | 59 |
+| `subscript_on_cast` | 374 | 34 |
 | `cast_int_arith` | 24 | 6 |
 
 Top TUs by raw offsets inside accepted functions:
@@ -68,13 +68,13 @@ Top TUs by raw offsets inside accepted functions:
 | src/kyoshin/cf/CtrlMovePC.cpp | 8 |
 | libs/monolib/src/scn/code_804BD8E8.cpp | 7 |
 | src/kyoshin/CFloorMap.cpp | 7 |
-| src/kyoshin/cf/CTaskREvent.cpp | 7 |
 | src/kyoshin/cf/object/CAIAction.cpp | 7 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp | 7 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 7 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 6 |
 | src/kyoshin/CTaskGameEff.cpp | 6 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 6 |
+| src/kyoshin/cf/CtrlAct.cpp | 6 |
+| src/kyoshin/cf/object/CfObjectColl.cpp | 6 |
 
 ## TU-local view structs (debt audit)
 
@@ -434,11 +434,11 @@ Top TUs by view debt:
 | src/kyoshin/cf/CTaskEnvironment.cpp | 12 | 22 | 21 | 14 | 10 | 9 | 0 | 0 | 8 | 0 | 0 | 0 | 11 | 0 |
 | src/kyoshin/cf/CTaskGameCf.cpp | 1 | 2 | 0 | 0 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 4 |
 | src/kyoshin/cf/CTaskGameEffAfter.cpp | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CTaskREvent.cpp | 2 | 4 | 26 | 6 | 10 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 26 | 7 |
+| src/kyoshin/cf/CTaskREvent.cpp | 2 | 4 | 26 | 6 | 10 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 24 | 5 |
 | src/kyoshin/cf/CTaskREvtSequence.cpp | 3 | 12 | 51 | 28 | 4 | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 86 | 3 |
 | src/kyoshin/cf/CVision.cpp | 24 | 34 | 41 | 52 | 45 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 51 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 38 | 1 | 0 | 43 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCam.cpp | 23 | 143 | 392 | 142 | 18 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 70 | 4 |
+| src/kyoshin/cf/CfCam.cpp | 23 | 143 | 392 | 142 | 18 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 65 | 4 |
 | src/kyoshin/cf/CfCamDirectionIntf.cpp | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent.cpp | 17 | 3 | 32 | 12 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 4 |
 | src/kyoshin/cf/CfCamEvent_1.cpp | 12 | 3 | 35 | 36 | 6 | 5 | 0 | 0 | 13 | 0 | 0 | 0 | 31 | 5 |
@@ -456,7 +456,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfGimmickItem.cpp | 8 | 2 | 12 | 1 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 5 | 0 |
-| src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 65 | 5 | 4 | 0 | 4 | 0 | 7 | 0 | 0 | 0 | 6 | 4 |
+| src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 69 | 5 | 0 | 0 | 4 | 0 | 7 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 32 | 15 | 31 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 |
 | src/kyoshin/cf/CfHikariItemManager.cpp | 3 | 12 | 21 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 1 |
@@ -488,10 +488,10 @@ Top TUs by view debt:
 | src/kyoshin/cf/CtrlRemote.cpp | 2 | 0 | 79 | 11 | 5 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 5 | 1 |
 | src/kyoshin/cf/ICamControlRemote.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/IResInfo.cpp | 39 | 70 | 79 | 36 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 6 | 2 |
-| src/kyoshin/cf/chain/CChain.cpp | 4 | 23 | 248 | 12 | 8 | 0 | 1 | 0 | 5 | 0 | 0 | 0 | 10 | 5 |
+| src/kyoshin/cf/chain/CChain.cpp | 4 | 23 | 248 | 12 | 8 | 0 | 1 | 0 | 5 | 0 | 0 | 0 | 9 | 5 |
 | src/kyoshin/cf/chain/CChainActorEne.cpp | 8 | 12 | 17 | 15 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/cf/chain/CChainActorList.cpp | 35 | 29 | 45 | 16 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 1 | 0 |
-| src/kyoshin/cf/chain/CChainActorPc.cpp | 5 | 17 | 30 | 12 | 19 | 2 | 0 | 0 | 10 | 0 | 0 | 0 | 27 | 4 |
+| src/kyoshin/cf/chain/CChainActorPc.cpp | 5 | 17 | 30 | 12 | 16 | 2 | 0 | 0 | 10 | 0 | 0 | 0 | 24 | 2 |
 | src/kyoshin/cf/chain/CChainCombo.cpp | 0 | 0 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/chain/CChainEffect.cpp | 0 | 1 | 8 | 3 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cf/chain/CChainTime.cpp | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -521,7 +521,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp | 3 | 4 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 4 | 1 | 12 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 3 | 1 | 8 | 1 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 3 | 1 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp | 13 | 2 | 38 | 4 | 7 | 8 | 0 | 0 | 34 | 0 | 0 | 0 | 14 | 7 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp | 13 | 2 | 38 | 4 | 6 | 3 | 0 | 0 | 34 | 0 | 0 | 0 | 10 | 3 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp | 3 | 4 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 7 | 2 | 17 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4430,8 +4430,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "goto_count": 2,
   "init_side_effect": 0,
   "ptr_arith": 10,
-  "ptr_sites": 26,
-  "ptr_sites_accepted": 7,
+  "ptr_sites": 24,
+  "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
   "self_params": 26,
   "void_ptr": 6
@@ -4478,7 +4478,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 143,
   "init_side_effect": 0,
   "ptr_arith": 18,
-  "ptr_sites": 70,
+  "ptr_sites": 65,
   "ptr_sites_accepted": 4,
   "schedule_pragma": 0,
   "self_params": 392,
@@ -4657,11 +4657,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 2,
   "goto_count": 7,
   "init_side_effect": 0,
-  "ptr_arith": 4,
-  "ptr_sites": 6,
-  "ptr_sites_accepted": 4,
+  "ptr_sites": 2,
   "schedule_pragma": 0,
-  "self_params": 65,
+  "self_params": 69,
   "void_ptr": 5
  },
  "src/kyoshin/cf/CfGimmickSaveOff.cpp": {
@@ -5039,7 +5037,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "goto_count": 5,
   "init_side_effect": 0,
   "ptr_arith": 8,
-  "ptr_sites": 10,
+  "ptr_sites": 9,
   "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
   "self_params": 248,
@@ -5076,9 +5074,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 17,
   "goto_count": 10,
   "init_side_effect": 0,
-  "ptr_arith": 19,
-  "ptr_sites": 27,
-  "ptr_sites_accepted": 4,
+  "ptr_arith": 16,
+  "ptr_sites": 24,
+  "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
   "self_params": 30,
   "view_total": 1,
@@ -5423,14 +5421,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 8,
+  "deref_arith": 3,
   "extern_c_nonlbl_decl": 13,
   "extern_c_nonlbl_def": 2,
   "goto_count": 34,
   "init_side_effect": 0,
-  "ptr_arith": 7,
-  "ptr_sites": 14,
-  "ptr_sites_accepted": 7,
+  "ptr_arith": 6,
+  "ptr_sites": 10,
+  "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
   "self_params": 38,
   "void_ptr": 4

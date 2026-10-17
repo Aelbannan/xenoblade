@@ -619,9 +619,9 @@ extern "C" void cfCam_setField1E0AndGlobal(cf::CfCamFollow* ptr, float f) {
 // Retail cfCam_setClear04: set/clear the shared flag word at +4.
 extern "C" __declspec(noinline) void cfCam_setClear04(void* obj, u32 mask, int flag) {
     if (flag != 0)
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(obj) + 4) |= mask;
+        static_cast<cf::CfCamFollow*>(obj)->field_0x04 |= mask;
     else
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(obj) + 4) &= ~mask;
+        static_cast<cf::CfCamFollow*>(obj)->field_0x04 &= ~mask;
 }
 extern "C" int cfCam_getUnkC4(void* self) { return *(int*)((char*)self + 0xc4); }
 extern "C" int cfCam_getBit0_0x530(void* p) {
@@ -1241,11 +1241,11 @@ void cfCam_setFollowTg(cf::CfCamFollow* self, void* arg) {
 __declspec(noinline) void cfCam_nopC1C8(cf::CfCamFollow* self) {}
 // cfCam_andcUnk04: clear the flag word at +4 (retail: lwz/andc/stw +0x4(r3)).
 __declspec(noinline) void cfCam_andcUnk04(void* self, int mask) {
-    *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 4) &= ~static_cast<unsigned int>(mask);
+    static_cast<cf::CfCamFollow*>(self)->field_0x04 &= ~static_cast<unsigned int>(mask);
 }
 // Retail cfCam_bit1At0x64: return bit 1 of the word at +100.
 __declspec(noinline) int cfCam_bit1At0x64(void* self) {
-    return (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 100) >> 1) & 1;
+    return (static_cast<cf::CfCamFollow*>(self)->field_0x64 >> 1) & 1;
 }
 // Tiny accessors (retail thunks).
 extern "C" __declspec(noinline) void* cfCam_getPlus10(void* self) { return static_cast<char*>(self) + 16; }
@@ -1271,7 +1271,7 @@ extern "C" __declspec(noinline) void* cfCam_nestedPlus118(void* self) {
 }
 extern "C" __declspec(noinline) void cfCam_copyToPlus28(void* self, const void* src) {
     const u32* s = static_cast<const u32*>(src);
-    u32* d = reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 40);
+    u32* d = reinterpret_cast<u32*>(&static_cast<cf::CfCamFollow*>(self)->field_0x28);
     d[0] = s[0];
     d[1] = s[1];
     d[2] = s[2];

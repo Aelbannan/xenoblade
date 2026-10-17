@@ -612,8 +612,8 @@ void evtUpdateSequenceKick() {
 void cf::CTaskREvent::Init() {
     this->mBuf = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x1400, 4);
     for (u32 i = 0; i < 0xAE; i++) {
-        strcpy((char*)this->mBuf + this->mIdx * 0x14, lbl_eu_80503008);
-        strcat((char*)this->mBuf + this->mIdx * 0x14, lbl_eu_80530458[i]);
+        strcpy((char*)(this->mBuf + this->mIdx * 0x14), lbl_eu_80503008);
+        strcat((char*)(this->mBuf + this->mIdx * 0x14), lbl_eu_80530458[i]);
         this->mIdx++;
     }
 }

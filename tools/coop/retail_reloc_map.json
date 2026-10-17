@@ -1,5 +1,5 @@
 {
-  "count": 2234,
+  "count": 2240,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -28467,11 +28467,95 @@
         ]
       }
     },
-    "main/nw4r/src/snd/snd_WsdPlayer@9723": {
+    "main/nw4r/src/snd/snd_WsdPlayer@10087": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 5,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A10C",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@10088": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A110",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@10089": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
         "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A114",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@10090": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A118",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@10094": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A120",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@10095": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066A128",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/snd/snd_WsdPlayer"
+        ]
+      }
+    },
+    "main/nw4r/src/snd/snd_WsdPlayer@9722": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_8066A108",
@@ -29599,8 +29683,8 @@
       }
     }
   },
-  "function_pairs": 13877,
-  "generated": "2026-10-18T04:01:58.440512",
+  "function_pairs": 13878,
+  "generated": "2026-10-18T04:02:23.158610",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

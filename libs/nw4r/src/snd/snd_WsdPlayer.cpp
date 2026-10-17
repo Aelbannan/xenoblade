@@ -311,12 +311,12 @@ void WsdPlayer::UpdateChannel() {
         surroundPan += mWaveSoundInfo.surroundPan / 63.0f;
     }
 
-    surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
-    surroundPan += GetSurroundPan();
-
     const BasicPlayerUpdateView* pParamView =
         reinterpret_cast<const BasicPlayerUpdateView*>(this);
     biquadValue = pParamView->biquadValue;
+
+    surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
+    surroundPan += GetSurroundPan();
 
     mainSend = 0.0f;
     mainSend += (mWaveSoundInfo.mainSend / 127.0f) - 1.0f;
@@ -326,14 +326,15 @@ void WsdPlayer::UpdateChannel() {
     lpfFreq += GetLpfFreq();
 
     int remoteFilter;
-    int biquadType;
-    biquadType = pParamView->biquadType;
     remoteFilter = GetRemoteFilter();
 
     u8 infoSend[AUX_BUS_NUM];
     infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
     infoSend[AUX_B] = mWaveSoundInfo.fxSendB;
     infoSend[AUX_C] = mWaveSoundInfo.fxSendC;
+
+    int biquadType;
+    biquadType = pParamView->biquadType;
 
     f32 fxSend[AUX_BUS_NUM];
     for (int i = 0; i < AUX_BUS_NUM; i++) {
@@ -379,7 +380,8 @@ void WsdPlayer::UpdateChannel() {
         Voice* pVoice =
             reinterpret_cast<const ChannelVoiceView*>(mChannel)->voice;
         SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
-            pVoice, i, pParamView->voiceOutParam[i]);
+            pVoice, i,
+            reinterpret_cast<const BasicPlayerUpdateView*>(this)->voiceOutParam[i]);
     }
 
     mChannel->SetLfoParam(mLfoParam);

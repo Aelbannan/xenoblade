@@ -81,6 +81,7 @@ public:
     void Term();
     void initSubsystems(u32 a, u32 b, void* str, u32 d);
 
+
     //0x000: vtable 1 (CTTask)
     //0x000-054: CTTask
     //0x054: vtable 2 (IWorkEvent)

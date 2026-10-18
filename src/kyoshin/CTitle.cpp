@@ -151,7 +151,7 @@ extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
 }
 
 
-extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleLogo*)self)->mAnimTrans1, lbl_eu_80668FE0); }
 
 // Logo state step: when animation 2 finishes, reset the state machine,
 // rebind the intro animation, and clear/set the phase flags.
@@ -369,7 +369,7 @@ extern "C" void CTitleMenu_onAnim0Done(CTitleMenu* self) {
     }
 }
 
-extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleMenu*)self)->mAnimTrans1, lbl_eu_80668FE0); }
 
 // When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
 extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
@@ -389,7 +389,7 @@ extern "C" void CTitleMenu_onAnim3Done(CTitleMenu* self) {
     }
 }
 
-extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleMenu*)self)->mAnimTrans4, lbl_eu_80668FE0); }
 
 // Menu state step: when animation 5 finishes, reset the state machine,
 // run the menu intro hook, and clear/set the phase flags.

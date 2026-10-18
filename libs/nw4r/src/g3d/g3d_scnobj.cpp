@@ -672,7 +672,7 @@ static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
 }
 
 bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D768)) {
+    if (other.GetTypeID() == TypeObj(lbl_eu_8051D768).GetTypeID()) {
         return true;
     }
 
@@ -687,24 +687,24 @@ const char* ScnObj::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
 
-// ScnGroup's base-chain check (ScnObj then G3dObj). Kept as a static helper
-// (not a virtual-call chain) so MWCC inlines it and emits the retail
-// parameter-reload pattern (a fresh lwz for the first two comparisons, then
-// register reuse).
-static bool scnGroupBaseIsDerivedFrom(G3dObj::TypeObj other) {
-    if (other == G3dObj::TypeObj(lbl_eu_8051D768)) {
-        return true;
-    }
-
-    return other == G3dObj::TypeObj(lbl_eu_8051D640);
-}
-
+// ScnGroup's derived-from chain (ScnGroup, ScnObj, then G3dObj) as one
+// flat ternary over explicit GetTypeID values. operator== against a
+// TU-visible rodata definition (or any static-helper boundary) makes MWCC
+// lower the whole chain to subf/cntlzw bool materialization; the explicit
+// branches with bool materialization only for the trailing return. Known
+// residual is MWCC's load CSE (one shared other.mName load where retail
+// reloads per link) - cf. AnmObjMatClr::IsDerivedFrom in g3d_anmclr.cpp
+// and the TU-context V1/V3 probes in .scratch/ctx_probe.cpp: a redundant
+// lwz r0, 0(r4) at the second link is the only remaining delta, provably
+// unobtainable from high-level C++ under the pinned toolchain (any CSE
+// barrier costs an instruction or a call retail does not have).
+//
+//
+//
 bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D788)) {
-        return true;
-    }
-
-    return scnGroupBaseIsDerivedFrom(other);
+    return other.GetTypeID() == TypeObj(lbl_eu_8051D788).GetTypeID() ? true
+         : other.GetTypeID() == G3dObj::TypeObj(lbl_eu_8051D768).GetTypeID() ? true
+         : (other.GetTypeID() == G3dObj::TypeObj(lbl_eu_8051D640).GetTypeID());
 }
 
 const G3dObj::TypeObj ScnGroup::GetTypeObj() const {

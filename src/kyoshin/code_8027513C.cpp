@@ -367,9 +367,9 @@ void tboxUpdateAll(UnkCode8027513C* self) {
 // retail: if (self->ptr74 == other) { other->b0 = 0; self->ptr74 = 0; } then tail-call CfObjectImplMoveClearLinkIfMatch
 extern "C" void CfObjectImplMoveClearLinkIfMatch();
 extern "C" void CfObjectImplTbox_ReleaseLink(void* self, void* other) {
-    if ((u32)(uintptr_t)other == *(u32*)((char*)self + 0x74)) {
-        *(u32*)((char*)other + 0xB0) = 0;
-        *(u32*)((char*)self + 0x74) = 0;
+    if (other == ((UnkCode8027513C*)self)->field_0x74) {
+        ((CfObjectEffB0*)other)->field_0xB0 = 0;
+        ((UnkCode8027513C*)self)->field_0x74 = 0;
     }
     CfObjectImplMoveClearLinkIfMatch();
 }

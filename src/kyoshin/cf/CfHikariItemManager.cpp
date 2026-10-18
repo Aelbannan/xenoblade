@@ -162,8 +162,9 @@ void hikariRemoveRecordTarget(cf::CfHikariItemManager* self, CfHikariItemRecord*
     self->records[self->field_1198] = NULL;
 }
 
+struct HikariFlag1194View { u8 _pad[0x1194]; u32 w1194; };
 void hikariSetFlagBit1(void* self) {
-    *(unsigned long*)((char*)self + 0x1194) |= 2;
+    ((HikariFlag1194View*)self)->w1194 |= 2;
 }
 // (us-802b5488): reset the manager - delete every record, clear the
 // +0x1104 scratch region and zero the counter block.  Same cleanup tail as the

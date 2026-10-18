@@ -697,7 +697,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
 }
 
 
-void* CActorParam_getMoveRecord__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x3298); }
+void* CActorParam_getMoveRecord__Q22cf11CActorParamFv(void* self) { return (void*)&((cf::CActorParam*)self)->unk3298; }
 
 void CtrlMoveEne_UpdateBattleMove(cf::CCtrlMoveEne* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
@@ -1148,9 +1148,9 @@ void CtrlMoveEne_ResetMoveState(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* ob
 }
 
 // Zeroes the +0x1928 move-data slots of the battle object (retail emits the
-// 60-store block inline at each of the four call sites in CtrlMoveEne_CheckKeepMoving).
+// 48-store block inline at each of the four call sites in CtrlMoveEne_CheckKeepMoving).
 static void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 8; i++) {
         cf::CFunc8008D51CSlot& s = obj->slots[i];
         s.w14 = 0;
         s.f0 = lbl_eu_806665C0;
@@ -1382,7 +1382,8 @@ d51c_97c:
 }
 
 
-void* CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e4); }
+struct MoveRateScale6E4View { u8 _pad[0x6e4]; float f6e4; };
+void* CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv(void* self) { return (void*)&((MoveRateScale6E4View*)self)->f6e4; }
 
 // Enemy movement-controller (re)initialisation (retail CtrlMoveEne_InitMoveHook): picks a
 // state from a bdat column, installs the matching move hook, seeds the +0x4C

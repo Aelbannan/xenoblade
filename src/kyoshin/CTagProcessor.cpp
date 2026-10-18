@@ -205,9 +205,9 @@ __declspec(noinline) void initTagParam(u8* obj, unsigned char a, unsigned char b
     base[1] = 0;
     base[2] = 0;
     base[3] = 0;
-    *(unsigned short*)(base + 4) = 0;
+    ((TagParam*)base)->field_04 = 0;
     base[6] = b;
-    *(float*)(base + 8) = c;
+    ((TagParam*)base)->field_08 = c;
 }
 
 // Init a tag-param block with a byte code (field_00) and a u16 value (field_04).
@@ -274,9 +274,9 @@ extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
     d[1] = s[1];
     d[2] = s[2];
     d[3] = s[3];
-    *(unsigned short*)(d + 4) = *(const unsigned short*)(s + 4);
+    ((TagParam*)d)->field_04 = ((const TagParam*)s)->field_04;
     d[6] = s[6];
-    *(float*)(d + 8) = *(const float*)(s + 8);
+    ((TagParam*)d)->field_08 = ((const TagParam*)s)->field_08;
 }
 
 // Deleting destructor for CTagProcessorBase (retail __dt__17CTagProcessorBaseFv):
@@ -1337,14 +1337,17 @@ struct TagContext {
     void addToCharSpace(float val) { charSpace = *(float*)((u8*)this + 4) + val; }
 };
 
-extern "C" const wchar_t* getContextStr(u8* self) { return *(const wchar_t**)(self + 0x4); }
+extern "C" const wchar_t* getContextStr(u8* self) { return ((const TagContext*)self)->contextStr; }
 
 extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
 // Char-space accumulation helper (retail C-ABI symbol in this unit).
 // noinline: the tag-writer family (TagWriterCharSpacePP) calls it via bl in retail,
 // so the tiny body must not be folded into call sites.
-extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) { *(float*)(self + 0xC) = *(float*)(self + 0x4) + val; };
+extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) {
+    TagContext* ctx = (TagContext*)self;
+    ctx->charSpace = *(float*)&ctx->contextStr + val;
+}
 
 // Fetch the tag chain head and return the first node's list header (4 bytes
 // before the payload). Retail asserts when the chain is empty.
@@ -2961,9 +2964,12 @@ u16* TagParseColor(void* a, u16* out, wchar_t* str) {
 }
 #pragma optimize_for_size off
 
-extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, u8* p) {
-    void* base = *(void**)(p + 4);
-    *(void**)(p + 4) = (u8*)base + 4;
+// Word view of the tag-writer cursor advanced by TagWriterAdvancePtr4:
+// the live pointer sits at +0x04 and steps by 4 bytes per call.
+struct TagWriterPtrView { u8 _pad00[4]; void* ptr; };
+extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, TagWriterPtrView* p) {
+    u8* base = (u8*)p->ptr;
+    p->ptr = base + 4;
     return 0;
 }
 

@@ -3231,7 +3231,40 @@ void* lbl_eu_8052C534[3] = { (void*)lbl_eu_80661E30, 0, 0, };
 // from commit 6d2ef546718a needle=sinit_801134E8
 // LLM-HARNESS-END: us-80111b50
 // LLM-HARNESS-BEGIN: us-80113fc4
-extern "C" void sinit_801134E8() {}
+extern "C" void sinit_801134E8() {
+    lbl_eu_80663F58[3] = 0;
+    lbl_eu_80663F58[2] = 0;
+    lbl_eu_80663F58[1] = 0;
+    lbl_eu_80663F58[0] = 0;
+    lbl_eu_80663F60[3] = 0;
+    lbl_eu_80663F60[2] = 0;
+    lbl_eu_80663F60[1] = 0;
+    lbl_eu_80663F60[0] = 0;
+    lbl_eu_80663F68[3] = 0;
+    lbl_eu_80663F68[2] = 0;
+    lbl_eu_80663F68[1] = 0;
+    lbl_eu_80663F68[0] = 120;
+    lbl_eu_80663F70[3] = 0;
+    lbl_eu_80663F70[2] = 50;
+    lbl_eu_80663F70[1] = 90;
+    lbl_eu_80663F70[0] = 255;
+    lbl_eu_80663F78[3] = 0;
+    lbl_eu_80663F78[2] = 0;
+    lbl_eu_80663F78[1] = 67;
+    lbl_eu_80663F78[0] = 84;
+    lbl_eu_80663F80[3] = 0;
+    lbl_eu_80663F80[2] = 0;
+    lbl_eu_80663F80[1] = 255;
+    lbl_eu_80663F80[0] = 255;
+    lbl_eu_80663F88[3] = 0;
+    lbl_eu_80663F88[2] = 110;
+    lbl_eu_80663F88[1] = 35;
+    lbl_eu_80663F88[0] = 0;
+    lbl_eu_80663F90[3] = 0;
+    lbl_eu_80663F90[2] = 255;
+    lbl_eu_80663F90[1] = 180;
+    lbl_eu_80663F90[0] = 70;
+}
 // LLM-HARNESS-END: us-80113fc4
 // LLM-HARNESS-BEGIN: us-801140a4
 extern "C" bool func_801135C8() { return false; }

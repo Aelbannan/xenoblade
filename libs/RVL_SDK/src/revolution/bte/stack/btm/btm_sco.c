@@ -97,21 +97,10 @@ const unsigned long btm_esco_defaults[4] = {0x1F40, 0x1F40, 0x0A0060, 0x3F0100};
 
 void btm_sco_init(void)
 {
-    unsigned long v0, v1, v2, v3;
-    const unsigned long *src = btm_esco_defaults;
-    unsigned char* cb = (unsigned char*)&btm_cb;
-
-    v0 = *src++;
-    v1 = *src++;
-    v2 = *src++;
-    v3 = *src++;
-
-    *(unsigned short*)(cb + 0x18f6) = 0xffff;
-    *(unsigned long*)(cb + 0x18f8) = v0;
-    *(unsigned long*)(cb + 0x18fc) = v1;
-    *(unsigned long*)(cb + 0x1900) = v2;
-    *(unsigned long*)(cb + 0x1904) = v3;
-    cb[0x1909] = 2;
+    SCO_CB->sco_disc_reason = 0xffff;
+    SCO_CB->def_esco_parms =
+        *(const tBTM_ESCO_PARAMS *)btm_esco_defaults;
+    SCO_CB->desired_sco_mode = 2;
 }
 
 /* SCO control-block states (retail values; btm_int.h does not define them) */

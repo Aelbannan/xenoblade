@@ -63,22 +63,33 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
         if (bit == 0) return 0;
     }
 
-    /* macroblock_type of first block (peek 6 bits) */
+    /* macroblock_type of first block (peek 6 bits).
+     * 17.6 goto-gate: retail lays out a linear ble/beq dispatch with both
+     * consume blocks forward plus a `b` to the outlined return. Plain
+     * if/else-if inlines the returns; the gate keeps them outlined
+     * (same family as CriWare mps_del MPS_CheckDelim). */
     {
         u32 v6 = cur >> 26;
         if (bitpos > 26) v6 |= next >> (58 - bitpos);
         u32 d22 = v6 - 22u;
-        if (d22 <= 1u) {
-            bitpos += 5;
-            if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
-            else cur <<= 5;
-        } else if (v6 == 11u) {
-            bitpos += 6;
-            if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
-            else cur <<= 6;
-        } else {
-            return 0;
-        }
+        if (d22 <= 1u)
+            goto mb1_p5;
+        if (v6 == 11u)
+            goto mb1_p6;
+        goto mb1_ret0;
+mb1_p5:
+        bitpos += 5;
+        if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
+        else cur <<= 5;
+        goto mb1_join;
+mb1_p6:
+        bitpos += 6;
+        if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
+        else cur <<= 6;
+        goto mb1_join;
+mb1_ret0:
+        return 0;
+mb1_join: ;
     }
 
     /* skip a run of "empty" macroblock codes */
@@ -122,23 +133,28 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     }
 
     /* one more macroblock_type (peek 6 bits). `cur`/`next` are dead after
-     * this point: only the bit position and read pointer advance. */
+     * this point: only the bit position and read pointer advance.
+     * 17.6 goto-gate, same as the first block above. */
     {
         u32 v6 = cur >> 26;
         if (bitpos > 26) v6 |= next >> (58 - bitpos);
-        switch (v6) {
-        case 22:
-        case 23:
-            bitpos += 5;
-            if (bitpos >= 32) { bitpos -= 32; p++; }
-            break;
-        case 11:
-            bitpos += 6;
-            if (bitpos >= 32) { bitpos -= 32; p++; }
-            break;
-        default:
-            return 0;
-        }
+        u32 d22 = v6 - 22u;
+        if (d22 <= 1u)
+            goto mb2_p5;
+        if (v6 == 11u)
+            goto mb2_p6;
+        goto mb2_ret0;
+mb2_p5:
+        bitpos += 5;
+        if (bitpos >= 32) { bitpos -= 32; p++; }
+        goto mb2_join;
+mb2_p6:
+        bitpos += 6;
+        if (bitpos >= 32) { bitpos -= 32; p++; }
+        goto mb2_join;
+mb2_ret0:
+        return 0;
+mb2_join: ;
     }
 
     /* byte offset of the next unconsumed bit must stay within `size` */

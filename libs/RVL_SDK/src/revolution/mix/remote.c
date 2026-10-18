@@ -12,11 +12,16 @@ extern u16 __MIXGetVolume(s32 value);
 
 // ----- Global state -----
 
-// __MIXRmtChannel is a global pointer (sbss) to the remote channel array.
-// Initialized during MIXInit to point to __s_MIXRmtChannel in BSS.
+// __MIXRmtChannel is an 8-byte retail .sbss object whose first word is the
+// remote channel table pointer (the second word is never accessed by this
+// TU). Initialized during MIXInit to point to __s_MIXRmtChannel in BSS.
 // Defined here to reproduce the retail .bss (0x1988) / .sbss allocations.
-// retail .sbss symbol is 8 bytes; u64 keeps the size (and keeps the pointer at 0x0)
-u64 __MIXRmtChannel;
+struct MIXRmtChannel;
+typedef struct {
+    struct MIXRmtChannel* channels;
+    u32 _reserved;
+} MIXRmtChannelTable;
+MIXRmtChannelTable __MIXRmtChannel;
 u8 __s_MIXRmtChannel[0x1988];
 
 // ----- Remote channel structure -----
@@ -56,7 +61,7 @@ void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
 {
     s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
     u32 bit = mask & 0xF;
-    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
+    MIXRmtChannel* ch = __MIXRmtChannel.channels + idx;
     u32 tmp;
 
     tmp = ch->flags | bit;
@@ -74,7 +79,7 @@ void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
 void MIXRmtSetFader(void* chanInfo, s32 selector, s32 value)
 {
     s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
-    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
+    MIXRmtChannel* ch = __MIXRmtChannel.channels + idx;
 
     switch (selector) {
     case 0:
@@ -95,7 +100,7 @@ void MIXRmtSetFader(void* chanInfo, s32 selector, s32 value)
 
 void __MIXRmtUpdateSettings(s32 idx, AXVPB* out)
 {
-    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
+    MIXRmtChannel* ch = __MIXRmtChannel.channels + idx;
     u32 flags = ch->flags;
 
     if (!(flags & (MIX_RMT_FLAG_COPY_DEST | MIX_RMT_FLAG_UPDATE)))
@@ -214,7 +219,7 @@ void __MIXRmtUpdateSettings(s32 idx, AXVPB* out)
 
 void __MIXRmtResetChannel(s32 idx)
 {
-    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
+    MIXRmtChannel* ch = __MIXRmtChannel.channels + idx;
 
     ch->flags = 0;
     ch->vol[0] = 0;

@@ -54,9 +54,10 @@ public:
     f32 mDepthFarNear;                           // 0x14C
     f32 mDepthFar;                               // 0x150
 
-    // Projection matrix written by CGXCache::makePerspProj (0x154-0x1D4)
-    // 0x40 bytes = 4x4 f32 matrix
-    f32 mProjMtx[4][4];                          // 0x154
+    // Projection matrices written by CGXCache::makePerspProj (0x154-0x1D4)
+    // 0x80 bytes = 2x 4x4 f32 matrices (retail ScnCamRebuild stw 340 + ScnCamViewReg addi 404)
+    f32 mProjMtx[4][4];                          // 0x154 - depth-split projection matrix
+    f32 mProjMtx2[4][4];                         // 0x194 - projection matrix (MTX44)
 
     // Viewport dimensions
     u16 mViewportX;                              // 0x1D4 = 0
@@ -67,8 +68,9 @@ public:
 
     u8 pad_1DD[3];                               // alignment
 
-    // Additional camera parameters
+    // Additional camera parameters (retail ScnCamRebuild stfs 480/484/488)
     f32 mFovY;                                   // 0x1E0 - vertical FOV
+    f32 mUnk1E4;                                 // 0x1E4 - E / tan(half FOV)
     f32 mAspectRatio;                            // 0x1E8 - computed aspect ratio
     f32 mNearZ;                                  // 0x1EC
     f32 mFarZ;                                   // 0x1F0

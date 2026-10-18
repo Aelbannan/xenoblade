@@ -103,6 +103,15 @@ public:
     u32 field_36C;                           // 0x36C
 };
 
+// Typed anchor view over CfObjectImplEneObj+0x68/0x6C (inside field_28):
+// exact layout with explicit pads; address-taken for sched slot calls.
+struct CfObjectImplEneSlotView {
+    u8 _pad00[0x68];                         // 0x00-0x67
+    u8 slot68;                               // 0x68 - child-slot anchor
+    u8 _pad69[0x03];                         // 0x69-0x6B
+    u8 slot6C;                               // 0x6C - field anchor
+};
+
 // Object with a u32 token at +0x70 (read by MoveImplEne_InitFieldsToken).
 struct CfObjectImplEneToken {
     u8 _pad00[0x70];                         // 0x00-0x6F

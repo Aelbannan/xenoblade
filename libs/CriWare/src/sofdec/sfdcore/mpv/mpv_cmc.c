@@ -15,26 +15,27 @@ void MPVCMC_InitObj(void* self) {
 }
 
 void mpvcmc_InitMcOiTa(void* self) {
-    u32 val = *(u32*)((u8*)self + 0xb24);
+    u8* base = (u8*)self;
+    u32 val = *(u32*)(base + 0xb24);
+    struct McOiTaPair { void* p; int v; }* e = (struct McOiTaPair*)(base + 0xad8);
+    u8* ptr = base + 0x380;
     int flags = 4;
-    u8* ptr;
     if (val == 0) {
         flags = -1;
     }
-    ptr = (u8*)self + 0x380;
-    *(int*)((u8*)self + 0xad4) = flags;
-    *(u32*)((u8*)self + 0xad8) = (u32)ptr;
-    *(u32*)((u8*)self + 0xae0) = (u32)ptr;
-    *(u32*)((u8*)self + 0xae8) = (u32)ptr;
-    *(u32*)((u8*)self + 0xaf0) = (u32)ptr;
-    *(u32*)((u8*)self + 0xaf8) = (u32)ptr;
-    *(u32*)((u8*)self + 0xb00) = (u32)ptr;
-    *(int*)((u8*)self + 0xadc) = 8;
-    *(int*)((u8*)self + 0xae4) = 8;
-    *(int*)((u8*)self + 0xaec) = 8;
-    *(int*)((u8*)self + 0xaf4) = 8;
-    *(int*)((u8*)self + 0xafc) = 8;
-    *(int*)((u8*)self + 0xb04) = 8;
+    *(int*)(base + 0xad4) = flags;
+    e[0].p = ptr;
+    e[1].p = ptr;
+    e[2].p = ptr;
+    e[3].p = ptr;
+    e[4].p = ptr;
+    e[5].p = ptr;
+    e[0].v = 8;
+    e[1].v = 8;
+    e[2].v = 8;
+    e[3].v = 8;
+    e[4].v = 8;
+    e[5].v = 8;
 }
 
 void MPVCMC_InitMcOiRt(void* self) {

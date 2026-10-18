@@ -21,7 +21,7 @@
 // +0x100/+0x102/+0x104 of the given table base.
 extern "C" void TutorialList_ClearSummaryCounts(u8* self);
 
-u8 CTutorialList::TutorialList_IsInitialized() { return ((u8*)this)[0x177]; }
+u8 CTutorialList::TutorialList_IsInitialized() { return this->mInitialized; }
 
 
 // Tutorial list constructor (retail __ct__CTutorialList). Constructs the

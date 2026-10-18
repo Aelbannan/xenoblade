@@ -52,6 +52,23 @@ class TestCoverage(unittest.TestCase):
         self.assertEqual(fs[0]["variable"], "self->f")
         self.assertEqual(fs[0]["offset"], "4")
 
+    def test_reinterpret_arrow_is_not_arithmetic(self):
+        # `->` after a reinterpret_cast<u8*>(...) is member access, not a
+        # subtraction: it must not be counted as reinterpret byte arithmetic.
+        self.assertEqual(
+            _cats("void g(void) {\n    reinterpret_cast<u8*>(&m)->field = 1;\n}\n"),
+            [],
+        )
+        self.assertEqual(
+            _cats("void g(void) {\n    u32* q = reinterpret_cast<u32*>(&m)->field;\n}\n"),
+            [],
+        )
+        # ...while a real reinterpret addition is still detected.
+        self.assertEqual(
+            _cats("void g(void) {\n    u32* q = reinterpret_cast<u32*>(reinterpret_cast<u8*>(p) + 0x10);\n}\n"),
+            ["reinterpret_arith"],
+        )
+
     def test_byte_pointer_arith_with_call_base(self):
         fs = _scan("void g(void) {\n    u8* r = (u8*)GetCharEntry(self->f) + 0x3534;\n}\n")
         self.assertEqual([f["category"] for f in fs], ["cast_byte_ptr_arith"])

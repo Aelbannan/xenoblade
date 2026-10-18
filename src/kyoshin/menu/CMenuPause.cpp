@@ -330,7 +330,7 @@ unsigned long CMenuPause::isInitialized() {
 // The duplicate `self != 0` guard reproduces retail's double beq.
 extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
     if (self != 0) {
-        __dt__17UnkClass_8045F564Fv((u8*)self + 100, -1);
+        __dt__17UnkClass_8045F564Fv(&((CMenuPause*)self)->mMemRegion, -1);
         if (self != 0) {
             if (self != 0) {
                 __dt__8CProcessFv(self, 0);

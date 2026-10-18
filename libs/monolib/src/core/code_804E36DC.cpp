@@ -256,12 +256,18 @@ extern "C" void schedUpdate(CSchedule* self, f32 dt) {
 
 // us-804e7e84: step all resolved entries once; retire when none remain active.
 extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
+    s16* h;
+    s16* h2;
+    int i;
+    CScheduleItem* item;
     if (self->mEntryCount == 0) {
         return;
     }
     self->field_0xd9 = 0;
-    for (int i = 0; i < 32; i++) {
-        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
+    h = (s16*)self;
+    i = 0;
+    for (; i < 32; i++, h++) {
+        item = (CScheduleItem*)SchedItem_FetchByHandle(h[76]);
         if (item != NULL) {
             if (schedTickItemLifetime(item, self->field_0x54, delta, self->mEntries, self) != 0) {
                 self->field_0xd9++;
@@ -271,10 +277,12 @@ extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
     if (self->field_0xd9 <= 0) {
         ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
         if (self->mEntryCount != 0) {
-            for (int i = 0; i < 32; i++) {
-                if (self->mHandles[i] >= 0) {
-                    SchedItem_ReleaseHandle(self->mHandles[i]);
-                    self->mHandles[i] = -1;
+            h2 = (s16*)self;
+            i = 0;
+            for (; i < 32; i++, h2++) {
+                if (h2[76] >= 0) {
+                    SchedItem_ReleaseHandle(h2[76]);
+                    h2[76] = -1;
                 }
             }
             self->mEntryCount = 0;

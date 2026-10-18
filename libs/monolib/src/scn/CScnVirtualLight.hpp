@@ -53,7 +53,10 @@ extern "C" void Env_ScaleVec4(ml::CVec4* out, const ml::CVec4* in, float s);
 
 // Single-float math helpers used by scnVlDirFromVec's direction-vector to
 // dir-light-angle conversion (flat-name retail symbols; not yet decompiled).
-extern "C" f32 atan2AnimFIdx(f32 value);
+// atan2AnimFIdx takes two args (y, x) like the libc atan2f wrapper: the
+// kyoshin sibling (CActParamAnim, FULL_MATCH us-8004D2D8) and the CfCam
+// cfCam_vecToAngles family (atan2AnimFIdx(tmp.y, r)) both pass two.
+extern "C" f32 atan2AnimFIdx(f32 y, f32 x);
 extern "C" f32 cfCam_mulSda2Const(f32 value);
 extern "C" f32 safeFSqrt(f32 value);
 

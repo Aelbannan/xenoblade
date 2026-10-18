@@ -351,6 +351,12 @@ private:
     SoundArchiveFile::SoundInfoOffset impl_GetSoundInfoOffset(u32 id) const
         DECOMP_DONT_INLINE;
 
+    // Retail standalone overload: fills *pOffset and reports success. The
+    // by-value form above is retail-inlined at every call site; only this
+    // overload exists as an out-of-line symbol.
+    bool impl_GetSoundInfoOffset(
+        u32 id, SoundArchiveFile::SoundInfoOffset* pOffset) const;
+
     const SoundArchiveFile::SeqSoundInfo* impl_GetSeqSoundInfo(u32 id) const {
         SoundArchiveFile::SoundInfoOffset offset = impl_GetSoundInfoOffset(id);
         return Util::GetDataRefAddress1(offset, mInfo);

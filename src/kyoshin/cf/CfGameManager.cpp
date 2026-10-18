@@ -100,7 +100,7 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 extern "C" u32 getEffectFlagFromMgr(void* mgr);
-extern "C" void setGimmickActive(void* obj, bool enable);
+extern "C" void setGimmick(void* obj, bool enable);
 extern "C" void refreshGimmickObject(void* obj);
 extern "C" void setVoiceActionActive(void* act, bool enable);
 
@@ -1609,11 +1609,11 @@ extern "C" void setResourceField1C__Q22cf13CfGameManagerFv(Unk812Data* data, u16
 extern "C" void setResourceField1E__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x1E = value; }
 
 Unk817A8Object* cf::CfGameManager::getManagerObjectA8() {
-    return *reinterpret_cast<Unk817A8Object**>(reinterpret_cast<u8*>(this) + 8);
+    return (Unk817A8Object*)this->mObjectFlags;
 }
 
 #pragma dont_inline on
-extern "C" void setObjectFlags64__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) { *reinterpret_cast<u32*>(reinterpret_cast<u8*>(data) + 0x64) = value; }
+extern "C" void setObjectFlags64__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) { data->flags_0x64 = value; }
 #pragma dont_inline reset
 
 #pragma dont_inline on
@@ -2479,7 +2479,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
             getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
         if (object != nullptr) {
-            setGimmickActive(object, true);
+            setGimmick(object, true);
             refreshGimmickObject(object);
         }
         node = node->next;
@@ -2746,7 +2746,7 @@ void cf::CfGameManager::func_80085FB8() {
             Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
                 getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
             if (object != nullptr) {
-                setGimmickActive(object, true);
+                setGimmick(object, true);
                 refreshGimmickObject(object);
             }
             node = node->next;

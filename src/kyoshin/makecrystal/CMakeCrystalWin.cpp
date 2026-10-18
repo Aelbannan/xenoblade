@@ -123,7 +123,7 @@ int mkCrystalIsBusyState(CMakeCrystalWin* self) {
     return result;
 }
 
-u32 mkCrystalGetWord10(void* self) { return *(u32*)((u8*)self + 0x10); }
+u32 mkCrystalGetWord10(void* self) { return (u32)((CMakeCrystalWin*)self)->mScene; }
 
 // Retail 0x80212BE8: when the banner, crystal box and loading overlay are all
 // ready, dismiss them, mark the window state as 1 and play the crystal sound.
@@ -243,7 +243,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
         if (getCrystalStateC(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])) != 0) {
             self->field_4360 = 0;
-            MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
+            MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(self->mModelDispArea));
 
             // Rebuild the crystal box: construct a temp, copy it in, destroy.
             // MWCC assigns stack slots in reverse declaration order, so the
@@ -260,7 +260,7 @@ void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
             __ct__CModelDispMakeCrystal(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), self->mScene);
             MakeCrystalCopyDispArea(&self->mModelDispArea[0], &dispTemp[0]);
             __dt__21CModelDispMakeCrystalFv(reinterpret_cast<CModelDispMakeCrystal*>(dispTemp), -1);
-            MakeCrystal_InitFiles(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]));
+            MakeCrystal_InitFiles(reinterpret_cast<CModelDispMakeCrystal*>(self->mModelDispArea));
             func_801C41E8(&self->mTitleAHelp, 0x30);
         } else {
             self->field_4361 = 1;

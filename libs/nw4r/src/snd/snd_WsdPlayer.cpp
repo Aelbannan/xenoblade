@@ -48,8 +48,30 @@ struct BasicPlayerUpdateView {
     u8 _pad0x00[0x18];                    // vtable + mVolume..mLpfFreq
     f32 biquadValue;                      // at 0x18 (PlayerParamSet::mUnk0x14)
     u8 biquadType;                        // at 0x1C (PlayerParamSet::mUnk0x18)
-    u8 _pad0x1D[0x70 - 0x1D];             // ..mRemoteFxSend
+    u8 remoteFilter;                      // at 0x1D (PlayerParamSet::mRemoteFilter)
+    u8 _pad0x1E[0x70 - 0x1E];             // ..mRemoteFxSend
     VoiceOutParamRetail voiceOutParam[4]; // at 0x70 (PlayerParamSet::mUnk0x6C)
+};
+
+// Retail UpdateChannel reads the biquad/remote-filter fields through
+// out-of-line-shaped inline accessors (the locked BasicPlayer header
+// declares only GetRemoteFilter); mirror them as TU-local inline getters
+// so the inlined PCode matches retail's scheduling/coloring. The inline
+// boundary is load-bearing for the tails schedule (verified via .scratch
+// MWCC probes against retail asm).
+struct WsdPlayerGetterView : WsdPlayer {
+    int GetRemoteFilterView() const {
+        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
+            ->remoteFilter;
+    }
+    int GetBiquadFilterTypeView() const {
+        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
+            ->biquadType;
+    }
+    f32 GetBiquadFilterValueView() const {
+        return reinterpret_cast<const BasicPlayerUpdateView*>(this)
+            ->biquadValue;
+    }
 };
 
 struct ChannelVoiceView {
@@ -286,13 +308,15 @@ void WsdPlayer::UpdateChannel() {
     f32 lpfFreq;
     f32 biquadValue;
     f32 mainSend;
+    int biquadType;
+    int remoteFilter;
+
+    volume = 1.0f;
+    volume *= GetVolume();
 
     pitchRatio = 1.0f;
     pitchRatio *= GetPitch();
     pitchRatio *= mWaveSoundInfo.pitch;
-
-    volume = 1.0f;
-    volume *= GetVolume();
 
     pan = 0.0f;
     if (mWaveSoundInfo.pan <= 1) {
@@ -313,7 +337,8 @@ void WsdPlayer::UpdateChannel() {
 
     const BasicPlayerUpdateView* pParamView =
         reinterpret_cast<const BasicPlayerUpdateView*>(this);
-    biquadValue = pParamView->biquadValue;
+    biquadValue = reinterpret_cast<const WsdPlayerGetterView*>(this)
+        ->GetBiquadFilterValueView();
 
     surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
     surroundPan += GetSurroundPan();
@@ -325,16 +350,16 @@ void WsdPlayer::UpdateChannel() {
     lpfFreq = 0.0f;
     lpfFreq += GetLpfFreq();
 
-    int remoteFilter;
-    remoteFilter = GetRemoteFilter();
+    remoteFilter = reinterpret_cast<const WsdPlayerGetterView*>(this)
+        ->GetRemoteFilterView();
 
     u8 infoSend[AUX_BUS_NUM];
     infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
     infoSend[AUX_B] = mWaveSoundInfo.fxSendB;
     infoSend[AUX_C] = mWaveSoundInfo.fxSendC;
 
-    int biquadType;
-    biquadType = pParamView->biquadType;
+    biquadType = reinterpret_cast<const WsdPlayerGetterView*>(this)
+        ->GetBiquadFilterTypeView();
 
     f32 fxSend[AUX_BUS_NUM];
     for (int i = 0; i < AUX_BUS_NUM; i++) {

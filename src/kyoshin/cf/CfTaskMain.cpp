@@ -33,8 +33,8 @@ extern u32 __ptmf_null[3];
 
 // Retail vtables in .data. lbl_eu_80526F58 is the CTTask<CfTaskMain> vtable;
 // lbl_eu_80526E80 is the CfTaskMain primary vtable (IWorkEvent sub-vtable at +0x24).
-extern const u8 lbl_eu_80526F58[];
-extern const u8 lbl_eu_80526E80[];
+extern char lbl_eu_80526F58[];
+extern char lbl_eu_80526E80[];
 
 // The complete-object destructor is declared in CfTaskMain.hpp (tail-called
 // by the IWorkEvent dtor thunk).
@@ -62,6 +62,22 @@ void CfTaskMain::Tail() {
 
 } // namespace cf
 
+// Byte-range shim over the CProcess header + owned fields so the factory
+// can write the vtable (+0x10), the __ptmf_null callback slots
+// (+0x3C..0x50), the IWorkEvent secondary vtable (+0x54) and the trailing
+// scalar (+0x58) with typed members. Mirrors the CUICfManager
+// CUICfInitProcess pattern (interim vtable, vtFinal between the PTMF
+// loads, per-slot temps).
+struct CfTaskMainCtorShim {
+    u8 _00[0x10];
+    void* vtable;         // 0x10 - CProcess vtable, overwritten below
+    u8 _14[0x28];         // 0x14-0x3B - rest of CProcess
+    u32 moveCallbacks[3]; // 0x3C-0x44 - __ptmf_null move-callback slots
+    u32 drawCallbacks[3]; // 0x48-0x50 - __ptmf_null draw-callback slots
+    void* evtVtable;      // 0x54 - IWorkEvent secondary vtable
+    u32 field58;          // 0x58
+};
+
 // Factory function: allocates, constructs, and registers a CfTaskMain.
 //   r3 = parent CProcess* (for Regist)
 //   r4 = u32 value stored at field_0x58
@@ -77,45 +93,33 @@ void* __ct__800697E8(CProcess* parent, u32 field58val) {
     cf::CfTaskMain* obj = static_cast<cf::CfTaskMain*>(mem);
     if (obj) {
         __ct__8CProcessFv(obj);
-
-        // In-place construction of CTTask<CfTaskMain> + CfTaskMain, using
-        // u32 word indexing. Round-trip both __ptmf_null and the final vtable
-        // label through u32 values so MWCC materializes each as ONE register
-        // (lis/addi), and use a volatile pointer for the null-PTMF words so
-        // every slot word is reloaded (retail issues six separate loads).
-        // In-place construction of CTTask<CfTaskMain> + CfTaskMain. The final
-        // vtable address is materialized first so MWCC gives it the low
-        // temporary register; the early derived temp gives vt an early use so
-        // MWCC colors it before the PTMF loads.
-        // In-place construction of CTTask<CfTaskMain> + CfTaskMain.
-        // The PTMF words MUST be read through a volatile pointer (round-tripped
-        // through u32 so the base materializes as ONE lis/addi): without
-        // volatility MWCC CSEs word0 across the two callback slots, while
-        // retail reloads all six words. Reading [0] before [1] or using typed
-        // member assignments (= nullptr / PTMF struct copy) produces worse
-        // schedules - keep this exact spelling.
-        u32* p = reinterpret_cast<u32*>(obj);
-        u32 vt = reinterpret_cast<u32>(lbl_eu_80526E80); // CfTaskMain vtable
-        u32 evt = vt + 0x24;                             // IWorkEvent vtable
-        p[4] = reinterpret_cast<u32>(lbl_eu_80526F58);   // interim CTTask vtable
+        CfTaskMainCtorShim* s = reinterpret_cast<CfTaskMainCtorShim*>(obj);
+        // Single address materialization reused for the final vtable store
+        // and the secondary-subobject slot.
+        s->vtable = lbl_eu_80526F58;
+        // The null-PTMF words are read through a pointer (round-tripped
+        // through u32 so the base materializes once with lis/addi): direct
+        // __ptmf_null[i] indexing lets MWCC fold the @l part into the
+        // offset-0 loads and split the base across two registers, while
+        // retail issues one addi and plain loads off a single base.
         volatile u32* ptmf =
             reinterpret_cast<volatile u32*>(reinterpret_cast<u32>(__ptmf_null));
-        // Reads spelled in retail load order ([1],[0],[2] per slot).
-        // NOTE: assigning straight into p[] (no temps) or reading [0] first
-        // produces worse schedules - keep the named temps in this order.
-        u32 ptmf1 = ptmf[1];
-        u32 ptmf0 = ptmf[0];
-        p[0xF] = ptmf0;       // 0x3C mMoveFunc[0]
-        p[0x10] = ptmf1;      // 0x40 mMoveFunc[1]
-        p[0x11] = ptmf[2];    // 0x44 mMoveFunc[2]
-        ptmf1 = ptmf[1];
-        ptmf0 = ptmf[0];
-        p[0x12] = ptmf0;      // 0x48 mDrawFunc[0]
-        p[0x13] = ptmf1;      // 0x4C mDrawFunc[1]
-        p[0x14] = ptmf[2];    // 0x50 mDrawFunc[2]
-        p[4] = vt;
-        p[0x15] = evt;        // IWorkEvent vtable
-        p[0x16] = field58val;
+        u32 ptmfWord1 = ptmf[1];
+        char* vtFinal = lbl_eu_80526E80;
+        u32 ptmfWord0 = ptmf[0];
+        s->moveCallbacks[0] = ptmfWord0;
+        s->moveCallbacks[1] = ptmfWord1;
+        u32 ptmfWord2 = ptmf[2];
+        s->moveCallbacks[2] = ptmfWord2;
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
+        s->drawCallbacks[0] = ptmfWord0;
+        s->drawCallbacks[1] = ptmfWord1;
+        ptmfWord2 = ptmf[2];
+        s->drawCallbacks[2] = ptmfWord2;
+        s->vtable = vtFinal;
+        s->evtVtable = vtFinal + 0x24;
+        s->field58 = field58val;
     }
     // Regist runs even when the allocation failed (retail behaviour).
     obj->Regist(parent, false);

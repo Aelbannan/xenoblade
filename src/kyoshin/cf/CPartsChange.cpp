@@ -69,6 +69,18 @@ struct SlotPair8 {
     u32 id;
     u32 data;
 };
+// Pointer-first view of an 8-byte slot pair (exact layout): the entry
+// GetSlotEntryAt indexes holds its object link in the first word.
+struct SlotPtr8 {
+    void* ptr;  // 0x00
+    u32 data;   // 0x04
+};
+// TU-local view of the +0x60C object slot read by CfObjectPcExt::GetField60C
+// (exact layout; replaces the raw offset deref).
+struct PcExt60CView {
+    u8 _pad[0x60C];
+    void* slot;  // 0x60C
+};
 // Actor slot table: 16 SlotPair8 entries, live-count words at +0x94/+0xA0/+0xA2.
 struct ActorSlotTable {
     SlotPair8 slots[16];
@@ -896,7 +908,7 @@ u16 CfObjectPcExt::GetField45C6() { return mField45C6; }
 
 void* CfActorAccessors::GetField30() { return &mField30; }
 
-void* CfObjectPcExt::GetField60C() { return (void*)((u8*)this + 0x60c); }
+void* CfObjectPcExt::GetField60C() { return (void*)&((PcExt60CView*)this)->slot; }
 
 void CfPartyInfo::SetField2D(u8 val) { field_2D = val; }
 
@@ -1256,7 +1268,7 @@ notfound:
 }
 
 void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx) {
-    return *(void**)((char*)self + (idx << 3));
+    return reinterpret_cast<SlotPtr8*>(self)[idx].ptr;
 }
 
 extern "C" void* CPartsChange_GetEnemySlotAt(u8* table, u32 idx) {

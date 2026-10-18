@@ -258,10 +258,10 @@ static void Decode(u8* src, u8* dst) {
     s32 expandSize = ((const Yay0Header*)src)->expandSize;
     s32 i = 0;
     s32 linkTblOfs = ((const Yay0Header*)src)->linkTblOfs;
+    s32 count;
     u32 maskBits = 0;
     u32 mask;
     s32 linkOfs;
-    s32 count;
     s32 chunkPos;
     s32 j;
 

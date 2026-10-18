@@ -8,10 +8,40 @@
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 
 
 namespace cf {
+// TU-local view of the unmodeled base-class bytes written by the ctor
+// (exact layout; member names are erased at codegen, same offsets/widths
+// as the raw typed stores they replace).
+struct CfEffCtorBaseView {
+    u8 _pad00[0x04];
+    u32 f04;                 // 0x04
+    u32 f08;                 // 0x08
+    u32 f0C;                 // 0x0C
+    u8 f10;                  // 0x10
+    u8 _pad11[0x30 - 0x11];
+    u32 f30;                 // 0x30
+    u32 f34;                 // 0x34
+    u8 _pad38[0x48 - 0x38];
+    float f48;               // 0x48
+    u8 _pad4C[0x50 - 0x4C];
+    float f50;               // 0x50
+    float f54;               // 0x54
+    float f58;               // 0x58
+    float f5C;               // 0x5C
+    u8 _pad60[0x6C - 0x60];
+    u32 f6C;                 // 0x6C
+    u8 _pad70[0x74 - 0x70];
+    u32 f74;                 // 0x74
+    u8 f78;                  // 0x78
+    u8 _pad79[0x88 - 0x79];
+    u32 f88;                 // 0x88
+    u16 f8C;                 // 0x8C
+    u16 f8E;                 // 0x8E
+};
 CfObjectEff::CfObjectEff() {
     // The retail base-ctor chain (CObjectState/CObjectParam/CfObject) is
     // inlined here: MWCC keeps the base vtable store and devirtualizes the
@@ -19,33 +49,33 @@ CfObjectEff::CfObjectEff() {
     // vtable replaces it. The 0x70-0x8E tail is cleared in the same block.
     // Unmodeled base bytes are written as raw typed stores (same order and
     // widths as retail); modeled fields use their real members.
-    u8* b = reinterpret_cast<u8*>(this);
-    *(u32*)(b + 0x04) = 0;
-    *(u32*)(b + 0x08) = 0;
-    *(u32*)(b + 0x0C) = 0;
-    *(b + 0x10) = 0;
-    *(u32*)(b + 0x30) = 0;
-    *(u32*)(b + 0x34) = 0;
+    CfEffCtorBaseView* v = reinterpret_cast<CfEffCtorBaseView*>(this);
+    v->f04 = 0;
+    v->f08 = 0;
+    v->f0C = 0;
+    v->f10 = 0;
+    v->f30 = 0;
+    v->f34 = 0;
     *(void**)this = (void*)&lbl_eu_805294E0;
     mSubObj38 = nullptr;
     mPos3C = lbl_eu_80666958;
     mPos40 = lbl_eu_80666958;
     mPos44 = lbl_eu_80666958;
-    *(float*)(b + 0x48) = lbl_eu_80666958;
+    v->f48 = lbl_eu_80666958;
     mField4C = lbl_eu_80666958;
-    *(float*)(b + 0x50) = lbl_eu_80666958;
-    *(float*)(b + 0x54) = lbl_eu_80666958;
-    *(float*)(b + 0x58) = lbl_eu_80666958;
-    *(float*)(b + 0x5C) = lbl_eu_80666958;
+    v->f50 = lbl_eu_80666958;
+    v->f54 = lbl_eu_80666958;
+    v->f58 = lbl_eu_80666958;
+    v->f5C = lbl_eu_80666958;
     mFloat60 = lbl_eu_8066695C;
     mFlags68 = 0;
-    *(u32*)(b + 0x6C) = 0;
+    v->f6C = 0;
     mField70 = 0;
-    *(u32*)(b + 0x74) = 0;
-    *(b + 0x78) = 0;
-    *(u32*)(b + 0x88) = 0;
-    *(u16*)(b + 0x8C) = 0;
-    *(u16*)(b + 0x8E) = 0;
+    v->f74 = 0;
+    v->f78 = 0;
+    v->f88 = 0;
+    v->f8C = 0;
+    v->f8E = 0;
     this->CfObject_UnkVirtualFunc3();
     // Derived ctor: switch to the CfObjectEff vtable and initialize the
     // effect slots, then register with the game manager's flag check.
@@ -147,8 +177,13 @@ extern "C" bool detachBoundO___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
     return false;
 }
 void CfObjectEff::notifySubA08_() {
-    if (mSubObj38 != nullptr)
-        reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->notifySubEffect();
+    // Forwards to the sub-object's vtable slot +0xA8 (tail virtual call).
+    // No-arg CScnItemModel::getEffectActOwner matches retail's leave-r4-live
+    // bctr (same shape as CfObjectMove UVF7, FULL_MATCH).
+    cf::CfObject* sub = (cf::CfObject*)mSubObj38;
+    if (sub != 0) {
+        reinterpret_cast<CScnItemModel*>(sub)->getEffectActOwner();
+    }
 }
 // Retail symbol setSubObject___Q22cf11CfObjectEffFv (void params in the name)
 // but the body consumes an object pointer in r4 - forced-name form.
@@ -203,16 +238,20 @@ void setChildScl__(cf::CfObject* self, float first, float second) {
         return schedSetStepIntervals(eff->mChildEff, first, second);
 }
 
+// TU-local typed views over raw offsets (exact layout, explicit pads).
+struct EffChildF50View { u8 _pad[0x50]; float f50; };
+struct EffRotTailView { u8 _pad[0x48]; u32 w0; u32 w1; u32 w2; };
 namespace cf {
 extern "C" void setChildF50____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float v) {
-    void* o = *(void**)((u8*)self + 0x94);
-    if (o) *(float*)((u8*)o + 0x50) = v;
+    EffChildF50View* o = reinterpret_cast<EffChildF50View*>(self->mChildEff);
+    if (o) o->f50 = v;
 }
 } // namespace cf
 
 extern "C" void setChildF50G_(void* self, float v) {
-    void* o = *(void**)((u8*)self + 0x94);
-    if (o) *(float*)((u8*)o + 0x50) = v;
+    EffChildF50View* o
+        = reinterpret_cast<EffChildF50View*>(static_cast<cf::CfObjectEff*>(self)->mChildEff);
+    if (o) o->f50 = v;
 }
 
 void setChildV40__(void* obj, const void* src) {
@@ -290,15 +329,16 @@ extern "C" void setEffRotVec___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
         *reinterpret_cast<u32*>(&child->field_30) = src->z;
     }
     // Whole-vector word copy into the 0x48 tail (spanning mField4C).
-    u32* dst48 = reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x48);
+    EffRotTailView* tail = reinterpret_cast<EffRotTailView*>(self);
+    u32* dst48 = reinterpret_cast<u32*>(&tail->w0);
     dst48[0] = src->x;
     dst48[1] = src->y;
     dst48[2] = src->z;
 }
 u8* CfObjectEff::getEffPosPtr_() {
     if (mChildEff != nullptr)
-        return reinterpret_cast<u8*>(mChildEff) + 0x28;
-    return reinterpret_cast<u8*>(this) + 0x48;
+        return reinterpret_cast<u8*>(&mChildEff->field_28);
+    return reinterpret_cast<u8*>(&reinterpret_cast<EffRotTailView*>(this)->w0);
 }
 // Retail symbol setEffYPos_____Q22cf11CfObjectEffFv (void params in the name)
 // but the body consumes a float in f1 - forced-name form.
@@ -576,7 +616,7 @@ void CfObjectEff::updateEffect_() {
     }
 }
 int CfObjectEff::checkStsFlag_() {
-    return ((*(u32*)((u8*)this + 0x68) >> 20) & 1);
+    return ((mFlags68 >> 20) & 1);
 }
 } // namespace cf
 
@@ -673,12 +713,19 @@ namespace cf {
 // Release path: detaches the child effect, clears the 0xB0 object, pokes the
 // 0x9C/0xA0 objects' slot-0x1BC (gated by the arg's 0x14 validity word and
 // the live-object check), then drops the child and sets flag 0x40.
+// TU-local view of the +0x14 validity word teardownEff__ reads off its
+// u8* argument (exact layout; replaces the raw offset deref). Valid
+// objects carry a non-zero word here (cf. getEffOwner__'s +0x64 flag word).
+struct EffTeardownArgView {
+    u8 _pad[0x14];
+    u32 valid;  // 0x14
+};
 extern "C" void teardownEff____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* arg) {
     // Parent for the effect detach is this+0x90; retail null-guards the
     // offset so a null this passes 0 to schedDetachChildSlot.
     u8* parent = reinterpret_cast<u8*>(self);
     if (self != nullptr) {
-        parent = reinterpret_cast<u8*>(self) + 0x90;
+        parent = reinterpret_cast<u8*>(&self->mSubObj90);
     }
     schedDetachChildSlot(self->mChildEff, parent);
     if (self->mFieldB0 != nullptr) {
@@ -686,7 +733,7 @@ extern "C" void teardownEff____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
         self->mFieldB0 = nullptr;
     }
     if (self->mField9C != nullptr &&
-        *(u32*)(arg + 0x14) != 0 &&
+        reinterpret_cast<EffTeardownArgView*>(arg)->valid != 0 &&
         lookupWorkAtAddr(self->mField9C) != 0) {
         reinterpret_cast<cf::CfObjectModel*>(self->mField9C)->CfObjectModel_detachEffectSlot(self);
     }

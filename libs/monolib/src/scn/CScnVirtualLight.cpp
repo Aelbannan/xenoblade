@@ -338,27 +338,17 @@ extern "C" __declspec(noinline) CVirtualLightAmb* scnVlCreateAmb(CScnVirtualLigh
 
 // Same family as scnVlCreateAmb but with the extra 3-float `val` pointer (r6)
 // and the f32 scalar in f1; creates+initializes the light object at `field`.
-// The direction-vector -> angle conversion keeps the sqrt(x^2+z^2) call even
-// though its result is unused (extern call, may warn) - retail computes it
-// into the dead f2 slot.
+// Direction-vector -> dir-light angles (cfCam_vecToAngles family):
+// t1 = mulSda(-atan2(-x, z)), len = sqrt(x*x + z*z) feeds the second atan2
+// as t2 = mulSda(atan2(-y, len)). Passing z/len explicitly is what makes
+// MWCC hoist the z load (f2) up front and keep the fmr f2,f1 of the sqrt
+// result like retail.
 extern "C" __declspec(noinline) void scnVlDirFromVec(CScnVirtualLightData* self, u8* field,
                               const CTaskGame_setVec4_tmp* data, const CTaskGame_setVec4_tmp* val,
                               f32 value) {
-    // Direction-vector -> dir-light angles. The sqrt result is unused by the
-    // call; retail still keeps the call (it may warn). Writing x*x + z*z makes
-    // MWCC schedule the z load (f2) up front next to the x load, like retail.
-    // Direction-vector -> dir-light angles. Two retail artifacts live in this
-    // block: a dead early read of the z component (retail schedules it at the
-    // top of the stream, then reloads it for the multiply), and a dead sqrt
-    // (len) whose result the scnVlCreateDir call setup overwrites - retail
-    // keeps both the call and the dead fmr of its result.
-    { const volatile f32& vz = val->unk00[2]; (void)vz; }
-    f32 t1 = cfCam_mulSda2Const(-atan2AnimFIdx(-val->unk00[0]));
+    f32 t1 = cfCam_mulSda2Const(-atan2AnimFIdx(-val->unk00[0], val->unk00[2]));
     f32 len = safeFSqrt(val->unk00[0] * val->unk00[0] + val->unk00[2] * val->unk00[2]);
-    f32 t2 = cfCam_mulSda2Const(atan2AnimFIdx(-val->unk00[1]));
-    // len is dead in retail too (its result register is overwritten by the
-    // scnVlCreateDir argument setup); retail keeps the call regardless.
-    (void)len;
+    f32 t2 = cfCam_mulSda2Const(atan2AnimFIdx(-val->unk00[1], len));
     scnVlCreateDir(self, field, data, value, t1, t2);
 }
 

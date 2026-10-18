@@ -89,9 +89,9 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 extern "C" void playUISound__FUl(u32);
 // retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail playUISound(0xE) }
 extern "C" void sysWinAdvancePhase3(void* self) {
-    if (*(u8*)((char*)self + 0x35) == 2) {
-        *(u8*)((char*)self + 0x35) = 3;
-        *(u8*)((char*)self + 0x36) = 0;
+    if (((CSysWin*)self)->field_35 == 2) {
+        ((CSysWin*)self)->field_35 = 3;
+        ((CSysWin*)self)->field_36 = 0;
         playUISound__FUl(0xE);
     }
 }

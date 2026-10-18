@@ -42,7 +42,7 @@ extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*);
 extern "C" char* BdatGetPtrDirect(void*, const char*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* CUICfManager_getPackedFont9C();
-extern "C" void* getPackedFont();
+extern "C" void* getPackedFont__Fv();
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -250,7 +250,7 @@ void CMenuSymbolMark::Init() {
         // calls (retail reloads the slot from the entry base each time).
         ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
         ApplyFontToTxtPanes(((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane(),
-                      (u32)getPackedFont());
+                      (u32)getPackedFont__Fv());
     }
     mField_274 = 1;
     // The `if (this)` idiom splits the IScnRender subobject address

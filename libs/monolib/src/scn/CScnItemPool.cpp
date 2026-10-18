@@ -149,13 +149,16 @@ struct CScnItemBig {
 // schedule.
 #pragma push
 #pragma auto_inline off
-// Emit the standalone reslist<CScnItem*> constructor for the retail symbol
-// __ct__reslist_CScnItem. With -inline auto MWCC else folds the template
-// default-ctor into every call site and never emits a global body;
-// instantiate BEFORE any use so the out-of-line copy is authoritative.
-template reslist<CScnItem*>::reslist();
+// Instantiate only the deleting dtor: this keeps the matched
+// __dt__19reslist<P8CScnItem>Fv body plus both weak vtables (the link-time
+// UNIT_RULES renames them to lbl_eu_8056E540/558). The standalone
+// default-ctor is deliberately NOT instantiated — retail carries it under
+// the flat __ct__reslist_CScnItem label, spelled out by hand below (a
+// template instantiation under Wii/1.1 can only emit the symbolic
+// __ct__19reslist<P8CScnItem>Fv mangling, which never pairs with the flat
+// registry symbol; cf. CScnEnvLgtCtrl's __ct__reslist_IScnEnvCtl).
+template reslist<CScnItem*>::~reslist();
 #pragma pop
-template class reslist<CScnItem*>;
 
 // Doubly-linked list node used by the item-pool free-list helpers.
 struct CScnItemPoolLink {
@@ -238,13 +241,30 @@ extern "C" void simSetLeafAnimTag(CScnItem* item, u32 arg);
 extern "C" void simClearNodeRefs(CScnItem* item, u32 arg);
 extern "C" void simSetFlag2OnTree(CScnItem* item, u32 arg);
 
-// reslist<CScnItem> constructor (retail __ct__reslist_CScnItem). The base
-// ctor is inlined; MWCC emits the base-vtable store at entry and the
-// derived-vtable store at the end, reproducing the retail double-store
-// schedule.
-//
-// NOTE: __ct__reslist_CScnItem is emitted by `template class reslist<CScnItem>`
-// above.
+// reslist<CScnItem*> constructor (retail __ct__reslist_CScnItem). The flat
+// retail name cannot be produced by a template instantiation under Wii/1.1
+// (symbolic mangling), so it is spelled out (cf. CScnEnvLgtCtrl's
+// __ct__reslist_IScnEnvCtl): MWCC mangles this C++-linkage definition into
+// reslist_CScnItem: real (non-template) subclass of reslist<CScnItem*>.
+// Its out-of-line ctor carries the retail flat name in constructor-mangled
+// form (__ct__16reslist_CScnItemFv, paired by the cycle digit-strip
+// fallback) while its body IS the template construction: the base init
+// inlines (same phase structure as the template derived ctor, so the
+// scheduler reproduces the retail order byte-identically), and
+// __declspec(novtable) suppresses any third vtable store, leaving exactly
+// the retail base-store/derived-store pair (COccCulling novtable
+// precedent). Relocs name the weak template vtables; the TU's UNIT_RULES
+// renames them to lbl_eu_8056E540/558 at link time. NOTE (us-8048ffb8):
+// the mined reloc map cannot learn the derived weak->lbl mapping (the
+// only exact-name pair exhibiting it is this unaccepted target), so the
+// FULL_MATCH cert and witness both fail-closed on those two reloc names
+// despite 100% identical instructions. Seeding the map from the TU's own
+// UNIT_RULES exact_renames (or template-aware pairing) accepts this with
+// no source change.
+struct __declspec(novtable) reslist_CScnItem : public reslist<CScnItem*> {
+    reslist_CScnItem();
+};
+reslist_CScnItem::reslist_CScnItem() : reslist<CScnItem*>() {}
 
 extern "C" __declspec(noinline) u32 CScnItemPool_getListCapacity(u8* self) { return ((CScnItemPoolState*)self)->value18; }
 // volatile load: keeps the body byte-identical (lhz) while making it impure to
@@ -293,28 +313,30 @@ extern "C" __declspec(noinline) void CScnItemPool_pushItemToList(u32 a, u32* b) 
 }
 extern "C" __declspec(noinline) void CScnItemPool_getStartNode(int* dst, const void* src) { *(u32*)dst = *(const u32*)((const u8*)src + 4); }
 extern "C" __declspec(noinline) void* CScnItemPool_lookupSubPool(u8* self, int kind) {
+    CScnItemPool* pool = (CScnItemPool*)self;
     switch (kind) {
     case 1:
-        return (void*)((char*)self + 0x0C);
+        return pool->mList0C;
     case 2:
-        return (void*)((char*)self + 0x2C);
+        return pool->mList2C;
     case 3:
-        return (void*)((char*)self + 0x4C);
+        return pool->mList4C;
     case 4:
-        return (void*)((char*)self + 0x6C);
+        return pool->mList6C;
     case 5:
-        return (void*)((char*)self + 0x8C);
+        return pool->mList8C;
     default:
         return nullptr;
     }
 }
 extern "C" __declspec(noinline) void* CScnItemPool_getSubPoolForKind(u8* self, s32 kind) {
+    CScnItemPool* pool = (CScnItemPool*)self;
     switch (kind) {
-    case 1: return (u8*)self + 0xC;
-    case 2: return (u8*)self + 0x2C;
-    case 3: return (u8*)self + 0x4C;
-    case 4: return (u8*)self + 0x6C;
-    case 5: return (u8*)self + 0x8C;
+    case 1: return pool->mList0C;
+    case 2: return pool->mList2C;
+    case 3: return pool->mList4C;
+    case 4: return pool->mList6C;
+    case 5: return pool->mList8C;
     default: return 0;
     }
 }

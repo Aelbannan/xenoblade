@@ -465,9 +465,9 @@ void cursorFinalize() {}
 
 extern CMenuBattleDamage* lbl_eu_80663F28;
 
-extern "C" void BtlDmg_SetByte777(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x777) = val; }
-extern "C" void BtlDmg_SetByte778(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x778) = val; }
-extern "C" void BtlDmg_SetField779(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x779) = val; }
+extern "C" void BtlDmg_SetByte777(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->_pad776[1] = val; }
+extern "C" void BtlDmg_SetByte778(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->_pad776[2] = val; }
+extern "C" void BtlDmg_SetField779(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->field_0x779 = val; }
 
 // Battle-damage singleton factory. Returns null when one already exists;
 // otherwise allocates the 0x77c-byte object from the work-thread region,
@@ -496,8 +496,8 @@ extern "C" void BtlDmg_NotifyDamage(int actorId, int value) {
         BtlDmg_SpawnPopup(g, actorId, value, 0);
     }
 }
-extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x774) = val; }
-extern "C" void BtlDmg_SetDamageDir(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x775) = val; }
+extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->mDamageType = val; }
+extern "C" void BtlDmg_SetDamageDir(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->mDamageDir = val; }
 extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
     if (lbl_eu_80663F28 == NULL) {
         return;

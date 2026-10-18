@@ -256,7 +256,7 @@ void CMenuQstCnt::Init() {
     // IScnRender subobject (same shape as Term()).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>((u8*)this + 0x70);
+        cb = reinterpret_cast<IScnRender*>(&this->mOcc70);
     }
     mScene->addRenderCB(cb, 0xa, 0);
 
@@ -269,7 +269,7 @@ void CMenuQstCnt::Term() {
     waitForDrawDone__9CDeviceVIFv();
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        cb = reinterpret_cast<IScnRender*>((u8*)this + 0x70);
+        cb = reinterpret_cast<IScnRender*>(&this->mOcc70);
     }
     mScene->removeRenderCB(cb);
     if (mLayout) {
@@ -337,7 +337,7 @@ void CMenuQstCnt::cbRenderBefore() {
     if (cf::CfGameManager::isSceneLoading()) return;
     {
         CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14);
-        f32 camDist = *(f32*)((u8*)cam + 0xC);
+        f32 camDist = cam->field_C;
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;
     }

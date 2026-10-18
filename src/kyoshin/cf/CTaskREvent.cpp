@@ -662,9 +662,9 @@ int evtIsMoviePaused() {
 }
 
 int evtHasMoviePlayer(void) {
-    int* ptr = (int*)lbl_eu_80664240;
-    if (!ptr) return 0;
-    int val = *(int*)((char*)ptr + 0x1e0);
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (!mgr) return 0;
+    int val = (int)mgr->mCri;
     return (unsigned)((-1 - val) | (val + 1)) >> 31;
 }
 

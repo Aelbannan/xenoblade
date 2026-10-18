@@ -48,14 +48,29 @@ public:
 };
 }
 
+// TU-local views over the secondary sub-object anchors written by the
+// ctor and refreshed by setupActionTable (exact layout; names erased at
+// codegen, same addi offsets as the raw byte expressions they replace).
+struct PcCtorVtView {
+    u8 _p0[0x08];
+    void* v8;               // 0x08
+    u8 _q[0x3380 - 0x0C];
+    void* v3380;            // 0x3380
+    u8 _r[0x3E9C - 0x3384];
+    void* v3E9C;            // 0x3E9C
+};
+struct PcAiSubView {
+    u8 _p[0x3380];
+    u8 ai;                  // 0x3380 - CAIAction sub-object anchor
+};
 cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
     // novtable class: write the four retail sub-vtable pointers manually
     // (base labels 0x0 / +0xC / +0x36C / +0x37C at offsets 0x0 / 0x8 /
     // 0x3380 / 0x3E9C).
     *(void**)this = (void*)lbl_eu_80529DA0;
-    *(void**)((u8*)this + 0x8) = (void*)(lbl_eu_80529DA0 + 0xC);
-    *(void**)((u8*)this + 0x3380) = (void*)(lbl_eu_80529DA0 + 0x36C);
-    *(void**)((u8*)this + 0x3E9C) = (void*)(lbl_eu_80529DA0 + 0x37C);
+    ((PcCtorVtView*)this)->v8 = (void*)(lbl_eu_80529DA0 + 0xC);
+    ((PcCtorVtView*)this)->v3380 = (void*)(lbl_eu_80529DA0 + 0x36C);
+    ((PcCtorVtView*)this)->v3E9C = (void*)(lbl_eu_80529DA0 + 0x37C);
 
     // Allocate the 0x44-byte CfResPcImpl resource object and construct it in
     // place, passing the player sub-object (this + 0x3E9C, null-checked). The
@@ -253,9 +268,9 @@ void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u3
     if ((int)a < 0x2c) {
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
         // r4-r8 stay live into the base Fv forced-name (retail arity Fv).
-        u8* subObj = reinterpret_cast<u8*>(self) + 0x3e9c;
+        cf::CfObjectMove* subObj = self->pcMove();
         CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFv(
-            (cf::CfObjectMove*)subObj, a, b, c, d, e);
+            subObj, a, b, c, d, e);
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
         if (obj != NULL) {
@@ -342,7 +357,7 @@ void cf::CfObjectPc::setupActionTable() {
     // The three uses of this+0x3380 are written in different syntaxes so MWCC
     // does not CSE the address into a callee-saved register (retail recomputes
     // addi r3, r31, 0x3380 at each call site).
-    aiResetTables((u8*)this + 0x3380);
+    aiResetTables((u8*)&((PcAiSubView*)this)->ai);
     if (((CfObjectPcSubFields*)this)->field_0x3F28 == 4) {
         // Arts-count bdat row: enable the art column when the string value's
         // first byte is '1' (the value is returned packed; read its low byte).
@@ -351,11 +366,11 @@ void cf::CfObjectPc::setupActionTable() {
         u32 val = getBdatStringColumnValue(lbl_eu_806640F4,
             (const char*)lbl_eu_804FC5EC + 0x24, artsData->field_0xC);
         if (*(s8*)&val == 1) {
-            aiInstallArts(&((u8*)this)[0x3380], 0x70, 0xd);
+        aiInstallArts((u8*)&((PcAiSubView*)this)->ai, 0x70, 0xd);
             return;
         }
     }
-    aiInstallArts((u8*)((u32)this + 0x3380), 0, 0);
+    aiInstallArts((u8*)&((PcAiSubView*)this)->ai, 0, 0);
 }
 
 
@@ -567,7 +582,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
         if (testActorStatus(self, (int*)&state, 6) ||
             ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData()),
                 testActorStatus(self, (int*)&state, 9))) {
-            CfObjectMove_setAnimModeArgs((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
+            CfObjectMove_setAnimModeArgs((u8*)self->pcMove(), 0x1B, 0, 6, 1);
         }
     actedDone:;
     }

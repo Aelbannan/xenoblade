@@ -5,7 +5,7 @@
 // (.sbss), lbl_eu_8056DC28 = prototype object (.data). Declaration only so
 // this TU emits no .bss/.sbss.
 extern "C" {
-    extern u32 lbl_eu_806658A8;
+    extern s8 lbl_eu_806658A8;
     extern void* lbl_eu_806658AC;
 }
 
@@ -30,5 +30,5 @@ MPFDrawCross* MPFDrawCross::getInstance(){
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.sbss] 0x806658A8-0x806658B0 (8B) zero-fill
-u32 lbl_eu_806658A8;            // sbss +0..+3 (init flag + pad)
+s8 lbl_eu_806658A8;             // sbss +0 (init flag; +1..+3 align pad)
 void* lbl_eu_806658AC;           // sbss +4..+7 (instance pointer)

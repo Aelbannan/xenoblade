@@ -74,6 +74,16 @@ struct UnkStruct_3Ptr {
     void* p4;
     void* p8;
 };
+// Flag-slot view over the CSLCur heap-slot bytes: the slot callback
+// (CSLCur_setFlag) sets the bytes at +0xB/+0xE of each entry, and
+// CSLCur_getSlot probes the byte at +0xF.
+struct CSLFlagSlot {
+    u8 _pad[0xB];
+    u8 f0B;      //0x0B
+    u8 _padC[2];
+    u8 f0E;      //0x0E
+    u8 f0F;      //0x0F
+};
 
 extern u32 lbl_eu_806649F0;
 
@@ -232,8 +242,8 @@ end:
 // for both (a partial commutative-add swap breaks the witness rho).
 extern "C" void CSLCur_setFlag(int /*unused*/, int index, u8 value) {
     if (lbl_eu_806649F0 == 0) return;
-    ((u8*)lbl_eu_806649F0 + index)[0xB] = 1;
-    ((u8*)lbl_eu_806649F0 + index)[0xE] = value;
+    ((CSLFlagSlot*)((u8*)lbl_eu_806649F0 + index))->f0B = 1;
+    ((CSLFlagSlot*)((u8*)lbl_eu_806649F0 + index))->f0E = value;
 }
 
 void drawLayout(
@@ -436,9 +446,16 @@ struct UnkTwoPtr {
     void* mObjB;        // +0x08 - object with a float field at +0x10
 };
 
+// Float field at +0x10 of an untyped layout object (CSLSub_bindPane's mObjB /
+// CSLCur_bindPane's mField0C). Exact layout, member access only.
+struct Float10View {
+    u8 _00[0x10];
+    float field10;  // +0x10
+};
+
 extern "C" __declspec(noinline) void CSLSub_bindPane(UnkTwoPtr* self) {
     ((UnkVtblObj*)self->mObjA)->vf11(self->mObjB, 1);
-    *(float*)((char*)self->mObjB + 0x10) = lbl_eu_80668B6C;
+    ((Float10View*)self->mObjB)->field10 = lbl_eu_80668B6C;
     ((UnkVtblObj*)self->mObjA)->vf14(0);
 }
 
@@ -1369,8 +1386,7 @@ extern "C" __declspec(noinline) int CSLCur_getSlot(CSLCur* cur, u8 index) {
     if (ptr == nullptr) return 0;
 
     // Check flag byte at offset 0xF from the indexed entry
-    u8* flagAddr = (u8*)cur + index;
-    if (flagAddr[0xF] != 0) {
+    if (((CSLFlagSlot*)((u8*)cur + index))->f0F != 0) {
         return (int)((u8*)ptr + 0x20);
     }
     return 0;
@@ -2620,6 +2636,6 @@ extern "C" __declspec(noinline) void CSLCur_bindPane(UnkPtrHolder* self) {
     self->mPtr->vf8(self->mField10);
     self->mPtr->vf7(self->mField0C);
     self->mPtr->vf11(self->mField0C, 1);
-    *(float*)((char*)self->mField0C + 0x10) = lbl_eu_80668B6C;
+    ((Float10View*)self->mField0C)->field10 = lbl_eu_80668B6C;
     self->mPtr->vf14(0);
 }

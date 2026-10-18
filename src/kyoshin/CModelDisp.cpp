@@ -614,9 +614,9 @@ void ModelDispDispatchChain(CModelDisp* self, void* param, void* chainArg) {
 #pragma pop
 
 extern "C" void ModelDispStartFadeOut(void* self) {
-    if (*(u8*)((u8*)self + 0x2FD8) != 0) return;
-    *(u8*)((u8*)self + 0x2FD8) = 1;
-    *(u8*)((u8*)self + 0x2FE4) = 0;
+    if (((CModelDisp*)self)->field_2FD8 != 0) return;
+    ((CModelDisp*)self)->field_2FD8 = 1;
+    ((CModelDisp*)self)->field_2FE4 = 0;
 }
 
 // Defined after its callees so -ipa does not fold their bodies into this

@@ -30,6 +30,11 @@ extern f32 lbl_eu_80517548[];
  * short-lived `float t` chain folded with `sum += t` (byte-identical output,
  * still +8); moving b0's declaration after the out+ pointers (worse,
  * reg_swap 162 -> 168). Declaring `s` at its first use is codegen-neutral.
+ * Ruled out (TU-final attempt 3): chain-FIRST-8 (taps 0..7 as one anchor-free
+ * chain, taps 8..31 separate) loses the valve -> frame 0xB0, OVER 32; and
+ * chain-last-2 (taps 0..29 separate, `sum+p30+p31` tail) STILL merges (+1/pass)
+ * AND loses the valve (frame 0xB0) -> OVER 40, worst of both. So only >=4-tap
+ * chains valve, and every valved shape merges: 0x90+merge vs 0xB0-merge-free wall.
  * Also ruled out (TU-final attempt 2): putting `sum` at the END of the
  * 24..31 chain (`... + p31 + sum`; reg_swap 161 vs 162, still +8) and
  * shortening the chained tail to taps 28..31 with individual statements

@@ -477,7 +477,7 @@ extern "C" void EvtFx_DetachEffect(CREvtEffect* self, void* effect) {
             // Detach from the callback sub-object (self+0x14), null-guarded like retail
             void* parent = (char*)self;
             if (self != 0) {
-                parent = (char*)self + 0x14;
+                parent = (char*)&self->mSecondaryVtable;
             }
             schedDetachChildSlot(effect, parent);
 

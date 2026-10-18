@@ -49,8 +49,8 @@ CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
         struct PTMF12 { u32 w[3]; };
         *(PTMF12*)&shim->callbacks[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
         *(PTMF12*)&shim->callbacks[3] = *(PTMF12*)(uintptr_t)__ptmf_null;
-        char* vt54 = lbl_eu_8053B0B8 + 0x24; // secondary-base vtable slot +0x54
-        char* vt58 = lbl_eu_8053B0B8 + 0xac; // secondary-base vtable slot +0x58
+        char* vt54 = &lbl_eu_8053B0B8[0x24]; // secondary-base vtable slot +0x54
+        char* vt58 = &lbl_eu_8053B0B8[0xac]; // secondary-base vtable slot +0x58
 
         shim->vtable = lbl_eu_8053B0B8;
         shim->field54 = vt54;
@@ -78,7 +78,7 @@ CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int controllerType);
 extern "C" void CTitle_showMenu(CMenuTitleSub*);
 
-extern "C" void TitleMenuSetFlagE8(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
+extern "C" void TitleMenuSetFlagE8(void* self) { ((CMenuTitleInput*)self)->field_e8 = 1; }
 
 void TitleMenuOnLoadDone(CMenuTitleInput* self) {
     // Opening menu: query the +0x60 sub-menu, flag this menu when it opens.
@@ -88,7 +88,7 @@ void TitleMenuOnLoadDone(CMenuTitleInput* self) {
 }
 
 void TitleMenuShowSub(CMenuTitleInput* self) {
-    ((unsigned char*)self)[0xe8] = 3;
+    self->field_e8 = 3;
     CTitle_showMenu(&self->mSub);
 }
 
@@ -152,7 +152,7 @@ void TitleMenuHandleInput(CMenuTitleInput* self) {
         // Direction/stick trigger bits differ between controller types; retail
         // re-runs the whole extraction block per branch (both flag words reloaded).
         // 0x10008 = bit16|bit3 exceeds the andi immediate, so MWCC masks it via
-        // rlwinm+rlwimi; (x | -x) >> 31 converts any non-zero value to 1.
+        // rlwinm+rlwimi; !!booleanization lowers to the neg/or/shift sequence.
         u32 turbo;
         u32 pressed;
         u32 trigger1;
@@ -166,18 +166,16 @@ void TitleMenuHandleInput(CMenuTitleInput* self) {
             pressed = pad->mPadPressedFlags;
             trigger1 = (pressed >> 21) & 1;
             trigger2 = (pressed >> 22) & 1;
-            dirButton = (u32)(-(s32)(turbo & 0x8004) | (turbo & 0x8004)) >> 31;
-            cancelButton =
-                (u32)(-(s32)(turbo & 0x10008) | (turbo & 0x10008)) >> 31;
+            dirButton = !!(turbo & 0x8004);
+            cancelButton = !!(turbo & 0x10008);
         } else {
             // Wiimote/Nunchuk: trigger bits 4, 5 from right.
             turbo = pad->mTurboPressButtonFlags;
             pressed = pad->mPadPressedFlags;
             trigger1 = (pressed >> 4) & 1;
             trigger2 = (pressed >> 5) & 1;
-            dirButton = (u32)(-(s32)(turbo & 0x8004) | (turbo & 0x8004)) >> 31;
-            cancelButton =
-                (u32)(-(s32)(turbo & 0x10008) | (turbo & 0x10008)) >> 31;
+            dirButton = !!(turbo & 0x8004);
+            cancelButton = !!(turbo & 0x10008);
         }
 
         // Each branch handles one input; every path falls through to the exit.

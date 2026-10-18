@@ -118,11 +118,12 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 tu = rSrt.Tu;
     f32 tv = rSrt.Tv;
 
-    // Product temps declared in retail creation order.
-    f32 sv_cos = sv * cosR;
-    f32 sv_sin = sv * sinR;
+    // su-pair declared first (numbering); MWCC may birth sv-pair first
+    // anyway as in the matched SR.
     f32 su_cos = su * cosR;
     f32 su_sin = su * sinR;
+    f32 sv_cos = sv * cosR;
+    f32 sv_sin = sv * sinR;
     f32 sv_sin_tu = sv_sin * tu;
     f32 su_cos_tu = su_cos * tu;
     f32 sv_cos_tv = sv_cos * tv;

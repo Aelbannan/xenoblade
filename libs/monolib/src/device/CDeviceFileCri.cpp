@@ -47,7 +47,7 @@ void CDeviceFileCri::setCriFilePathC(const wchar_t* pData) { *(wchar_t**)&lbl_eu
 
 extern "C" void sinit_80450B2C() {
     lbl_eu_806576C8[0] = 0;
-    *(u32*)(lbl_eu_806576C8 + 0x80) = 0;
+    ((u32*)lbl_eu_806576C8)[0x20] = 0;
 }
 
 #pragma dont_inline on
@@ -136,18 +136,18 @@ CDeviceFileCri::~CDeviceFileCri() {
 
 namespace {
 
-// Replica of CWorkThread::isException() (retail inlines both the flag test
-// and CMsgParam<8>::find() here; find's out-of-line copy lives in CWorkRoot),
-// walking the queue by byte offset
-// (CDeviceFileCri-relative: mMsgQueue@0x80 -> mArrayPtr/mFront/mSize/mCapacity).
-// Loop shape mirrors CMsgParam<N>::find's return-i / return-minus-one body:
-// that is what makes MWCC drive the trip count through CTR (mtctr/bdnz) and
-// fold exhaustion into the shared 'li r6,-1' tail.
+struct CriMsgView { // raw CMsgParam<8> tail view (members private); isException replica
+    u8 _00[0x1A4];
+    CMsgParamEntry* mArrayPtr; // 0x1A4
+    u32 mFront;                // 0x1A8
+    u32 mSize;                 // 0x1AC
+    u32 mCapacity;             // 0x1B0
+};
 inline int criFindException(CDeviceFileCri* self) {
-    for (int i = 0; (u32)i < *(u32*)((char*)self + 0x1AC); i++) {
-        u32 slot = (*(u32*)((char*)self + 0x1A8) + i) %
-                   *(u32*)((char*)self + 0x1B0);
-        if ((*(CMsgParamEntry**)((char*)self + 0x1A4))[slot].command ==
+    for (int i = 0; (u32)i < ((CriMsgView*)self)->mSize; i++) {
+        u32 slot = (((CriMsgView*)self)->mFront + i) %
+                   ((CriMsgView*)self)->mCapacity;
+        if ((((CriMsgView*)self)->mArrayPtr)[slot].command ==
             CWorkThread::EVT_EXCEPTION) {
             return i;
         }

@@ -404,7 +404,7 @@ void* SchedRes_FindValueByKey(CResLookup* self, void* key) {
         for (; i < count; i++) {
             CResLookupEntry* entry = (CResLookupEntry*)((u8*)self->mEntries + off);
             if (entry->mKey == key) {
-                return *(void**)((u8*)self->mEntries + i * 8);
+                return self->mEntries[i].mValue;
             }
             off += 8;
         }

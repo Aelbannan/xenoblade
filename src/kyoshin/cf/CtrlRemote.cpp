@@ -505,7 +505,8 @@ a89c:
     }
 }
 
-float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+struct CActorParam1840View { u8 _pad[0x1840]; float f1840; };
+float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return ((CActorParam1840View*)self)->f1840; }
 
 // Target us-8009abb4. Pad-handler gate: when the global "demo/idle" state
 // word clears, run a battery of player-state probes; if none of them flag a

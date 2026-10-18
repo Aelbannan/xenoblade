@@ -55,27 +55,30 @@ s32 SUD_AnalyTypeCcs(const char* buf, s32 len) {
  * table. On a hit, stores the match offset in *outOffset and 35 in *outSize,
  * unless the offset lies in the top quarter of the address space (cntlzw bit
  * 4 clear), in which case *outSize is 0.
+ *
+ * The walk pointer `p` is deliberately declared after `table`/`i`: MWCC
+ * colors first-declared locals into the highest saved registers, so this
+ * order puts table=r30, i=r29, p=r28 (retail), matching the data pointer's
+ * r28 while id/outOffset/outSize take r25-r27.
  */
 void SUD_SearchSudDat(char* data, s32 id, s32* outOffset, s32* outSize) {
     const char* table;
     s32 i;
+    char* p = data;
 
     *outOffset = 0;
     *outSize = 0;
     // Guard + bare block keeps MWCC's branch-over-branch lowering
     // (`bgt loop_init; b end` instead of a single `ble end`).
-    if (!(data != NULL && id > 0))
+    if (p == NULL || id <= 0)
         return;
     {
         table = lbl_eu_8051D47C;
-        i = 0;
-        while (i < id) {
-            if (memcmp(data, table + 0x1f, 1) == 0 && memcmp(data, table, 8) == 0) {
-                *outOffset = (s32)data;
-                *outSize = ((__cntlzw((u32)data) >> 5) & 1) ? 0 : 35;
+        for (i = 0; i < id; ++p, ++i) {
+            if (memcmp(p, table + 0x1f, 1) == 0 && memcmp(p, table, 8) == 0) {
+                *outOffset = (s32)p;
+                *outSize = ((__cntlzw((u32)p) >> 5) & 1) ? 0 : 35;
             }
-            ++data;
-            ++i;
         }
     }
 }

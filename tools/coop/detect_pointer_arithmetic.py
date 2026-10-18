@@ -33,7 +33,7 @@ CAST_BYTE_ARITH = re.compile(
 CAST_INT_ARITH = re.compile(
     r'\(\s*([a-zA-Z_]\w*(?:\s*\*)+)\s*\)\s*'
     r'\(\s*\(\s*' + INT_T + r'\s*\)\s*'
-    r'(.+?)\s*[+\-]\s*'
+    r'(.+?)\s*[+\-](?!>)\s*'
     r'(.+?)\s*\)', re.IGNORECASE)
 
 SUBSCRIPT_CAST = re.compile(
@@ -47,11 +47,11 @@ PTR_OFFSET_DEREF = re.compile(
 REINTERPRET_ARITH = re.compile(
     r'reinterpret_cast\s*<\s*([^>]+)\s*>\s*\(\s*'
     r'reinterpret_cast\s*<\s*' + BYTE_T + r'\s*\*+\s*>\s*'
-    r'\(([^)]+)\)\s*[+\-]\s*([^)]+)\s*\)', re.IGNORECASE)
+    r'\(([^)]+)\)\s*[+\-](?!>)\s*([^)]+)\s*\)', re.IGNORECASE)
 
 REINTERPRET_BYTE_ARITH = re.compile(
     r'reinterpret_cast\s*<\s*' + BYTE_T + r'\s*\*+\s*>\s*'
-    r'\(([^)]+)\)\s*[+\-]\s*([^;,)]+)', re.IGNORECASE)
+    r'\(([^)]+)\)\s*[+\-](?!>)\s*([^;,)]+)', re.IGNORECASE)
 
 HAS_PTR_CAST = re.compile(r'\(\s*(?:' + BYTE_T + r'|[a-zA-Z_]\w*\s*\*)\s*\*?\s*\)')
 HAS_REINTERPRET = re.compile(r'reinterpret_cast')

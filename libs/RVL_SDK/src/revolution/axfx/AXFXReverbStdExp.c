@@ -16,16 +16,17 @@ static void __FreeDelayLine(AXFX_REVERBSTD_EXP* reverb);
 static void __BzeroDelayLines(AXFX_REVERBSTD_EXP* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP* reverb);
 
+#pragma peephole off
 u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     // Interleaved declaration order drives the -O4,p scheduler: retail hoists
     // both table bases, loads the 32000.0f const, then the param, then
     // Filter[6][0] before the fmuls, with fctiwz between [6][2]/[6][3].
-    u32 ival = (u32)(s32)(32000.0f * reverb->preDelayTimeMax);
     u32 f0 = __FilterSizeTable[6][0];
     u32 e7 = __EarlySizeTable[7];
     u32 f1 = __FilterSizeTable[6][1];
     u32 f2 = __FilterSizeTable[6][2];
     u32 f3 = __FilterSizeTable[6][3];
+    u32 ival = (u32)(s32)(32000.0f * reverb->preDelayTimeMax);
     u32 tot = e7 + ival;
 
     tot += f0;
@@ -34,6 +35,7 @@ u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     tot += f3;
     return tot * 12;
 }
+#pragma peephole on
 
 BOOL AXFXReverbStdExpInit(AXFX_REVERBSTD_EXP* reverb) {
     u32 i;

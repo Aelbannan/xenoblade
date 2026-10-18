@@ -6,7 +6,7 @@
 //   - us-804637e0 UnkClass_8045F564::validateHeap()
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
-#include "monolib/lib/CLibLayout.hpp"
+#include "libs/monolib/src/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <revolution/mem.h>
 
@@ -32,15 +32,13 @@ UnkClass_8045F564::~UnkClass_8045F564() {
     
     // Remove this instance from CLibLayout's tracking array by shifting
     // every later entry down one slot.
-    CLibLayout* lib = lbl_eu_80665710;
-    for (u32 i = 0; i < lib->instanceCount; i++) {
-        if (lib->instanceArray[i] != this) continue;
+    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
+        if (lbl_eu_80665710->instanceArray[i] != this) continue;
 
-        while (i < lib->instanceCount - 1) {
-            lib->instanceArray[i] = lib->instanceArray[i + 1];
-            i++;
+        for (; i < lbl_eu_80665710->instanceCount - 1; i++) {
+            lbl_eu_80665710->instanceArray[i] = lbl_eu_80665710->instanceArray[i + 1];
         }
-        lib->instanceCount--;
+        lbl_eu_80665710->instanceCount--;
         break;
     }
 }

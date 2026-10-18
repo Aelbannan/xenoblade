@@ -629,6 +629,42 @@ SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
     return ref;
 }
 
+// Retail standalone overload (bool return, SoundInfoOffset* result).
+bool SoundArchiveFileReader::impl_GetSoundInfoOffset(
+    u32 id, SoundArchiveFile::SoundInfoOffset* pOffset) const {
+    const SoundArchiveFile::SoundCommonTable* pTable =
+        Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
+
+    if (pTable == NULL) {
+        return false;
+    }
+
+    if (id >= pTable->count) {
+        return false;
+    }
+
+    if (GetVersion() >= NW4R_VERSION(1, 1)) {
+        const SoundArchiveFile::SoundCommonInfo* pInfo =
+            Util::GetDataRefAddress0(pTable->items[id], mInfo);
+
+        if (pInfo == NULL) {
+            return false;
+        }
+
+        *pOffset = pInfo->soundInfoRef;
+
+        return true;
+    }
+
+    SoundArchiveFile::SoundInfoOffset ref;
+    ref.refType = pTable->items[id].refType;
+    ref.dataType = pTable->items[id].dataType;
+    ref.value = pTable->items[id].value + 0x1C;
+    *pOffset = ref;
+
+    return true;
+}
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r

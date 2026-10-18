@@ -15,6 +15,7 @@ extern const f32 lbl_eu_8066AFB4;
 CLight::CLight(){
     u8* self = (u8*)this;
     extern char lbl_eu_8056F950[];
+    void* lp = nullptr;
     *(void**)self = (void*)&lbl_eu_8056F950;
     *(float*)(self + 0x04) = lbl_eu_8066AFA8;
     *(float*)(self + 0x08) = lbl_eu_8066AFA8;
@@ -26,22 +27,55 @@ CLight::CLight(){
     *(float*)(self + 0x20) = lbl_eu_8066AFA8;
     *(float*)(self + 0x24) = lbl_eu_8066AFA8;
     *(float*)(self + 0x28) = lbl_eu_8066AFB0;
-    void* lp = nullptr;
     *(u32*)(self + 0x2C) = (u32)lp;
-    *(u32*)(self + 0x30) = (u32)(lp != 0) | 0xF;
     *(u32*)(self + 0x34) = (u32)lp;
     *(float*)(self + 0x38) = lbl_eu_8066AFB0;
     *(float*)(self + 0x3C) = lbl_eu_8066AFB4;
+    this->unk30 = (u32)this->mpLightObj | 0xF;
 }
 
-void LightCtlCopyObj(u8* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+// Copies light state from src into an existing CLight without disturbing its
+// vtable (offset 0) or its LightObj pointer (0x2C): plain fields first, then
+// the LightObj contents through operator=, then the trailing field.
+extern "C" CLight* LightCtlCopyObj(CLight* dst, const CLight* src) {
+    dst->unk4 = src->unk4;
+    dst->unk10 = src->unk10;
+    // The four scalar words (unk1C_x..unk28) move as raw u32 words
+    // (retail lwz/stw), matching the LightCtlSetPos idiom in this TU.
+    const u32* s = (const u32*)&src->unk1C_x;
+    u32* d = (u32*)&dst->unk1C_x;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+    dst->unk30 = src->unk30;
+    dst->unk34 = src->unk34;
+    dst->unk38 = src->unk38;
+    *dst->mpLightObj = *src->mpLightObj;
+    dst->unk3C = src->unk3C;
+    return dst;
 }
 void LightCtlSetObj(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
-void LightCtlSetAttnMode(u8* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+extern "C" void LightCtlSetAttnMode(CLight* self, int mode) {
+    self->unk34 = mode;
+    self->mpLightObj->Clear();
+    switch (self->unk34) {
+    case 1:
+        self->mpLightObj->InitLightAttnA(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
+        self->mpLightObj->InitLightAttnK(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
+        break;
+    case 3:
+        self->mpLightObj->InitLightAttnA(lbl_eu_8066AFB0, lbl_eu_8066AFA8, lbl_eu_8066AFA8);
+        break;
+    case 0:
+        self->mpLightObj->Disable();
+        self->unk30 &= ~0x10000;
+        break;
+    default:
+        break;
+    }
 }
 // Set the light position: copy the vector as raw u32 words (retail lwz/stw),
 // then forward to the LightObj (tail call).
@@ -53,8 +87,35 @@ extern "C" void LightCtlSetPos(CLight* self, const ml::CVec3* v) {
     dst[2] = s[2];
     self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
 }
-void LightCtlSetDir(u8* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+// Set the light direction: copy the vector as raw u32 words (retail lwz/stw),
+// then forward to the LightObj per the unk34 light type. Case 1 scales the
+// direction to a position (then InitLightPos with unk4, as in LightCtlSetPos).
+extern "C" void LightCtlSetDir(CLight* self, const ml::CVec3* dir) {
+    u32* dst = (u32*)&self->unk20;
+    const u32* s = (const u32*)dir;
+    dst[0] = s[0];
+    dst[1] = s[1];
+    dst[2] = s[2];
+    switch (self->unk34) {
+    case 1: {
+        ml::CVec3 tmp;
+        ml::CVec3 pos;
+        const f32 dist = lbl_eu_8066AFB8;
+        nw4r::math::VEC3Scale(tmp, *(const ml::CVec3*)&self->unk20, dist);
+        pos.x = tmp.x;
+        pos.y = tmp.y;
+        pos.z = tmp.z;
+        self->unk4 = pos;
+        self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
+        break;
+    }
+    case 2:
+        self->mpLightObj->InitSpecularDir(self->unk20, self->unk24, self->unk28);
+        break;
+    case 4:
+        self->mpLightObj->InitLightDir(self->unk20, self->unk24, self->unk28);
+        break;
+    }
 }
 // Computes a light direction by building the XYZ Euler rotation matrix for
 // (X = angleY, Y = angleX, Z fixed at 0) and applying it to the +Z unit

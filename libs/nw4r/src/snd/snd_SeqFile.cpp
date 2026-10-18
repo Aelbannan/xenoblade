@@ -23,15 +23,6 @@ struct SeqLabelBlock {
     u32 offset[1];                     // at 0xc
 };
 
-// Views SeqFileReader's data members so the label-search helper below can
-// reach the header pointer without private-member access. Same layout as
-// SeqFileReader's prefix (mHeader/mDataBlock), so callers may pass a real
-// SeqFileReader by pointer.
-struct SeqFileReaderView {
-    const SeqFile::Header* mHeader;       // at 0x0
-    const SeqFile::DataBlock* mDataBlock; // at 0x4 (same as SeqFileReader)
-};
-
 // Pointer add that keeps the source operand order (base first) when lowered.
 template <typename T, typename Base, typename Off>
 inline const T* AddPtrBaseFirst(const Base* pBase, Off offset) {
@@ -41,9 +32,6 @@ inline const T* AddPtrBaseFirst(const Base* pBase, Off offset) {
 
 } // namespace
 
-// Free function whose retail symbol takes a const SeqFileReader*. Defined
-// against SeqFileReaderView (layout-compatible with SeqFileReader) because
-// the reader's members are private.
 // File-local validity check, typed on ut::BinaryFileHeader (no void*).
 // Declared inline so MWCC folds it into the SeqFileReader constructor body:
 // the retail unit has no standalone validity-check symbol, so an out-of-line
@@ -84,12 +72,10 @@ const void* SeqFileReader::GetBaseAddress() const {
                               Util::ReadBigEndian(mDataBlock->baseOffset));
 }
 
-extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
-    const SeqFileReaderView* pReader, const char* label, u32* outOffset) {
-    const SeqFile::Header* pHeader = pReader->mHeader;
+bool SeqFileReader::ReadOffsetByLabel(const char* label, u32* outOffset) const {
     const SeqLabelBlock* pLabelBlock =
-        reinterpret_cast<const SeqLabelBlock*>(ut::GetIntPtr(pHeader) +
-                                               pHeader->labelBlockOffset);
+        reinterpret_cast<const SeqLabelBlock*>(ut::GetIntPtr(mHeader) +
+                                               mHeader->labelBlockOffset);
 
     if (pLabelBlock == NULL) {
         return false;
@@ -97,8 +83,7 @@ extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
 
     u32 nameLen = strlen(label);
 
-    u32 i = 0;
-    for (; i < pLabelBlock->entryCount; i++) {
+    for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry =
             AddPtrBaseFirst<SeqLabelEntry>(pLabelBlock, pLabelBlock->offset[i]);
 

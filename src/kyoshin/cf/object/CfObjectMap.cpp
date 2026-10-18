@@ -105,7 +105,7 @@ extern "C" void CfObjectMap_refreshRegion(void* self) {
 }
 
 void clearStatus__Q22cf11CfObjectMapFv(void* self) {
-    *(unsigned short*)((char*)self + 0x8e) = 0;
+    ((cf::CfObjectMap*)self)->field_0x8E = 0;
 }
 
 extern "C" void noopMapStub() {}

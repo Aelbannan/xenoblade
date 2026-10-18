@@ -956,9 +956,10 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
 }
 
 extern "C" void DbgZeroTriple(void* self) {
-    *(u32*)((u8*)self + 8) = 0;
-    *(u32*)((u8*)self + 0) = 0;
-    *(u32*)((u8*)self + 4) = 0;
+    u32* words = (u32*)self;
+    words[2] = 0;
+    words[0] = 0;
+    words[1] = 0;
 }
 
 // Animation-player handle: the bound anim object, its id, and the player

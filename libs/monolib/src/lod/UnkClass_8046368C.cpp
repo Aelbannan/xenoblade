@@ -114,10 +114,10 @@ void initLodTables__Q23LOD17CLODCacheManagerSFv(void*);
 void* catmullRomBin__Q23LOD17CLODCacheManagerSFv(void*);
 void selectCubicLookup__Q23LOD17UnkClass_8046368CFv(void);
 void selectLinearLookup__Q23LOD17UnkClass_8046368CFv(void);
-void setLodFadeAlpha(s32);
+void setLodFadeAlpha__Fl(s32);
 void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
-void scaleLodFadeAlpha(f32);
-void setLodColorFactor(s32);
+void scaleLodFadeAlpha__Ff(f32);
+void setLodColorFactor__Fl(s32);
 void cfCam_nopCtorSlot(void*);
 
 // ---------------------------------------------------------------------------
@@ -388,7 +388,7 @@ extern "C" void dispatchLodDraw__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 
     lbl_eu_806657A0 = p->f1A;
     lbl_eu_806657A8 = p->f0C;
-    setLodColorFactor(p->f0E);
+    setLodColorFactor__Fl(p->f0E);
 
     if (p->flags & 0x1000) {
         lbl_eu_806657BC = p->f1E;
@@ -530,7 +530,7 @@ s32 updateLodFade(u32 arg) {
             return 1;
         }
         if (v != 0xFF) {
-            setLodFadeAlpha(v);
+            setLodFadeAlpha__Fl(v);
         }
     }
 
@@ -544,13 +544,13 @@ s32 updateLodFade(u32 arg) {
             if (lbl_eu_8066A5F8 == cur) {
                 return 1;
             }
-            scaleLodFadeAlpha(lbl_eu_8066A5F8 - cur);
+            scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - cur);
             return 0;
         }
         if ((arg & 0x60) == 0x60) {
             f32 cur = lbl_eu_80658038[2];
             if (lbl_eu_8066A5F8 != cur) {
-                scaleLodFadeAlpha(cur);
+                scaleLodFadeAlpha__Ff(cur);
             }
             return 0;
         }
@@ -562,13 +562,13 @@ s32 updateLodFade(u32 arg) {
                     if (lbl_eu_8066A5F8 == cur) {
                         return 1;
                     }
-                    scaleLodFadeAlpha(lbl_eu_8066A5F8 - cur);
+                    scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - cur);
                     return 0;
                 }
                 if (arg & (0x20u << i)) {
                     f32 cur = lbl_eu_80658038[i];
                     if (lbl_eu_8066A5F8 != cur) {
-                        scaleLodFadeAlpha(cur);
+                        scaleLodFadeAlpha__Ff(cur);
                     }
                     return 0;
                 }
@@ -605,7 +605,7 @@ s32 getLodFadeRatio(s32 a, u32 b) {
             union { double d; u32 w[2]; } m1, m2;
             m1.w[0] = 0x43300000u; m1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
             m2.w[0] = 0x43300000u; m2.w[1] = b ^ 0x80000000u;
-            scaleLodFadeAlpha((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha__Ff((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
             return 0;
         }
         if ((s32)lbl_eu_806657C0 == a) {
@@ -619,7 +619,7 @@ s32 getLodFadeRatio(s32 a, u32 b) {
             union { double d; u32 w[2]; } n1, n2;
             n1.w[0] = 0x43300000u; n1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
             n2.w[0] = 0x43300000u; n2.w[1] = b ^ 0x80000000u;
-            scaleLodFadeAlpha(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
             return 0;
         }
         return 1;
@@ -643,7 +643,7 @@ s32 applyLodRangeFade(s32 a, s32 b, s32 da, s32 db) {
     if (a <= lim) {
         if (da != 0 && a + da > lim) {
             s32 over = a + da - lim;
-            setLodFadeAlpha(255 - (over * 255) / da);
+            setLodFadeAlpha__Fl(255 - (over * 255) / da);
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
@@ -654,7 +654,7 @@ s32 applyLodRangeFade(s32 a, s32 b, s32 da, s32 db) {
     }
     if (db != 0 && b - db < lim) {
         s32 under = b - lim;
-        setLodFadeAlpha((under * 255) / db);
+        setLodFadeAlpha__Fl((under * 255) / db);
     } else {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
@@ -669,12 +669,12 @@ ordered:
     }
     if (da != 0 && a + da > lim) {
         s32 over2 = a + da - lim;
-        setLodFadeAlpha(255 - (over2 * 255) / da);
+        setLodFadeAlpha__Fl(255 - (over2 * 255) / da);
         return 0;
     }
     if (db != 0 && b - db < lim) {
         s32 under2 = b - lim;
-        setLodFadeAlpha((under2 * 255) / db);
+        setLodFadeAlpha__Fl((under2 * 255) / db);
         return 0;
     }
     resetLodFlags__Q23LOD17UnkClass_804645CCFv();

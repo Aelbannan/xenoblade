@@ -4,6 +4,7 @@
 #include <revolution/enc/encunicode.h>
 #include <nw4r/ut/ut_Font.h>
 #include "monolib/device/CDeviceFontInfoExt.hpp"
+#include "monolib/util/MemManager.hpp"
 
 extern "C" {
 // .sbss2:0x8066B558 (4B) | lbl_8066DCF8 - font-name blob; its address is passed
@@ -150,6 +151,8 @@ extern "C" void create__18CDeviceFontInfoExtFv() {}
 extern "C" u32 lbl_eu_8056C740[0xF];
 
 extern "C" void __ct__Q34nw4r2ut10PackedFontFv(void* self);
+extern "C" void Destroy__Q34nw4r2ut10PackedFontFv(void* self);
+extern "C" void __dt__Q34nw4r2ut10PackedFontFv(void* self, int flag);
 
 CDeviceFontInfoExt::CDeviceFontInfoExt() {
     *(void**)this = lbl_eu_8056C740;
@@ -159,6 +162,22 @@ CDeviceFontInfoExt::CDeviceFontInfoExt() {
     *(void**)((u8*)this + 0x18) = 0;
     __ct__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
     field_60 = 0;
+}
+
+// CDeviceFontInfoExt::~CDeviceFontInfoExt() (us-8045742c, 0x88) — mirrors the
+// accepted CDeviceFontInfoRom dtor recipe: explicit vptr re-store (MWCC folds
+// its own auto-store into this one, as in the ctor above), PackedFont::Destroy,
+// guarded deallocate of the +0x18 buffer, explicit PackedFont dtor call with
+// the MWCC destroy-without-delete flag (-1, cf. drawGX()->~CDrawGX()), and the
+// implicit deleting-flag operator delete.
+CDeviceFontInfoExt::~CDeviceFontInfoExt() {
+    *(void**)this = lbl_eu_8056C740;
+    Destroy__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
+    if (*(void**)((u8*)this + 0x18) != NULL) {
+        mtl::MemManager::deallocate(*(void**)((u8*)this + 0x18));
+        *(void**)((u8*)this + 0x18) = NULL;
+    }
+    __dt__Q34nw4r2ut10PackedFontFv((u8*)((u32)this + 0x1C), -1);
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

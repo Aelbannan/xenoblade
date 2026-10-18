@@ -13,7 +13,7 @@ namespace ml{
         ml::CMat34 unkCC;
         u8 unkFC[0x10];
         ml::CVec3 unk10C;
-        u8 unk118[0x258 - 0x118];
+        u8 unk118[0x248 - 0x118];
         ml::CPlane unk248[6];
     };
 

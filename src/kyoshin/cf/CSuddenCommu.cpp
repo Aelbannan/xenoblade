@@ -1123,16 +1123,35 @@ __declspec(noinline) void SuddenCommuPlayCue(CSuddenCommu* self, int playerIdx, 
 
 // Static initializer: fills the .bss state-handler PMF table (lbl_eu_80575870,
 // 14 x 12-byte ptmf entries) from the ptmf constants embedded at +0x30 of the
-// split vtable object lbl_eu_805339C0. Spelled as explicit per-entry struct
-// copies so MWCC fully unrolls (retail shape); loops stay rolled up.
+// split vtable object lbl_eu_805339C0.
+//
+// OPEN RESIDUAL (us-801be164): retail is a clean straight-line 42-word copy
+// (115 insns, frame 96, stmw r14): src base in r4 (full lis+addi), dst HA in
+// r3 with the first store as `stwu r16,dst@l(r3)`, 9 src entry-address
+// windows (entries 0-8) + on-demand windows for 9-13, two waves (entries
+// 0-9 with 4 stack spills, then 10-13), all in saved regs. Every high-level
+// spelling tried (14x struct copies, member scalars, u32 words, PMF type,
+// dst-global/dst-local, loop [rolls], 10+4 / struct+u32 splits, reversed and
+// load/store-ordered statements, explicit entry pointers / pointer chains /
+// named value temps, volatile src [pins 26 ordered loads, tail still spills
+// via 1 temp], labels, nested structs, u64 copies, per-function pragmas,
+// MWCC 1.0-1.7) degenerates to the same 1-temp stack-staging shape (122-125
+// insns, frame 144): MWCC hoists all 42 loads above all stores, exceeds its
+// ~27-live-range grace budget, and falls back to staging everything through
+// the stack. Retail's graceful 26-reg + 4-spill schedule with entry-address
+// windows is not reproducible from any constant-index C++ shape (MWCC folds
+// all constant entry addresses unconditionally); no barrier construct exists
+// in the retail body (no calls/branches/volatiles; exactly 42+42 accesses).
+// Scheduler-ordering wall: parked at the honest 14-copy spelling.
 struct CSuddenCommuPtmfEntry {
     u32 field_00;
     u32 field_04;
     u32 field_08;
 };
 void sinit_801BC86C() {
-    CSuddenCommuPtmfEntry* dst = (CSuddenCommuPtmfEntry*)lbl_eu_80575870;
-    CSuddenCommuPtmfEntry const* src = (CSuddenCommuPtmfEntry const*)lbl_eu_805339C0 + 4;
+    typedef void (CSuddenCommu::*Pmf)();
+    Pmf* src = (Pmf*)((CSuddenCommuPtmfEntry*)lbl_eu_805339C0 + 4);
+    Pmf* dst = (Pmf*)lbl_eu_80575870;
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];

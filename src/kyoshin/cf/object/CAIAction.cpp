@@ -42,7 +42,7 @@ CAIAction::CAIAction() {
     void* slotBase;
 
     p = slots;
-    end = (u8*)this + 0x20C;
+    end = (u8*)&this->unk20C;
 
     unk8 = 0;
 
@@ -54,8 +54,8 @@ CAIAction::CAIAction() {
 
     slotBase = slots;
     unk218 = 0x10;
-    q = (u8*)this + 0x21C;
-    p = (u8*)this + 0xADC;
+    q = this->entries;
+    p = this->trailer;
     *(void**)end = slotBase;
     unk214 = 0;
     unk210 = 0;
@@ -65,7 +65,7 @@ CAIAction::CAIAction() {
         q += 0xE;
     } while (q < p);
 
-    std::memset((u8*)this + 0xAE0, 0, 0xE);
+    std::memset(this->trailer + 4, 0, 0xE);
     std::memset(trailer, 0, 0x20);
 
     unkAFC = 1;
@@ -192,7 +192,7 @@ void clearAIActionTable__Fv() {
     lbl_eu_806641B0 = 0;
 }
 void aiActionStoreWordB14(void* obj, unsigned int value) {
-    *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
+    static_cast<cf::CAIAction*>(obj)->unkB14 = value;
 }
 
 // Appends a slot to the ring buffer, inserting before the current head
@@ -343,7 +343,7 @@ extern "C" int aiAppendToRing(cf::CAIAction* self, const cf::CAIActionSlot* in) 
     return 1;
 }
 void* aiActionClearBlockADC(void* p) {
-    return memset((char*)p + 0xADC, 0, 0x20);
+    return memset(static_cast<cf::CAIAction*>(p)->trailer, 0, 0x20);
 }
 void aiActionUpdateEntriesDelta(void* self, float delta) {
     struct Entry {
@@ -544,9 +544,16 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
 }
 // extern "C" per the CfObjectPc.hpp declaration (retail symbol is unmangled;
 // CfObjectPc.cpp imports it under that exact name).
-extern "C" void aiActionStoreIndexedBytes(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
+// TU-local u16 view of the flags halfword aiActionStoreIndexedBytes
+// maintains at entry+12 (base+0x228; exact layout, replaces the raw
+// halfword derefs while keeping retail's mulli/add address schedule).
+struct AIEntryFlagsView {
+    u8 _pad[0x228];
+    u16 flags;  // 0x228
+};
+extern "C" void aiActionStoreIndexedBytes(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; ((AIEntryFlagsView*)base)->flags = a13; if (a7 == 11 || a9 == 11) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 10 || a9 == 10) ((AIEntryFlagsView*)base)->flags |= 1; if (a7 == 7 || a9 == 7) ((AIEntryFlagsView*)base)->flags |= 2; }
 void aiActionClearBits0006(void* self) {
-    *(u16*)((u8*)self + 8) &= ~0x0006;
+    static_cast<cf::CAIAction*>(self)->unk8 &= ~0x0006;
 }
 
 // Loads the AI config table pointer into lbl_eu_806641B0 and walks the
@@ -557,7 +564,7 @@ void initAIActionTable(void* tableArg) {
     lbl_eu_806641B0 = table;
     u32 raw = table->count;
     s32 count = (s32)(u16)__rlwimi((raw << 8) & 0xFF00, raw, 24, 24, 31);
-    const u8* ep = (const u8*)table + 2;
+    const u8* ep = (const u8*)table->entries;
     char name[0x11];
     for (s32 i = 0; i < count; i++) {
         std::memcpy(name, ep + 4, 0x10);

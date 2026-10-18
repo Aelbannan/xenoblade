@@ -149,17 +149,17 @@ u8* CCharVoiceMan_AllocVoiceArena(int size) {
         if ((int)m->headOffset - (int)m->allocHead < size)
             return 0;
         m->allocHead = (int)m->allocHead + size;
-        return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->allocHead - size;
+        return lbl_eu_80664A58->unk4 + lbl_eu_80664A58->allocHead - size;
     }
     // Wrapped: space up to the 0x200 limit, else restart at the buffer base.
     if (0x200 - (int)m->allocHead < size) {
         if ((int)m->headOffset < size)
             return 0;
         m->allocHead = size;
-        return (u8*)lbl_eu_80664A58 + 4;
+        return lbl_eu_80664A58->unk4;
     }
     m->allocHead = (int)m->allocHead + size;
-    return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->allocHead - size;
+    return lbl_eu_80664A58->unk4 + lbl_eu_80664A58->allocHead - size;
 }
 unsigned int CCharVoiceMan_MakeVoiceEventId(unsigned int value) { unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
 int CCharVoiceMan_NullVoiceDispatch(void* self) { return 0; }
@@ -547,7 +547,7 @@ int CCharVoiceMan_TryPlayCharVoice(cf::CVoiceActorState* self) {
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
     if (isBattleStatusActive(&self->unk4[4], 0xcf) == 0 && isBattleStatusActive(&self->unk4[4], 0xd0) == 0)
         return 0;
-    cf::CfObjectImplPcSub3E9C* move = (cf::CfObjectImplPcSub3E9C*)((u8*)self + 0x3E9C);
+    cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)self)->mSub;
     u32 moveRes = move->sf4C();
     void* r = MapFx_ResolveOwner(findObjectById((BOOL)moveRes));
     if (r == 0)
@@ -630,7 +630,7 @@ void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* c) {
 void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CfObjectImplPcSub3E9C* move = (cf::CfObjectImplPcSub3E9C*)((u8*)self + 0x3E9C);
+    cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)self)->mSub;
     u32 moveRes = move->sf4C();
     void* actor = findObjectById((BOOL)moveRes);
     if (actor != 0)

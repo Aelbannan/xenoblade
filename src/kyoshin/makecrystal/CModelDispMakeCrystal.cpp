@@ -268,7 +268,7 @@ void __ct__CMCEffCrystal(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffUpRank(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffDivide(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffCylinder(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__6CCur18Fv(void*, void*);
+void __ct__CCur18(void*, void*);
 void createRegion__17UnkClass_8045F564FiiPCci(void*, u32, int, const char*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 void setMemInitFlag__Q23mtl10MemManagerFb(bool);
@@ -889,7 +889,8 @@ CModelDispMakeCrystal* MakeCrystal_InitSlotArray(CModelDispMakeCrystal* self)
 void* __dt__8021C540(void* obj, int flag)
 {
     if (obj != nullptr) {
-        __dt__Q22cf17CActParamAnimGameFv(reinterpret_cast<u8*>(obj) + 8, -1);
+        u8* sub = reinterpret_cast<u8*>(obj);
+        __dt__Q22cf17CActParamAnimGameFv(sub + 8, -1);
         if (flag > 0) {
             __dl__FPv(obj);
         }
@@ -1557,11 +1558,25 @@ extern "C" void __declspec(noinline) setCrystalPosEntry(
 }
 
 #pragma optimize_for_size on
+// View of the crystal-list head pointer at +0xE1C: active byte at +0,
+// u16 live count at +4 (read by the State* gating checks).
+struct MCCountHead {
+    u8 _pad00[4];
+    u16 count04;
+};
+
+// Address anchor for the inline CMCEffSuccess at +0xD5C (the
+// isFinished__FPv callee takes void*, so only the offset is modeled).
+struct MCCSuccessAnchor {
+    u8 _pad00[0xd5c];
+    CMCEffSuccess effD5C;
+};
+
 void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (!crystalListIsActive(base + 0xc18)) return;
-    u16 crystalCount = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
+    u16 crystalCount = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
     if (crystalCount >= 0x64) {
         // Success: full crystal count reached.
         base[0xbdd] = 9;
@@ -1687,7 +1702,7 @@ void __declspec(noinline) MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
     f32 v = (*vel += lbl_eu_806684A0);
     if (v < lbl_eu_806684D8) return;
     *vel = lbl_eu_806684A4;
-    u16 count = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
+    u16 count = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
     if (count >= 0x12c) {
         // Success path: full crystal count reached.
         base[0xbdd] = 0xe;
@@ -1731,7 +1746,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* se
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__13CMCEffCrystalFv(base + 0xd90)) {
         MakeCrystal_AppendItemSteps(self);
-        u16 count = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
+        u16 count = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
         if (count >= 0x64) {
             base[0xbdd] = 0xb;
             crystalListState3To8(base + 0xc18);
@@ -1745,7 +1760,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* se
 
 void __declspec(noinline) MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* self)
 {
-    if (isFinished__FPv((u8*)self + 0xd5c)) {
+    if (isFinished__FPv(&((MCCSuccessAnchor*)self)->effD5C)) {
         u8* base = reinterpret_cast<u8*>(self);
         u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
         if (entries[0]) {
@@ -3747,11 +3762,11 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__14CMCEffCylinderFv(effCylinder, -1);
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->init();
         // Cursor objects: build on stack, install via MenuShopSellCopyCursor, destroy.
-        __ct__6CCur18Fv(cur1, CUICfManager_getArcResourceAccessor());
+        __ct__CCur18(cur1, CUICfManager_getArcResourceAccessor());
         MenuShopSellCopyCursor(base + 0xe20, cur1);
         __dt__6CCur18Fv(cur1, -1);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->initLayout();
-        __ct__6CCur18Fv(cur2, CUICfManager_getArcResourceAccessor());
+        __ct__CCur18(cur2, CUICfManager_getArcResourceAccessor());
         MenuShopSellCopyCursor(base + 0xeb4, cur2);
         __dt__6CCur18Fv(cur2, -1);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->initLayout();
@@ -3816,7 +3831,13 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
 }
 #pragma optimize_for_size off
 
-void CModelDispMakeCrystal::setCrystalCursor(u32 val) { *(u32*)((u8*)this + 0xE1C) = val; }
+// Byte view of the cursor slot at +0xE1C (u32 store into the entries slot).
+struct MCCursorView {
+    u8 _pad00[0xE1C];
+    u32 cursorE1C;
+};
+
+void CModelDispMakeCrystal::setCrystalCursor(u32 val) { ((MCCursorView*)this)->cursorE1C = val; }
 
 int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
 {
@@ -3831,24 +3852,26 @@ int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
 
 // Anim-callback slot: buffered ids at +0x10/+0x14 (+0x08 is address-taken
 // embedded data, still formed raw). Per-statement use only.
-struct MCCryAnimSlot { u8 _00[0x10]; u32 id10; u32 id14; };
+// Slot record: the detachable anim-wrapper subobject at +0x08 (forwarded to
+// schedDetachChildSlot) and the registered anim ids at +0x10/+0x14.
+struct MCCryAnimSlot { u8 _00[8]; void* anim08; u8 _0C[4]; u32 id10; u32 id14; };
 
 // Release a registered anim callback by id: if the id matches the buffered
 // object (+0x10 / +0x14), flush it with the anim wrapper (+0x8, or the object
 // itself when null) and clear the slot.
-void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
+extern "C" void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
 {
     u32 e1 = ((MCCryAnimSlot*)obj)->id10;
     if (id == e1) {
         void* arg = obj;
-        if (obj) arg = (u8*)obj + 8;
+        if (obj) arg = &((MCCryAnimSlot*)obj)->anim08;
         schedDetachChildSlot(reinterpret_cast<void*>(e1), arg);
         ((MCCryAnimSlot*)obj)->id10 = 0;
     } else {
-        u32 e2 = ((MCCryAnimSlot*)obj)->id14;
-        if (id == e2) {
-            void* arg = obj;
-            if (obj) arg = (u8*)obj + 8;
+    u32 e2 = ((MCCryAnimSlot*)obj)->id14;
+    if (id == e2) {
+        void* arg = obj;
+        if (obj) arg = &((MCCryAnimSlot*)obj)->anim08;
             schedDetachChildSlot(reinterpret_cast<void*>(e2), arg);
             ((MCCryAnimSlot*)obj)->id14 = 0;
         }
@@ -3857,11 +3880,11 @@ void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
 
 // (initCrystalData is a retail hard-symbol; not defined here so it stays a call)
 
-void CModelDispMakeCrystal::destroyCrystalDispThunk4() { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)this - 0x4); }
+extern "C" void destroyCrystalDispThunk4(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
 
-void CModelDispMakeCrystal::releaseCrystalDispThunk() { ((void(*)(void*))MakeCrystal_ClearAnimSlot)((char*)this - 0x8); }
+extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self) { ((void(*)(void*))MakeCrystal_ClearAnimSlot)((char*)self - 0x8); }
 
-void CModelDispMakeCrystal::destroyCrystalDispThunk8() { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)this - 0x8); }
+extern "C" void destroyCrystalDispThunk8(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
 
 void sinit_80221DDC() {
     initCrystalData(lbl_eu_80664718);
@@ -3915,10 +3938,10 @@ extern void WorkEvent28__10IWorkEventFv();
 extern void WorkEvent29__10IWorkEventFv();
 extern void WorkEvent30__10IWorkEventFv();
 extern void WorkEvent31__10IWorkEventFv();
-extern void destroyCrystalDispThunk4__21CModelDispMakeCrystalFv(int);
-extern void destroyCrystalDispThunk8__21CModelDispMakeCrystalFv(int);
-extern void releaseCrystalDispThunk__21CModelDispMakeCrystalFv(int);
-extern void MakeCrystal_ClearAnimSlot__FPvUl();
+extern "C" void destroyCrystalDispThunk4(CModelDispMakeCrystal* self);
+extern "C" void destroyCrystalDispThunk8(CModelDispMakeCrystal* self);
+extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self);
+extern "C" void MakeCrystal_ClearAnimSlot(void*, u32);
 
 // .data 0xC8: CModelDispMakeCrystal vtable (RTTI + dtor + IWorkEvent
 // slots, then two secondaries at -4/-8).
@@ -3933,10 +3956,10 @@ const void* lbl_eu_80535E70[50] = {
     (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xE0+60
     (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xE0+70
     (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, (void*)lbl_eu_806627E8, (void*)0xFFFFFFFC, // +0xE0+80
-(void*)destroyCrystalDispThunk4__21CModelDispMakeCrystalFv, (void*)actParamNop0, (void*)actParamNop1, (void*)actParamNop2, // +0xE0+90
+(void*)destroyCrystalDispThunk4,
     (void*)actParamNop3, (void*)actParamNop4, (void*)actParamNop7, (void*)actParamNop5, // +0xE0+A0
-(void*)actParamNop6, (void*)lbl_eu_806627E8, (void*)0xFFFFFFF8, (void*)destroyCrystalDispThunk8__21CModelDispMakeCrystalFv, // +0xE0+B0
-    (void*)releaseCrystalDispThunk__21CModelDispMakeCrystalFv, (void*)MakeCrystal_ClearAnimSlot__FPvUl, // +0xE0+C0
+(void*)destroyCrystalDispThunk8,
+(void*)releaseCrystalDispThunk, (void*)MakeCrystal_ClearAnimSlot,
 };
 
 // .data 0x10: RTTI descriptor + pad.

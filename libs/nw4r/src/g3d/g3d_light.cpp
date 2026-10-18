@@ -21,7 +21,6 @@ LightObj::LightObj(const LightObj& rLightObj){
 // LightSetting ctor below can inline the mFlag=0 store instead of emitting a
 // call to the g3d_state definition (retail emits no call).
 inline LightObj::LightObj() : mFlag(0) {}
-
 LightObj& LightObj::operator=(const LightObj& rOther) {
     if (this != &rOther) {
         mFlag = rOther.mFlag;
@@ -153,42 +152,6 @@ void LightObj::ApplyViewMtx(const math::MTX34& rCamera) {
  * LightSetting
  *
  ******************************************************************************/
-namespace {
-// Scratch-light storage.
-// an out-of-line __dt__ copy in this TU, and the retail split has room for
-// exactly the 23 owned functions — so the four scratch lights live in this
-// union instead: `init` provides the explicit mFlag = 0 store (mirroring
-// the default ctor retail inlines), while `obj` gives direct member access
-// with per-site `sp + offset` addressing exactly like retail's calls.
-// (A LightObj&/pointer alias instead holds the address live in a register
-// and perturbs allocation; the union itself is never constructed, only its
-// trivially-destructible `init` member is written, so no out-of-line dtor
-// for the union's own construction path is needed here. MWCC still emits
-// weak __dt__ copies for the union and its member under its
-// "nontrivial-member" warning; both merge at link and only cost split
-// bytes, which is the documented residual below.)
-struct LightWork {
-    u32 mFlag;       // at 0x0
-    GXLightObj mObj; // at 0x4
-};
-
-// Scratch-light storage. Naming a LightObj-typed local forces MWCC to emit
-// an out-of-line __dt__ copy in this TU, and the retail split has room for
-// exactly the 23 owned functions — so the four scratch lights live in this
-// union instead: `init` provides the explicit mFlag = 0 store (mirroring
-// the default ctor retail inlines), while `obj` gives direct member access
-// with per-site `sp + offset` addressing exactly like retail's calls.
-// (A LightObj&/pointer alias or an inline-forwarding mirror instead holds
-// the address live in a register and perturbs allocation; only the union
-// member path reproduces retail's call sequence byte-for-byte.)
-// Residual: MWCC warns (10402) on the nontrivial union member and emits two
-// weak __dt__ copies (union + member, 0x40 each). Both merge at link and
-// neither is referenced; they cost only split bytes (see TU size check).
-union LightScratch {
-    LightWork init; // write path: explicit mFlag = 0 (mirrors default ctor)
-    LightObj obj;   // use path: Clear/Init*/Enable/operator= calls
-};
-} // namespace
 LightSetting::LightSetting(LightObj* pLightObjArray,
                            AmbLightObj* pAmbLightObjArray, u32 numLight,
                            LightSetData* pLightSetDataArray, u32 numLightSet)
@@ -214,54 +177,47 @@ LightSetting::LightSetting(LightObj* pLightObjArray,
     GXColor white = {255, 255, 255, 255};
     AmbLightObj ambWhite = {255, 255, 255, 255};
 
-    LightScratch lobj0;
-    lobj0.init.mFlag = 0;
-    LightScratch lobj1;
-    lobj1.init.mFlag = 0;
-    LightScratch lobj2;
-    lobj2.init.mFlag = 0;
-    LightScratch lobj3;
-    lobj3.init.mFlag = 0;
+    LightObj lobj0, lobj1, lobj2, lobj3;
 
-    lobj0.obj.Clear();
-    lobj1.obj.Clear();
-    lobj2.obj.Clear();
-    lobj3.obj.Clear();
+    lobj0.Clear();
+    lobj1.Clear();
+    lobj2.Clear();
+    lobj3.Clear();
 
-    lobj0.obj.InitLightColor(white);
-    lobj0.obj.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
-    lobj0.obj.InitLightDir(0.0f, -1.0f, 0.0f);
-    lobj0.obj.InitLightSpot(90.0f, GX_SP_OFF);
-    lobj0.obj.InitLightDistAttn(10.0f, 0.5f, GX_DA_OFF);
-    lobj0.obj.Enable();
+    lobj0.InitLightColor(white);
+    lobj0.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
+    lobj0.InitLightDir(0.0f, -1.0f, 0.0f);
+    lobj0.InitLightSpot(90.0f, GX_SP_OFF);
+    lobj0.InitLightDistAttn(10.0f, 0.5f, GX_DA_OFF);
+    lobj0.Enable();
 
-    lobj1.obj.InitLightColor(white);
-    lobj1.obj.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
-    lobj1.obj.Enable();
+    lobj1.InitLightColor(white);
+    lobj1.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
+    lobj1.Enable();
 
-    lobj2.obj.InitLightColor(white);
-    lobj2.obj.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
-    lobj2.obj.InitSpecularDir(0.0f, -1.0f, 0.0f);
-    lobj2.obj.InitLightShininess(16.0f);
-    lobj2.obj.Enable();
+    lobj2.InitLightColor(white);
+    lobj2.InitLightPos(4000000.0f, 4000000.0f, 4000000.0f);
+    lobj2.InitSpecularDir(0.0f, -1.0f, 0.0f);
+    lobj2.InitLightShininess(16.0f);
+    lobj2.Enable();
 
-    lobj3.obj.Disable();
+    lobj3.Disable();
 
     if (mNumLight > 0) {
-        mpLightObjArray[0] = lobj0.obj;
+        mpLightObjArray[0] = lobj0;
         mpAmbLightObjArray[0] = ambWhite;
     }
     if (mNumLight > 1) {
-        mpLightObjArray[1] = lobj1.obj;
+        mpLightObjArray[1] = lobj1;
         mpAmbLightObjArray[1] = ambWhite;
     }
     if (mNumLight > 2) {
-        mpLightObjArray[2] = lobj2.obj;
+        mpLightObjArray[2] = lobj2;
         mpAmbLightObjArray[2] = ambWhite;
     }
 
     for (u32 i = 3; i < mNumLight; i++) {
-        mpLightObjArray[i] = lobj3.obj;
+        mpLightObjArray[i] = lobj3;
         mpAmbLightObjArray[i] = ambWhite;
     }
 }

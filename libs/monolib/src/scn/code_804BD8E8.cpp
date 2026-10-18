@@ -430,11 +430,11 @@ void ScnRes_CopyEntryMid(ScnResHead* dst, int index) {
 }
 
 extern "C" { extern unsigned char lbl_eu_8065F428[]; }
-extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
+extern "C" void* ScnRes_GetEntryPtr_E50C(u32 idx) { return &((ScnResourceEntry*)lbl_eu_8065F428)[idx]; }
 
 void* ScnRes_GetEntryHead2_E520(int index) {
     extern unsigned char lbl_eu_8065F428[];
-    return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
+    return &((ScnResourceEntry*)lbl_eu_8065F428)[index].mid;
 }
 
 extern "C" s32 ScnRes_ProjectTracked(ml::CVec3* out);
@@ -509,6 +509,7 @@ struct ScnTriInfo {
     u8 idxE;          // 0x0E
     u8 field_0x0F;
     u16 vtxIdx;       // 0x10 - index (x6 bytes) into the s16 vertex buffer
+    u16 field_0x12;     // 0x12 - table-select word read by EDFC/EE54/EEAC
 };
 
 // Entry-header pointer view: word 0x18 is the triangle info, 0x1C a matrix.
@@ -525,6 +526,7 @@ struct ScnStateObj2 {
     s16* shortVerts;     // 0x1C
     u8 field_0x20[0x24 - 0x20];
     ml::CVec3* vertsB;   // 0x24
+    u32* table;          // 0x28 - mask table read by EDFC/EE54/EEAC
 };
 
 void PSMTXMultVec(const f32* m, const f32* src, f32* dst);
@@ -691,8 +693,8 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 extern "C" s32 ScnRes_ReadTableByte_EDFC(u32* dst, u32 mask, u32 index, u32 offset) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    u32* table = ((u32**)lbl_eu_8065F32C)[10];
-    u32 sel = ((u16*)entries[index].field_0x18)[9];
+    u32* table = ((ScnStateObj2*)lbl_eu_8065F32C)->table;
+    u32 sel = ((ScnTriInfo*)entries[index].field_0x18)->field_0x12;
     if (table[sel] & mask) {
         *dst = ((u8*)&table[sel + 1])[offset];
         return 1;
@@ -710,9 +712,9 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
     s32 count = lbl_eu_80665988;
     if (count != 0) {
         ScnResourceEntry* p = (ScnResourceEntry*)lbl_eu_8065F428;
-        u32* table = ((u32**)lbl_eu_8065F32C)[10];
+        u32* table = ((ScnStateObj2*)lbl_eu_8065F32C)->table;
         for (; count > 0; --count) {
-            u32 sel = ((u16*)p->field_0x18)[9];
+            u32 sel = ((ScnTriInfo*)p->field_0x18)->field_0x12;
             if (flags & table[sel]) {
                 return 1;
             }
@@ -730,8 +732,8 @@ extern "C" int ScnRes_ScanFlaggedEntry_EE54(u32 flags) {
 extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
     extern unsigned char lbl_eu_8065F428[];
     ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    u32* table = ((u32**)lbl_eu_8065F32C)[10];
-    u32 sel = ((u16*)entries[index].field_0x18)[9];
+    u32* table = ((ScnStateObj2*)lbl_eu_8065F32C)->table;
+    u32 sel = ((ScnTriInfo*)entries[index].field_0x18)->field_0x12;
     return (flags & table[sel]) != 0 ? 1 : 0;
 }
 #pragma pop

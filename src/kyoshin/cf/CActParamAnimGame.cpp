@@ -23,11 +23,11 @@
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
     *(void**)self = (void*)lbl_eu_80526458;
-    *(u32*)((u8*)self + 0x4EC) = 0;
-    *(u32*)((u8*)self + 0x4F0) = 0;
-    *(u16*)((u8*)self + 0x530) = 0;
+    ((cf::CActParamAnimGameView*)self)->flags4EC = 0;
+    ((cf::CActParamAnimGameView*)self)->flags4F0 = 0;
+    ((cf::CActParamAnimGameView*)self)->flags530 = 0;
     self->initAnimState();
-    *(cf::CActParamAnimGameLink**)((u8*)self + 0x4E8) = arg;
+    ((cf::CActParamAnimGameView*)self)->link4E8 = arg;
     return self;
 }
 
@@ -35,9 +35,9 @@ cf::CActParamAnimGame::CActParamAnimGame() {
     // Base ctor (__ct__13CActParamAnimFv) runs first; the retail vtable is
     // stored manually because the class is __declspec(novtable).
     *(void**)this = (void*)lbl_eu_80526458;
-    *(u32*)((u8*)this + 0x4EC) = 0;
-    *(u32*)((u8*)this + 0x4F0) = 0;
-    *(u16*)((u8*)this + 0x530) = 0;
+    ((CActParamAnimGameView*)this)->flags4EC = 0;
+    ((CActParamAnimGameView*)this)->flags4F0 = 0;
+    ((CActParamAnimGameView*)this)->flags530 = 0;
     this->initAnimState();
 }
 
@@ -1251,7 +1251,7 @@ bool cf::CActParamAnimGame::checkHeightBelow() {
 
 bool stepAnimState__13CActParamAnimFv(void* self);
 bool checkNotFalling__Q22cf17CActParamAnimGame(void* self) {
-    if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 2) {
+    if (((cf::CActParamAnimGameView*)self)->flags4EC & 2) {
         return false;
     }
     return stepAnimState__13CActParamAnimFv(self);
@@ -1372,7 +1372,7 @@ bool cf::CActParamAnimGame::dashStartGate(u32 type) {
 }
 
 bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
-    if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 0x00040000) {
+    if (((cf::CActParamAnimGameView*)self)->flags4EC & 0x00040000) {
         startAnimDual(self);
         return true;
     }
@@ -1412,7 +1412,13 @@ bool cf::CActParamAnimGame::scanActorList(u32 type) {
     return false;
 }
 
-float cf::CActorParam::CActorParam_getDamageScale() { return *(float*)((u8*)this + 0x17F4); }
+// TU-local view of the damage-scale float at +0x17F4 read by
+// CActorParam_getDamageScale (exact layout; no named member exists yet).
+struct CActorParamDamageScaleView {
+    u8 _pad[0x17F4];        // 0x00-0x17F3
+    float damageScale17F4;  // 0x17F4-0x17F7
+};
+float cf::CActorParam::CActorParam_getDamageScale() { return ((CActorParamDamageScaleView*)this)->damageScale17F4; }
 
 // Returns true (and notifies the linked region) when the +0x4F4 link is
 // active; otherwise falls back to the +0x4E8 link when +0x4F4 is null.

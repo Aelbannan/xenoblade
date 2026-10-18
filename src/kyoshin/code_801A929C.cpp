@@ -30,8 +30,15 @@ extern "C" int CamEvtGetFl46();
 
 extern "C" void __dl__FPv(void*);
 
+// Byte view of a CtrlState entry's +0x2C match-slot word (mirrors
+// CtrlState::m2C, s16 init -1; the full struct is defined below).
+struct MarkSlotView {
+    u8 _00[0x2C];
+    u16 m2C; // +0x2C
+};
+
 void BattleWork_MarkSlotFFFF(void* self) {
-    *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
+    ((MarkSlotView*)self)->m2C = 0xFFFF;
 }
 
 // Retail exports the blend helper under a plain C symbol, so the definition
@@ -1073,8 +1080,8 @@ extern "C" void func_801AAC78(u8 v) {
 
 extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
     extern unsigned char lbl_eu_80664330;
-    void* p = *(void**)(&lbl_eu_80664330);
-    if (p) *(unsigned char*)((u8*)p + 0x1b) = v;
+    CtrlStateWork* p = *(CtrlStateWork**)(&lbl_eu_80664330);
+    if (p) p->m1B = v;
 }
 
 void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {

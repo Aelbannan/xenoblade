@@ -620,7 +620,7 @@ extern "C" u32 CtrlPad_TestBit23(cf::CtrlPc* self) { return (self->mPadFlags >> 
 // CfObjectImplPc/CfObjectImplNpc vtable slot next to Walker_GetField380
 // (same +0x380 word); byte-offset idiom mirrors that getter.
 extern "C" void Walker_SetField380(void* self, u32 value) {
-    *(u32*)((u8*)self + 0x380) = value;
+    static_cast<cf::CtrlPc*>(self)->mField380 = value;
 }
 
 // Move-base query dispatcher (retail CtrlPad_QueryMoveBase): with the flag word set,
@@ -646,7 +646,7 @@ extern "C" int moveBaseRoute();
 extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
     float c = lbl_eu_80666728;
     typedef void (*Fn)(void*, float);
-    ((Fn)cachedMoveReq)((u8*)self + 0x8c, c);
+    ((Fn)cachedMoveReq)(&self->mSubObj8C, c);
 }
 
 // Move-base tail-call delegates (retail CtrlPad_Delegate89B24 / CtrlPad_Delegate89E88 /
@@ -655,15 +655,15 @@ extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
 // (Pre-clobber stub family names: delegateTo89E88 / delegateTo89F68.)
 extern "C" int CtrlPad_Delegate89B24(cf::CtrlPc* self, void* out) {
     typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseSway)((u8*)self + 0x8c, out);
+    return ((Fn)moveBaseSway)(&self->mSubObj8C, out);
 }
 extern "C" int CtrlPad_Delegate89E88(cf::CtrlPc* self, void* out) {
     typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseRoute)((u8*)self + 0x8c, out);
+    return ((Fn)moveBaseRoute)(&self->mSubObj8C, out);
 }
 extern "C" int CtrlPad_Delegate89F68(cf::CtrlPc* self, void* out) {
     typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseScnCmd)((u8*)self + 0x8c, out);
+    return ((Fn)moveBaseScnCmd)(&self->mSubObj8C, out);
 }
 
 // Cached-pad-handle getter (retail CtrlPad_GetField1D4): the +0x1D4 word

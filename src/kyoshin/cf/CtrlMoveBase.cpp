@@ -403,8 +403,9 @@ extern "C" void moveBaseUnlink(void* self) {
     }
 }
 
+struct maskMoveBaseFlags_obj { char pad[0x40]; unsigned short flags; };
 void maskMoveBaseFlags(void* self) {
-    *(unsigned short*)((char*)self + 0x40) &= 1;
+    ((maskMoveBaseFlags_obj*)self)->flags &= 1;
 }
 
 // Cache facing angle (atan2 of x/z scaled) and the passed-in scalar into the
@@ -474,10 +475,12 @@ void maskMoveChildFlags(maskMoveChildFlags_obj* self) {
     }
 }
 
+struct writeMoveSlotFloat_item { char pad[4]; float value; };
+struct writeMoveSlotFloat_obj { char pad[0x30]; writeMoveSlotFloat_item* item; };
 void writeMoveSlotFloat(void* obj, float val) {
-    void* it = *(void**)((char*)obj + 0x30);
+    writeMoveSlotFloat_item* it = ((writeMoveSlotFloat_obj*)obj)->item;
     if (it) {
-        *(float*)((char*)it + 0x4) = val;
+        it->value = val;
     }
 }
 

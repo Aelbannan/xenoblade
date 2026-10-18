@@ -196,3 +196,69 @@ clean (40939 records, 0 bad).
 3. Remaining `container_of`/byteOff-idiom sites (mostly non-convertible):
    `CUIWindowManager` (25), `CMenuArtsSelect`, `CEquipChange`, `CMiniMap`,
    `CTaskREvent` residual, `CfCam` residual, `code_804BD8E8`, etc.
+
+---
+
+## Waves 4-9 (same day, continuation)
+
+After waves 1-3 the wave line kept running on the remaining actionable work plus the two
+extern "C" buckets and a registry sweep.
+
+| wave | agents | scope | result |
+|---|---|---|---|
+| 4 | 8 | extern "C" drift (3), extern "C" invented (2), registry hygiene (1), pointer tails (2) | ~128: 80 pointer sites, 14 invented removals, 34 drift fixes, registry report (no writes) |
+| 5 | 4 | menu/UI/cf pointer tails + bounded member-candidate pilot | 68 pointer sites; member pilot STOPPED (blocked) |
+| 6 | 3 | monolib/UI/cf pointer tails | 77 pointer sites |
+| 7 | 4 | pointers + **lint-blocked retry** | ~129 pointer sites (w7d 55, w7a 44) |
+| 8 | 2 | residuals + fresh tails | 52 pointer sites |
+| 9 | 3 | big-three + cf tails + 1-2-site tails | 31 pointer sites (w9a 0 - see below) |
+
+Final live scan: `ptr_sites` **9102 -> 8248** (-854), accepted-in-accepted-fn sites **940\* -> 380**
+(corrected series), `ptr-arith` 6294 -> **5621**, `deref-arith` 2599 -> **2342**. Cumulative
+~**1030 items** touched (about 800 pointer sites, ~62 extern "C"/drift, 14 invented removals,
+registry/evidence/member-pilot).
+
+### extern "C" disposition
+
+- **invented**: ~14 real repo-wide, all removed or proven unremovable (rest are functions with
+  parameter lists / `__vt__` / data in shared `extern "C" {}` blocks).
+- **retail-drift**: 34 real fixes (drift-a 15, drift-c 16, drift-b 3); the remaining 70 entries are
+  `extc` classifier false positives (float-literal suffix `f` misread as the name; `lodmm_vt_* -> lo`
+  prefix matches; `= <float>f` sd2 initializers).
+- **member-candidates (5444)**: BLOCKED. `extc-member-a` showed even the smallest clean plan
+  (`SLList`/`SchedList_*`) is unexecutable: vtable `(u32)&Fn` entries break under member pointers,
+  and a function-symbol rename needs a `symbols.txt` rename the toolchain does not offer
+  (`rename-all` is type-only). Needs a tooling decision, not more agents.
+
+### New findings (waves 4-9)
+
+- **`ptr_sites.py` had a second detector bug — now FIXED** (`tools/coop/detect_pointer_arithmetic.py`):
+  `REINTERPRET_ARITH`/`REINTERPRET_BYTE_ARITH`/`CAST_INT_ARITH` lacked the `(?!>)` guard the other
+  three categories carry, so `reinterpret_cast<u8*>(&m)->field` matched as `- >field` arithmetic.
+  Regression test `test_reinterpret_arrow_is_not_arithmetic` added; effect: `CMenuOption` 10 -> 2,
+  `CUICfManager` 31 -> 25 accepted sites. Distinct from the acceptance-keying fix in `ptr_sites.py`.
+- **Delta-lint is not a CI gate** (only `smell_report --check`, build, registry, unit-rules run).
+  Waves 1-6 had skipped real sites for a lint that never blocks; the wave-7 retry recovered 55.
+- **`self`/`void*`/`extC-def` moved slightly UP** from the cleanups (self 13765 -> 13844, void*
+  7931 -> 7941, extC-def 5108 -> 5111): the line-based `self` metric counts cast-at-use; the
+  `void*`/`extC-def` rises are new TU-local view members and the drift-c thunk `extern "C"` defs.
+  These are conscious-re-baseline items, not new debt.
+- **Registry staleness**: `UIWin_FlagBufCanShow` was already FULL_MATCH (stale premise);
+  `code_801862C0` `us-80188104` is ACTIVE@3.4% but hexdiff 100%; `sweep_stale_full_match`
+  over-reports because it reads prebuilt objects without rebuilding (3/3 sampled false positives).
+- **One real header layout bug found**: `ocUnit` header `field_30` actually sits at 0x20 (a
+  preceding `unk14` is mis-sized). Deferred as a header-fix item.
+
+### Stopping point
+
+The remaining 380 accepted-site expressions across 144 TUs are all in TUs already assigned at
+least once; wave 9a proved the largest cluster (68 sites: CUICfManager/CUIWindowManager/CMenuOption)
+is entirely `container_of`/`byteOff` hazards or the `->` detector false positive. The residual is the
+documented hazard catalogue (this doc + `docs/MWCC_PATTERNS.md`), so further waves re-skip rather
+than convert. Natural end of the burn-down until either the detector is fixed or the hazard shapes
+are revisited.
+
+### `git` disclosures
+
+Two agents each ran one accidental read-only `git status` (`ptr-w2c`, `ptr-w5c`); no mutations.
+Recorded for completeness.

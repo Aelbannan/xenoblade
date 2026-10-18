@@ -1509,11 +1509,11 @@ extern "C" __declspec(noinline) void clearWordFlag(u32* self, u32 mask) {
 }
 
 extern "C" char* getEntryPtr(char* base, int a, int b) {
-    return base + (a + b + 0x59) * 0x3C + 4;
+    return (char*)((ResEntry*)base)[a + b + 0x59].data;
 }
 
 extern "C" char* getEntryPtrGrid(char* self, int a, int b) {
-    return self + (b + a * 11 + 12) * 60 + 4;
+    return (char*)((ResEntry*)self)[b + a * 11 + 12].data;
 }
 
 extern "C" u32 getResEntryId(int unused, const ResEntry* p) {

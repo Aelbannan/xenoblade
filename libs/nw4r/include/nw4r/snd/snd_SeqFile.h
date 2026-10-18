@@ -46,6 +46,7 @@ public:
     bool IsValidFileHeader(const void* pSeqBin);
 
     const void* GetBaseAddress() const;
+    bool ReadOffsetByLabel(const char* pLabel, u32* pOffset) const;
 
 private:
     const SeqFile::Header* mHeader;       // at 0x0

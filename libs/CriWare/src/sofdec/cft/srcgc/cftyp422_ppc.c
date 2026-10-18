@@ -27,26 +27,23 @@ float lbl_eu_805FDDC0[0x502];
     ((((A) & 0xff) << 8) | (((B) >> 16) & 0xff) | (((B) & 0xff) << 16) | ((((A) >> 24) & 0xff) << 24))
 
 /* Build the five YCbCr 4:2:0 -> ARGB8888 lookup tables.
- * Int->float uses the shared 0x4330-exponent bit-reform idiom with the
- * bias constant read from the literal pool (+0x18).
- * Even entries use centres one step early for the +0xC00/+0x1000 tables
- * ((i - 127)); preserved verbatim from retail.
+ * Each table line converts its centre with a plain (float)(int) builtin
+ * cast; MWCC expands that to its own 0x4330-exponent idiom (subi/xoris +
+ * stw-pair + lfd-magic + fsubs, magic = MWCC's own pooled B18 literal)
+ * with no frsp, feeding the coefficient fmuls directly. Even entries
+ * centre on (i-128) (Y on (i-16)), odd entries on (i-127) (Y on (i-15)).
+ * The Y scale/add is split across statements so no fmadds forms. The fifth
+ * table reuses the bumped base pointer, and a second index j (bumped
+ * twice per iteration) carries the store addresses.
  */
 void CFT_Ycc420plnToArgb8888Init(void) {
-    struct CFT_YCCConsts *cf = (struct CFT_YCCConsts *)lbl_eu_805197B0;
     float *tblBase = lbl_eu_805FDDC0;
-    /* two conversion slots so both int->double results stay live */
-    union {
-        f64 d;
-        u32 w[2];
-    } ca, cb;
-    float *tblY = &tblBase[0x000];
-    float *tblCr = &tblBase[0x100];
-    float *tblCb = &tblBase[0x200];
-    float *tblG = &tblBase[0x300];
-    float *tblB = &tblBase[0x400];
+    struct CFT_YCCConsts *cf = (struct CFT_YCCConsts *)lbl_eu_805197B0;
+    float *tblY = tblBase;
+    float *tblCr = tblBase + 0x100;
+    float *tblCb = tblBase + 0x200;
+    float *tblG = tblBase + 0x300;
     /* coefficients cached in locals so they hoist out of the loop */
-    f64 bias = cf->bias;
     float k0 = cf->k0;
     float k1 = cf->k1;
     float k2 = cf->k2;
@@ -54,30 +51,25 @@ void CFT_Ycc420plnToArgb8888Init(void) {
     float k4 = cf->k4;
     float k5 = cf->k5;
     int i;
+    int j;
 
-    ca.w[0] = 0x43300000;
-    cb.w[0] = 0x43300000;
-    for (i = 0; i < 256; i += 2) {
-        f64 v128, v15, v127, v16;
-        cb.w[1] = (u32)(i - 128) ^ 0x80000000;
-        v128 = cb.d - bias;
-        tblCr[i] = k2 * (float)v128;
-        tblCb[i] = k3 * (float)v128;
-        ca.w[1] = (u32)(i - 127) ^ 0x80000000;
-        v127 = ca.d - bias;
-        tblG[i] = k4 * (float)v127;
-        tblB[i] = k5 * (float)v127;
-        cb.w[1] = (u32)(i - 16) ^ 0x80000000;
-        v16 = cb.d - bias;
-        tblY[i] = k1 + k0 * (float)v16;
-
-        ca.w[1] = (u32)(i - 15) ^ 0x80000000;
-        v15 = ca.d - bias;
-        tblCr[i + 1] = k2 * (float)v15;
-        tblCb[i + 1] = k3 * (float)v15;
-        tblY[i + 1] = k1 + k0 * (float)v15;
-        tblG[i + 1] = k4 * (float)v15;
-        tblB[i + 1] = k5 * (float)v15;
+    tblBase += 0x400;
+    for (i = 0, j = 0; i < 256; i += 2, j++) {
+        float y0;
+        float y1;
+        y0 = k0 * (float)(i - 16);
+        tblCr[j] = k2 * (float)(i - 128);
+        tblCb[j] = k3 * (float)(i - 128);
+        tblG[j] = k4 * (float)(i - 128);
+        tblBase[j] = k5 * (float)(i - 128);
+        tblY[j] = k1 + y0;
+        j++;
+        y1 = k0 * (float)(i - 15);
+        tblCr[j] = k2 * (float)(i - 127);
+        tblCb[j] = k3 * (float)(i - 127);
+        tblY[j] = k1 + y1;
+        tblG[j] = k4 * (float)(i - 127);
+        tblBase[j] = k5 * (float)(i - 127);
     }
 }
 

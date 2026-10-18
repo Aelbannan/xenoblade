@@ -496,8 +496,8 @@ extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj
     u32 id2 = *(u32*)obj->field_04->f30();
     if (testActorStatus(obj, (int*)&id2, 0x1a) != 0) return 0;
     if (obj->field_3F28 == 5) {
-        if (isBattleStatusActive((u8*)obj + 8, 0xf0) != 0) return 0;
-        if (isBattleStatusActive(&((u8*)obj)[8], 0xf1) != 0) return 0;
+        if (isBattleStatusActive((u8*)&obj->mSub8, 0xf0) != 0) return 0;
+        if (isBattleStatusActive((u8*)&obj->mSub8, 0xf1) != 0) return 0;
         u32 id3 = *(u32*)obj->field_04->f30();
         if (testActorStatus(obj, (int*)&id3, 0xb) != 0) return 0;
         f32 a = obj->v084();

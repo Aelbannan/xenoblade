@@ -177,7 +177,7 @@ CTimeLightGrp::~CTimeLightGrp() {
 // retail EH frame), and links the node before the head sentinel.
 extern "C" void TimeLightPushBack(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPtr item) {
     reslist<CVirtualLightObjPtr>* base =
-        (reslist<CVirtualLightObjPtr>*)((u8*)self + 8);
+        (reslist<CVirtualLightObjPtr>*)&self->resVtbl;
 
     _reslist_node<CVirtualLightObjPtr>* startNode = base->mStartNodePtr;
     int i = base->findFirstEmptySlotIndex();

@@ -34,7 +34,9 @@ void MoveImplEne_InitFieldsToken(cf::CfObjectImplEneObj* self) {
     }
 }
 
-void* MoveImplEne_GetField6CPtr(void* self) { return (void*)((u8*)self + 0x6c); }
+void* MoveImplEne_GetField6CPtr(void* self) {
+    return &static_cast<cf::CfObjectImplEneSlotView*>(self)->slot6C;
+}
 
 // Releases the effect token at +0x36C (if set) and clears it, then forwards
 // to MoveImplResetFull.
@@ -265,7 +267,7 @@ extern "C" void MoveImplEne_SyncBattleRoster(void* self) { MoveImplSyncBattleRos
 // vtable[0x4C] of the own sub-object and counts it.
 int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
     void* base = self->field_18;
-    if (base != 0) base = (u8*)base + 0x3e9c;
+    if (base != 0) base = &static_cast<cf::CfImplEneBattleObj*>(base)->mSub;
     void* obj = getEffOwner____FPv(base);
 
     cf::CfObjectImplEneActor* actor = (cf::CfObjectImplEneActor*)lookupCA0By45C0(obj);
@@ -386,7 +388,7 @@ void MoveImplEne_MatchTokenRelease(cf::CfObjectImplEneObj* self, u32 arg) {
     u32 v = self->field_36C;
     if (v == arg) {
         void* p = (u8*)self;
-        if (self != 0) p = (u8*)self + 0x68;
+        if (self != 0) p = &reinterpret_cast<cf::CfObjectImplEneSlotView*>(self)->slot68;
         schedDetachChildSlot((void*)v, p);
         self->field_36C = 0;
     }

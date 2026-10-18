@@ -104,7 +104,7 @@ extern void CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
-extern void CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv();
+extern void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv();
 extern void CfObject_createMoveTarget__Q22cf8CfObjectFv();
 extern void CfObject_getCurrentTarget__Q22cf8CfObjectFv();
 extern void CfObject_forwardNpcAction__Q22cf8CfObjectFv();
@@ -205,7 +205,7 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
-    &CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv,
+    &CfObject_setMoveTargetPtr__Q22cf8CfObjectFv,
     &CfObject_createMoveTarget__Q22cf8CfObjectFv,
     &CfObject_getCurrentTarget__Q22cf8CfObjectFv,
     &CfObject_forwardNpcAction__Q22cf8CfObjectFv,

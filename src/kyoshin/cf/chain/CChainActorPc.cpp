@@ -44,7 +44,13 @@ extern "C" int translateChainActorState(void* self) {
     return value;
 }
 extern "C" bool chainUnlinkOnOwnerMatch(void*);
-extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch((void*)((char*)self + 0x74)); }
+// Address anchor for the effect-link subobject at +0x74, forwarded to the
+// unlink matcher (void* callee, so the member is only an offset anchor).
+struct ChainEff74Anchor {
+    u8 _pad00[0x74];
+    u8 link74;
+};
+extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch(&((ChainEff74Anchor*)self)->link74); }
 extern "C" bool isChainActorEnabled() { return true; }
 // Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
 // Slot +0x48 (index 18 overall, vt offset 0x48) is CChain_getZero_A9FC: int(void* p) - owned by cf::CChainActorPc (leaf override of base A9FC).
@@ -83,8 +89,14 @@ int CChainActorPc::CChain_getZero_A9D0() { return 0; }
 extern "C" void forwardChainZeroA9FC(cf::CChainActorPc* self, void* arg) {
     self->CChain_getZero_A9FC(*(void**)arg);
 }
+// Word view of the actor bitfield at +0x3F00 (same test as
+// CChainActorPc::CChain_getZero_A9FC).
+struct ChainBitWord {
+    u8 _pad00[0x3f00];
+    int bits3F00;
+};
 extern "C" int testChainActorBit(void*, void* p) {
-    return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
+    return ((((ChainBitWord*)p)->bits3F00 >> 1) & 1);
 }
 extern "C" void CChain_QueryVoiceNode();
 extern "C" void queryChainVoice() {

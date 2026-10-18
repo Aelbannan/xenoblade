@@ -1484,11 +1484,6 @@ extern "C" u32
     u32 samples = 0;
 
     switch (fmt) {
-    case nw4r::snd::SAMPLE_FORMAT_PCM_S8: {
-        samples = addr - reinterpret_cast<u32>(pBase);
-        break;
-    }
-
     case nw4r::snd::SAMPLE_FORMAT_DSP_ADPCM: {
         // Nibble address -> sample index within the DSP ADPCM stream.
         samples = addr - reinterpret_cast<u32>(pBase) * sizeof(u16);
@@ -1497,6 +1492,11 @@ extern "C" u32
                   (samples / AX_ADPCM_NIBBLES_PER_FRAME * AX_ADPCM_SAMPLES_PER_FRAME) -
                   sizeof(u16);
         // clang-format on
+        break;
+    }
+
+    case nw4r::snd::SAMPLE_FORMAT_PCM_S8: {
+        samples = addr - reinterpret_cast<u32>(pBase);
         break;
     }
 

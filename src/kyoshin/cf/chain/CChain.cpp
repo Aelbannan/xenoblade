@@ -73,7 +73,7 @@ extern "C" int CChain_getZero_A9EC() { return 0; }
 extern "C" int CChain_getZero_A9F4() { return 0; }
 extern "C" int CChain_getZero_A9FC() { return 0; }
 extern "C" int CChain_getZero_AA04() { return 0; }
-extern "C" u16 CChain_getChainCount(u8* self) { return *(u16*)((u8*)*(void**)self + 0x3f28); }
+extern "C" u16 CChain_getChainCount(u8* self) { return ((cf::CChainBattleObj*)*(void**)self)->field_3F28; }
 
 bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
     unsigned char v = a1[2];

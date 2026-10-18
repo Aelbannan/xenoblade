@@ -37,6 +37,9 @@ struct BtlGaugeView { u8 _00[0x194]; u32 gauge194; };
 struct BtlUnitIdView { u8 _00[0x3F28]; u16 id3F28; };
 struct BtlSlot74View { u8 _00[0x74]; void* ptr74; };
 struct BtlRing8View { u8 _00[8]; cf::BtlRingNode* ring8; };
+struct BtlSlotIdView { u8 _00[4]; u32 slotId4; };
+struct BtlCharCellView { u8 _00[0xE8]; u8 cellE8; };
+struct BtlVisionSlotView { u8 _00[0x219C]; u8 visionSlot; };
 
 // (Actor slots now fold onto their owners: tension 0x304 ->
 // cf::CActorParam::CActorParam_resetTensionState, TP 0x150 ->
@@ -233,7 +236,7 @@ int selectTgt(VMThread* pThread) {
     }
     if (ocObj != 0) {
         void* mgr = ArtsSelect_GetContainer();
-        void* slot = ArtsSelect_Lookup(mgr, *(u32*)((u8*)ocObj + 4));
+        void* slot = ArtsSelect_Lookup(mgr, ((BtlSlotIdView*)ocObj)->slotId4);
         if (slot != 0) {
             void* cam = Selector_GetInstance();
             Selector_UpdateFilter(cam, ((BtlSlot74View*)slot)->ptr74);
@@ -307,7 +310,7 @@ int isVoiceEvent(VMThread* pThread) {
 
 int unlockMonadoArts(VMThread* pThread) {
     void* data = CtrlObjectParam_GetCharEntry(1);
-    void* ptr = (u8*)data + 0xE8;
+    void* ptr = &((BtlCharCellView*)data)->cellE8;
     for (int i = 0; i < 8; i++) {
         ResTbox_SetCellBit80(ptr, 0, 1, i);
         ResTbox_SetCellBit40(ptr, 0, 1, i);
@@ -389,7 +392,7 @@ int breakVision(VMThread* pThread) {
         // Retail re-fetches the manager here instead of caching it across the
         // intervening calls (keeps the frame small).
         bm = cf::CBattleManager::getInstance();
-        routeVisionSlotFx((u8*)bm + 0x219C, visionList, 5, 1, 0);
+        routeVisionSlotFx(&((BtlVisionSlotView*)bm)->visionSlot, visionList, 5, 1, 0);
         if (voiceAction != 0) {
             // Different syntax families stop MWCC from CSE-ing the address
             // into an in-place update of voiceAction (retail recomputes the
@@ -443,5 +446,5 @@ extern "C" void pluginBtlRegist() {
     // Retail reloc names carry the eu_ prefix.
     extern char lbl_eu_805038B0[];
     extern char lbl_eu_80532360[];
-    vmPluginRegist((void*)((char*)lbl_eu_805038B0 + 0xe), (void*)lbl_eu_80532360);
+    vmPluginRegist((void*)(lbl_eu_805038B0 + 0xe), (void*)lbl_eu_80532360);
 }

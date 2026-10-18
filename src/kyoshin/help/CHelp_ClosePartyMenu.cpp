@@ -12,5 +12,11 @@ void CHelp_ClosePartyMenu::checkHelpCondition() {
     this->func_802B7CBC(flag);
 }
 
+// us-802baf5c
+// Returns true if either PTNotice or the party-menu state is active.
+bool CHelp_ClosePartyMenu::isPartyMenuReady() {
+    return PTNotice_IsActive_3C10() || menuPTStateIsActive();
+}
+
 } // namespace cf
 

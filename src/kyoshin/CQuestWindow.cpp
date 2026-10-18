@@ -939,14 +939,14 @@ void CQuestWindow::Init() {
     // this-adjust (null this -> null IWorkEvent) as mr/beq/addi.
     IWorkEvent* evt = (IWorkEvent*)this;
     if (this != 0) {
-        evt = (IWorkEvent*)((u8*)this + 0x6c);
+        evt = (IWorkEvent*)&this->field_6C;
     }
     field_0x8C = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
         lbl_eu_8052CF80[SearchThresholdIdx(field_B8)], evt, 0, 0);
     IWorkEvent* evt2 = (IWorkEvent*)this;
     if (this != 0) {
-        evt2 = (IWorkEvent*)((u8*)this + 0x6c);
+        evt2 = (IWorkEvent*)&this->field_6C;
     }
     field_0x88 = (CFileHandle*)CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), lbl_eu_80661EB8, evt2, 0, 0);

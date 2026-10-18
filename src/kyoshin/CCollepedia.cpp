@@ -980,15 +980,15 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
     if (this_->field_49 == 0) return;
     
     drawLayout(this_->field_38, drawInfo, 0, 1);
-    clpCurDrawLyt((CBaseCur*)((u8*)this_ + 0x6c), drawInfo);
+    clpCurDrawLyt((CBaseCur*)&this_->field_54[0x18], drawInfo);
     
     if (this_->field_28F0 != NULL) {
         drawLayout(this_->field_28F0, drawInfo, 0, 1);
     }
     
-    Cur_DrawLayout((CBaseCur*)((u8*)this_ + 0x54), drawInfo);
+    Cur_DrawLayout((CBaseCur*)&this_->field_54[0], drawInfo);
     sysWinDrawLayout(&this_->field_9C, drawInfo);
-    Cur_DrawLayout((CBaseCur*)((u8*)this_ + 0x84), drawInfo);
+    Cur_DrawLayout((CBaseCur*)&this_->field_54[0x30], drawInfo);
 }
 #pragma pop
 

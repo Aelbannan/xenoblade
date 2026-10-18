@@ -55,11 +55,22 @@ extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 // call, turning the retail `b slideKizDown` into a bare return.
 extern "C" __declspec(noinline) void slideKizDown(UnkKizunaSelfCE78* self);
 extern "C" void setCurPanePhase(UnkKizunaSelf57D90* self, u32 a);
+
+// TU-local view of tickCurByFlag's object: ready flag at +0x8C with the
+// cursor-phase sub-object at +0xAC (same offsets the mode-3 tryKizMode3
+// path addresses raw). Exact layout, member access only.
+struct TickCurByFlagSelf {
+    u8 _00[0x8C];
+    u8 field8C;                // +0x8C
+    u8 _8D[0xAC - 0x8D];
+    UnkKizunaSelf57D90 subAC;  // +0xAC
+};
 extern "C" __declspec(noinline) void tickCurByFlag(void* self) {
-    if (*(u8*)((char*)self + 0x8C) != 0) {
-        setCurPanePhase((UnkKizunaSelf57D90*)((char*)self + 0xAC), 1);
+    TickCurByFlagSelf* v = (TickCurByFlagSelf*)self;
+    if (v->field8C != 0) {
+        setCurPanePhase(&v->subAC, 1);
     } else {
-        setCurPanePhase((UnkKizunaSelf57D90*)((char*)self + 0xAC), 0);
+        setCurPanePhase(&v->subAC, 0);
     }
 }
 
@@ -67,6 +78,22 @@ extern "C" __declspec(noinline) void tickCurByFlag(void* self) {
 struct UnkKizunaDisp {
     u8 _00[0x3A];
     u8 field_0x3A;
+};
+
+// TU-local view of the chart-state bytes probed by kizChartReady /
+// kizChartOpen (gate bytes at +0x61/+0x7D/+0x7E/+0xBD, result bytes at
+// +0x3B/+0x3C). Exact layout, member access only.
+struct KizChartState {
+    u8 _00[0x3b];
+    u8 f3B;                   // +0x3B (kizChartReady result)
+    u8 f3C;                   // +0x3C (kizChartOpen result)
+    u8 _3D[0x61 - 0x3d];
+    u8 f61;                   // +0x61
+    u8 _62[0x7d - 0x62];
+    u8 f7D;                   // +0x7D
+    u8 f7E;                   // +0x7E (kizChartReady gate)
+    u8 _7F[0xbd - 0x7f];
+    u8 fBD;                   // +0xBD
 };
 
 extern "C" void kizOpenWinNop() {}
@@ -1067,12 +1094,15 @@ extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
 }
 
 // retail: if (field26) { field34=1; field36=field26; field38=const }
+// (same UnkKizunaSelfAB object the tickLineState dispatch passes to the
+// SelIn/SelOut siblings - see the reinterpret_casts at the call sites.)
 extern "C" __declspec(noinline) void lineStartSelect(void* self) {
-    u16 v = *(u16*)((char*)self + 0x26);
+    UnkKizunaSelfAB* sel = (UnkKizunaSelfAB*)self;
+    u16 v = sel->field26;
     if (v != 0) {
-        *(u8*)((char*)self + 0x34) = 1;
-        *(u16*)((char*)self + 0x36) = v;
-        *(float*)((char*)self + 0x38) = lbl_eu_80668828;
+        sel->field34 = 1;
+        sel->field36 = v;
+        sel->field38 = lbl_eu_80668828;
     }
 }
 
@@ -1670,8 +1700,9 @@ void teardownKizuna(UnkKizunaSelfC6F0* self) {
 }
 
 extern "C" unsigned char kizChartReady(u8* this_ptr) {
-    if (*(unsigned char*)(this_ptr + 0x7e) != 0) {
-        return *(unsigned char*)(this_ptr + 0x3b);
+    KizChartState* st = (KizChartState*)this_ptr;
+    if (st->f7E != 0) {
+        return st->f3B;
     } else {
         return 0;
     }
@@ -1679,12 +1710,13 @@ extern "C" unsigned char kizChartReady(u8* this_ptr) {
 
 extern "C" unsigned char kizChartOpen(u8* arg1)
 {
-    if (*(unsigned char*)(arg1 + 0x61) == 0)
+    KizChartState* st = (KizChartState*)arg1;
+    if (st->f61 == 0)
         return 0;
-    if (*(unsigned char*)(arg1 + 0x7d) == 0)
+    if (st->f7D == 0)
         return 0;
-    if (*(unsigned char*)(arg1 + 0xbd) != 0)
-        return *(unsigned char*)(arg1 + 0x3c);
+    if (st->fBD != 0)
+        return st->f3C;
     return 0;
 }
 
@@ -1843,9 +1875,10 @@ extern "C" u8 kizHasSelFlag(CKizunagramState* self) {
 
 // retail: lfs f0,const; li r0,0; stb 0x34; sth 0x36; stfs 0x38
 extern "C" __declspec(noinline) void lineClearSelect(void* self) {
-    *(u8*)((char*)self + 0x34) = 0;
-    *(u16*)((char*)self + 0x36) = 0;
-    *(float*)((char*)self + 0x38) = lbl_eu_80668828;
+    UnkKizunaSelfAB* sel = (UnkKizunaSelfAB*)self;
+    sel->field34 = 0;
+    sel->field36 = 0;
+    sel->field38 = lbl_eu_80668828;
 }
 
 // retail: lbz 0xdd; xori; subic; subfe; stb - toggle (x^1)!=0 under -O4,s

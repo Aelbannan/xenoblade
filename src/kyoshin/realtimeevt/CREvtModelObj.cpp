@@ -926,8 +926,8 @@ extern "C" int EvtObj_OnFileEvent(void* self, CEventFile* ev) {
 // EvtObj_CheckFlags140 (us-80184b00) - Check function
 // ============================================================
 extern "C" int EvtObj_CheckFlags140(void* self) {
-    char* s = (char*)self;
-    u32 flags = *(u32*)(s + 0x18);
+    CREvtModelObj* obj = (CREvtModelObj*)self;
+    u32 flags = obj->mFlags;
     int result = 0;
     if (flags & 1) {
         if (flags & 0x40) {
@@ -955,7 +955,7 @@ extern "C" void func_801835C4(CREvtModelObj* self) {
 // Retail: lwz / cmplw-bnelr / li / stw.
 // ============================================================
 extern "C" void func_801836CC(void* self, unsigned long value) {
-    u32* slot = (u32*)((char*)self + 0x7C);
+    u32* slot = (u32*)&((CREvtModelObj*)self)->mFileHandle3;
     if (*slot == (u32)value)
         *slot = 0;
 }

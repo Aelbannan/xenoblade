@@ -53,8 +53,9 @@ void cf::CfObjectTbox::initTbox() {
     this->update();
 }
 
+struct TboxFwd38View { u8 _pad[0x38]; void* impl38; };
 extern "C" void CfObjectTbox_ForwardToImpl(u8* self) {
     extern void tboxSyncChild(void*);
-    void* ptr = *(void**)((char*)self + 0x38);
+    void* ptr = ((TboxFwd38View*)self)->impl38;
     if (ptr != 0) tboxSyncChild(ptr);
 }

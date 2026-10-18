@@ -1,0 +1,2347 @@
+{
+  "symbol": "DCT_AcIdctDouble",
+  "retail_path": "/Users/ahmed/projects/xenoblade/build/us/obj/CriWare/src/sofdec/sfdcore/dct/dct_ac.o",
+  "decomp_path": "/Users/ahmed/projects/xenoblade/build/us/src/CriWare/src/sofdec/sfdcore/dct/dct_ac.o",
+  "retail_size": 556,
+  "decomp_size": 556,
+  "total_instructions": 139,
+  "mismatch_count": 138,
+  "reg_swap_count": 47,
+  "pure_reg_swap_count": 17,
+  "structural_count": 91,
+  "reg_mapping": {
+    ".4byte*ra": [
+      {
+        "retail_reg": 1,
+        "decomp_regs": [
+          3,
+          10
+        ]
+      },
+      {
+        "retail_reg": 3,
+        "decomp_regs": [
+          11
+        ]
+      },
+      {
+        "retail_reg": 5,
+        "decomp_regs": [
+          1,
+          12
+        ]
+      },
+      {
+        "retail_reg": 7,
+        "decomp_regs": [
+          13
+        ]
+      },
+      {
+        "retail_reg": 11,
+        "decomp_regs": [
+          3
+        ]
+      },
+      {
+        "retail_reg": 13,
+        "decomp_regs": [
+          0,
+          3
+        ]
+      }
+    ],
+    ".4byte*rb": [
+      {
+        "retail_reg": 29,
+        "decomp_regs": [
+          3,
+          5,
+          6
+        ]
+      },
+      {
+        "retail_reg": 30,
+        "decomp_regs": [
+          11,
+          12,
+          13,
+          31
+        ]
+      }
+    ],
+    ".4byte*rd": [
+      {
+        "retail_reg": 29,
+        "decomp_regs": [
+          1,
+          5,
+          6
+        ]
+      },
+      {
+        "retail_reg": 30,
+        "decomp_regs": [
+          10,
+          11,
+          12,
+          13
+        ]
+      }
+    ],
+    "addi*ra": [
+      {
+        "retail_reg": 11,
+        "decomp_regs": [
+          6
+        ]
+      }
+    ],
+    "addi*rd": [
+      {
+        "retail_reg": 11,
+        "decomp_regs": [
+          6
+        ]
+      }
+    ],
+    "lfd*ra": [
+      {
+        "retail_reg": 7,
+        "decomp_regs": [
+          8
+        ]
+      },
+      {
+        "retail_reg": 9,
+        "decomp_regs": [
+          7,
+          8,
+          12
+        ]
+      },
+      {
+        "retail_reg": 10,
+        "decomp_regs": [
+          7,
+          8,
+          11
+        ]
+      },
+      {
+        "retail_reg": 11,
+        "decomp_regs": [
+          8
+        ]
+      }
+    ],
+    "lfd*rd": [
+      {
+        "retail_reg": 0,
+        "decomp_regs": [
+          2,
+          5
+        ]
+      },
+      {
+        "retail_reg": 1,
+        "decomp_regs": [
+          2,
+          3,
+          9,
+          10
+        ]
+      },
+      {
+        "retail_reg": 2,
+        "decomp_regs": [
+          4
+        ]
+      },
+      {
+        "retail_reg": 3,
+        "decomp_regs": [
+          10,
+          11
+        ]
+      },
+      {
+        "retail_reg": 4,
+        "decomp_regs": [
+          3
+        ]
+      },
+      {
+        "retail_reg": 5,
+        "decomp_regs": [
+          12,
+          13
+        ]
+      },
+      {
+        "retail_reg": 6,
+        "decomp_regs": [
+          2
+        ]
+      },
+      {
+        "retail_reg": 7,
+        "decomp_regs": [
+          2,
+          3,
+          13
+        ]
+      },
+      {
+        "retail_reg": 8,
+        "decomp_regs": [
+          1,
+          3
+        ]
+      },
+      {
+        "retail_reg": 10,
+        "decomp_regs": [
+          0
+        ]
+      },
+      {
+        "retail_reg": 11,
+        "decomp_regs": [
+          8
+        ]
+      },
+      {
+        "retail_reg": 13,
+        "decomp_regs": [
+          3
+        ]
+      },
+      {
+        "retail_reg": 29,
+        "decomp_regs": [
+          31
+        ]
+      },
+      {
+        "retail_reg": 30,
+        "decomp_regs": [
+          7
+        ]
+      }
+    ],
+    "li*rd": [
+      {
+        "retail_reg": 0,
+        "decomp_regs": [
+          3
+        ]
+      },
+      {
+        "retail_reg": 6,
+        "decomp_regs": [
+          0
+        ]
+      },
+      {
+        "retail_reg": 12,
+        "decomp_regs": [
+          5
+        ]
+      }
+    ],
+    "op31_599*ra": [
+      {
+        "retail_reg": 5,
+        "decomp_regs": [
+          9
+        ]
+      }
+    ],
+    "op31_599*rb": [
+      {
+        "retail_reg": 8,
+        "decomp_regs": [
+          5,
+          6
+        ]
+      }
+    ],
+    "op31_599*rd": [
+      {
+        "retail_reg": 3,
+        "decomp_regs": [
+          10
+        ]
+      },
+      {
+        "retail_reg": 30,
+        "decomp_regs": [
+          0
+        ]
+      }
+    ]
+  },
+  "instructions": [
+    {
+      "offset": 0,
+      "retail_hex": "0x3CA00000",
+      "decomp_hex": "0x9421FDF0",
+      "retail_asm": "lis r5, 0",
+      "decomp_asm": "stwu sp, -528(sp)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 4,
+      "retail_hex": "0x38A50000",
+      "decomp_hex": "0xDBE10208",
+      "retail_asm": "addi r5, r5, 0",
+      "decomp_asm": "stfd f31, 520(sp)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 8,
+      "retail_hex": "0x48000004",
+      "decomp_hex": "0x3CA00000",
+      "retail_asm": "b 0x00000104",
+      "decomp_asm": "lis r5, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 12,
+      "retail_hex": "0x9421FDE0",
+      "decomp_hex": "0x3D200000",
+      "retail_asm": "stwu sp, -544(sp)",
+      "decomp_asm": "lis r9, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 16,
+      "retail_hex": "0xDBE10218",
+      "decomp_hex": "0xC8850000",
+      "retail_asm": "stfd f31, 536(sp)",
+      "decomp_asm": "lfd f4, 0(r5)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 20,
+      "retail_hex": "0xDBC10210",
+      "decomp_hex": "0x39290000",
+      "retail_asm": "stfd f30, 528(sp)",
+      "decomp_asm": "addi r9, r9, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 24,
+      "retail_hex": "0xDBA10208",
+      "decomp_hex": "0x39400000",
+      "retail_asm": "stfd f29, 520(sp)",
+      "decomp_asm": "li r10, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 28,
+      "retail_hex": "0x39800000",
+      "decomp_hex": "0x38A00000",
+      "retail_asm": "li r12, 0",
+      "decomp_asm": "li r5, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 32,
+      "retail_hex": "0x38C00000",
+      "decomp_hex": "0x38000004",
+      "retail_asm": "li r6, 0",
+      "decomp_asm": "li r0, 4",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 36,
+      "retail_hex": "0x3CE00000",
+      "decomp_hex": "0x39810008",
+      "retail_asm": "lis r7, 0",
+      "decomp_asm": "addi r12, sp, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 40,
+      "retail_hex": "0x38000004",
+      "decomp_hex": "0x7D632A14",
+      "retail_asm": "li r0, 4",
+      "decomp_asm": "add r11, r3, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 44,
+      "retail_hex": "0x39210008",
+      "decomp_hex": "0x7D8C2A14",
+      "retail_asm": "addi r9, sp, 8",
+      "decomp_asm": "add r12, r12, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 48,
+      "retail_hex": "0x7D433214",
+      "decomp_hex": "0x38C00000",
+      "retail_asm": "add r10, r3, r6",
+      "decomp_asm": "li r6, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 52,
+      "retail_hex": "0x7D293214",
+      "decomp_hex": "0x7C0903A6",
+      "retail_asm": "add r9, r9, r6",
+      "decomp_asm": "mtspr 19, r0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 56,
+      "retail_hex": "0x39000000",
+      "decomp_hex": "0xC8AB0000",
+      "retail_asm": "li r8, 0",
+      "decomp_asm": "lfd f5, 0(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 60,
+      "retail_hex": "0x7C0903A6",
+      "decomp_hex": "0x7D093214",
+      "retail_asm": "mtspr 19, r0",
+      "decomp_asm": "add r8, r9, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 64,
+      "retail_hex": "0xCBA70000",
+      "decomp_hex": "0x7C2934AE",
+      "retail_asm": "lfd f29, 0(r7)",
+      "decomp_asm": "op31_599 r1, r9, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 68,
+      "retail_hex": "0x7D654214",
+      "decomp_hex": "0x38C60008",
+      "retail_asm": "add r11, r5, r8",
+      "decomp_asm": "addi r6, r6, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 72,
+      "retail_hex": "0x7FC544AE",
+      "decomp_hex": "0x7C0934AE",
+      "retail_asm": "op31_599 r30, r5, r8",
+      "decomp_asm": "op31_599 r0, r9, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 76,
+      "retail_hex": "0x39080008",
+      "decomp_hex": "0x7CE93214",
+      "retail_asm": "addi r8, r8, 8",
+      "decomp_asm": "add r7, r9, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 80,
+      "retail_hex": "0xCBEA0000",
+      "decomp_hex": "0xFCC5207A",
+      "retail_asm": "lfd f31, 0(r10)",
+      "decomp_asm": ".4byte 0xFCC5207A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 84,
+      "retail_hex": "0xC9AB0040",
+      "decomp_hex": "0xC86B0008",
+      "retail_asm": "lfd f13, 64(r11)",
+      "decomp_asm": "lfd f3, 8(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 88,
+      "retail_hex": "0xFFBEEFFA",
+      "decomp_hex": "0xC8480040",
+      "retail_asm": ".4byte 0xFFBEEFFA",
+      "decomp_asm": "lfd f2, 64(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 92,
+      "retail_hex": "0xC98A0008",
+      "decomp_hex": "0x38C60008",
+      "retail_asm": "lfd f12, 8(r10)",
+      "decomp_asm": "addi r6, r6, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 96,
+      "retail_hex": "0xC96B0080",
+      "decomp_hex": "0xFCA5203A",
+      "retail_asm": "lfd f11, 128(r11)",
+      "decomp_asm": ".4byte 0xFCA5203A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 100,
+      "retail_hex": "0xC94A0010",
+      "decomp_hex": "0xC8070040",
+      "retail_asm": "lfd f10, 16(r10)",
+      "decomp_asm": "lfd f0, 64(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 104,
+      "retail_hex": "0xC92B00C0",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": "lfd f9, 192(r11)",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 108,
+      "retail_hex": "0xFFADEB3A",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": ".4byte 0xFFADEB3A",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 112,
+      "retail_hex": "0xC90A0018",
+      "decomp_hex": "0xC86B0010",
+      "retail_asm": "lfd f8, 24(r10)",
+      "decomp_asm": "lfd f3, 16(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 116,
+      "retail_hex": "0xC8EB0100",
+      "decomp_hex": "0xC8480080",
+      "retail_asm": "lfd f7, 256(r11)",
+      "decomp_asm": "lfd f2, 128(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 120,
+      "retail_hex": "0xC8CA0020",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": "lfd f6, 32(r10)",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 124,
+      "retail_hex": "0xFFABEABA",
+      "decomp_hex": "0xC8070080",
+      "retail_asm": ".4byte 0xFFABEABA",
+      "decomp_asm": "lfd f0, 128(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 128,
+      "retail_hex": "0xC8AB0140",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": "lfd f5, 320(r11)",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 132,
+      "retail_hex": "0xC88A0028",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": "lfd f4, 40(r10)",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 136,
+      "retail_hex": "0xC86B0180",
+      "decomp_hex": "0xC86B0018",
+      "retail_asm": "lfd f3, 384(r11)",
+      "decomp_asm": "lfd f3, 24(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 140,
+      "retail_hex": "0xC82B01C0",
+      "decomp_hex": "0xC84800C0",
+      "retail_asm": "lfd f1, 448(r11)",
+      "decomp_asm": "lfd f2, 192(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 144,
+      "retail_hex": "0x7D654214",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": "add r11, r5, r8",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 148,
+      "retail_hex": "0xFFA9EA3A",
+      "decomp_hex": "0xC80700C0",
+      "retail_asm": ".4byte 0xFFA9EA3A",
+      "decomp_asm": "lfd f0, 192(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 152,
+      "retail_hex": "0x7FC544AE",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": "op31_599 r30, r5, r8",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 156,
+      "retail_hex": "0xC84A0030",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": "lfd f2, 48(r10)",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 160,
+      "retail_hex": "0x39080008",
+      "decomp_hex": "0xC86B0020",
+      "retail_asm": "addi r8, r8, 8",
+      "decomp_asm": "lfd f3, 32(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 164,
+      "retail_hex": "0xC80A0038",
+      "decomp_hex": "0xC8480100",
+      "retail_asm": "lfd f0, 56(r10)",
+      "decomp_asm": "lfd f2, 256(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 168,
+      "retail_hex": "0xC9AB0040",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": "lfd f13, 64(r11)",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 172,
+      "retail_hex": "0xFFA7E9BA",
+      "decomp_hex": "0xC8070100",
+      "retail_asm": ".4byte 0xFFA7E9BA",
+      "decomp_asm": "lfd f0, 256(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 176,
+      "retail_hex": "0xC96B0080",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": "lfd f11, 128(r11)",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 180,
+      "retail_hex": "0xC92B00C0",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": "lfd f9, 192(r11)",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 184,
+      "retail_hex": "0xC8EB0100",
+      "decomp_hex": "0xC86B0028",
+      "retail_asm": "lfd f7, 256(r11)",
+      "decomp_asm": "lfd f3, 40(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 188,
+      "retail_hex": "0xFFA5E93A",
+      "decomp_hex": "0xC8480140",
+      "retail_asm": ".4byte 0xFFA5E93A",
+      "decomp_asm": "lfd f2, 320(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 192,
+      "retail_hex": "0xC8AB0140",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": "lfd f5, 320(r11)",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 196,
+      "retail_hex": "0xFFA3E8BA",
+      "decomp_hex": "0xC8070140",
+      "retail_asm": ".4byte 0xFFA3E8BA",
+      "decomp_asm": "lfd f0, 320(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 200,
+      "retail_hex": "0xC86B0180",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": "lfd f3, 384(r11)",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 204,
+      "retail_hex": "0xFFA1E83A",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": ".4byte 0xFFA1E83A",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 208,
+      "retail_hex": "0xC82B01C0",
+      "decomp_hex": "0xC86B0030",
+      "retail_asm": "lfd f1, 448(r11)",
+      "decomp_asm": "lfd f3, 48(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 212,
+      "retail_hex": "0xDBA90000",
+      "decomp_hex": "0xC8480180",
+      "retail_asm": "stfd f29, 0(r9)",
+      "decomp_asm": "lfd f2, 384(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 216,
+      "retail_hex": "0xCBA70000",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": "lfd f29, 0(r7)",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 220,
+      "retail_hex": "0xFFBEEFFA",
+      "decomp_hex": "0xC8070180",
+      "retail_asm": ".4byte 0xFFBEEFFA",
+      "decomp_asm": "lfd f0, 384(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 224,
+      "retail_hex": "0xFFADEB3A",
+      "decomp_hex": "0xFC201890",
+      "retail_asm": ".4byte 0xFFADEB3A",
+      "decomp_asm": ".4byte 0xFC201890",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 228,
+      "retail_hex": "0xFFABEABA",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": ".4byte 0xFFABEABA",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 232,
+      "retail_hex": "0xFFA9EA3A",
+      "decomp_hex": "0xC86B0038",
+      "retail_asm": ".4byte 0xFFA9EA3A",
+      "decomp_asm": "lfd f3, 56(r11)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 236,
+      "retail_hex": "0xFFA7E9BA",
+      "decomp_hex": "0xC84801C0",
+      "retail_asm": ".4byte 0xFFA7E9BA",
+      "decomp_asm": "lfd f2, 448(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 240,
+      "retail_hex": "0xFFA5E93A",
+      "decomp_hex": "0xFCA1283A",
+      "retail_asm": ".4byte 0xFFA5E93A",
+      "decomp_asm": ".4byte 0xFCA1283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 244,
+      "retail_hex": "0xFFA3E8BA",
+      "decomp_hex": "0xC80701C0",
+      "retail_asm": ".4byte 0xFFA3E8BA",
+      "decomp_asm": "lfd f0, 448(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 248,
+      "retail_hex": "0xFFA1E83A",
+      "decomp_hex": "0xFCC330BA",
+      "retail_asm": ".4byte 0xFFA1E83A",
+      "decomp_asm": ".4byte 0xFCC330BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 252,
+      "retail_hex": "0xDBA90008",
+      "decomp_hex": "0xFCA3283A",
+      "retail_asm": "stfd f29, 8(r9)",
+      "decomp_asm": ".4byte 0xFCA3283A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 256,
+      "retail_hex": "0x39290010",
+      "decomp_hex": "0xD8CC0000",
+      "retail_asm": "addi r9, r9, 16",
+      "decomp_asm": "stfd f6, 0(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 260,
+      "retail_hex": "0x4200FF3C",
+      "decomp_hex": "0xD8AC0008",
+      "retail_asm": "bc 16, 0, 0x00000138",
+      "decomp_asm": "stfd f5, 8(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 264,
+      "retail_hex": "0x398C0001",
+      "decomp_hex": "0x398C0010",
+      "retail_asm": "addi r12, r12, 1",
+      "decomp_asm": "addi r12, r12, 16",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 268,
+      "retail_hex": "0x38C60040",
+      "decomp_hex": "0x4200FF2C",
+      "retail_asm": "addi r6, r6, 64",
+      "decomp_asm": "bc 16, 0, 0x00000130",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 272,
+      "retail_hex": "0x2C0C0008",
+      "decomp_hex": "0x394A0001",
+      "retail_asm": "cmpi cr0, 0, r12, 8",
+      "decomp_asm": "addi r10, r10, 1",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 276,
+      "retail_hex": "0x4180FF18",
+      "decomp_hex": "0x38A50040",
+      "retail_asm": "bc 12, 0, 0x00000124",
+      "decomp_asm": "addi r5, r5, 64",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 280,
+      "retail_hex": "0x39600000",
+      "decomp_hex": "0x2C0A0008",
+      "retail_asm": "li r11, 0",
+      "decomp_asm": "cmpi cr0, 0, r10, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 284,
+      "retail_hex": "0x38600000",
+      "decomp_hex": "0x4180FF08",
+      "retail_asm": "li r3, 0",
+      "decomp_asm": "bc 12, 0, 0x0000011C",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 288,
+      "retail_hex": "0x3CE00000",
+      "decomp_hex": "0x39400000",
+      "retail_asm": "lis r7, 0",
+      "decomp_asm": "li r10, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 292,
+      "retail_hex": "0x38000004",
+      "decomp_hex": "0x38600000",
+      "retail_asm": "li r0, 4",
+      "decomp_asm": "li r3, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 296,
+      "retail_hex": "0x39210008",
+      "decomp_hex": "0x3CE00000",
+      "retail_asm": "addi r9, sp, 8",
+      "decomp_asm": "lis r7, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 300,
+      "retail_hex": "0x7DA91CEE",
+      "decomp_hex": "0x38000004",
+      "retail_asm": "op31_631 r13, r9, r3",
+      "decomp_asm": "li r0, 4",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 304,
+      "retail_hex": "0x7D441A14",
+      "decomp_hex": "0x39010008",
+      "retail_asm": "add r10, r4, r3",
+      "decomp_asm": "addi r8, sp, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 308,
+      "retail_hex": "0x39000000",
+      "decomp_hex": "0x7C081CEE",
+      "retail_asm": "li r8, 0",
+      "decomp_asm": "op31_631 r0, r8, r3",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 312,
+      "retail_hex": "0x38C00000",
+      "decomp_hex": "0x7D641A14",
+      "retail_asm": "li r6, 0",
+      "decomp_asm": "add r11, r4, r3",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 316,
+      "retail_hex": "0xC9890040",
+      "decomp_hex": "0x38A00000",
+      "retail_asm": "lfd f12, 64(r9)",
+      "decomp_asm": "li r5, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 320,
+      "retail_hex": "0xC9490080",
+      "decomp_hex": "0x38C00000",
+      "retail_asm": "lfd f10, 128(r9)",
+      "decomp_asm": "li r6, 0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 324,
+      "retail_hex": "0xC90900C0",
+      "decomp_hex": "0xC8280040",
+      "retail_asm": "lfd f8, 192(r9)",
+      "decomp_asm": "lfd f1, 64(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 328,
+      "retail_hex": "0xC8C90100",
+      "decomp_hex": "0xC8480080",
+      "retail_asm": "lfd f6, 256(r9)",
+      "decomp_asm": "lfd f2, 128(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 332,
+      "retail_hex": "0xC8890140",
+      "decomp_hex": "0xC86800C0",
+      "retail_asm": "lfd f4, 320(r9)",
+      "decomp_asm": "lfd f3, 192(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 336,
+      "retail_hex": "0xC8490180",
+      "decomp_hex": "0xC8880100",
+      "retail_asm": "lfd f2, 384(r9)",
+      "decomp_asm": "lfd f4, 256(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 340,
+      "retail_hex": "0xC80901C0",
+      "decomp_hex": "0xC8A80140",
+      "retail_asm": "lfd f0, 448(r9)",
+      "decomp_asm": "lfd f5, 320(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 344,
+      "retail_hex": "0x7C0903A6",
+      "decomp_hex": "0xC8C80180",
+      "retail_asm": "mtspr 19, r0",
+      "decomp_asm": "lfd f6, 384(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 348,
+      "retail_hex": "0xCBC70000",
+      "decomp_hex": "0xC8E801C0",
+      "retail_asm": "lfd f30, 0(r7)",
+      "decomp_asm": "lfd f7, 448(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 352,
+      "retail_hex": "0x7D254214",
+      "decomp_hex": "0x7C0903A6",
+      "retail_asm": "add r9, r5, r8",
+      "decomp_asm": "mtspr 19, r0",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 356,
+      "retail_hex": "0x7C6544AE",
+      "decomp_hex": "0x7D492CAE",
+      "retail_asm": "op31_599 r3, r5, r8",
+      "decomp_asm": "op31_599 r10, r9, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 360,
+      "retail_hex": "0x39080008",
+      "decomp_hex": "0x7D092A14",
+      "retail_asm": "addi r8, r8, 8",
+      "decomp_asm": "add r8, r9, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 364,
+      "retail_hex": "0xC8290040",
+      "decomp_hex": "0xC9270000",
+      "retail_asm": "lfd f1, 64(r9)",
+      "decomp_asm": "lfd f9, 0(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 368,
+      "retail_hex": "0xFFC3F37A",
+      "decomp_hex": "0x38A50008",
+      "retail_asm": ".4byte 0xFFC3F37A",
+      "decomp_asm": "addi r5, r5, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 372,
+      "retail_hex": "0xC9690080",
+      "decomp_hex": "0xC9080040",
+      "retail_asm": "lfd f11, 128(r9)",
+      "decomp_asm": "lfd f8, 64(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 376,
+      "retail_hex": "0xC92900C0",
+      "decomp_hex": "0x7D892A14",
+      "retail_asm": "lfd f9, 192(r9)",
+      "decomp_asm": "add r12, r9, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 380,
+      "retail_hex": "0xC8E90100",
+      "decomp_hex": "0xFD2A483A",
+      "retail_asm": "lfd f7, 256(r9)",
+      "decomp_asm": ".4byte 0xFD2A483A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 384,
+      "retail_hex": "0xC8A90140",
+      "decomp_hex": "0xC9A80080",
+      "retail_asm": "lfd f5, 320(r9)",
+      "decomp_asm": "lfd f13, 128(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 388,
+      "retail_hex": "0xFFC1F33A",
+      "decomp_hex": "0xC98800C0",
+      "retail_asm": ".4byte 0xFFC1F33A",
+      "decomp_asm": "lfd f12, 192(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 392,
+      "retail_hex": "0xC8690180",
+      "decomp_hex": "0xC9680100",
+      "retail_asm": "lfd f3, 384(r9)",
+      "decomp_asm": "lfd f11, 256(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 396,
+      "retail_hex": "0xC82901C0",
+      "decomp_hex": "0xC9480140",
+      "retail_asm": "lfd f1, 448(r9)",
+      "decomp_asm": "lfd f10, 320(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 400,
+      "retail_hex": "0x7D254214",
+      "decomp_hex": "0xFFE8487A",
+      "retail_asm": "add r9, r5, r8",
+      "decomp_asm": ".4byte 0xFFE8487A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 404,
+      "retail_hex": "0xFFCBF2BA",
+      "decomp_hex": "0xC9280180",
+      "retail_asm": ".4byte 0xFFCBF2BA",
+      "decomp_asm": "lfd f9, 384(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 408,
+      "retail_hex": "0xFFC9F23A",
+      "decomp_hex": "0xC90801C0",
+      "retail_asm": ".4byte 0xFFC9F23A",
+      "decomp_asm": "lfd f8, 448(r8)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 412,
+      "retail_hex": "0xFFC7F1BA",
+      "decomp_hex": "0xFDADF8BA",
+      "retail_asm": ".4byte 0xFFC7F1BA",
+      "decomp_asm": ".4byte 0xFDADF8BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 416,
+      "retail_hex": "0xFFC5F13A",
+      "decomp_hex": "0xFD8C68FA",
+      "retail_asm": ".4byte 0xFFC5F13A",
+      "decomp_asm": ".4byte 0xFD8C68FA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 420,
+      "retail_hex": "0xFFC3F0BA",
+      "decomp_hex": "0xFD6B613A",
+      "retail_asm": ".4byte 0xFFC3F0BA",
+      "decomp_asm": ".4byte 0xFD6B613A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 424,
+      "retail_hex": "0xFFC1F03A",
+      "decomp_hex": "0xFD4A597A",
+      "retail_asm": ".4byte 0xFFC1F03A",
+      "decomp_asm": ".4byte 0xFD4A597A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 428,
+      "retail_hex": "0x7FCA35AE",
+      "decomp_hex": "0xFD2951BA",
+      "retail_asm": "op31_727 r30, r10, r6",
+      "decomp_asm": ".4byte 0xFD2951BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 432,
+      "retail_hex": "0x38C60040",
+      "decomp_hex": "0xFD0849FA",
+      "retail_asm": "addi r6, r6, 64",
+      "decomp_asm": ".4byte 0xFD0849FA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 436,
+      "retail_hex": "0xCBC70000",
+      "decomp_hex": "0x7D0B35AE",
+      "retail_asm": "lfd f30, 0(r7)",
+      "decomp_asm": "op31_727 r8, r11, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 440,
+      "retail_hex": "0x7C6544AE",
+      "decomp_hex": "0x38C60040",
+      "retail_asm": "op31_599 r3, r5, r8",
+      "decomp_asm": "addi r6, r6, 64",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 444,
+      "retail_hex": "0x39080008",
+      "decomp_hex": "0x7D492CAE",
+      "retail_asm": "addi r8, r8, 8",
+      "decomp_asm": "op31_599 r10, r9, r5",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 448,
+      "retail_hex": "0xC8290040",
+      "decomp_hex": "0x38A50008",
+      "retail_asm": "lfd f1, 64(r9)",
+      "decomp_asm": "addi r5, r5, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 452,
+      "retail_hex": "0xFFC3F37A",
+      "decomp_hex": "0xC9270000",
+      "retail_asm": ".4byte 0xFFC3F37A",
+      "decomp_asm": "lfd f9, 0(r7)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 456,
+      "retail_hex": "0xC9690080",
+      "decomp_hex": "0xC90C0040",
+      "retail_asm": "lfd f11, 128(r9)",
+      "decomp_asm": "lfd f8, 64(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 460,
+      "retail_hex": "0xC92900C0",
+      "decomp_hex": "0xFD2A483A",
+      "retail_asm": "lfd f9, 192(r9)",
+      "decomp_asm": ".4byte 0xFD2A483A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 464,
+      "retail_hex": "0xC8E90100",
+      "decomp_hex": "0xC9AC0080",
+      "retail_asm": "lfd f7, 256(r9)",
+      "decomp_asm": "lfd f13, 128(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 468,
+      "retail_hex": "0xC8A90140",
+      "decomp_hex": "0xC98C00C0",
+      "retail_asm": "lfd f5, 320(r9)",
+      "decomp_asm": "lfd f12, 192(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 472,
+      "retail_hex": "0xFFC1F33A",
+      "decomp_hex": "0xC96C0100",
+      "retail_asm": ".4byte 0xFFC1F33A",
+      "decomp_asm": "lfd f11, 256(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 476,
+      "retail_hex": "0xC8690180",
+      "decomp_hex": "0xC94C0140",
+      "retail_asm": "lfd f3, 384(r9)",
+      "decomp_asm": "lfd f10, 320(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 480,
+      "retail_hex": "0xC82901C0",
+      "decomp_hex": "0xFFE8487A",
+      "retail_asm": "lfd f1, 448(r9)",
+      "decomp_asm": ".4byte 0xFFE8487A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 484,
+      "retail_hex": "0xFFCBF2BA",
+      "decomp_hex": "0xC92C0180",
+      "retail_asm": ".4byte 0xFFCBF2BA",
+      "decomp_asm": "lfd f9, 384(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 488,
+      "retail_hex": "0xFFC9F23A",
+      "decomp_hex": "0xC90C01C0",
+      "retail_asm": ".4byte 0xFFC9F23A",
+      "decomp_asm": "lfd f8, 448(r12)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 492,
+      "retail_hex": "0xFFC7F1BA",
+      "decomp_hex": "0xFDADF8BA",
+      "retail_asm": ".4byte 0xFFC7F1BA",
+      "decomp_asm": ".4byte 0xFDADF8BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 496,
+      "retail_hex": "0xFFC5F13A",
+      "decomp_hex": "0xFD8C68FA",
+      "retail_asm": ".4byte 0xFFC5F13A",
+      "decomp_asm": ".4byte 0xFD8C68FA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 500,
+      "retail_hex": "0xFFC3F0BA",
+      "decomp_hex": "0xFD6B613A",
+      "retail_asm": ".4byte 0xFFC3F0BA",
+      "decomp_asm": ".4byte 0xFD6B613A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 504,
+      "retail_hex": "0xFFC1F03A",
+      "decomp_hex": "0xFD4A597A",
+      "retail_asm": ".4byte 0xFFC1F03A",
+      "decomp_asm": ".4byte 0xFD4A597A",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 508,
+      "retail_hex": "0x7FCA35AE",
+      "decomp_hex": "0xFD2951BA",
+      "retail_asm": "op31_727 r30, r10, r6",
+      "decomp_asm": ".4byte 0xFD2951BA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 512,
+      "retail_hex": "0x38C60040",
+      "decomp_hex": "0xFD0849FA",
+      "retail_asm": "addi r6, r6, 64",
+      "decomp_asm": ".4byte 0xFD0849FA",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 516,
+      "retail_hex": "0x4200FF58",
+      "decomp_hex": "0x7D0B35AE",
+      "retail_asm": "bc 16, 0, 0x00000254",
+      "decomp_asm": "op31_727 r8, r11, r6",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 520,
+      "retail_hex": "0x396B0001",
+      "decomp_hex": "0x38C60040",
+      "retail_asm": "addi r11, r11, 1",
+      "decomp_asm": "addi r6, r6, 64",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 524,
+      "retail_hex": "0x38630008",
+      "decomp_hex": "0x4200FF58",
+      "retail_asm": "addi r3, r3, 8",
+      "decomp_asm": "bc 16, 0, 0x0000025C",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 528,
+      "retail_hex": "0x2C0B0008",
+      "decomp_hex": "0x394A0001",
+      "retail_asm": "cmpi cr0, 0, r11, 8",
+      "decomp_asm": "addi r10, r10, 1",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 532,
+      "retail_hex": "0x4180FF14",
+      "decomp_hex": "0x38630008",
+      "retail_asm": "bc 12, 0, 0x00000220",
+      "decomp_asm": "addi r3, r3, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 536,
+      "retail_hex": "0xCBE10218",
+      "decomp_hex": "0x2C0A0008",
+      "retail_asm": "lfd f31, 536(sp)",
+      "decomp_asm": "cmpi cr0, 0, r10, 8",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 540,
+      "retail_hex": "0xCBC10210",
+      "decomp_hex": "0x4180FF14",
+      "retail_asm": "lfd f30, 528(sp)",
+      "decomp_asm": "bc 12, 0, 0x00000228",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": true
+    },
+    {
+      "offset": 544,
+      "retail_hex": "0xCBA10208",
+      "decomp_hex": "0xCBE10208",
+      "retail_asm": "lfd f29, 520(sp)",
+      "decomp_asm": "lfd f31, 520(sp)",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": true,
+      "structural": false
+    },
+    {
+      "offset": 548,
+      "retail_hex": "0x38210220",
+      "decomp_hex": "0x38210210",
+      "retail_asm": "addi sp, sp, 544",
+      "decomp_asm": "addi sp, sp, 528",
+      "match": false,
+      "has_decomp_reloc": false,
+      "reg_swap": true,
+      "pure_reg_swap": false,
+      "structural": false
+    },
+    {
+      "offset": 552,
+      "retail_hex": "0x4E800020",
+      "decomp_hex": "0x4E800020",
+      "retail_asm": "bclr 20, 0",
+      "decomp_asm": "bclr 20, 0",
+      "match": true,
+      "has_decomp_reloc": false,
+      "reg_swap": false,
+      "pure_reg_swap": false,
+      "structural": false
+    }
+  ],
+  "size_check": {
+    "budget": 804,
+    "retail_text": 804,
+    "decomp_text": 804,
+    "ok": true,
+    "over_by": null,
+    "split_path": "CriWare/src/sofdec/sfdcore/dct/dct_ac.c",
+    "notes": "within split budget (0x0 spare)"
+  },
+  "retail_relocations": [
+    {
+      "offset": 2,
+      "type": 6,
+      "symbol": "lbl_eu_806046C0",
+      "addend": 0
+    },
+    {
+      "offset": 6,
+      "type": 4,
+      "symbol": "lbl_eu_806046C0",
+      "addend": 0
+    },
+    {
+      "offset": 38,
+      "type": 6,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 66,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 218,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 290,
+      "type": 6,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 350,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 438,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    }
+  ],
+  "decomp_relocations": [
+    {
+      "offset": 10,
+      "type": 6,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 14,
+      "type": 6,
+      "symbol": "lbl_eu_806046C0",
+      "addend": 0
+    },
+    {
+      "offset": 18,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 22,
+      "type": 4,
+      "symbol": "lbl_eu_806046C0",
+      "addend": 0
+    },
+    {
+      "offset": 298,
+      "type": 6,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 366,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    },
+    {
+      "offset": 454,
+      "type": 4,
+      "symbol": "lbl_eu_8051C3A8",
+      "addend": 0
+    }
+  ],
+  "reloc_drift": [
+    {
+      "offset": 2,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "lbl_eu_806046C0",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_HA",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 6,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "lbl_eu_806046C0",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_LO",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 10,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_8051C3A8",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_HA"
+    },
+    {
+      "offset": 14,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_806046C0",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_HA"
+    },
+    {
+      "offset": 18,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_8051C3A8",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_LO"
+    },
+    {
+      "offset": 22,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_806046C0",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_LO"
+    },
+    {
+      "offset": 38,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_HA",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 66,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_LO",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 218,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_LO",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 290,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_HA",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 298,
+      "reloc_type": 6,
+      "type": "R_PPC_ADDR16_HA",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_8051C3A8",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_HA"
+    },
+    {
+      "offset": 350,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_LO",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 366,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_8051C3A8",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_LO"
+    },
+    {
+      "offset": 438,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "lbl_eu_8051C3A8",
+      "decomp_symbol": "",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": 0,
+      "decomp_addend": null,
+      "addend_delta": null,
+      "retail_type": "R_PPC_ADDR16_LO",
+      "decomp_type": "\u2014"
+    },
+    {
+      "offset": 454,
+      "reloc_type": 4,
+      "type": "R_PPC_ADDR16_LO",
+      "retail_symbol": "",
+      "decomp_symbol": "lbl_eu_8051C3A8",
+      "kind": "presence",
+      "category": "data",
+      "retail_addend": null,
+      "decomp_addend": 0,
+      "addend_delta": null,
+      "retail_type": "\u2014",
+      "decomp_type": "R_PPC_ADDR16_LO"
+    }
+  ],
+  "reloc_suggestions": {
+    "0x0002": [
+      "reloc present on retail side ONLY at 0x0002 (lbl_eu_806046C0 [R_PPC_ADDR16_HA]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0006": [
+      "reloc present on retail side ONLY at 0x0006 (lbl_eu_806046C0 [R_PPC_ADDR16_LO]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x000a": [
+      "reloc present on decomp side ONLY at 0x000a (lbl_eu_8051C3A8 [R_PPC_ADDR16_HA]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x000e": [
+      "reloc present on decomp side ONLY at 0x000e (lbl_eu_806046C0 [R_PPC_ADDR16_HA]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0012": [
+      "reloc present on decomp side ONLY at 0x0012 (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0016": [
+      "reloc present on decomp side ONLY at 0x0016 (lbl_eu_806046C0 [R_PPC_ADDR16_LO]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0026": [
+      "reloc present on retail side ONLY at 0x0026 (lbl_eu_8051C3A8 [R_PPC_ADDR16_HA]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0042": [
+      "reloc present on retail side ONLY at 0x0042 (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x00da": [
+      "reloc present on retail side ONLY at 0x00da (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x0122": [
+      "reloc present on retail side ONLY at 0x0122 (lbl_eu_8051C3A8 [R_PPC_ADDR16_HA]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x012a": [
+      "reloc present on decomp side ONLY at 0x012a (lbl_eu_8051C3A8 [R_PPC_ADDR16_HA]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x015e": [
+      "reloc present on retail side ONLY at 0x015e (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x016e": [
+      "reloc present on decomp side ONLY at 0x016e (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x01b6": [
+      "reloc present on retail side ONLY at 0x01b6 (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 decomp has no reloc at this offset",
+      "  retail references a linker symbol decomp resolved INLINE \u2014 fix only if a real source shape keeps the reference (do NOT add an extern retail-name spelling; PLAN.md \u00a717.6 no longer approves relocation-name spellings)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ],
+    "0x01c6": [
+      "reloc present on decomp side ONLY at 0x01c6 (lbl_eu_8051C3A8 [R_PPC_ADDR16_LO]) \u2014 retail has no reloc at this offset",
+      "  decomp emits a reloc where retail resolves the value INLINE \u2014 the fix is to make decomp emit NO reloc at this offset: inline the constant/value or restructure the expression so the reference is resolved at compile time (do NOT add an extern reference \u2014 that keeps the reloc and cannot pass the reloc-site gate)",
+      "  NOT reloc-NAME fixable; check the expression/operand shape (docs/MWCC_PATTERNS.md SDA globals / \u00a71b float pools)"
+    ]
+  }
+}

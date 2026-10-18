@@ -2,8 +2,8 @@
 
 // Byte-swap a 32-bit word (the CX streams store integers big-endian).
 static inline u32 CXSwap32(u32 val) {
-    return (val >> 24 & 0xFF) | (val >> 8 & 0xFF00) | (val << 8 & 0xFF0000) |
-           (val << 24 & 0xFF000000);
+    return ((val & 0xFF000000) >> 24) | ((val & 0xFF0000) >> 8) |
+           ((val & 0xFF00) << 8) | ((val & 0xFF) << 24);
 }
 
 // Load a big-endian 32-bit word and return its numeric value.
@@ -31,7 +31,9 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
     const u8* tree;
     s32 bitsLeft;
     u32 bits;
-    u32 bit;
+    s32 bit;
+    u32 node;
+    u32 flags;
 
     size = CXLoadBE32(src) >> 8;
     if (size != 0) {
@@ -42,9 +44,10 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
 
     bitBuffer = 0;
     treeBase = data + 1;
-    countMax = 4 + (src[0] & 7);
+    flags = src[0];
+    countMax = 4 + (flags & 7);
     byteCount = 0;
-    shift = src[0] & 0xF;
+    shift = flags & 0xF;
     if (size == 0) {
         size = CXLoadBE32(src + 4);
     }
@@ -59,12 +62,12 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
         words += 4;
         bitsLeft = 32;
         while (--bitsLeft >= 0) {
-            u8 node = *tree;
+            node = *tree;
             bit = bits >> 31;
-            tree = (const u8*)(((u32)tree & ~1) + bit + 2 * ((node & 0x3F) + 1));
+            tree = (const u8*)(bit + ((u32)tree & ~1) + 2 * ((node & 0x3F) + 1));
             if ((node << bit) & 0x80) {
                 // Leaf reached: emit the byte stored at the leaf offset.
-                u8 out = *tree;
+                u32 out = *tree;
                 bitBuffer = (bitBuffer >> shift) | (out << (32 - shift));
                 tree = (const u8*)treeBase;
                 if (++byteCount == countMax) {

@@ -472,8 +472,8 @@ extern "C" void setActive(void* self, u32 a);
 // byte 7 and run the +0x18 sub-object init.
 extern "C" __declspec(noinline) void PartyStateWin_StateMarkEquipActive(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip) != 0) {
-        *(u8*)((u8*)self + 0x6BE4) = 7;
-        setActive((u8*)self + 0x18, 1);
+        self->field_6BE4 = 7;
+        setActive(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 1);
     }
 }
 
@@ -720,8 +720,8 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
 // Gate: when the help sub-object is idle and the +0x4150 window accepts
 // input, raise the +0x6BE4 state byte to 7.
 extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)((u8*)self + 0x18)) && EquipChange_IsActiveFlag((CEquipChange*)((u8*)self + 0x4150)))
-        *((u8*)self + 0x6BE4) = 7;
+    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) && EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)))
+        self->field_6BE4 = 7;
 }
 
 // us-801fc71c | PartyStateWin_StateEquipInput
@@ -1612,32 +1612,51 @@ extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag)
     // Uninitialized stack record: retail reads its own frame at sp+0xC..0x2A
     // (the only retail caller passes just the object and the type flag, so
     // these are stale stack bytes).
+    // Retail schedule: the type tag is picked first (held in r28 across the
+    // body), then the ring index math (total in r30, base in r29, scaled
+    // offset in r31), with the record loads interleaved in the divw shadow
+    // and the tag stored via stwux (which also forms dst in r29) before the
+    // remaining field stores. The loads must precede the first store:
+    // a store through dst first would pin them below the address math
+    // (may-alias: dst and rec share the record type), killing the
+    // interleave and the stwux. All temps are consumed from locals so the
+    // loads batch into distinct registers instead of reloading per store.
     CPartyStateWinRec rec;
     volatile CPartyStateWinRec* rp = &rec;
-    s32 total = self->field_0x3f0 + self->field_0x3f4;
-    CPartyStateWinRec* dst =
-        (CPartyStateWinRec*)(self->field_0x3ec +
-                             (total % self->field_0x3f8) * 0x24);
+    u32 v4;
+    u32 v8;
+    u32 vc;
+    u32 v10;
+    u32 v14;
+    u32 v18;
+    u32 v1c;
+    u16 v20;
+    u8 v22;
+    s32 total;
     u32 type = 4;
     if (flag != 0) {
         type = 5;
     }
-    u32 v4 = rp->field_0x4;
-    u32 v8 = rp->field_0x8;
-    u32 vc = rp->field_0xc;
-    u32 v10 = rp->field_0x10;
-    u32 v14 = rp->field_0x14;
-    u32 v18 = rp->field_0x18;
-    u32 v1c = rp->field_0x1c;
-    u16 v20 = rp->field_0x20;
-    u8 v22 = rp->field_0x22;
+    u8* base = self->field_0x3ec;
+    total = self->field_0x3f0 + self->field_0x3f4;
+    CPartyStateWinRec* dst =
+        (CPartyStateWinRec*)(base + (total % self->field_0x3f8) * 0x24);
+    v4 = rp->field_0x4;
+    v8 = rp->field_0x8;
+    vc = rp->field_0xc;
+    v10 = rp->field_0x10;
+    v14 = rp->field_0x14;
+    v18 = rp->field_0x18;
+    v1c = rp->field_0x1c;
+    v20 = rp->field_0x20;
+    v22 = rp->field_0x22;
     dst->field_0x0 = type;
-    dst->field_0x4 = rp->field_0x4;
-    dst->field_0x8 = rp->field_0x8;
-    dst->field_0xc = rp->field_0xc;
-    dst->field_0x10 = rp->field_0x10;
-    dst->field_0x14 = rp->field_0x14;
-    dst->field_0x18 = rp->field_0x18;
+    dst->field_0x4 = v4;
+    dst->field_0x8 = v8;
+    dst->field_0xc = vc;
+    dst->field_0x10 = v10;
+    dst->field_0x14 = v14;
+    dst->field_0x18 = v18;
     dst->field_0x1c = v1c;
     dst->field_0x20 = v20;
     dst->field_0x22 = v22;

@@ -3978,51 +3978,61 @@ namespace cf {
 // found without a live actor bound to it. Returns 0 otherwise.
 s32 findFreeBattleSlot(D7D24_Obj* self) {
     s32 result = 0;
+    s32 i;
+    u8* p;
+    u32* kp;
+    u32* entryBase;
+    // Retail 0x800D880C shape notes: the 16-word scan is a counted loop that
+    // MWCC unrolls 8x into a two-trip CTR loop, keeping the dead induction
+    // update (li r4,0 / addi r4,r4,7). The key cursor (kp) and the byte scan
+    // cursor (p) stay distinct locals so the match flag lands in r0; the two
+    // forward gotos are control-flow exit gates (multi-exit guards), which
+    // let the mid/return paths read result from r31 (see MWCC_PATTERNS
+    // "Counted loop unrolls to CTR + dead induction counter"). The second
+    // pass keeps the self+j*4 entry temp (e) for the retail rlwinm/add shape.
+    // kp mirrors entryBase (fixed key base); p is the advancing scan cursor.
+    // i is the counted-loop index MWCC converts to CTR (dead update kept).
+    // s holds the per-check scan word so the scan side loads first.
 
     // If bit 0 of field_78 is clear, report 1
     if ((self->field_78 & 1) == 0) {
         result = 1;
     } else {
-        u8* entryBase = (u8*)self->field_B8;
+        entryBase = self->field_B8;
         if (entryBase != nullptr) {
-            // First loop: 2 iterations x 8 fields of a 0x20-byte entry.
-            // Target word re-read at the top of every iteration (retail shape).
-            // Comparand is [arrayBase+4], NOT self->field_4 (retail lwz r0,4(r6)).
-            u32 found = 0;
-            s32 idx;
-            u8* p = entryBase;
-            for (idx = 0; idx != 14; idx += 7) {
-                if (*(u32*)(p + 0x08) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x0C) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x10) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x14) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x18) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x1C) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x20) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                if (*(u32*)(p + 0x24) == *(u32*)(entryBase + 4)) { found = 1; break; }
-                p += 0x20;
+            u32 found;
+            kp = entryBase;
+            p = (u8*)entryBase;
+            for (i = 0; i < 16; i++) {
+                u32 s = *(u32*)(p + 8);
+                if (s == kp[1]) { found = 1; goto out; }
+                p += 4;
             }
-
-            // Matching entry only counts if its id resolves to an actor.
-            if (found && findObjectById(*(s32*)(entryBase + 4)) != nullptr) return result;
+            found = 0;
+        out:
+            if (found) {
+                if (findObjectById((s32)kp[1]) != 0) goto done;
+            }
 
             // Second pass: walk the u32 array at self+8 (up to 16 entries); stop at
             // the first non-zero word and report whether it equals self->field_4.
+            // Shared done gate reads result once from r31.
             {
                 u8* scan = (u8*)self;
-                for (s32 i = 0; i < 16; i++) {
+                for (s32 j = 0; j < 16; j++) {
                     if (*(u32*)(scan + 8) != 0) {
-                        if (*(u32*)((u8*)self + i * 4 + 8) == *(u32*)((u8*)self + 4)) {
+                        u8* e = (u8*)self + j * 4;
+                        if (*(u32*)(e + 8) == self->field_4) {
                             result = 1;
                         }
-                        return result;
+                        goto done;
                     }
                     scan += 4;
                 }
             }
         }
     }
-
+done:
     return result;
 }
 

@@ -269,24 +269,31 @@ extern "C" void actAnimVt88(void* self) { ((CActParamAnimView*)self)->fireAngleG
 extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->fireAngleLoGt(); }
 
 
+// View over sub-object A/B for the ref-entry reads in getParamRefS16A/B:
+// the entry void* sits at +0x74 (mField2D4 / mField2E0+0x74 = mField354)
+// and points at a CActParamDataRef (s16 at +0x08/+0x0A).
+struct ParamRefEntryBlk {
+    u8 _pad00[0x74];
+    void* mEntry74;              // 0x74
+};
 int getParamRefS16A(CActParamData* self) {
-    u8* block = reinterpret_cast<u8*>(&self->mA260);
+    ParamRefEntryBlk* block = reinterpret_cast<ParamRefEntryBlk*>(&self->mA260);
     if (self->mField2D4 == 0)
-        block = reinterpret_cast<u8*>(&self->mField2E0);
-    void* entry = *reinterpret_cast<void**>(block + 116);
+        block = reinterpret_cast<ParamRefEntryBlk*>(&self->mField2E0);
+    void* entry = block->mEntry74;
     if (entry == NULL)
         return -1;
-    return *reinterpret_cast<s16*>(static_cast<u8*>(entry) + 8);
+    return reinterpret_cast<CActParamDataRef*>(entry)->mShort08;
 }
 
 int getParamRefS16B(CActParamData* self) {
-    u8* block = reinterpret_cast<u8*>(&self->mA260);
+    ParamRefEntryBlk* block = reinterpret_cast<ParamRefEntryBlk*>(&self->mA260);
     if (self->mField2D4 == 0)
-        block = reinterpret_cast<u8*>(&self->mField2E0);
-    void* entry = *reinterpret_cast<void**>(block + 116);
+        block = reinterpret_cast<ParamRefEntryBlk*>(&self->mField2E0);
+    void* entry = block->mEntry74;
     if (entry == NULL)
         return -1;
-    return *reinterpret_cast<s16*>(static_cast<u8*>(entry) + 10);
+    return reinterpret_cast<CActParamDataRef*>(entry)->mShort0A;
 }
 
 u32 actParamZero0() {

@@ -80,9 +80,15 @@ DECOMP_INLINE MemManager::MemRegion::MemRegion() try :
     catch(...) {}
 
 MemManager::MemRegion::~MemRegion() {
+    //Both operands assigned in-compare: the SDA-direct load keeps retail's
+    //first-emission slot and r4 color, the extra handle temp fixes the
+    //allocator graph, and the both-impure tie lists (member, SDA) like
+    //retail's cmpl. (Split declare for colors from assign for loads.)
+    ALLOC_HANDLE handle;
+    ALLOC_HANDLE hMEM1;
     //Must deallocate if this region is not the MEM1/MEM2 region
-    if (mHandle != MemManager::getHandleMEM1()
-        && mHandle != MemManager::getHandleMEM2()) {
+    if ((handle = mHandle) != (hMEM1 = lbl_eu_80663508)
+        && handle != MemManager::getHandleMEM2()) {
         MemManager::deallocateImpl(mStartAddress);
     }
 

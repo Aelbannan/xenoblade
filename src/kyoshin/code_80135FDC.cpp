@@ -188,6 +188,18 @@ extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 
 struct FourShorts { s16 a, b, c, d; };
 
+// Pane-holder view: several untyped params carry their owner pane at +0x10.
+struct PaneHolder10View {
+    u8 _00[0x10];
+    nw4r::lyt::Pane* pane10;
+};
+
+// Anim-link item view: the link item holds its AnimTransform at +0x8.
+struct AnimLinkItemView {
+    u8 _00[8];
+    nw4r::lyt::AnimTransform* anim8;
+};
+
 // ---------- init ----------
 void MenuStateInitFlags() {
     lbl_eu_80664058 = 0;
@@ -898,9 +910,9 @@ add_out:
 // (bl relocs present at every call site). noinline blocks the auto-inline
 // without changing the helper bodies (both are byte-matched).
 extern "C" __declspec(noinline) void code80135FDC_setVec3(float* self, float a, float b, float c) {
-    *(float*)((char*)self + 0) = a;
-    *(float*)((char*)self + 4) = b;
-    *(float*)((char*)self + 8) = c;
+    self[0] = a;
+    self[1] = b;
+    self[2] = c;
 }
 
 extern "C" __declspec(noinline) void Vec3AddInto(nw4r::math::VEC3* output,
@@ -1090,7 +1102,7 @@ extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c) {
 
 extern "C" void PaneSetTexPaletteByName(void* a, u32 b, void* palette) {
     if (a == NULL) return;
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
+    nw4r::lyt::Pane* owner = ((PaneHolder10View*)a)->pane10;
     nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)b, true);
     if (res == NULL) return;
     if (palette == NULL) return;
@@ -1706,7 +1718,7 @@ extern "C" u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
 
 extern "C" u8 GetCollectedFlagWord8(u32 idx) {
     extern u16 lbl_eu_80664078[3];
-    return (u8)(((u16*)lbl_eu_80664078)[(u8)idx]);
+    return (u8)(lbl_eu_80664078[(u8)idx]);
 }
 
 extern u8 lbl_eu_8066407E;
@@ -1901,7 +1913,7 @@ extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, void* src, u32 idx) {
 }
 
 extern "C" void PaneMatSetTevColorsByName(void* obj, void* arg2, void* src1, void* src2) {
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
     nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
     if (res == NULL) return;
     if (res == NULL) return;
@@ -1936,7 +1948,7 @@ extern "C" void PaneMatSetTevColors(nw4r::lyt::Pane* owner, void* src1, void* sr
 }
 
 extern "C" void PaneSetColorFieldSingle(void* obj, void* arg2, void* src) {
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
     void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits THREE beq's on the same null test (dead-duplicated-test
     // family); the direct goto-gate with the tripled condition reproduces it.
@@ -1960,7 +1972,7 @@ out:
 }
 
 extern "C" void PaneSetColorFieldPair(void* obj, void* arg2, void* a, void* b) {
-    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* owner = ((PaneHolder10View*)obj)->pane10;
     void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits the null test three times (three beq to the epilogue).
     if (result != NULL) {
@@ -2843,7 +2855,7 @@ extern "C" void AnimResetToFirst(void* self, void* arg) {
 extern "C" void AnimJumpToLast(void* self, void* arg) {
     void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
-        nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
+        nw4r::lyt::AnimTransform* anim = ((AnimLinkItemView*)t)->anim8;
         // Signed conversion (retail xoris r0,r3,0x8000): (u32) would emit the
         // unsigned double-trick without the sign flip.
         f32 f = (f32)(s32)(anim->GetFrameSize() - 1);

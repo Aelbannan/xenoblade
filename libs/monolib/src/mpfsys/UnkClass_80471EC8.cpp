@@ -277,7 +277,7 @@ void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self,
             (MpfsysViewFrame*)Scn_HasCamItem(s->field_0x2E08, s->field_0x2E0C);
         f32 scale = vf->field_0x1E0;
         pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)a4, (u8*)vf + 0x9C, a5, a6, scale);
+            (mpfsys::UnkClass_80471EC8*)a4, vf->field_0x9C, a5, a6, scale);
         mpfsys::MPFDrawDisplayList* inst = mpfsys::MPFDrawDisplayList::getInstance();
         paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
             inst, (u8*)a4 + d->field_0x10, s->field_0x2E10, a7);
@@ -660,7 +660,7 @@ void getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
     outFog->a = 0xFF;
 }
 
-void mpfsys::UnkClass_80471EC8::markDirty() { *(u8*)((u8*)this + 0x2E10) = 1; }
+void mpfsys::UnkClass_80471EC8::markDirty() { ((MpfsysResState*)this)->field_0x2E10 = 1; }
 
 void setColorMode__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, s32 mode) {
     // Layer colour-mode setter. The retail symbol is annotated Fv but takes
@@ -1019,8 +1019,14 @@ void mpfsys::UnkClass_80471EC8::updateLayers() {
 }
 #pragma pop
 
+// Half of the 64-record layer array: 32 records at the 0xB4 record stride
+// (32 * 0xB4 = 0x1680), the stride getLayerRecord indexes by.
+struct MpfsysLayerHalf {
+    MpfsysLayerRec mRec[32];
+};
+
 void* mpfsys::UnkClass_80471EC8::getLayerRecord(u8 layerIndex) {
-    return (u8*)this + layerIndex * 0x1680;
+    return (u8*)((MpfsysLayerHalf*)this + layerIndex);
 }
 
 // Uploads the texture for display-list entry `texIndex` to texMap `texMap`.

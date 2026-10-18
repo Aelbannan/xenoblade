@@ -44,9 +44,9 @@ extern "C" u8* EffectActNw4rGetLeafActData(CScnEffectActNw4r* self) { return sim
 // Kept as integer word copies: retail moves the bits without float ops.
 extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const void* other) {
     CScnEffectActMgr* mgr = self->mpMgr;
-    *(u32*)&mgr->field_0x304 = *(u32*)other;
-    *(u32*)&mgr->field_0x308 = *(u32*)((const char*)other + 4);
-    *(u32*)&mgr->field_0x30c = *(u32*)((const char*)other + 8);
+    *(u32*)&mgr->field_0x304 = ((const u32*)other)[0];
+    *(u32*)&mgr->field_0x308 = ((const u32*)other)[1];
+    *(u32*)&mgr->field_0x30c = ((const u32*)other)[2];
 }
 
 // Manager's effect-act getter, act slot at +0x48.

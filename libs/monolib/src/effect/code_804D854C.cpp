@@ -205,21 +205,22 @@ extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec
 // toward the scene fog by the remaining-frame ratio.
 void resolveEffectFog() {
     if (lbl_eu_806659BC <= 0) {
+        s32 idx = lbl_eu_80663B38;
         nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
-        *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(lbl_eu_80663B38);
+        *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(idx);
         return;
     }
 
+    s32 idx = lbl_eu_80663B38;
     nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
 
     // GetFog only fills the leading 0x18 bytes; widening tmp to a full
     // FogState leaves its tail fields untouched (matching retail).
     FogState tmp;
-    *(FogData*)&tmp = *root->GetFog(lbl_eu_80663B38);
+    *(FogData*)&tmp = *root->GetFog(idx);
 
     // Fade weight derived from the frames-remaining counter.
     f32 blend = lbl_eu_8066B1B8 - lbl_eu_806659BC / lbl_eu_8066B1BC;
-    f32 w = lbl_eu_8066B1B8 - blend;
 
     FogState work[2];
     work[0] = *(FogState*)&lbl_eu_8065FCA0;
@@ -240,9 +241,6 @@ void resolveEffectFog() {
         work[0].m_a = lbl_eu_806659C0[3];
     }
 
-    // Past halfway the blend snaps to the scene fog record entirely.
-    FogState* sel = (blend >= lbl_eu_8066B1C4) ? &work[1] : &work[0];
-
     // Colors are normalized, blended, then rescaled for the output record.
     f32 base[4];
     base[0] = work[0].m_r / lbl_eu_8066B1C0;
@@ -256,6 +254,16 @@ void resolveEffectFog() {
     tgt[2] = work[1].m_b / lbl_eu_8066B1C0;
     tgt[3] = work[1].m_a / lbl_eu_8066B1C0;
 
+    // Past halfway the blend snaps to the scene fog record entirely.
+    u32 selType;
+    if (blend < lbl_eu_8066B1C4) {
+        selType = work[0].m_type;
+    } else {
+        selType = work[1].m_type;
+    }
+
+    f32 w = lbl_eu_8066B1B8 - blend;
+
     f32 out[4];
     out[0] = tgt[0] * blend + base[0] * w;
     out[1] = tgt[1] * blend + base[1] * w;
@@ -263,11 +271,7 @@ void resolveEffectFog() {
     out[3] = tgt[3] * blend + base[3] * w;
 
     FogDesc* dst = &lbl_eu_8065FCD0;
-    dst->type = sel->m_type;
-    dst->f4 = blend * (work[1].m_startz - work[0].m_startz) + work[0].m_startz;
-    dst->f8 = blend * (work[1].m_endz - work[0].m_endz) + work[0].m_endz;
-    dst->fc = blend * (work[1].m_nearz - work[0].m_nearz) + work[0].m_nearz;
-    dst->f10 = blend * (work[1].m_farz - work[0].m_farz) + work[0].m_farz;
+    dst->type = selType;
 
     GXColor color;
     *(u32*)&color = 0;
@@ -275,5 +279,10 @@ void resolveEffectFog() {
     color.g = (u8)(out[1] * lbl_eu_8066B1C0);
     color.b = (u8)(out[2] * lbl_eu_8066B1C0);
     color.a = (u8)(lbl_eu_8066B1B8 * lbl_eu_8066B1C0);
+
+    dst->f4 = blend * (work[1].m_startz - work[0].m_startz) + work[0].m_startz;
+    dst->f8 = blend * (work[1].m_endz - work[0].m_endz) + work[0].m_endz;
+    dst->fc = blend * (work[1].m_nearz - work[0].m_nearz) + work[0].m_nearz;
+    dst->f10 = blend * (work[1].m_farz - work[0].m_farz) + work[0].m_farz;
     dst->color = *(u32*)&color;
 }

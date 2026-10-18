@@ -903,8 +903,10 @@ int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
         state->mField6C = fCon;
         state->mField70 = 0;
         state->mField72 = 0;
-        memset((u8*)state + 8, 0, 0x40);
-        memset((u8*)state + 0x84, 0, 0x34);
+        memset(&state->mField8, 0, 0x40);
+        // _84 rides 2 bytes low in this decl (unnamed 0x82-0x83 pad not
+        // modelled); [2] recovers the exact retail +0x84 base.
+        memset(&state->_84[2], 0, 0x34);
         state->mField74 = 0;
         state->mField78 = 0;
         state->mField50 = arg->mField18;
@@ -2068,12 +2070,12 @@ extern "C" void ctrlActHandleCase4Move(CtrlActView* self) {
 int ctrlActFaceTargetVec(void* self) { return 0; }
 
 void ctrlActClearState30(void* self) {
-    memset((u8*)self + 0x30, 0, 0x2C);
-    requestItemLoad(*(void**)((u8*)self + 0x5C), 0x40);
+    memset(&((CtrlActView*)self)->mPos30, 0, 0x2C);
+    requestItemLoad(((CtrlActView*)self)->mPlayer, 0x40);
 }
 
 unsigned long ctrlActIsFlagBit15Clear(void* self) {
-    unsigned long v = *(unsigned long*)((char*)self + 0x58);
+    unsigned long v = *(unsigned long*)&((CtrlActView*)self)->mFlags58;
     return !((v >> 15) & 1);
 }
 
@@ -2138,7 +2140,7 @@ void ctrlActUpdateData70(void* obj) {
         unsigned char u7a;
         unsigned char u7b;
     };
-    Data70* data = (Data70*)((char*)obj + 0x70);
+    Data70* data = (Data70*)&((CtrlActView*)obj)->mField70;
     unsigned short temp = data->u74;
     f32 v = lbl_eu_80666CFC;  // 1.0f (SDA2 float pool)
     data->u78 = 0;

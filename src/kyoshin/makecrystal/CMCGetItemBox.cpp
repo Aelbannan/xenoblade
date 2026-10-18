@@ -103,8 +103,7 @@ extern "C" __declspec(noinline) void initMCItemSub(CMCItemBoxSub* x) {
     // Retail walks a pointer over the table (cmplw loop); the inline bound is
     // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
     // retail emits the hoisted addi before the param copy; every tested shape
-    // (decl order, dependent derivation, alias, comma-seq, while-guard) keeps
-    // the copy first.
+    // keeps the copy first (see attempts stall note us-8029917c).
     s16* p = x->table;
     do {
         *p++ = -1;

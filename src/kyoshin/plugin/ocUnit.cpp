@@ -313,10 +313,18 @@ extern "C" int setPosX(VMThread* pThread, int handle) {
 
 // copy 3 u32 into +0x3C. Retail Fv linker name for slot 0xA8; virtual decl is
 // CfObject_syncMoveTarget (alias UnkVirtualFunc22).
+// Move-target triple at CfObject+0x3C (copied word-wise by
+// CfObject_UnkVirtualFunc22 / CfObject_setMoveTargetVec).
+struct CfObjectMoveTgt3C {
+    u8 _pad00[0x3C];
+    u32 mWords3C[3];
+};
 extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, const void* src) {
-    ((u32*)((u8*)self + 0x3C))[0] = *(const u32*)((const u8*)src + 0);
-    ((u32*)((u8*)self + 0x3C))[1] = *(const u32*)((const u8*)src + 4);
-    ((u32*)((u8*)self + 0x3C))[2] = *(const u32*)((const u8*)src + 8);
+    CfObjectMoveTgt3C* dst = (CfObjectMoveTgt3C*)self;
+    const u32* words = (const u32*)src;
+    dst->mWords3C[0] = words[0];
+    dst->mWords3C[1] = words[1];
+    dst->mWords3C[2] = words[2];
 }
 
 // us-8003cadc: same shape as setPosX but writes the computed angle to
@@ -380,8 +388,8 @@ int setObjName(VMThread* pThread, int handle) {
 // Retail linker name for slot 0x3C (hand-built tables). Virtual decl is
 // CObjectParam_setObjectName.
 extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, const char* str) {
-    *(u32*)((u8*)self + 0x30) = strlen(str);
-    strcpy((char*)((u8*)self + 0x10), str);
+    static_cast<cf::CObjectParam*>(self)->field_30 = strlen(str);
+    strcpy((char*)&static_cast<cf::CObjectParam*>(self)->mPtr10, str);
 }
 
 bool isValid() { return false; }
@@ -797,7 +805,7 @@ int isTalk(VMThread* pThread, int handle) {
 }
 
 extern "C" void* CObjectState_getStateData__Q22cf12CObjectStateFv(void* self) {
-    return (void*)((u8*)self + 8);
+    return &static_cast<cf::CObjectState*>(self)->unk8;
 }
 
 int onEvent(VMThread* pThread, int handle) {
@@ -859,20 +867,20 @@ done:
 // CObjectState_checkStateFlagsC.
 extern "C" int CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(void* self, int mask) {
     if ((u32)mask < 0x3F) {
-        u32 f = *(u32*)((u8*)self + 0xC) & 0x3F;
+        u32 f = static_cast<cf::CObjectState*>(self)->unkC & 0x3F;
         return (u32)mask == f;
     }
-    return (*(u32*)((u8*)self + 0xC) & (u32)mask) != 0;
+    return (static_cast<cf::CObjectState*>(self)->unkC & (u32)mask) != 0;
 }
 
 // Retail linker name for slot 0x24 (hand-built tables). Virtual decl is
 // CObjectState_checkStateFlags8.
 extern "C" int CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(void* self, int mask) {
     if ((u32)mask < 0x3F) {
-        u32 f = *(u32*)((u8*)self + 0x8) & 0x3F;
+        u32 f = static_cast<cf::CObjectState*>(self)->unk8 & 0x3F;
         return (u32)mask == f;
     }
-    return (*(u32*)((u8*)self + 0x8) & (u32)mask) != 0;
+    return (static_cast<cf::CObjectState*>(self)->unk8 & (u32)mask) != 0;
 }
 
 // --- Batch 2 targets start here ---
@@ -1719,6 +1727,12 @@ extern "C" int setChildVal(VMThread* pThread, int handle) {
 
 // us-8003fd48: followUnit
 // Sets a follow/attention relationship between two objects
+// OC instance handle (same layout as CamOCHandle in pluginCam.hpp):
+// the object id consumed by ArtsSelect_Lookup sits at +0x04.
+struct OcUnitHandle {
+    u8 _pad00[4];
+    u32 mObjId04;    // +0x04
+};
 extern "C" int followUnit(VMThread* pThread, int handle) {
     int targetOC;
     if (vmArgOmitChk(pThread, 1)) {
@@ -1732,7 +1746,7 @@ extern "C" int followUnit(VMThread* pThread, int handle) {
     void* target = 0;
     if (targetOC) {
         ctx = ArtsSelect_GetContainer();
-        target = ArtsSelect_Lookup(ctx, *(int*)((u8*)targetOC + 4));
+        target = ArtsSelect_Lookup(ctx, ((OcUnitHandle*)targetOC)->mObjId04);
     }
     bindPartnerO_(obj, target, 0);
     return 0;
@@ -1795,7 +1809,7 @@ extern "C" int setUnitTarget(VMThread* pThread, int handle) {
     void* target = 0;
     if (targetOC) {
         ctx = ArtsSelect_GetContainer();
-        target = ArtsSelect_Lookup(ctx, *(int*)((u8*)targetOC + 4));
+        target = ArtsSelect_Lookup(ctx, ((OcUnitHandle*)targetOC)->mObjId04);
     }
     setTargetObj_(obj, target);
     return 0;
@@ -1930,7 +1944,7 @@ extern "C" int chkRange(VMThread* pThread, int handle) {
     }
     if (target != 0) {
         void* ctx2 = ArtsSelect_GetContainer();
-        target = (cf::CfObject*)ArtsSelect_Lookup(ctx2, *(u32*)((u8*)target + 4));
+        target = (cf::CfObject*)ArtsSelect_Lookup(ctx2, ((OcUnitHandle*)target)->mObjId04);
     } else {
         target = (cf::CfObject*)getPlayerContainerForCam__Q22cf13CfGameManagerFv();
     }
@@ -1970,7 +1984,7 @@ extern "C" int chkEventRange(VMThread* pThread, int handle) {
     }
     if (target != 0) {
         void* ctx2 = ArtsSelect_GetContainer();
-        target = (cf::CfObject*)ArtsSelect_Lookup(ctx2, *(u32*)((u8*)target + 4));
+        target = (cf::CfObject*)ArtsSelect_Lookup(ctx2, ((OcUnitHandle*)target)->mObjId04);
     } else {
         target = cf::CfGameManager::getPlayer(0);
     }
@@ -2024,7 +2038,13 @@ void CObjectState_setStateBitMask__Q22cf12CObjectStateFv(void* self, unsigned lo
     ((cf::CObjectState*)self)->unk4 |= bits;
 }
 
-void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
+// Trailing word of CObjectParam at +0x34 (signalActionEnd payload /
+// getSelfObjectId return); the class spells it as u8 unk34[4].
+struct CObjectParamTail34 {
+    u8 _pad00[0x34];
+    u32 mWord34;
+};
+void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv(void* self, u32 val) { ((CObjectParamTail34*)self)->mWord34 = val; }
 
 void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
     ((cf::CObjectState*)self)->unk4 &= ~mask;
@@ -2032,7 +2052,7 @@ void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv(void* self, unsigned lo
 
 void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { static_cast<cf::CfObjectModel*>(self)->field_BD = val; }
 
-u32 CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
+u32 CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv(void* self) { return ((CObjectParamTail34*)self)->mWord34; }
 
 // us-8003f6d8: 12-byte word copy src -> this+0x48. Retail symbol is
 // Fv-mangled but the body consumes a pointer in r4. Element-wise u32 copy;

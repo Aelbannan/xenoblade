@@ -84,12 +84,19 @@ struct CNReqtaskLoadData {
 // resets the async state to step 0, then returns the task vtable pointer.
 //
 // First arg is the CNReqtaskLoad sub-task block embedded in CNRequest (+4).
-extern "C" CNReqtaskLoadVtbl** NandLoadConfigure(CNReqtaskLoadData* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
-    CNReqtaskLoadData* d = data;
+// First parameter stays an opaque byte pointer (`u8*`) with a typed local
+// `d`, mirroring the byte-identical NandRmConfigure recipe in the sibling
+// CNReqtaskRemove unit: the `u8*` + cast-local split plus hoisted scalar
+// args reproduce retail's saved-register colouring across the strcpy call.
+extern "C" CNReqtaskLoadVtbl** NandLoadConfigure(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
+    CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
+    u32 buf = arg2;
+    u32 size = arg3;
+    u8 flag = arg4;
     strcpy(d->path, path);
-    d->mBuffer = arg2;
-    d->mSize = arg3;
-    d->mFlag = arg4;
+    d->mBuffer = buf;
+    d->mSize = size;
+    d->mFlag = flag;
     d->mState = 0;
     return (CNReqtaskLoadVtbl**)lbl_eu_806659E8;
 }

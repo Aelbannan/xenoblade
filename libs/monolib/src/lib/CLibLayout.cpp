@@ -273,9 +273,8 @@ bool CLibLayout::wkStandbyLogout() {
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
 void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // Every access is spelled through the global singleton so MWCC CSEs all
-    // the global loads into one anonymous scratch temp (retail keeps the
-    // singleton in a scratch reg, not a named local). The volatile views stop
-    // dominator-CSE from merging hashCount's two loads (branch test + body).
+    // the global loads into one scratch temp (retail: singleton in scratch).
+    // The volatile views stop dominator-CSE merging hashCount's two loads.
     // Retail keeps ONE register live across three different values -- the
     // preloaded mAllocHandle, the hash index, and the element's fallback
     // handle -- so all three share a single local.
@@ -283,15 +282,16 @@ void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     CLibLayout* inst = lbl_eu_80665710;
     u32 val = inst->mAllocHandle;
     if (static_cast<const volatile CLibLayout*>(inst)->hashCount != 0) {
-        s32 idx = static_cast<const volatile CLibLayout*>(inst)->hashAccum;
-        idx += static_cast<const volatile CLibLayout*>(inst)->hashCount;
+        s32 idx = inst->hashCount;
+        idx += inst->hashAccum;
         // Signed % : retail emits subi/divw/mullw/subf (divw is signed).
         idx = (idx - 1) % inst->hashDivisor;
+        u8* pBuf;
         CLibLayoutHashElem* elem = inst->hashTable[idx];
         // Registering with a frame heap takes priority: allocate there and
         // query the frame heap's free size, returning the allocated buffer.
         if (elem->field_4 != NULL) {
-            u8* pBuf = static_cast<u8*>(
+            pBuf = static_cast<u8*>(
                 MEMAllocFromFrmHeapEx(elem->field_4, size, 4));
             MEMGetAllocatableSizeForFrmHeapEx(elem->field_4, 4);
             return pBuf;
@@ -326,12 +326,12 @@ void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // instanceCount DOES move the loop-head reload into retail's r5 but
     // degrades ctr/bdnz to an explicit counter (+8 bytes); caching that
     // volatile read in the for-init gets folded back to one temp (colors
-    // revert). Residual vs retail is purely the {singleton-walker, element}
-    // register colors (r5,r3) vs (r3,r5) -- see attempts.jsonl open item;
-    // recorded sole remaining lever is a unit mw_version sweep (configure.py).
+    // revert). FULL_MATCH fix: NO element local -- spell instanceArray[i]
+    // inline at both uses; CSE merges them into one anonymous temp younger
+    // than the walker, yielding retail colors walker->r5 / element->r3.
     for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
-        UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
-        if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
+        if (lbl_eu_80665710->instanceArray[i]->unk8 <= (u32)block &&
+            lbl_eu_80665710->instanceArray[i]->unkC > (u32)block) {
             if (block != NULL) {
                 mtl::MemManager::deallocate(block);
             }

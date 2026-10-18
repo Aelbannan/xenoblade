@@ -229,9 +229,7 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
             delayed[ch] = fx->line[ch][fx->curPos];
 
             if (fx->busIn != NULL) {
-                s32 in = *inBus[ch] + *input[ch];
-                mixed[ch] = coef * fx->last[ch] + invCoef * in;
-                inBus[ch] += 1;
+                mixed[ch] = invCoef * (*input[ch] + *inBus[ch]++) + coef * fx->last[ch];
             } else {
                 mixed[ch] = invCoef * (*input[ch]) + coef * fx->last[ch];
             }

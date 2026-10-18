@@ -74,7 +74,7 @@ cf::CfResPcImpl::~CfResPcImpl() {
 
 int CfResPcImpl_isHandlerActive(void* p)
 {
-    return (unsigned int)*(unsigned short*)((char*)p + 8) >= 3;
+    return (unsigned int)static_cast<cf::CfResPcImpl*>(p)->field_08 >= 3;
 }
 
 int CfResPcImpl_getHandlerLimit() { return 2; }

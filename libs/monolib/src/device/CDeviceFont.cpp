@@ -225,11 +225,11 @@ CDeviceFontInfoReslist* __dt__reslist_IDeviceFontInfo(
     if (t != 0) {
         if (t != 0) {
             t->m_vtable = lbl_eu_8056C734;
+            CDeviceFontInfoListNode* prev;
             CDeviceFontInfoListNode* node = t->mStartNodePtr->mNext;
-            while (node != t->mStartNodePtr) {
-                CDeviceFontInfoListNode* prev = node;
-                node = node->mNext;
-                prev->mNext = 0;
+            while (t->mStartNodePtr != node) {
+                prev = node;
+                node = node->mNext; prev->mNext = 0;
             }
             t->mStartNodePtr->mNext = t->mStartNodePtr;
             t->mStartNodePtr->mPrev = t->mStartNodePtr;

@@ -44,8 +44,8 @@ typedef struct MPVABDEC_BLK_ {
     u8 *dctbl;     /* 0x2C DC-size VLC table */
 } MPVABDEC_BLK;
 
-extern char lbl_eu_8051C378[];
 extern u32 lbl_eu_806046A8[];
+extern char lbl_eu_8051C378[];
 
 void MPVABDEC_Init(void) {
     lbl_eu_806046A8[2] = (u32)lbl_eu_8051C378;

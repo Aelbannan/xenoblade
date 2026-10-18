@@ -259,16 +259,16 @@ extern "C" void GridSubMenu_RewindSelection(void* self) {
     }
 }
 // retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail playUISound(0xE) }
-extern "C" void GridSubMenu_AdvanceState2To3(void* self) {
-    if (*(u8*)((char*)self + 0x22) == 2) {
-        *(u8*)((char*)self + 0x22) = 3;
-        *(u8*)((char*)self + 0x21) = 0;
+extern "C" void GridSubMenu_AdvanceState2To3(CItemBoxGridSubMenu* self) {
+    if (self->mAnimState == 2) {
+        self->mAnimState = 3;
+        self->mIsOpened = 0;
         playUISound__FUl(0xE);
     }
 }
 
 // retail: if (field_20) tail drawLayout(*(self+8), drawInfo passthrough, 0, 1)
-extern "C" void GridSubMenu_DrawLayoutGated(u8* self, void* drawInfo){
-    if (self[0x20] == 0) return;
-    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), drawInfo, 0, 1);
+extern "C" void GridSubMenu_DrawLayoutGated(CItemBoxGridSubMenu* self, void* drawInfo){
+    if (self->mIsVisible == 0) return;
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mLayout, drawInfo, 0, 1);
 }

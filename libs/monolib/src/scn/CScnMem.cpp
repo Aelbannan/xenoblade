@@ -195,7 +195,7 @@ CScnMem::~CScnMem() {
 extern "C" u32 getScnRootPtr(CScn* self) { return (u32)self->mUnk8C; }
 
 
-extern "C" void* getScnRootSlot10(void* self) { return *(void**)((u8*)*(void**)((u8*)self + 0x8C) + 0x10); }
+extern "C" void* getScnRootSlot10(void* self) { return reinterpret_cast<CScnRootNw4rLayout*>(((CScn*)self)->mUnk8C)->mRootGroup; }
 
 extern "C" void* getScnRoot44C(CScn* self) { return RootNw4r_Ptr44C(self->mUnk8C); }
 

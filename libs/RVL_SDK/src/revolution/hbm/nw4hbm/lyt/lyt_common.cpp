@@ -30,13 +30,13 @@ namespace detail {
  * Utility functions
  *
  ******************************************************************************/
+bool EqualsPaneName(const char* pLhs, const char* pRhs) {
+    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
+}
+
 bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
     // Material names are 20 bytes; res/pane names are 16 (NW4R_LYT_RES_NAME_LEN).
     return std::strncmp(pLhs, pRhs, NW4R_LYT_MATERIAL_NAME_LEN) == 0;
-}
-
-bool EqualsPaneName(const char* pLhs, const char* pRhs) {
-    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
 }
 
 bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
@@ -106,45 +106,6 @@ void TexCoordAry::Copy(const void* pSrc, u8 num) {
             mpData[j][i] = pSrcCoords[j][i];
         }
     }
-}
-
-void DrawLine(const math::VEC2& pos, const Size& size, ut::Color color) {
-    GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_F32, 0);
-
-    GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG,
-                  GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
-    GXSetChanMatColor(GX_COLOR0A0, color);
-
-    GXSetNumTexGens(0);
-    GXSetNumTevStages(1);
-    GXSetNumIndStages(0);
-
-    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL,
-                  GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-    GXSetTevDirect(GX_TEVSTAGE0);
-    GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
-    GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
-                          GX_CH_ALPHA);
-
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
-                   GX_LO_SET);
-    GXSetLineWidth(6, 0);
-
-    // Draw rectangle outline as line strip: TL -> TR -> BR -> BL -> TL
-    GXBegin(GX_LINESTRIP, GX_VTXFMT0, 5);
-    {
-        GXPosition2f32(pos.x, pos.y);
-        GXPosition2f32(pos.x + size.width, pos.y);
-        GXPosition2f32(pos.x + size.width, pos.y + size.height);
-        GXPosition2f32(pos.x, pos.y + size.height);
-        GXPosition2f32(pos.x, pos.y);
-    }
-    GXEnd();
 }
 
 /******************************************************************************
@@ -262,6 +223,45 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
     }
 
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);
+}
+
+void DrawLine(const math::VEC2& pos, const Size& size, ut::Color color) {
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_F32, 0);
+
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG,
+                  GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    GXSetChanMatColor(GX_COLOR0A0, color);
+
+    GXSetNumTexGens(0);
+    GXSetNumTevStages(1);
+    GXSetNumIndStages(0);
+
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL,
+                  GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GXSetTevDirect(GX_TEVSTAGE0);
+    GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
+    GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
+                          GX_CH_ALPHA);
+
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
+                   GX_LO_SET);
+    GXSetLineWidth(6, 0);
+
+    // Draw rectangle outline as line strip: TL -> TR -> BR -> BL -> TL
+    GXBegin(GX_LINESTRIP, GX_VTXFMT0, 5);
+    {
+        GXPosition2f32(pos.x, pos.y);
+        GXPosition2f32(pos.x + size.width, pos.y);
+        GXPosition2f32(pos.x + size.width, pos.y + size.height);
+        GXPosition2f32(pos.x, pos.y + size.height);
+        GXPosition2f32(pos.x, pos.y);
+    }
+    GXEnd();
 }
 
 /******************************************************************************

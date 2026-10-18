@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,13 +42,23 @@ def _ensure_database(args: argparse.Namespace) -> None:
     contributions = _abs(args.contributions) if args.contributions else None
     sources = [reference, attempts, contributions]
     if args.rebuild or not database_is_fresh(args.database, sources):
-        count = build_database(
-            args.database,
-            reference,
-            attempts,
-            contributions,
-            root=ROOT,
-        )
+        # Build into a unique temp file and atomically replace the live index.
+        # build_database unlinks + recreates its target, so building in place
+        # lets concurrent invocations race ("table metadata already exists" /
+        # missing entries_fts) and lets readers observe a half-built DB.
+        tmp = args.database.with_name(f".{args.database.name}.tmp.{os.getpid()}")
+        try:
+            count = build_database(
+                tmp,
+                reference,
+                attempts,
+                contributions,
+                root=ROOT,
+            )
+            os.replace(tmp, args.database)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
         print(
             f"indexed {count} entries -> {args.database.relative_to(ROOT)}",
             file=sys.stderr,

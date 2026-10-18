@@ -49,12 +49,17 @@ struct MonoRequestState {
 // us-804f9e98: func_eu_804F9E98  size=0x48
 // Copies src into the request's string payload, stamps the two payload bytes,
 // clears the lifecycle state, and returns the module-global string pointer.
+// The (void*) round-trip on the request pointer is load-bearing: without it
+// MWCC colors the three call-surviving spills bottom-up (req->r29) instead
+// of retail's order (req->r31, flagD->r29, flagE->r30); the extra IR node
+// reorders Chaitin numbering so the saved-reg assignment matches exactly.
 extern "C" char** func_eu_804F9E98(MonoRequestState* req, const char* src,  // returns &lbl_eu_80665A98
                                    u8 flagD, u8 flagE) {
-    strcpy(req->payload, src);
-    req->field_0xD = flagD;
-    req->field_0xE = flagE;
-    req->state = 0;
+    MonoRequestState* rs = (MonoRequestState*)(void*)req;
+    strcpy(rs->payload, src);
+    rs->field_0xD = flagD;
+    rs->field_0xE = flagE;
+    rs->state = 0;
     return &lbl_eu_80665A98;
 }
 

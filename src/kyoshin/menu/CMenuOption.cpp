@@ -484,9 +484,9 @@ u32 lbl_eu_80539230[34] = {
 };
 #pragma section data_type ".data" ".data"
 __declspec(section ".data") u32 lbl_eu_805392B8[4] = { 0, 0, 0, 0 };
-extern "C" void __dt__11CMenuOptionFv__FP11CMenuOptioni(CMenuOption* self, int flag);
+extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* self, int flag);
 u32 lbl_eu_805392C8[14] = {
-    (u32)lbl_eu_80662C58, 0, (u32)__dt__11CMenuOptionFv__FP11CMenuOptioni,
+    (u32)lbl_eu_80662C58, 0, (u32)__dt__11CMenuOptionFv,
     0, (u32)Init__11CMenuOptionFv, (u32)Term__11CMenuOptionFv,
     (u32)Move__11CMenuOptionFv, 0, 0,
     (u32)lbl_eu_80662C58, -88, (u32)CMenuOption_dtorAdj58, (u32)CMenuOption_renderBeforeAdj58,

@@ -505,7 +505,7 @@ extern "C" u8 isStandbyReady__11CDeviceFileFv() { return lbl_eu_806636A8; }
 
 int CDeviceFile::setParent(CWorkThread* parent) {
     // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
-    *(void**)((char*)(u32)lbl_eu_80665660 + 0x1C8) = parent;
+    ((CDeviceFile*)(u32)lbl_eu_80665660)->field_0x1C8 = parent;
     return 1;
 }
 
@@ -894,11 +894,11 @@ void CDeviceFile::setHandleParam(CFileHandle* pHandle, unsigned long param) {
 }
 
 void CDeviceFile::setHandleFlag1(CFileHandle* pFileHandle) {
-    *(u32*)((char*)pFileHandle + 0x58) |= 2;
+    pFileHandle->field_0x58 |= 2;
 }
 
 void CDeviceFile::setHandleFlag2(CFileHandle* pFileHandle) {
-    *(u32*)((char*)pFileHandle + 0x58) |= 4;
+    pFileHandle->field_0x58 |= 4;
 }
 
 bool CDeviceFile::wkStandbyLogin() {

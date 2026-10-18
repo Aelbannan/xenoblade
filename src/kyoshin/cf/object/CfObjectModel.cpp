@@ -774,11 +774,20 @@ void CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     reinterpret_cast<CScnItemModel*>(sub)->setModelFloatRate(value);
 }
 
-void CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv(void* self, float val) { *(float*)((u8*)self + 0xa4) = val; }
+// Typed view of the +0xA4..+0xAF float triple (exact layout): the three
+// Fv float-slot setters below write fA4/fA8/fAC through it.
+struct ModelFloatA4 {
+    u8 _pad00[0xA4];
+    float fA4;  // 0xA4
+    float fA8;  // 0xA8
+    float fAC;  // 0xAC
+};
 
-void CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv(void* self, float val) { *(float*)((u8*)self + 0xa8) = val; }
+void CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv(void* self, float val) { reinterpret_cast<ModelFloatA4*>(self)->fA4 = val; }
 
-void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void* self, float val) { *(float*)((u8*)self + 0xac) = val; }
+void CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv(void* self, float val) { reinterpret_cast<ModelFloatA4*>(self)->fA8 = val; }
+
+void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void* self, float val) { reinterpret_cast<ModelFloatA4*>(self)->fAC = val; }
 
 // Retail symbol is Fv (no params) but the body reads r4 and forwards it to
 // the sub-object's vtable slot +0x6C; written with the verbatim mangled
@@ -1139,7 +1148,7 @@ void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
-void CfObjectModel_teardownModel__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv();
 void CfObject_getPosVector__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv();
@@ -1316,7 +1325,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
     0,
     (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
-    (const void*)CfObjectModel_teardownModel__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv,
     0,
     (const void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv,
     (const void*)CfObject_isMoveActiveNow__Q22cf8CfObjectFv,

@@ -131,27 +131,29 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
 
     // Top two rows of the 3x4 matrix (the offset matrix), with absolute
     // values kept alongside for the normalization search below.
-    f32 m00 = rMtx.m[0][0];
-    f32 m01 = rMtx.m[0][1];
-    f32 m10 = rMtx.m[1][0];
-    f32 a00 = __fabsf(m00);
-    f32 m02 = rMtx.m[0][2];
-    f32 m11 = rMtx.m[1][1];
-    f32 m12 = rMtx.m[1][2];
-    f32 a01 = __fabsf(m01);
-    f32 a02 = __fabsf(m02);
-    f32 a10 = __fabsf(m10);
-    f32 a11 = __fabsf(m11);
-    f32 a12 = __fabsf(m12);
+    f32 m00, m01, m10, a00, m02, m11, m12, a01, a02, a10, a11, a12;
 
-    s8 scale = 0;
+    m00 = rMtx.m[0][0];
+    m01 = rMtx.m[0][1];
+    a00 = __fabsf(m00);
+    m02 = rMtx.m[0][2];
+    a01 = __fabsf(m01);
+    m10 = rMtx.m[1][0];
+    m11 = rMtx.m[1][1];
+    m12 = rMtx.m[1][2];
+    a02 = __fabsf(m02);
+    a10 = __fabsf(m10);
+    a11 = __fabsf(m11);
+    a12 = __fabsf(m12);
+
+    s32 scale = 0;
 
     if (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
         a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
         a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC) {
         // Scale down: halve every element until the largest |value| < 1.0f.
         do {
-            if (scale >= 46) {
+            if ((s8)scale >= 46) {
                 break;
             }
             a00 *= lbl_eu_80669BD0;
@@ -191,7 +193,7 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
         } while (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
                  a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
                  a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0 &&
-                 scale > -17);
+                 (s8)scale > -17);
     }
 
 
@@ -202,28 +204,25 @@ void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
     u32 exp = scale + 17;
 
     s32 w00 = (s32)(scl * m00);
-
-    u32 word0 = (u32)(exp & 3) << 22;
+    u32 word0 = ((id + 6) << 24) | (((exp) & 3) << 22);
     s32 w10 = (s32)(scl * m10);
-    word0 |= (id + 6) << 24;
+    *fifo = 0x61;
+    *(volatile unsigned int*)fifo =
+        word0 | (((u32)w00 & 0x7FF) | (((u32)w10 & 0x7FF) << 11));
+
     s32 w01 = (s32)(scl * m01);
-    u32 word1 = (u32)((exp >> 2) & 3) << 22;
     s32 w11 = (s32)(scl * m11);
-    word1 |= (id + 7) << 24;
+    u32 word1 = ((id + 7) << 24) | ((((exp) >> 2) & 3) << 22);
+    *fifo = 0x61;
+    *(volatile unsigned int*)fifo =
+        word1 | (((u32)w01 & 0x7FF) | (((u32)w11 & 0x7FF) << 11));
+
     s32 w02 = (s32)(scl * m02);
     s32 w12 = (s32)(scl * m12);
-    u32 word2 = (u32)((exp >> 4) & 3) << 22;
-    word2 |= (id + 8) << 24;
-
+    u32 word2 = ((id + 8) << 24) | ((((exp) >> 4) & 3) << 22);
     *fifo = 0x61;
     *(volatile unsigned int*)fifo =
-        word0 | (((u32)w10 & 0x7FF) << 11) | ((u32)w00 & 0x7FF);
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
-        word1 | (((u32)w11 & 0x7FF) << 11) | ((u32)w01 & 0x7FF);
-    *fifo = 0x61;
-    *(volatile unsigned int*)fifo =
-        word2 | (((u32)w12 & 0x7FF) << 11) | ((u32)w02 & 0x7FF);
+        word2 | (((u32)w02 & 0x7FF) | (((u32)w12 & 0x7FF) << 11));
 }
 
 } // namespace fifo

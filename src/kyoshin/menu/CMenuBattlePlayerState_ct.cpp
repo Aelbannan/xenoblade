@@ -1,6 +1,12 @@
 // menu-bps-ctor: __ct__CMenuBattlePlayerState only.
 // Own TU with -O4,s so the inlined 0x60/0x0C pad fill keeps li/divwu/mtctr
 // without breaking Term/cbRenderBefore on the main -O4,p object.
+//
+// Retail shape (sibling CMenuBattleCommu factory idiom): unmangled extern "C"
+// free function __ct__CMenuBattlePlayerState(void*, CScn*), NOT a C++ ctor.
+// A C++ ctor here mangles to __ct__22CMenuBattlePlayerStateFP4CScn AND makes
+// MWCC emit implicit base/member init calls (extra CProcess + 2x UnkClass
+// bls). Manual CProcess-style stores with raw label vtables.
 #include "kyoshin/menu/CMenuBattlePlayerState.hpp"
 
 #include "monolib/work/CProcess.hpp"
@@ -30,17 +36,27 @@ extern const f32 lbl_eu_80666F94; // 0.0f
 extern const f32 lbl_eu_80666FB0; // -1.0f
 }
 
-CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
+// Unmangled retail symbol: __ct__CMenuBattlePlayerState (not a C++ ctor).
+// Prelude mirrors the FULL_MATCH __ct__CMenuBattleCommu factory: temp vtable,
+// post-increment ptmf triple loads, interleaved dispatch slots, UnkClass ctor.
+extern "C" void* __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
+    // MWCC colors NV regs in declaration order (first -> highest): z takes
+    // r31 (whole-function zero), then loop-carried values, leaving `self`
+    // at the retail r27 home.
+    u32 z;
+    u32 qpSign;
+    u32 nCopy;
+    u8 i;
+    CMenuBattlePlayerState* me;
+    u8* padStart;
     CMenuBpsProcessShim* process;
-    char* vtFinal;
     char* vtWork;
     char* vtRender;
-    u32 z;
+    u32 p0, p1, p2;
+    u32 q0, q1, q2;
     u32 v4;
     u32 v6;
     u32 vB;
-    u8 i;
-    u8* padStart;
     u8* padEnd;
     u8* padLim;
     s32 padSize;
@@ -48,79 +64,95 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     s32 q12;
     s32 q12p1;
 
-    process = reinterpret_cast<CMenuBpsProcessShim*>(this);
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
+    me = reinterpret_cast<CMenuBattlePlayerState*>(self);
+    process = reinterpret_cast<CMenuBpsProcessShim*>(me);
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(me));
+    // Single ptmf cursor (commu idiom): one base register + lwzu head.
+    const u32* ptmf = __ptmf_null;
 
     // Interim CProcess vtable, then final MI vtable + interface pieces.
-    // Retail order: vtFinal, ptmf[0], vtWork, z, ptmf[1], vtRender,
-    // then cb[0], cb[2], cb[4]/cb[3], cb[5].
+    // Retail order: lwzu p0, vtWork add, z li, lwz p1, cb1 store, vtRender
+    // add, cb0 store, lwz p2, cb2 store, reload q0/q1, cb4/cb3 stores, q2,
+    // cb5 store, state bytes, then final vtable + dispatch slots + scene.
     process->vtable = lbl_eu_8052C1C0;
-    vtFinal = lbl_eu_8052C330;
-    process->callbacks[0] = __ptmf_null[0];
-    vtWork = vtFinal + 0x24;
+    vtWork = lbl_eu_8052C330 + 0x24;
     z = 0;
-    process->callbacks[1] = __ptmf_null[1];
-    vtRender = vtFinal + 0xac;
-    process->callbacks[2] = __ptmf_null[2];
-    process->callbacks[3] = __ptmf_null[0];
-    process->callbacks[4] = __ptmf_null[1];
-    process->callbacks[5] = __ptmf_null[2];
-    unk54 = (u8)z;
-    unk55 = (u8)z;
-    process->vtable = vtFinal;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(this) + 0x58) = vtWork;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(this) + 0x5c) = vtRender;
-    mScn = scn;
+    p0 = *ptmf++;
+    p1 = *ptmf++;
+    process->callbacks[1] = p1;
+    vtRender = lbl_eu_8052C330 + 0xac;
+    process->callbacks[0] = p0;
+    p2 = *ptmf++;
+    process->callbacks[2] = p2;
+    q0 = ptmf[-3];
+    q1 = ptmf[-2];
+    process->callbacks[4] = q1;
+    process->callbacks[3] = q0;
+    q2 = ptmf[-1];
+    process->callbacks[5] = q2;
+    me->unk54 = (u8)z;
+    me->unk55 = (u8)z;
+    process->vtable = lbl_eu_8052C330;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;
+    me->mScn = scn;
 
-    __ct__17UnkClass_8045F564Fv(&unk64);
-    __construct_array(mSlots, reinterpret_cast<void*>(BpsStateClearSlot),
+    __ct__17UnkClass_8045F564Fv(&me->unk64);
+    __construct_array(me->mSlots, reinterpret_cast<void*>(BpsStateClearSlot),
                       reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
 
     // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
-    unk7C4 = lbl_eu_80666F94;
-    unk7C8 = (u8)z;
-    unk7C9 = (u8)z;
-    unk7CC = lbl_eu_8052C42C;
-    __ct__17UnkClass_8045F564Fv(&unk7D0);
+    me->unk7C4 = lbl_eu_80666F94;
+    me->unk7C8 = (u8)z;
+    me->unk7C9 = (u8)z;
+    me->unk7CC = lbl_eu_8052C42C;
+    __ct__17UnkClass_8045F564Fv(&me->unk7D0);
 
     {
         f32 zeroF;
         f32 neg1F;
         CMenuBattlePlayerStateSlot slot;
-        u32 pMask;
-        u32 spMask;
-        u32 qMask;
-        u32 qpMask;
+        u32 pSign;
+        u32 spSign;
+        u32 qSign;
         u32 ok;
         u32 ok2;
         u32 ok3;
 
-        // Retail guards use parity bits (clrrwi ..,31 keeps only bit 0).
+        // Retail guards use sign-bit masks (rlwinm ..,0,0,0 keeps MSB).
+        // Freeze statement order: the split div statements are dataflow-
+        // independent, and even -O4,s hoists/reorders them (padLim/counts
+        // sink or hoist). Scheduling-off keeps retail's interleaved order.
         padStart = slot.pad90;
         padEnd = reinterpret_cast<u8*>(&slot.unk204);
+        // Plain /12 (divw under -O4,s). The retail mulhw/bit30-fixup delta
+        // is the known residual (see stall note); hand-splitting it invites
+        // scheduler hoists that cost more than the div itself.
         padSize = static_cast<s32>(padEnd - padStart);
         sizePlus = padSize + 0xb;
-        unk7F4 = 1;
-        // Signed /12: under -O4,s stays divw (retail lis 0x2AAB/mulhw). Soft-cap.
+        me->unk7F4 = 1;
         q12 = sizePlus / 12;
-        pMask = padSize & 1;
-        q12p1 = q12 + 1;
+        pSign = (u32)padSize & 0x80000000u;
+        me->unk7E0 = (void*)z;
         padLim = padEnd - 0x60;
         zeroF = lbl_eu_80666F94;
-        spMask = sizePlus & 1;
-        unk7E0 = (void*)z;
+        spSign = (u32)sizePlus & 0x80000000u;
+        me->unk7E4 = (nw4r::lyt::Layout*)z;
         neg1F = lbl_eu_80666FB0;
-        unk7E4 = (nw4r::lyt::Layout*)z;
-        qMask = q12 & 1;
-        unk7E8 = (nw4r::lyt::AnimTransform*)z;
-        qpMask = q12p1 & 1;
-        unk7EC = (nw4r::lyt::AnimTransform*)z;
+        me->unk7E8 = (nw4r::lyt::AnimTransform*)z;
+        q12p1 = q12 + 1;
+        i = 0;
+        qSign = (u32)q12 & 0x80000000u;
+        me->unk7EC = (nw4r::lyt::AnimTransform*)z;
+        qpSign = (u32)q12p1 & 0x80000000u;
         v4 = 4;
-        unk7F0 = (nw4r::lyt::AnimTransform*)z;
+        me->unk7F0 = (nw4r::lyt::AnimTransform*)z;
         v6 = 6;
         vB = 0xb;
-        unk7F8 = z;
-        i = 0;
+        nCopy = 0x30;
+        me->unk7F8 = z;
+        // Literal strides: under -O4,s MWCC keeps divwu/mtctr (only -O4,p
+        // would strength-reduce to mulhwu).
         do {
             // Inlined BpsStateClearSlot: clear +0x74..+0x8c then pad90[0x174].
             slot.unk74 = (void*)z;
@@ -138,13 +170,13 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
 
                 if (bp < be) {
                     if (q12p1 > 8) {
-                        // Retail dual bool gate (padSize/sizePlus then q12/q12p1),
-                        // with top-bit-masked checks (clrrwi ..,31).
+                        // Retail dual bool gate (padSize/sizePlus signs, then
+                        // q12/q12p1), with sign-bit-masked checks.
                         ok = 0;
                         ok2 = 0;
                         if (!(padStart > be)) {
                             ok3 = 1;
-                            if (pMask == 0 && spMask != 0) {
+                            if (pSign == 0 && spSign != 0) {
                                 ok3 = 0;
                             }
                             if (ok3 != 0) {
@@ -153,7 +185,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                         }
                         if (ok2 != 0) {
                             ok3 = 1;
-                            if (qMask == 0 && qMask != qpMask) {
+                            if (qSign == 0 && qSign != qpSign) {
                                 ok3 = 0;
                             }
                             if (ok3 != 0) {
@@ -161,9 +193,12 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                             }
                         }
                         if (ok != 0) {
-                            // Count from padStart (not bp) like leaf/retail.
-                            c = (u32)(lim + 0x5f - padStart) / 0x60;
                             if (bp < lim) {
+                                // Count from padStart (not bp) like leaf/retail.
+                                // Computed inside the taken branch so the
+                                // long-latency divwu is not speculated above
+                                // the gate.
+                                c = (u32)(lim + 0x5f - padStart) / 0x60;
                                 do {
                                     u32* w = reinterpret_cast<u32*>(bp);
                                     w[0] = z;
@@ -195,8 +230,8 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                             }
                         }
                     }
-                    c = (u32)(be + 0xb - bp) / 0xc;
                     if (bp < be) {
+                        c = (u32)(be + 0xb - bp) / 0x0C;
                         do {
                             u32* w = reinterpret_cast<u32*>(bp);
                             w[0] = z;
@@ -259,12 +294,11 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
 
             // Retail copy: dest first word = 0, head words from slot+4,
-            // lbz unk80, mtctr/lwzu/stwu ×0x30 from +0x84, then tail.
+            // lbz unk80, mtctr/lwzu/stwu x0x30 from +0x84, then tail.
             {
-                CMenuBattlePlayerStateSlot* dst = &mSlots[i];
+                CMenuBattlePlayerStateSlot* dst = &me->mSlots[i];
                 u32* s;
                 u32* d;
-                u32 n;
                 u32* sp;
                 u32* dp;
 
@@ -309,13 +343,12 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                 u32* dstWords = reinterpret_cast<u32*>(&dst->unk84);
                 s = slotWords - 1;
                 d = dstWords - 1;
-                n = 0x30;
                 do {
                     u32 a = *(s + 1);
                     u32 b = *(s += 2);
                     *(d + 1) = a;
                     *(d += 2) = b;
-                } while (--n);
+                } while (--nCopy);
 
                 dst->unk204 = slot.unk204;
                 dst->unk208 = slot.unk208;
@@ -354,4 +387,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
             i = (u8)(i + 1);
         } while (i < 3);
     }
+
+    return me;
 }

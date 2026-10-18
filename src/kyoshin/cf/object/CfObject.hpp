@@ -266,9 +266,8 @@ namespace cf {
 
 
         //0x0: vtable
-        // CObjectParam currently ends at 0x28.
-        u8 field_0x28[0x10];
-        void* mSubObj38;          // 0x38-0x3B
+        // CObjectParam ends at 0x38 (field_30 at +0x30, unk34 at +0x34).
+        void* mSubObj38;
         float mPos3C;           // 0x3C-0x3F
         float mPos40;           // 0x40-0x43
         float mPos44;           // 0x44-0x47

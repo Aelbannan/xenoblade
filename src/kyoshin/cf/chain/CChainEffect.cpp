@@ -110,9 +110,15 @@ void chainTeardownLinkClear(cf::CChainEffect* self) {
     self->unk8 = 0;
 }
 
+// Word view of the link head cleared by chainClearTwoWords (+0x04/+0x08).
+struct ChainClearWords {
+    u8 _pad00[4];
+    u32 word04;
+    u32 word08;
+};
 void chainClearTwoWords(void* self) {
-    *(unsigned long*)((char*)self + 4) = 0;
-    *(unsigned long*)((char*)self + 8) = 0;
+    ((ChainClearWords*)self)->word04 = 0;
+    ((ChainClearWords*)self)->word08 = 0;
 }
 
 // Scan the manager's circular object list and bind-remove every object matching

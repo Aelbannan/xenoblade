@@ -44,9 +44,9 @@ cf::CInfoCf::~CInfoCf() {
     lbl_eu_80664250 = 0;
 }
 
-extern "C" void* InfoCfGetUnk0C() { return *(void**)((u8*)lbl_eu_80664250 + 0xC); }
+extern "C" void* InfoCfGetUnk0C() { return (void*)lbl_eu_80664250->mField0C; }
 
-extern "C" void* InfoCfGetUnk10() { return *(void**)((u8*)lbl_eu_80664250 + 0x10); }
+extern "C" void* InfoCfGetUnk10() { return (void*)lbl_eu_80664250->mField10; }
 
 // FULL_MATCH - no-op virtual function (vtable slot 2).  Immediately returns.
 void InfoCfNoopVirt() {

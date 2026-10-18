@@ -498,10 +498,10 @@ s32 findPackFileId(const char* pName, const char* pPath) {
 // folds this small helper into findPackFileId below.
 __declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
-    u8* head = *(u8**)((u8*)sys + 0x1E8);
+    u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* first = *(u8**)head;
     if (first != head) {
-        return findFileEntry(*(void**)(first + 8), pName, (void**)pOut, pFileId);
+        return findFileEntry(((ArcItemListNode*)first)->mItem, pName, (void**)pOut, pFileId);
     }
     return false;
 }
@@ -511,10 +511,10 @@ __declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, v
 bool CWorkSystemPack::areArcsReady() {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     if (sys == 0) return false;
-    u8* head = *(u8**)((u8*)sys + 0x1E8);
+    u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* n = *(u8**)head;
     for (; n != head; n = *(u8**)n) {
-        if (*(s32*)(*(u8**)(n + 8) + 0x2C) != 2) return false;
+        if (((ArcItemListNode*)n)->mItem->unk2C != 2) return false;
     }
     return true;
 }

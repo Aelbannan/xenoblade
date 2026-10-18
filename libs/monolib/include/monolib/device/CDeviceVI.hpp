@@ -8,7 +8,7 @@
 #include <revolution/GX.h>
 #include <revolution/VI.h>
 
-//size: 0x2c0
+//size: 0x2c4 (retail __ct stw 704 = 0x2C0 unk2C0, ends 0x2C4)
 class __declspec(novtable) CDeviceVI : public CDeviceBase, public IErrorWii {
 public:
     CDeviceVI(const char* pName, CWorkThread* pParent);
@@ -96,7 +96,7 @@ public:
     u32 unk2A4;
     u32 mVisPerFrame; //0x2A8
     u32 unk2AC;
-    u32 mNewVisPerFrame;
+    u32 mNewVisPerFrame; //0x2B0
     u8 unk2B4; //padding?
     u8 unk2B5;
     u8 unk2B6[2]; //padding?

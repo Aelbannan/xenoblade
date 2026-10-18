@@ -1587,7 +1587,7 @@ s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node) {
     s32 state;
     u32 bound = self->field_0xdc[2];   // 0xe4
     if (bound != 0) {
-        state = *(u8*)((u8*)bound - 0xd);
+        state = *(u8*)(bound - 0xd);
     } else {
         state = 0;
     }
@@ -1598,7 +1598,7 @@ s32 EffSys_RebindSceneLinks(EffectRoot* self, void* scene, void* node) {
 
     bound = self->field_0xdc[4];       // 0xec
     if (bound != 0) {
-        state = *(u8*)((u8*)bound - 0xd);
+        state = *(u8*)(bound - 0xd);
     } else {
         state = 0;
     }

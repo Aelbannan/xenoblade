@@ -3908,7 +3908,8 @@ s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
 }
 #pragma optimize_for_size off
 
-extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 val) { *(u8*)(self + 0x180) = val; }
+struct PsByte180View { u8 _pad[0x180]; u8 b180; };
+extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 val) { ((PsByte180View*)self)->b180 = val; }
 
 extern "C" void UI_CPassiveSkill_thunk28_68C38(u8* self) { CPassiveSkillLine_confirmAcquire(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 

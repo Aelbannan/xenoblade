@@ -37,7 +37,7 @@ void* MapFx_ResolveOwner(void* obj);
 void  releaseNode__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
 void* allocFreeNode__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
 int   dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
-int   walkPathCheck__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
+int   updateWalker__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
 // getInstance__Q22cf14CBattleManagerFv comes from CfGameManager.hpp
 // (extern "C" CBattleManagerView* form) - do not redeclare here.
 f32 SinFIdx__Q24nw4r4mathFf(f32);
@@ -149,6 +149,14 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
     return self;
 }
 
+// Sub-object at the game-sub-manager slot +0x2F2C (cf. CCtrlMoveMgr2F2C in
+// CtrlMoveBase.hpp): the node pointer is reached through this TU-local view
+// instead of raw byte arithmetic.
+struct CCGMNodeView {
+    u8 _pad00[0x2f2c];
+    u32 node00;
+};
+
 // ============================================================================
 // movePcReleaseTaskReset - release active task, reset base (0x60 bytes)
 // ============================================================================
@@ -156,7 +164,7 @@ extern "C" void movePcReleaseTaskReset(CCtrlMovePC* self) {
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
-            void* p = (char*)gm + 0x2f2c;
+            void* p = &((CCGMNodeView*)gm)->node00;
             if (p != 0) {
                 releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
@@ -178,7 +186,7 @@ extern "C" int movePcTickCounterWrap(CCtrlMovePC* self) {
         d[1] |= 1u;                    // *(data+4) |= 1
         self->mStateFunc = lbl_eu_80532D28;
     }
-    *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
     return 0;
 }
 
@@ -203,7 +211,7 @@ extern "C" int movePcFlagTransitionReset(CCtrlMovePC* self) {
     g &= 0xE1FFFFFFu;                  // rlwinm 0,7,2
     self->mArr124[3] = 0;              // 0x12a
     self->mFlags4C = g;
-    *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
     return 0;
 }
 
@@ -221,7 +229,7 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
         setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
     } else {
         self->mStateFunc = lbl_eu_80532C98;
-        *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
     }
     return 0;
 }
@@ -234,8 +242,8 @@ extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
     self->mArr124[15] = (s16)(old + 1);
     if (old < 30) {
         cf::CfObjectActor* w = (cf::CfObjectActor*)self->mObject;
-        void* sub = *(void**)((char*)w + 0x3f60);
-        u16 flag = *(u16*)((char*)sub + 0x530);
+        void* sub = ((cf::CfObjWrap*)w)->mSub;
+        u16 flag = ((cf::CfMoveSub*)sub)->mField530;
         if ((flag & 1u) == 0) {                // clrlwi. bit 31
             f32 a = w->CfObjectActor_readFacingAngle();             // vtable 0x5b4
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
@@ -250,12 +258,25 @@ extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
     return 0;
 }
 
+// Address anchor for the inline CfObjectMove at wrapper +0x3E9C
+// (CfObjWrap models the same object; this exposes the move subobject).
+struct CfWrapMoveAnchor {
+    u8 _pad00[0x3e9c];
+    u8 moveObj;
+};
+
+// Battle-state byte at manager +0x1AA (retail lbz; range gate [1, 0x18]).
+struct CBattleMgrStateView {
+    u8 _pad00[0x1aa];
+    u8 state1AA;
+};
+
 // ============================================================================
 // movePcTopTickDispatch - top-level tick: query object, gate on battle state, run the
 // state-machine dispatch loop (0xAC).
 // ============================================================================
 extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
-    cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
+    cf::CfObject* emb = (cf::CfObject*)&((CfWrapMoveAnchor*)self->mObject)->moveObj;
     f32 v = emb->CfObject_getMoveSpeedRate();
     if (lbl_eu_80667B60 == v) {
         return;
@@ -263,7 +284,7 @@ extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
 
     // Ternary materialization: MWCC emits li 0 / cmplwi / blt / cmplwi /
     // bgt / li 1 for the nested ternary form (avoids the range-fold).
-    int battleState = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
+    int battleState = ((CBattleMgrStateView*)getInstance__Q22cf14CBattleManagerFv())->state1AA;
     bool inBattle = (u32)battleState >= 1 && (u32)battleState <= 0x18;
     if (inBattle) {
         return;
@@ -606,7 +627,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         if (okT != 0) {
             if (dispatchScnCommand__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                     lbl_eu_80667B60, lbl_eu_80667B60) != 0) {
-                if (walkPathCheck__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
+                if (updateWalker__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                         &out, lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
                     return;
                 }
@@ -810,7 +831,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
     if (self->mBase30 != 0) {
         ml::CVec3* tp = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
                             ->CfObject_getPosVector();
-        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mBase30, (Vec*)tp, (Vec*)goalPtr,
+        if (updateWalker__17UnkClass_8047D2ACFv(self->mBase30, (Vec*)tp, (Vec*)goalPtr,
                 lbl_eu_80667B60, lbl_eu_80667B60, 1) != 0) {
             // Contact: slide along the surface normal toward the goal.
             self->mFlags4C &= ~0x01000000u;
@@ -944,7 +965,7 @@ extern "C" int movePcEnterApproach(cf::CCtrlMovePC* self) {
             } else {
                 ok = 1;
             }
-            if (ok && walkPathCheck__17UnkClass_8047D2ACFv(self->mTask,
+            if (ok && updateWalker__17UnkClass_8047D2ACFv(self->mTask,
                     (Vec*)&self->mPos, &self->mVec54,
                     lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
                 self->mFlags4C |= 1u;

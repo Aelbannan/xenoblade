@@ -51,10 +51,17 @@ static inline f32 cvtToF_A8F0(volatile DblCvtSlots& s) {
 }
 
 
-// Multiple targets map to the same function - single definition
-u32 scnImN4GetWord4AC(u8* self) { return *(u32*)((u8*)self + 0x4ac); }
+// TU-local word view at +0x4AC (inside the opaque env-light bytes);
+// replaces the raw offset deref in scnImN4GetWord4AC (exact layout).
+struct ScnImN4Word4ACView {
+    u8 _pad[0x4AC];
+    u32 word;  // 0x4AC
+};
 
-extern "C" u32  scnImN4GetEffAct(u8* self) { return *(u32*)((u8*)self + 0x14c0); }
+// Multiple targets map to the same function - single definition
+u32 scnImN4GetWord4AC(u8* self) { return ((ScnImN4Word4ACView*)self)->word; }
+
+extern "C" u32  scnImN4GetEffAct(u8* self) { return ((CScnItemModelNw4r*)self)->field_0x14C0; }
 
 extern "C" void scnImN4SetShadFlg(u8* self) {
     CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
@@ -982,11 +989,20 @@ extern "C" void  scnImN4LookRel(CScnItemModelNw4r* self) {
 extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
                                                             int deleting) {
     if (self != nullptr) {
-        u8* vt = (u8*)lbl_eu_8056DE80;
-        *(void**)self = (void*)vt;
-        *(void**)((u8*)self + 0x1464) = vt + 0xDC;
-        *(void**)((u8*)self + 0x1468) = vt + 0xF4;
-        self->field_0x147C->Destroy();
+    u8* vt = (u8*)lbl_eu_8056DE80;
+    *(void**)self = (void*)vt;
+    // Secondary vtable anchors live at +0x1464/+0x1468 (inside the +0x864
+    // pool pad region); reached here through a TU-local view so the raw
+    // offsets stay out of the dtor body.
+    struct VtAnchors {
+        u8 _pad[0x1464];
+        void* mAnchor1464;   // +0x1464 (vtable+0xDC)
+        void* mAnchor1468;   // +0x1468 (vtable+0xF4)
+    };
+    VtAnchors* anchors = reinterpret_cast<VtAnchors*>(self);
+    anchors->mAnchor1464 = vt + 0xDC;
+    anchors->mAnchor1468 = vt + 0xF4;
+    self->field_0x147C->Destroy();
         if (&self->field_0x17CC != 0) {
             self->field_0x17D0 = 0;
             if (self->field_0x17D8 != 0xFFFFFFFF) {
@@ -999,13 +1015,13 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
             self->field_0x17D4 = 0;
             self->field_0x17D8 = -1;
         }
-        __dt__12CMdlDynamicsFv((u8*)self + 0x17A0, -1);
-        __dt__10CMdlAnmEyeFv((u8*)self + 0x1770, -1);
-        __dt__9CMdlAnmUVFv((u8*)self + 0x1730, -1);
-        __dt__9CMdlMouthFv((u8*)self + 0x1700, -1);
-        __dt__12CMdlMaterialFv((u8*)self + 0x16C8, -1);
-        __dt__4CScnFvMaruShadowNw4r((u8*)self + 0x1650, -1);
-        __dt__17CScnEffectActNw4rFv((u8*)self + 0x14C4, -1);
+        __dt__12CMdlDynamicsFv((u8*)&self->field_0x17A0, -1);
+        __dt__10CMdlAnmEyeFv((u8*)&self->field_0x1770, -1);
+        __dt__9CMdlAnmUVFv((u8*)&self->field_0x1730, -1);
+        __dt__9CMdlMouthFv((u8*)&self->field_0x1700, -1);
+        __dt__12CMdlMaterialFv((u8*)&self->field_0x16C8, -1);
+        __dt__4CScnFvMaruShadowNw4r((u8*)&self->field_0x1650, -1);
+        __dt__17CScnEffectActNw4rFv((u8*)&self->field_0x14C4, -1);
         __dt__13CScnItemModelFv((CScnItemModel*)self, 0);
         if (deleting > 0) {
             operator delete(self);
@@ -2261,7 +2277,7 @@ extern "C" int  scnImN4FindNodeByName(CScnItemModelNw4r* self, const char* name)
     return 1;
 }
 
-extern "C" u32  scnImN4GetTblCnt(u8* self) { return *(u32*)((u8*)self + 0x828); }
+extern "C" u32  scnImN4GetTblCnt(u8* self) { return ((CScnItemModelNw4r*)self)->member824.field_4; }
 
 // scnImN4GetNodeName: resolve the node named by the +0x824 entry table and
 // return its name string (node data + self-relative +8 offset), or 0 when

@@ -97,7 +97,7 @@ CfObjectMove::CfObjectMove() {
     // (CObjectState_applyStateFlags) is invoked with flag 3.
     *(void**)this = (void*)lbl_eu_80529690;
     mTargetC4 = 0;
-    __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((u8*)this + 0xD0));
+    __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)_D0);
     ColiNodeInit(_60C_region);
     mTarget6C0 = 0;
     mField6C4 = 1;
@@ -1148,7 +1148,7 @@ extern "C" void CfObjectMove_setSubB0FieldC(cf::CfObjectMove* self, unsigned sho
 
 // Retail CfObjectMove_getSubB0FieldA: sign-extended load of the +0xB0 sub-object's +0xA
 // halfword. (Old getSubFieldA method body moved onto the retail name.)
-extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 10); }
+extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* self) { return ((cf::CfResObjImpl*)self->mSubObjB0)->field_0A; }
 
 // Retail CfObjectMove_setSubB0FieldA: store to the +0xB0 sub-object's +0xA halfword.
 // (Old setSubFieldA method body moved onto the retail name.)
@@ -1159,7 +1159,7 @@ extern "C" void CfObjectMove_setSubB0FieldA(cf::CfObjectMove* self, unsigned sho
 
 // Retail CfObjectMove_getSubB0FieldE: sign-extended load of the +0xB0 sub-object's +0xE
 // halfword. (Old getSubFieldE method body moved onto the retail name.)
-extern "C" int CfObjectMove_getSubB0FieldE(cf::CfObjectMove* self) { return *(s16*)((char*)self->mSubObjB0 + 14); }
+extern "C" int CfObjectMove_getSubB0FieldE(cf::CfObjectMove* self) { return ((cf::CfResObjImpl*)self->mSubObjB0)->field_0E; }
 
 // Retail CfObjectMove_setSubB0FieldE: store to the +0xB0 sub-object's +0xE halfword.
 // (Old setSubFieldE method body moved onto the retail name.)
@@ -2121,7 +2121,7 @@ void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d) {
 }
 
 // retail: lwz r3,0xB0(r3); lhz r3,0xC(r3); blr
-extern "C" u16 CfObjectMove_getSubB0FieldC(void* self) { return *(u16*)((u8*)*(void**)((u8*)self + 0xB0) + 0xC); }
+extern "C" u16 CfObjectMove_getSubB0FieldC(void* self) { return ((cf::CfResObjImpl*)((cf::CfObjectMove*)self)->mSubObjB0)->field_0C; }
 extern "C" void CfObjectMove_resetAnimModeArgs(cf::CfObjectMove* self) {
     // Store 1 at +0x6C4, -1 at +0x6C8, and clear bits 24-26 of mFlags6C9.
     // Bitfield clear: MWCC emits the retail rlwinm r0,r0,0,27,23 directly

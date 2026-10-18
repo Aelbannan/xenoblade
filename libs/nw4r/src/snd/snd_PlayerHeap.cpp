@@ -59,7 +59,9 @@ bool PlayerHeap::Create(void* pBase, u32 size) {
 
 void* PlayerHeap::Alloc(u32 size) {
     u8* pCur = static_cast<u8*>(mEnd);
-    u8* pNext = pCur + size;
+    u32 nextAddr = size;
+    nextAddr += reinterpret_cast<u32>(pCur);
+    u8* pNext = reinterpret_cast<u8*>(nextAddr);
 
     if (pNext > static_cast<u8*>(mUnk0x10)) {
         return NULL;

@@ -7,6 +7,7 @@ namespace cf {
 class __declspec(novtable) CHelp_ClosePartyMenu : public CHelpSwitch {
 public:
     void checkHelpCondition();
+    bool isPartyMenuReady();
 };
 } // namespace cf
 

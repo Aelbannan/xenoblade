@@ -438,25 +438,29 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
         return;
     }
     KizunaPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    u32 b, a, f1, f2, f3, f4;
+    // Declaration order drives MWCC's register colors (a before b);
+    // assignment order below drives the load schedule.
+    u32 a, b, f1, f2, f3, f4;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
-        f1 = (turbo & 0x8004) != 0;
-        f2 = ((turbo >> 15) & 1) | ((turbo >> 28) & 1);
-        f3 = (turbo & 0x2001) != 0;
-        b = (pressed >> 10) & 1;
-        f4 = (turbo & 0x4002) != 0;
-        a = (pressed >> 9) & 1;
+        f1 = !!(turbo & 0x8004);
+        // 0x10008 = bit 16 | bit 3: MWCC splits the over-16-bit mask into
+        // rlwinm + rlwimi, matching retail (cf. KizunagramDriveChart).
+        f2 = !!(turbo & 0x10008);
+        f3 = !!(turbo & 0x2001);
+        b = (pressed >> 21) & 1;
+        f4 = !!(turbo & 0x4002);
+        a = (pressed >> 22) & 1;
     } else {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
-        f1 = (turbo & 0x8004) != 0;
-        f2 = ((turbo >> 15) & 1) | ((turbo >> 28) & 1);
-        f3 = (turbo & 0x2001) != 0;
-        b = (pressed >> 27) & 1;
-        f4 = (turbo & 0x4002) != 0;
-        a = (pressed >> 26) & 1;
+        f1 = !!(turbo & 0x8004);
+        f2 = !!(turbo & 0x10008);
+        f3 = !!(turbo & 0x2001);
+        b = (pressed >> 4) & 1;
+        f4 = !!(turbo & 0x4002);
+        a = (pressed >> 5) & 1;
     }
     if (b) {
         return;

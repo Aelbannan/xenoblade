@@ -69,7 +69,8 @@ private:
 
     void*       mParam1;          // 0x54 (unknowable pointee - never used in code)
     void*       mParam2;          // 0x58 (unknowable pointee - never used in code)
-    LOD::LODMemMan mLODMemMan;   // 0x5C
+    LOD::LODMemMan mLODMemMan;   // 0x5C (shared-header size 0x1500; retail create li 7492 + stw 7484/7488)
+    u8 _5C_pad[0x7E0];            // 0x155C .. 0x1D3C (matches src/lod/CTaskLOD.hpp)
     LOD::LODMemMan* mpSecondaryLOD; // 0x1D3C
     LOD::LODMemMan* mpActiveLOD; // 0x1D40
 };

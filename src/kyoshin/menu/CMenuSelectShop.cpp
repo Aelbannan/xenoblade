@@ -63,19 +63,30 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
                                                   void* scene, void* a3) {
     __ct__8CProcessFv(self);
 
-    // Interface sub-table stores referenced here so the composite vtable
-    // address is materialized before the __ptmf_null base.
+    // Temp (CProcess) vtable.
     self->mVtab = (u32)lbl_eu_8052D238;
-    self->mOcc6C = (u32)lbl_eu_80532550 + 0x24;
-    self->mOcc70 = (u32)lbl_eu_80532550 + 0xAC;
 
-    // Retail stores the second slot of each null-ptmf pair first.
-    self->mPtmfThis0 = __ptmf_null[1];
-    self->mPtmfFunc0 = __ptmf_null[0];
-    self->mPtmfDelta0 = __ptmf_null[2];
-    self->mPtmfThis1 = __ptmf_null[1];
-    self->mPtmfFunc1 = __ptmf_null[0];
-    self->mPtmfDelta1 = __ptmf_null[2];
+    // Null-ptmf slot groups: update-form first load (*n++) materializes the
+    // __ptmf_null base once (retail lwzu); each group stores its second slot
+    // first. The sub-table addresses are computed between the loads so MWCC
+    // keeps them live across the stores (retail addi pair); they are stored
+    // late with the composite vtable (CMenuQuestLog shape).
+    u32* n = __ptmf_null;
+    u32 a0 = *n++;
+    u32 occ6c = (u32)lbl_eu_80532550 + 0x24;
+    u32 a1 = n[0];
+    self->mPtmfThis0 = a1;
+    u32 occ70 = (u32)lbl_eu_80532550 + 0xAC;
+    self->mPtmfFunc0 = a0;
+    u32 a2 = n[1];
+    self->mPtmfDelta0 = a2;
+
+    a0 = n[-1];
+    a1 = n[0];
+    self->mPtmfThis1 = a1;
+    self->mPtmfFunc1 = a0;
+    a2 = n[1];
+    self->mPtmfDelta1 = a2;
     self->mLayout = 0;
     self->mField58 = 0;
     self->mField5C = 0;
@@ -88,6 +99,8 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
 
     // Derived-class overrides: composite vtable + interface sub-tables.
     self->mVtab = (u32)lbl_eu_80532550;
+    self->mOcc6C = occ6c;
+    self->mOcc70 = occ70;
     self->mScene = (CScn*)scene;
 
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);

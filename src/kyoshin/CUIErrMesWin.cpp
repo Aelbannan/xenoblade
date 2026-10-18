@@ -136,7 +136,7 @@ CUIErrMesWin* __ct__802B4DF4(CProcess* parent, u32 a, u16 b, u8 c) {
     return (CUIErrMesWin*)lbl_eu_80664C28;
 }
 
-extern "C" void ErrWin_SetState1_4EF4(void* self) { *(u8*)((u8*)self + 0x9C) = 1; }
+extern "C" void ErrWin_SetState1_4EF4(CUIErrMesWin* self) { self->field_0x9C = 1; }
 
 // ErrWin_MarkReady_4F00 (us-802b7970) - once the embedded CSysWin is ready, mark the
 // window state byte as "ready" (2).
@@ -187,7 +187,10 @@ void ErrWin_MarkActive6_5054(CUIErrMesWin* self) {
     }
 }
 
-extern "C" void ErrWin_SetFlag39_5094(void* self) { *(u8*)((u8*)self + 57) = 1; }
+// Byte view of the CTTask<CUIErrMesWin> base byte at +0x39 written by
+// ErrWin_SetFlag39_5094 (no named member exists in the base chain).
+struct ErrWinFlag39View { u8 _pad00[57]; u8 field_0x39; };
+extern "C" void ErrWin_SetFlag39_5094(ErrWinFlag39View* self) { self->field_0x39 = 1; }
 
 
 void ErrWin_RenderCbThunk_5138(void* self) { ((void(*)(void*))cbRenderBefore__12CUIErrMesWinFv)((char*)self - 0x58); }

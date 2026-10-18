@@ -213,6 +213,14 @@ void func_80127BD8(void*, float*);
 char* BdatTouchStringCell(char*, char*, u32);
 extern "C" char* BdatGetPtrDirect(void*, char*);
 u32 func_801392C0();
+
+// Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10). Spelled through
+// this view rather than GetRootPane(): the auto_inline-off regions would
+// emit an out-of-line call for the accessor.
+struct LayoutRootPaneView {
+    u8 _00[0x10];
+    nw4r::lyt::Pane* rootPane10;
+};
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 u32 CtrlObjectParam_GetCurrentRowKey();
 u32 CtrlObjectParam_GetArtsDataWord(void*);
@@ -451,7 +459,7 @@ void calcItemBoxPaneVec(u8* arg0, CItemBoxInfo* info, u32 arg2) {
     nw4r::lyt::Pane* child;
     char* base = lbl_eu_805063BC;
     sprintf(buf, base + 0x161, arg2 + 1);
-    child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
     first = child->FindPaneByName(base + 0x16e, true);
     second = child->FindPaneByName(buf, true);
     ScalePaneWorldPos((nw4r::math::VEC3*)arg0, second, first, child);
@@ -460,7 +468,7 @@ void calcItemBoxPaneVec(u8* arg0, CItemBoxInfo* info, u32 arg2) {
 
 void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
-    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    nw4r::lyt::Pane* child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
     setPaneVisible(result, (u32)arg2);
 }
@@ -1967,7 +1975,7 @@ void clearItemBoxTripleRows(CItemBoxInfo* info) {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        void* r = ((LayoutRootPaneView*)info->state.layout)->rootPane10->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
@@ -5061,7 +5069,7 @@ void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
     nw4r::lyt::Pane* child;
     char* base = lbl_eu_805063BC;
     sprintf(buf, base + 0x161, arg2 + 1);
-    child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    child = ((LayoutRootPaneView*)info->state.layout)->rootPane10;
     first = child->FindPaneByName(base + 0x16e, true);
     second = child->FindPaneByName(buf, true);
     ScalePaneWorldPos((nw4r::math::VEC3*)arg0, second, first, child);
@@ -6232,7 +6240,7 @@ void clearItemBox2TripleRows(CItemBoxInfo2* info) {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+        void* r = ((LayoutRootPaneView*)info->state.layout)->rootPane10->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue(info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);

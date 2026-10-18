@@ -37,9 +37,7 @@ void criware_803A5908(u8 *table) {
 int criware_803A59B0(void) {
     u8 table[256];
     criware_803A5908(table);
-    if (memcmp(table, lbl_eu_8051C090, 256) != 0)
-        return -1;
-    return 0;
+    return -(memcmp(table, lbl_eu_8051C090, 256) != 0);
 }
 
 /* Check if buf starts with MPEG start code prefix 0x000001 */

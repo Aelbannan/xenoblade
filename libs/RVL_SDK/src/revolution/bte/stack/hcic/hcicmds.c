@@ -42,7 +42,7 @@ int btsnd_hcic_inq_cancel(void)
     return 1;
 }
 
-int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
+int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, const unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
     unsigned char *p = GKI_getpoolbuf(2);
     unsigned char b0, b1, b2;

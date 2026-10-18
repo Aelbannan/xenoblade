@@ -716,7 +716,7 @@ extern "C" bool CScrollBar_isVisible(void*);
 // visible AND the flag byte at 0x8A is set. Int return so callers compare
 // with cmpwi directly (cf. CMenuTutorialList.hpp).
 int PlayAward_IsListReady(CPlayAwardList* self) {
-    if (CScrollBar_isVisible((u8*)self + 0x48)) {
+    if (CScrollBar_isVisible(self->mScrollBar)) {
         return self->field_0x8A;
     }
     return 0;

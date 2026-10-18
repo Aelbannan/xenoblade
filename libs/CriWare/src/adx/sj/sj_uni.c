@@ -242,13 +242,17 @@ void sjuni_Reset(SJUNI *self) {
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else {
+        SJUNI_CHUNK *p;
         int i;
-        SJUNI_CHUNK *chunks = (SJUNI_CHUNK *)self->pool_mem;
+        SJUNI_CHUNK *chunks;
+        chunks = (SJUNI_CHUNK *)self->pool_mem;
         self->free_head = chunks;
+        p = chunks;
         for (i = 0; i < self->num_chunks - 1; i++) {
-            chunks[i].next = &chunks[i + 1];
-            chunks[i].ptr = NULL;
-            chunks[i].size = 0;
+            p->next = &chunks[i + 1];
+            p->ptr = NULL;
+            p->size = 0;
+            p++;
         }
         chunks[i].next = NULL;
         chunks[i].ptr = NULL;

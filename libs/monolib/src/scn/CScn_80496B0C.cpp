@@ -366,7 +366,7 @@ Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli(
     MEMAllocator* pAllocator, u32* pSize, nw4r::g3d::ResMdl mdl,
     int numChildren);
 
-void scn80496SetFloat178(u8* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void scn80496SetFloat178(u8* self, float val) { ((CScn80496B0C*)self)->field_0x178 = val; }
 
 
 // Returns the virtual value at vtable offset 0x20 of the object at
@@ -430,7 +430,7 @@ void scn80496RefreshBlendTag(CScn80496B0C* self, u32 tag) {
     }
 }
 
-extern "C" u32 scn80496HasChild1Node(u8* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
+extern "C" u32 scn80496HasChild1Node(u8* self) { return ((CScn80496B0C*)self)->field_0x8->field_0x84[0] != 0; }
 
 // Returns whether the +0x14 ids of the two chains' nodes differ, or 0 when
 // either chain is missing.
@@ -460,7 +460,7 @@ u32 scn80496IsComplete(CScn80496B0C* self) {
     return !(nb->field_0x14 - na->field_0x14);
 }
 
-extern "C" u32 scn80496HasChild2Node(u8* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
+extern "C" u32 scn80496HasChild2Node(u8* self) { return ((CScn80496B0C*)self)->field_0xC->field_0x84[0] != 0; }
 
 // Refreshes the child's TRS outputs from the model node selected by nodeIdx:
 // the translate output receives the node's position (or zero when the node is

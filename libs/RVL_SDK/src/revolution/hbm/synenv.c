@@ -5,29 +5,6 @@
 extern const f32 __HBMSYNn128[];
 extern const s32 __HBMSYNAttackAttnTable[];
 
-// .rodata constant pool referenced by the envelope tick computations.
-// Retail emits it as a file-local (static) 0x20-byte pool entry; defined here
-// with the exact retail values (pow base 2.0, divisors, ms scale 1000.0,
-// s32->f64 bias 2^52+2^31).
-typedef struct HBMSYNEnvConsts {
-    f64 powBase;   // 0x00 - pow() base
-    f32 divA;      // 0x08
-    f32 mulMs;     // 0x0c - seconds -> milliseconds
-    f32 divB;      // 0x10
-    f32 pad14;
-    f64 convBias;  // 0x18 - s32->f64 conversion bias
-} HBMSYNEnvConsts;
-static HBMSYNEnvConsts const lbl_80518B58 = {
-    2.0, 78643200.0f, 1000.0f, 78642000.0f, 0.0f, 4503601774854144.0,
-};
-
-// s32 -> f64 the way MWCC lowers it: 0x4330-prefixed double of the sign-flipped
-// word minus the rodata bias constant.
-typedef union HBMSYNCvt {
-    f64 d;
-    u32 w[2];
-} HBMSYNCvt;
-
 typedef struct HBMSYNVoice {
     u8  _pad0[0x08];
     void* base;        // 0x08 - synth base pointer
@@ -57,60 +34,60 @@ typedef struct HBMSYNVolParams {
     s32 decayExtra;    // 0x2C
 } HBMSYNVolParams;
 
-// Convert one envelope parameter (a biased exponent-style value, 0x80000000 =
-// "unset") into a tick count: ms = mulMs * pow(powBase, linear combination of
-// the decoded values divided by the divisor). Values are decoded through a
-// 0x43300000-prefixed double and rebased by the rodata bias constant.
+// Volume envelope setup: attack/decay tick conversion via pow(2.0, ...).
+// int->float uses plain (f32) builtin casts (MWCC's xoris/lfd-pool/fsubs
+// idiom); 2.0 pools first via the (void)2.0 anchor (single r31 base, exact
+// retail pool layout [2.0, divA, mulMs, divB, magic]). A const-qualified or
+// function-scope powBase variable instead breaks pooling or frame shape.
 extern "C" void __HBMSYNSetupVolumeEnvelope(void* voice)
 {
     HBMSYNVoice* v = (HBMSYNVoice*)voice;
-    HBMSYNEnvConsts const* tbl = &lbl_80518B58;
-    HBMSYNCvt cvt1, cvt2;
     s32 ticks;
+    HBMSYNVolParams* pp0 = (HBMSYNVolParams*)v->params;
 
-    cvt1.w[0] = 0x43300000;
-    cvt2.w[0] = 0x43300000;
-
-    if (((HBMSYNVolParams*)v->params)->attack == 0x80000000) {
+    // Pool anchor only: pools 2.0 at the head of the compiler literal pool
+    // (exact retail layout). A bare literal statement keeps 2.0 first with
+    // no variable, no code, and no virtual-register numbering of its own.
+    // The arms below use literal 2.0 at the pow sites (deduped here).
+    (void)2.0;
+    if (pp0->attack == 0x80000000) {
         v->volPhase = 1;
         v->vol = 0;
-        if (((HBMSYNVolParams*)v->params)->decay == 0x80000000) {
+        if (pp0->decay == 0x80000000) {
             v->volPhase = 2;
-            v->vol = ((HBMSYNVolParams*)v->params)->sustain;
+            v->vol = pp0->sustain;
         }
     } else {
-        u8 ch = v->idx;
-        s32 attack = ((HBMSYNVolParams*)v->params)->attack;
-        s32 extra = ((HBMSYNVolParams*)v->params)->attackExtra;
+        s32 extra;
+        u8 ch;
+        ch = v->idx;
+        extra = pp0->attackExtra;
 
-        // Dead gate: this re-tests the value the outer gate compared, so MWCC
-        // folds it onto the stale CR0 — the ticks = 0 path costs no compare.
-        if (attack == 0x80000000) {
+        // Dead gate: re-tests the outer value, so MWCC folds it onto the
+        // stale CR0 -- the ticks = 0 path costs no compare.
+        if (pp0->attack == 0x80000000) {
             ticks = 0;
         } else if (extra == 0x80000000) {
-            cvt1.w[1] = (u32)attack ^ 0x80000000;
-            f32 exp = (f32)pow(tbl->powBase,
-                (f64)((f32)(cvt1.d - tbl->convBias) / tbl->divA));
-            ticks = tbl->mulMs * exp;
+            f32 a = (f32)pp0->attack;
+            f32 arg = a / 78643200.0f;
+            f32 e = (f32)pow(2.0, (f64)arg);
+            ticks = (s32)(1000.0f * e);
         } else {
-            cvt1.w[1] = (u32)extra ^ 0x80000000;
-            cvt2.w[1] = (u32)attack ^ 0x80000000;
-            f32 exp = (f32)pow(tbl->powBase,
-                (f64)((f32)(cvt1.d - tbl->convBias) * __HBMSYNn128[ch] +
-                      (f32)(cvt2.d - tbl->convBias)) / tbl->divB);
-            ticks = tbl->mulMs * exp;
+            f32 arg = ((f32)pp0->attack + (f32)extra * __HBMSYNn128[ch]) / 78642000.0f;
+            f32 e = (f32)pow(2.0, (f64)arg);
+            ticks = (s32)(1000.0f * e);
         }
 
         {
             s32 div3 = ticks / 3;
             if (div3 != 0) {
-                v->attackRate = 0x640000 / div3;
                 v->attackTicks = 0;
+                v->attackRate = 0x640000 / div3;
                 v->vol = 0xFC400000;
                 v->volPhase = 0;
             } else {
-                v->attackRate = 0x640000;
                 v->attackTicks = 0;
+                v->attackRate = 0x640000;
                 v->vol = (s32)0xFC400000;
                 v->volPhase = 0;
             }
@@ -118,29 +95,33 @@ extern "C" void __HBMSYNSetupVolumeEnvelope(void* voice)
     }
 
     if ((u32)v->volPhase < 2) {
+        s32 decay;
+        s32 extra2;
+        HBMSYNVolParams* pp = (HBMSYNVolParams*)v->params;
         u8 ch = v->note;
-        s32 decay = ((HBMSYNVolParams*)v->params)->decay;
-        s32 extra2 = ((HBMSYNVolParams*)v->params)->decayExtra;
+        decay = pp->decay;
+        extra2 = pp->decayExtra;
 
         if (decay == 0x80000000) {
             ticks = 0;
         } else if (extra2 == 0x80000000) {
-            cvt2.w[1] = (u32)decay ^ 0x80000000;
-            f32 exp = (f32)pow(tbl->powBase,
-                (f64)((f32)(cvt2.d - tbl->convBias) / tbl->divA));
-            ticks = tbl->mulMs * exp;
+            f32 d = (f32)decay;
+            f32 arg = d / 78643200.0f;
+            f32 e = (f32)pow(2.0, (f64)arg);
+            ticks = (s32)(1000.0f * e);
         } else {
-            cvt1.w[1] = (u32)decay ^ 0x80000000;
-            cvt2.w[1] = (u32)extra2 ^ 0x80000000;
-            f32 exp = (f32)pow(tbl->powBase,
-                (f64)((f32)(cvt2.d - tbl->convBias) * __HBMSYNn128[ch] +
-                      (f32)(cvt1.d - tbl->convBias)) / tbl->divB);
-            ticks = tbl->mulMs * exp;
+            f32 arg = ((f32)decay + (f32)extra2 * __HBMSYNn128[ch]) / 78642000.0f;
+            f32 e = (f32)pow(2.0, (f64)arg);
+            ticks = (s32)(1000.0f * e);
         }
 
         {
             s32 div3 = ticks / 3;
-            v->decayRate = (div3 != 0) ? (s32)0xFC400000 / div3 : (s32)0xFC400000;
+            if (div3 != 0) {
+                v->decayRate = (s32)0xFC400000 / div3;
+            } else {
+                v->decayRate = (s32)0xFC400000;
+            }
         }
     }
 

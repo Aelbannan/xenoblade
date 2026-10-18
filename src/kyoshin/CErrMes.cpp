@@ -87,11 +87,11 @@ extern "C" void getErrMesText16() {
 }
 
 extern "C" void getErrMesText19() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 19);
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 19);
 }
 
 extern "C" void getErrMesText20() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 20);
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 20);
 }
 
 extern "C" void* getErrMesLangTable0(void) { return (void*)lbl_eu_8053A438; }
@@ -146,5 +146,5 @@ void setErrMesLanguage(s32 lang) {
 }
 
 extern "C" void getErrMesText01() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)&lbl_eu_80513420[9], 1);
 }

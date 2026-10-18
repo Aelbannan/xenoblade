@@ -222,7 +222,7 @@ extern "C" __declspec(noinline) u32 MdlDyn_GetResMdlData(u8* self) { return *(u3
 
 extern "C" __declspec(noinline) void MdlDyn_StoreResRef(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-extern "C" __declspec(noinline) u32 MdlDyn_GetListCount(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetListCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
 
 // (mapped to MdlDyn_GetResMdlData above)
 
@@ -267,7 +267,7 @@ void* __dt__804EA1D0(CMdlDynBuffer* self, s32 freeIt) {
     return self;
 }
 
-extern "C" __declspec(noinline) u32 MdlDyn_GetListBase(u8* self) { return *(u32*)((u8*)self + 0x0); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetListBase(u8* self) { return (u32)((CMdlDynBuffer*)self)->field_0x0; }
 
 extern "C" __declspec(noinline) void* MdlDyn_GetListEnd(u8* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
 
@@ -824,7 +824,7 @@ extern "C" __declspec(noinline) u8* MdlDyn_GetAnchorElem(u8* self, u32 idx) {
     return *(u8**)self + idx * 0x98;
 }
 
-extern "C" __declspec(noinline) u32 MdlDyn_GetAnchorCount(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 MdlDyn_GetAnchorCount(u8* self) { return ((CMdlDynBuffer*)self)->field_0x4; }
 
 // Returns a pointer to element idx of a 0xB0-byte-stride array stored at self+0.
 extern "C" __declspec(noinline) u8* MdlDyn_GetDynElem(u8* self, u32 idx) {

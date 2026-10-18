@@ -152,10 +152,10 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
 // retail does not have. optimize_for_size merges the r30/r31 saves into the
 // retail stmw r30 prologue.
 #pragma optimize_for_size on
-extern "C" void* __dt__9CArtsInfoFv(void* self, int flags) {
+extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
     if (self != 0) {
-        __dt__6CCur18Fv((u8*)self + 0x5C, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        __dt__6CCur18Fv(&self->mCursor[0], -1);
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         if (flags > 0) {
             __dl__FPv(self);
         }
@@ -296,6 +296,9 @@ void CArtsInfo_ReqState4(CArtsInfo* self) {
 // optimize_for_size gives the retail _savegpr_28/_restgpr_28 prologue; real
 // member calls give the retail r12 vtable dispatches (vtable+0x2C =
 // SetAnimationEnable, vtable+0x38 = Animate).
+// Frame view of nw4r::lyt::AnimTransform: the current frame sits at +0x10
+// (retail stores it directly; SetFrame would emit an out-of-line bl).
+struct AnimTransFrameView { u8 _pad00[0x10]; f32 frame; };
 #pragma optimize_for_size on
 void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
@@ -310,7 +313,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, true);
 
     // Reset anim transform frame (retail stores 0.0f straight to +0x10)
-    *(float*)((u8*)self->mpAnimTrans4 + 0x10) = lbl_eu_80668680;
+    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans4)->frame = lbl_eu_80668680;
 
     self->mpLayout1->Animate(0);
 
@@ -321,7 +324,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, true);
 
     // Reset anim transform frame
-    *(float*)((u8*)self->mpAnimTrans3 + 0x10) = lbl_eu_80668680;
+    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans3)->frame = lbl_eu_80668680;
 
     self->mpLayout1->Animate(0);
 
@@ -330,7 +333,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
     // Reset anim transform frame
-    *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
+    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans5)->frame = lbl_eu_80668680;
 
     self->mpLayout2->Animate(0);
 
@@ -371,7 +374,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
     // Set anim transform frame
-    *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
+    reinterpret_cast<AnimTransFrameView*>(self->mpAnimTrans5)->frame = lbl_eu_80668680;
 
     self->mpLayout2->Animate(0);
 

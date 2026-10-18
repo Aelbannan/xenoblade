@@ -150,20 +150,20 @@ extern "C" int getArtsTier(int x) {
     }
     return ret;
 }
-extern "C" float getArtsFacing(const u8* this_) { unsigned short raw = *(const unsigned short*)(this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
+extern "C" float getArtsFacing(const u8* this_) { unsigned short raw = reinterpret_cast<const cf::CAttackParamPrefix*>(this_)->unk5A; int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
 void getArtsClampedRate(){}
 extern const float lbl_eu_805019C0[];
 extern "C" float getArtsGaugeRate(const u8* self) {
-    int index = *reinterpret_cast<const unsigned short*>(self + 0x5a);
+    int index = reinterpret_cast<const cf::CAttackParamPrefix*>(self)->unk5A;
     if (index < 0)
         index = 0;
     else if (index > 5)
         index = 5;
     return lbl_eu_805019C0[index];
 }
-extern "C" int isArtsSpecialKind(const u8* self) { const unsigned short value = *reinterpret_cast<const unsigned short*>(self + 0x5c); return value == 3 || value == 4 || value == 11; }
+extern "C" int isArtsSpecialKind(const u8* self) { const unsigned short value = reinterpret_cast<const cf::CAttackParamPrefix*>(self)->unk5C; return value == 3 || value == 4 || value == 11; }
 extern "C" bool hasArtsGauge(u8* self) {
-    return *(unsigned short*)(self + 0x5C) == 11;
+    return reinterpret_cast<cf::CAttackParamPrefix*>(self)->unk5C == 11;
 }
 
 // getArtsScaledSpeed: per-frame-scaled entry of the arts-speed table @0x805019A8.
@@ -678,6 +678,6 @@ int checkArtsFull(void* param, void* actor, int flags) {
 extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv() { return 0; }
 
 void cf::CArtsParam::vtableFunc3(u8 val) {
-    u8* o = *(u8**)((u8*)this + 0x88);
-    if (o) *(u8*)((u8*)o + 0) = val;
+    u8* o = (u8*)this->unk88;
+    if (o) *o = val;
 }

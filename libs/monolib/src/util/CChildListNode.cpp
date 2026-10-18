@@ -22,14 +22,24 @@ void* lbl_eu_8056BBA0[4] = {
  * &__dt__...Fv}) in this TU; coordinator must rename it to lbl_eu_8056BBB0,
  * insert the [0] reloc -> lbl_eu_806635E0 and pad to 0x10. Not faked. */
 
+// Novtable vptr slots have no C++ members: raw view of the retail layout
+// (CChildListNode vtable at +0x10, TChildListHeader vtable at +0x34).
+struct CChildListNodeVptrs {
+    u8 _00[0x10];
+    void* vptr10;   // 0x10
+    u8 _14[0x20];   // 0x14..0x34
+    void* vptr34;   // 0x34
+};
+
 CChildListNode::CChildListNode()
     : mParent(NULL) {
 
     // vptr slots (novtable): CChildListNode vtable at +0x10 (overrides the
     // base CDoubleListNode vptr), TChildListHeader vtable at +0x34 (mChildren).
     // Retail store order: mParent, vptr@0x10, vptr@0x34, mChildren.Reset().
-    *(void**)((char*)this + 0x10) = (void*)lbl_eu_8056BBA0;
-    *(void**)((char*)this + 0x34) = (void*)lbl_eu_8056BBB0;
+    CChildListNodeVptrs* slots = (CChildListNodeVptrs*)this;
+    slots->vptr10 = (void*)lbl_eu_8056BBA0;
+    slots->vptr34 = (void*)lbl_eu_8056BBB0;
     mChildren.Reset();
 }
 

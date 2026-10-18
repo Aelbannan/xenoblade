@@ -200,9 +200,8 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         nw4r::lyt::Pane* pane =
             mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DC0[mDirection], true);
         float drag[2];
-        TagCopyVec2f(drag, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4C));
-        nw4r::math::VEC3 dims =
-            *reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<u8*>(pane) + 0x2C);
+        TagCopyVec2f(drag, reinterpret_cast<CScrollBarPane*>(pane)->mDrag);
+        nw4r::math::VEC3 dims = reinterpret_cast<CScrollBarPane*>(pane)->mDims;
         mScrollPosY = drag[1];
         mThumbHeight = dims.x;
         mContentHeight = dims.y;

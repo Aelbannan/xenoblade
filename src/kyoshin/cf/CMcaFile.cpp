@@ -4,6 +4,7 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "kyoshin/cf/CMcaFile.hpp"
 
+struct McaHeadView { u8 magic[4]; u32 dataOff; };
 extern "C" void __ct__CMcaFile(u8* self, void* data) {
     u8* s = (u8*)self;
     u8* d = (u8*)data;
@@ -15,7 +16,7 @@ extern "C" void __ct__CMcaFile(u8* self, void* data) {
 
     if ((s8)d[0] == 0x6D && (s8)d[1] == 0x63 && (s8)d[2] == 0x61 && (s8)d[3] == 0) {
         s[4] = 1;
-        *(void**)(s + 12) = d + *(u32*)(d + 4);
+        *(void**)(s + 12) = d + ((McaHeadView*)d)->dataOff;
     }
 }
 
@@ -51,7 +52,7 @@ extern "C" void initMcaFile(u8* self, void* data, const char* name) {
 
     if ((s8)d[0] == 0x6D && (s8)d[1] == 0x63 && (s8)d[2] == 0x61 && (s8)d[3] == 0) {
         hasMagic = 1;
-        dataAdj = (u8*)data + *(u32*)(d + 4);
+        dataAdj = (u8*)data + ((McaHeadView*)d)->dataOff;
     }
 
     if (hasMagic != 0) {

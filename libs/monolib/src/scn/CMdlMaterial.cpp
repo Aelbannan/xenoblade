@@ -34,8 +34,8 @@ public:
 };
 
 // Local .sdata "ref" strings (defined at the bottom of this TU).
-extern "C" u32 lbl_sd_04;
-extern "C" u32 lbl_sd_05;
+extern u32 lbl_sd_04;
+extern u32 lbl_sd_05;
 
 // Assertion strings emitted by the inlined nw4r ResUserData/ResDict accessors
 // (declared here at global scope; C++ does not mangle global variable names,
@@ -654,9 +654,9 @@ extern "C" const u32 lbl_eu_80524798[7] = {
 // [.sdata] 0x80663C30-0x80663C58 (0x28): RTTI pairs + "ref" strings.
 extern "C" u32 lbl_sd_00[2] = { (u32)&lbl_eu_8066B2F8, (u32)&lbl_eu_8066B300 };
 extern "C" u32 lbl_sd_02[2] = { (u32)&lbl_eu_80524798, 0x00000000 };
-extern "C" u32 lbl_sd_04 = 0x72656600;
-extern "C" u32 lbl_sd_05 = 0x72656600;
-extern "C" u32 lbl_sd_06 = 0x72656600;
-extern "C" u32 lbl_sd_07 = 0x72656600;
-extern "C" u32 lbl_sd_08 = 0x72656600;
-extern "C" u32 lbl_sd_09 = 0x72656600;
+extern u32 lbl_sd_04 = 0x72656600;
+extern u32 lbl_sd_05 = 0x72656600;
+extern u32 lbl_sd_06 = 0x72656600;
+extern u32 lbl_sd_07 = 0x72656600;
+extern u32 lbl_sd_08 = 0x72656600;
+extern u32 lbl_sd_09 = 0x72656600;

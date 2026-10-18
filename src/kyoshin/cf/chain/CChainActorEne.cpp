@@ -52,6 +52,20 @@ struct GlistList {
     GlistNode* field_04;      //0x04
 };
 
+// Word view of the resolve-owner object: the sub-object pointer lives at
+// +0x04 (same CChainBigObj shape as the PC-side TU).
+struct EneOwnerObj {
+    u8 _pad0[4];
+    void* sub;   //0x04
+};
+
+// Party-gauge word inside the battle manager (+0x194, cf. BattleMeterView
+// in the PC-side TU).
+struct BattleMeterView {
+    u8 _pad00[0x194];
+    int meter;   //0x194
+};
+
 
 
 // Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
@@ -78,7 +92,7 @@ extern "C" int ChainEne_ValidateCand_1384(cf::CChainActorEne* self, int arg) {
     void* handle = findObjectById(arg);
     void* obj = MapFx_ResolveOwner(handle);
     if (obj == 0) return 0;
-    void* sub = *(void**)((u8*)obj + 4);
+    void* sub = ((EneOwnerObj*)obj)->sub;
     int v = *(int*)static_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
     if (testActorStatus(obj, &v, 0x803) != 0) {
         return CChainActor_CheckReady((void*)self, (void*)arg);
@@ -114,7 +128,7 @@ extern "C" int ChainEne_IsWired_146C(const cf::CChainActorEne* self) {
 // chain types when the ids differ. Requires the flag bit at 0x3f00 on the
 // second object.
 extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
-    if (((u32*)arg2)[0x3f00 / 4] & 4) {
+    if (((EneChainObj*)arg2)->flag & 4) {
         u32 a1 = self->unk0;
         if (a1 != 0) a1 += 0x3e9c;
         EneChainObj* e1 = (EneChainObj*)getEffOwner__((void*)a1);
@@ -255,5 +269,5 @@ extern "C" int ChainEne_GetZeroVia_18E4(void* self, void* arg) { return static_c
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
 extern "C" void ChainEne_TouchBattle194_18F8(void) {
-    PartyGaugeSetClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x12c);
+    PartyGaugeSetClamped(reinterpret_cast<u8*>(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter), 0x12c);
 }

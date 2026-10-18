@@ -3258,14 +3258,16 @@ inline void HomeButton::fadeout_sound(f32 gain) {
  *
  * nw4hbm::lyt::ArcResourceAccessor
  *
- * The destructor is inline in lyt_arcResourceAccessor.h (retail keeps a
- * strong out-of-line copy in this TU, which the linker prefers over the
- * weak copy emitted with the vtable in lyt_arcResourceAccessor.o).
+ * The destructor is declared out-of-line in lyt_arcResourceAccessor.h
+ * (retail keeps the strong copy in this TU; the vtable lives in
+ * lyt_arcResourceAccessor.o keyed on GetResource).
  *
  ******************************************************************************/
 
 namespace nw4hbm {
 namespace lyt {
+
+ArcResourceAccessor::~ArcResourceAccessor() {}
 
 } // namespace lyt
 } // namespace nw4hbm

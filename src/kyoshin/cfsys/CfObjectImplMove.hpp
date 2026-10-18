@@ -356,9 +356,9 @@ union CfMoveF64Conv {
 struct CfMovePosObj {
     u8 _00_0B[0xc];               // 0x00-0x0b
     f32 field_0xC;                // 0xc
-    u8 _10_1B[0x10];              // 0x10-0x1b
+    u8 _10_1B[0x0C];              // 0x10-0x1b
     f32 field_0x1C;               // 0x1c
-    u8 _20_2B[0x10];              // 0x20-0x2b
+    u8 _20_2B[0x0C];              // 0x20-0x2b
     f32 field_0x2C;               // 0x2c
 };
 

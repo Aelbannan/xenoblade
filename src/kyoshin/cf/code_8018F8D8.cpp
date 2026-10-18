@@ -575,7 +575,7 @@ int CfCmd_ResolveSlot1E4(CFuncHost408* self, u32 arg1, u32 arg2) {
     // CtrlRemote_GetFileEventIds is declared in CfGameManager.hpp (CfFileEventIdsView*);
     // retail treats the result as this 4-byte pair.
     UnkR31_8019E88* p = reinterpret_cast<UnkR31_8019E88*>(CtrlRemote_GetFileEventIds());
-    func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_0x408 + 0x28);
+    func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, &self->field_0x408[0x28]);
     if (CfRes_tryResolveSlot1E4(p->field_0x2, p->field_0x0, 3) == 0) {
         CfRes_markKey(reinterpret_cast<UnkClass_80085334*>(self), 0x28);
     }

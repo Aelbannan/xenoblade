@@ -125,7 +125,7 @@ extern "C" void sortMenuDispatchState(CSortMenu* _this) {
     }
 
     _this->mpLayout->Animate(0);
-    CScrollBar_UpdateDispatch((u8*)_this + 0x2C);
+    CScrollBar_UpdateDispatch(&_this->mScrollBar);
 }
 
 // ============================================================================
@@ -212,7 +212,7 @@ extern "C" void sortMenuToState4Page(CSortMenu* _this) {
     if (_this->field_0x2A != 3) return;
     _this->field_0x2A = 4;
     _this->field_0x2B = 0;
-    CScrollBar_requestScrollOut((u8*)_this + 0x2C);
+    CScrollBar_requestScrollOut(&_this->mScrollBar);
 }
 
 // ============================================================================
@@ -547,12 +547,13 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, s + 0x63);
         bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, s + 0x7c);
 
-        // Root pane sits at Layout + 0x10 (direct field access, not a virtual
-        // call). Retail order: load mpLayout, materialize the font-id constant,
-        // then read the root pane before calling the font builder.
-        nw4r::lyt::Layout* lyt = mpLayout;
-        int fontId = 1;
-        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)lyt + 0x10);
+    // Root pane sits at Layout + 0x10, read via the non-virtual inline
+    // accessor (no out-of-line call, same direct load as retail).
+    // Retail order: load mpLayout, materialize the font-id constant,
+    // then read the root pane before calling the font builder.
+    nw4r::lyt::Layout* lyt = mpLayout;
+    int fontId = 1;
+    nw4r::lyt::Pane* rootPane = lyt->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
         // Virtual call through the font object's vtable slot +0x24.
         u32 result = ((CDeviceFontItf*)fontObj)->getResource();

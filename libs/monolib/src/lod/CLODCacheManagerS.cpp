@@ -281,40 +281,40 @@ s32 CLODCacheManagerS::findCutBinIdx()
 // ===========================================================================
 f32 CLODCacheManagerS::lerpDistEntry()
 {
-    // Plain builtin u16/s32 -> f32 casts: MWCC emits the 0x43300000 stack
-    // scratch / xoris / fsubs-of-2^52-magic sequence per conversion, reusing
-    // two scratch slots across the whole function (retail shape).
+    // Retail model: builtin casts (MWCC 0x4330 idiom, lone fsubs), two
+    // scratch slots, CTR pointer loop (for-shape); minimal float temps so
+    // MWCC's scratch-FPR birth order matches retail (magic f1, 1.0 f2).
     if (lbl_eu_80665754 <= (f32)field_0x0) {
         return lbl_eu_8066573C[field_0x8].near;
     }
-
     if (lbl_eu_80665754 >= (f32)field_0x2) {
-        LODDistEntry* end = &lbl_eu_8066573C[field_0x8 + field_0x6];
-        return end[-1].near;
+        LODDistEntry* en = &lbl_eu_8066573C[field_0x8 + field_0x6];
+        return en[-1].near;
     }
-
-    // Walk the straddling bins; counter runs over entries after the first.
-    s32 base = field_0x8;
-    s32 cnt = field_0x6;
-    LODDistEntry* e = &lbl_eu_8066573C[base + 1];
     u16 key = lbl_eu_80665758;
-    if (cnt > 1) {
-        s32 n = cnt - 1;
-        do {
-            u16 A = e->far;
-            if (key < A) {
-                u16 B = e[-1].far;
-                s32 d = (s32)A - (s32)B;
-                f32 bFar = (f32)B;
-                f32 denom = (f32)d;
-                f32 t = (lbl_eu_80665754 - bFar) / denom;
-                return e[-1].near * (lbl_eu_8066A5C0 - t) + e->near * t;
-            }
-            e++;
-        } while (--n != 0);
+    s32 cnt = (s32)field_0x6;
+    LODDistEntry* e = &lbl_eu_8066573C[field_0x8 + 1];
+    for (s32 j = 1; j < cnt; j++) {
+        u16 A = e->far;
+        if (key < A) {
+            u16 B = e[-1].far;
+            s32 span = (s32)A - (s32)B;
+            f32 unit = lbl_eu_8066A5C0;
+            f32 spanF = (f32)span;
+            f32 t = (lbl_eu_80665754 - (f32)B) / spanF;
+            f32 leftP = e[-1].near * (unit - t);
+            return leftP + e->near * t;
+        }
+        e++;
     }
     return lbl_eu_8066A5C4;
 }
+// (line-neutral pads: keep lerpDistEntry region at 36 lines)
+// (pad 2)
+// (pad 3)
+// (pad 4)
+// (pad 5)
+// (pad 6: restores the 36-line region so downstream line numbers hold)
 
 /**
  * Integer->double bit-conversion scratch slot (MWCC 0x4330-prefix trick).

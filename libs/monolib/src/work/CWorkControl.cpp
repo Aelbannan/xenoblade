@@ -159,6 +159,13 @@ bool CWorkControl::wkStandbyLogout(){
 // -O4,s (before -func_align 4) is a no-op here - the #pragma optimize_for_size
 // blocks already cover every function, create unchanged. Remaining idea:
 // register-renaming witness certification (cycle) for EQUIVALENT_MATCH.
+// RE-PROBES (2026-10-18, all negative, reverted to two-local baseline):
+// declare-then-assign (result decl first) no-op; &pool[0x6C] array-index form
+// no-op; name inlined into ctor arg restructures (16B frame, 2 saved regs,
+// name computed post-null-check, 22 structural) - confirms two-local shape;
+// removing #pragma optimize_for_size regresses (spills, 0x84 OVER) so the
+// pragma is required. cycle witness-gate: abi-boundary (rho r30->r31) -
+// witness-CLOSED, only FULL_MATCH can accept.
 
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){

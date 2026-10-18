@@ -40,23 +40,26 @@ extern "C" {
 }
 
 // __ct__CCharVoice (0x802A3230)
-// NOTE (known ceiling): retail fuses the name-pointer materialization into a single
-// callee-saved reg (`lis r30,@ha; addi r30,r30,@l` + two mr's) while every
-// available MWCC hoists a bare `lis @ha` above the spills and emits per-use
-// `addi rX,@l`. Tried: CVoiceName struct-ptr local + field access, char* local,
-// register local, const/non-const array, cast forms, decl-order swaps - all
-// produce byte-identical output (MWCC_CASES "adx_fsvr lis/addi coalescing
-// ceiling"). Kept at the best-known shape.
+// NOTE: the name pointer must live in a named `char*` local so MWCC fully
+// materializes it once (`lis r30,@ha; addi r30,r30,@l`, then `or`/mr copies);
+// inline `(const char*)lbl` uses at each call site keep only `lis @ha` in the
+// reg with per-use `addi rX,@l`. The zero likewise needs a named `int` local
+// (used for both mOwner and mField34) so it survives the calls in a saved reg.
+// Decl order zero-first/name-second gives zero->r31, name->r30 per Rule A
+// (first-declared -> highest saved reg). The named pointer local also flips
+// the strcpy arg order to retail's src-first (or r4 before addi r3).
 extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 {
+    int zero = 0;
+    char* name = (char*)lbl_eu_805106D4;
     self->mVtable         = lbl_eu_805398B0;
-    self->mOwner          = 0;
+    self->mOwner          = (CVoiceOwnerIntf*)zero;
     self->mVoiceId        = -1;
     self->mPriorityCheck  = -1;
     self->mSoundHandle    = -1;
-    self->mFileNameLen    = strlen((const char*)lbl_eu_805106D4);
-    strcpy(self->mFileName, (const char*)lbl_eu_805106D4);
-    self->mField34        = 0;
+    self->mFileNameLen    = strlen(name);
+    strcpy(self->mFileName, name);
+    self->mField34        = zero;
     self->mBattleSndHandle = 0xFFFF;
     return self;
 }

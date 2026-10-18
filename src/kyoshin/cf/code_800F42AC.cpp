@@ -178,8 +178,9 @@ cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self) {
     return self->subObject;
 }
 
+struct CfCode0CView { u8 _pad[0xc]; void* p0c; };
 void* CfCode_GetOptPtr0C(void* self) {
-    void* v = *(void**)((char*)self + 0xc);
+    void* v = ((CfCode0CView*)self)->p0c;
     return v ? v : 0;
 }
 

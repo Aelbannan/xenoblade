@@ -3248,7 +3248,7 @@ void cfCam_tuneZoomDist(cf::CfCamFollow* self) {
 struct CamVec168View {
     ml::CVec3 v0;
     ml::CVec3 v1;
-    u8 _pad18[0x18];
+    ml::CVec3 v2; u8 _pad24[0x0C]; // 0x18 vec (tails read x/y) + 0x24 pad (were _pad18)
     ml::CVec3 v3;
 };
 void cfCam_updateFrame(cf::CfCamFollow* self) {
@@ -3315,7 +3315,7 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
     cfCam_testUnk04M(reinterpret_cast<int>(self), 0x800);
 
     self->unk244 = self->unk23C + self->unk240;
-    stack8 = *(f32*)(self->unk168) - *(f32*)(self->unk168 + 0xC);
+    stack8 = reinterpret_cast<CamVec168View*>(self->unk168)->v0.x - reinterpret_cast<CamVec168View*>(self->unk168)->v1.x;
     int big = cfCam_absFloat(&stack8) > lbl_eu_8066629C;
     cfCam_dirToAngles(&stack90, reinterpret_cast<const ml::CVec3*>(self->unk1C + 0x0C),
                   reinterpret_cast<f32*>(self->unk168 + 0x18), big, 0, self->unk244);
@@ -3359,8 +3359,8 @@ void cfCam_updateFrame(cf::CfCamFollow* self) {
     cfCam_applyRelPos(self, self->unk1C + 0x18, &stack14, 0, lbl_eu_80661B50,
                   lbl_eu_806662DC);
     lbl_eu_80663DE4 = self->unk23C;
-    lbl_eu_80570A38[0] = *(f32*)(self->unk168 + 0x18);
-    lbl_eu_80570A38[1] = *(f32*)(self->unk168 + 0x1C);
+    lbl_eu_80570A38[0] = reinterpret_cast<CamVec168View*>(self->unk168)->v2.x;
+    lbl_eu_80570A38[1] = reinterpret_cast<CamVec168View*>(self->unk168)->v2.y;
 }
 // cfCam_normQuat: normalize a quaternion in place and hand the pointer back.
 // noinline: retail callers keep the `bl cfCam_normQuat` instead of an inlined
@@ -3535,8 +3535,8 @@ __declspec(noinline) void cfCam_applyRelPos(cf::CfCamFollow* self, void* src, vo
                                         float f2) {
     copyVec3Words(self->unk1C, src);
     *(f32*)(self->unk1C + 4) += self->unk1DC;
-    lbl_eu_80570A38[0] = *(f32*)(self->unk168 + 0x18);
-    lbl_eu_80570A38[1] = *(f32*)(self->unk168 + 0x1C);
+    lbl_eu_80570A38[0] = reinterpret_cast<CamVec168View*>(self->unk168)->v2.x;
+    lbl_eu_80570A38[1] = reinterpret_cast<CamVec168View*>(self->unk168)->v2.y;
     if (cfCam_getSignBit04(self) != 0) {
         ScnCamPointAt(self->unk160, f2, self->unk1C, arg);
         cfCam_set1E0Check(static_cast<cf::CfCamFollow*>(self->unk160), f1);

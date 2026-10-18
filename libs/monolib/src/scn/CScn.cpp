@@ -80,18 +80,20 @@ extern "C" CScn* __ct__CScn(CScn* self) {
     // Intermediate accessor-table pointer, repointed below.
     v->unk10 = lbl_eu_8056E984;
 
+    u32 d0, m0;
     u32* move = (u32*)&v->mMoveFunc;
-    u32* draw = (u32*)&v->mDrawFunc;
-    const u32* n = __ptmf_null;
-    u32 m0 = *n++;
-    u32 m1 = *n++;
-    f32 f98 = lbl_eu_8066AAB0;
-    move[1] = m1;
+    const u32* n;
+    f32 f98;
+    n = __ptmf_null;
+    m0 = *n++;
+    f98 = lbl_eu_8066AAB0;
+    move[1] = *n++;
     move[0] = m0;
     move[2] = *n++;
     // Second copy re-reads from the null-ptmf base.
+    u32* draw = (u32*)&v->mDrawFunc;
     n = __ptmf_null;
-    u32 d0 = *n++;
+    d0 = *n++;
     draw[1] = *n++;
     draw[0] = d0;
     draw[2] = *n++;
@@ -460,7 +462,7 @@ extern "C" void Scn_SetPauseFlag(void* p, unsigned char v) {
     ((CScn*)p)->unk_3E5 = v;
 }
 // retail: stb r4,0x3e6(r3); blr
-extern "C" void Scn_SetStopFlag(u8* self, u8 v) { self[0x3E6] = v; }
+extern "C" void Scn_SetStopFlag(u8* self, u8 v) { ((CScn*)self)->unk_3E6 = v; }
 extern "C" void Scn_CallUnk68_V3(u8* self) {
     VTarget* obj = (VTarget*)((CScn*)self)->mCamWork;
     obj->v3();

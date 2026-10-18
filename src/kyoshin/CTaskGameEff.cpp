@@ -302,6 +302,10 @@ extern "C" void* attachEffectById(EffHostObj* target, EffHostObj* host, u32 id, 
 // manager's 0x304 data block. Returns the resolved effect (or 0).
 // optimize_for_size on: retail prologue saves r30+r31 via stmw, not stw.
 #pragma optimize_for_size on
+// TU-local typed views over the manager+0x98 sub-object and its +0x304
+// anchor (exact layout, explicit pads); cf::CfObjectMove is incomplete here.
+struct Mgr98View { u8 _pad[0x98]; u8* sub98; };
+struct Mgr304View { u8 _pad[0x304]; u8 anchor; };
 void* bindIndexedEffect(int index, void* manager) {
     if (cf::CfGameManager::getInstance() == nullptr) {
         return nullptr;
@@ -313,9 +317,9 @@ void* bindIndexedEffect(int index, void* manager) {
     void* obj = __dynamic_cast(eff, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
     if (obj != nullptr && manager != nullptr) {
         bindPartnerO_(obj, manager, 0);
-        void* data = *(void**)((u8*)manager + 0x98);
+        void* data = static_cast<Mgr98View*>(manager)->sub98;
         if (data != nullptr) {
-            setChild34Sc_(obj, (u8*)data + 0x304);
+            setChild34Sc_(obj, &static_cast<Mgr304View*>(data)->anchor);
         }
     }
     return obj;

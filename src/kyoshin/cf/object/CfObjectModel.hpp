@@ -87,7 +87,9 @@ namespace cf {
         u8* field_EC;  // 0xEC
     };
     struct CfObjectModelSub98 {
-        u8 _pad00[0x7A4];             // 0x00-0x7A3
+        u8 _pad00[0x304];             // 0x00-0x303
+        u8 field_304;                // 0x304 (setChild34Sc_ source anchor; address taken)
+        u8 _pad305[0x7A4 - 0x305];   // 0x305-0x7A3
         u32 field_7A4;                // 0x7A4
         u32 field_7A8;                // 0x7A8
         u8 _pad7AC[0x146C - 0x7AC];   // 0x7AC-0x146B

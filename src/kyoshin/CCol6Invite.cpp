@@ -41,63 +41,65 @@ struct CCol6InviteCtorShim {
     u8 field74;          // 0x74
 };
 
-// Factory for the CCol6Invite singleton. Allocates 0x78 bytes from work
-// memory, constructs the CProcess base, fills the callback/field block, stores
-// itself as the singleton and registers as a child of `parent`. Mirrors retail
-// control flow: the singleton store + Regist run even when the allocation
-// failed (r31 stays NULL) and the object (possibly NULL) is returned.
-CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+// Constructor/factory for the CCol6Invite singleton (retail unmangled symbol
+// __ct__CCol6Invite). Allocates 0x78 bytes from work memory, constructs the
+// CProcess base, fills the callback/field block, stores itself as the
+// singleton and registers as a child of `self`. Mirrors retail control flow:
+// the singleton store + Regist run even when the allocation failed (the
+// object register stays NULL) and the object (possibly NULL) is returned.
+// TU-local type-distinct view of __ptmf_null (unsigned long members, like
+// CCol6CheckBatPtmfView): keeps MWCC's type-based aliasing from coupling the
+// ptmf loads with the u32 obj stores.
+struct CCol6InvitePtmfView { unsigned long w0, w1, w2; };
+
+extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4) {
+    CCol6InviteCtorShim* obj;
     // Return NULL if the singleton already exists.
     if (lbl_eu_8066423C != 0) {
         return 0;
     }
-    CCol6Invite* obj =
-        (CCol6Invite*)(CCol6InviteCtorShim*)mtl::MemManager::allocate(
-            0x78, CWorkThreadSystem::getWorkMem());
+    u32 workMem = CWorkThreadSystem::getWorkMem();
+    obj = (CCol6InviteCtorShim*)mtl::MemManager::allocate(0x78, workMem);
 
     if (obj != 0) {
-        CCol6InviteCtorShim* p = (CCol6InviteCtorShim*)obj;
         __ct__8CProcessFv((CProcess*)obj);
-        p->vtable = (void*)lbl_eu_8052D238;
+        obj->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Retail loads [1],[0],[2] then stores per slot; the named-member
-        // struct view keeps MWCC from emitting duplicate @l references.
-        u32 ptmfWord1, ptmfWord0, ptmfWord2;
-        const PtmfNullWords* ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
+        // Retail loads [1],[0],[2] then stores per slot.
+        const CCol6InvitePtmfView* ptmf =
+            reinterpret_cast<const CCol6InvitePtmfView*>(__ptmf_null);
+        u32 ptmfWord1 = ptmf->w1;
+        u32 ptmfWord0 = ptmf->w0;
+        obj->callbacks[0] = ptmfWord0;
+        obj->callbacks[1] = ptmfWord1;
+        obj->callbacks[2] = ptmf->w2;
         ptmfWord1 = ptmf->w1;
         ptmfWord0 = ptmf->w0;
-        p->callbacks[0] = ptmfWord0;
-        p->callbacks[1] = ptmfWord1;
-        ptmfWord2 = ptmf->w2;
-        p->callbacks[2] = ptmfWord2;
-        ptmfWord1 = ptmf->w1;
-        ptmfWord0 = ptmf->w0;
-        p->callbacks[3] = ptmfWord0;
-        p->callbacks[4] = ptmfWord1;
-        ptmfWord2 = ptmf->w2;
-        p->callbacks[5] = ptmfWord2;
+        obj->callbacks[3] = ptmfWord0;
+        obj->callbacks[4] = ptmfWord1;
+        obj->callbacks[5] = ptmf->w2;
 
-        p->field54 = 0;
-        p->field58 = 0;
-        p->field5C = 0;
-        p->index = -1;
-        p->flag64 = 0;
-        p->flag65 = 0;
-        p->flag66 = 0;
-        p->active = 1;
-        p->field68 = 0;
+        obj->field54 = 0;
+        obj->field58 = 0;
+        obj->field5C = 0;
+        obj->index = -1;
+        obj->flag64 = 0;
+        obj->flag65 = 0;
+        obj->flag66 = 0;
+        obj->active = 1;
+        obj->field68 = 0;
 
-        p->vtable = (void*)lbl_eu_8052FF3C;
-        p->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
-        p->arg2 = arg2;
-        p->arg3 = arg3;
-        p->arg4 = arg4;
-        p->field74 = 0;
+        obj->vtable = (void*)lbl_eu_8052FF3C;
+        obj->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
+        obj->arg2 = arg2;
+        obj->arg3 = arg3;
+        obj->arg4 = arg4;
+        obj->field74 = 0;
     }
 
-    lbl_eu_8066423C = obj;
-    ((CProcess*)obj)->Regist(parent, false);
+    lbl_eu_8066423C = (CCol6Invite*)obj;
+    ((CProcess*)obj)->Regist(self, false);
     return lbl_eu_8066423C;
 }
 
@@ -178,6 +180,7 @@ extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...) {
     va_start(va, format);
     vsnprintf(buf, 0x100, format, va);
     va_end(va);
-    *(u32*)(buffer + 0x100) = strlen(buf);
+    struct Col6BufLenView { char data[0x100]; u32 len100; };
+    ((Col6BufLenView*)buffer)->len100 = strlen(buf);
     strcpy(buffer, buf);
 }

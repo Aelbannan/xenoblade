@@ -78,7 +78,7 @@ extern "C" __declspec(noinline) CMenuZeal* __ct__CMenuZeal(
     obj->mField_A0 = 0;
     obj->mField_A1 = 0;
 
-    __ct__17UnkClass_8045F564Fv(&obj->mLayoutMem[0]);
+    __ct__17UnkClass_8045F564Fv(obj->mLayoutMem);
 
     obj->mField_B8 = (u32)a3;
     obj->mField_BC = 1;

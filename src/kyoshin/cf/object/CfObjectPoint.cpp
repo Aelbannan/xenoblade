@@ -91,7 +91,9 @@ public:
     //0x0: vtable
     //0x0-10: CObjectState
     u8* mPtr10;            // 0x10-0x13 (pointer stored at offset 0x10)
-    u8 _pad14[0x28 - 0x14]; // 0x14-0x27
+    u8 _pad14[0x30 - 0x14]; // 0x14-0x2F
+    u32 field_30;          // 0x30 (name length; hasObjectName)
+    u8 unk34[4];           // 0x34-0x37
 };
 
 class __declspec(novtable) CfObject : public CObjectParam {
@@ -195,9 +197,8 @@ public:
     virtual float CfObject_getProgressHigh();     //0x174
 
     //0x0: vtable
-    // CObjectParam currently ends at 0x28.
-    u8 field_0x28[0x10];
-    CfObjectPoint* mSubObj38; // 0x38-0x3B
+    // CObjectParam ends at 0x38 (field_30 at +0x30, unk34 at +0x34).
+    CfObjectPoint* mSubObj38;
     float mPos3C;           // 0x3C-0x3F
     float mPos40;           // 0x40-0x43
     float mPos44;           // 0x44-0x47

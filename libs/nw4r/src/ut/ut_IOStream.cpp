@@ -1,17 +1,17 @@
 #include <nw4r/ut.h>
 
-// Retail owns the IOStream RuntimeTypeInfo in nw4r_data.s (.sbss); declared
-// extern so this .text-only split emits no data. ut_FileStream.h consumes it.
+// Retail owns the IOStream RuntimeTypeInfo in ut_FileStream's .sbss slice
+// (lbl_eu_80665540); declared extern so this split emits no data of its own.
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665540;
 
-// The retail split keeps the auto-static-init for the (retail-owned) typeinfo
-// object as a standalone 0xC function in this TU; reproduce it without
-// defining the object (the blob's copy is already initialized). The symbol is
-// renamed to the retail backslash form (__sinit_\ut_IOStream_cpp) via the
-// postprocess exact_renames rule for this object.
-extern "C" void __sinit_ut_IOStream_cpp() {
-    *(const nw4r::ut::detail::RuntimeTypeInfo**)&lbl_eu_80665540 = NULL;
-}
+// The retail split keeps the TU static-init for the FileStream-owned
+// typeinfo object (0xC parent-link NULL store); the guard's inline ctor
+// folds into the auto-__sinit_ with no emitted storage of its own.
+namespace {
+struct IOStreamTypeInfoInit { IOStreamTypeInfoInit() {
+    lbl_eu_80665540.mParentTypeInfo = NULL; } };
+static IOStreamTypeInfoInit s_ioStreamTypeInfoInit;
+} // namespace
 
 namespace nw4r {
 namespace ut {

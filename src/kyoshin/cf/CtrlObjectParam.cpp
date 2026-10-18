@@ -842,7 +842,7 @@ extern "C" void CtrlObjectParam_ClearItemSlotsBitmap() {
     for (u32 i = 0; i < 0x3E8; ++i) {
         memset(work + 0x58 + i * 8, 0, 8);
     }
-    memset(work + 0x1FFC, 0, 0x186A);
+    memset(reinterpret_cast<cf::CtrlObjectParamWork*>(work)->bitmap_1FFC, 0, 0x186A);
 }
 
 extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
@@ -899,7 +899,7 @@ void CtrlObjectParam_SetStateBitFlag(unsigned int idx, int flag) {
 extern "C" int CtrlObjectParam_GetStateBitFlag(unsigned int idx) {
     // Flag-bit lookup: bit idx of the 320-bit bitmap at work-buffer +0x3866.
     if (idx >= 0x140) return 0;
-    const u8* bitmap = reinterpret_cast<const u8*>(lbl_eu_80663E88 + 0x3866);
+    const u8* bitmap = reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88)->bitmap_3866;
     return (bitmap[idx >> 3] >> (idx & 7)) & 1;
 }
 
@@ -929,7 +929,7 @@ extern "C" void CtrlObjectParam_SetWorkTailValue(unsigned long val) {
 
 extern "C" u32 CtrlObjectParam_GetWorkTailValue() {
     extern u32 lbl_eu_80663E88;
-    return *reinterpret_cast<u32*>(lbl_eu_80663E88 + 0x3A388);
+    return reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88)->field_3A388;
 }
 
 extern "C" unsigned long CtrlObjectParam_GetWorkField50() {
@@ -2820,7 +2820,7 @@ extern "C" void CtrlObjectParam_MergeArtsListNode(cf::CtrlObjectParamArtsList* l
     if (tag == 0x1111) return;
     if (tag != 0xAAAA) return;
     target->field_00 = 0x1111;
-    memset(reinterpret_cast<u8*>(target) + 0x10, 0, 0xC);
+    memset(target->data, 0, 0xC);
     // Fold the following 0x1111 row into this node.
     cf::CtrlObjectParamArtsListEntry* nxt = target->next;
     if (nxt != 0 && (u32)nxt->field_00 == 0x1111) {

@@ -562,7 +562,7 @@ struct CFunc8008D51CSub {
     void* vtable;                       // 0x00
 };
 
-// One 0x14-byte slot of the +0x1928 array CtrlMoveEne_CheckKeepMoving zeroes (word at +0x14
+// One 0x18-byte slot of the +0x1928 array CtrlMoveEne_CheckKeepMoving zeroes (word at +0x14
 // then the five floats).
 struct CFunc8008D51CSlot {
     f32 f0;                                             // 0x00
@@ -577,7 +577,7 @@ struct CFunc8008D51CSlot {
 // +0x455A halfword.
 struct CFunc8008D51CObj {
     u8 _pad[0x1928];                                    // 0x00-0x1927
-    CFunc8008D51CSlot slots[10];                        // 0x1928-0x19E7
+    CFunc8008D51CSlot slots[8];                         // 0x1928-0x19E7
     u8 _pad19E8[0x3374 - 0x19E8];                       // 0x19E8-0x3373
     u32 field_3374;                                     // 0x3374
     u8 _pad3378[0x3E9C - 0x3378];                       // 0x3378-0x3E9B

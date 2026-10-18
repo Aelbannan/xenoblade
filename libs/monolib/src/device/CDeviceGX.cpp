@@ -62,7 +62,7 @@ extern "C" CGXCache* cacheInstance__9CDeviceGX = nullptr;
 extern "C" u32 lbl_eu_806656A8 = 0;
 extern "C" CDesktop* lbl_eu_806656AC = nullptr;
 extern "C" u8 lbl_eu_806656B0 = 0;
-extern "C" u8 gap_10_806656B1_sbss[3];
+extern u8 gap_10_806656B1_sbss[3];
 // (DECOMP_FORCEACTIVE removed: every anchor below is referenced by real
 // code/data, and the anchor stub's name embeds a line number, which made
 // UNIT_RULES drop matching fragile.)
@@ -128,21 +128,39 @@ struct DeviceGxMsgQueueData {
     u32 mSize;                   // 0x1AC
     u32 mCapacity;               // 0x1B0
 };
-static int FindMsgException(const DeviceGxMsgQueueData* q, u32 msg);
-// Mirrors CMsgParam<8>::find (see CWorkRoot.cpp, FULL_MATCH); -inline auto
-// folds this single-call static into isInitialized so the retail-inlined
-// scan shape (sunk -1, aliased index) reproduces.
+// Mirrors CMsgParam<8>::find (see CWorkRoot.cpp, FULL_MATCH); the scan is
+// written directly in the body with a goto-gate walk (sunk -1, aliased
+// index), reproducing the retail-inlined shape with no bl. Loop index is
+// declared before the queue view it dereferences so MWCC colors inst=r6 /
+// i=r7 as retail does (isInitialized inlined-find family recipe).
+// NOTE: CDeviceBase declares its own mFlags at 0x1C4 shadowing
+// CWorkThread::mFlags at 0x7C -- retail tests bit 4 of the 0x7C word, so the
+// flag read must qualify CWorkThread:: explicitly. Likewise the state read
+// targets CWorkThread::mState (0x48).
 bool CDeviceGX::isInitialized(){
+    const CDeviceGX* inst = lbl_eu_806656A0;
+
     bool exception;
-    if (lbl_eu_806656A0->mFlags & THREAD_FLAG_EXCEPTION) {
+    if (inst->CWorkThread::mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = FindMsgException((const DeviceGxMsgQueueData*)lbl_eu_806656A0, EVT_EXCEPTION) >= 0;
+        const DeviceGxMsgQueueData* queue = (const DeviceGxMsgQueueData*)inst;
+        int found;
+        u32 i = 0;
+        for (; i < queue->mSize; i++) {
+            if (queue->mArrayPtr[(queue->mFront + i) % queue->mCapacity].command == EVT_EXCEPTION) {
+                found = (int)i;
+                goto merged;
+            }
+        }
+        found = -1;
+merged:
+        exception = found >= 0;
     }
     bool result = false;
     if (!exception) {
         bool stateOK = true;
-        ThreadState state = lbl_eu_806656A0->mState;
+        int state = inst->CWorkThread::mState;
         if (state != THREAD_STATE_LOGIN && state != THREAD_STATE_RUN) {
             stateOK = false;
         }
@@ -151,18 +169,6 @@ bool CDeviceGX::isInitialized(){
         }
     }
     return result;
-}
-
-// Mirrors CMsgParam<8>::find body (CWorkRoot.cpp holds the out-of-line
-// definition); -inline auto folds this single-call static into isInitialized
-// reproducing the retail-inlined scan shape (sunk -1, aliased index, no bl).
-static int FindMsgException(const DeviceGxMsgQueueData* q, u32 msg) {
-    for (int i = 0; i < q->mSize; i++) {
-        if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == msg) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 void CDeviceGX::setDevicesInitializedFlag(bool state){

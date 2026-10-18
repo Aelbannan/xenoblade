@@ -78,8 +78,8 @@ void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
         u32 q1 = loopStart / 14;
         u32 m1 = loopStart % 14;
 
-        u32 a2 = (m2 + basePtr) + ((q2 << 4) + 2);
-        u32 a1 = (m1 + basePtr) + ((q1 << 4) + 2);
+        u32 a2 = (m2 + basePtr) + ((q2 * 16) + 2);
+        u32 a1 = (m1 + basePtr) + ((q1 * 16) + 2);
 
         O_WU32(0x96, 0x10000);
         O_W32(0x9A, a1);
@@ -110,9 +110,8 @@ void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 
         // endAddr = basePtr + ((totalSamp-1) % 14) + ((totalSamp-1) / 14) * 16 + 2
         {
-            u32 t = totalSamp - 1;
-            u32 q = t / 14;
-            u32 m = t - q * 14;
+            u32 q = (totalSamp - 1) / 14;
+            u32 m = (totalSamp - 1) % 14;
             O_W32(0x9E, (m + basePtr) + ((q << 4) + 2));
         }
 

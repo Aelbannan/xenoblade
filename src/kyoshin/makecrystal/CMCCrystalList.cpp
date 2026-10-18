@@ -23,7 +23,7 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 void closeFileHandle(CFileHandle**);
-extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -43,30 +43,37 @@ void setPaneVisible(void*, u32);
 void AnimJumpToLast(void*, void*);
 }
 
-// Retail 0x80224580: constructor. Stores the retail vtable label, default-
-// constructs both mem-region members, zeroes every pointer/flag field, then
-// clears the 8 slot states with a rolled u8-counter loop (-O4,s shape).
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+
+// Retail 0x80224580: constructor. Flat C-linkage free function (retail symbol
+// is the unmangled __ct__CMCCrystalList, called as such from
+// CModelDispMakeCrystal). Stores the retail vtable label, default-constructs
+// both mem-region members, zeroes every pointer/flag field, then clears the
+// 8 slot states with a rolled u8-counter loop (-O4,s shape).
 #pragma optimize_for_size on
-CMCCrystalList::CMCCrystalList()
+extern "C" CMCCrystalList* __ct__CMCCrystalList(CMCCrystalList* self)
 {
-    *(void**)this = (void*)lbl_eu_80535F80;
-    mFileHandle1 = nullptr;
-    mFileHandle2 = nullptr;
-    mArcResAccessor = nullptr;
-    mArcResAccessor2 = nullptr;
-    mLayout = nullptr;
-    mAnimTrans1 = nullptr;
-    mAnimTrans2 = nullptr;
-    mAnimTrans3 = nullptr;
-    mAnimTrans4 = nullptr;
-    mAnimRes5 = nullptr;
-    mState = 0;
-    mStateIdx = 0;
-    mDataFlag = 0;
-    mIsActive = 1;
+    *(void**)self = (void*)lbl_eu_80535F80;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion1);
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion2);
+    self->mFileHandle1 = nullptr;
+    self->mFileHandle2 = nullptr;
+    self->mArcResAccessor = nullptr;
+    self->mArcResAccessor2 = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans1 = nullptr;
+    self->mAnimTrans2 = nullptr;
+    self->mAnimTrans3 = nullptr;
+    self->mAnimTrans4 = nullptr;
+    self->mAnimRes5 = nullptr;
+    self->mState = 0;
+    self->mStateIdx = 0;
+    self->mDataFlag = 0;
+    self->mIsActive = 1;
     for (u8 i = 0; i < 8; i++) {
-        mSlotStates[i] = 0;
+        self->mSlotStates[i] = 0;
     }
+    return self;
 }
 #pragma optimize_for_size off
 
@@ -155,8 +162,8 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
         delete self->mLayout;
         self->mLayout = nullptr;
     }
-    releaseArcResourceAccessor(self->mArcResAccessor);
-    releaseArcResourceAccessor(self->mArcResAccessor2);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->mArcResAccessor);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->mArcResAccessor2);
     self->mArcResAccessor = nullptr;
     self->mArcResAccessor2 = nullptr;
     self->mMemRegion1.deleteRegion();

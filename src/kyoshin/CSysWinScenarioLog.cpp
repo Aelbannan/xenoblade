@@ -85,7 +85,7 @@ void SysWinLog_ResetState() {
 // ---------------------------------------------------------------------------
 extern "C" void* __dt__18CSysWinScenarioLogFv(CSysWinScenarioLog* _this, int flags) {
     if (_this) {
-        __dt__17UnkClass_8045F564Fv((char*)_this + 0x7C, -1);
+        __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
         if (_this) {
             if (_this) {
                 __dt__8CProcessFv(_this, 0);
@@ -1454,8 +1454,8 @@ void SysWinLog_SweepSlotPressure() {
 }
 
 extern "C" void ScnLog_ClearStateWords(u8* self){
-    *(u32*)(self + 0x1D80) = 0;
-    *(u32*)(self + 0x1D84) = 0;
+    reinterpret_cast<CSysWinSlotTable*>(self)->mIdxA = 0;
+    reinterpret_cast<CSysWinSlotTable*>(self)->mIdxB = 0;
 }
 
 // ---------------------------------------------------------------------------

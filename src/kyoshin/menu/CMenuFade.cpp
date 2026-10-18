@@ -135,7 +135,7 @@ extern "C" int getFadeMenu() {
     return lbl_eu_80663FA0;
 }
 extern "C" u8 isFadeActive(u8* pthis) {
-    return pthis[0x94];
+    return ((CMenuFade*)pthis)->field_0x94;
 }
 extern "C" void triggerFadeMenu(CMenuFade* pthis) {
     pthis->field_0x54 = 1;

@@ -1,6 +1,6 @@
 // monolib effect matrix utilities (retail EU: code_804DB938).
 //
-// Table-driven sin/cos trigonometry (1-degree entries with linear
+// Table-driven sin/cos trigonometry
 // interpolation), axis/euler-angle -> rotation matrix builders for all six
 // rotation orders, the sin/cos table initializer, an axis remap table and
 // paired-single vector lerps.
@@ -11,7 +11,7 @@
 #include <monolib/math/CVec4.hpp>
 #include <nw4r/math.h>
 #include <math.h>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"
 
 // ---------------------------------------------------------------------------
 // Sin/cos lookup tables: 360 entries of {value, delta} in BSS, built at
@@ -121,10 +121,10 @@ static void CERotTrigIdxFirstX(Mtx m, f32 rad) {
                  frac * cosE->delta + cosE->value, 'x');
 }
 
-// Third-rotation variants for CERotEulerOrder: commuted multiply (rad first in
-// source, constant fetched last by MWCC's operand evaluator). Retail fetches
-// the sdata2 constants before the angle only in the third rotation of each
-// case; commuting the operands is the lever that reorders the float loads.
+// Third-rotation variants for CERotEulerOrder (UNUSED, negative result):
+// commuted multiply (rad first) canonicalizes to identical codegen vs the
+// IdxFirst forms, so they cannot reorder the float loads. Kept (not deleted)
+// to preserve TU line numbers for -ipa file codegen stability (Aug 2026).
 static void CERotTrigThirdZ(Mtx m, f32 rad) {
     f32 deg = rad * lbl_eu_8066B260;
     int n = (int)deg;
@@ -268,7 +268,7 @@ int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
 // Order X, Y, Z.
 // NOTE: idx-first trig variant — this caller's register context needs
 // mulhw r3 / xoris r0 like retail (see CERot_AxisToMatrix).
-void CERotEulerXYZ(ml::CMat34* mtx, const Vec* ang) {
+void CERotEulerXYZ(ml::CMat34* mtx, Vec* ang) {
     // Retail frame slots run work(0x98) > rotY(0x68) > work2(0x38) > rotZ(0x8):
     // first-declared local takes the highest slot.
     ml::CMat34 work;
@@ -290,7 +290,7 @@ void CERotEulerXYZ(ml::CMat34* mtx, const Vec* ang) {
 
 // Order Z, X, Y.
 // idx-first trig variant, same reason as CERotEulerXYZ.
-void CERotEulerZXY(ml::CMat34* mtx, const Vec* ang) {
+void CERotEulerZXY(ml::CMat34* mtx, Vec* ang) {
     // Retail frame slots run work(0x98) > rotX(0x68) > work2(0x38) > rotY(0x8):
     // first-declared local takes the highest slot. Plain Mtx locals: copying
     // the raw array pairs load/store words in retail's order.
@@ -317,7 +317,7 @@ void CERotEulerZXY(ml::CMat34* mtx, const Vec* ang) {
 // Retail is a compare-chain dispatch (cmpwi/beq per case); each case builds
 // R3 * (R2 * R1) with the idx-first table trig (mulhw r3 / xoris r0
 // coloring, cf. CERotEulerXYZ).
-void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
+void CERotEulerOrder(ml::CMat34* mtx, Vec* ang, int order) {
     switch (order) {
     case 0: { // X,Y,Z
         if (CERot_AxisToMatrix(mtx->mtx, ang) != 0) {
@@ -333,8 +333,8 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotY.mtx, ang->y, 'y');
         PSMTXConcat(rotY.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 az = ang->z;
-        CERotTrigThirdZ(rotZ.mtx, az);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstZ(rotZ.mtx, ang->z);
         PSMTXConcat(rotZ.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
@@ -351,8 +351,8 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotZ.mtx, ang->z, 'z');
         PSMTXConcat(rotZ.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 ay = ang->y;
-        CERotTrigThirdY(rotY.mtx, ay);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstY(rotY.mtx, ang->y);
         PSMTXConcat(rotY.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
@@ -369,8 +369,8 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotX.mtx, ang->x, 'x');
         PSMTXConcat(rotX.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 az = ang->z;
-        CERotTrigThirdZ(rotZ.mtx, az);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstZ(rotZ.mtx, ang->z);
         PSMTXConcat(rotZ.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
@@ -387,8 +387,8 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotZ.mtx, ang->z, 'z');
         PSMTXConcat(rotZ.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 ax = ang->x;
-        CERotTrigThirdX(rotX.mtx, ax);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstX(rotX.mtx, ang->x);
         PSMTXConcat(rotX.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
@@ -405,8 +405,8 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotX.mtx, ang->x, 'x');
         PSMTXConcat(rotX.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 ay = ang->y;
-        CERotTrigThirdY(rotY.mtx, ay);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstY(rotY.mtx, ang->y);
         PSMTXConcat(rotY.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
@@ -423,13 +423,13 @@ void CERotEulerOrder(ml::CMat34* mtx, const Vec* ang, int order) {
         CERotTrigIdxFirst(rotY.mtx, ang->y, 'y');
         PSMTXConcat(rotY.mtx, mtx->mtx, work.mtx);
         *mtx = work;
-        f32 ax = ang->x;
-        CERotTrigThirdX(rotX.mtx, ax);
+        /* third angle loads direct (no spill local) */
+        CERotTrigIdxFirstX(rotX.mtx, ang->x);
         PSMTXConcat(rotX.mtx, mtx->mtx, work2.mtx);
         *mtx = work2;
         break;
     }
-    }
+}
 }
 
 // Axis order remap used by the effect system.

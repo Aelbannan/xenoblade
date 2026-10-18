@@ -111,7 +111,7 @@ extern "C" void ChEff_Dispatch_CF90(CCharEffectEne* self, void* target, u32 type
     void* dataSrc;
     u32 bitFlag, subtype;
     mgr = self->mManager;
-    dataSrc = *(void**)((u8*)mgr + 0x98);
+    dataSrc = static_cast<cf::CfObjectMove*>(mgr)->mSubObj98;
     if (dataSrc == nullptr) return;
     bitFlag = (flags >> 7) & 1;
     subtype = flags & 0x7F;
@@ -121,16 +121,16 @@ extern "C" void ChEff_Dispatch_CF90(CCharEffectEne* self, void* target, u32 type
     }
     data = nullptr;
     if (type == 0xA || type == 0xC || type == 0xE || type == 0x19 || subtype == 2) {
-        data = *(void**)((u8*)mgr + 0x4594);
+        data = static_cast<cf::CfObjectImplPc18*>(mgr)->field_4594;
     } else if (type == 0xB || type == 0xD || type == 0xF || subtype == 3) {
-        data = *(void**)((u8*)mgr + 0x4598);
+        data = static_cast<cf::CfObjectImplPc18*>(mgr)->field_4598;
     }
     if (data != nullptr) {
         dataSrc = reinterpret_cast<void*>(reinterpret_cast<cf::CfObjectImplPcTgt*>(data)->vfA8());
     }
     bindPartnerO_(target, self->mManager, (u32)(uintptr_t)dataSrc);
     reinterpret_cast<cf::CfObjectEff*>(target)->setEffLockFg_(bitFlag);
-    setChild34Sc_(target, (void*)((u8*)(*(void**)((u8*)self->mManager + 0x98)) + 0x304));
-    simGetLeafDist7B0((u8*)(*(void**)((u8*)self->mManager + 0x98)));
+    setChild34Sc_(target, &self->mManager->mSubObj98->field_304);
+    simGetLeafDist7B0(reinterpret_cast<u8*>(self->mManager->mSubObj98));
     setChildF50G_((u8*)target);
 }

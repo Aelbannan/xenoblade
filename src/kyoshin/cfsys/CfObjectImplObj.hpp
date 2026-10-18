@@ -135,7 +135,9 @@ public:
     u8 _pad04[0x10];                 // 0x04-0x13
     CfObjectImplObjSub* field_14;    // 0x14 (driver sub-object)
     u8* field_18;                    // 0x18 (actor object)
-    u8 _pad1C[0x368 - 0x1C];         // 0x1C-0x367
+    u8 _pad1C[0x68 - 0x1C];         // 0x1C-0x67
+    u8 slot68;                     // 0x68 (ObjImplGetUnk68 anchor; address taken)
+    u8 _pad69[0x368 - 0x69];        // 0x69-0x367
     // Embedded CPartsChange at 0x368-0x397, kept as a raw buffer so MWCC does
     // not auto-destroy it (retail calls __dt__Q22cf12CPartsChangeFv DIRECTLY
     // from the deleting dtor, with no vtable dispatch and no vptr re-store).

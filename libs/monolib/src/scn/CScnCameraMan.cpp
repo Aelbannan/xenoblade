@@ -47,7 +47,7 @@ CScnCameraMan::~CScnCameraMan() {
         if (view != NULL) {
             CScnCameraParam* param = mParam;
             if (param != NULL) {
-                param = (CScnCameraParam*)((u8*)param + 0x54);
+                param = (CScnCameraParam*)&param->field_0x54;
             }
             ((CViewVt46*)view)->vfB8(param);
         }
@@ -64,14 +64,14 @@ void CamMan_SwapViewParam_AED4(CScnCameraMan* cam, CView* view, u32 idx) {
         if (v != NULL) {
             CScnCameraParam* param = cam->mParam;
             if (param != NULL) {
-                param = (CScnCameraParam*)((u8*)param + 0x54);
+                param = (CScnCameraParam*)&param->field_0x54;
             }
             ((CViewVt46*)v)->vfB8(param);
         }
     }
     CScnCameraParam* param = cam->mParam;
     if (param != NULL) {
-        param = (CScnCameraParam*)((u8*)param + 0x54);
+        param = (CScnCameraParam*)&param->field_0x54;
     }
     view->enqueueContextMsg((u32)param);
     cam->mViews[idx] = view->mWorkID;

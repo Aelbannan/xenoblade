@@ -644,10 +644,14 @@ void WPADiCreateKeyFor3rd(s32 chan) {
 void WPADiDecode(s32 chan, u8* buf, u16 len, s32 offset) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
     u16 i = 0;
+    u8 m;
+    u8 v;
 
-    for (; i < len; i++) {
-        u8 m = (u8)((offset + i) % 8);
-        u8 v = buf[i] ^ cb->decryptXorTable[m];
-        buf[i] = cb->decryptAddTable[m] + v;
+    for (i = 0; i < len; i++) {
+        u8 a;
+        m = (u8)((offset + i) % 8);
+        a = cb->decryptAddTable[m];
+        v = (u8)(buf[i] ^ cb->decryptXorTable[m]);
+        buf[i] = (u8)(a + v);
     }
 }

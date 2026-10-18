@@ -42,6 +42,7 @@ extern "C" void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
     self->field_04 = model;
     u32 num = nw4r::g3d::ResMdl(model->field_0x146C)
                   .GetResMatNumEntries();
+    u32 j;
     u32 flag;
     u32 i;
     for (i = 0; i < num; i++) {
@@ -66,7 +67,6 @@ extern "C" void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
         }
     }
     flag = 1;
-    u32 j;
     for (j = 0; j < num; j++) {
         nw4r::g3d::ResMat mat =
             nw4r::g3d::ResMdl(model->field_0x146C)
@@ -208,10 +208,10 @@ extern const char lbl_eu_80524800[0x10] = "CMdlAnmEye";
 // the hpp exposes only the pointer, so the zero half is a separate symbol.
 extern const char lbl_eu_8066B358[];
 const char* lbl_eu_80663C88 = lbl_eu_8066B358;
-extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663C8C = 0x00000000;
+extern __declspec(section ".sdata") const u32 lbl_eu_80663C8C = 0x00000000;
 extern "C" const void* lbl_eu_80663C90[2] = { (const void*)lbl_eu_80524800, 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C98[4] = { 0x72,0x65,0x66,0x00 };
-extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663C9C = 0x00000000;
+extern __declspec(section ".sdata") const u32 lbl_eu_80663C9C = 0x00000000;
 // [.data] vtable.
 extern "C" u32 lbl_eu_805701D0[4] = {
     (u32)&lbl_eu_80663C90, 0x00000000,

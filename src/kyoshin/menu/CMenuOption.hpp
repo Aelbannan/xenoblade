@@ -69,7 +69,7 @@ public:
 extern "C" CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg);
 // hasOptionMenu (live-instance check) is declared by kyoshin/CTaskGame.hpp.
 // Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
-CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
+extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
 // Retail constructor symbol (unmangled flat form; defined in CMenuOption.cpp).
 CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg);
 

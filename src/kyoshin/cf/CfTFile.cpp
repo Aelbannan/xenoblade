@@ -109,8 +109,9 @@ int CfTFile_LoadEventArchive(CfTFile* self, u32 param) {
     return 1;
 }
 
+struct CfTFile828View { u8 _pad[0x828]; u32 w828; };
 extern "C" u32 CfTFile_TestField828(u8* self) {
-    u32 x = *(u32*)((u8*)self + 0x828);
+    u32 x = ((CfTFile828View*)self)->w828;
     return !(0 - x);
 }
 

@@ -1955,10 +1955,10 @@ extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattle
 // Slot 0x38: int-indexed reader for the base status array at +0x8.
 // Primitive behind slot 0x54 (getEntryByIndex), which tail-calls here.
 void* cf::CBattleState::CBattleState_getStatusSlot(int index) {
-    return (char*)&((cf::CBattleStateEntry*)((u8*)this + 0x8))[index];
+    return (char*)&((cf::CBattleStateEntryArray*)this)->entries[index];
 }
 extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
-    return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x8))[idx];
+    return (char*)&((cf::CBattleStateEntryArray*)self)->entries[idx];
 }
 extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x688))[idx];

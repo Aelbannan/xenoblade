@@ -301,7 +301,7 @@ u32 CItemData_lookupBdatCol(CItemData* self, const char* colName) {
 
 char* CItem_defaultNameStr() {
     extern char lbl_eu_80501C58[];
-    return lbl_eu_80501C58 + 0x63;
+    return &lbl_eu_80501C58[0x63];
 }
 
 extern char lbl_eu_80501C58[];
@@ -317,8 +317,14 @@ struct CItemWordAt8 { u8 _pad[8]; u32 word; };
 // 8-byte sub-record with the category/id halfword at +4
 // (CItemExt_getSubRecId reads p + idx*8 + 0xc, i.e. word+4 of entry idx).
 struct CItemSubRec8 { u8 _pad[4]; u16 catId; u16 _pad2; };
+// Half18 bitfield pair at +0x18 of a byte buffer (CItem_setHalf18Bit15 /
+// CItem_setHalf18Low15 write p + 0x18 through ItemHalf18).
+struct CItemHalf18At18 { u8 _pad[0x18]; ItemHalf18 half18; };
+// u16 table at +8 of a byte buffer (CItem_getIndexedCat/Id read tab[idx]
+// through (u16*)(p + 8); CItem_packSlotValRank writes base + index*2 + 8).
+struct CItemU16Tab8 { u8 _pad[8]; u16 tab[1]; };
 
-extern "C" const char* CItem_cDefaultName(void) { return (const char*)lbl_eu_80501C58 + 0x63; }
+extern "C" const char* CItem_cDefaultName(void) { return &lbl_eu_80501C58[0x63]; }
 
 const char* CItemRec_lookup88(u32 unused, CItemRec* rec) {
     u32 v = rec->field_00;
@@ -2223,7 +2229,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
                 }
                 CItem_initItemImplInstances(rec)->vf48(rec);
             }
-            t = *(u16*)(cd + (u16)s * 2 + 2);
+            t = ((u16*)cd)[(u16)s + 1];
             *sc = (s16)CtrlObjectParam_ReadItemDataU16(cd, (u32)s,
                                      (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
             CtrlObjectParam_WriteEquipSlotValue(cd, (u32)s, (void*)-1);
@@ -3450,11 +3456,11 @@ u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { obj->field_10 
 
 u16 CItemParam_getField16(u32, CItemParam* obj) { return obj->field_10; }
 
-extern "C" void CItem_setHalf18Bit15(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->bit15 = (u16)val; }
+extern "C" void CItem_setHalf18Bit15(void* u, u8* p, u32 val) { ((CItemHalf18At18*)p)->half18.bit15 = (u16)val; }
 
 u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (obj->field_18 >> 15) & 1; }
 
-extern "C" void CItem_setHalf18Low15(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->low15 = (u16)val; }
+extern "C" void CItem_setHalf18Low15(void* u, u8* p, u32 val) { ((CItemHalf18At18*)p)->half18.low15 = (u16)val; }
 
 u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return obj->field_18 & 0x7FFF; }
 
@@ -3492,7 +3498,7 @@ int CItemExt_getSize28(CItemExt*) { return 28; }
 // Merge the value into the u16 field at (base + index*2 + 8) bits 16-27,
 // call the rank function with it, then merge the rank into bits 28-30.
 extern "C" void CItem_packSlotValRank(void* a, u8* base, u32 index, u32 value) {
-    u16* p = (u16*)(base + index * 2 + 8);
+    u16* p = &((CItemU16Tab8*)base)->tab[index];
     *p = (u16)__rlwimi(*p, value, 4, 16, 27);
     int rank = CItem_rankVal(value);
     *p = (u16)__rlwimi(*p, (u32)rank, 1, 28, 30);

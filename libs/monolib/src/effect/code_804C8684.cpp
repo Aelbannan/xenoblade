@@ -36,10 +36,10 @@ extern "C" void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
         // store hi-before-lo, then the word at 0x08 (retail schedule).
         u32 lo = *(const u32*)src;
         u32 hi = *(const u32*)((const char*)src + 4);
-        u8* dst = (u8*)&lbl_eu_8065FC08;
-        *(u32*)(dst + 4) = hi;
-        *(u32*)dst = lo;
-        *(u32*)(dst + 8) = src->field_0x08;
+        u32* dst = (u32*)&lbl_eu_8065FC08;
+        dst[1] = hi;
+        dst[0] = lo;
+        dst[2] = src->field_0x08;
     }
 }
 
@@ -47,17 +47,29 @@ extern "C" void EffCtl_StoreFlagAndParams(u8 flag, const CEffectParam* src) {
 // sinit_804C86C0: static-initializer writing the 11 float constants into the
 // 3-block array rooted at lbl_eu_8065FBE8. The float constants are referenced
 // through their retail sdata2 symbols so the lfs relocs stay pinned.
+// Block 2 is addressed as p[2] through the local pointer (== FC08's address)
+// so no FC08/FBE8+32 reloc is emitted; MWCC still emits one partial+LO store
+// (extra table LO reloc: 9 relocs vs retail's 7). Reloc-exact is unreachable
+// for the same reason as the bases (any +0 store takes the partial+LO form
+// once a completed copy exists).
 //
-// KNOWN RESIDUAL: retail materializes four GPR bases (r6 = table, r5 = r6+0,
-// r4 = r6+0x10, r3 = r6+0x20) and splits the stores between the table base
-// (heads, small displacements) and the per-block copies (tails), while every
-// expressible high-level source shape tried so far is folded by MWCC CSE into
-// ONE base with full displacements. Ruled out this session (all produce
-// byte-identical single-base output): statement reorder to the retail lfs
-// schedule; per-block tail pointer locals; walking-pointer (p++) tail chain;
-// mixed pointer types (f32* strided heads + SInitBlk* tails). See open-item
-// packet / sibling sinit_8049FC60 (KB attempts all COMPILES 0%). Size stays
-// within the split budget.
+// KNOWN RESIDUAL (witness-closed, FULL-only): retail materializes four GPR
+// bases (r6 = table, r5 = r6+0, r4 = r6+0x10, r3 = r6+0x20), splitting heads
+// (via r6) from per-block tails. 30+ probe shapes under the TU's exact
+// GC/3.0a5.2 -O4,p flags (see .scratch/sinit/) prove MWCC collapses every
+// same-symbol constant-offset derivation into ONE base + ONE completed copy
+// (2 bases max), regardless of: pointer decls (&arr[i]/base+i/chained p+1),
+// subobject vs block pointers, casts, inlined helpers, unrolled loops,
+// statement/decl order, volatile data, opt pragmas (opt_propagation/peephole/
+// optimize_for_size), ipa modes, or compiler version (all GC 1.x-3.x + Wii).
+// Two symbols give 2 bases each, confirming the per-symbol rule. The retired
+// angles additionally included the btm-style mixed-form and reassignment
+// shapes. Sibling sinit_8049FC60 has the same wall. Next angles: explicit
+// unroll-pragma + per-iter-select loop nests; #pragma scheduling permutations
+// for the lfs/store interleave once bases match. Emission here is
+// semantically identical to retail (same 11 addresses + values); only GPR
+// base allocation differs (2 vs 4), which the renaming witness cannot certify
+// (gates: size equality + non-reg-field equality). Size stays in budget.
 // ---------------------------------------------------------------------------
 
 // One default-parameter block: head float plus a 3-float tail vector.
@@ -76,26 +88,21 @@ extern f32 lbl_eu_8066B090;  // 0.8f
 extern f32 lbl_eu_8066B094;  // 5.0f
 extern f32 lbl_eu_8066B098;  // 393.0f
 
-void sinit_804C86C0() {
-    // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks
-    // (see the KNOWN RESIDUAL note above for the retail base-register split).
-    // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks.
-    // (See the KNOWN RESIDUAL note above for the retail base-register split.)
-    lbl_eu_8065FBE8[0].head = lbl_eu_8066B088;
-    lbl_eu_8065FBE8[1].head = lbl_eu_8066B088;
-    lbl_eu_8065FC08.head = lbl_eu_8066B094;
-
+extern "C" void sinit_804C86C0() {
+    // Every block address flows through the single table pointer (see the
+    // residual note above for why only 2 of retail's 4 GPR bases survive).
     SInitBlk* p = lbl_eu_8065FBE8;
-    p->tail.x = lbl_eu_8066B08C;
-    p->tail.y = lbl_eu_8066B08C;
-    p->tail.z = lbl_eu_8066B090;
-    p++;
-    p->tail.x = lbl_eu_8066B088;
-    p->tail.y = lbl_eu_8066B088;
-    p->tail.z = lbl_eu_8066B090;
-    p++;
-    p->tail.x = lbl_eu_8066B098;
-    p->tail.y = lbl_eu_8066B08C;
+    p[0].head = lbl_eu_8066B088;
+    p[0].tail.x = lbl_eu_8066B08C;
+    p[0].tail.y = lbl_eu_8066B08C;
+    p[0].tail.z = lbl_eu_8066B090;
+    p[1].head = lbl_eu_8066B088;
+    p[1].tail.x = lbl_eu_8066B088;
+    p[1].tail.y = lbl_eu_8066B088;
+    p[1].tail.z = lbl_eu_8066B090;
+    p[2].head = lbl_eu_8066B094;
+    p[2].tail.x = lbl_eu_8066B098;
+    p[2].tail.y = lbl_eu_8066B08C;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

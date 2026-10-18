@@ -1480,9 +1480,9 @@ extern "C" void CBattleState_getEntryByIndex__Q22cf12CBattleStateFv(cf::CBattleS
 }
 
 extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
-    *(ParamCopyBlock*)((u8*)self + 0x17e4) = *(const ParamCopyBlock*)src;
+    *(ParamCopyBlock*)&self->unk17E4 = *(const ParamCopyBlock*)src;
 }
 
 extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
-    *(ParamCopyBlock*)((u8*)self + 0x1650) = *(const ParamCopyBlock*)src;
+    *(ParamCopyBlock*)&self->unk1650 = *(const ParamCopyBlock*)src;
 }

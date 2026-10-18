@@ -538,7 +538,7 @@ extern "C" void thunk_adj4_update(void* self) { ((void(*)(void*))updatePcEffect)
 extern "C" int getEffectBankByte() {
     if (lbl_eu_80664398 == 0)
         return 0;
-    return *(u8*)((u8*)lbl_eu_80664398 + 0x58);
+    return lbl_eu_80664398->maxEffects;
 }
 
 // Slot-active query (retail func_801B1FFC): 1 when the global bank exists

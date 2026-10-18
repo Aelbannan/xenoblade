@@ -1106,11 +1106,11 @@ void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
 
 extern "C" u32 Coli_IsHeightInRange_7044(u8* self, float f) {
     u32 r = 0;
-    if (f <= *(float*)((u8*)self + 0x64) && f >= *(float*)((u8*)self + 0x68)) r = 1;
+    if (f <= ((CColiMoverState*)self)->field_0x64 && f >= ((CColiMoverState*)self)->field_0x68) r = 1;
     return r;
 }
 
-extern "C" u32 Coli_IsUnderCeiling_7074(u8* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
+extern "C" u32 Coli_IsUnderCeiling_7074(u8* self, float f) { return f <= ((CColiMoverState*)self)->field_0x64; }
 
 // resolveHitFwd - resolve the raycast hit point (offset + dir * t) and test
 // it against the mover's three vertices: store the mover's half-float vertex
@@ -2748,7 +2748,7 @@ u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
     return 1;
 }
 
-extern "C" u32 Coli_IsSlotActive_ADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
+extern "C" u32 Coli_IsSlotActive_ADA0(u8* self) { return ((CColiMoverState*)self)->field_0x5C != 0; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static initializer for the scene-resource object (lbl_eu_8065F32C): reset

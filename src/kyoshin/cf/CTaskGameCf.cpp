@@ -323,10 +323,9 @@ void CTaskGameCf::beginExit() {
     }
 
 void CTaskGameCf::finishExit() {
-    u32* taskGame = *(u32**)((u8*)this + 0x58);
-    u32* sceneData = *(u32**)((u8*)taskGame + 0x74);
-    *(u8*)((u8*)sceneData + 0x3E4) = 0;
-    *(u32*)((u8*)this + 0x54) |= 2;
+    CScnNw4r* sceneData = pTaskGame->getScene();
+    sceneData->unk_3E4 = 0;
+    unk_54 |= 2;
 }
 
 } //namespace cf

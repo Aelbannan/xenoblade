@@ -449,7 +449,7 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
     case 0xce:
         // Event 0xce is gated on the +0x8 sub-object's handler accepting it;
         // only then issue command 0x1c.
-        if (isBattleStatusActive((u8*)self->field_0x18 + 8, 0xce) == 0) {
+        if (isBattleStatusActive(self->field_0x18->field_08, 0xce) == 0) {
             self->field_0x18->sub.vfn20C(0x1c);
         }
         break;
@@ -1626,7 +1626,11 @@ void MoveImplSyncEffectState(CfObjectImplMoveObj* self, u32 param) {
 extern "C" void MoveImplRunEffectVirtuals(CfObjectImplMoveObj* self) {
     if (self->field_0x18 == 0)
         return;
-    if (*(u32*)((u8*)self->field_0x18 + 0x3F2C) == 0)
+    struct Actor3F2CView {
+        u8 _pad00[0x3F2C];
+        u32 field_3F2C;  // 0x3F2C
+    };
+    if (reinterpret_cast<Actor3F2CView*>(self->field_0x18)->field_3F2C == 0)
         return;
     self->vfE4()->e14();
 }

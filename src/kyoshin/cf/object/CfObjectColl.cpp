@@ -19,6 +19,16 @@ public:
 };
 } // namespace cf
 
+// Exact-layout prefix view of cf::CfObject data (0x00-0x6F): the TU-local
+// CfObject decl pads 0x04-0x67, so byte-offset readers spell through this.
+struct CfObjectDataView {
+    u8 _00[0x60];
+    float f60;     // 0x60 scale (UVF35/36)
+    u32 w64;       // 0x64 flag word (HasFlag bit 15 / bit 5)
+    u32 mFlags68;  // 0x68 shared flag word
+    u32 w6C;       // 0x6C holder word (UVF11 bit 0)
+};
+
 // Retail callee keeps its flat, unmangled name (reloc-name fix, PLAN.md 17.6).
 extern "C" u32 Tok_Pack08(u32 a, u32 b);
 extern "C" u32 Tok_ParseFile(const char* path);
@@ -26,7 +36,7 @@ extern "C" u32 Tok_ParseFile(const char* path);
 // Null-guarded bit-15 flag test on +0x64
 // set (retail keeps r3 = self and tests with r0 via bclr 4,2).
 extern "C" void* CollObjHasFlag64Bit15(void* self) {
-    if (self && (*(u32*)((u8*)self + 0x64) & 0x8000))
+    if (self && (((CfObjectDataView*)self)->w64 & 0x8000))
         return self;
     return 0;
 }
@@ -168,7 +178,7 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
 // the widened header decl serves call-site codegen only.
 extern "C" void copyCollPosition__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, ml::CVec3* pos, float scale) {
     self->CfObject_snapMoveTarget(pos, scale);
-    self->func_80047814((u8*)self + 0x3c);
+    self->func_80047814(&self->pad04[0x38]);
 }
 
 // Pointers stay non-const: retail interleaves loads with stores (aliasing).
@@ -567,7 +577,7 @@ void CollObjSetResIdPathName(cf::CfObjectColl* self, const char* name) {
 }
 
 void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b) {
-    *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
+    ((cf::CfObjectColl*)self)->field_0x9C = (a << 16) + b;
 }
 
 unsigned long CollObjSetResIdReady(void* self) {
@@ -579,10 +589,10 @@ unsigned long CollObjSetResIdReady(void* self) {
 // Sign test on a call through the u16 index at +0x9C (offset 0x20C8 table).
 extern "C" int CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" bool CollObjTestResIdReady(void* self) {
-    return CtrlRemote_TouchBitByArg((*(u32*)((u8*)self + 0x9C) >> 16) + 0x20C8) != 0;
+    return CtrlRemote_TouchBitByArg((((cf::CfObjectColl*)self)->field_0x9C >> 16) + 0x20C8) != 0;
 }
 
-extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { ((cf::CfObjectColl*)self)->field_0x9C = val; }
 
 extern const float lbl_eu_80666914;
 extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
@@ -647,13 +657,13 @@ extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv(cf::CfObject* self) {
 
 extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(cf::CfObject* self) { return *(float*)((u8*)self + 0x60); }
+extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(cf::CfObject* self) { return ((CfObjectDataView*)self)->f60; }
 
-extern "C" void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv(cf::CfObject* self, float val) { *(float*)((u8*)self + 0x60) = val; }
+extern "C" void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv(cf::CfObject* self, float val) { ((CfObjectDataView*)self)->f60 = val; }
 
-extern "C" void* CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv(cf::CfObject* self) { return (void*)((u8*)self + 0x48); }
+extern "C" void* CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x44]; }
 
-extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(cf::CfObject* self) { return (void*)((u8*)self + 0x3c); }
+extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x38]; }
 
 extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
     *(float*)((char*)self + 0x3c) = a;
@@ -678,7 +688,7 @@ extern "C" int CfObject_queryTargetState__Q22cf8CfObjectFv(cf::CfObject* self) {
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
 int cf::CfObject::CfObject_UnkVirtualFunc11() {
-    return *(u32*)((u8*)this + 0x6C) & 1;
+    return ((CfObjectDataView*)this)->w6C & 1;
 }
 
 void cf::CfObject::CfObject_forwardSubObject() {
@@ -692,7 +702,7 @@ int cf::CfObjectPoint::isCollEnabled() {
 }
 
 extern "C" void* CollObjHasFlag64Bit5(void* param_1) {
-    if (param_1 != NULL && (*(unsigned int*)((char*)param_1 + 0x64) & 0x20)) {
+    if (param_1 != NULL && (((CfObjectDataView*)param_1)->w64 & 0x20)) {
         return param_1;
     }
     return NULL;

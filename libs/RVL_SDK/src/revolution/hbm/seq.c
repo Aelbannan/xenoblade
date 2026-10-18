@@ -81,11 +81,13 @@ void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
 {
     HBMSEQTRACK* track = &seq->tracks[0];
     u8* p = data;
+    u32 tag;
+    u32 len;
     int n = count;
     while (n != 0) {
     retry:
-        u32 tag = ((HBMMIDICHUNK *)p)->tag;
-        u32 len = ((HBMMIDICHUNK *)p)->length;
+        tag = ((HBMMIDICHUNK *)p)->tag;
+        len = ((HBMMIDICHUNK *)p)->length;
         p += 8;
         if (tag == 0x4D54726B) {
             track->seq = seq;
@@ -277,7 +279,13 @@ extern "C" void HBMSEQRunAudioFrame(void)
                         case 0xF0:
                         case 0xF7:
                             /* system common: skip the payload */
-                            v = HBMSEQReadVarInt(&track->cur);
+                            b = *track->cur;
+                            v = b & 0x7F;
+                            while (b & 0x80) {
+                                track->cur++;
+                                b = *track->cur;
+                                v = (v << 7) + (b & 0x7F);
+                            }
                             track->cur++;
                             track->cur += v;
                             break;
@@ -297,16 +305,23 @@ extern "C" void HBMSEQRunAudioFrame(void)
                                 break;
                             case 0x51:
                                 /* tempo change */
-                                v = HBMSEQReadVarInt(&track->cur);
+                                b = *track->cur;
+                                v = b & 0x7F;
+                                while (b & 0x80) {
+                                    track->cur++;
+                                    b = *track->cur;
+                                    v = (v << 7) + (b & 0x7F);
+                                }
                                 track->cur++;
                                 b1 = *track->cur;
                                 track->cur++;
                                 b2 = *track->cur;
                                 track->cur++;
+                                tempo32 = (u32)b1 << 8;
+                                tempo32 = (tempo32 + b2) << 8;
                                 b3 = *track->cur;
                                 track->cur++;
-                                tempo32 =
-                                    ((((u32)b1 << 8) + b2) << 8) + b3;
+                                tempo32 += b3;
                                 f = (f32)tempo32;
                                 seqp = track->seq;
                                 track->tempo = 1000000.0f / f;
@@ -317,7 +332,13 @@ extern "C" void HBMSEQRunAudioFrame(void)
                                     (u32)(65536.0f * f);
                                 break;
                             default:
-                                v = HBMSEQReadVarInt(&track->cur);
+                                b = *track->cur;
+                                v = b & 0x7F;
+                                while (b & 0x80) {
+                                    track->cur++;
+                                    b = *track->cur;
+                                    v = (v << 7) + (b & 0x7F);
+                                }
                                 track->cur++;
                                 track->cur += v;
                                 break;
@@ -356,7 +377,13 @@ extern "C" void HBMSEQRunAudioFrame(void)
                         if (track->sub_state == 0) {
                             break;
                         }
-                        v = HBMSEQReadVarInt(&track->cur);
+                        b = *track->cur;
+                        v = b & 0x7F;
+                        while (b & 0x80) {
+                            track->cur++;
+                            b = *track->cur;
+                            v = (v << 7) + (b & 0x7F);
+                        }
                         track->cur++;
                         track->delay = v << 16;
                     }

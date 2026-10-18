@@ -730,7 +730,7 @@ void Coli_RebiasIndices(int *dest, int offset, int *src) {
     dest[2] = offset + src[3];
 }
 
-extern "C" void Coli_StoreRange(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0xC) = a; *(u32*)((u8*)self + 0x10) = b; }
+extern "C" void Coli_StoreRange(void* self, u32 a, u32 b) { ((u32*)self)[3] = a; ((u32*)self)[4] = b; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_804BC9E8(void) {}

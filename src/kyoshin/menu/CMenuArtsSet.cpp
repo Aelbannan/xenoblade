@@ -2396,7 +2396,7 @@ void CMenuArtsSet_teardown(CMenuArtsSet* self) {
     self->field_0x28 = 0;
     ArtsLayoutPair_release((SArts2FDF4*)&self->mSubObj124);
     ArtsLayoutPair_releaseSlots((SArts3066C*)&self->mSubObj148);
-    ArtsTableLayout_release((SArts3066C*)((u8*)&self->mSubObj148 + 0x2C));
+    ArtsTableLayout_release((SArts3066C*)&self->mList174);
     if (self->field_0x1C != 0) {
         if (self->field_0x1C != 0) {
             self->field_0x1C->v0(1);
@@ -2458,7 +2458,7 @@ __declspec(noinline) void CMenuArtsSet_beginClose(CMenuArtsSet* self) {
     self->mField31 = 0;
     ArtsSubCursor_setVisible(&self->mSubObj148, 0);
     self->field_0x196 = 0;
-    ArtsTableCursor_refresh((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
+    ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
     CArtsInfo_ReqState4(&self->mSubObj74);
     playUISound__FUl(6);
 }
@@ -2590,7 +2590,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorUp(CMenuArtsSet* self) {
             CMenuArtsSet_refreshArtsInfo(self);
             goto L_Sound;
         }
-        ArtsTable_pageUp((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
+        ArtsTable_pageUp(&self->mList174);
         CMenuArtsSet_refreshArtsInfo(self);
         goto L_Sound;
     }
@@ -2599,7 +2599,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorUp(CMenuArtsSet* self) {
         CMenuArtsSet_refreshArtsInfo(self);
         goto L_Sound;
     }
-    ArtsTable_pageUp((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
+    ArtsTable_pageUp(&self->mList174);
     CMenuArtsSet_refreshArtsInfo(self);
 L_Sound:
     playUISound__FUl(1);
@@ -2617,7 +2617,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorDown(CMenuArtsSet* self) {
             CMenuArtsSet_refreshArtsInfo(self);
             goto L_Sound;
         }
-        ArtsTable_pageDown((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
+        ArtsTable_pageDown(&self->mList174);
         CMenuArtsSet_refreshArtsInfo(self);
         goto L_Sound;
     }
@@ -2626,7 +2626,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorDown(CMenuArtsSet* self) {
         CMenuArtsSet_refreshArtsInfo(self);
         goto L_Sound;
     }
-    ArtsTable_pageDown((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
+    ArtsTable_pageDown(&self->mList174);
     CMenuArtsSet_refreshArtsInfo(self);
 L_Sound:
     playUISound__FUl(1);
@@ -2908,7 +2908,7 @@ __declspec(noinline) void CMenuArtsSet_selectPrevChar(CMenuArtsSet* self) {
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
     v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
-    artsFillTable((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
+    artsFillTable(&self->mList174, v);
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound__FUl(10);
 }
@@ -2934,7 +2934,7 @@ void CMenuArtsSet_confirmLockedArt(CMenuArtsSet* self) {
     }
     lbl_eu_806628A8[0] = (lbl_eu_806628A8[0] ^ 1) != 0;
     artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
-    artsFillTable((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
+    artsFillTable(&self->mList174, v);
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound__FUl(0xA);
 }
@@ -3136,7 +3136,7 @@ void CMenuArtsSet_completeLayoutIn(CMenuArtsSet* self) {
     self->field_0x1C->v11(self->field_0x24, 1);
     self->field_0x2C = 2;
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
-    artsFillTable((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
+    artsFillTable(&self->mList174, v);
     float vec[3];
     vec[0] = lbl_eu_80668678;
     vec[1] = lbl_eu_8066867C;

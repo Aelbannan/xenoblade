@@ -27,10 +27,10 @@ void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
 // the compiler jts + MWCC's 8-align pad ARE the 0x290 section.
 extern "C" {
 extern void __dt__Q22cf18CfObjectImplWalkerFv();
-extern void ObjPc_ArtsCmdFeedback_6F30__FPQ22cf14CfObjectImplPciii();
+extern void ObjPc_ArtsCmdFeedback_6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4);
 extern void Walker_ForwardBattleEntry();
-extern void ObjPc_BattleEffectDispatch_70BC__FPQ22cf14CfObjectImplPcUlP17CfObjectImplPcEvt();
-extern void ObjPc_BattleEventCmdDispatch_75D4__FPQ22cf14CfObjectImplPcUlPQ22cf20CfObjectImplPcEvtCmd();
+extern void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param);
+extern void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token, cf::CfObjectImplPcEvtCmd* evt);
 extern void MoveImplDriveMoveSounds();
 extern void MoveImplTriggerCamShake();
 extern void MoveImplMatchIdSetRegion();
@@ -53,21 +53,21 @@ extern void dispatchObjectFunc48__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc52b__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc53__Q22cf13CfGameManagerFv();
 extern void Walker_SwitchTargetParty();
-extern void ObjPc_TickPlayer_A458__FPQ22cf14CfObjectImplPc();
+extern void ObjPc_TickPlayer_A458(cf::CfObjectImplPc* self);
 extern void Walker_UpdatePartyBattle();
 extern void Walker_LeaveBattle();
 extern void MoveImplResolveActorRef();
-extern void ObjPc_StoreSubVal_A274__FPvi();
-extern void ObjPc_EventDispatch_9A20__FPQ22cf14CfObjectImplPcP17CfObjectImplPcEvt();
-extern void ObjPc_ArtsCmdEventDispatch_9CEC__FPQ22cf14CfObjectImplPcP17CfObjectImplPcEvt();
+extern void ObjPc_StoreSubVal_A274(void* self, int value);
+extern void ObjPc_EventDispatch_9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
+extern void ObjPc_ArtsCmdEventDispatch_9CEC(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 // (MoveImplDispatch204 reuses src/kyoshin/cfsys/CfObjectImplMove.hpp's C-linkage decl)
-extern void ObjPc_DispatchArtsTable_A104__FPQ22cf14CfObjectImplPcUl();
-extern void ObjPc_DispatchArtsCmd_A084__FPQ22cf14CfObjectImplPcUl();
+extern void ObjPc_DispatchArtsTable_A104(cf::CfObjectImplPc* self, u32 param);
+extern void ObjPc_DispatchArtsCmd_A084(cf::CfObjectImplPc* self, u32 param);
 extern void Walker_ExitBattleSweep();
 extern void Walker_ResetBattleHook();
 extern void Walker_SyncBattleFrame();
 extern void Walker_VtNoopA0();
-extern void ObjPc_ClearSub_5AA0__FPQ22cf14CfObjectImplPc();
+extern void ObjPc_ClearSub_5AA0(cf::CfObjectImplPc* self);
 extern void MoveImplPushEventId();
 extern void Walker_Adjust0C_Dtor();
 extern void Walker_Adjust0C_6EC0();
@@ -78,7 +78,7 @@ extern void Walker_DispatchTalkSrc();
 extern void Walker_SweepBattleActors();
 extern void MoveImplRepositionEffect();
 extern void Walker_InnerPtr68();
-extern void ObjPc_NotifyVf10_6EC0__FPQ22cf14CfObjectImplPcUl();
+extern void ObjPc_NotifyVf10_6EC0(cf::CfObjectImplPc* self, u32 param);
 extern void CfObjectImplMoveClearLinkIfMatch();
 extern void Walker_FanfareBattleStart();
 extern void Walker_VtNoopF0();
@@ -97,21 +97,21 @@ extern void* lbl_eu_80661C68;
 // (same definitions; plain names are retail's UNDEF view).
 __declspec(section ".data") __attribute__((used))
 const void* lbl_eu_8052A558[66] = {
-    (void*)&lbl_eu_80661D28, 0, (void*)__dt__Q22cf18CfObjectImplWalkerFv, (void*)ObjPc_ArtsCmdFeedback_6F30__FPQ22cf14CfObjectImplPciii, // +0x0
-    (void*)Walker_ForwardBattleEntry, (void*)ObjPc_BattleEffectDispatch_70BC__FPQ22cf14CfObjectImplPcUlP17CfObjectImplPcEvt, (void*)ObjPc_BattleEventCmdDispatch_75D4__FPQ22cf14CfObjectImplPcUlPQ22cf20CfObjectImplPcEvtCmd, (void*)MoveImplDriveMoveSounds, // +0x10
+(void*)ObjPc_ArtsCmdFeedback_6F30,
+    (void*)Walker_ForwardBattleEntry, (void*)ObjPc_BattleEffectDispatch_70BC, (void*)ObjPc_BattleEventCmdDispatch_75D4, (void*)MoveImplDriveMoveSounds, // +0x10
     (void*)MoveImplTriggerCamShake, (void*)MoveImplMatchIdSetRegion, (void*)Walker_DispatchBattleCmd, (void*)MoveImplBindDriver, // +0x20
     (void*)toggleObjectMask8__Q22cf13CfGameManagerFv, (void*)clearObjectMask8__Q22cf13CfGameManagerFv, (void*)clearObjectFlagsAll__Q22cf13CfGameManagerFv, (void*)getObjectFlags__Q22cf13CfGameManagerFv, // +0x30
     (void*)hasAnyFlags, (void*)dispatchObjectFunc19__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc23__Q22cf13CfGameManagerFv, (void*)dispatchObjectFuncC4__Q22cf13CfGameManagerFv, // +0x40
     (void*)dispatchObjectFunc31__Q22cf13CfGameManagerFv, (void*)getObjectSub54Ptr__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc58__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc56__Q22cf13CfGameManagerFv, // +0x50
     (void*)dispatchObjectFunc46__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc48__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc52b__Q22cf13CfGameManagerFv, (void*)dispatchObjectFunc53__Q22cf13CfGameManagerFv, // +0x60
-    (void*)Walker_SwitchTargetParty, (void*)ObjPc_TickPlayer_A458__FPQ22cf14CfObjectImplPc, (void*)Walker_UpdatePartyBattle, (void*)Walker_LeaveBattle, // +0x70
-    (void*)MoveImplResolveActorRef, (void*)ObjPc_StoreSubVal_A274__FPvi, (void*)ObjPc_EventDispatch_9A20__FPQ22cf14CfObjectImplPcP17CfObjectImplPcEvt, (void*)ObjPc_ArtsCmdEventDispatch_9CEC__FPQ22cf14CfObjectImplPcP17CfObjectImplPcEvt, // +0x80
-    (void*)MoveImplDispatch204, (void*)ObjPc_DispatchArtsTable_A104__FPQ22cf14CfObjectImplPcUl, (void*)ObjPc_DispatchArtsCmd_A084__FPQ22cf14CfObjectImplPcUl, (void*)Walker_ExitBattleSweep, // +0x90
-    (void*)Walker_ResetBattleHook, (void*)Walker_SyncBattleFrame, (void*)Walker_VtNoopA0, (void*)ObjPc_ClearSub_5AA0__FPQ22cf14CfObjectImplPc, // +0xA0
+(void*)ObjPc_TickPlayer_A458,
+    (void*)MoveImplResolveActorRef, (void*)ObjPc_StoreSubVal_A274, (void*)ObjPc_EventDispatch_9A20, (void*)ObjPc_ArtsCmdEventDispatch_9CEC, // +0x80
+    (void*)MoveImplDispatch204, (void*)ObjPc_DispatchArtsTable_A104, (void*)ObjPc_DispatchArtsCmd_A084, (void*)Walker_ExitBattleSweep, // +0x90
+(void*)ObjPc_ClearSub_5AA0,
     (void*)MoveImplPushEventId, (void*)&lbl_eu_80661D28, (void*)0xFFFFFFF4, (void*)Walker_Adjust0C_Dtor, // +0xB0
     (void*)Walker_Adjust0C_6EC0, (void*)&lbl_eu_80661D28, (void*)0xFFFFFFF0, (void*)Walker_Adjust10_Dtor, // +0xC0
     (void*)Walker_Adjust10_FFA0, (void*)Walker_OnBattleChange, (void*)Walker_DispatchTalkSrc, (void*)Walker_SweepBattleActors, // +0xD0
-    (void*)MoveImplRepositionEffect, (void*)Walker_InnerPtr68, (void*)ObjPc_NotifyVf10_6EC0__FPQ22cf14CfObjectImplPcUl, (void*)CfObjectImplMoveClearLinkIfMatch, // +0xE0
+(void*)ObjPc_NotifyVf10_6EC0,
     (void*)Walker_FanfareBattleStart, (void*)Walker_VtNoopF0, (void*)Walker_SetField380, (void*)Walker_GetField380, // +0xF0
     (void*)Walker_TryStartBattle, (void*)Walker_BindBattleObj, // +0x100
 };
@@ -196,9 +196,9 @@ void ObjPc_InitLink_5998(cf::CfObjectImplPc* self)
     CharEffInit(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
     u8* owner = (u8*)self->field_18;
     if (owner != 0) {
-        owner += 0x3e9c;
+        owner = (u8*)&self->field_18->mSub;
     }
-    attachOwner((u8*)&self->field_28, owner);
+    attachOwner(self->field_28, owner);
     u32 out14;
     u32 out10;
     u32 outC;

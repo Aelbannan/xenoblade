@@ -389,12 +389,12 @@ void ArtsSelect_NotifyAll(void* p) {
                 continue;
             }
             // Notifier at +0x98 is a CScnItemModel (vfunc88(int) at 0x88).
-            CScnItemModel* notifier = *reinterpret_cast<CScnItemModel**>(reinterpret_cast<u8*>(widget) + 0x98);
+            CScnItemModel* notifier = reinterpret_cast<ArtsWidgetView*>(widget)->field_98;
             if (notifier == NULL) {
                 continue;
             }
             int armed = 0;
-            u32 flag6C = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(widget) + 0x6C);
+            u32 flag6C = reinterpret_cast<ArtsWidgetView*>(widget)->field_6C;
             if ((flag6C & 0x10000000) != 0 && p != NULL) {
                 armed = 1;
             }

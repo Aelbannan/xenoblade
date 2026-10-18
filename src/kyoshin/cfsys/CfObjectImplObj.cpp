@@ -12,10 +12,12 @@ extern "C" void MoveImplRunEffectVirtuals(void* self);
 // into CharEffInit.
 void ObjImplPrepFrame(cf::CfObjectImplObj* self) {
     MoveImplInitFields(self);
-    CharEffInit(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
+    CharEffInit(self->vfE4(), self->field_14, self->field_18);
 }
 
-void* ObjImplGetUnk68(void* self) { return (void*)((u8*)self + 0x68); }
+void* ObjImplGetUnk68(void* self) {
+    return &static_cast<cf::CfObjectImplObj*>(self)->slot68;
+}
 
 // us-800caf74: dispatch the embedded event id via MoveImplPushEventId, then point
 // the +0x368 CPartsChange at the driver sub-object's +0x98 event id.
@@ -26,7 +28,9 @@ void ObjImplPushEventResolve(cf::CfObjectImplObj* self) {
 }
 
 extern "C" void CPartsChange_SyncSlotState(void* a, void* b, int c);
-extern "C" void ObjImplSyncSlotState(void* self, void* b) { CPartsChange_SyncSlotState((char*)self + 0x368, b, 1); }
+extern "C" void ObjImplSyncSlotState(void* self, void* b) {
+    CPartsChange_SyncSlotState(static_cast<cf::CfObjectImplObj*>(self)->mPartsChange, b, 1);
+}
 
 void ObjImplNoop(void) {}
 

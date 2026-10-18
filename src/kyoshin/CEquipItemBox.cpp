@@ -1613,8 +1613,8 @@ extern "C" void closeEIBBox(CEquipItemBox* self) {
     releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_34);
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0]);
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
-    resetEIBCur((CEIBCur*)((u8*)self + 0x44));
-    resetEIBCur((CEIBCur*)((u8*)self + 0x5c));
+    resetEIBCur(reinterpret_cast<CEIBCur*>(&self->_pad44));
+    resetEIBCur(reinterpret_cast<CEIBCur*>(&self->pagecur));
     ((CBaseCur*)&self->ccur18[0])->cleanup();
     sortMenuTermCleanup(self->_padSortMenu);
     sysWinTermLayout(&self->_padSysWin1[0]);
@@ -1741,7 +1741,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
         } else {
             // Decrement unk_1f5 with wrap
             u8 cur = self->unk_1f5;
-            CEquipItemGrid* wrapGrid = (CEquipItemGrid*)((u8*)self + 0x37e);
+            CEquipItemGrid* wrapGrid = reinterpret_cast<CEquipItemGrid*>(&self->_pad37D[1]);
             u8 val = cur - 1;
             self->unk_1f5 = val;
             if ((s8)(u8)val < -1)
@@ -2301,9 +2301,9 @@ extern "C" __declspec(noinline) int eibRowMatches(CEquipItemBox* self) {
 }
 #pragma pop
 
-extern "C" unsigned char getEIBSelCat(u8* self) {
-    s8 idx = *(s8*)(self + 0x373);
-    return *(unsigned char*)(self + 0x36c + idx);
+extern "C" unsigned char getEIBSelCat(CEquipItemBox* self) {
+    s8 idx = (s8)self->unk_373;
+    return self->unk_36c[idx];
 }
 
 // Scan the 6 equipment slots for the item that owns the slot id selected by
@@ -2429,15 +2429,11 @@ extern "C" __declspec(noinline) int eibHudPrompt(CEquipItemBox* self) {
 // GetCollectedFlagByte's category byte; an unk_1f5 of -1 always returns 0.
 extern "C" int isEIBCatMatch(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) return 0;
-    u32 b;
-    int idx;
-    u8 cat;
-    u32 a;
-    idx = self->unk_1f4 + self->unk_1f5 * 5;
-    cat = (u8)((self->unk_1fc >> 8) & 0xff);
-    a = getEIBByte2((CEquipItemGrid*)((u8*)self + 0x37E), (u8)idx);
-    b = GetCollectedFlagByte(cat);
-    return a == b;
+    u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
+    CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
+    u32 a = getEIBByte2(grid, (u8)(self->unk_1f4 + self->unk_1f5 * 5));
+    u32 b = GetCollectedFlagByte(cat);
+    return b == a;
 }
 #pragma pop
 

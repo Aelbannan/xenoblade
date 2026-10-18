@@ -57,15 +57,17 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 su = rSrt.Su;
-    f32 sv = rSrt.Sv;
-
-    // Precompute the four scale-rotate products (retail computes them in
-    // this order: Sv*sin, Su*sin, Su*cos, Sv*cos).
-    f32 svs = sv * sinR;
-    f32 sus = su * sinR;
-    f32 suc = su * cosR;
-    f32 svc = sv * cosR;
+    // Declaration order fixes temp colors, assignment order fixes load order.
+    f32 sv, s, c, su;
+    f32 suc, sus, svc, svs;
+    s = sinR;
+    sv = rSrt.Sv;
+    su = rSrt.Su;
+    c = cosR;
+    svs = sv * s;
+    sus = su * s;
+    suc = su * c;
+    svc = sv * c;
 
     pMtx->m[0][0] = suc;
     pMtx->m[0][1] = sus;
@@ -112,21 +114,28 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 su = rSrt.Su;
-    f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
-
-    pMtx->m[0][0] = su * cosR;
-    pMtx->m[0][1] = su * sinR;
+    // No su/sv/tu/tv copies: struct reads inside the products gate the Sv
+    // load behind cos (retail Su,cos,sin,Sv order). t1/t2 live inline and
+    // CSE-share across rows so they reuse dead regs instead of taking
+    // fresh colors; named m03a/m03b pin the m03-mul schedule; m10 stays
+    // last so its fneg does not displace sus*t2 (cf. probes X2/F48).
+    f32 suc, sus, svc, svs;
+    f32 m03a, m03b;
+    suc = rSrt.Su * cosR;
+    sus = rSrt.Su * sinR;
+    svc = rSrt.Sv * cosR;
+    svs = rSrt.Sv * sinR;
+    pMtx->m[0][0] = suc;
+    pMtx->m[0][1] = sus;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = -(su * cosR) * (lbl_eu_80669CC4 + tu) +
-                    su * sinR * (tv - lbl_eu_80669CC4) + lbl_eu_80669CC4;
-    pMtx->m[1][0] = -(sv * sinR);
-    pMtx->m[1][1] = sv * cosR;
+    pMtx->m[1][1] = svc;
     pMtx->m[1][2] = lbl_eu_80669CC0;
-    pMtx->m[1][3] = sv * sinR * (lbl_eu_80669CC4 + tu) +
-                    sv * cosR * (tv - lbl_eu_80669CC4) + lbl_eu_80669CC4;
+    m03a = -suc * (lbl_eu_80669CC4 + rSrt.Tu);
+    m03b = sus * (rSrt.Tv - lbl_eu_80669CC4);
+    pMtx->m[0][3] = m03a + m03b + lbl_eu_80669CC4;
+    pMtx->m[1][3] = svs * (lbl_eu_80669CC4 + rSrt.Tu) +
+                    svc * (rSrt.Tv - lbl_eu_80669CC4) + lbl_eu_80669CC4;
+    pMtx->m[1][0] = -svs;
 }
 
 void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {

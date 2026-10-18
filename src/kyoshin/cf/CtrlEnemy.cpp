@@ -480,11 +480,11 @@ extern f32 lbl_eu_80666590;
 extern "C" void cachedMoveReq(void* a, float f);
 extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { cachedMoveReq(((cf::CtrlEnemy*)self)->mSub84, lbl_eu_80666590); }
 
-void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway(this->mSub84); }
 
-void cf::CtrlEnemy::delegateTo80089E88() { moveBaseRoute((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089E88() { moveBaseRoute(this->mSub84); }
 
-void cf::CtrlEnemy::delegateTo80089F68() { moveBaseScnCmd((char*)this + 0x84); }
+void cf::CtrlEnemy::delegateTo80089F68() { moveBaseScnCmd(this->mSub84); }
 
 int cf::CtrlEnemy::ret0_80088870() { return 0; }
 int cf::CtrlEnemy::ret0_80088878() { return 0; }

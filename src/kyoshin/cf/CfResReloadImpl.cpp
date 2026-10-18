@@ -43,10 +43,9 @@ cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* self, cf::CfR
     return self;
 }
 
-// EQUIVALENT_MATCH: checks if type field at offset +8 is >= 3
-int checkTypeIsValid(cf::CfResReloadImpl* arg) {
-    unsigned int v = *(unsigned short*)((char*)arg + 8);
-    return (int)(((v | 0xFFFFFFFCu) - ((v - 3u) >> 1)) >> 31);
+// vtable slot 0x14 - normalized (field_08 >= 3) test (was checkTypeIsValid)
+extern "C" int isReloadTypeOk(cf::CfResReloadImpl* self) {
+    return self->field_08 >= 3;
 }
 
 // Checks whether the current reload resource is in use: when the parent's
@@ -54,7 +53,7 @@ int checkTypeIsValid(cf::CfResReloadImpl* arg) {
 // parent's +0x6C flag bit 5 is set, the lookup entry's +0x04 pointer must
 // match the parent resource (+0x70) and the +0x40 vtable slot of the entry
 // object must be nonzero. Otherwise returns the normalized (field_08 >= 3)
-// flag computed by checkTypeIsValid's expression.
+// flag computed by isReloadTypeOk's expression.
 int isReloadInUse(const cf::CfResReloadImpl* self) {
     // Retail hoists the parent load above the LR spill (const self), keeps it
     // in one register for both flag-word tests, then reloads it from self
@@ -700,7 +699,7 @@ extern "C" int getSubTypeId() { return 1; }
 
 extern "C" void setWorkValue(cf::CfResReloadImpl* thisPtr, int index, unsigned int value) {
     if (index < 2) {
-        ((unsigned int*)((char*)thisPtr + 0x14))[index] = value;
+        thisPtr->field_14[index] = value;
     }
 }
 

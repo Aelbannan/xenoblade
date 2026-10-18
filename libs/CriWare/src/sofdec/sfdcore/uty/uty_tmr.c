@@ -19,7 +19,6 @@ struct UtyTmrPair {
     u32 active;  // 0x08
     u32 unit;    // 0x0C
 };
-
 struct UtyTmrData {
     volatile s32 count;     // 0x00: init counter
     s32 id;                 // 0x04: armed id

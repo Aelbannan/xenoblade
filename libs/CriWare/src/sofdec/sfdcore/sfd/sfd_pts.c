@@ -85,12 +85,22 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, u32* o) {
         o[0] = 1;
         r = -1;
     } else {
+        /* NOTE: halves + lo temp are load-bearing for MWCC scheduling:
+           hi-first halves let the first store use indexed stwx (base+index
+           stay live when e takes a fresh reg); pre-loading lo avoids an
+           alias-kill reload of d[1] after the hi store. */
         s32 uc = q->unk0C;
-        s32 next = uc + 1;
         SfdPtsEntry* e = &q->entries[uc];
-        e->u.pts = ((SfdPtsData*)data)->u.pts;
-        e->pos = ((SfdPtsData*)data)->pos;
-        e->size = ((SfdPtsData*)data)->size;
+        s32 next = uc + 1;
+        u32 lo = d[1];
+        u32 size;
+        u32 pos;
+        e->u.hw[0] = d[0];
+        e->u.hw[1] = lo;
+        size = d[3];
+        pos = d[2];
+        e->pos = pos;
+        e->size = size;
         /* wrap write index: speculative subtract, override when no wrap */
         s32 nn = (next < q->maxIdx) ? next : next - q->maxIdx;
         s32 c2 = q->count + 1;

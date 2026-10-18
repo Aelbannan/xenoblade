@@ -59,6 +59,12 @@ struct CScnTexWorkManEntry {
     f32 field_0x2c;  // z-axis bound
 };
 
+// Texture-work object cursor word at +0x28 (read by TexMan_ReleaseArg_02D8).
+struct CScnTexWorkManCursor {
+    u8 field_0x00[0x28];
+    u32 field_0x28; // allocation cursor snapshot
+};
+
 // Node-id collection list used by the node-tree walk (array at 0x0, count
 // at 0x4).
 struct CScnTexWorkManNodeIdList {
@@ -312,7 +318,7 @@ extern "C" void __dt__804943A0(void* self, int flags);
 extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
     if (lbl_eu_806658FC != 0) return;
     if (lbl_eu_80665900 == (u32)arg) {
-        lbl_eu_806658F0 = *(u32*)((u8*)arg + 0x28);
+        lbl_eu_806658F0 = ((CScnTexWorkManCursor*)arg)->field_0x28;
     }
     if (arg != 0) {
         __dt__804943A0(arg, 1);
@@ -340,22 +346,35 @@ extern "C" void* Scn_GetCamList(void* scene, void* view);
 
 // Apply the camera's perspective (matrix at cam+0x9c, fov/near/far at
 // cam+0x1e0/0x1ec/0x1f0) to the given CDrawGX; falls back to the current view.
+// Camera perspective payload read by TexMan_ApplyCamPersp_034C: view matrix
+// at +0x9c, near/mid/far planes at +0x1e0/+0x1ec/+0x1f0.
+struct CScnTexWorkManCamPersp {
+    u8 field_0x00[0x9c];
+    ml::CMat34 field_0x9c;
+    u8 field_0xcc[0x1e0 - 0xcc];
+    f32 field_0x1e0; // near
+    u8 field_0x1e4[0x1ec - 0x1e4];
+    f32 field_0x1ec; // mid
+    f32 field_0x1f0; // far
+};
+
 int TexMan_ApplyCamPersp_034C(CScnTexWorkMan* scene, CDrawGX* gx, CView* view) {
     if (view == NULL) {
         view = CView::getCurrentView();
     }
-    const u8* cam = (const u8*)Scn_GetCamList(scene, view);
+    const CScnTexWorkManCamPersp* cam =
+        (const CScnTexWorkManCamPersp*)Scn_GetCamList(scene, view);
     // Sequenced to match retail's load order (far, mat addr, mid, near).
-    const f32 valFar = *(const f32*)(cam + 0x1f0);
-    const ml::CMat34& mat = *(const ml::CMat34*)(cam + 0x9c);
-    const f32 valMid = *(const f32*)(cam + 0x1ec);
-    const f32 valNear = *(const f32*)(cam + 0x1e0);
+    const f32 valFar = cam->field_0x1f0;
+    const ml::CMat34& mat = cam->field_0x9c;
+    const f32 valMid = cam->field_0x1ec;
+    const f32 valNear = cam->field_0x1e0;
     gx->setPerspective(mat, valNear, valMid, valFar);
     return 1;
 }
 
 extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name) {
-    nw4r::g3d::ResMdl mdl = *(nw4r::g3d::ResMdl*)((u8*)self + 0x146C);
+    nw4r::g3d::ResMdl mdl = nw4r::g3d::ResMdl(((CScnTexWorkMan*)self)->mResMdl1);
     return mdl.GetResNode(name);
 }
 

@@ -29,7 +29,7 @@ extern "C" const volatile unsigned char lbl_eu_80527048[];
 #pragma pop
 }
 
-char** cf::CfCamEvent::initCamIntfInstances() {
+extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self) {
     if (!lbl_eu_80663DB0) {
         lbl_eu_80663DB4 = (char*)lbl_eu_80527130;
         lbl_eu_80663DB0 = 1;
@@ -43,25 +43,31 @@ char** cf::CfCamEvent::initCamIntfInstances() {
         lbl_eu_80663DC0 = 1;
     }
 
-    s32 type = unk8;
-    char** result = &lbl_eu_80663DBC;
+    s32 type = self->unk8;
+    cf::CfCamDispatch* result = (cf::CfCamDispatch*)&lbl_eu_80663DBC;
     if (type == 8) {
-        return &lbl_eu_80663DBC;
+        return (cf::CfCamDispatch*)&lbl_eu_80663DBC;
     }
     if (type == 9) {
-        return &lbl_eu_80663DB4;
+        return (cf::CfCamDispatch*)&lbl_eu_80663DB4;
     }
     if (type == 10) {
-        return &lbl_eu_80663DC4;
+        return (cf::CfCamDispatch*)&lbl_eu_80663DC4;
     }
     return result;
 }
 
+// Byte view of the opaque camera-event handle's float factor at +0x280.
+struct CfCamFactorView {
+    u8 _00[0x280];
+    float factor280;
+};
+
 extern "C" void CfCamEvt_StoreFactor280(u8* self, float value) {
-    *(float*)((uintptr_t)self + 0x280) = value;
+    ((CfCamFactorView*)self)->factor280 = value;
 }
 extern "C" float CfCamEvt_LoadFactor280(u8* self) {
-    return *(float*)((char*)self + 0x280);
+    return ((CfCamFactorView*)self)->factor280;
 }
 
 using namespace cf;

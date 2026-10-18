@@ -921,75 +921,61 @@ extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlot
     // Search the whole chart for another entry with the same id, then
     // insert this entry before the head of that entry's prev chain.
     // Retail unrolls the head-walk 10 levels, then hands the remainder
-    // to KizunaEntryFindListHead.
+    // to KizunaEntryFindListHead. The walk alternates the cursor between
+    // `head` and a scratch pointer with flat gotos (same idiom as
+    // IdTable_SumValues/IdTable_MaxValueC in code_8025FB10.cpp): odd
+    // levels load into `t` (null falls straight through to the stores),
+    // even levels load into `head` (null needs its own `head = t` copy
+    // block); the fully-nested if/else form emits extra dead join
+    // branches here (probe-verified across Wii/1.0, 1.1, 1.3, GC/3.0a5.2).
     for (int e = 0; e < 66; e++) {
         CPcKizunaSlotEntry* pos = &self->slots[e / 6].data00 + (e % 6);
         if (id != pos->field04) continue;
         if (pos == entry) continue;
         // Walk the prev chain toward the list head; retail unrolls 10 loads,
         // then hands the remainder to the shared walker KizunaEntryFindListHead.
-        CPcKizunaSlotEntry* head = pos;
-        CPcKizunaSlotEntry* cur = pos;
-        CPcKizunaSlotEntry* nxt = cur->pField1C;
-        if (nxt != 0) {
-            cur = nxt;
-            nxt = cur->pField1C;
-            if (nxt != 0) {
-                cur = nxt;
-                nxt = cur->pField1C;
-                if (nxt != 0) {
-                    cur = nxt;
-                    nxt = cur->pField1C;
-                    if (nxt != 0) {
-                        cur = nxt;
-                        nxt = cur->pField1C;
-                        if (nxt != 0) {
-                            cur = nxt;
-                            nxt = cur->pField1C;
-                            if (nxt != 0) {
-                                cur = nxt;
-                                nxt = cur->pField1C;
-                                if (nxt != 0) {
-                                    cur = nxt;
-                                    nxt = cur->pField1C;
-                                    if (nxt != 0) {
-                                        cur = nxt;
-                                        nxt = cur->pField1C;
-                                        if (nxt != 0) {
-                                            cur = nxt;
-                                            nxt = cur->pField1C;
-                                            if (nxt != 0) {
-                                                head = KizunaEntryFindListHead(nxt);
-                                            } else {
-                                                head = cur;
-                                            }
-                                        } else {
-                                            head = cur;
-                                        }
-                                    } else {
-                                        head = cur;
-                                    }
-                                } else {
-                                    head = cur;
-                                }
-                            } else {
-                                head = cur;
-                            }
-                        } else {
-                            head = cur;
-                        }
-                    } else {
-                        head = cur;
-                    }
-                } else {
-                    head = cur;
-                }
-            } else {
-                head = cur;
-            }
-        } else {
-            head = cur;
-        }
+        CPcKizunaSlotEntry* head;
+        CPcKizunaSlotEntry* t = pos->pField1C;
+        if (t == 0) goto C0;
+        head = t->pField1C;
+        if (head == 0) goto C2;
+        t = head->pField1C;
+        if (t == 0) goto done;
+        head = t->pField1C;
+        if (head == 0) goto C4;
+        t = head->pField1C;
+        if (t == 0) goto done;
+        head = t->pField1C;
+        if (head == 0) goto C6;
+        t = head->pField1C;
+        if (t == 0) goto done;
+        head = t->pField1C;
+        if (head == 0) goto C8;
+        t = head->pField1C;
+        if (t == 0) goto done;
+        head = t->pField1C;
+        if (head == 0) goto C10;
+        head = KizunaEntryFindListHead(head);
+        goto done;
+    C10:
+        head = t;
+        goto done;
+    C8:
+        head = t;
+        goto done;
+    C6:
+        head = t;
+        goto done;
+    C4:
+        head = t;
+        goto done;
+    C2:
+        head = t;
+        goto done;
+    C0:
+        head = pos;
+        goto done;
+    done:
         head->pField1C = entry;
         entry->pField18 = head;
         break;

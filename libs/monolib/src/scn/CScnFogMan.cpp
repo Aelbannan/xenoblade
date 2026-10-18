@@ -202,12 +202,16 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             fog.ref().type = newType;
         }
 
+        f32 startz1;
+        f32 endz1;
+        endz1 = self->field_0x34;
+        startz1 = self->field_0x30;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
         }
         if (fog.ptr() != NULL) {
-            fog.ref().startz = self->field_0x30;
-            fog.ref().endz = self->field_0x34;
+            fog.ref().startz = startz1;
+            fog.ref().endz = endz1;
         }
 
         // Pack the scaled channels through a byte temp so MWCC emits the
@@ -240,12 +244,14 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             fog.ref().type = newType;
         }
 
-        GXColor color0 = {
-            (u8)(lbl_eu_8066ABC4 * self->field_0xC),
-            (u8)(lbl_eu_8066ABC4 * self->field_0x10),
-            (u8)(lbl_eu_8066ABC4 * self->field_0x14),
-            (u8)(lbl_eu_8066ABC4 * self->field_0x18),
-        };
+        // Pack the scaled channels through a byte temp so MWCC emits the
+        // retail stb/lwz/stw sequence.
+        u8 tmp0[4];
+        tmp0[0] = (u8)(lbl_eu_8066ABC4 * self->field_0xC);
+        tmp0[1] = (u8)(lbl_eu_8066ABC4 * self->field_0x10);
+        tmp0[2] = (u8)(lbl_eu_8066ABC4 * self->field_0x14);
+        tmp0[3] = (u8)(lbl_eu_8066ABC4 * self->field_0x18);
+        GXColor color0 = *(GXColor*)tmp0;
 
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
@@ -257,12 +263,16 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             fog.ref().color.a = color0.a;
         }
 
+        f32 startz0;
+        f32 endz0;
+        endz0 = self->field_0x1c;
+        startz0 = self->field_0x20;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
         }
         if (fog.ptr() != NULL) {
-            fog.ref().startz = self->field_0x20;
-            fog.ref().endz = self->field_0x1c;
+            fog.ref().startz = startz0;
+            fog.ref().endz = endz0;
         }
     } else if (self->value08 == 3) {
         if (fog.ptr() == NULL) {
@@ -287,16 +297,20 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             if (gray > 255) {
                 gray = 255;
             }
-            color.r = color.g = color.b = (u8)gray;
+            color.r = (u8)gray;
+            color.g = (u8)gray;
+            color.b = (u8)gray;
+            GXColor setColor = color;
 
             if (fogSlot.ptr() == NULL) {
                 nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
             }
             if (fogSlot.ptr() != NULL) {
-                fogSlot.ref().color.r = color.r;
-                fogSlot.ref().color.g = color.g;
-                fogSlot.ref().color.b = color.b;
-                fogSlot.ref().color.a = color.a;
+                nw4r::g3d::FogData* pfd = &fogSlot.ref();
+                pfd->color.r = setColor.r;
+                pfd->color.g = setColor.g;
+                pfd->color.b = setColor.b;
+                pfd->color.a = setColor.a;
             }
         }
     }

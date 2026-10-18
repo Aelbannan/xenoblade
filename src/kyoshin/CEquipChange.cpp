@@ -1087,17 +1087,22 @@ end:
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* self) {
     nw4r::math::VEC3 pos;
-    CEquipColorPair palette[7];
+    // Word view of the 7-pair block: the cursor byte selects one of the 14
+    // words. Same 0x38-byte stack slot, so the frame layout is unchanged.
+    union {
+        CEquipColorPair pair[7];
+        u32 word[14];
+    } palette;
     // 0x38-byte block copy (7 pairs of 8 bytes) - the block-copy path emits
     // the retail lwzu/stwu counted loop.
-    *(CEquipPaletteBlock*)palette = *(const CEquipPaletteBlock*)lbl_eu_80508120;
+    *(CEquipPaletteBlock*)&palette = *(const CEquipPaletteBlock*)lbl_eu_80508120;
 
     // The retail reloads the sub-object pointer (field_34 -> +0x10) at every
     // call site, so keep the access inline (a temp would live in a callee-saved
     // register across the calls).
     CEquipColorPair scale;
     nw4r::lyt::Pane* pane =
-        ((nw4r::lyt::Layout*)self->field_34)->GetRootPane()->FindPaneByName((const char*)((u32*)palette)[self->field_98], true);
+        ((nw4r::lyt::Layout*)self->field_34)->GetRootPane()->FindPaneByName((const char*)palette.word[self->field_98], true);
     AccumPaneWorldPos(&pos, pane);
 
     pane = ((nw4r::lyt::Layout*)self->field_34)->GetRootPane()->FindPaneByName(lbl_eu_80508168 + 0x3E, true);

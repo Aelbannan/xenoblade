@@ -1910,6 +1910,9 @@ def cmd_symbols(symrecover_args: list[str]) -> int:
         symrecover_args = symrecover_args[1:]
     if not symrecover_args:
         symrecover_args = ["--help"]
+    intercepted = _maybe_handle_function_rename(symrecover_args)
+    if intercepted is not None:
+        return intercepted
     old_argv = sys.argv
     try:
         sys.argv = ["symrecover", *symrecover_args]
@@ -1918,6 +1921,55 @@ def cmd_symbols(symrecover_args: list[str]) -> int:
         return symrecover_main()
     finally:
         sys.argv = old_argv
+
+
+def _maybe_handle_function_rename(symrecover_args: list[str]) -> int | None:
+    """Intercept FUNCTION-symbol renames before delegating to symrecover.
+
+    Returns None when the invocation is a classic placeholder-type rename
+    (or any other subcommand), so the existing type-only path runs
+    byte-for-byte unchanged.  Returns an exit code when the function path
+    handled the command.
+    """
+    if not symrecover_args:
+        return None
+    sub = symrecover_args[0]
+    aliases = {
+        "rename-plan": ("plan", ("old", "new_spec")),
+        "rename-fn-plan": ("plan", ("old", "new_spec")),
+        "rename-all": ("apply", ("old", "new_spec")),
+        "rename-fn-all": ("apply", ("old", "new_spec")),
+        "rename-apply": ("apply", ("old", "new_spec")),
+    }
+    if sub not in aliases:
+        return None
+    mode, _ = aliases[sub]
+    # Positional operands: first two non-flag tokens.
+    positionals = [a for a in symrecover_args[1:] if not a.startswith("-")]
+    if len(positionals) < 2:
+        return None  # let symrecover/argparse print usage
+    old, new = positionals[0], positionals[1]
+    from tools.coop.symbol_fn_rename import (
+        cmd_fn_apply,
+        cmd_fn_plan,
+        looks_like_function_rename,
+    )
+
+    if sub in ("rename-fn-plan", "rename-fn-all"):
+        handler = cmd_fn_plan if mode == "plan" else cmd_fn_apply
+        return handler(symrecover_args[1:], ROOT)
+    if not looks_like_function_rename(ROOT, old, new):
+        return None
+    if sub == "rename-apply" and "--all" not in symrecover_args:
+        print(
+            "ERROR: function renames rewrite source as well as symbols.txt; "
+            "use 'symbols rename-all <old> <new>' (or rename-apply --all).",
+            file=sys.stderr,
+        )
+        return 1
+    if mode == "plan":
+        return cmd_fn_plan(symrecover_args[1:], ROOT)
+    return cmd_fn_apply(symrecover_args[1:], ROOT)
 
 
 def cmd_behaviour(behaviour_args: list[str]) -> int:

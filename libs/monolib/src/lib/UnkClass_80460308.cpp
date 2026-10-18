@@ -180,7 +180,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
     const InfCode* dcode;
     u32 lmask;
     u32 dmask;
-    InfCode here;
+    const InfCode* here;
     u32 op;
     u32 len;
     u32 dist;
@@ -210,17 +210,17 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
             INF_PULLBYTE();
             INF_PULLBYTE();
         }
-        here = lcode[hold & lmask];
+        here = lcode + (hold & lmask);
     dolen:
-        op = here.op;
-        INF_DROPBITS(here.bits);
+        op = here->op;
+        INF_DROPBITS(here->bits);
+        len = here->val;
         if (op == 0) {
             /* literal */
-            INF_PUP(out) = (u8)here.val;
+            INF_PUP(out) = (u8)len;
         }
         else if (op & 16) {
             /* length base */
-            len = here.val;
             op &= 15; /* number of extra bits */
             if (op) {
                 if (bits < op) {
@@ -233,13 +233,13 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
                 INF_PULLBYTE();
                 INF_PULLBYTE();
             }
-            here = dcode[hold & dmask];
+            here = dcode + (hold & dmask);
         dodist:
-            op = here.op;
-            INF_DROPBITS(here.bits);
+            op = here->op;
+            INF_DROPBITS(here->bits);
+            dist = here->val;
             if (op & 16) {
                 /* distance base */
-                dist = here.val;
                 op &= 15; /* number of distance bits */
                 if (bits < op) {
                     INF_PULLBYTE();
@@ -336,7 +336,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
             }
             else if ((op & 64) == 0) {
                 /* 2nd level distance code */
-                here = dcode[here.val + (hold & ((1U << op) - 1))];
+                here = dcode + (dist + (hold & ((1U << op) - 1)));
                 goto dodist;
             }
             else {
@@ -347,7 +347,7 @@ extern "C" void ZlibInflateFastCore(InfStream* strm, u32 start)
         }
         else if ((op & 64) == 0) {
             /* 2nd level length code */
-            here = lcode[here.val + (hold & ((1U << op) - 1))];
+            here = lcode + (len + (hold & ((1U << op) - 1)));
             goto dolen;
         }
         else if (op & 32) {

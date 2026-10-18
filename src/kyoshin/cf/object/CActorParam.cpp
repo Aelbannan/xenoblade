@@ -1307,7 +1307,7 @@ unk28_done:
 
 
 extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, void* arts) {
-    // Early flag→r16, delta→r15 across the holder loops. Both must be dead
+    // Early flag->r16, delta->r15 across the holder loops. Both must be dead
     // before the snapshot flood so those GPRs can be reused for temps.
     // Mid-section combat state is a separate local (reclaims r16 after vf34C).
     int flag = 0;
@@ -1355,7 +1355,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     // Snapshot: uninit gauge/f27 decls birth saved FPRs (f31..f27). Uninit
     // t1660/t1658/t165C reserve scratch holes (retail f10/f12/f11). artsArg is
     // formed with a t1650-dependent no-op so the 0x1650 load stays early and
-    // t1650's web stays in the flood clique (avoids volatile→r0 coalesce).
+    // t1650's web stays in the flood clique (avoids volatile->r0 coalesce).
     float v17E8 = *(float*)((u8*)self + 0x17E8);
     float v17F4;
     float v17EC;
@@ -1448,7 +1448,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     *(u32*)((u8*)selfArg + 0x1858) = t16C4;
     selfArg->CActorParam_applyArtsStats(artsArg);
     if (self->CActorParam_getStatusTable() != NULL) {
-        // Retail post-fdivs: f26=0, gm→r14, bLT from cror→r15, combat→r16.
+        // Retail post-fdivs: f26=0, gm->r14, bLT from cror->r15, combat->r16.
         float ratio = v17E8 / v17F4;
         float f26 = lbl_eu_806677E4;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
@@ -1673,7 +1673,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 (s16)(*(s16*)((u8*)self + 0x1894) + add1898);
         }
 
-        // Retail re-checks getStatusTable before id-48 (null → skip to loop).
+        // Retail re-checks getStatusTable before id-48 (null -> skip to loop).
         if (self->CActorParam_getStatusTable() != NULL) {
             if (Counter_TestBit(self->CActorParam_getStatusTable(), 48) != 0) {
                 // Reuse gm's r14 for the status-48 value (retail overwrites gm).
@@ -1690,7 +1690,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                         ok = 0;
                         goto status48_done;
                     }
-                    // Fresh local after the bump — retail addi r3,r3,32 then
+                    // Fresh local after the bump -- retail addi r3,r3,32 then
                     // relative +4/+0x14/+0x24.. (not absolute from the original).
                     {
                         u8* o2 = o + 0x20;
@@ -2021,7 +2021,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 float hp = *(float*)((u8*)self + 0x17F4);
                 double mag;
                 double d;
-                // Select magic first, then hp + mag → retail fadd f0,f1,f0.
+                // Select magic first, then hp + mag -> retail fadd f0,f1,f0.
                 if (hp > lbl_eu_806677E4) {
                     mag = lbl_eu_806677F0;
                 } else {
@@ -2088,13 +2088,13 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
             }
 
-            // Rematerialize dest each time (retail addi r3,r31,imm — not CSE).
+            // Rematerialize dest each time (retail addi r3,r31,imm -- not CSE).
             std::memset((u8*)self + 0x16C8, 0, 120);
 
-            // int temps → stw spills (retail 124(sp)); s16 would sth lower.
+            // int temps -> stw spills (retail 124(sp)); s16 would sth lower.
             // Memset(82) dest is formed as (u8*)self+0x1740 at the call so
             // MWCC can schedule addi r3 / li r4 / li r5 early while the
-            // 0x1770 shuffle spills and the 0x1740 block occupies r16–r30.
+            // 0x1770 shuffle spills and the 0x1740 block occupies r16-r30.
             int s1770 = *(s16*)((u8*)self + 0x1770);
             int s1772 = *(s16*)((u8*)self + 0x1772);
             int s176C = *(s16*)((u8*)self + 0x176C);

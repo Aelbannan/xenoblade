@@ -625,10 +625,10 @@ void cf::CfValueItemManager::collectValueItems() {
 // Toggle the item-record flag on the hikari-item manager singleton, passing
 // the arg through (retail: getter result in r3 feeds the second call).
 extern "C" void* ClearMenu_GetGlobal10();
-extern "C" void hikariSetEnableBit0(void* self, u32 enable);
+// (memberized: hikariSetEnableBit0 -> CfHikariItemRecord::SetEnableBit0; declaration moved into class CfHikariItemRecord)
 
 extern "C" void setItemEnable(void* self, void* arg) {
-    hikariSetEnableBit0(ClearMenu_GetGlobal10(), (u32)arg);
+    (ClearMenu_GetGlobal10())->SetEnableBit0((u32)arg);
 }
 
 // updateMapItems - per-frame map item update.  Walks every collected item,

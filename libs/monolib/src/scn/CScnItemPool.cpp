@@ -152,7 +152,7 @@ struct CScnItemBig {
 // Instantiate only the deleting dtor: this keeps the matched
 // __dt__19reslist<P8CScnItem>Fv body plus both weak vtables (the link-time
 // UNIT_RULES renames them to lbl_eu_8056E540/558). The standalone
-// default-ctor is deliberately NOT instantiated — retail carries it under
+// default-ctor is deliberately NOT instantiated -- retail carries it under
 // the flat __ct__reslist_CScnItem label, spelled out by hand below (a
 // template instantiation under Wii/1.1 can only emit the symbolic
 // __ct__19reslist<P8CScnItem>Fv mangling, which never pairs with the flat
@@ -234,6 +234,7 @@ public:
     void update();
     void vicbCleanupAC();   // this-4 thunk -> cleanupACPool (vtable+0x98)
     void vicbDtorThunk();   // this-4 thunk -> ~CScnItemPool   (vtable+0x90)
+    void cleanupACList();
 };
 
 // Cross-unit pool-item helpers (retail C-ABI, unmangled symbols).
@@ -353,7 +354,7 @@ struct CScnPoolSceneIf {
 //          via CScnItemPool_pushItemToList.
 //  kind 2: item->vfunc08(-1); clear small-slot flag at (item-mSlotsD0)/0x58.
 //  kind 4: item->vfunc08(-1); clear big-slot flag at (item-mSlotsD8)/0x3A8
-//          (signed division — retail emits the add-back correction form).
+//          (signed division -- retail emits the add-back correction form).
 //  other:  double-checked-null item->vfunc08(1).
 extern "C" __declspec(noinline) void CScnItemPool_releaseItemByKind(CScnItemPool* self, CScnItem* item) {
     if (CScnItemPool_getItemKind((u8*)item) == 1) {
@@ -575,7 +576,7 @@ extern "C" __declspec(noinline) void CScnItemPool_pushOtherToList(u32 unused, u3
     CScnItemPool_pushItemToList(arg1, &slot);
 }
 // CScnItemPool_countListNodes: node count of the reslist at self (sentinel walk).
-// Declare cur BEFORE end so end's vreg is born after cur's — the
+// Declare cur BEFORE end so end's vreg is born after cur's -- the
 // loop-invariant end takes the higher scratch r5 (retail lwz r5,4(r3)).
 // noinline: retail CALLS this helper from CScnItemPool_hasFreeSlot; without it MWCC
 // auto-inlines the same-TU body into the caller (19-structural residual).
@@ -708,8 +709,8 @@ extern "C" __declspec(noinline) void __dt__8048C378(CScnItemPoolListData* self) 
     self->field_0x18 = 0;
 }
 // cleanupACPool: 4-byte tail-call wrapper to CScnItemPool_cleanupACList (retail: b CScnItemPool_cleanupACList)
-extern "C" void CScnItemPool_cleanupACList(CScnItemPool* self);
-__declspec(noinline) void CScnItemPool::cleanupACPool() { CScnItemPool_cleanupACList(this); }
+// (memberized: CScnItemPool_cleanupACList -> CScnItemPool::cleanupACList; declaration moved into class CScnItemPool)
+__declspec(noinline) void CScnItemPool::cleanupACPool() { this->cleanupACList(); }
 // CDeviceVICb-subobject thunks: adjust this from the +4 secondary base back to
 // the primary and tail-call the implementation.
 extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
@@ -773,7 +774,7 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
         words[0] = vt;
         words[1] = vt + 0x88;
         CScnItemPool_drainAllSubPools((u8*)self);
-        CScnItemPool_cleanupACList(self);
+        self->cleanupACList();
         __dt__8048C378((CScnItemPoolListData*)self->mList0C);
         __dt__8048C378((CScnItemPoolListData*)self->mList2C);
         __dt__8048C378((CScnItemPoolListData*)self->mList4C);
@@ -820,7 +821,7 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
 // retail reloc names exactly.
 
 // Foreign words referenced by the blocks below (defined in monolibdata2 /
-// other TUs). cleanupACPool__12CScnItemPoolFv is this TU's own member — the
+// other TUs). cleanupACPool__12CScnItemPoolFv is this TU's own member -- the
 // extern "C" spelling matches its C++ mangled symbol exactly.
 extern "C" {
 extern u32 lbl_eu_80663938[];  // RTTI locator ti(CScnItemPool) (.sdata)
@@ -839,7 +840,7 @@ extern void cleanupACPool__12CScnItemPoolFv();
 // Sized 0x10 so the retail align pad lands inside the definition.
 extern "C" const char lbl_eu_80523F18[0x10] = "CScnItemPool";
 
-// [.data] 0x8056E488-0x8056E52C (0xA4): __vt__12CScnItemPool — primary group
+// [.data] 0x8056E488-0x8056E52C (0xA4): __vt__12CScnItemPool -- primary group
 // ([rtti, 0, dtor, IWorkEvent 1-31]) followed by the CDeviceVICb sub-vtable
 // group ([rtti, -4, 5 slots]).
 extern "C" u32 lbl_eu_8056E488[41] = {
@@ -880,8 +881,8 @@ extern "C" u32 lbl_eu_8056E52C[5] = {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void CScnItemPool_cleanupACList(CScnItemPool* self) {
-    _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)&self->mListAC;
+void CScnItemPool::cleanupACList() {
+    _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)&this->mListAC;
     _reslist_node<CScnItem*>* itemNode;  // sp+0x18
     _reslist_node<CScnItem*>* out;       // sp+0x14
     _reslist_node<CScnItem*>* unlink;    // sp+0x10

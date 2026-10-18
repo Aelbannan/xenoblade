@@ -80,7 +80,7 @@ extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" int CFade_IsReady(CFade* self);
 extern "C" int CFade_IsVisible(CFade* self);
-extern "C" void CFade_FadeIn(CFade* self);
+// (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
 extern "C" void CFade_FadeOut(CFade* self);
 extern "C" void CFade_StartLoad(CFade* self);
 extern "C" void CFade_Update(CFade* self);
@@ -99,7 +99,7 @@ extern "C" int FloorMap_IsSysWinBusy(CFloorMap* self);
 extern "C" void FloorMap_UpdateRowPanePos(CFloorMap* self);
 extern "C" void FloorMap_CursorNextFloor(CFloorMap* self);
 extern "C" void FloorMap_OpenRowWindow(CFloorMap* self);
-extern "C" u8 FloorMap_GetActiveFlag58(CFloorMap* self);
+// (memberized: FloorMap_GetActiveFlag58 -> CFloorMapFull::GetActiveFlag58; declaration moved into class CFloorMapFull)
 extern "C" void FloorMap_ConfirmSelect(CFloorMap* self);
 extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
 extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);
@@ -145,14 +145,14 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self);
 // of the 1-line body, keeping the retail `bl Scn_SetPauseFlag` call site.
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 // CFloorMap helpers (retail unmangles these member helpers).
-extern "C" void FloorMap_SetMapTable(CFloorMap* self, u8 mapIdx);
+// (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
 extern "C" void FloorMap_LoadMapFiles(CFloorMap* self);
 extern "C" void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp / CFade draw + reset helpers.
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void CFade_Unload(CFade* self);
+// (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 // UI/sound + scene-active helpers.
 extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
 extern "C" int IsMenuState621F0();

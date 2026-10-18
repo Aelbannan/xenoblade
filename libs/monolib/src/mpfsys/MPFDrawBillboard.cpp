@@ -1,7 +1,7 @@
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
 
 extern "C" {
-    s8 lbl_eu_806658A0;   // .sbss word 0 (monolibdata2) — now owned by this TU
+    s8 lbl_eu_806658A0;   // .sbss word 0 (monolibdata2) -- now owned by this TU
     mpfsys::MPFDrawBillboard* lbl_eu_806658A4;   // .sbss word 1
 }
 

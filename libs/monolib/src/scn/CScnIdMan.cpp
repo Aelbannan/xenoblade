@@ -59,11 +59,11 @@ void CScnIdMan::cbRenderBefore() {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056EC80-0x8056EC90 (16 bytes) — CScnIdMan vtable + RTTI typeinfo.
+// [.data] 0x8056EC80-0x8056EC90 (16 bytes) -- CScnIdMan vtable + RTTI typeinfo.
 extern "C" u32 lbl_eu_80663A78;  // .sdata RTTI typeinfo (foreign TU)
 extern "C" void __dt__9CScnIdManFv();   // this-TU dtor symbol
 extern "C" void cbRenderBefore__9CScnIdManFv();  // this-TU member symbol
-// [.data] 0x8056EC80-0x8056EC90 (16 bytes) — CScnIdMan vtable + RTTI typeinfo.
+// [.data] 0x8056EC80-0x8056EC90 (16 bytes) -- CScnIdMan vtable + RTTI typeinfo.
 extern "C" u32 lbl_eu_8056EC80[0x4] = {
     (u32)&lbl_eu_80663A78,
     0x00000000,

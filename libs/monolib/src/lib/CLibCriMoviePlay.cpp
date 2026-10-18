@@ -49,7 +49,7 @@ extern "C" {
 
 // External function declarations
 extern "C" {
-    // GX cache (typed like CScnBloom / CView — void* erased at codegen)
+    // GX cache (typed like CScnBloom / CView -- void* erased at codegen)
     void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
     void setBlendState__8CGXCacheFii(CGXCache* cache, int a, int b);
     void resetGXStateA__8CGXCacheFv(CGXCache* cache);

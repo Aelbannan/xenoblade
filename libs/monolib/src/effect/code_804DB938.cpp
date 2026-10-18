@@ -266,7 +266,7 @@ int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
 // ---------------------------------------------------------------------------
 
 // Order X, Y, Z.
-// NOTE: idx-first trig variant — this caller's register context needs
+// NOTE: idx-first trig variant -- this caller's register context needs
 // mulhw r3 / xoris r0 like retail (see CERot_AxisToMatrix).
 void CERotEulerXYZ(ml::CMat34* mtx, Vec* ang) {
     // Retail frame slots run work(0x98) > rotY(0x68) > work2(0x38) > rotZ(0x8):

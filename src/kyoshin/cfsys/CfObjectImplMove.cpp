@@ -1415,13 +1415,13 @@ tail:
 // list (type 0x20) bound to this object's vf48 handle, then re-position each
 // listed effect at the shared constant vector and hand the list head to
 // vf70 before tearing the holder down.
-void MoveImplSweepReposition(CfObjectImplMoveObj* self) {
-    self->field_0x18->field_04->b20(0x400000);
-    self->field_0x18->field_04->b20(0x800000);
+void CfObjectImplMoveObj::SweepReposition() {
+    this->field_0x18->field_04->b20(0x400000);
+    this->field_0x18->field_04->b20(0x800000);
     CfMoveEnumHolder holder;
     CTaskGame_enumListCtor(&holder);
     startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-    u32 handle = self->vf48();
+    u32 handle = this->vf48();
     sortEntriesByDistance(CTaskGame_enumListGet(&holder), (void*)handle);
     // The count is re-read through CTaskGame_enumListGet on every use (retail makes
     // a fresh call each time).
@@ -1429,12 +1429,12 @@ void MoveImplSweepReposition(CfObjectImplMoveObj* self) {
         for (u32 i = 0; i < ((CfMoveEnumList*)CTaskGame_enumListGet(&holder))->field_620; i++) {
             void* entry =
                 MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
-            self->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
+            this->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
                 lbl_eu_80666C60);
         }
     }
-    self->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
-    self->vf80();
+    this->vf70(findFirstCleanObjectId(CTaskGame_enumListGet(&holder)));
+    this->vf80();
     __dt__80043E88(&holder, -1);
 }
 

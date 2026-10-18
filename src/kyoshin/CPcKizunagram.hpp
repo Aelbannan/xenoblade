@@ -150,6 +150,8 @@ struct CPcKizunagramBig {
     u32 field_0x884;                    // 0x884
     u8 data888[0x14];                   // 0x888 .. 0x89C
     int field_0x89C;                    // 0x89C
+    void SetActiveSlot(int slotIdx);
+    void PersistSlotEntry(CPcKizunaSlotEntry* entry);
 };
 
 // Chart object shared by KizunagramStoreChartEntry/F528/F768/F9AC (starts at work+0x3534).
@@ -168,6 +170,8 @@ struct CPcKizunaChart {
             CPcKizunaSlot workSlots[0xb];    // 0x3D4 - current chart entries
         };
     };
+    void KizunagramClearChartEntry(int a, int b);
+    void KizunagramStoreWorkEntry(int a, int b, int value);
 };
 
 // Working-copy entry view: for a total-chart position (slot a, sub b-1), the
@@ -220,7 +224,7 @@ extern "C" void KizunagramPulseRise(CPcKizunagram* self);
 extern "C" void KizunagramPulseFall(CPcKizunagram* self);
 extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value);
 extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self);
-extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b);
+// (memberized: KizunagramClearChartEntry -> CPcKizunaChart::KizunagramClearChartEntry; declaration moved into class CPcKizunaChart)
 extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* table, int val);
 extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id);
 extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id);

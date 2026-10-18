@@ -134,12 +134,12 @@ extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flag
 #pragma optimize_for_size on
 // Initialise the Kizuna talk list (retail initTalkList): load the talk-list
 // file and the shared archive, then set up the scroll bar.
-void initTalkList(CKizunaTalkList* self) {
+void CKizunaTalkList::initTalkList() {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    self->mEntryCount = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], self, 0, 0);
-    self->mUnknown18 = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], self, 0, 0);
-    CScrollBar_loadLayoutArc(&self->mScrollBar);
-    self->mUnknown86 = 0;
+    this->mEntryCount = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, &lbl_eu_8050E990[0x67], this, 0, 0);
+    this->mUnknown18 = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(KyoshinHeap_GetField44(), &lbl_eu_8050E990[0x82], this, 0, 0);
+    CScrollBar_loadLayoutArc(&this->mScrollBar);
+    this->mUnknown86 = 0;
 }
 #pragma optimize_for_size off
 
@@ -153,27 +153,27 @@ extern "C" __declspec(noinline) void rewindTalkAnim28(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self);
 
 #pragma optimize_for_size on
-void updateTalkList(CKizunaTalkList* self) {
-    if (self->mState84 != 0) {
-        switch (self->mState85) {
+void CKizunaTalkList::updateTalkList() {
+    if (this->mState84 != 0) {
+        switch (this->mState85) {
         case 1:
-            advanceTalkAnim24(self);
+            advanceTalkAnim24(this);
             break;
         case 2:
-            advanceTalkAnim28(self);
+            advanceTalkAnim28(this);
             break;
         case 4:
-            rewindTalkAnim28(self);
+            rewindTalkAnim28(this);
             break;
         case 5:
-            rewindTalkAnim24(self);
+            rewindTalkAnim24(this);
             break;
         }
 
         // Layout virtual slot 0x38/4: disable animation.
-        ((void (*)(void*, int))(*(void***)self->mpLayout20)[0x38 / 4])(self->mpLayout20, 0);
-        Cur_Update(&self->mCursor);
-        CScrollBar_UpdateDispatch(&self->mScrollBar);
+        ((void (*)(void*, int))(*(void***)this->mpLayout20)[0x38 / 4])(this->mpLayout20, 0);
+        Cur_Update(&this->mCursor);
+        CScrollBar_UpdateDispatch(&this->mScrollBar);
     }
 }
 #pragma optimize_for_size off
@@ -181,11 +181,11 @@ void updateTalkList(CKizunaTalkList* self) {
 #pragma optimize_for_size on
 // Draw the talk list (retail drawTalkList): draw the layout, scroll bar and
 // cursor when the list is visible.
-void drawTalkList(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
-    if (self->mState84 != 0) {
-        drawLayout(self->mpLayout20, pDrawInfo, 0, 1);
-        CScrollBar_draw(&self->mScrollBar, (void*)pDrawInfo);
-        Cur_DrawLayout(&self->mCursor, (void*)pDrawInfo);
+void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
+    if (this->mState84 != 0) {
+        drawLayout(this->mpLayout20, pDrawInfo, 0, 1);
+        CScrollBar_draw(&this->mScrollBar, (void*)pDrawInfo);
+        Cur_DrawLayout(&this->mCursor, (void*)pDrawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -193,23 +193,23 @@ void drawTalkList(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 #pragma optimize_for_size on
 // Teardown (retail teardownTalkList): release the BDAT query state, file handles,
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
-void teardownTalkList(CKizunaTalkList* self) {
+void CKizunaTalkList::teardownTalkList() {
     getEntry__5CBdatFUl(2);
-    closeFileHandle((CFileHandle**)&self->mEntryCount);
-    closeFileHandle((CFileHandle**)&self->mUnknown18);
-    self->mState84 = 0;
-    if (self->mpLayout20 != NULL) {
+    closeFileHandle((CFileHandle**)&this->mEntryCount);
+    closeFileHandle((CFileHandle**)&this->mUnknown18);
+    this->mState84 = 0;
+    if (this->mpLayout20 != NULL) {
         // Layout virtual slot 0x08/4.
-        ((void (*)(void*, int))((void**)self->mpLayout20)[0x08 / 4])(self->mpLayout20, 1);
-        self->mpLayout20 = NULL;
+        ((void (*)(void*, int))((void**)this->mpLayout20)[0x08 / 4])(this->mpLayout20, 1);
+        this->mpLayout20 = NULL;
     }
-    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mUnknown1C);
-    self->mUnknown1C = 0;
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C);
+    this->mUnknown1C = 0;
 
     // Cursor virtual slot 0x0c/4 on the embedded cursor.
-    ((void (*)(void*))((void**)*(void**)&self->mCursor[0])[0x0c / 4])(&self->mCursor[0]);
-    CScrollBar_Teardown(&self->mScrollBar);
-    deleteRegion((UnkClass_8045F564*)((u8*)self + 4));
+    ((void (*)(void*))((void**)*(void**)&this->mCursor[0])[0x0c / 4])(&this->mCursor[0]);
+    CScrollBar_Teardown(&this->mScrollBar);
+    deleteRegion((UnkClass_8045F564*)((u8*)this + 4));
     lbl_eu_806648B8 = NULL;
 }
 #pragma optimize_for_size off
@@ -471,9 +471,9 @@ void buildTalkList(TalkListEntryArray* arr) {
 
 // Whether the talk-list has anything to show (retail hasVisibleTalks): returns
 // the unknown-0x86 state byte when the scroll bar is visible, else 0.
-u8 hasVisibleTalks(CKizunaTalkList* self) {
-    if (CScrollBar_isVisible(&self->mScrollBar)) {
-        return self->mUnknown86;
+u8 CKizunaTalkList::hasVisibleTalks() {
+    if (CScrollBar_isVisible(&this->mScrollBar)) {
+        return this->mUnknown86;
     }
     return 0;
 }
@@ -481,133 +481,133 @@ u8 hasVisibleTalks(CKizunaTalkList* self) {
 
 // Begin showing the talk list (retail showTalkList): when idle, mark state 1,
 // bind the entry-depart/entry animations and configure the scroll bar.
-void showTalkList(CKizunaTalkList* self) {
-    if (self->mState85 == 0) {
-        self->mState85 = 1;
-        self->mNeedsRebuild = 0;
-        bindScrollOutAnims(self);
-        moveTalkCursor(self);
+void CKizunaTalkList::showTalkList() {
+    if (this->mState85 == 0) {
+        this->mState85 = 1;
+        this->mNeedsRebuild = 0;
+        bindScrollOutAnims(this);
+        moveTalkCursor(this);
         f32 vec[3];
         vec[0] = lbl_eu_806689C8;
         vec[1] = lbl_eu_806689CC;
         vec[2] = lbl_eu_806689D0;
-        CScrollBar_InitRootPane(&self->mScrollBar, vec);
-        CScrollBar_UpdateThumb(&self->mScrollBar, 7, self->mEntryArray.mCount);
-        CScrollBar_requestScrollIn(&self->mScrollBar);
+        CScrollBar_InitRootPane(&this->mScrollBar, vec);
+        CScrollBar_UpdateThumb(&this->mScrollBar, 7, this->mEntryArray.mCount);
+        CScrollBar_requestScrollIn(&this->mScrollBar);
     }
 }
 
 // Advance from display to dismissal (retail hideTalkList): when the list is
 // shown (state 3), step to 4 and make the cursor leave the list.
-void hideTalkList(CKizunaTalkList* self) {
-    if (self->mState85 == 3u) {
-        self->mState85 = 4;
-        self->mNeedsRebuild = 0;
-        bindScrollInAnims(self);
-        Cur_SetVisible(&self->mCursor, 0);
-        CScrollBar_requestScrollOut(&self->mScrollBar);
+void CKizunaTalkList::hideTalkList() {
+    if (this->mState85 == 3u) {
+        this->mState85 = 4;
+        this->mNeedsRebuild = 0;
+        bindScrollInAnims(this);
+        Cur_SetVisible(&this->mCursor, 0);
+        CScrollBar_requestScrollOut(&this->mScrollBar);
         playUISound__FUl(6);
     }
 }
 
-void scrollTalkListUp(CKizunaTalkList* self) {
+void CKizunaTalkList::scrollTalkListUp() {
     // Scroll up one position through the talk entries.
-    u8 count = self->mEntryArray.mCount;
-    u8 dec = self->mUnknown88 - 1;
-    self->mUnknown88 = (s8)dec;
+    u8 count = this->mEntryArray.mCount;
+    u8 dec = this->mUnknown88 - 1;
+    this->mUnknown88 = (s8)dec;
     if ((s8)dec < 0) {
-        self->mUnknown88 = 0;
-        s16 pos = self->mUnknown8A - 1;
-        self->mUnknown8A = pos;
+        this->mUnknown88 = 0;
+        s16 pos = this->mUnknown8A - 1;
+        this->mUnknown8A = pos;
         if (pos < 0) {
             if (count >= 7) {
-                self->mUnknown88 = 6;
-                self->mUnknown8A = (s16)(count - 7);
+                this->mUnknown88 = 6;
+                this->mUnknown8A = (s16)(count - 7);
             } else {
                 u8 n = count - 1;
-                self->mUnknown88 = (s8)n;
-                self->mUnknown8A = 0;
+                this->mUnknown88 = (s8)n;
+                this->mUnknown8A = 0;
                 if ((s8)n < 0)
-                    self->mUnknown88 = 0;
+                    this->mUnknown88 = 0;
             }
         }
     }
-    renderTalkRows(self);
-    moveTalkCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
+    renderTalkRows(this);
+    moveTalkCursor(this);
+    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
     playUISound__FUl(1);
 }
 
-void scrollTalkListDown(CKizunaTalkList* self) {
+void CKizunaTalkList::scrollTalkListDown() {
     // Scroll down one position through the talk entries.
-    u8 count = self->mEntryArray.mCount;
+    u8 count = this->mEntryArray.mCount;
     if (count >= 7) {
-        self->mUnknown88 = self->mUnknown88 + 1;
-        if (self->mUnknown88 >= 7) {
-            self->mUnknown88 = 6;
+        this->mUnknown88 = this->mUnknown88 + 1;
+        if (this->mUnknown88 >= 7) {
+            this->mUnknown88 = 6;
             int limit = count - 7;
-            self->mUnknown8A = self->mUnknown8A + 1;
-            if (self->mUnknown8A > limit) {
-                self->mUnknown88 = 0;
-                self->mUnknown8A = 0;
+            this->mUnknown8A = this->mUnknown8A + 1;
+            if (this->mUnknown8A > limit) {
+                this->mUnknown88 = 0;
+                this->mUnknown8A = 0;
             }
         }
     } else {
-        self->mUnknown88 = self->mUnknown88 + 1;
-        if (self->mUnknown88 >= count) {
-            self->mUnknown88 = 0;
-            self->mUnknown8A = 0;
+        this->mUnknown88 = this->mUnknown88 + 1;
+        if (this->mUnknown88 >= count) {
+            this->mUnknown88 = 0;
+            this->mUnknown8A = 0;
         }
     }
-    renderTalkRows(self);
-    moveTalkCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
+    renderTalkRows(this);
+    moveTalkCursor(this);
+    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
     playUISound__FUl(1);
 }
 
-void pageTalkListUp(CKizunaTalkList* self) {
+void CKizunaTalkList::pageTalkListUp() {
     // Scroll up by a page of seven entries.
-    u8 count = self->mEntryArray.mCount;
+    u8 count = this->mEntryArray.mCount;
     if (count >= 7) {
-        s16 pos = self->mUnknown8A - 7;
-        self->mUnknown8A = pos;
+        s16 pos = this->mUnknown8A - 7;
+        this->mUnknown8A = pos;
         if (pos < 0) {
-            self->mUnknown88 = (s8)(pos + 6);
-            self->mUnknown8A = 0;
-            if (self->mUnknown88 < 0)
-                self->mUnknown88 = 0;
+            this->mUnknown88 = (s8)(pos + 6);
+            this->mUnknown8A = 0;
+            if (this->mUnknown88 < 0)
+                this->mUnknown88 = 0;
         }
     } else {
-        self->mUnknown88 = 0;
-        self->mUnknown8A = 0;
+        this->mUnknown88 = 0;
+        this->mUnknown8A = 0;
     }
-    renderTalkRows(self);
-    moveTalkCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
+    renderTalkRows(this);
+    moveTalkCursor(this);
+    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
     playUISound__FUl(1);
 }
 
-void pageTalkListDown(CKizunaTalkList* self) {
+void CKizunaTalkList::pageTalkListDown() {
     // Scroll down by a page of seven entries, clamping to the list end.
-    u8 count = self->mEntryArray.mCount;
+    u8 count = this->mEntryArray.mCount;
     if (count >= 7) {
-        self->mUnknown8A = self->mUnknown8A + 7;
+        this->mUnknown8A = this->mUnknown8A + 7;
         int limit = count - 7;
-        if (self->mUnknown8A > limit) {
-            self->mUnknown88 = self->mUnknown8A - limit;
-            self->mUnknown8A = limit;
-            if (self->mUnknown88 >= 7)
-                self->mUnknown88 = 6;
+        if (this->mUnknown8A > limit) {
+            this->mUnknown88 = this->mUnknown8A - limit;
+            this->mUnknown8A = limit;
+            if (this->mUnknown88 >= 7)
+                this->mUnknown88 = 6;
         }
     } else {
-        self->mUnknown88 = count - 1;
-        self->mUnknown8A = 0;
-        if (self->mUnknown88 < 0)
-            self->mUnknown88 = 0;
+        this->mUnknown88 = count - 1;
+        this->mUnknown8A = 0;
+        if (this->mUnknown88 < 0)
+            this->mUnknown88 = 0;
     }
-    renderTalkRows(self);
-    moveTalkCursor(self);
-    CScrollBar_PlaceThumb(&self->mScrollBar, (u16)self->mUnknown8A);
+    renderTalkRows(this);
+    moveTalkCursor(this);
+    CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
     playUISound__FUl(1);
 }
 
@@ -919,6 +919,6 @@ extern "C" __declspec(noinline) void* talkEntryAt(void* self, u32 idx) {
 // Rebuild-pending flag (retail func_8027355C): the pending-rebuild byte at
 // +0x87, read as an int so external callers keep a plain cmpwi on the result.
 // Member alias: CKizunaTalkList::needsRebuild.
-extern "C" int needsTalkRebuild(CKizunaTalkList* self) {
-    return self->mNeedsRebuild;
+int CKizunaTalkList::needsTalkRebuild() {
+    return this->mNeedsRebuild;
 }

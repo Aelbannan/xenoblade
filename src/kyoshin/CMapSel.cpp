@@ -444,10 +444,10 @@ extern "C" void __declspec(noinline) moveMapSelPageDown(CMapSel* self) {
     playUISound__FUl(1);
 }
 
-u8 getMapGridCell(CMapSelFull* self){
-    s8 x = self->field_8D;
-    s8 y = self->field_8C;
-    return self->mGridData[x + y];
+u8 CMapSelFull::getMapGridCell(){
+    s8 x = this->field_8D;
+    s8 y = this->field_8C;
+    return this->mGridData[x + y];
 }
 
 /* finishMapSelLoad - Finish the map-data load: when animation 1 completes,

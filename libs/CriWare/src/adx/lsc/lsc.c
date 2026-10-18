@@ -425,7 +425,7 @@ u32 lbl_eu_805EC440[4];
 // null path are REQUIRED for retail codegen: the return-value liveness keeps
 // the address base in r4 (retail lis r4; addi r4; lwz r12,0(r4)), and
 // `#pragma peephole off` blocks MWCC's lwzu fold of the addi+lwz pair
-// (peephole on always emits `lwzu r12, LO(r4)` — 0x24 vs retail 0x28).
+// (peephole on always emits `lwzu r12, LO(r4)` -- 0x24 vs retail 0x28).
 // The final `return fn(a1,a2)` passes the callee's r3 through (retail
 // bctrl; blr with no extra move).
 #pragma peephole off

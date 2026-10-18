@@ -4,7 +4,7 @@
 //   lbl_eu_80522458 (.rodata 0x2) = "."
 // getNoPathExtName's rfind needle and itoa's empty string (retail references
 // the pooled "" at lbl_eu_80522458 + 2). The sdata2_threshold 0 pragma keeps
-// the 2-byte const string in .rodata — MWCC would otherwise route a <=8B
+// the 2-byte const string in .rodata -- MWCC would otherwise route a <=8B
 // const into .sdata2, and consumers address it via lis/@l (matching retail).
 #ifdef __MWERKS__
 #pragma push

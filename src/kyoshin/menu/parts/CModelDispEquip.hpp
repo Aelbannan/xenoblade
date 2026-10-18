@@ -311,6 +311,7 @@ public:
     f32 colorA;     // 0x10A4
     f32 scale1[3];  // 0x10A8
     f32 scale2[3];  // 0x10B4
+    int LoadModelArc(u32 param);
 };
 
 // C-linkage imports (retail unmangled symbols).

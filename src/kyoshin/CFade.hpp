@@ -47,6 +47,8 @@ public:
 
     ~CFade();
     bool OnFileEvent(CEventFile* pEventFile);
+    void Unload();
+    void In();
 };
 
 // Retail-unmangled fade helpers

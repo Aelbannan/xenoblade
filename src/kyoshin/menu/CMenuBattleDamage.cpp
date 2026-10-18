@@ -30,8 +30,8 @@
 extern "C" void* __dt__17CMenuBattleDamageFv(void*, int);
 
 // Defined below in this TU (damage-slot enqueue; also called by BtlDmg_NotifyDamage).
-extern "C" void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId,
-                              int value, u32 flags);
+// (memberized: BtlDmg_SpawnPopup -> CMenuBattleDamage::BtlDmg_SpawnPopup; declaration moved into class CMenuBattleDamage)
+//
 
 // Unmangled retail ctor symbol; takes the owning scene (stored at +0x60).
 // Zero-fills the entries twice: first directly, then by copying a
@@ -493,7 +493,7 @@ CMenuBattleDamage* BtlDmg_Create(CProcess* parent, CScn* scene) {
 extern "C" void BtlDmg_NotifyDamage(int actorId, int value) {
     CMenuBattleDamage* g = lbl_eu_80663F28;
     if (g) {
-        BtlDmg_SpawnPopup(g, actorId, value, 0);
+        g->BtlDmg_SpawnPopup(actorId, value, 0);
     }
 }
 extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->mDamageType = val; }
@@ -521,7 +521,7 @@ extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
             return;
         }
     }
-    BtlDmg_SpawnPopup(lbl_eu_80663F28, actorId, value, flags);
+    lbl_eu_80663F28->BtlDmg_SpawnPopup(actorId, value, flags);
 }
 
 // Cursor state machine: state 2 -> 3 (damage-up animation), enabling the
@@ -654,11 +654,10 @@ extern "C" void BtlDmg_QueueDraw(CMenuBattleDamageQueue* self) {
 // either the big damage layout (flags == 0) or the small label layout
 // (flags != 0), chaining the animation start frame to a previous entry of
 // the same actor so popups don't overlap.
-void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
-                    u32 flags) {
+void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
     s8 found = -1;
     for (u8 i = 0; i < 8; i++) {
-        if (self->mEntries[i].mActive == 0) {
+        if (this->mEntries[i].mActive == 0) {
             found = (s8)i;
             break;
         }
@@ -671,7 +670,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
     u32 aliveCount = 0;
     u8 maxZ = 0;
     for (u8 i = 0; i < 0x20; i++) {
-        CMenuBattleDamageEntry& o = self->mEntries[i];
+        CMenuBattleDamageEntry& o = this->mEntries[i];
         if (o.mActive != 0) {
             CMenuBattleDamageActor* a = findObjectById((int)o.field_24);
             if (a != 0 && (a->field_0x64 & 2) != 0) {
@@ -683,11 +682,11 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
         }
     }
 
-    CMenuBattleDamageEntry& e = self->mEntries[found];
+    CMenuBattleDamageEntry& e = this->mEntries[found];
     e.mActive = 1;
     e.field_20 = value;
     e.field_24 = actorId;
-    e.field_30 = self->mDamageDir;
+    e.field_30 = this->mDamageDir;
     e.field_31 = maxZ + 1;
 
     nw4r::math::VEC3 tmp;    // 0x10 (vfn12C strided components)
@@ -721,7 +720,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
             world.y += lbl_eu_80666F6C;
         }
 
-        CMenuBattleDamagePose* pose = Scn_FindCamItem(self->mScn, -1);
+        CMenuBattleDamagePose* pose = Scn_FindCamItem(this->mScn, -1);
         CamMan_ProjectToScreen(&screen, pose, &world);
 
         screen.y = (screen.y - lbl_eu_80666F74) * lbl_eu_80666F78;
@@ -750,7 +749,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
         nw4r::lyt::Pane* pane = e.mLayout0->GetRootPane();
         pane->SetTranslate(screen);
 
-        switch (self->mDamageType) {
+        switch (this->mDamageType) {
         case 0:
             sprintf(buf8, lbl_eu_804FD524 + 0xc9);
             break;
@@ -763,7 +762,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
         }
 
         ml::FixStr<32> buf; // 0x34
-        switch (self->mDamageType) {
+        switch (this->mDamageType) {
         case 0:
             buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
             break;
@@ -835,13 +834,13 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
             ->SetVisible(false);
 
         const char* animName = lbl_eu_804FD524 + 0xf5;
-        if (self->mDamageType == 3) {
+        if (this->mDamageType == 3) {
             animName = lbl_eu_804FD524 + 0xfd;
-        } else if (self->mDamageType == 1) {
+        } else if (this->mDamageType == 1) {
             animName = lbl_eu_804FD524 + 0x112;
-        } else if (self->mDamageType == 2) {
+        } else if (this->mDamageType == 2) {
             animName = lbl_eu_804FD524 + 0x11a;
-        } else if (self->mDamageType == 0xa) {
+        } else if (this->mDamageType == 0xa) {
             animName = lbl_eu_804FD524 + 0x10a;
         } else {
             animName = lbl_eu_804FD524 + 0xf5;
@@ -854,7 +853,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
             ->SetVisible(true);
         LayoutSetTextBoxFmtValue(e.mLayout0, animName, buf.c_str(), 0);
 
-        if (self->_pad776[1] != 0) {
+        if (this->_pad776[1] != 0) {
             e.mLayout0->GetRootPane()
                 ->FindPaneByName(lbl_eu_804FD524 + 0x124, true)
                 ->SetVisible(true);
@@ -864,11 +863,11 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
         // numeric types, mAnim2 when the extra style flag is set.
         e.field_32 = 1;
         e.field_04 = e.mAnim1;
-        if (self->mDamageType == 2 || self->mDamageType == 1 ||
-            self->mDamageType == 0xa) {
+        if (this->mDamageType == 2 || this->mDamageType == 1 ||
+            this->mDamageType == 0xa) {
             e.field_04 = e.mAnim0;
         }
-        if (self->field_0x779 != 0) {
+        if (this->field_0x779 != 0) {
             e.field_04 = e.mAnim2;
         }
         e.mLayout0->UnbindAllAnimation();
@@ -879,7 +878,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
 
         e.field_34 = lbl_eu_80666F68;
         for (s8 j = found - 1; j >= 0; j--) {
-            CMenuBattleDamageEntry& p = self->mEntries[j];
+            CMenuBattleDamageEntry& p = this->mEntries[j];
             if (p.mActive == 0) {
                 continue;
             }
@@ -976,7 +975,7 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
 
         e.field_34 = lbl_eu_80666F68;
         for (s8 j = found - 1; j >= 0; j--) {
-            CMenuBattleDamageEntry& p = self->mEntries[j];
+            CMenuBattleDamageEntry& p = this->mEntries[j];
             if (p.mActive == 0) {
                 continue;
             }
@@ -1000,5 +999,5 @@ void BtlDmg_SpawnPopup(CMenuBattleDamage* self, int actorId, int value,
         }
     }
 
-    self->_pad776[0] += 1;
+    this->_pad776[0] += 1;
 }

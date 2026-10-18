@@ -4167,8 +4167,8 @@ void FloorMap_OpenRowWindow(void* self) {
 // stride 0x10). Map 18 aliases map 17's string and maps 26-28 alias map 25's,
 // so the last strings are reused; unknown ids clear the pointer. MWCC emits
 // this as a jump table.
-void FloorMap_SetMapTable(CFloorMap* self, u8 id) {
-    (void)self;
+void CFloorMap::SetMapTable(u8 id) {
+    (void)this;
     lbl_eu_80664798 = id;
     switch (id) {
     case 0:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x524]); break;
@@ -4218,7 +4218,7 @@ extern "C" u32 FloorMap_ClassifyByte41(u8* self) {
 
 extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)->field_5A; }
 
-extern "C" u8 FloorMap_GetActiveFlag58(CFloorMapFull* self) { return self->field_58; }
+u8 CFloorMapFull::GetActiveFlag58() { return this->field_58; }
 
 void FloorMap_ConfirmSelect(void* self) {
     extern int CSysWin_isActive(void*);

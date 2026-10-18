@@ -35,7 +35,7 @@ extern "C" void obbVolumePass(const char* self, u32 a, u32 b, u32 c, u32 d);
 // Cross-TU imports (monolib/coli collision manager entry points).
 extern "C" void beginColiPass(char* state, const f32* offset, u32 flags, int mode);
 extern "C" void beginLinkPass(char* state, const f32* offset, u32 flags, int mode);
-extern "C" void initColiMover(char* self);
+// (memberized: initColiMover -> CColiMoverState::initColiMover; declaration moved into class CColiMoverState)
 
 // Cross-TU imports (monolib/coli ray/query passes; retail plain symbols).
 // Note: MWCC Wii/1.1 rejects extern "C" calls where all six arguments are
@@ -118,7 +118,7 @@ struct ScnRmObj {
 void* __dt__804BD8E8(ScnRmObj* obj, s32 flags) {
     if (obj != NULL) {
         obj->field_0x00 = 0;
-        initColiMover(lbl_eu_8065F32C);
+        lbl_eu_8065F32C->initColiMover();
         if (flags > 0) {
             ::operator delete(obj);
         }

@@ -36,7 +36,7 @@ extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c);
 // setup.
 class CScnEnvLgtData;
 extern "C" void ScnEnvLgt_noopF940(CScnEnvLgtData* self);
-extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self);  // clears the data object's light state
+// (memberized: ScnEnvLgt_ClearLights -> CScnEnvLgtData::ClearLights; declaration moved into class CScnEnvLgtData) // clears the data object's light state
 
 // nw4r g3d G3DState::SetLightObj is missing from the (read-only) g3d_state.h;
 // declare it here so calls emit the retail mangled name.

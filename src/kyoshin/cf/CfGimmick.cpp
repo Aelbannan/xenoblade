@@ -806,7 +806,7 @@ extern "C" int CfGimmick_CheckFightListPlayerAlive(u32 playerId) {
         // null case as-is and dereferences the offset anyway).
         // List objects point at the CfObjectMove subobject (+0x3E9C); adjust
         // once to the player base. HP is vtable+0x128 on that same base
-        // (do not subtract 0x3E9C again — that emits lwzu -0x3E9C).
+        // (do not subtract 0x3E9C again -- that emits lwzu -0x3E9C).
         CfPlayerBase* base = (CfPlayerBase*)node->object;
         if (base != 0) {
             char* bbytes = (char*)base;

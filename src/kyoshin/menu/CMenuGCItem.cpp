@@ -19,7 +19,7 @@ public:
 extern "C" void cbRenderBefore__11CMenuGCItemFv(void*);
 
 // Phase-2 helper defined below (phase-2 input dispatch; advances mState to 3).
-extern "C" void CMenuGCItem_HandlePhase2(CMenuGCItem* self);
+// (memberized: CMenuGCItem_HandlePhase2 -> CMenuGCItem::HandlePhase2; declaration moved into class CMenuGCItem)
 
 /*
  * Retail constructor symbol (unmangled global). Combines the factory and the
@@ -148,7 +148,7 @@ void CMenuGCItem::Move() {
         }
         break;
     case 2:
-        CMenuGCItem_HandlePhase2(this);
+        this->HandlePhase2();
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
@@ -210,4 +210,4 @@ extern "C" int CMenuGCItem_IsActive() {
     return lbl_eu_80664C00 != 0;
 }
 
-extern "C" void CMenuGCItem_HandlePhase2(CMenuGCItem* self) {}
+void CMenuGCItem::HandlePhase2() {}

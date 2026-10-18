@@ -247,7 +247,7 @@ void* __dt__8012596C(void* self, int deleting) {
 }
 
 // Tag-processor base constructor (retail __ct__CTagProcessorBase): the member
-// ctor provides the compiler-generated nw4r base-ctor call — placement new
+// ctor provides the compiler-generated nw4r base-ctor call -- placement new
 // would add a null beq the retail does not have. novtable: the retail vtable
 // data lives in .data (lbl_eu_8052DA68), so the vptr is stored explicitly.
 CTagProcessorBase::CTagProcessorBase() {
@@ -280,7 +280,7 @@ extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
 }
 
 // Deleting destructor for CTagProcessorBase (retail __dt__17CTagProcessorBaseFv):
-// genuine C++ member dtor of the derived class — the compiler emits the nw4r
+// genuine C++ member dtor of the derived class -- the compiler emits the nw4r
 // base-dtor call with flag 0 and the operator delete when the deleting flag
 // is set (the retail shape). optimize_for_size merges the r30/r31 saves into
 // stmw/lmw and fixes the copy order (TagWriterCode7 family pattern).
@@ -567,7 +567,7 @@ void* __ct__CTagProcessor(void* self) {
 }
 
 // Deleting destructor for CTagProcessor (retail __dt__13CTagProcessorFv):
-// genuine C++ member dtor of the derived class — the compiler emits the base
+// genuine C++ member dtor of the derived class -- the compiler emits the base
 // dtor call (__dt__17CTagProcessorBaseFv) with flag 0 and the operator delete
 // when the deleting flag is set (the retail shape). optimize_for_size merges
 // the r30/r31 saves into stmw/lmw + fixes the copy order (family pattern).
@@ -1707,7 +1707,7 @@ void* __ct__CTagProcessorSE(void* self) {
 }
 
 // Deleting destructor for CTagProcessorSE (retail __dt__15CTagProcessorSEFv):
-// member dtor of the derived class — base dtor call with flag 0, then
+// member dtor of the derived class -- base dtor call with flag 0, then
 // operator delete when the deleting flag is set. optimize_for_size merges
 // the r30/r31 saves into stmw/lmw; the base dtor is noinline so its guard
 // isn't inlined into the derived dtor (single null-check, family pattern).
@@ -2033,7 +2033,7 @@ extern "C" __declspec(noinline) void TagProcBuildOpenText(CTagProcessorBase* msg
 
 // Tag-writer family (small variants): init a TagParam block with a tag code
 // NOTE: retail prologue is stwu; mflr; stw r0; stmw r30; or r30,r4,r4;
-// or r31,r6,r6 — the optimize_for_size pragma merges the callee-saved saves
+// or r31,r6,r6 -- the optimize_for_size pragma merges the callee-saved saves
 // into stmw/lmw and fixes the copy order (MWCC_CASES CPartyState
 // drawPartyState pattern); plain -O4,p emits reversed stw pairs + moves.
 #pragma optimize_for_size on

@@ -125,7 +125,7 @@ extern "C" __declspec(noinline) void sinit_804DB330() {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056FDC8-0x8056FDE8 (32 bytes) — two vtables.
+// [.data] 0x8056FDC8-0x8056FDE8 (32 bytes) -- two vtables.
 extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&NandRmPollState, (u32)&CNReqSaveDeallocIfOpen };
 extern "C" u32 lbl_eu_8056FDD8[4] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000 };
 
@@ -136,7 +136,7 @@ extern "C" u32 lbl_eu_80663BA0[2] = { (u32)&lbl_eu_80524638, (u32)&lbl_eu_8056FD
 extern "C" const char lbl_eu_80524638[0x10] = {
     0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x52,0x65,0x6D,0x6F,0x76,0x65,0x00 };
 
-// [.sbss] 0x806659F8-0x80665A00 (8 bytes) — the task vtable pointer + pad.
+// [.sbss] 0x806659F8-0x80665A00 (8 bytes) -- the task vtable pointer + pad.
 extern "C" {
     CNReqtaskRemoveVtbl* lbl_eu_806659F8;  // definition (zero-init, sbss word 0)
     u32 lbl_eu_806659F8_pad;               // 2nd sbss word

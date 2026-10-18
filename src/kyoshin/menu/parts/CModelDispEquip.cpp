@@ -12,7 +12,7 @@ extern "C" void ModelDispEquip_StepIdleBuildOrTick(CModelDispEquip*);
 extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip*);
 extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquip*);
 extern "C" __declspec(noinline) void ModelDispEquip_ClearFileSlot(u8* ptr);
-extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param);
+// (memberized: ModelDispEquip_LoadModelArc -> CModelDispEquip::LoadModelArc; declaration moved into class CModelDispEquip)
 extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val);
 extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip*, CActParamHolder*);
 extern "C" __declspec(noinline) void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d);
@@ -417,7 +417,7 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
                 m = actor->field_3F2C;
                 if (m == 0) ready = 0;
                 if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_isMoveActiveNow() == 0) ready = 0;
-                if (ModelDispEquip_LoadModelArc(self, actor->field_3F28) == 0) ready = 0;
+                if (self->LoadModelArc(actor->field_3F28) == 0) ready = 0;
             }
             if (holder->field_0x00 == 0 && ready != 0) {
                 // ---- build the display model (retail statement order) ----
@@ -660,7 +660,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         }
     }
 
-    if (ModelDispEquip_LoadModelArc(self, charId) == 0) allLoaded = 0;
+    if (self->LoadModelArc(charId) == 0) allLoaded = 0;
     if (allLoaded == 0) return;
 
     // ---- build the display model ----
@@ -783,14 +783,14 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
 // (PartyStateWin_PickAllocHandle), and kick the async read into modelFileHandle.
 // Path token: param<<20 | 0x78000000 | (rotl(handle,22) into bits 15..21) -
 // retail emits slwi + oris + rlwimi for exactly this expression form.
-extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param) {
+int CModelDispEquip::LoadModelArc(u32 param) {
     CModelDispFileCtx ctx;
     PartyStateWin_InitMemCounters(&ctx);
-    if (self->modelData != 0)
+    if (this->modelData != 0)
         return 1;
     // Positive-condition nesting: retail branches OVER the body to the shared
     // li r3,0 tail (bne/blt), instead of early-returning from inside.
-    if (self->modelFileHandle == 0) {
+    if (this->modelFileHandle == 0) {
         void* h = getBdatEntryColumn__Q22cf13CfGameManagerFv(param, 5);
         // false-init + explicit field stores keep MWCC from emitting the
         // out-of-line FixStr(bool) call - retail inlines the two zero stores.
@@ -807,8 +807,8 @@ extern "C" int ModelDispEquip_LoadModelArc(CModelDispEquip* self, u32 param) {
         if (size >= 0) {
             u32 alloc = PartyStateWin_PickAllocHandle(&ctx, (u32)size);
             CFileHandle* fh =
-                (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
-            self->modelFileHandle = fh;
+                (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, this, 0, 0);
+            this->modelFileHandle = fh;
             setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
         }
     }

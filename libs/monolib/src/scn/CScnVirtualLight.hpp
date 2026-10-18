@@ -322,6 +322,8 @@ public:
     CScnVirtualLightNode* mList;       // +0x14
     s32 mCapacity;                     // +0x18
     u8 field_0x1C;                     // +0x1C
+    void VlAllocNodes(u32 handle, int capacity);
+    void VlClearList();
 };
 
 class CLight {

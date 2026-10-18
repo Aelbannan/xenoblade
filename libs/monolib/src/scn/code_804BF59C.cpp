@@ -79,14 +79,14 @@ void ScnEnvLgt_Propagate(){}
 // declare this method; the catalog retains the original retail address
 // 0x804C3A04 and only its body is reconstructed.
 // ---------------------------------------------------------------------------
-extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self) {
+void CScnEnvLgtData::ClearLights() {
     // Walk each of the 8 LightObj entries: call Clear() on the cursor and
     // mask FLAG_ENABLE_LIGHT (LSB bit 2) out of mFlag. The retail codegen
     // keeps three pointers live (r28 = this, r30 = LightObj for the Clear()
     // call, r31 = the lagging base pointer used for the flag load/store)
     // plus the counter (r29).
-    char* clearCursor = reinterpret_cast<char*>(&self->mLightObjs[0]);
-    char* flagCursor = reinterpret_cast<char*>(self);
+    char* clearCursor = reinterpret_cast<char*>(&this->mLightObjs[0]);
+    char* flagCursor = reinterpret_cast<char*>(this);
     for (u32 i = 0; i < 8; ++i) {
         reinterpret_cast<nw4r::g3d::LightObj*>(clearCursor)->Clear();
         // Clear the FLAG_ENABLE_LIGHT bit (LSB bit 2) from mFlag. The retail
@@ -100,15 +100,15 @@ extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self) {
     // Reset the six float fields to 0.0f and the active-light count to 0.
     // The store order must match the retail (0x450 cluster first, then 0x438).
     extern const f32 lbl_eu_8066AF80;
-    f32* floats450 = self->mAmbColor;  // 0x450
+    f32* floats450 = this->mAmbColor;  // 0x450
     floats450[0] = lbl_eu_8066AF80;
     floats450[1] = lbl_eu_8066AF80;
     floats450[2] = lbl_eu_8066AF80;
-    f32* floats438 = self->mAmbColorBase;  // 0x438
+    f32* floats438 = this->mAmbColorBase;  // 0x438
     floats438[0] = lbl_eu_8066AF80;
     floats438[1] = lbl_eu_8066AF80;
     floats438[2] = lbl_eu_8066AF80;
-    self->mActiveLightCount = 0;
+    this->mActiveLightCount = 0;
 }
 
 // ---------------------------------------------------------------------------

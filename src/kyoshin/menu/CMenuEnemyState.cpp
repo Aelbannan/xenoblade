@@ -72,7 +72,7 @@ char lbl_eu_804FDBF8[0x2A0] =
 "pic_status_g\0mf80_tginf00_enmk00.tpl\0mf80_tginf00_enmk01.tpl\0mf80_tginf00_enmk02.tpl\0"
 "MNU_battle\0name\0txt_name_npc\0%03d\0txt_name_enemmy\0frame\0pic_gr\0icon\0\0\0\0\0\0";
 // Forward views: the .data RTTI area (defined at file end) plus sibling-TU
-// sdata locators and CfRes's "." separator — UNDEF here, addresses only,
+// sdata locators and CfRes's "." separator -- UNDEF here, addresses only,
 // zero bytes in-file. (80661A40 is CfRes's char[8]; a const-char view here.)
 extern const void* lbl_eu_8052C4F8[];
 extern const void* lbl_eu_80661958[];
@@ -771,7 +771,7 @@ void CMenuEnemyState::cbRenderBefore() {
         // Rematerialize &indices[j] each step (retail addi r1,0x8). Load depthB before
         // depthA so fcmpo uses f1/f0. XOR via store-reload of order[j]/pair[1].
         {
-            // pass-before-order + block-scoped limit → order=r9, j=r12, swapped=r11
+            // pass-before-order + block-scoped limit -> order=r9, j=r12, swapped=r11
             // (retail). Peak 99.172%: pass/limit/pair still color r8/r10/r30 vs
             // retail r10/r5/r8; XOR operand/dest Chaitin follows from that.
             // Decl order pins colors: order=r9, pass=r10, limit=r5, left=CTR;
@@ -1016,7 +1016,7 @@ void CMenuEnemyState::Move() {
 
         if (actor2 != NULL) {
             f32 stateVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getHp();
-            // Retail: state==FEC && panelData[0x1c]==0 → always cull.
+            // Retail: state==FEC && panelData[0x1c]==0 -> always cull.
             if (animMarker == stateVal) {
                 if (panel.unk1C == 0) {
                     panel.visible = z;
@@ -3117,7 +3117,7 @@ void CMenuEnemyState::Term() {
 // (destructor uses the hpp extern "C" decl.)
 // Address-taken extern "C" decls for member-defined slots (global scope never
 // collides with the class scope; signatures carry a dummy int so they cannot
-// be confused with the members — a same-signature same-TU extern "C" decl
+// be confused with the members -- a same-signature same-TU extern "C" decl
 // of a class member is MWCC 10322 poison (CNBanner pattern). Address-taken
 // only; the linker merges them onto the member definitions by name.
 extern "C" void Init__15CMenuEnemyStateFv(int);

@@ -424,6 +424,7 @@ struct EvtBdabModel {
     u32 field_0x14;   // 0x14: event type word (+6 vs +1 counter bump)
     u32 field_0x18;   // 0x18: flag word (bit 8 selects the packed-slot path)
     void* field_0x1C; // 0x1C: id/slot table (EvtBdabPtr1C)
+    int SeqProbeEvtSlot(u32* out);
 };
 
 // Readiness probe called by EvtSeqProbeEvtSlot (retail resolves it as the flat
@@ -511,6 +512,9 @@ public:
     u32 field_0x40;            // 0x40: busy flag (tested by EvtSeqIsSameNameType3Busy)
     u8 gap44[0x04];            // 0x44-0x47
     u32 field_0x48;            // 0x48: busy flag (tested by EvtSeqIsSameNameType3Busy)
+    void SeqInsertRtEvent();
+    int SeqIsSameNameType3Busy();
+    int SeqCheckRunGate();
 };  // size 0x4C
 
 // Object returned by UnkEvtListEntry::vf_0x14() on success; its vtable slot
@@ -622,6 +626,7 @@ public:
     u8 gap04[0x14];           // 0x04-0x17
     u32 field_0x18;           // 0x18
     UnkObj1C80168514* field_0x1C;  // 0x1C
+    int EvtSeqCheckEventRunGuard();
 };  // size 0x20
 
 // Object destructed by __dt__801682AC: memory-block wrapper with a data
@@ -865,13 +870,13 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqFinishSequence(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx);
-extern "C" void EvtSeqInsertRtEvent(UnkEvtListEntry* self);
+// (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
 extern "C" u32 EvtSeqResolvePackedResId(u32 resId);
 extern "C" int EvtSeqCheckRegionStatus(u8* data);
-extern "C" int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self);
-extern "C" int EvtSeqCheckRunGate(UnkEvtListEntry* self);
+// (memberized: EvtSeqIsSameNameType3Busy -> UnkEvtListEntry::SeqIsSameNameType3Busy; declaration moved into class UnkEvtListEntry)
+// (memberized: EvtSeqCheckRunGate -> UnkEvtListEntry::SeqCheckRunGate; declaration moved into class UnkEvtListEntry)
 extern "C" void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self);
-extern "C" int EvtSeqCheckEventRunGuard(UnkObj80168514* self);
+// (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
 extern "C" bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev);
 extern "C" int EvtSeqFindResAddr(u8* data, const char* name, s32* out);
 extern "C" int EvtSeqResolveAnmChr2(u8* data, const char* name, s32* out, s32* out2);

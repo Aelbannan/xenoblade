@@ -1778,11 +1778,11 @@ struct CItemBoxLabelArgs { u32 v[4]; };
 void renderItemBoxLabels(CItemBoxInfo* info, u32 arg2) {
     clearItemBoxPairTexts(info);
     resetItemBoxRowPanes(info);
-    // vals first → higher frame slot (sp+24); out second → sp+8.
+    // vals first -> higher frame slot (sp+24); out second -> sp+8.
     // A struct `vals = out` lowers to `__as__` (0x84). Retail reloads all
     // four words then stores them (0x94); first label call uses live w1,
     // second reloads staged vals[3].
-    // volatile: size-opt DSE was dropping unused vals[0]/[2] (0x94→0x7c).
+    // volatile: size-opt DSE was dropping unused vals[0]/[2] (0x94->0x7c).
     volatile CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
     getItemBoxLabelRec(out.v, info, (void*)arg2);
@@ -2186,7 +2186,7 @@ struct D8EPartyData { u32 w[12]; };
 // Distinct type for the high-frame party band.
 struct D8EPartySlot { u32 w[12]; };
 // Retail high-frame band (butting 0x4330 temps at sp+2592):
-//   party@2352 (48B) | listB@2400 (96B) | listA@2496 (96B) = 240B → base@2352.
+//   party@2352 (48B) | listB@2400 (96B) | listA@2496 (96B) = 240B -> base@2352.
 struct D8EHighFrame {
     D8EPartySlot party;
     CItemBoxInfoEntry listB[8];
@@ -2343,7 +2343,7 @@ extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 extern "C" const f32 lbl_eu_80668040;
 extern "C" const f32 lbl_eu_80668044;
 extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
-    // Packed selection: retail emits slot (rlwinm.→r26/CR0), then member
+    // Packed selection: retail emits slot (rlwinm.->r26/CR0), then member
     // (r18), then type (r27). Declaring member before type matches that
     // emission order; type stays longest-lived for r27.
     u8 memberRaw = (u8)((arg2 >> 8) & 0xFF);
@@ -2359,7 +2359,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     // ---- high-frame band: party + lists (retail sp+2352/2400/2496) ----
     // D8EHighFrame places party@2352. Member assign outlines __as__ in this
     // 26KB body (scratch small TUs inline mtctr/lwzu; inline_max does not help).
-    // Explicit dual-word loop ≈7% exact; CBattleState dest-4/stwu reorders
+    // Explicit dual-word loop ~7% exact; CBattleState dest-4/stwu reorders
     // loads (lwz8 before lwz4) and drops exact to ~3%.
     D8EHighFrame highFrame;
     {
@@ -2386,7 +2386,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     }
 
     // ---- character setup ----
-    // Two (u8) casts from the raw return → retail's paired rlwinm (save + arg).
+    // Two (u8) casts from the raw return -> retail's paired rlwinm (save + arg).
     u32 memberTmp = GetCollectedFlagByte(memberRaw);
     u8 member = (u8)memberTmp;
     void* charObj = CtrlObjectParam_GetCharEntry((u8)memberTmp);
@@ -2407,7 +2407,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     // ---- HP values (clamped to 9999) ----
     // String-pool base before HP so it takes r14 (retail) and HP lands in r18/r19.
     char* base = lbl_eu_805063BC;
-    // Both virtuals before either clamp — retail interleaves the two
+    // Both virtuals before either clamp -- retail interleaves the two
     // fctiwz conversions around the second vcall, not the first clamp.
     s32 hp1 = (s32)stats->CActorParam_getHp();
     s32 hp2 = (s32)stats->CActorParam_getDamageScale();
@@ -2415,7 +2415,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) — 3-arg.
+    // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) -- 3-arg.
     // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
     // so immediates stay plain +0x139, not parent+0x54+imm.
     LayoutSetTextBoxFmtValue(info->state.layout, &base[0x4D7],
@@ -2674,7 +2674,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         D8EComparisonStorage comparisonStorage;
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
-            // Member assign → li r0,6 + trailing word. Open: retail e_cur@1916 /
+            // Member assign -> li r0,6 + trailing word. Open: retail e_cur@1916 /
             // c_cur@2296 (380B apart), not adjacent array slots.
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EEntry& e_cur = comparisonStorage.weapon[0];

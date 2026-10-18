@@ -19,10 +19,10 @@ extern const volatile float kOneF = 1.0f;
 
 // Forward decls so the dispatch below stays independent of the helper bodies
 // (retail keeps every helper as an out-of-line bl call).
-extern "C" void NumSel_AdvanceOpen_B49C(CNumSelect* self);
-extern "C" void NumSel_RewindReset_B530(CNumSelect* self);
-extern "C" void NumSel_RestartAnim_B580(CNumSelect* self);
-extern "C" void NumSel_RestartAnimAlt_B644(CNumSelect* self);
+// (memberized: NumSel_AdvanceOpen_B49C -> CNumSelect::Sel_AdvanceOpen; declaration moved into class CNumSelect)
+// (memberized: NumSel_RewindReset_B530 -> CNumSelect::Sel_RewindReset; declaration moved into class CNumSelect)
+// (memberized: NumSel_RestartAnim_B580 -> CNumSelect::Sel_RestartAnim; declaration moved into class CNumSelect)
+// (memberized: NumSel_RestartAnimAlt_B644 -> CNumSelect::Sel_RestartAnimAlt; declaration moved into class CNumSelect)
 
 // Keep every helper out-of-line: MWCC -inline auto would otherwise fold them
 // into the state dispatcher below (retail keeps all five as bl calls).
@@ -97,55 +97,55 @@ extern "C" void NumSel_ApplyPaneVis_B410(CNumSelect* self, int value) {
 #pragma pop
 
 // Fade-out step: once anim 0x20 reaches 1.0, swap in anim 0x24 and enable it.
-extern "C" void NumSel_AdvanceOpen_B49C(CNumSelect* self) {
-    if (advanceAnimTransform(self->field_20, kOneF)) {
-        self->field_2F = 2;
-        self->field_2E = 1;
-        self->mpLayout->UnbindAllAnimation();
-        self->mpLayout->BindAnimation(self->field_24);
-        self->mpLayout->SetAnimationEnable(self->field_24, true);
+void CNumSelect::Sel_AdvanceOpen() {
+    if (advanceAnimTransform(this->field_20, kOneF)) {
+        this->field_2F = 2;
+        this->field_2E = 1;
+        this->mpLayout->UnbindAllAnimation();
+        this->mpLayout->BindAnimation(this->field_24);
+        this->mpLayout->SetAnimationEnable(this->field_24, true);
     }
 }
 
 // When the +0x20 animation has finished (AnimRewindFrame with the 1.0 constant),
 // reset the selection state bytes (m2C/m2E/m2F) for a fresh pass.
-void NumSel_RewindReset_B530(CNumSelect* self) {
-    if (AnimRewindFrame(self->field_20, kOneF)) {
-        self->field_2F = 0;
-        self->field_2E = 1;
-        self->field_2C = 0;
+void CNumSelect::Sel_RewindReset() {
+    if (AnimRewindFrame(this->field_20, kOneF)) {
+        this->field_2F = 0;
+        this->field_2E = 1;
+        this->field_2C = 0;
     }
 }
 
 /* Restart the +0x28 animation from frame 0: unbind everything, attach anim
  * +0x24, rewind its frame, and advance the state machine to step 2. */
-extern "C" void NumSel_RestartAnim_B580(CNumSelect* self) {
-    if (advanceAnimTransform(self->field_28, kOneF) == 0) {
+void CNumSelect::Sel_RestartAnim() {
+    if (advanceAnimTransform(this->field_28, kOneF) == 0) {
         return;
     }
-    self->field_28->SetFrame(0.0f);
-    self->mpLayout->Animate();
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_24);
-    self->mpLayout->SetAnimationEnable(self->field_24, true);
-    self->field_24->SetFrame(0.0f);
-    self->field_2F = 2;
-    self->field_2E = 1;
+    this->field_28->SetFrame(0.0f);
+    this->mpLayout->Animate();
+    this->mpLayout->UnbindAllAnimation();
+    this->mpLayout->BindAnimation(this->field_24);
+    this->mpLayout->SetAnimationEnable(this->field_24, true);
+    this->field_24->SetFrame(0.0f);
+    this->field_2F = 2;
+    this->field_2E = 1;
 }
 
 // Identical body to NumSel_RestartAnim_B580 (retail duplicates it byte for byte).
-extern "C" void NumSel_RestartAnimAlt_B644(CNumSelect* self) {
-    if (advanceAnimTransform(self->field_28, kOneF) == 0) {
+void CNumSelect::Sel_RestartAnimAlt() {
+    if (advanceAnimTransform(this->field_28, kOneF) == 0) {
         return;
     }
-    self->field_28->SetFrame(0.0f);
-    self->mpLayout->Animate();
-    self->mpLayout->UnbindAllAnimation();
-    self->mpLayout->BindAnimation(self->field_24);
-    self->mpLayout->SetAnimationEnable(self->field_24, true);
-    self->field_24->SetFrame(0.0f);
-    self->field_2F = 2;
-    self->field_2E = 1;
+    this->field_28->SetFrame(0.0f);
+    this->mpLayout->Animate();
+    this->mpLayout->UnbindAllAnimation();
+    this->mpLayout->BindAnimation(this->field_24);
+    this->mpLayout->SetAnimationEnable(this->field_24, true);
+    this->field_24->SetFrame(0.0f);
+    this->field_2F = 2;
+    this->field_2E = 1;
 }
 #pragma pop
 
@@ -278,19 +278,19 @@ extern "C" void NumSel_DispatchState_AED4(CNumSelect* self) {
     }
     switch (self->field_2F) {
     case 1:
-        NumSel_AdvanceOpen_B49C(self);
+        self->Sel_AdvanceOpen();
         break;
     case 2:
         advanceAnimTransform(self->field_24, kOneF);
         break;
     case 3:
-        NumSel_RewindReset_B530(self);
+        self->Sel_RewindReset();
         break;
     case 4:
-        NumSel_RestartAnim_B580(self);
+        self->Sel_RestartAnim();
         break;
     case 5:
-        NumSel_RestartAnimAlt_B644(self);
+        self->Sel_RestartAnimAlt();
         break;
     }
     self->mpLayout->Animate();

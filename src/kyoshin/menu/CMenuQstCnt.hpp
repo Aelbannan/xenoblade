@@ -89,6 +89,7 @@ struct CMenuQstCnt {
     void Term();
     void Move();
     void cbRenderBefore();
+    void RefreshDisplay();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

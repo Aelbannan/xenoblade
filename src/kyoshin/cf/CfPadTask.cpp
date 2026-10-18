@@ -34,7 +34,7 @@ extern "C" {
     s32 isMoveFuncActive__9CTaskGameFv();
 }
 
-// The retail CfPadTask.o split object carries NO data sections — the class
+// The retail CfPadTask.o split object carries NO data sections -- the class
 // statics live in the retail data object (split1.s .sbss / .bss) and are
 // referenced from this TU as plain (undefined) symbols with the exact retail
 // mangled names (config symbols.txt). Not defining them here keeps this TU

@@ -56,7 +56,7 @@ extern "C" void Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void termMapSel(CMapSel* self);
-extern "C" void CFade_Unload(CFade* self);
+// (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 extern "C" void FloorMap_Teardown(CFloorMap* self);
 extern u32 lbl_eu_80664790;
 }
@@ -710,7 +710,7 @@ void CMenuMapSelect::Term() {
     BgTex_Release_3D9C(&mBgTex);
     teardown(&mTitleHelp);
     termMapSel(&mMapSel);
-    CFade_Unload(&mFade);
+    (&mFade)->Unload();
     FloorMap_Teardown(&mFloorMap);
 
     lbl_eu_80664790 = 0;

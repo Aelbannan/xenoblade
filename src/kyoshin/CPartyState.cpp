@@ -317,7 +317,7 @@ extern "C" void stepPartySelectBack(CPartyState* self) {
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
 extern "C" __declspec(noinline) void swapPartyMembers(CPartyState* self) {
     int* party = CtrlObjectParam_GetSlotTableBase();
-    // (u8) result cast instead of `& 0xFF` — same mask, different VR birth.
+    // (u8) result cast instead of `& 0xFF` -- same mask, different VR birth.
     u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
     CtrlObjectParam_SwapSlotValues(party, slotA, GetCollectedFlagByte(self->field_0x4C));
     BuildSlotItemLists(0);

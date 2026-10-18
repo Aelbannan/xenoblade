@@ -110,7 +110,7 @@ extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
 extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
 extern "C" int CFade_IsReady(CFade* self);
-extern "C" void CFade_FadeIn(CFade* self);
+// (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
 
 // Additional retail-unmangled callee names for the kizuna-gram screen state
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
@@ -173,7 +173,7 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void CFade_Unload(CFade* self);
+// (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 
 // CLoad draw/reset helpers.
 extern "C" void CLoadTeardownLayout(CLoad* self);

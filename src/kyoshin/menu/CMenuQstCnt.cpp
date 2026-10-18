@@ -52,7 +52,7 @@ void QstCnt_SignalReady_6BBC(QstMenuData* self);
 void QstCnt_AdvanceToOpen_6C18(QstMenuData* self);
 void QstCnt_TickToOpened_6C5C(QstMenuData* self);
 void QstCnt_FinishAnim(CMenuQstCnt* self);
-void QstCnt_RefreshDisplay(CMenuQstCnt* self);
+// (memberized: QstCnt_RefreshDisplay -> CMenuQstCnt::RefreshDisplay; declaration moved into class CMenuQstCnt)
 QstData* QstCnt_InitRecords_6FAC(QstData* self);
 void* __dt__80227070(QstData* self, int flags);
 void QstCnt_RefreshRecords(QstData* self);
@@ -250,7 +250,7 @@ void CMenuQstCnt::Init() {
     mLayout->Animate(0);
 
     mField67 = 0;
-    QstCnt_RefreshDisplay(this);
+    this->RefreshDisplay();
 
     // Retail guards a dead null-check on this before picking the +0x70
     // IScnRender subobject (same shape as Term()).
@@ -370,16 +370,16 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b,
             switch (g->mState8C) {
             case 0:
                 g->mSelEntry.f4 = c;
-                if (lbl_eu_80664720->mField19C) QstCnt_RefreshDisplay(lbl_eu_80664720);
+                if (lbl_eu_80664720->mField19C) lbl_eu_80664720->RefreshDisplay();
                 break;
             case 1:
                 g->mSelEntry.f4 = c;
-                QstCnt_RefreshDisplay(lbl_eu_80664720);
+                lbl_eu_80664720->RefreshDisplay();
                 break;
             case 2:
                 g->mSelEntry.f4 = c;
                 lbl_eu_80664720->mValue90 = lbl_eu_80668568;
-                QstCnt_RefreshDisplay(lbl_eu_80664720);
+                lbl_eu_80664720->RefreshDisplay();
                 break;
             default:
                 changed = 1;
@@ -465,7 +465,7 @@ void QstCnt_FinishAnim(CMenuQstCnt* self) {
     QstEntry tmp0;
     setQstEntry(&tmp0, 0, 0, 0, 0, 0);
     copyQstEntry(&self->mEntries[0], &tmp0);
-    QstCnt_RefreshDisplay(self);
+    self->RefreshDisplay();
 
     QstEntry scratch[32];
     u8 i, j;
@@ -494,28 +494,28 @@ void QstCnt_FinishAnim(CMenuQstCnt* self) {
 }
 #pragma pop
 
-void QstCnt_RefreshDisplay(CMenuQstCnt* self) {
-    if (self->mSelEntry.f0 == 0) return;
-    if (self->mSelEntry.f4 > self->mSelEntry.f5) {
-        self->mSelEntry.f4 = self->mSelEntry.f5;
+void CMenuQstCnt::RefreshDisplay() {
+    if (this->mSelEntry.f0 == 0) return;
+    if (this->mSelEntry.f4 > this->mSelEntry.f5) {
+        this->mSelEntry.f4 = this->mSelEntry.f5;
     }
-    u32 v = SearchThresholdIdx(self->mSelEntry.f0);
-    char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], self->mSelEntry.f0);
-    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x64], s, 0);
-    if (self->mSelEntry.f6 == 0) {
-        s = BdatGetPtrDirect(lbl_eu_80664094, &lbl_eu_80509A10[0x85], self->mSelEntry.f2);
+    u32 v = SearchThresholdIdx(this->mSelEntry.f0);
+    char* s = BdatGetPtrDirect((void*)lbl_eu_80573D18[v], &lbl_eu_80509A10[0x92], this->mSelEntry.f0);
+    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x64], s, 0);
+    if (this->mSelEntry.f6 == 0) {
+        s = BdatGetPtrDirect(lbl_eu_80664094, &lbl_eu_80509A10[0x85], this->mSelEntry.f2);
     } else {
-        s = BuildItemNameStr(self->mSelEntry.f2);
+        s = BuildItemNameStr(this->mSelEntry.f2);
     }
-    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x74], s, 0);
-    if (self->mSelEntry.f6 == 0) {
+    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x74], s, 0);
+    if (this->mSelEntry.f6 == 0) {
         s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
     } else {
         s = (char*)BdatTouchStringCell(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
     }
-    LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
-    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x41], self->mSelEntry.f4);
-    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x4d], self->mSelEntry.f5);
+    LayoutSetTextBoxFmtValue(this->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
+    setLayoutTextBoxNumber(this->mLayout, &lbl_eu_80509A10[0x41], this->mSelEntry.f4);
+    setLayoutTextBoxNumber(this->mLayout, &lbl_eu_80509A10[0x4d], this->mSelEntry.f5);
 }
 
 QstData* QstCnt_InitRecords_6FAC(QstData* self) {

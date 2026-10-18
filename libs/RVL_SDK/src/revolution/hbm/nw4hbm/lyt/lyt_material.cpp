@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-// Retail .sbss2 0x8066B550 size 0x8 (DefaultBlackColor zero-fill) — force section size
+// Retail .sbss2 0x8066B550 size 0x8 (DefaultBlackColor zero-fill) -- force section size
 extern "C" __declspec(section ".sdata2") const int _sbss2_lyt_material_dummy[2] = {0, 0};
 
 namespace nw4hbm {

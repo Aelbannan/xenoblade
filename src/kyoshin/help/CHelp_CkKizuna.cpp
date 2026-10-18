@@ -3,7 +3,7 @@
 namespace cf {
 
 // Sets the CHelpSwitch flag while the kizuna-talk menu (CMenuKizunaTalk
-// singleton via isKizunaTalkActive) is absent — i.e. closes this help once the
+// singleton via isKizunaTalkActive) is absent -- i.e. closes this help once the
 // talk ends.
 void CHelp_CkKizuna::checkKizunaTalkClosed() {
     // Inline the comparison so MWCC keeps isKizunaTalkActive's return in r3 for the

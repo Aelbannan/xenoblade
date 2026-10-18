@@ -278,7 +278,7 @@ extern "C" void uploadLightEnv(CLightEnv* self, int idx) {
 // enables it. The number of enabled lights is recorded in mActiveLightCount.
 // ---------------------------------------------------------------------------
 extern "C" void exportSlotLights(CLightEnv* env, CScnEnvLgtData* data, int slot) {
-    ScnEnvLgt_ClearLights(data);
+    data->ClearLights();
     data->mAmbColorBase[0] = env->mSlotColors[slot].x;
     data->mAmbColorBase[1] = env->mSlotColors[slot].y;
     data->mAmbColorBase[2] = env->mSlotColors[slot].z;

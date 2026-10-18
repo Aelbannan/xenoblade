@@ -376,6 +376,7 @@ struct CMiniMapGimmickView {
         };
     };
     u32 field_0x6A4;                   // 0x6A4 - live row count
+    u32 FillMarkerEntry();
 };
 
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):

@@ -423,7 +423,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
                    ->mChainPhase;
         // Battle-phase gate: phases 1..0x18 block chain starts.
         // NOTE (wall class 13): retail keeps two standalone cmplwi compares;
-        // Wii/1.1 folds every spelling tried to addi/rlwinm/cmpli — needs the
+        // Wii/1.1 folds every spelling tried to addi/rlwinm/cmpli -- needs the
         // configure.py GC-version split (cf. isTypeId1to24 notes).
         int inRange = 0;
         if (v >= 1) {

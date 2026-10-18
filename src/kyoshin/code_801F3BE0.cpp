@@ -82,7 +82,7 @@ class CfGimmickLock;
 class CfGimmickEne;
 class CActorParam;
 }
-extern "C" void GimmickElv_SetLodVisible(CfGimmickElvData* self, int show);
+// (memberized: GimmickElv_SetLodVisible -> CfGimmickElvData::SetLodVisible; declaration moved into class CfGimmickElvData)
 extern "C" void gimmickLockClearBinding(cf::CfGimmickLock* self);
 extern "C" void gimmickEneResolveArts(cf::CfGimmickEne* self, cf::CActorParam* actor);
 extern "C" void gimmickEneStopSound(cf::CfGimmickEne* self, cf::CActorParam* actor);
@@ -552,7 +552,7 @@ void GimToggleElevatorLod(CGimmickGlobal* self, s32 id, int show) {
     for (i = 0; i < self->mGimmickCount; i++) {
         g = self->mGimmicks[i];
         if (g->typeId == 3 && id == g->bdatRowId) {
-            return GimmickElv_SetLodVisible((CfGimmickElvData*)self->mGimmicks[i], show);
+            return ((CfGimmickElvData*)self->mGimmicks[i])->SetLodVisible(show);
         }
     }
 }

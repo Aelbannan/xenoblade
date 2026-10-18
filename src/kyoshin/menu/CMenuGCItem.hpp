@@ -61,6 +61,7 @@ public:
     u8 mState;                    // 0x4AC4
     u8 mArg;                      // 0x4AC5
     CMenuGCItem();
+    void HandlePhase2();
 };
 
 // Data imports (MWCC does not mangle global-scope data names).

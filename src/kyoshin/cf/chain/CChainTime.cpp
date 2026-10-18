@@ -46,7 +46,7 @@ extern "C" void tickChainTimer(cf::CChainTime* self) {
     if (lbl_eu_80668A88 != timer) {
         if (self->mEnabled != 0) {
             // Retail compares against lbl_eu_80668A8C (0.0f) here, not a -1.0f
-            // literal — using the extern keeps the lfs reloc on the retail name
+            // literal -- using the extern keeps the lfs reloc on the retail name
             // and avoids pooling a TU-local float constant.
             if (timer != lbl_eu_80668A8C || self->mChainEffect.unk4 != 0) {
                 timer = self->mTimer;

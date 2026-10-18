@@ -288,7 +288,7 @@ extern "C" CScnFilterReslist* __dt__reslist_CScnFilter(CScnFilterReslist* obj, i
 extern "C" void __dt__10IScnRenderFv(void* self, int flag);
 extern "C" u32 lbl_eu_8056EB78[4];
 extern "C" void ScnFilterList_destroy(void* self);
-extern "C" void ScnFilterIterList_destroy(CScnFilterIteratorReslist* self);
+// (memberized: ScnFilterIterList_destroy -> CScnFilterIteratorReslist::IterList_destroy; declaration moved into class CScnFilterIteratorReslist)
 
 // flattened init function (retail __ct__CScnFilterMan): base IScnRender
 // init, vptr install, both reslists constructed, flags cleared, seed lists,
@@ -316,7 +316,7 @@ CScnFilterMan::~CScnFilterMan() {
     *(void**)this = (void*)lbl_eu_8056EB78;
     mScene->removeRenderCB((IScnRender*)this);
     ScnFilterList_destroy(&field_08);
-    ScnFilterIterList_destroy(&field_28);
+    (&field_28)->IterList_destroy();
     __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter((CScnFilterListIter*)&field_28, -1);
     FMDtorCalls::__dt__reslist_CScnFilter(&field_08, -1);
     __dt__10IScnRenderFv(this, 0);
@@ -344,7 +344,7 @@ extern "C" __declspec(noinline) void __dt__8049D130(CScnFilterReslist* self) {
 extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self);
 #pragma push
 #pragma auto_inline off
-extern "C" void ScnFilterIterList_destroy(CScnFilterIteratorReslist* self) { __dt__8049D18C(self); }
+void CScnFilterIteratorReslist::IterList_destroy() { __dt__8049D18C(this); }
 #pragma pop
 
 extern "C" void __dla__FPv(void* p);

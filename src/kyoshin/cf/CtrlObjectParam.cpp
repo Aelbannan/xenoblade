@@ -79,19 +79,19 @@ extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state statu
 #include <new>
 #include <cstring>
 
-// Stub declared below (CtrlObjectParam_LearnArtsSlots) — called by CtrlObjectParam_SetEquipSlot4.
+// Stub declared below (CtrlObjectParam_LearnArtsSlots) -- called by CtrlObjectParam_SetEquipSlot4.
 extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* self);
 
-// CtrlObjectParam_RampArtsStatStep (arts-stat ramp) — defined later in this TU, called by
+// CtrlObjectParam_RampArtsStatStep (arts-stat ramp) -- defined later in this TU, called by
 // CtrlObjectParam_RampEntryArtsLevel below.
 extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 value);
 
-// Arts-set init / re-apply and the arts-slot re-arm ctor — defined later in
+// Arts-set init / re-apply and the arts-slot re-arm ctor -- defined later in
 // this TU, called by the CtrlObjectParam_RefreshCharEntry shared tail below.
     extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView* self);
 extern "C" void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotOwner* self);
 
-// Entry init helper (defined below) — called by __ct__8009ED08.
+// Entry init helper (defined below) -- called by __ct__8009ED08.
 extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* self, u16 val);
 
 // Arts-list walker defined later in this TU; CtrlObjectParam_AllocArtsListNode aborts its row
@@ -106,31 +106,31 @@ extern "C" int CtrlObjectParam_SwapSlotEntries(cf::CtrlObjectParamSwap* self, in
 extern "C" int CtrlObjectParam_FindSlotTypeIndex(const int* param_1, int param_2,
                              int* param_3, int* param_4);
 
-// CtrlObjectParam_AccumCharLevelRank (level/rank accumulator) — defined later in this TU, called
+// CtrlObjectParam_AccumCharLevelRank (level/rank accumulator) -- defined later in this TU, called
 // by CtrlObjectParam_AdjustPartyArtsLevel below.
 extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int* outB,
                               int unkArg4, int unkArg5, int flag);
 
-// CtrlObjectParam_AvgPartyArtsLevel (party-average level/rank) — defined later in this TU, called
+// CtrlObjectParam_AvgPartyArtsLevel (party-average level/rank) -- defined later in this TU, called
 // by CtrlObjectParam_AdjustPartyArtsLevel below.
 extern "C" void CtrlObjectParam_AvgPartyArtsLevel(u8* self, int* outLevel, int* outRank,
                               int targetLevel, int flag);
 
-// CtrlObjectParam_ReapplyArtsSet (arts-set re-apply) — defined later in this TU, called by
+// CtrlObjectParam_ReapplyArtsSet (arts-set re-apply) -- defined later in this TU, called by
 // CtrlObjectParam_ApplyArtsRankUp below.
 extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* self);
 
-// isPartySlotMatch (work-buffer slot-table probe) — defined later in this TU,
+// isPartySlotMatch (work-buffer slot-table probe) -- defined later in this TU,
 // called by CtrlObjectParam_ApplyArtsRankUp below.
 static inline int isPartySlotMatch(int type);
 
-// CtrlObjectParam_RecollectArtsRows (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
+// CtrlObjectParam_RecollectArtsRows (init helper) -- defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
 extern "C" __declspec(noinline) void CtrlObjectParam_RecollectArtsRows(cf::CtrlObjectParamActorOwner* self);
 
-// CtrlObjectParam_RecollectArtsRows (init helper) — defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
+// CtrlObjectParam_RecollectArtsRows (init helper) -- defined later in this TU, called by CtrlObjectParam_ActivateActorOwner.
 extern "C" __declspec(noinline) void CtrlObjectParam_RecollectArtsRows(cf::CtrlObjectParamActorOwner* self);
 
-// CtrlObjectParam_ResetWorkBuffer (work-buffer reset) — defined later in this TU.
+// CtrlObjectParam_ResetWorkBuffer (work-buffer reset) -- defined later in this TU.
 extern "C" void CtrlObjectParam_ResetWorkBuffer(cf::CtrlObjectParamWork* work);
 
 void __ct__8009D604() {
@@ -189,7 +189,7 @@ void __ct__8009D604() {
 
 extern "C" void __dt__8009D72C() {
     // Global destructor for the work-buffer pointer. The retail emits two
-    // beq's on the same test (cmpwi r3,0; beq epi; beq epi) — the dead
+    // beq's on the same test (cmpwi r3,0; beq epi; beq epi) -- the dead
     // second branch. Only the &&-form on a LOCAL keeps both beq (the same
     // duplicate disjunct on the global folds to one); MWCC CSEs the local
     // test to one cmpwi + two beq (CKizunagram/btm_sec duplicated-test
@@ -233,7 +233,7 @@ cf::CtrlObjectParamSubEntry* cf::CtrlObjectParamData::getSubStruct(unsigned long
     return &entries[index];
 }
 
-// ── CtrlObjectParam_RefreshEquipSlotBlock (us-8009e1cc) ───────────────────────────────────────────
+// -- CtrlObjectParam_RefreshEquipSlotBlock (us-8009e1cc) -------------------------------------------
 // Equip-slot arts/status refresh: resolve the item instance for the slot
 // (category = index+4, or 2 for index 5) and derive the arts id from the
 // item's first word; without an item, fall back to the self u16 table. Then
@@ -942,7 +942,7 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
     *reinterpret_cast<unsigned short*>(lbl_eu_80663E88 + 0x50) = value;
 }
 
-// ── __ct__8009ED08 (us-8009f6e0) ─────────────────────────────────────────
+// -- __ct__8009ED08 (us-8009f6e0) -----------------------------------------
 // Character-row copy: resolve the row entries for the two u16 row indices
 // (work + idx*0x3DD4), init entryA via CtrlObjectParam_RampEntryArtsLevel, snapshot entryB's
 // param sub-region (blocks at +0x188/+0x16AC/+0x1730) to stack locals, copy
@@ -976,9 +976,9 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
         reinterpret_cast<u8*>(entryB) + 0x1730) = t3;
 }
 
-// ── CtrlObjectParam_RefreshCharEntry (us-8009f974) ───────────────────────────────────────────
+// -- CtrlObjectParam_RefreshCharEntry (us-8009f974) -------------------------------------------
 // Character-entry refresh: when arg2 is 0, snapshot the type id and run the
-// init flow — the arts-stat gate (slot 0x108) splits into the >0 branch
+// init flow -- the arts-stat gate (slot 0x108) splits into the >0 branch
 // (slot 0xD4 level write + 0x170/0x188/0x198/0x1A4/0x1BC arts-set refresh,
 // slot 0xCC byte write, then the equip-slot/column block) and the <=0 branch
 // (same refresh plus the slot 0x264 float write, then the arts-stat record
@@ -1205,7 +1205,7 @@ void* cf::CActorParam::CActorParam_getTensionStatus() {
 // `bl __ct__8009F8B8` call site would vanish.
 extern "C" __declspec(noinline) void __ct__8009F8B8(cf::CtrlObjectParamArtsSlotOwner* self){}
 
-// ── CtrlObjectParam_InitArtsSlotSet (us-800a0dcc) ───────────────────────────────────────────
+// -- CtrlObjectParam_InitArtsSlotSet (us-800a0dcc) -------------------------------------------
 // Arts-set init: refresh the six u16 arts-slot words of the getArtsSlotIds
 // result through the arts-stat / item bdat columns. The type-0 path writes
 // the three header words from stat columns and zeroes the rest; the main path
@@ -1339,7 +1339,7 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* selfV) {
     return p->word0 & 0xFFFF;
 }
 
-// ── CtrlObjectParam_RampEntryArtsLevel (us-800a1238) ───────────────────────────────────────────
+// -- CtrlObjectParam_RampEntryArtsLevel (us-800a1238) -------------------------------------------
 // Entry init: fill the stats record (vtable slot 0x20C result) from the
 // arts-stat bdat columns (byte/float/short fields), refresh the embedded
 // CActorParam from the actor, then ramp the arts level from the current
@@ -1456,7 +1456,7 @@ void* cf::CActorParam::CActorParam_getBattleParams() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_17E4;
 }
 
-// ── CtrlObjectParam_RampArtsStatStep (us-800a183c) ───────────────────────────────────────────
+// -- CtrlObjectParam_RampArtsStatStep (us-800a183c) -------------------------------------------
 // Arts-stat ramp: resolve the stat record via vtable slot 0x20C, bail when
 // the head equals the target level (or the target exceeds 99), then walk the
 // 4-column stat table, ramping each stat field toward the target level with
@@ -1625,7 +1625,7 @@ void CtrlObjectParam_SyncParamFromActorEx(cf::CtrlObjectParamArtsView* self, u32
     }
 }
 
-// ── CtrlObjectParam_LearnArtsSlots (us-800a1e34) ───────────────────────────────────────────
+// -- CtrlObjectParam_LearnArtsSlots (us-800a1e34) -------------------------------------------
 // Arts-learn flow: gate on the party-member frame count (type 3 / state
 // 0x1D), refresh the embedded CActorParam from the actor (or the 0xA4
 // slot), then walk the 3x8 column-name grid, claiming an empty arts slot
@@ -1766,7 +1766,7 @@ u32 cf::CActorParam::CActorParam_getArtsLevel() {
 
 extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
 
-// ── CtrlObjectParam_ClaimArtsSlotRow (us-800a227c) ───────────────────────────────────────────
+// -- CtrlObjectParam_ClaimArtsSlotRow (us-800a227c) -------------------------------------------
 // Arts-slot update: resolve the actor for the type id, refresh the embedded
 // CActorParam (via CActorParam_copyAll or the 0xA4 slot), then claim an arts-slot
 // row in the 0x49-stride table at +0xE8: the bdat columns +0x58/+0x253/+0x109
@@ -1843,7 +1843,7 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
 // the stub carries the real parameter list. noinline: an empty body would
 // otherwise be folded into the caller and the retail `bl CtrlObjectParam_ApplyArtsRankUp`
 // call site would vanish.
-// ── CtrlObjectParam_ApplyArtsRankUp (us-800a2bd0) ───────────────────────────────────────────
+// -- CtrlObjectParam_ApplyArtsRankUp (us-800a2bd0) -------------------------------------------
 // Arts rank/level helper: gate on the party-member frame count (type 3 /
 // state 0x1D), forward the change to the actor (slot 0x1F4) when present,
 // else apply it to the embedded CActorParam (slots 0x1DC/0x1FC) and the
@@ -1954,7 +1954,7 @@ extern "C" __declspec(noinline) void CtrlObjectParam_ApplyArtsRankUp(void* selfV
     }
 }
 
-// ── CtrlObjectParam_AdjustPartyArtsLevel (us-800a2814) ───────────────────────────────────────────
+// -- CtrlObjectParam_AdjustPartyArtsLevel (us-800a2814) -------------------------------------------
 // Party-member arts-level adjust: read the member's current arts level
 // through vtable slot 0x108 (and the actor's, when one exists), accumulate
 // the level/rank totals via CtrlObjectParam_AccumCharLevelRank, then rescale *v1/*v2 by the
@@ -2078,7 +2078,7 @@ extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int*
     }
 }
 
-// ── CtrlObjectParam_AvgPartyArtsLevel (us-800a2678) ───────────────────────────────────────────
+// -- CtrlObjectParam_AvgPartyArtsLevel (us-800a2678) -------------------------------------------
 // Compute the party average arts level (slotTable rows 0..2) and derive an
 // out-level / out-rank pair from the caller's target level. The 0x3356
 // resource lookup gates the whole computation; when no arts rows exist the
@@ -2157,7 +2157,7 @@ void cf::CActorParam::CActorParam_addSecondCurrency(u32 addend) {
     }
 }
 
-// ── CtrlObjectParam_RunPartyArtsFlow (us-800a307c) ───────────────────────────────────────────
+// -- CtrlObjectParam_RunPartyArtsFlow (us-800a307c) -------------------------------------------
 // Party-member arts/level flow: verify the character row id is a party
 // member (slotTable membership), then run the arts/level helper with the
 // caller's out-pointer block; arg9 clears the two secondary outputs.
@@ -2236,7 +2236,7 @@ probed:
     Counter884_AddClamped(self->big, arg4);
 }
 
-// ── CtrlObjectParam_WriteArtsCounter (us-800a334c) ───────────────────────────────────────────
+// -- CtrlObjectParam_WriteArtsCounter (us-800a334c) -------------------------------------------
 // Arts-change gate: when the character row id is a party member (or the
 // flag-bit test passes) and the sequence is past the 0x1D early frame,
 // write the arts-set counter at self+0x3534.
@@ -2306,7 +2306,7 @@ void cf::CActorParam::CActorParam_setSpentCurrency(u32 val) {
     unk1604 = val;
 }
 
-// ── CtrlObjectParam_ReapplyArtsSet (us-800a34c8) ───────────────────────────────────────
+// -- CtrlObjectParam_ReapplyArtsSet (us-800a34c8) ---------------------------------------
 // Arts-set re-apply: walk the 11 x 0xC4 arts groups at +0x3534. For the
 // group matching the selected row (field_3DD0), claim the first empty slot
 // whose bdat cost (byte*100) fits the row's level cap at +0x3DBC: pay it via
@@ -2382,7 +2382,7 @@ extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* selfV
     return learned;
 }
 
-// ── CtrlObjectParam_WriteArtsSlotIn (us-800a36b0) ───────────────────────────────────────────
+// -- CtrlObjectParam_WriteArtsSlotIn (us-800a36b0) -------------------------------------------
 // Arts-slot write-in: read the source row's 12-bit arts type (top bits of
 // the u16 at +4) plus seven bdat columns (ids/levels/flags), scan the source
 // row's 2x4 slots for a matching id (honoring the two byte flags v5/v6),
@@ -2544,7 +2544,7 @@ extern "C" u8 CtrlObjectParam_GetRowColumnByte(cf::CtrlObjectParamBdatRow* self)
     // bdat column lookup: item/weapon table (lbl_eu_806640F4), column name
     // at lbl_eu_804FBCB0+0x58, row key at +0xC of the object; the returned
     // column value is truncated to a byte via a memory round-trip (retail
-    // stw r3,8(sp); lbz r3,8(sp)) — deref-of-storage, not a cast (the cast
+    // stw r3,8(sp); lbz r3,8(sp)) -- deref-of-storage, not a cast (the cast
     // folds to rlwinm).
     u32 v = getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
                                      &lbl_eu_804FBCB0[0x58], self->field_0C);
@@ -2756,7 +2756,7 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
     return reinterpret_cast<u8*>(node) + 0x20;
 }
 
-// ── CtrlObjectParam_MergeArtsListNode (us-800a4094) ───────────────────────────────────────────
+// -- CtrlObjectParam_MergeArtsListNode (us-800a4094) -------------------------------------------
 // Arts-list merge: locate the 0xAAAA node whose data area (+0x20) is the
 // caller's target pointer, validate the list through a second walk (unknown
 // tags trigger the CtrlObjectParam_ScanArtsListRows row-scan abort), then re-tag the node

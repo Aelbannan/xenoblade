@@ -191,6 +191,7 @@ struct QuestWinObj {
     u32 field_0xE0;                          // 0xE0
     u8 field_0xE4;                           // 0xE4
     u32 field_0xE8;                          // 0xE8
+    void enableAnimB();
 };
 
 // 12-byte Move-hook ptmf copied into +0x3C by installMoveHook (retail .data).

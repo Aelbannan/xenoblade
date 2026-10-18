@@ -226,6 +226,7 @@ struct CfHikariItemRecord {
     /* 0x42 */ u16 field_42; // flag word (0x40 set by hikariInitRecordTimers)
     /* 0x44 */ u8 field_44[0x1194 - 0x44];
     /* 0x1194 */ u32 field_1194; // flag word (bit0 toggle, bit1 hikariSetFlagBit1)
+    void SetEnableBit0(u32 enable);
 };
 
 // Hikari item update / emitter functions (retail symbols).  extern "C" so the

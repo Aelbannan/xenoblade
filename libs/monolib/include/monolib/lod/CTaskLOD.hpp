@@ -9,7 +9,7 @@ Task wrapper around a LODMemMan instance.
 
 CTaskLOD manages the LOD (level-of-detail) memory manager lifecycle.  It owns
 an embedded LODMemMan member and can optionally allocate a secondary
-swap‑instance.  Most public methods delegate to the active LODMemMan.
+swap-instance.  Most public methods delegate to the active LODMemMan.
 
 Inherits from CTTask<CTaskLOD> which provides the Move/Draw callback slots.
 */

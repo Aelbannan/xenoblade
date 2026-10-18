@@ -330,7 +330,7 @@ u32 AHXSJD_GetDecDtLen(void* self) {
 
 u32 AHXSJD_GetDecNumSmpl(void* self) {
     AHXSJD* sjd = (AHXSJD*)self;
-    // Retail: lwz 0x2C; lwz 0x28; add — chan_info[6] + chan_info[5].
+    // Retail: lwz 0x2C; lwz 0x28; add -- chan_info[6] + chan_info[5].
     return sjd->chanInfo[6] + sjd->chanInfo[5];
 }
 

@@ -165,13 +165,13 @@ extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
 extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
 extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void scnLgtCallLightV26(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
+// (memberized: scnLgtCallLightV26 -> CScnEnvLgtCtrl::CallLightV26; declaration moved into class CScnEnvLgtCtrl)
 extern "C" void teardownG3dObjects__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
 extern "C" void* resetAndReload__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
 extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
-extern "C" void scnLgtCallLightV27(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, void* a);
+// (memberized: scnLgtCallLightV27 -> CScnEnvLgtCtrl::CallLightV27; declaration moved into class CScnEnvLgtCtrl)
 
 // Overlay for the compiler-placed vptr slot at +0x10 (the CDoubleListNode
 // base occupies 0x00-0x10).  create() installs the retail vtable pointers
@@ -424,14 +424,14 @@ extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, v
 void CTaskLOD::activateLOD() {
     if (lbl_eu_80665730[0]) {
         clearElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 1);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, 1);
     }
 }
 
 void CTaskLOD::deactivateLOD() {
     if (lbl_eu_80665730[0]) {
         setElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, this, 0);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, 0);
     }
 }
 
@@ -442,7 +442,7 @@ void CTaskLOD::deactivateLOD() {
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
     if (lbl_eu_80665730[0]) {
         toggleElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, flag);
-        scnLgtCallLightV26(lbl_eu_80665730[0]->mParam1->field_0x7C, self, flag);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(self, flag);
     }
 }
 // Value-delegates.  Like the void wrappers above, each forwards to the
@@ -468,7 +468,7 @@ void CTaskLOD::refreshLOD() {
 extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
     if (lbl_eu_80665730[0]) {
         configureShrinkTargets__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
-        scnLgtCallLightV27(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, (void*)(u32)a);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV27(val, self, (void*)(u32)a);
     }
 }
 

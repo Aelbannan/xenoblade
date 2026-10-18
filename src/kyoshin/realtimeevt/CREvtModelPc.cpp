@@ -53,10 +53,10 @@ extern "C" {
     // Task helpers
     extern int EvtSeqGetWalkIndex();
     extern int EvtSeqGetCounter100();
-    extern void EvtSeqInsertRtEvent(void* self);
-    extern int EvtSeqProbeEvtSlot(void* self, void* pId);
-    extern void* EvtSeqCheckRunGate(void* self);
-    extern void EvtSeqCheckEventRunGuard(void* self);
+    // (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
+    // (memberized: EvtSeqProbeEvtSlot -> EvtBdabModel::SeqProbeEvtSlot; declaration moved into class EvtBdabModel)
+    // (memberized: EvtSeqCheckRunGate -> UnkEvtListEntry::SeqCheckRunGate; declaration moved into class UnkEvtListEntry)
+    // (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
     extern int EvtSeqGetStateBit14();
     extern int EvtSeqGetStateBit12();
     extern void* evtLookupCmdWord(void* parent, u32 type, int slot);
@@ -131,7 +131,7 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
         FLD(u32, s, 0x10) = ptmf[2];
     }
 
-    EvtSeqInsertRtEvent(self);
+    self->SeqInsertRtEvent();
 
     u32* pParent = FLD(u32*, s, 0x1C);
     u32 field30 = pParent[0x30 / 4];
@@ -340,7 +340,7 @@ extern "C" void EvtModelPc_InitCounter(void* self) {
 
     FLD(s32, s, 0xB0) = -1;
 
-    int result = EvtSeqProbeEvtSlot(self, s + 0xB0);
+    int result = self->SeqProbeEvtSlot(s + 0xB0);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -405,7 +405,7 @@ extern "C" void EvtModelPc_LoadFiles(void* self) {
     // If the request is for character 3 or 8, check whether such a character
     // is already being loaded by another model object.
     if (decB == 3 || decB == 8) {
-        isNewFile = (EvtSeqCheckRunGate(self) != 0) ? 1 : 0;
+        isNewFile = (self->SeqCheckRunGate() != 0) ? 1 : 0;
         if (isNewFile == 0) {
             gameMgr = getGimmickListHead__Q22cf13CfGameManagerFv();
             objList = FLD(void*, gameMgr, 0x04);
@@ -702,7 +702,7 @@ extern "C" void EvtModelPc_UpdatePos(void* self) {
     }
 
     if (FLD(u32, s, 0x18) & 0x800) {
-        EvtSeqCheckEventRunGuard(self);
+        self->EvtSeqCheckEventRunGuard();
     }
 }
 

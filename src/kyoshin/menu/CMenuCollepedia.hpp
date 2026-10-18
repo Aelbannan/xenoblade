@@ -55,6 +55,10 @@ public:
     u8 mState;                    // 0x29B4
     f32 mTimer;                   // 0x29B8
     CMenuCollepedia();
+    void Colle_NavigateBack();
+    void Colle_CloseMenu();
+    void Colle_OpenMenu();
+    void Colle_HandleInput();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).

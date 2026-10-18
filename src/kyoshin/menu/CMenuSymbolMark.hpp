@@ -218,6 +218,15 @@ public:
     u32 mField_8A8; // 0x8A8
     f32 mField_8AC; // 0x8AC
     SymbolMarkRenderItem* mRenderItem; // 0x8B0
+    void SymMark_RebuildEntryBuf();
+    void SymMark_RebuildIdsA();
+    void SymMark_RebuildIdsB();
+    void SymMark_AddTouchMark();
+    void SymMark_Refresh();
+    void SymMark_AddKindMarks();
+    void SymMark_SyncBufMarks();
+    void SymMark_AddRangeMarks();
+    void SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 argE);
 };
 
 // CfActorView pad deleted: use cf::CfObject / cf::CfObjectMove for 0xAC/0x12C/0x160 and CfObjectMove extended 0x228, and cf::CActorParam for 0x128 hp gate

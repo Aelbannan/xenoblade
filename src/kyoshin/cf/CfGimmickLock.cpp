@@ -30,8 +30,8 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
 
     // Bdat columns: min/max unlock bounds and the resource id (the cells are
     // string pointers; only the low 16 bits are used).
-    // Byte offsets into the pointer table (cast through char* — the label is
-    // typed void*[], so bare +0x34 would scale by 4 → lwz 0xD0).
+    // Byte offsets into the pointer table (cast through char* -- the label is
+    // typed void*[], so bare +0x34 would scale by 4 -> lwz 0xD0).
     u8* colTab = (u8*)lbl_eu_805357E8;
     u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), row);
     self->minVal = *(u16*)&vMin;
@@ -530,7 +530,7 @@ int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target) {
     return 0;
 }
 
-// typed data sections — source shape for retail bytes (replaces absorb blobs)
+// typed data sections -- source shape for retail bytes (replaces absorb blobs)
 // .rodata 0x20: two strings with pad; .sdata 0x10: two 8-byte pointer tables; .sdata2 0x20: "popID1" + 6 floats
 extern "C" {
 extern char lbl_eu_80508668[];

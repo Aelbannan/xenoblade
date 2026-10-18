@@ -38,7 +38,7 @@
 // Real signature of the post-update hook (retail passes the data pointer in
 // r3); the catalog header's (void) declaration is renamed out of the way.
 extern "C" void ScnEnvLgt_noopF940(CScnEnvLgtData* self);
-extern "C" void ScnEnvLgt_ClearLights(CScnEnvLgtData* self);
+// (memberized: ScnEnvLgt_ClearLights -> CScnEnvLgtData::ClearLights; declaration moved into class CScnEnvLgtData)
 #include "monolib/util/MemManager.hpp"    // mtl::MemManager (allocate / deallocate)
 #include "monolib/util/reslist.hpp"       // reslist<T> (embedded light-item list)
 
@@ -120,7 +120,7 @@ extern "C" void scnLgtSetBound(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) 
 void scnLgtGatherLights(CScnEnvLgtCtrl* self, CScnEnvLgtData* data, void* arg,
                    float f) {
     u32 count = 0;
-    ScnEnvLgt_ClearLights(data);
+    data->ClearLights();
     CScnEnvLgtCtrlListNode* node;
     for (node = self->field_0x0C->mNext; node != self->field_0x0C;
          node = node->mNext) {
@@ -450,9 +450,9 @@ void scnLgtPushLgtValue(CScnEnvLgtCtrl* self, s32 flag, float f) {
 
 // scnLgtCallLightV26 (us-804c6170): same ring walk as scnLgtBindLightArg, dispatching
 // vtable slot 28 (0x70) with two args on every item.
-void scnLgtCallLightV26(CScnEnvLgtCtrl* self, void* a, void* b) {
-    CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
-    while (node != self->field_0x0C) {
+void CScnEnvLgtCtrl::CallLightV26(void* a, void* b) {
+    CScnEnvLgtCtrlListNode* node = this->field_0x0C->mNext;
+    while (node != this->field_0x0C) {
         node->mItem->v26(a, b);
         node = node->mNext;
     }
@@ -461,9 +461,9 @@ void scnLgtCallLightV26(CScnEnvLgtCtrl* self, void* a, void* b) {
 // scnLgtCallLightV27 (us-804c61f0): ring walk dispatching vtable slot 29 (0x74)
 // with two args plus a float on every item; the float stays in f31 across
 // the virtual calls (MWCC FPR-save prologue).
-void scnLgtCallLightV27(CScnEnvLgtCtrl* self, void* a, void* b, float f) {
-    CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
-    while (node != self->field_0x0C) {
+void CScnEnvLgtCtrl::CallLightV27(void* a, void* b, float f) {
+    CScnEnvLgtCtrlListNode* node = this->field_0x0C->mNext;
+    while (node != this->field_0x0C) {
         node->mItem->v27(a, b, f);
         node = node->mNext;
     }
@@ -1038,7 +1038,7 @@ void scnLgtBuildHeader(CScnEnvLgtCtrlLgtHeader* dst,
 // so the retail `bl`s survive (inlining the empty stubs would drop the
 // FPR-save prologue and shrink the frame).
 extern "C" __declspec(noinline) void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f);
-extern "C" __declspec(noinline) void scnLgtStepWorkBlob(CScnEnvLgtCtrl* self, float f);
+// (memberized: scnLgtStepWorkBlob -> CScnEnvLgtCtrl::StepWorkBlob; declaration moved into class CScnEnvLgtCtrl)
 
 // scnLgtFrameStep (us-804c7244): one-frame step of the env-light controller.
 // Guarded by +0x04 bit 31 (MSB, `clrrwi. r0, r4, 31`); the frame delta is
@@ -1072,7 +1072,7 @@ extern "C" void scnLgtFrameStep(CScnEnvLgtCtrl* self, float f1) {
             }
         }
         scnLgtDispatchFadeEntries(self, delta);
-        scnLgtStepWorkBlob(self, delta);
+        self->StepWorkBlob(delta);
     }
 }
 
@@ -1683,36 +1683,36 @@ extern "C" __declspec(noinline) void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWor
 // the +0x30/+0x20 pair when both exist, then dispatch scnLgtDispatchEntryEvents for
 // every entry in the +0x48 control's list (the ctl and the +0x14 base are
 // re-loaded per iteration because the dispatch call may alias them).
-void scnLgtStepWorkBlob(CScnEnvLgtCtrl* self, float f) {
-    u32 flags = self->field_0x04;
+void CScnEnvLgtCtrl::StepWorkBlob(float f) {
+    u32 flags = this->field_0x04;
     if (!(flags & 0x80)) return;
     // reuse the parameter register for the accumulation (retail fadds f1)
-    f = self->field_0xC8 + f;
-    self->field_0xC8 = f;
-    f32 limit = self->alt2.field_0x4C->field_0x08;
+    f = this->field_0xC8 + f;
+    this->field_0xC8 = f;
+    f32 limit = this->alt2.field_0x4C->field_0x08;
     if (limit < f) {
         if (flags & 0x100) {
-            self->field_0xC8 = limit;
+            this->field_0xC8 = limit;
         } else {
-            self->field_0xC8 = lbl_eu_8066B010;
+            this->field_0xC8 = lbl_eu_8066B010;
         }
     }
     CScnEnvLgtCtrlWorkBlob blob;
-    scnLgtInitWorkBlob(&blob, (u32)self->field_0x2C, (u32)self->alt2.field_0x4C,
-                  self->field_0xC8, (u32)self->field_0x0C);
+    scnLgtInitWorkBlob(&blob, (u32)this->field_0x2C, (u32)this->alt2.field_0x4C,
+                  this->field_0xC8, (u32)this->field_0x0C);
     // The null checks double as argument setup (retail loads field_0x30 /
     // field_0x20 into r4/r5 while testing them, then calls).
-    if (self->field_0x30 != 0 && self->field_0x20 != 0) {
-        scnLgtPushControlRows(&blob, (CScnEnvLgtCtrlCtorCtl*)self->field_0x30,
-                      (u8*)self->field_0x20);
+    if (this->field_0x30 != 0 && this->field_0x20 != 0) {
+        scnLgtPushControlRows(&blob, (CScnEnvLgtCtrlCtorCtl*)this->field_0x30,
+                      (u8*)this->field_0x20);
     }
-    CScnEnvLgtCtrlLgtCtl* ctl = self->alt2.field_0x48;
+    CScnEnvLgtCtrlLgtCtl* ctl = this->alt2.field_0x48;
     if (ctl != 0 && (ctl->field_0x00 & 0x10)) {
         u32 off;
         u32 i;
-        for (i = 0, off = 0; i < self->alt2.field_0x48->mCount;
+        for (i = 0, off = 0; i < this->alt2.field_0x48->mCount;
              off += 0xd8, i++) {
-            scnLgtDispatchEntryEvents(&blob, (u8*)&self->field_0x14_ptr[i]);
+            scnLgtDispatchEntryEvents(&blob, (u8*)&this->field_0x14_ptr[i]);
         }
     }
 }

@@ -39,14 +39,14 @@ extern "C" {
     extern void EvtModelSetEventData(void* self, void* pData, void* pModelData);
     extern void EvtModelReleaseAnimsOnce(void* self);
     extern void EvtModelReleaseAnims(void* self);
-    extern void EvtSeqInsertRtEvent(void* self);
-    extern int EvtSeqProbeEvtSlot(void* self, void* pSlot);
-    extern int EvtSeqIsSameNameType3Busy(void* self);
+    // (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
+    // (memberized: EvtSeqProbeEvtSlot -> EvtBdabModel::SeqProbeEvtSlot; declaration moved into class EvtBdabModel)
+    // (memberized: EvtSeqIsSameNameType3Busy -> UnkEvtListEntry::SeqIsSameNameType3Busy; declaration moved into class UnkEvtListEntry)
     extern void* EvtSeqFindSameNameType3(void* self);
     extern int EvtSeqGetCounter100(void* self);
     extern int EvtSeqGetCounter104(void);
     extern int EvtSeqGetWalkIndex(void);
-    extern void EvtSeqCheckEventRunGuard(void* self);
+    // (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
     extern void EvtObj_ScanPlayers(void* self);
     extern void func_801836CC(void* self, unsigned long value);
     extern int EvtSeqGetStateBit14(void);
@@ -155,7 +155,7 @@ extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
     self->mCallback[1] = *p++;
     self->mCallback[2] = *p;
 
-    EvtSeqInsertRtEvent(self);
+    self->SeqInsertRtEvent();
 
     // Pick the update callback based on the parent task's mode field:
     // -1 -> standalone mode (0x50 flags + alternate ptmf), other nonzero -> 0x30
@@ -421,7 +421,7 @@ extern "C" void EvtObj_ResetStateB(void* self) {
 
     FLD(s32, s, 0x74) = -1;
 
-    int result = EvtSeqProbeEvtSlot(self, s + 0x74);
+    int result = self->SeqProbeEvtSlot(s + 0x74);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -557,7 +557,7 @@ extern "C" void EvtObj_SetupModel(void* self) {
 
     if (flags & 0x2) {
         if (flags & 0x200) {
-            if (EvtSeqIsSameNameType3Busy(self) == 0) {
+            if (self->SeqIsSameNameType3Busy() == 0) {
                 FLD(u32, s, 0x18) &= ~0x100;
                 u32* base = (u32*)((char*)lbl_eu_80531EF8 + 0x78);
                 FLD(u32, s, 0x0C) = base[1];
@@ -766,14 +766,14 @@ extern "C" void EvtObj_TickUpdate(void* self) {
         // Builtin i2f is required: instructions come out byte-identical to
         // retail incl. schedule. Residual (open item): MWCC pools the
         // 0x4330000080000000 magic TU-locally (@N) where retail lfds the
-        // shared blob lbl_eu_80667910 — single SDA21 reloc-name drift.
+        // shared blob lbl_eu_80667910 -- single SDA21 reloc-name drift.
         // §7i manual pattern regresses here (adds frsp / reschedules;
         // 3 non-improving attempts, see attempts.jsonl).
         float ft = (float)val;
         simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }
 
-    EvtSeqCheckEventRunGuard(self);
+    self->EvtSeqCheckEventRunGuard();
     EvtObj_ScanPlayers(self);
 }
 
@@ -978,5 +978,5 @@ extern "C" void EvtObj_ThunkInit3C(void* self) {
 extern "C" void EvtObj_ThunkCtor3C(void* self) {
     ((void(*)(void*))__ct__80181B74)((char*)self - 0x3C);
 }
-// retail: li r3,1; blr — returns true
+// retail: li r3,1; blr -- returns true
 extern "C" bool EvtObj_AlwaysTrue(void* self) { return true; }

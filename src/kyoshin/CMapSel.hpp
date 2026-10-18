@@ -64,6 +64,7 @@ struct CMapSelFull {
     s8 field_8C;  // y coordinate
     s8 field_8D;  // x coordinate
     u8 mGridData[128]; // grid lookup data starting at +0x8E
+    u8 getMapGridCell();
 };
 
 // Abstract view into the embedded CCur18 cursor vtable. MWCC inserts an

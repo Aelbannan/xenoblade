@@ -15,7 +15,7 @@ void* lbl_eu_8056BBA0[4] = {
     (void*)&Reset__14CChildListNodeFv,
 };
 /* UNRESOLVED: lbl_eu_8056BBB0 (0x10, TChildListHeader<CChildListNode> vtable
- * {&lbl_eu_806635E0, 0, &__dt__34TChildListHeader<14CChildListNode>Fv, 0}) —
+ * {&lbl_eu_806635E0, 0, &__dt__34TChildListHeader<14CChildListNode>Fv, 0}) --
  * the dtor reloc name cannot be written in C++ source (MWCC rejects '<' in
  * extern "C" ids and &T::~T). MWCC emits the equivalent weak
  * __vt__34TChildListHeader<14CChildListNode> (0xC, .data @+0x10: {0, 0,

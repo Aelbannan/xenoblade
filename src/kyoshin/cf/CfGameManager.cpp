@@ -1135,7 +1135,7 @@ void KyoshinHeap_Init();
 void gmCallInit1120();
 void CmText_InitCallbackTable();
 void CmText_RegisterCallback(void (*fn)(), int);
-extern "C" void KizunagramSetActiveSlot(void* self, int slot);
+// (memberized: KizunagramSetActiveSlot -> CPcKizunagramBig::SetActiveSlot; declaration moved into class CPcKizunagramBig)
 extern "C" void MiniMapResetLayoutAnims();
 void CollObjSetupRotBoxState4Timed(void* self, void* pos, const void* ext, float radius);
 extern "C" void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b);
@@ -2284,9 +2284,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
             if (x == 8) {
                 UnkClass_8009EC9C* obj3 =
                     reinterpret_cast<UnkClass_8009EC9C*>(CtrlObjectParam_GetCharEntry(3));
-                KizunagramSetActiveSlot(&obj->itemCounts_0x3534,
-                              *reinterpret_cast<u32*>(
-                                  reinterpret_cast<u8*>(obj3) + 0x3DD0));
+                (&obj->itemCounts_0x3534)->SetActiveSlot(*reinterpret_cast<u32*>( reinterpret_cast<u8*>(obj3) + 0x3DD0));
                 // Slot owner: CActorParam is embedded at +0x17C (vtable) -
                 // CtrlObjectParam.hpp; 0x200 is getSecondCurrency (() -> u32),
                 // 0x1F8 is setSecondCurrency (u32). Both called via the

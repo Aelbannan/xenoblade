@@ -4,7 +4,7 @@
 // Retail .rodata string owned by this TU (monolibdata1 blob dissolve):
 //   lbl_eu_805224C0 (.rodata 0x2) = " "
 // dispTree's indent pad string. The sdata2_threshold 0 pragma keeps the
-// 2-byte const string in .rodata — MWCC would otherwise route a <=8B const
+// 2-byte const string in .rodata -- MWCC would otherwise route a <=8B const
 // into .sdata2, and consumers address it via lis/@l (matching retail).
 #ifdef __MWERKS__
 #pragma push

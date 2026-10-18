@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 19139 |
-| extern "C" declarations (non-lbl_*, imports) | 8809 |
-| extern "C" definitions (forced names) | 5122 |
-| `self`/register-style params | 13852 |
-| `void*` (params + locals) | 7942 |
+| extern "C" (total lines) | 18946 |
+| extern "C" declarations (non-lbl_*, imports) | 8664 |
+| extern "C" definitions (forced names) | 5043 |
+| `self`/register-style params | 13273 |
+| `void*` (params + locals) | 7915 |
 | raw pointer offset arithmetic | 5620 |
 | deref-through-cast arithmetic | 2340 |
 | inline asm / `register` | 108 |
@@ -32,14 +32,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 2811 |
 | src/kyoshin/cf/object/CActorParam.cpp | 2205 |
-| src/kyoshin/CItemBoxGrid.cpp | 2038 |
-| src/kyoshin/CPassiveSkill.cpp | 1981 |
+| src/kyoshin/CPassiveSkill.cpp | 1969 |
+| src/kyoshin/CItemBoxGrid.cpp | 1733 |
 | src/kyoshin/cf/CfCam.cpp | 1722 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1644 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 1539 |
-| src/kyoshin/code_800B06A4.cpp | 1414 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 1518 |
+| src/kyoshin/code_800B06A4.cpp | 1411 |
 | src/kyoshin/action/CActParamData.cpp | 1322 |
-| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1295 |
+| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1291 |
 
 ## Actionable pointer arithmetic (curated, per-expression)
 
@@ -80,7 +80,7 @@ Top TUs by raw offsets inside accepted functions:
 
 A `struct XView` declared in a `.cpp` that types a raw offset into an object is an **interim** idiom, not an end state: it duplicates layout knowledge outside the owning class. `tools/coop/view_audit.py` resolves what each view wraps and classifies it - **opaque** (`u8*`/`void*`/temp buffer/call result), **vendored** (header under `nw4r/`, `revolution/`, `RVL_SDK/`, `CriWare/` - cannot be edited), **debt** (wraps a project class whose header declares no member at that offset), **duplicate** (the class ALREADY declares a member there - the view contradicts the header), **unconfirmed** (owner header has no offset comments), **reverted** (an attempt log records that the view was tested and kept - a view that cannot become a member without declaring a false one). Migrate a debt view with a **line-neutral in-place padding replacement** (`u8 pad_74[4];` -> `CFileHandle* mFileHandle;`): same line count, same offset, so no includer `-ipa` re-baseline is needed. Counts are informational (heuristic classification).
 
-- views: 231  |  debt+duplicate: **14**  |  duplicate (hack): 2
+- views: 231  |  debt+duplicate: **15**  |  duplicate (hack): 2
 
 Top TUs by view debt:
 
@@ -89,6 +89,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfRes.cpp | 3 | 0 |
 | libs/monolib/src/lod/LODMemMan.cpp | 2 | 0 |
 | src/kyoshin/code_800B06A4.cpp | 2 | 0 |
+| src/kyoshin/CFloorMap.cpp | 1 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 1 | 1 |
 | src/kyoshin/cf/CPartsChange.cpp | 1 | 0 |
 | src/kyoshin/cf/CfCamEvent.cpp | 1 | 0 |
@@ -101,11 +102,11 @@ Top TUs by view debt:
 
 | TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto | asm-shim | schedule-pragma | init-side-effect | ptr-sites | ptr-acc |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| libs/monolib/src/coli/CColiProc.cpp | 4 | 9 | 8 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 1 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 105 | 58 | 229 | 10 | 9 | 0 | 0 | 0 | 29 | 0 | 0 | 0 | 58 | 0 |
+| libs/monolib/src/coli/CColiProc.cpp | 4 | 5 | 4 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 1 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 101 | 58 | 225 | 10 | 9 | 0 | 0 | 0 | 29 | 0 | 0 | 0 | 58 | 0 |
 | libs/monolib/src/coli/code_804B2FF0.cpp | 38 | 1 | 21 | 9 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804B59C8.cpp | 44 | 16 | 74 | 14 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 |
-| libs/monolib/src/coli/code_804BAE10.cpp | 6 | 6 | 77 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
+| libs/monolib/src/coli/code_804B59C8.cpp | 43 | 15 | 68 | 14 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 |
+| libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 56 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
 | libs/monolib/src/core/CArcItem.cpp | 33 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 45 | 1 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDrawGX.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -117,7 +118,7 @@ Top TUs by view debt:
 | libs/monolib/src/core/CProcRoot.cpp | 42 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrcData.cpp | 47 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CSchedule.cpp | 1 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| libs/monolib/src/core/CSchedule.cpp | 1 | 1 | 1 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | libs/monolib/src/core/CScriptCode.cpp | 3 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSplitFrame.cpp | 0 | 6 | 8 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | libs/monolib/src/core/CTaskManager.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -125,9 +126,9 @@ Top TUs by view debt:
 | libs/monolib/src/core/CView.cpp | 71 | 18 | 32 | 19 | 85 | 16 | 0 | 0 | 125 | 0 | 0 | 0 | 94 | 1 |
 | libs/monolib/src/core/CViewFrame.cpp | 31 | 9 | 19 | 9 | 1 | 1 | 0 | 0 | 15 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/CViewRoot.cpp | 41 | 4 | 3 | 6 | 0 | 1 | 0 | 0 | 23 | 0 | 0 | 0 | 2 | 0 |
-| libs/monolib/src/core/ScheduleList.cpp | 18 | 0 | 29 | 13 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
-| libs/monolib/src/core/code_804DEDA8.cpp | 17 | 13 | 9 | 32 | 44 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 115 | 3 |
-| libs/monolib/src/core/code_804E36DC.cpp | 3 | 12 | 9 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
+| libs/monolib/src/core/ScheduleList.cpp | 17 | 0 | 28 | 13 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| libs/monolib/src/core/code_804DEDA8.cpp | 14 | 13 | 8 | 32 | 44 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 115 | 3 |
+| libs/monolib/src/core/code_804E36DC.cpp | 0 | 7 | 9 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | libs/monolib/src/core/code_804EE558.cpp | 23 | 9 | 5 | 34 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 31 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 21 | 1 | 5 | 31 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 1 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -150,10 +151,10 @@ Top TUs by view debt:
 | libs/monolib/src/device/CDeviceVICb.cpp | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CGXCache.cpp | 22 | 12 | 41 | 41 | 12 | 1 | 0 | 0 | 24 | 0 | 0 | 0 | 13 | 0 |
 | libs/monolib/src/effect/CERand.cpp | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/effect/CETrail.cpp | 21 | 10 | 5 | 26 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
+| libs/monolib/src/effect/CETrail.cpp | 21 | 9 | 3 | 27 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/effect/code_804C8718.cpp | 79 | 5 | 45 | 45 | 3 | 1 | 0 | 0 | 6 | 0 | 0 | 0 | 8 | 2 |
-| libs/monolib/src/effect/code_804CC2B8.cpp | 63 | 34 | 100 | 88 | 33 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 0 |
+| libs/monolib/src/effect/code_804C8718.cpp | 64 | 5 | 24 | 39 | 3 | 1 | 0 | 0 | 6 | 0 | 0 | 0 | 8 | 2 |
+| libs/monolib/src/effect/code_804CC2B8.cpp | 57 | 32 | 69 | 87 | 33 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 0 |
 | libs/monolib/src/effect/code_804D854C.cpp | 10 | 4 | 5 | 16 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/effect/code_804D9274.cpp | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804DB938.cpp | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -171,7 +172,7 @@ Top TUs by view debt:
 | libs/monolib/src/lib/UnkClass_80460308.cpp | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_80460C34.cpp | 4 | 3 | 0 | 0 | 15 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lod/CLODCacheManagerS.cpp | 13 | 0 | 14 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
-| libs/monolib/src/lod/CTaskLOD.cpp | 40 | 8 | 49 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lod/CTaskLOD.cpp | 38 | 8 | 47 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lod/LODMemMan.cpp | 92 | 14 | 147 | 23 | 37 | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 67 | 0 |
 | libs/monolib/src/lod/UnkClass_8046368C.cpp | 17 | 7 | 1 | 5 | 1 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 5 | 0 |
 | libs/monolib/src/lod/UnkClass_80466348.cpp | 26 | 37 | 135 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -196,7 +197,7 @@ Top TUs by view debt:
 | libs/monolib/src/scn/CLight.cpp | 1 | 5 | 9 | 1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 15 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 5 | 8 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmUV.cpp | 3 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlDynamics.cpp | 64 | 46 | 86 | 42 | 46 | 31 | 0 | 0 | 2 | 0 | 0 | 0 | 69 | 3 |
+| libs/monolib/src/scn/CMdlDynamics.cpp | 63 | 45 | 81 | 42 | 46 | 31 | 0 | 0 | 2 | 0 | 0 | 0 | 69 | 3 |
 | libs/monolib/src/scn/CMdlLook.cpp | 4 | 2 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 6 | 0 | 1 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 8 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 2 | 7 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -205,11 +206,11 @@ Top TUs by view debt:
 | libs/monolib/src/scn/CScnBloom.cpp | 15 | 23 | 41 | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/scn/CScnCameraMan.cpp | 34 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnEffectActNw4r.cpp | 2 | 15 | 29 | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 2 | 0 |
-| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 37 | 72 | 149 | 68 | 204 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 293 | 0 |
+| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 35 | 72 | 143 | 68 | 204 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 293 | 0 |
 | libs/monolib/src/scn/CScnFadeMan.cpp | 2 | 3 | 6 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 2 | 2 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFilterMan.cpp | 72 | 64 | 82 | 23 | 4 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 5 | 1 |
-| libs/monolib/src/scn/CScnFogMan.cpp | 4 | 7 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFilterMan.cpp | 71 | 63 | 80 | 23 | 4 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 5 | 1 |
+| libs/monolib/src/scn/CScnFogMan.cpp | 3 | 6 | 13 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 3 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnIdMan.cpp | 11 | 2 | 3 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemAnim.cpp | 6 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -220,14 +221,14 @@ Top TUs by view debt:
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 6 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 32 | 44 | 89 | 7 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 29 | 60 | 191 | 32 | 10 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 25 | 6 |
-| libs/monolib/src/scn/CScnItemPool.cpp | 17 | 29 | 43 | 11 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 2 |
+| libs/monolib/src/scn/CScnItemPool.cpp | 16 | 28 | 40 | 11 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 15 | 2 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 11 | 7 | 24 | 24 | 29 | 20 | 0 | 0 | 1 | 0 | 0 | 0 | 40 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 51 | 13 | 22 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
 | libs/monolib/src/scn/CScnRoot.cpp | 4 | 4 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRootNw4r.cpp | 7 | 17 | 28 | 6 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 |
 | libs/monolib/src/scn/CScnTexWorkMan.cpp | 11 | 4 | 9 | 6 | 0 | 0 | 0 | 0 | 54 | 0 | 0 | 0 | 12 | 2 |
-| libs/monolib/src/scn/CScnVirtualLight.cpp | 15 | 41 | 115 | 42 | 11 | 5 | 0 | 0 | 20 | 0 | 0 | 0 | 12 | 0 |
+| libs/monolib/src/scn/CScnVirtualLight.cpp | 12 | 39 | 109 | 42 | 11 | 5 | 0 | 0 | 20 | 0 | 0 | 0 | 12 | 0 |
 | libs/monolib/src/scn/CScn_80496B0C.cpp | 141 | 18 | 42 | 8 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 2 |
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 4 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 3 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -237,8 +238,8 @@ Top TUs by view debt:
 | libs/monolib/src/scn/code_8047D2AC.cpp | 23 | 4 | 31 | 31 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BC9EC.cpp | 10 | 0 | 4 | 15 | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | 0 |
-| libs/monolib/src/scn/code_804BD8E8.cpp | 21 | 10 | 4 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 2 |
-| libs/monolib/src/scn/code_804BF59C.cpp | 0 | 4 | 8 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/code_804BD8E8.cpp | 20 | 10 | 3 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 2 |
+| libs/monolib/src/scn/code_804BF59C.cpp | 0 | 3 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/util/CChildListNode.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/util/CDoubleListNode.cpp | 2 | 0 | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | libs/monolib/src/util/CPathUtil.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -371,38 +372,38 @@ Top TUs by view debt:
 | src/kyoshin/CEquipItemBox.cpp | 10 | 110 | 150 | 34 | 49 | 0 | 0 | 0 | 23 | 0 | 0 | 0 | 72 | 0 |
 | src/kyoshin/CErrMes.cpp | 2 | 18 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CExchangeWin.cpp | 3 | 11 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CFade.cpp | 31 | 12 | 16 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CFloorMap.cpp | 18 | 10 | 94 | 104 | 73 | 18 | 0 | 0 | 20 | 0 | 0 | 0 | 145 | 9 |
-| src/kyoshin/CItemBoxGrid.cpp | 54 | 71 | 501 | 223 | 201 | 57 | 0 | 0 | 50 | 0 | 0 | 0 | 261 | 0 |
+| src/kyoshin/CFade.cpp | 31 | 10 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CFloorMap.cpp | 18 | 9 | 92 | 104 | 73 | 18 | 0 | 0 | 20 | 0 | 0 | 0 | 145 | 9 |
+| src/kyoshin/CItemBoxGrid.cpp | 37 | 54 | 377 | 221 | 201 | 57 | 0 | 0 | 50 | 0 | 0 | 0 | 261 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 1 | 4 | 9 | 7 | 12 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 |
 | src/kyoshin/CItemBoxInfo.cpp | 84 | 19 | 4 | 198 | 280 | 172 | 0 | 0 | 3 | 0 | 0 | 0 | 339 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 7 | 10 | 140 | 19 | 4 | 1 | 0 | 0 | 16 | 0 | 0 | 0 | 5 | 0 |
-| src/kyoshin/CKizunaTalkList.cpp | 6 | 14 | 56 | 16 | 23 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 40 | 0 |
+| src/kyoshin/CKizunaTalkList.cpp | 6 | 13 | 27 | 16 | 23 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 40 | 0 |
 | src/kyoshin/CKizunagram.cpp | 15 | 52 | 112 | 25 | 15 | 7 | 4 | 10 | 3 | 0 | 0 | 0 | 17 | 3 |
 | src/kyoshin/CLoad.cpp | 36 | 1 | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 2 | 16 | 98 | 12 | 12 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 11 | 2 |
-| src/kyoshin/CMapSel.cpp | 14 | 21 | 51 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 |
-| src/kyoshin/CMiniMap.cpp | 51 | 13 | 35 | 103 | 105 | 70 | 0 | 0 | 6 | 0 | 0 | 0 | 120 | 2 |
+| src/kyoshin/CMapSel.cpp | 14 | 21 | 50 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 |
+| src/kyoshin/CMiniMap.cpp | 50 | 13 | 32 | 102 | 105 | 70 | 0 | 0 | 6 | 0 | 0 | 0 | 120 | 2 |
 | src/kyoshin/CModelDisp.cpp | 7 | 12 | 36 | 16 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 19 | 0 |
-| src/kyoshin/CNumSelect.cpp | 4 | 11 | 23 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CNumSelect.cpp | 0 | 8 | 11 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/COption.cpp | 0 | 1 | 9 | 2 | 74 | 65 | 0 | 2 | 0 | 0 | 0 | 0 | 139 | 0 |
 | src/kyoshin/CPartyState.cpp | 0 | 24 | 51 | 2 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 5 | 0 |
 | src/kyoshin/CPartyStateWin.cpp | 22 | 29 | 82 | 3 | 2 | 0 | 0 | 0 | 55 | 0 | 0 | 0 | 4 | 4 |
-| src/kyoshin/CPassiveSkill.cpp | 101 | 63 | 290 | 50 | 25 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 24 | 0 |
-| src/kyoshin/CPcKizunagram.cpp | 3 | 28 | 71 | 8 | 16 | 0 | 0 | 0 | 47 | 0 | 0 | 0 | 21 | 5 |
+| src/kyoshin/CPassiveSkill.cpp | 98 | 63 | 287 | 47 | 25 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 24 | 0 |
+| src/kyoshin/CPcKizunagram.cpp | 2 | 25 | 64 | 8 | 16 | 0 | 0 | 0 | 47 | 0 | 0 | 0 | 21 | 5 |
 | src/kyoshin/CPresentWin.cpp | 1 | 14 | 40 | 14 | 8 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 8 | 0 |
 | src/kyoshin/CQstLogInfo.cpp | 5 | 13 | 36 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogList.cpp | 6 | 19 | 62 | 2 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 2 | 0 |
-| src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 |
+| src/kyoshin/CQuestWindow.cpp | 2 | 3 | 34 | 11 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 5 | 52 | 68 | 34 | 73 | 14 | 0 | 0 | 48 | 0 | 0 | 0 | 93 | 3 |
 | src/kyoshin/CScrollBar.cpp | 35 | 6 | 12 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSelShopWin.cpp | 2 | 4 | 8 | 4 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CSelShopWin.cpp | 0 | 2 | 4 | 4 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 4 | 1 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
-| src/kyoshin/CSkipTimer.cpp | 13 | 14 | 72 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
+| src/kyoshin/CSkipTimer.cpp | 7 | 8 | 51 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
 | src/kyoshin/CSortMenu.cpp | 5 | 29 | 0 | 3 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 |
 | src/kyoshin/CSysWin.cpp | 1 | 21 | 28 | 8 | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinBuff.cpp | 2 | 5 | 8 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
-| src/kyoshin/CSysWinSave.cpp | 1 | 7 | 9 | 11 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 3 | 0 |
+| src/kyoshin/CSysWinSave.cpp | 0 | 6 | 7 | 11 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 40 | 18 | 5 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 7 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 2 | 7 | 7 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -419,7 +420,7 @@ Top TUs by view debt:
 | src/kyoshin/CTutorialList.cpp | 9 | 30 | 66 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 |
 | src/kyoshin/CUIBattleManager.cpp | 16 | 14 | 36 | 44 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 |
 | src/kyoshin/CUICfManager.cpp | 68 | 28 | 14 | 49 | 21 | 0 | 0 | 0 | 203 | 0 | 0 | 0 | 65 | 25 |
-| src/kyoshin/CUIErrMesWin.cpp | 6 | 5 | 27 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
+| src/kyoshin/CUIErrMesWin.cpp | 4 | 3 | 19 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/CUIWindowManager.cpp | 21 | 40 | 28 | 27 | 0 | 0 | 0 | 0 | 103 | 0 | 0 | 0 | 37 | 27 |
 | src/kyoshin/action/CActParamAnim.cpp | 4 | 81 | 324 | 44 | 62 | 42 | 0 | 0 | 17 | 0 | 0 | 0 | 80 | 1 |
 | src/kyoshin/action/CActParamData.cpp | 98 | 105 | 246 | 236 | 7 | 7 | 0 | 0 | 61 | 0 | 0 | 0 | 21 | 11 |
@@ -441,7 +442,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CTaskGameCf.cpp | 1 | 2 | 0 | 0 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
 | src/kyoshin/cf/CTaskGameEffAfter.cpp | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskREvent.cpp | 2 | 4 | 26 | 6 | 9 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 23 | 2 |
-| src/kyoshin/cf/CTaskREvtSequence.cpp | 3 | 12 | 51 | 28 | 4 | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 86 | 4 |
+| src/kyoshin/cf/CTaskREvtSequence.cpp | 3 | 12 | 42 | 28 | 4 | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 86 | 4 |
 | src/kyoshin/cf/CVision.cpp | 24 | 34 | 41 | 52 | 45 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 51 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 38 | 1 | 0 | 43 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCam.cpp | 23 | 143 | 392 | 142 | 18 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 1 |
@@ -455,9 +456,9 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfCollCircleImpl.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 98 | 2 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGameManager.cpp | 139 | 64 | 31 | 74 | 6 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 18 | 0 |
+| src/kyoshin/cf/CfGameManager.cpp | 138 | 64 | 30 | 73 | 6 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 18 | 0 |
 | src/kyoshin/cf/CfGimmick.cpp | 14 | 42 | 29 | 10 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 12 | 0 |
-| src/kyoshin/cf/CfGimmickElv.cpp | 1 | 16 | 42 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
+| src/kyoshin/cf/CfGimmickElv.cpp | 1 | 15 | 41 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
 | src/kyoshin/cf/CfGimmickEne.cpp | 10 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 8 | 2 | 12 | 1 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
@@ -465,10 +466,10 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 69 | 5 | 0 | 0 | 4 | 0 | 7 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 32 | 15 | 31 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 |
-| src/kyoshin/cf/CfHikariItemManager.cpp | 3 | 12 | 22 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 |
+| src/kyoshin/cf/CfHikariItemManager.cpp | 3 | 12 | 21 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 |
 | src/kyoshin/cf/CfMapEffectManager.cpp | 1 | 5 | 6 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
-| src/kyoshin/cf/CfMapItemManager.cpp | 42 | 7 | 29 | 37 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
-| src/kyoshin/cf/CfMapMineManager.cpp | 3 | 15 | 24 | 15 | 20 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 41 | 0 |
+| src/kyoshin/cf/CfMapItemManager.cpp | 41 | 7 | 28 | 36 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+| src/kyoshin/cf/CfMapMineManager.cpp | 3 | 14 | 18 | 15 | 20 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 41 | 0 |
 | src/kyoshin/cf/CfNandManager.cpp | 71 | 34 | 1 | 21 | 20 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 0 |
 | src/kyoshin/cf/CfObjectEnumList.cpp | 41 | 7 | 38 | 49 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 |
 | src/kyoshin/cf/CfObjectSelectorObj.cpp | 16 | 1 | 11 | 19 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 1 | 0 |
@@ -541,8 +542,8 @@ Top TUs by view debt:
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp | 9 | 0 | 20 | 3 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp | 3 | 2 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cfsys/CfObjectImplEne.cpp | 6 | 2 | 31 | 20 | 1 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 6 | 5 |
-| src/kyoshin/cfsys/CfObjectImplMove.cpp | 2 | 1 | 37 | 18 | 3 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 0 |
+| src/kyoshin/cfsys/CfObjectImplEne.cpp | 5 | 2 | 30 | 19 | 1 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 6 | 5 |
+| src/kyoshin/cfsys/CfObjectImplMove.cpp | 2 | 1 | 36 | 18 | 3 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 11 | 0 |
 | src/kyoshin/cfsys/CfObjectImplNpc.cpp | 1 | 2 | 9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cfsys/CfObjectImplObj.cpp | 4 | 3 | 15 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/cfsys/CfObjectImplPc.cpp | 64 | 0 | 49 | 22 | 14 | 0 | 0 | 0 | 59 | 0 | 0 | 0 | 22 | 3 |
@@ -550,12 +551,12 @@ Top TUs by view debt:
 | src/kyoshin/code_800A3B24.cpp | 12 | 5 | 10 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 3 | 49 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/code_800B06A4.cpp | 107 | 94 | 202 | 277 | 115 | 38 | 0 | 0 | 77 | 0 | 0 | 0 | 139 | 5 |
+| src/kyoshin/code_800B06A4.cpp | 106 | 94 | 201 | 277 | 115 | 38 | 0 | 0 | 77 | 0 | 0 | 0 | 139 | 5 |
 | src/kyoshin/code_80135FDC.cpp | 22 | 73 | 13 | 162 | 61 | 5 | 0 | 0 | 38 | 0 | 0 | 0 | 65 | 0 |
 | src/kyoshin/code_801862C0.cpp | 0 | 3 | 15 | 21 | 3 | 2 | 1 | 2 | 0 | 0 | 0 | 0 | 9 | 2 |
 | src/kyoshin/code_801A929C.cpp | 24 | 6 | 9 | 10 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 1 |
-| src/kyoshin/code_801F3BE0.cpp | 27 | 0 | 45 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
-| src/kyoshin/code_802405F4.cpp | 14 | 4 | 5 | 2 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 |
+| src/kyoshin/code_801F3BE0.cpp | 26 | 0 | 44 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
+| src/kyoshin/code_802405F4.cpp | 13 | 4 | 4 | 2 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 |
 | src/kyoshin/code_8025FB10.cpp | 7 | 2 | 0 | 2 | 1 | 0 | 0 | 0 | 339 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_8027513C.cpp | 2 | 2 | 22 | 18 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 3 |
 | src/kyoshin/code_802B8A3C.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 |
@@ -574,35 +575,35 @@ Top TUs by view debt:
 | src/kyoshin/makecrystal/CMCCylinderGauge.cpp | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCEffStart.cpp | 76 | 7 | 8 | 20 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 1 |
 | src/kyoshin/makecrystal/CMCGetItemBox.cpp | 28 | 20 | 64 | 22 | 17 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 |
-| src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 2 | 17 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
-| src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 39 | 5 | 18 | 29 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 2 |
+| src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 2 | 16 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
+| src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 38 | 5 | 17 | 28 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 22 | 2 |
 | src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 289 | 3 | 246 | 90 | 98 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 176 | 3 |
 | src/kyoshin/makecrystal/code_80213488.cpp | 4 | 10 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 78 | 18 | 40 | 88 | 22 | 8 | 0 | 0 | 35 | 0 | 0 | 0 | 61 | 5 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 18 | 66 | 231 | 24 | 38 | 1 | 0 | 0 | 27 | 0 | 0 | 0 | 42 | 1 |
-| src/kyoshin/menu/CMenuBattleChain.cpp | 43 | 14 | 31 | 7 | 0 | 0 | 3 | 3 | 3 | 0 | 0 | 0 | 3 | 3 |
+| src/kyoshin/menu/CMenuBattleChain.cpp | 42 | 13 | 29 | 7 | 0 | 0 | 3 | 3 | 3 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
-| src/kyoshin/menu/CMenuBattleDamage.cpp | 4 | 8 | 15 | 5 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 3 | 3 |
+| src/kyoshin/menu/CMenuBattleDamage.cpp | 3 | 8 | 13 | 5 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuBattleEnd.cpp | 3 | 5 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/menu/CMenuBattleMode.cpp | 3 | 2 | 5 | 4 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattlePlayerState.cpp | 23 | 5 | 22 | 24 | 2 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 7 | 3 |
 | src/kyoshin/menu/CMenuBattlePlayerState_ct.cpp | 5 | 1 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 20 | 0 |
-| src/kyoshin/menu/CMenuCollepedia.cpp | 15 | 3 | 29 | 3 | 53 | 34 | 0 | 2 | 0 | 0 | 0 | 0 | 93 | 2 |
+| src/kyoshin/menu/CMenuCollepedia.cpp | 11 | 2 | 17 | 3 | 53 | 34 | 0 | 2 | 0 | 0 | 0 | 0 | 93 | 2 |
 | src/kyoshin/menu/CMenuEnemyState.cpp | 56 | 10 | 48 | 59 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 | 5 | 3 |
 | src/kyoshin/menu/CMenuFade.cpp | 6 | 7 | 7 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 3 | 3 |
-| src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 | 5 | 2 |
+| src/kyoshin/menu/CMenuGCItem.cpp | 2 | 4 | 4 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 | 5 | 2 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 2 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
 | src/kyoshin/menu/CMenuGetItemMulti.cpp | 47 | 1 | 44 | 20 | 0 | 0 | 0 | 0 | 63 | 0 | 0 | 0 | 4 | 4 |
 | src/kyoshin/menu/CMenuItem.cpp | 2 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 | 10 | 2 |
-| src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 | 21 | 3 |
+| src/kyoshin/menu/CMenuKeyAssign.cpp | 2 | 1 | 3 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 | 21 | 3 |
 | src/kyoshin/menu/CMenuKizunaTalk.cpp | 5 | 6 | 16 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 |
-| src/kyoshin/menu/CMenuKizunaTalkList.cpp | 40 | 3 | 45 | 4 | 58 | 54 | 0 | 0 | 0 | 0 | 0 | 0 | 111 | 2 |
+| src/kyoshin/menu/CMenuKizunaTalkList.cpp | 28 | 3 | 33 | 4 | 58 | 54 | 0 | 0 | 0 | 0 | 0 | 0 | 111 | 2 |
 | src/kyoshin/menu/CMenuKizunagram.cpp | 1 | 4 | 15 | 2 | 3 | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 5 | 2 |
 | src/kyoshin/menu/CMenuLandTelop.cpp | 1 | 1 | 8 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 1 |
 | src/kyoshin/menu/CMenuLvUp.cpp | 2 | 2 | 14 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 3 | 3 |
-| src/kyoshin/menu/CMenuMapSelect.cpp | 44 | 3 | 45 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 |
+| src/kyoshin/menu/CMenuMapSelect.cpp | 40 | 3 | 41 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 |
 | src/kyoshin/menu/CMenuMapSelectSC.cpp | 1 | 9 | 10 | 1 | 82 | 72 | 0 | 0 | 5 | 0 | 0 | 0 | 153 | 2 |
 | src/kyoshin/menu/CMenuOption.cpp | 7 | 0 | 15 | 2 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 3 | 5 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 4 |
@@ -611,14 +612,14 @@ Top TUs by view debt:
 | src/kyoshin/menu/CMenuPassiveSkill.cpp | 1 | 11 | 18 | 0 | 8 | 0 | 0 | 0 | 15 | 0 | 0 | 0 | 16 | 1 |
 | src/kyoshin/menu/CMenuPause.cpp | 5 | 7 | 7 | 12 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 3 | 1 | 70 | 11 | 3 | 3 | 1 | 0 | 9 | 0 | 0 | 0 | 6 | 3 |
-| src/kyoshin/menu/CMenuQstCnt.cpp | 16 | 3 | 31 | 4 | 2 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 4 | 1 |
+| src/kyoshin/menu/CMenuQstCnt.cpp | 15 | 3 | 28 | 4 | 2 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 4 | 1 |
 | src/kyoshin/menu/CMenuQuestLog.cpp | 12 | 16 | 20 | 4 | 16 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 26 | 2 |
 | src/kyoshin/menu/CMenuSave.cpp | 1 | 8 | 10 | 2 | 87 | 81 | 1 | 2 | 0 | 0 | 0 | 0 | 167 | 2 |
 | src/kyoshin/menu/CMenuSelectShop.cpp | 3 | 6 | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuShopBuy.cpp | 2 | 10 | 8 | 2 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 2 |
 | src/kyoshin/menu/CMenuShopSell.cpp | 2 | 9 | 8 | 4 | 3 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 5 | 2 |
 | src/kyoshin/menu/CMenuSkipTimer.cpp | 4 | 8 | 17 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 1 |
-| src/kyoshin/menu/CMenuSymbolMark.cpp | 54 | 17 | 75 | 67 | 7 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 19 | 5 |
+| src/kyoshin/menu/CMenuSymbolMark.cpp | 44 | 10 | 23 | 66 | 7 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 19 | 5 |
 | src/kyoshin/menu/CMenuTitle.cpp | 2 | 5 | 12 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuTutorial.cpp | 3 | 1 | 14 | 0 | 2 | 2 | 1 | 2 | 2 | 0 | 0 | 0 | 4 | 2 |
 | src/kyoshin/menu/CMenuTutorialList.cpp | 1 | 2 | 12 | 0 | 3 | 3 | 1 | 0 | 7 | 0 | 0 | 0 | 5 | 2 |
@@ -627,7 +628,7 @@ Top TUs by view debt:
 | src/kyoshin/menu/CMenuZeal.cpp | 1 | 0 | 7 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/code_80187F14.cpp | 15 | 7 | 0 | 1 | 2 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 10 | 4 |
 | src/kyoshin/menu/code_8018C5FC.cpp | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/parts/CModelDispEquip.cpp | 13 | 41 | 84 | 14 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 21 | 2 |
+| src/kyoshin/menu/parts/CModelDispEquip.cpp | 12 | 40 | 79 | 14 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 21 | 2 |
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 23 | 0 | 38 | 1 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/plugin/ocBuiltin.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -647,9 +648,9 @@ Top TUs by view debt:
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 11 | 4 | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMem.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 197 | 2 | 76 | 82 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 1 |
-| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 52 | 2 | 50 | 43 | 20 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 22 | 1 |
-| src/kyoshin/realtimeevt/CREvtModelObj.cpp | 51 | 22 | 53 | 70 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 3 |
-| src/kyoshin/realtimeevt/CREvtModelPc.cpp | 36 | 15 | 36 | 69 | 5 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 9 | 1 |
+| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 48 | 2 | 42 | 42 | 20 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 22 | 1 |
+| src/kyoshin/realtimeevt/CREvtModelObj.cpp | 47 | 22 | 45 | 66 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 16 | 3 |
+| src/kyoshin/realtimeevt/CREvtModelPc.cpp | 32 | 15 | 28 | 65 | 5 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 9 | 1 |
 | src/kyoshin/realtimeevt/CREvtMovie.cpp | 4 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtObj.cpp | 0 | 6 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
@@ -677,25 +678,25 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/coli/CColiProc.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 9,
+  "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 5,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 8,
+  "self_params": 4,
   "void_ptr": 1
  },
  "libs/monolib/src/coli/code_804A6C60.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 105,
+  "extern_c_nonlbl_decl": 101,
   "extern_c_nonlbl_def": 58,
   "goto_count": 29,
   "init_side_effect": 0,
   "ptr_arith": 9,
   "ptr_sites": 58,
   "schedule_pragma": 0,
-  "self_params": 229,
+  "self_params": 225,
   "view_total": 5,
   "void_ptr": 10
  },
@@ -711,24 +712,24 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/coli/code_804B59C8.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 44,
-  "extern_c_nonlbl_def": 16,
+  "extern_c_nonlbl_decl": 43,
+  "extern_c_nonlbl_def": 15,
   "init_side_effect": 0,
   "ptr_arith": 17,
   "ptr_sites": 24,
   "schedule_pragma": 0,
-  "self_params": 74,
+  "self_params": 68,
   "void_ptr": 14
  },
  "libs/monolib/src/coli/code_804BAE10.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 6,
   "init_side_effect": 0,
   "ptr_sites": 2,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 77,
+  "self_params": 56,
   "void_ptr": 2
  },
  "libs/monolib/src/core/CArcItem.cpp": {
@@ -835,13 +836,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 1,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 1,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 5
+  "self_params": 1
  },
  "libs/monolib/src/core/CScriptCode.cpp": {
   "asm_insn_shim": 0,
@@ -921,33 +922,32 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/ScheduleList.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 18,
+  "extern_c_nonlbl_decl": 17,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 1,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 29,
+  "self_params": 28,
   "void_ptr": 13
  },
  "libs/monolib/src/core/code_804DEDA8.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 17,
-  "extern_c_nonlbl_decl": 17,
+  "extern_c_nonlbl_decl": 14,
   "extern_c_nonlbl_def": 13,
   "init_side_effect": 0,
   "ptr_arith": 44,
   "ptr_sites": 115,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 9,
+  "self_params": 8,
   "view_total": 6,
   "void_ptr": 32
  },
  "libs/monolib/src/core/code_804E36DC.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 12,
+  "extern_c_nonlbl_def": 7,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 3,
@@ -1161,13 +1161,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/effect/CETrail.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 21,
-  "extern_c_nonlbl_def": 10,
+  "extern_c_nonlbl_def": 9,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "ptr_sites": 6,
   "schedule_pragma": 0,
-  "self_params": 5,
-  "void_ptr": 26
+  "self_params": 3,
+  "void_ptr": 27
  },
  "libs/monolib/src/effect/Unknown1.cpp": {
   "asm_insn_shim": 0,
@@ -1183,7 +1183,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/effect/code_804C8718.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 79,
+  "extern_c_nonlbl_decl": 64,
   "extern_c_nonlbl_def": 5,
   "goto_count": 6,
   "init_side_effect": 0,
@@ -1191,21 +1191,21 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 8,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 45,
-  "void_ptr": 45
+  "self_params": 24,
+  "void_ptr": 39
  },
  "libs/monolib/src/effect/code_804CC2B8.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 9,
-  "extern_c_nonlbl_decl": 63,
-  "extern_c_nonlbl_def": 34,
+  "extern_c_nonlbl_decl": 57,
+  "extern_c_nonlbl_def": 32,
   "init_side_effect": 0,
   "ptr_arith": 33,
   "ptr_sites": 60,
   "schedule_pragma": 0,
-  "self_params": 100,
+  "self_params": 69,
   "view_total": 1,
-  "void_ptr": 88
+  "void_ptr": 87
  },
  "libs/monolib/src/effect/code_804D854C.cpp": {
   "asm_insn_shim": 0,
@@ -1371,12 +1371,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lod/CTaskLOD.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 40,
+  "extern_c_nonlbl_decl": 38,
   "extern_c_nonlbl_def": 8,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 49,
-  "void_ptr": 17
+  "self_params": 47,
+  "void_ptr": 16
  },
  "libs/monolib/src/lod/LODMemMan.cpp": {
   "asm_insn_shim": 0,
@@ -1716,15 +1716,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CMdlDynamics.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 31,
-  "extern_c_nonlbl_decl": 64,
-  "extern_c_nonlbl_def": 46,
+  "extern_c_nonlbl_decl": 63,
+  "extern_c_nonlbl_def": 45,
   "goto_count": 2,
   "init_side_effect": 0,
   "ptr_arith": 46,
   "ptr_sites": 69,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 86,
+  "self_params": 81,
   "void_ptr": 42
  },
  "libs/monolib/src/scn/CMdlLook.cpp": {
@@ -1813,13 +1813,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 15,
-  "extern_c_nonlbl_decl": 37,
+  "extern_c_nonlbl_decl": 35,
   "extern_c_nonlbl_def": 72,
   "init_side_effect": 0,
   "ptr_arith": 204,
   "ptr_sites": 293,
   "schedule_pragma": 0,
-  "self_params": 149,
+  "self_params": 143,
   "view_total": 10,
   "void_ptr": 68
  },
@@ -1847,24 +1847,24 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnFilterMan.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 72,
-  "extern_c_nonlbl_def": 64,
+  "extern_c_nonlbl_decl": 71,
+  "extern_c_nonlbl_def": 63,
   "goto_count": 2,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "ptr_sites": 5,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 82,
+  "self_params": 80,
   "void_ptr": 23
  },
  "libs/monolib/src/scn/CScnFogMan.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 7,
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 6,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 16,
+  "self_params": 13,
   "view_total": 1,
   "void_ptr": 1
  },
@@ -1971,14 +1971,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 17,
-  "extern_c_nonlbl_def": 29,
+  "extern_c_nonlbl_decl": 16,
+  "extern_c_nonlbl_def": 28,
   "init_side_effect": 0,
   "ptr_arith": 12,
   "ptr_sites": 15,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 43,
+  "self_params": 40,
   "void_ptr": 11
  },
  "libs/monolib/src/scn/CScnLightMan.cpp": {
@@ -2048,14 +2048,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnVirtualLight.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 5,
-  "extern_c_nonlbl_decl": 15,
-  "extern_c_nonlbl_def": 41,
+  "extern_c_nonlbl_decl": 12,
+  "extern_c_nonlbl_def": 39,
   "goto_count": 20,
   "init_side_effect": 0,
   "ptr_arith": 11,
   "ptr_sites": 12,
   "schedule_pragma": 0,
-  "self_params": 115,
+  "self_params": 109,
   "void_ptr": 42
  },
  "libs/monolib/src/scn/CScn_80496B0C.cpp": {
@@ -2153,23 +2153,23 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/code_804BD8E8.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 21,
+  "extern_c_nonlbl_decl": 20,
   "extern_c_nonlbl_def": 10,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 4,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 4,
+  "self_params": 3,
   "void_ptr": 16
  },
  "libs/monolib/src/scn/code_804BF59C.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 4,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 8,
+  "self_params": 6,
   "void_ptr": 1
  },
  "libs/monolib/src/util/CChildListNode.cpp": {
@@ -3535,24 +3535,25 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CFade.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 31,
-  "extern_c_nonlbl_def": 12,
+  "extern_c_nonlbl_def": 10,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 16,
+  "self_params": 14,
   "void_ptr": 2
  },
  "src/kyoshin/CFloorMap.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 18,
   "extern_c_nonlbl_decl": 18,
-  "extern_c_nonlbl_def": 10,
+  "extern_c_nonlbl_def": 9,
   "goto_count": 20,
   "init_side_effect": 0,
   "ptr_arith": 73,
   "ptr_sites": 145,
   "ptr_sites_accepted": 9,
   "schedule_pragma": 0,
-  "self_params": 94,
+  "self_params": 92,
+  "view_debt": 1,
   "view_total": 2,
   "void_ptr": 104
  },
@@ -3564,16 +3565,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CItemBoxGrid.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 57,
-  "extern_c_nonlbl_decl": 54,
-  "extern_c_nonlbl_def": 71,
+  "extern_c_nonlbl_decl": 37,
+  "extern_c_nonlbl_def": 54,
   "goto_count": 50,
   "init_side_effect": 0,
   "ptr_arith": 201,
   "ptr_sites": 261,
   "schedule_pragma": 0,
-  "self_params": 501,
+  "self_params": 377,
   "view_total": 2,
-  "void_ptr": 223
+  "void_ptr": 221
  },
  "src/kyoshin/CItemBoxGridSubMenu.cpp": {
   "asm_insn_shim": 0,
@@ -3618,12 +3619,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 7,
   "extern_c_nonlbl_decl": 6,
-  "extern_c_nonlbl_def": 14,
+  "extern_c_nonlbl_def": 13,
   "init_side_effect": 0,
   "ptr_arith": 23,
   "ptr_sites": 40,
   "schedule_pragma": 0,
-  "self_params": 56,
+  "self_params": 27,
   "view_total": 1,
   "void_ptr": 16
  },
@@ -3674,13 +3675,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 13,
   "ptr_sites": 13,
   "schedule_pragma": 0,
-  "self_params": 51,
+  "self_params": 50,
   "void_ptr": 9
  },
  "src/kyoshin/CMiniMap.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 70,
-  "extern_c_nonlbl_decl": 51,
+  "extern_c_nonlbl_decl": 50,
   "extern_c_nonlbl_def": 13,
   "goto_count": 6,
   "init_side_effect": 0,
@@ -3688,9 +3689,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 120,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 35,
+  "self_params": 32,
   "view_total": 3,
-  "void_ptr": 103
+  "void_ptr": 102
  },
  "src/kyoshin/CModelDisp.cpp": {
   "asm_insn_shim": 0,
@@ -3711,11 +3712,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CNumSelect.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 11,
+  "extern_c_nonlbl_def": 8,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 23,
+  "self_params": 11,
   "void_ptr": 2
  },
  "src/kyoshin/COccCulling.cpp": {
@@ -3763,28 +3763,28 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CPassiveSkill.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 101,
+  "extern_c_nonlbl_decl": 98,
   "extern_c_nonlbl_def": 63,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 25,
   "ptr_sites": 24,
   "schedule_pragma": 0,
-  "self_params": 290,
+  "self_params": 287,
   "view_total": 1,
-  "void_ptr": 50
+  "void_ptr": 47
  },
  "src/kyoshin/CPcKizunagram.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 28,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 25,
   "goto_count": 47,
   "init_side_effect": 0,
   "ptr_arith": 16,
   "ptr_sites": 21,
   "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
-  "self_params": 71,
+  "self_params": 64,
   "void_ptr": 8
  },
  "src/kyoshin/CPresentWin.cpp": {
@@ -3822,13 +3822,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CQuestWindow.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 4,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "ptr_sites": 7,
   "schedule_pragma": 0,
-  "self_params": 37,
+  "self_params": 34,
   "void_ptr": 11
  },
  "src/kyoshin/CSaveLoad.cpp": {
@@ -3860,12 +3860,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CSelShopWin.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 4,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "rn_params": 2,
   "schedule_pragma": 0,
-  "self_params": 8,
+  "self_params": 4,
   "view_total": 3,
   "void_ptr": 4
  },
@@ -3882,13 +3881,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CSkipTimer.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 13,
-  "extern_c_nonlbl_def": 14,
+  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_def": 8,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "ptr_sites": 4,
   "schedule_pragma": 0,
-  "self_params": 72,
+  "self_params": 51,
   "void_ptr": 6
  },
  "src/kyoshin/CSortMenu.cpp": {
@@ -3923,14 +3922,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CSysWinSave.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 7,
+  "extern_c_nonlbl_def": 6,
   "goto_count": 2,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 3,
   "schedule_pragma": 0,
-  "self_params": 9,
+  "self_params": 7,
   "void_ptr": 11
  },
  "src/kyoshin/CSysWinScenarioLog.cpp": {
@@ -4115,13 +4113,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CUIErrMesWin.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 6,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_sites": 3,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 27,
+  "self_params": 19,
   "view_total": 1,
   "void_ptr": 9
  },
@@ -4391,7 +4389,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 86,
   "ptr_sites_accepted": 4,
   "schedule_pragma": 0,
-  "self_params": 51,
+  "self_params": 42,
   "void_ptr": 28
  },
  "src/kyoshin/cf/CVision.cpp": {
@@ -4515,16 +4513,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/CfGameManager.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 139,
+  "extern_c_nonlbl_decl": 138,
   "extern_c_nonlbl_def": 64,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 6,
   "ptr_sites": 18,
   "schedule_pragma": 0,
-  "self_params": 31,
+  "self_params": 30,
   "view_total": 1,
-  "void_ptr": 74
+  "void_ptr": 73
  },
  "src/kyoshin/cf/CfGimmick.cpp": {
   "asm_insn_shim": 0,
@@ -4543,12 +4541,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CfGimmickElv.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 16,
+  "extern_c_nonlbl_def": 15,
   "init_side_effect": 0,
   "ptr_arith": 5,
   "ptr_sites": 6,
   "schedule_pragma": 0,
-  "self_params": 42,
+  "self_params": 41,
   "void_ptr": 9
  },
  "src/kyoshin/cf/CfGimmickEne.cpp": {
@@ -4633,7 +4631,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 1,
   "ptr_sites": 5,
   "schedule_pragma": 0,
-  "self_params": 22,
+  "self_params": 21,
   "view_debt": 1,
   "view_total": 1,
   "void_ptr": 3
@@ -4652,26 +4650,26 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/CfMapItemManager.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 42,
+  "extern_c_nonlbl_decl": 41,
   "extern_c_nonlbl_def": 7,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 1,
   "schedule_pragma": 0,
-  "self_params": 29,
+  "self_params": 28,
   "view_total": 2,
-  "void_ptr": 37
+  "void_ptr": 36
  },
  "src/kyoshin/cf/CfMapMineManager.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 16,
   "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 15,
+  "extern_c_nonlbl_def": 14,
   "init_side_effect": 0,
   "ptr_arith": 20,
   "ptr_sites": 41,
   "schedule_pragma": 0,
-  "self_params": 24,
+  "self_params": 18,
   "void_ptr": 15
  },
  "src/kyoshin/cf/CfNandManager.cpp": {
@@ -5473,7 +5471,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cfsys/CfObjectImplEne.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_decl": 5,
   "extern_c_nonlbl_def": 2,
   "goto_count": 7,
   "init_side_effect": 0,
@@ -5481,8 +5479,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 6,
   "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
-  "self_params": 31,
-  "void_ptr": 20
+  "self_params": 30,
+  "void_ptr": 19
  },
  "src/kyoshin/cfsys/CfObjectImplMove.cpp": {
   "asm_insn_shim": 0,
@@ -5493,7 +5491,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 3,
   "ptr_sites": 11,
   "schedule_pragma": 0,
-  "self_params": 37,
+  "self_params": 36,
   "void_ptr": 18
  },
  "src/kyoshin/cfsys/CfObjectImplNpc.cpp": {
@@ -5571,7 +5569,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/code_800B06A4.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 38,
-  "extern_c_nonlbl_decl": 107,
+  "extern_c_nonlbl_decl": 106,
   "extern_c_nonlbl_def": 94,
   "goto_count": 77,
   "init_side_effect": 0,
@@ -5579,7 +5577,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 139,
   "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
-  "self_params": 202,
+  "self_params": 201,
   "view_debt": 2,
   "view_total": 17,
   "void_ptr": 277
@@ -5628,23 +5626,23 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/code_801F3BE0.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 27,
+  "extern_c_nonlbl_decl": 26,
   "init_side_effect": 0,
   "ptr_sites": 2,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 45,
+  "self_params": 44,
   "void_ptr": 16
  },
  "src/kyoshin/code_802405F4.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 14,
+  "extern_c_nonlbl_decl": 13,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 5,
   "schedule_pragma": 0,
-  "self_params": 5,
+  "self_params": 4,
   "void_ptr": 2
  },
  "src/kyoshin/code_8025FB10.cpp": {
@@ -5925,22 +5923,22 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 2,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 17,
+  "self_params": 16,
   "void_ptr": 4
  },
  "src/kyoshin/makecrystal/CMenuMakeCrystal.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 39,
+  "extern_c_nonlbl_decl": 38,
   "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "ptr_arith": 5,
   "ptr_sites": 22,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 18,
+  "self_params": 17,
   "view_total": 1,
-  "void_ptr": 29
+  "void_ptr": 28
  },
  "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp": {
   "asm_insn_shim": 0,
@@ -5994,15 +5992,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuBattleChain.cpp": {
   "asm_code": 3,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 43,
-  "extern_c_nonlbl_def": 14,
+  "extern_c_nonlbl_decl": 42,
+  "extern_c_nonlbl_def": 13,
   "goto_count": 3,
   "init_side_effect": 0,
   "ptr_sites": 3,
   "ptr_sites_accepted": 3,
   "rn_params": 3,
   "schedule_pragma": 0,
-  "self_params": 31,
+  "self_params": 29,
   "void_ptr": 7
  },
  "src/kyoshin/menu/CMenuBattleCommu.cpp": {
@@ -6018,14 +6016,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuBattleDamage.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 8,
   "goto_count": 4,
   "init_side_effect": 0,
   "ptr_sites": 3,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 15,
+  "self_params": 13,
   "void_ptr": 5
  },
  "src/kyoshin/menu/CMenuBattleEnd.cpp": {
@@ -6075,15 +6073,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuCollepedia.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 34,
-  "extern_c_nonlbl_decl": 15,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_decl": 11,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "ptr_arith": 53,
   "ptr_sites": 93,
   "ptr_sites_accepted": 2,
   "rn_params": 2,
   "schedule_pragma": 0,
-  "self_params": 29,
+  "self_params": 17,
   "void_ptr": 3
  },
  "src/kyoshin/menu/CMenuEnemyState.cpp": {
@@ -6115,15 +6113,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_code": 1,
   "asm_insn_shim": 0,
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 5,
   "ptr_sites_accepted": 2,
   "rn_params": 2,
   "schedule_pragma": 0,
-  "self_params": 6,
+  "self_params": 4,
   "void_ptr": 2
  },
  "src/kyoshin/menu/CMenuGameClear.cpp": {
@@ -6185,15 +6183,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuKeyAssign.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 7,
-  "extern_c_nonlbl_def": 6,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 1,
   "goto_count": 50,
   "init_side_effect": 0,
   "ptr_arith": 6,
   "ptr_sites": 21,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 92,
+  "self_params": 3,
   "void_ptr": 12
  },
  "src/kyoshin/menu/CMenuKizunaTalk.cpp": {
@@ -6209,14 +6207,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuKizunaTalkList.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 54,
-  "extern_c_nonlbl_decl": 40,
+  "extern_c_nonlbl_decl": 28,
   "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 58,
   "ptr_sites": 111,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 45,
+  "self_params": 33,
   "void_ptr": 4
  },
  "src/kyoshin/menu/CMenuKizunagram.cpp": {
@@ -6259,13 +6257,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuMapSelect.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 44,
+  "extern_c_nonlbl_decl": 40,
   "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_sites": 2,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 45,
+  "self_params": 41,
   "view_total": 1,
   "void_ptr": 2
  },
@@ -6371,7 +6369,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuQstCnt.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 16,
+  "extern_c_nonlbl_decl": 15,
   "extern_c_nonlbl_def": 3,
   "goto_count": 1,
   "init_side_effect": 0,
@@ -6379,7 +6377,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 4,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 31,
+  "self_params": 28,
   "void_ptr": 4
  },
  "src/kyoshin/menu/CMenuQuestLog.cpp": {
@@ -6461,17 +6459,17 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuSymbolMark.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 54,
-  "extern_c_nonlbl_def": 17,
+  "extern_c_nonlbl_decl": 44,
+  "extern_c_nonlbl_def": 10,
   "goto_count": 14,
   "init_side_effect": 0,
   "ptr_arith": 7,
   "ptr_sites": 19,
   "ptr_sites_accepted": 5,
   "schedule_pragma": 0,
-  "self_params": 75,
+  "self_params": 23,
   "view_total": 1,
-  "void_ptr": 67
+  "void_ptr": 66
  },
  "src/kyoshin/menu/CMenuTitle.cpp": {
   "asm_insn_shim": 0,
@@ -6570,15 +6568,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/parts/CModelDispEquip.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 13,
-  "extern_c_nonlbl_def": 41,
+  "extern_c_nonlbl_decl": 12,
+  "extern_c_nonlbl_def": 40,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "ptr_sites": 21,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 84,
+  "self_params": 79,
   "void_ptr": 14
  },
  "src/kyoshin/plugin/ocBdat.cpp": {
@@ -6810,7 +6808,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/realtimeevt/CREvtModelMap.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 52,
+  "extern_c_nonlbl_decl": 48,
   "extern_c_nonlbl_def": 2,
   "goto_count": 2,
   "init_side_effect": 0,
@@ -6818,26 +6816,26 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 22,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 50,
-  "void_ptr": 43
+  "self_params": 42,
+  "void_ptr": 42
  },
  "src/kyoshin/realtimeevt/CREvtModelObj.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 51,
+  "extern_c_nonlbl_decl": 47,
   "extern_c_nonlbl_def": 22,
   "init_side_effect": 0,
   "ptr_arith": 10,
   "ptr_sites": 16,
   "ptr_sites_accepted": 3,
   "schedule_pragma": 0,
-  "self_params": 53,
+  "self_params": 45,
   "view_total": 1,
-  "void_ptr": 70
+  "void_ptr": 66
  },
  "src/kyoshin/realtimeevt/CREvtModelPc.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 36,
+  "extern_c_nonlbl_decl": 32,
   "extern_c_nonlbl_def": 15,
   "goto_count": 2,
   "init_side_effect": 0,
@@ -6845,8 +6843,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 9,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 36,
-  "void_ptr": 69
+  "self_params": 28,
+  "void_ptr": 65
  },
  "src/kyoshin/realtimeevt/CREvtMovie.cpp": {
   "asm_insn_shim": 0,

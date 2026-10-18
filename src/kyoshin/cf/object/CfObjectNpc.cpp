@@ -12,7 +12,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <string.h>
 
-// sdata2 float pool — single table to avoid leading 0.0 sbss migration (see task recipe a)
+// sdata2 float pool -- single table to avoid leading 0.0 sbss migration (see task recipe a)
 __declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdata2_tbl_CfObjectNpc[8] = {0.0f, 0.6f, 1.8f, 0.1f, 30.0f, 25.0f, 12.5f, 100.0f};
 #define lbl_eu_80666AE0 sdata2_tbl_CfObjectNpc[0]
 #define lbl_eu_80666AE4 sdata2_tbl_CfObjectNpc[1]
@@ -219,7 +219,7 @@ u8 CfObjectNpc::getIconType() {
 
 } // namespace cf
 
-// typed data sections — source shape for retail bytes (replaces absorb blobs)
+// typed data sections -- source shape for retail bytes (replaces absorb blobs)
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC570[0x10] = "cf::CfObjectNpc";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC580[0x38] = "JUhead\0name\0OVER\0move_speed\0scale\0icon_type\0rlt_meet";
 

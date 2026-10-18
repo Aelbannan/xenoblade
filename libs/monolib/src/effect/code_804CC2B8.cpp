@@ -241,6 +241,7 @@ struct EffectStruct {
     void* field_0x32c;
     void* field_0x330;
     void* field_0x334;
+    void EffFxStoreNodeParams(u32 a, u32 b);
 };
 
 // Sub-object referenced by field_0x328: its dispatch pointer sits at
@@ -309,10 +310,16 @@ struct Vend {
 // there). Local forward declarations kept here because this TU cannot include
 // the CETrail header from its current writable scope; move to CETrail.hpp
 // (or a shared header) when scope allows.
-struct CETrailLight;
+// TU-local view of CETrailLight (defined in CETrail.cpp): only the
+// memberized Drive declaration is needed at the call site.
 struct CETrailLightParam;
-extern "C" void TrailLight_Drive(CETrailLight* self, void* arg, s32 mode,
-                              const CETrailLightParam* p, f32 f1, f32 f2);
+struct CResHolder;
+struct CETrailLight {
+    void Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2);
+    CETrailLight* Init(CResHolder* parent);
+};
+// (memberized: TrailLight_Drive -> CETrailLight::Drive; declaration moved into class CETrailLight)
+//
 
 // Trail driver imports (defined in CETrail.cpp).
 struct CETrail;
@@ -460,6 +467,13 @@ struct SceneSubLater {
     Mtx field_0x18;
 };
 
+// Forward decl: full SrcMtx view is defined below (used by the memberized
+// EffFxSetupSceneXforms declaration inside EffectScene).
+struct SrcMtx;
+// Forward decl: full view defined below (used by the memberized
+// EffFxApplySceneMatrix declaration inside EffectScene).
+class CFBC8Target;
+
 struct EffectScene {
     u16 field_0x00;
     u16 field_0x02;
@@ -574,6 +588,9 @@ struct EffectScene {
     void* field_0x32c;
     void* field_0x330;
     void* field_0x334;
+    void EffFxSceneTickDispatch();
+    void EffFxSetupSceneXforms(const SrcMtx* src);
+    void EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, Vec* d, const f32* c, bool flag);
 };
 
 // Retail: lwz r3,0(r3); blr  - returns the node/scene type from field_0x00.
@@ -732,32 +749,32 @@ typedef union MtxCopy {
 // Target 10: copy + invert a source matrix, transform several source vectors
 // and stash them across the scene, then feed the sub-object helper and zero the
 // local dir vector.
-void EffFxSetupSceneXforms(EffectScene* self, const SrcMtx* src) {
+void EffectScene::EffFxSetupSceneXforms(const SrcMtx* src) {
     // Two unrolled 48-byte matrix copies (retail emits 6 u64 lwz/stw chunks
     // each; whole-struct copies make MWCC materialize in registers instead).
-    *(MtxCopy*)&self->field_0x130 = *(const MtxCopy*)&src->field_0x24;
-    *(MtxCopy*)&self->field_0x160 = *(const MtxCopy*)&src->field_0x54;
+    *(MtxCopy*)&this->field_0x130 = *(const MtxCopy*)&src->field_0x24;
+    *(MtxCopy*)&this->field_0x160 = *(const MtxCopy*)&src->field_0x54;
     Mtx tmp;
-    PSMTXInverse(self->field_0x130, tmp);
+    PSMTXInverse(this->field_0x130, tmp);
     Vec v0;
     PSMTXMultVec(tmp, (const Vec*)src, &v0);
-    self->field_0xa0 = v0;
-    self->field_0xac = v0;
-    self->field_0x124 = v0;
+    this->field_0xa0 = v0;
+    this->field_0xac = v0;
+    this->field_0x124 = v0;
     Vec v1;
     PSMTXMultVec(tmp, &src->field_0x18, &v1);
-    self->field_0xd0 = v1;
-    PSMTXInverse(self->field_0x160, tmp);
+    this->field_0xd0 = v1;
+    PSMTXInverse(this->field_0x160, tmp);
     Vec v2;
     PSMTXMultVec(tmp, &src->field_0x0c, &v2);
-    self->field_0xc4 = v2;
-    SceneSubObj* sub = self->field_0x0c;
+    this->field_0xc4 = v2;
+    SceneSubObj* sub = this->field_0x0c;
     u8* pf = (u8*)sub->field_0xf8;
     u32 c = pf ? (u32)(pf - 8) : 0;
     u32 b = pf ? *(u8*)(pf - 0x10) : 0;
-    lytBindSetupForPane(&self->field_0xdc, self->field_0x08, b, c, 0);
-    self->field_0xb8 = ml::CVec3::zero;
-    self->field_0x06 = (u16)(self->field_0x06 | 0x800);
+    lytBindSetupForPane(&this->field_0xdc, this->field_0x08, b, c, 0);
+    this->field_0xb8 = ml::CVec3::zero;
+    this->field_0x06 = (u16)(this->field_0x06 | 0x800);
 }
 
 // Rotation-matrix builders used by EffFxUpdateSceneAim's aim-matrix step.
@@ -779,36 +796,34 @@ void __attribute__((never_inline)) EffFxCondClearFlag15(EffectScene* self);
 void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
 void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p);
 void __attribute__((never_inline)) EffFxArmNodeFlag40(EffectScene* self);
-void __attribute__((never_inline)) EffFxApplySceneMatrix(EffectScene* self, class CFBC8Target* obj,
-                                                 const ml::CMat34* a, Vec* d, const f32* c,
-                                                 bool flag);
+// (memberized: EffFxApplySceneMatrix -> EffectScene::EffFxApplySceneMatrix; declaration moved into class EffectScene)
 }
 
 // Target 3: process a frame of the firework/placer scene if the b11 flag is set.
-void EffFxSceneTickDispatch(EffectScene* self) {
-    if (!((SceneFlagBits*)&self->field_0x06)->b11) return;
-    s32 type = (s32)EffFxGetSceneClass(self->field_0x0c);
+void EffectScene::EffFxSceneTickDispatch() {
+    if (!((SceneFlagBits*)&this->field_0x06)->b11) return;
+    s32 type = (s32)EffFxGetSceneClass(this->field_0x0c);
     Vec stackA;
     Vec stackB;
     noopAnimVec3(&stackA);
     noopAnimVec3(&stackB);
-    ((SceneFlagBits*)&self->field_0x06)->b9 = 0;
-    EffFxTransformStoredDir(self, &stackB);
-    EffFxUpdateSceneAim(self);
-    func_804CD9EC(self);
-    EffFxAccumSubObjDir(self, &stackB);
-    EffFxTransformStoredDir(self, &stackA);
-    if (lbl_eu_8066B0D8 < *(const f32*)&self->field_0x10) {
-        EffFxTestSegmentRegionA(self, &stackB, &stackA);
-        EffFxTestSegmentRegionB(self, &stackB, &stackA);
+    ((SceneFlagBits*)&this->field_0x06)->b9 = 0;
+    EffFxTransformStoredDir(this, &stackB);
+    EffFxUpdateSceneAim(this);
+    func_804CD9EC(this);
+    EffFxAccumSubObjDir(this, &stackB);
+    EffFxTransformStoredDir(this, &stackA);
+    if (lbl_eu_8066B0D8 < *(const f32*)&this->field_0x10) {
+        EffFxTestSegmentRegionA(this, &stackB, &stackA);
+        EffFxTestSegmentRegionB(this, &stackB, &stackA);
     }
-    if (!((SceneFlagBits*)&self->field_0x06)->b14) {
-        EffFxCondClearFlag15(self);
+    if (!((SceneFlagBits*)&this->field_0x06)->b14) {
+        EffFxCondClearFlag15(this);
     }
-    EffFxNormalizeDirDelta(self, (const ml::CVec3*)&stackB, (const ml::CVec3*)&stackA);
-    func_804CE264(self, &stackA, &self->field_0x190);
-    if (type == 0xd) EffFxDriveAttachedLight(self, &stackA);
-    if (type == 0x8) EffFxArmNodeFlag40(self);
+    EffFxNormalizeDirDelta(this, (const ml::CVec3*)&stackB, (const ml::CVec3*)&stackA);
+    func_804CE264(this, &stackA, &this->field_0x190);
+    if (type == 0xd) EffFxDriveAttachedLight(this, &stackA);
+    if (type == 0x8) EffFxArmNodeFlag40(this);
 }
 
 // Target 4 (EffFxUpdateSceneAim): per-frame position update. Non-special scenes
@@ -1151,9 +1166,7 @@ void __attribute__((never_inline)) EffFxSetupAxisRotation(EffectScene* self, Mtx
 void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
                    Mtx* spA, Vec* spB);
 void __attribute__((never_inline)) EffFxUpdateLightColor(EffectScene* self, f32* a, Vec* p1);
-void __attribute__((never_inline)) EffFxApplySceneMatrix(EffectScene* self, class CFBC8Target* obj,
-                                                 const ml::CMat34* a, Vec* spB, const f32* c,
-                                                 bool flag);
+// (memberized: EffFxApplySceneMatrix -> EffectScene::EffFxApplySceneMatrix; declaration moved into class EffectScene)
 void __attribute__((never_inline)) EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type);
 }
 
@@ -1175,10 +1188,7 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
     EffFxSetupMatrixPair(self, &self->field_0x19c, &self->field_0x1dc, type, p1,
                   &stackA, &stackB);
     if (self->field_0x32c) {
-        EffFxApplySceneMatrix(self, (CFBC8Target*)self->field_0x32c,
-                      (const ml::CMat34*)&self->field_0x19c, &stackB,
-                      (const f32*)&self->field_0x1cc,
-                      EffFxGetSubWord5C((const SceneSubObj*)self->field_0x08) != 0);
+        self->EffFxApplySceneMatrix((CFBC8Target*)self->field_0x32c, (const ml::CMat34*)&self->field_0x19c, &stackB, (const f32*)&self->field_0x1cc, EffFxGetSubWord5C((const SceneSubObj*)self->field_0x08) != 0);
     }
 }
 
@@ -1569,8 +1579,7 @@ public:
 // Applies the scene matrix `a` to the target: pushes color/alpha/flag state,
 // decomposes the matrix (translation + normalized columns + euler rotation)
 // and feeds each piece to the target through its virtual interface.
-void EffFxApplySceneMatrix(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec* d,
-                   const f32* c, bool flag) {
+void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, Vec* d, const f32* c, bool flag) {
     obj->setFlag(c[3] != lbl_eu_8066B0DC);
     obj->setAlpha(lbl_eu_8066B0D8 - c[3]);
     obj->unk1C(flag);
@@ -1655,10 +1664,7 @@ extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj
 // type-punned floats; 0x2a4 is truncated to an int mode.
 extern "C" void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p) {
     if (self->field_0x330 != 0 && self->field_0x0c->field_0x110 != 0) {
-        TrailLight_Drive((CETrailLight*)self->field_0x330, p,
-                      (s32)*(f32*)&self->field_0x2a4,
-                      (const CETrailLightParam*)&self->field_0x1cc,
-                      *(f32*)&self->field_0x29c, *(f32*)&self->field_0x2a0);
+        ((CETrailLight*)self->field_0x330)->Drive(p, (s32)*(f32*)&self->field_0x2a4, (CETrailLightParam*)&self->field_0x1cc, *(f32*)&self->field_0x29c, *(f32*)&self->field_0x2a0);
     }
 }
 
@@ -2311,7 +2317,7 @@ extern "C" s32 SchedRes_ResetAnimViaTable(void* lookup, void* a, s32 index);
 extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s32 segCount, void* linkArg,
                                 u32 dataA, u32 dataB, bool flag158, u32 id15C);
 // Light attachment init (CETrail.cpp).
-extern "C" CETrailLight* TrailLight_Init(CETrailLight* self, void* parent);
+// (memberized: TrailLight_Init -> CETrailLight::Init; declaration moved into class CETrailLight)
 
 // Target 3: initialise an effect scene from a source node entry. Seeds the
 // flag word (two fixed bits, one bit from the source entry, one random bit),
@@ -2402,7 +2408,7 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
         if (mtl::MemManager::getMaxAllocSize(h) >= 8) {
             light = (CETrailLight*)mtl::MemManager::allocate(8, h);
             if (light != 0) {
-                light = TrailLight_Init(light, ((MatFlags*)out->field_0x08)->field_0x10);
+                light = light->Init((CResHolder*)((MatFlags*)out->field_0x08)->field_0x10);
             }
         }
         out->field_0x330 = light;
@@ -3337,39 +3343,40 @@ struct EffectInit {
     u32 field_0x10;
     u32 field_0x14;
     u32 field_0x18;
+    void EffFxInitNodeHead();
 };
 
 // Target 5: us-804d80d4
-void EffFxInitNodeHead(EffectInit* self) {
-    self->field_0x06 = -1;
-    self->field_0x08 = -1;
-    self->field_0x0a = 0;
-    self->field_0x00 = 0;
-    self->field_0x02 = 0;
-    self->field_0x04 = 0;
-    self->field_0x0c = 0;
-    self->field_0x10 = 0;
-    self->field_0x14 = 0;
-    self->field_0x18 = 0;
+void EffectInit::EffFxInitNodeHead() {
+    this->field_0x06 = -1;
+    this->field_0x08 = -1;
+    this->field_0x0a = 0;
+    this->field_0x00 = 0;
+    this->field_0x02 = 0;
+    this->field_0x04 = 0;
+    this->field_0x0c = 0;
+    this->field_0x10 = 0;
+    this->field_0x14 = 0;
+    this->field_0x18 = 0;
 }
 
 // Target 10: us-804d8108 - walk the node chain by index, releasing each node,
 // then clear the head list. old is declared before idx so it takes the higher
 // saved register (retail: old in r31, idx in r30).
-void EffFxReleaseNodeChain(EffectNode* self) {
+void EffectNode::EffFxReleaseNodeChain() {
     s32 old = 0;
-    s32 idx = self->field_0x06;
+    s32 idx = this->field_0x06;
     while (idx >= 0) {
         old = idx;
         EffectNode* node = SchedNode_FetchByIndex(idx);
         idx = node->field_0x02;
         SchedNode_ReleaseHandle((s16)old);
     }
-    self->field_0x06 = -1;
-    self->field_0x08 = -1;
-    self->field_0x0a = 0;
-    self->field_0x0c = 0;
-    self->field_0x18 = 0;
+    this->field_0x06 = -1;
+    this->field_0x08 = -1;
+    this->field_0x0a = 0;
+    this->field_0x0c = 0;
+    this->field_0x18 = 0;
 }
 
 // Node type used by EffFxUpdateNodeToneLight (per-node update state; float sub-fields at
@@ -3594,27 +3601,27 @@ void func_804D401C(EffectNode* self, f32 f) {
     }
 }
 
-void EffFxProcessNodeChain(EffectNode* self) {
-    if (self->field_0x0a <= 0) return;
+void EffectNode::EffFxProcessNodeChain() {
+    if (this->field_0x0a <= 0) return;
     EffectNode* node;
-    if (self->field_0x06 >= 0) {
-        node = SchedNode_FetchByIndex(self->field_0x06);
-        self->field_0x00 = -1;
-        self->field_0x02 = self->field_0x06;
-        self->field_0x04 = node->field_0x02;
-        self->field_0x0c = 0;
+    if (this->field_0x06 >= 0) {
+        node = SchedNode_FetchByIndex(this->field_0x06);
+        this->field_0x00 = -1;
+        this->field_0x02 = this->field_0x06;
+        this->field_0x04 = node->field_0x02;
+        this->field_0x0c = 0;
     } else {
         node = 0;
     }
     f32 lim = lbl_eu_8066B140;
     while (node) {
         EffFxAccumNodeWeight((EffectStruct*)(void*)node);
-        if (self->field_0x04 >= 0) {
-            self->field_0x00 = self->field_0x02;
-            self->field_0x02 = self->field_0x04;
-            node = SchedNode_FetchByIndex(self->field_0x04);
-            self->field_0x04 = node->field_0x02;
-            self->field_0x0c += 1;
+        if (this->field_0x04 >= 0) {
+            this->field_0x00 = this->field_0x02;
+            this->field_0x02 = this->field_0x04;
+            node = SchedNode_FetchByIndex(this->field_0x04);
+            this->field_0x04 = node->field_0x02;
+            this->field_0x0c += 1;
         } else {
             node = 0;
         }
@@ -3665,9 +3672,17 @@ struct SwapHolder {
 // call sites emit only `li r3, N` like retail.
 typedef void (*FogPushFn)(int);
 
-struct RenderObj;
-extern "C" void EffFxPushPolyPass(RenderObj* self);
-extern "C" void EffFxPushPalettePass(RenderObj* self);
+struct MtxHolder;
+struct RenderMat;
+struct RenderObj {
+    u8 pad_0x00[0x10];
+    MtxHolder* field_0x10;
+    RenderMat* field_0x14;
+    s32 field_0x18;
+    void EffFxPushPolyPass();
+    void EffFxPushPalettePass();
+};
+// (memberized: EffFxPushPalettePass -> RenderObj::EffFxPushPalettePass; declaration moved into class RenderObj)
 
 // Target 1 (us-804d842c): render-dispatch for a linked effect node chain.
 // Guards on the 0x0a frame counter, clears the GX vertex-descriptor state,
@@ -3683,7 +3698,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
     RenderTypeObj* t = (RenderTypeObj*)self->field_0x14;
     switch (t->field_0x00) {
     case 8: {
-        EffFxPushPolyPass((RenderObj*)self);
+        ((RenderObj*)self)->EffFxPushPolyPass();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
             node = SchedNode_FetchByIndex(self->field_0x06);
@@ -4005,7 +4020,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
     }
     default: {
         if (t->field_0x04 == 5) {
-            EffFxPushPolyPass((RenderObj*)self);
+            ((RenderObj*)self)->EffFxPushPolyPass();
             EffectNode* node;
             if (self->field_0x06 >= 0) {
                 node = SchedNode_FetchByIndex(self->field_0x06);
@@ -4030,7 +4045,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
                 EffFxRenderChainStrip((EffectScene*)(void*)node2, (s32)arg);
             }
         } else {
-            EffFxPushPalettePass((RenderObj*)self);
+            ((RenderObj*)self)->EffFxPushPalettePass();
             EffectNode* node;
             if (self->field_0x06 >= 0) {
                 node = SchedNode_FetchByIndex(self->field_0x06);
@@ -4091,21 +4106,17 @@ struct MtxHolder {
     u8 pad_0x14[0x5c - 0x14];
     s32 field_0x5c;             // tev swap index
 };
-struct RenderObj {
-    u8 pad_0x00[0x10];
-    MtxHolder* field_0x10;
-    RenderMat* field_0x14;
-    s32 field_0x18;
-};
+// (RenderObj moved above EffFxRenderDispatch: member calls need the complete
+// type at the call site; MtxHolder/RenderMat views are unchanged below.)
 
 // Target 2 (us-804d98d8): push GX state for a polygon/material pass.
 // Sets vertex descs + channel control + ambient color + tex coord gen + blend
 // and TEV swap tables selected by the active sub-mode, then runs the shared
 // texture/finalize helpers.
-extern "C" void EffFxPushPolyPass(RenderObj* self) {
+void RenderObj::EffFxPushPolyPass() {
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-    void* q = self->field_0x14->field_0x114;
+    void* q = this->field_0x14->field_0x114;
     u8 b = q ? *(u8*)((u8*)q - 0x1c) : 0;
     if (b == 0) {
         GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
@@ -4115,9 +4126,9 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
         GXSetChanCtrl(GX_COLOR1A1, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
         // Ambient color: word-copy of the source RGBA block, scaled by the
         // material factor and the B148 gain, then clamped into [B140, B14C].
-        ColorSrc* cs = self->field_0x10->field_0x10->field_0x5c;
+        ColorSrc* cs = this->field_0x10->field_0x10->field_0x5c;
         ml::CCol4 src = *(ml::CCol4*)&cs->field_0xac;
-        void* q2 = self->field_0x14->field_0x114;
+        void* q2 = this->field_0x14->field_0x114;
         f32 factor = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
         ml::CCol4 mult;
         ml::CCol4 scaled(src.r * factor, src.g * factor, src.b * factor, src.a);
@@ -4143,9 +4154,9 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
     }
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
-    void* m = Scn_FindCamItem((void*)self->field_0x10->field_0x10, -1);
+    void* m = Scn_FindCamItem((void*)this->field_0x10->field_0x10, -1);
     GXLoadPosMtxImm((const float(*)[4])((u8*)m + 0xcc), 0);
-    q = self->field_0x14->field_0x114;
+    q = this->field_0x14->field_0x114;
     u16 b2 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     switch (b2) {
     case 0: GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); break;
@@ -4153,8 +4164,8 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
     case 2: GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR); break;
     case 3: GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_SRCCLR, GX_LO_CLEAR); break;
     }
-    s32 swapMode = self->field_0x10->field_0x5c;
-    if (self->field_0x18 != swapMode) {
+    s32 swapMode = this->field_0x10->field_0x5c;
+    if (this->field_0x18 != swapMode) {
         switch (swapMode) {
         case 0:
             GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -4181,15 +4192,15 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
             GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             break;
         }
-        self->field_0x18 = swapMode;
+        this->field_0x18 = swapMode;
     }
-    q = self->field_0x14->field_0x114;
+    q = this->field_0x14->field_0x114;
     s32 tp = 0;
     s32 bfl = 0;
     u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     // extrwi 1,20 -> rlwinm 21 = bit 11 (0x800); extrwi 1,25 -> rlwinm 26 = bit 6 (0x40).
-    if (dd0 == 0 && !((self->field_0x14->field_0x1c >> 11) & 1)) bfl = 1;
-    if (bfl && !((self->field_0x14->field_0x1c >> 6) & 1)) tp = 1;
+    if (dd0 == 0 && !((this->field_0x14->field_0x1c >> 11) & 1)) bfl = 1;
+    if (bfl && !((this->field_0x14->field_0x1c >> 6) & 1)) tp = 1;
     pushEffectFog(tp, bfl);
     EffFxResetPlacerColors();
 }
@@ -4197,12 +4208,12 @@ extern "C" void EffFxPushPolyPass(RenderObj* self) {
 // Target 2 (us-804d92b0): near-twin of EffFxPushPolyPass. Same GX pass but uses
 // a palette array for POS vertex data, no position matrix load, and table
 // based blends.
-extern "C" void EffFxPushPalettePass(RenderObj* self) {
+void RenderObj::EffFxPushPalettePass() {
     GXSetVtxDesc(GX_VA_POS, GX_INDEX8);
     GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
     // Palette select: retail extracts bit 10 (0x0400) of the flag word and
     // materializes (bit != 0) as a 0/1 value before branching on it.
-    u32 bit = (self->field_0x14->field_0x1c >> 10) & 1;
+    u32 bit = (this->field_0x14->field_0x1c >> 10) & 1;
     u32 cond = bit != 0;
     const u8* arr;
     if (cond) {
@@ -4211,7 +4222,7 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
         arr = lbl_eu_80524500;
     }
     GXSetArray(GX_VA_POS, (void*)arr, 3);
-    void* q = self->field_0x14->field_0x114;
+    void* q = this->field_0x14->field_0x114;
     u8 b = q ? *(u8*)((u8*)q - 0x1c) : 0;
     if (b == 0) {
         GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
@@ -4221,9 +4232,9 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
         GXSetChanCtrl(GX_COLOR1A1, GX_ENABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
         // Ambient color: 4-word copy of the source block (retail uses lwz/stw),
         // scaled by the material factor then clamped into [B140, B14C].
-        ColorSrc* cs = self->field_0x10->field_0x10->field_0x5c;
+        ColorSrc* cs = this->field_0x10->field_0x10->field_0x5c;
         ml::CCol4 s = *(ml::CCol4*)&cs->field_0xac;
-        void* q2 = self->field_0x14->field_0x114;
+        void* q2 = this->field_0x14->field_0x114;
         f32 f7 = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
         f32 d[4];
         d[0] = s.r * f7;
@@ -4253,7 +4264,7 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
     }
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
-    q = self->field_0x14->field_0x114;
+    q = this->field_0x14->field_0x114;
     u16 b2 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     switch (b2) {
     case 0: GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); break;
@@ -4261,8 +4272,8 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
     case 2: GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR); break;
     case 3: GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_SRCCLR, GX_LO_CLEAR); break;
     }
-    s32 swapMode = self->field_0x10->field_0x5c;
-    if (self->field_0x18 != swapMode) {
+    s32 swapMode = this->field_0x10->field_0x5c;
+    if (this->field_0x18 != swapMode) {
         switch (swapMode) {
         case 0:
             GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -4289,17 +4300,17 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
             GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             break;
         }
-        self->field_0x18 = swapMode;
+        this->field_0x18 = swapMode;
     }
-    q = self->field_0x14->field_0x114;
+    q = this->field_0x14->field_0x114;
     u16 dd0 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     // Retail booleanizes each bit test (extrwi/neg/or/srwi.) before branching.
     // extrwi 1,20 = bit 10; extrwi 1,25 = bit 5.
-    u32 b20 = (self->field_0x14->field_0x1c >> 10) & 1;
+    u32 b20 = (this->field_0x14->field_0x1c >> 10) & 1;
     u32 c20 = b20 != 0;
     s32 bfl = 0;
     if (dd0 == 0 && !c20) bfl = 1;
-    u32 b25 = (self->field_0x14->field_0x1c >> 5) & 1;
+    u32 b25 = (this->field_0x14->field_0x1c >> 5) & 1;
     u32 c25 = b25 != 0;
     s32 tp = 0;
     if (bfl && !c25) tp = 1;
@@ -4308,46 +4319,46 @@ extern "C" void EffFxPushPalettePass(RenderObj* self) {
 }
 
 // Target 8: us-804d9ebc - attach node list entry by index.
-EffectNode* EffFxFetchHeadNode(EffectNode* self) {
-    s32 idx = self->field_0x06;
+EffectNode* EffectNode::EffFxFetchHeadNode() {
+    s32 idx = this->field_0x06;
     if (idx >= 0) {
         EffectNode* node = SchedNode_FetchByIndex(idx);
-        self->field_0x00 = -1;
-        self->field_0x02 = self->field_0x06;
-        self->field_0x04 = node->field_0x02;
-        self->field_0x0c = 0;
+        this->field_0x00 = -1;
+        this->field_0x02 = this->field_0x06;
+        this->field_0x04 = node->field_0x02;
+        this->field_0x0c = 0;
         return node;
     }
     return 0;
 }
 
 // Target 9: us-804d9f20 - step to next node slot.
-EffectNode* EffFxStepNextNode(EffectNode* self) {
-    s32 cur = self->field_0x04;
+EffectNode* EffectNode::EffFxStepNextNode() {
+    s32 cur = this->field_0x04;
     if (cur >= 0) {
-        self->field_0x00 = self->field_0x02;
-        self->field_0x02 = cur;
+        this->field_0x00 = this->field_0x02;
+        this->field_0x02 = cur;
         EffectNode* node = SchedNode_FetchByIndex(cur);
-        self->field_0x04 = node->field_0x02;
-        self->field_0x0c = self->field_0x0c + 1;
+        this->field_0x04 = node->field_0x02;
+        this->field_0x0c = this->field_0x0c + 1;
         return node;
     }
     return 0;
 }
 
-void EffFxAppendChainNode(EffectNode* self, s32 index) {
+void EffectNode::EffFxAppendChainNode(s32 index) {
     s32 v = SchedNode_ClaimActivate(index);
     if ((s16)v < 0) return;
     SchedNode_FetchByIndex((s16)v);
-    if (self->field_0x06 >= 0) {
-        EffectNode* last = SchedNode_FetchByIndex(self->field_0x08);
+    if (this->field_0x06 >= 0) {
+        EffectNode* last = SchedNode_FetchByIndex(this->field_0x08);
         last->field_0x02 = (s16)v;
-        self->field_0x08 = (s16)v;
+        this->field_0x08 = (s16)v;
     } else {
-        self->field_0x06 = (s16)v;
-        self->field_0x08 = (s16)v;
+        this->field_0x06 = (s16)v;
+        this->field_0x08 = (s16)v;
     }
-    self->field_0x0a += 1;
+    this->field_0x0a += 1;
 }
 
 extern "C" void __attribute__((never_inline)) EffFxUnlinkChainNode(EffectNode* self) {
@@ -4456,9 +4467,9 @@ s32 EffFxShuffleNodeLinks(void* unused, Node2Control* c, Node2** p5, Node2** p6,
 }
 
 // Target 1: us-804d8184 - simple setter: stores two params at offsets 0x10/0x14
-void EffFxStoreNodeParams(EffectStruct* self, u32 a, u32 b) {
-    self->field_0x10 = a;
-    self->field_0x14 = b;
+void EffectStruct::EffFxStoreNodeParams(u32 a, u32 b) {
+    this->field_0x10 = a;
+    this->field_0x14 = b;
 }
 
 // Target 2: us-804d22b4 - if field_0x1c <= 0.0f, clear bit 15 (0x8000) of field_0x06

@@ -882,8 +882,8 @@ extern "C" void __ct__CColiProc(CColiProcLocal* self);
 
 // Local proc seeded by ColiProc_InitQuad and classified by ColiProc_CheckEntries (both
 // defined in the sibling CColiProc TU; same-TU stubs are declared below).
-extern "C" void ColiProc_InitQuad(CColiProcLocal* self, CColiObject* target,
-                              u32 a, u32 b);
+// (memberized: ColiProc_InitQuad -> CColiProc::InitQuad; declaration moved into class CColiProc)
+//
 extern "C" int ColiProc_CheckEntries(CColiProcLocal* proc, CColiObject* obj);
 // Local-proc classifier used by ColiProcessSegmentPair / ColiProcessSegmentSelect (sibling
 // CColiProc TU): classifies the linked object against the seeded proc.
@@ -891,12 +891,12 @@ extern "C" int ColiProc_ProcessSegments(CColiProcLocal* proc, CColiObject* obj);
 // Sibling CColiProc TU helpers used by ColiNodeRebuildClassify: seed/classify the
 // local proc (ColiProc_InitTriple, ColiProc_ClassifyEntries) and query its result bits
 // (ColiProc_IsTargetFlagged, ColiProc_TestBit18State).
-extern "C" void ColiProc_InitTriple(CColiProcLocal* self, CColiObject* target,
-                              u32 a);
+// (memberized: ColiProc_InitTriple -> CColiProc::InitTriple; declaration moved into class CColiProc)
+//
 extern "C" int ColiProc_ClassifyEntries(CColiProcLocal* work, u16* outIndex,
                              void** outBuf, void* arg4);
-extern "C" bool ColiProc_IsTargetFlagged(CColiProcLocal* self);
-extern "C" bool ColiProc_TestBit18State(CColiProcLocal* self);
+// (memberized: ColiProc_IsTargetFlagged -> CColiProc::IsTargetFlagged; declaration moved into class CColiProc)
+// (memberized: ColiProc_TestBit18State -> CColiProc::TestBit18State; declaration moved into class CColiProc)
 // Local-object ctor: the trailing params default so ColiCheckStateGate's retail
 // no-setup call (`&local` only) still compiles.
 extern "C" CColiObject* ColiInitFlatSegment(CColiObject* self, const VEC3* a = 0,
@@ -4786,8 +4786,7 @@ void ColiNodeRefreshAxes(CColiNode804B09C8* self) {
             self->field_0x0c[4] = c2;
             self->field_0x0c[5] = c2;
             CColiProcLocal proc;
-            ColiProc_InitQuad(&proc, (CColiObject*)self->field_0x00,
-                          self->field_0x08, (u32)self->field_0x04);
+            (&proc)->InitQuad((CColiObject*)self->field_0x00, self->field_0x08, (u32)self->field_0x04);
             ColiProc_RefreshAxes(&proc, self->field_0x0c, self->field_0x24,
                           &self->field_0x24[3], self->field_0xb0);
             if (self->field_0xa8 & 0xC0) {
@@ -4917,7 +4916,7 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
         }
         node->field_0xa8 &= 0xFFFFBB01;
         CColiProcLocal proc;
-        ColiProc_InitTriple(&proc, (CColiObject*)node->field_0x00, node->field_0x08);
+        (&proc)->InitTriple((CColiObject*)node->field_0x00, node->field_0x08);
         switch (ColiProc_ClassifyEntries(&proc, &node->field_0xb0,
                               (void**)&node->field_0x04, &node->field_0x24[3])) {
         case 1:
@@ -4928,10 +4927,10 @@ extern "C" void ColiNodeRebuildClassify(void* self) {
             break;
         }
         node->field_0xa8 |= 0x1;
-        if (ColiProc_IsTargetFlagged(&proc)) {
+        if ((&proc)->IsTargetFlagged()) {
             node->field_0xa8 |= 0x2000;
         }
-        if (ColiProc_TestBit18State(&proc)) {
+        if ((&proc)->TestBit18State()) {
             node->field_0xa8 |= 0x4000;
         }
     }
@@ -5269,8 +5268,7 @@ int ColiQuerySpecDispatch(CColiObject* self, const CColiSubSpec804A7878* spec,
         if (t != 0) return 0;
         local.field_0x314 = (u32)self;
         if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-            ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                          self->field_0x04);
+            (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
             if (ColiProc_DispatchSpec(&proc, &local) != 0) return 1;
         }
         return 0;
@@ -5312,8 +5310,7 @@ bool ColiCheckMoveGate(CColiObject* self, const VEC3* v, f32 f) {
     if (!ColiTestAabbContains((CColiObject*)&seg, self)) goto fail;
     ColiInitPointScalar14(&local, v, f);
     local.field_0x314 = (u32)self;
-    ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                  self->field_0x04);
+    (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return true;
 fail:
@@ -5353,8 +5350,7 @@ bool ColiCheckStateGate(CColiObject* self) {
     ((LocalObjCtor1)&ColiInitFlatSegment)(&local);
     local.field_0x314 = (u32)self;
     CColiObject* tgt = self->field_0x00_obj;
-    ColiProc_InitQuad(&proc, tgt, self->field_0x08,
-                  self->field_0x04);
+    (&proc)->InitQuad(tgt, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return true;
 fail:
@@ -5390,8 +5386,7 @@ int ColiCheckMoveScaled(CColiObject* self, const VEC3* v, f32 f1, f32 f2, f32 f3
     if (!ColiTestAabbContains((CColiObject*)&seg, self)) goto fail;
     ColiInitScaledSpec(&local, (const CColiSubSpec804A7878*)v, f1, f2, f3);
     local.field_0x314 = (u32)self;
-    ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                  self->field_0x04);
+    (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
     if (ColiProc_CheckEntries(&proc, &local) == 0) goto fail;
     return 1;
 fail:
@@ -5445,8 +5440,7 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
         lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AEA0;
         CColiProcLocal proc;
-        ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                      self->field_0x04);
+        (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
         proc.field_0xc |= 0x2;
         result = (result | ColiProc_RunCollideScan(&proc, outVec, obj,
                                          (self->field_0xa8 >> 9) & 1)) != 0;
@@ -5617,8 +5611,7 @@ extern "C" int ColiProcessSegmentPair(CColiObject* self, CColiObject* v, u32 fla
     v->field_0x314 = (u32)self;
     int result = 0;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                      self->field_0x04);
+        (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
             proc.field_0xc |= 0x4;
         }
@@ -5665,8 +5658,7 @@ int ColiProcessSegmentSelect(CColiObject* self, CColiObject* v, u32 flag) {
     v->field_0x314 = (u32)self;
     int result = 0;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                      self->field_0x04);
+        (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
             proc.field_0xc |= 0x4;
         }
@@ -5732,8 +5724,7 @@ extern "C" int ColiQueryNodePoint(CColiObject* self, CColiObject* v, u32 flag) {
     if (t != 0) return 0;
     v->field_0x314 = (u32)self;
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        ColiProc_InitQuad(&proc, self->field_0x00_obj, self->field_0x08,
-                      self->field_0x04);
+        (&proc)->InitQuad(self->field_0x00_obj, self->field_0x08, self->field_0x04);
         if (self->field_0xa8 & 0x1000) {
             proc.field_0xc |= 0x4;
         }

@@ -55,7 +55,7 @@ extern "C" u32 lbl_eu_8056DC90[];
 extern "C" void* __ct__CScnItemCameraNw4r(CScnItemCamera* self, void* parent,
                                          const char* name) {
     // Return ths after the vtable store so MWCC keeps r3=self (or r31,r31)
-    // and materialises the vtable address in r4 — matching retail lis/or/addi/stw.
+    // and materialises the vtable address in r4 -- matching retail lis/or/addi/stw.
     CScnItemCamera* ths = self;
     __ct__CScnItemCamera(ths, (CScnItemCamera*)parent, name);
     *(u32**)ths = lbl_eu_8056DC90;

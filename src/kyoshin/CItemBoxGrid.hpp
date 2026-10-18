@@ -171,6 +171,23 @@ struct CItemBoxGridFull {
     u8 field_2802;   // current category
     u8 field_2803;   // row count
     u8 field_2804;   // page index
+    void ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt);
+    void ShowCellBadge(u32 kind, void* item, u16 idx);
+    void SortByItemU16();
+    void SortByPriceDesc();
+    void SortByKindNameD();
+    void SortByItemByte6();
+    void SortByCellFlags();
+    void SortByFlag6Desc();
+    void SortByFlag6Asc();
+    void SortByItemVf08();
+    void SortByItemVf30();
+    void SortByEquipAsc();
+    void SortByEquipDesc();
+    void SortByCapKeyAsc();
+    void SortByCapKey2Asc();
+    void SortByCapKeyDesc();
+    void SortByItemVf90();
 };
 
 class CItemBoxGrid {

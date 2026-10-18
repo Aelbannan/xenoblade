@@ -14,8 +14,8 @@
 
 // US retail keeps these func_8022* symbols unmangled (C linkage) even though
 // they operate on a CSelShopWin; only ctor/dtor/OnFileEvent stay C++ mangled.
-extern "C" void advanceShopWinOpen(CSelShopWin* self);
-extern "C" void rewindShopWinClose(CSelShopWin* self);
+// (memberized: advanceShopWinOpen -> CSelShopWin::advanceShopWinOpen; declaration moved into class CSelShopWin)
+// (memberized: rewindShopWinClose -> CSelShopWin::rewindShopWinClose; declaration moved into class CSelShopWin)
 
 // Opaque overlay structs used by OnFileEvent (retail layout unknown).
 struct ShopPaneInfo {  // extends nw4r::lyt::Pane field we touch
@@ -120,10 +120,10 @@ void CSelShopWin::driveShopWinAnim() {
     if (mIsLayoutBuilt == 0) return;
     switch (mAnimState) {
         case 1:
-            advanceShopWinOpen(this);
+            this->advanceShopWinOpen();
             break;
         case 3:
-            rewindShopWinClose(this);
+            this->rewindShopWinClose();
             break;
     }
     mLayout->Animate(0);
@@ -190,19 +190,19 @@ extern "C" void getShopWinPanePos(nw4r::math::VEC3* pOutPos, CSelShopWin* window
 
 #pragma push
 #pragma auto_inline off
-extern "C" void advanceShopWinOpen(CSelShopWin* self) {
+void CSelShopWin::advanceShopWinOpen() {
     float f = lbl_eu_80668600;
-    if (advanceAnimTransform(self->mAnimTransform, f) != 0) {
-        self->mAnimState = 2;
-        self->mAnimActive = 1;
+    if (advanceAnimTransform(this->mAnimTransform, f) != 0) {
+        this->mAnimState = 2;
+        this->mAnimActive = 1;
     }
 }
 
-extern "C" void rewindShopWinClose(CSelShopWin* self) {
+void CSelShopWin::rewindShopWinClose() {
     float f = lbl_eu_80668600;
-    if (AnimRewindFrame(self->mAnimTransform, f) != 0) {
-        self->mAnimState = 0;
-        self->mAnimActive = 1;
+    if (AnimRewindFrame(this->mAnimTransform, f) != 0) {
+        this->mAnimState = 0;
+        this->mAnimActive = 1;
     }
 }
 #pragma pop

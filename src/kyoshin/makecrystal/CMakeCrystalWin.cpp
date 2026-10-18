@@ -108,14 +108,14 @@ u8 mkCrystalGetFlag4361(void* self) { return ((CMakeCrystalWin*)self)->field_436
 
 // Retail 0x802149C8: returns 0 only when the game is not busy and the crystal
 // box is inactive and the window state is a non-zero value below 7.
-int mkCrystalIsBusyState(CMakeCrystalWin* self) {
+int CMakeCrystalWin::mkCrystalIsBusyState() {
     if (MenuTutorialIsCreated() != 0) {
         return 1;
     }
-    if (getCrystalBoxSysWin(&self->mCrystalBox) != 0) {
+    if (getCrystalBoxSysWin(&this->mCrystalBox) != 0) {
         return 1;
     }
-    u8 state = self->field_4360;
+    u8 state = this->field_4360;
     int result = 1;
     if (state < 7 && state != 0) {
         result = 0;

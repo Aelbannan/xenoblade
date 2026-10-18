@@ -18,9 +18,9 @@ extern "C" void schedReleaseAllItems(CSchedule* self);
 // CSchedule::FeedTargetDist/Update are members now; see monolib/core/CSchedule.hpp.
 // (line kept to hold downstream -ipa line numbers stable.)
 extern "C" void __ct__CSchedule(CSchedule* self);
-extern "C" int Sched_Init(CSchedule* self, ScheduleEntry* entries,
-                             u8* field_0x08_ptr, u8* field_0x0c_ptr,
-                             u32 flags_a, u32 flags_b, u8* field_0x10_ptr);
+// (Sched_Init is now CSchedule::Init; stale decl retired 2026-10-18.)
+// (line kept to hold downstream -ipa line numbers stable.)
+// (line kept to hold downstream -ipa line numbers stable.)
 extern "C" void __dt__9CScheduleFv(void* self, int flag);
 
 // MWCC runtime delete helpers (retail `delete` / `delete[]` lowering).
@@ -371,7 +371,7 @@ CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
     if (p == 0) {
         return 0;
     }
-    if (Sched_Init(p, entries, p8, pc, fa, fb, p10) == 0) {
+    if (p->Init(entries, p8, pc, fa, fb, p10) == 0) {
         if (p != 0) {
             if (p != 0) {
                 scheduleDestroy(p);

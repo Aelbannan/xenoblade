@@ -665,6 +665,9 @@ public:
     f32 field_0x130[8];                     // +0x130 recorded light priorities /* 0x130 */
     u16 field_0x150[8];                     // +0x150 recorded light row indices /* 0x150 */
     u8 field_0x160[8];                      // +0x160 recorded light row selectors /* 0x160 */
+    void CallLightV26(void* a, void* b);
+    void CallLightV27(void* a, void* b, float f);
+    void StepWorkBlob(float f);
 };
 
 // Retail vtable data blob installed at CScnEnvLgtCtrl+0x00 by the dtor.

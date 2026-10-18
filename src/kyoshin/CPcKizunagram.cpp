@@ -20,7 +20,7 @@ extern char lbl_eu_8050D868[];
 // Column-name format base (KizunagramRebuildSlotList uses +0x06).
 extern char lbl_eu_8050DB18[];
 
-extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry);
+// (memberized: KizunagramPersistSlotEntry -> CPcKizunagramBig::PersistSlotEntry; declaration moved into class CPcKizunagramBig)
 
 // Named float constants in .sdata2 referenced via @sda21 by KizunagramPulseRise/E5A8.
 extern const float lbl_eu_8066887C;
@@ -782,10 +782,10 @@ extern "C" CPcKizunagramBig* KizunagramClearChart(CPcKizunagramBig* self) {
     return self;
 }
 
-void KizunagramSetActiveSlot(CPcKizunagramBig* self, int slotIdx) {
-    if (self->field_0x89C != slotIdx) {
-        self->field_0x89C = slotIdx;
-        KizunagramRebuildSlotList(self);
+void CPcKizunagramBig::SetActiveSlot(int slotIdx) {
+    if (this->field_0x89C != slotIdx) {
+        this->field_0x89C = slotIdx;
+        KizunagramRebuildSlotList(this);
     }
 }
 
@@ -895,7 +895,7 @@ extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self) {
     u16 newid = slot->data00.field04;
     u32* p2 = (u32*)(self->data870 + ((newid >> 3) & 0x1FFFFFF8));
     *p2 |= (1u << (newid & 0x1f));
-    KizunagramPersistSlotEntry(self, &slot->data00);
+    self->PersistSlotEntry(&slot->data00);
 }
 
 // Persist an affinity entry (KizunagramPersistSlotEntry). If the entry's id is not yet in
@@ -911,10 +911,10 @@ extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self) {
 #pragma push
 #pragma optimize_for_size off
 
-extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry) {
+void CPcKizunagramBig::PersistSlotEntry(CPcKizunaSlotEntry* entry) {
     u32 id = entry->field04;
     u32 bit = 1u << (id & 0x1f);
-    u32 word = *(u32*)(self->data870 + ((id >> 3) & ~3u));
+    u32 word = *(u32*)(this->data870 + ((id >> 3) & ~3u));
     if ((bit & word) != 0) {
         if ((entry->byte14 & 2) == 0) return;
 
@@ -929,7 +929,7 @@ extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlot
     // block); the fully-nested if/else form emits extra dead join
     // branches here (probe-verified across Wii/1.0, 1.1, 1.3, GC/3.0a5.2).
     for (int e = 0; e < 66; e++) {
-        CPcKizunaSlotEntry* pos = &self->slots[e / 6].data00 + (e % 6);
+        CPcKizunaSlotEntry* pos = &this->slots[e / 6].data00 + (e % 6);
         if (id != pos->field04) continue;
         if (pos == entry) continue;
         // Walk the prev chain toward the list head; retail unrolls 10 loads,
@@ -982,7 +982,7 @@ extern "C" void KizunagramPersistSlotEntry(CPcKizunagramBig* self, CPcKizunaSlot
     }
     } else {
         // Set path: narrower window on the word index.
-        *(u32*)(self->data870 + (((id >> 5) & 0x7FFu) << 2)) |= bit;
+        *(u32*)(this->data870 + (((id >> 5) & 0x7FFu) << 2)) |= bit;
     }
 }
 #pragma pop
@@ -1086,7 +1086,7 @@ searchDone:
     dst->field10 = (float)c4;
     u8 c5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     pos->byte14 |= c5;
-    KizunagramPersistSlotEntry(big, (CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20));
+    big->PersistSlotEntry((CPcKizunaSlotEntry*)((u8*)big + off + b * 0x20));
 }
 #pragma pop
 
@@ -1144,7 +1144,7 @@ searchDone:
     entry->field10 = (float)(u8)v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     pos->byte14 |= (u8)v5;
-    KizunagramPersistSlotEntry((CPcKizunagramBig*)self, entry);
+    ((CPcKizunagramBig*)self)->PersistSlotEntry(entry);
 }
 
 // KizunagramStoreWorkEntry: same (re)load as KizunagramStoreChartEntry, but on the per-character
@@ -1153,13 +1153,13 @@ searchDone:
 // calls (speed-style allocation); disable the unit's size bias here too.
 #pragma push
 #pragma optimize_for_size off
-extern "C" void KizunagramStoreWorkEntry(CPcKizunaChart* self, int a, int b, int value) {
+void CPcKizunaChart::KizunagramStoreWorkEntry(int a, int b, int value) {
     u32 off = a * 0xC4;
     u32 sub = b << 5;
-    CPcKizunagramBig* big = (CPcKizunagramBig*)self;
+    CPcKizunagramBig* big = (CPcKizunagramBig*)this;
 
     // Unlink the working-copy entry from its id's doubly-linked list.
-    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
+    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)this + off + sub);
     CPcKizunaSlotEntry* nxt = wp->entry.pField18;
     u16 id = wp->entry.field04;
     CPcKizunaSlotEntry* prv = wp->entry.pField1C;
@@ -1219,7 +1219,7 @@ searchDone:
     ((CPcKizunaWorkEntryPos*)((u8*)big + off + b * 0x20))->entry.field10 = (float)*(u8*)&v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
     wq->entry.byte14 |= *(u8*)&v5;
-    KizunagramPersistSlotEntry(big, (CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4));
+    big->PersistSlotEntry((CPcKizunaSlotEntry*)((u8*)big + off + sub + 0x3D4));
 }
 #pragma pop
 
@@ -1228,8 +1228,8 @@ searchDone:
 // -O4,s stmw/helpers the unit default produces for this function.
 #pragma optimize_for_size off
 #pragma use_lmw_stmw off
-extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b) {
-    // Retail keeps the total-chart position (self + a*0xC4 + b*0x20) as the
+void CPcKizunaChart::KizunagramClearChartEntry(int a, int b) {
+    // Retail keeps the total-chart position (this + a*0xC4 + b*0x20) as the
     // base register and reads the working-copy entry at +0x3D4 displacements.
     u32 off = a * 0xC4;
     CPcKizunaWorkEntryPos* wq;
@@ -1239,15 +1239,15 @@ extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b) {
     u8 saved;
     // The unlink block shifts; the clear block multiplies - distinct GVN
     // values so retail's rematerialized base register is reproduced.
-    nxt = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.pField18;
-    id = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.field04;
-    prv = ((CPcKizunaWorkEntryPos*)((u8*)self + off + ((u32)b << 5)))->entry.pField1C;
+    nxt = ((CPcKizunaWorkEntryPos*)((u8*)this + off + ((u32)b << 5)))->entry.pField18;
+    id = ((CPcKizunaWorkEntryPos*)((u8*)this + off + ((u32)b << 5)))->entry.field04;
+    prv = ((CPcKizunaWorkEntryPos*)((u8*)this + off + ((u32)b << 5)))->entry.pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
 
     // Recompute the position base after the unlink; mul form keeps this a
     // distinct GVN value from the unlink's shift form.
-    wq = (CPcKizunaWorkEntryPos*)((u8*)self + off + b * 0x20);
+    wq = (CPcKizunaWorkEntryPos*)((u8*)this + off + b * 0x20);
     saved = wq->entry.byte14 & 1;
     memset(&wq->entry, 0, 0x20);
     wq->entry.byte14 = saved;
@@ -1256,7 +1256,7 @@ extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b) {
     if ((u32)id >= 0x9e) {
         found = 0;
     } else {
-        CPcKizunaSlot* sp = &self->searchSlots[0];
+        CPcKizunaSlot* sp = &this->searchSlots[0];
         for (int j = 0; j < 11; j++) {
             const CPcKizunaSlotEntry* e = &sp->sub[1];
             if (id == sp->data00.field04) { found = 1; goto searchDone; }
@@ -1271,7 +1271,7 @@ extern "C" void KizunagramClearChartEntry(CPcKizunaChart* self, int a, int b) {
     }
 searchDone:
     if (!found) {
-        u32* p = (u32*)(self->data870 + ((id >> 3) & ~7));
+        u32* p = (u32*)(this->data870 + ((id >> 3) & ~7));
         *p &= ~(1u << (id & 0x1f));
     }
 }

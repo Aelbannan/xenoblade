@@ -106,9 +106,9 @@ extern "C" unsigned long SysWinSaveIsCreated() {
 // C-linkage (retail symbol is unmangled SysWinSaveHandleInput), so the definition
 // carries extern "C" and the call site in Move emits the retail reloc name
 // (same convention as SysWinSelectHandleInput in CSysWinSelect.cpp).
-extern "C" void SysWinSaveHandleInput(CSysWinSave* self);
+// (memberized: SysWinSaveHandleInput -> CSysWinSave::HandleInput; declaration moved into class CSysWinSave)
 
-extern "C" void SysWinSaveHandleInput(CSysWinSave* self) {
+void CSysWinSave::HandleInput() {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
@@ -130,32 +130,32 @@ extern "C" void SysWinSaveHandleInput(CSysWinSave* self) {
 
     if (in1) {
         // Close the dialog without advancing the save slot.
-        self->mFlagDC = 3;
-        sysWinAdvancePhase3(&self->mSysWin[0]);
-        Cur_SetVisible(&self->mCur18[0], 0);
+        this->mFlagDC = 3;
+        sysWinAdvancePhase3(&this->mSysWin[0]);
+        Cur_SetVisible(&this->mCur18[0], 0);
         playUISound__FUl(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
-        self->mFlagDC = 3;
-        sysWinAdvancePhase3(&self->mSysWin[0]);
-        Cur_SetVisible(&self->mCur18[0], 0);
-        self->mFlagDD = 1;
+        this->mFlagDC = 3;
+        sysWinAdvancePhase3(&this->mSysWin[0]);
+        Cur_SetVisible(&this->mCur18[0], 0);
+        this->mFlagDD = 1;
         playUISound__FUl(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
-        self->mFlagDD = self->mFlagDD - 1;
-        if (self->mFlagDD < 0) self->mFlagDD = 1;
+        this->mFlagDD = this->mFlagDD - 1;
+        if (this->mFlagDD < 0) this->mFlagDD = 1;
         u8 tmp[0x18];
-        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mFlagDD);
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
+        sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
+        reinterpret_cast<CCur18View*>(&this->mCur18[0])->vf04(tmp);
         playUISound__FUl(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
-        self->mFlagDD = self->mFlagDD + 1;
-        if (self->mFlagDD > 1) self->mFlagDD = 0;
+        this->mFlagDD = this->mFlagDD + 1;
+        if (this->mFlagDD > 1) this->mFlagDD = 0;
         u8 tmp[0x18];
-        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mFlagDD);
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
+        sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
+        reinterpret_cast<CCur18View*>(&this->mCur18[0])->vf04(tmp);
         playUISound__FUl(1);
     }
 }
@@ -269,7 +269,7 @@ void CSysWinSave::Move() {
         break;
     case 2:
         // Input handling for the open dialog.
-        SysWinSaveHandleInput(this);
+        this->HandleInput();
         break;
     case 3:
         // Closing transition finished - hand control back to the UI.

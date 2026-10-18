@@ -139,7 +139,7 @@ s32 mpvlib_ChkFatal(void) {
     /* endianness self-test: on big-endian (target) the first stored byte is 1 */
     endian = 0x01020304;
     if (((u8*)&endian)[0] != 1) {
-        /* illegal endianness — spin forever in an unusable ctr loop */
+        /* illegal endianness -- spin forever in an unusable ctr loop */
         for (;;) {
             ((void (*)(void))-1)();
         }

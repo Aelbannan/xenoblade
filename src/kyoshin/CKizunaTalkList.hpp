@@ -95,6 +95,18 @@ public:
     CKizunaTalkList();
     ~CKizunaTalkList();
     bool OnFileEvent(CEventFile* pEventFile);
+    void hideTalkList();
+    void scrollTalkListUp();
+    void scrollTalkListDown();
+    void pageTalkListUp();
+    void pageTalkListDown();
+    void initTalkList();
+    int needsTalkRebuild();
+    void teardownTalkList();
+    u8 hasVisibleTalks();
+    void showTalkList();
+    void drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo);
+    void updateTalkList();
 };
 
 // ---------------------------------------------------------------------------

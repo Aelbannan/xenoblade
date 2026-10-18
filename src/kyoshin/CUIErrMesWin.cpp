@@ -17,8 +17,8 @@
 // call sites stay out-of-line. ErrWin_PlayVoice_5254 is a noinline stub (matched in a
 // separate session) so ErrWin_UpdateSub_515C's call stays a direct `bl ErrWin_PlayVoice_5254`.
 // All three keep C linkage so call-site relocs emit the retail unmangled names.
-extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag);
-extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self);
+// (memberized: ErrWin_UpdateSub_515C -> CErrMesSub::Win_UpdateSub; declaration moved into class CErrMesSub)
+// (memberized: ErrWin_ClearAllLists_58A4 -> CErrMesSub::Win_ClearAllLists; declaration moved into class CErrMesSub)
 extern "C" __declspec(noinline) void ErrWin_PlayVoice_5254(CErrMesSub* self,
                                                     CErrMesObjView* player,
                                                     void* candidate, void* d80);
@@ -201,7 +201,7 @@ void ErrWin_DtorThunkB_5140(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinF
 // update (ErrWin_ClearAllLists_58A4); otherwise do nothing.
 void func_802B5148(CErrMesSub* self) {
     if (self->field_0 != 0) {
-        ErrWin_ClearAllLists_58A4(self);
+        self->Win_ClearAllLists();
     }
 }
 
@@ -210,7 +210,7 @@ void func_802B5148(CErrMesSub* self) {
 // a valid candidate is found, play its voice (ErrWin_PlayVoice_5254); otherwise reset
 // the active records (ErrWin_ClearAllLists_58A4). With flag == 0, reset when the
 // sub-object is active.
-extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
+void CErrMesSub::Win_UpdateSub(int flag) {
     if (flag != 0) {
         void* d80 = Scn_FindCamItem((void*)CfRes_getD80Flag(), -1);
         CErrMesObjView* p1 =
@@ -236,13 +236,13 @@ extern "C" void ErrWin_UpdateSub_515C(CErrMesSub* self, int flag) {
             }
         }
         if (p1 != 0 && candidate != 0) {
-            ErrWin_PlayVoice_5254(self, p1, candidate, d80);
+            ErrWin_PlayVoice_5254(this, p1, candidate, d80);
         } else {
-            ErrWin_ClearAllLists_58A4(self);
+            this->Win_ClearAllLists();
         }
     } else {
-        if (self->field_0 != 0) {
-            ErrWin_ClearAllLists_58A4(self);
+        if (this->field_0 != 0) {
+            this->Win_ClearAllLists();
         }
     }
 }
@@ -257,7 +257,7 @@ extern "C" __declspec(noinline) void ErrWin_PlayVoice_5254(CErrMesSub* self,
 // the voice/actor list, the gimmick list and the enemy list, then clear this
 // sub-object's own active flag. The actor-list items point at the embedded
 // +0x3E9C sub-object, so the record base is recovered by subtracting 0x3E9C.
-extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self) {
+void CErrMesSub::Win_ClearAllLists() {
     u8* base;
     CErrMesList* list = getListB28();
     for (CErrMesListNode* node = list->sentinel->next; node != list->sentinel; node = node->next) {
@@ -277,7 +277,7 @@ extern "C" void ErrWin_ClearAllLists_58A4(CErrMesSub* self) {
         reinterpret_cast<CErrMesEnemyObj*>(enode->object)->field_0x6F4 = 0;
     }
 
-    self->field_0 = 0;
+    this->field_0 = 0;
 }
 
 // ErrWin_PlayBattleVoice_5970 (us-802b83e0) - play an error-message voice for a battle
@@ -426,7 +426,7 @@ void func_802B48B8(CErrMesEntry* self) {
     if (self->field_8 != 0 && self->field_4 == 2) {
         flag = 1;
     }
-    ErrWin_UpdateSub_515C(&self->sub, flag);
+    (&self->sub)->Win_UpdateSub(flag);
 }
 // ErrWin_RegEntryS1_48E4 (us-802b7354) - (re)register an error-message entry against
 // `owner`: keep the record untouched when it is already registered for the

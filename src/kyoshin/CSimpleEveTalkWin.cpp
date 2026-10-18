@@ -658,12 +658,12 @@ extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
 extern "C" void __dt__17CSimpleEveTalkWinFv(void*);
 extern "C" void cbRenderBefore__17CSimpleEveTalkWinFv(void*);
 
-// Spoof thunks — retail `subi/b` are compiler thunks for the
+// Spoof thunks -- retail `subi/b` are compiler thunks for the
 // IWorkEvent@0x6C / IScnRender@0x70 bases. Plain `p->~Class()` lowers to
 // `stwu/mfspr/addic./beq/bl` (0x50), not 0x8. The cast tail-calls the
 // flat `__dt__`/`cbRenderBefore` and is §17.6 high-level C++ (extern "C"
 // REL24, no asm). With real bases the ideal would be
-// `static_cast<CSimpleEveTalkWin*>(base)->~…`, today 0x20/0x9c.
+// `static_cast<CSimpleEveTalkWin*>(base)->~...`, today 0x20/0x9c.
 void eveTalkWinDtorThunk6C(u8* self) {
     ((void (*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c);
 }

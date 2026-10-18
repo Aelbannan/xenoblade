@@ -123,6 +123,7 @@ public:
     u8 mDamageDir;                // 0x775 (BtlDmg_SetDamageDir setter)
     u8 _pad776[0x779 - 0x776];    // 0x776..0x778
     u8 field_0x779;               // 0x779 (BtlDmg_SetField779 setter)
+    void BtlDmg_SpawnPopup(int actorId, int value, u32 flags);
 };
 
 /*

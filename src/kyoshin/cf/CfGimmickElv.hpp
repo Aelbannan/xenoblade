@@ -125,4 +125,5 @@ struct CfGimmickElvData {
     /* 0x1D2 */ u16 direction;
     /* 0x1D4 */ u16 val1D4;
     /* 0x1D6 */ u16 val1D6;
+    void SetLodVisible(int show);
 };

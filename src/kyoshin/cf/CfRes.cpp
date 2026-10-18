@@ -2523,7 +2523,7 @@ void cf::CfResTask::Term() {
 }
 
 
-// cf::CfRes::CfRes() — retail factory ctor. The retail symbol is the
+// cf::CfRes::CfRes() -- retail factory ctor. The retail symbol is the
 // pre-mangled name __ct__Q22cf5CfResFv (a global function, not a member: a
 // member ctor would return `this`, but retail returns the freshly allocated
 // manager object). Allocates a 0x1FA4-byte manager, constructs it as a

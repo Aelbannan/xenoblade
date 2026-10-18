@@ -94,6 +94,8 @@ extern u32 lbl_eu_80664C30;
 // the rest of the layout is opaque to this TU.
 struct CErrMesSub {
     u8 field_0;  // +0x00 - active flag
+    void Win_UpdateSub(int flag);
+    void Win_ClearAllLists();
 };
 
 // Error-message record (func_802B48A0 / func_802B48B8 family).

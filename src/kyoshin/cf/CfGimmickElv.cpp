@@ -5,7 +5,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// retail data — typed source shape (replaces absorb blobs)
+// retail data -- typed source shape (replaces absorb blobs)
 extern "C" {
 struct __data_CfGimmickElv {
     unsigned char a[0x24];
@@ -264,19 +264,19 @@ extern "C" void GimmickElv_Update(CfGimmickElvData* self) {
 // ============================================================
 // GimmickElv_SetLodVisible (0x80 bytes) - LOD visibility toggle
 // ============================================================
-extern "C" void GimmickElv_SetLodVisible(CfGimmickElvData* self, int show) {
-    u8 lod = self->lod0;
+void CfGimmickElvData::SetLodVisible(int show) {
+    u8 lod = this->lod0;
     if (lod != 0) {
         // Clear visibility/mode bits once, then set the appropriate one
-        u32 f = self->flags & ~0x1000E0u;
-        self->flags = f;
+        u32 f = this->flags & ~0x1000E0u;
+        this->flags = f;
         if (show != 0) {
-            self->flags = f | 0x40;
+            this->flags = f | 0x40;
             clearLODEntry__8CTaskLODFv(lod);
         } else {
-            self->flags = f | 0x20;
+            this->flags = f | 0x20;
         }
-        getLODOrSelf__8CTaskLODFv(self->lod0);
+        getLODOrSelf__8CTaskLODFv(this->lod0);
     }
 }
 // ============================================================

@@ -771,6 +771,7 @@ public:
     u32 field_0x20;               // 0x20
     f32 field_0x24;               // 0x24
     u8 field_0x28[0x10];          // 0x28 (opaque; address taken)
+    void SweepReposition();
 };
 
 // Stack-allocated enum-list holder (CTaskGame_enumListCtor ctor / __dt__80043E88 dtor)

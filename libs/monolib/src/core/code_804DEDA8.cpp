@@ -819,8 +819,8 @@ extern CEffectNodePool lbl_eu_80661738;
 extern "C" void EffRoot_InitDefaults(CEffectObj* obj);
 
 // Effect-object constructor (monolib/src/effect/code_804C8718.cpp).
-extern "C" s32 EffObj_Construct(CEffectObj* self, const u8* base, const u8* data,
-                             u8* arg4, s32 arg5, u8 arg6);
+// (memberized: EffObj_Construct -> EffObject::Obj_Construct; declaration moved into class EffObject)
+//
 
 // Re-initialize the schedule resource tables: clear both element arrays and
 // reset the pool counters.
@@ -925,7 +925,7 @@ void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
 
 // Import from monolib/src/core/code_804E36DC.cpp (retail symbol schedClearItemSlots):
 // initialize one pool item (all slots closed).
-extern "C" void schedClearItemSlots(CScheduleItem* item);
+// (schedClearItemSlots is now CScheduleItem::ClearSlots; stale decl retired.)
 
 // Allocate/initialize the schedule-item pool: round the byte size up to 32,
 // record base/count, then run the item initializer over each 0x58-byte item.
@@ -939,7 +939,7 @@ void* SchedItem_AllocPool(u32 size, s32 count) {
     i = 0;
     s32 off = 0;
     while (i < count) {
-        schedClearItemSlots((CScheduleItem*)((u8*)lbl_eu_80661718.base + off));
+        ((CScheduleItem*)((u8*)lbl_eu_80661718.base + off))->ClearSlots();
         off += 0x58;
         i++;
     }
@@ -948,7 +948,7 @@ void* SchedItem_AllocPool(u32 size, s32 count) {
 
 // Entry-blob resolver for allocated schedule items (retail symbol
 // schedInitItemFromData, monolib/src/core/code_804E36DC.cpp).
-extern "C" s32 schedInitItemFromData(CScheduleItem* item, u32 a, u32 b, u32 c);
+// (schedInitItemFromData is now CScheduleItem::InitFromData; stale decl retired.)
 
 // Allocate a free schedule item from the pool ring for (a, b, c): starting
 // past the most recently released handle, claim the first slot whose
@@ -965,7 +965,7 @@ s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
             if (node->mPoolIndex >= 0) {
                 idx = (idx + 1) % lbl_eu_80661718.count;
             } else {
-                schedClearItemSlots(node);
+                node->ClearSlots();
                 node->mPoolIndex = (s16)idx;
                 lbl_eu_80661718.freeCount++;
                 lbl_eu_80661718.lastHandle =
@@ -977,7 +977,7 @@ s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
     if (node == NULL) {
         return -1;
     }
-    if (schedInitItemFromData(node, a, b, c) != 0) {
+    if (node->InitFromData((u8*)a, (const CScheduleEntryData*)b, (CSchedule*)c) != 0) {
         return node->mPoolIndex;
     }
     return -1;
@@ -992,7 +992,7 @@ extern "C" void SchedItem_ReleaseHandle(s16 handle) {
     }
     if (!(handle < 0) && lbl_eu_80661718.count > handle) {
         lbl_eu_80661718.lastHandle = handle;
-        schedReleaseItemSlots(&lbl_eu_80661718.base[handle]);
+        (&lbl_eu_80661718.base[handle])->ReleaseSlots();
         if (lbl_eu_80661718.freeCount > 0) {
             lbl_eu_80661718.freeCount--;
         }
@@ -1065,7 +1065,7 @@ s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
     if (node == NULL) {
         return -1;
     }
-    if (EffObj_Construct(node, base, data, arg3, arg4, arg5) != 0) {
+    if (node->Obj_Construct(base, data, arg3, arg4, arg5) != 0) {
         return *(s16*)((u8*)node + 0x1e);
     }
     // Constructor failed: rewind the handle cursor and release the object.

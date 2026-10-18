@@ -146,7 +146,7 @@ struct CViewMsgPayload {
 // Retail <10> deleting-dtor shape: no vtable store; the entry clears are
 // guarded by a null-test of the entry-array address (r3+4, not foldable).
 // NOTE: our build (-RTTI on) additionally emits a vptr store here (+0xC) that
-// retail lacks — sibling reslist dtors carry the store in BOTH builds (their
+// retail lacks -- sibling reslist dtors carry the store in BOTH builds (their
 // classes have bases); standalone CMsgParam<10> gets it elided in retail's
 // compiler run. Experiments: extern "C" free-function forms stay frameless
 // (bclr early-return, no r31/prologue) and cannot reproduce the compiler-

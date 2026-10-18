@@ -41,7 +41,7 @@ struct CrystalItemBuf {
 // Fake polymorphic facade over the object returned by
 // CItem_initItemImplInstances (real class layout unknown; only the dispatch
 // slots 2/19/25 at vtable offsets 0x8/0x4C/0x64 are used). novtable keeps
-// MWCC from emitting a vtable — the object is created elsewhere and the
+// MWCC from emitting a vtable -- the object is created elsewhere and the
 // dispatch loads the vptr from the object at runtime (retail lwz r12 form).
 // MWCC reserves vtable slots 0-1 for the implicit dtor pair, so the first
 // declared virtual lands at slot 2 (offset 0x08).
@@ -113,7 +113,7 @@ public:
     /* 0x4C */ s32 mState;                 // State (0=inactive, 1/2/4-8=active steps)
     /* 0x50 */ u8 mIsActive;               // Active flag; set when layout initialised
     u8 func_8021A8EC() const { return mIsActive; }
-    /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0→1
+    /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0->1
 };
 
 // ---------------------------------------------------------------------------
@@ -133,7 +133,7 @@ extern char lbl_eu_80508DF8[];
 extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
-// mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) — C linkage keeps the call relocs
+// mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) -- C linkage keeps the call relocs
 // bound to the retail names.
 extern "C" u32 CUICfManager_getPackedFont9C();
 extern "C" FourShorts PaneMatGetS16Quad(void*, u32);

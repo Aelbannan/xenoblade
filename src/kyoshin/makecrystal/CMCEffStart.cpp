@@ -214,9 +214,9 @@ struct CFontPanel {
 };
 
 // Retail ships unmangled ctor symbols (__ct__CMCEffStart / __ct__CMCEffUpRed /
-// …). Free-function form so derived ctors bl the bare base name and external
+// ...). Free-function form so derived ctors bl the bare base name and external
 // callers (CModelDispMakeCrystal) bind the same reloc. Install the retail
-// vtable label first (lis/addi/stw) — a pure member-field init omits it.
+// vtable label first (lis/addi/stw) -- a pure member-field init omits it.
 extern "C" void* lbl_eu_80536114[];
 extern "C" void* lbl_eu_805360F4[];
 extern "C" void* lbl_eu_805360D4[];

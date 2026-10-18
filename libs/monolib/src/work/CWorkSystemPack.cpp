@@ -413,7 +413,7 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
 #pragma optimize_for_size off
 
 // extern "C" free-function form: clear the work-system singleton, then tear
-// down the two resource lists (mArcList +0x1E4, mPackList +0x1C4 — retail's
+// down the two resource lists (mArcList +0x1E4, mPackList +0x1C4 -- retail's
 // addic. null-checks), the base CWorkThread (unchecked), and the flags-based
 // delete; stmw/lmw frame via optimize_for_size.
 #pragma push

@@ -13,7 +13,7 @@
 #include <nw4r/lyt.h>
 
 // Cross-TU layout helpers (kyoshin .text). Retail keeps these unmangled at
-// CScrollBar call sites; extern "C" stops MWCC from emitting __F… tails.
+// CScrollBar call sites; extern "C" stops MWCC from emitting __F... tails.
 extern "C" void Cur_SetPaneTranslate(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 void closeFileHandle(CFileHandle**);
@@ -82,7 +82,7 @@ struct CScrollBarPane {
 };
 
 // .sdata2 retail table (splits: 80668138-80668158). Declaring the six
-// objects here — before any code — emits them in retail declaration order at
+// objects here -- before any code -- emits them in retail declaration order at
 // the retail offsets (+0x0 zero, +0x4 4.0, +0x8/+0x10 the 2^52 / 2^52+2^31
 // debias doubles, +0x18 1.0, +0x1c 5.0) so all six retail labels are defined
 // at their retail offsets. The code keeps the retail lfs schedule: MWCC may

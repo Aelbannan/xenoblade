@@ -102,15 +102,15 @@ extern "C" __declspec(noinline) void scnVlItemNop(CVirtualLightObj** item) {}
 // be inlined, dropping the retail call-site reloc).
 extern "C" __declspec(noinline) void scnVlZeroNext(void* self, void* out) { *(u32*)out = 0; }
 
-extern "C" void scnVlAllocNodes(CScnVirtualLightReslist* self, u32 handle, int capacity);
+// (memberized: scnVlAllocNodes -> CScnVirtualLightReslist::VlAllocNodes; declaration moved into class CScnVirtualLightReslist)
 extern "C" __declspec(noinline) void scnVlReserve(void* self, u32 handle, int capacity) {
-    scnVlAllocNodes((CScnVirtualLightReslist*)self, handle, capacity);
+    ((CScnVirtualLightReslist*)self)->VlAllocNodes(handle, capacity);
 }
 
 
 // Base reslist teardown helper (retail scnVlClearList; defined at the bottom
 // of this TU under #pragma auto_inline off).
-extern "C" void scnVlClearList(CScnVirtualLightReslist* self);
+// (memberized: scnVlClearList -> CScnVirtualLightReslist::VlClearList; declaration moved into class CScnVirtualLightReslist)
 
 extern "C" void __dt__804923A0(CScnVirtualLightReslist* obj);
 extern "C" __declspec(noinline) void scnVlDtorList(CScnVirtualLightReslist* self) {
@@ -152,7 +152,7 @@ CScnVirtualLight::~CScnVirtualLight() {
 // (field_0x1C), and reset the capacity. noinline keeps the tail-call
 // `b __dt__804923A0` from scnVlDtorList (retail keeps it out-of-line).
 extern "C" __declspec(noinline) void __dt__804923A0(CScnVirtualLightReslist* obj) {
-    scnVlClearList(obj);
+    obj->VlClearList();
     if (obj->field_0x1C == false && obj->mList != nullptr) {
         delete[] obj->mList;
         obj->mList = nullptr;
@@ -206,8 +206,8 @@ __declspec(noinline) u32 scnVlWordsNe(const u32* a, const u32* b) {
     return *a != *b;
 }
 
-extern "C" void scnVlClearList(CScnVirtualLightReslist* self);
-extern "C" __declspec(noinline) void scnVlClearThunk(void* self) { scnVlClearList((CScnVirtualLightReslist*)self); }
+// (memberized: scnVlClearList -> CScnVirtualLightReslist::VlClearList; declaration moved into class CScnVirtualLightReslist)
+extern "C" __declspec(noinline) void scnVlClearThunk(void* self) { ((CScnVirtualLightReslist*)self)->VlClearList(); }
 
 extern "C" __declspec(noinline) int* scnVlCopyWord(int* dst, int* src){
     *dst = *src;
@@ -1115,27 +1115,27 @@ void sinit_80494300() {
 // ring from the first node, destroy each node's item (scnVlItemNop) and
 // reset its mNext (scnVlZeroNext), then relink the sentinel onto itself
 // (reslist.hpp clearList shape).
-extern "C" void scnVlClearList(CScnVirtualLightReslist* self) {
-    CScnVirtualLightNode* node = self->mStartNodePtr->mNext;
-    while (node != self->mStartNodePtr) {
+void CScnVirtualLightReslist::VlClearList() {
+    CScnVirtualLightNode* node = this->mStartNodePtr->mNext;
+    while (node != this->mStartNodePtr) {
         CScnVirtualLightNode* cur = node;
         node = node->mNext;
         scnVlItemNop(&cur->mItem);
-        scnVlZeroNext(self, cur);
+        scnVlZeroNext(this, cur);
     }
-    self->mStartNodePtr->mNext = self->mStartNodePtr;
-    self->mStartNodePtr->mPrev = self->mStartNodePtr;
+    this->mStartNodePtr->mNext = this->mStartNodePtr;
+    this->mStartNodePtr->mPrev = this->mStartNodePtr;
 }
 // reserve the reslist node array (retail scnVlAllocNodes): allocate count*0xC
 // bytes via MemManager::allocate_array, zero the mNext of the first `count`
 // nodes (MWCC auto-unrolls the fill loop 8x with its overflow guards), then
 // set the capacity. `handle` is passed through untouched to allocate_array.
-extern "C" void scnVlAllocNodes(CScnVirtualLightReslist* self, u32 handle, int capacity) {
-    self->mList = (CScnVirtualLightNode*)mtl::MemManager::allocate_array((u32)capacity * 0xC, handle);
+void CScnVirtualLightReslist::VlAllocNodes(u32 handle, int capacity) {
+    this->mList = (CScnVirtualLightNode*)mtl::MemManager::allocate_array((u32)capacity * 0xC, handle);
     for (int i = 0; i < capacity; i++) {
-        self->mList[i].mNext = nullptr;
+        this->mList[i].mNext = nullptr;
     }
-    self->mCapacity = capacity;
+    this->mCapacity = capacity;
 }
 #pragma pop
 // Retail scnVlResetMgr: scene-light reset. arg == 0 destroys every light

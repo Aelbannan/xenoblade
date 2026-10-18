@@ -29,7 +29,7 @@ public:
     virtual void vfunc_14();
     virtual bool isBusy();
     virtual void vfunc_1C();
-    // C++ vptr occupies +0x00 (no separate explicit vtable member — that
+    // C++ vptr occupies +0x00 (no separate explicit vtable member -- that
     // doubled the leading pointer and shifted mType/mCallback by +4).
     /* 0x04 */ u32 mType;
     /* 0x08 */ void (CREvtObj::*mCallback)();  // __ptmf (12 bytes: 3 x u32)

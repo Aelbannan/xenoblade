@@ -1736,7 +1736,7 @@ int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec* b,
     }
     return found;
 }
-// CRTP task base — canonical monolib template (declared-only members so the
+// CRTP task base -- canonical monolib template (declared-only members so the
 // explicit out-of-line specializations below emit the retail Move/Draw/dtor
 // symbols). The full class definition lives here (single-TU scope) because
 // CTaskColiManager's full layout is only needed in this TU.
@@ -1932,7 +1932,7 @@ int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
 }
 
 // ---------------------------------------------------------------------------
-// CTaskColiManager::create — the retail symbol is Fv but the body reads three
+// CTaskColiManager::create -- the retail symbol is Fv but the body reads three
 // incoming registers (parent / a / b, per the CTaskGame call site: r3 = root
 // proc, r4 = field_0x74, r5 = field_0x70). MWCC mangles a global function's
 // name with its parameter list, so the exact retail symbol is emitted via

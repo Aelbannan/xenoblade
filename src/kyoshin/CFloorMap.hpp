@@ -120,6 +120,7 @@ struct CFloorMapFull {
     u8 field_333C;           // 0x333C
     u8* field_3340;          // 0x3340 - allocated buffer pointer
     f32 field_3344;          // 0x3344 - buffer free countdown timer
+    u8 GetActiveFlag58();
 };
 
 // Full CFloorMap layout based on retail analysis.
@@ -223,6 +224,7 @@ public:
     u8 field_333C;                           // 0x333C
     u8* field_3340;                          // 0x3340
     f32 field_3344;                          // 0x3344
+    void SetMapTable(u8 id);
 };
 
 

@@ -126,9 +126,9 @@ extern "C" void FogManSetValue08(u8* self, u32 val) {
 // Tail-call trampoline over FogManApplyFog (retail is a single `b`).
 // Retail symbol is unmangled (C linkage); other TUs' relocs target
 // `FogManApplyFog` directly.
-extern "C" bool FogManApplyFog(CScnFogMan* self);
+// (memberized: FogManApplyFog -> CScnFogMan::ApplyFog; declaration moved into class CScnFogMan)
 extern "C" bool FogManIsFogEnabled(CScnFogMan* self) {
-    return FogManApplyFog(self);
+    return self->ApplyFog();
 }
 
 extern "C" void FogManSetNearFar(u8* self, float a, float b) {
@@ -183,18 +183,18 @@ extern "C" void FogManCopyFogParams(CScnFogMan* self, u32 value, const SWordVec*
 // Apply the fog-manager state to the scene root's slot-0 fog according to
 // value08, then optionally propagate a grayscaled fog colour to all 32 slots
 // (when field_0x28 is set). Fog mode 4 means "fog disabled".
-extern "C" bool FogManApplyFog(CScnFogMan* self) {
-    if (self->value08 == 4) {
+bool CScnFogMan::ApplyFog() {
+    if (this->value08 == 4) {
         return false;
     }
 
     nw4r::g3d::ScnRoot* root =
-        (nw4r::g3d::ScnRoot*)getScnRootSlot10(self->rootView);
+        (nw4r::g3d::ScnRoot*)getScnRootSlot10(this->rootView);
     nw4r::g3d::Fog fog = root->GetFog(0);
 
     // Comparison order matches the retail branch chain (1, 2, 0, 3).
-    if (self->value08 == 1) {
-        GXFogType newType = (GXFogType)self->field_0x2c;
+    if (this->value08 == 1) {
+        GXFogType newType = (GXFogType)this->field_0x2c;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
         }
@@ -204,8 +204,8 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
 
         f32 startz1;
         f32 endz1;
-        endz1 = self->field_0x34;
-        startz1 = self->field_0x30;
+        endz1 = this->field_0x34;
+        startz1 = this->field_0x30;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
         }
@@ -217,10 +217,10 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
         // Pack the scaled channels through a byte temp so MWCC emits the
         // retail stb/lwz/stw sequence.
         u8 tmp1[4];
-        tmp1[0] = (u8)(lbl_eu_8066ABC4 * self->field_0x40);
-        tmp1[1] = (u8)(lbl_eu_8066ABC4 * self->field_0x44);
-        tmp1[2] = (u8)(lbl_eu_8066ABC4 * self->field_0x48);
-        tmp1[3] = (u8)(lbl_eu_8066ABC4 * self->field_0x4c);
+        tmp1[0] = (u8)(lbl_eu_8066ABC4 * this->field_0x40);
+        tmp1[1] = (u8)(lbl_eu_8066ABC4 * this->field_0x44);
+        tmp1[2] = (u8)(lbl_eu_8066ABC4 * this->field_0x48);
+        tmp1[3] = (u8)(lbl_eu_8066ABC4 * this->field_0x4c);
         GXColor color1 = *(GXColor*)tmp1;
 
         if (fog.ptr() == NULL) {
@@ -233,10 +233,10 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             fog.ref().color.a = color1.a;
         }
         return true;
-    } else if (self->value08 == 2) {
-        scnLgtApplyFogByte(self->rootView->field_0x7c);
-    } else if (self->value08 == 0) {
-        GXFogType newType = (GXFogType)self->field_0x50;
+    } else if (this->value08 == 2) {
+        scnLgtApplyFogByte(this->rootView->field_0x7c);
+    } else if (this->value08 == 0) {
+        GXFogType newType = (GXFogType)this->field_0x50;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
         }
@@ -247,10 +247,10 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
         // Pack the scaled channels through a byte temp so MWCC emits the
         // retail stb/lwz/stw sequence.
         u8 tmp0[4];
-        tmp0[0] = (u8)(lbl_eu_8066ABC4 * self->field_0xC);
-        tmp0[1] = (u8)(lbl_eu_8066ABC4 * self->field_0x10);
-        tmp0[2] = (u8)(lbl_eu_8066ABC4 * self->field_0x14);
-        tmp0[3] = (u8)(lbl_eu_8066ABC4 * self->field_0x18);
+        tmp0[0] = (u8)(lbl_eu_8066ABC4 * this->field_0xC);
+        tmp0[1] = (u8)(lbl_eu_8066ABC4 * this->field_0x10);
+        tmp0[2] = (u8)(lbl_eu_8066ABC4 * this->field_0x14);
+        tmp0[3] = (u8)(lbl_eu_8066ABC4 * this->field_0x18);
         GXColor color0 = *(GXColor*)tmp0;
 
         if (fog.ptr() == NULL) {
@@ -265,8 +265,8 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
 
         f32 startz0;
         f32 endz0;
-        endz0 = self->field_0x1c;
-        startz0 = self->field_0x20;
+        endz0 = this->field_0x1c;
+        startz0 = this->field_0x20;
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
         }
@@ -274,7 +274,7 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
             fog.ref().startz = startz0;
             fog.ref().endz = endz0;
         }
-    } else if (self->value08 == 3) {
+    } else if (this->value08 == 3) {
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC00, 0x41, lbl_eu_8056EBE0);
         }
@@ -283,7 +283,7 @@ extern "C" bool FogManApplyFog(CScnFogMan* self) {
         }
     }
 
-    if (self->field_0x28 != 0) {
+    if (this->field_0x28 != 0) {
         for (int i = 0; i < 0x20; i++) {
             nw4r::g3d::Fog fogSlot = root->GetFog(i);
             GXColor color;

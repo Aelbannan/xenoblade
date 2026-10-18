@@ -98,6 +98,7 @@ public:
     bool isBusy();
     int getGuestState();
     void setGuestModeOn();
+    bool ClaimFileData(CEventFile* pEvent);
 };
 
 // CREvtModelMap vtable (0x80531D80; main 0x44 bytes + IWorkEvent 0x80).

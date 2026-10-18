@@ -285,10 +285,10 @@ body:
  * switch its chain type and return null; otherwise allocate 0xa0 bytes from
  * the work heap, construct the menu and register it under the parent process.
  */
-extern "C" void switchChainType(CMenuBattleChain* self, u8 arg);
+// (memberized: switchChainType -> CMenuBattleChain::switchChainType; declaration moved into class CMenuBattleChain)
 extern "C" CMenuBattleChain* createBattleChainMenu(CProcess* parent, CScn* scene, u8 chainType) {
     if (lbl_eu_80664A60 != NULL) {
-        switchChainType(lbl_eu_80664A60, chainType);
+        lbl_eu_80664A60->switchChainType(chainType);
         return NULL;
     }
     u32 heap = CWorkThreadSystem::getWorkMem();
@@ -325,30 +325,30 @@ void requestCancelChain() {
  * one (or either is 8), replay the second anim transform; otherwise switch to
  * the fourth. The new type is stored back at +0x9D.
  */
-extern "C" void switchChainType(CMenuBattleChain* self, u8 arg) {
-    if (self->mField9D == arg) {
-        self->mField9C = 4;
-        self->mAnim2->SetFrame(lbl_eu_80668CB0);
-        self->mLayout->UnbindAllAnimation();
-        self->mLayout->BindAnimation(self->mAnim2);
-        self->mLayout->SetAnimationEnable(self->mAnim2, true);
-        self->mLayout->Animate(0);
-    } else if (self->mField9D == 8 || arg == 8) {
-        self->mField9C = 4;
-        self->mAnim2->SetFrame(lbl_eu_80668CB0);
-        self->mLayout->UnbindAllAnimation();
-        self->mLayout->BindAnimation(self->mAnim2);
-        self->mLayout->SetAnimationEnable(self->mAnim2, true);
-        self->mLayout->Animate(0);
+void CMenuBattleChain::switchChainType(u8 arg) {
+    if (this->mField9D == arg) {
+        this->mField9C = 4;
+        this->mAnim2->SetFrame(lbl_eu_80668CB0);
+        this->mLayout->UnbindAllAnimation();
+        this->mLayout->BindAnimation(this->mAnim2);
+        this->mLayout->SetAnimationEnable(this->mAnim2, true);
+        this->mLayout->Animate(0);
+    } else if (this->mField9D == 8 || arg == 8) {
+        this->mField9C = 4;
+        this->mAnim2->SetFrame(lbl_eu_80668CB0);
+        this->mLayout->UnbindAllAnimation();
+        this->mLayout->BindAnimation(this->mAnim2);
+        this->mLayout->SetAnimationEnable(this->mAnim2, true);
+        this->mLayout->Animate(0);
     } else {
-        self->mField9C = 6;
-        self->mAnim4->SetFrame(lbl_eu_80668CB0);
-        self->mLayout->UnbindAllAnimation();
-        self->mLayout->BindAnimation(self->mAnim4);
-        self->mLayout->SetAnimationEnable(self->mAnim4, true);
-        self->mLayout->Animate(0);
+        this->mField9C = 6;
+        this->mAnim4->SetFrame(lbl_eu_80668CB0);
+        this->mLayout->UnbindAllAnimation();
+        this->mLayout->BindAnimation(this->mAnim4);
+        this->mLayout->SetAnimationEnable(this->mAnim4, true);
+        this->mLayout->Animate(0);
     }
-    self->mField9D = arg;
+    this->mField9D = arg;
 }
 
 /*

@@ -56,6 +56,7 @@ public:
     f32 field_0x68;   // 0x68
     f32 field_0x6c;   // 0x6c
     f32 field_0x70;   // 0x70
+    bool ApplyFog();
 };
 
 // Cross-TU import (definition in CScnEnvLgtCtrl.cpp): set +0x00 bit 0x20 /

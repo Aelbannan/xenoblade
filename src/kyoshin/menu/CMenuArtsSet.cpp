@@ -514,7 +514,7 @@ extern "C" __declspec(noinline) void artsGoPrevItem(SArtsSub8022FA58* self) {
 }
 
 // vtable +0x200 slot on the +0x17C manager sub-object, result discarded.
-// NOTE: the header's SArtsManager vtable is mid-edit — v128 currently maps
+// NOTE: the header's SArtsManager vtable is mid-edit -- v128 currently maps
 // to +0x208 (MWCC +2 leading slots); the retail +0x200 slot needs 2 fewer
 // fillers before v126. Manual casts add an extra indirection.
 // C-linkage + noinline so callers emit a real bl (retail shape).

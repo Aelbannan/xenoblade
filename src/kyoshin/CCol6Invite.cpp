@@ -147,7 +147,7 @@ void Col6SystemDtorThunk70(u8* self) {
 // Col6CheckBatDtorThunk6C (retail func_801640D0): CCol6CheckBat dtor at
 // subobject +0x6c. Backs `this` off and tail-calls the non-deleting destructor.
 void Col6CheckBatDtorThunk6C(u8* self) {
-    // Retail thunk: subi r3,r3,0x6c; b __dt__13CCol6CheckBatFv — r4 (flags)
+    // Retail thunk: subi r3,r3,0x6c; b __dt__13CCol6CheckBatFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6CheckBat*);
     ((DtorFn)__dt__13CCol6CheckBatFv)(reinterpret_cast<CCol6CheckBat*>(self - 0x6c));
@@ -156,7 +156,7 @@ void Col6CheckBatDtorThunk6C(u8* self) {
 // Col6HintDtorThunk70 (retail func_801640F0): CCol6Hint dtor at subobject
 // +0x70. Backs `this` off and tail-calls the non-deleting destructor.
 void Col6HintDtorThunk70(u8* self) {
-    // Retail thunk: subi r3,r3,0x70; b __dt__9CCol6HintFv — r4 (flags)
+    // Retail thunk: subi r3,r3,0x70; b __dt__9CCol6HintFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6Hint*);
     ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x70));
@@ -165,7 +165,7 @@ void Col6HintDtorThunk70(u8* self) {
 // Col6InviteDtorThunk6C: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
 // CCol6Invite embedded subobject and tail-calls the non-deleting destructor.
 void Col6InviteDtorThunk6C(u8* self) {
-    // Retail thunk: subi r3,r3,0x6c; b __dt__11CCol6InviteFv — r4 (flags)
+    // Retail thunk: subi r3,r3,0x6c; b __dt__11CCol6InviteFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6Invite*);
     ((DtorFn)__dt__11CCol6InviteFv)(reinterpret_cast<CCol6Invite*>(self - 0x6c));

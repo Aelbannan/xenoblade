@@ -151,7 +151,7 @@ void bdatGetPosXYZ(ml::CVec3* out, u32 index);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void PaneSetVtxColorAll(void* pic, s32 arg);
 void MiniMapRebuildGimmickPanes(void* self);
-void* MiniMapFillMarkerEntry(void* self);
+// (memberized: MiniMapFillMarkerEntry -> CMiniMapGimmickView::FillMarkerEntry; declaration moved into class CMiniMapGimmickView)
 void MiniMapPlaceMarkers(void* self, u32 row);
 void MiniMapBuildMarkerPanes(void* self, void* table, void* layout, f32 scale);
 void MiniMapInitGimmickTables(CMiniMapGimmickView* self, u32 arg, void* layout, f32 scale);
@@ -1124,7 +1124,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
         // ---- mode-32 section ----
     mode32:
         {
-            gimmickView = MiniMapFillMarkerEntry((u8*)self + 0x17C);
+            gimmickView = (void*)((CMiniMapGimmickView*)((u8*)self + 0x17C))->FillMarkerEntry();
             {
 #undef __cntlzw
                 u32 cf8cVal = (u32)CtrlRemote_TouchBitByArg(0x3334);
@@ -2441,7 +2441,7 @@ s32 MiniMapHasGlobalData() {
 }
 
 extern "C" void MiniMapResetLayoutAnims(void) {
-    // Fall-through `if (g != 0)` — an early `return` on this s32 signature
+    // Fall-through `if (g != 0)` -- an early `return` on this s32 signature
     // keeps r3 live as the pending return and forces `li r4,3`.
     // First virtual call uses a block-local Layout*; later calls reload
     // from g so the pointer is not saved across bctrl (retail: r31 only).
@@ -3167,29 +3167,29 @@ void MiniMapResetGimmickTables(CMiniMapGimmickView* self) {
 
 // MiniMapFillMarkerEntry - fill one marker-visibility table entry per call; returns 1
 // when the row budget ran out (MiniMapUpdateMapIcons uses the result as a bool).
-u32 MiniMapFillMarkerEntry(CMiniMapGimmickView* self) {
+u32 CMiniMapGimmickView::FillMarkerEntry() {
     // Declaration order tuned for MWCC reverse-declaration reg allocation
     // (ret=r30, end=r29, i=r28).
     u32 ret = 0;
     s32 end;
-    s32 count = self->field_0x0C;
-    s32 i = self->field_0x10;
+    s32 count = this->field_0x0C;
+    s32 i = this->field_0x10;
     if (i >= count) {
         ret = 1;
     } else {
-        u8* tab = ((self->field_0x590 != 0) ? self->field_0x338
-                                            : self->field_0x400);
+        u8* tab = ((this->field_0x590 != 0) ? this->field_0x338
+                                            : this->field_0x400);
         end = i + count;
         while (i < end) {
-            *(tab + i) = (u8)func_80138574(self->field_0x00, i + 1);
-            self->field_0x10 += 1;
-            if (self->field_0x10 >= self->field_0x0C) {
+            *(tab + i) = (u8)func_80138574(this->field_0x00, i + 1);
+            this->field_0x10 += 1;
+            if (this->field_0x10 >= this->field_0x0C) {
                 ret = 1;
                 break;
             }
             i++;
         }
     }
-    MiniMapUpdateGimmickRows(self);
+    MiniMapUpdateGimmickRows(this);
     return ret;
 }

@@ -185,6 +185,7 @@ public:
     // Two dynamic buffers; destroyed in reverse declaration order.
     CMdlDynBuffer buf08;    // 0x8 (list-pointer array)
     CMdlDynBuffer buf18;    // 0x18 (element-kind array)
+    void Dyn_SolveContacts(nw4r::math::MTX34* matrices);
 };
 
 CMdlDynamics::CMdlDynamics() {
@@ -1380,7 +1381,7 @@ extern "C" void MdlDyn_NormalizeMtx(nw4r::math::MTX34* m);
 extern "C" void MdlDyn_ClampToBounds(CMdlDynSet* owner, nw4r::math::VEC3* vec, CMdlDynElem* self);
 extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt,
                               nw4r::math::MTX34* matrices);
-extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matrices);
+// (memberized: MdlDyn_SolveContacts -> CMdlDynamics::Dyn_SolveContacts; declaration moved into class CMdlDynamics)
 extern "C" u32 MdlDyn_GetAnchorBase(u8* self);
 extern "C" void* MdlDyn_GetAnchorEnd(u8* self);
 extern "C" u32 MdlDyn_IsEnabled(u8* self);
@@ -1630,7 +1631,7 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
             lstIt++;
         }
         if (MdlDyn_IsPoseFrozen((u8*)self->field_0x4) == 0) {
-            MdlDyn_SolveContacts(self, matrices);
+            self->Dyn_SolveContacts(matrices);
         }
         frame++;
     }
@@ -2140,7 +2141,7 @@ struct BufViewRec {
 // relaxes each element's position/velocity toward the anchor matrix columns
 // referenced by its entry array, then dispatches the per-element update kinds
 // accumulating into both the element and a stack-local accumulator element.
-extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
+void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
     // Shared scratch vectors; MWCC pins their addresses to the non-volatile
     // registers across the nested loops (retail r14-r25/r30/r31).
     ml::CVec3 vSum;  // kind-1 position sum
@@ -2158,15 +2159,15 @@ extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matr
     CMdlDynElem elem;
     CMdlDynElem* pAcc = &elem;
     ml::CVec3* zeroVec = &ml::CVec3::zero;
-    CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
+    CMdlDynList** it = (CMdlDynList**)this->buf08.field_0x0;
     const f32 blendK = lbl_eu_8066B3E4;   // contact-point scale
     const f32 clipY = lbl_eu_8066B3D0;    // view-space y threshold
     const f32 penScale = lbl_eu_8066B3F4; // penetration scale
     const f32 relaxScale = lbl_eu_8066B3F8;
     const f32 relaxPos = lbl_eu_8066B3FC;
 
-    while (it != (CMdlDynList**)self->buf08.field_0x0 +
-                      self->buf08.field_0x4) {
+    while (it != (CMdlDynList**)this->buf08.field_0x0 +
+                      this->buf08.field_0x4) {
         u32 idx = 0;
         u32 off = 0;
         while (idx != ((CMdlDynList*)*it)->field_0x4) {
@@ -2189,7 +2190,7 @@ extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matr
             while (ent != (CMdlDynEntry*)(tgt->bufA0.field_0x0 +
                                           tgt->bufA0.field_0x4 *
                                               sizeof(CMdlDynEntry))) {
-                MdlResRoot* root = (MdlResRoot*)self->field_0x4;
+                MdlResRoot* root = (MdlResRoot*)this->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                 unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, ent->id);
                 if (raw == 0) {
@@ -2230,13 +2231,13 @@ extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matr
             while (kindIt != (u32*)(tgt->buf90.field_0x0 +
                                     tgt->buf90.field_0x4 * sizeof(u32))) {
                 CMdlDynElem98* e =
-                    (CMdlDynElem98*)((u8*)self->buf18.field_0x0 + *kindIt * 0x98);
+                    (CMdlDynElem98*)((u8*)this->buf18.field_0x0 + *kindIt * 0x98);
                 switch (e->field_0x94) {
                 case 1: {
                     vSum = *(ml::CVec3*)&pAcc->field_0x68 +
                            *(ml::CVec3*)&tgt->field_0x68;
                     pc = vSum * blendK;
-                    if (MdlDyn_PushSphere((MdlDynObj*)self,
+                    if (MdlDyn_PushSphere((MdlDynObj*)this,
                                       (nw4r::math::VEC3*)&pc,
                                       (nw4r::math::VEC3*)&dOut1,
                                       &e->field_0x0, matrices)) {
@@ -2268,7 +2269,7 @@ extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matr
                     PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&world, (Vec*)&view);
                     vFlat = *(ml::CVec3*)&view;
                     if (vFlat.y > clipY) {
-                        MdlResRoot* root = (MdlResRoot*)self->field_0x4;
+                        MdlResRoot* root = (MdlResRoot*)this->field_0x4;
                         nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                         unsigned long raw =
                             GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
@@ -2339,7 +2340,7 @@ extern "C" void MdlDyn_SolveContacts(CMdlDynamics* self, nw4r::math::MTX34* matr
                         *(ml::CVec3*)&tgt->field_0x68;
                     ml::CVec3 p = sum * blendK;
                     pc = p;
-                    if (MdlDyn_PushPole((MdlDynObj*)self,
+                    if (MdlDyn_PushPole((MdlDynObj*)this,
                                       (nw4r::math::VEC3*)&pc,
                                       (nw4r::math::VEC3*)&dOut3, e,
                                       matrices)) {

@@ -77,6 +77,7 @@ public:
     /* 0x4361 */ u8 field_4361;
 
     void cbRenderBefore();
+    int mkCrystalIsBusyState();
 };
 
 // Imports used by this unit's window functions. The retail US reloc names for

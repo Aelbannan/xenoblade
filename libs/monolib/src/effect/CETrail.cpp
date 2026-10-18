@@ -212,9 +212,12 @@ struct CResHolder {
     void* m_res; // 0x5C
 };
 
+struct CETrailLightParam;
 struct CETrailLight {
     CResHolder* m_parent; // 0x0
     CLight* m_light;      // 0x4
+    void Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2);
+    CETrailLight* Init(CResHolder* parent);
 };
 
 struct CETrailLightParam {
@@ -885,16 +888,16 @@ extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::C
 // ---------------------------------------------------------------------------
 // TrailLight_Init: light attachment init
 // ---------------------------------------------------------------------------
-extern "C" CETrailLight* TrailLight_Init(CETrailLight* self, CResHolder* parent) {
-    self->m_parent = parent;
-    self->m_light = (CLight*)scnVlAllocSlot(parent->m_res);
-    if (self->m_light == nullptr) {
-        return self;
+CETrailLight* CETrailLight::Init(CResHolder* parent) {
+    this->m_parent = parent;
+    this->m_light = (CLight*)scnVlAllocSlot(parent->m_res);
+    if (this->m_light == nullptr) {
+        return this;
     }
-    LightCtlSetAttnMode(self->m_light, 3);
-    self->m_light->m_flags = (self->m_light->m_flags & ~0xFu) | 0xFu;
-    LightCtlSetEnable(self->m_light, 0);
-    return self;
+    LightCtlSetAttnMode(this->m_light, 3);
+    this->m_light->m_flags = (this->m_light->m_flags & ~0xFu) | 0xFu;
+    LightCtlSetEnable(this->m_light, 0);
+    return this;
 }
 
 // ---------------------------------------------------------------------------
@@ -929,15 +932,15 @@ struct LightColor {
     f32 r, g, b, a;
 };
 
-void TrailLight_Drive(CETrailLight* self, void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2) {
-    // NOTE: self->m_light is re-read for every call (never cached in a local)
+void CETrailLight::Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 f2) {
+    // NOTE: this->m_light is re-read for every call (never cached in a local)
     // so MWCC keeps it in a volatile register like retail.
-    if (self->m_light == nullptr) {
+    if (this->m_light == nullptr) {
         return;
     }
 
     if (p->m_intensity <= lbl_eu_8066B198) {
-        LightCtlSetEnable(self->m_light, 0);
+        LightCtlSetEnable(this->m_light, 0);
         return;
     }
 
@@ -961,17 +964,17 @@ void TrailLight_Drive(CETrailLight* self, void* arg, s32 mode, CETrailLightParam
     }
     s32 m = (s32)fm;
 
-    LightCtlSetEnable(self->m_light, 1);
-    LightCtlSetPos(self->m_light, arg);
-    LightCtlInitDistAttn(self->m_light, m, f1, f2);
+    LightCtlSetEnable(this->m_light, 1);
+    LightCtlSetPos(this->m_light, arg);
+    LightCtlInitDistAttn(this->m_light, m, f1, f2);
 
     LightColor out;
-    self->m_light->m_3C = lbl_eu_8066B1AC;
+    this->m_light->m_3C = lbl_eu_8066B1AC;
     out.b = p->m_b * p->m_intensity;
     out.g = p->m_g * p->m_intensity;
     out.r = p->m_r * p->m_intensity;
     out.a = lbl_eu_8066B1A4;
-    LightCtlSetColor(self->m_light, &out);
+    LightCtlSetColor(this->m_light, &out);
 }
 
 // ---------------------------------------------------------------------------

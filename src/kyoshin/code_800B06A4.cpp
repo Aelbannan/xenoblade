@@ -46,7 +46,7 @@ extern "C" void CPartsChange_UpdatePartyState(unsigned long a, float b);
 
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
-extern "C" void mineScanPoints(CfMapMineManager* self);  // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
+// (memberized: mineScanPoints -> CfMapMineManager::ScanPoints; declaration moved into class CfMapMineManager) // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
 extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg); // retail unmangled
 extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
@@ -684,7 +684,7 @@ extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 #pragma auto_inline off
 extern "C" void tickMineSubobject(UnkClass_805764CC* self) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() && self->field_0xCAC) {
-        mineScanPoints((CfMapMineManager*)self->field_0xCAC);
+        ((CfMapMineManager*)self->field_0xCAC)->ScanPoints();
     }
 }
 #pragma pop
@@ -1356,7 +1356,7 @@ cf::CfObject* nextReslistB48(cf::CfObject* obj) {
 extern "C" void* nextReslistBE8(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
     // Return whatever reslistFindObj left in r3 (retail has no explicit return
-    // materialization — keep the call result live as the function result).
+    // materialization -- keep the call result live as the function result).
     return ::reslistFindObj(&ctx->field_0xBE8, obj);
 }
 #pragma pop

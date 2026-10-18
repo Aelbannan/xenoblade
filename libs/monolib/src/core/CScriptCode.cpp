@@ -35,9 +35,9 @@ const char lbl_eu_80522540[] = "CScriptCode";
 const char lbl_eu_8052254C[] = "CScriptCode";
 
 // RTTI locators for the base interfaces come from data_vtables.hpp
-// (void* form). Do not redeclare as u32[] — MWCC rejects the conflict.
+// (void* form). Do not redeclare as u32[] -- MWCC rejects the conflict.
 // MWCC forbids taking the address of a ctor/dtor (and sibling TUs use the
-// retail-mangled free symbols for vtable words — see CWorkFlowSetup.cpp).
+// retail-mangled free symbols for vtable words -- see CWorkFlowSetup.cpp).
 extern "C" void __dt__11CScriptCodeFv();
 extern "C" void wkStandbyLogout__11CScriptCodeFv();
 extern "C" void wkStandbyLogin__11CWorkThreadFv();

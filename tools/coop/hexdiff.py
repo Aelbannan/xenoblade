@@ -832,6 +832,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="show relocation table for both retail and decomp objects",
     )
+    parser.add_argument(
+        "--pair-alias",
+        action="append",
+        default=[],
+        metavar="OLD=NEW",
+        help="pair retail symbol OLD with decomp symbol NEW (repeatable). "
+        "Lets --all verify planned renames whose new name no longer "
+        "contains the old one (memberize-bulk gate).",
+    )
     return parser.parse_args(argv)
 
 
@@ -1263,11 +1272,21 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
 
     decomp_by_name = {f.name: f for f in decomp_fn}
     decomp_by_value = {f.value: f for f in decomp_fn}
+    aliases: dict[str, str] = {}
+    for item in getattr(args, "pair_alias", None) or []:
+        if "=" in item:
+            old, new = item.split("=", 1)
+            if old and new:
+                aliases[old] = new
     rows = []
     for rf in sorted(retail_fn, key=lambda f: f.value):
-        # Try exact name match first, then substring match (like _resolve_candidates),
-        # then exact value match. This handles mangled decomp names and address shifts.
+        # Try exact name match first, then planned-rename alias, then
+        # substring match (like _resolve_candidates), then exact value match.
+        # The alias arm pairs renames whose new name no longer contains the
+        # old one (memberize-bulk gate) before fuzzy matching can misfire.
         dm = decomp_by_name.get(rf.name)
+        if dm is None and rf.name in aliases:
+            dm = decomp_by_name.get(aliases[rf.name])
         if dm is None:
             # Reuse the --symbol resolver (exact -> case-insensitive -> substring
             # -> Itanium length-prefix digit-strip) so retail short names
@@ -1307,6 +1326,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             if dm is None:
                 out["functions"].append({
                     "symbol": rf.name, "present": False,
+                    "decomp_symbol": None,
                 })
                 continue
             ok = c["mismatch"] == 0
@@ -1315,6 +1335,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             out["functions"].append({
                 "symbol": rf.name,
                 "present": True,
+                "decomp_symbol": dm.name,
                 "match": ok,
                 "mismatch": c["mismatch"],
                 "structural": c["structural"],

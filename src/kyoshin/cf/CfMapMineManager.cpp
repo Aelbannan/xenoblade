@@ -87,6 +87,7 @@ struct CfMapMineManager {
     MineListBase mPoints;  // 0x004  (0x40 bytes -> ends at 0x44)
     MineMsgRing mMsgs;     // 0x044  (0x490 bytes -> ends at 0x4D4)
     MineSoundTimer mSnd[16]; // 0x4D4..0x554
+    void ScanPoints();
 };
 
 // MineSceneObjectIf was a fake vtable pad. Retail tables at
@@ -847,14 +848,14 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
 // ---------------------------------------------------------------------------
 // mineScanPoints - main per-frame point scan: spawn/despawn and insert new.
 // ---------------------------------------------------------------------------
-extern "C" void mineScanPoints(CfMapMineManager* self) {
+void CfMapMineManager::ScanPoints() {
     BdatFilePointer* file = lbl_eu_806640C8;
     u32 rowBegin = Bdat_GetRowBase_B41C(file);
     u32 rowEnd = rowBegin + Bdat_GetMaxRow_B1EC(file);
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
 
-    MineNode* start = self->mPoints.mStartPtr;
+    MineNode* start = this->mPoints.mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         if (n->mItem.mObj0 != 0) {
@@ -874,18 +875,18 @@ extern "C" void mineScanPoints(CfMapMineManager* self) {
         n = n->mNext;
     }
 
-    self->mMsgs.mCount = 0;
-    self->mMsgs.mReadIdx = 0;
+    this->mMsgs.mCount = 0;
+    this->mMsgs.mReadIdx = 0;
     for (int i = 0; i < 16; i++) {
-        self->mSnd[i].mId = 0;
-        self->mSnd[i].mTime = 0.0f;
+        this->mSnd[i].mId = 0;
+        this->mSnd[i].mTime = 0.0f;
     }
-    self->mTime = 0.0f;
+    this->mTime = 0.0f;
 
     MinePoint tmp;
     for (u32 row = rowBegin; row < rowEnd; row++) {
         MineNode* found = 0;
-        MineNode* s2 = self->mPoints.mStartPtr;
+        MineNode* s2 = this->mPoints.mStartPtr;
         MineNode* m = s2->mNext;
         while (m != s2) {
             if ((m->mItem.mFlags >> 22) == (row & 0xFFFF) &&
@@ -898,9 +899,9 @@ extern "C" void mineScanPoints(CfMapMineManager* self) {
         }
 
         if (found != 0) {
-            mineFillPointFromRow(self, row, &found->mItem, 0);
+            mineFillPointFromRow(this, row, &found->mItem, 0);
             if (found->mItem.mTimer14 < lbl_eu_8066A208) {
-                mineRespawnPoint(self, &found->mItem);
+                mineRespawnPoint(this, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
                     u32 g = lbl_eu_80663E24;
                     setLODParam__8CTaskLODFv(
@@ -929,10 +930,10 @@ extern "C" void mineScanPoints(CfMapMineManager* self) {
                 }
             }
         } else {
-            if (mineFillPointFromRow(self, row, &tmp, 1) != 0) {
-                mineRespawnPoint(self, &tmp);
-                u32 idx = ListFindFree(self);
-                MineNode* slot = (MineNode*)((u8*)self->mPoints.mList + idx * 0x2C);
+            if (mineFillPointFromRow(this, row, &tmp, 1) != 0) {
+                mineRespawnPoint(this, &tmp);
+                u32 idx = ListFindFree(this);
+                MineNode* slot = (MineNode*)((u8*)this->mPoints.mList + idx * 0x2C);
                 MinePoint* dst = &slot->mItem;
                 *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
                 *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
@@ -947,7 +948,7 @@ extern "C" void mineScanPoints(CfMapMineManager* self) {
                 *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
                 *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
                 // push_back into the intrusive list
-                MineNode* head = self->mPoints.mStartPtr;
+                MineNode* head = this->mPoints.mStartPtr;
                 slot->mNext = head;
                 slot->mPrev = head->mPrev;
                 head->mPrev->mNext = slot;

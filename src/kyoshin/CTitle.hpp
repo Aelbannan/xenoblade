@@ -86,7 +86,7 @@ public:
     /* 0x2C */ CTitleLogo mLogo;
     /* 0x48 */ CTitleMenu mMenu;
     /* 0x70 */ u8 mCur[0x18]; // CCur18 cursor (opaque)
-}; // sizeof 0x88 — mCurBody below is a cast view, not a real member
+}; // sizeof 0x88 -- mCurBody below is a cast view, not a real member
 
 // Body view of the embedded CCur18 (past its vptr), used by OnFileEvent
 // to copy a freshly-constructed stack cursor into mCur. Kept outside the

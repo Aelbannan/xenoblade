@@ -55,6 +55,7 @@ public:
     s32 mActiveLightCount; // 0x480
     // Bitfield of control flags (bit 0x80 = ?, bit 0x100 = ?).
     u32 mFlags; // 0x484
+    void ClearLights();
 };
 
 // CScnEnvLgtData constructor.

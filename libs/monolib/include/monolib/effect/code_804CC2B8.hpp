@@ -21,6 +21,11 @@ struct EffectNode {
     s16 field_0x0c;
     u8 pad_0x0e[0x18 - 0x0e];
     u32 field_0x18;
+    void EffFxReleaseNodeChain();
+    EffectNode* EffFxStepNextNode();
+    EffectNode* EffFxFetchHeadNode();
+    void EffFxProcessNodeChain();
+    void EffFxAppendChainNode(s32 index);
 };
 
 struct U16Pair {

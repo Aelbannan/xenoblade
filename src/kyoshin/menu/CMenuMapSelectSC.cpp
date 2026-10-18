@@ -269,7 +269,7 @@ void CMenuMapSelectSC::Term() {
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
     teardown(&mTitleAHelp);
-    CFade_Unload(&mFade);
+    (&mFade)->Unload();
     FloorMap_Teardown(&mFloorMap);
 
     lbl_eu_806647C0 = 0;
@@ -378,7 +378,7 @@ extern "C" bool MapSelectSCIsCreated() { extern u32 lbl_eu_806647C0; return lbl_
 // start the fade-in animation and advance to phase 1.
 extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self) {
     if (isInitialized(&self->mTitleAHelp) && CFade_IsReady(&self->mFade)) {
-        CFade_FadeIn(&self->mFade);
+        (&self->mFade)->In();
         self->mState = 1;
     }
 }
@@ -389,7 +389,7 @@ extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self) {
 extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         Scn_SetPauseFlag(reinterpret_cast<CScn*>(self->mParentRef), 0);
-        FloorMap_SetMapTable(&self->mFloorMap, (u8)lbl_eu_80664184);
+        (&self->mFloorMap)->SetMapTable((u8)lbl_eu_80664184);
         FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 2;
         UIWin_ControlWindowLists(1, 0);
@@ -471,14 +471,14 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
         if ((pressed & 0x00200000) != 0) {
             FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 6;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
+            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 5;
                 playUISound(6);
             } else {
@@ -486,7 +486,7 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
             }
         } else if ((pressed & 0x00800000) != 0) {
             if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 5;
                 playUISound(6);
             }
@@ -564,14 +564,14 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
             if ((pressed & 0x10) != 0) {
                 FloorMap_OpenRowWindow(&self->mFloorMap);
                 if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
-                    CFade_FadeIn(&self->mFade);
+                    (&self->mFade)->In();
                     self->mState = 6;
                 }
             } else if ((pressed & 0x20) != 0) {
-                if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
+                if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
                     FloorMap_ConfirmSelect(&self->mFloorMap);
                 } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                    CFade_FadeIn(&self->mFade);
+                    (&self->mFade)->In();
                     self->mState = 5;
                     playUISound(6);
                 } else {
@@ -579,7 +579,7 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
                 }
             } else if ((pressed & 0x400) != 0) {
                 if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                    CFade_FadeIn(&self->mFade);
+                    (&self->mFade)->In();
                     self->mState = 5;
                     playUISound(6);
                 }

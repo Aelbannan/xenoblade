@@ -164,7 +164,7 @@ CKizunaLine::~CKizunaLine() {}
 // releaseRadarChild` (retail links this symbol unmangled) instead of inlining.
 extern "C" __declspec(noinline) void releaseRadarChild(UnkKizunaSelf57D90* self) {
     // Retail re-tests field8 inside the guard: the duplicated condition CSEs to
-    // one cmpwi with two beq's (dead second branch — the btm_sec pattern).
+    // one cmpwi with two beq's (dead second branch -- the btm_sec pattern).
     if (self->field8 != 0) {
         if (self->field8 != 0) {
             self->field8->target2(1);
@@ -524,7 +524,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     }
 }
 
-// us-8025b198 (0x8025B198): game-local PSVECAdd kernel — dst[i] = a[i] + b[i], i in 0..2.
+// us-8025b198 (0x8025B198): game-local PSVECAdd kernel -- dst[i] = a[i] + b[i], i in 0..2.
 // Retail is a pure paired-single body (psq_l/ps_add/psq_st, no frame, arg order r3=dst,
 // r4=a, r5=b) that MWCC cannot emit from scalar C++ (no ps_add intrinsic; scalar C++
 // yields 9 lfs/fadds/stfs). Isolated Gekko paired-single backend (PLAN.md 17.6).
@@ -550,7 +550,7 @@ extern "C" void kizAddVec3(float* dst, const float* a, const float* b) {
 }
 #endif
 
-// us-8025b1bc (0x8025B1BC): game-local PSVECScale kernel — dst = src * scale (3 floats).
+// us-8025b1bc (0x8025B1BC): game-local PSVECScale kernel -- dst = src * scale (3 floats).
 // Retail is a pure paired-single body (psq_l/ps_muls0/psq_st, no frame, arg order r3=dst,
 // r4=src, f1=scale). MWCC has no ps_muls0 intrinsic and scalar C++ yields
 // lfs/fmuls/stfs. Isolated Gekko paired-single backend (PLAN.md 17.6).
@@ -1599,7 +1599,7 @@ extern "C" __declspec(noinline) void infoAnimToMode5(UnkKizunaSelfC21C* self) {
 
 // infoAnimToMode0 (us-8025e494): kizuna-line update gate. Retail: reads the
 // global float lbl_eu_80668834 (sdata), calls AnimRewindFrame([self+0xC], f1)
-// (declared CArtsInfo.hpp, defined code_80135FDC.cpp — the old comment's
+// (declared CArtsInfo.hpp, defined code_80135FDC.cpp -- the old comment's
 // "no split symbols" blocker is stale); on non-zero return: field14=0,
 // field15=1, then [self+8] virtual slot 56 (target14) twice with arg 0,
 // then slot 32 (target8) with arg [self+0xC].

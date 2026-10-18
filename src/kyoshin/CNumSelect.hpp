@@ -132,4 +132,8 @@ public:
     /* 0x2E */ u8 field_2E;
     /* 0x2F */ u8 field_2F;
     /* 0x30 */ u8 field_30;
+    void Sel_AdvanceOpen();
+    void Sel_RewindReset();
+    void Sel_RestartAnim();
+    void Sel_RestartAnimAlt();
 };

@@ -57,6 +57,7 @@ public:
     u8  mCur18[0x18];             // 0xC4 CCur18 cursor storage
     u8  mFlagDC;                  // 0xDC
     s8  mFlagDD;                  // 0xDD signed flag (cf load/release toggle)
+    void HandleInput();
 };
 
 // Render-callback and scene helper used by Term/cbRenderBefore (retail CScn

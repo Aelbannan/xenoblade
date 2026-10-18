@@ -84,12 +84,12 @@ extern const char lbl_eu_8050372C[];
 extern const char lbl_eu_80503718[];
 
 void Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* ev);
-void EvtSeqInsertRtEvent(CREvtModelMap* self);
-bool EvtSeqProbeEvtSlot(void* self, s32* pId);
+// (memberized: MapModel_ClaimFileData -> CREvtModelMap::ClaimFileData; declaration moved into class CREvtModelMap)
+// (memberized: EvtSeqInsertRtEvent -> UnkEvtListEntry::SeqInsertRtEvent; declaration moved into class UnkEvtListEntry)
+// (memberized: EvtSeqProbeEvtSlot -> EvtBdabModel::SeqProbeEvtSlot; declaration moved into class EvtBdabModel)
 u32 EvtSeqGetCounter100();
 u32 EvtSeqGetStateBit5();
-void EvtSeqCheckEventRunGuard(CREvtModelMap* self);
+// (memberized: EvtSeqCheckEventRunGuard -> UnkObj80168514::EvtSeqCheckEventRunGuard; declaration moved into class UnkObj80168514)
 u32 REvtCam_IsField98Set();
 s32 REvtCam_IsMode2B0Eq1();
 s32 REvtCam_IsMode2B0Eq2();
@@ -224,7 +224,7 @@ CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
         self->mCallback[0] = w0;
         w2 = *src++;
         self->mCallback[2] = w2;
-        EvtSeqInsertRtEvent(self);
+        self->SeqInsertRtEvent();
         if (*(s32*)((char*)self->mPtr1C + 0x30) != 0) {
             self->mFlags |= 0x30;
         }
@@ -356,7 +356,7 @@ void MapModel_ProbeSlot(CREvtModelMap* self)
 {
     s32* pId = &self->mCreatureId;
     *pId = -1;
-    if (EvtSeqProbeEvtSlot(self, pId)) {
+    if (self->SeqProbeEvtSlot(pId)) {
         u32 w1, w2, w0;
         u32* src = (u32*)lbl_eu_80531D38;
         w0 = *src++;
@@ -526,7 +526,7 @@ void MapModel_Update(CREvtModelMap* self)
         simRefreshFlag8(self->mEmoteModel, fTime);
     }
     reinterpret_cast<CREvtModel*>(self)->setVisible(REvtCam_IsField98Set());
-    EvtSeqCheckEventRunGuard(self);
+    self->EvtSeqCheckEventRunGuard();
 }
 
 void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)
@@ -647,29 +647,29 @@ void MapModel_ApplyVisible(CREvtModelMap* self, int visible)
 
 int MapModel_VisFlag3(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
 
-bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* pEvent)
+bool CREvtModelMap::ClaimFileData(CEventFile* pEvent)
 {
-    if (pEvent->mFileHandle == self->mFileHandle1) {
+    if (pEvent->mFileHandle == this->mFileHandle1) {
         if (pEvent->unk0 == 1) {
-            self->mFileData1 = self->mFileHandle1->getData();
+            this->mFileData1 = this->mFileHandle1->getData();
         } else {
-            self->mFlags |= 4;
+            this->mFlags |= 4;
         }
-        self->mFileHandle1 = 0;
+        this->mFileHandle1 = 0;
         return 1;
     }
-    if (pEvent->mFileHandle == self->mFileHandle2) {
+    if (pEvent->mFileHandle == this->mFileHandle2) {
         if (pEvent->unk0 == 1) {
-            self->mFileData2 = self->mFileHandle2->getData();
+            this->mFileData2 = this->mFileHandle2->getData();
         }
-        self->mFileHandle2 = 0;
+        this->mFileHandle2 = 0;
         return 1;
     }
-    if (pEvent->mFileHandle == self->mFileHandle3) {
+    if (pEvent->mFileHandle == this->mFileHandle3) {
         if (pEvent->unk0 == 1) {
-            self->mFileData3 = self->mFileHandle3->getData();
+            this->mFileData3 = this->mFileHandle3->getData();
         }
-        self->mFileHandle3 = 0;
+        this->mFileHandle3 = 0;
         return 1;
     }
     return 0;
@@ -677,7 +677,7 @@ bool MapModel_ClaimFileData(CREvtModelMap* self, CEventFile* pEvent)
 
 bool OnFileEvent__13CREvtModelMapFP10CEventFile(IWorkEvent* self, CEventFile* ev)
 {
-    return MapModel_ClaimFileData(reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38), ev);
+    return (reinterpret_cast<CREvtModelMap*>(reinterpret_cast<char*>(self) - 0x38))->ClaimFileData(ev);
 }
 
 void MapModel_ThunkCtor38(void* self, int dealloc) {

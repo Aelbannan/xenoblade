@@ -86,6 +86,7 @@ struct CScnFilterIteratorReslist {
     CScnFilterIterNode* mList;         // 0x14 node array
     int mCapacity;                     // 0x18
     bool field_0x1C;                   // 0x1C ownership flag
+    void IterList_destroy();
 };
 
 class __declspec(novtable) CScnFilterMan {

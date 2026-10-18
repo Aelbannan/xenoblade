@@ -5,7 +5,7 @@
 #include "monolib/math.hpp"
 #include <types.h>
 
-// us-8043df30: apply() — push the split rects to both child views. view1 gets
+// us-8043df30: apply() -- push the split rects to both child views. view1 gets
 // the full pane (split line replaces the size along the split axis), view2 gets
 // the remaining pane beyond the border. Runs only while both views exist.
 extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
@@ -236,7 +236,7 @@ extern "C" s16 getSplitLine__11CSplitFrameFv(u8* self) {
 }
 
 
-// us-8043e0ec: setSplitLine() — store the split line, clamp it against the
+// us-8043e0ec: setSplitLine() -- store the split line, clamp it against the
 // parent viewport (lower: 0 / -border, upper: viewSize + border / viewSize),
 // then re-apply the split rects to both child views like apply().
 extern "C" void setSplitLine__11CSplitFrameFs(CSplitFrame* self, s16 line) {

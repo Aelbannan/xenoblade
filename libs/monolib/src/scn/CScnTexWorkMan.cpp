@@ -911,4 +911,4 @@ u32 lbl_eu_80665904;
 u32 lbl_eu_80665908[2];
 // (retired DECOMP_FORCEACTIVE keep-alives: 80524020 is referenced by
 // MemManager::create above; 80524010 is anchored by CScnItemCamera.cpp's
-// sd table — section-defined globals survive linking without text refs.)
+// sd table -- section-defined globals survive linking without text refs.)

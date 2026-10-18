@@ -1796,9 +1796,9 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
 // Kizuna-chart helpers (defined in CPcKizunagram.cpp) called with the
 // character skill blob. KizunagramClearChartEntry's trailing argument registers are left
 // unset by retail, so only the blob pointer is passed.
-extern "C" void KizunagramSetActiveSlot(void* self, int slot);
-extern "C" void KizunagramClearChartEntry(void* self);
-extern "C" void KizunagramStoreWorkEntry(void* self, int a, int b, int value);
+// (memberized: KizunagramSetActiveSlot -> CPcKizunagramBig::SetActiveSlot; declaration moved into class CPcKizunagramBig)
+// (memberized: KizunagramClearChartEntry -> CPcKizunaChart::KizunagramClearChartEntry; declaration moved into class CPcKizunaChart)
+// (memberized: KizunagramStoreWorkEntry -> CPcKizunaChart::KizunagramStoreWorkEntry; declaration moved into class CPcKizunaChart)
 extern "C" void SysWinLog_ScanSegmentSlots(u8* self);
 extern "C" void sysWinSetKindContent(void*, const char*, int);
 extern "C" void sysWinSetTwoTextValues(void*, void*, void*);
@@ -1828,9 +1828,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                         (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
                     s8 fe = (s8)self->field_FE;
                     u8 row = lbl_eu_8050DB60[(ch - 1) * 8 + f4 - 1];
-                    KizunagramStoreWorkEntry(blob, row, fe + 1,
-                                  self->field_F8 + self->field_F7 * 5 +
-                                      (f4 - 1) * 0x19 + 1);
+                    blob->KizunagramStoreWorkEntry(row, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
                     CPSkillSlot* slot = &blob->records2[row].slots[fe + 1];
                     slot->byte14 |= 1;
                     SysWinLog_ScanSegmentSlots((u8*)blob);
@@ -1857,7 +1855,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                                 freeFlag = (slot->byte14 & 1) == 0;
                                 if (freeFlag != 0 && costLo != 0) {
                                     self->field_11F = 0;
-                                    KizunagramClearChartEntry(blob);
+                                    blob->KizunagramClearChartEntry();
                                     slot->byte14 |= 1;
                                     CPassiveSkillLine_updateSkillTabs(self);
                                     CPassiveSkillLine_refreshLearnGrid(self);
@@ -1896,7 +1894,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
             playUISound(5);
             return;
         }
-        KizunagramSetActiveSlot(blob, (s8)self->field_F5);
+        blob->SetActiveSlot((s8)self->field_F5);
         CPassiveSkillLine_updateSkillTabs(self);
         playUISound(0x12);
         return;
@@ -1955,9 +1953,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                 return;
             }
             self->field_11F = 0;
-            KizunagramStoreWorkEntry(blob, skillId, fe + 1,
-                          self->field_F8 + self->field_F7 * 5 +
-                              (f4 - 1) * 0x19 + 1);
+            blob->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
             CPSkillSlot* slot2 = &blob->records2[skillId].slots[fe + 1];
             slot2->byte14 |= 1;
             SysWinLog_ScanSegmentSlots((u8*)blob);
@@ -1967,9 +1963,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
         }
         // Empty slot: acquire without the message flow.
         self->field_11F = 0;
-        KizunagramStoreWorkEntry(blob, skillId, fe + 1,
-                      self->field_F8 + self->field_F7 * 5 +
-                          (f4 - 1) * 0x19 + 1);
+        blob->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
         slot->byte14 |= 1;
         SysWinLog_ScanSegmentSlots((u8*)blob);
         CPassiveSkillLine_enterStateA(self);

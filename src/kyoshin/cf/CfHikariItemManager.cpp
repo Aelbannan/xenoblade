@@ -189,11 +189,11 @@ void hikariResetManagerRecords(cf::CfHikariItemManager* self) {
 
 // (us-802b5528): toggle flag bit 0 of +0x1194 - nonzero arg clears
 // the bit, zero sets it.
-void hikariSetEnableBit0(CfHikariItemRecord* self, u32 enable) {
+void CfHikariItemRecord::SetEnableBit0(u32 enable) {
     if (enable != 0) {
-        self->field_1194 &= ~1u;
+        this->field_1194 &= ~1u;
     } else {
-        self->field_1194 |= 1u;
+        this->field_1194 |= 1u;
     }
 }
 

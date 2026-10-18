@@ -292,14 +292,14 @@ extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
 // state handlers - keep each out-of-line.
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerOnFwdGate(CSkipTimer* self) {
-    if (advanceAnimTransform(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
-        self->mField29 = 2;
-        CSkipTimerBindAnim24(self);
+void CSkipTimer::OnFwdGate() {
+    if (advanceAnimTransform(this->mAnimTransform20, lbl_eu_80668C30) != 0) {
+        this->mField29 = 2;
+        CSkipTimerBindAnim24(this);
         // Intermediate local: retail keeps the action id in r0 across the
         // sub-controller address computation before the u8 conversion.
-        int action = CSkipTimerMapKeyToAction(self);
-        CSkipTimer2Start(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]),
+        int action = CSkipTimerMapKeyToAction(this);
+        CSkipTimer2Start(reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]),
                       static_cast<u8>(action));
     }
 }
@@ -308,10 +308,10 @@ extern "C" void CSkipTimerOnFwdGate(CSkipTimer* self) {
 // CSkipTimerOnReverseDone: reverse-anim reached end -> clear skip state.
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerOnReverseDone(CSkipTimer* self) {
-    if (AnimRewindFrame(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
-        self->mField29 = 0;
-        self->mField2B = 1;
+void CSkipTimer::OnReverseDone() {
+    if (AnimRewindFrame(this->mAnimTransform20, lbl_eu_80668C30) != 0) {
+        this->mField29 = 0;
+        this->mField2B = 1;
     }
 }
 #pragma pop
@@ -479,12 +479,12 @@ void CSkipTimer_BeginLoad(CSkipTimer* self) {
 
 // Retail strips mangling on these state-handler symbols (US short-form func_
 // names), so both declarations and definitions carry C linkage.
-extern "C" void CSkipTimerOnFwdGate(CSkipTimer* self);
-extern "C" void CSkipTimerReengageInput(CSkipTimer* self);
-extern "C" void CSkipTimerEndSkip(CSkipTimer* self);
-extern "C" void CSkipTimerOnReverseDone(CSkipTimer* self);
-extern "C" void CSkipTimerActivateSkipUI(CSkipTimer* self);
-extern "C" void CSkipTimerLockSkipButton(CSkipTimer* self);
+// (memberized: CSkipTimerOnFwdGate -> CSkipTimer::OnFwdGate; declaration moved into class CSkipTimer)
+// (memberized: CSkipTimerReengageInput -> CSkipTimer::ReengageInput; declaration moved into class CSkipTimer)
+// (memberized: CSkipTimerEndSkip -> CSkipTimer::EndSkip; declaration moved into class CSkipTimer)
+// (memberized: CSkipTimerOnReverseDone -> CSkipTimer::OnReverseDone; declaration moved into class CSkipTimer)
+// (memberized: CSkipTimerActivateSkipUI -> CSkipTimer::ActivateSkipUI; declaration moved into class CSkipTimer)
+// (memberized: CSkipTimerLockSkipButton -> CSkipTimer::LockSkipButton; declaration moved into class CSkipTimer)
 extern "C" void CSkipTimer2DriveState(CSkipTimer2* self);
 extern "C" void CSkipTimer2HoldRelease(CSkipTimer2* self, u8 arg);
 
@@ -495,10 +495,10 @@ void CSkipTimerTick(CSkipTimer* self) {
     if (self->mField28 == 0) return;
     switch (self->mField29) {
     case 1:
-        CSkipTimerOnFwdGate(self);
+        self->OnFwdGate();
         break;
     case 2:
-        CSkipTimerReengageInput(self);
+        self->ReengageInput();
         break;
     case 3: {
         // Intermediate local: retail keeps the action id in r0 across the
@@ -509,16 +509,16 @@ void CSkipTimerTick(CSkipTimer* self) {
         break;
     }
     case 4:
-        CSkipTimerEndSkip(self);
+        self->EndSkip();
         break;
     case 5:
-        CSkipTimerOnReverseDone(self);
+        self->OnReverseDone();
         break;
     case 6:
-        CSkipTimerActivateSkipUI(self);
+        self->ActivateSkipUI();
         break;
     case 7:
-        CSkipTimerLockSkipButton(self);
+        self->LockSkipButton();
         break;
     }
     self->mLayout2->Animate(0);
@@ -683,22 +683,22 @@ u8 CSkipTimerIsEngaged(CSkipTimer* self) {
 // CSkipTimerReengageInput: (re)engage skip input: frame 3, button state 1.
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerReengageInput(CSkipTimer* self) {
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+void CSkipTimer::ReengageInput() {
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]);
     if (sub->mField23 == 0) return;
-    self->mField29 = 3;
-    self->mField2B = 1;
+    this->mField29 = 3;
+    this->mField2B = 1;
 }
 #pragma pop
 
 // CSkipTimerEndSkip: end the skip: frame 5, then rebind the forward anim (tail call).
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerEndSkip(CSkipTimer* self) {
-    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+void CSkipTimer::EndSkip() {
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&this->mSkipTimer2Data[0]);
     if (sub->mField23 == 0) return;
-    self->mField29 = 5;
-    CSkipTimerBindAnim20(self);
+    this->mField29 = 5;
+    CSkipTimerBindAnim20(this);
 }
 #pragma pop
 
@@ -706,20 +706,20 @@ extern "C" void CSkipTimerEndSkip(CSkipTimer* self) {
 // panel is engaged.
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerActivateSkipUI(CSkipTimer* self) {
-    if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
-    self->mField29 = 3;
-    self->mField2B = 1;
+void CSkipTimer::ActivateSkipUI() {
+    if (CSysWin_isActive(&this->mSysWinData[0]) == 0) return;
+    this->mField29 = 3;
+    this->mField2B = 1;
 }
 #pragma pop
 
 // CSkipTimerLockSkipButton: lock the skip button on while the syswin panel is engaged.
 #pragma push
 #pragma auto_inline off
-extern "C" void CSkipTimerLockSkipButton(CSkipTimer* self) {
-    if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
-    self->mField2B = 1;
-    self->mActive = 1;
+void CSkipTimer::LockSkipButton() {
+    if (CSysWin_isActive(&this->mSysWinData[0]) == 0) return;
+    this->mField2B = 1;
+    this->mActive = 1;
 }
 #pragma pop
 

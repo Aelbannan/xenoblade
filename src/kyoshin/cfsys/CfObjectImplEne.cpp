@@ -257,9 +257,9 @@ void MoveImplEne_PlayKindSound(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u
     }
 }
 
-extern "C" void MoveImplSweepReposition(void* self);
+// (memberized: MoveImplSweepReposition -> CfObjectImplMoveObj::SweepReposition; declaration moved into class CfObjectImplMoveObj)
 extern "C" void MoveImplSyncBattleRoster(void* self);
-extern "C" void MoveImplEne_SweepReposition(void* self) { MoveImplSweepReposition(self); }
+extern "C" void MoveImplEne_SweepReposition(void* self) { self->SweepReposition(); }
 extern "C" void MoveImplEne_SyncBattleRoster(void* self) { MoveImplSyncBattleRoster(self); }
 
 // Scans the battle actor's up-to-16 timeline entries; for each entry not

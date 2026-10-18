@@ -11,11 +11,11 @@ extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
 // This-unit phase handlers (retail-unmangled func_ names), referenced by
 // Colle_HandleInput before their definitions below. extern "C" keeps the call
 // relocs bare (retail keeps the unmangled names at these call sites).
-extern "C" void Colle_NavigateBack(CMenuCollepedia* self);
-extern "C" void Colle_CloseMenu(CMenuCollepedia* self);
+// (memberized: Colle_NavigateBack -> CMenuCollepedia::Colle_NavigateBack; declaration moved into class CMenuCollepedia)
+// (memberized: Colle_CloseMenu -> CMenuCollepedia::Colle_CloseMenu; declaration moved into class CMenuCollepedia)
 extern "C" void Colle_BeginOpen(CMenuCollepedia* self);
-extern "C" void Colle_OpenMenu(CMenuCollepedia* self);
-extern "C" void Colle_HandleInput(CMenuCollepedia* self);
+// (memberized: Colle_OpenMenu -> CMenuCollepedia::Colle_OpenMenu; declaration moved into class CMenuCollepedia)
+// (memberized: Colle_HandleInput -> CMenuCollepedia::Colle_HandleInput; declaration moved into class CMenuCollepedia)
 extern "C" void Colle_MarkClosing(CMenuCollepedia* self);
 extern "C" void clpDoFrameUpd(CCollepedia* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
@@ -238,10 +238,10 @@ void CMenuCollepedia::Move() {
         Colle_BeginOpen(this);
         break;
     case 1:
-        Colle_OpenMenu(this);
+        this->Colle_OpenMenu();
         break;
     case 2:
-        Colle_HandleInput(this);
+        this->Colle_HandleInput();
         break;
     case 3:
         Colle_MarkClosing(this);
@@ -264,10 +264,10 @@ void Colle_BeginOpen(){}
 
 // Advance the collepedia menu: once the title bar is idle and the collepedia
 // core is ready, open the menu (state 2).
-void Colle_OpenMenu(CMenuCollepedia* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
-        if (clpGetInputOk(&self->mCollepedia) != 0) {
-            self->mState = 2;
+void CMenuCollepedia::Colle_OpenMenu() {
+    if (isIdle__11CTitleAHelpFv(&this->mTitleAHelp) != 0) {
+        if (clpGetInputOk(&this->mCollepedia) != 0) {
+            this->mState = 2;
         }
     }
 }
@@ -276,116 +276,116 @@ void Colle_OpenMenu(CMenuCollepedia* self) {
 // open, tick the open timer (clamped to 10s), then read the pad and dispatch
 // to the collepedia core / menu handlers. Classic-controller (co-op) and
 // Wiimote pad layouts map the same actions to different button bits.
-extern "C" void Colle_HandleInput(CMenuCollepedia* self) {
+void CMenuCollepedia::Colle_HandleInput() {
     if (GetItemMulti_IsActiveFlag() != 0) {
         return;
     }
-    self->mTimer += lbl_eu_806687E4;
-    if (self->mTimer > lbl_eu_806687E8) {
-        self->mTimer = lbl_eu_806687E8;
+    this->mTimer += lbl_eu_806687E4;
+    if (this->mTimer > lbl_eu_806687E8) {
+        this->mTimer = lbl_eu_806687E8;
     }
 
     MenuCollepediaPadData* pad =
         (MenuCollepediaPadData*)cf::CfGameManager::getCfPadData();
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Classic-controller (co-op) layout.
-        if (clpCanClaim(&self->mCollepedia) != 0) {
-            func_801C41E8(&self->mTitleAHelp, 0x50);
+        if (clpCanClaim(&this->mCollepedia) != 0) {
+            func_801C41E8(&this->mTitleAHelp, 0x50);
         } else {
-            func_801C41E8(&self->mTitleAHelp, 0x51);
+            func_801C41E8(&this->mTitleAHelp, 0x51);
         }
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         if ((turbo >> 6) & 1) {
-            clpPrevCatPg(&self->mCollepedia);
+            clpPrevCatPg(&this->mCollepedia);
             return;
         }
         if ((turbo >> 5) & 1) {
-            clpNextCatPg(&self->mCollepedia);
+            clpNextCatPg(&this->mCollepedia);
             return;
         }
         if ((pressed >> 10) & 1) {
-            clpOnConfirm(&self->mCollepedia);
+            clpOnConfirm(&this->mCollepedia);
             return;
         }
         if ((pressed >> 9) & 1) {
-            Colle_NavigateBack(self);
+            this->Colle_NavigateBack();
             return;
         }
         if (turbo & 0x8004) {
-            clpCursorLeft(&self->mCollepedia);
+            clpCursorLeft(&this->mCollepedia);
             return;
         }
         if (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) {
-            clpCursorRght(&self->mCollepedia);
+            clpCursorRght(&this->mCollepedia);
             return;
         }
         if (turbo & 0x2001) {
-            clpCursorUp(&self->mCollepedia);
+            clpCursorUp(&this->mCollepedia);
             return;
         }
         if (turbo & 0x4002) {
-            clpCursorDown(&self->mCollepedia);
+            clpCursorDown(&this->mCollepedia);
             return;
         }
         if ((pressed >> 8) & 1) {
-            Colle_CloseMenu(self);
+            this->Colle_CloseMenu();
             return;
         }
     } else {
         // Single-player Wiimote-style layout.
-        if (clpCanClaim(&self->mCollepedia) != 0) {
-            func_801C41E8(&self->mTitleAHelp, 0x50);
+        if (clpCanClaim(&this->mCollepedia) != 0) {
+            func_801C41E8(&this->mTitleAHelp, 0x50);
         } else {
-            func_801C41E8(&self->mTitleAHelp, 0x51);
+            func_801C41E8(&this->mTitleAHelp, 0x51);
         }
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         // Holding the confirm button (bit 19) with the core idle plays the
         // open sound once and restarts the timer, then feeds the pad through.
         if (((pad->mPadHeldFlags >> 19) & 1) &&
-            clpIsBusy(&self->mCollepedia) == 0) {
-            func_801C41E8(&self->mTitleAHelp, 0x52);
-            if (self->mTimer > lbl_eu_806687E4) {
+            clpIsBusy(&this->mCollepedia) == 0) {
+            func_801C41E8(&this->mTitleAHelp, 0x52);
+            if (this->mTimer > lbl_eu_806687E4) {
                 playUISound__FUl(2);
             }
-            self->mTimer = lbl_eu_806687E0;
+            this->mTimer = lbl_eu_806687E0;
             if (turbo & 0x2001) {
-                clpPrevCatPg(&self->mCollepedia);
+                clpPrevCatPg(&this->mCollepedia);
                 return;
             }
             if (turbo & 0x4002) {
-                clpNextCatPg(&self->mCollepedia);
+                clpNextCatPg(&this->mCollepedia);
                 return;
             }
             return;
         }
         if ((pressed >> 27) & 1) {
-            clpOnConfirm(&self->mCollepedia);
+            clpOnConfirm(&this->mCollepedia);
             return;
         }
         if ((pressed >> 26) & 1) {
-            Colle_NavigateBack(self);
+            this->Colle_NavigateBack();
             return;
         }
         if (turbo & 0x8004) {
-            clpCursorLeft(&self->mCollepedia);
+            clpCursorLeft(&this->mCollepedia);
             return;
         }
         if (((turbo >> 15) & 1) | ((turbo >> 28) & 1)) {
-            clpCursorRght(&self->mCollepedia);
+            clpCursorRght(&this->mCollepedia);
             return;
         }
         if (turbo & 0x2001) {
-            clpCursorUp(&self->mCollepedia);
+            clpCursorUp(&this->mCollepedia);
             return;
         }
         if (turbo & 0x4002) {
-            clpCursorDown(&self->mCollepedia);
+            clpCursorDown(&this->mCollepedia);
             return;
         }
         if ((pressed >> 21) & 1) {
-            Colle_CloseMenu(self);
+            this->Colle_CloseMenu();
         }
     }
 }
@@ -402,27 +402,27 @@ void Colle_MarkClosing(CMenuCollepedia* self) {
 
 // Close the collepedia menu: when the core is not blocking, run the close
 // sequence (save prompt + close sound) and set state 4.
-void Colle_CloseMenu(CMenuCollepedia* self) {
-    if (clpIsBusy(&self->mCollepedia) == 0) {
+void CMenuCollepedia::Colle_CloseMenu() {
+    if (clpIsBusy(&this->mCollepedia) == 0) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
             playUISound__FUl(6);
         }
-        self->mState = 4;
-        self->mField54 = 1;
+        this->mState = 4;
+        this->mField54 = 1;
     }
 }
 
 // Navigate the collepedia menu: forward input to the core, or close the
 // detail view and return to the list (state 3).
-void Colle_NavigateBack(CMenuCollepedia* self) {
-    if (clpIsOverlay(&self->mCollepedia) != 0) {
-        clpOnCancel(&self->mCollepedia);
+void CMenuCollepedia::Colle_NavigateBack() {
+    if (clpIsOverlay(&this->mCollepedia) != 0) {
+        clpOnCancel(&this->mCollepedia);
     } else {
-        if (clpIsBusy(&self->mCollepedia) == 0) {
-            beginClose(&self->mTitleAHelp);
-            clpReqCloseVw(&self->mCollepedia);
-            self->mState = 3;
+        if (clpIsBusy(&this->mCollepedia) == 0) {
+            beginClose(&this->mTitleAHelp);
+            clpReqCloseVw(&this->mCollepedia);
+            this->mState = 3;
         }
     }
 }

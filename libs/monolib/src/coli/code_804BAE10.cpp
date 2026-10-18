@@ -70,9 +70,9 @@ struct ColiObj {
 // Collision walk helpers in the sibling coli unit (code_804B59C8): take the
 // processing object plus a pointer into its u16 index array. C linkage so the
 // bl relocs carry the retail names.
-extern "C" void Coli_DispatchRegCb_791C(ColiObj* self, const u16* list, u16 value);
-extern "C" void setSeenBitLst(ColiObj* self, const u16* list, int count);
-extern "C" bool rayBoxHitTest(ColiObj* self, const u16* list, int count);
+// (memberized: Coli_DispatchRegCb_791C -> CColiRegObj::DispatchRegCb; declaration moved into class CColiRegObj)
+// (memberized: setSeenBitLst -> CColiBitObj::setSeenBitLst; declaration moved into class CColiBitObj)
+// (memberized: rayBoxHitTest -> CColiObj2::rayBoxHitTest; declaration moved into class CColiObj2)
 
 extern "C" void ColiQuery_Reset(void* self) { *(u32*)self = 0; }
 
@@ -215,14 +215,13 @@ void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
-                              self->indices[tri->field_0x8]);
+                self->DispatchRegCb(&self->indices[tri->field_0x8 + 1], self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                setSeenBitLst(self, &self->indices[idx + 1], self->indices[idx]);
+                self->setSeenBitLst(&self->indices[idx + 1], self->indices[idx]);
             }
         } else {
             for (u32 i = tri->field_0x8; i < tri->field_0x8 + tri->field_0x1; i++) {
@@ -273,14 +272,13 @@ void ColiWalkSegTree(ColiObj* self, ColiTri* tri) {
     if ((tri->field_0x0 & 6) != 0) {
         u32 idx;
         if ((tri->field_0x0 & 2) != 0) {
-            Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
-                          self->indices[tri->field_0x8]);
+            self->DispatchRegCb(&self->indices[tri->field_0x8 + 1], self->indices[tri->field_0x8]);
             idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
         } else {
             idx = tri->field_0x8;
         }
         if ((tri->field_0x0 & 4) != 0) {
-            setSeenBitLst(self, &self->indices[idx + 1], self->indices[idx]);
+            self->setSeenBitLst(&self->indices[idx + 1], self->indices[idx]);
         }
     } else {
         // bounds hoisted; signed ints so retail emits cmpw/blt
@@ -311,14 +309,13 @@ void ColiWalkBoxTreeA(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
-                              self->indices[tri->field_0x8]);
+                self->DispatchRegCb(&self->indices[tri->field_0x8 + 1], self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                setSeenBitLst(self, &self->indices[idx + 1], self->indices[idx]);
+                self->setSeenBitLst(&self->indices[idx + 1], self->indices[idx]);
             }
         } else {
             int start = tri->field_0x8;
@@ -348,14 +345,13 @@ void ColiWalkBoxTreeB(ColiObj* self, ColiTri* tri) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
-                Coli_DispatchRegCb_791C(self, &self->indices[tri->field_0x8 + 1],
-                              self->indices[tri->field_0x8]);
+                self->DispatchRegCb(&self->indices[tri->field_0x8 + 1], self->indices[tri->field_0x8]);
                 idx = tri->field_0x8 + self->indices[tri->field_0x8] + 1;
             } else {
                 idx = tri->field_0x8;
             }
             if ((tri->field_0x0 & 4) != 0) {
-                setSeenBitLst(self, &self->indices[idx + 1], self->indices[idx]);
+                self->setSeenBitLst(&self->indices[idx + 1], self->indices[idx]);
             }
         } else {
             // bounds hoisted: retail keeps start/end/2*i live across the loop
@@ -385,8 +381,7 @@ extern "C" bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node);
 
 bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     if (node->field_0x8 == 3) {
-        return rayBoxHitTest(self, &self->indices2[node->field_0x0 + 1],
-                             self->indices2[node->field_0x0]);
+        return self->rayBoxHitTest(&self->indices2[node->field_0x0 + 1], self->indices2[node->field_0x0]);
     }
     u16 axis = node->field_0x8;
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[axis];
@@ -399,8 +394,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         // plane straddles the box: near child first (inlined), far child on miss
         ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
         if (nearChild->field_0x8 == 3) {
-            hit = rayBoxHitTest(self, &self->indices2[nearChild->field_0x0 + 1],
-                                self->indices2[nearChild->field_0x0]);
+            hit = self->rayBoxHitTest(&self->indices2[nearChild->field_0x0 + 1], self->indices2[nearChild->field_0x0]);
         } else {
             u16 nAxis = nearChild->field_0x8;
             f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nAxis];
@@ -426,8 +420,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
         bool hit2;
         if (farChild->field_0x8 == 3) {
-            hit2 = rayBoxHitTest(self, &self->indices2[farChild->field_0x0 + 1],
-                                 self->indices2[farChild->field_0x0]);
+            hit2 = self->rayBoxHitTest(&self->indices2[farChild->field_0x0 + 1], self->indices2[farChild->field_0x0]);
         } else {
             u16 fAxis = farChild->field_0x8;
             f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[fAxis];
@@ -454,8 +447,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     if (dmin >= lbl_eu_8066AEFC) {
         ColiNode* child = &self->tris2[self->indices2[node->field_0x0 + 1]];
         if (child->field_0x8 == 3) {
-            hit = rayBoxHitTest(self, &self->indices2[child->field_0x0 + 1],
-                                self->indices2[child->field_0x0]);
+            hit = self->rayBoxHitTest(&self->indices2[child->field_0x0 + 1], self->indices2[child->field_0x0]);
         } else {
             u16 cAxis = child->field_0x8;
             f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
@@ -476,8 +468,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     }
     ColiNode* child = &self->tris2[self->indices2[node->field_0x0]];
     if (child->field_0x8 == 3) {
-        hit = rayBoxHitTest(self, &self->indices2[child->field_0x0 + 1],
-                            self->indices2[child->field_0x0]);
+        hit = self->rayBoxHitTest(&self->indices2[child->field_0x0 + 1], self->indices2[child->field_0x0]);
     } else {
         u16 cAxis = child->field_0x8;
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
@@ -632,7 +623,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     ColiNode* node = self->tris2;
     if (node->field_0x8 == 3) {
         u32 idx = node->field_0x0;
-        return rayBoxHitTest(self, &self->indices2[idx + 1], self->indices2[idx]);
+        return self->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
     }
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[node->field_0x8];
     f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[node->field_0x8];
@@ -643,7 +634,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         ColiNode* nearChild = &self->tris2[self->indices2[node->field_0x0]];
         if (nearChild->field_0x8 == 3) {
             u32 idx = nearChild->field_0x0;
-            return rayBoxHitTest(self, &self->indices2[idx + 1], self->indices2[idx]);
+            return self->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nearChild->field_0x8];
         f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nearChild->field_0x8];
@@ -664,7 +655,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         ColiNode* farChild = &self->tris2[self->indices2[node->field_0x0 + 1]];
         if (farChild->field_0x8 == 3) {
             u32 idx = farChild->field_0x0;
-            return rayBoxHitTest(self, &self->indices2[idx + 1], self->indices2[idx]);
+            return self->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[farChild->field_0x8];
         f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[farChild->field_0x8];
@@ -688,7 +679,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
         child = &self->tris2[self->indices2[node->field_0x0 + 1]];
         if (child->field_0x8 == 3) {
             u32 idx = child->field_0x0;
-            return rayBoxHitTest(self, &self->indices2[idx + 1], self->indices2[idx]);
+            return self->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
         f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
@@ -706,7 +697,7 @@ bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     child = &self->tris2[self->indices2[node->field_0x0]];
     if (child->field_0x8 == 3) {
         u32 idx = child->field_0x0;
-        return rayBoxHitTest(self, &self->indices2[idx + 1], self->indices2[idx]);
+        return self->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
     }
     f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
     f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];

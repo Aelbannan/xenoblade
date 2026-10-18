@@ -156,24 +156,24 @@ extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 // unload, freeing the file handle, layout and arc resources.
-extern "C" void CFade_Unload(CFade* self) {
-    closeFileHandle(&self->mFileHandle);
-    nw4r::lyt::Layout* layout = self->mLayout;
-    self->mIsLoaded = 0;
+void CFade::Unload() {
+    closeFileHandle(&this->mFileHandle);
+    nw4r::lyt::Layout* layout = this->mLayout;
+    this->mIsLoaded = 0;
     if (layout != nullptr) {
         delete layout;
-        self->mLayout = nullptr;
+        this->mLayout = nullptr;
     }
-    releaseArcResourceAccessor(self->mArcResAcc);
-    self->mArcResAcc = nullptr;
-    self->mMemRegion.deleteRegion();
+    releaseArcResourceAccessor(this->mArcResAcc);
+    this->mArcResAcc = nullptr;
+    this->mMemRegion.deleteRegion();
 }
 
 // start fading in if currently idle.
-extern "C" void CFade_FadeIn(CFade* self) {
-    if (self->mFadeState == 0) {
-        self->mFadeState = 1;
-        self->mVisible = 0;
+void CFade::In() {
+    if (this->mFadeState == 0) {
+        this->mFadeState = 1;
+        this->mVisible = 0;
     }
 }
 

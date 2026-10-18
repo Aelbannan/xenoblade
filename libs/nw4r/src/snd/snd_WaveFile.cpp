@@ -267,7 +267,7 @@ WaveArchiveReader::WaveArchiveReader(const void* pData) {
     // FULL_MATCH (2026-08): the version check booleanizes ARITHMETICALLY.
     // The retail idiom subfic(256-v)/orc(256|~v)/srwi(1)/subf/srwi(31) is
     // MWCC's booleanization of `version <= 0x100` (constant-first operand
-    // form) — `version >= 0x100` booleanizes to the mirrored addi(v-256)/
+    // form) -- `version >= 0x100` booleanizes to the mirrored addi(v-256)/
     // orc(v|~256) form. The if/else-if/else chain with the redundant
     // `ok = (version <= 0x100)` in the else keeps the arithmetic idiom AND
     // the retail's out-of-line block layout (magic beq / fail li r0,0 / b

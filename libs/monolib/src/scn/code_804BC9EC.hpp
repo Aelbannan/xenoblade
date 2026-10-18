@@ -47,7 +47,7 @@ extern "C" {
 ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
 void Coli_ClearOutFlag_8078(ScnResData* self, int index);
 void getMoverEntry(ScnResData* self);
-void initColiMover(ScnResData* self);
+// (memberized: initColiMover -> CColiMoverState::initColiMover; declaration moved into class CColiMoverState)
 void Coli_CheckFlag(ScnResData*);
 void clrSeenBitTbl(int, int);
 void setSeenBitTbl(ScnResData*);

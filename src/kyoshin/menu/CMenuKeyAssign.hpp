@@ -64,6 +64,11 @@ public:
     u8 mUnkClass[0x10];        // 0x64 - scratch region storage (manual dtor)
     nw4r::lyt::Layout* mLayout; // 0x74 - layout drawn in cbRenderBefore
     u32 mField_78;             // 0x78 - open state (openKeyAssignPlayer: 3 = already open)
+    void hideKeyAssignPanes();
+    void setKeyAssignLabels(char* str, int idx);
+    void openKeyAssignPlayer();
+    void openKeyAssignColumns(int state, int count, int mode);
+    void openKeyAssignButtons(int a, int b, int c, int d, int e, int mode);
 };
 
 // View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible

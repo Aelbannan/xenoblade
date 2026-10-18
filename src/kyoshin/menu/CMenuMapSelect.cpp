@@ -40,19 +40,19 @@ extern const f32 lbl_eu_8066872C; // timer increment per frame
 extern const f32 lbl_eu_80668730; // timer cap
 
 // Callee helpers (retail-unmangled names).
-// Use the C++ member — a local extern "C" Fv(s16) overload conflicts with
+// Use the C++ member -- a local extern "C" Fv(s16) overload conflicts with
 // CfGameManager.hpp's bool isClassicController().
 int CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);
-void CFade_FadeIn(CFade* self);
+// (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
 void beginMapSelClose(CMapSel* self);
 void moveMapSelUp(CMapSel* self);
 void moveMapSelSelection(CMapSel* self);
 void moveMapSelPageUp(CMapSel* self);
 void moveMapSelPageDown(CMapSel* self);
-u8 getMapGridCell(CMapSel* self);
-void FloorMap_SetMapTable(CFloorMap* self, u8 mapIdx);
+// (memberized: getMapGridCell -> CMapSelFull::getMapGridCell; declaration moved into class CMapSelFull)
+// (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
 void FloorMap_LoadMapFiles(CFloorMap* self);
 
 int FloorMap_ClassifyByte41(CFloorMap* self);
@@ -63,7 +63,7 @@ u8 FloorMap_GetField208Gated(CFloorMap* self);
 int FloorMap_IsSysWinBusy(CFloorMap* self);
 void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
 u16 FloorMap_GetU16Field5A(CFloorMap* self);
-u8 FloorMap_GetActiveFlag58(CFloorMap* self);
+// (memberized: FloorMap_GetActiveFlag58 -> CFloorMapFull::GetActiveFlag58; declaration moved into class CFloorMapFull)
 void FloorMap_ConfirmSelect(CFloorMap* self);
 void FloorMap_UpdateRowPanePos(CFloorMap* self);
 void FloorMap_CursorNextFloor(CFloorMap* self);
@@ -230,7 +230,7 @@ void CMenuMapSelect::handleWorldMapInput() {
 
     if (triggerBit1 != 0) {
         // Cancel/back: fade out and leave the world map.
-        CFade_FadeIn(&this->mFade);
+        (&this->mFade)->In();
         this->mState = 4;
         playUISound(3);
     } else if (triggerBit2 != 0) {
@@ -266,8 +266,8 @@ void setupFloorMapPhase(CMenuMapSelect* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         self->mFloorMap = CFloorMap();
 
-        u8 sel = getMapGridCell(&self->mMapSel);
-        FloorMap_SetMapTable(&self->mFloorMap, sel);
+        u8 sel = (&self->mMapSel)->getMapGridCell();
+        (&self->mFloorMap)->SetMapTable(sel);
         FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 5;
     }
@@ -330,14 +330,14 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         if ((pressed & 0x00200000) != 0) {
             FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
+            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 8;
                 playUISound(6);
             } else {
@@ -398,14 +398,14 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         if ((pressed & 0x10) != 0) {
             FloorMap_OpenRowWindow(&self->mFloorMap);
             if (FloorMap_GetU16Field5A(&self->mFloorMap) != 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
-            if (FloorMap_GetActiveFlag58(&self->mFloorMap) != 0) {
+            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-                CFade_FadeIn(&self->mFade);
+                (&self->mFade)->In();
                 self->mState = 8;
                 playUISound(6);
             } else {

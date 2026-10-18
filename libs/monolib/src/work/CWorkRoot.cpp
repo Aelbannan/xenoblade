@@ -346,7 +346,7 @@ __declspec(noinline) void reslist<T>::pop_front(){
 // than inlining it; the header body would fold the find loop into callers.
 // Hand-written stand-in keeps an out-of-line bl; reloc-map equates the
 // ILi8E spelling to retail find__12CMsgParam<8>CFUl (angle brackets are not
-// legal C identifiers — see MWCC_PATTERNS.md).
+// legal C identifiers -- see MWCC_PATTERNS.md).
 extern "C" int find__12CMsgParamILi8ECFUl(const void* queue, u32 msg);
 extern "C" bool isRunning__11CWorkThreadCFv(CWorkThread* thread);
 extern "C" bool isEvent3__11CWorkThreadCFv(CWorkThread* thread);
@@ -357,7 +357,7 @@ bool CWorkThread::isEvent3() const {
 }
 
 
-// Out-of-line CMsgParam<8>::find — the retail keeps a standalone symbol
+// Out-of-line CMsgParam<8>::find -- the retail keeps a standalone symbol
 // (find__12CMsgParam<8>CFUl) that callers bl to; the header body would
 // inline it under -ipa.
 template <int N>

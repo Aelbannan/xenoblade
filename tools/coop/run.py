@@ -2729,6 +2729,16 @@ def main() -> int:
         help="extc subcommand and flags (scan, plan <class>, --json PATH)",
     )
 
+    p_memberize = sub.add_parser(
+        "memberize-bulk",
+        help="Supervised bulk member-ization driver (plan/apply with byte-identity gate)",
+    )
+    p_memberize.add_argument(
+        "memberize_args",
+        nargs=argparse.REMAINDER,
+        help="memberize-bulk subcommand and flags (plan --scan-json PATH, apply --plan-json PATH)",
+    )
+
     p_opcodes = sub.add_parser(
         "opcodes",
         help="List PowerPC opcodes used in main.dol (wraps tools.dol_opcodes)",
@@ -2930,6 +2940,10 @@ def main() -> int:
         from tools.coop import extc
 
         return extc.main(args.extc_args)
+    if args.command == "memberize-bulk":
+        from tools.coop import memberize_bulk
+
+        return memberize_bulk.main(args.memberize_args)
     if args.command == "behaviour":
         return cmd_behaviour(args.behaviour_args)
     if args.command == "equivalence":

@@ -29,6 +29,8 @@ struct CScheduleChild {
 // Total size: 0xf0.
 struct CSchedule {
     ~CSchedule();
+    int Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, unsigned int flags_a, unsigned int flags_b, u8* field_0x10_ptr);
+    int RebuildHandles();
     void Update(f32 dt);
     void StepEntries(f32 delta);
     void FeedTargetDist();

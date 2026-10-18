@@ -110,8 +110,8 @@ void closeFileHandle__FPP11CFileHandle(void**);
 void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
 void sysWinTermLayout(void*);
-extern "C" void ShowCellIcon(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
-extern "C" void ShowCellBadge(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
+// (memberized: ShowCellIcon -> CItemBoxGridFull::ShowCellIcon; declaration moved into class CItemBoxGridFull)
+// (memberized: ShowCellBadge -> CItemBoxGridFull::ShowCellBadge; declaration moved into class CItemBoxGridFull)
 extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx);
 extern "C" void ShowCellCount(void* self, u32 kind, void* flag2, void* flag3, u32 idx);
 extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx);
@@ -1126,28 +1126,28 @@ extern "C" __declspec(noinline) int IsSkillItem(void* obj) {
 
 // Forward declarations for sort helpers defined later in this file.
 void SortGridEntries(CItemBoxGridFull* self, u32 mode);
-extern "C" void SortByItemU16(CItemBoxGridFull* self);
-extern "C" void SortByPriceDesc(CItemBoxGridFull* self);
-extern "C" void SortByKindNameD(CItemBoxGridFull* self);
-extern "C" void SortByItemByte6(CItemBoxGridFull* self);
-extern "C" void SortByCellFlags(CItemBoxGridFull* self);
-extern "C" void SortByFlag6Desc(CItemBoxGridFull* self);
-extern "C" void SortByFlag6Asc(CItemBoxGridFull* self);
-extern "C" void SortByItemVf08(CItemBoxGridFull* self);
+// (memberized: SortByItemU16 -> CItemBoxGridFull::SortByItemU16; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByPriceDesc -> CItemBoxGridFull::SortByPriceDesc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByKindNameD -> CItemBoxGridFull::SortByKindNameD; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByItemByte6 -> CItemBoxGridFull::SortByItemByte6; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByCellFlags -> CItemBoxGridFull::SortByCellFlags; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByFlag6Desc -> CItemBoxGridFull::SortByFlag6Desc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByFlag6Asc -> CItemBoxGridFull::SortByFlag6Asc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByItemVf08 -> CItemBoxGridFull::SortByItemVf08; declaration moved into class CItemBoxGridFull)
 void GroupBySlotStat(CItemBoxGridFull* self, u32 target);
 void GroupBySlotAlt(CItemBoxGridFull* self, u32 target);
 void SortGridByValue(CItemBoxGridFull* self);
-extern "C" void SortByItemVf30(CItemBoxGridFull* self);
-extern "C" void SortByEquipAsc(CItemBoxGridFull* self);
-extern "C" void SortByEquipDesc(CItemBoxGridFull* self);
+// (memberized: SortByItemVf30 -> CItemBoxGridFull::SortByItemVf30; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByEquipAsc -> CItemBoxGridFull::SortByEquipAsc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByEquipDesc -> CItemBoxGridFull::SortByEquipDesc; declaration moved into class CItemBoxGridFull)
 void SortGridBySlotStatus(CItemBoxGridFull* self);
 void SortGridByKindName(CItemBoxGridFull* self);
 void SortGridByKindNameAlt(CItemBoxGridFull* self);
-extern "C" void SortByCapKeyAsc(CItemBoxGridFull* self);
-extern "C" void SortByCapKey2Asc(CItemBoxGridFull* self);
+// (memberized: SortByCapKeyAsc -> CItemBoxGridFull::SortByCapKeyAsc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByCapKey2Asc -> CItemBoxGridFull::SortByCapKey2Asc; declaration moved into class CItemBoxGridFull)
 void GroupByCapKey(CItemBoxGridFull* self, u32 target);
-extern "C" void SortByCapKeyDesc(CItemBoxGridFull* self);
-extern "C" void SortByItemVf90(CItemBoxGridFull* self);
+// (memberized: SortByCapKeyDesc -> CItemBoxGridFull::SortByCapKeyDesc; declaration moved into class CItemBoxGridFull)
+// (memberized: SortByItemVf90 -> CItemBoxGridFull::SortByItemVf90; declaration moved into class CItemBoxGridFull)
 void SortGridByMsgKeyDesc(CItemBoxGridFull* self);
 void GroupByKindName(CItemBoxGridFull* self, u32 target);
 
@@ -1171,84 +1171,84 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
     u8 v = (u8)CItemBlock_getFlag120EC(self->field_2802);
     switch (self->field_2802) {
     case 0:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 1:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
             SortGridByValue(self);
             SortGridBySlotStatus(self);
             break;
         case 2:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
             SortGridByValue(self);
             SortGridByKindName(self);
             SortGridBySlotStatus(self);
             break;
         case 3:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
             SortGridByValue(self);
             SortGridByKindNameAlt(self);
             SortGridBySlotStatus(self);
             break;
         case 4:
             SortGridByValue(self);
-            SortByItemVf30(self);
-            SortByEquipDesc(self);
+            self->SortByItemVf30();
+            self->SortByEquipDesc();
             SortGridBySlotStatus(self);
             break;
         case 5:
             SortGridByValue(self);
-            SortByItemVf30(self);
-            SortByEquipAsc(self);
+            self->SortByItemVf30();
+            self->SortByEquipAsc();
             SortGridBySlotStatus(self);
             break;
         case 6:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 1:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 0:
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 3);
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKeyAsc(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKeyAsc();
             break;
         case 1:
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 3);
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKey2Asc(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKey2Asc();
             break;
         case 2:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKeyAsc(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKeyAsc();
             GroupByCapKey(self, 3);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 1);
             break;
         case 3:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKeyAsc(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKeyAsc();
             GroupByCapKey(self, 3);
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             break;
         case 4:
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKeyAsc(self);
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKeyAsc();
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 3);
@@ -1257,66 +1257,66 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 3);
-            SortByCapKeyAsc(self);
-            SortByEquipAsc(self);
-            SortByItemVf30(self);
-            SortByCapKeyDesc(self);
+            self->SortByCapKeyAsc();
+            self->SortByEquipAsc();
+            self->SortByItemVf30();
+            self->SortByCapKeyDesc();
             break;
         case 6:
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 3);
-            SortByCapKeyAsc(self);
-            SortByItemVf30(self);
-            SortByEquipDesc(self);
+            self->SortByCapKeyAsc();
+            self->SortByItemVf30();
+            self->SortByEquipDesc();
             break;
         case 7:
             GroupByCapKey(self, 1);
             GroupByCapKey(self, 2);
             GroupByCapKey(self, 3);
-            SortByCapKeyAsc(self);
-            SortByItemVf30(self);
-            SortByEquipAsc(self);
+            self->SortByCapKeyAsc();
+            self->SortByItemVf30();
+            self->SortByEquipAsc();
             break;
         case 8:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         case 9:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 2:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 0:
-            SortByItemU16(self);
+            self->SortByItemU16();
             break;
         case 1:
-            SortByItemVf90(self);
+            self->SortByItemVf90();
             SortGridEntries(self, self->field_2802);
-            SortByItemVf08(self);
+            self->SortByItemVf08();
             break;
         case 2:
             SortGridEntries(self, self->field_2802);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 0);
             GroupBySlotAlt(self, 1);
             break;
         case 3:
             SortGridEntries(self, self->field_2802);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
             GroupBySlotAlt(self, 2);
             break;
         case 4:
             SortGridEntries(self, self->field_2802);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
@@ -1325,8 +1325,8 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 1);
             break;
@@ -1334,8 +1334,8 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 2);
             break;
@@ -1343,8 +1343,8 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 3);
             break;
@@ -1352,8 +1352,8 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 4);
             break;
@@ -1361,8 +1361,8 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 5);
             break;
@@ -1370,93 +1370,93 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
             GroupBySlotAlt(self, 2);
             GroupBySlotAlt(self, 1);
             GroupBySlotAlt(self, 0);
-            SortByItemVf90(self);
-            SortByItemVf08(self);
+            self->SortByItemVf90();
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             GroupBySlotStat(self, 6);
             break;
         case 11:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 3:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 0:
-            SortByItemU16(self);
+            self->SortByItemU16();
             break;
         case 1:
-            SortByItemVf08(self);
+            self->SortByItemVf08();
             break;
         case 2:
-            SortByItemVf08(self);
+            self->SortByItemVf08();
             SortGridEntries(self, self->field_2802);
             break;
         case 3:
-            SortByItemU16(self);
-            SortByPriceDesc(self);
+            self->SortByItemU16();
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 4:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 1:
-            SortByKindNameD(self);
+            self->SortByKindNameD();
             break;
         case 2:
-            SortByItemByte6(self);
+            self->SortByItemByte6();
             break;
         case 3:
-            SortByCellFlags(self);
+            self->SortByCellFlags();
             break;
         case 4:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 5:
-        SortByItemU16(self);
+        self->SortByItemU16();
         switch (v) {
         case 1:
-            SortByItemByte6(self);
+            self->SortByItemByte6();
             break;
         case 2:
-            SortByCellFlags(self);
+            self->SortByCellFlags();
             break;
         case 3:
-            SortByPriceDesc(self);
+            self->SortByPriceDesc();
             break;
         }
         break;
     case 6:
         if (v == 0) {
-            SortByItemU16(self);
+            self->SortByItemU16();
         }
         break;
     case 7:
         switch (v) {
         case 0:
-            SortByItemU16(self);
+            self->SortByItemU16();
             break;
         case 1:
             GroupByKindName(self, 3);
             GroupByKindName(self, 2);
             GroupByKindName(self, 1);
             SortGridByMsgKeyDesc(self);
-            SortByFlag6Desc(self);
+            self->SortByFlag6Desc();
             break;
         case 2:
             GroupByKindName(self, 3);
             GroupByKindName(self, 2);
             GroupByKindName(self, 1);
             SortGridByMsgKeyDesc(self);
-            SortByFlag6Asc(self);
+            self->SortByFlag6Asc();
             break;
         case 3:
-            SortByItemU16(self);
-            SortByPriceDesc(self);
+            self->SortByItemU16();
+            self->SortByPriceDesc();
             break;
         }
         break;
@@ -1775,17 +1775,17 @@ struct CItemBoxGridHeadView {
 // Bubble-sort grid entries ascending by the item object's +4 value. The two
 // item lookups (CItem_kindPtr) gate the swap; the 3-slot temp shuffle keeps
 // the retail bl sequence (CopyEntry9Bytes x3 / CopyGridEntry9 x2).
-extern "C" void SortByItemU16(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByItemU16() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             if (((CItemBoxGridItemView*)obj1)->field_04 <= ((CItemBoxGridItemView*)obj2)->field_04) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1800,19 +1800,19 @@ extern "C" void SortByItemU16(CItemBoxGridFull* self) {
 // evaluate item j+1 before item j (locals force the call order), matching
 // retail's sequence; the 3-slot temp shuffle is the same shape as
 // SortByItemU16. Swap when the first item's price is strictly lower.
-extern "C" void SortByPriceDesc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByPriceDesc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
-            u32 v2 = GetItemBasePrice(self, obj2);
-            u32 v1 = GetItemBasePrice(self, obj1);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
+            u32 v2 = GetItemBasePrice(this, obj2);
+            u32 v1 = GetItemBasePrice(this, obj1);
             if (v1 >= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1828,17 +1828,17 @@ extern "C" void SortByPriceDesc(CItemBoxGridFull* self) {
 // looked up in the message table (lbl_eu_80664104) with the "name" key
 // string; swap when the byte keys differ (descending). Same 3-slot temp
 // shuffle shape as SortByItemU16.
-extern "C" void SortByKindNameD(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByKindNameD() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
@@ -1857,17 +1857,17 @@ extern "C" void SortByKindNameD(CItemBoxGridFull* self) {
 
 // Bubble-sort grid entries descending by the item object's +6 byte (swap when
 // the first is strictly smaller). Same temp-shuffle shape as SortByItemU16.
-extern "C" void SortByItemByte6(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByItemByte6() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             if (((CItemBoxGridItemView*)obj1)->field_06 >= ((CItemBoxGridItemView*)obj2)->field_06) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1883,16 +1883,16 @@ extern "C" void SortByItemByte6(CItemBoxGridFull* self) {
 // pairs while the earlier entry's byte is strictly smaller, stopping early
 // when a pass makes no swap. The 3-slot temp shuffle (12-byte stride) keeps
 // the retail CopyEntry9Bytes / CopyGridEntry9 call sequence.
-extern "C" void SortByCellFlags(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByCellFlags() {
     u32 i;
-    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
+    for (i = 0; (u16)i < this->field_2800 - 1; i++) {
         u32 i16 = (u16)i;
         int swapped = 0;
         u32 j;
         char tmp[36];
-        for (j = 0; (u16)j < self->field_2800 - 1 - (s32)i16; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
-            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+        for (j = 0; (u16)j < this->field_2800 - 1 - (s32)i16; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &this->entries[(u16)j + 1];
             if ((u32)e1->flags[3] < (u32)e2->flags[3]) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1902,14 +1902,14 @@ extern "C" void SortByCellFlags(CItemBoxGridFull* self) {
         }
         if (!swapped) break;
     }
-    for (u32 i = 0; (u16)i < self->field_2800 - 1; i++) {
+    for (u32 i = 0; (u16)i < this->field_2800 - 1; i++) {
         u32 i16 = (u16)i;
         int swapped = 0;
         u32 j;
         char tmp2[36];
-        for (j = 0; (u16)j < self->field_2800 - 1 - (s32)i16; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
-            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+        for (j = 0; (u16)j < this->field_2800 - 1 - (s32)i16; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &this->entries[(u16)j + 1];
             if ((u32)e1->flags[2] < (u32)e2->flags[2]) {
                 CopyEntry9Bytes(tmp2, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp2 + 12, (const char*)e2));
@@ -1926,17 +1926,17 @@ extern "C" void SortByCellFlags(CItemBoxGridFull* self) {
 // optimize_for_size merges the r26-r31 saves into retail's stmw prologue.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void SortByFlag6Desc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByFlag6Desc() {
     /* grid base viewed as entries/field_2800 (see CItemBoxGridFull). */
     char tmp[36];
     u32 i;
-    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
+    for (i = 0; (u16)i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u32 j;
-        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+        for (j = 0; (u16)j < this->field_2800 - 1 - (u16)i; j++) {
             u16 jj = (u16)j;
-            CItemBoxGridEntry* e1 = &self->entries[jj];
-            CItemBoxGridEntry* e2 = &self->entries[jj + 1];
+            CItemBoxGridEntry* e1 = &this->entries[jj];
+            CItemBoxGridEntry* e2 = &this->entries[jj + 1];
             if (e1->flags[4] > e2->flags[4]) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1953,17 +1953,17 @@ extern "C" void SortByFlag6Desc(CItemBoxGridFull* self) {
 // SortByFlag6Desc with the comparison inverted).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void SortByFlag6Asc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByFlag6Asc() {
     /* grid base viewed as entries/field_2800 (see CItemBoxGridFull). */
     char tmp[36];
     u32 i;
-    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
+    for (i = 0; (u16)i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u32 j;
-        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+        for (j = 0; (u16)j < this->field_2800 - 1 - (u16)i; j++) {
             u16 jj = (u16)j;
-            CItemBoxGridEntry* e1 = &self->entries[jj];
-            CItemBoxGridEntry* e2 = &self->entries[jj + 1];
+            CItemBoxGridEntry* e1 = &this->entries[jj];
+            CItemBoxGridEntry* e2 = &this->entries[jj + 1];
             if (e1->flags[4] < e2->flags[4]) {
                 CopyEntry9Bytes(tmp, (const char*)e1);
                 CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1979,19 +1979,19 @@ extern "C" void SortByFlag6Asc(CItemBoxGridFull* self) {
 // Bubble-sort grid entries ascending by the item instance's vtable+0x08
 // slot value (u16). v2 (item j+1) is evaluated before v1 to match retail's
 // call order; the 3-slot temp shuffle is the same shape as SortByItemU16.
-extern "C" void SortByItemVf08(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByItemVf08() {
     void* obj2;
     u16 v2;
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            obj2 = CItem_kindPtr(this->field_2802, e2->id);
             v2 = (u16)CItem_initItemImplInstances((CItemData*)obj2)->vf08((CItemData*)obj2);
             u16 v1;
             v1 = (u16)CItem_initItemImplInstances((CItemData*)obj1)->vf08((CItemData*)obj1);
@@ -2101,17 +2101,17 @@ void SortGridByValue(CItemBoxGridFull* self) {
 // Bubble-sort grid entries ascending by the item instance's vtable+0x30
 // slot value (u16). v2 is evaluated first, matching retail's call order;
 // same 3-slot temp shuffle shape as SortByItemU16.
-extern "C" void SortByItemVf30(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByItemVf30() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf30((CItemData*)obj2);
             u32 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf30((CItemData*)obj1);
             if ((u16)v1 >= (u16)v2) continue;
@@ -2127,19 +2127,19 @@ extern "C" void SortByItemVf30(CItemBoxGridFull* self) {
 // Bubble-sort grid entries ascending by HasEquippedSlot slot status (swap when
 // item j's value is strictly lower). Same 3-slot temp shuffle shape as
 // SortByItemU16.
-extern "C" void SortByEquipAsc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByEquipAsc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
-            u32 v1 = HasEquippedSlot(self, obj1);
-            u32 v2 = HasEquippedSlot(self, obj2);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
+            u32 v1 = HasEquippedSlot(this, obj1);
+            u32 v2 = HasEquippedSlot(this, obj2);
             if (v1 >= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2153,19 +2153,19 @@ extern "C" void SortByEquipAsc(CItemBoxGridFull* self) {
 // Bubble-sort grid entries descending by HasEquippedSlot slot status (swap when
 // item j's value is strictly higher). Same 3-slot temp shuffle shape as
 // SortByItemU16.
-extern "C" void SortByEquipDesc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByEquipDesc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
-            u32 v1 = HasEquippedSlot(self, obj1);
-            u32 v2 = HasEquippedSlot(self, obj2);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
+            u32 v1 = HasEquippedSlot(this, obj1);
+            u32 v2 = HasEquippedSlot(this, obj2);
             if (v1 <= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2274,17 +2274,17 @@ void SortGridByKindNameAlt(CItemBoxGridFull* self) {
 // name lookup in the capacity table (lbl_eu_806640F8). Both kinds are
 // computed first, then both lookups - the SortByKindNameD ordering. Same
 // 3-slot temp shuffle shape as SortByItemU16.
-extern "C" void SortByCapKeyAsc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByCapKeyAsc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
@@ -2304,17 +2304,17 @@ extern "C" void SortByCapKeyAsc(CItemBoxGridFull* self) {
 // Bubble-sort grid entries ascending by the byte value of each item's kind
 // name lookup in the capacity table (lbl_eu_806640F8), key string offset
 // 0x240. Same ordering and temp shuffle shape as SortByCapKeyAsc.
-extern "C" void SortByCapKey2Asc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByCapKey2Asc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
@@ -2376,17 +2376,17 @@ void GroupByCapKey(CItemBoxGridFull* self, u32 target) {
 // name lookup in the capacity table (lbl_eu_806640F8), key string offset
 // 0x251 (swap when item j's key byte is strictly higher). Same ordering
 // and temp shuffle shape as SortByCapKeyAsc.
-extern "C" void SortByCapKeyDesc(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByCapKeyDesc() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
@@ -2406,17 +2406,17 @@ extern "C" void SortByCapKeyDesc(CItemBoxGridFull* self) {
 // Bubble-sort grid entries ascending by the item instance's vtable+0x90
 // slot value (byte). v1 is evaluated first, matching retail's call order;
 // same 3-slot temp shuffle shape as SortByItemU16.
-extern "C" void SortByItemVf90(CItemBoxGridFull* self) {
+void CItemBoxGridFull::SortByItemVf90() {
     u16 i;
-    for (i = 0; i < self->field_2800 - 1; i++) {
+    for (i = 0; i < this->field_2800 - 1; i++) {
         int swapped = 0;
         u16 j;
         char tmp[36];
-        for (j = 0; j < self->field_2800 - 1 - i; j++) {
-            CItemBoxGridEntry* e1 = &self->entries[j];
-            CItemBoxGridEntry* e2 = &self->entries[j + 1];
-            void* obj1 = CItem_kindPtr(self->field_2802, e1->id);
-            void* obj2 = CItem_kindPtr(self->field_2802, e2->id);
+        for (j = 0; j < this->field_2800 - 1 - i; j++) {
+            CItemBoxGridEntry* e1 = &this->entries[j];
+            CItemBoxGridEntry* e2 = &this->entries[j + 1];
+            void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
+            void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 v1 = (u32)CItem_initItemImplInstances((CItemData*)obj1)->vf90((CItemData*)obj1);
             u32 v2 = (u32)CItem_initItemImplInstances((CItemData*)obj2)->vf90((CItemData*)obj2);
             if ((u8)v1 >= (u8)v2) continue;
@@ -4662,8 +4662,8 @@ store:
 // accessor's default label, then a kind name-table fallback, the list-tab
 // override when bt is set, and finally the shared sprintf + PaneSetTexPaletteByName
 // show.
-extern "C" void ShowCellIcon(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt) {
-    u8* p = (u8*)self;
+void CItemBoxGridFull::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
+    u8* p = (u8*)this;
     void* obj = item ? item : 0;
     u32 msgId = 0;
     if (obj) {
@@ -4777,8 +4777,8 @@ done:
 // for skill items, 0x19c..0x198 for origin arts), each falling back to the
 // +0x3C accessor's default label when the lookup yields nothing, then a kind
 // name-table fallback, and finally the shared sprintf + PaneSetTexPaletteByName show.
-extern "C" void ShowCellBadge(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
-    u8* p = (u8*)self;
+void CItemBoxGridFull::ShowCellBadge(u32 kind, void* item, u16 idx) {
+    u8* p = (u8*)this;
     void* obj = item ? item : 0;
     u32 msgId = 0;
     if (obj) {
@@ -5176,8 +5176,8 @@ void RebuildGridUI(void* self) {
         u32 kind = GetCellKind((CItemBoxGridFull*)sub, (u16)idx);
         void* obj = GetCellItemPtr((CItemBoxGridFull*)sub, (u16)idx);
         u32 bt = GetCellByte7(sub, idx);
-        ShowCellIcon((CItemBoxGridFull*)self, kind & 0xFFFF, obj, idx, bt);
-        ShowCellBadge((CItemBoxGridFull*)self, kind & 0xFFFF, obj, idx);
+        ((CItemBoxGridFull*)self)->ShowCellIcon(kind & 0xFFFF, obj, idx, bt);
+        ((CItemBoxGridFull*)self)->ShowCellBadge(kind & 0xFFFF, obj, idx);
         s32 chk = CheckCellState(sub, idx);
         SetCellCaption(self, (s8)chk, obj, idx);
         u32 b5 = GetCellFlag3(sub, idx);

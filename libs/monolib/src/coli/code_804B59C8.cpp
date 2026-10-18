@@ -260,6 +260,7 @@ struct CColiMoverState {
     u32 field_0xB8;
     u32 field_0xBC;
     u32 field_0xC0;
+    void initColiMover();
 };
 
 // 0x3C-byte input record: 12 matrix floats plus an extrusion scalar.
@@ -315,7 +316,7 @@ struct CColiOutEntry {
 // Shared mover-state reset helper (defined in the sibling coli unit; C
 // linkage so the bl reloc carries the retail name).
 extern "C" void ColiQuery_Reset(CColiMoverState* self);
-extern "C" void initColiMover(CColiMoverState* self);
+// (memberized: initColiMover -> CColiMoverState::initColiMover; declaration moved into class CColiMoverState)
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
 // Query/mover object: scalar offset at +0x00, three u16 vertex indices into
@@ -376,6 +377,7 @@ struct CColiRegObj {
     void (CColiRegObj::*field_0xA0)(const ml::CVec3*, const ml::CVec3*);  // 0xA0
     void (CColiRegObj::*field_0xAC)(u16*, u16);  // 0xAC - register callback (Coli_DispatchRegCb_791C dispatch)
     bool (CColiRegObj::*field_0xB8)(f32);              // 0xB8 - height gate
+    void DispatchRegCb(u16* entry, u16 value);
 };
 
 // Segment tests shared with the sibling coli unit (code_804BAE10).
@@ -518,7 +520,7 @@ extern "C" CColiMoverState* __dt__804B5A7C(CColiMoverState* self, int flag) {
 // null re-check after initColiMover mirrors the retail shape.
 extern "C" ScnResData* __dt__804B5AD0(ScnResData* self, int flag) {
     if (self != NULL) {
-        initColiMover((CColiMoverState*)self);
+        ((CColiMoverState*)self)->initColiMover();
         if (self != NULL) {
             ColiQuery_Reset((CColiMoverState*)self);
         }
@@ -1236,6 +1238,7 @@ struct CColiObj2 {
     Vec3* field_0x54;              // 0x54 - ray vertex table (12-byte stride)
     CColiMtx4* field_0x58;         // 0x58 - matrix table (0x30-byte stride)
     CColiEntry16* field_0x5C;      // 0x5C - entry table (16-byte stride)
+    bool rayBoxHitTest(const u16* list, int count);
 };
 
 // Coli_InstallDataPtrs_74F0 - relocate the raycast object's table pointers from a base
@@ -1322,49 +1325,49 @@ void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, int count) 
 // the 9-word default configuration table, reset the shared manager
 // (identity matrix, active flag, seen-bit window) and free the previous
 // allocation.
-extern "C" void initColiMover(CColiMoverState* self) {
+void CColiMoverState::initColiMover() {
     const u32* s0 = &lbl_eu_8056F508[0];
     const u32* s1 = &lbl_eu_8056F508[3];
     const u32* s2 = &lbl_eu_8056F508[6];
-    self->field_0x14 = 0;
-    self->field_0x18 = 0;
-    self->field_0x1C = 0;
-    self->field_0x20 = 0;
-    self->field_0x28 = 0;
-    self->field_0x2C = 0;
-    self->field_0x30 = 0;
-    self->field_0x38 = 0;
-    self->field_0x3C = 0;
-    self->field_0x40 = 0;
-    self->field_0x44 = 0;
-    self->field_0x6C = 0;
-    self->field_0x70 = 0;
-    self->field_0x78 = 0;
-    self->field_0x7C = s0[0];
-    self->field_0x80 = s0[1];
-    self->field_0x84 = s0[2];
-    self->field_0x88 = s1[0];
-    self->field_0x8C = s1[1];
-    self->field_0x90 = s1[2];
-    self->field_0x94 = s2[0];
-    self->field_0x98 = s2[1];
-    self->field_0x9C = s2[2];
-    self->field_0x5C = 0;
-    ColiQuery_Reset(self);
+    this->field_0x14 = 0;
+    this->field_0x18 = 0;
+    this->field_0x1C = 0;
+    this->field_0x20 = 0;
+    this->field_0x28 = 0;
+    this->field_0x2C = 0;
+    this->field_0x30 = 0;
+    this->field_0x38 = 0;
+    this->field_0x3C = 0;
+    this->field_0x40 = 0;
+    this->field_0x44 = 0;
+    this->field_0x6C = 0;
+    this->field_0x70 = 0;
+    this->field_0x78 = 0;
+    this->field_0x7C = s0[0];
+    this->field_0x80 = s0[1];
+    this->field_0x84 = s0[2];
+    this->field_0x88 = s1[0];
+    this->field_0x8C = s1[1];
+    this->field_0x90 = s1[2];
+    this->field_0x94 = s2[0];
+    this->field_0x98 = s2[1];
+    this->field_0x9C = s2[2];
+    this->field_0x5C = 0;
+    ColiQuery_Reset(this);
     PSMTXIdentity(lbl_eu_8065F1C8.field_0xF0);
     lbl_eu_8065F1C8.field_0x134 = 1;
     memset(lbl_eu_8065F1A0, 0, 0x28);
-    if (self->field_0x60 != 0) {
-        mtl::MemManager::deallocate(self->field_0x60);
-        self->field_0x60 = 0;
+    if (this->field_0x60 != 0) {
+        mtl::MemManager::deallocate(this->field_0x60);
+        this->field_0x60 = 0;
     }
 }
 
 // Coli_DispatchRegCb_791C: forward the entry pointer + value to the +0xAC register
 // callback member pointer (MWCC lowers the call to `addi r12,self,0xAC; bl
 // __ptmf_scall` with the args passed through untouched).
-void Coli_DispatchRegCb_791C(CColiRegObj* self, u16* entry, u16 value) {
-    (self->*self->field_0xAC)(entry, value);
+void CColiRegObj::DispatchRegCb(u16* entry, u16 value) {
+    (this->*this->field_0xAC)(entry, value);
 }
 
 // regSeenListCb - register every index of the u16 list: set the index's bit
@@ -1418,6 +1421,7 @@ class CColiBitObj;
 class CColiBitObj {
 public:
     virtual ~CColiBitObj();
+    void setSeenBitLst(u16* list, int count);
 
 private:
     u8 field_0x04[0x3C - 0x04];
@@ -1433,16 +1437,16 @@ public:
 // is the entry index plus the object's bit-array offset; lbl_eu_80663AC8
 // holds the base pointer of the shared bit array) and invoke the dispatch
 // callback for each newly reserved entry.
-void setSeenBitLst(CColiBitObj* self, u16* list, int count) {
+void CColiBitObj::setSeenBitLst(u16* list, int count) {
     for (int i = 0; i < count; i++) {
-        int n = self->field_0x6C + list[i];
+        int n = this->field_0x6C + list[i];
         u32* bits = (u32*)lbl_eu_80663AC8;
         // Word fetched before the mask so the scheduler matches retail.
         u32 word = bits[n >> 5];
         u32 mask = 1u << (n & 0x1F);
         if (!(word & mask)) {
             bits[n >> 5] = word | mask;
-            (self->*(self->field_0x88))(&self->field_0x3C[list[i]]);
+            (this->*(this->field_0x88))(&this->field_0x3C[list[i]]);
         }
     }
 }
@@ -1451,7 +1455,7 @@ void setSeenBitLst(CColiBitObj* self, u16* list, int count) {
 // intersect the ray (manager offset 0x00 / direction 0x0C) with the entry's
 // plane and vertex, and accept when the hit point passes the four
 // plane-distance tests of the two segments (t in [0, 0x8066AED4]).
-bool rayBoxHitTest(CColiObj2* self, const u16* list, int count) {
+bool CColiObj2::rayBoxHitTest(const u16* list, int count) {
     for (int i = 0; i < count; i++) {
         u16 idx = list[i];
         u32* bits = (u32*)lbl_eu_80663ACC;
@@ -1461,8 +1465,8 @@ bool rayBoxHitTest(CColiObj2* self, const u16* list, int count) {
         u32 mask = 1u << bitIdx;
         if (w & mask) continue;
         bits[wordIdx] = w | mask;
-        CColiEntry16* entry = &self->field_0x5C[idx];
-        Vec3* vert = &self->field_0x54[entry->field_0x0E];
+        CColiEntry16* entry = &this->field_0x5C[idx];
+        Vec3* vert = &this->field_0x54[entry->field_0x0E];
         f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)vert,
                                        (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x0C);
         if (dot2 == lbl_eu_8066AED0) continue;
@@ -1476,18 +1480,18 @@ bool rayBoxHitTest(CColiObj2* self, const u16* list, int count) {
         hit.y = lbl_eu_8065F1C8.field_0x00.y + lbl_eu_8065F1C8.field_0x0C.y * t;
         hit.x = lbl_eu_8065F1C8.field_0x00.x + lbl_eu_8065F1C8.field_0x0C.x * t;
         hit.z = lbl_eu_8065F1C8.field_0x00.z + lbl_eu_8065F1C8.field_0x0C.z * t;
-        Vec3* v2 = &self->field_0x50[entry->field_0x06];
+        Vec3* v2 = &this->field_0x50[entry->field_0x06];
         ml::CVec3 seg;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&seg, (const nw4r::math::VEC3*)&hit,
                             (const nw4r::math::VEC3*)v2);
-        CColiMtx4* m2 = &self->field_0x58[entry->field_0x0C];
+        CColiMtx4* m2 = &this->field_0x58[entry->field_0x0C];
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
                                 (const nw4r::math::VEC3*)&m2->v[0]) <= lbl_eu_8066AEE0)
             continue;
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
                                 (const nw4r::math::VEC3*)&m2->v[1]) <= lbl_eu_8066AEE0)
             continue;
-        Vec3* v3 = &self->field_0x50[entry->field_0x0A];
+        Vec3* v3 = &this->field_0x50[entry->field_0x0A];
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&seg, (const nw4r::math::VEC3*)&hit,
                             (const nw4r::math::VEC3*)v3);
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
@@ -2758,7 +2762,7 @@ void sinit_804BADB4() {
     CColiMoverState* obj = (CColiMoverState*)&lbl_eu_8065F32C;
     ColiQuery_Reset(obj);
     ((ScnResData*)obj)->field_0x60 = NULL;
-    initColiMover(obj);
+    obj->initColiMover();
     void* const dtor = (void*)&__dt__804B5AD0;
     void* const reg = (void*)&lbl_eu_8065F320;
     __register_global_object(obj, dtor, reg);

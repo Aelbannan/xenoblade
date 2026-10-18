@@ -30,15 +30,15 @@ struct PtmfNullTriple {
 
 // Key-assign free helpers (defined in this TU). Retail emits these under the
 // unmangled names, so the declarations/definitions keep C linkage.
-extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self);
-extern "C" void setKeyAssignLabels(CMenuKeyAssign* self, char* str, int idx);
-extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self);
+// (memberized: hideKeyAssignPanes -> CMenuKeyAssign::hideKeyAssignPanes; declaration moved into class CMenuKeyAssign)
+// (memberized: setKeyAssignLabels -> CMenuKeyAssign::setKeyAssignLabels; declaration moved into class CMenuKeyAssign)
+// (memberized: openKeyAssignPlayer -> CMenuKeyAssign::openKeyAssignPlayer; declaration moved into class CMenuKeyAssign)
 
 // Open the key-assign menu: state is the remap-column base index (also the
 // mField_78 open state), count is the number of columns to show, mode selects
 // the special 3-column layout. Retail emits these under the unmangled names.
-extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count, int mode);
-extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode);
+// (memberized: openKeyAssignColumns -> CMenuKeyAssign::openKeyAssignColumns; declaration moved into class CMenuKeyAssign)
+// (memberized: openKeyAssignButtons -> CMenuKeyAssign::openKeyAssignButtons; declaration moved into class CMenuKeyAssign)
 
 // us-8011492c - CMenuKeyAssign::~CMenuKeyAssign
 // Complete-object destructor. The UnkClass_8045F564 scratch region at +0x64 is
@@ -77,7 +77,7 @@ void CMenuKeyAssign::Init() {
     ApplyFontToTxtPanes(rootPane, fontResult);
 
     // Hide the button panes that are not yet active (shared helper).
-    hideKeyAssignPanes(this);
+    this->hideKeyAssignPanes();
 
     // MI adjust: IScnRender subobject at +0x5c (null-this safe).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -160,22 +160,22 @@ void CMenuKeyAssign::Move() {
             bool inRange = phase >= 1 && phase <= 0x18;
             if (inRange) {
                 if (CMenuArtsSelect_IsAvailable() != 0) {
-                    openKeyAssignColumns(self, 0x19, 1, 0);
+                    self->openKeyAssignColumns(0x19, 1, 0);
                     goto done;
                 }
-                openKeyAssignColumns(self, 0x18, 1, 0);
+                self->openKeyAssignColumns(0x18, 1, 0);
                 goto done;
             }
         }
         if ((pad->mHeldButtonFlags & 0x10) != 0) {
             int b = battleCommuIsActive();
             if (b == 0 && GetZealObjPtr() == 0) {
-                openKeyAssignButtons(self, 9, 10, 13, 12, 0, 1);
+                self->openKeyAssignButtons(9, 10, 13, 12, 0, 1);
                 goto done;
             }
         }
         if (CMainMenu_IsOpen() != 0) {
-            openKeyAssignColumns(self, 0x16, 2, 0);
+            self->openKeyAssignColumns(0x16, 2, 0);
             goto done;
         }
         if (CMenuArtsSelect_isCreated() != 0) {
@@ -197,9 +197,9 @@ void CMenuKeyAssign::Move() {
                                 cnt++;
                             }
                             if (cnt > 1) {
-                                openKeyAssignPlayer(self);
+                                self->openKeyAssignPlayer();
                             } else {
-                                openKeyAssignColumns(self, 3, 1, 0);
+                                self->openKeyAssignColumns(3, 1, 0);
                             }
                             handled = 1;
                             goto artsDone;
@@ -207,35 +207,35 @@ void CMenuKeyAssign::Move() {
                     }
                     switch (player->mSub38->mState36C) {
                     case 1:
-                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1b, 0, 0);
+                        self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1b, 0, 0);
                         handled = 1;
                         break;
                     case 2:
-                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1c, 0, 0);
+                        self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1c, 0, 0);
                         handled = 1;
                         break;
                     case 3:
-                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1d, 0, 0);
+                        self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1d, 0, 0);
                         handled = 1;
                         break;
                     case 4:
                         if (player->mSub38->mCount370 == 1) {
-                            openKeyAssignColumns(self, 0x1e, 0, 0);
+                            self->openKeyAssignColumns(0x1e, 0, 0);
                         } else {
-                            openKeyAssignColumns(self, 0x1f, 0, 0);
+                            self->openKeyAssignColumns(0x1f, 0, 0);
                         }
                         handled = 1;
                         break;
                     case 7:
-                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x25, 0, 0);
+                        self->openKeyAssignColumns(player->mSub38->mCount370 + 0x25, 0, 0);
                         handled = 1;
                         break;
                     case 8:
-                        openKeyAssignColumns(self, player->mSub38->mCount370 + 0x26, 0, 0);
+                        self->openKeyAssignColumns(player->mSub38->mCount370 + 0x26, 0, 0);
                         handled = 1;
                         break;
                     default:
-                        openKeyAssignColumns(self, 0x1a, 1, 0);
+                        self->openKeyAssignColumns(0x1a, 1, 0);
                         break;
                     }
                     goto artsDone;
@@ -244,22 +244,22 @@ void CMenuKeyAssign::Move() {
             // arts == 0 or testActorStatus == 0: retail dereferences arts here.
             f32 gauge = ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
             if (gauge <= lbl_eu_80667078) {
-                openKeyAssignButtons(self, 0x18, 1, 9, 0, 0, 1);
+                self->openKeyAssignButtons(0x18, 1, 9, 0, 0, 1);
             } else {
-                openKeyAssignButtons(self, 1, 2, 9, 0, 0, 1);
+                self->openKeyAssignButtons(1, 2, 9, 0, 0, 1);
             }
             handled = 1;
         artsDone:
             if (handled == 0) {
                 if (CMenuArtsSelect_IsAvailable() != 0) {
-                    openKeyAssignColumns(self, 0x19, 1, 0);
+                    self->openKeyAssignColumns(0x19, 1, 0);
                     goto done;
                 }
                 if (battleMode != 0) {
-                    openKeyAssignButtons(self, 0x18, 9, 0, 0, 0, 1);
+                    self->openKeyAssignButtons(0x18, 9, 0, 0, 0, 1);
                     goto done;
                 }
-                openKeyAssignButtons(self, 0x18, 1, 9, 0, 0, 1);
+                self->openKeyAssignButtons(0x18, 1, 9, 0, 0, 1);
                 goto done;
             }
         }
@@ -286,51 +286,51 @@ void CMenuKeyAssign::Move() {
                                     ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                                 switch (st) {
                                 case 3:
-                                    openKeyAssignColumns(self, 0x10, 1, 0);
+                                    self->openKeyAssignColumns(0x10, 1, 0);
                                     goto done;
                                 case 2:
-                                    openKeyAssignColumns(self, 0x11, 2, 0);
+                                    self->openKeyAssignColumns(0x11, 2, 0);
                                     goto done;
                                 case 9:
-                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                    self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 default:
-                                    openKeyAssignColumns(self, 0xf, 1, 0);
+                                    self->openKeyAssignColumns(0xf, 1, 0);
                                     goto done;
                                 }
                             }
                             if ((flags & 0x4000) || (flags & 0x8000)) {
                                 switch (((CActorTargetView*)target)->mType91) {
                                 case 6:
-                                    openKeyAssignColumns(self, 0x15, 1, 0);
+                                    self->openKeyAssignColumns(0x15, 1, 0);
                                     goto done;
                                 case 0xc:
-                                    openKeyAssignColumns(self, 0x14, 1, 0);
+                                    self->openKeyAssignColumns(0x14, 1, 0);
                                     goto done;
                                 case 9:
-                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                    self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 case 0xa:
-                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                    self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 case 0xb:
-                                    openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                    self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                     goto done;
                                 default:
-                                    openKeyAssignColumns(self, 0x13, 1, 0);
+                                    self->openKeyAssignColumns(0x13, 1, 0);
                                     goto done;
                                 }
                             }
-                            openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                            self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                             goto done;
                         }
-                        openKeyAssignColumns(self, 0xe, 1, 0);
+                        self->openKeyAssignColumns(0xe, 1, 0);
                         goto done;
                     }
-                    openKeyAssignColumns(self, 0xe, 1, 0);
+                    self->openKeyAssignColumns(0xe, 1, 0);
                     goto done;
                 }
-                openKeyAssignColumns(self, 0xe, 1, 0);
+                self->openKeyAssignColumns(0xe, 1, 0);
                 goto done;
             }
         }
@@ -341,13 +341,13 @@ void CMenuKeyAssign::Move() {
                 id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                 if (id != 0) {
                     if (findObjectById(id) != 0) {
-                        openKeyAssignButtons(self, 1, 2, 9, 0, 0, 1);
+                        self->openKeyAssignButtons(1, 2, 9, 0, 0, 1);
                         goto done;
                     }
                 }
             }
         }
-        openKeyAssignColumns(self, 0xe, 1, 0);
+        self->openKeyAssignColumns(0xe, 1, 0);
         goto done;
     }
 
@@ -364,22 +364,22 @@ void CMenuKeyAssign::Move() {
         bool inRange = phase >= 1 && phase <= 0x18;
         if (inRange) {
             if (CMenuArtsSelect_IsAvailable() != 0) {
-                openKeyAssignColumns(self, 0x19, 1, 0);
+                self->openKeyAssignColumns(0x19, 1, 0);
                 goto done;
             }
-            openKeyAssignColumns(self, 0x18, 1, 0);
+            self->openKeyAssignColumns(0x18, 1, 0);
             goto done;
         }
     }
     if ((pad->mHeldButtonFlags & 0x800) != 0) {
         int b = battleCommuIsActive();
         if (b == 0 && GetZealObjPtr() == 0) {
-            openKeyAssignButtons(self, 9, 10, 13, 12, 0, 1);
+            self->openKeyAssignButtons(9, 10, 13, 12, 0, 1);
             goto done;
         }
     }
     if (CMainMenu_IsOpen() != 0) {
-        openKeyAssignColumns(self, 0x16, 2, 0);
+        self->openKeyAssignColumns(0x16, 2, 0);
         goto done;
     }
     if ((pad->mHeldButtonFlags & 0x1000) != 0) {
@@ -399,10 +399,10 @@ void CMenuKeyAssign::Move() {
                             cnt++;
                         }
                         if (cnt > 1) {
-                            openKeyAssignPlayer(self);
+                            self->openKeyAssignPlayer();
                             goto done;
                         }
-                        openKeyAssignColumns(self, 3, 1, 0);
+                        self->openKeyAssignColumns(3, 1, 0);
                         goto done;
                     }
                 }
@@ -412,14 +412,14 @@ void CMenuKeyAssign::Move() {
                         f32 gauge =
                             ((f32 (*)(void*))((void**)arts)[0x128 / 4])(arts);
                         if (gauge <= lbl_eu_80667078) {
-                            openKeyAssignColumns(self, 1, 1, 0);
+                            self->openKeyAssignColumns(1, 1, 0);
                             goto done;
                         }
-                        openKeyAssignColumns(self, 1, 2, 0);
+                        self->openKeyAssignColumns(1, 2, 0);
                         goto done;
                     }
                 }
-                openKeyAssignColumns(self, 0, 0, 0);
+                self->openKeyAssignColumns(0, 0, 0);
                 goto done;
             }
         }
@@ -431,45 +431,45 @@ void CMenuKeyAssign::Move() {
             if (testActorStatus(arts, &id, 0x803) != 0) {
                 switch (player->mSub38->mState36C) {
                 case 1:
-                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1b, 0, 0);
+                    self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1b, 0, 0);
                     handled = 1;
                     break;
                 case 2:
-                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1c, 0, 0);
+                    self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1c, 0, 0);
                     handled = 1;
                     break;
                 case 3:
-                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x1d, 0, 0);
+                    self->openKeyAssignColumns(player->mSub38->mCount370 + 0x1d, 0, 0);
                     handled = 1;
                     break;
                 case 4:
                     if (player->mSub38->mCount370 == 1) {
-                        openKeyAssignColumns(self, 0x1e, 0, 0);
+                        self->openKeyAssignColumns(0x1e, 0, 0);
                     } else {
-                        openKeyAssignColumns(self, 0x1f, 0, 0);
+                        self->openKeyAssignColumns(0x1f, 0, 0);
                     }
                     handled = 1;
                     break;
                 case 7:
-                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x25, 0, 0);
+                    self->openKeyAssignColumns(player->mSub38->mCount370 + 0x25, 0, 0);
                     handled = 1;
                     break;
                 case 8:
-                    openKeyAssignColumns(self, player->mSub38->mCount370 + 0x26, 0, 0);
+                    self->openKeyAssignColumns(player->mSub38->mCount370 + 0x26, 0, 0);
                     handled = 1;
                     break;
                 default:
-                    openKeyAssignColumns(self, 0x1a, 1, 0);
+                    self->openKeyAssignColumns(0x1a, 1, 0);
                     break;
                 }
             }
         }
         if (handled == 0) {
             if (CMenuArtsSelect_IsAvailable() != 0) {
-                openKeyAssignColumns(self, 0x19, 1, 0);
+                self->openKeyAssignColumns(0x19, 1, 0);
                 goto done;
             }
-            openKeyAssignColumns(self, 0x18, 1, 0);
+            self->openKeyAssignColumns(0x18, 1, 0);
             goto done;
         }
     }
@@ -496,55 +496,55 @@ void CMenuKeyAssign::Move() {
                                 ((u32 (*)(void*))((void**)bf)[0x228 / 4])(bf);
                             switch (st) {
                             case 3:
-                                openKeyAssignColumns(self, 0x10, 1, 0);
+                                self->openKeyAssignColumns(0x10, 1, 0);
                                 goto done;
                             case 2:
-                                openKeyAssignColumns(self, 0x11, 2, 0);
+                                self->openKeyAssignColumns(0x11, 2, 0);
                                 goto done;
                             case 9:
-                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             default:
-                                openKeyAssignColumns(self, 0xf, 1, 0);
+                                self->openKeyAssignColumns(0xf, 1, 0);
                                 goto done;
                             }
                         }
                         if ((flags & 0x4000) || (flags & 0x8000)) {
                             switch (((CActorTargetView*)target)->mType91) {
                             case 6:
-                                openKeyAssignColumns(self, 0x15, 1, 0);
+                                self->openKeyAssignColumns(0x15, 1, 0);
                                 goto done;
                             case 0xc:
-                                openKeyAssignColumns(self, 0x14, 1, 0);
+                                self->openKeyAssignColumns(0x14, 1, 0);
                                 goto done;
                             case 9:
-                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             case 0xa:
-                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             case 0xb:
-                                openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                                self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                                 goto done;
                             default:
-                                openKeyAssignColumns(self, 0x13, 1, 0);
+                                self->openKeyAssignColumns(0x13, 1, 0);
                                 goto done;
                             }
                         }
-                        openKeyAssignButtons(self, 0xe, 0, 0, 0, 0, 0);
+                        self->openKeyAssignButtons(0xe, 0, 0, 0, 0, 0);
                         goto done;
                     }
-                    openKeyAssignColumns(self, 0xe, 1, 0);
+                    self->openKeyAssignColumns(0xe, 1, 0);
                     goto done;
                 }
-                openKeyAssignColumns(self, 0xe, 1, 0);
+                self->openKeyAssignColumns(0xe, 1, 0);
                 goto done;
             }
-            openKeyAssignColumns(self, 0xe, 1, 0);
+            self->openKeyAssignColumns(0xe, 1, 0);
             goto done;
         }
     }
-    openKeyAssignColumns(self, 0xe, 1, 0);
+    self->openKeyAssignColumns(0xe, 1, 0);
 done:
     ((void (*)(void*, u32))((void**)self->mLayout)[0x38 / 4])(self->mLayout, 0);
 }
@@ -649,7 +649,7 @@ extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
 // from the texture dimensions (u16 -> f32 via the 0x43300000 magic double),
 // then assigns the button labels through setKeyAssignLabels. The F64Conv pairs are
 // function-scope (their 0x43300000 words are stored once, before the guards).
-extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count, int mode) {
+void CMenuKeyAssign::openKeyAssignColumns(int state, int count, int mode) {
     // F64Conv pairs are function-scope (their 0x43300000 words are stored once,
     // before the guards).
     F64Conv ch, cw;
@@ -660,11 +660,11 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
     cw.w[0] = 0x43300000;
     ch.w[0] = 0x43300000;
 
-    if ((s32)self->mField_78 == state) {
+    if ((s32)this->mField_78 == state) {
         return;
     }
-    self->mField_78 = (u32)state;
-    hideKeyAssignPanes(self);
+    this->mField_78 = (u32)state;
+    this->hideKeyAssignPanes();
     if (state == 0) {
         return;
     }
@@ -696,7 +696,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
                 }
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -711,7 +711,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-                setKeyAssignLabels(self, s2, i);
+                this->setKeyAssignLabels(s2, i);
             }
         }
     } else {
@@ -726,7 +726,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -740,7 +740,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
-            setKeyAssignLabels(self, s2, 0);
+            this->setKeyAssignLabels(s2, 0);
         }
         {
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
@@ -752,7 +752,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -766,7 +766,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
-            setKeyAssignLabels(self, s2, 1);
+            this->setKeyAssignLabels(s2, 1);
         }
     }
 }
@@ -776,7 +776,7 @@ extern "C" void openKeyAssignColumns(CMenuKeyAssign* self, int state, int count,
 // 3-column layout. mField_78 stores (a+b+c+d+e)*100 as the open state. `count`
 // is the index of the first zero id (5 when all non-zero); the ids are kept in
 // a stack array because the loop indexes them by pointer.
-extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, int d, int e, int mode) {
+void CMenuKeyAssign::openKeyAssignButtons(int a, int b, int c, int d, int e, int mode) {
     F64Conv cw, ch;
     cw.w[0] = 0x43300000;
     ch.w[0] = 0x43300000;
@@ -784,11 +784,11 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
     int state = (e + (d + b)) + (c + a);
     state *= 100;
 
-    if (self->mField_78 == (u32)state) {
+    if (this->mField_78 == (u32)state) {
         return;
     }
-    self->mField_78 = (u32)state;
-    hideKeyAssignPanes(self);
+    this->mField_78 = (u32)state;
+    this->hideKeyAssignPanes();
     if (state == 0) {
         return;
     }
@@ -834,7 +834,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
                 }
                 str.format(&base[0x66], (flag ? 4 : i) + 1);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -849,7 +849,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
             }
             if (i < 4) {
                 char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-                setKeyAssignLabels(self, s2, i);
+                this->setKeyAssignLabels(s2, i);
             }
         }
     } else {
@@ -863,7 +863,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
             if (tex != 0) {
                 str2.format(&base[0x66], 1);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str2.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -877,7 +877,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], 26);
-            setKeyAssignLabels(self, s2, 0);
+            this->setKeyAssignLabels(s2, 0);
         }
         {
             u16 r = BdatGetU16ByTableKey(&base[0x3b], name, state);
@@ -888,7 +888,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
             if (tex != 0) {
                 str3.format(&base[0x66], 2);
                 nw4r::lyt::Pane* pane =
-                    self->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
+                    this->mLayout->GetRootPane()->FindPaneByName(str3.mString, true);
                 PaneSetTexPalette(pane, tex);
                 u16 w = tex->mHeader->mDims[1];
                 u16 h = tex->mHeader->mDims[0];
@@ -902,7 +902,7 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
                 pv->flags = (pv->flags & 0xFE) | 1;
             }
             char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], state);
-            setKeyAssignLabels(self, s2, 1);
+            this->setKeyAssignLabels(s2, 1);
         }
     }
 }
@@ -912,12 +912,12 @@ extern "C" void openKeyAssignButtons(CMenuKeyAssign* self, int a, int b, int c, 
 // the corresponding "timg" texture and sizes the target pane from the texture
 // dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
 // button labels through setKeyAssignLabels.
-extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self) {
-    if ((s32)self->mField_78 == 3) {
+void CMenuKeyAssign::openKeyAssignPlayer() {
+    if ((s32)this->mField_78 == 3) {
         return;
     }
-    self->mField_78 = 3;
-    hideKeyAssignPanes(self);
+    this->mField_78 = 3;
+    this->hideKeyAssignPanes();
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
@@ -946,7 +946,7 @@ extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self) {
         if (tex != 0) {
             str.format(&base[0x66], mapped + 1);
             nw4r::lyt::Pane* pane =
-                self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
+                this->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
             PaneSetTexPalette(pane, tex);
             // u16 -> f32 via MWCC's 0x43300000 magic double pair.
             cw.w[1] = (u32)tex->mHeader->mDims[1];
@@ -962,35 +962,35 @@ extern "C" void openKeyAssignPlayer(CMenuKeyAssign* self) {
             mapped = 2;
         }
         char* s2 = BdatTouchStringCell(&base[0x3b], &base[0x72], idx);
-        setKeyAssignLabels(self, s2, mapped);
+        this->setKeyAssignLabels(s2, mapped);
     }
 }
 
 // Hide button panes by name (called from Init and openKeyAssignPlayer). Formats the
 // pane name from the loop index; the 5 extra panes are skipped for i==5
 // (retail shape - the i==5 pane is the one openKeyAssignPlayer re-labels).
-extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self) {
+void CMenuKeyAssign::hideKeyAssignPanes() {
     char buf[0x20];
     int i;
     for (i = 1; i <= 6; i++) {
         sprintf(buf, &lbl_eu_804FDEE8[0x66], i);
-        PaneFlagView* p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+        PaneFlagView* p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
         p->flags &= 0xFE;
         if (i != 5) {
             sprintf(buf, &lbl_eu_804FDEE8[0x77], i);
-            p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->flags &= 0xFE;
             sprintf(buf, &lbl_eu_804FDEE8[0x83], i);
-            p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->flags &= 0xFE;
             sprintf(buf, &lbl_eu_804FDEE8[0x91], i);
-            p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->flags &= 0xFE;
             sprintf(buf, &lbl_eu_804FDEE8[0x9f], i);
-            p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->flags &= 0xFE;
             sprintf(buf, &lbl_eu_804FDEE8[0xad], i);
-            p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
             p->flags &= 0xFE;
         }
     }
@@ -999,28 +999,28 @@ extern "C" void hideKeyAssignPanes(CMenuKeyAssign* self) {
 // Assign the button label for one column: write the text into the pane name
 // from the sprintf'd buffer, then unhide that pane (SetVisible(true) via the
 // +0xBB flag byte). Called for each of the 5 remappable columns.
-extern "C" void setKeyAssignLabels(CMenuKeyAssign* self, char* str, int idx) {
+void CMenuKeyAssign::setKeyAssignLabels(char* str, int idx) {
     char buf[0x20];
     int v = idx + 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x77], v);
-    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
-    PaneFlagView* p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
+    PaneFlagView* p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x83], v);
-    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
-    p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
+    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x91], v);
-    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
-    p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
+    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0x9f], v);
-    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
-    p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
+    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
     sprintf(buf, &lbl_eu_804FDEE8[0xad], v);
-    LayoutSetTextBoxFmtValue(self->mLayout, buf, str, 0);
-    p = (PaneFlagView*)self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    LayoutSetTextBoxFmtValue(this->mLayout, buf, str, 0);
+    p = (PaneFlagView*)this->mLayout->GetRootPane()->FindPaneByName(buf, true);
     p->flags = (p->flags & 0xFE) | 1;
 }
 

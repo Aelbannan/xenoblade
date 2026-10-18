@@ -20,7 +20,7 @@ extern "C" void* Bdat_GetTable_AA34(void); extern "C" void CtrlObjectParam_Apply
 // completeWindowOpen calls enableAnimB, which is defined later in this TU.
 // extern "C": the retail symbol is unmangled, so both the definition and the
 // call reloc must carry C linkage (CCur.cpp precedent).
-extern "C" void enableAnimB(QuestWinObj* self);
+// (memberized: enableAnimB -> QuestWinObj::enableAnimB; declaration moved into class QuestWinObj)
 
 u32 getQuestWindow(void) {
     extern u32 lbl_eu_80663FD0;
@@ -313,7 +313,7 @@ CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) 
 // at +0xA0 and mark the window running (state byte +0xBC = 2).
 void completeWindowOpen(QuestWinObj* self) {
     if (advanceAnimTransform(self->mAnimA, lbl_eu_80667140) != 0) {
-        enableAnimB(self);
+        self->enableAnimB();
         Cur_SetVisible(&self->mCursor, 1);
         self->field_0xBC = 2;
     }
@@ -837,9 +837,9 @@ void enableAnimA(QuestWinObj* self) {
 // Bind anim A (+0x98) disabled then anim B (+0x9C) enabled onto the layout
 // (enableAnimB; mirror image of enableAnimA). extern "C" keeps the
 // unmangled retail symbol name (see the forward declaration above).
-extern "C" void enableAnimB(QuestWinObj* self) {
-    self->mpLayout->SetAnimationEnable(self->mAnimA, false);
-    self->mpLayout->SetAnimationEnable(self->mAnimB, true);
+void QuestWinObj::enableAnimB() {
+    this->mpLayout->SetAnimationEnable(this->mAnimA, false);
+    this->mpLayout->SetAnimationEnable(this->mAnimB, true);
 }
 
 // ---------------------------------------------------------------------------

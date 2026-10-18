@@ -1811,7 +1811,7 @@ using nw4r::snd::detail::StrmPlayer;
 // static voice callback. StrmPlayer::VoiceCallbackFunc is a private member, so
 // it cannot be named from the global-scope AllocVoices free function; C
 // linkage keeps the pre-mangled identifier verbatim (MWCC re-mangles C++
-// free functions). Declaration only — the definition is the member below.
+// free functions). Declaration only -- the definition is the member below.
 extern "C" void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv(
     nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
     void*);

@@ -56,7 +56,7 @@ void CMenuKizunagram::Term() {
     teardownKizuna(&mSub98);
     KizunagramTerm(&mPcKizunagram);
     CLoadTeardownLayout(&mLoad);
-    CFade_Unload(&mFade);
+    (&mFade)->Unload();
 
     lbl_eu_806647E0 = 0;
     DecMenuCounter64080();
@@ -242,7 +242,7 @@ extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, 
 void KizunagramBeginFadeIn(CMenuKizunagram* self) {
     if (CFade_IsReady(&self->mFade) != 0) {
         self->field_0x21C = 1;
-        CFade_FadeIn(&self->mFade);
+        (&self->mFade)->In();
     }
 }
 

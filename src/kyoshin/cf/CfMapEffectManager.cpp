@@ -87,7 +87,7 @@ extern "C" void MapFx_ReleaseHandle(CfMapEffectManager* pSelf) {
     }
 }
 
-// retail: MapFx_ResetSlots (0x801702E0) — reset the effect-object slots and the
+// retail: MapFx_ResetSlots (0x801702E0) -- reset the effect-object slots and the
 // two per-slot s16 counter banks. Same-TU definition; linkage (C) is inherited
 // from the extern "C" declaration in the header so calls keep the retail name.
 void MapFx_ResetSlots(CfMapEffectManager* pSelf) {
@@ -109,7 +109,7 @@ void MapFx_ResetSlots(CfMapEffectManager* pSelf) {
     }
 }
 
-// retail: MapFx_CheckRowRange (0x8017038C) — BDAT range check against the current
+// retail: MapFx_CheckRowRange (0x8017038C) -- BDAT range check against the current
 // chapter/event counters reported by CfGameManager.
 int MapFx_CheckRowRange(int unused, int index) {
     u8* bdat = lbl_eu_806640AC;
@@ -444,7 +444,7 @@ void MapFx_SetPointEnabled(u8 arg) {
     lbl_eu_80664290->field_0x138 = arg;
 }
 
-// retail: MapFx_ReleaseObject (0x80171094) — release a registered effect object
+// retail: MapFx_ReleaseObject (0x80171094) -- release a registered effect object
 // (or the scene handle at 0x134) by pointer identity.
 void MapFx_ReleaseObject(CfMapEffectManager* pSelf, CfObject* target) {
     if (reinterpret_cast<CfObject*>(pSelf->field_0x134) == target) {
@@ -464,7 +464,7 @@ void MapFx_ReleaseObject(CfMapEffectManager* pSelf, CfObject* target) {
     }
 }
 
-// retail: MapFx_PushFlash (0x80171180) — push a clamped flash value to every
+// retail: MapFx_PushFlash (0x80171180) -- push a clamped flash value to every
 // active effect object.
 void MapFx_PushFlash(float first, float second) {
     float value = second;

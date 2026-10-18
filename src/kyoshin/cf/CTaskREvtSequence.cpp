@@ -305,13 +305,13 @@ u32 EvtSeqGetStateBit10() {
     return (p->field_0x5C >> 10) & 1;
 }
 
-int EvtSeqCheckEventRunGuard(UnkObj80168514* self) {
+int UnkObj80168514::EvtSeqCheckEventRunGuard() {
     // Event-run guard chain: flag bits 7/8 off, state byte gate + flag bit 16
     // clear, state count >= 5, id word != 0xFFFFFFFF; then compare id+1
     // against state->field_0xF8 (signed). On the high side, dispatch the
     // +0x40 table slot when the +0x38 halfword's bits 16-23 match; otherwise
     // dispatch the +0x3C slot and arm the state byte on a nonzero return.
-    u32 flags = self->field_0x18;
+    u32 flags = this->field_0x18;
     if (flags & 0x80) {
         return 0;
     }
@@ -325,18 +325,18 @@ int EvtSeqCheckEventRunGuard(UnkObj80168514* self) {
     if ((s32)st->field_0x100 < 5) {
         return 0;
     }
-    if (self->field_0x1C->field_0x34 == 0xFFFFFFFF) {
+    if (this->field_0x1C->field_0x34 == 0xFFFFFFFF) {
         return 0;
     }
     u32 f8 = st->field_0xF8;
-    if ((s32)(self->field_0x1C->field_0x34 + 1) > (s32)f8) {
-        u32 h = self->field_0x1C->field_0x38;
+    if ((s32)(this->field_0x1C->field_0x34 + 1) > (s32)f8) {
+        u32 h = this->field_0x1C->field_0x38;
         if (h != 0 && (s32)((h >> 8) & 0xFF) == (s32)f8) {
-            self->vf_0x40();
+            this->vf_0x40();
         }
         return 0;
     }
-    if (self->vf_0x3C()) {
+    if (this->vf_0x3C()) {
         lbl_eu_80664268->field_0x114 = 1;
     }
     return 1;
@@ -2262,12 +2262,12 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
     return 0;
 }
 
-int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
+int UnkEvtListEntry::SeqIsSameNameType3Busy() {
     // Walk the realtime-event list (bounds clamped to the state limit); return
-    // 1 for the first type-3 entry, other than self, whose name matches self's
+    // 1 for the first type-3 entry, other than this, whose name matches this's
     // name (evtModelDataPtr -> field_0x1C + 0x10) and that is busy (0x48/0x40).
     // Register allocation mirrors EvtSeqFindSameNameType3: first-declared local gets the
-    // highest callee-saved reg (scaled r31 .. entry r27, self r26). `scaled` is
+    // highest callee-saved reg (scaled r31 .. entry r27, this r26). `scaled` is
     // an explicit induction variable so its back-edge increment sits after i++.
     u32 scaled;
     const char* nameEntry;
@@ -2287,9 +2287,9 @@ int EvtSeqIsSameNameType3Busy(UnkEvtListEntry* self) {
         UnkState_80664268* cur = lbl_eu_80664268;
         u8* abase = (u8*)cur->field_0xA4;
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
-        if (entry->field_0x14 == 3 && entry != self) {
+        if (entry->field_0x14 == 3 && entry != this) {
             nameEntry = (const char*)evtModelDataPtr(entry);
-            if (strcmp((const char*)evtModelDataPtr(self), nameEntry) == 0) {
+            if (strcmp((const char*)evtModelDataPtr(this), nameEntry) == 0) {
                 int busy =
                     entry->field_0x48 != 0 || entry->field_0x40 != 0;
                 if (busy) {
@@ -2745,15 +2745,15 @@ void EvtSeqRefreshEventLod(cf::CTaskREvtSequence* self) {
     }
 }
 
-void EvtSeqInsertRtEvent(UnkEvtListEntry* self) {
-    // Insert `self` into the realtime-event list, sorted by the name-data
+void UnkEvtListEntry::SeqInsertRtEvent() {
+    // Insert `this` into the realtime-event list, sorted by the name-data
     // priority word (+0x30): find an existing same-name entry with a HIGHER
     // priority and replace it in place, otherwise append at the end. Either
     // way run a bubble-sort pass over the whole list afterwards. The outer
     // walk uses the cached state pointer while the sorts re-read the global.
     //
     // Register-allocation notes (from hexdiff iterations):
-    // - Retail mapping: self r31, scaled r30, count r29, eName r28,
+    // - Retail mapping: this r31, scaled r30, count r29, eName r28,
     //   selfName r27, state r26, i r25 (stmw r25). Sort-loop temporaries
     //   are anonymous volatiles (gp/base r4, j r5, swapped r6, scaledJ r7,
     //   b r8, a r9, addr r10).
@@ -2784,14 +2784,14 @@ void EvtSeqInsertRtEvent(UnkEvtListEntry* self) {
     scaled = 0;
     count = (state = lbl_eu_80664268)->field_0x110;
     while (i < count) {
-        // Load order mirrors retail: base, self's name data, then the entry
+        // Load order mirrors retail: base, this's name data, then the entry
         // (lwzx), then the entry's name data.
-        selfName = self->field_0x1C;
+        selfName = this->field_0x1C;
         eName = (*(UnkEvtListEntry**) (
             (u8*)state->field_0x10C + scaled))->field_0x1C;
         if (strcmp(&eName->mName[0], &selfName->mName[0]) == 0) {
             if (eName->field_0x30 > selfName->field_0x30) {
-                state->field_0x10C[i] = self;
+                state->field_0x10C[i] = this;
                 // Bubble-sort pass 1 (list unchanged in length).
                 int swapped;
                 s32 j;
@@ -2826,7 +2826,7 @@ void EvtSeqInsertRtEvent(UnkEvtListEntry* self) {
         i++;
     }
     // Append at the end of the list, then bubble-sort pass 2.
-    lbl_eu_80664268->field_0x10C[state->field_0x110] = self;
+    lbl_eu_80664268->field_0x10C[state->field_0x110] = this;
     state->field_0x110 = state->field_0x110 + 1;
     int swapped;
     s32 j;
@@ -2853,7 +2853,7 @@ void EvtSeqInsertRtEvent(UnkEvtListEntry* self) {
     } while (swapped != 0);
 }
 
-int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
+int EvtBdabModel::SeqProbeEvtSlot(u32* out) {
     // Event-slot claim probe (called from the realtime-event dispatcher).
     // Inactive while the shared state walk is past its first frame window;
     // otherwise scans this model's claimed id/slot table for a slot matching
@@ -2865,16 +2865,16 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
     if ((s32)st->field_0xF8 >= 1 && (s32)st->field_0x100 < 3) {
         return 0;
     }
-    if (self->field_0x18 & 0x100) {
+    if (this->field_0x18 & 0x100) {
         // Packed-slot path: scan the eight halfword slots at mPtr1C+0x38.
         // A nonzero slot whose low byte minus (slot-table base + 2) equals
         // field_0xF8 claims the frame.
         // Two groups of four keeps the retail mtctr=2 shape: the inner
         // constant-trip scan unrolls while the counted outer loop stays
-        // rolled. Everything reads through self/state directly.
+        // rolled. Everything reads through this/state directly.
         for (int row = 0; row < 2; row++) {
             for (int k = 0; k < 4; k++) {
-                u16 h = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)
+                u16 h = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)
                             ->field_0x38[row * 4 + k];
                 if (h == 0) {
                     goto notFound;
@@ -2895,7 +2895,7 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
     notFound:
         return 0;
     }
-    EvtBdabPtr1C* p1c = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C);
+    EvtBdabPtr1C* p1c = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C);
     u32 idv = p1c->field_0x30;
     if (idv < 2) {
         if (out != 0) {
@@ -2911,11 +2911,11 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
     // live (< 8) counter byte triggers the advance. Then a second, unweighted
     // backward scan accepts any live counter byte.
     sum = 0;
-    if (isEvtDataFlagSet(self) == 0) {
+    if (isEvtDataFlagSet(this) == 0) {
         // Re-read the shared state and this model's slot object after the
         // probe call - neither is kept live across the call.
         UnkState_80664268* post = lbl_eu_80664268;
-        EvtBdabPtr1C* pc = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C);
+        EvtBdabPtr1C* pc = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C);
         u32 idv2 = pc->field_0x30;
         u32 f8 = post->field_0xF8;
         u32 base = reinterpret_cast<EvtSeqC4View80*>(post->field_0xC4)->field_0x80;
@@ -2931,10 +2931,10 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
                            ->field_0xC;
                 if (post->field_0x13C[idx] < 8 && sum >= 0x96) {
                     post->field_0x13C[f8] +=
-                        (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
+                        (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
                     if (out != 0) {
                         *out = reinterpret_cast<EvtBdabPtr1C*>(
-                                   self->field_0x1C)
+                                   this->field_0x1C)
                                    ->field_0x30;
                     }
                     return 1;
@@ -2949,10 +2949,10 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
             while ((s32)idx >= (s32)f8) {
                 if (cur->field_0x13C[idx] < 8) {
                     post->field_0x13C[f8] +=
-                        (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
+                        (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
                     if (out != 0) {
                         *out = reinterpret_cast<EvtBdabPtr1C*>(
-                                   self->field_0x1C)
+                                   this->field_0x1C)
                                    ->field_0x30;
                     }
                     return 1;
@@ -2963,13 +2963,13 @@ int EvtSeqProbeEvtSlot(EvtBdabModel* self, u32* out) {
     }
     // Final gate: only when the claimed slot directly follows the state index.
     u32 finId =
-        reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)->field_0x30;
+        reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)->field_0x30;
     UnkState_80664268* fin = lbl_eu_80664268;
     if (fin->field_0xF8 == finId - 1) {
         fin->field_0x13C[fin->field_0xF8] +=
-            (u8)((s32)self->field_0x14 == 2 ? 6 : 1);
+            (u8)((s32)this->field_0x14 == 2 ? 6 : 1);
         if (out != 0) {
-            *out = reinterpret_cast<EvtBdabPtr1C*>(self->field_0x1C)
+            *out = reinterpret_cast<EvtBdabPtr1C*>(this->field_0x1C)
                        ->field_0x30;
         }
         return 1;
@@ -3046,7 +3046,7 @@ void EvtSeqClearStateBit9() {
     }
 }
 
-int EvtSeqCheckRunGate(UnkEvtListEntry* self) {
+int UnkEvtListEntry::SeqCheckRunGate() {
     // Event-run gate: if bit 11 of the state flag word is set, run the walk
     // over type-2 entries whose packed token (name object +0x20) unpacks to a
     // 3/8 payload id (return 1), otherwise set bit 0x800 and stop.
@@ -3074,7 +3074,7 @@ int EvtSeqCheckRunGate(UnkEvtListEntry* self) {
     for (; i < end; i++) {
         UnkEvtListEntry* entry =
             reinterpret_cast<UnkEvtListEntry*>(st->field_0xA4[i]);
-        if (entry->field_0x14 == 2 && entry != self) {
+        if (entry->field_0x14 == 2 && entry != this) {
             u32 out0, out1, out2, out3;
             Tok_Unpack(
                 reinterpret_cast<UnkEvtName2*>(entry->field_0x1C)->field_0x20,

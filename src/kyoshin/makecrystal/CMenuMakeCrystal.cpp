@@ -46,7 +46,7 @@ int  IsMenuState621F0();
 void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
 void BgTex_Tick_3D54(void* self);                            // CBgTex animate
 int  mkCrystalGetFlag4361(void* self);                            // CMakeCrystalWin query
-int  mkCrystalIsBusyState(void* self);                            // CMakeCrystalWin query
+// (memberized: mkCrystalIsBusyState -> CMakeCrystalWin::mkCrystalIsBusyState; declaration moved into class CMakeCrystalWin) // CMakeCrystalWin query
 void mkCrystalTick(void* self);                            // CMakeCrystalWin tick
 int  CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
@@ -88,7 +88,7 @@ public:
 // UI sound effect (playUISound__FUl).
 void playUISound(u32 op);
 // MakeCrystalInitWin helper: init the CBgTex sub-object and arm the state byte.
-// (declared extern "C" above — retail symbol is unmangled)
+// (declared extern "C" above -- retail symbol is unmangled)
 
 // ---------------------------------------------------------------------------
 // Factory: create the singleton CMenuMakeCrystal under `parent`.
@@ -349,7 +349,7 @@ void CMenuMakeCrystal::Move() {
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
     MCDoneFlag* done = reinterpret_cast<MCDoneFlag*>(this);
 
-    if (mkCrystalIsBusyState(&reinterpret_cast<MCSubObjView*>(self)->win80) == 0) {
+    if ((&reinterpret_cast<MCSubObjView*>(self)->win80)->mkCrystalIsBusyState() == 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).

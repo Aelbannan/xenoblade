@@ -83,6 +83,7 @@ public:
     u8 mField9D;                // 0x9D chain-type byte (ctor arg)
     u8 mField9E;                // 0x9E frame counter
     u8 _pad9F;                  // 0x9F
+    void switchChainType(u8 arg);
 };
 
 // Battle-chain singleton (retail SDA symbol, .sbss).

@@ -98,7 +98,7 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
 }
 
 // Free-function dtor (retail D2): destroy widgets, then game-side CProcess
-// wrapper __dt__800FED0C — not library __dt__8CProcessFv.
+// wrapper __dt__800FED0C -- not library __dt__8CProcessFv.
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
 extern "C" CMenuTutorial* __dt__13CMenuTutorialFv(CMenuTutorial* self, int flags) {
     if (self != 0) {

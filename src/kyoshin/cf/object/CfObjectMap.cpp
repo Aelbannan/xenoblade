@@ -28,7 +28,7 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
 // The slot takes a void* arg (CfObjectMove.hpp vtable decl): passing
 // this->mTarget70 keeps r4 live as the call argument, so MWCC keeps the ret
-// default in r0 — retail's exact allocation (FULL_MATCH).
+// default in r0 -- retail's exact allocation (FULL_MATCH).
 #pragma scheduling off
 void* cf::CfObjectMap::checkTarget() {
     void* ret = (void*)1;

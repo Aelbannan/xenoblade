@@ -5,6 +5,7 @@
 // Forward declarations
 struct CSchedule;
 struct ScheduleEntry;
+struct CScheduleEntryData;
 
 // Pool-managed schedule item (0x58 bytes, pool at lbl_eu_80661718, stride 0x58).
 // Allocated/looked up via handles through SchedItem_FetchByHandle.
@@ -19,6 +20,14 @@ struct CScheduleItem {
     CSchedule* mOwner;  // 0x4C: owning CSchedule
     s16 mPoolIndex;   // 0x50: index in the pool (-1 = free)
     u8 _pad52[6];     // 0x52
+    void LoadSlots(ScheduleEntry* entries, CSchedule* sched);
+    void StepSlots(f32 delta);
+    DECOMP_DONT_INLINE int TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched);
+    DECOMP_DONT_INLINE void FeedDistance(f32 delta, CSchedule* sched);
+    void ClearSlots();
+    void ReleaseSlots();
+    int InitFromData(u8* base, const CScheduleEntryData* data, CSchedule* owner);
+    DECOMP_DONT_INLINE void ReleaseObjects();
 };                  // size 0x58
 
 // Entry blob header: {lifetime, offset} pairs resolved by schedInitItemFromData.

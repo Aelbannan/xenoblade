@@ -441,7 +441,7 @@ int sfmps_DecodeOneUnit(void* self, s32 buf, s32 size, s32* out_size, s32* out_f
 // volatile: locals reverse BOTH load order (s1,s0) AND store order ([0],[1]);
 // inline stores interleave load-store-load-store. KEY LEVER: volatile on the
 // pair of reads forces MWCC to keep BOTH loads in source order (s0 first) and
-// hoist them ahead of the stores — byte-identical to retail. (Volatile is
+// hoist them ahead of the stores -- byte-identical to retail. (Volatile is
 // safe here: self+0x9a0/0x9a4 are state fields read once; no aliasing in scope.)
 void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     void (*cb)(s32, void*, s32, s32);

@@ -23,6 +23,10 @@ struct CColiProc {
     u32 field_0x44;              // 0x44
     void* field_0x48;            // 0x48
     u32 field_0x4C;              // 0x4C
+    void InitQuad(CColiProcTarget* target, u32 a, u32 b);
+    void InitTriple(CColiProcTarget* target, u32 a);
+    bool IsTargetFlagged();
+    bool TestBit18State();
 };
 
 // Context/link struct passed to ColiProc_ProcessSegments; only 0x3C is referenced here.
@@ -39,31 +43,31 @@ extern "C" const f32 lbl_eu_8066AEA8;
 extern "C" void ColiProc_ProcessSegments();
 extern "C" void __ct__CColiProc(CColiProc* self);
 
-extern "C" void ColiProc_InitTriple(CColiProc* self, CColiProcTarget* target, u32 a) {
-    self->field_0x0 = target;
-    self->field_0x4 = a;
-    self->field_0xC = 0;
+void CColiProc::InitTriple(CColiProcTarget* target, u32 a) {
+    this->field_0x0 = target;
+    this->field_0x4 = a;
+    this->field_0xC = 0;
 }
 
-extern "C" void ColiProc_InitQuad(CColiProc* self, CColiProcTarget* target, u32 a, u32 b) {
-    self->field_0x0 = target;
-    self->field_0x4 = a;
-    self->field_0x8 = b;
-    self->field_0xC = 0;
+void CColiProc::InitQuad(CColiProcTarget* target, u32 a, u32 b) {
+    this->field_0x0 = target;
+    this->field_0x4 = a;
+    this->field_0x8 = b;
+    this->field_0xC = 0;
 }
 
 // Returns true if field_0x0 is non-null and bit 0 of its u16 at offset 6 is set.
 // Both failure paths share a single return-0 tail to match retail branch layout.
-extern "C" bool ColiProc_IsTargetFlagged(CColiProc* self) {
-    if (self->field_0x0 != nullptr && (self->field_0x0->field_0x6 & 1)) {
+bool CColiProc::IsTargetFlagged() {
+    if (this->field_0x0 != nullptr && (this->field_0x0->field_0x6 & 1)) {
         return true;
     }
     return false;
 }
 
 // Returns bit 18 of field_0xC (extrwi extraction).
-extern "C" bool ColiProc_TestBit18State(CColiProc* self) {
-    return ((self->field_0xC >> 18) & 1) != 0;
+bool CColiProc::TestBit18State() {
+    return ((this->field_0xC >> 18) & 1) != 0;
 }
 
 // --- ColiProc_ClassifyEntries dependencies ---

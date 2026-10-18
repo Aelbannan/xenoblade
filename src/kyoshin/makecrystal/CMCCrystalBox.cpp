@@ -375,10 +375,10 @@ void* __dt__80213E4C(void* self, int flags) {
 }
 
 // Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
-// up-counter (clrlslwi/clrlwi masks) — the -O4,s shape; -O4,p unrolls the
+// up-counter (clrlslwi/clrlwi masks) -- the -O4,s shape; -O4,p unrolls the
 // constant-trip loop. optimize_for_size forces the rolled form.
 // Retail zeroes a 32-byte word array at +0, the +0x20 byte, an 8-byte
-// array at +0x21 (filled with 0xFF), +0x29 and +0x6A — with a rolled
+// array at +0x21 (filled with 0xFF), +0x29 and +0x6A -- with a rolled
 // mtctr/bdnz loop (the -O4,s shape; -O4,p unrolls). The header's +4-shifted
 // pad_00/subObjPtrs view doesn't match this region, so raw offsets are used.
 #pragma optimize_for_size on

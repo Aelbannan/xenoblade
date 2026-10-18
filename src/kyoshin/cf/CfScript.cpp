@@ -293,18 +293,20 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     } else {
         int sepLen = strlen(lbl_eu_80661AD0);
         char* p = &(*(ml::FixStr<128>*)pathStorage).mString[-1] + length;
-        char* end = &(*(ml::FixStr<128>*)pathStorage).mString[-1];
-        while (true) {
-            if (p == end) {
-                index = -1;
-                break;
+        // No end local (an end local CSE-shares the single base addi;
+        // retail has two). Plain while with the bottom compare; the
+        // early exit jumps over the trailing index = -1
+        // (goto-gate, PLAN 17.6).
+        while (p != &(*(ml::FixStr<128>*)pathStorage).mString[-1]) {
+            if (strncmp(p, lbl_eu_80661AD0, sepLen) != 0) {
+                p--;
+                continue;
             }
-            if (strncmp(p, lbl_eu_80661AD0, sepLen) == 0) {
-                index = (int)(p - (*(ml::FixStr<128>*)pathStorage).mString);
-                break;
-            }
-            p--;
+            index = (int)(p - (*(ml::FixStr<128>*)pathStorage).mString);
+            goto strip_done;
         }
+        index = -1;
+    strip_done:;
     }
 
     // Strip the extension so only the bare filename remains.
@@ -330,11 +332,16 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     ml::FixStr<128>& path = *(ml::FixStr<128>*)pathStorage;
     path.format(&lbl_eu_804FB3A4[0x1C], lbl_eu_805708D0, extBuffer.mString);
 
-    // Append the archive extension (operator+=).
-    (*(ml::FixStr<128>*)pathStorage) += &lbl_eu_804FB3A4[0x21];
+    // Retail derives the archive extension from the live pool base (addi
+    // off the format pool register) and reuses it for strlen/strcat.
+    const char* dotSb = &lbl_eu_804FB3A4[0x21];
+    (*(ml::FixStr<128>*)pathStorage) += dotSb;
 
     // If the current directory already matches, sanity-check the file exists.
-    if (strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
+    // Retail materializes the strcmp == 0 test into a named int temp
+    // (MWCC cntlzw/srwi boolean idiom, CR reused by the branch).
+    int sameDir = strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0;
+    if (sameDir) {
         if (getFileSize__11CDeviceFileFPCc((*(ml::FixStr<128>*)pathStorage).mString, 1) < 0) {
             if (strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
                 strstr((*(ml::FixStr<128>*)pathStorage).mString, &lbl_eu_804FB3A4[0x2B]);
@@ -344,8 +351,11 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     }
 
     // If the slot holds a different loaded script, leave it alone.
+    // Same named-temp boolean idiom as above; retail enters the
+    // keep-check when the names are EQUAL.
     if (extBuffer.mLength != 0) {
-        if (strcmp(extBuffer.mString, script->mName) != 0) {
+        int sameScript = strcmp(extBuffer.mString, script->mName) == 0;
+        if (sameScript) {
             u32 flags = script->mFlags;
             if (!(flags & 0x2) && (flags & 0x1)) {
                 return true;
@@ -367,7 +377,8 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     script->mWaitCount = 0;
     script->mName[0] = '\0';
     script->mNameLen = 0;
-    script->mFlags = script->mFlags & ~0x3B & ~0x09;
+    script->mFlags = script->mFlags & ~0x3B;
+    script->mFlags = script->mFlags & ~0x09;
 
     void* handle = CfRes_readCommonArchive(script->mVmContext, (*(ml::FixStr<128>*)pathStorage).mString, script);
     script->mFileHandle = handle;

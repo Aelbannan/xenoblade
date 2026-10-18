@@ -1,5 +1,5 @@
 {
-  "count": 2248,
+  "count": 2236,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -1850,7 +1850,7 @@
       "R_PPC_ADDR16_LO": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 2,
+        "count": 1,
         "kind": "data",
         "retail_addend": 14336,
         "retail_symbol": "lbl_eu_805696F0",
@@ -2223,20 +2223,9 @@
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 2,
+        "count": 1,
         "kind": "data",
-        "retail_addend": 15520,
-        "retail_symbol": "lbl_eu_8056ABE0",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 15488,
+        "retail_addend": 14468,
         "retail_symbol": "lbl_eu_8056ABE0",
         "units": [
           "main/nw4r/src/snd/snd_SoundArchivePlayer"
@@ -2264,54 +2253,6 @@
         "retail_symbol": "lbl_eu_8056A810",
         "units": [
           "main/nw4r/src/snd/snd_MemorySoundArchive"
-        ]
-      }
-    },
-    "__vt__Q44nw4r3snd18SoundArchivePlayer11WsdCallback": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14563,
-        "retail_symbol": "lbl_eu_8056AC10",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 31870,
-        "retail_symbol": "lbl_eu_8056AC10",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      }
-    },
-    "__vt__Q44nw4r3snd18SoundArchivePlayer17SeqNoteOnCallback": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 36865,
-        "retail_symbol": "lbl_eu_8056AC20",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 37825,
-        "retail_symbol": "lbl_eu_8056AC20",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
         ]
       }
     },
@@ -2411,30 +2352,6 @@
         ]
       }
     },
-    "__vt__Q44nw4r3snd6detail20MmlSeqTrackAllocator": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 15456,
-        "retail_symbol": "lbl_eu_8056AAD0",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14366,
-        "retail_symbol": "lbl_eu_8056AAD0",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      }
-    },
     "__vt__Q44nw4r3snd6detail5Voice": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -2507,30 +2424,6 @@
         ]
       }
     },
-    "__vt__Q44nw4r3snd6detail9MmlParser": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14468,
-        "retail_symbol": "lbl_eu_8056AAB0",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 37022,
-        "retail_symbol": "lbl_eu_8056AAB0",
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      }
-    },
     "__vt__Q44nw4r3snd6detail9SeqPlayer": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -2546,7 +2439,7 @@
       "R_PPC_ADDR16_LO": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 2,
+        "count": 1,
         "kind": "data",
         "retail_addend": 49184,
         "retail_symbol": "lbl_eu_8056AAF8",
@@ -26253,7 +26146,7 @@
         ]
       }
     },
-    "main/nw4r/src/g3d/g3d_anmchr@12088": {
+    "main/nw4r/src/g3d/g3d_anmchr@12101": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -28043,48 +27936,6 @@
         ]
       }
     },
-    "main/nw4r/src/snd/snd_SeqPlayer@10410": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A008",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/snd/snd_SeqPlayer"
-        ]
-      }
-    },
-    "main/nw4r/src/snd/snd_SoundArchivePlayer@12262": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A050",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      }
-    },
-    "main/nw4r/src/snd/snd_SoundArchivePlayer@12282": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066A048",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/snd/snd_SoundArchivePlayer"
-        ]
-      }
-    },
     "main/nw4r/src/snd/snd_SoundPlayer@5908": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -29793,8 +29644,8 @@
       }
     }
   },
-  "function_pairs": 13950,
-  "generated": "2026-10-18T16:23:05.851623",
+  "function_pairs": 13933,
+  "generated": "2026-10-18T16:48:26.420284",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

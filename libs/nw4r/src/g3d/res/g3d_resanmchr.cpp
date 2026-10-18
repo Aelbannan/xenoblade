@@ -297,7 +297,7 @@ f32 CalcAnimationCV(const ResAnmChrCVData* pCVData, u16 numFrame, f32 frame) {
     f32 r = frame - static_cast<f32>(frame_i);
 
     f32 v0 = TTraits::GetAt(pCVData, frame_i);
-    if (r == lbl_eu_80669AE0) {
+    if (lbl_eu_80669AE0 == r) {
         return v0;
     }
 

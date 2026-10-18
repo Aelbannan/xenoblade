@@ -65,7 +65,7 @@ public:
     } // at 0x6C
 
     SeqPlayer::SetupResult Setup(SeqTrackAllocator* pAllocator,
-                                 u32 allocTrackFlags, int voices,
+                                 u32 allocTrackFlags,
                                  NoteOnCallback* pCallback);
 
     void Prepare(const void* pBase, s32 seqOffset,

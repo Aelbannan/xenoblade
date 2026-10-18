@@ -35,7 +35,7 @@ void SeqSound::InitParam() {
 }
 
 SeqPlayer::SetupResult SeqSound::Setup(SeqTrackAllocator* pAllocator,
-                                       u32 allocTrackFlags, int voices,
+                                       u32 allocTrackFlags,
                                        NoteOnCallback* pCallback) {
     InitParam();
     return mSeqPlayer.Setup(pAllocator, allocTrackFlags, GetVoiceOutCount(),

@@ -293,6 +293,9 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             // Two u16 counts ([+2] row, [+0] column) offsetting the two
             // panes; u32->float via the named 2^52+2^31 magic double keeps
             // the sdata2 reloc on lbl_eu_80668608.
+            // Two u16 counts ([+2] row, [+0] column) offsetting the two
+            // panes; u32->float via the named 2^52+2^31 magic double keeps
+            // the sdata2 reloc on lbl_eu_80668608.
             UnkCoords* coords = obj->chain->pCoords;
             u16 row = coords->c2;
             u16 col = coords->c0;

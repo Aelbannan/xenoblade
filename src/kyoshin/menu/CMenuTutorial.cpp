@@ -32,25 +32,35 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     CMenuTutorial* self, CProcess* parent, u32 arg2) {
     __ct__8CProcessFv((CProcess*)self);
 
-    // Walk the null PMF words in retail order.
+    // Walk the null PMF words in retail order. Element temps are declared
+    // (older vregs) so MWCC colors them against the long-lived pair;
+    // assignments below stay in retail load order.
     u32 composite = (u32)lbl_eu_805391C0;
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    const u32* pmf = __ptmf_null;
-    u32 w0 = *(pmf++);
-    u32 subVtable = composite + 0x24;
+    u32 e2;
+    u32 v0;
+    const u32* pmf;
+    u32 w0;
+    u32 subVtable;
     const u32 zero = 0;
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+    pmf = __ptmf_null;
+    w0 = *(pmf++);
+    subVtable = composite + 0x24;
 
     // Null PMF slots in retail store order (0x40, 0x3C, 0x44, 0x4C, 0x48,
     // 0x50), with the tutorial subobject address formed mid-sequence. The
     // pointer is walked twice over the same three words.
     self->ptmf0[1] = *(pmf++);
     self->ptmf0[0] = w0;
-    self->ptmf0[2] = *(pmf++);
+    e2 = *(pmf++);
+    self->ptmf0[2] = e2;
     pmf -= 3;
-    u32 v0 = *(pmf++);
-    self->ptmf1[1] = *(pmf++);
+    v0 = *(pmf++);
+    e2 = *(pmf++);
+    self->ptmf1[1] = e2;
     self->ptmf1[0] = v0;
-    self->ptmf1[2] = *(pmf);
+    e2 = *(pmf);
+    self->ptmf1[2] = e2;
 
     self->field_54 = zero;
     self->field_55 = zero;
@@ -69,7 +79,7 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     self->mSavedInputFlags = zero;
     // Bit 1 of the Init flag word decides whether the open event is fired;
     // extracted once and stored, then tested.
-    u32 openBit = (lbl_eu_80663E24 >> 1) & 1;
+    u32 openBit = (lbl_eu_80663E24 >> 30) & 1;
     self->mSomething = openBit;
     if (openBit == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(1);
@@ -79,9 +89,9 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     self->mSavedInputFlags = cf::CfGameManager::getEnabledInputFlags();
 
     // Re-enable the input-flag set the player had before the tutorial:
-    // classic controller (0x60000000) or core pad (0x30).
+    // classic controller (0x00600000) or core pad (0x30).
     u32 padFlags =
-        isClassicController__Q22cf13CfGameManagerFv(-1) ? 0x60000000 : 0x30;
+        isClassicController__Q22cf13CfGameManagerFv(-1) ? 0x00600000 : 0x30;
     cf::CfGameManager::enablePadFlags((u32)-1, false);
     cf::CfGameManager::enablePadFlags(padFlags, true);
     return self;

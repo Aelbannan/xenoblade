@@ -167,7 +167,7 @@ typedef struct MWSFDPLY {
     u8   field_0x68[0x20];  /* 0x68..0x87 */
     s32  field_0x88;        /* 0x88 video switch */
     s32  field_0x8c;        /* 0x8c audio switch */
-    u8   field_0x90;        /* 0x90 concat-play flag */
+    s8   field_0x90;        /* 0x90 concat-play flag */
     u8   field_0x91;        /* 0x91 */
     s8   field_0x92;        /* 0x92 pause/seek flag */
     u8   field_0x93;        /* 0x93 */
@@ -309,6 +309,7 @@ int mwPlyTermSupply(void *h) {
  * through the SVM error hook). */
 void mw_sfd_start_ex(MWSFDPLY* self) {
     s8 pause;
+    void* sfdH;
 
     MWSFLIB_GetLibWorkPtr();
     self->field_0x678 = 0;
@@ -355,9 +356,8 @@ void mw_sfd_start_ex(MWSFDPLY* self) {
 
     /* Re-apply the pause state: while paused, let the decoder sleep and keep
      * the stream-set clocks in sync with the pause flag. */
-    pause = self->field_0x92;
-    if (pause != 0) {
-        void* sfdH = self->field_0x58;
+    if (pause = self->field_0x92) {
+        sfdH = self->field_0x58;
         if (MWSFD_GetPauseBdr() == 1 && self->field_0x8 == 1) {
             s32 cond;
             if (SFD_GetCond(sfdH, 6, &cond) == 0) {
@@ -367,12 +367,16 @@ void mw_sfd_start_ex(MWSFDPLY* self) {
                 mwlSfdSleepDecSvr(self);
             }
         }
-        if (SFD_Pause(sfdH, pause) != 0) {
-            MWSFLIB_SetErrCode(-0x136);
-            MWSFSVM_Error(lbl_eu_8051B1A0 + 0x106,
-                          (pause == 1) ? (char*)(lbl_eu_8051B1A0 + 0x129)
-                                       : (char*)(lbl_eu_8051B1A0 + 0x12c));
-        }
+    if (SFD_Pause(sfdH, pause) != 0) {
+        char* fmt;
+        char* onoff;
+        MWSFLIB_SetErrCode(-0x136);
+        fmt = (char*)(lbl_eu_8051B1A0 + 0x106);
+        onoff = (char*)(lbl_eu_8051B1A0 + 0x12c);
+        if (pause == 1)
+            onoff = (char*)(lbl_eu_8051B1A0 + 0x129);
+        MWSFSVM_Error(fmt, onoff);
+    }
         MWSST_GetTime(self->field_0x5d8, pause);
         MWSST_GetTime(self->field_0x600, pause);
         self->field_0x92 = pause;
@@ -531,10 +535,14 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
         }
     }
     if (SFD_Pause(sfdH, pause) != 0) {
+        char* fmt;
+        char* onoff;
         MWSFLIB_SetErrCode(-0x136);
-        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x106,
-                      (pause == 1) ? (char*)(lbl_eu_8051B1A0 + 0x129)
-                                   : (char*)(lbl_eu_8051B1A0 + 0x12c));
+        fmt = (char*)(lbl_eu_8051B1A0 + 0x106);
+        onoff = (char*)(lbl_eu_8051B1A0 + 0x12c);
+        if (pause == 1)
+            onoff = (char*)(lbl_eu_8051B1A0 + 0x129);
+        MWSFSVM_Error(fmt, onoff);
     }
     MWSST_GetTime(self->field_0x5d8, pause);
     MWSST_GetTime(self->field_0x600, pause);
@@ -542,12 +550,7 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
 }
 
 int MWSFPLY_SetFlowLimit(void *h) {
-    s32 v = *(s32 *)((u8 *)h + 0x50C);
-    union { u32 w[2]; double d; } u;
-    u.w[0] = 0x43300000;
-    u.w[1] = (u32)v ^ 0x80000000;
-    double dv = u.d - lbl_eu_8051B198;
-    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * dv));
+    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32*)((u8*)h + 0x50C)));
 }
 
 int mwPlyChkSupply(void *h) {

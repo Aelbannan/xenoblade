@@ -5895,3 +5895,59 @@ Wrap ONLY the leaf in `#pragma peephole off` ... `#pragma peephole on`, keep pla
 - Result:    MdlDyn_PushSphere `bge` landed, `li`/`b` extras gone (0x2e8 -> 0x2dc); same shape copied to MdlDyn_PushPole radSq checks.
 - Confidence: hypothesis (two-function evidence; NaN semantics differ from naive `>=` and were not audited beyond byte-match).
 - Applies to/a.k.a.: sphere/capsule push-out helpers and any dual-miss early-out with a shared `li r3,0` pad; cf. inverted-float-select entry (`<`-with-body-first gives `fcmpo`+`bge`).
+
+## Cached loop bound becomes ctr/bdnz; reloaded field stays lha/cmp/bc (GC/3.0a5.2, -O4,p)
+- Symptom:   Retail loop shows `b COND; BODY; addi ptr; addi idx; COND: lha cnt; cmp idx,cnt; bc BODY` but decomp emits `mtspr ctr` + `bdnz` with the bound hoisted.
+- Cause:     Caching the bound in a local (`s16 count = obj->field; for (i=1; i<count; ...)`) lets MWCC prove loop invariance and select the counted-loop template. Retail re-reads the field every iteration.
+- Fix:       Compare against the field in the loop condition (`for (; i < obj->field; ...)` or `for (i=1; ...)` with the field spelling). Bonus color rule from the same functions: declare the index before the element pointer (`int i = 1; Elem* e = base+1;`) to land index=r4/ptr=r5 instead of the reverse.
+- Result:    CamEvtStepShk/PushCamEntry shake loops: ctr/bdnz eliminated, loop skeleton (b/COND/addi/addi/lha/cmp/bc) and r4/r5 colors now match retail; function % flat (other residuals dominate) but skeleton verified byte-aligned in --asm.
+- Confidence: repo_proven (before/after --asm on kyoshin/cf/CfCamEvent_1, GC/3.0a5.2).
+- Applies to/a.k.a.: any `for (i=1; i<cached; i++, ptr++)` over an object field where retail shows per-iteration lha; cf. declaration-order allocator contract (register_mapping.md).
+
+## TU-wide C++-mangled vs retail-plain symbols silently disables reloc-name canonicalization (Wii/1.1, all TUs)
+- Symptom:   Every function in a TU shows 0-insn-diff but `cycle` reports function 0.0% + `witness-gate: reloc | slot N: lbl_eu_X vs @NNNN`, or pool-name drift that no source edit fixes. Decomp `nm` shows `Foo__Fv`/`Foo__FP7Bar` while retail `nm` shows plain `Foo`.
+- Cause:     The reloc canonicalizer pairs functions by exact symbol name; mangled-vs-plain never pairs, so value-equal pool relocs (e.g. compiler-synthesized 2^52 conversion magic vs the TU's named .sdata2 double) are never canonicalized and the witness reloc-gate refuses. The comparator itself ignores reloc NAMES (functionRelocDiffs=data_value), so pairing is the only blocker.
+- Fix:       Declare the affected functions `extern "C"` (header extern "C" block, following the CfT_SelectDisplayMode precedent) so decomp emits the plain retail names; verify with `nm` on both objects first. Callers in other TUs already treating them as `extern "C"` confirms the direction. No `configure.py`/UNIT_RULES/postprocess change needed.
+- Result:    kyoshin/cf/CfTFile: CfT_PlayTimeGet (0 mismatches) went straight to FULL_MATCH on the next cycle; PlayClockUpdate 90.5%->99.3% (reloc gate cleared, pure FPR-rotation residual exposed); PlayClockAdvanceFrame/FirstEntry3/FindEntryByKey pair correctly for the first time.
+- Confidence: repo_proven (before/after cycle on 5 targets, same batch; no codegen change, names only).
+- Applies to/a.k.a.: any TU whose decomp symbols carry `__F` suffixes while retail's are plain; the "7 functions went 0-mismatch FULL_MATCH" recipe (extern "C" + in-TU magic definition). Check FIRST before chasing pool/conversion spellings.
+
+## Jump-table body mapping via .rela.data — cascade collapse → per-body fixes (Wii/1.1, FULL_MATCH path)
+- Symptom:   3000-insn switch function at ~55% with ~1500 structural; offset-aligned hexdiff shows a single early insertion cascading thousands of rows, masking the true (small) diff count.
+- Cause:     Alignment cascade from 1-2 extra/missing insns per case body; the real diffs are a handful of same-size bodies.
+- Fix:       Parse retail+decomp .rela.data dense R_PPC_ADDR32 runs per function symbol: sorted unique addends = case-body layout; consecutive differences = body sizes. Diff the size sequences rank-by-rank — only truly-differing bodies show up (here: exactly 2/86). Reverse-map target addend -> table index -> source case, then fix each flagged body from its own retail rows. Same technique maps any body address to its switch idx.
+- Result:    mpvabdec IntraBlock/DC11/NintraBlock 54-76% -> 91-97% / 20% by fixing only flagged bodies (escape e-sharing, sign swaps); all sizes exact.
+- Confidence: repo_proven
+- Applies to/a.k.a.: large switch/decoder TUs (mpv, VLC, Huffman); jump-table base via .rela.text table symbol; entry[i] == idx i.
+
+## Escape-head value sharing (s32 e) + f00 &0xFFFFFF mask (Wii/1.1, FULL_MATCH path)
+- Symptom:   Escape-coded VLC body +1 insn vs retail: decomp recomputes (s8)((bits>>13)&0xFF) inside the else while retail hoists one extsb above the branch and reuses it for both test and recompute; f00 computed via srawi instead of rlwinm.
+- Cause:     Test uses &0x7F while else uses (s8)&0xFF (no CSE across branch); f00 (s8)(v>>8) lowers to srawi+extsb instead of rlwinm+extsb.
+- Fix:       Keep the &0x7F test (retail emits the dead extract too); introduce `s32 e = (s8)((bits >> 13) & 0xFF);` before the test and use `(e << 1)` in the else (forces the hoist+reuse, -1 insn, positions match); write f00 as `(u32)(s8)(((v >> 8) & 0xFFFFFF))` (value-identical, forces rlwinm extract). Do NOT use &0xFF on f00 (adds a redundant mask insn).
+- Result:    Escape bodies 0x138/0xf0 -> exact 0x134/0xec, cascade collapsed (~1400 structural gone per function).
+- Confidence: repo_proven
+- Applies to/a.k.a.: MPEG/VLC escape paths with (x-1)|1 / -((x-1)|1) sign forms; Wii/1.1 trace-scheduling hoists.
+
+## ON/OFF string ternary → default-then-overwrite sharing one pool base (Wii/1.1, FULL_MATCH path)
+- Symptom:   Error call `Error(fmt, pause==1 ? ON : OFF)` with string-table offsets compiles to a branchy ternary: false-value first, then true-value, then the base address recomputed a second time for the format arg (+2 insns, +8 bytes, base in two regs). Retail instead keeps ONE pool base in a scratch reg, derives fmt then default-OFF from it, and conditionally overwrites with ON.
+- Cause:     MWCC lowers the `?:` with the false value as default in a branch; the later format-arg computation cannot reuse the dead base and rematerializes `lis/addi`. Splitting into adjacent assignments lets CSE share one base.
+- Fix:       Replace the ternary with two locals assigned adjacently after any preceding call: `fmt = lbl+0x106; onoff = lbl+0x12c; if (pause == 1) onoff = lbl+0x129; Error(fmt, onoff);`. Retail order is fmt first, OFF default, conditional ON overwrite.
+- Result:    CriWare mwsfdply mwPlyPause 61.4%->100% FULL_MATCH (size 0x14c->0x138 exact, split PASS); sibling mw_sfd_start_ex 36.8%->77%+ with the identical change (same family, shared root cause).
+- Confidence: repo_proven (before/after hexdiff --all on 2 same-TU siblings + cycle accept on one).
+- Applies to/a.k.a.: ON/OFF, TRUE/FALSE, enum-string error args of the form `Error(base+K1, c ? base+K2 : base+K3)`; the fmt-first/default-second/overwrite-third schedule.
+
+## Stack-slot order = reverse declaration, use-order independent (Wii/1.1, probe-proven)
+- Symptom:   Function with N address-taken word locals places them at unexpected sp offsets; guessing declaration order from use order fails.
+- Cause:     MWCC assigns stack slots strictly by declaration order, last-declared = lowest offset (sp+8 upward), regardless of first-use order. Probe: `int a,b,c,d,e` used in order a..e vs e..a both yield a@sp+0x18 ... e@sp+8.
+- Fix:       Declare locals so that reverse-declaration matches the retail slot map (lowest-offset local declared LAST). For slots t1@8,t2@12,...,fps@48 declare `fps, cond, ..., t2, t1`.
+- Result:    mwsfdsl mwPlyExecInfiniteLoopHandle 11-word frame slots exact on first reorder (304 structural -> ~0 from slots alone).
+- Confidence: repo_proven (wibo probe pq1/pq2 + same-TU application).
+- Applies to/a.k.a.: any function with 3+ address-taken locals; frame-layout reconstruction.
+
+## `if (x>=0) {S} else {return}` emits trailing dead branch (Wii/1.1, probe-proven)
+- Symptom:   Retail has `[cmpi; blt FAR-epilogue; S; b NEXT; b FAR-epilogue]` with the last branch unreachable; writing `if (x<0) return; S;` gives `[bge; b FAR; S]` instead (extra branch, wrong polarity).
+- Cause:     MWCC lays out `if (C) {S} else {return}` as branch-on-C-true directly to the far return, S inline, `b JOIN`, then the else-return block out of line. Probe `qa` reproduces the exact shape incl. the dead `blr`.
+- Fix:       Write the test in `>=` form with the work in the then-block and a bare `else { return; }`, e.g. `if (r >= 0) { self->f = 2; } else { return; }`.
+- Result:    mwsfdsl infinite-loop calc tail byte-exact (eliminated phantom +1 branch).
+- Confidence: repo_proven (wibo probe qa vs qb + same-TU application).
+- Applies to/a.k.a.: early-exit tails with a trailing dead branch; dual is `if (C) return; REST;` -> single branch-on-true to return (qb shape).

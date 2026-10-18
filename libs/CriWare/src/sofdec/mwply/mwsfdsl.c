@@ -314,8 +314,10 @@ struct MwsfplyCbObj {
 typedef struct MWSFDPLY {
     u32 field_0x0;            /* enable flag (MWSFD_IsEnableHndl) */
     u32 field_0x4;            /* error/status code */
-    u32 field_0x8;            /* mode (compared to 0xa) */
-    u8 field_0xc[0x58];       /* 0x0c..0x63 */
+    s32 field_0x8;            /* mode (compared to 0xa, signed cmpi) */
+    u8 field_0xc[0x4c];       /* 0x0c..0x57 */
+    void* field_0x58;         /* SFD handle for SFD_GetFps */
+    u8 field_0x5c[0x8];       /* 0x5c..0x63 */
     LscHandle* field_0x64;    /* LSC stream handle */
     u8 field_0x68[0x28];      /* 0x68..0x8f */
     s8 field_0x90;            /* link-stm flag */
@@ -332,11 +334,14 @@ typedef struct MWSFDPLY {
     u32 field_0x63c;
     u32 field_0x640;
     u32 field_0x644;
-    u32 field_0x648;
-    u32 field_0x64c;
-    u8 field_0x650[0x8];      /* 0x650..0x657 */
+    s32 field_0x648;
+    s32 field_0x64c;
+    s32 field_0x650;          /* range pid */
+    s32 field_0x654;          /* range fid */
     u32 field_0x658;
     u32 field_0x65c;
+    s32 field_0x660;
+    u32 field_0x664;
 } MWSFDPLY;
 
 /* ---- SVM trace callback infrastructure ----
@@ -371,6 +376,9 @@ struct TraceRec {
 };
 
 extern TraceCb* lbl_eu_805FF3A0;
+extern TraceRec lbl_eu_80566428;
+extern TraceRec lbl_eu_805664FC;
+extern TraceRec lbl_eu_80566778;
 extern TraceRec lbl_eu_805665D0;
 extern TraceRec lbl_eu_805666A4;
 extern TraceRec lbl_eu_8056684C;
@@ -386,6 +394,16 @@ void MWSFPLY_SetFlowLimit(MWSFDPLY* player);
 void MWSFCRE_SetSupplySj(MWSFDPLY* player);
 void mwPlyStartSj(MWSFDPLY* self, MwsfplySjArg* arg);
 void mwPlyStartSeamless(MWSFDPLY* self);
+void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname);
+void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg6);
+int mwPlyGetStat(MWSFDPLY* self);
+s32 mwPlyGetRareStat(MWSFDPLY* self);
+int mwPlyGetTotalFrmNum(MWSFDPLY* self);
+void mwPlyGetTime(MWSFDPLY* self, s32* out1, s32* out2);
+u32 MWSFD_GetCond(MWSFDPLY* self, s32 cond_no, s32* out);
+s32 SFD_GetFps(void* sfd, s32* fps);
+int ADXF_GetFnameRangeEx(s32 pid, s32 fid, const void* namebuf, u32* a, u32* b, u32* c);
+char* ADXF_GetFnameFromPt(s32 idx);
 
 void LSC_SetLpFlg(LscHandle* handle, s32 flag);
 void LSC_Start(LscHandle* handle);
@@ -496,7 +514,7 @@ void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
     if (self->field_0x8 != 0xa) {
         if (LSC_EntryFname(self->field_0x64, fname) < 0) {
             self->field_0x4 = 4;
-            MWSFSVM_Error(lbl_eu_80519B90 + 0x55);
+            MWSFSVM_Error(lbl_eu_80519B90 + 0x55, fname);
         } else {
             self->field_0x94 += 1;
         }
@@ -546,21 +564,74 @@ void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg
         }
     }
     mwPlyStartSeamless(self);
-    {
-        u32 prev = self->field_0x644;
-        self->field_0x648 = 3;
-        self->field_0x658 = arg5;
-        self->field_0x65c = arg6;
-        self->field_0x640 = 1;
-        if (prev == 0) {
-            self->field_0x64c = 1;
-        }
+    self->field_0x648 = 3;
+    self->field_0x658 = arg5;
+    self->field_0x65c = arg6;
+    self->field_0x640 = 1;
+    if (self->field_0x644 == 0) {
+        self->field_0x64c = 1;
     }
 }
 
 /* ---- Non-target stubs preserved from the scaffold ---- */
 
-void mwPlyStartFnameLp() {}
+/* Start loop playback of a file: validate, trace entry, record the name,
+ * stop the stream and enter the file (unless in mode 0xa), arm the loop
+ * flag, delegate to mwPlyStartSeamless, publish the loop parameters, and
+ * trace exit. */
+void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x109);
+        return;
+    }
+    if (fname == NULL) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x138);
+        return;
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            lbl_eu_80566428.self = (u32)self;
+            lbl_eu_80566428.arg = (u32)fname;
+            cb->vtable->trace(cb, &lbl_eu_80566428.field_0x04);
+        }
+    }
+    MWSFPLY_RecordFname(self, fname);
+    if (self->field_0x8 != 0xa) {
+        LSC_Stop(self->field_0x64);
+        mwPlyEntryFname(self, self->field_0x4e8);
+        {
+            s32 lpFlag = 1;
+            if (MWSFD_IsEnableHndl(self) != 1) {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+            } else {
+                TraceCb* cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    lbl_eu_8056684C.self = (u32)self;
+                    lbl_eu_8056684C.arg = (u32)&lpFlag;
+                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                }
+                LSC_SetLpFlg(self->field_0x64, lpFlag);
+                cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                }
+            }
+        }
+        mwPlyStartSeamless(self);
+        self->field_0x648 = 1;
+        self->field_0x640 = 1;
+        if (self->field_0x644 == 0) {
+            self->field_0x64c = 1;
+        }
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            cb->vtable->trace(cb, &lbl_eu_80566428.field_0x6c);
+        }
+    }
+}
 
 int MWSFLSC_IsFsStatErr(void) { extern int LSC_GetStat(void); return (LSC_GetStat() == 3) ? 1 : 0; }
 
@@ -580,4 +651,182 @@ void MWSFLSC_Pause(MWSFDPLY* self) {
     }
 }
 
-void mwPlyExecInfiniteLoopHandle() {}
+/* Infinite-loop handler: when loop mode is armed (0x64c == 1) and playback
+ * has started (stat == 2), compute the remaining loop time from the total
+ * frame count and framerate. Otherwise dispatch on the loop state (0x64c):
+ * with rare-stat 3, start/enter the requested loop form selected by 0x648,
+ * then run the tail bookkeeping (counter, timeout check, loop-flag and
+ * link-flag maintenance) surrounded by SVM trace enter/exit callbacks. */
+void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
+    s32 pid;
+    s32 fid;
+    LscHandle* hnd;
+    s32 fps;
+    s32 cond;
+    u32 rangeC;
+    u32 rangeB;
+    u32 rangeA;
+    s32 lpFlag;
+    s32 dummy2;
+    s32 dummy1;
+    s32 lpFlag2;
+    s32 t2;
+    s32 t1;
+    if (self->field_0x63c == 0) {
+        return;
+    }
+    if (self->field_0x640 == 0) {
+        return;
+    }
+    if (self->field_0x64c == 1 && mwPlyGetStat(self) == 2) {
+        s32 r;
+        MWSFD_GetCond(self, 54, &cond);
+        SFD_GetFps(self->field_0x58, &fps);
+        if (fps <= 0) {
+            MWSFSVM_Error(lbl_eu_80519B90 + 0x30b);
+            self->field_0x660 = cond;
+            r = -1;
+        } else {
+            s32 total = mwPlyGetTotalFrmNum(self);
+            r = cond - ((((total * 1000 / fps) * 3000) + ((((total * 1000 / fps) * 3000) >> 31) & 1)) >> 1);
+            self->field_0x660 = r;
+        }
+        if (r >= 0) {
+            self->field_0x64c = 2;
+        } else {
+            return;
+        }
+    }
+    if ((u32)(self->field_0x64c - 2) > 1) {
+        return;
+    }
+    if (mwPlyGetRareStat(self) == 3) {
+        mwPlyGetTime(self, &dummy1, &dummy2);
+        self->field_0x644 = 1;
+        switch (self->field_0x648) {
+        case 1:
+            mwPlyStartFnameLp(self, self->field_0x4e8);
+            break;
+        case 2: {
+            fid = self->field_0x654;
+            pid = self->field_0x650;
+            if (MWSFD_IsEnableHndl(self) != 1) {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0x21c);
+                break;
+            }
+            LSC_Stop(self->field_0x64);
+            if (MWSFD_IsEnableHndl(self) != 1) {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0x1c0);
+            } else {
+                hnd = self->field_0x64;
+                if (ADXF_GetFnameRangeEx(pid, fid, self->field_0x4e8, &rangeA, &rangeB, &rangeC) == 0) {
+                    LSC_EntryFileRange(hnd, ADXF_GetFnameFromPt(pid), rangeA, rangeB, rangeC);
+            } else {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0x1eb, pid, fid);
+            }
+            }
+            {
+                lpFlag = 1;
+                if (MWSFD_IsEnableHndl(self) != 1) {
+                    MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+                } else {
+                    TraceCb* cb = lbl_eu_805FF3A0;
+                    if (cb != NULL) {
+                        lbl_eu_8056684C.self = (u32)self;
+                        lbl_eu_8056684C.arg = (u32)&lpFlag;
+                        cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                    }
+                    LSC_SetLpFlg(self->field_0x64, lpFlag);
+                    cb = lbl_eu_805FF3A0;
+                    if (cb != NULL) {
+                        cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                    }
+                }
+            }
+            mwPlyStartSeamless(self);
+            self->field_0x648 = 2;
+            self->field_0x650 = pid;
+            self->field_0x654 = fid;
+            self->field_0x640 = 1;
+            if (self->field_0x644 == 0) {
+                self->field_0x64c = 1;
+            }
+            break;
+        }
+        case 3:
+            mwPlyStartFnameRangeLp(self, self->field_0x4e8, self->field_0x658, self->field_0x65c);
+            break;
+        }
+        self->field_0x644 = 0;
+        self->field_0x664 += 1;
+    }
+    mwPlyGetTime(self, &t1, &t2);
+    if (self->field_0x660 / 1000 > t1 / t2) {
+        return;
+    }
+    if (self->field_0x64c != 2) {
+        return;
+    }
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x162);
+    } else {
+        {
+            TraceCb* cb = lbl_eu_805FF3A0;
+            if (cb != NULL) {
+                lbl_eu_805664FC.self = (u32)self;
+                cb->vtable->trace(cb, &lbl_eu_805664FC.field_0x04);
+            }
+        }
+        {
+            lpFlag2 = 0;
+            if (MWSFD_IsEnableHndl(self) != 1) {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+            } else {
+                TraceCb* cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    lbl_eu_8056684C.self = (u32)self;
+                    lbl_eu_8056684C.arg = (u32)&lpFlag2;
+                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                }
+                LSC_SetLpFlg(self->field_0x64, lpFlag2);
+                cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                }
+            }
+        }
+        if (MWSFD_IsEnableHndl(self) != 1) {
+            MWSFSVM_Error(lbl_eu_80519B90 + 0x18e);
+        } else {
+            {
+                TraceCb* cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    lbl_eu_80566778.self = (u32)self;
+                    cb->vtable->trace(cb, &lbl_eu_80566778.field_0x04);
+                }
+            }
+            if (MWSFD_IsEnableHndl(self) != 1) {
+                MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+            } else {
+                if (self->field_0x90 == 1) {
+                    self->field_0x91 = 1;
+                }
+                self->field_0x90 = 0;
+            }
+            {
+                TraceCb* cb = lbl_eu_805FF3A0;
+                if (cb != NULL) {
+                    cb->vtable->trace(cb, &lbl_eu_80566778.field_0x6c);
+                }
+            }
+        }
+        self->field_0x64c = 4;
+        {
+            TraceCb* cb = lbl_eu_805FF3A0;
+            if (cb != NULL) {
+                cb->vtable->trace(cb, &lbl_eu_805664FC.field_0x6c);
+            }
+        }
+    }
+    self->field_0x64c = 3;
+}

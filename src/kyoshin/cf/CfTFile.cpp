@@ -134,9 +134,14 @@ cf::CfTFileEntry* CfTFile_FirstEntry3(CfTFile* self) {
 // Returns null when the key is zero or not present in any table.
 // Retail inlines this section scan into the wrapper; keeping it as a
 // parameterised helper preserves the unfused parameter guards.
+// Match a file-event key against the five event tables (mEntries0..4) in
+// order, returning a pointer to the first entry whose mKey equals `key`.
+// Returns null when the key is zero or not present in any table.
+// Retail inlines this section scan into the wrapper; keeping it as a
+// parameterised helper preserves the unfused parameter guards.
 static inline cf::CfTFileEntry* findEventEntry(cf::CfTFileData* data, int key) {
-    int i;
     u16 count;
+    int i;
     if (data == 0) {
         return 0;
     }
@@ -300,17 +305,13 @@ void CfT_PlayClockAccumulate(u32 a, u32 b) {
 
 // Advance the shared play clock by one frame: the delta is fmod'ing the
 // current second counter against the 60 Hz frame rate; the caller-supplied
-// value is folded in through the 2^52 double-magic (u32 -> float).
+// u32 folds in through MWCC's builtin u32 -> float conversion (plain 2^52
+// magic, single fsubs, no xoris, no union). The A*t product is staged
+// before the conversion so retail's fmuls-before-stack-lfd schedule holds.
 void CfT_PlayClockAdvanceFrame(u32 v) {
     float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
-    union {
-        u32 w[2];
-        double d;
-    } conv;
-    conv.w[1] = v;
-    conv.w[0] = 0x43300000;
     lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80663D94 = lbl_eu_8066623C * (float)(conv.d - lbl_eu_80666220) + lbl_eu_80666248 * t;
+    lbl_eu_80663D94 = lbl_eu_8066623C * (float)v + lbl_eu_80666248 * t;
 }
 
 // Same clock advance as CfT_PlayClockAdvanceFrame, but the frame-delta term is the

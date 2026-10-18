@@ -84,16 +84,20 @@ void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, s32 tableType) {
     if (compoMode == 0x64) {
         needUpdate = FALSE;
     } else if (compoMode == tableType) {
-        if (tableType == 4 || tableType == 5) {
-            needUpdate = FALSE;
-        } else if (tableType == 2) {
+        switch (tableType) {
+        case 2:
             if (SFXA_IsNeedUpdateLumiTbl(self->alphaState) != 1) {
                 needUpdate = FALSE;
             }
-        } else if (tableType == 1) {
+            break;
+        case 4:
+        case 5:
+        case 1:
+        case 0x15:
             needUpdate = FALSE;
-        } else if (tableType == 0x15) {
-            needUpdate = FALSE;
+            break;
+        default:
+            break;
         }
     }
 
@@ -104,23 +108,34 @@ void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, s32 tableType) {
     self->compoMode = tableType;
 
     /* Retail dispatches with a compare chain (no address jumptable). */
-    if (tableType == 0x0B || tableType == 0x0D) {
+    switch (tableType) {
+    case 0x0B:
+    case 0x0D:
         SFXZ_MakeCnvZTbl((void*)self->_24, stmInf->_4C, self->_38);
-    } else if (tableType == 0x02) {
+        break;
+    case 0x02:
         SFXA_MakeAlpLumiTbl(self->alphaState, stmInf->_4C, self->_38);
-    } else if (tableType == 0x04) {
+        break;
+    case 0x04:
         SFXA_MakeAlp3110Tbl(self->alphaState, stmInf->_4C, self->_38);
-    } else if (tableType == 0x05) {
+        break;
+    case 0x05:
         SFXA_MakeAlp3211Tbl(self->alphaState, stmInf->_4C, self->_38);
-    } else if (tableType == 0x15) {
+        break;
+    case 0x15: {
         void (*cb)(u32) = (void (*)(u32))self->makeColorAdjustCallback;
+        u32 arg = self->_38;
         if (cb != NULL) {
-            cb(self->_38);
+            cb(arg);
         }
-    } else if (tableType == 0x01) {
+        break;
+    }
+    case 0x01:
         SFXCNV_MakeCcirFromY((u8*)self->_38);
-    } else {
+        break;
+    default:
         SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x30]);
+        break;
     }
 }
 
@@ -457,9 +472,9 @@ const unsigned char lbl_eu_8051CF48[0x230] = {
 // --- restored from git history (base:gone); do not expand beyond these functions ---
 // Deduped empty stubs (history restore produced multiple conflicting copies).
 
-void SFX_SetCnvFrmCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
-void SFX_SetCopyAlphaCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
-void SFX_SetMakeLumiTableCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
-void SFX_SetMakeAlp3TableCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
-void SFX_SetMakeAlp3110TableCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
-void SFX_SetMakeColAdjTableCbFunc(void *ctx, void *cb) { (void)ctx; (void)cb; }
+void SFX_SetCnvFrmCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->makeCnvFrameCallback = cb; }
+void SFX_SetCopyAlphaCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->copyAlphaCallback = cb; }
+void SFX_SetMakeLumiTableCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->alphaState->makeLumiTable = (SFXAlphaCallback)cb; }
+void SFX_SetMakeAlp3TableCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->alphaState->makeAlpTable = (SFXAlphaTableCallback)cb; }
+void SFX_SetMakeAlp3110TableCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->alphaState->makeAlp3110Table = (SFXAlphaTableCallback)cb; }
+void SFX_SetMakeColAdjTableCbFunc(void *ctx, void *cb) { ((SFXConvertState*)ctx)->makeColorAdjustCallback = cb; }

@@ -659,7 +659,8 @@ void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
         if (size != 0) {
             /* Int->float conversion plus sample-rate scale; clamped to the
              * 0x8000 minimum stream-buffer size. */
-            s32 lim = (s32)(*(f32*)(s + 0x3C) * (f32)size);
+            f32 rate = *(f32*)(s + 0x3C);
+            s32 lim = (s32)(rate * (f32)size);
             size = 0x8000;
             if (lim > 0x8000)
                 size = lim;
@@ -739,17 +740,15 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
         frames = self->frameCount;
         w = self->width;
         h = self->height;
-        if (self->mode > 3) {
+        if ((u32)self->mode > 3) {
             MWSFSVM_Error(lbl_eu_8051A3CC);
         }
         s32 w16 = (w + 15) / 16;
         s32 h16 = (h + 15) / 16;
-        s32 W = w16 << 4;
-        s32 H = h16 << 4;
+        s32 W = w16 * 16;
+        s32 H = h16 * 16;
         s32 luma = ((w16 >> 27) & 1) + W;
         s32 chroma = ((h16 >> 27) & 1) + H;
-        /* One Y frame + double-pitch chroma frame; the +0x20 header lands in
-         * a separate variable so it gets its own register (retail shape). */
         s32 blkW = (((W + 0x1f) / 32) * 32);
         s32 frameSize = ((chroma >> 1) * ((((luma >> 1) + 0x1f) / 32) * 32)) * 2 +
                         H * blkW;
@@ -855,12 +854,12 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         /* Round up to macroblocks; one frame slot carries a 0x20 header. */
         s32 w16 = (pw + 15) / 16;
         s32 h16 = (ph + 15) / 16;
-        s32 W = w16 << 4;
-        s32 H = h16 << 4;
-        s32 lh = (((w16 >> 4) & 1) + W) >> 1;
-        s32 ch = (((h16 >> 4) & 1) + H) >> 1;
+        s32 W = w16 * 16;
+        s32 H = h16 * 16;
+        s32 luma = ((w16 >> 27) & 1) + W;
+        s32 chroma = ((h16 >> 27) & 1) + H;
         s32 unit = H * (((W + 0x1f) / 32) * 32) +
-                   ch * (((lh + 0x1f) / 32) * 32) * 2 + 0x20;
+                   ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 + 0x20;
         w->size0 = unit * 2;
         w->size1 = cnt * unit;
     }

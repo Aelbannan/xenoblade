@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 19134 |
-| extern "C" declarations (non-lbl_*, imports) | 8810 |
-| extern "C" definitions (forced names) | 5120 |
+| extern "C" (total lines) | 19140 |
+| extern "C" declarations (non-lbl_*, imports) | 8811 |
+| extern "C" definitions (forced names) | 5121 |
 | `self`/register-style params | 13860 |
 | `void*` (params + locals) | 7942 |
 | raw pointer offset arithmetic | 5619 |
@@ -375,7 +375,7 @@ Top TUs by view debt:
 | src/kyoshin/CFloorMap.cpp | 18 | 10 | 94 | 104 | 73 | 18 | 0 | 0 | 20 | 0 | 0 | 0 | 145 | 9 |
 | src/kyoshin/CItemBoxGrid.cpp | 54 | 71 | 501 | 223 | 201 | 57 | 0 | 0 | 50 | 0 | 0 | 0 | 261 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 1 | 4 | 9 | 7 | 12 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 12 | 0 |
-| src/kyoshin/CItemBoxInfo.cpp | 83 | 18 | 4 | 198 | 280 | 172 | 0 | 0 | 3 | 0 | 0 | 0 | 339 | 0 |
+| src/kyoshin/CItemBoxInfo.cpp | 84 | 19 | 4 | 198 | 280 | 172 | 0 | 0 | 3 | 0 | 0 | 0 | 339 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 7 | 10 | 140 | 19 | 4 | 1 | 0 | 0 | 16 | 0 | 0 | 0 | 5 | 0 |
 | src/kyoshin/CKizunaTalkList.cpp | 6 | 14 | 56 | 16 | 23 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 40 | 0 |
 | src/kyoshin/CKizunagram.cpp | 15 | 52 | 112 | 25 | 15 | 7 | 4 | 10 | 3 | 0 | 0 | 0 | 17 | 3 |
@@ -3590,8 +3590,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CItemBoxInfo.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 172,
-  "extern_c_nonlbl_decl": 83,
-  "extern_c_nonlbl_def": 18,
+  "extern_c_nonlbl_decl": 84,
+  "extern_c_nonlbl_def": 19,
   "goto_count": 3,
   "init_side_effect": 0,
   "ptr_arith": 280,

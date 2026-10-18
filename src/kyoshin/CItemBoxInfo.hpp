@@ -312,7 +312,7 @@ extern "C" void initItemBoxVecTable(void*);
 extern "C" int IsSkillItem(void*);
 extern "C" u32 isItemBoxType9Flagged(void*);
 extern "C" void renderItemBoxDetail(CItemBoxInfo*, u32, void*, u32);
-extern "C" void renderItemBoxKind2(CItemBoxInfo*, u16, void*, u16);
+extern "C" void renderItemBoxKind2(CItemBoxInfo*, u16, void*, u32);
 extern "C" void renderItemBoxKind3(CItemBoxInfo*, u16, void*, u32);
 
 // 0xA8-byte detail record built by buildItemBoxNameRec for renderItemBoxKind3; only the

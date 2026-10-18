@@ -207,6 +207,7 @@ static inline void* CItem_kindPtr_1(u32 id) { return CItem_kindPtr(0, (s16)id); 
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, unsigned int);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
@@ -223,7 +224,7 @@ struct LayoutRootPaneView {
 };
 u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 u32 CtrlObjectParam_GetCurrentRowKey();
-u32 CtrlObjectParam_GetArtsDataWord(void*);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" f32 GetFloatTableEntry(u32);
 void clearItemBoxTripleRows(CItemBoxInfo*);
 extern "C" void buildItemBoxNameRec(void*, void*, void*, void*);
@@ -475,6 +476,8 @@ void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
 
 #pragma push
 #pragma auto_inline off
+#undef lbl_eu_80668010
+extern "C" const f32 lbl_eu_80668010;
 extern "C" void openItemBoxPhase1(CItemBoxInfo* info) {
     float arg = lbl_eu_80668010;
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
@@ -498,6 +501,7 @@ extern "C" void closeItemBoxPhase1(CItemBoxInfo* info) {
         info->state.state = 5;
     }
 }
+#define lbl_eu_80668010 sdata2_ItemBox.f8010
 
 extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
@@ -515,6 +519,12 @@ extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
 // the candidate item's.
 #pragma push
 #pragma optimize_for_size on
+#undef lbl_eu_80668014
+#undef lbl_eu_80668018
+#undef lbl_eu_8066801C
+extern "C" const f32 lbl_eu_80668014;
+extern "C" const f32 lbl_eu_80668018;
+extern "C" const f32 lbl_eu_8066801C;
 extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
     // Scratch doubles for MWCC's int->float magic (2^52 unsigned repair,
     // 2^63 sign-repair); retail materializes both high words up front.
@@ -589,6 +599,9 @@ extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
         d[1] = s[1];
     }
 }
+#define lbl_eu_80668014 sdata2_ItemBox.f8014
+#define lbl_eu_80668018 sdata2_ItemBox.f8018
+#define lbl_eu_8066801C sdata2_ItemBox.f801C
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
@@ -950,7 +963,7 @@ void buildItemBoxSlotRec(void* out, void* unused, void* data, void* arg3) {
 // slot colours the row pane and stamps the candidate-item texture.
 #pragma push
 #pragma optimize_for_size on
-void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
+extern "C" void renderItemBoxKind2(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     setupItemBoxSlotPanes(info);
     // Declaration order follows the retail frame layout (high -> low):
     // staged colour temps > copied record > FixStr storage > source record >
@@ -1176,9 +1189,9 @@ void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4)
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x25b, base + 0x2aa, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x286, base + 0x2aa, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x292, base + 0x2aa, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, recAny.rec.v[0]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, recAny.rec.v[1]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, recAny.rec.v[2]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, (u8)recAny.rec.v[0]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, (u8)recAny.rec.v[1]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, (u8)recAny.rec.v[2]);
     u32 v1 = BdatGetU8Direct((u32)lbl_eu_806640F8, base + 0x1eb, (u16)BdatGetItemId(itemId));
     char* s1;
     switch ((u8)v1) {
@@ -2407,8 +2420,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     // so immediates stay plain +0x139, not parent+0x54+imm.
     LayoutSetTextBoxFmtValue(info->state.layout, &base[0x4D7],
         ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, &base[0x139], member), 0);
-    setLayoutTextBoxNumber(info->state.layout, &base[0x4E3], stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber(info->state.layout, &base[0x4F0], stats->CActorParam_getTotalCurrency());
+    setLayoutTextBoxNumber(info->state.layout, &base[0x4E3], (u8)stats->CActorParam_getActorLevel());
+    setLayoutTextBoxNumber(info->state.layout, &base[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt(info->state.slotPanes[0], hp1);
     LayoutSetTextBoxInt(info->state.slotPanes[2], hp2);
     SetLayoutSelfText(info->state.slotPanes[3], BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
@@ -4763,8 +4776,8 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 6), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x6d2],
                       BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 9), 0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], 0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], 0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], (u8)0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], (u8)0);
         setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
 
         // Cache the slot panes at +0x40..+0x8C for the renderer (retail keeps
@@ -8206,9 +8219,9 @@ char* formatItemBoxName(void* item_data, u8 index) {
     if (item_id == 0) return NULL;
     u8 category = *(u8*)((u8*)item_data + index + 0xB4);
     s16 val = *(s16*)((u8*)item_data + index * 2 + 0xC0);
-    char buf[0x20];
-    char tmp[0x20];
-    char tailBuf[0x20];
+    char tailBuf[0x40];
+    char tmp[0x40];
+    char buf[0x40];
     char* base = lbl_eu_805063BC;
     sprintf(buf, base, val);
     u8 fmt = (u8)BdatGetU8Direct((u32)lbl_eu_806640D8, base + 3, item_id);
@@ -8222,7 +8235,7 @@ char* formatItemBoxName(void* item_data, u8 index) {
     while (*scan) {
         if (*scan == '$') {
             char c = *++scan;
-            memset(tmp, 0, 0x20);
+            memset(tmp, 0, 0x40);
             if (c == '1') {
                 scan++;
                 switch (fmt) {
@@ -8309,39 +8322,59 @@ void hideItemBoxPanes(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         } else {
             SET_PANE(0x113, 0x1);
             // (was switch: retail compiles this dispatch as compares)
-            if (arg2 == 2) {
+            if ((u32)arg2 - 4 > 4) {
+                if ((s16)arg2 != 2) {
+                    if ((s16)arg2 != 3) {
+                        if ((s16)arg2 != 9) {
+                            if ((s16)arg2 != 0xa) {
+                                if ((s16)arg2 == 0xd) {
+                                    SET_PANE(0xf2, 0x1);
+                                }
+                            } else {
+                                SET_PANE(0xe6, 0x1);
+                            }
+                        } else {
+                            SET_PANE(0xce, 0x1);
+                        }
+                    } else {
+                        SET_PANE(0xda, 0x1);
+                    }
+                } else {
                     SET_PANE(0xc2, 0x1);
                     SET_PANE(0x10b, 0x1);
-                } else if (arg2 == 3) {
-                    SET_PANE(0xda, 0x1);
-                } else if (arg2 >= 4 && arg2 <= 8) {
-                    SET_PANE(0xc2, 0x1);
-                    SET_PANE(0x10b, 0x1);
-                } else if (arg2 == 9) {
-                    SET_PANE(0xce, 0x1);
-                } else if (arg2 == 0xa) {
-                    SET_PANE(0xe6, 0x1);
-                } else if (arg2 == 0xd) {
-                    SET_PANE(0xf2, 0x1);
                 }
+            } else {
+                    SET_PANE(0xc2, 0x1);
+                    SET_PANE(0x10b, 0x1);
+            }
         }
     } else {
         SET_PANE(0x113, 0x1);
         // (was switch: retail compiles this dispatch as compares)
-        if (arg2 == 2) {
-                SET_PANE(0xc2, 0x1);
-                SET_PANE(0x10b, 0x1);
-            } else if (arg2 == 3) {
-                SET_PANE(0xda, 0x1);
-            } else if (arg2 >= 4 && arg2 <= 8) {
-                SET_PANE(0xc2, 0x1);
-                SET_PANE(0x10b, 0x1);
-            } else if (arg2 == 9) {
-                SET_PANE(0xce, 0x1);
-            } else if (arg2 == 0xa) {
-                SET_PANE(0xe6, 0x1);
-            } else if (arg2 == 0xd) {
-                SET_PANE(0xf2, 0x1);
+        if ((u32)arg2 - 4 > 4) {
+                if ((s16)arg2 != 2) {
+                    if ((s16)arg2 != 3) {
+                        if ((s16)arg2 != 9) {
+                            if ((s16)arg2 != 0xa) {
+                                if ((s16)arg2 == 0xd) {
+                                    SET_PANE(0xf2, 0x1);
+                                }
+                            } else {
+                                SET_PANE(0xe6, 0x1);
+                            }
+                        } else {
+                            SET_PANE(0xce, 0x1);
+                        }
+                    } else {
+                        SET_PANE(0xda, 0x1);
+                    }
+                } else {
+                    SET_PANE(0xc2, 0x1);
+                    SET_PANE(0x10b, 0x1);
+                }
+            } else {
+                    SET_PANE(0xc2, 0x1);
+                    SET_PANE(0x10b, 0x1);
             }
     }
 #undef SET_PANE
@@ -8365,15 +8398,13 @@ void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     }
     // Dispatch on the selection kind; the 4..8 range opens the item-box
     // detail view and each of the 2/3/9/0xA/0xD cases picks a renderer.
-    if ((u32)kind - 4 <= 4) {
-        renderItemBoxDetail(info, slot, arg3,
-                      (info->state.field_9A > 2) ? arg2 : (u16)-1);
-    } else if (kind == 2) {
-        renderItemBoxKind2(info, slot, arg3,
-                      (info->state.field_9A > 2) ? (u32)arg2 : 0xFFFF);
-    } else if (kind == 3) {
+    if ((u32)kind - 4 > 4) {
+        if (kind == 2) {
+            renderItemBoxKind2(info, slot, arg3,
+                      (u16)((info->state.field_9A > 2) ? (s32)arg2 : -1));
+        } else if (kind == 3) {
         renderItemBoxKind3(info, slot, arg3,
-                      (info->state.field_9A > 2) ? arg2 : (u16)-1);
+                      (u16)((info->state.field_9A > 2) ? (s32)arg2 : -1));
     } else if (kind == 9) {
         renderItemBoxSlotList(info, slot, arg3);
     } else if (kind == 0xA) {
@@ -8388,6 +8419,10 @@ void renderItemBoxByKind(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         clearItemBoxQuadTexts(info);
         clearItemBoxPairTexts(info);
         clearItemBoxSlotTexts(info);
+        }
+    } else {
+        renderItemBoxDetail(info, slot, arg3,
+                      (u16)((info->state.field_9A > 2) ? (s32)arg2 : -1));
     }
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
     // The bool ctor clears inline (mString[0]=0 / mLength=0) exactly like the

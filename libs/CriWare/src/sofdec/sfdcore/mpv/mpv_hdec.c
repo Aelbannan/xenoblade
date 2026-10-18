@@ -133,40 +133,33 @@ typedef struct MpvHdecTbl {
 
 void MPVHDEC_Init(void) {
     MpvHdecTbl* tbl = (MpvHdecTbl*)lbl_eu_80602A90;
-    void (*ppic)(void);
-    void (*bpic)(void);
-    void (*shc)(void);
-    void (*gsc)(void);
-    void (*esc)(void);
-    void (*udsc)(void);
+    void (**a)(void) = tbl->a;
+    void (**b)(void) = tbl->b;
+    void (**c)(void) = tbl->c;
+    void (**d)(void) = tbl->d;
+    void (**e)(void) = tbl->e;
 
-    memset(&tbl->a, 0, sizeof(tbl->a));
-    memset(&tbl->b, 0, sizeof(tbl->b));
-    memset(&tbl->c, 0, sizeof(tbl->c));
-    memset(&tbl->d, 0, sizeof(tbl->d));
-    memset(&tbl->e, 0, sizeof(tbl->e));
+    memset(a, 0, sizeof(tbl->a));
+    memset(b, 0, sizeof(tbl->b));
+    memset(c, 0, sizeof(tbl->c));
+    memset(d, 0, sizeof(tbl->d));
+    memset(e, 0, sizeof(tbl->e));
 
-    ppic = MPVUMC_PpicSkipped;
-    bpic = MPVUMC_BpicSkipped;
-    shc = fn_803AFDB0;
-    gsc = fn_803AFFB4;
-    esc = fn_803B00B8;
-    udsc = fn_803B01BC;
-    tbl->a[1] = ppic;
-    tbl->a[2] = ppic;
-    tbl->a[3] = bpic;
-    tbl->b[1] = shc;
-    tbl->b[2] = shc;
-    tbl->b[3] = shc;
-    tbl->b[4] = shc;
-    tbl->b[11] = shc;
-    tbl->b[12] = shc;
-    tbl->b[13] = shc;
-    tbl->b[14] = shc;
-    tbl->c[2] = gsc;
-    tbl->c[3] = gsc;
-    tbl->d[3] = esc;
-    tbl->e[3] = udsc;
+    a[1] = MPVUMC_PpicSkipped;
+    tbl->a[2] = MPVUMC_PpicSkipped;
+    tbl->a[3] = MPVUMC_BpicSkipped;
+    tbl->b[1] = fn_803AFDB0;
+    tbl->b[2] = fn_803AFDB0;
+    tbl->b[3] = fn_803AFDB0;
+    tbl->b[4] = fn_803AFDB0;
+    tbl->b[11] = fn_803AFDB0;
+    tbl->b[12] = fn_803AFDB0;
+    tbl->b[13] = fn_803AFDB0;
+    tbl->b[14] = fn_803AFDB0;
+    tbl->c[2] = fn_803AFFB4;
+    tbl->c[3] = fn_803AFFB4;
+    tbl->d[3] = fn_803B00B8;
+    tbl->e[3] = fn_803B01BC;
 }
 
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c) {

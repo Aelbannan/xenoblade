@@ -122,7 +122,6 @@ u16 *mpvvlc_InitCbpSub1(u16 *tbl) {
     p[52] = p[53] = 0x7108;
     p[54] = p[55] = 0x4d08;
     p[56] = p[57] = -0x1cf8;
-    p[59] = p[58] = -0x2cf8;
     p[58] = p[59] = -0x2cf8;
     p[60] = p[61] = -0x34f8;
     p[62] = -0x38f8;
@@ -411,12 +410,26 @@ void mpvvlc_InitMbaiIpic(void) {
     *p++ = 0x0240;
 
     v = 0x210;
+    /* Inner pass written out: MWCC rolls only the outer i<2 loop (retail) */
     for (i = 0; i < 2; i++) {
-        for (j = 0; j < 6; j++) {
-            *p++ = v | 0x440d;
-            *p++ = v | 0x040c;
-            v -= 0x10;
-        }
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
+        *p++ = v | 0x440d;
+        *p++ = v | 0x040c;
+        v -= 0x10;
     }
     for (i = 0; i < 6; i++) {
         *p++ = v | 0x440c;
@@ -425,26 +438,59 @@ void mpvvlc_InitMbaiIpic(void) {
         *p++ = v | 0x040b;
         v -= 0x10;
     }
+    /* Inner pass written out 3x: MWCC rolls only the outer i<2 loop (retail) */
     for (i = 0; i < 2; i++) {
-        for (j = 0; j < 3; j++) {
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x440a;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            *p++ = v | 0x0409;
-            v -= 0x10;
-        }
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        v -= 0x10;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        v -= 0x10;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x440a;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        *p++ = v | 0x0409;
+        v -= 0x10;
     }
     for (i = 0; i < 2; i++) {
         *p++ = v | 0x4409;
@@ -899,7 +945,7 @@ void MPVVLC_Init(u32 *work) {
     mpvvlc_InitMbTypePpic();
     mpvvlc_InitMbTypeBpic();
     mpvvlc_InitMotion();
-    mpvvlc_InitCbpSub2(mpvvlc_InitCbpSub1((u16 *)lbl_eu_80602FF8));
+    mpvvlc_InitCbpSub2(mpvvlc_InitCbpSub1((u16 *)(g + 0)));
     mpvvlc_InitDcSizY();
     mpvvlc_InitDcSizC();
     mpvvlc2_InitDcSizY();

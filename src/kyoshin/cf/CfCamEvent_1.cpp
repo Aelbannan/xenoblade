@@ -1660,8 +1660,9 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         u8 on = (demo != 0);
         self->shake[0].field_0x163 = on;
         if (on) {
+            int i = 1;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
+            for (; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
@@ -1680,8 +1681,9 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         } else {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 1;
+            int i = 1;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
+            for (; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
@@ -2493,8 +2495,9 @@ void CamEvtStepShk(CfCamEventManager* self) {
         u8 on = (lbl_eu_80570C90.h00 != 0);
         self->shake[0].field_0x163 = on;
         if (on) {
+            int i = 1;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
+            for (; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 d = cur - (e - 1)->x4;
                 if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
@@ -2515,8 +2518,9 @@ void CamEvtStepShk(CfCamEventManager* self) {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 1;
         }
+        int iNB = 1;
         CfCamEventElem* eNB = self->shake[0].u.elems + 1;
-        for (int iNB = 1; iNB < self->shake[0].field_0x166; iNB++, eNB) {
+        for (; iNB < self->shake[0].field_0x166; iNB++, eNB) {
             f32 cur = eNB->x4;
             f32 d = cur - (eNB - 1)->x4;
             if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {

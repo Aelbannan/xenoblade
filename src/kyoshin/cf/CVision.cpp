@@ -3218,7 +3218,7 @@ void cf::CVision::setEffectScale(u32 active) {
         if (effectArray[i] != 0) {
             setChildF50G_(effectArray[i], scl);
             if (effectArray[i]->mSchedule != 0) {
-                schedUpdate(effectArray[i]->mSchedule, lbl_eu_80667CF0);
+                (effectArray[i]->mSchedule)->Update(lbl_eu_80667CF0);
             }
         }
     }

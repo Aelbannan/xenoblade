@@ -15,8 +15,8 @@
 // linkage; the canonical declarations live in headers that are out of this
 // TU's writable scope).
 extern "C" void schedReleaseAllItems(CSchedule* self);
-extern "C" void schedFeedTargetDist(CSchedule* self);
-extern "C" void schedUpdate(CSchedule* self, f32 dt);
+// CSchedule::FeedTargetDist/Update are members now; see monolib/core/CSchedule.hpp.
+// (line kept to hold downstream -ipa line numbers stable.)
 extern "C" void __ct__CSchedule(CSchedule* self);
 extern "C" int Sched_Init(CSchedule* self, ScheduleEntry* entries,
                              u8* field_0x08_ptr, u8* field_0x0c_ptr,
@@ -248,7 +248,7 @@ static u32 slAllocHandle(void) {
     } while (0)
 
 // ---------------------------------------------------------------------------
-// SchedList_StepAll: step every schedule (schedUpdate with a delta), then
+// SchedList_StepAll: step every schedule (CSchedule::Update with a delta), then
 // remove-and-destroy any schedule whose flags select the removal path
 // (bit 10 set, bit 15 clear).
 // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ void SchedList_StepAll(SLList* self, f32 dt) {
     if (count != 0) {
         node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr && node != 0) {
-            schedUpdate((CSchedule*)node->mItem, dt);
+            ((CSchedule*)node->mItem)->Update(dt);
             node = node->mNext;
         }
         do {
@@ -323,7 +323,7 @@ void SchedList_SweepAll(SLList* self) {
     }
 }
 
-// SchedList_SweepMatched: schedFeedTargetDist on each schedule whose field_0x10 matches x.
+// SchedList_SweepMatched: CSchedule::FeedTargetDist on each schedule whose field_0x10 matches x.
 void SchedList_SweepMatched(SLList* self, u8* x) {
     SLNode* node;
     u32 count = 0;
@@ -339,7 +339,7 @@ void SchedList_SweepMatched(SLList* self, u8* x) {
         while (node != self->mRes.mStartNodePtr) {
             CSchedule* item = (CSchedule*)node->mItem;
             if (x == item->field_0x10) {
-                schedFeedTargetDist(item);
+                item->FeedTargetDist();
             }
             node = node->mNext;
         }

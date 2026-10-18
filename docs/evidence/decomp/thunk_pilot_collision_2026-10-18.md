@@ -60,3 +60,38 @@ not verified).
   member-ization, dry-run planner + gated apply.
 
 Both are self-contained under `tools/coop/` and do not edit the tree.
+
+## Resolution (2026-10-18, verified)
+
+**Stage 1 — thunk recovery: hypothesis TRUE, landed.** MWCC names adjustor thunks
+after the overridden virtual, so declaring `IScnRender::cbRenderBefore` (slot 1)
+with a separate non-virtual `handleEmptyRender` makes MWCC emit the adjustors at
+the retail addresses itself:
+
+```
+@92@cbRenderBefore__15CMenuBattleModeFv   subi r3,-92 ; b ->cbRenderBefore
+@88@cbRenderBefore__Q22cf12CTaskCullingFv subi r3,-88 ; b ->cbRenderBefore
+```
+
+- `CMenuBattleMode`: split FAIL 0x8-over -> **PASS (0x654/0x654)**; gained
+  `dtorAdj5C` at 100%; `renderBeforeAdj5C`/`dtorAdj5C` map to the emitted thunks.
+- `CTaskCulling`: `@88@cbRenderBefore` 100%; +1 function.
+- `CTaskGame`: `handleEmptyRender__10IScnRenderFv` stays 100% (0x800444C0 blr).
+- Includer sample unchanged (CMainMenu 29/31, CQuestWindow 26/30,
+  CTaskGameEff 25/28, CMenuQuestLog 22/23, CMenuTutorial 13/14).
+- `configure.py` `link_transform` on the `CTaskGame` object keeps the historical
+  `handleEmptyRender__10IScnRenderFv` name in the linked map; it is a **supported
+  mechanism** (`tools/project.py:1150`, 12 uses in `configure.py`), not invented.
+
+**Stage 2 — member-ization: 3 symbols landed, code-neutral.**
+`schedUpdate`/`schedStepEntries`/`schedFeedTargetDist` ->
+`CSchedule::Update`/`StepEntries`/`FeedTargetDist` in `code_804E36DC.cpp`.
+Companion edits: +3 in-class declarations in `CSchedule.hpp`; 4 bare qualified
+file-scope declarations demoted to comments (a bare `CSchedule::Update(f32)` at
+file scope is MWCC 10127 — it broke `CMenuBattleMode.o` mid-flight and was fixed);
+2 real out-of-unit callers repaired (`CVision.cpp:3221`, `CfObjectImplEne.cpp:374`).
+
+Per-unit after: each renamed symbol matches at its exact baseline (`Update`
+77.9% 0x30c, `StepEntries` 100% 0x120, `FeedTargetDist` 28.4% 0x160/0x158);
+`ScheduleList`/`CVision`/`CfObjectImplEne` zero diff; all four units split PASS.
+Registry re-synced (19300 targets, match states preserved).**

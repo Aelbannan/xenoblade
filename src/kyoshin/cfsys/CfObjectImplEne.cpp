@@ -371,7 +371,7 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
         effect->mRotScaled[1] = *(s32*)&rotScaled[1];
         effect->mRotScaled[2] = *(s32*)&rotScaled[2];
         f32 dt = simGetLeafDist7B0((void*)battleObj->field_3F34);
-        schedUpdate((CSchedule*)effect, dt);
+        ((CSchedule*)effect)->Update(dt);
         schedReleaseAllItems(effect);
     }
     return 1;

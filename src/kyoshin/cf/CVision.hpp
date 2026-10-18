@@ -547,7 +547,7 @@ namespace cf{
 // Keep `extern "C"` and the exact symbol names -- they ARE the retail names.
 // ---------------------------------------------------------------------------
 extern "C" void setChildF50G_(void* self, float v);
-extern "C" void schedUpdate(CSchedule* self, f32 dt);
+// CSchedule::Update is a member now; declared in monolib/core/CSchedule.hpp.
 extern "C" void* bindIndexedEffect(u32 cls, int param);
 extern "C" void __dl__FPv(void* ptr);
 

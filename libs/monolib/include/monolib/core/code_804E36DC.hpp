@@ -52,5 +52,5 @@ extern "C" f64 lbl_eu_8066B2F0;
 extern "C" f64 lbl_eu_8066B2E8;
 
 // Functions defined in this TU (forward declarations)
-extern "C" void schedStepEntries(CSchedule* self, f32 delta);
+// CSchedule::StepEntries is a member now; declared in monolib/core/CSchedule.hpp.
 extern "C" void schedReleaseItemObjects(CScheduleItem* item);

@@ -136,7 +136,7 @@ extern "C" void schedStepItemSlots(CScheduleItem* item, f32 delta) {
     }
 }
 
-// us-804e8390: per-frame item step used by CSchedule::schedStepEntries.
+// us-804e8390: per-frame item step used by CSchedule::StepEntries.
 extern "C" DECOMP_DONT_INLINE int schedTickItemLifetime(CScheduleItem* item, f32 time, f32 delta,
                              ScheduleEntry* entries, CSchedule* sched) {
     if (!((item->mFlags >> 7) & 1)) {
@@ -191,44 +191,44 @@ extern "C" DECOMP_DONT_INLINE void schedFeedDistance(CScheduleItem* item, f32 de
 // ---------------------------------------------------------------------------
 
 // us-804e7b78: main update: transform flags, fixed-timestep stepping.
-extern "C" void schedUpdate(CSchedule* self, f32 dt) {
-    CScheduleFlags* flags = (CScheduleFlags*)&self->field_0x00;
+void CSchedule::Update(f32 dt) {
+    CScheduleFlags* flags = (CScheduleFlags*)&this->field_0x00;
     if (flags->b8) {
         return;
     }
 
-    f32 step = dt * self->field_0x50 * Scn_GetFrameDelta(self->field_0x10);
+    f32 step = dt * this->field_0x50 * Scn_GetFrameDelta(this->field_0x10);
 
     u32 hasTranslation =
-        (self->field_0x1c != lbl_eu_8066B2E4) || (self->field_0x20 != lbl_eu_8066B2E4) || (self->field_0x24 != lbl_eu_8066B2E4);
+        (this->field_0x1c != lbl_eu_8066B2E4) || (this->field_0x20 != lbl_eu_8066B2E4) || (this->field_0x24 != lbl_eu_8066B2E4);
     flags->b13 = hasTranslation;
 
     u32 hasRotation =
-        (self->field_0x28 != lbl_eu_8066B2E4) || (self->field_0x2c != lbl_eu_8066B2E4) || (self->field_0x30 != lbl_eu_8066B2E4);
+        (this->field_0x28 != lbl_eu_8066B2E4) || (this->field_0x2c != lbl_eu_8066B2E4) || (this->field_0x30 != lbl_eu_8066B2E4);
     flags->b12 = hasRotation;
 
     u32 hasScale =
-        (self->field_0x34 != lbl_eu_8066B2E0) || (self->field_0x38 != lbl_eu_8066B2E0) || (self->field_0x3c != lbl_eu_8066B2E0);
+        (this->field_0x34 != lbl_eu_8066B2E0) || (this->field_0x38 != lbl_eu_8066B2E0) || (this->field_0x3c != lbl_eu_8066B2E0);
     flags->b11 = hasScale;
 
     if (flags->b13 || flags->b12 || flags->b11) {
-        CERotEulerXYZ(&self->mMatrix, &self->field_0x28);
-        self->mMatrix.m[0][3] += self->field_0x1c;
-        self->mMatrix.m[1][3] += self->field_0x20;
-        self->mMatrix.m[2][3] += self->field_0x24;
+        CERotEulerXYZ(&this->mMatrix, &this->field_0x28);
+        this->mMatrix.m[0][3] += this->field_0x1c;
+        this->mMatrix.m[1][3] += this->field_0x20;
+        this->mMatrix.m[2][3] += this->field_0x24;
     } else {
-        self->mMatrix = ml::CMat34::identity;
+        this->mMatrix = ml::CMat34::identity;
     }
 
-    if (self->mEntryCount == 0) {
-        self->field_0x90 = 0.0f;
-        self->field_0x94 = 1.0f;
+    if (this->mEntryCount == 0) {
+        this->field_0x90 = 0.0f;
+        this->field_0x94 = 1.0f;
         return;
     }
 
-    if (self->field_0x90 != lbl_eu_8066B2E4) {
-        s32 denom = (s32)self->field_0x94;
-        s32 numer = (s32)(step + self->field_0x90);
+    if (this->field_0x90 != lbl_eu_8066B2E4) {
+        s32 denom = (s32)this->field_0x94;
+        s32 numer = (s32)(step + this->field_0x90);
         s32 count = numer / denom;
         s32 rem = numer - count * denom;
         step = (f32)rem;
@@ -237,47 +237,47 @@ extern "C" void schedUpdate(CSchedule* self, f32 dt) {
             count--;
         }
         for (s32 i = 0; i < count; i++) {
-            schedStepEntries(self, (f32)denom);
-            if (self->mEntryCount != 0) {
+            this->StepEntries((f32)denom);
+            if (this->mEntryCount != 0) {
                 for (int j = 0; j < 32; j++) {
-                    CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[j]);
+                    CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(this->mHandles[j]);
                     if (item != NULL) {
                         schedReleaseItemObjects(item);
                     }
                 }
             }
         }
-        self->field_0x90 = 0.0f;
-        self->field_0x94 = 1.0f;
+        this->field_0x90 = 0.0f;
+        this->field_0x94 = 1.0f;
     }
 
-    schedStepEntries(self, step);
+    this->StepEntries(step);
 }
 
 // us-804e7e84: step all resolved entries once; retire when none remain active.
-extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
+void CSchedule::StepEntries(f32 delta) {
     s16* h2;
     s16* h;
     int i;
     CScheduleItem* item;
-    if (self->mEntryCount == 0) {
+    if (this->mEntryCount == 0) {
         return;
     }
-    self->field_0xd9 = 0;
-    h = (s16*)self;
+    this->field_0xd9 = 0;
+    h = (s16*)this;
     i = 0;
     for (; i < 32; i++, h++) {
         item = (CScheduleItem*)SchedItem_FetchByHandle(h[76]);
         if (item != NULL) {
-            if (schedTickItemLifetime(item, self->field_0x54, delta, self->mEntries, self) != 0) {
-                self->field_0xd9++;
+            if (schedTickItemLifetime(item, this->field_0x54, delta, this->mEntries, this) != 0) {
+                this->field_0xd9++;
             }
         }
     }
-    if (self->field_0xd9 <= 0) {
-        ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
-        if (self->mEntryCount != 0) {
-            h2 = (s16*)self;
+    if (this->field_0xd9 <= 0) {
+        ((CScheduleFlags*)&this->field_0x00)->b15 = 0;
+        if (this->mEntryCount != 0) {
+            h2 = (s16*)this;
             i = 0;
             for (; i < 32; i++, h2++) {
                 if (h2[76] >= 0) {
@@ -285,10 +285,10 @@ extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
                     h2[76] = -1;
                 }
             }
-            self->mEntryCount = 0;
+            this->mEntryCount = 0;
         }
     }
-    self->field_0x54 += delta;
+    this->field_0x54 += delta;
 }
 
 // us-804e7fa4: emit/update every resolved item.
@@ -305,26 +305,26 @@ extern "C" void schedReleaseAllItems(CSchedule* self) {
 }
 
 // us-804e8008: compute distance to the schedule target and feed it to items.
-extern "C" void schedFeedTargetDist(CSchedule* self) {
-    if (self->mEntryCount == 0) {
+void CSchedule::FeedTargetDist() {
+    if (this->mEntryCount == 0) {
         return;
     }
     f32 dist;
-    if (self->field_0x14 != 0) {
-        CSchedulePosLink* link = reinterpret_cast<CSchedulePosLink*>(self->field_0x14);
+    if (this->field_0x14 != 0) {
+        CSchedulePosLink* link = reinterpret_cast<CSchedulePosLink*>(this->field_0x14);
         const ml::CVec3* pos = (const ml::CVec3*)link->vfunc11();
-        u8* target = (u8*)Scn_FindCamItem(self->field_0x10, -1);
+        u8* target = (u8*)Scn_FindCamItem(this->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *pos;
         dist = PSVECMag(diff);
     } else {
-        u8* target = (u8*)Scn_FindCamItem(self->field_0x10, -1);
-        ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *(const ml::CVec3*)&self->field_0x1c;
+        u8* target = (u8*)Scn_FindCamItem(this->field_0x10, -1);
+        ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *(const ml::CVec3*)&this->field_0x1c;
         dist = PSVECMag(diff);
     }
     for (int i = 0; i < 32; i++) {
-        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(self->mHandles[i]);
+        CScheduleItem* item = (CScheduleItem*)SchedItem_FetchByHandle(this->mHandles[i]);
         if (item != NULL) {
-            schedFeedDistance(item, dist, self);
+            schedFeedDistance(item, dist, this);
         }
     }
 }

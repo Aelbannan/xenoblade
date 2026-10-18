@@ -29,6 +29,9 @@ struct CScheduleChild {
 // Total size: 0xf0.
 struct CSchedule {
     ~CSchedule();
+    void Update(f32 dt);
+    void StepEntries(f32 delta);
+    void FeedTargetDist();
 
     u16 field_0x00;          // 0x00: packed flags built from init params
     ScheduleEntry* mEntries; // 0x04: pointer to ScheduleEntry array

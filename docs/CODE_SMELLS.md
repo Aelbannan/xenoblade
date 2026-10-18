@@ -11,10 +11,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 19144 |
-| extern "C" declarations (non-lbl_*, imports) | 8811 |
-| extern "C" definitions (forced names) | 5125 |
-| `self`/register-style params | 13861 |
+| extern "C" (total lines) | 19139 |
+| extern "C" declarations (non-lbl_*, imports) | 8809 |
+| extern "C" definitions (forced names) | 5122 |
+| `self`/register-style params | 13852 |
 | `void*` (params + locals) | 7942 |
 | raw pointer offset arithmetic | 5620 |
 | deref-through-cast arithmetic | 2340 |
@@ -125,9 +125,9 @@ Top TUs by view debt:
 | libs/monolib/src/core/CView.cpp | 71 | 18 | 32 | 19 | 85 | 16 | 0 | 0 | 125 | 0 | 0 | 0 | 94 | 1 |
 | libs/monolib/src/core/CViewFrame.cpp | 31 | 9 | 19 | 9 | 1 | 1 | 0 | 0 | 15 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/CViewRoot.cpp | 41 | 4 | 3 | 6 | 0 | 1 | 0 | 0 | 23 | 0 | 0 | 0 | 2 | 0 |
-| libs/monolib/src/core/ScheduleList.cpp | 20 | 0 | 31 | 13 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| libs/monolib/src/core/ScheduleList.cpp | 18 | 0 | 29 | 13 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
 | libs/monolib/src/core/code_804DEDA8.cpp | 17 | 13 | 9 | 32 | 44 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 115 | 3 |
-| libs/monolib/src/core/code_804E36DC.cpp | 3 | 15 | 16 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
+| libs/monolib/src/core/code_804E36DC.cpp | 3 | 12 | 9 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
 | libs/monolib/src/core/code_804EE558.cpp | 23 | 9 | 5 | 34 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 31 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 21 | 1 | 5 | 31 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 1 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -921,13 +921,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/ScheduleList.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 20,
+  "extern_c_nonlbl_decl": 18,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "ptr_sites": 1,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 31,
+  "self_params": 29,
   "void_ptr": 13
  },
  "libs/monolib/src/core/code_804DEDA8.cpp": {
@@ -947,12 +947,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/core/code_804E36DC.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 15,
+  "extern_c_nonlbl_def": 12,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 3,
   "schedule_pragma": 0,
-  "self_params": 16,
+  "self_params": 9,
   "void_ptr": 3
  },
  "libs/monolib/src/core/code_804EE558.cpp": {

@@ -352,7 +352,9 @@ struct LODElem48 {
     f32 field_0x0;                 // 0x00 base position x
     f32 field_0x4;                 // 0x04 base position y
     f32 field_0x8;                 // 0x08 base position z
-    u8  mPad_0C[0x40 - 0xC];       // 0x0c..0x3f
+    u8  mPad_0C[0x38 - 0xC];       // 0x0c..0x37
+    f32 field_0x38;                // 0x38 culling radius (shared-buffer data)
+    u8  mPad_3C[0x40 - 0x3C];      // 0x3c..0x3f
     u16 field_0x40;                // 0x40 element id
     u16 field_0x42;                // 0x42 enabled flag (nonzero)
     u16 field_0x44;                // 0x44 flag bits (bit 1: byte param, bit 6: ps source)
@@ -417,6 +419,7 @@ struct LODElem48Full {
     u16 field_0x44;            // 0x44
     u8  field_0x46;            // 0x46
     u8  field_0x47;            // 0x47
+    u8  mPad_48[4];             // 0x48..0x4b trailing pad (0x48 stride)
 };
 
 // Manager world-position view at LODMemMan+0x20 (floats consumed by the
@@ -706,6 +709,11 @@ extern "C" void updateSubViewFrame__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u8*
 // the exact retail names (the Fv suffix is a decompiler guess).  The func_*
 // bodies are the retail-named member stubs / definitions below.
 extern "C" u32 ScnRes_IsStateActive_E4A0();
+// ScnRes_Notify2Word_E458 returns the scan-query result in r3 (its void-typed
+// definition in scn/code_804BD8E8.cpp tail-calls launchRayScan, leaving the
+// result live; this TU's prototype exposes it so the refreshGroupFromList
+// gate can test it).  Call codegen is identical either way.
+extern "C" u32 ScnRes_Notify2Word_E458(u32 a1, u32 a2);
 extern "C" LODPoolBlock* findPoolBlockById__Q23LOD9LODMemManFv(LODPoolBlock* self, int id);
 extern "C" u8* getOrCreatePoolData__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int id);
 extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 size, int id);
@@ -1759,7 +1767,7 @@ bool isElementFlagClear__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {
 void setElementLodLevel__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, f32 f1) {
     LODMemManLayout* l = (LODMemManLayout*)self;
     if (!(l->field_0x6C & 1)) return;
-    u16 v = (u16)(s32)(lbl_eu_8066A6C0 * f1);
+    u16 v = (u16)(s32)(lbl_eu_8066A70C * f1);
     LODElem48* p48 = l->field_0x90;
     LODElem20* p20 = l->field_0x4;
     int i = 0;
@@ -2227,9 +2235,118 @@ void updateBoxElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODBoxElem* box)
     }
 }
 
-void LOD::LODMemMan::refreshGroupFromList() {}
+// refreshGroupFromList: per-pair element update driven by a { type, index }
+// group list.  `value` counts the 4-byte pairs at `data` (u16 type index at
+// +0x0, u16 element index at +0x2).  A per-element bitmap at +0x64 skips
+// already-processed elements (and records the bit-0x2-flagged ones); every
+// other element goes through the shared distance / type-match / plane-cull
+// core (same shape as updateElementsByDesc): direct-model types bind through
+// the scene, ResFile types resolve a slot, and survivors link into the
+// element chains unless the Notify gate or the kind check stops them.
+// The Fv retail symbol carries (value, data) in r4/r5; C linkage keeps the
+// exact name while exposing the register args (cf. updateElementsByDesc).
+// There are no member-form callers, so the member declaration is satisfied
+// by this definition.
+static inline f32 LODVecLenSq(const LODVec3f* v);
+// Chain-hoist pinning (MWCC_PATTERNS mpv fix): retail recomputes the
+// (u8*)self+0x20/0xCC/0xA44 derives at each use site, but the O4 scheduler
+// speculatively hoists them into prologue saved regs.  scheduling-off pins
+// advances to program order and stops the hoist.
+extern "C" void refreshGroupFromList__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u16 value, u8* data) {
+    LODMemManLayout* l = (LODMemManLayout*)self;
+    const f32 cZero = lbl_eu_8066A6C0;
+    LODVec3f delta;
+    LODVec3f work;
+    for (int i = 0; i < value; i++, data += 4) {
+        u16 idx = ((u16*)data)[1];
+        if (l->field_0x64[idx >> 5] & (1u << (idx & 31))) {
+            continue;
+        }
+        LODElem20* elem = &l->field_0x4[idx];
+        if (elem->field_0x0 & 2) {
+            l->field_0x64[idx >> 5] |= (1u << (idx & 31));
+            continue;
+        }
+        u16 t = ((u16*)data)[0];
+        LODTypeDesc18* td = &l->field_0x94[t];
+        LODElem48* ed = &l->field_0x90[idx];
+        // Paired-single SDK helpers (cf. MWCC_PATTERNS §1g): scalar f32 math
+        // never fuses into the retail psq_l/ps_sub/ps_sum0 sequences.
+        nw4r::math::VEC3Sub(
+            (nw4r::math::VEC3*)&delta,
+            (const nw4r::math::VEC3*)&ed->field_0x0,
+            (const nw4r::math::VEC3*)((LODMgrPosView*)self)->mPos);
+        f32 distSq = nw4r::math::VEC3Dot(
+            (const nw4r::math::VEC3*)&delta,
+            (const nw4r::math::VEC3*)&delta);
+        f32 lim = td->field_0xC;
+        lim *= lim;
+        if (!(distSq < lim)) {
+            continue;
+        }
+        if (td->field_0x6 == 1) {
+            l->field_0x64[idx >> 5] |= (1u << (idx & 31));
+            bindResMdl__Q23LOD9LODMemManFv(
+                (LOD::LODMemMan*)((u8*)self + 0xCC), (CScn*)l->mView_1C,
+                td->field_0x0, idx, (const f32*)ed);
+            continue;
+        }
+        LODElem20* rec = &l->field_0x4[idx];
+        s32 slot;
+        if (td->mFlags & 0x8000) {
+            if (acquireResFileSlot__Q23LOD9LODMemManFv(
+                    (LOD::LODMemMan*)((u8*)self + 0xCC),
+                    (LOD::LODMemMan*)((u8*)self + 0xA44), td->field_0x0,
+                    &slot) == 0) {
+                continue;
+            }
+            rec->field_0x0 |= 1;
+        } else {
+            slot = t;
+            rec->field_0x0 &= ~1u;
+        }
+        l->field_0x64[idx >> 5] |= (1u << (idx & 31));
+        f32 rad = ed->field_0x38;
+        f32 rad2 = rad * rad;
+        if (rad2 < distSq) {
+            f32 proj = nw4r::math::VEC3Dot(
+                (const nw4r::math::VEC3*)((LODMgrPosView*)self)->qPos,
+                (const nw4r::math::VEC3*)&delta);
+            f32 g = proj * ((LODMgrPosView*)self)->field_0x38;
+            if (proj <= cZero && rad2 < g * g) {
+                continue;
+            }
+            nw4r::math::VEC3Scale(
+                (nw4r::math::VEC3*)&work,
+                (const nw4r::math::VEC3*)((LODMgrPosView*)self)->qPos, g);
+            nw4r::math::VEC3Sub(
+                (nw4r::math::VEC3*)&work,
+                (const nw4r::math::VEC3*)&delta,
+                (const nw4r::math::VEC3*)&work);
+            f32 limv = g * ((LODMgrPosView*)self)->field_0x74 + rad * ((LODMgrPosView*)self)->field_0x78;
+            f32 workSq = nw4r::math::VEC3Dot(
+                (const nw4r::math::VEC3*)&work,
+                (const nw4r::math::VEC3*)&work);
+            if (!(workSq < limv * limv)) {
+                continue;
+            }
+        }
+        if (l->field_0x68 & 0x10) {
+            if (ed->field_0x44 & 1) {
+                if (ScnRes_Notify2Word_E458((u32)((u8*)self + 0x20), (u32)ed)) {
+                    continue;
+                }
+            }
+        }
+        if (rec->field_0xE == 0) {
+            continue;
+        }
+        rec->field_0x18 = (u16)slot;
+        linkElementToChains__Q23LOD9LODMemManFv(self, rec, t, &delta);
+    }
+}
 
-// Squared length of *v.  Taking the pointer forces the vector argument
+// Squared length of *v.
 // memory-resident, mirroring retail's store/reload shape.
 static inline f32 LODVecLenSq(const LODVec3f* v) {
     return v->x * v->x + v->y * v->y + v->z * v->z;
@@ -2308,7 +2425,8 @@ extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
                 }
 
                 // Plane culling against the manager's radius planes.
-                f32 rad = ed->field_0x8;
+                // The culling radius sits at ed+0x38 (mMtx[11] in this view).
+                f32 rad = ed->mMtx[11];
                 f32 rad2 = rad * rad;
                 if (rad2 < distSq) {
                     f32 proj = mp->qPos[0] * delta.x + mp->qPos[1] * delta.y +
@@ -2454,7 +2572,7 @@ void LOD::LODMemMan::refreshPaletteBinding() {
         int outIdx = 0;
         for (int i = 0; i < count; i++, outIdx++, entries++) {
             const char* name = (const char*)((u8*)group + *entries);
-            for (u32 j = 0; j < numEntries; j++) {
+            for (int j = 0; j < (int)numEntries; j++) {
                 nw4r::g3d::ResTexPlttInfo info =
                     resMdl.GetResTexPlttInfoOffsetFromTexName(j);
                 if (info.ptr() == NULL)
@@ -2489,7 +2607,7 @@ void LOD::LODMemMan::refreshPaletteBinding() {
     }
     if (notFound) {
         l->field_0xB4 = 0;
-        l->field_0x6C &= ~0x180000u;
+        l->field_0x6C &= ~0x1800u;
     }
 }
 
@@ -2629,30 +2747,53 @@ extern "C" void linkElementToChains__Q23LOD9LODMemManFv(
 // ---------------------------------------------------------------------------
 void rebuildElementChains__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int count) {
     LODBuildList* l = (LODBuildList*)self;
+    // Retail strength-reduces the inner loop to pointer/offset induction
+    // (mtctr/bdnz over 3, pre-advanced tail/head/pair pointers), so the
+    // source keeps explicit inductions instead of [i]/[w] indexing.
+    // Declaration order drives saved-reg colors (ascending): bo, t1, off,
+    // hb, t2, bound, w.  Assignments stay in prologue order (bound first).
+    int bo;
+    LODElem20** t1;
+    int off;
+    u8* hb;
+    LODElem20** t2;
+    int bound;
+    int w;
     LODElem20* tail2[3] = { 0, 0, 0 };
     LODElem20* tail1[3] = { 0, 0, 0 };
-    int bound = count * 6;
-    int w = 0;
+    bound = count * 6;
+    w = 0;
+    bo = 0;
     while (w < bound) {
-        for (int i = 0; i < 3; i++, w += 2) {
-            LODElem20* elem = l->mPairs[w];
+        t1 = tail1;
+        off = 0;
+        hb = (u8*)l;
+        t2 = tail2;
+        for (int k = 0; k < 3; k++) {
+            LODElem20* elem = *(LODElem20**)((u8*)l->mPairs + bo);
             if (elem != 0) {
                 if (elem->field_0x0 & 1) {
-                    if (tail1[i] != 0) {
-                        ((LODLinkNode*)tail1[i])->mLinks[i] = elem->field_0x1A;
+                    if (*t1 != 0) {
+                        *(s16*)((u8*)*t1 + 0x10 + off) = elem->field_0x1A;
                     } else {
-                        l->mHeadSet[i] = elem;
+                        *(LODElem20**)(hb + 0x48) = elem;
                     }
-                    tail1[i] = l->mPairs[w + 1];
+                    *t1 = *(LODElem20**)((u8*)l->mPairs + bo + 4);
                 } else {
-                    if (tail2[i] != 0) {
-                        ((LODLinkNode*)tail2[i])->mLinks[i] = elem->field_0x1A;
+                    if (*t2 != 0) {
+                        *(s16*)((u8*)*t2 + 0x10 + off) = elem->field_0x1A;
                     } else {
-                        l->mHeadClr[i] = elem;
+                        *(LODElem20**)(hb + 0x3C) = elem;
                     }
-                    tail2[i] = l->mPairs[w + 1];
+                    *t2 = *(LODElem20**)((u8*)l->mPairs + bo + 4);
                 }
             }
+            t1++;
+            off += 2;
+            hb += 4;
+            t2++;
+            bo += 8;
+            w += 2;
         }
     }
     for (int i = 0; i < 3; i++) {
@@ -3483,11 +3624,12 @@ void reloadChildGxLights__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int childIdx)
             }
         }
     }
+    // Retail order: load +0x96C, store +0x974, load limit, store +0x970,
+    // i = 0, load base colour, then the hoisted shift-one.
+    f32 f96c = m->field_0x96C;
     m->field_0x974 = childIdx;
-    // Load the limit scale before refreshing +0x970: retail interleaves the
-    // limit load between the two stores.
     f32 limit = lbl_eu_8066A720;
-    m->field_0x970 = m->field_0x96C;
+    m->field_0x970 = f96c;
     int i = 0;
     GXColor baseColor = lbl_eu_8066A71C;
     for (; i < p->field_0x280; i++) {

@@ -174,6 +174,10 @@ void CSysWinBuff::cbRenderBefore() {
 // allocation failed (r31 stays NULL), matching retail.
 // ---------------------------------------------------------------------------
 extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* scene, u16 arg) {
+    const PtmfNullWords* ptmf;
+    u32 ptmfSecond;
+    u32 ptmfFirst;
+    u32 ptmfWord2;
     if (lbl_eu_806648E0 != 0)
         return 0;
 
@@ -187,21 +191,20 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
         // copied, then the scalar fields are initialised.
         obj->vtable = (void*)lbl_eu_8052D238;
 
-        // Copy the null ptmf words ([1],[0],[2] per slot; CCol6CheckBat shape:
-        // struct view keeps one materialised base, vtFinal interleaved).
-        const PtmfNullWords* ptmf =
-            reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
-        u32 ptmfWord1 = ptmf->w1;
-        u32 ptmfWord0 = ptmf->w0;
-        char* vtFinal = lbl_eu_80537DC0;
-        obj->callbacks[0] = ptmfWord0;
-        obj->callbacks[1] = ptmfWord1;
-        u32 ptmfWord2 = ptmf->w2;
+        // Copy the null member-function pointer into both callback slots
+        // (retail loads __ptmf_null[1],[0],[2] per slot - load-both/store-both,
+        // so use intermediate locals to force the retail ordering).
+        ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
+        ptmfFirst = ptmf->w1;
+        ptmfSecond = ptmf->w0;
+        obj->callbacks[0] = ptmfSecond;
+        obj->callbacks[1] = ptmfFirst;
+        ptmfWord2 = ptmf->w2;
         obj->callbacks[2] = ptmfWord2;
-        ptmfWord1 = ptmf->w1;
-        ptmfWord0 = ptmf->w0;
-        obj->callbacks[3] = ptmfWord0;
-        obj->callbacks[4] = ptmfWord1;
+        ptmfFirst = ptmf->w1;
+        ptmfSecond = ptmf->w0;
+        obj->callbacks[3] = ptmfSecond;
+        obj->callbacks[4] = ptmfFirst;
         ptmfWord2 = ptmf->w2;
         obj->callbacks[5] = ptmfWord2;
 
@@ -215,9 +218,9 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
         obj->active = 1;
         obj->field68 = 0;
 
-        obj->vtable = vtFinal;
-        obj->field6C = (u32)(vtFinal + 0x24);
-        obj->field70 = (u32)(vtFinal + 0xac);        obj->fileHandle = 0;
+        obj->vtable = (void*)lbl_eu_80537DC0;
+        obj->field6C = (u32)(lbl_eu_80537DC0 + 0x24);
+        obj->field70 = (u32)(lbl_eu_80537DC0 + 0xac);        obj->fileHandle = 0;
         obj->scene = scene;
 
         __ct__CSysWin(&obj->mSysWin[0], 0);

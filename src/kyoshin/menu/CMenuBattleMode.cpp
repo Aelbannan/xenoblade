@@ -106,10 +106,10 @@ void CMenuBattleMode::Init() {
 
 // C-linkage declarations so MWCC emits the plain retail symbol names (the
 // thunks jump through these unmangled addresses; C++ linkage would re-mangle).
-extern "C" void cbRenderBefore__15CMenuBattleModeFv();
-void CMenuBattleMode_renderBeforeAdj5C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
+// (thunk-recovery pilot: MWCC now emits the +0x5C adjustors itself as weak
+// @92@cbRenderBefore__15CMenuBattleModeFv / @92@__dt__15CMenuBattleModeFv --
+// the hand-written Adj5C thunks above are deleted; padding keeps line count.)
 extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag);
-void CMenuBattleMode_dtorAdj5C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
 // Deleting virtual destructor (D1 shape): destroys the mLayoutMem member
 // (delete flag -1), then the CProcess base (via IUICf/CTTask), then frees the

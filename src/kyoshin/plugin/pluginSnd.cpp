@@ -13,6 +13,11 @@ extern "C" {
     extern float lbl_eu_80667D90;   // SE volume scale (float)
     extern float lbl_eu_80667D94;   // BGM fade time (float)
     extern double lbl_eu_80667D98;  // signed int->float magic double (2^52 + 2^31)
+// Retail-owned pool slot for MWCC's int->float conversion magic (2^52+2^31 =
+// 4503601774854144.0, exact below 2^53). Defined so the builtin conversions
+// merge into the named retail slot instead of a TU-local @N pool entry.
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80667D98 =
+    4503601774854144.0;
     extern float lbl_eu_80667DA0;   // voice volume (float)
     extern char lbl_eu_80504148[];  // voice file-name format string
 
@@ -58,6 +63,11 @@ template <> void ml::FixStr<128>::format(const char* fmt, ...);
 // Script command: play a BGM track.  Arg 1 is the file name, arg 2 a fixed-
 // point volume (scaled by lbl_eu_80667D90), arg 3 an optional loop/clear
 // flag that defaults to false when omitted.
+// Retail defines every command with a plain (unmangled) symbol, so the whole
+// command family has C linkage. Plain decomp names also let the reloc-map
+// miner pair retail/decomp functions and canonicalize the TU-local int->float
+// magic pool (@N) to lbl_eu_80667D98 for the witness reloc gate.
+extern "C" {
 int playBgm(VMThread* pThread) {
     const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
     int fixed = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
@@ -92,34 +102,33 @@ int stopBgm(VMThread* pThread) {
 int setFieldBgm(VMThread* pThread) {
     int first;
     int second;
-    int idx;
-    int volInt;
-    int enable;
     float vol;
-    if (vmArgOmitChk(pThread, 1) != 0) {
+    int idx = 1;
+
+    if (vmArgOmitChk(pThread, 1)) {
         first = 0;
         idx = 2;
     } else {
-        idx = 2;
-        first = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+        VMArg* arg = vmArgPtrGet(pThread, idx++);
+        first = vmArgIntGet(idx, arg);
     }
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, idx)) {
         second = 0;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         second = vmArgIntGet(idx, arg);
     }
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    if (vmArgOmitChk(pThread, idx)) {
         vol = lbl_eu_80667DA0;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
-        float converted = vmArgFixedGet(idx, arg);
-        vol = converted;
+        vol = (float)vmArgFixedGet(idx, arg);
     }
-    volInt = (int)vol;
-    if (vmArgOmitChk(pThread, idx) != 0) {
+    int volInt = (int)vol;
+    int enable;
+    if (vmArgOmitChk(pThread, idx)) {
         enable = 0;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
@@ -365,8 +374,8 @@ int playSeMap(VMThread* pThread) {
 // an optional fixed-point fade time (default lbl_eu_80667D94), arg 3 the
 // new volume (default 0 when omitted).
 int volSeMap(VMThread* pThread) {
-    int id;
     int idx;
+    int id;
     int vol;
     float fade;
     id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -379,17 +388,18 @@ int volSeMap(VMThread* pThread) {
         fade = (float)vmArgFixedGet(idx, arg);
     }
     int fadeInt = (int)fade;
-    if (vmArgOmitChk(pThread, idx) == 0) {
+    if (vmArgOmitChk(pThread, idx) != 0) {
+        vol = 0;
+    } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         vol = vmArgIntGet(idx, arg);
-    } else {
-        vol = 0;
     }
-    BattleWork_ApplyVolumeStore(id, vol, (float)fadeInt / lbl_eu_80667D90);
+    float fadeF = (float)fadeInt / lbl_eu_80667D90;
+    BattleWork_ApplyVolumeStore(id, vol, fadeF);
     return 0;
 }
 
-// Script command: stop a common SE slot.  Arg 2 is a fixed-point volume that
+// Script command: stop a common SE slot.
 // is scaled by lbl_eu_80667D90.  The int->float conversion is written
 // manually (MWCC_CASES 7i) so the magic double reloc targets the retail
 // lbl_eu_80667D98 instead of a TU-local @N pool constant.
@@ -450,7 +460,7 @@ int seCamPos(VMThread* pThread) {
     return 0;
 }
 
-extern "C" int clearCamPos() {
+int clearCamPos() {
     extern unsigned char lbl_eu_8066443A;
     extern void func_801AAD08();
     func_801AAD08();
@@ -458,9 +468,10 @@ extern "C" int clearCamPos() {
     return 0;
 }
 
-extern "C" void pluginSndRegist() {
+void pluginSndRegist() {
     extern void vmPluginRegist(void*, void*);
     extern char lbl_eu_80504148[];
     extern char lbl_eu_805333F8[];
     vmPluginRegist((void*)((char*)lbl_eu_80504148 + 0x15), (void*)lbl_eu_805333F8);
 }
+} // extern "C"

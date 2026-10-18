@@ -191,8 +191,11 @@ int CfTFile::OnFileEvent(CEventFile* pEventFile) {
     return result;
 }
 
-// Retail dtor mangling of the global-scope CfTFile class.
-CfTFile* __dt__7CfTFileFv(CfTFile* obj, int flag) {
+// Retail dtor carries the cf::-qualified mangling (__dt__Q22cf7CfTFileFv)
+// even though the class itself is global-scope (cf. OnFileEvent__7CfTFile).
+// Like the __ct__cf_CfTFile ctor above, the __ prefix keeps the name
+// unmangled so it is emitted verbatim.
+CfTFile* __dt__Q22cf7CfTFileFv(CfTFile* obj, int flag) {
     if (obj != nullptr && flag > 0) {
         operator delete(obj);
     }
@@ -204,15 +207,18 @@ float CfT_PlayRateGet() { return lbl_eu_80661AF0; }
 void func_80069EA8(int param) {
     extern float lbl_eu_80666214;
     extern float lbl_eu_80666218;
-    unsigned char val = lbl_eu_80663DA0;
     if (param != 0) {
+        unsigned char val = lbl_eu_80663DA0;
+        float rate = lbl_eu_80666214;
         val |= 0x02;
         lbl_eu_80663DA0 = val;
-        lbl_eu_80661AF0 = lbl_eu_80666214;
+        lbl_eu_80661AF0 = rate;
     } else {
+        unsigned char val = lbl_eu_80663DA0;
+        float rate = lbl_eu_80666218;
         val &= 0x02;
         lbl_eu_80663DA0 = val;
-        lbl_eu_80661AF0 = lbl_eu_80666218;
+        lbl_eu_80661AF0 = rate;
     }
 }
 

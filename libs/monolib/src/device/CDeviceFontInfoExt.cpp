@@ -164,7 +164,7 @@ CDeviceFontInfoExt::CDeviceFontInfoExt() {
     field_60 = 0;
 }
 
-// CDeviceFontInfoExt::~CDeviceFontInfoExt() (us-8045742c, 0x88) — mirrors the
+// CDeviceFontInfoExt::~CDeviceFontInfoExt() (us-8045742c, 0x88) -- mirrors the
 // accepted CDeviceFontInfoRom dtor recipe: explicit vptr re-store (MWCC folds
 // its own auto-store into this one, as in the ctor above), PackedFont::Destroy,
 // guarded deallocate of the +0x18 buffer, explicit PackedFont dtor call with

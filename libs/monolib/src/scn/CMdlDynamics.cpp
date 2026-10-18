@@ -856,12 +856,12 @@ extern "C" __declspec(noinline) void MdlDyn_StoreLensHolder(u8* self, const void
 __declspec(noinline) void MdlDyn_AppendRec(void *pRec, void *pSrc) {
     int *p = (int *)pRec;
     int *src = (int *)pSrc;
+    const int off = p[1] * 12;
     int idx = p[1];
     int base = p[0];
-    int off = idx * 12;
     p[1] = idx + 1;
+    *(int *)((u8 *)base + off) = *src;
     int *dst = (int *)(base + off);
-    dst[0] = src[0];
     float *fdst = (float *)dst;
     float *fsrc = (float *)src;
     fdst[1] = fsrc[1];
@@ -891,21 +891,24 @@ void MdlDyn_AddVecAll(CMdlDynSet* self, const nw4r::math::VEC3* src) {
     CMdlDynList** it = vself->field_0x8;
     while (it != vself->field_0x8 + vself->field_0xC) {
         u32 i = 0;
-        CMdlDynList* lst;
-        // The list fetch lives in the rotated test block (volatile keeps it
-        // out of LICM's hands); the assignment forwards it to the body so
-        // its register dies right after the element address is formed.
-        for (; i !=
-               (lst = (CMdlDynList*)*(volatile CMdlDynList**)it)->field_0x4;
-             i++) {
-            CMdlDynElem* e = &lst->field_0x0[i];
+        u32 off = 0;
+        // Reloaded every inner iteration like retail: the element stores
+        // may alias the list slot, so the list pointer dies after the
+        // element address is formed and is re-fetched for the bound check.
+        CMdlDynList* lst = *it;
+        do {
+            u8* base = (u8*)lst->field_0x0;
+            i++;
+            CMdlDynElem* e = (CMdlDynElem*)(base + off);
+            off += sizeof(CMdlDynElem);
             nw4r::math::VEC3Add(&e->field_0x5C, &e->field_0x5C,
                                 (nw4r::math::VEC3*)src);
             nw4r::math::VEC3Add(&e->field_0x68, &e->field_0x68,
                                 (nw4r::math::VEC3*)src);
             nw4r::math::VEC3Add(&e->field_0x80, &e->field_0x80,
                                 (nw4r::math::VEC3*)src);
-        }
+            lst = (CMdlDynList*)*(volatile CMdlDynList**)it;
+        } while (i != lst->field_0x4);
         it++;
     }
 }
@@ -917,6 +920,7 @@ void MdlDyn_AddVecAll(CMdlDynSet* self, const nw4r::math::VEC3* src) {
 // The zero/sentinel constants are kept in locals so MWCC pins them to
 // registers across the deallocate calls, matching retail.
 void MdlDyn_FreeAll(CMdlDynamics* self) {
+    CMdlDynList* lst;
     if (self->buf08.field_0x4 != 0) {
         CMdlDynList** it = (CMdlDynList**)self->buf08.field_0x0;
         u32 zero = 0;
@@ -924,9 +928,8 @@ void MdlDyn_FreeAll(CMdlDynamics* self) {
         while (
             it != (CMdlDynList**)self->buf08.field_0x0 + self->buf08.field_0x4) {
             u32 idx;
-            u32 off;
             CMdlDynElem* e;
-            CMdlDynList* lst;
+            u32 off;
             CMdlDynElem* elem = (*it)->field_0x0;
             // Pass 1: raw pointer walk; the list pointer is re-read (into
             // lst) in the test each iteration.
@@ -1708,23 +1711,26 @@ extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r
     f32 wy2 = q->w * y2;
     f32 t = xz2 - wy2;
     f32 s = -t;
-    // Clamp into [-1,1]: four sequential direct guards (compare + conditional
-    // fmr from a fresh pool load each time); ±1 bounds are the shared-pool
-    // floats 1.0f/B3E8, never literals.
-    if (s >= 1.0f) {
-        s = 1.0f;
+    // Double defensive clamp plus a NaN-only domain warning, all against the
+    // shared-pool bound floats (never literals); same shape as the
+    // aimMdlLook pitch clamp.
+    if (s >= lbl_eu_8066B3D4) {
+        if (s > lbl_eu_8066B3D4) {
+            s = lbl_eu_8066B3E8;
+        }
+    } else {
+        s = lbl_eu_8066B3D4;
     }
-    if (s <= -1.0f) {
-        s = -1.0f;
-    }
-    if (s < -1.0f) {
-        s = -1.0f;
-    }
-    if (s > 1.0f) {
-        s = 1.0f;
+    if (s < lbl_eu_8066B3E8) {
+        s = lbl_eu_8066B3E8;
+    } else if (s > lbl_eu_8066B3D4) {
+        s = lbl_eu_8066B3D4;
     }
     s32 inDomain = 0;
-    if (s <= 1.0f && s >= -1.0f) {
+    if (s <= lbl_eu_8066B3D4) {
+        inDomain = 1;
+    }
+    if (s >= lbl_eu_8066B3E8) {
         inDomain = 1;
     }
     if (!inDomain) {
@@ -1880,25 +1886,27 @@ extern "C" s32 MdlDyn_PushSphere(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::ma
     }
 
     f32 radius = node->field_0x20;
-    f32 lenSq = nw4r::math::VEC3Dot((nw4r::math::VEC3*)&diff,
-                                    (nw4r::math::VEC3*)&diff);
-    if (lenSq >= radius * radius) {
-        return 0;
-    }
-    f32 len = sqrt(lenSq); // frsp on assignment
-    if (len == lbl_eu_8066B3D0) {
-        return 0;
-    }
-    diff *= lbl_eu_8066B3D4 / len;
+    f32 lenSq = nw4r::math::VEC3LenSq((nw4r::math::VEC3*)&diff);
+    // Inverted select: `<` with the hit body first lowers to fcmpo+bge
+    // (naive `>=` gives fcmpo+cror+bne).
+    if (lenSq < radius * radius) {
+        f32 len = sqrt(lenSq); // frsp on assignment
+        if (len == lbl_eu_8066B3D0) {
+            goto fail;
+        }
+        diff *= lbl_eu_8066B3D4 / len;
 
-    ml::CVec3 orig;
-    orig = *(ml::CVec3*)pos;
-    // Project radially onto the sphere surface and store through pos.
-    *(ml::CVec3*)pos = *(ml::CVec3*)pos + diff * radius;
+        ml::CVec3 orig;
+        orig = *(ml::CVec3*)pos;
+        // Project radially onto the sphere surface and store through pos.
+        *(ml::CVec3*)pos = *(ml::CVec3*)pos + diff * radius;
 
-    *(ml::CVec3*)out =
-        (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
-    return 1;
+        *(ml::CVec3*)out =
+            (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
+        return 1;
+    }
+fail:
+    return 0;
 }
 
 // us-804f1648: capsule-style projection helper. Transforms the position into
@@ -1926,29 +1934,30 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
     // Project onto the unit sphere around both Y poles.
     f32 radius = lbl_eu_8066B3D4;
     f32 zero = lbl_eu_8066B3D0;
-    for (u32 i = 0; i < 2; i++) {
+    for (s32 i = 0; i < 2; i++) {
         axis.y = (i == 0) ? one : -one;
 
         ml::CVec3 d = world - axis;
 
         if (d.x < one && d.y < one && d.z < one) {
-            f32 lenSq = d.magnitude();
+            f32 lenSq = nw4r::math::VEC3LenSq((const nw4r::math::VEC3*)&d);
             if (lenSq < one * one) {
                 f32 len = sqrt(lenSq);
-                if (len != zero) {
-                    f32 inv = radius / len;
-                    d.x *= inv;
-                    d.y *= inv;
-                    d.z *= inv;
-                    // Scale by one; expanded so VEC3Scale writes the return
-                    // object directly (no scale() temp), then copy-constructs
-                    // dir, matching retail's two-slot staging.
-                    ml::CVec3 dirRet;
-                    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&dirRet,
-                                          (const nw4r::math::VEC3*)&d, one);
-                    ml::CVec3 dir(dirRet);
-                    world = ml::CVec3(dir + axis);
+                if (len == zero) {
+                    continue;
                 }
+                f32 inv = radius / len;
+                d.x *= inv;
+                d.y *= inv;
+                d.z *= inv;
+                // Scale by one; expanded so VEC3Scale writes the return
+                // object directly (no scale() temp), then copy-constructs
+                // dir, matching retail's two-slot staging.
+                ml::CVec3 dirRet;
+                nw4r::math::VEC3Scale((nw4r::math::VEC3*)&dirRet,
+                                      (const nw4r::math::VEC3*)&d, one);
+                ml::CVec3 dir(dirRet);
+                world = ml::CVec3(dir + axis);
             }
         }
     }
@@ -1958,49 +1967,50 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
         return 0;
     }
     f32 radSq = world.x * world.x + world.z * world.z;
-    if (radSq >= one * one || radSq == lbl_eu_8066B3D0) {
-        return 0;
-    }
+    if (radSq < one * one) {
+        if (radSq != lbl_eu_8066B3D0) {
+            // Resolve the element's res node (offset at 0x5C, 4-aligned).
+            MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
+            nw4r::g3d::ResMdl mdl((void*)(unsigned long)root->field_0x146C);
+            unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, elem->field_0x0);
+            u8* node = (u8*)raw;
+            if (node == 0) {
+                nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                                lbl_eu_80663910, lbl_eu_80663CB8);
+            }
+            u32 off = *(u32*)(node + 0x5C);
+            if (off != 0) {
+                node += off;
+                if ((((u32)node) & 3) != 0) {
+                    nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+                }
+            } else {
+                raw = 0;
+            }
+            if (raw == 0) {
+                nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            }
+            u32 n = (node != 0) ? *(u32*)(node + 0x10) : 0;
 
-    // Resolve the element's res node (offset at 0x5C, 4-aligned).
-    MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
-    nw4r::g3d::ResMdl mdl((void*)(unsigned long)root->field_0x146C);
-    unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, elem->field_0x0);
-    u8* node = (u8*)raw;
-    if (node == 0) {
-        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
-                        lbl_eu_80663910, lbl_eu_80663CB8);
-    }
-    u32 off = *(u32*)(node + 0x5C);
-    if (off != 0) {
-        node += off;
-        if ((((u32)node) & 3) != 0) {
-            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+            // Project the XZ point onto the unit circle.
+            f32 len = sqrt(radSq);
+            f32 inv = lbl_eu_8066B3D4 / len;
+            world.x = world.x * inv * lbl_eu_8066B3D4;
+            world.z = world.z * inv * lbl_eu_8066B3D4;
+
+            // Push the position back out through the matrix chain.
+            ml::CVec3 orig = *(ml::CVec3*)pos;
+            PSMTXMultVec(matrices[n].mtx, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret3);
+            world = ml::CVec3(*(ml::CVec3*)&ret3);
+            PSMTXMultVec((f32 (*)[4])node, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret4);
+
+            s32 ret = 1;
+            *(ml::CVec3*)pos = ml::CVec3(*(ml::CVec3*)&ret4);
+            *(ml::CVec3*)out = (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
+            return ret;
         }
-    } else {
-        raw = 0;
     }
-    if (raw == 0) {
-        nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
-    }
-    u32 n = (node != 0) ? *(u32*)(node + 0x10) : 0;
-
-    // Project the XZ point onto the unit circle.
-    f32 len = sqrt(radSq);
-    f32 inv = lbl_eu_8066B3D4 / len;
-    world.x = world.x * inv * lbl_eu_8066B3D4;
-    world.z = world.z * inv * lbl_eu_8066B3D4;
-
-    // Push the position back out through the matrix chain.
-    ml::CVec3 orig = *(ml::CVec3*)pos;
-    PSMTXMultVec(matrices[n].mtx, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret3);
-    world = ml::CVec3(*(ml::CVec3*)&ret3);
-    PSMTXMultVec((f32 (*)[4])node, (const Vec*)(nw4r::math::VEC3*)world, (Vec*)&ret4);
-
-    s32 ret = 1;
-    *(ml::CVec3*)pos = ml::CVec3(*(ml::CVec3*)&ret4);
-    *(ml::CVec3*)out = (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
-    return ret;
+    return 0;
 }
 
 // us-804f0f80: per-element dynamics update. Walks the target's element-id

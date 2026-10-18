@@ -1,5 +1,5 @@
 {
-  "count": 2250,
+  "count": 2243,
   "entries": {
     "BTU_str_cmd_timeout": {
       "R_PPC_ADDR16_HA": {
@@ -3587,30 +3587,6 @@
         ]
       }
     },
-    "lbl_eu_8051C378": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": -32,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 15488,
-        "retail_symbol": "lbl_eu_806046A8",
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": -33,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14468,
-        "retail_symbol": "lbl_eu_806046A8",
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      }
-    },
     "lbl_eu_80535AD0": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 1,
@@ -3906,30 +3882,6 @@
         ]
       }
     },
-    "lbl_eu_806046A8": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 33,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14435,
-        "retail_symbol": "lbl_eu_8051C378",
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 36995,
-        "retail_symbol": "lbl_eu_8051C378",
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      }
-    },
     "lbl_eu_80619C00": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -4141,19 +4093,6 @@
         ]
       }
     },
-    "lbl_eu_8066B3EC": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066B3D0",
-        "units": [
-          "main/monolib/src/scn/CMdlDynamics"
-        ]
-      }
-    },
     "listsByPrio$5906": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -4303,48 +4242,6 @@
         "scoped": true,
         "units": [
           "main/CriWare/src/sofdec/mwply/mwsfdcre"
-        ]
-      }
-    },
-    "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec@1350": {
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 22164,
-        "retail_symbol": "jumptable_eu_805672D8",
-        "scoped": true,
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      }
-    },
-    "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec@2691": {
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 22164,
-        "retail_symbol": "jumptable_eu_805676D8",
-        "scoped": true,
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
-        ]
-      }
-    },
-    "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec@4066": {
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 22164,
-        "retail_symbol": "jumptable_eu_80567AD8",
-        "scoped": true,
-        "units": [
-          "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
         ]
       }
     },
@@ -23010,6 +22907,20 @@
         ]
       }
     },
+    "main/kyoshin/cf/CfTFile@4342": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80666220",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/CfTFile"
+        ]
+      }
+    },
     "main/kyoshin/cf/CtrlAct@7546": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -23514,11 +23425,11 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@12309": {
+    "main/kyoshin/code_80135FDC@12317": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 3,
+        "count": 4,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_806672F0",
@@ -23528,11 +23439,11 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@12312": {
+    "main/kyoshin/code_80135FDC@12320": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 2,
+        "count": 4,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_806672F8",
@@ -23542,7 +23453,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@13318": {
+    "main/kyoshin/code_80135FDC@13310": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24337,6 +24248,20 @@
         "scoped": true,
         "units": [
           "main/kyoshin/plugin/pluginCam"
+        ]
+      }
+    },
+    "main/kyoshin/plugin/pluginSnd@3557": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 23,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80667D98",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/plugin/pluginSnd"
         ]
       }
     },
@@ -25143,7 +25068,7 @@
         ]
       }
     },
-    "main/monolib/src/lod/LODMemMan@12622": {
+    "main/monolib/src/lod/LODMemMan@12764": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -25908,20 +25833,6 @@
         "scoped": true,
         "units": [
           "main/monolib/src/nand/CNReqtaskSaveBanner"
-        ]
-      }
-    },
-    "main/monolib/src/scn/CMdlDynamics@11444": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_8066B3D4",
-        "scoped": true,
-        "units": [
-          "main/monolib/src/scn/CMdlDynamics"
         ]
       }
     },
@@ -29819,8 +29730,8 @@
       }
     }
   },
-  "function_pairs": 13929,
-  "generated": "2026-10-18T13:32:27.540391",
+  "function_pairs": 13952,
+  "generated": "2026-10-18T14:45:59.386523",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

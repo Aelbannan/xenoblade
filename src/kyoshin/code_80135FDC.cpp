@@ -328,9 +328,11 @@ extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
                reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
         return 1;
     }
-    int i = 0;
     dst[destLen] = 0;
-    int len = (int)destLen;
+    int i;
+    int len;
+    i = 0;
+    len = (int)destLen;
     while (*dst != 0 && i < len) {
         if (*dst == 0x40u)
             *dst = 0x0Au;
@@ -340,71 +342,93 @@ extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
     return 1;
 }
 
-// optimize_for_size gives retail's cmpi-pair SJIS checks (at -O4 the range
-// checks coalesce into subi/cmpli); same pattern as CArtsInfo.cpp.
-#pragma optimize_for_size on
+// Range-pair fusion block (MWCC_CASES CItemBlock_testKindFlag): the second
+// comparison of each pair is commuted (constant-first), which blocks MWCC's
+// subi/cmpli range fusion while emitting the same cmpi+bgt/bng.
+// (An optimize_for_size pragma was tried here and has no effect on fusion.)
 extern "C" void SjisDotToCommaEU(char* str) {
     extern int getLanguage__9CDeviceSCFv();
     int lang = getLanguage__9CDeviceSCFv();
     if ((u8)(lang + 0xFE) > 2) return;
+    s8 c;
+    s8 d;
     int len = strlen(str);
     int i = 0;
     while (i < len) {
-        s8 c = *str;
+        c = *str;
         if (c == 0x2e) {
             *str = 0x2c;
-        } else {
-            // Nested (not &&-chained) tests: chained ranges coalesce into
-            // subi/cmpli pairs, retail keeps two signed cmpis per group.
-            if (c >= 0x81) {
-                if (c <= 0x9f) {
-                    i += 1;
-                    str += 1;
-                    goto next;
-                }
-            }
-            if (c >= 0xe0) {
-                if (c <= 0xef) {
-                    i += 1;
-                    str += 1;
-                }
-            }
+            goto next;
         }
+        if (c < 0x81)
+            goto g2;
+        if (0x9f >= c)
+            goto match;
+g2: {
+            d = *str;
+            if (d < 0xe0)
+                goto next;
+            if (0xef < d)
+                goto next;
+        }
+match:
+        i += 1;
+        str += 1;
 next:
         i += 1;
         str += 1;
     }
 }
-#pragma optimize_for_size off
 
 extern "C" int SplitStringTrim(char* src, char delim, char** outTokens) {
-    // next is a walking char** (retail keeps it as a raw byte offset in a
-    // register, starting at outTokens+4)
-    int count = 1;
-    char** next = outTokens + 1;
+    // Token slots via scaled subscript outTokens[count++] (explicit scale
+    // keeps a byte offset IV and stwx; a stepped byte offset or u32-slots
+    // word index strength-reduces to a walking pointer). count parallels it
+    // for the return value.
+    // Split declare (colors) from assign (loads): decl order drives the
+    // saved-reg allocation, init order keeps the retail load schedule.
+    int len;
+    int count;
+    int i;
+    count = 1;
     *outTokens = src;
-    int len = strlen(src);
-    int i = 0;
+    len = strlen(src);
+    i = 0;
     while (i < len) {
         char c = src[i];
         if (c == delim) {
             src[i] = 0;
             char* q = &src[i] + 1;
             int j = 1;
-            do {
-                if (*q != ' ')
-                    break;
-                q++;
-                j++;
-            } while (true);
-            *next = &src[i] + j;
-            next++;
-            count++;
-        } else if (c >= 0x81 && c <= 0x9F) {
-            i++;
-        } else if (c >= 0xE0 && c <= 0xEF) {
+            // Test-first space skip (retail beq-to-body, exit falls through
+            // to the token store; while/do-while rotate or invert it).
+spctest:
+            if (' ' == *q)
+                goto spcbody;
+            outTokens[count++] = &src[i] + j;
+            goto next;
+spcbody:
+            q++;
+            j++;
+            goto spctest;
+        } else {
+            // Commuted 2nd comparisons block subi/cmpli fusion
+            // (MWCC_CASES CItemBlock_testKindFlag); lead falls into i++.
+            if (c < 0x81)
+                goto sjis2;
+            if (0x9f >= c)
+                goto lead;
+sjis2: {
+                char d = src[i];
+                if (d < 0xe0)
+                    goto next;
+                if (0xef < d)
+                    goto next;
+            }
+lead:
             i++;
         }
+next:
         i++;
     }
     // trim trailing spaces from each token; retail rotates this into a
@@ -424,35 +448,45 @@ extern "C" int SplitStringTrim(char* src, char delim, char** outTokens) {
 }
 
 extern "C" int SplitWStringTrim(u16* src, u16 delim, u16** outTokens) {
+    // Mirrors SplitStringTrim: scaled subscript keeps byte-IV + stwx;
+    // test-first space skip via hand goto (beq-to-body, no guard);
+    // delim-first comparison matches retail cmpl order.
+    u16* p = src;
     int count = 1;
-    int idx = 1;
     outTokens[0] = src;
     int len = wcslen((wchar_t*)src);
-    u16* p = src;
     for (int i = 0; i < len; i++) {
-        if (*p == delim) {
+        if (delim == *p) {
             *p = 0;
-            int j = 1;
-            u16* q = p + 1;
-            while (*q == L' ') {
-                q++;
-                j++;
-            }
-            outTokens[idx] = p + j;
-            idx++;
-            count++;
+            int j;
+            u16* q;
+            q = p + 1;
+            j = 1;
+wspctest:
+            if (L' ' == *q)
+                goto wspcbody;
+            outTokens[count++] = p + j;
+            goto wnextp;
+wspcbody:
+            q++;
+            j++;
+            goto wspctest;
         }
+wnextp:
         p++;
     }
     for (int k = 0; k < count; k++) {
         u16* t = outTokens[k];
         int pos = wcslen((wchar_t*)t) - 1;
-        u16* q = t + pos;
+        int bpos = pos * 2;
+        u16* q = (u16*)((u8*)t + bpos);
         while (pos >= 0) {
             if (*q == L' ') {
                 q--;
                 pos--;
+                bpos -= 2;
             } else {
+                q = t + pos;
                 q[1] = 0;
                 break;
             }
@@ -713,11 +747,12 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo) {
 
     // Toggle the locationAdjust flag bit and reload the location-adjust
     // scale from the tuned sdata2 constants (wide aspect only).
+    bool adj = !drawInfo->IsLocationAdjust();
     nw4r::math::VEC2 scale;
     scale.x = lbl_eu_806672E4;
     scale.y = lbl_eu_806672E8;
     drawInfo->SetLocationAdjustScale(scale);
-    drawInfo->SetLocationAdjust(!drawInfo->IsLocationAdjust());
+    drawInfo->SetLocationAdjust(adj);
 }
 
 int MapValueToRank6(int value) {
@@ -812,7 +847,7 @@ extern float lbl_eu_806672EC;
 extern const float lbl_eu_806672F0;
 extern float lbl_eu_806672E8;
 extern double lbl_eu_806672F8;
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(
+extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(
     nw4r::lyt::AnimTransform* anim, float delta) {
     float newFrame = delta + anim->GetFrame();
     u32 result = 0;
@@ -1133,7 +1168,7 @@ extern "C" void PaneSetTexPalette(void* a, void* palette) {
     }
 }
 
-void func_80138078__FUl(u32 arg) {
+extern "C" void playUISound__FUl(u32 arg) {
     extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 channel, u32 soundId, u32 volume, u32 flag, float f1); // play SE
     extern f32 lbl_eu_80667300;
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
@@ -1155,16 +1190,29 @@ extern "C" u16 GetU16PairEntry(u32 idx) {
     return ((u16*)&t)[n];
 }
 
+// Retail keeps the table copy as a CTR loop (no unroll) but unrolls the
+// search 7x: size-leaning codegen for the straight-line copy.
+#pragma optimize_for_size on
 extern "C" u32 SearchThresholdIdx(u32 val) {
     u32 words[28];
-    for (int i = 0; i < 28; i++) {
-        words[i] = lbl_eu_805001C0[i];
+    // Two-per-iteration 1-indexed walking copy from -1 (retail -4 bias
+    // with lwz+4/lwzu+8 and stw+4/stwu+8 under CTR-14).
+    u32* d = words - 1;
+    u32* s = lbl_eu_805001C0 - 1;
+    u32* dd = &d[1];
+    for (int i = 0; i < 14; i++) {
+        const u32 a = s[1];
+        const u32 b = s[2];
+        *dd++ = a;
+        *dd++ = b;
+        s += 2;
     }
     for (int i = 27; i >= 0; i--) {
         if (val >= words[i]) return i;
     }
     return 0;
 }
+#pragma optimize_for_size off
 
 extern "C" u32 CheckEntryConditions(const char* name, u32 id) {
     u32 flag = 0;

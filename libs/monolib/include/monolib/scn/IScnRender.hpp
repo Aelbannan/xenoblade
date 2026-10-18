@@ -1,12 +1,12 @@
 #pragma once
 
-// Retail vtable (lbl_eu_80525A00): [~IScnRender, handleEmptyRender].
-// handleEmptyRender is the base (empty) implementation of the render-callback
-// slot; derived classes override it with their own cbRenderBefore-style
-// functions (named cbRenderBefore__<Class>Fv in retail), declared there as
-// plain members + extern "C" vtable thunks.
+// Retail vtable (lbl_eu_80525A00): [~IScnRender, cbRenderBefore]. The old
+// handleEmptyRender spelling was a misnomer for the render-callback slot:
+// MWCC names adjustor thunks after the overridden virtual, and only an
+// exact name match overrides (a differently-named member gets no thunk).
+// See the thunk-recovery pilot note (docs/evidence/decomp, 2026-10-18).
 class IScnRender {
 public:
     virtual ~IScnRender(){}
-    virtual void handleEmptyRender();
+    virtual void cbRenderBefore();
 };

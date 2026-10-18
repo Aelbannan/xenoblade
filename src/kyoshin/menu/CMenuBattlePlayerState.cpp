@@ -1023,18 +1023,21 @@ extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2]
 // This-adjusting deleting-dtor thunk (secondary base at +0x58):
 // retail emits `subi r3, r3, 0x58; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no bl).
+// (thunk-recovery pilot: kept hand-written (named) so hexdiff pairs by name;
+// the weak compiler @88@/@92@ twins pair only by offset, which needs exact
+// tiling -- re-delete once this TU tiles exactly; padding keeps line count.)
 extern "C" void* BpsStateDtorThunk58(void* self, int deleteFlag) {
     return __dt__22CMenuBattlePlayerStateFv(
         reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x58),
         deleteFlag);
 }
-// IScnRender cbRenderBefore this-adjusting thunk (retail: subi r3,-0x5c; b cbRenderBefore__22CMenuBattlePlayerStateFv)
-extern "C" void BpsStateRenderThunk5C(void* self) {
-    reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c)->cbRenderBefore();
-}
+// IScnRender cbRenderBefore thunk (free-pointer call: member is now virtual,
+// so a member call would bctrl-dispatch; retail is a direct bl). The fwd decl
+// shares the thunk line so extern-C declaration counts are unchanged (pilot).
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv(); extern "C" void BpsStateRenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__22CMenuBattlePlayerStateFv)((char*)self - 0x5c); }
 // This-adjusting deleting-dtor thunk (IScnRender base at +0x5c):
 // retail emits `subi r3, r3, 0x5c; b __dt__22CMenuBattlePlayerStateFv`.
-// Forwarding deleteFlag untouched keeps the tail call (no li/bl).
+// Forwarding deleteFlag untouched keeps the tail call (no li/bl). Pad pad pad.
 extern "C" void* BpsStateDtorThunk5C(void* self, int deleteFlag) {
     return __dt__22CMenuBattlePlayerStateFv(
         reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c),

@@ -29,35 +29,41 @@ typedef struct MPC08Params_ {
 
 /* Quarter-pel one-ref compensation: 8x8 block from two ref rows */
 void MPVMC08_OneRef4p_TuneC(MPC08Params *prm) {
-    u8 *s1 = prm->src1;
-    u8 *s2 = prm->src2;
-    u8 *dst = prm->dst;
-    u32 stride = prm->stride;
+    u8 *dst;
+    u8 *s1;
+    u8 *s2;
+    u32 stride;
     int i;
+    s1 = prm->src1;
+    s2 = prm->src2;
+    dst = prm->dst;
+    stride = prm->stride;
 
     for (i = 0; i < 8; i++) {
-        u32 S0 = s2[0] + s1[0];
+        u32 c0 = s1[0] + s2[0];
         __dcbt(s2, stride);
-        u32 S1 = s2[1] + s1[1];
-        u32 S2 = s2[2] + s1[2];
-        u32 S3 = s2[3] + s1[3];
-        u32 S4 = s2[4] + s1[4];
-        u32 S5 = s2[5] + s1[5];
-        u32 S6 = s2[6] + s1[6];
-        u32 S7 = s2[7] + s1[7];
-        u32 S8 = s1[8] + s2[8];
-
-        u32 v0 = ((S0 + S1 + 2) >> 2) << 24;
-        u32 v1 = ((S1 + S2 + 2) >> 2) << 16;
-        u32 v2 = ((S2 + S3 + 2) >> 2) << 8;
-        u32 v3 = (S3 + S4 + 2) >> 2;
-        u32 v4 = ((S4 + S5 + 2) >> 2) << 24;
-        u32 v5 = ((S5 + S6 + 2) >> 2) << 16;
-        u32 v6 = ((S6 + S7 + 2) >> 2) << 8;
-        u32 v7 = (S7 + S8 + 2) >> 2;
-
-        *(u32 *)&dst[0] = v0 | v1 | v2 | v3;
-        *(u32 *)&dst[4] = v4 | v5 | v6 | v7;
+        u32 c1 = s1[1] + s2[1];
+        u32 c2 = s1[2] + s2[2];
+        u32 c3 = s1[3] + s2[3];
+        u32 c4 = s1[4] + s2[4];
+        u32 c5 = s1[5] + s2[5];
+        u32 c6 = s1[6] + s2[6];
+        u32 c7 = s1[7] + s2[7];
+        u32 c8 = s1[8] + s2[8];
+u32 m0 = c0 + c1;
+        u32 m1 = c1 + c2;
+        u32 m2 = c2 + c3;
+        u32 m3 = c3 + c4;
+        u32 m4 = c4 + c5;
+        u32 w0 = (((m0 + 2) >> 2) << 24) | (((m1 + 2) >> 2) << 16) |
+                 (((m2 + 2) >> 2) << 8) | ((m3 + 2) >> 2);
+        m0 = c5 + c6;
+        m1 = c6 + c7;
+        m2 = c7 + c8;
+        u32 w1 = (((m4 + 2) >> 2) << 24) | (((m0 + 2) >> 2) << 16) |
+                 (((m1 + 2) >> 2) << 8) | ((m2 + 2) >> 2);
+        *(u32 *)&dst[0] = w0;
+        *(u32 *)&dst[4] = w1;
         s1 += stride;
         s2 += stride;
         dst += 8;
@@ -145,11 +151,15 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
 /* Half-pel vertical one-ref compensation: (src1[i] + src2[i] + 1) >> 1.
    Dispatches on the src1 alignment; two rows per loop iteration. */
 void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
-    u8 *dst = prm->dst;
-    u8 *s1 = prm->src1;
-    u8 *s2 = prm->src2;
-    u32 stride = prm->stride;
+    u8 *dst;
+    u8 *s1;
+    u8 *s2;
+    u32 stride;
     int i;
+    s1 = prm->src1;
+    s2 = prm->src2;
+    dst = prm->dst;
+    stride = prm->stride;
 
     if (((u32)s1 & 3) == 0)
         goto mpvmc08_v2_case0;

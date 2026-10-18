@@ -67,6 +67,15 @@ using ::CfTFile;
 extern "C" {
 __declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b);
 int CfT_GetClockTimeByMode(int mode);
+// Retail emits these five helpers with plain C-linkage names (cf. nm of the
+// retail object: no __Fv/__FP7CfTFile suffixes). Declaring them here gives
+// the CfTFile.cpp definitions C language linkage so reloc-name
+// canonicalization can pair them (mangled vs plain silently disables it).
+cf::CfTFileEntry* CfTFile_FirstEntry3(CfTFile* self);
+cf::CfTFileEntry* CfTFile_FindEntryByKey(CfTFile* self, int key);
+float CfT_PlayTimeGet();
+void CfT_PlayClockUpdate();
+void CfT_PlayClockAdvanceFrame(u32 v);
 int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1);

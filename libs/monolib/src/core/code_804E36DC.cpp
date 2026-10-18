@@ -256,8 +256,8 @@ extern "C" void schedUpdate(CSchedule* self, f32 dt) {
 
 // us-804e7e84: step all resolved entries once; retire when none remain active.
 extern "C" void schedStepEntries(CSchedule* self, f32 delta) {
-    s16* h;
     s16* h2;
+    s16* h;
     int i;
     CScheduleItem* item;
     if (self->mEntryCount == 0) {

@@ -435,7 +435,16 @@ config.libs = [
             Object(Matching, "kyoshin/plugin/ocMsg.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBdat.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocUnit.cpp"),
-            Object(NonMatching, "kyoshin/CTaskGame.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "kyoshin/CTaskGame.cpp", extra_cflags=["-func_align 16"], link_transform={
+                # Thunk-recovery pilot: the IScnRender render-callback virtual is
+                # really cbRenderBefore (MWCC @88@cbRenderBefore proof), so the
+                # base impl is defined under its true name. The link copy keeps
+                # the historical symbols.txt name (CHelp/CBgTex rename idiom) so
+                # the registry + linked map stay stable.
+                "renames": [
+                    ("cbRenderBefore__10IScnRenderFv", "handleEmptyRender__10IScnRenderFv"),
+                ],
+            }),
             Object(NonMatching, "kyoshin/cf/CTaskGameCf.cpp", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "kyoshin/CTaskGameEff.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
@@ -464,7 +473,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-sdata 0"]),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (CamEvtBusyChk/5640/54C0 family)
+Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # was -sdata 0 (SDA wall: lis+lwz vs retail SDA21; removal 10/39->17/39 FULL; GC/3.0a5.2 kept for two-cmpi range form; -O4,s probe REVERTED: 17->14, broke ReleaseAllSlots/MappedSlot/ThenFire)
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -1491,7 +1500,7 @@ Object(Matching, "CriWare/src/adx/lsc/lsc_err.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_mem.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_rbf.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_uni.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c", mw_version = "Wii/1.1"),
+Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c", mw_version = "Wii/1.1"),
 Object(Matching, "CriWare/src/adx/sj/sj_crs.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_err.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1"),
@@ -1519,7 +1528,7 @@ Object(Matching, "CriWare/src/adx/sj/sj_crs.c", mw_version = "Wii/1.1"),
             Object(Matching, "CriWare/src/sofdec/mwply/mwsfdsvm.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwstm.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsee.c"),
-            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsfx.c"),
+Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsfx.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdcre.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdlib.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdply.c"),
@@ -1544,7 +1553,7 @@ Object(Matching, "CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_m2v.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpvabdec.c"),
+            Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpvabdec.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_slice.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/dct/dct_ac.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/dct/dct_isr.c"),

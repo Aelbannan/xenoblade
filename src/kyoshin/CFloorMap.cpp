@@ -4834,13 +4834,13 @@ extern "C" void* __ct__80244F50(void* self, int a, int b, u8 c) {
     *(u8*)(p + 0x0C) = 1;
 
     // Tautological range test over the object's own storage (retail emits
-    // both compare results; the flag ends up 1 either way).
+    // both compare results as separate branches off one cmpl; MWCC keeps
+    // the dead computation and the flag ends up 1 either way).
     const u8* lo = p + 0x31C;
     const u8* hi = p + 0x30D0;
     u8 flag = 1;
-    if (lo < hi) {
-        flag = (lo <= hi);
-    }
+    if (lo < hi) flag = 0;
+    if (lo <= hi) flag = 1;
 
     const void* n0 = lbl_eu_80537104;
     const void* n1 = lbl_eu_805370EC;

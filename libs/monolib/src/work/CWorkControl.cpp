@@ -159,6 +159,10 @@ bool CWorkControl::wkStandbyLogout(){
 // -O4,s (before -func_align 4) is a no-op here - the #pragma optimize_for_size
 // blocks already cover every function, create unchanged. Remaining idea:
 // register-renaming witness certification (cycle) for EQUIVALENT_MATCH.
+// RE-RUN (2026-10-18): mangling verified clean (retail C++-mangled); -ipa off
+// probed - create unchanged, setFlowSetup regressed 20-structural + split FAIL,
+// reverted; alias-temp (CWorkThread* copy) CSE-merged no-op; void* mem temp +
+// standard placement-new regressed (reloc shift), reverted. Color wall stands.
 // RE-PROBES (2026-10-18, all negative, reverted to two-local baseline):
 // declare-then-assign (result decl first) no-op; &pool[0x6C] array-index form
 // no-op; name inlined into ctor arg restructures (16B frame, 2 saved regs,

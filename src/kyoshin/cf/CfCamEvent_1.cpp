@@ -806,16 +806,13 @@ void CamEvtCopyBlk(CfCamEventManager* dst, CfCamEventCopySrc* src) {
     // Retail copies the triplets as raw GPR words (lwz/stw pairs), not
     // per-float lfs/stfs - use u32 word regions on both sides.
     // Paired word temps reproduce retail's lwz-pair/stw-pair GPR copy shape.
-    // OPEN ITEM (us-80076010, 91.3%): retail loads lo THEN hi (lo->r5,
-    // hi->r0); every declaration order tried gives either lo-first-load with
-    // swapped colors or hi-first-load with matching colors - the load order
-    // is bound to the color assignment in MWCC. Witness rejected the reorder
-    // (slot-2 bits differ), so this needs the true source idiom: likely a
-    // struct copy of a 3-word region that MWCC inline-expands.
-    // Named-member word reads with hi born first (retail colors hi->r0);
-    // MWCC then schedules the loads by ascending source address.
-    u32 hi = src->w_110;
-    u32 lo = src->w_10C;
+    // MATCHED (FULL_MATCH us-80076010): declare hi-then-lo for colors
+    // (hi->r0, lo->r5) but ASSIGN lo first - MWCC schedules loads by
+    // assignment order while colors follow declaration order.
+    u32 hi;
+    u32 lo;
+    lo = src->w_10C;
+    hi = src->w_110;
     dst->field_0x54.w[1] = hi;
     dst->field_0x54.w[0] = lo;
     dst->field_0x54.w[2] = src->w_114;
@@ -1663,9 +1660,8 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         u8 on = (demo != 0);
         self->shake[0].field_0x163 = on;
         if (on) {
-            s16 count = self->shake[0].field_0x166;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < count; i++, e++) {
+            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
@@ -1684,9 +1680,8 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         } else {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 1;
-            s16 count = self->shake[0].field_0x166;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < count; i++, e++) {
+            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
@@ -2498,9 +2493,8 @@ void CamEvtStepShk(CfCamEventManager* self) {
         u8 on = (lbl_eu_80570C90.h00 != 0);
         self->shake[0].field_0x163 = on;
         if (on) {
-            s16 count = self->shake[0].field_0x166;
             CfCamEventElem* e = self->shake[0].u.elems + 1;
-            for (int i = 1; i < count; i++, e++) {
+            for (int i = 1; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 d = cur - (e - 1)->x4;
                 if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
@@ -2521,16 +2515,15 @@ void CamEvtStepShk(CfCamEventManager* self) {
             self->shake[0].field_0x162 = 1;
             self->shake[0].field_0x163 = 1;
         }
-        s16 count = self->shake[0].field_0x166;
-        CfCamEventElem* e = self->shake[0].u.elems + 1;
-        for (int i = 1; i < count; i++, e++) {
-            f32 cur = e->x4;
-            f32 d = cur - (e - 1)->x4;
+        CfCamEventElem* eNB = self->shake[0].u.elems + 1;
+        for (int iNB = 1; iNB < self->shake[0].field_0x166; iNB++, eNB) {
+            f32 cur = eNB->x4;
+            f32 d = cur - (eNB - 1)->x4;
             if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
                 if (d > lbl_eu_8066641C)
-                    e->x4 = cur - lbl_eu_8066A1FC;
+                    eNB->x4 = cur - lbl_eu_8066A1FC;
                 else
-                    e->x4 = cur + lbl_eu_8066A1FC;
+                    eNB->x4 = cur + lbl_eu_8066A1FC;
             }
         }
     }
@@ -2571,11 +2564,13 @@ void CamEvtDeadStp(f32 step, CfCamEventShakeElem* e) {
 // in-source pins the addi so the optimizer cannot refold it into the load
 // displacements.
 bool CamEvtShkActv(CfCamEventManager* manager) {
-    // CLOSED OPEN ITEM (us-8007a758): retail materializes base+0x1F4 via
-    // `addi r3,r3,500` before the 2nd/3rd byte tests. Exhausted shapes: raw
-    // u8* indexing, member access shake[i], tab0-strided array, array
-    // reference binding, explicit sub-object pointer - ALL fold to direct
-    // displacements. Caller verified normal (passes manager in r3).
+    // NOTE: retail materializes base+0x1F4 via `addi r3,r3,500` before the
+    // 2nd/3rd byte tests, and keeps the final check branchy. Tried: raw
+    // u8* indexing, &shake[0] unit pointer (u[0]/u[1]), tab0-first ordering
+    // for r3 reuse, mutating `p += 0x1F4` step - ALL fold to direct 854/1230
+    // displacements and the trailing `return x != 0` if-converts to
+    // neg/or/rlwinm under GC/3.0a5.2 (same trailing-diamond wall as
+    // CamEvtClassId's == 11). Needs flag/version investigation.
     if (manager->tab0.flag_active != 0) return true;
     if (manager->shake[0].field_0x162 != 0) return true;
     return manager->shake[1].field_0x162 != 0;

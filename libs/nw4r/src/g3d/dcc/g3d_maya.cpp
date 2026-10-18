@@ -63,8 +63,6 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     // Split decl/assign: declaration order fixes temp register colors,
     // assignment order fixes emission order.
-    // Split decl/assign: declaration order fixes temp register colors,
-    // assignment order fixes emission order.
     f32 sv, su, svs, suc, sus, svc;
     su = rSrt.Su;
     sv = rSrt.Sv;
@@ -123,31 +121,27 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 su = rSrt.Su;
-    f32 sv = rSrt.Sv;
-
-    // hs = 0.5*sin, u = -0.5*cos; the 0.5 subtraction comes after both products
-    f32 hs = lbl_eu_80669CA4 * sinR;
-    f32 u = lbl_eu_80669CA8 * cosR;
-    f32 t = hs - lbl_eu_80669CA4;
-
-    // read late so the loads schedule where retail has them
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
-
-    pMtx->m[0][0] = su * cosR;
+    // hs is single-use but load-bearing-split (fmuls early, fsubs late):
+    // keep it named. suc/sus/lo/hi/nsv are likewise split by schedule.
+    // Temp SET is forced by the 0-structural schedule; colors are
+    // allocator-determined (decl-perm was byte-identical => SSA vregs).
+    f32 suc, sus, hs, nsv, u, t, lo, hi;
+    hs = lbl_eu_80669CA4 * sinR;
+    nsv = -rSrt.Sv;
+    u = lbl_eu_80669CA8 * cosR;
+    t = hs - lbl_eu_80669CA4;
+    suc = rSrt.Su * cosR;
+    lo = u - t;
+    pMtx->m[0][0] = suc;
+    hi = u + t;
+    sus = rSrt.Su * sinR;
     pMtx->m[0][2] = lbl_eu_80669C98;
-
-    // both translation offsets share the (u -/+ t) forms
-    f32 lo = u - t;
-    f32 hi = u + t;
-
-    pMtx->m[0][1] = su * sinR;
-    pMtx->m[0][3] = su * (lo - tu);
-    pMtx->m[1][0] = -sv * sinR;
+    pMtx->m[0][1] = sus;
+    pMtx->m[0][3] = rSrt.Su * (lo - rSrt.Tu);
+    pMtx->m[1][0] = nsv * sinR;
+    pMtx->m[1][1] = rSrt.Sv * cosR;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = lbl_eu_80669C9C + sv * (tv + hi);
-    pMtx->m[1][1] = sv * cosR;
+    pMtx->m[1][3] = lbl_eu_80669C9C + rSrt.Sv * (rSrt.Tv + hi);
 }
 void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] *= rSrt.Su;

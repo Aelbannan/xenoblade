@@ -695,8 +695,8 @@ extern "C" __declspec(noinline) int CTaskGame_playTimeGate() {
 }
 #pragma optimize_for_size off
 extern "C" u32 CTaskGame_enumListGet(u32* ptr) { return *ptr; }
-// IScnRender::cbRenderBefore() base impl (retail blr; old handleEmptyRender name was a misnomer).
-void IScnRender::cbRenderBefore() {}
+// IScnRender base impls (retail blr): cbRenderBefore + legacy handleEmptyRender (0x800444C0).
+void IScnRender::cbRenderBefore() {} void IScnRender::handleEmptyRender() {}
 void Tail__8CProcessFv() {}
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
 extern "C" void CTaskGame_thunkIWorkDtor(void *self) {

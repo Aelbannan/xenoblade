@@ -96,6 +96,11 @@ void CMenuPause::Init() {
             }
         }
     }
+    // Middle message-table text field between the two cursor variants.
+    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_8050C5C8[0x99],
+                  BdatTouchStringCell(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
+                                0x6c),
+                  0);
     {
         u16 msg = BdatGetU16ByTableKey(
             &lbl_eu_8050C5C8[0x5d],
@@ -125,7 +130,7 @@ void CMenuPause::Init() {
     mState = 1;
     playUISound__FUl(0xd);
 
-    mField74[0] = mField74[1] = mField74[2] = mField74[3] = 0; // field 0x74
+    *(u32*)mField74 = 0; // field 0x74 (single word store)
 
     // Register as a scene render callback; IScnRender subobject lives at +0x5c.
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
@@ -343,7 +348,7 @@ extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
     return self;
 }
 
-unsigned long Pause_IsActive() {
+extern "C" unsigned long Pause_IsActive() {
     CMenuPause* p = lbl_eu_806647C8;
     if (p == NULL) {
         return 0;
@@ -377,6 +382,6 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
 }
 
 // IScnRender / IWorkEvent adjuster thunks (subobjects embedded in CMenuPause).
-void Pause_ThunkDtor58(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
-void Pause_ThunkRender5C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
-void Pause_ThunkDtor5C(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }
+extern "C" void Pause_ThunkDtor58(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
+extern "C" void Pause_ThunkRender5C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
+extern "C" void Pause_ThunkDtor5C(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }

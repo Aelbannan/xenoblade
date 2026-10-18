@@ -82,7 +82,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
             // pointer is declared AFTER the call so the buffer address reuses
             // `name`'s saved register instead of extending liveness backward.
             u8 nameBuf[0x44];
-            ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)nameBuf, name);
+        ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)nameBuf, name);
             const char* str = ((ml::FixStr<64>*)nameBuf)->mString;
 
             newItem->mParent = self;

@@ -51,8 +51,8 @@ BOOL SFX_IsMergeField(SFXConvertState* self, SFXStmInf* stmInf) {
 
     if (splitField == -1) goto caseNeg1;
     if (splitField == 0) goto case0;
-    if (splitField != 1) goto caseDefault;
-    goto case1;
+    if (splitField == 1) goto case1;
+    goto caseDefault;
 
 caseNeg1: {
     u32 v0 = stmInf->_88;

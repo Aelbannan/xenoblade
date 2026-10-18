@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 19140 |
+| extern "C" (total lines) | 19144 |
 | extern "C" declarations (non-lbl_*, imports) | 8811 |
-| extern "C" definitions (forced names) | 5121 |
-| `self`/register-style params | 13860 |
+| extern "C" definitions (forced names) | 5125 |
+| `self`/register-style params | 13861 |
 | `void*` (params + locals) | 7942 |
-| raw pointer offset arithmetic | 5619 |
+| raw pointer offset arithmetic | 5620 |
 | deref-through-cast arithmetic | 2340 |
 | inline asm / `register` | 108 |
 | rN-named params | 37 |
@@ -45,12 +45,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 The `ptr-arith`/`deref-arith` rows above are **line-based proxies**: a line carrying a cast plus an offset bumps `ptr-arith`, and the same line's deref independently bumps `deref-arith`, so one expression can move two counters. This section counts individual expressions with `tools/coop/detect_pointer_arithmetic.py` and splits every TU by whether the enclosing function is already accepted (`targets.json`). Sites inside accepted functions are the **actionable backlog** (typed field/pointer rewrites are byte-identical and `hexdiff`-verifiable now); sites in unmatched functions are a **churn budget** — those bodies get rewritten while matching, so cleaning them early is wasted work plus `-ipa file` line-shift risk. **Target: `ptr-acc` -> 0; `ptr-sites` follows as TUs reach acceptance.** These counts are informational and not part of the strict regression gate: acceptance migration moves existing sites into the accepted set, so the accepted total is not monotonic.
 
-- expression sites: 8228  |  inside accepted functions: **400**  |  unmatched: 7828
+- expression sites: 8230  |  inside accepted functions: **402**  |  unmatched: 7828
 
 | expression shape | sites | accepted |
 |---|---|---|
 | `cast_byte_offset_deref` | 3039 | 29 |
-| `cast_byte_ptr_arith` | 2760 | 274 |
+| `cast_byte_ptr_arith` | 2762 | 276 |
 | `ptr_offset_deref` | 1627 | 29 |
 | `reinterpret_arith` | 406 | 30 |
 | `subscript_on_cast` | 373 | 28 |
@@ -446,7 +446,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfBdat.cpp | 38 | 1 | 0 | 43 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCam.cpp | 23 | 143 | 392 | 142 | 18 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 60 | 1 |
 | src/kyoshin/cf/CfCamDirectionIntf.cpp | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCamEvent.cpp | 17 | 4 | 35 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfCamEvent.cpp | 17 | 4 | 35 | 12 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cf/CfCamEvent_1.cpp | 12 | 3 | 37 | 36 | 2 | 1 | 0 | 0 | 13 | 0 | 0 | 0 | 27 | 1 |
 | src/kyoshin/cf/CfCamLookatIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamTargetIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -525,7 +525,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 8 | 3 | 28 | 24 | 2 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 6 | 1 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 3 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp | 3 | 4 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 4 | 1 | 12 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 2 | 2 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 4 | 1 | 13 | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 3 | 1 | 8 | 1 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 3 | 1 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp | 13 | 2 | 38 | 4 | 6 | 3 | 0 | 0 | 34 | 0 | 0 | 0 | 10 | 3 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp | 0 | 1 | 8 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -609,7 +609,7 @@ Top TUs by view debt:
 | src/kyoshin/menu/CMenuPTGauge.cpp | 5 | 4 | 12 | 4 | 0 | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 2 | 2 |
 | src/kyoshin/menu/CMenuPTState.cpp | 11 | 4 | 12 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuPassiveSkill.cpp | 1 | 11 | 18 | 0 | 8 | 0 | 0 | 0 | 15 | 0 | 0 | 0 | 16 | 1 |
-| src/kyoshin/menu/CMenuPause.cpp | 5 | 3 | 7 | 12 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 3 | 3 |
+| src/kyoshin/menu/CMenuPause.cpp | 5 | 7 | 7 | 12 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 3 | 3 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 3 | 1 | 70 | 11 | 3 | 3 | 1 | 0 | 9 | 0 | 0 | 0 | 6 | 3 |
 | src/kyoshin/menu/CMenuQstCnt.cpp | 16 | 3 | 31 | 4 | 2 | 3 | 0 | 0 | 1 | 0 | 0 | 0 | 4 | 1 |
 | src/kyoshin/menu/CMenuQuestLog.cpp | 12 | 16 | 20 | 4 | 16 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 26 | 2 |
@@ -4441,6 +4441,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 17,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
+  "ptr_arith": 1,
+  "ptr_sites": 2,
+  "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
   "self_params": 35,
   "view_debt": 1,
@@ -5322,7 +5325,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 2,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 12,
+  "self_params": 13,
   "void_ptr": 1
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp": {
@@ -6341,7 +6344,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuPause.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 5,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_def": 7,
   "goto_count": 9,
   "init_side_effect": 0,
   "ptr_sites": 3,

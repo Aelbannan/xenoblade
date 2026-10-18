@@ -53,6 +53,7 @@ public:
     // +0x00: vtable pointer (lbl_eu_8056DCD8, stored manually)
     CScnItemIdHost* mParent;  // +0x04 owning scene host
     u16 mType;                // +0x08 item kind (5 = id)
+    u8 pad_0A[2];             // +0x0A padding
     char mName[0x40];         // +0x0C name buffer
     u32 mNameLen;             // +0x4C name length
     u32 mValue;               // +0x50

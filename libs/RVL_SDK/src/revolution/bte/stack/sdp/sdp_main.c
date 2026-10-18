@@ -21,6 +21,12 @@
 #include <harness_catalog.h>
 #include <string.h>
 
+/* Retail declaration drift: this TU's caller-side view of L2CA_Register
+ * returns BOOLEAN (retail sdp_init masks the result as a byte -
+ * rlwinm r0,r3,0,24,31 at 0x164), while the shipped l2c_api.h / l2c_api.c
+ * declare UINT16 (halfword mask rlwinm 0,16,31). Hide the header spelling
+ * for the duration of the BTE includes and declare the retail view. */
+#define L2CA_Register L2CA_Register_rettype_hidden
 #include "revolution/BTE/include/bt_target.h"
 #include "revolution/BTE/gki/common/gki.h"
 #include "revolution/BTE/stack/include/bt_types.h"
@@ -28,6 +34,9 @@
 #include "revolution/BTE/stack/include/sdp_api.h"
 #include "revolution/BTE/stack/include/l2c_api.h"
 #include "revolution/BTE/stack/include/btu.h"
+#undef L2CA_Register
+/* Retail caller-side view: BOOLEAN return (see note above). */
+extern BOOLEAN L2CA_Register(UINT16 psm, tL2CAP_APPL_INFO *p_cb_info);
 
 /* ------------------------------------------------------------------ */
 /* SDP control block (retail sdp_int.h layout)                        */

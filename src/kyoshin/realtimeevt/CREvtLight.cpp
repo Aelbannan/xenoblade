@@ -173,13 +173,15 @@ extern "C" f32 CREvtLight_DistToTarget(CREvtLight* self, cf::CfObject* target) {
 
     // diff = targetPos - thisPos via VEC3::operator- (paired-single block),
     // then element-copied to a Vec for the magnitude call (retail stages
-    // the sub result through a temporary before PSVECMag).
+    // the sub result through a temporary before PSVECMag). Plain Vec with
+    // no intermediate pointer, matching the accepted AngleState sibling;
+    // the unpinned &d lets the scheduler hoist it above the PS block.
     nw4r::math::VEC3 tmp = *pos - *self->pos();
-    Vec d, *dp = &d;
-    dp->x = tmp.x;
-    dp->y = tmp.y;
-    dp->z = tmp.z;
-    return PSVECMag(dp);
+    Vec d;
+    d.x = tmp.x;
+    d.y = tmp.y;
+    d.z = tmp.z;
+    return PSVECMag(&d);
 }
 
 // ============================================================================

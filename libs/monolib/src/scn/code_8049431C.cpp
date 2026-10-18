@@ -10,7 +10,7 @@ extern "C" {
     extern void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
     extern void setZWriteMode__8CGXCacheFii(void* self, int, int);
     extern void setZCompareMD__8CGXCacheFii(void* self, int, int);
-    extern void setAlphaBlend__8CGXCacheFv(void* self);
+    extern void setAlphaBlend__8CGXCacheFv(void* self, int, int);
     extern void updateCmd1Words__8CGXCacheFv(void* self, int, int, int, int, int);
     extern void* cacheInstance__9CDeviceGX;
 }
@@ -40,38 +40,43 @@ extern "C" void* __dt__804943A0(void* self, int deleteFlag) {
 }
 
 extern "C" void TexObj_CopyRect(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 h, GXBool p3, GXBool p4) {
-    // Load/copy order below mirrors MWCC's scheduling: x, w, y, h, then fix parity,
-    // Load/copy order mirrors MWCC's statement-by-statement emission.
-    s16 x = rect->mPos.x;
-    u16 dstW = w;
-    s16 y = rect->mPos.y;
-    u16 dstH = h;
+    // Declare (for colors) then assign (for load order): MWCC numbers
+    // copy-temps by declaration order but schedules loads by assignment order.
+    s16 x;
+    u16 dstW;
+    s16 y;
+    u16 dstH;
+    s16 rw;
+    s16 rh;
+    GXBool clearFmt;
+    GXBool clearAll;
+    x = rect->mPos.x;
+    dstW = w;
+    y = rect->mPos.y;
+    dstH = h;
+    rw = rect->mSize.x;
+    rh = rect->mSize.y;
+    clearFmt = p3;
+    clearAll = p4;
     if ((x & 1) != 0)
         x = x - 1;
-    s16 rw = rect->mSize.x;
-    s16 rh = rect->mSize.y;
-    GXBool clearFmt = p3;
-    GXBool clearAll = p4;
     if ((y & 1) != 0)
         y = y - 1;
     if ((rw & 1) != 0)
         rw = rw - 1;
     if ((rh & 1) != 0)
         rh = rh - 1;
-    if (rw != 0) {
-        if (rh != 0) {
+    if (rw != 0 && rh != 0) {
         setZWriteMode__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
         setZCompareMD__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
-        setAlphaBlend__8CGXCacheFv(cacheInstance__9CDeviceGX);
+        setAlphaBlend__8CGXCacheFv(cacheInstance__9CDeviceGX, 0, 0);
         updateCmd1Words__8CGXCacheFv(cacheInstance__9CDeviceGX, 1, 4, 5, 0, 0);
         GXSetTexCopySrc((u16)x, (u16)y, (u16)rw, (u16)rh);
         GXSetTexCopyDst(w, h, GXGetTexObjFmt((GXTexObj*)self), p3);
         GXCopyTex((void*)self->mField20, p4);
         GXPixModeSync();
-        GXPixModeSync(); // PROBE
         GXInvalidateTexAll();
         DCFlushRange((void*)self->mField20, self->mField24);
-        }
     }
 }
 

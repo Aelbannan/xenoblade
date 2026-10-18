@@ -1,12 +1,11 @@
 #pragma once
 
-// Retail vtable (lbl_eu_80525A00): [~IScnRender, cbRenderBefore]. The old
-// handleEmptyRender spelling was a misnomer for the render-callback slot:
-// MWCC names adjustor thunks after the overridden virtual, and only an
-// exact name match overrides (a differently-named member gets no thunk).
-// See the thunk-recovery pilot note (docs/evidence/decomp, 2026-10-18).
+// Retail: IScnRender carries virtual cbRenderBefore (vtable lbl_eu_80525A00 slot 1)
+// plus legacy non-virtual empty handleEmptyRender (0x800444C0, blr; defined in
+// kyoshin/CTaskGame.cpp). Adjustor thunks take the overridden virtual's name.
 class IScnRender {
 public:
     virtual ~IScnRender(){}
     virtual void cbRenderBefore();
+    void handleEmptyRender(); // non-virtual legacy empty impl (retail 0x800444C0)
 };

@@ -5951,3 +5951,11 @@ Wrap ONLY the leaf in `#pragma peephole off` ... `#pragma peephole on`, keep pla
 - Result:    mwsfdsl infinite-loop calc tail byte-exact (eliminated phantom +1 branch).
 - Confidence: repo_proven (wibo probe qa vs qb + same-TU application).
 - Applies to/a.k.a.: early-exit tails with a trailing dead branch; dual is `if (C) return; REST;` -> single branch-on-true to return (qb shape).
+
+## Out-of-line empty base dtor regresses derived dtors (nw4r/snd ~BasicSound, 2026-10-18)
+- Symptom:   Moving `virtual ~BasicSound() {}` out-of-line (header decl + `BasicSound::~BasicSound() {}` in snd_BasicSound.cpp) shrank WaveSound .text 0x438->0x410 (-0x28, not -0x40) and SeqSound 0xA64->0xA30, but regressed both derived deleting-dtors: `__dt__WaveSoundFv` 0x40/0x40 100% -> 0x40/0x58 22.7%, `__dt__SeqSoundFv` -> 0x6c/0x78 50%. PlayerHeap unchanged (0x2DC, never carried the weak copy). Change reverted same session; 15/15, 23/23, 8/8 restored.
+- Cause:     Retail derived dtors contain NO call to the base dtor, so retail's `~BasicSound` is also inline-empty in retail headers; the retail strong `__dt__BasicSoundFv` (0x40 @ snd_BasicSound.o) is the key-function-TU emission, present in decomp too (0x40/0x40 match). Outlining forces an external `bl __dt__BasicSoundFv` (+0x18 WaveSound / +0x0c SeqSound) into every derived dtor. Post-change nm confirms `__dt__BasicSoundFv` went *UND* in WaveSound.o while `__dt__NonCopyable` (0x40), `__dt__WsdPlayerFv` (0x40 W), `__dt__AutoLock<OSMutex>` (0x58 W) remain as weak weight.
+- Fix:       Keep `virtual ~BasicSound() {}` inline-empty in the header. Do NOT outline it (or `~NonCopyable`/`~AutoLock`) to chase split-size budgets: the overage is unlinked-object weak-symbol weight, not a matching defect.
+- Result:    Revert restored WaveSound 15/15, SeqSound 23/23, PlayerHeap 8/8 at 100% with pre-change sizes; no promotion possible (split FAIL persists: 0xD8/0x31C/0xDC over).
+- Confidence: repo_proven (before/after hexdiff --all + nm on 3 units, same session). Same rule as CTaskCulling/IWorkEvent entry above.
+- Applies to/a.k.a.: any hierarchy whose derived dtors match at 100% with an inline-empty base dtor; split-size overage from weak dtor copies.

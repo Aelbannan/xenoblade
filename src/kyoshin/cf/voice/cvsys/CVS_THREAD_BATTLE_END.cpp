@@ -366,30 +366,29 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
     int idx = self->field_0x30;
     CVoiceHandle* handle = self->field_0x20[idx];
     if (handle == NULL) return;
-    if (((int (*)(CVoiceHandle*))handle->vtable[0x2BC / 4])(handle) != 0) return;
+    if (reinterpret_cast<VoicePlayingIf*>(handle)->isPlaying() != 0) return;
 
     int voiceId;
     if (self->field_0x30 == self->field_0x2c) {
         // Counter at limit: choose a battle-end variant line by sub-state.
+        // Each side carries its own request tail (retail emits the
+        // slot-fetch/TryRequestVoice/PlayThreadVoice sequence twice).
         CVoiceHandle* h = self->field_0x20[self->field_0x30];
         if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 1) {
             if (ml::math::mtRand(100) < 0x1e) {
-                if (ml::math::mtRand(100) >= 0x32) voiceId = 0xb63;
-                else voiceId = 0xb55;
+                voiceId = (ml::math::mtRand(100) < 0x32) ? 0xb55 : 0xb63;
             } else {
                 voiceId = -1;
             }
         } else if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 3) {
             if (ml::math::mtRand(100) < 0x1e) {
-                if (ml::math::mtRand(100) >= 0x32) voiceId = 0xb61;
-                else voiceId = 0xb57;
+                voiceId = (ml::math::mtRand(100) < 0x32) ? 0xb57 : 0xb61;
             } else {
                 voiceId = -1;
             }
         } else if (self->field_0x34 == 1 && HpVoice_MapSubState(h) == 7) {
             if (ml::math::mtRand(100) < 0x1e) {
-                // Bool-to-int add reproduces retail's branchless subfc/subfe.
-                voiceId = 0x5dd + (int)(ml::math::mtRand(100) >= 0x32);
+                voiceId = (ml::math::mtRand(100) < 0x32) ? 0x5dd : 0x5de;
             } else {
                 voiceId = -1;
             }
@@ -397,19 +396,26 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
             if (self->field_0x39 != 0) voiceId = lbl_eu_80662CC8[ml::math::mtRand(2)];
             else voiceId = lbl_eu_80539988[ml::math::mtRand(7)];
         }
+        CVoiceHandle* sl = self->field_0x20[self->field_0x30];
+        CCharVoice* vp = (CCharVoice*)sl;
+        if (sl != NULL) {
+            vp = &sl->voice;
+        }
+        if (TryRequestVoice(self, vp, voiceId) == 0) {
+            self->PlayThreadVoice();
+        }
     } else {
         // Counter not at limit: simpler random pick.
         if (self->field_0x39 != 0) voiceId = lbl_eu_80662CD0[ml::math::mtRand(2)];
         else voiceId = lbl_eu_805399A8[ml::math::mtRand(4)];
-    }
-
-    CVoiceHandle* sl = self->field_0x20[self->field_0x30];
-    CCharVoice* vp = (CCharVoice*)sl;
-    if (sl != NULL) {
-        vp = &sl->voice;
-    }
-    if (TryRequestVoice(self, vp, voiceId) == 0) {
-        self->blank1();
+        CVoiceHandle* sl = self->field_0x20[self->field_0x30];
+        CCharVoice* vp = (CCharVoice*)sl;
+        if (sl != NULL) {
+            vp = &sl->voice;
+        }
+        if (TryRequestVoice(self, vp, voiceId) == 0) {
+            self->PlayThreadVoice();
+        }
     }
 }
 

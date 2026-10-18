@@ -72,8 +72,6 @@ union CMenuPauseF64Conv {
 // pane. Never instantiated, so no vtable is emitted; a genuine virtual call
 // makes MWCC emit the retail r12 dispatch sequence.
 struct CMenuPauseFontView {
-    virtual void sf0() = 0;
-    virtual void sf1() = 0;
     virtual void sf2() = 0;
     virtual void sf3() = 0;
     virtual void sf4() = 0;

@@ -30,13 +30,17 @@ void CWorkUtil::dispTree(const CWorkThread* pThread, int indent){
 
     ml::FixStr<64> text;
 
-    // The local keeps MWCC's lis/@l address materialisation in a saved
-    // register with mr copies at each use (retail shape); referencing the
-    // extern inline merges the LO into the first use (addi rD,rS,0).
-    const char* pPad = lbl_eu_805224C0;
+    const char* pPad;
+    int i;
 
-    for(int i = 0; i < indent; i++){
-        text += pPad;
+    i = 0;
+
+    if(indent > 0){
+        pPad = lbl_eu_805224C0;
+
+        for(; i < indent; i++){
+            text += pPad;
+        }
     }
 
     text += pThread->mName.c_str();

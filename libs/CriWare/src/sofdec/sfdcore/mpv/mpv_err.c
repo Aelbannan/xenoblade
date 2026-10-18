@@ -60,44 +60,25 @@ s32 MPVERR_SetCode(s32 val, u32 err_code) {
 
 // Register (or clear, with cb == NULL) the user error callback either on a
 // decoder handle or, when the handle is NULL, in the global block.
-// Inline twin of MPVERR_SetCode used by MPV_SetErrFunc; inlining it is what
-// produces the retail code shape of the invalid-handle path.
-static __inline__ s32 MPVERR_SetCode_i(s32 val, u32 err_code) {
-    SFD_MPV* mpv = (SFD_MPV*)val;
-    if (mpv == NULL) {
-        /* callback loaded before the code store: fixes the temp order */
-        MPVErrCallback gcb = (MPVErrCallback)lbl_eu_80602A78[0];
-        lbl_eu_80602A78[2] = err_code;
-        if (err_code != 0 && gcb != NULL) {
-            gcb(lbl_eu_80602A78[1]);
-        }
-    } else {
-        mpv->errInf.code = err_code;
-        if (err_code != 0) {
-            MPVErrCallback cb = mpv->errInf.func;
-            if (cb != NULL) {
-                cb(mpv->errInf.user);
-            }
-        }
-    }
-    return err_code;
-}
-
-// Register (or clear, with cb == NULL) the user error callback either on a
-// decoder handle or, when the handle is NULL, in the global block.
 // The callback/argument pair lands at errInf+0/+4; an invalid handle is
 // rejected by MPVLIB_CheckHn and reported as fatal code 0xFF030203 through
-// the inline twin below.
+// the inline global dispatch below.
 s32 MPV_SetErrFunc(SFD_MPV* mpv, MPVErrCallback cb, u8* arg) {
+    SFD_MPV* m = (SFD_MPV*)(void*)mpv;
     u32* dst;
-    if (mpv == NULL) {
+    if (m == NULL) {
         dst = lbl_eu_80602A78;
-    } else if (MPVLIB_CheckHn(mpv)) {
+    } else if (MPVLIB_CheckHn(m)) {
         /* invalid handle: record the fatal code and dispatch it through the
          * previously registered global callback */
-        return MPVERR_SetCode_i(0, 0xFF030203);
+        MPVErrCallback gcb = (MPVErrCallback)lbl_eu_80602A78[0];
+        lbl_eu_80602A78[2] = 0xFF030203;
+        if (gcb != NULL) {
+            gcb(lbl_eu_80602A78[1]);
+        }
+        return 0xFF030203;
     } else {
-        dst = (u32*)&mpv->errInf;
+        dst = (u32*)&m->errInf;
     }
     dst[0] = (u32)cb;
     dst[1] = (u32)arg;

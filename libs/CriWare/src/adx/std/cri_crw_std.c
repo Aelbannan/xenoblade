@@ -42,7 +42,7 @@ int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap) {
     return vsprintf(s, fmt, ap);
 }
 
-static s32 clamp_s16(s32 val) {
+static inline s32 clamp_s16(s32 val) {
     if (val > 0x7FFF) {
         return 0x7FFF;
     }

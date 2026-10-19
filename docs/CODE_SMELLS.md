@@ -14,8 +14,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 18908 |
 | extern "C" declarations (non-lbl_*, imports) | 8637 |
 | extern "C" definitions (forced names) | 5026 |
-| `self`/register-style params | 13184 |
-| `void*` (params + locals) | 7912 |
+| `self`/register-style params | 13202 |
+| `void*` (params + locals) | 7911 |
 | raw pointer offset arithmetic | 5620 |
 | deref-through-cast arithmetic | 2340 |
 | inline asm / `register` | 108 |
@@ -102,11 +102,11 @@ Top TUs by view debt:
 
 | TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto | asm-shim | schedule-pragma | init-side-effect | ptr-sites | ptr-acc |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| libs/monolib/src/coli/CColiProc.cpp | 4 | 5 | 4 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 1 |
+| libs/monolib/src/coli/CColiProc.cpp | 4 | 5 | 4 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 1 |
 | libs/monolib/src/coli/code_804A6C60.cpp | 101 | 58 | 225 | 10 | 9 | 0 | 0 | 0 | 29 | 0 | 0 | 0 | 58 | 0 |
 | libs/monolib/src/coli/code_804B2FF0.cpp | 38 | 1 | 21 | 9 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B59C8.cpp | 43 | 15 | 68 | 14 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 0 |
-| libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 56 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
+| libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 74 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
 | libs/monolib/src/core/CArcItem.cpp | 33 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 45 | 1 | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDrawGX.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -684,8 +684,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 5,
   "ptr_sites_accepted": 1,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 1
+  "self_params": 4
  },
  "libs/monolib/src/coli/code_804A6C60.cpp": {
   "asm_insn_shim": 0,
@@ -729,7 +728,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_sites": 2,
   "ptr_sites_accepted": 2,
   "schedule_pragma": 0,
-  "self_params": 56,
+  "self_params": 74,
   "void_ptr": 2
  },
  "libs/monolib/src/core/CArcItem.cpp": {

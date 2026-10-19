@@ -7,27 +7,7 @@
 #include "monolib/coli/CColiProc.hpp"
 #include "monolib/util/MemManager.hpp"
 
-struct CColiProcTarget {
-    u32 field_0x0;
-    u16 field_0x4;
-    u16 field_0x6;
-};
-
-struct CColiProc {
-    CColiProcTarget* field_0x0;
-    u32 field_0x4;
-    u32 field_0x8;
-    u32 field_0xC;
-    u8 field_0x10[0x28];        // 0x10..0x38
-    nw4r::math::VEC3 field_0x38; // 0x38 vector
-    u32 field_0x44;              // 0x44
-    void* field_0x48;            // 0x48
-    u32 field_0x4C;              // 0x4C
-    void InitQuad(CColiProcTarget* target, u32 a, u32 b);
-    void InitTriple(CColiProcTarget* target, u32 a);
-    bool IsTargetFlagged();
-    bool TestBit18State();
-};
+// CColiProcTarget/CColiProc definitions live in CColiProc.hpp (single source).
 
 // Context/link struct passed to ColiProc_ProcessSegments; only 0x3C is referenced here.
 struct CColiLinkObj {

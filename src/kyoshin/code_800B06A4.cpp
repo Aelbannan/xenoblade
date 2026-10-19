@@ -48,7 +48,7 @@ extern "C" void CPartsChange_UpdatePartyState(unsigned long a, float b);
 struct CfMapMineManager {
     void ScanPoints();
 };
-// (memberized: mineScanPoints -> CfMapMineManager::ScanPoints; declaration moved into class CfMapMineManager) // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
+// (memberized: mineScanPoints -> CfMapMineManager::ScanPoints; declaration moved into class CfMapMineManager)
 extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg); // retail unmangled
 extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();

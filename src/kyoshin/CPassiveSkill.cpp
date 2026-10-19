@@ -11,20 +11,25 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
-// Local views of the kizuna chart/big objects (full definitions live in
-// CPcKizunagram.hpp, which cannot be included here: its extern "C"
-// decls (BdatGetU8Direct u32 vs u8, isPaneVisible void vs Pane*, etc.)
-// clash with this TU's retail spellings. Declaring the same class/method
-// signatures locally keeps the retail mangled relocs without the clash.
-class CPcKizunaChart {
-public:
-    void KizunagramStoreWorkEntry(int a, int b, int value);
-    void KizunagramClearChartEntry(int a, int b);
-};
-class CPcKizunagramBig {
-public:
-    void SetActiveSlot(int slotIdx);
-};
+// Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
+// Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
+// bool isPaneVisible(Pane*), Pane* PaneSetTexPalette, VEC3 ScalePaneWorldPos,
+// u8 setLayoutTextBoxNumber, void* Class_8045F858 ct/dt vs header spellings).
+#define BdatGetU8Direct BdatGetU8Direct_kiz_hidden
+#define isPaneVisible isPaneVisible_kiz_hidden
+#define PaneSetTexPalette PaneSetTexPalette_kiz_hidden
+#define ScalePaneWorldPos ScalePaneWorldPos_kiz_hidden
+#define setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc setLayoutTextBoxNumber_kiz_hidden
+#define __ct__14Class_8045F858FP17UnkClass_8045F564 __ct__14Class_8045F858_kiz_hidden
+#define __dt__14Class_8045F858Fv __dt__14Class_8045F858_kiz_hidden
+#include "kyoshin/CPcKizunagram.hpp"
+#undef BdatGetU8Direct
+#undef isPaneVisible
+#undef PaneSetTexPalette
+#undef ScalePaneWorldPos
+#undef setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
+#undef __ct__14Class_8045F858FP17UnkClass_8045F564
+#undef __dt__14Class_8045F858Fv
 namespace passiveSkillVecView {
 extern "C" nw4r::math::VEC3
     ScalePaneWorldPos(nw4r::lyt::Pane* paneA, nw4r::lyt::Pane* paneB,

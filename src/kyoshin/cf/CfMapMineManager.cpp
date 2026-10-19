@@ -11,8 +11,7 @@
 #include <string.h>
 #include <math.h>
 
-class BdatFilePointer;
-struct CfMapMineManager;
+// Mine* + CfMapMineManager full layouts live in CfMapMineManager.hpp (single source).
 
 // ---------------------------------------------------------------------------
 // Types

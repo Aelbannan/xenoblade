@@ -57,6 +57,7 @@ public:
     /* 0x24 */ u8 field_0x24; // active flag
     /* 0x25 */ u8 field_0x25; // phase flag (init 1)
     /* 0x26 */ u8 field_0x26; // state machine index (0..6)
+    void __declspec(noinline) bindAnim1();
 };
 
 // Opaque controller behind CTitle::field_0x20: only the virtual at vtable

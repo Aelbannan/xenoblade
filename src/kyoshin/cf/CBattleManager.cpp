@@ -791,7 +791,7 @@ extern "C" void driveVisionRingFx(cf::CVision* self);
 extern "C" void PartyGaugeTickDecay(cf::UnkClass_8018C5FC* self);
 extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self);
 extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self);
-extern "C" void CChain_UpdatePerFrame(cf::CChain* self);
+// (memberized: CChain_UpdatePerFrame -> CChain::UpdatePerFrame; declaration moved into class CChain)
 extern "C" void ChainTmr_Update_D20C(cf::UnkClass_800D8DBC* self);
 extern "C" void SuddenCommuDriveFrame(cf::CSuddenCommu* self);
 extern "C" void SysWinBuff_EmptyStubB20(void* self);
@@ -4198,7 +4198,7 @@ extern "C" void updateBattleManager(cf::CBattleManager* self) {
     driveVisionRingFx(&self->mVision);
     PartyGaugeTickDecay(&self->unk194);
     updatePtStateTimer(&self->unk19C);
-    CChain_UpdatePerFrame(&self->mChain);
+((cf::CChain*)(&self->mChain))->UpdatePerFrame();
     ChainTmr_Update_D20C(&self->unk20C8);
     SuddenCommuDriveFrame(&self->mSuddenCommu);
     SysWinBuff_EmptyStubB20((u8*)&self->mSuddenCommu + 0x28);

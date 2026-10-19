@@ -607,20 +607,20 @@ extern "C" void* Selector_GetInstance();
 // Unit functions whose retail linker symbols are UNMANGLED: declare them
 // extern "C" so call sites emit the unmangled reloc names (retail uses C
 // linkage for these menu helpers).
-extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self);
-extern "C" void EneSt_CursorBuild(CPcSelectCursorLayout* self);
-extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* posA, void* posB);
-extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData);
+// (memberized: EneSt_CursorUpdate -> CPcSelectCursorLayout::EneSt_CursorUpdate; declaration moved into class CPcSelectCursorLayout)
+// (memberized: EneSt_CursorBuild -> CPcSelectCursor::EneSt_CursorBuild; declaration moved into class CPcSelectCursor)
+// (memberized: EneSt_PositionPanel -> CMenuEnemyState::EneSt_PositionPanel; declaration moved into class CMenuEnemyState)
+// (memberized: EneSt_UpdatePanelHighlight -> CMenuEnemyState::EneSt_UpdatePanelHighlight; declaration moved into class CMenuEnemyState)
 void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
-extern "C" void EneSt_HighlightPane(CMenuEnemyState* self, u8* panelData, int which);
+// (memberized: EneSt_HighlightPane -> CMenuEnemyState::EneSt_HighlightPane; declaration moved into class CMenuEnemyState)
 void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
-extern "C" void EneSt_RefreshNameColor(CMenuEnemyState* self, u8* panelData);
-extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self);
+// (memberized: EneSt_RefreshNameColor -> CMenuEnemyState::EneSt_RefreshNameColor; declaration moved into class CMenuEnemyState)
+// (memberized: EneSt_RefreshMenu -> CMenuEnemyState::EneSt_RefreshMenu; declaration moved into class CMenuEnemyState)
 // Menu sound effect for the enemy-menu (plain C++ so MWCC mangles the retail
 // name playUISound__FUl).
 extern void playUISound(u32);
 void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* actor);
-extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* actor2);
+// (memberized: EneSt_ScanSlotHighlight -> CMenuEnemyState::EneSt_ScanSlotHighlight; declaration moved into class CMenuEnemyState)
 extern "C" {
 // CfGameManager::isSceneActive is not declared in CfGameManager.hpp (owned
 // by other batch targets); call the mangled linker name directly instead of
@@ -955,7 +955,7 @@ void CMenuEnemyState::Move() {
         }
     }
 
-    EneSt_RefreshMenu(this);
+    this->EneSt_RefreshMenu();
 
     // Retail pre-loop materialization (80110A88..AA4): pc call, then
     // f30/r30/f31/r29/f28/r28/r27/r31 - declare in that dependence order.
@@ -1098,7 +1098,7 @@ void CMenuEnemyState::Move() {
             }
         }
 
-        EneSt_UpdatePanelHighlight(this, reinterpret_cast<u8*>(&panel));
+        this->EneSt_UpdatePanelHighlight(reinterpret_cast<u8*>(&panel));
 
         {
             Vec3f posTmp;
@@ -1135,11 +1135,11 @@ void CMenuEnemyState::Move() {
                 }
             }
 
-            EneSt_PositionPanel(this, reinterpret_cast<u8*>(&panel), &posA, &posB);
+            this->EneSt_PositionPanel(reinterpret_cast<u8*>(&panel), &posA, &posB);
         }
 
         if (panel.unk1F == 0 && actor2 != NULL) {
-            EneSt_RefreshNameColor(this, reinterpret_cast<u8*>(&panel));
+            this->EneSt_RefreshNameColor(reinterpret_cast<u8*>(&panel));
 
             if (panel.unk1C != 0) {
                 u32 count = cf::CBattleManager::getInstance()->mActorList1.size();
@@ -1232,7 +1232,7 @@ void CMenuEnemyState::Move() {
     }
 
     if (selectCursor.field44 != 0) {
-        EneSt_CursorUpdate(&selectCursor);
+        ((CPcSelectCursorLayout*)(&selectCursor))->EneSt_CursorUpdate();
     }
 
     selectCursor.layout1C->Animate(0);
@@ -1245,40 +1245,40 @@ done:
 // 0x2000 scratch region, builds the layout + two anims from the shared arc
 // accessor (field18), grabs six named panes off the root pane, then enables
 // anim20. Called after the ctor from the owning menu's file-event path.
-void EneSt_CursorBuild(CPcSelectCursor* self) {
-    self->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
+void CPcSelectCursor::EneSt_CursorBuild() {
+    this->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
                              &lbl_eu_804FDBF8[0x00], 0);
-    Class_8045F858 regionGuard(&self->mem08);
+    Class_8045F858 regionGuard(&this->mem08);
     mtl::MemManager::setMemInitFlag(false);
 
     // Retail reloads field18 (the arc accessor) and layout1C per call instead
     // of caching them in locals, so each is re-loaded from the object.
-    buildLayout(&self->layout1C,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
+    buildLayout(&this->layout1C,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
                   &lbl_eu_804FDBF8[0x10]);
-    bindLayoutAnimTransform(self->layout1C, &self->anim20,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
+    bindLayoutAnimTransform(this->layout1C, &this->anim20,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
                   &lbl_eu_804FDBF8[0x2c]);
-    bindLayoutAnimTransform(self->layout1C, &self->anim24,
-                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
+    bindLayoutAnimTransform(this->layout1C, &this->anim24,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
                   &lbl_eu_804FDBF8[0x4b]);
 
-    self->field28 = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field28 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x6a], true);
-    self->field34 = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field34 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x72], true);
-    self->field2C = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field2C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x7c], true);
-    self->field30 = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field30 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x86], true);
-    self->field38 = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field38 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x90], true);
-    self->field3C = (u32)self->layout1C->GetRootPane()->FindPaneByName(
+    this->field3C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x9c], true);
 
-    self->layout1C->SetAnimationEnable(self->anim24, false);
-    self->layout1C->SetAnimationEnable(self->anim20, true);
-    self->layout1C->Animate(0);
+    this->layout1C->SetAnimationEnable(this->anim24, false);
+    this->layout1C->SetAnimationEnable(this->anim20, true);
+    this->layout1C->Animate(0);
 }
 
 // Cursor first-activation (retail bare EneSt_CursorActivate): when the state word
@@ -1307,7 +1307,7 @@ u8 EneSt_CursorGetFlag(CPcSelectCursor* self) {
 // EneSt_CursorSet41: stb + b EneSt_CursorUpdate).
 void EneSt_CursorSet41(CPcSelectCursor* self, u8 val) {
     self->byte41 = val;
-    return EneSt_CursorUpdate((CPcSelectCursorLayout*)self);
+    return ((CPcSelectCursorLayout*)self)->EneSt_CursorUpdate();
 }
 
 // EneSt_CursorToState4 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
@@ -1496,7 +1496,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
     posA = *posPtr;
     posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
-    EneSt_PositionPanel(self, reinterpret_cast<u8*>(panel), &posA, &posB);
+    self->EneSt_PositionPanel(reinterpret_cast<u8*>(panel), &posA, &posB);
 
     // Colour/scale quads from sdata; the four words are individual retail
     // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
@@ -1550,7 +1550,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
 
     panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
-    EneSt_HighlightPane(self, reinterpret_cast<u8*>(panel), (panel->unk1C != 0) ? 1 : 2);
+    self->EneSt_HighlightPane(reinterpret_cast<u8*>(panel), (panel->unk1C != 0) ? 1 : 2);
 
     // Slot-type texture by the vt[0x258] value (1/2/3 select a name offset).
     u32* p258 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr();
@@ -1589,10 +1589,10 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
 // actor's flag bits, position, colour quads and actor2 slot/type textures
 // (same core as EneSt_RegisterPanel, then the highlight-scan panes and the scan
 // timer are reset).
-extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
+void CMenuEnemyState::EneSt_RefreshMenu() {
     u32 lastId;
     MenuEnemyPanel* panel;
-    panel = &self->panels[23];
+    panel = &this->panels[23];
     lastId = static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
     u8* panelData = reinterpret_cast<u8*>(panel);
 
@@ -1600,18 +1600,18 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         // Already showing: clear and re-register when the selection changed.
         if (lastId == 0) {
             panel->visible = 0;
-            self->field82C = lastId;
+            this->field82C = lastId;
             playUISound(0x58);
             return;
         }
-        if (self->field82C == lastId) return;
+        if (this->field82C == lastId) return;
 
         panel->visible = 0;
-        self->field82C = 0;
+        this->field82C = 0;
         Obj64_91* obj = reinterpret_cast<Obj64_91*>(
             findObjectById(static_cast<int>(lastId)));
         if (obj == NULL) return;
-        self->field82C = lastId;
+        this->field82C = lastId;
 
         // Mirror the actor's flag word bits onto the panel state bytes
         // (MSB-first bitfield reads; retail emits lwz+extrwi per bit).
@@ -1662,7 +1662,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         posA = *posPtr;
         Vec3f posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
-        EneSt_PositionPanel(self, panelData, &posA, &posB);
+        this->EneSt_PositionPanel(panelData, &posA, &posB);
 
         // Colour/scale quads from sdata; the four words are individual retail
         // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
@@ -1715,8 +1715,8 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->field9C)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->field9C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->fieldA0)->flagBB &= 0xFE;
 
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
@@ -1726,7 +1726,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
 
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
-                EneSt_HighlightPane(self, panelData, (panel->unk1C != 0) ? 1 : 2);
+                this->EneSt_HighlightPane(panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
                 void* tex = NULL;
@@ -1756,34 +1756,34 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         }
 
         // Reset the highlight-scan panes and the scan timer.
-        reinterpret_cast<ObjBBFlag*>(self->field94)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->field98)->flagBB &= 0xFE;
-        self->field7D8 = lbl_eu_80667038;
-        self->field7DC = 0;
-        self->field7E0 = 0;
+        reinterpret_cast<ObjBBFlag*>(this->field94)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->field98)->flagBB &= 0xFE;
+        this->field7D8 = lbl_eu_80667038;
+        this->field7DC = 0;
+        this->field7E0 = 0;
         playUISound(0x59);
     } else {
         // Hidden: clear the old matching panel entry, then re-register.
         if (lastId == 0) {
             panel->visible = 0;
-            self->field82C = lastId;
+            this->field82C = lastId;
             return;
         }
-        if (self->field82C == lastId) return;
+        if (this->field82C == lastId) return;
 
         for (u8 i = 0; i < 23; i++) {
-            if (self->panels[i].visible != 0 && self->panels[i].actorId == lastId) {
-                self->panels[i].visible = 0;
+            if (this->panels[i].visible != 0 && this->panels[i].actorId == lastId) {
+                this->panels[i].visible = 0;
                 break;
             }
         }
 
         panel->visible = 0;
-        self->field82C = 0;
+        this->field82C = 0;
         Obj64_91* obj = reinterpret_cast<Obj64_91*>(
             findObjectById(static_cast<int>(lastId)));
         if (obj == NULL) return;
-        self->field82C = lastId;
+        this->field82C = lastId;
 
         // Mirror the actor's flag word bits onto the panel state bytes.
         ObjFlagBits* fb = reinterpret_cast<ObjFlagBits*>(&obj->word64);
@@ -1824,7 +1824,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         posA2 = *posPtr2;
         Vec3f posB2 = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
-        EneSt_PositionPanel(self, panelData, &posA2, &posB2);
+        this->EneSt_PositionPanel(panelData, &posA2, &posB2);
 
         // Colour/scale quads from sdata; the four words are individual retail
         // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
@@ -1877,8 +1877,8 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->field9C)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->field9C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->fieldA0)->flagBB &= 0xFE;
 
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
@@ -1888,7 +1888,7 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
 
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
-                EneSt_HighlightPane(self, panelData, (panel->unk1C != 0) ? 1 : 2);
+                this->EneSt_HighlightPane(panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
                 void* tex2 = NULL;
@@ -1918,11 +1918,11 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
         }
 
         // Reset the highlight-scan panes and the scan timer.
-        reinterpret_cast<ObjBBFlag*>(self->field94)->flagBB &= 0xFE;
-        reinterpret_cast<ObjBBFlag*>(self->field98)->flagBB &= 0xFE;
-        self->field7D8 = lbl_eu_80667038;
-        self->field7DC = 0;
-        self->field7E0 = 0;
+        reinterpret_cast<ObjBBFlag*>(this->field94)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(this->field98)->flagBB &= 0xFE;
+        this->field7D8 = lbl_eu_80667038;
+        this->field7DC = 0;
+        this->field7E0 = 0;
         playUISound(0x57);
     }
 }
@@ -1934,14 +1934,14 @@ extern "C" void EneSt_RefreshMenu(CMenuEnemyState* self) {
 // (findObjB28ById table entry by byte41, subobject at +0x3E9C): the cursor is
 // projected with the scene pose and its Y only moves downward toward the
 // enemy's live position.
-extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
+void CPcSelectCursorLayout::EneSt_CursorUpdate() {
     // Retail reloads every pane field from the object (no pane locals).
-    reinterpret_cast<ObjBBFlag*>(self->field28)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field34)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field2C)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field30)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field38)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field3C)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field28)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field34)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB &= 0xFE;
 
     // Battle actor list non-empty -> light the four "target" panes.
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
@@ -1955,20 +1955,20 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
         count++;
     }
     if (count != 0) {
-        reinterpret_cast<ObjBBFlag*>(self->field2C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field2C)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(self->field30)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field30)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(self->field38)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field38)->flagBB & 0xFE) | 1;
-        reinterpret_cast<ObjBBFlag*>(self->field3C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field3C)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field2C)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field30)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field38)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field3C)->flagBB & 0xFE) | 1;
     }
 
     // Arrow pane; enemy subobject via the byte41 table entry (+4 words).
-    ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(self->field28);
+    ObjBBFlag* arrow = reinterpret_cast<ObjBBFlag*>(this->field28);
     u8* tbl = reinterpret_cast<u8*>(CtrlObjectParam_GetSlotTableBase());
-    void* entry = *reinterpret_cast<void**>(tbl + self->byte41 * 4 + 4);
+    void* entry = *reinterpret_cast<void**>(tbl + this->byte41 * 4 + 4);
     void* sub = findObjB28ById(static_cast<s32>(reinterpret_cast<u32>(entry)));
     // Retail copies sub into the target register first, then patches up
     // +0x3E9C only when non-null (mr/beq/addi shape).
@@ -1982,7 +1982,7 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
             CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
         if (bt != NULL && bt->field04 != NULL &&
             target->field74 == reinterpret_cast<u32>(bt->field04)) {
-            arrow = reinterpret_cast<ObjBBFlag*>(self->field34);
+            arrow = reinterpret_cast<ObjBBFlag*>(this->field34);
         }
         arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
 
@@ -2011,7 +2011,7 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
         pos = *src;
 
         PoseLayout* pose = static_cast<PoseLayout*>(
-            Scn_FindCamItem(reinterpret_cast<void*>(self->field04), -1));
+            Scn_FindCamItem(reinterpret_cast<void*>(this->field04), -1));
         CamMan_ProjectToScreen(&out, pose, &pos);
 
         arrow->flagBB = (arrow->flagBB & 0xFE) | 1;
@@ -2057,7 +2057,7 @@ extern "C" void EneSt_CursorUpdate(CPcSelectCursorLayout* self) {
 // highlight colour; otherwise pick the colour from the diff between the
 // panel's unk24 and the player-target id. Then scan the enemy slot list for a
 // matching id and light the unk40 pane.
-extern "C" void EneSt_RefreshNameColor(CMenuEnemyState* self, u8* panelData) {
+void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
     if (panel->unk1D == 0) return;
 
@@ -2094,8 +2094,8 @@ extern "C" void EneSt_RefreshNameColor(CMenuEnemyState* self, u8* panelData) {
         if (panel->panelType != 0) {
             // Retail hoists the second call's pane pointer (r28) ahead of the
             // first call's argument setup.
-            void* p90 = reinterpret_cast<void*>(self->field90);
-            PaneSetVtxColorPairs(reinterpret_cast<void*>(self->field8C), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
+            void* p90 = reinterpret_cast<void*>(this->field90);
+            PaneSetVtxColorPairs(reinterpret_cast<void*>(this->field8C), 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
             PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
         }
     } else {
@@ -2118,8 +2118,8 @@ extern "C" void EneSt_RefreshNameColor(CMenuEnemyState* self, u8* panelData) {
         if (panel->panelType != 0) {
             // Both pane pointers are common to every branch; retail hoists
             // both loads above the branch chain (calls would clobber them).
-            void* p8C = reinterpret_cast<void*>(self->field8C);
-            void* p90 = reinterpret_cast<void*>(self->field90);
+            void* p8C = reinterpret_cast<void*>(this->field8C);
+            void* p90 = reinterpret_cast<void*>(this->field90);
             if (tgt >= 6) {
                 PaneSetVtxColorPairs(p8C, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
                 PaneSetVtxColorPairs(p90, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3C00);
@@ -2171,7 +2171,7 @@ extern "C" void EneSt_RefreshNameColor(CMenuEnemyState* self, u8* panelData) {
 // highlight style by unk1E/unk1F/unk20/unk1D, loads the matching name text
 // (or formats the actor2 sub-id with sprintf), refreshes the highlight-slot
 // textures (EneSt_ScanSlotHighlight) and closes with the unk44 scale reset.
-extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData) {
+void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
     char buf[0x20];
     panel->panelType = 0;
@@ -2180,7 +2180,7 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
     if (obj == NULL) return;
 
     // Only the last-selected enemy gets the full highlight path. (Retail
-    // reloads the panel/self pane fields at every site - no cached locals.)
+    // reloads the panel/this pane fields at every site - no cached locals.)
     reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
     if (panel->unk1D != 0) {
         reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB =
@@ -2192,7 +2192,7 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
     if (panel->unk1C != 0) {
         which = 1;
     }
-    EneSt_HighlightPane(self, panelData, which);
+    this->EneSt_HighlightPane(panelData, which);
 
     // Retail evaluates actorId first (cmpl r3,r0 operand order).
     if (panel->actorId !=
@@ -2207,39 +2207,39 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
     reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB =
         (reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB & 0xFE) | 1;
     reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
-    EneSt_HighlightPane(self, panelData, 3);
+    this->EneSt_HighlightPane(panelData, 3);
     panel->panelType = 1;
-    if (self->field7D4 != sub74) {
-        self->field7D4 = sub74;
+    if (this->field7D4 != sub74) {
+        this->field7D4 = sub74;
     }
 
-    reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field80)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field84)->flagBB &= 0xFE;
-    reinterpret_cast<ObjBBFlag*>(self->field88)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB &= 0xFE;
+    reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB &= 0xFE;
 
     if (panel->unk1E != 0 || panel->unk1F != 0) {
-        reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB & 0xFE) | 1;
         if (panel->unk20 != 0) {
-            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
                           BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
                                         &lbl_eu_804FDBF8[0x261], 8),
                           0);
         } else if (panel->unk1F != 0) {
-            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
                           reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
                           0);
         } else {
-            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
                           GetBdatNameByNumId(reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
                           0);
         }
     } else if (panel->unk1D != 0) {
-        reinterpret_cast<ObjBBFlag*>(self->field80)->flagBB =
-            (reinterpret_cast<ObjBBFlag*>(self->field80)->flagBB & 0xFE) | 1;
+        reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB =
+            (reinterpret_cast<ObjBBFlag*>(this->field80)->flagBB & 0xFE) | 1;
         Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(MapFx_ResolveOwner(obj));
         u32 special = 0;
         if ((obj->word64 & (1 << 2)) != 0) {
@@ -2254,29 +2254,29 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
         s32 a2id = static_cast<s32>(static_cast<u32>(
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (special != 0) {
-            LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x1b2],
+            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x1b2],
                           BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
                                         &lbl_eu_804FDBF8[0x261], 7),
                           0);
         } else {
             sprintf(buf, &lbl_eu_804FDBF8[0x273], a2id);
-            LayoutSetTextBoxText(self->unk74, &lbl_eu_804FDBF8[0x1b2], buf, 0);
+            LayoutSetTextBoxText(this->unk74, &lbl_eu_804FDBF8[0x1b2], buf, 0);
         }
         a2id = static_cast<s32>(static_cast<u32>(
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (static_cast<s32>(panel->unk24) != a2id) {
             panel->unk24 = static_cast<u32>(
                 reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
-            EneSt_RefreshNameColor(self, panelData);
+            this->EneSt_RefreshNameColor(panelData);
         }
-        LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x278],
+        LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x278],
                       reinterpret_cast<char*>(
                           const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
                       0);
         // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
-        PaneSetVtxColorByName(self->unk74, &lbl_eu_804FDBF8[0x278],
+        PaneSetVtxColorByName(this->unk74, &lbl_eu_804FDBF8[0x278],
                       0xEDE80000 - 0x2501);
-        EneSt_ScanSlotHighlight(self, actor2);
+        this->EneSt_ScanSlotHighlight(actor2);
 
         void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
@@ -2285,12 +2285,12 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
             // Retail clrlwi's the result - keep the u8 narrowing.
             switch (v) {
             case 1:
-                reinterpret_cast<ObjBBFlag*>(self->field84)->flagBB =
-                    (reinterpret_cast<ObjBBFlag*>(self->field84)->flagBB & 0xFE) | 1;
+                reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB =
+                    (reinterpret_cast<ObjBBFlag*>(this->field84)->flagBB & 0xFE) | 1;
                 break;
             case 2:
-                reinterpret_cast<ObjBBFlag*>(self->field88)->flagBB =
-                    (reinterpret_cast<ObjBBFlag*>(self->field88)->flagBB & 0xFE) | 1;
+                reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB =
+                    (reinterpret_cast<ObjBBFlag*>(this->field88)->flagBB & 0xFE) | 1;
                 break;
             }
         }
@@ -2309,9 +2309,9 @@ extern "C" void EneSt_UpdatePanelHighlight(CMenuEnemyState* self, u8* panelData)
         if (v298->field50 != NULL) {
             Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
             if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == lbl_eu_80666FEC) {
-                LayoutSetTextBoxFmtValue(self->unk74, &lbl_eu_804FDBF8[0x278],
+                LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x278],
                               reinterpret_cast<char*>(o50), 0);
-                PaneSetVtxColorByName(self->unk74, &lbl_eu_804FDBF8[0x278], 0xF52819FF);
+                PaneSetVtxColorByName(this->unk74, &lbl_eu_804FDBF8[0x278], 0xF52819FF);
             }
         }
     }
@@ -2329,9 +2329,9 @@ tail:
 // layout2 root pane; otherwise zeroes the vector fields. Then the position
 // marker v is clamped (y only moves downward) and written into the layout1
 // root pane (and layout2/unk74 panes when panelType != 0).
-extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* posA, void* posB) {
+void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
-    PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(self->unk60, -1));
+    PoseLayout* pose = static_cast<PoseLayout*>(Scn_FindCamItem(this->unk60, -1));
     nw4r::math::VEC3* pa = static_cast<nw4r::math::VEC3*>(posA);
     nw4r::math::VEC3* pb = static_cast<nw4r::math::VEC3*>(posB);
     nw4r::math::VEC3 v;
@@ -2461,7 +2461,7 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
         pane->v30 = v.y;
         pane->v34 = v.z;
         PanePosLayout* p74 =
-            reinterpret_cast<PanePosLayout*>(self->unk74->GetRootPane());
+            reinterpret_cast<PanePosLayout*>(this->unk74->GetRootPane());
         p74->v2C = v.x;
         p74->v30 = v.y;
         p74->v34 = v.z;
@@ -2474,16 +2474,16 @@ extern "C" void EneSt_PositionPanel(CMenuEnemyState* self, u8* panelData, void* 
 // texture and flagging field94. Then rebuild the 32-entry id table plus the
 // 0x20 sentinel from actor2->field1530 and scan field98 from field7E0+1
 // (wrapping at 0x21) the same way.
-extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* actor2) {
-    self->field7D8 += lbl_eu_80666FE8;
-    if (self->field7D8 > lbl_eu_80667038) {
-        self->field7D8 = lbl_eu_80666FEC;
-        u8 idx = (u8)(self->field7DC + 1);
+void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
+    this->field7D8 += lbl_eu_80666FE8;
+    if (this->field7D8 > lbl_eu_80667038) {
+        this->field7D8 = lbl_eu_80666FEC;
+        u8 idx = (u8)(this->field7DC + 1);
         for (;;) {
             if (idx >= 0x20) {
                 idx = 0;
             }
-            ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(self->field94);
+            ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(this->field94);
             f94->flagBB &= 0xFE;
             SubSlot5CResult* res =
                 reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
@@ -2499,12 +2499,12 @@ extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* act
                     if (tex != 0) {
                         f94->flagBB = (f94->flagBB & 0xFE) | 1;
                         PaneSetTexPalette(f94, tex);
-                        self->field7DC = idx;
+                        this->field7DC = idx;
                         break;
                     }
                 }
             }
-            if ((s32)(u8)idx == (s32)self->field7DC) {
+            if ((s32)(u8)idx == (s32)this->field7DC) {
                 break;
             }
             idx++;
@@ -2519,12 +2519,12 @@ extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* act
             }
             arr16[0x20] = (u16)actor2->field1530;
 
-            u8 idx2 = (u8)(self->field7E0 + 1);
+            u8 idx2 = (u8)(this->field7E0 + 1);
             for (;;) {
                 if (idx2 >= 0x21) {
                     idx2 = 0;
                 }
-                ObjBBFlag* f98 = reinterpret_cast<ObjBBFlag*>(self->field98);
+                ObjBBFlag* f98 = reinterpret_cast<ObjBBFlag*>(this->field98);
                 f98->flagBB &= 0xFE;
                 u16 v = arr16[idx2];
                 if (v != 0) {
@@ -2536,7 +2536,7 @@ extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* act
                         if (tex != 0) {
                             f98->flagBB = (f98->flagBB & 0xFE) | 1;
                             PaneSetTexPalette(f98, tex);
-                            self->field7E0 = idx2;
+                            this->field7E0 = idx2;
                             break;
                         }
                     } else {
@@ -2550,13 +2550,13 @@ extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* act
                             if (tex != 0) {
                                 f98->flagBB = (f98->flagBB & 0xFE) | 1;
                                 PaneSetTexPalette(f98, tex);
-                                self->field7E0 = idx2;
+                                this->field7E0 = idx2;
                                 break;
                             }
                         }
                     }
                 }
-                if ((s32)(u8)idx2 == (s32)self->field7E0) {
+                if ((s32)(u8)idx2 == (s32)this->field7E0) {
                     break;
                 }
                 idx2++;
@@ -2573,7 +2573,7 @@ extern "C" void EneSt_ScanSlotHighlight(CMenuEnemyState* self, Actor2Layout* act
 // (the others are cleared); case 3 additionally plays a layout sound and
 // nudges a scale vec3 on unk44. Called from EneSt_UpdateIndicator with which=3.
 // (arg1 `self` is not referenced by retail.)
-extern "C" void EneSt_HighlightPane(CMenuEnemyState* self, u8* panelData, int which) {
+void CMenuEnemyState::EneSt_HighlightPane(u8* panelData, int which) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
 
     ObjBBFlag* f1 = reinterpret_cast<ObjBBFlag*>(
@@ -2679,7 +2679,7 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
         return;
     }
 
-    EneSt_HighlightPane(self, panelData, 3);
+    self->EneSt_HighlightPane(panelData, 3);
     reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB =
         (reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB & 0xFE) | 1;
 
@@ -3051,7 +3051,7 @@ void CMenuEnemyState::Init() {
     u32 scn = (u32)unk60;
     selectCursor.field18 = (u32)CUICfManager_getArcResourceAccessor();
     selectCursor.field04 = scn;
-    EneSt_CursorBuild(&selectCursor);
+    ((CPcSelectCursor*)(&selectCursor))->EneSt_CursorBuild();
 
     field7C4 = 1;
 

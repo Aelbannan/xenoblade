@@ -159,6 +159,7 @@ namespace cf {
         u8  pad_00[4];       // 0x00..0x03
         int intArr1[3];      // 0x04..0x0F  (type 1, indices 0,1,2)
         int intArr2[3];      // 0x10..0x1B  (type 2, indices 0,1,2)
+        int SlotEntries(int firstType, int firstIndex, int secondType, int secondIndex);
     };
 
     // -- Clear view (clearStruct): byte + 24 ints ---------------------------

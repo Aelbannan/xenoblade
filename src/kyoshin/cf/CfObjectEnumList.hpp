@@ -49,6 +49,7 @@ public:
     u32 field_3034;
     u32 field_3038;
     u32 field_303C;
+    void runEnumObjects(int flags, u32 options);
 };
 
 } // namespace cf
@@ -64,6 +65,8 @@ class CfSortableList {
 public:
     virtual void* get(int idx) = 0;     // decl idx 0 -> retail +0x08
     virtual float value(int idx) = 0;   // decl idx 1 -> retail +0x0C
+    int findSortPivot(int lo, int hi);
+    int partitionSortList(int lo, int hi, int pivot);
 };
 
 

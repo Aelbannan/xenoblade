@@ -233,6 +233,7 @@ struct CMMMapImg {
     u8 mReady;                  // 0x0C - load-complete flag
     u8 mRow;                    // 0x0D - selected BDAT row (forced min 1)
     u8 mMode;                   // 0x0E - selected unlock-gated resource variant
+    void MiniMapRequestMapImage();
 };
 
 class CMiniMap {
@@ -329,6 +330,7 @@ struct MiniMapTable {
     ml::CVec3 field_4C[3][5];     // 0x4C..0x100 - per-marker world position
     nw4r::lyt::Pane* field_100[3][5]; // 0x100..0x13C - per-marker pane
     nw4r::lyt::Pane* field_13C;   // 0x13C - pane parent (layout root pane)
+    void BuildMarkerPanes(void* table, void* layout, f32 scale);
 };
 
 // Pane-entry record written by MiniMapUpdateGimmickRows: integer-truncated grid coords
@@ -377,6 +379,7 @@ struct CMiniMapGimmickView {
     };
     u32 field_0x6A4;                   // 0x6A4 - live row count
     u32 FillMarkerEntry();
+    void InitGimmickTables(u32 table, void* layout, f32 scale);
 };
 
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):

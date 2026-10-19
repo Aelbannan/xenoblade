@@ -4,6 +4,10 @@
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
+// Forward decl: full view is TU-local in CMenuEnemyState.cpp (only the
+// pointer is needed for the memberized EneSt_ScanSlotHighlight declaration).
+struct Actor2Layout;
+
 // Panel entry in the 24-slot panel array at offset 0xA4, each 0x4C bytes.
 // Initialised in the ctor do-while loop.  The entry-pointer trick
 // (entry = this + idx*0x4C) means entry+0xA4 == &panels[idx]; named
@@ -69,6 +73,7 @@ struct CPcSelectCursorLayout {
     u8 byte41;                             // +0x41  (= unk825)
     u8 pad42[2];                           // +0x42-0x43
     u32 field44;                           // +0x44  (= unk828)
+    void EneSt_CursorUpdate();
 };
 
 class CMenuEnemyState {
@@ -157,6 +162,12 @@ public:
     ~CMenuEnemyState();
     void Init();
     void Term();
+    void EneSt_PositionPanel(u8* panelData, void* posA, void* posB);
+    void EneSt_UpdatePanelHighlight(u8* panelData);
+    void EneSt_HighlightPane(u8* panelData, int which);
+    void EneSt_RefreshNameColor(u8* panelData);
+    void EneSt_RefreshMenu();
+    void EneSt_ScanSlotHighlight(Actor2Layout* actor2);
 };
 
 // CPcSelectCursor lives at offset 0x7E4 in CMenuEnemyState and is 0x48 bytes.
@@ -185,6 +196,7 @@ public:
 
     CPcSelectCursor();
     ~CPcSelectCursor();
+    void EneSt_CursorBuild();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

@@ -8,6 +8,8 @@
 
 #include <nw4r/lyt.h>
 
+namespace cf { class CfObjectActor; }
+
 // Layout for actor fields accessed via byte-offset arithmetic
 // (actor is cf::CfObjectPc*, accessed via MenuBpsActorFields offsets)
 struct MenuBpsActorFields {
@@ -156,6 +158,9 @@ public:
     u32 unk7F8; // 0x7f8: gates the trailing unk7E4 draw / shared anim state
     CMenuBattlePlayerState(CScn* scn);
     virtual ~CMenuBattlePlayerState();
+    void BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CMenuBattlePlayerStateSlot* slot);
+    void BpsStateActivateSlot(CMenuBattlePlayerStateSlot* slot, u32 index);
+    void BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slot);
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

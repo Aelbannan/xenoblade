@@ -42,6 +42,11 @@ from tools.symbolrecover.lib.xref import build_xref, compare_regions  # noqa: E4
 
 REGIONS = ("us", "eu", "jp")
 
+#: Regions edited by DEFAULT.  US only: rewriting every region's symbols.txt on
+#: each rename is what produced the multi-region skew (and a truncated
+#: config/jp/symbols.txt).  Widen explicitly with ``--region us,eu``.
+DEFAULT_REGIONS = ("us",)
+
 
 def _symbols_path(project_root: Path, region: str) -> Path:
     return project_root / "config" / region / "symbols.txt"
@@ -179,7 +184,7 @@ def cmd_rtti(args: argparse.Namespace) -> int:
 
 
 def cmd_rename_plan(args: argparse.Namespace) -> int:
-    plan = plan_rename(args.project_root, args.old_type, args.new_type, list(REGIONS))
+    plan = plan_rename(args.project_root, args.old_type, args.new_type, list(DEFAULT_REGIONS))
     compatible = rename_mangling_compatible(args.old_type, args.new_type)
     print(f"old:  {plan.old_type} ({len(plan.old_type)} chars)")
     print(f"new:  {plan.new_type} ({len(plan.new_type)} chars)")
@@ -230,7 +235,7 @@ def _print_rename_edits(project_root: Path, edits, symbol_touched: list[Path], d
 
 
 def cmd_rename_apply(args: argparse.Namespace) -> int:
-    regions = [args.region] if args.region else list(REGIONS)
+    regions = [args.region] if args.region else list(DEFAULT_REGIONS)
     if args.all:
         active_region = args.region or "us"
         edits, symbol_touched = apply_full_rename(
@@ -272,8 +277,8 @@ def cmd_rename_apply(args: argparse.Namespace) -> int:
 
 def cmd_rename_all(args: argparse.Namespace) -> int:
     active_region = args.region or "us"
-    regions = [args.region] if args.region else list(REGIONS)
-    plan = plan_full_rename(args.project_root, active_region, args.old_type, args.new_type)
+    regions = [args.region] if args.region else list(DEFAULT_REGIONS)
+    plan = plan_full_rename(args.project_root, active_region, args.old_type, args.new_type, regions)
     compatible = rename_mangling_compatible(args.old_type, args.new_type)
     print(f"old:  {args.old_type} ({len(args.old_type)} chars)")
     print(f"new:  {args.new_type} ({len(args.new_type)} chars)")

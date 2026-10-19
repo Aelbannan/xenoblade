@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import shutil
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .mwcc import mangle_length_prefix
 from .parser import load_symbols
 from .xref import build_xref, scan_source_tree
+from tools.coop.lib.atomic_write import atomic_write_text
+from tools.coop.lib.symbols_lock import symbols_edit_lock
 
 
 TEXT_SCAN_ROOTS = ("src", "libs", "configure.py", "config", "docs")
@@ -104,10 +107,22 @@ def replace_type_text(text: str, old_type: str, new_type: str) -> tuple[str, int
     return updated, count
 
 
-def plan_full_rename(project_root: Path, region: str, old_type: str, new_type: str) -> FullRenamePlan:
+def plan_full_rename(
+    project_root: Path,
+    region: str,
+    old_type: str,
+    new_type: str,
+    regions: list[str] | None = None,
+) -> FullRenamePlan:
+    """Plan a full rename.  *regions* defaults to US only (see
+    ``tools/coop/symbol_fn_rename.DEFAULT_REGIONS``): rewriting every region's
+    ``symbols.txt`` on each rename is what produced the multi-region skew and a
+    truncated file.
+    """
+    regions = list(regions) if regions else ["us"]
     symbol_files = [
         project_root / "config" / r / "symbols.txt"
-        for r in ("us", "eu", "jp")
+        for r in regions
         if (project_root / "config" / r / "symbols.txt").is_file()
     ]
     text_files = collect_text_files(project_root, old_type, region)
@@ -125,7 +140,8 @@ def apply_text_file(path: Path, old_type: str, new_type: str, dry_run: bool) -> 
     original = path.read_text(encoding="utf-8")
     updated, count = replace_type_text(original, old_type, new_type)
     if count and not dry_run:
-        path.write_text(updated, encoding="utf-8")
+        # Atomic: a racing/interrupted write must not truncate the file.
+        atomic_write_text(path, updated)
     return FileEdit(path=path, replacements=count)
 
 
@@ -158,19 +174,24 @@ def apply_full_rename(
     edits: list[FileEdit] = []
     symbol_touched: list[Path] = []
 
-    if include_symbols:
-        _, symbol_touched = apply_rename(project_root, old_type, new_type, regions, dry_run)
+    # One editor at a time for the whole operation.  The nested
+    # ``apply_rename`` re-enters this same lock (re-entrant per thread), so
+    # symbols.txt, the source files and the file renames all happen under a
+    # single exclusive hold.
+    with (nullcontext() if dry_run else symbols_edit_lock(project_root)):
+        if include_symbols:
+            _, symbol_touched = apply_rename(project_root, old_type, new_type, regions, dry_run)
 
-    plan = plan_full_rename(project_root, region, old_type, new_type)
-    for path in plan.text_files:
-        if include_symbols and path in symbol_touched:
-            continue
-        if not path.is_file():
-            continue
-        edits.append(apply_text_file(path, old_type, new_type, dry_run))
+        plan = plan_full_rename(project_root, region, old_type, new_type, regions)
+        for path in plan.text_files:
+            if include_symbols and path in symbol_touched:
+                continue
+            if not path.is_file():
+                continue
+            edits.append(apply_text_file(path, old_type, new_type, dry_run))
 
-    if rename_files:
-        rename_edits = apply_file_renames(plan.file_renames, dry_run)
-        edits.extend(rename_edits)
+        if rename_files:
+            rename_edits = apply_file_renames(plan.file_renames, dry_run)
+            edits.extend(rename_edits)
 
     return edits, symbol_touched

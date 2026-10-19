@@ -536,25 +536,25 @@ void CCharVoiceMan_ReleaseVoices(u8 flag) {
 // state checks pass, resolve the target's voice action and fire a battle/lvl
 // voice node.
 // Retail references this helper by its bare unmangled symbol (C linkage).
-extern "C" int CCharVoiceMan_TryPlayCharVoice(cf::CVoiceActorState* self);
-int CCharVoiceMan_TryPlayCharVoice(cf::CVoiceActorState* self) {
-    if (!(self->field_3F00 & 0x2))
+// (memberized: CCharVoiceMan_TryPlayCharVoice -> CVoiceActorState::CharVoiceMan_TryPlayCharVoice; declaration moved into class CVoiceActorState)
+int cf::CVoiceActorState::CharVoiceMan_TryPlayCharVoice() {
+    if (!(this->field_3F00 & 0x2))
         return 0;
-    if (((cf::CfObjectImplPc18*)self)->v2BC() != 0)
+    if (((cf::CfObjectImplPc18*)this)->v2BC() != 0)
         return 0;
-    if (self->field_3F28 != 1)
+    if (this->field_3F28 != 1)
         return 0;
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
-    if (isBattleStatusActive(&self->unk4[4], 0xcf) == 0 && isBattleStatusActive(&self->unk4[4], 0xd0) == 0)
+    if (isBattleStatusActive(&this->unk4[4], 0xcf) == 0 && isBattleStatusActive(&this->unk4[4], 0xd0) == 0)
         return 0;
-    cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)self)->mSub;
+    cf::CfObjectImplPcSub3E9C* move = &((cf::CfObjectImplPc18*)this)->mSub;
     u32 moveRes = move->sf4C();
     void* r = MapFx_ResolveOwner(findObjectById((BOOL)moveRes));
     if (r == 0)
         return 0;
     if (((cf::CVoiceActorState*)r)->field_3F28 != 0x10c)
         return 0;
-    BmVoice_PlayGated(self, 0xfa5, 0x14);
+    BmVoice_PlayGated(this, 0xfa5, 0x14);
     return 1;
 }
 // Register a freshly-created sound node, then clear byte 0x22C.
@@ -755,7 +755,7 @@ void CCharVoiceMan_HookPendingBattleVoice(cf::CVoiceActorState* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (lbl_eu_80664A58->unk228 == 0) {
-        if (CCharVoiceMan_TryPlayCharVoice(self) != 0) {
+        if (self->CharVoiceMan_TryPlayCharVoice() != 0) {
             lbl_eu_80664A58->unk228 = 1;
             return;
         }

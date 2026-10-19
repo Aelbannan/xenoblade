@@ -193,9 +193,18 @@ class PlanTest(unittest.TestCase):
     def test_plan_contents(self) -> None:
         plan = plan_function_rename(self.root, "Widget_Paint", "WdgState::Paint(int, int)")
         self.assertEqual(plan.new_mangled, "Paint__8WdgStateFii")
-        self.assertEqual(len(plan.symbol_edits), 2)
-        regions = sorted(e.region for e in plan.symbol_edits)
-        self.assertEqual(regions, ["eu", "us"])
+        # DEFAULT IS US-ONLY: a rename must never rewrite a region the caller
+        # did not ask for (multi-region rewrites caused the skew/truncation bug).
+        self.assertEqual(len(plan.symbol_edits), 1)
+        self.assertEqual([e.region for e in plan.symbol_edits], ["us"])
+        # Explicit multi-region is still supported when genuinely intended.
+        plan_multi = plan_function_rename(
+            self.root, "Widget_Paint", "WdgState::Paint(int, int)",
+            regions=["us", "eu"],
+        )
+        self.assertEqual(
+            sorted(e.region for e in plan_multi.symbol_edits), ["eu", "us"]
+        )
         # Only the name part changes; address/size suffix preserved.
         for edit in plan.symbol_edits:
             self.assertTrue(edit.new_line.startswith("Paint__8WdgStateFii = "),

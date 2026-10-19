@@ -22,7 +22,7 @@
 // (retail calls them, so the call must survive).
 extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self);
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim1(CTitleMenu* self);
+// (memberized: CTitleMenu_bindAnim1 -> CTitleMenu::bindAnim1; declaration moved into class CTitleMenu)
 extern "C" void __declspec(noinline) CTitleMenu_bindAnim4(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self);
 extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self);
@@ -364,7 +364,7 @@ extern "C" void CTitleMenu_nop() {}
 extern "C" void CTitleMenu_onAnim0Done(CTitleMenu* self) {
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans0, lbl_eu_80668FE0)) {
         self->field_0x26 = 2;
-        CTitleMenu_bindAnim1(self);
+        self->bindAnim1();
         self->field_0x25 = 1;
     }
 }
@@ -414,12 +414,12 @@ extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self) {
 
 // Menu phase 2: unbind the intro animation, bind animation 1, reset it to
 // frame 0, and advance the layout.
-extern "C" void CTitleMenu_bindAnim1(CTitleMenu* self) {
-    self->mLayout->UnbindAnimation(self->mAnimTrans0);
-    self->mLayout->BindAnimation(self->mAnimTrans1);
-    self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
-    self->mAnimTrans1->SetFrame(lbl_eu_80668FF0);
-    self->mLayout->Animate(0);
+void CTitleMenu::bindAnim1() {
+    this->mLayout->UnbindAnimation(this->mAnimTrans0);
+    this->mLayout->BindAnimation(this->mAnimTrans1);
+    this->mLayout->SetAnimationEnable(this->mAnimTrans1, true);
+    this->mAnimTrans1->SetFrame(lbl_eu_80668FF0);
+    this->mLayout->Animate(0);
 }
 
 // Menu phase 3: unbind the intro animation, bind animation 2, reset it to

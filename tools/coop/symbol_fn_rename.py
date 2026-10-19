@@ -78,10 +78,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from tools.coop.lib.atomic_write import atomic_write_text
+from tools.coop.lib.symbols_lock import symbols_edit_lock
 from tools.symbolrecover.lib.mwcc import demangle_symbol
 from tools.symbolrecover.lib.parser import PLACEHOLDER_RE
 
 REGIONS = ("us", "eu", "jp")
+
+#: Regions edited by DEFAULT.  US only: the other regions are not needed for the
+#: US pipeline, and rewriting all three on every rename is what produced the
+#: multi-region skew / truncation class of bug.  Widen explicitly with
+#: ``--region us,eu`` (or ``regions=[...]``) when a multi-region rename is
+#: genuinely intended.
+DEFAULT_REGIONS = ("us",)
 BACKUP_ROOT = Path("/tmp/symbol_fn_rename")
 
 # Files the scanner considers (definition / declaration / call-site search).
@@ -1474,7 +1482,7 @@ def plan_function_rename(
     loudly; see the flag-rationale note above ``_demote_comment``.
     """
     if regions is None:
-        regions = list(REGIONS)
+        regions = list(DEFAULT_REGIONS)
     else:
         # Explicit region list: the rename must never touch a region the
         # caller did not ask for (jp is currently corrupt; US pipeline only).
@@ -2089,6 +2097,38 @@ def apply_function_rename(
     no_header_insert: bool = False,
     demote_import_band: bool = False,
 ) -> tuple[FnPlan, list[str]]:
+    """Apply a function rename, holding the repo-wide symbols-edit lock.
+
+    Only ONE process may edit ``config/<region>/symbols.txt`` at a time: the
+    lock (``tools/coop/lib/symbols_lock.py``) serialises concurrent callers so
+    two editors can never interleave their read-modify-write of the same file
+    (the suspected cause of a truncated ``symbols.txt``).  All behaviour is
+    otherwise delegated to :func:`_apply_function_rename_unlocked`.
+    """
+    if dry_run:
+        # No writes happen, so do not create the lock file: a dry run must stay
+        # observationally inert (tests assert "dry run writes nothing").
+        return _apply_function_rename_unlocked(
+            project_root, old, new_spec, regions, dry_run, allow_review,
+            no_header_insert, demote_import_band,
+        )
+    with symbols_edit_lock(project_root):
+        return _apply_function_rename_unlocked(
+            project_root, old, new_spec, regions, dry_run, allow_review,
+            no_header_insert, demote_import_band,
+        )
+
+
+def _apply_function_rename_unlocked(
+    project_root: Path,
+    old: str,
+    new_spec: str,
+    regions: list[str] | None = None,
+    dry_run: bool = True,
+    allow_review: bool = False,
+    no_header_insert: bool = False,
+    demote_import_band: bool = False,
+) -> tuple[FnPlan, list[str]]:
     """Apply a function rename.  Returns (plan, log_lines).
 
     * Always builds the plan first (refusals propagate, nothing written).
@@ -2299,7 +2339,7 @@ def cmd_fn_plan(argv: list[str], project_root: Path) -> int:
                               "default OFF so triage still surfaces the 10127 review"))
     _add_common(parser)
     args = parser.parse_args(argv)
-    regions = [args.region] if args.region else list(REGIONS)
+    regions = [args.region] if args.region else list(DEFAULT_REGIONS)
     try:
         plan = plan_function_rename(project_root, args.old, args.new_spec, regions,
                                     no_header_insert=args.no_header_insert,
@@ -2327,7 +2367,7 @@ def cmd_fn_apply(argv: list[str], project_root: Path) -> int:
                               "opt-in (default OFF) so bulk runs never silently comment lines"))
     _add_common(parser)
     args = parser.parse_args(argv)
-    regions = [args.region] if args.region else list(REGIONS)
+    regions = [args.region] if args.region else list(DEFAULT_REGIONS)
     try:
         _plan, log = apply_function_rename(
             project_root, args.old, args.new_spec, regions,

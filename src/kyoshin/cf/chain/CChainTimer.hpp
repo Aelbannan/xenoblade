@@ -265,6 +265,10 @@ namespace cf {
         CChainTemp mChainTemp;      // 0x1C (arts music slot table; address taken)
         CChainTime field_84;        // 0x84
         CChainTimer field_9C;       // 0x9C
+    void Tmr_SetActive(int val);
+    void Tmr_Advance();
+    int Tmr_IsUsable(cf::CChainBattleObj* obj);
+    int Tmr_ScanUsable(cf::CChainBattleObj* obj, int flag);
     };
 
     // Result of CMenuArtsSelect_getSelectState: s8 state bytes at +0x0/+0x1.

@@ -188,7 +188,7 @@ void appendEnumEntries(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
 
 // Forward decl: defined later in this TU.  Retail symbol is C-linkage
 // (unmangled), so the definition below is extern "C" to match reloc names.
-extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options);
+// (memberized: runEnumObjects -> CfObjEnumList::runEnumObjects; declaration moved into class CfObjEnumList)
 
 // startEnumObjects: reset the list counts, then normalize the flags/options pair
 // (param - 0x80000000 selects one of five presets) and hand off to the main
@@ -226,7 +226,7 @@ void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
         self->field_3038 = param2;
         break;
     }
-    runEnumObjects(self, self->field_3034, self->field_3038);
+    self->runEnumObjects(self->field_3034, self->field_3038);
 }
 
 #define ENUM_DUMMY_VIRTUAL(n_) virtual void v##n_() = 0
@@ -444,9 +444,9 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
         (info_).field_18 = false;                                            \
         (info_).objectId = (object_)->objectId;                              \
         (info_).object = (object_);                                          \
-        self->mObjInfo[self->mObjInfoCount++] = (info_);                     \
-        self->mPtrArray[self->mPtrCount++] =                                 \
-            &self->mObjInfo[self->mObjInfoCount - 1];                        \
+        this->mObjInfo[this->mObjInfoCount++] = (info_);                     \
+        this->mPtrArray[this->mPtrCount++] =                                 \
+            &this->mObjInfo[this->mObjInfoCount - 1];                        \
     } while (false)
 
 // Variant with (object, objectId) assignment order (retail store order).
@@ -455,9 +455,9 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
         (info_).field_18 = false;                                            \
         (info_).object = (object_);                                          \
         (info_).objectId = (object_)->objectId;                              \
-        self->mObjInfo[self->mObjInfoCount++] = (info_);                     \
-        self->mPtrArray[self->mPtrCount++] =                                 \
-            &self->mObjInfo[self->mObjInfoCount - 1];                        \
+        this->mObjInfo[this->mObjInfoCount++] = (info_);                     \
+        this->mPtrArray[this->mPtrCount++] =                                 \
+            &this->mObjInfo[this->mObjInfoCount - 1];                        \
     } while (false)
 
 #define ENUM_BASIC_FILTERS(rejected_, object_, options_, compare_)           \
@@ -520,7 +520,7 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
         }                                                                     \
     } while (false)
 
-extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options) {
+void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     cf::CfObjEnumList::sObjInfo info0;
     cf::CfObjEnumList::sObjInfo info1;
     cf::CfObjEnumList::sObjInfo info2;
@@ -593,9 +593,9 @@ extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options) 
         }
         flags &= ~0x10u;
     } else if (flags & 0x40000) {
-        runEnumObjects(self, 4, options);
-        if (self->mPtrCount == 0) {
-            runEnumObjects(self, 0x10, options);
+        this->runEnumObjects(4, options);
+        if (this->mPtrCount == 0) {
+            this->runEnumObjects(0x10, options);
         }
         flags &= ~0x40000u;
     } else if (flags & 0x20) {
@@ -1032,7 +1032,7 @@ extern "C" void runEnumObjects(cf::CfObjEnumList* self, int flags, u32 options) 
         return;
     }
 
-    runEnumObjects(self, flags, options);
+    this->runEnumObjects(flags, options);
 }
 
 #undef ENUM_ACTOR_FILTERS
@@ -1087,19 +1087,19 @@ void* findFirstCleanObjectId(cf::CfObjEnumList* self) {
 // whose sort value differs from value(lo); return that index, or lo when
 // value(lo) >= value(p) (descending tie-break), or -1 when the whole range
 // is equal to value(lo).  Retail symbols are unmangled globals.
-extern "C" int findSortPivot(CfSortableList* self, int lo, int hi);
+// (memberized: findSortPivot -> CfSortableList::findSortPivot; declaration moved into class CfSortableList)
 
 // partitionSortList: Hoare partition (defined below).
-extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot);
+// (memberized: partitionSortList -> CfSortableList::partitionSortList; declaration moved into class CfSortableList)
 
 // quicksortSortableList: quicksort recursion over the sortable list.  With the unit's
 // -inline auto, MWCC expands findSortPivot/partitionSortList at every call site,
 // producing the retail multi-stage inline blob.
 extern "C" void quicksortSortableList(CfSortableList* self, int lo, int hi) {
     if (lo != hi) {
-        int p = findSortPivot(self, lo, hi);
+        int p = self->findSortPivot(lo, hi);
         if (p != -1) {
-            int m = partitionSortList(self, lo, hi, p);
+            int m = self->partitionSortList(lo, hi, p);
             if (lo != m - 1) {
                 quicksortSortableList(self, lo, m - 1);
             }
@@ -1110,15 +1110,15 @@ extern "C" void quicksortSortableList(CfSortableList* self, int lo, int hi) {
     }
 }
 
-extern "C" int findSortPivot(CfSortableList* self, int lo, int hi) {
+int CfSortableList::findSortPivot(int lo, int hi) {
     int p = lo + 1;
-    while (p <= hi && self->value(lo) == self->value(p)) {
+    while (p <= hi && this->value(lo) == this->value(p)) {
         p++;
     }
     if (p > hi) {
         return -1;
     }
-    if (self->value(lo) >= self->value(p)) {
+    if (this->value(lo) >= this->value(p)) {
         return lo;
     }
     return p;
@@ -1130,24 +1130,24 @@ extern "C" int findSortPivot(CfSortableList* self, int lo, int hi) {
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
-extern "C" int partitionSortList(CfSortableList* self, int lo, int hi, int pivot) {
+int CfSortableList::partitionSortList(int lo, int hi, int pivot) {
     int i = lo;
     int j = hi;
-    float pivotValue = self->value(pivot);
+    float pivotValue = this->value(pivot);
     while (i <= j) {
-        while (i <= hi && self->value(i) < pivotValue) {
+        while (i <= hi && this->value(i) < pivotValue) {
             i++;
         }
-        while (j >= lo && self->value(j) >= pivotValue) {
+        while (j >= lo && this->value(j) >= pivotValue) {
             j--;
         }
         if (i > j) {
             break;
         }
-        void* tmp = *reinterpret_cast<void**>(self->get(i));
-        *reinterpret_cast<void**>(self->get(i)) =
-            *reinterpret_cast<void**>(self->get(j));
-        *reinterpret_cast<void**>(self->get(j)) = tmp;
+        void* tmp = *reinterpret_cast<void**>(this->get(i));
+        *reinterpret_cast<void**>(this->get(i)) =
+            *reinterpret_cast<void**>(this->get(j));
+        *reinterpret_cast<void**>(this->get(j)) = tmp;
         i++;
         j--;
     }

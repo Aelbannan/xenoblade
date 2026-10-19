@@ -74,13 +74,13 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // findObjB28ById is declared (extern "C", s32) by CAIAction.hpp, included
 // transitively via CfObjectActor.hpp -> CBattleManager.hpp.
-void BpsStateUpdateSlotArts(CMenuBattlePlayerState* self,
-                   cf::CfObjectActor* actor,
-                   CMenuBattlePlayerStateSlot* slot);
-void BpsStateActivateSlot(CMenuBattlePlayerState* self,
-                   CMenuBattlePlayerStateSlot* slot, u32 index);
-void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
-                   CMenuBattlePlayerStateSlot* slot);
+// (memberized: BpsStateUpdateSlotArts -> CMenuBattlePlayerState::BpsStateUpdateSlotArts; declaration moved into class CMenuBattlePlayerState)
+//
+//
+// (memberized: BpsStateActivateSlot -> CMenuBattlePlayerState::BpsStateActivateSlot; declaration moved into class CMenuBattlePlayerState)
+//
+// (memberized: BpsStateRefreshSlot -> CMenuBattlePlayerState::BpsStateRefreshSlot; declaration moved into class CMenuBattlePlayerState)
+//
 // Unmangled retail name (extern "C" in code_80135FDC.hpp).
 extern char lbl_eu_804FD720[];
 extern const f32 lbl_eu_80666F90; // 1.0f
@@ -614,7 +614,7 @@ void CMenuBattlePlayerState::Move() {
 
             // Retail: clrlwi; mulli 0x270; add this; addi +0x74 → &mSlots[i].
             slot = &mSlots[i];
-            BpsStateUpdateSlotArts(this, actor, slot);
+            this->BpsStateUpdateSlotArts(actor, slot);
 
             hp = static_cast<u32>(actor->CActorParam_getHp());
             maxHp = static_cast<u32>(actor->CActorParam_getDamageScale());
@@ -750,7 +750,7 @@ void CMenuBattlePlayerState::Move() {
 
             switch (static_cast<s32>(slot->unk244)) {
             case 0:
-                BpsStateActivateSlot(this, slot, i);
+                this->BpsStateActivateSlot(slot, i);
                 break;
             case 1: {
                 u32 a = advanceAnimTransform(slot->unk04, lbl_eu_80666F90);
@@ -762,7 +762,7 @@ void CMenuBattlePlayerState::Move() {
                 break;
             }
             case 2:
-                BpsStateRefreshSlot(this, slot);
+                this->BpsStateRefreshSlot(slot);
                 break;
             case 3: {
                 u32 a = AnimRewindFrame(slot->unk04,
@@ -1315,9 +1315,7 @@ struct MenuBpsAnimFrameView {
 // (unk268/unk6C pane), then over a snapshot plus the level icon at index 0x20
 // (unk26C/unk70 pane).
 // ---------------------------------------------------------------------------
-void BpsStateUpdateSlotArts(CMenuBattlePlayerState* self,
-                   cf::CfObjectActor* actor,
-                   CMenuBattlePlayerStateSlot* slot) {
+void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CMenuBattlePlayerStateSlot* slot) {
     MenuBpsPaneFlagsView* starPane;
 
     // Tension timer: raises flag bit 0x800 when it exceeds FDC.
@@ -1450,8 +1448,7 @@ void BpsStateUpdateSlotArts(CMenuBattlePlayerState* self,
 // and re-arms the per-slot state machine. `index` nonzero suppresses the
 // playUISound(0x99) jingle on first activation.
 // ---------------------------------------------------------------------------
-void BpsStateActivateSlot(CMenuBattlePlayerState* self,
-                   CMenuBattlePlayerStateSlot* slot, u32 index) {
+void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* slot, u32 index) {
     u8 gate = slot->unk240;
     slot->unk25C &= ~0x03E00000u;
     if (gate == 0 && slot->unk80 == 0) {
@@ -1483,7 +1480,7 @@ void BpsStateActivateSlot(CMenuBattlePlayerState* self,
         }
     }
 
-    BpsStateUpdateHpGauge(self, slot);
+    BpsStateUpdateHpGauge(this, slot);
 
     if (slot->unk25C & 0x4) {
         slot->unk25C &= ~0x4u;
@@ -1516,7 +1513,7 @@ void BpsStateActivateSlot(CMenuBattlePlayerState* self,
 
     slot->unk234 = slot->unk230;
     slot->unk23C = slot->unk238;
-    BpsStateSelectSlotAnim(self, slot, slot->unk230);
+    BpsStateSelectSlotAnim(this, slot, slot->unk230);
 
     // Star-pane visibility follows the smoothed HP ratio.
     if (slot->unk220 == lbl_eu_80666F94) {
@@ -1572,8 +1569,7 @@ void BpsStateActivateSlot(CMenuBattlePlayerState* self,
 // jingle, runs the tension state machine (unk250) and party-gauge machine
 // (unk254), and steps the sub-layout (unk78) cursor.
 // ---------------------------------------------------------------------------
-extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
-                              CMenuBattlePlayerStateSlot* slot) {
+void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slot) {
     u32 flags = slot->unk25C;
     u32 prevStatus = slot->unk20C;
     // Clear bits 6-10 up front; bit 0 only drops when the refresh runs.
@@ -1608,7 +1604,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
         }
     }
 
-    BpsStateUpdateHpGauge(self, slot);
+    BpsStateUpdateHpGauge(this, slot);
 
     if (slot->unk25C & 4) {
         slot->unk25C &= ~4u;
@@ -1724,7 +1720,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
         u32 curMode = slot->unk230;
         u32 prevMode = slot->unk234;
         if (curMode != prevMode || slot->unk238 != slot->unk23C) {
-            BpsStateSelectSlotAnim(self, slot);
+            BpsStateSelectSlotAnim(this, slot);
 
             if (slot->unk260 == 0) {
                 void* player = cf::CfGameManager::getPlayer(0);
@@ -1972,7 +1968,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
         // Retail evaluates the gate as a skip-chain: any failed condition
         // falls straight through to the bind sequence; only all-pass plus
         // hp > 0 jumps past it.
-        if (slot->unk230 == 4 && slot->unk240 == 0 && self->unk7C8 == 0) {
+        if (slot->unk230 == 4 && slot->unk240 == 0 && this->unk7C8 == 0) {
             if (slot->unk220 > lbl_eu_80666F94) {
                 break;
             }
@@ -2016,7 +2012,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
         changed2 = 1;
         advanceAnimTransform(slot->unk3C, lbl_eu_80666F90);
         // Same skip-chain gate as case 0xD, keyed on mode 0.
-        if (slot->unk230 == 0 && slot->unk240 == 0 && self->unk7C8 == 0) {
+        if (slot->unk230 == 0 && slot->unk240 == 0 && this->unk7C8 == 0) {
             if (slot->unk220 > lbl_eu_80666F94) {
                 break;
             }
@@ -2064,7 +2060,7 @@ extern "C" void BpsStateRefreshSlot(CMenuBattlePlayerState* self,
 
     // Once the level-up cursor is armed, swap the gauge layout to its
     // alternate animation set and move the slot to state 3.
-    if (slot->unk80 == 0 && slot->unk240 == 0 && self->unk7C8 != 0 &&
+    if (slot->unk80 == 0 && slot->unk240 == 0 && this->unk7C8 != 0 &&
         slot->unk254 == 0xB) {
         MenuBpsPaneFlagsView* fp = reinterpret_cast<MenuBpsPaneFlagsView*>(
             slot->unk20->GetRootPane());

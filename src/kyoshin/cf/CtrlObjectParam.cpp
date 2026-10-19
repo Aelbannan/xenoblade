@@ -101,8 +101,8 @@ extern "C" __declspec(noinline) void CtrlObjectParam_ScanArtsListRows(cf::CtrlOb
 
 // Forward decls for the swap/type helpers defined later in this TU (callers
 // in CtrlObjectParam_SwapSlotValues).
-extern "C" int CtrlObjectParam_SwapSlotEntries(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
-                             int secondType, int secondIndex);
+// (memberized: CtrlObjectParam_SwapSlotEntries -> CtrlObjectParamSwap::SlotEntries; declaration moved into class CtrlObjectParamSwap)
+//
 extern "C" int CtrlObjectParam_FindSlotTypeIndex(const int* param_1, int param_2,
                              int* param_3, int* param_4);
 
@@ -532,23 +532,22 @@ int CtrlObjectParam_SwapSlotValues(cf::CtrlObjectParamSwap* self, unsigned int a
     int r1 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), a, &t1, &i1);
     int r2 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), b, &t2, &i2);
     if (r1 != 0 && r2 != 0) {
-        return CtrlObjectParam_SwapSlotEntries(self, t1, i1, t2, i2);
+        return self->SlotEntries(t1, i1, t2, i2);
     }
     return 0;
 }
 
-extern "C" int CtrlObjectParam_SwapSlotEntries(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
-                             int secondType, int secondIndex) {
+int cf::CtrlObjectParamSwap::SlotEntries(int firstType, int firstIndex, int secondType, int secondIndex) {
     int* first = 0;
     int* second = 0;
     if (firstType == 1)
-        first = &self->intArr1[firstIndex];
+        first = &this->intArr1[firstIndex];
     else if (firstType == 2)
-        first = &self->intArr2[firstIndex];
+        first = &this->intArr2[firstIndex];
     if (secondType == 1)
-        second = &self->intArr1[secondIndex];
+        second = &this->intArr1[secondIndex];
     else if (secondType == 2)
-        second = &self->intArr2[secondIndex];
+        second = &this->intArr2[secondIndex];
     int value = *first;
     *first = *second;
     *second = value;
@@ -651,7 +650,7 @@ extern "C" int CtrlObjectParam_MoveValueToHead(cf::CtrlObjectParamSwap* self, un
         int f3 = CtrlObjectParam_FindSlotTypeIndex(reinterpret_cast<const int*>(self), other, &t3, &i3);
         int result;
         if (f2 != 0 && f3 != 0) {
-            result = CtrlObjectParam_SwapSlotEntries(self, t2, i2, t3, i3);
+            result = self->SlotEntries(t2, i2, t3, i3);
         } else {
             result = 0;
         }

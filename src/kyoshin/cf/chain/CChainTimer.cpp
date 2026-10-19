@@ -40,10 +40,10 @@ struct CBattleManagerChainGate {
 // Same-TU helpers (retail symbols ChainTmr_Advance_D8C4 / ChainTmr_SetActive_DB74 /
 // ChainTmr_IsUsable_E070 / ChainTmr_ScanUsable_E200 are unmangled, so they are defined with C
 // linkage to keep intra-TU call reloc names identical to retail).
-extern "C" void ChainTmr_SetActive_DB74(cf::CChainState* self, int val);
-extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self);
-extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj* obj);
-extern "C" int ChainTmr_ScanUsable_E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag);
+// (memberized: ChainTmr_SetActive_DB74 -> CChainState::Tmr_SetActive; declaration moved into class CChainState)
+// (memberized: ChainTmr_Advance_D8C4 -> CChainState::Tmr_Advance; declaration moved into class CChainState)
+// (memberized: ChainTmr_IsUsable_E070 -> CChainState::Tmr_IsUsable; declaration moved into class CChainState)
+// (memberized: ChainTmr_ScanUsable_E200 -> CChainState::Tmr_ScanUsable; declaration moved into class CChainState)
 
 // The member sub-objects construct implicitly before this body (flusher
 // vptr/zero, chain-temp memset, chain-time ctor call, chain-timer vptr).
@@ -115,7 +115,7 @@ void ChainTmr_Update_D20C(cf::CChainState* self) {
     }
 
     if (changed) {
-        ChainTmr_SetActive_DB74(self, 0);
+        self->Tmr_SetActive(0);
         if (self->field_0 != 0) {
             lbl_eu_80663DA0 &= 0xFE;
             self->field_84.resetChainTime();
@@ -131,7 +131,7 @@ void ChainTmr_Update_D20C(cf::CChainState* self) {
         // Retail evaluates the chain-timer countdown before advancing the
         // state machine.
         if (self->field_9C.unk0 > 0) self->field_9C.unk0--;
-        ChainTmr_Advance_D8C4(self);
+        self->Tmr_Advance();
 
         if (self->field_10 != 0) {
             // Phase counter wraps at 0x23, then drives a sinusoidal
@@ -256,53 +256,53 @@ void ChainTmr_CheckArts_D478(cf::CChainState* self, cf::CChainBattleObj* obj) {
 
 // Chain state-machine advance. Revalidates the battle objects (voice actor,
 // both chain members) then walks the 1/2/3 state transitions.
-extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
+void cf::CChainState::Tmr_Advance() {
     int st = 0;
     cf::CChainBattleObj* voice =
-        (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById((int)self->field_C));
+        (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById((int)this->field_C));
     if (voice == 0) st = 1;
     else if (voice->v173() != 0) st = 1;
-    else if (self->field_4->v173() != 0) st = 1;
-    else if (self->field_8->v173() != 0) st = 1;
-    else if (ChainTmr_IsUsable_E070(self, self->field_8) == 0) st = 1;
-    else st = (ChainTmr_ScanUsable_E200(self, self->field_8, 0) == 0);
-    if (st != 0) self->field_0 = 3;
+    else if (this->field_4->v173() != 0) st = 1;
+    else if (this->field_8->v173() != 0) st = 1;
+    else if (this->Tmr_IsUsable(this->field_8) == 0) st = 1;
+    else st = (this->Tmr_ScanUsable(this->field_8, 0) == 0);
+    if (st != 0) this->field_0 = 3;
 
     resetBattleGauge__Q22cf13CfGameManagerFv();
 
-    cf::CChainBattleObj* o1 = self->field_4;
+    cf::CChainBattleObj* o1 = this->field_4;
     u32 id1 = *(u32*)o1->field_04->f30();
     if (testActorStatus(o1, (int*)&id1, 0x4000) == 0)
-        dispatchItemLoad(self->field_4, 0x4000);
-    cf::CChainBattleObj* o2 = self->field_8;
+        dispatchItemLoad(this->field_4, 0x4000);
+    cf::CChainBattleObj* o2 = this->field_8;
     u32 id2 = *(u32*)o2->field_04->f30();
     if (testActorStatus(o2, (int*)&id2, 0x4000) == 0)
-        dispatchItemLoad(self->field_8, 0x4000);
+        dispatchItemLoad(this->field_8, 0x4000);
 
-    if (self->field_4->field_3F60 != 0)
-        self->field_4->field_3F60->field_4EC |= 0x1000;
-    if (self->field_8->field_3F60 != 0)
-        self->field_8->field_3F60->field_4EC |= 0x1000;
+    if (this->field_4->field_3F60 != 0)
+        this->field_4->field_3F60->field_4EC |= 0x1000;
+    if (this->field_8->field_3F60 != 0)
+        this->field_8->field_3F60->field_4EC |= 0x1000;
 
-    switch (self->field_0) {
+    switch (this->field_0) {
     case 1:
-        self->field_0++;
+        this->field_0++;
         break;
     case 2: {
         cf::CArtsSelectStateView* state =
             (cf::CArtsSelectStateView*)CMenuArtsSelect_getSelectState();
         if (state == 0) break;
         if (state->field_1 == -1) break;
-        chainUnbindMatchingObjects(0x7a, (int)(u32)self->field_8);
+        chainUnbindMatchingObjects(0x7a, (int)(u32)this->field_8);
         if (state->field_0 == 0 && state->field_1 == 5) {
             // Do not advance while the arts-select target battle object is
             // flagged as busy (field_3374 bits 14/15).
             int chk;
-            if (self->field_8->field_3F28 != 1) {
+            if (this->field_8->field_3F28 != 1) {
                 chk = 0;
             } else {
-                if ((self->field_8->field_3374 & 0x4000) == 0 &&
-                    (self->field_8->field_3374 & 0x8000) == 0) {
+                if ((this->field_8->field_3374 & 0x4000) == 0 &&
+                    (this->field_8->field_3374 & 0x8000) == 0) {
                     chk = 0;
                 } else {
                     chk = 1;
@@ -310,16 +310,16 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
             }
             if (chk != 0) break;
         }
-        self->field_0++;
+        this->field_0++;
         break;
     }
     case 3:
-        ChainTmr_SetActive_DB74(self, 0);
+        this->Tmr_SetActive(0);
         lbl_eu_80663DA0 &= 0xFE;
-        self->field_84.mTimer = lbl_eu_80668A98;
-        self->field_84.mEnabled = 0;
-        self->field_84.mPaused = 1;
-        self->field_0 = 0;
+        this->field_84.mTimer = lbl_eu_80668A98;
+        this->field_84.mEnabled = 0;
+        this->field_84.mPaused = 1;
+        this->field_0 = 0;
         break;
     }
 }
@@ -328,36 +328,36 @@ extern "C" void ChainTmr_Advance_D8C4(cf::CChainState* self) {
 // sub-objects (aiRebootAction/E0 on +0x3380, vtable calls on the embedded
 // +0x3E9C voice), refreshes the wave target / arts music table, and toggles
 // the arts-select menu.
-extern "C" void ChainTmr_SetActive_DB74(cf::CChainState* self, int val) {
-    if (self->field_4 != 0) {
+void cf::CChainState::Tmr_SetActive(int val) {
+    if (this->field_4 != 0) {
         if (val != 0) {
-            dispatchItemLoad(self->field_4, 0x4000);
-            aiRebootAction(&self->field_4->mField3380);
-            if (self->field_4->field_3F60 != 0)
-                self->field_4->field_3F60->field_4EC |= 0x1000;
+            dispatchItemLoad(this->field_4, 0x4000);
+            aiRebootAction(&this->field_4->mField3380);
+            if (this->field_4->field_3F60 != 0)
+                this->field_4->field_3F60->field_4EC |= 0x1000;
         } else {
-            aiActionClearBits0006(&self->field_4->mField3380);
-            self->field_4->field_04->f06(0x4000);
+            aiActionClearBits0006(&this->field_4->mField3380);
+            this->field_4->field_04->f06(0x4000);
         }
     }
-    if (self->field_8 != 0) {
+    if (this->field_8 != 0) {
         if (val != 0) {
-            ChainMusic_SaveSlots(&self->mChainTemp, self->field_8);
-            self->field_10 = self->field_8;
-            self->field_14 = 0;
-            self->field_8->v042();
-            requestItemLoad(self->field_8, 0x40);
-            dispatchItemLoad(self->field_8, 0x4000);
-            self->field_8->mSub8.s06(0xeb);
-            aiRebootAction(&self->field_8->mField3380);
+            ChainMusic_SaveSlots(&this->mChainTemp, this->field_8);
+            this->field_10 = this->field_8;
+            this->field_14 = 0;
+            this->field_8->v042();
+            requestItemLoad(this->field_8, 0x40);
+            dispatchItemLoad(this->field_8, 0x4000);
+            this->field_8->mSub8.s06(0xeb);
+            aiRebootAction(&this->field_8->mField3380);
 
             // Warn when the voice actor drifts beyond the chain range: the
             // squared distance between the chain target and the voice actor's
             // positions (vtable slot 0xAC of the embedded voice sub-objects).
             // Spelled as VEC3Sub into a local plus a component-wise copy so
             // MWCC keeps both stack vectors and the paired-single square-sum.
-            int actorId = (int)self->field_C;
-            cf::CChainBattleObj* target = self->field_8;
+            int actorId = (int)this->field_C;
+            cf::CChainBattleObj* target = this->field_8;
             cf::CChainBattleObj* voice =
                 (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById(actorId));
             f32 distSq;
@@ -376,25 +376,25 @@ extern "C" void ChainTmr_SetActive_DB74(cf::CChainState* self, int val) {
                 distSq = nw4r::math::VEC3LenSq(&d);
             }
             if (distSq < lbl_eu_80668AC8)
-                self->field_8->mSub.v18(self->field_C);
-            if (self->field_8->field_3F28 != 5)
-                self->field_8->v087();
+                this->field_8->mSub.v18(this->field_C);
+            if (this->field_8->field_3F28 != 5)
+                this->field_8->v087();
             else
-                self->field_8->v082(lbl_eu_80668AA8);
-            if (self->field_8->field_3F60 != 0)
-                self->field_8->field_3F60->field_4EC |= 0x1000;
+                this->field_8->v082(lbl_eu_80668AA8);
+            if (this->field_8->field_3F60 != 0)
+                this->field_8->field_3F60->field_4EC |= 0x1000;
         } else {
-            aiActionClearBits0006(&self->field_8->mField3380);
-            self->field_8->field_04->f06(0x4000);
-            if (self->field_10 != 0)
-                CfModel_GetSpeedRate(&self->field_10->mSub, lbl_eu_80656C40);
-            self->field_10 = 0;
-            self->field_14 = 0;
-            ChainMusic_RestoreSlots(&self->mChainTemp, self->field_8);
+            aiActionClearBits0006(&this->field_8->mField3380);
+            this->field_8->field_04->f06(0x4000);
+            if (this->field_10 != 0)
+                CfModel_GetSpeedRate(&this->field_10->mSub, lbl_eu_80656C40);
+            this->field_10 = 0;
+            this->field_14 = 0;
+            ChainMusic_RestoreSlots(&this->mChainTemp, this->field_8);
         }
     }
     if (val != 0) {
-        syncBattleState__Q22cf13CfGameManagerFv(self->field_8 ? &self->field_8->mSub : 0);
+        syncBattleState__Q22cf13CfGameManagerFv(this->field_8 ? &this->field_8->mSub : 0);
         CMenuArtsSelect_setDisabled();
         CMenuArtsSelect_ResetSlotAnims();
     } else {
@@ -450,7 +450,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     self->field_84.mTimer = lbl_eu_80668AA8;
     self->field_84.mEnabled = 1;
     self->field_84.mPaused = 1;
-    ChainTmr_SetActive_DB74(self, 1);
+    self->Tmr_SetActive(1);
     return 1;
 }
 
@@ -482,14 +482,14 @@ extern "C" int ChainTmr_GateArts_DF38(cf::CChainState* self, cf::CChainBattleObj
 // Chain-start usability gate: only allow starting a chain on obj when it
 // passes the battle-object usability check.
 extern "C" int ChainTmr_StartUsable_E018(cf::CChainState* self, cf::CChainBattleObj* obj) {
-    if (ChainTmr_IsUsable_E070(self, obj) == 0) return 0;
-    return ChainTmr_ScanUsable_E200(self, obj, 1);
+    if (self->Tmr_IsUsable(obj) == 0) return 0;
+    return self->Tmr_ScanUsable(obj, 1);
 }
 
 // Battle-object usability check: chainable (vtable 0x2bc), owns the actor id
 // flags (testActorStatus), and in arts-select mode is not on cooldown
 // (vtable 0x158/0x15c timers).
-extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj* obj) {
+int cf::CChainState::Tmr_IsUsable(cf::CChainBattleObj* obj) {
     if (obj->v173() != 0) return 0;
     u32 id1 = *(u32*)obj->field_04->f30();
     if (testActorStatus(obj, (int*)&id1, 0x803) == 0) return 0;
@@ -513,13 +513,13 @@ extern "C" int ChainTmr_IsUsable_E070(cf::CChainState* self, cf::CChainBattleObj
 // (slot 8 while field_3F28 == 5), a pre-check that drops slots whose arts
 // param is flagged (id == 2 via checkArtsFull -2), then the real usage check
 // with the caller flag (slot 8 uses the RC arts param).
-extern "C" int ChainTmr_ScanUsable_E200(cf::CChainState* self, cf::CChainBattleObj* obj, int flag) {
+int cf::CChainState::Tmr_ScanUsable(cf::CChainBattleObj* obj, int flag) {
     // Declared first: MWCC pins it to r30 across both loops like retail.
     cf::CAttackParam* artsParam;
     int f = 0x22;
     if (flag) f |= 0x10;
 
-    if (self->field_0 == 2) {
+    if (this->field_0 == 2) {
         CMenuArtsSelect* menu = CMenuArtsSelect_getInstance();
         if (menu == 0) return 1;
         for (int i = 0; i <= 8; i++) {

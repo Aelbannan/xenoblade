@@ -88,6 +88,7 @@ namespace cf {
         CChainChanceInit mChainChance; //0x1EDC
         CChainCombo mChainCombo; //0x1EF4
         u8 unk1F0C[0x14];
+        void UpdatePerFrame();
     };
 
     // View of the battle manager tail for CChain_CheckActivateReady:

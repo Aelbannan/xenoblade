@@ -63,6 +63,7 @@ namespace cf{
         u16 field_3F28;
         u8 unk3F2A[0x36];
         CVoiceF3F60Obj* field_3F60;
+    int CharVoiceMan_TryPlayCharVoice();
     };
 
     struct CBattleCountAccessor {

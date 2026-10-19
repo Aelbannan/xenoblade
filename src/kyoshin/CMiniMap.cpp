@@ -153,8 +153,8 @@ void PaneSetVtxColorAll(void* pic, s32 arg);
 void MiniMapRebuildGimmickPanes(void* self);
 // (memberized: MiniMapFillMarkerEntry -> CMiniMapGimmickView::FillMarkerEntry; declaration moved into class CMiniMapGimmickView)
 void MiniMapPlaceMarkers(void* self, u32 row);
-void MiniMapBuildMarkerPanes(void* self, void* table, void* layout, f32 scale);
-void MiniMapInitGimmickTables(CMiniMapGimmickView* self, u32 arg, void* layout, f32 scale);
+// (memberized: MiniMapBuildMarkerPanes -> MiniMapTable::BuildMarkerPanes; declaration moved into class MiniMapTable)
+// (memberized: MiniMapInitGimmickTables -> CMiniMapGimmickView::InitGimmickTables; declaration moved into class CMiniMapGimmickView)
 void* CfObjectMove_getSelfIfActive(void* obj);
 void* createPicture__10CLibLayoutFv();
 void* createTextbox__10CLibLayoutFv();
@@ -167,7 +167,7 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 f32 FrSqrt__Q24nw4r4mathFf(f32);
 int sprintf(char*, const char*, ...);
-void MiniMapRequestMapImage(CMMMapImg* self);
+// (memberized: MiniMapRequestMapImage -> CMMMapImg::MiniMapRequestMapImage; declaration moved into class CMMMapImg)
 }
 // C++-mangled retail helper: actor id -> action source object.
 void* findObjectById(int id);
@@ -395,8 +395,8 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         parent = (nw4r::lyt::Pane*)((MiniMapLayout*)mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x281], true);
         AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(parent, clockPic);
 
-        MiniMapBuildMarkerPanes(mField3C.mW, lbl_eu_80663FB8, mLayout0C, mField20);
-        MiniMapInitGimmickTables((CMiniMapGimmickView*)mField17C.mW, mField28, mLayout0C, mField20);
+        ((MiniMapTable*)(mField3C.mW))->BuildMarkerPanes(lbl_eu_80663FB8, mLayout0C, mField20);
+        ((CMiniMapGimmickView*)mField17C.mW)->InitGimmickTables(mField28, mLayout0C, mField20);
         mReady = 1;
         ((UnkClass_8045F564*)m824)->validateHeap();
         }
@@ -2033,7 +2033,7 @@ void CMenuMiniMap2::Init() {
         mMiniMap.mField3C.mFlag38 = sub.mFlag0C;
         mMiniMap.mField3C.mFlag39 = sub.mFlag0D;
         mMiniMap.mField3C.mFlag3A = sub.mFlag0E;
-        MiniMapRequestMapImage((CMMMapImg*)&mMiniMap.mSub);
+        ((CMMMapImg*)&mMiniMap.mSub)->MiniMapRequestMapImage();
     }
 }
 
@@ -2191,7 +2191,7 @@ extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self) {
     case 6:
         // Kick off the map-image load request for the current row.
         self->field_0x18 = 7;
-        MiniMapRequestMapImage((CMMMapImg*)&self->mSub);
+        ((CMMMapImg*)&self->mSub)->MiniMapRequestMapImage();
         break;
     case 7:
         // Map image ready -> show it (uses the cached timg when present).
@@ -2529,24 +2529,24 @@ MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self) {
 // picture, reset its SRT to the zero constant, then record pane/id/position/
 // flag into the marker tables (max 15 entries; hitting 16 ends the scan).
 // ============================================================================
-void MiniMapBuildMarkerPanes(MiniMapTable* self, void* table, void* layout, f32 scale) {
-    self->field_08 = (u32)layout;
-    self->field_04 = (u32)table;
-    self->field_0C = scale;
+void MiniMapTable::BuildMarkerPanes(void* table, void* layout, f32 scale) {
+    this->field_08 = (u32)layout;
+    this->field_04 = (u32)table;
+    this->field_0C = scale;
 
     // Marker parent pane, looked up once through the layout's pane manager.
-    self->field_13C = (nw4r::lyt::Pane*)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0xd], true);
+    this->field_13C = (nw4r::lyt::Pane*)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0xd], true);
 
     Bdat_GetTable_AA34();
-    u16 count = Bdat_GetMaxRow_B1EC((void*)self->field_04);
+    u16 count = Bdat_GetMaxRow_B1EC((void*)this->field_04);
     // Loaded after the row count (retail keeps the constant off the fast path).
     f32 zero = lbl_eu_80667090;
     u8 n = 0;
     for (u16 i = 1; i <= count; i++) {
-        if ((int)lbl_eu_80664184 != (int)(u8)BdatGetU8Direct((u32)self->field_04,
+        if ((int)lbl_eu_80664184 != (int)(u8)BdatGetU8Direct((u32)this->field_04,
                                    &lbl_eu_804FE1FC[0x16], i))
             continue;
-        if ((u8)BdatGetU8Direct((u32)self->field_04,
+        if ((u8)BdatGetU8Direct((u32)this->field_04,
                               &lbl_eu_804FE1FC[0x1c], i) == 2)
             continue;
 
@@ -2570,11 +2570,11 @@ void MiniMapBuildMarkerPanes(MiniMapTable* self, void* table, void* layout, f32 
             PaneSetVtxColorAll(pane, -1);            *(u8*)((u8*)pane + 0xBB) = (*(u8*)((u8*)pane + 0xBB) & 0xFE) | 1;
         }
         if (pane == 0) continue;
-        self->field_100[0][n] = pane;
-        self->field_10[0][n] = i;
+        this->field_100[0][n] = pane;
+        this->field_10[0][n] = i;
         bdatGetPosXYZ(&pos, i);
-        self->field_4C[0][n] = pos;
-        self->field_3D[n] = 0;
+        this->field_4C[0][n] = pos;
+        this->field_3D[n] = 0;
         if (n >= 15) return;
         n++;
     }
@@ -2660,44 +2660,44 @@ extern "C" void __declspec(noinline) MiniMapPlaceMarkers(void* self, u32 row) {
 // via the layout's pane manager (+0x10), then fill the per-row enable/id/valid
 // entries for rows 1..count and seed both name-lookup tables.
 // ============================================================================
-extern "C" void MiniMapInitGimmickTables(CMiniMapGimmickView* self, u32 table, void* layout, f32 scale) {
-    self->field_0x00 = (const char*)table;
-    self->field_0x04 = (u32)layout;
-    self->field_0x08 = scale;
+void CMiniMapGimmickView::InitGimmickTables(u32 table, void* layout, f32 scale) {
+    this->field_0x00 = (const char*)table;
+    this->field_0x04 = (u32)layout;
+    this->field_0x08 = scale;
 
     // Marker parent pane, looked up once through the layout's pane manager.
-    self->field_0x14 = (u32)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x37], true);
+    this->field_0x14 = (u32)((MiniMapLayout*)layout)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x37], true);
 
-    self->field_0x0C = (s32)Bdat_GetMaxRow_B1EC((void*)table);
+    this->field_0x0C = (s32)Bdat_GetMaxRow_B1EC((void*)table);
 
-    for (s32 i = 0; i < self->field_0x0C; i++) {
-        self->field_0x18[i] = BdatGetU8Direct((u32)self->field_0x00,
+    for (s32 i = 0; i < this->field_0x0C; i++) {
+        this->field_0x18[i] = BdatGetU8Direct((u32)this->field_0x00,
                                             &lbl_eu_804FE1FC[0x40], i + 1);
-        if (self->field_0x18[i] != 0) {
-            self->field_0xE0[i] = BdatGetU16Direct((void*)self->field_0x00,
+        if (this->field_0x18[i] != 0) {
+            this->field_0xE0[i] = BdatGetU16Direct((void*)this->field_0x00,
                                                 &lbl_eu_804FE1FC[0x45], i + 1);
-            u16 id = BdatGetU16Direct((void*)self->field_0x00,
+            u16 id = BdatGetU16Direct((void*)this->field_0x00,
                                    &lbl_eu_804FE1FC[0x4C], i + 1);
             void* entry = lbl_eu_80573D18[SearchThresholdIdx(id)];
             u8 valid = (BdatGetU8Direct((u32)entry, &lbl_eu_804FE1FC[0x55], id) != 0);
-            self->field_0x270[i] = valid;
+            this->field_0x270[i] = valid;
             if (!valid) {
                 // Reassign id from the alternate column and retry the same
                 // entry lookup (retail reuses the masked register).
-                id = BdatGetU16Direct((void*)self->field_0x00,
+                id = BdatGetU16Direct((void*)this->field_0x00,
                                    &lbl_eu_804FE1FC[0x5F], i + 1);
                 if (id != 0) {
-                    self->field_0x270[i] =
+                    this->field_0x270[i] =
                         (BdatGetU8Direct((u32)entry, &lbl_eu_804FE1FC[0x55], id) != 0);
                 }
             }
         }
     }
 
-    for (s32 j = 0; j < self->field_0x0C; j++) {
-        u8 res = (u8)func_80138574(self->field_0x00, j + 1);
-        self->field_0x338[j] = res;
-        self->field_0x400[j] = res;
+    for (s32 j = 0; j < this->field_0x0C; j++) {
+        u8 res = (u8)func_80138574(this->field_0x00, j + 1);
+        this->field_0x338[j] = res;
+        this->field_0x400[j] = res;
     }
 }
 // ============================================================================
@@ -2727,11 +2727,11 @@ struct MiniMapSubObj {
 // whose floor height is above the player's y, resolves the unlock-gated
 // resource variant, then requests the formatted image path into MEM2.
 // ============================================================================
-extern "C" void MiniMapRequestMapImage(CMMMapImg* self) {
-    closeFileHandle(&self->mFileHandle);
-    if (self->mData != NULL) {
-        deallocate__Q23mtl10MemManagerFPv(self->mData);
-        self->mData = NULL;
+void CMMMapImg::MiniMapRequestMapImage() {
+    closeFileHandle(&this->mFileHandle);
+    if (this->mData != NULL) {
+        deallocate__Q23mtl10MemManagerFPv(this->mData);
+        this->mData = NULL;
     }
 
     u8 best = 0;
@@ -2752,13 +2752,13 @@ extern "C" void MiniMapRequestMapImage(CMMMapImg* self) {
             }
         }
     }
-    self->mRow = best;
+    this->mRow = best;
     if (best == 0) {
-        self->mRow = 1;
+        this->mRow = 1;
     }
 
     char* strings = lbl_eu_804FE1FC;
-    u8 row = self->mRow;
+    u8 row = this->mRow;
     u16 va = BdatGetU16Direct(lbl_eu_80663FB8, strings + 0x157, row);
     u16 vb = BdatGetU16Direct(lbl_eu_80663FB8, strings + 0x15d, row);
     u32 vc = BdatGetU8Direct((u32)lbl_eu_80663FB8, strings + 0x164, row);
@@ -2793,14 +2793,14 @@ extern "C" void MiniMapRequestMapImage(CMMMapImg* self) {
         break;
     }
 
-    u16 nameId = BdatGetU16Direct(lbl_eu_80663FB8, variant, self->mRow);
+    u16 nameId = BdatGetU16Direct(lbl_eu_80663FB8, variant, this->mRow);
     ml::FixStr<128> path;
     path.format(strings + 0x180, MakeTplNameSysFile(nameId));
 
-    self->mFileHandle = CDeviceFile::readFile(
+    this->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), path.mString,
-        reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    self->mReady = 0;
+        reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    this->mReady = 0;
 }
 
 extern "C" void __declspec(noinline) MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {

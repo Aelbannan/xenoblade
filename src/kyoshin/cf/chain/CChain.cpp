@@ -304,24 +304,24 @@ void cf::CChain::CChain_ResetChainState() {
 // the actor list (dead-actor removal, member rebuild, run-linkage), then when
 // a chain type is active decrement both chain timers and advance the chance /
 // voice / time / menu sub-objects; finally forward the err-mes record.
-void CChain_UpdatePerFrame(cf::CChain* self) {
+void cf::CChain::UpdatePerFrame() {
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     // rlwinm r0,r0,0,12,12: bit 19 (0x80000) of the mode-flag word.
     if ((lbl_eu_80663E28 & 0x80000) != 0) return;
-    Chain_SweepDeadActors(&self->mChainActorList);
-    ChainList_SweepDead((cf::CChainList*)&self->mChainMember);
-    Chain_RebuildLinks(&self->mChainActorList);
-    if (reinterpret_cast<cf::CChainHeadView*>(self)->field_2 != 0) {
-        ChainList_UpdateAll((cf::CChainList*)&self->mChainMember);
-        if (self->mChainTimer1.unk0 > 0) self->mChainTimer1.unk0--;
-        if (self->mChainTimer2.unk0 > 0) self->mChainTimer2.unk0--;
-        Chain_TickChanceCount((cf::CChainChanceS*)&self->mChainChance);
-        CChain_TickChain(self);
-        tickChainTimer(&self->mChainTime);
-        consumeChainToggles((CBattleChainMenuState*)&self->unk1F0C[0]);
+    Chain_SweepDeadActors(&this->mChainActorList);
+    ChainList_SweepDead((cf::CChainList*)&this->mChainMember);
+    Chain_RebuildLinks(&this->mChainActorList);
+    if (reinterpret_cast<cf::CChainHeadView*>(this)->field_2 != 0) {
+        ChainList_UpdateAll((cf::CChainList*)&this->mChainMember);
+        if (this->mChainTimer1.unk0 > 0) this->mChainTimer1.unk0--;
+        if (this->mChainTimer2.unk0 > 0) this->mChainTimer2.unk0--;
+        Chain_TickChanceCount((cf::CChainChanceS*)&this->mChainChance);
+        CChain_TickChain(this);
+        tickChainTimer(&this->mChainTime);
+        consumeChainToggles((CBattleChainMenuState*)&this->unk1F0C[0]);
         CChain_RetireVoiceId();
     }
-    func_802B48B8((CErrMesEntry*)&self->unk1F0C[8]);
+    func_802B48B8((CErrMesEntry*)&this->unk1F0C[8]);
 }
 // Chain-start path for the arts combo: valid only for chain types in the
 // gauge-accumulating ranges (0xA..0xC or 0x14..0x15); resolves the member

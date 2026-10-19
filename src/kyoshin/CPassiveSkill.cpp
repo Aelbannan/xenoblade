@@ -11,6 +11,20 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
+// Local views of the kizuna chart/big objects (full definitions live in
+// CPcKizunagram.hpp, which cannot be included here: its extern "C"
+// decls (BdatGetU8Direct u32 vs u8, isPaneVisible void vs Pane*, etc.)
+// clash with this TU's retail spellings. Declaring the same class/method
+// signatures locally keeps the retail mangled relocs without the clash.
+class CPcKizunaChart {
+public:
+    void KizunagramStoreWorkEntry(int a, int b, int value);
+    void KizunagramClearChartEntry(int a, int b);
+};
+class CPcKizunagramBig {
+public:
+    void SetActiveSlot(int slotIdx);
+};
 namespace passiveSkillVecView {
 extern "C" nw4r::math::VEC3
     ScalePaneWorldPos(nw4r::lyt::Pane* paneA, nw4r::lyt::Pane* paneB,
@@ -1828,7 +1842,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                         (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
                     s8 fe = (s8)self->field_FE;
                     u8 row = lbl_eu_8050DB60[(ch - 1) * 8 + f4 - 1];
-                    blob->KizunagramStoreWorkEntry(row, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
+                    ((CPcKizunaChart*)blob)->KizunagramStoreWorkEntry(row, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
                     CPSkillSlot* slot = &blob->records2[row].slots[fe + 1];
                     slot->byte14 |= 1;
                     SysWinLog_ScanSegmentSlots((u8*)blob);
@@ -1855,7 +1869,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                                 freeFlag = (slot->byte14 & 1) == 0;
                                 if (freeFlag != 0 && costLo != 0) {
                                     self->field_11F = 0;
-                                    blob->KizunagramClearChartEntry();
+                                    ((CPcKizunaChart*)blob)->KizunagramClearChartEntry(row, fe + 1);
                                     slot->byte14 |= 1;
                                     CPassiveSkillLine_updateSkillTabs(self);
                                     CPassiveSkillLine_refreshLearnGrid(self);
@@ -1894,7 +1908,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
             playUISound(5);
             return;
         }
-        blob->SetActiveSlot((s8)self->field_F5);
+        ((CPcKizunagramBig*)blob)->SetActiveSlot((s8)self->field_F5);
         CPassiveSkillLine_updateSkillTabs(self);
         playUISound(0x12);
         return;
@@ -1953,7 +1967,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
                 return;
             }
             self->field_11F = 0;
-            blob->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
+            ((CPcKizunaChart*)blob)->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
             CPSkillSlot* slot2 = &blob->records2[skillId].slots[fe + 1];
             slot2->byte14 |= 1;
             SysWinLog_ScanSegmentSlots((u8*)blob);
@@ -1963,7 +1977,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_handleInput(u8* selfRaw) 
         }
         // Empty slot: acquire without the message flow.
         self->field_11F = 0;
-        blob->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
+        ((CPcKizunaChart*)blob)->KizunagramStoreWorkEntry(skillId, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
         slot->byte14 |= 1;
         SysWinLog_ScanSegmentSlots((u8*)blob);
         CPassiveSkillLine_enterStateA(self);

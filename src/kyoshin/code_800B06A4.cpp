@@ -45,7 +45,9 @@ extern "C" void CPartsChange_LoadBdatTables(unsigned long a, void* b);
 extern "C" void CPartsChange_UpdatePartyState(unsigned long a, float b);
 
 // Forward declarations for callees used by my targets
-struct CfMapMineManager;
+struct CfMapMineManager {
+    void ScanPoints();
+};
 // (memberized: mineScanPoints -> CfMapMineManager::ScanPoints; declaration moved into class CfMapMineManager) // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
 extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg); // retail unmangled
 extern "C" void* getEffOwner____FPv(void* data);

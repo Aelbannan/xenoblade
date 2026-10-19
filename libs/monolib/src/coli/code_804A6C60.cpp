@@ -877,6 +877,15 @@ struct CColiProcLocal {
     u32 field_0x4;   // +0x4
     u32 field_0x8;   // +0x8
     u32 field_0xc;   // +0xc
+    // Memberized from CColiProc (see sibling CColiProc TU). Declared here
+    // with the TU-local CColiObject view so the existing call sites compile
+    // without changing the 0x10-byte stack layout. The retail mangled names
+    // are CColiProc::..., so this is a build-only shape; matching will need
+    // the CColiProc cast.
+    void InitQuad(CColiObject* target, u32 a, u32 b);
+    void InitTriple(CColiObject* target, u32 a);
+    bool IsTargetFlagged();
+    bool TestBit18State();
 };
 extern "C" void __ct__CColiProc(CColiProcLocal* self);
 

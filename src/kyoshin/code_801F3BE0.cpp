@@ -76,7 +76,9 @@ extern const f32 lbl_eu_80668158;
 // Cross-TU callees (defined in the cf/ gimmick units; no header declares them).
 // Declared with C linkage so the call relocs keep the retail names
 // (GimmickElv_SetLodVisible's own definition is extern "C").
-struct CfGimmickElvData;
+struct CfGimmickElvData {
+    void SetLodVisible(int show);
+};
 namespace cf {
 class CfGimmickLock;
 class CfGimmickEne;

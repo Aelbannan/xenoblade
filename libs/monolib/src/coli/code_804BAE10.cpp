@@ -64,6 +64,15 @@ struct ColiObj {
     u16* indices;     // 0x08 index array
     ColiNode* tris2;  // 0x0C secondary node array (12-byte stride)
     u16* indices2;    // 0x10 secondary index array
+    // Memberized helpers (full defs in sibling code_804B59C8 TU as
+    // CColiRegObj::DispatchRegCb, CColiBitObj::setSeenBitLst,
+    // CColiObj2::rayBoxHitTest). Declared here with the TU-local ColiObj
+    // view so the existing call sites compile without changing layout.
+    // Retail mangled names are on the sibling classes, so this is a
+    // build-only shape; matching will need the sibling-class casts.
+    void DispatchRegCb(u16* entry, u16 value);
+    void setSeenBitLst(u16* list, u16 count);
+    bool rayBoxHitTest(u16* list, u16 count);
 };
 
 

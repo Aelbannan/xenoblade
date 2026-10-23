@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -14,21 +15,9 @@ class ArcResourceAccessor;
 }
 } // namespace nw4r
 
-// Render-callback APIs on the owning scene (OOL in CScn, retail symbols
-// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 /*
  * Zeal (collective) menu screen controller.
@@ -144,7 +133,6 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // Effect/cue object factory (defined in pluginUi.cpp; declared here because
 // pluginUi.hpp's extern "C" BdatTouchStringCell clashes with code_80135FDC.hpp's).
-void* bindIndexedEffect(u32 cls, void* param);
 
 // UI sound effect (mangles to playUISound__FUl).
 void playUISound(u32 op);

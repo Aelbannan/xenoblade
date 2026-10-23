@@ -9,18 +9,7 @@
 
 class CPad;
 
-// Pad accessors on cf::CfGameManager used by Move()/KizunaList_Phase2Input.
-// Declared member-for-member here (full definition: kyoshin/cf/CfGameManager.hpp)
-// because that header's lbl_eu_80664090 declaration conflicts with the one in
-// CKizunaTalkList.hpp above; merge back once those types are reconciled.
-namespace cf {
-class CfPadData;
-class CfGameManager {
-public:
-    static CPad* getCurrentPad();
-    static CfPadData* getCfPadData();
-};
-} // namespace cf
+#include "kyoshin/cf/CfGameManager.hpp" // getCurrentPad / getCfPadData
 
 
 // Shared string pool (.rodata) used by Init.

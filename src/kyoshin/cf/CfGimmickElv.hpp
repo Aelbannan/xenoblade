@@ -55,7 +55,6 @@ UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 int CfSoundMan_IsRecordActive(int a);
 void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
 void CfSoundMan_WriteSlotParam(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);

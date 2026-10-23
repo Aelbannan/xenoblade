@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 #include <monolib/work/CEventFile.hpp>  // CEventFile (OnFileEvent param)
 
 // CEquipItemBox vtable (lbl_eu_80538658)
@@ -167,7 +168,7 @@ struct CEquipItemBox {
     u8 unk_58;          // 0x58 (cursor0 mActive)
     u8 _pad59[3];       // 0x59..0x5B (mVisible + pad)
     u8 pagecur[0x18];   // 0x5C..0x73 (CEIBPageCur region)
-    u8 ccur18[0x18];    // 0x74..0x8B
+    CCur18 ccur18;      // 0x74..0x8B
 
     // +0x8C: CSortMenu (0xF0 bytes)
     u8 _padSortMenu[0xF0];
@@ -262,17 +263,6 @@ struct CEquipItemBoxPaneSizeView {
 /* (cursor-member +0x08 dispatch goes through the real classes now:
    CEIBCur::initLayout / CEIBPageCur::initLayout / CBaseCur::initLayout.) */
 
-/* Non-vtable CCur18 field block copied from the stack temp into the member
-   (4 words + 2 bytes, skipping the vtable word at +0x00). */
-struct CEquipItemBoxCCur18CopyView {
-    u32 word0;  // +0x04
-    u32 word1;  // +0x08
-    u32 word2;  // +0x0C
-    u32 word3;  // +0x10
-    u8 b0;      // +0x14
-    u8 b1;      // +0x15
-};
-
 /* Per-page store tables written by rebuildEIBKind2Cells: byte table at +0x2B8,
    byte table at +0x2C4 and s16 table at +0x2D0 (read by refreshEIBItemList). */
 struct CEquipItemBoxPageStoreView {
@@ -287,7 +277,6 @@ extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const 
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);
@@ -305,10 +294,8 @@ extern "C" void CopyVec4s(void*, const void*);
 extern "C" void PaneSetTexPalette(void*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
-extern "C" void __ct__CCur18(void*, void*);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
 extern void* lbl_eu_806649E0;
@@ -574,7 +561,6 @@ extern "C" void rebuildEIBGridPage(CEquipItemGrid* grid, u8 v, u8 b, u8 hi);
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* BdatTouchStringCell(char*, char*, u32);
 extern "C" u32 BdatGetU8Direct(u32, const char*, u32);
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -842,7 +828,6 @@ extern "C" u32 BdatGetItemType(u32);
 // member-class dtors live in their own TUs as extern "C" free functions).
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__9CSortMenuFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void* __dt__80285C44(void*, int);
 

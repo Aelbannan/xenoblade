@@ -186,7 +186,7 @@ void func_80098EF8(CtrlPcVf38* self)
         isBattleStatusActive(&self->mField5C->mField8, 0x9) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xa) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0 ||
-        (getUnk80664658()->mField214 & 2) != 0 ||
+        (getUnk80664658()->mFlags & 2) != 0 ||
         SkipTimer_IsActiveFlag() != 0 ||
         (lbl_eu_80663E24 & 0x8429A000) != 0 ||
         ((lbl_eu_80663E28 & 0x20000) | (lbl_eu_80663E28 & 0x30)) != 0 ||

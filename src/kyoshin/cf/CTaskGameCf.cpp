@@ -2,7 +2,7 @@
 
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/CTaskEnvironment.hpp"
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameImports.hpp"
 #include "kyoshin/CUIBattleManager.hpp"
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/CUIWindowManager.hpp"

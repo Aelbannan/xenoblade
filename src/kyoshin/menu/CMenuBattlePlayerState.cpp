@@ -37,6 +37,7 @@
 #include "functions.hpp"
 #include <nw4r/math.h>
 #include <revolution/GX.h>
+#include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch

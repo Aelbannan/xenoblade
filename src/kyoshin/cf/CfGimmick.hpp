@@ -47,12 +47,7 @@ public:
 
 } // namespace cf
 
-// Global settings object returned by getUnk80664658 (field_214 flag word).
-struct CfGimmickGlobal {
-    u8 pad[0x210];
-    u32 field_210;   // 0x210 - value set by CfGimmick_SetGlobalFlag80AndValue
-    u32 field_214;   // 0x214 - flag bits set by several setters
-};
+#include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658 (owner)
 
 // Minimal 3-component vector used by the CfGimmick collision helpers.
 struct CfGimmickVec3 {
@@ -174,8 +169,6 @@ extern "C" f32 lbl_eu_80662780;
 // 1.0f fill constant used when no player is present (.sdata2).
 extern "C" const f32 lbl_eu_80668360;
 
-// Shared singleton accessor; refs resolve to the unmangled retail name.
-extern "C" CfGimmickGlobal* getUnk80664658();
 
 // Bdat table data used by CfGimmick_LookupBdatGimmickName / CfGimmick_LoadBdatAreaPos columns.
 extern "C" const void* lbl_eu_805357E8[];

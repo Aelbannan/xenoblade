@@ -206,7 +206,6 @@ extern "C" void __ct__CMCCrystalList(void* self);
 extern "C" void __ct__CScrollBar(void* self, int arg);
 extern "C" void __ct__CSysWin(void* self, int arg);
 extern "C" void __ct__CMCGetItemBox(void* self);
-extern "C" void __ct__CCur18(void* self, void* arg);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void InfoCfCopySysWin(void* dest, void* src);
 extern "C" size_t strlen(const char* s);

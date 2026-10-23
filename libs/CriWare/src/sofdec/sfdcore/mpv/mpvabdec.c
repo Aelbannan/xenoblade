@@ -51,24 +51,73 @@ void MPVABDEC_Init(void) {
     lbl_eu_806046A8[2] = (u32)lbl_eu_8051C378;
 }
 
+/* 6-bit run + 8/16-bit level escape (ISO 11172-2 escape code). A level byte
+ * of 0x00/0x80 extends to a 16-bit level, growing the code to 28 bits. */
+#define MPVABDEC_DECODE_ESCAPE() \
+    s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2; \
+    blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF)); \
+    v = (s8)((bits >> 13) & 0xFF); \
+    if ((v & 0x7F) == 0) { \
+        blk->codelen = 0x1C; \
+        v = (v << 1) | (s32)((bits >> 5) & 0xFF); \
+    } \
+    if (v < 0) { \
+        blk->f08 = 1; \
+        v = -v; \
+    } else { \
+        blk->f08 = 0; \
+    } \
+    blk->f04 = (s32)v
+
+/* Run/level tail shared by every escape and table-driven AC case:
+ * advance the zigzag position by run+1, then dequantise level into block[]
+ * (ISO 11172-2 2.4.4: intra uses 2*level*q, non-intra (2*level+1)*q,
+ * both followed by oddification). */
+#define MPVABDEC_PUT_COEF(LEV) \
+    s32 run = blk->f00; \
+    p += run + 1; \
+    s32 c = (s8)*p; \
+    blk->last = c; \
+    s32 lev = (LEV); \
+    s32 s = ((s32)blk->clip[c] * (lev * (s32)blk->quant)) >> 4; \
+    s = (s - 1) | 1; \
+    if (blk->f08 != 0) s = -s; \
+    blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11)
+
+#define MPVABDEC_PUT_INTRA_COEF()  MPVABDEC_PUT_COEF(2 * blk->f04)
+#define MPVABDEC_PUT_NINTRA_COEF() MPVABDEC_PUT_COEF(2 * blk->f04 + 1)
+
+
 s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
-    u32 hi = ctx->hi;
-    u32 lo = ctx->lo;
-    s32 bc = ctx->bc;
-    u32 *ptr = ctx->ptr;
-    u32 t = hi >> 16;
+    s32 *sum;
+    u32 hi;
+    u32 lo;
+    s32 bc;
+    u32 *ptr;
+    u32 t;
+    u8 v;
+    u32 size;
+    u32 low;
+    s32 dc;
+    u32 one;
+    u8 *p;
+    s16 *masktbl;
+    hi = ctx->hi;
+    lo = ctx->lo;
+    bc = ctx->bc;
+    ptr = ctx->ptr;
+    t = hi >> 16;
     if (bc > 0x10) t |= lo >> (0x30 - bc);
-    u8 v = blk->dctbl[t >> 9];
-    u32 size = (u32)v >> 4;
-    u32 low = v & 0xF;
-    s32 dc = size;
+    v = blk->dctbl[t >> 9];
+    size = (u32)v >> 4;
+    low = v & 0xF;
+    dc = size;
     if (size != 0) {
-        s16 *masktbl = ctx->masktbl;
-        u32 mask = (u32)masktbl[low];
+        masktbl = ctx->masktbl;
+        t &= masktbl[low];
         low += size;
-        u32 one = 1u << (size - 1);
-        t &= mask;
         t >>= 16 - low;
+        one = 1u << (size - 1);
         if ((t & one) == 0) t += 1 - (one << 1);
         dc = (s32)(t << 3);
     }
@@ -80,13 +129,13 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         } else {
         hi <<= low;
     }
-    s32 *sum = blk->sum;
+    sum = blk->sum;
     dc += *sum;
     *sum = dc;
     blk->block[0] = (s16)(dc << 3);
     blk->first = 0;
     blk->last = 0;
-    u8 *p = ctx->p9ac;
+    p = ctx->p9ac;
 
     for (;;) {
         u32 bits = hi;
@@ -236,7 +285,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -258,7 +307,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -360,7 +409,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 3;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -404,7 +453,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -429,7 +478,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -451,7 +500,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -816,7 +865,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 79: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -838,7 +887,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 78: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -861,7 +910,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 5;
@@ -877,7 +926,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 71: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -899,7 +948,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 70: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -922,7 +971,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 5;
@@ -1048,21 +1097,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 blk->f08 = bits & 1;
                 } else {
                 blk->codelen = 0x14;
-                s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
-                blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-                s32 e = (s8)((bits >> 13) & 0xFF);
-                if (((bits >> 13) & 0x7F) != 0) {
-                    } else {
-                    blk->codelen = 0x1C;
-                    v = (e << 1) | (s32)((bits >> 5) & 0xFF);
-                    }
-                if (v < 0) {
-                    blk->f08 = 1;
-                    v = -v;
-                    } else {
-                    blk->f08 = 0;
-                    }
-                blk->f04 = (s32)v;
+                MPVABDEC_DECODE_ESCAPE();
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -1072,16 +1107,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 30: case 31: {
@@ -1122,7 +1148,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -1139,7 +1165,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -1258,7 +1284,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((8 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -1275,7 +1301,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((8 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -1326,7 +1352,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 3;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -1343,7 +1369,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 3;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -1361,11 +1387,10 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             blk->codelen = 0x14;
             s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
             blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-            s32 e = (s8)((bits >> 13) & 0xFF);
-            if (((bits >> 13) & 0x7F) != 0) {
-                } else {
+            v = (s8)((bits >> 13) & 0xFF);
+            if ((v & 0x7F) == 0) {
                 blk->codelen = 0x1C;
-                v = (e << 1) | (s32)((bits >> 5) & 0xFF);
+                v = (v << 1) | (s32)((bits >> 5) & 0xFF);
                 }
             if (v < 0) {
                 blk->f08 = 1;
@@ -1374,16 +1399,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 blk->f08 = 0;
                 }
             blk->f04 = (s32)v;
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1396,7 +1412,8 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits >>= 21;
+            bits <<= 1;
+            bits >>= 22;
             s16 t = ctx->tbl994[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)(((t >> 8) & 0xFFFFFF));
@@ -1409,24 +1426,16 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits >>= 19;
+            bits <<= 1;
+            bits >>= 20;
             s16 t = ctx->tbl998[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
@@ -1436,16 +1445,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 0: {
@@ -1475,7 +1475,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -1485,16 +1485,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 254: {
@@ -1702,7 +1693,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -1719,7 +1710,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -1849,6 +1840,7 @@ exit:
 
 
 s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
+    s32 *sum;
     u32 hi = ctx->hi;
     u32 lo = ctx->lo;
     s32 bc = ctx->bc;
@@ -1860,10 +1852,11 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
     u32 low = v & 0xF;
     s32 dc = size;
     if (size != 0) {
-        u32 x = bits << low;
+        bits <<= low;
         low += size;
-        x = ((s32)x >> 1) ^ 0x80000000u;
-        dc = (s32)((x >> 31) + ((s32)x >> (31 - size)));
+        bits = (s32)bits >> 1;
+        bits ^= 0x80000000u;
+        dc = (s32)((bits >> 31) + ((s32)bits >> (31 - size)));
     }
     bc += low;
     if (bc >= 0x20) {
@@ -1873,7 +1866,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         } else {
         hi <<= low;
     }
-    s32 *sum = blk->sum;
+    sum = blk->sum;
     dc += *sum;
     *sum = dc;
     blk->block[0] = (s16)(dc << 3);
@@ -2029,7 +2022,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -2051,7 +2044,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -2153,7 +2146,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 3;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -2197,7 +2190,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -2222,7 +2215,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -2244,7 +2237,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((4 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -2609,7 +2602,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 79: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -2631,7 +2624,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 78: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -2654,7 +2647,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 5;
@@ -2670,7 +2663,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 71: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -2692,7 +2685,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         case 70: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -2715,7 +2708,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 5;
@@ -2841,21 +2834,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 blk->f08 = bits & 1;
                 } else {
                 blk->codelen = 0x14;
-                s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
-                blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-                s32 e = (s8)((bits >> 13) & 0xFF);
-                if (((bits >> 13) & 0x7F) != 0) {
-                    } else {
-                    blk->codelen = 0x1C;
-                    v = (e << 1) | (s32)((bits >> 5) & 0xFF);
-                    }
-                if (v < 0) {
-                    blk->f08 = 1;
-                    v = -v;
-                    } else {
-                    blk->f08 = 0;
-                    }
-                blk->f04 = (s32)v;
+                MPVABDEC_DECODE_ESCAPE();
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -2865,16 +2844,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 30: case 31: {
@@ -2915,7 +2885,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -2932,7 +2902,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 2;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -3051,7 +3021,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((8 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -3068,7 +3038,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((8 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -3119,7 +3089,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 3;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -3136,7 +3106,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 3;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
@@ -3154,11 +3124,10 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             blk->codelen = 0x14;
             s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
             blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-            s32 e = (s8)((bits >> 13) & 0xFF);
-            if (((bits >> 13) & 0x7F) != 0) {
-                } else {
+            v = (s8)((bits >> 13) & 0xFF);
+            if ((v & 0x7F) == 0) {
                 blk->codelen = 0x1C;
-                v = (e << 1) | (s32)((bits >> 5) & 0xFF);
+                v = (v << 1) | (s32)((bits >> 5) & 0xFF);
                 }
             if (v < 0) {
                 blk->f08 = 1;
@@ -3167,16 +3136,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 blk->f08 = 0;
                 }
             blk->f04 = (s32)v;
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3189,7 +3149,8 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits >>= 21;
+            bits <<= 1;
+            bits >>= 22;
             s16 t = ctx->tbl994[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)(((t >> 8) & 0xFFFFFF));
@@ -3202,24 +3163,16 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits >>= 19;
+            bits <<= 1;
+            bits >>= 20;
             s16 t = ctx->tbl998[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
@@ -3229,16 +3182,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 0: {
@@ -3268,7 +3212,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -3278,16 +3222,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_INTRA_COEF();
             continue;
         }
         case 254: {
@@ -3495,7 +3430,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -3512,7 +3447,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
-            s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((4 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 7;
@@ -3642,6 +3577,13 @@ exit:
 
 
 s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
+    u8 *p;
+    u32 hi;
+    u32 lo;
+    s32 bc;
+    u32 *ptr;
+    u32 bits;
+    u32 t990;
     u32 *b0 = (u32 *)blk->block;
     b0[1] = 0; b0[0] = 0; b0[3] = 0; b0[2] = 0;
     b0[5] = 0; b0[4] = 0; b0[7] = 0; b0[6] = 0;
@@ -3651,11 +3593,11 @@ s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
     b0[21] = 0; b0[20] = 0; b0[23] = 0; b0[22] = 0;
     b0[25] = 0; b0[24] = 0; b0[27] = 0; b0[26] = 0;
     b0[29] = 0; b0[28] = 0; b0[31] = 0; b0[30] = 0;
-    s32 bc = ctx->bc;
-    u32 hi = ctx->hi;
-    u32 lo = ctx->lo;
-    u32 *ptr = ctx->ptr;
-    u32 bits = hi;
+    bc = ctx->bc;
+    hi = ctx->hi;
+    lo = ctx->lo;
+    ptr = ctx->ptr;
+    bits = hi;
     if (bc != 0) bits |= lo >> (32 - bc);
     if ((s32)bits < 0) {
         blk->f08 = (bits >> 30) & 1;
@@ -3674,28 +3616,29 @@ s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
     if (v == 0) goto nib_escape_long;
 
     {
-        u32 t990 = ctx->tbl990[(v << 1) >> 2];
+        t990 = ctx->tbl990[(v << 1) >> 2];
         blk->f00 = t990 & 0xFF;
         if (blk->f00 != 0x40) {
             blk->codelen = t990 >> 16;
-            blk->f04 = (s32)(s8)((t990 >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t990 >> 8) & 0xFFFFFF);
             bits >>= 0x21 - (s32)blk->codelen;
             blk->f08 = bits & 1;
         } else {
+            s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
+            blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
             blk->codelen = 0x14;
-            s32 w = (s32)((bits >> 11) & 0xFFFF) >> 2;
-            blk->f00 = (u32)(s8)(w >> 8);
-            if (((bits >> 13) & 0x7F) == 0) {
+            v = (s8)((bits >> 13) & 0xFF);
+            if ((v & 0x7F) == 0) {
                 blk->codelen = 0x1C;
-                w = ((s32)(s8)((bits >> 13) & 0xFF) << 1) | (s32)((bits >> 5) & 0xFF);
+                v = (v << 1) | (s32)((bits >> 5) & 0xFF);
             }
-            if (w < 0) {
+            if (v < 0) {
                 blk->f08 = 1;
-                w = -w;
+                v = -v;
             } else {
                 blk->f08 = 0;
             }
-            blk->f04 = (s32)w;
+            blk->f04 = (s32)v;
         }
         goto nib_prefix_done;
     }
@@ -3739,11 +3682,10 @@ nib_escape_long:
 
 nib_table:
     blk->f00 = (u32)(t & 0xFF);
-    blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+    blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
     blk->f08 = bits & 1;
 
 nib_prefix_done:
-    u8 *p = ctx->p9ac;
     bc += (s32)blk->codelen;
     if (bc >= 0x20) {
         bc -= 0x20;
@@ -3752,12 +3694,12 @@ nib_prefix_done:
         } else {
         hi <<= (s32)blk->codelen;
     }
-    s32 *sum = blk->sum;
-    p += blk->f00;
-    s32 c = (s8)p[0];
+    p = ctx->p9ac + blk->f00;
+    s32 c = (s8)*p;
     blk->first = c;
     blk->last = c;
-    s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
+    s32 lev = 2 * blk->f04 + 1;
+    s32 s = ((s32)blk->clip[c] * (lev * (s32)blk->quant)) >> 4;
     s = (s - 1) | 1;
     if (blk->f08 != 0) s = -s;
     blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
@@ -3910,7 +3852,7 @@ nib_prefix_done:
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((5 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -3932,7 +3874,7 @@ nib_prefix_done:
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((5 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -4103,7 +4045,7 @@ nib_prefix_done:
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((5 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -4125,7 +4067,7 @@ nib_prefix_done:
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
-            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            s32 sc2 = ((5 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
             sc2 = (sc2 - 1) | 1;
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
@@ -4490,7 +4432,7 @@ nib_prefix_done:
         case 79: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((5 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -4512,7 +4454,7 @@ nib_prefix_done:
         case 78: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((5 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -4551,7 +4493,7 @@ nib_prefix_done:
         case 71: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((5 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -4573,7 +4515,7 @@ nib_prefix_done:
         case 70: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
-            s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
+            s32 sc1 = ((5 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
@@ -4713,30 +4655,16 @@ nib_prefix_done:
         }
         case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39: {
             bits <<= 1;
-            u32 t = ctx->tbl990[(bits >> 25) & 0x7F];
-            blk->f00 = t & 0xFF;
+            t990 = ctx->tbl990[(bits >> 25) & 0x7F];
+            blk->f00 = t990 & 0xFF;
             if (blk->f00 != 0x40) {
-                blk->codelen = t >> 16;
-                blk->f04 = (s32)(s8)(t >> 8);
+                blk->codelen = t990 >> 16;
+                blk->f04 = (s32)(s8)(t990 >> 8);
                 bits >>= 0x21 - (s32)blk->codelen;
                 blk->f08 = bits & 1;
                 } else {
                 blk->codelen = 0x14;
-                s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
-                blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-                s32 e = (s8)((bits >> 13) & 0xFF);
-                if (((bits >> 13) & 0x7F) != 0) {
-                    } else {
-                    blk->codelen = 0x1C;
-                    v = (e << 1) | (s32)((bits >> 5) & 0xFF);
-                    }
-                if (v < 0) {
-                    blk->f08 = 1;
-                    v = -v;
-                    } else {
-                    blk->f08 = 0;
-                    }
-                blk->f04 = (s32)v;
+                MPVABDEC_DECODE_ESCAPE();
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -4746,16 +4674,7 @@ nib_prefix_done:
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_NINTRA_COEF();
             continue;
         }
         case 30: case 31: {
@@ -5035,11 +4954,10 @@ nib_prefix_done:
             blk->codelen = 0x14;
             s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
             blk->f00 = (u32)(s8)(((v >> 8) & 0xFFFFFF));
-            s32 e = (s8)((bits >> 13) & 0xFF);
-            if (((bits >> 13) & 0x7F) != 0) {
-                } else {
+            v = (s8)((bits >> 13) & 0xFF);
+            if ((v & 0x7F) == 0) {
                 blk->codelen = 0x1C;
-                v = (e << 1) | (s32)((bits >> 5) & 0xFF);
+                v = (v << 1) | (s32)((bits >> 5) & 0xFF);
                 }
             if (v < 0) {
                 blk->f08 = 1;
@@ -5048,16 +4966,7 @@ nib_prefix_done:
                 blk->f08 = 0;
                 }
             blk->f04 = (s32)v;
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_NINTRA_COEF();
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5070,10 +4979,11 @@ nib_prefix_done:
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits >>= 21;
+            bits <<= 1;
+            bits >>= 22;
             s16 t = ctx->tbl994[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += 11;
             if (bc >= 0x20) {
@@ -5081,26 +4991,18 @@ nib_prefix_done:
                 hi = lo << bc;
                 lo = *ptr++;
                 } else {
-                hi <<= 11;
+                hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_NINTRA_COEF();
             continue;
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits >>= 19;
+            bits <<= 1;
+            bits >>= 20;
             s16 t = ctx->tbl998[bits >> 1];
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
@@ -5108,18 +5010,9 @@ nib_prefix_done:
                 hi = lo << bc;
                 lo = *ptr++;
                 } else {
-                hi <<= 13;
+                hi <<= blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_NINTRA_COEF();
             continue;
         }
         case 0: {
@@ -5149,7 +5042,7 @@ nib_prefix_done:
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
-            blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+            blk->f04 = (s32)(s8)((t >> 8) & 0xFFFFFF);
             blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -5159,16 +5052,7 @@ nib_prefix_done:
                 } else {
                 hi <<= (s32)blk->codelen;
                 }
-            p += blk->f00;
-            s32 c = (s8)*++p;
-            blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-            if (blk->f08 != 0) {
-                s = -((s - 1) | 1);
-                } else {
-                s = (s - 1) | 1;
-                }
-            blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
+            MPVABDEC_PUT_NINTRA_COEF();
             continue;
         }
         case 254: {

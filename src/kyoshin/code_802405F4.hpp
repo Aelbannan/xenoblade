@@ -7,13 +7,11 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
-#include "kyoshin/CMapSel.hpp"
+#include "kyoshin/CMapSelImports.hpp"
 #include "kyoshin/CFade.hpp"
 
 // CFloorMap.hpp and CMapSel.hpp declare overlapping helpers with different
 // signatures; rename CFloorMap's versions while its header is processed.
-#define CCur18View CCur18ViewFloorMap
-#define CCur18Data CCur18DataFloorMap
 #define CScrollBar_UpdateDispatch CScrollBar_UpdateDispatchFloorMap
 #define Cur_Update Cur_UpdateFloorMap
 #define sysWinDispatchPhase sysWinDispatchPhaseFloorMap
@@ -27,8 +25,6 @@
 #define BdatTouchStringCell BdatTouchStringCellFloorMap
 #define PaneSetTexPaletteByName PaneSetTexPaletteByNameFloorMap
 #include "kyoshin/CFloorMap.hpp"
-#undef CCur18View
-#undef CCur18Data
 #undef CScrollBar_UpdateDispatch
 #undef Cur_Update
 #undef sysWinDispatchPhase
@@ -77,7 +73,6 @@ void BgTex_Tick_3D54(class CBgTex* self);
 void updateHelp(class CTitleAHelp* self);
 int isInitialized(class CTitleAHelp* self);
 // Mangled-name form so callers compare with cmpwi directly (no byte mask).
-extern "C" int isIdle__11CTitleAHelpFv(class CTitleAHelp* self);
 void func_801C412C(class CTitleAHelp* self);
 void func_801C41E8(class CTitleAHelp* self, u8 arg);
 void func_801C4654(class CTitleAHelp* self, u32 arg);

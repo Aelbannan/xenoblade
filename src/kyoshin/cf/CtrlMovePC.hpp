@@ -3,6 +3,7 @@
 #include <types.h>
 #include <revolution/MTX.h>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/code_801F3BE0.hpp"
 
 // MWCC pointer-to-member-function (12 bytes). Layout matches Runtime/ptmf.c:
 //   this_delta @+0, v_offset @+4, f_data @+8.
@@ -108,12 +109,7 @@ struct CfObjWrap {
     u16 mField455A;           // +0x455A
 };
 
-// Object returned by getUnk80664658 (flag word at +0x214).
-struct CfGlobalSettings {
-    u8 field_0x00[0x214];
-    u32 field_214;            // 0x214 flag bits
-};
-
+ 
 // State sub-object returned by CfObject::UVF48 (void* at vtable 0x110 on the
 // embedded move object; f32 at +0x14, s16 at +0x1AC).
 struct CfObjState {
@@ -164,8 +160,6 @@ int  ScnRes_EntryFlagThunk_E5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
 void* CtrlObjectParam_GetSlotTableBase();
-cf::CfGlobalSettings* getUnk80664658();
-int  GimProbeLockAccept(void* a, void* b);
 void ctrlActUpdateData70(void* a);
 void maskMoveChildFlags(cf::CCtrlMovePC* self);
 int  moveBaseRoute(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);

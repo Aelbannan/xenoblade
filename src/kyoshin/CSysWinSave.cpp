@@ -132,30 +132,30 @@ void CSysWinSave::HandleInput() {
         // Close the dialog without advancing the save slot.
         this->mFlagDC = 3;
         sysWinAdvancePhase3(&this->mSysWin[0]);
-        Cur_SetVisible(&this->mCur18[0], 0);
+        Cur_SetVisible(&this->mCur18, 0);
         playUISound__FUl(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         this->mFlagDC = 3;
         sysWinAdvancePhase3(&this->mSysWin[0]);
-        Cur_SetVisible(&this->mCur18[0], 0);
+        Cur_SetVisible(&this->mCur18, 0);
         this->mFlagDD = 1;
         playUISound__FUl(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         this->mFlagDD = this->mFlagDD - 1;
         if (this->mFlagDD < 0) this->mFlagDD = 1;
-        u8 tmp[0x18];
+        u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
         sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
-        reinterpret_cast<CCur18View*>(&this->mCur18[0])->vf04(tmp);
+        this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound__FUl(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         this->mFlagDD = this->mFlagDD + 1;
         if (this->mFlagDD > 1) this->mFlagDD = 0;
-        u8 tmp[0x18];
+        u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
         sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
-        reinterpret_cast<CCur18View*>(&this->mCur18[0])->vf04(tmp);
+        this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         playUISound__FUl(1);
     }
 }
@@ -208,18 +208,11 @@ void CSysWinSave::Init() {
     reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
 
     // Rebuild the embedded CCur18 cursor the same way (shared arc accessor).
-    u8 tempC[0x18];
-    __ct__CCur18(tempC, (void*)CUICfManager_getArcResourceAccessor());
-    CCur18Data* mc = reinterpret_cast<CCur18Data*>(&mCur18[0]);
-    CCur18Data* tc = reinterpret_cast<CCur18Data*>(tempC);
-    mc->f_04 = tc->f_04;
-    mc->f_08 = tc->f_08;
-    mc->f_0c = tc->f_0c;
-    mc->f_10 = tc->f_10;
-    mc->f_14 = tc->f_14;
-    mc->f_15 = tc->f_15;
-    __dt__6CCur18Fv(tempC, -1);
-    reinterpret_cast<CCur18View*>(&mCur18[0])->vf02();
+    CCur18 tempC;
+    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
+    mCur18 = tempC;
+    __dt__6CCur18Fv(&tempC, -1);
+    mCur18.initLayout();
 
     mMemRegion.validateHeap();
 }
@@ -261,10 +254,10 @@ void CSysWinSave::Move() {
         // Window active: update the cursor from the stored slot flag.
         if (CSysWin_isActive(&mSysWin[0])) {
             mFlagDC = 2;
-            Cur_SetVisible(&mCur18[0], 1);
-            u8 tmp[0x18];
+            Cur_SetVisible(&mCur18, 1);
+            u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
             sysWinGetPaneScreenPos(tmp, &mSysWin[0], mFlagDD);
-            reinterpret_cast<CCur18View*>(&mCur18[0])->vf04(tmp);
+            mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         }
         break;
     case 2:
@@ -283,7 +276,7 @@ void CSysWinSave::Move() {
     }
 
     sysWinDispatchPhase(&mSysWin[0]);
-    Cur_Update(&mCur18[0]);
+    Cur_Update(&mCur18);
 }
 
 // ---------------------------------------------------------------------------
@@ -295,7 +288,7 @@ void CSysWinSave::Move() {
 void CSysWinSave::Term() {
     CDeviceVI::waitForDrawDone();
     sysWinTermLayout(&mSysWin[0]);
-    reinterpret_cast<CCursor18*>(&mCur18[0])->vf3();
+    mCur18.cleanup();
     mMemRegion.deleteRegion();
     lbl_eu_80664A08 = 0;
 
@@ -316,7 +309,7 @@ void CSysWinSave::Term() {
 // ---------------------------------------------------------------------------
 extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
     if (_this != 0) {
-        __dt__6CCur18Fv(&_this->mCur18[0], -1);
+        __dt__6CCur18Fv(&_this->mCur18, -1);
         __dt__7CSysWinFv(&_this->mSysWin[0], -1);
         __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
         if (_this != 0) {
@@ -361,7 +354,7 @@ body:
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     SetWideLocAdjust(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     sysWinDrawLayout(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    Cur_DrawLayout(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    Cur_DrawLayout(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
@@ -423,7 +416,7 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
 
         __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
         __ct__CSysWin(&obj->mSysWin[0], 0);
-        __ct__CCur18(&obj->mCur18[0], 0);
+        __ct__CCur18(&obj->mCur18, 0);
 
         obj->mFlagDC = 0;
         obj->mFlagDD = 0;

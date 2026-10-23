@@ -8,6 +8,7 @@
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
+#include "kyoshin/cf/chain/CChainEffectImports.hpp"
 
 // ---- Cross-TU helper declarations ---------------------------------------
 // getEffOwner / findObjectById are mangled C++ retail symbols; the rest are

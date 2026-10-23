@@ -307,6 +307,8 @@ struct CHelpTableFull {
 extern "C" DECOMP_DONT_INLINE void clearHelpListHolder(cf::CHelpListHolder* self);
 extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag);
 extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self);
+// Help-popup gate (CHelpManager.cpp; also called by CHelp_GameOver).
+extern "C" int isHelpPopupReady(cf::CHelpManager* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern cf::CHelpManager* lbl_eu_80664A10;

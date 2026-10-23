@@ -1,5 +1,6 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfMapMineManager.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 // High-level C++ reconstruction from retail ASM (US, 0x8020785C..0x80209D20).
@@ -1123,8 +1124,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
         if (snd->mId != 0) {
             snd->mTime -= dt;
             if (snd->mTime <= zeroD) {
-                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, snd->mId, 0, 0,
-                                                           lbl_eu_806682E4);
+                cf::CfSoundMan::playActorSound(0, snd->mId, 0, 0, lbl_eu_806682E4);
                 snd->mId = 0;
                 snd->mTime = zero;
             }
@@ -1237,7 +1237,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
 
     mgr->mTime = lbl_eu_806682EC;
     minePlayCollectSfx(mgr, drop.mKind07 & 0x3F, &nearest->mItem.mPosX);
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x3C, 0, 0, lbl_eu_806682E4);
+    cf::CfSoundMan::playActorSound(0, 0x3C, 0, 0, lbl_eu_806682E4);
 
     // Register a one-shot sound timer in the first free slot.
     u16 sndId = 0x46 + (u16)(dropFlag != 0 ? 1 : 0);

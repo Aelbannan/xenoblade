@@ -288,7 +288,6 @@ extern "C" {
     // though the retail symbol is Fv; declared here with the caller's shape.
     CLibCri* startMovie__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
     u32 EvtSeqGetSharedState();
-    u32 Scn_CallUnk8C_V9(CScn* scene);
     void evtStartMoviePlayback(const char* path, int flag, u8* handle);
     int evtIsFullyIdle();
     void evtTeardownActive();

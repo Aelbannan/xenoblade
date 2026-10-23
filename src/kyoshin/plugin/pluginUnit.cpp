@@ -16,15 +16,8 @@ namespace cf {
 class CfObjectActor;
 class CfUnknownSub;
 class CfCode800F42AC;
-// Minimal battle-manager interface. The full cf::CBattleManager header chain
-// conflicts with CfGameManager.hpp's C-linkage singleton declarations
-// (differing return types for the same mangled symbol), so pluginUnit only
-// sees the static accessor; the definition lives in CBattleManager.cpp.
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-};
 }
+#include "kyoshin/cf/CBattleManager.hpp"
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {

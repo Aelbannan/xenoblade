@@ -1,6 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuQuestLog
 // Replace stubs with high-level C/C++ during decomp.
 
+#define ISCN_RENDER_NO_DTOR // see CMenuQuestLog.hpp
+
 // Retail copyScrollBarData is a copy constructor that returns dst (r3), but the
 // shared headers still declare a void-returning scaffold. Rename that
 // declaration aside for this TU only so the real definition below can use the
@@ -13,15 +15,7 @@
 #undef copyScrollBarData
 #undef __ct__UnkClass_8011C974
 
-// Minimal CTaskGame view: the full kyoshin/CTaskGame.hpp pulls in
-// monolib/scn.hpp (and with it the inline-dtor IScnRender.hpp that makes
-// MWCC emit a 0x40 __dt__10IScnRenderFv orphan in this TU -- see the note
-// in CMenuQuestLog.hpp). Only these two statics are used here.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
 #include "kyoshin/code_80135FDC.hpp"     // IsMenuState621F0 / SetWideLocAdjust
 #include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
@@ -173,17 +167,7 @@ void CMenuQuestLog::Init() {
     mQstLogList.mpLayout = *(nw4r::lyt::Layout**)(tmp.list + 0x1c);
     mQstLogList.mpAnim0 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x20);
     mQstLogList.mpAnim1 = *(nw4r::lyt::AnimTransform**)(tmp.list + 0x24);
-    // CCur18 cursor sub-object: copy everything except the vptr slot.
-    {
-        CCur18Data* dstCur = (CCur18Data*)&mQstLogList.mCur18[0];
-        CCur18Data* srcCur = (CCur18Data*)(tmp.list + 0x28);
-        dstCur->field_4 = srcCur->field_4;
-        dstCur->field_8 = srcCur->field_8;
-        dstCur->field_C = srcCur->field_C;
-        dstCur->field_10 = srcCur->field_10;
-        dstCur->field_14 = srcCur->field_14;
-        dstCur->field_15 = srcCur->field_15;
-    }
+    mQstLogList.mCur18 = reinterpret_cast<CQstLogList*>(tmp.list)->mCur18;
     copyScrollBarData(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
     __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mSortMenuData.mUnk04[0]), (const u32*)(tmp.list + 0x84));
     mQstLogList.mSortMenuData.mFileHandle = *(u32*)(tmp.list + 0x94);
@@ -470,7 +454,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
 extern "C" void gateQuestLogList(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
+    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mState = 2;
 }
 
@@ -540,14 +524,14 @@ extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
 
 // Same gate as gateQuestLogList but toggles the +0x54 byte to 1.
 extern "C" void flagQuestLogReady(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList))
+    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList))
         self->mField54 = 1;
 }
 
 extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 {
     CMenuQuestLog* base = self;
-    if (isIdle__11CTitleAHelpFv(&base->mTitleAHelp) && QstLogList_IsSortEnabled(&base->mQstLogList)) {
+    if (base->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&base->mQstLogList)) {
         unsigned int value = QstLogList_GetSelectedQuestLo(&base->mQstLogList);
         QstLogInfo_SetQuestIdSlot(&base->mQstLogInfo, static_cast<unsigned short>(value));
         QstLogInfo_LoadCommonArchive(&base->mQstLogInfo);
@@ -575,7 +559,7 @@ extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
 // state 7.
 // ---------------------------------------------------------------------------
 extern "C" void finishQuestLogInfo(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+    if (self->mTitleAHelp.isIdle() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         self->mState = 7;
     }
 }
@@ -609,7 +593,7 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
 // to state 9.
 // ---------------------------------------------------------------------------
 extern "C" void resortQuestLogList(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+    if (self->mTitleAHelp.isIdle() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         func_801C41E8(&self->mTitleAHelp, 0x3c);
         reopenFromClose(&self->mTitleAHelp);
         QstLogList_BeginSortOpen(&self->mQstLogList);
@@ -622,7 +606,7 @@ extern "C" void resortQuestLogList(CMenuQuestLog* self) {
 // When the title help is idle and sorting is enabled, advance to state 2.
 // ---------------------------------------------------------------------------
 extern "C" void reopenQuestLogList(CMenuQuestLog* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && QstLogList_IsSortEnabled(&self->mQstLogList)) {
+    if (self->mTitleAHelp.isIdle() && QstLogList_IsSortEnabled(&self->mQstLogList)) {
         self->mState = 2;
     }
 }

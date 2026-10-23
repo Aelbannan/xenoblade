@@ -11,6 +11,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef CItemBlock_getKindSlot
@@ -66,12 +67,7 @@ extern "C" {
     void updateReloadFloat(int);
     void seedReloadTmr(int);
 
-    void GimDispatch14ByRow(int, int);
-    void GimDispatch18ByRow(int, int);
-    void GimDispatch1CType1(int, int);
-    void GimToggleElevatorLod(int, int, int);
     void Scn_SetPalFixFlag(int, int);
-    int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
     // CItem_initItemImplInstances: CfGameManager.hpp declares it returning
     // CItemImplInstances* - local void* form conflicts (10197).
@@ -1738,7 +1734,7 @@ int setGimmick(VMThread* vmThread) {
         state = vmArgIntGet(3, arg);
     }
 
-    int unk = getUnk80664658();
+    CGimmickGlobal* unk = getUnk80664658();
     if (unk) {
         if (state == 0)
             GimDispatch14ByRow(unk, gimmickId);
@@ -1766,7 +1762,7 @@ int setElvGim(VMThread* vmThread) {
         value = vmArgIntGet(3, arg);
     }
 
-    int unk = getUnk80664658();
+    CGimmickGlobal* unk = getUnk80664658();
     if (unk) {
         GimToggleElevatorLod(unk, gimmickId, value);
     }

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 // CChainBattleObj / CChainSub4: virtual-dispatch mirrors of the battle objects
@@ -17,13 +18,6 @@
 // (the function sat at 0x801F3BE8 on JP) that no C++ class mangling can
 // reproduce, so the constructor is written as a free function below.
 // ---------------------------------------------------------------------------
-
-// 3-component position vector embedded in every gimmick object at +0x04.
-struct CGimmickVec3 {
-    f32 x;  // 0x00
-    f32 y;  // 0x04
-    f32 z;  // 0x08
-};
 
 // Common layout of the gimmick objects stored in the container's mGimmicks
 // array (shared base of cf::CfGimmick; concrete types are CfGimmickLock,
@@ -51,22 +45,9 @@ struct CGimmickDispatch {
     virtual void vf1C();   // dispatched at vtable + 0x1C
 };
 
-// Singleton gimmick container (ctor __ct__801F3BE8, accessor getUnk80664658).
-struct CGimmickGlobal {
-    CGimmickEntry* mGimmicks[0x80];  // 0x000 - up to 0x80 gimmick objects
-    s32 field_0x200;                 // 0x200 - iteration start index
-    s32 field_0x204;                 // 0x204 - iteration end index
-    s32 field_0x208;                 // 0x208 - object sub-count
-    s32 mGimmickCount;               // 0x20C - number of gimmicks in mGimmicks
-    u32 field_0x210;                 // 0x210
-    u32 mFlags;                      // 0x214 - flag word
-    u32 field_0x218;                 // 0x218 - fade counter
-    f32 field_0x21C;                 // 0x21C - fade value
-};
-
 // Singleton instance (retail .sbss). Global-scope name - no extern "C" needed
 // (MWCC does not mangle global variable names).
-extern u32 lbl_eu_80664658;
+extern CGimmickGlobal* lbl_eu_80664658;
 
 // Shared 0.0f float-pool constant (retail .sdata2). Referenced by name so the
 // reloc lands on lbl_eu_80668158 instead of MWCC's auto pool label; const lets
@@ -148,25 +129,14 @@ extern "C" void CfGimmick_SetGlobalB8Value(u32 value);
 // Gimmick object list accessor (testActorStatus comes from CChainTimer.hpp).
 extern "C" CGimmickList* getReslistB48();
 
-// Sibling spawn / lifecycle functions defined later in this TU (GimSpawnAll
-// sits before their definitions and calls them). C linkage keeps the call
-// relocs on the unmangled retail names (GimSpawnObjects, ...).
-extern "C" bool GimSpawnObjects(CGimmickGlobal* self);
-extern "C" bool GimSpawnLocks(CGimmickGlobal* self);
-extern "C" bool GimSpawnElevators(CGimmickGlobal* self);
-extern "C" bool GimSpawnWarps(CGimmickGlobal* self);
-extern "C" bool GimSpawnJumps(CGimmickGlobal* self);
-extern "C" bool GimSpawnItems(CGimmickGlobal* self);
-extern "C" bool GimSpawnEnemies(CGimmickGlobal* self);
 
-u32 getUnk80664658(void) {
-    extern u32 lbl_eu_80664658;
+CGimmickGlobal* getUnk80664658(void) {
     return lbl_eu_80664658;
 }
 
 // Constructor: register the singleton and clear the load-state fields.
 CGimmickGlobal* __ct__801F3BE8(CGimmickGlobal* self) {
-    lbl_eu_80664658 = (u32)self;
+    lbl_eu_80664658 = self;
     self->mGimmickCount = 0;
     self->field_0x21C = lbl_eu_80668158;
     self->field_0x218 = 0;
@@ -207,7 +177,7 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
 // tables in order, stopping at the first failure. The save-off family is
 // spawned inline from lbl_eu_80664140 (0x88-byte objects); the enemy family
 // (GimSpawnEnemies) runs only when every other family fit in the 0x80 slots.
-void GimSpawnAll(CGimmickGlobal* self) {
+void GimSpawnAll(CGimmickGlobal* self, void* obj) {
     self->mFlags = 0;
     self->field_0x200 = 0;
     self->field_0x21C = lbl_eu_80668158;
@@ -471,7 +441,7 @@ void GimTeardownAll(CGimmickGlobal* self) {
     CfGimmick_InitPartyGlobals();
 }
 
-void GimUpdateGlobal(){}
+void GimUpdateGlobal(CGimmickGlobal* self, void* obj) {}
 
 void GimNoopA(void) {}
 
@@ -609,10 +579,10 @@ CGimmickVec3* GimFindPosByRow(const CGimmickGlobal* self, s32 id) {
 }
 
 // Probe every type-2 (lock) gimmick; return 1 as soon as one accepts the id.
-int GimProbeLockAccept(CGimmickGlobal* self, s32 id) {
+int GimProbeLockAccept(CGimmickGlobal* self, const ml::CVec3* pos) {
     for (s32 i = 0; i < self->mGimmickCount; i++) {
         CGimmickEntry* g = self->mGimmicks[i];
-        if (g->typeId == 2 && gimmickLockDispatchState((cf::CfGimmickLock*)g, (void*)id))
+        if (g->typeId == 2 && gimmickLockDispatchState((cf::CfGimmickLock*)g, (void*)pos))
             return 1;
     }
     return 0;

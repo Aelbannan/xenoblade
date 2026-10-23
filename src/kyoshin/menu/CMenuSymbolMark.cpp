@@ -2,6 +2,7 @@
 // High-level C++ reconstruction
 
 #include "kyoshin/menu/CMenuSymbolMark.hpp"
+#include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>   // nw4r::lyt::DrawInfo
 #include <nw4r/lyt/lyt_layout.h>    // nw4r::lyt::Layout
@@ -101,11 +102,8 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
 }
 
 // Render-gate globals/callees (declared locally to avoid header conflicts).
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" void* isFlag01Set__9CTaskGameFv(void* self);
 extern "C" int IsMenuState621F0();
-struct CMenuGimmickGlobal { u8 mPad[0x214]; u32 field_214; };
-extern "C" CMenuGimmickGlobal* getUnk80664658();
+#include "kyoshin/code_801F3BE0.hpp"
 extern u32 lbl_eu_80663E28;
 // C++-linkage helpers - retail emits the mangled forms
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / drawLayout__FPQ34nw4r3lyt6Layout...
@@ -517,7 +515,7 @@ void CMenuSymbolMark::Move() {
 // DrawInfo.
 void CMenuSymbolMark::cbRenderBefore() {
     // Nested guard reproduces retail's beq-body/b-exit branch pair.
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0) {
+    if (CTaskGame::getInstance()->isFlag01Set() == 0) {
         if (!(lbl_eu_80663E28 & 0x200000)) {
             goto cont;
         }
@@ -526,7 +524,7 @@ void CMenuSymbolMark::cbRenderBefore() {
 cont:
     if (mArchiveFP == 0) return;
     if (IsMenuState621F0() == 0) return;
-    if (getUnk80664658()->field_214 & 0x100000) return;
+    if (getUnk80664658()->mFlags & 0x100000) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
     if (mEntryCount == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -1203,7 +1201,6 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
 extern "C" void bdatGetPosXYZ(Vec* out, int id);
 extern "C" s16 BdatGetS16Direct(const void* fp, const char* str, u32 id);
 extern "C" u32 CheckState2CC8Active(u16 id);
-extern "C" void* GimFindPosByRow(CMenuGimmickGlobal* mgr, u16 id);
 
 // Bounds test: build the anchor/extent pair from the scene pose block and
 // query CheckViewAngle60 against the world point.
@@ -1489,10 +1486,7 @@ void CMenuSymbolMark::SymMark_SyncBufMarks() {
             if (CheckState2CC8Active((u16)id) != 0) {
                 break;
             }
-            struct FloatTrio {
-                f32 x, y, z;
-            };
-            FloatTrio rec = *(FloatTrio*)GimFindPosByRow(getUnk80664658(), (u16)id);
+            CGimmickVec3 rec = *GimFindPosByRow(getUnk80664658(), (u16)id);
             Vec recPos;
             recPos.x = rec.x;
             recPos.y = rec.y;
@@ -1772,7 +1766,7 @@ extern u32 identity__Q22ml6CMat34[12];
 #pragma push
 #pragma auto_inline off
 void CArrow3D::cbRenderBefore() {
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0) {
+    if (CTaskGame::getInstance()->isFlag01Set() != 0) {
         return;
     }
     if (lbl_eu_80663E28 & 0x200000) {
@@ -1793,7 +1787,7 @@ void CArrow3D::cbRenderBefore() {
     if (lbl_eu_80663E24 & 0xAFA40200) {
         return;
     }
-    if (getUnk80664658()->field_214 & 0x100000) {
+    if (getUnk80664658()->mFlags & 0x100000) {
         return;
     }
     // Battle active? Count nodes in the battle list at +8; any entry aborts.

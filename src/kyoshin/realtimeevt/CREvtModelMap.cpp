@@ -74,21 +74,7 @@ struct ActionEntry {
 #include "monolib/work/CEventFile.hpp"
 
 // Forward decls for labels and helpers
-// Declaration-only views of the realtime-event list classes that own the
-// EvtSeq* members called below (full definitions in
-// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
-// The model object is passed as their `this`.
-class UnkEvtListEntry {
-public:
-    void SeqInsertRtEvent();
-};
-struct EvtBdabModel {
-    int SeqProbeEvtSlot(u32* out);
-};
-class UnkObj80168514 {
-public:
-    void EvtSeqCheckEventRunGuard();
-};
+#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
 
 extern "C" {
 extern ActionEntry lbl_eu_80531D20[];
@@ -114,7 +100,6 @@ void enableLOD__8CTaskLODFv();
 void restorePrimaryLOD__8CTaskLODFv();
 void disableLOD__8CTaskLODFv();
 void acquireLODResource__8CTaskLODFv(void* task, u32 value);
-extern mtl::ALLOC_HANDLE Scn_CallUnk8C_V9(void* self);
 void Scn_IsAnimActiveOrNull(void* pEmote);
 void* Scn_SetupAnim(void* a, void* b, int c, int d);
 void simSetFlag2OnTree(void* pEmote, int flag);
@@ -123,7 +108,6 @@ void simRefreshFlag8(void* pEmote, float time);
 void scnLgtRemoveLgtItem(void* pData);
 void* scnLgtCreateEnvController(void* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
-void* getGlobalSda();
 void __dt__80185754(CREvtModelMap* self);
 void __ct__80172668(CREvtModelMap* self, int dealloc);
 void getField20();
@@ -145,7 +129,6 @@ extern CREvtModelMap* lbl_eu_806642B0;
 extern CREvtModelMap* lbl_eu_806642B4;
 extern float lbl_eu_806678C0;
 extern double lbl_eu_806678C8;
-extern void* spawnGimmickEntity__Q22cf13CfGameManagerFv();
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
 extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
 extern void __ct__CREvtModel(void* self, void* pData, int pArg);
@@ -346,7 +329,7 @@ bool func_80180CBC(CREvtModelMap* self)
     return 1;
 }
 
-void MapModel_DisablePoints(CREvtModelMap* self)
+void MapModel_DisablePoints()
 {
     if (lbl_eu_806642B0) {
         return;
@@ -358,7 +341,7 @@ void MapModel_DisablePoints(CREvtModelMap* self)
     }
 }
 
-void MapModel_EnablePoints(CREvtModelMap* self)
+void MapModel_EnablePoints()
 {
     if (lbl_eu_806642B0) {
         return;
@@ -415,14 +398,14 @@ void MapModel_LoadFiles(CREvtModelMap* self)
             u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
             if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                 self->mFileHandle1 = CDeviceFile::readFile(
-                    Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
+                    lbl_eu_80663E14->getAllocHandle(), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                 setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM2());
             } else {
                 self->mFileHandle1 = CDeviceFile::readFile(
                     mtl::MemManager::getHandleMEM2(), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, Scn_CallUnk8C_V9(lbl_eu_80663E14));
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, lbl_eu_80663E14->getAllocHandle());
             }
             if (EvtSeqGetStateBit5()) {
                 setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, getScnCounter__Fv());
@@ -438,14 +421,14 @@ void MapModel_LoadFiles(CREvtModelMap* self)
                 u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     self->mFileHandle2 = CDeviceFile::readFile(
-                        Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
+                        lbl_eu_80663E14->getAllocHandle(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle2 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, Scn_CallUnk8C_V9(lbl_eu_80663E14));
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, lbl_eu_80663E14->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
@@ -462,14 +445,14 @@ void MapModel_LoadFiles(CREvtModelMap* self)
                 u32 innerFlags = ((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     self->mFileHandle3 = CDeviceFile::readFile(
-                        Scn_CallUnk8C_V9(lbl_eu_80663E14), filePath.mString,
+                        lbl_eu_80663E14->getAllocHandle(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle3 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, Scn_CallUnk8C_V9(lbl_eu_80663E14));
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, lbl_eu_80663E14->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());

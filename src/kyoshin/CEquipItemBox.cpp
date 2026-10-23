@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include <nw4r/lyt/lyt_layout.h>
@@ -14,9 +15,9 @@
 #include "monolib/work/IWorkEvent.hpp"
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
-// TU-local: declared as int here (retail defers narrowing); other TUs
-// declare it as u16 independently -- no cross-TU conflict since each TU
-// compiles separately.
+// KEEP (blockers-A 2026-10-23): BdatGetU16Direct is declared int here
+// (retail getEIBProgress defers narrowing, no clrlwi after the call); the
+// canonical u16 form lives in kyoshin/code_80135FDC_Bdat.hpp.
 extern "C" int BdatGetU16Direct(const void*, const void*, int);
 
 // C-linkage imports live in kyoshin/CEquipItemBox.hpp.
@@ -1393,7 +1394,7 @@ CEquipItemBox::CEquipItemBox() {
     unk_43 = 1;
     __ct__CEIBCur((CEIBCur*)&_pad44[0], 0);
     __ct__CEIBPageCur((CEIBPageCur*)&pagecur[0], 0);
-    __ct__CCur18(&ccur18[0], 0);
+    __ct__CCur18(&ccur18, 0);
     __ct__CSortMenu(&_padSortMenu[0]);
     __ct__CSysWin(&_padSysWin1[0], 0);
     __ct__CSysWin(&_padSysWin2[0], 0);
@@ -1474,7 +1475,7 @@ CEquipItemBox::~CEquipItemBox() {
     __dt__7CSysWinFv(&_padSysWin2[0], -1);
     __dt__7CSysWinFv(&_padSysWin1[0], -1);
     __dt__9CSortMenuFv(&_padSortMenu[0], -1);
-    __dt__6CCur18Fv(&ccur18[0], -1);
+    __dt__6CCur18Fv(&ccur18, -1);
     __dt__80285C44(&pagecur[0], -1);
     __dt__17UnkClass_8045F564Fv(&_pad04[0x10], -1);
     __dt__17UnkClass_8045F564Fv(&_pad04[0], -1);
@@ -1523,7 +1524,7 @@ extern "C" void updateEIBBox(CEquipItemBox* self) {
         self->field_38->Animate(0);
         updateEIBCur((CEIBCur*)&self->_pad44[0]);
         updateEIBCur((CEIBCur*)&self->pagecur[0]);
-        Cur_Update(&self->ccur18[0]);
+        Cur_Update(&self->ccur18);
         sortMenuDispatchState(&self->_padSortMenu[0]);
         sysWinDispatchPhase(&self->_padSysWin1[0]);
         sysWinDispatchPhase(&self->_padSysWin2[0]);
@@ -1551,7 +1552,7 @@ extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
         if (sortMenuIsVisible28(&self->_padSortMenu[0]) != 0 ||
             CSysWin_getUnk34(&self->_padSysWin1[0]) != 0 ||
             self->unk_375 != 0) {
-            Cur_DrawLayout(&self->ccur18[0], drawInfo);
+            Cur_DrawLayout(&self->ccur18, drawInfo);
         }
     }
     sysWinDrawLayout(&self->_padSysWin2[0], drawInfo);
@@ -1562,7 +1563,7 @@ extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
 // delete the layout object, release the arc accessors and both memory regions,
 // then tear down the embedded cursors, sort menu and both system windows.
 extern "C" void closeEIBBox(CEquipItemBox* self) {
-    getEntry__5CBdatFUl(5);
+    CBdat::getEntry(5);
     closeFileHandle__FPP11CFileHandle(&self->field_24);
     closeFileHandle__FPP11CFileHandle(&self->field_28);
     closeFileHandle__FPP11CFileHandle(&self->field_2C);
@@ -1577,7 +1578,7 @@ extern "C" void closeEIBBox(CEquipItemBox* self) {
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
     resetEIBCur(reinterpret_cast<CEIBCur*>(&self->_pad44));
     resetEIBCur(reinterpret_cast<CEIBCur*>(&self->pagecur));
-    ((CBaseCur*)&self->ccur18[0])->cleanup();
+    self->ccur18.cleanup();
     sortMenuTermCleanup(self->_padSortMenu);
     sysWinTermLayout(&self->_padSysWin1[0]);
     sysWinTermLayout(&self->_padSysWin2[0]);
@@ -1675,7 +1676,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
         sortMenuScrollUp(&self->_padSortMenu[0]);
         char tmp[0xC];
         sortMenuFormatPaneText(tmp, &self->_padSortMenu[0]);
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Sort menu idle: retail dispatches on unk_375 FIRST -- no sel==-1
         // gate here; that check happens in the caller/dispatch above.
@@ -1696,7 +1697,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             CopyTabSlotVec(&tmp, arr,
                           (u32)((u8)((s8)self->unk_376 * 4 + self->unk_377)));
-            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+            self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         } else {
             // Decrement unk_1f5 with wrap
             u8 cur = self->unk_1f5;
@@ -1732,7 +1733,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
             sortMenuScrollDown(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
-            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+            self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
             return;
         }
@@ -1755,7 +1756,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         CopyTabSlotVec(&tmp2, arr,
                       (u8)((s8)self->unk_377 + (s8)self->unk_376 * 4));
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -1779,7 +1780,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
             sortMenuPageUpStep(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
-            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+            self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
         }
         return;
@@ -1801,7 +1802,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         CopyTabSlotVec(&tmp2, arr,
                       (u8)(self->unk_377 + (s8)self->unk_376 * 4));
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -1840,7 +1841,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
         sortMenuPageDownStep(&self->_padSortMenu[0]);
         nw4r::math::VEC3 tmp;
         sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         playUISound__FUl(1);
         return;
     }
@@ -1859,7 +1860,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
         }
         nw4r::math::VEC3 tmp2;
         CopyTabSlotVec(&tmp2, arr, (u8)(self->unk_377 + (s8)self->unk_376 * 4));
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -1934,7 +1935,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
         updateEIBCursorPos(self);
         self->unk_58 = 1;
-        Cur_SetVisible(&self->ccur18[0], 0);
+        Cur_SetVisible(&self->ccur18, 0);
         sortMenuToState4Page(&self->_padSortMenu[0]);
         playUISound__FUl(6);
         return;
@@ -1953,8 +1954,8 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
     sortMenuSetPage(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     self->unk_58 = 0;
     sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
-    ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
-    Cur_SetVisible(&self->ccur18[0], 1);
+    self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+    Cur_SetVisible(&self->ccur18, 1);
     sortMenuOpenInit(&self->_padSortMenu[0]);
     self->unk_1f6 = 0;
     playUISound__FUl(2);
@@ -1970,7 +1971,7 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
         if (CSysWin_isActive(&self->_padSysWin1[0]) != 0) {
             self->unk_41 = 5;
             sysWinAdvancePhase3(&self->_padSysWin1[0]);
-            Cur_SetVisible(&self->ccur18[0], 0);
+            Cur_SetVisible(&self->ccur18, 0);
             self->unk_58 = 1;
             self->unk_374 = 0;
         }
@@ -1988,12 +1989,12 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
         if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
         updateEIBCursorPos(self);
         self->unk_58 = 1;
-        Cur_SetVisible(&self->ccur18[0], 0);
+        Cur_SetVisible(&self->ccur18, 0);
         sortMenuToState4Page(&self->_padSortMenu[0]);
     } else if (self->unk_375 != 0) {
         self->unk_375 = 0;
         self->unk_58 = 1;
-        Cur_SetVisible(&self->ccur18[0], 0);
+        Cur_SetVisible(&self->ccur18, 0);
     } else if (isPaneVisible(pane) != 0) {
         setPaneVisible(pane, 0);
         self->unk_378 = 0;
@@ -2159,10 +2160,10 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
         self->unk_375 = 1;
         self->unk_376 = (u8)pos;
         self->unk_377 = (u8)(sel - (s8)pos * 4);
-        Cur_SetVisible(&self->ccur18[0], 1);
+        Cur_SetVisible(&self->ccur18, 1);
         nw4r::math::VEC3 tmp;
         CopyTabSlotVec(&tmp, &list->field_00[0], sel);
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         self->unk_378 = 1;
         playUISound__FUl(2);
         return;
@@ -2396,7 +2397,7 @@ extern "C" __declspec(noinline) void eibCloseAnim(CEquipItemBox* self) {
 extern "C" __declspec(noinline) void eibSysWin1Done(CEquipItemBox* self) {
     if (CSysWin_isActive(self->_padSysWin1) != 0) {
         self->unk_41 = 2;
-        Cur_SetVisible(self->ccur18, 1);
+        Cur_SetVisible(&self->ccur18, 1);
         updateEIBCursorPos(self);
     }
 }
@@ -2817,7 +2818,7 @@ extern "C" __declspec(noinline) void updateEIBCursorPos(CEquipItemBox* self) {
     // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
         sysWinGetPaneScreenPos(winName, &self->_padSysWin1[0], self->unk_374);
-        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)winName);
+        self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)winName);
     } else {
         s8 sel = self->unk_1f5;
         if (sel == -1) {
@@ -3755,7 +3756,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         void* buf = fh->field_4;
         fh->field_4 = 0;
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        field_30 = createArcResourceAccessor__10CLibLayoutFv();
+        field_30 = CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_30, buf, base + 0x71f);
         buildLayout(&field_38, field_30, base + 0x723);
         bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
@@ -3835,18 +3836,11 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         PartyStateWin_CopySlotRec((u8*)&pagecur[0], (const u8*)temp2Buf);
         __dt__80285C44(temp2Buf, -1);
         ((CEIBPageCur*)&pagecur[0])->initLayout();
-        u8 tempCur[0x1A];
-        __ct__CCur18(tempCur, CUICfManager_getArcResourceAccessor());
-        CEquipItemBoxCCur18CopyView* curSrc = (CEquipItemBoxCCur18CopyView*)&tempCur[4];
-        CEquipItemBoxCCur18CopyView* curDst = (CEquipItemBoxCCur18CopyView*)&ccur18[4];
-        curDst->word0 = curSrc->word0;
-        curDst->word1 = curSrc->word1;
-        curDst->word2 = curSrc->word2;
-        curDst->word3 = curSrc->word3;
-        curDst->b0 = curSrc->b0;
-        curDst->b1 = curSrc->b1;
-        __dt__6CCur18Fv(tempCur, -1);
-        ((CBaseCur*)&ccur18[0])->initLayout();
+        u8 tempCur[0x1A]; // retail frame reserves 0x1A bytes for the CCur18 temp
+        __ct__CCur18(reinterpret_cast<CCur18*>(tempCur), CUICfManager_getArcResourceAccessor());
+        ccur18 = *reinterpret_cast<CCur18*>(tempCur);
+        __dt__6CCur18Fv(reinterpret_cast<CCur18*>(tempCur), -1);
+        ccur18.initLayout();
         char* msg3 = CUICfManager_getPackedFont9C();
         setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);
@@ -3912,7 +3906,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         void* buf2 = fh2->field_4;
         fh2->field_4 = 0;
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        field_34 = createArcResourceAccessor__10CLibLayoutFv();
+        field_34 = CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_34, buf2, base + 0x71f);
         closeEIBSortMenu(this);
         field_28 = 0;
@@ -3926,7 +3920,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         fh3->field_4 = 0;
         Bdat_GetTable_AA34();  // retail passes no args (r3 stale from the field_2C load)
         if (getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]) == 0) {
-            setBdatEntry__5CBdatFUlPv(5, buf3);
+            CBdat::setBdatEntry(5, buf3);
         }
         lbl_eu_806649E0 = getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]);
         closeEIBSortMenu(this);

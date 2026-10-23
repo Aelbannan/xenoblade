@@ -2,11 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include <revolution/GX.h>
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CTaskManager.hpp"
 #include "functions.hpp"
 #include "kyoshin/CPartyStateWin.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/core/CViewFrame.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -42,7 +45,7 @@ __declspec(noinline) mtl::ALLOC_HANDLE PartyStateWin_PickAllocHandle(CPartyState
         handle = mtl::MemManager::getHandleMEM1();
         self->field_0x0 -= size + 0x80;
     } else if (size < self->field_0x4 - 0x80000) {
-        handle = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+        handle = lbl_eu_80663E14->getAllocHandle();
         self->field_0x4 -= size + 0x80;
     }
     return handle;
@@ -416,8 +419,8 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
     if (scene2 != 0) {
         // Retail re-reads mScene for the second store (no CSE across the
         // pointer writes - same scheme as CMakeCrystalWin).
-        reinterpret_cast<CPartyStateWinScnFlags*>(self->mScene)->field_3E4 = 1;
-        reinterpret_cast<CPartyStateWinScnFlags*>(self->mScene)->field_39 = 1;
+        self->mScene->unk_3E4 = 1;
+        self->mScene->SetRemove();
         self->mScene = 0;
     }
     CWorkThread* thread = self->mWork14;
@@ -428,9 +431,9 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
         // materialized as locals so MWCC cannot sink the load into the call
         // argument slot.
         WORK_ID wid = thread->mWorkID;
-        CTaskGameProcView* tv =
-            reinterpret_cast<CTaskGameProcView*>(getInstance__9CTaskGameFv());
-        tv->unk6C->pssDetachView(wid);
+        CTaskGame* game = CTaskGame::getInstance();
+        // +0x6C is the parent process passed to the CTaskGame ctor.
+        static_cast<CProc*>(game->unk6C)->pssDetachView(wid);
         self->mWork14->wkSetEvent(CWorkThread::EVT_NONE);
         self->mWork14 = 0;
     }
@@ -587,7 +590,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* sel
 // Menu-open gate: when the title help is idle, the party state is settled and
 // the model display is ready, arm the window (state 0x2).
 extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         self->field_6BE4 = 0x2;
@@ -676,7 +679,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePartyInput(CPartyStateWi
 // display are all idle, run the party-state sub-step (with the announce
 // sound when it advances) and latch the 0x6BE5 flag.
 extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         if (self->field_6BE5 == 0) {
@@ -695,7 +698,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* s
 // refresh the equip display slot and the equip-change category) and arm
 // state 0x5.
 extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50)) &&
         EquipChange_GetSelWhenReady(reinterpret_cast<CEquipChange*>(&self->_pad4150)) &&
@@ -720,7 +723,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* 
 // Gate: when the help sub-object is idle and the +0x4150 window accepts
 // input, raise the +0x6BE4 state byte to 7.
 extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) && EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)))
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() && EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150)))
         self->field_6BE4 = 7;
 }
 
@@ -1094,7 +1097,7 @@ tail:
 // equip-change states are settled, rebuild the window (reload the string
 // pool names, refresh all sub-objects) and arm state 0x9.
 extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         ModelDispEquip_GetState20(&self->mModelDispEquip) &&
         EquipChange_IsActiveFlag(reinterpret_cast<CEquipChange*>(&self->_pad4150))) {
         ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
@@ -1110,7 +1113,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* 
 
 // us-801fd2c8 | PartyStateWin_StateGateReopen (same body as PartyStateWin_StateGateOpen)
 extern "C" __declspec(noinline) void PartyStateWin_StateGateReopen(CPartyStateWin* self) {
-    if (isIdle__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isIdle() &&
         isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         self->field_6BE4 = 0x2;
@@ -1382,14 +1385,14 @@ CPartyStateWin::CPartyStateWin(u32 arg1, u32 arg2) {
 // noinline keeps PartyStateWin_ThunkRenderBefore's forwarder a real tail branch (the retail
 // cbRenderBefore is a large out-of-line function, 0xBC bytes).
 __declspec(noinline) void CPartyStateWin::cbRenderBefore() {
-    getInstance__9CTaskGameFv();
+    CTaskGame::getInstance();
     // Gate: when the task game is not ready or the global mode bit (0x200000)
     // is set, skip the render. The if-&&-goto body / goto end / end: return
     // chain (exit label before the body label) keeps the body off the
     // fallthrough so MWCC emits retail's branch-over-branch: `bne end` for
     // the first disjunct, `beq body; b end` for the second (same scheme as
     // CMenuKizunagram::Move).
-    if (isFlag01Set__9CTaskGameFv() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -1471,7 +1474,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     u32 equipViewTmp[0x430];
     u32 modelDispTmp[0xBFE];
 
-    CTaskGame* game = getInstance__9CTaskGameFv();
+    CTaskGame* game = CTaskGame::getInstance();
     CWorkThread* work =
         reinterpret_cast<CWorkThread*>(PartyStateWin_GetGameWorkThread(reinterpret_cast<u8*>(game)));
     CProc* proc = reinterpret_cast<CProc*>(PartyStateWin_GetGameProc(reinterpret_cast<u8*>(game)));
@@ -1670,7 +1673,7 @@ extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag)
 // handle; returns self (retail keeps `this` in r31 and returns it).
 __declspec(noinline) CPartyStateWinMem* PartyStateWin_InitMemCounters(CPartyStateWinMem* self) {
     self->field_0x0 = mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
-    self->field_0x4 = mtl::MemManager::getMaxAllocSize(Scn_CallUnk8C_V9(lbl_eu_80663E14));
+    self->field_0x4 = mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle());
     return self;
 }
 

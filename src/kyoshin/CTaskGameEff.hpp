@@ -121,20 +121,7 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
 extern "C" const void* lbl_eu_80661970;
 extern "C" const void* lbl_eu_806618F0;
 
-// Minimal CScn declaration local to this TU set: only the render-callback
-// members used by Init/Term/registerEffScene/unregisterEffectScene. Declared with the
-// real class tag so member calls emit the retail mangled symbols
-// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
-// Guarded so the kyoshin task headers can be included together in one TU
-// (same minimal declaration appears in CTaskGameEvt.hpp / CTaskGamePic.hpp).
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // Layout mirror of the retail _reslist_base<CScn> instantiation (same shape
 // as monolib's reslist.hpp template). The retail dtor symbols use old flat
@@ -231,7 +218,7 @@ public:
     void Init();
     void Term();
     void cbRenderBefore();
-
+    void Draw();
     /* 0x54 */ IScnRender field_0x54;    // render callback (prio 0xe)
     /* 0x58 */ IScnRender field_0x58;    // render callback (prio 8)
     /* 0x5C */ CScn* mScene;

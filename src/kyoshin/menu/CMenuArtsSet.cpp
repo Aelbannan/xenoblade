@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
 #include "kyoshin/CBgTex.hpp"
@@ -3255,7 +3256,7 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     u8* fileData = field_0x14->mData;
     field_0x14->mData = 0;
     setMemInitFlag__Q23mtl10MemManagerFb(false);
-    field_0x18 = createArcResourceAccessor__10CLibLayoutFv();
+    field_0x18 = CLibLayout::createArcResourceAccessor();
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_0x18, fileData,
                                                    lbl_eu_8050AC70 + 0x2D9);
     buildLayout((nw4r::lyt::Layout**)&field_0x1C, field_0x18,

@@ -1148,7 +1148,7 @@ void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv();
+void CfObjectModel_teardownModel__Q22cf13CfObjectModelFv();
 void CfObject_getPosVector__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv();
@@ -1325,7 +1325,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
     0,
     (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_teardownModel__Q22cf13CfObjectModelFv,
     0,
     (const void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv,
     (const void*)CfObject_isMoveActiveNow__Q22cf8CfObjectFv,

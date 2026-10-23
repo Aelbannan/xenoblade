@@ -63,21 +63,9 @@ struct CSystemWindow {
     void cbRenderBefore();
 };
 
-// Render-callback APIs on the owning scene (OOL in CScn, retail symbols
-// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // C-ABI function imports / definitions: these retail symbols are unmangled
 // (C-linkage), so they must be declared `extern "C"` to stop MWCC appending a

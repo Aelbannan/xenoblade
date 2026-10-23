@@ -85,7 +85,6 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" int IsItemBoxReady(CItemBoxGrid* self);
 extern "C" void InitItemDisplay(CItemBoxGrid* self);
 extern "C" void UpdateItemBox(CItemBoxGrid* self);

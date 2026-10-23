@@ -101,14 +101,14 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         u8* fileData = (u8*)self->field_0x88->getData();
         mtl::MemManager::setMemInitFlag(false);
         CTagProcessor* tag = (CTagProcessor*)mtl::MemManager::allocate(
-            0x858, getAllocHandle__10CLibLayoutFv());
+            0x858, CLibLayout::getAllocHandle());
         if (tag != 0) {
             // Retail keeps the tag in r3 across the ctor call: __ct__CTagProcessor
             // returns its object pointer, which feeds the +0x90 store directly.
             tag = (CTagProcessor*)__ct__CTagProcessor(tag);
         }
         self->field_0x90 = (CQuestWinRes*)tag;
-        self->field_0x94 = createArcResourceAccessor__10CLibLayoutFv();
+        self->field_0x94 = CLibLayout::createArcResourceAccessor();
         self->field_0x94->Attach(fileData, &lbl_eu_804FEC84[0xd]);
         buildLayout(&self->mpLayout, self->field_0x94, &lbl_eu_804FEC84[0x11]);
         bindLayoutAnimTransform(self->mpLayout, &self->mAnimA, self->field_0x94,
@@ -156,18 +156,11 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
 
         // Build the cursor on the stack, copy its body into the member region
         // (skipping the +0x00 vtable pointer) and destroy the temp.
-        u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
-        CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&self->mCursor[0]);
-        CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
-        curDst->f_04 = curSrc->f_04;
-        curDst->f_08 = curSrc->f_08;
-        curDst->f_0c = curSrc->f_0c;
-        curDst->f_10 = curSrc->f_10;
-        curDst->f_14 = curSrc->f_14;
-        curDst->f_15 = curSrc->f_15;
-        __dt__6CCur18Fv(tmpCur, -1);
-        reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf02();
+        CCur18 tmpCur;
+        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+        self->mCursor = tmpCur;
+        __dt__6CCur18Fv(&tmpCur, -1);
+        self->mCursor.initLayout();
 
         refreshQuestContent(self);
         self->field_0x88 = 0;
@@ -177,7 +170,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
     }
     if (self->field_0x8C == evt) {
         u8* fileData = (u8*)self->field_0x8C->getData();
-        setBdatEntry__5CBdatFUlPv(2, fileData);
+        CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
         self->field_0xD0 =
             (u32)getFP__FPCc(lbl_eu_8052CFF4[SearchThresholdIdx(self->field_B8)]);
@@ -206,7 +199,7 @@ void CQuestWindow::cbRenderBefore() {
     SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     if (field_0xC0 >= 0) {
-        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     }
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -254,7 +247,7 @@ extern "C" void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 
     self->field_0x94 = 0;
     self->mAnimA = 0;
     self->mAnimB = 0;
-    __ct__CCur18(&self->mCursor[0], 0);
+    __ct__CCur18(&self->mCursor, 0);
     self->field_B8 = arg2;
     self->field_0xBC = 0;
     self->field_0xC0 = 0;
@@ -862,7 +855,7 @@ __attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
                 &lbl_eu_804FEC84[0x2f7], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
-            reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         } else {
             nw4r::lyt::Pane* p1 = self->mpLayout->GetRootPane()->FindPaneByName(
                 &lbl_eu_804FEC84[0x306], true);
@@ -870,7 +863,7 @@ __attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
                 &lbl_eu_804FEC84[0x2f7], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
-            reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
     } else {
         nw4r::lyt::Pane* p1 = self->mpLayout->GetRootPane()->FindPaneByName(
@@ -879,7 +872,7 @@ __attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
             &lbl_eu_804FEC84[0x2f7], true);
         nw4r::math::VEC3 pos;
         ScalePaneWorldPos(&pos, p1, p2, self->mpLayout->GetRootPane());
-        reinterpret_cast<CCur18View*>(&self->mCursor)->vf04(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     }
 }
 
@@ -968,7 +961,7 @@ void CQuestWindow::Term() {
     closeFileHandle(&field_0x88);
     closeFileHandle(&field_0x8C);
     CBdat::getEntry(2);
-    reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
+    mCursor.cleanup();
     if (mpLayout != 0) {
         delete mpLayout;
         mpLayout = 0;
@@ -1008,7 +1001,7 @@ void* __dt__12CQuestWindowFv(CQuestWindow* _this, int flags) {
         _this->field_6C = (u32)lbl_eu_8052D0F0 + 0x24;
         _this->field_70 = (u32)lbl_eu_8052D0F0 + 0xAC;
         cf::CfPadTask::setInputDisableTime(lbl_eu_80667138);
-        __dt__6CCur18Fv(&_this->mCursor[0], -1);
+        __dt__6CCur18Fv(&_this->mCursor, -1);
         __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
         __dt__9IUIWindowFv(_this, 0);
         if (flags > 0) {

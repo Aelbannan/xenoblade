@@ -7,17 +7,7 @@
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Minimal local view: the shared CfGameManager.hpp declares updatePadState as
-// a void member, but retail returns the frame delta in f1 (call sites add it
-// straight into +0x154). The shared header is outside this session's writable
-// scope, so re-declare the enclosing class here with the correct signature.
-namespace cf {
-class CfGameManager {
-public:
-    ~CfGameManager();
-    static float updatePadState();
-};
-} // namespace cf
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // Exact-layout prefix view of cf::CfObject data (0x00-0x6F): the TU-local
 // CfObject decl pads 0x04-0x67, so byte-offset readers spell through this.

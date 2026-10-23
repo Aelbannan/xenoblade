@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction from retail PPC
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -540,7 +541,7 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         void* fileData = mFileHandle->getData();
 
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
+        mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)CLibLayout::createArcResourceAccessor();
         mArcResAcc->Attach(fileData, s + 0x49);
 
         buildLayout(&mpLayout, mArcResAcc, s + 0x4d);

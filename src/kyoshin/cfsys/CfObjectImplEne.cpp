@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cfsys/CfObjectImplEne.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"

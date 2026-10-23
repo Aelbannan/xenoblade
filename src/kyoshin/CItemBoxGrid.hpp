@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 class CBaseCur;
 class UnkClass_8045F564;
 namespace nw4r { namespace lyt {
@@ -274,7 +275,6 @@ extern "C" void CItemBlock_setCount(int);
 extern "C" void NumSel_SetCaption_B030(void*, void*);
 extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -389,7 +389,6 @@ extern "C" void GridSubMenu_TermLayout(void*);
 extern "C" void ExWin_Teardown(void*);
 extern "C" void termPresentWin(void*);
 extern "C" void* getFP__FPCc(const char*);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
 extern "C" unsigned char* SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);  // returns p (retail ctor reuses caller-preserved r3)
@@ -427,10 +426,8 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" void* getAllocHandle__10CLibLayoutFv(void);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
@@ -462,12 +459,10 @@ extern "C" void InfoCfCopySysWin(void*, void*);
 extern "C" void ItemBlockSetDefaultFlags();
 extern "C" void* __ct__801C5514(void*);
 extern "C" CBaseCur* __ct__CCur09(void*, void*);
-extern "C" CBaseCur* __ct__CCur18(void*, void*);
 extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" CBaseCur* __ct__CCur11(void*, void*);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void __dt__6CCur09Fv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur16Fv(void*, int);
 extern "C" void __dt__6CCur11Fv(void*, int);
 extern "C" void __dt__7CSysWinFv(void*, int);
@@ -482,7 +477,6 @@ extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void MenuShopSellCopyData(void*, void*);
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void Cur_SetTwoPanes09(void*, CibgVec3, CibgVec3);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void initPresentWin(void*, void*);

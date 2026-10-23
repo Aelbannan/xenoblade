@@ -1,6 +1,8 @@
 #include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/CTaskGame.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 
 // --- CTTask<CUICfManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -289,7 +291,7 @@ u32 KizunaList_Create(CUICfUnk144*, u32);
 // headers declare these same flat symbols with different signatures
 // (SysWinGetSingleton: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; MenuTutorialCreate:
 // CMenuTutorial.hpp C++ member; Scn_QueryUnk80State: CTaskGame.hpp/code_80135FDC.hpp
-// CScn* arg; getUnk80664658: CfGimmick.hpp vs CMainMenu.hpp already differ;
+// CScn* arg;
 // lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
 // declaration would break TUs that co-include those headers.
 extern "C" {
@@ -305,7 +307,6 @@ struct CTaskGameCamView {
 };
 // Matches the global UnkScnResult declared in CfGameManager.hpp (included
 // at the top of this file).
-CUICfGlobalSettings* getUnk80664658();
 void* __ct__8011C1B8(void* ctx, u32 scene);
 // lbl_eu_80663E14 comes from CfGameManagerData.hpp (CScn*) - no local redecl.
 }
@@ -346,8 +347,8 @@ int __declspec(noinline) CUICfManager_isWorldMapBusy(CUICfManagerCreateView* sin
     if (getInstance__11CSysWinBuffFv() != 0) {
         return 1;
     }
-    CUICfGlobalSettings* g = getUnk80664658();
-    if ((g->field_214 & 0x40000) != 0) {
+    CGimmickGlobal* g = getUnk80664658();
+    if ((g->mFlags & 0x40000) != 0) {
         playUISound(5);
         return 1;
     }
@@ -1396,7 +1397,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
 
     // OR-combined guard: first disjunct emits the direct `bne end`, second
     // the retail branch-over `beq cont; b end` (MWCC_CASES TutorialList_OpenAfterFilesReady).
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
         (lbl_eu_80663E28 & 0x00200000u) != 0) {
         return;
     }
@@ -4135,14 +4136,7 @@ int CUICfManager_isUIBusy() {
     }
     return 0;
 }
-// Minimal cf::CBattleManager view (the full CBattleManager.hpp pulls the
-// object/chain headers; only getInstance is needed for CUICfManager_checkMenuOpenGate).
-namespace cf {
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-};
-}
+#include "kyoshin/cf/CBattleManager.hpp"
 
 // Float-returning vtable slot (vtable +0x128) of the player wrapper.
 typedef float (*CUICfVFloatFn)(CUICfPlayerView*);
@@ -4253,8 +4247,8 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
         return 1;
     }
     {
-        CUICfGlobalSettings* g = getUnk80664658();
-        if ((g->field_214 & (1 << 19)) != 0) {
+        CGimmickGlobal* g = getUnk80664658();
+        if ((g->mFlags & (1 << 19)) != 0) {
             return 2;
         }
     }

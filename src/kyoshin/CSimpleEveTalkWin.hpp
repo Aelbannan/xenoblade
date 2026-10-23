@@ -181,21 +181,9 @@ public:
     virtual u32 getFontHandle();  // 0x24
 };
 
-// Minimal CScn decl (retail addRenderCB__4CScnFP10IScnRenderUlUl /
-// removeRenderCB__4CScnFP10IScnRender).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // C-ABI imports (retail symbols are unmangled or pre-mangled; C linkage stops
 // MWCC appending a __F<argtypes> suffix to the emitted reloc names).

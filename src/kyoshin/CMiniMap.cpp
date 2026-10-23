@@ -1,7 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/CMiniMap
 // Replace stubs with high-level C/C++ during decomp.
 
+#define ISCN_RENDER_NO_DTOR // see CMiniMap.hpp (IScnRender sub-vtable dtor slot)
+
 #include "kyoshin/CMiniMap.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -126,7 +129,6 @@ void CTaskGame_enumListCtor(void* holder);
 void* CTaskGame_enumListGet(void* holder);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 u8 BdatGetU8Direct(u32, const char*, u32);
-u16 BdatGetU16Direct(void*, const char*, u32);
 s16 BdatGetS16Direct(void*, const char*, u32);
 u32 Bdat_GetMaxRow_B1EC(void*);
 void __dt__80043E88(void* holder, int);
@@ -2367,7 +2369,7 @@ void CMenuMiniMap2::cbRenderBefore() {
         return;
     if (!IsMenuState621F0()) return;
     if (!GetSysStateFlag10()) return;
-    if (getUnk80664658()->field_214 & 0x100000) return;
+    if (getUnk80664658()->mFlags & 0x100000) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
     if (isVisionAnimating()) return;
 
@@ -3057,14 +3059,14 @@ extern "C" void __declspec(noinline) MiniMapRebuildGimmickPanes(void* self) {
             bool hit = false;
             for (u32 k = 1; k <= rowCount; k++) {
                 s16 v = BdatGetS16Direct(lbl_eu_80663FB8, strings + 0x30, k);
-                CMMGimmickPos* p = GimFindPosByRow(getUnk80664658(), dispId);
+                CGimmickVec3* p = GimFindPosByRow(getUnk80664658(), (u16)dispId);
                 if ((f64)v - lbl_eu_80667098 > p->y) {
                     if (band == k) hit = true;
                     break;
                 }
             }
             if (!hit) break;
-            CMMGimmickPos* p = GimFindPosByRow(getUnk80664658(), dispId);
+            CGimmickVec3* p = GimFindPosByRow(getUnk80664658(), (u16)dispId);
             u32 cnt = view->field_0x6A4;
             view->field_0x5D4[cnt].x = p->x;
             view->field_0x5D4[cnt].y = p->y;

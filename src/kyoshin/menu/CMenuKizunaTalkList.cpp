@@ -47,7 +47,6 @@ struct KizunaPadData {
 // signature. int returns keep the caller's `!= 0` as a plain cmpwi (no u8 mask)
 // like retail.
 // ---------------------------------------------------------------------------
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 // (memberized: needsTalkRebuild -> CKizunaTalkList::needsTalkRebuild; declaration moved into class CKizunaTalkList)
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
@@ -409,7 +408,7 @@ void KizunaList_Phase0Show(CMenuKizunaTalkList* self) {
 // Advance the talk-list phase (retail KizunaList_Phase1Ready): once the title/help bar
 // is idle and the list has entries waiting, mark the main state byte as 2.
 void KizunaList_Phase1Ready(CMenuKizunaTalkList* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         (&self->mKizunaTalkList)->needsTalkRebuild() != 0) {
         self->mState = 2;
     }
@@ -466,7 +465,7 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
 // Same idle check as KizunaList_Phase1Ready, but marks the 0x54 phase flag instead of
 // the main state byte.
 void KizunaList_Phase3Flag(CMenuKizunaTalkList* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         (&self->mKizunaTalkList)->needsTalkRebuild() != 0) {
         self->mUnknown54 = 1;
     }

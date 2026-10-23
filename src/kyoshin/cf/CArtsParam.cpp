@@ -7,20 +7,7 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/db/db_assert.h>
 
-// Minimal local view of cf::CBattleManager. The full CBattleManager.hpp pulls
-// in the chain sub-object headers (CChain.hpp etc.), which are currently
-// mid-refactor and do not parse in this TU. Only the members used by
-// checkArtsFull are declared; offsets match the full header layout
-// (vtable at +0, unk20C8 at +0x20C8). getInstance() resolves to the real
-// mangled symbol getInstance__Q22cf14CBattleManagerFv at link time.
-namespace cf {
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-    u8 _pad20C8[0x20C8];  // 0x00-0x20C7
-    u32 unk20C8;          // 0x20C8
-};
-}
+#include "kyoshin/cf/CBattleManager.hpp"
 
 // Free-function imports previously supplied by the trimmed chain headers
 // (CChainTimer.hpp / CfObjectImplEne.hpp / CBattleManager.hpp). extern "C"

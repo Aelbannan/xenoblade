@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <stdio.h>   // sprintf (award pane names)
+#include "monolib/lib/CLibLayout.hpp"
 #include <revolution/gx/GXPixel.h>  // GXSetZMode
 
 #include "kyoshin/harness_catalog.hpp"
@@ -135,14 +136,13 @@ void CMenuPlayAward::Init() {
     mPlayAwardList.mAnimTrans28 = reinterpret_cast<CPlayAwardList*>(tempList)->mAnimTrans28;
     mPlayAwardList.field_0x2C = reinterpret_cast<CPlayAwardList*>(tempList)->field_0x2C;
     // Cursor body (+0x30..+0x45, skipping the +0x00 vtable pointer).
-    CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mPlayAwardList.mCursor[0]);
-    CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(reinterpret_cast<CPlayAwardList*>(tempList)->mCursor);
-    curDst->field_4 = curSrc->field_4;
-    curDst->field_8 = curSrc->field_8;
-    curDst->field_C = curSrc->field_C;
-    curDst->field_10 = curSrc->field_10;
-    curDst->field_14 = curSrc->field_14;
-    curDst->field_15 = curSrc->field_15;
+    CCur18& curSrc = reinterpret_cast<CPlayAwardList*>(tempList)->mCursor;
+    mPlayAwardList.mCursor.mArcResAcc = curSrc.mArcResAcc;
+    mPlayAwardList.mCursor.mpLayout = curSrc.mpLayout;
+    mPlayAwardList.mCursor.mpAnimTrans0 = curSrc.mpAnimTrans0;
+    mPlayAwardList.mCursor.mpAnimTrans1 = curSrc.mpAnimTrans1;
+    mPlayAwardList.mCursor.mActive = curSrc.mActive;
+    mPlayAwardList.mCursor.mVisible = curSrc.mVisible;
     // Scroll bar: 16-byte mem region via the helper, then the field body.
     __ct__UnkClass_8011C974(&mPlayAwardList.mScrollBar[4], tempList + 0x4c);
     CScrollBarData* barDst = reinterpret_cast<CScrollBarData*>(&mPlayAwardList.mScrollBar[0]);
@@ -342,7 +342,7 @@ void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
 // Help-bar show: when the title/help bar is idle and the award list is in its
 // "ready" state, display the help bar (byte at 0x1160 = 2).
 void PlayAward_Phase1_Advance(CMenuPlayAward* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField1160 = 2;
     }
 }
@@ -410,7 +410,7 @@ void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
 // Help-bar hide: when the title/help bar is idle and the award list is in its
 // "ready" state, mark the menu as closing (byte at 0x54 = 1).
 void PlayAward_Phase3_RequestClose(CMenuPlayAward* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField54 = 1;
     }
 }
@@ -583,7 +583,7 @@ CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
     self->mAnimTrans24 = 0;
     self->mAnimTrans28 = 0;
     self->field_0x2C = 0;
-    __ct__CCur18(self->mCursor, 0);
+    __ct__CCur18(&self->mCursor, 0);
     __ct__CScrollBar(self->mScrollBar, 0);
     self->field_0x88 = 0;
     self->field_0x89 = 0;
@@ -633,7 +633,7 @@ CPlayAwardList* __dt__14CPlayAwardListFv(CPlayAwardList* self, int dealloc) {
             __destroy_arr(entryArr->mEntries, (void*)__dt__802706D4, 8, 0x200);
         }
         __dt__10CScrollBarFv(self->mScrollBar, -1);
-        __dt__6CCur18Fv(self->mCursor, -1);
+        __dt__6CCur18Fv(&self->mCursor, -1);
         self->mMemRegion.~UnkClass_8045F564();
         if (dealloc > 0) {
             __dl__FPv(self);
@@ -674,7 +674,7 @@ void PlayAward_UpdateList(CPlayAwardList* self) {
             break;
         }
         self->mLayout20->Animate(0);
-        Cur_Update(self->mCursor);
+        Cur_Update(&self->mCursor);
         CScrollBar_UpdateDispatch(self->mScrollBar);
     }
 }
@@ -685,7 +685,7 @@ void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
         drawLayout(self->mLayout20, drawInfo, 0, 1);
         CScrollBar_draw(self->mScrollBar, drawInfo);
-        Cur_DrawLayout(self->mCursor, drawInfo);
+        Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
 
@@ -705,7 +705,7 @@ void PlayAward_ReleaseList(CPlayAwardList* self) {
         self->field_0x2C = 0;
     }
     releaseArcResourceAccessor(self->mArcAccessor1C);
-    reinterpret_cast<CCursor18*>(&self->mCursor)->vf3();
+    self->mCursor.cleanup();
     CScrollBar_Teardown(self->mScrollBar);
     self->mMemRegion.deleteRegion();
 }
@@ -766,7 +766,7 @@ void PlayAward_RequestClose(CPlayAwardList* self) {
         self->field_0x89 = 4;
         self->field_0x8B = 0;
         PlayAward_BindOpenAnims(self);
-        Cur_SetVisible(self->mCursor, 0);
+        Cur_SetVisible(&self->mCursor, 0);
         CScrollBar_requestScrollOut(self->mScrollBar);
         playUISound(6);
     }
@@ -991,11 +991,11 @@ void PlayAward_RefreshCursor(CPlayAwardList* self) {
     nw4r::math::VEC3 pos;
     char buf[0x20];
     sprintf(buf, &lbl_eu_8050E7C0[0x93], self->field_0x8C + 1);
-    Cur_SetVisible(self->mCursor, 1);
+    Cur_SetVisible(&self->mCursor, 1);
     nw4r::lyt::Pane* pane1 = self->mLayout20->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_8050E7C0[0xab], true);
     ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout20->GetRootPane());
-    reinterpret_cast<CCursor18*>(&self->mCursor)->vf4(&pos);
+    self->mCursor.setRootPaneTranslate(&pos);
 }
 
 void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
@@ -1086,7 +1086,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Scratch heap region guard around the layout build.
         u8 regionBuf[8];
         char buf[0x20];
-        u8 tmpCur[0x18];
+        CCur18 tmpCur;
         mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x10000,
                                 &lbl_eu_8050E7C0[0x118], 0);
         __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
@@ -1097,7 +1097,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Allocate the tag processor (0x858 bytes, layout memory pool).
         void* tagProc = allocate__Q23mtl10MemManagerFUlUl(
-            0x858, getAllocHandle__10CLibLayoutFv());
+            0x858, CLibLayout::getAllocHandle());
         if (tagProc != 0) {
             tagProc = __ct__CTagProcessor(tagProc);
         }
@@ -1105,7 +1105,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Build the layout + forward/reverse anim transforms from the arc.
         mArcAccessor1C = (nw4r::lyt::ArcResourceAccessor*)
-            createArcResourceAccessor__10CLibLayoutFv();
+            CLibLayout::createArcResourceAccessor();
         mArcAccessor1C->Attach(fileData, &lbl_eu_8050E7C0[0x127]);
         buildLayout(&mLayout20, mArcAccessor1C, &lbl_eu_8050E7C0[0x12b]);
         bindLayoutAnimTransform(mLayout20, &mAnimTrans24, mArcAccessor1C,
@@ -1143,17 +1143,10 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Build the cursor on the stack, copy its body into the member region
         // (skipping the +0x00 vtable pointer) and destroy the temp.
-        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
-        CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCursor[0]);
-        CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
-        curDst->field_4 = curSrc->field_4;
-        curDst->field_8 = curSrc->field_8;
-        curDst->field_C = curSrc->field_C;
-        curDst->field_10 = curSrc->field_10;
-        curDst->field_14 = curSrc->field_14;
-        curDst->field_15 = curSrc->field_15;
-        __dt__6CCur18Fv(tmpCur, -1);
-        reinterpret_cast<CCursor18*>(&mCursor)->vf2();
+        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+        mCursor = tmpCur;
+        __dt__6CCur18Fv(&tmpCur, -1);
+        mCursor.initLayout();
 
         // Refresh the list, release the file handle and the scratch region.
         PlayAward_LoadEntries(this);
@@ -1165,7 +1158,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     if (mFileHandle2 == event->mFileHandle) {
         // Common archive finished: detach its buffer into the BDAT tables.
         void* fileData2 = mFileHandle2->getData();
-        setBdatEntry__5CBdatFUlPv(2, fileData2);
+        CBdat::setBdatEntry(2, fileData2);
         Bdat_GetTable_AA34();
         lbl_eu_806648A8 = getFP__FPCc(&lbl_eu_8050E7C0[0x183]);
         mFileHandle2 = 0;

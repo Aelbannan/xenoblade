@@ -1,6 +1,7 @@
 #pragma once
 
 #include "monolib/device/CFileHandle.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/util/reslist.hpp"
 #include "monolib/work.hpp"
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
@@ -16,8 +17,6 @@ void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* ptr);
 extern "C" void CMenuArtsSelect_clearArtsRef();
 // Layout/BDAT helpers used by the file-event handler.
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" u16 BdatGetU16Direct(const void* table, const void* key, int id);
 extern "C" char* MakeTplNameSysFile(u32 id);
 
 class CProcess;

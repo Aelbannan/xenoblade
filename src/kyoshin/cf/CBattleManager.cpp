@@ -14,7 +14,7 @@
 // ml::pi: CChain.hpp's const f32 form is kept (load-bearing for
 // chain-TU scheduling); CfObjectEne.hpp and this TU's local decl are aligned
 // to it, so no pre-include rename is needed.
-#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CBattleManagerImports.hpp"
 extern "C" cf::CBattleManager* lbl_eu_80663F00;
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -42,6 +42,10 @@ extern "C" cf::CBattleManager* lbl_eu_80663F00;
 #include "kyoshin/cf/CfGameManager.hpp"
 // (UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp; single decl.)
 #include "monolib/work.hpp"
+
+// Retail C++ symbol getEffOwner____FPv (0x800AE12C); the plain C++ name
+// getEffOwner__ mangles to it (same declaration as CChainActorEne.cpp).
+void* getEffOwner__(void* obj);
 
 // Arts-data row returned by CtrlObjectParam_GetCharEntry: the per-entry table scanned by
 // scanArtsEntries starts at +0x1C (passed to CtrlObjectParam_GetArtsStatsRow). (CtrlObjectParam_GetCharEntry
@@ -662,11 +666,11 @@ CBattleManager* CBattleManager::getInstance() {
                 void* player = getPlayer__Q22cf13CfGameManagerFi(i);
                 void* action = MapFx_ResolveOwner(player);
                 if(action != nullptr){
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x40);
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80);
-                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x8000);
-                    dispatchItemLoad(action, 0x800);
-                    dispatchItemLoad(action, 0x1000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x400000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x800000);
+                    ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80000000);
+                    dispatchItemLoad(action, 0x8000000);
+                    dispatchItemLoad(action, 0x10000000);
                 }
             }
 
@@ -771,7 +775,9 @@ extern "C" void CBattleMan_EmitVisionEvent(u8* self, void*) { ((cf::CBattleManag
 // isBattleStatusActive / findBattleStatusEntry / Counter_TestBit are already declared in
 // object/CAIAction.hpp / CVision.hpp (included via CBattleManager.hpp).
 extern "C" int IdTable_GetSum(void*, int, void*);
-extern "C" bool CChain_chkActorList(void*);  // retail C wrapper symbol
+// Retail C wrapper (this += 0x18, tail-call): the actor is forwarded in r4 as
+// the Chain_FindOrCreateActor key.
+extern "C" bool CChain_chkActorList(void* chain, cf::CfObjectActor* actor);
 extern "C" void* findTopBattleStatusEntry(void*, u32);
 extern "C" bool isBattleStatusKind1(int);
 extern "C" int isBattleEventKind1(int);
@@ -3973,7 +3979,7 @@ namespace cf {
 // Searches for a matching value in this->field_B8 entries and this->+8 array.
 // Returns 1 if field_78 bit 0 is clear, or if a matching non-zero element is
 // found without a live actor bound to it. Returns 0 otherwise.
-s32 findFreeBattleSlot(D7D24_Obj* self) {
+extern "C" s32 findFreeBattleSlot(D7D24_Obj* self) {
     s32 result = 0;
     s32 i;
     u8* p;
@@ -4259,6 +4265,18 @@ extern "C" void updateBattleManager(cf::CBattleManager* self) {
 // busy check; unregistered idle actors are pushed into the lists, notified
 // through their vtable holders and the battle-event chain, and reset the
 // sudden-commu voice state when they become the lone list-2 member.
+// Iterator distance (std::distance-style; the MSL here ships no <iterator>
+// distance). Iterators are taken by value, so retail keeps both copies in the frame.
+template <typename It>
+static inline int iterDistance(It first, It last) {
+    int n = 0;
+    while (first != last) {
+        ++first;
+        n++;
+    }
+    return n;
+}
+
 extern "C" void registerBattleActor(void* selfV, void* actorV) {
     cf::CBattleManager* self = (cf::CBattleManager*)selfV;
     cf::CfObjectActor* actor = (cf::CfObjectActor*)actorV;
@@ -4274,18 +4292,10 @@ extern "C" void registerBattleActor(void* selfV, void* actorV) {
     _reslist_node<cf::CfObjectActor*>* cur = head1->mNext;
     while (cur != head1 && cur->mItem != actor) cur = cur->mNext;
 
-    if (cur != head1) {
-        // Already registered: refresh the busy check.
-        actor->CActorParam_isBattleLocked();
-    } else if (actor->CActorParam_isBattleLocked() != 0) {
-        // Busy and unregistered: retail re-runs the check call.
-        actor->CActorParam_isBattleLocked();
-    } else {
+    if (cur == head1 && actor->CActorParam_isBattleLocked() == 0) {
         // Register the actor in the lists.
         self->mActorList1.push_back(actor);
-        {
-            CChain_chkActorList(&self->mChain);
-        }
+        CChain_chkActorList(&self->mChain, actor);
         if (acc->field_3F00 & 0x2) {
             self->mActorList2.push_back(actor);
         } else {
@@ -4305,31 +4315,25 @@ extern "C" void registerBattleActor(void* selfV, void* actorV) {
         }
 
         // If mActorList2 holds at most one actor, reset the voice state.
-        // Retail walks via a 2-slot pointer table spilled to the frame.
-        const _reslist_node<cf::CfObjectActor*>* nodes[2];
-        nodes[0] = self->mActorList2.mStartNodePtr;
-        nodes[1] = nodes[0]->mNext;
-        u32 count = 0;
-        while (nodes[1] != nodes[0]) {
-            count++;
-            nodes[1] = nodes[1]->mNext;
-        }
+        int count = iterDistance(self->mActorList2.begin(), self->mActorList2.end());
         if (count <= 1 && (acc->field_3F00 & 0x2)) {
             CCharVoiceMan_ResetAndAppend();
             SysWinLog_ResetState();
-            self->mSuddenCommu.unk28 = 0;
-            self->mSuddenCommu.unk2C = lbl_eu_80666DDC;
+            self->mSuddenCommu.resetPairTimer();
         }
 
         if (acc->field_3F00 & 0x4) {
 ((cf::CfObject*)acc->field_3ED4)->CfObject_notifyActiveMember();
             CCharVoiceMan_LatchPendingVoiceId(actor);
         }
+    } else {
+        // Already registered or busy: retail re-runs the check call.
+        actor->CActorParam_isBattleLocked();
     }
 }
 void unregisterBattleActor(void* mgrV, void* targetV){
-    cf::CBattleManager* mgr = (cf::CBattleManager*)mgrV;
     BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)targetV;
+    cf::CBattleManager* mgr = (cf::CBattleManager*)mgrV;
     cf::CfGameManager::getInstance();
     if(isGlobalCamFlagSet__Fi(0x4000000) != 0) return;
 
@@ -4344,81 +4348,81 @@ void unregisterBattleActor(void* mgrV, void* targetV){
         }else{
             mgr->mActorList3.remove((cf::CfObjectActor*)target);
         }
+    }else{
+        return;
+    }
 
-        // Call vfunc at +0x3ED4 object's vtable[0x7C]
+    // Call vfunc at +0x3ED4 object's vtable[0x7C]
 ((cf::CfObject*)target->field_3ed4)->CfObject_notifyMemberRemoved();
 
-        // Call target's vtable[0x2E4]
-        ((cf::CActorParam*)target)->CActorParam_resetGaugeEntries();
+    // Call target's vtable[0x2E4]
+    ((cf::CActorParam*)target)->CActorParam_resetGaugeEntries();
 
-        // If target flag bit 0x04 at +0x3F00 is set, do extra cleanup
-        if(target->field_3f00 & 0x04){
-            ((cf::CActorParam*)target)->CActorParam_setupActorState();
-            ((cf::CActorParam*)target)->CActorParam_refreshBattleStatus();
-            // Call secondary vtable at +0x3E9C, vtable[0x50]
-            ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_signalActionEnd(0);
-        }
-
-        // Notify all battle events (retail re-reads the sentinel each pass)
-        {
-            _reslist_node<cf::IBattleEvent*>* cur = mgr->mBattleEventList.mStartNodePtr->mNext;
-            while(cur != mgr->mBattleEventList.mStartNodePtr){
-                cf::IBattleEvent* event = cur->mItem;
-                event->onActorUnregister((cf::CfObjectActor*)target);
-                cur = cur->mNext;
-            }
-        }
-
-        // Drain mActorList1 sentinel loop
-        {
-            _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList1.mStartNodePtr->mNext;
-            _reslist_node<cf::CfObjectActor*>* head = mgr->mActorList1.mStartNodePtr;
-            while(cur != head) cur = cur->mNext;
-        }
-
-        // Global list state gates (sequential, with CBattleMan_OnActorsEmpty between)
-        if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
-        CBattleMan_OnActorsEmpty(mgr);
-        if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
-
-        if(!(target->field_3f00 & 0x04)){
-            if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
-        }
-
-        // Player cleanup loop
-        for(int i = 0; i < 3; i++){
-            void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-            void* action = MapFx_ResolveOwner(player);
-            if(action != nullptr){
-                ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x40);
-                ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80);
-                ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x8000);
-                dispatchItemLoad(action, 0x800);
-                dispatchItemLoad(action, 0x1000);
-            }
-        }
-
-        // Call virtual setPartyMaskFlag(mgr, 1, 1)
-        mgr->setPartyMaskFlag(1, 1);
-
-        // Clear global flag (rlwinm mask 29..27 clears bit 28)
-        lbl_eu_80663E28 &= ~0x8;
-        CChain_ForwardVoiceClear(&mgr->mChain);
-
-        // Enum list iteration
-        EnumListHolder holder;
-        CTaskGame_enumListCtor(&holder);
-        startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
-
-        for(u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-            void* element = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
-            ((cf::CActorParam*)element)->CActorParam_setupActorState();
-            ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
-            ((cf::CActorParam*)element)->CActorParam_initStatusCounter();
-        }
-
-        __dt__80043E88(&holder, -1);
+    // If target flag bit 0x04 at +0x3F00 is set, do extra cleanup
+    if(target->field_3f00 & 0x04){
+        ((cf::CActorParam*)target)->CActorParam_setupActorState();
+        ((cf::CActorParam*)target)->CActorParam_refreshBattleStatus();
+        // Call secondary vtable at +0x3E9C, vtable[0x50]
+        ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_signalActionEnd(0);
     }
+
+    // Notify all battle events (retail re-reads the sentinel each pass)
+    {
+        _reslist_node<cf::IBattleEvent*>* cur = mgr->mBattleEventList.mStartNodePtr->mNext;
+        while(cur != mgr->mBattleEventList.mStartNodePtr){
+            cf::IBattleEvent* event = cur->mItem;
+            event->onActorUnregister((cf::CfObjectActor*)target);
+            cur = cur->mNext;
+        }
+    }
+
+    // Drain mActorList1 sentinel loop
+    {
+        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList1.mStartNodePtr->mNext;
+        _reslist_node<cf::CfObjectActor*>* head = mgr->mActorList1.mStartNodePtr;
+        while(cur != head) cur = cur->mNext;
+    }
+
+    // Global list state gates (sequential, with CBattleMan_OnActorsEmpty between)
+    if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
+    CBattleMan_OnActorsEmpty(mgr);
+    if(!(target->field_3f00 & 0x04)){
+        if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
+    }
+
+    // Player cleanup loop
+    for(int i = 0; i < 3; i++){
+        void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+        void* action = MapFx_ResolveOwner(player);
+        if(action != nullptr){
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x400000);
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x800000);
+            ((cf::CObjectState*)((cf::CActorState*)action)->unk4)->CObjectState_clearStateFlags8(0x80000000);
+            dispatchItemLoad(action, 0x8000000);
+            dispatchItemLoad(action, 0x10000000);
+        }
+    }
+
+    // Call virtual setPartyMaskFlag(mgr, 1, 1)
+    mgr->setPartyMaskFlag(1, 1);
+
+    // Clear global flag (rlwinm mask 29..27 clears bit 28)
+    lbl_eu_80663E28 &= ~0x8;
+    CChain_ForwardVoiceClear(&mgr->mChain);
+
+    // Enum list iteration
+    EnumListHolder holder;
+    CTaskGame_enumListCtor(&holder);
+    startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
+
+    for(u32 i = 0; i < ((cf::CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
+        void* element = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
+        ((cf::CActorParam*)element)->CActorParam_setupActorState();
+        ((cf::CActorParam*)element)->CActorParam_refreshBattleStatus();
+        ((cf::CActorParam*)element)->CActorParam_initStatusCounter();
+    }
+
+    __dt__80043E88(&holder, -1);
 }
 
 // Actor/Sub/SubObj/Block deleted: use CfObjectActor / CActorParam_UnkStruct1 / UnkStruct2
@@ -4948,15 +4952,15 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
                     }
                 }
             } else if (type == 2) {
-                flag = 1;
+                int canApply = 1;
                 if (((cf::CActorParam*)enemy)->CActorParam_getStatusTable()) {
-                    if (Counter_TestBit(((cf::CActorParam*)enemy)->CActorParam_getStatusTable(), 0x76)) flag = 0;
+                    if (Counter_TestBit(((cf::CActorParam*)enemy)->CActorParam_getStatusTable(), 0x76)) canApply = 0;
                 }
                 if (isBattleStatusActive(&enemy->statusBase, 0x28)) {
                     void* e = findBattleStatusEntry(&enemy->statusBase, 0x28);
-                    if (move->field_B4 < *(s32*)((u8*)e + 0x10)) flag = 0;
+                    if (move->field_B4 < *(s32*)((u8*)e + 0x10)) canApply = 0;
                 }
-                if (flag) move->field_74 |= 0x80020000;
+                if (canApply) move->field_74 |= 0x80020000;
             }
         }
     }
@@ -6900,8 +6904,6 @@ post_dispatch:;
 extern f64 lbl_eu_80666E08;   // 0x4330000000000000 sibling magic
 extern f32 lbl_eu_80666E24;   // 0.15f
 
-// C-linkage route: retail references findFreeBattleSlot by its unmangled symbol.
-extern "C" s32 findFreeBattleSlot(void*);
 
 // Status-list entry overlay (findBattleStatusEntry result): flags word +0x08,
 // payload word +0x10, tick s16 +0x14, aux s16 +0x1A.
@@ -7548,7 +7550,7 @@ void emitBattleEvents(void* self_, void* attacker_, void* target_, void* move_) 
 
 postSwitch:
     if (subObj->unk78 & 0x800) {
-        if (findFreeBattleSlot((void*)move) == 0) hit = 0;
+        if (findFreeBattleSlot((D7D24_Obj*)move) == 0) hit = 0;
     }
     if (!(move->mFlagsArray[0].flags & 0x10000000)) {
         move->unk5C = move->unk54 * move->unk58;
@@ -10351,9 +10353,6 @@ extern "C" void updateBattleHelpState(void*, void*);
 extern "C" s32 startPcEffect(void*, s32, void*, s32);
 extern "C" void CfObjectMove_relaySubB0Slot54(void*, int, int, u32, f32, f32);
 extern "C" void Scn_SetTimeScale(void*);
-// Retail references findFreeBattleSlot by its unmangled symbol; route new calls
-// through a C-linkage overload (the C++-mangled definition above is untouched).
-extern "C" s32 findFreeBattleSlot(void*);
 extern "C" void* getEffectTask();
 extern "C" void followUpBattleMove(void*, void*, void*, void*);
 extern "C" void dispatchBattleMove(void*, void*, void*, void*);
@@ -10376,7 +10375,7 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
     // One scratch home serves the D7D24 probe, both 0x10A status reads and
     // the 0x12E entry pointer (retail reuses one callee-saved register for
     // all of them).
-    void* stat = (void*)findFreeBattleSlot((void*)move);
+    void* stat = (void*)findFreeBattleSlot((D7D24_Obj*)move);
     if (((E85F0_Move*)move)->flags78 & 0x800) {              // 0x800E9130
         if (((cf::CActorParam*)(actor))->CActorParam_getStatsSlot() == 0) {                           // 0x800E9138 chain-arts pass
             stat = (void*)isBattleStatusActive((u8*)actor + 8, 0x10A);
@@ -12192,7 +12191,7 @@ check:
 
             {
                 void* base = (actor != nullptr) ? (void*)((u8*)actor + 0x3e9c) : (void*)actor;
-                void* result = getEffOwner(base);
+                void* result = getEffOwner__(base);
                 if (result != nullptr) {
                     *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
                     CPartsChange_ResetBattleEntry(result, 0, 0);

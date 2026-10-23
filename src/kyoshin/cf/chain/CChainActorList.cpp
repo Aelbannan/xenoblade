@@ -1,12 +1,5 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-// Shield: CChainTimer.hpp declares ChainMusic_SaveSlots/RestoreSlots as
-// (void*, void*) for its callers; this TU defines them with full types
-// (retail bodies access typed members). The hidden names keep both decls.
-#define ChainMusic_SaveSlots ChainMusic_SaveSlots_void_hidden
-#define ChainMusic_RestoreSlots ChainMusic_RestoreSlots_void_hidden
 #include "kyoshin/cf/chain/CChainTimer.hpp"
-#undef ChainMusic_SaveSlots
-#undef ChainMusic_RestoreSlots
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/CVision.hpp"
@@ -21,6 +14,17 @@ namespace cf { class CfObjectActor; }
 #include "monolib/math/Random.hpp"
 #include <new>
 #include <cstring>
+#include "kyoshin/cf/chain/CChainActorListImports.hpp"
+// Shield: CChainTimerImports.hpp declares ChainMusic_SaveSlots/RestoreSlots as
+// (void*, void*) for its callers; this TU defines them with full types
+// (retail bodies access typed members). The hidden names keep both decls.
+#define ChainMusic_SaveSlots ChainMusic_SaveSlots_void_hidden
+#define ChainMusic_RestoreSlots ChainMusic_RestoreSlots_void_hidden
+#include "kyoshin/cf/chain/CChainTimerImports.hpp"
+#undef ChainMusic_SaveSlots
+#undef ChainMusic_RestoreSlots
+#include "kyoshin/cf/chain/CChainComboImports.hpp"
+#include "kyoshin/cf/CVisionImports.hpp"
 
 // C-linkage pseudo-imports for this TU now live in the "C-linkage imports"
 // section of kyoshin/cf/chain/CChainActorList.hpp (real imports).

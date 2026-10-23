@@ -1,4 +1,4 @@
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameImports.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
@@ -1770,7 +1770,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
     self->unk68 |= 0x400000;
     if (CTaskGame_windowGate(self) == 0) {
         if (self->unk86 == 0 && CTaskGame_playTimeGate() == 0 && EvtSeqGetStateBit10() != 0) {
-            CTaskGame_openStream(0, &lbl_eu_804FA890[0x6E], Scn_CallUnk8C_V9(self->unk74), 0, 1, 0, lbl_eu_80665D6C);
+            CTaskGame_openStream(0, &lbl_eu_804FA890[0x6E], self->unk74->getAllocHandle(), 0, 1, 0, lbl_eu_80665D6C);
         }
         if (self->unkD4 != 0) {
             EvtTask_Relay65038(reinterpret_cast<void*>(self->unkD4));
@@ -2295,7 +2295,7 @@ s32 CTaskGame::isMoveFuncActive() {
 // the unkDC budget is not exceeded: resolve the file extension; when the
 // hasPackFile pack check identifies an archive path (func_804DDD54) the
 // size check is skipped; otherwise getFileSize(path, 1) must be >= 0. Then
-// run the shared reset (CTaskGame_resetStream), pick the alloc handle (Scn_CallUnk8C_V9
+// run the shared reset (CTaskGame_resetStream), pick the alloc handle (CScn::getAllocHandle
 // on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
 // FixStr<256> (mLength + strcpy; DevFile_SubstLangPath path fix-up for the
 // non-archive case), open the CRI stream (dispatchFilePlayback) into unkD8, set the
@@ -2331,7 +2331,7 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
     }
     CTaskGame_resetStream();
     if ((u32)(a3 + 0x10000) == 0xFFFF) {
-        a3 = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+        a3 = lbl_eu_80663E14->getAllocHandle();
     }
     ml::FixStr<256> filename(false);
     filename.mLength = static_cast<int>(strlen(path));

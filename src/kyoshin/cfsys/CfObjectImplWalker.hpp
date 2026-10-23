@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -720,13 +721,6 @@ public:
     virtual u32 vf40();                      // index 14 -> vtable 0x40
 };
 
-// Global gimmick container (getUnk80664658 result): flag word at +0x214,
-// stored object at +0x218.
-struct CfWalkGimmickGlobal {
-    u8 _00[0x214];                           // 0x00-0x213
-    u32 field_214;                           // 0x214
-    void* field_218;                         // 0x218
-};
 
 // Battle sub-object (talk-source field_C4): flags at +0x270 and +0x4EC.
 struct CfWalkBattleSubC4 {
@@ -975,7 +969,6 @@ void registerBattleActor(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CUICfManager_queueFactoryMenu(int id, float f);
-void* bindIndexedEffect(u32 cls, int param);
 void simSetLeafAnimTag(void* obj, u32 flags);
 void CItem_openAreaEventBox(u32 a, u32 b);
 void UIWin_CreateB4790Win(void* str, int flags);
@@ -1026,7 +1019,6 @@ extern "C" bool Scn_IsDefaultScale(class CScn* scene);
 int isAnyFieldFlagSet__Q22cf13CfGameManagerFv(void);
 int CtrlNpcIsActive(void);
 // getInstance__11CSysWinBuffFv is declared in CMainMenu.hpp (already in scope).
-void* getUnk80664658(void);
 int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e); // canonical int form (CtrlMoveBase.hpp owner)
 void* ScnRes_GetEntryHead2_E520(int index);
 void CfObjectMove_relaySubB0Slot54(void* obj, int a, int b, u32 c, f32 d, f32 e);

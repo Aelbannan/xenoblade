@@ -87,7 +87,6 @@ extern "C" void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self);
 // Retail-unmangled callee names (US retail strips the mangling for these
 // widget helpers) -- C linkage so calls bind the literal retail symbol.
 // Return types are int (not u8) so callers compare with cmpwi directly.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);

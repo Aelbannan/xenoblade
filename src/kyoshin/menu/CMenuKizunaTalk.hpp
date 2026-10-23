@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
@@ -35,6 +36,8 @@ public:
     u32 mField68;                  // 0x68
 };
 
+// KEEP (header-consolidation round 2, 2026-10-23): the ctor stores both
+// subobject vptrs by hand, so these stay PODs instead of the monolib classes.
 // IWorkEvent / IScnRender base subobjects: 4-byte vtable slots into the retail
 // composite vtable (+0x24 / +0xAC, see the ctor). Plain PODs - the retail
 // subobject vtables are stored by the ctor, not by MWCC.
@@ -45,6 +48,9 @@ struct IScnRender {
     u32 mVtable;
 };
 
+// KEEP (header-consolidation pilot 2026-10-23): this TU models IWorkEvent as a
+// manual-vtable struct above, which conflicts with the real IWorkEvent that the
+// canonical monolib/scn/CScn.hpp derives from, so it cannot include it.
 // Minimal CScn view: only the render-callback members are used by this TU
 // (retail symbols addRenderCB__4CScnFP10IScnRenderUlUl /
 // removeRenderCB__4CScnFP10IScnRender). Defined OOL in monolib/src/scn/CScn.
@@ -60,14 +66,6 @@ public:
 class CLayoutView {
 public:
     virtual void vf02(int flag) = 0;   // vtable + 0x8 - release/unbind
-};
-
-// CCur18 vtable view: MWCC prefix again, so user virtual 1 sits at +0xC.
-class CCur18View {
-public:
-    virtual void vf02() = 0;           // vtable + 0x8
-    virtual void vf03() = 0;           // vtable + 0xC - per-frame update
-    virtual void vf04(void* arg) = 0;  // vtable + 0x10 - cursor selection update
 };
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34).
@@ -110,22 +108,10 @@ public:
     virtual void v20() = 0;  // index 32 -> vtable +0x88
 };
 
-// Field view over a CCur18-shaped blob: four words then two lone bytes
-// (+0x14/+0x15) copied individually (retail lbz/stb pairs).
-struct KizunaCurFields {
-    u8 _00[0x4];
-    u32 f_04;
-    u32 f_08;
-    u32 f_0c;
-    u32 f_10;
-    u8 f_14;
-    u8 f_15;
-};
-
 // kickoffKizunaWindow stack scratch laid out like the retail frame:
 // cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
 struct KizunaScratch {
-    u8 mCur[0x18];
+    CCur18 mCur;
     u8 mWin2[0x3C];
     u8 mWin0[0x3C];
 };
@@ -167,7 +153,7 @@ public:
     u32 mFieldA0;                        // 0xA0
     u8 mFieldA4;                         // 0xA4
     u8 _padA5[3];                        // 0xA5 - padding before mCur
-    u8 mCur[0x18];                       // 0xA8 - CCur18 cursor storage
+    CCur18 mCur;                         // 0xA8
     u8 mSysWin[0x3C];                    // 0xC0 - CSysWin panel storage
 
     ~CMenuKizunaTalk();
@@ -203,7 +189,6 @@ extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void sysWinGetPaneScreenPos(void* out, void* syswin, u8 sel);
 extern "C" u16 LookupRelateValue(u8 a, u8 b);
 extern "C" int CfT_DispatchFrameCounts();
-extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* Bdat_GetTable_AA34();
 
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).

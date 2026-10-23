@@ -19,13 +19,7 @@ class CProcess;
 class CScn;
 class IScnRender;
 
-// Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv; same scheme as CMenuBattleEnd.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Unknown per-entry object, deleted via virtual dispatch (vtable+8, flag 1).
 // Only the virtual-dtor shape is required -- the real class lives in the

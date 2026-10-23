@@ -14,15 +14,7 @@ class CScn;
 class CProcess;
 class IScnRender;
 
-// Minimal CTaskGame decl (retail global-namespace class; symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The real
-// CTaskGame.hpp pulls broken monolib work.hpp-umbrella headers, so the static
-// members are declared here (same scheme as CSystemWindow.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // One entry of the internal message/queue array (stride 8).
 struct UnkBattleEntry {

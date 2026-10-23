@@ -2,27 +2,13 @@
 
 #include <types.h>
 
-// Local IScnRender declaration with NO destructor and no inline bodies (see
-// CMenuTutorial.hpp). The shared monolib/scn/IScnRender.hpp defines
-// `virtual ~IScnRender(){}` inline; odr-using that inline dtor from this TU
-// makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
+// IScnRender without a virtual destructor (CMenuQuestLog.cpp defines
+// ISCN_RENDER_NO_DTOR): odr-using the inline `virtual ~IScnRender(){}` from this
+// TU makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
 // and blows the split budget (retail keeps that copy only in CTaskGame.o).
-// Omitting the dtor gives IScnRender an implicitly trivial one while keeping
-// the vtable layout identical (slot order: dtor slot, handleEmptyRender).
-class IScnRender {
-public:
-    virtual void handleEmptyRender();
-};
+#include "monolib/scn/IScnRender.hpp"
 
-// Minimal CScn view exposing only the render-callback registration used by
-// this TU (retail mangled member symbols; defined in the monolib CScn TU).
-// A local body-less declaration avoids pulling monolib/scn.hpp (see the
-// IScnRender note above).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
 #include "monolib/work/CProcess.hpp"
 
@@ -148,7 +134,6 @@ extern CMenuQuestLog* lbl_eu_80663FC0[2];
 extern u32 lbl_eu_80663E28;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" bool isIdle__11CTitleAHelpFv(void*);
 extern "C" bool QstLogList_IsSortEnabled(void*);
 extern "C" unsigned int QstLogList_GetSelectedQuestLo(void*);
 extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);

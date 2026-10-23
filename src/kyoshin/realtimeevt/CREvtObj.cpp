@@ -46,7 +46,7 @@ extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
 // ============================================================================
 extern "C" cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
-        freeEvtMemPtr(self);
+        freeEvtMemPtr(reinterpret_cast<u8*>(self));
     }
     return self;
 }
@@ -78,7 +78,7 @@ extern "C" void EvtObj_RunCallback(cf::CREvtObj* self) {
 // ============================================================================
 extern "C" void* EvtObj_AllocBlock(u32 size) {
     // First arg is a byte count (callers pass 0x1F0/0xB4/0x88), not a pointer.
-    return allocEvtMemAligned((void*)size, 4, 1);
+    return allocEvtMemAligned(size, 4, 1);
 }
 
 // ============================================================================

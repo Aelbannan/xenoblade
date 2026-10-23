@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
@@ -16,7 +17,6 @@ void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
 void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*,
     char*);
-u16 BdatGetU16Direct(const char*, const char*, const char*);
 char* MakeTplNameSysFile(u16);
 void PaneSetTexPaletteByName(void*, const char*, void*);
 u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
@@ -111,8 +111,7 @@ extern "C" void CrySupStartState(CMCCrystalSupport* self) {
 #pragma optimize_for_size on
 extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
     const char* base = lbl_eu_8050AA3C;
-    u16 key = BdatGetU16Direct((const char*)lbl_eu_80664090, base + 0x2d,
-                            (const char*)index);
+    u16 key = BdatGetU16Direct(lbl_eu_80664090, base + 0x2d, index);
     char* name = MakeTplNameSysFile(key);
     void* resource = self->mAccessor->GetResource('timg', name, nullptr);
     if (resource != nullptr) {

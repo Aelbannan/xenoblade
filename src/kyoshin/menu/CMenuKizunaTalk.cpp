@@ -3,6 +3,7 @@
 // IWorkEvent + IScnRender bases, an embedded CCur18 cursor and CSysWin panel.
 
 #include "kyoshin/menu/CMenuKizunaTalk.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 #include "functions.hpp"
 
@@ -11,6 +12,10 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
+
+// KEEP (extern-C cleanup 2026-10-23): CLibLayout.hpp cannot be included here
+// (it brings the canonical IWorkEvent, which clashes with this TU's KEEP copy).
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 
@@ -61,7 +66,7 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
     obj->mFieldA0 = 0;
     obj->mFieldA4 = 0;
 
-    __ct__CCur18(&obj->mCur[0], 0);
+    __ct__CCur18(&obj->mCur, 0);
     return obj;
 }
 
@@ -74,7 +79,7 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
 #pragma optimize_for_size on
 CMenuKizunaTalk::~CMenuKizunaTalk() {
     __dt__7CSysWinFv(&mSysWin[0], -1);
-    __dt__6CCur18Fv(&mCur[0], -1);
+    __dt__6CCur18Fv(&mCur, -1);
     __dt__17UnkClass_8045F564Fv(&mMemRegion[0], -1);
 }
 #pragma optimize_for_size off
@@ -96,7 +101,7 @@ void CMenuKizunaTalk::Init() {
 #pragma optimize_for_size on
 void CMenuKizunaTalk::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile1));
     closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile2));
 
@@ -117,7 +122,7 @@ void CMenuKizunaTalk::Term() {
     sysWinTermLayout(&mSysWin[0]);
 
     // CCur18 cursor virtual slot 3 (vtable + 0xC): per-frame update.
-    reinterpret_cast<CCur18View*>(&mCur[0])->vf03();
+    mCur.cleanup();
 
     lbl_eu_80664424 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
@@ -199,18 +204,10 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
         __dt__7CSysWinFv(&scratch.mWin2[0], -1);
         reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
 
-        __ct__CCur18(&scratch.mCur[0], CUICfManager_getArcResourceAccessor());
-        KizunaCurFields* dst = reinterpret_cast<KizunaCurFields*>(&self->mCur[0]);
-        KizunaCurFields* src = reinterpret_cast<KizunaCurFields*>(&scratch.mCur[0]);
-        dst->f_04 = src->f_04;
-        dst->f_08 = src->f_08;
-        dst->f_0c = src->f_0c;
-        dst->f_10 = src->f_10;
-        // Byte-sized page fields copied individually (retail lbz/stb pairs).
-        dst->f_14 = src->f_14;
-        dst->f_15 = src->f_15;
-        __dt__6CCur18Fv(&scratch.mCur[0], -1);
-        reinterpret_cast<CCur18View*>(&self->mCur[0])->vf02();
+        __ct__CCur18(&scratch.mCur, CUICfManager_getArcResourceAccessor());
+        self->mCur = scratch.mCur;
+        __dt__6CCur18Fv(&scratch.mCur, -1);
+        self->mCur.initLayout();
         break;
     }
     }
@@ -280,10 +277,10 @@ void advanceKizunaWindow(CMenuKizunaTalk* self) {
     case 2:
         if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
             self->mFieldA0 = 3;
-            Cur_SetVisible(&self->mCur[0], 1);
+            Cur_SetVisible(&self->mCur, 1);
             u8 tmp[0x10];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
-            reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
+            self->mCur.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
         }
         break;
     }
@@ -349,17 +346,17 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             self->mField9C = (s8)(self->mField9C - 1);
             if (self->mField9C < 0) self->mField9C = 1;
             playUISound__FUl(1);
-            u8 tmp[0xC];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
-            reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
+            nw4r::math::VEC3 tmp;
+            sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
+            self->mCur.setRootPaneTranslate(&tmp);
         } else if (confirm != 0) {
             // Confirm: move the cursor page down (wrap over 1 to 0).
             self->mField9C = (s8)(self->mField9C + 1);
             if (self->mField9C > 1) self->mField9C = 0;
             playUISound__FUl(1);
-            u8 tmp[0xC];
-            sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], (u8)self->mField9C);
-            reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
+            nw4r::math::VEC3 tmp;
+            sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
+            self->mCur.setRootPaneTranslate(&tmp);
         } else if (left != 0) {
             // Left: confirm the current page and advance the window.
             s8 page = self->mField9C;
@@ -371,13 +368,13 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             }
             self->mFieldA0 = 4;
             sysWinAdvancePhase3(&self->mSysWin[0]);
-            Cur_SetVisible(&self->mCur[0], 0);
+            Cur_SetVisible(&self->mCur, 0);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
             playUISound__FUl(6);
             sysWinAdvancePhase3(&self->mSysWin[0]);
-            Cur_SetVisible(&self->mCur[0], 0);
+            Cur_SetVisible(&self->mCur, 0);
         }
         break;
     }
@@ -579,7 +576,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
     }
     if (self->mFile2 == handle) {
         void* data2 = self->mFile2->getData();
-        setBdatEntry__5CBdatFUlPv(2, data2);
+        CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
         lbl_eu_80664424 = (u8*)getFP__FPCc(&lbl_eu_80505118[0x1e5]);
         self->mFile2 = 0;

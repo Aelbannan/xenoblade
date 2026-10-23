@@ -5,28 +5,13 @@
 // to reproduce the retail reloc to lbl_eu_80531080.
 
 #include "kyoshin/cf/CfMapEffectManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp" // extern "C" lookupWorkAtAddr/800B9404/8003B1EC/8003B41C
 #include "monolib/device/CDeviceSC.hpp"   // CDeviceSC::getLanguage
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-
-namespace cf {
-// Local minimal view of cf::CfGameManager used by MapFx_ReloadFromBdat. The full
-// class in include/kyoshin/cf/CfGameManager.hpp declares getControllerWordA37C as
-// void, but retail returns a value (its body is a tail call to
-// CfT_FrameCountB) and this caller truncates it to u16.
-class CfGameManager {
-public:
-    static u32 getCurrentSlotIndex();
-    static u32 getControllerWordA33C();
-    static u32 getControllerWordA37C();
-    static u32 getGlobalWord64184Dup();
-    static u32 getGlobalPtr640A8();
-    static void* getGameSubManager();
-};
-} // namespace cf
 
 using namespace cf;
 

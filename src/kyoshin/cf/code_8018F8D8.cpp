@@ -16,7 +16,7 @@
 #undef PartyStateWin_OpenWindow
 #undef create__8CScnNw4rFv
 
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameImports.hpp"
 // NOTE: CfObjectActor.hpp is deliberately NOT included here:
 // CAIAction.hpp (its line-5 include) still carries a stale 2-arg declaration
 // of getBdatStringColumnValue that collides with the canonical 3-arg decl in

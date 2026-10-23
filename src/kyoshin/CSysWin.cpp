@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 
@@ -242,12 +243,12 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     u8* archive = reinterpret_cast<u8*>(mFileHandle->getData());
     mtl::MemManager::setMemInitFlag(false);
     CTagProcessor* tag = (CTagProcessor*)mtl::MemManager::allocate(
-        0x858, getAllocHandle__10CLibLayoutFv());
+        0x858, CLibLayout::getAllocHandle());
     if (tag != 0) {
         __ct__CTagProcessor(tag);
     }
     mTagProcessor = tag;
-    mArcAccessor = createArcResourceAccessor__10CLibLayoutFv();
+    mArcAccessor = CLibLayout::createArcResourceAccessor();
     mArcAccessor->Attach(archive, &lbl_eu_8050A478[0x117]);
     buildLayout(&mLayout, mArcAccessor, &lbl_eu_8050A478[0x11b]);
     bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcAccessor, &lbl_eu_8050A478[0x134]);

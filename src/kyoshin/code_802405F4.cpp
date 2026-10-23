@@ -1,11 +1,11 @@
 // Auto-scaffolded catalog TU for kyoshin/code_802405F4
 // Replace stubs with high-level C/C++ during decomp.
 
-// CMapSel.hpp carries a legacy (void*, float) pseudo-import for AnimRewindFrame;
+// CMapSelImports.hpp carries a legacy (void*, float) pseudo-import for AnimRewindFrame;
 // code_80135FDC.hpp (included below) declares the canonical
 // (nw4r::lyt::AnimTransform*, float). Skip the legacy decl so the two
 // extern "C" declarations don't clash (10197). Must be defined before any
-// header that pulls in CMapSel.hpp (code_802405F4.hpp includes it).
+// header that pulls in CMapSelImports.hpp (code_802405F4.hpp includes it).
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 // code_80135FDC.hpp declares ml::epsilon as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
@@ -742,7 +742,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 1:
-        if (isIdle__11CTitleAHelpFv(&mTitleHelp) == 0) break;
+        if (mTitleHelp.isIdle() == 0) break;
         if (getMapSelInitFlag(&mMapSel) == 0) break;
         mState = 2;
         break;
@@ -752,7 +752,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 3:
-        if (isIdle__11CTitleAHelpFv(&mTitleHelp) == 0) break;
+        if (mTitleHelp.isIdle() == 0) break;
         if (getMapSelInitFlag(&mMapSel) == 0) break;
         mField54 = 1;
         break;

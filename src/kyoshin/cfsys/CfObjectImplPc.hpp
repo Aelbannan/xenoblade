@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
 
 // Internal driver struct for CfObjectImplPc.
 // Function ObjPc_StoreSubVal_A274 accesses a sub-object at +0x18 and reads/writes an int at +0x3e98.
@@ -1031,7 +1032,6 @@ void SysWinLog_TickCounter23(void);
 void* findBattleStatusEntry(void* obj, int id);
 void CUICfManager_queueFactoryMenu(int a, float b);
 int CBattleMan_ListHasValue(void* mgr, void* obj);
-void bindIndexedEffect(u32 entry, void* sub);
 void* CtrlObjectParam_GetCharEntry(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }

@@ -233,7 +233,7 @@ void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self) {
 // Phase 1 -> 2 (advance): once the title bar is idle and the list data is
 // ready, move to the next phase.
 void CMenuTutorialList_PhaseAdvance(CMenuTutorialList* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mFlag = 2;
         }
@@ -245,7 +245,7 @@ void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self) {}
 // Close: same idle+ready guard as CMenuTutorialList_PhaseAdvance, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 void CMenuTutorialList_PhaseClose(CMenuTutorialList* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (TutorialList_IsInitialized((CTutorialList*)self->mTutorialList) != 0) {
             self->mField54 = 1;
         }

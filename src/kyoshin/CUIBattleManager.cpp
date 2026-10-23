@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CUIBattleManager.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 // --- CTTask<CUIBattleManager> out-of-line specializations ---
@@ -50,7 +51,7 @@ void CTTask<CUIBattleManager::CTest>::Draw() {
 // return types for this import; the single canonical copy now lives in
 // kyoshin/cf/CBattleManagerApi.hpp (pulled in by both headers).
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameImports.hpp"
 // CfObjectPc.hpp is NOT included here: its chain (CfObjectActor.hpp ->
 // CAIAction.hpp vs ocBdat.hpp) currently carries divergent extern "C"
 // declarations of getBdatStringColumnValue (MWCC 10197). Only opaque pointer
@@ -852,7 +853,7 @@ int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
 
     if (self->mFileArtsElem == evt->unk04) {
         void* buf = self->mFileArtsElem->getData();
-        acc = createArcResourceAccessor__10CLibLayoutFv();
+        acc = CLibLayout::createArcResourceAccessor();
         self->mFileArtsElemDone = acc;
         acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
         self->mFileArtsElem = NULL;
@@ -860,7 +861,7 @@ int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
     }
     if (self->mFileArtsSys == evt->unk04) {
         void* buf = self->mFileArtsSys->getData();
-        acc = createArcResourceAccessor__10CLibLayoutFv();
+        acc = CLibLayout::createArcResourceAccessor();
         self->mFileArtsSysDone = acc;
         acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
         self->mFileArtsSys = NULL;
@@ -870,7 +871,7 @@ int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         if (self->mFileArtsPc[i] == evt->unk04) {
             if (evt->unk00 == 1) {
                 void* buf = self->mFileArtsPc[i]->getData();
-                acc = createArcResourceAccessor__10CLibLayoutFv();
+                acc = CLibLayout::createArcResourceAccessor();
                 self->mFileArtsPcBusy[i] = acc;
                 acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
             }
@@ -882,7 +883,7 @@ int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         }
         void* buf = self->mFileFacePc[i]->getData();
         self->mFileFacePc[i] = NULL;
-        acc = createArcResourceAccessor__10CLibLayoutFv();
+        acc = CLibLayout::createArcResourceAccessor();
         self->mFaceAccessor[i] = acc;
         acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
         // Pointer-arithmetic spelling: reduces to retail's bare i*4

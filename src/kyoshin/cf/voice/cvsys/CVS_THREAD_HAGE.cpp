@@ -1,5 +1,5 @@
 // CVS_THREAD_HAGE: Voice thread variant for "Hage" (bald/bare) audio.
-// FULL_MATCH: HageGetBufferSize -- buffer-size getter (virtual method override).
+// FULL_MATCH: blank1__15CVS_THREAD_HAGEFv -- buffer-size getter (virtual method override).
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"

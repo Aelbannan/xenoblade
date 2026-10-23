@@ -20,14 +20,7 @@ class DrawInfo;
 
 class CScn;
 
-// Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv); the full header would pull the monolib CScn,
-// conflicting with the minimal CScn from harness_catalog.hpp -> CTaskGameEff.hpp.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Battle-chain menu state shared by the trackChainPlayer..requestAnimReset helpers:
 // the current player reference plus two pending toggle flags consumed when the

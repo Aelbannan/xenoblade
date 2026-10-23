@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
@@ -1063,7 +1064,6 @@ extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u3
 
 // BDAT message-table / texture-name helpers used by ArtsCharList_refreshDisplay (imports).
 extern void* lbl_eu_80664090;
-extern "C" u32 BdatGetU16Direct(const void* tbl, const void* key, int id);
 extern "C" char* MakeTplNameSysFile(u32 id);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout* layout, const char* name, void* res);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();

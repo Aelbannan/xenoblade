@@ -76,14 +76,7 @@ public:
     f32 mFloat5120;                  // 0x5120 (state-4 fade float)
 };
 
-// Minimal CScn view exposing the render-callback registration used by Init
-// (retail mangled name addRenderCB__4CScnFP10IScnRenderUlUl; defined in the
-// monolib/scn CScn TU).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
 /* Layout view of the CItemBoxLine body, used only by the copy helper
  * ItemEx_CopyLine (the full class lives in CItemBoxLine.hpp, which cannot be
@@ -164,7 +157,6 @@ struct CMIExPadData {
 // func_ helpers; isIdle keeps its C++ mangling). int returns keep the caller's
 // `!= 0` as a plain cmpwi (no u8 mask) like retail. These names ARE the
 // retail linker symbols - do not rename or "fix" the mangled forms.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" int ItemBoxLine_IsReadyFlag(CItemBoxLine* self);
 extern "C" int GetField61(CItemBoxGrid* self);
 
@@ -226,8 +218,6 @@ extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, C
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names; the DrawInfo
  // ct/dt keep their pre-mangled forms - a C++ local would virtual-dispatch).
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" int IsMenuState621F0();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);

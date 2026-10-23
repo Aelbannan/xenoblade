@@ -5,7 +5,7 @@
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CTaskGameImports.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/CUICfManager.hpp"
 #include "monolib/work/CProcess.hpp"

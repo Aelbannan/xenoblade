@@ -37,7 +37,6 @@ extern "C" void getStreamVolume__7CLibCriFv(s32);
 extern "C" void setStreamVolume__7CLibCriFv(s32, float);
 extern "C" void setStreamVolumeScale__7CLibCriFv(s32, float);
 extern "C" s32 setStreamPanVolume__7CLibCriFv(s32, void*, s32, float, float, float);
-extern "C" void getInstance__7CLibCriFv();
 extern "C" s32 isSceneActive__Q22cf13CfGameManagerFv();
 
 // Shared name buffers (lbl_eu_80575798/BC): s32-typed words holding a
@@ -198,7 +197,7 @@ void MenuSnd_SetSlotsPause_8890(s32 active) {
         if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
         else s = nullptr;
         if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
-            getInstance__7CLibCriFv();
+            CLibCri::getInstance();
             setStreamPause__7CLibCriFv(s->handle, active);
             if (active != 0) s->status = 5;
             else s->status = 2;
@@ -243,7 +242,7 @@ extern "C" void MenuSnd_SetSlotVolume_88488(SoundSlot* slot, u32 type, float f1,
     // Retail order: validity check on the raw handle word, then getInstance,
     // then cache the status halfword (no call between its read and last use).
     if ((u32)slot->handle == 0xFFFFFFFF) return;
-    getInstance__7CLibCriFv();
+    CLibCri::getInstance();
     u16 st = slot->status;
     // Product and the reloaded handle are materialized after the call;
     // the status test follows them so MWCC schedules lhz/fmuls/lwz together.
@@ -366,9 +365,9 @@ void MenuSnd_SetSeVolPush_95F4(float f1) {
 }
 
 extern "C" void MenuSnd_StopSlot_882AC(SoundSlot* slot, float vol, u32 type) {
-    getInstance__7CLibCriFv();
+    CLibCri::getInstance();
     if (lbl_eu_80667A08 == vol) {
-        getInstance__7CLibCriFv();
+        CLibCri::getInstance();
         if ((u32)slot->backupHandle != 0xFFFFFFFF) {
             stopStream__7CLibCriFv(slot->backupHandle);
             slot->backupHandle = -1;
@@ -579,7 +578,7 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
         h = s->backupHandle;
         if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !isStreamActive__7CLibCriFv(h))) {
+                : (CLibCri::getInstance(), !isStreamActive__7CLibCriFv(h))) {
             s->backupHandle = m1;
             s->backupU16_1 = z;
             s->backupU16_2 = z;
@@ -590,7 +589,7 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
         h = s->handle;
         if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !isStreamActive__7CLibCriFv(h))) {
+                : (CLibCri::getInstance(), !isStreamActive__7CLibCriFv(h))) {
             s->handle = m1;
             s->field_0x54 = z;
             s->field_0x56 = z;
@@ -684,7 +683,7 @@ extern "C" s32 MenuSnd_QuerySlotLive_89A04(s32 index) {
 // same name is already playing, restart or restore it; otherwise start a new
 // one and return the new CRI handle (-1 on failure).
 s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
-    getInstance__7CLibCriFv();
+    CLibCri::getInstance();
     f32 vol = params->vol1;
     f32 product = params->vol2 * params->vol3;
     const char* name = params->name->mString;
@@ -696,16 +695,16 @@ s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* params, s32 fla
     // skips the getInstance/query calls entirely.
     if ((slot->handle == 0xFFFFFFFF)
             ? 0
-            : (getInstance__7CLibCriFv(), isStreamActive__7CLibCriFv(slot->handle))) {
+            : (CLibCri::getInstance(), isStreamActive__7CLibCriFv(slot->handle))) {
         if (strcmp(slot->name, name) == 0) {
             // Same name: restart the voice.
             if ((u32)slot->handle != 0xFFFFFFFF) {
-                getInstance__7CLibCriFv();
+                CLibCri::getInstance();
                 setStreamPause__7CLibCriFv(slot->handle, 0);
                 slot->status = 2;
             }
             if ((u32)slot->handle != 0xFFFFFFFF) {
-                getInstance__7CLibCriFv();
+                CLibCri::getInstance();
                 getStreamVolume__7CLibCriFv(slot->handle);
             }
             fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
@@ -746,7 +745,7 @@ s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* params, s32 fla
             slot->field_0x56 = tmp.field_0x56;
             slot->status = tmp.status;
             if ((u32)slot->handle != 0xFFFFFFFF) {
-                getInstance__7CLibCriFv();
+                CLibCri::getInstance();
                 getStreamVolume__7CLibCriFv(slot->handle);
             }
             fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
@@ -776,7 +775,7 @@ s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* params, s32 fla
             setStreamVolume__7CLibCriFv(slot->handle, lbl_eu_80667A08);
             fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
             if ((u32)slot->handle != 0xFFFFFFFF) {
-                getInstance__7CLibCriFv();
+                CLibCri::getInstance();
                 getStreamVolume__7CLibCriFv(slot->handle);
             }
         } else {

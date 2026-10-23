@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction from retail PPC.
 
 #include "kyoshin/menu/CMenuItemExchange.hpp"
+#include "kyoshin/CTaskGame.hpp"
 
 #include <revolution/GX.h>
 
@@ -331,8 +332,8 @@ typedef void (*CMenuExchangePhaseFn)(CMenuItemExchange*);
  * (state dispatch through the retail jump table) and tick every widget.
  */
 void CMenuItemExchange::Move() {
-    getInstance__9CTaskGameFv();
-    if (isFlag01Set__9CTaskGameFv() == 0) {
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set() == 0) {
         if ((lbl_eu_80663E28 & 0x200000) == 0) {
             goto body;
         }
@@ -365,8 +366,8 @@ body:
  * (`beq body`; fallthrough = end).
  */
 void CMenuItemExchange::cbRenderBefore() {
-    getInstance__9CTaskGameFv();
-    if (isFlag01Set__9CTaskGameFv() == 0 &&
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -434,7 +435,7 @@ __declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
 /* Exchange-menu phase gate: once the title/help bar is idle and the item-box
  * line is ready, advance the menu to phase 2 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom1(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         self->field_5118 = 2;
     }
@@ -445,7 +446,7 @@ __declspec(noinline) void ItemEx_Phase2Idle(CMenuItemExchange* self){}
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 1 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->field_64 = 1;
@@ -456,7 +457,7 @@ __declspec(noinline) void ItemEx_GateFrom3(CMenuItemExchange* self) {
  * leaves the initial value, apply the grid selection to help bar + line and
  * advance to phase 5, kicking menu-op 0x6d. */
 __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
         IsItemBoxReady(&self->mItemBoxGrid) != 0) {
         self->mFloat5120 = self->mFloat5120 + lbl_eu_80667E7C;
@@ -476,7 +477,7 @@ __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 6 (field_5118). */
 __declspec(noinline) void ItemEx_GateFrom5(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->field_5118 = 6;
     }
@@ -548,7 +549,7 @@ __declspec(noinline) void ItemEx_Phase6Input(CMenuItemExchange* self) {
  * ready, reset the help bar to mode 0, stop its animation, finish the line
  * load and advance the menu to phase 8 (field_5118). */
 __declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         func_801C41E8(&self->mTitleAHelp, 0);
         reopenFromClose(&self->mTitleAHelp);
@@ -560,7 +561,7 @@ __declspec(noinline) void ItemEx_Phase7Entry(CMenuItemExchange* self) {
 /* Exchange-menu phase gate: twin of ItemEx_GateFrom1 (idle help bar + ready
  * item-box line) advancing the menu to phase 2. */
 __declspec(noinline) void ItemEx_GateFrom8(CMenuItemExchange* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
         self->field_5118 = 2;
     }

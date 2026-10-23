@@ -37,8 +37,6 @@ extern "C" void copyVec3Words(void* dst, const B47Vec3* src);
 extern "C" void noopAnimVec3(void* dst);
 extern "C" void CfRes_releaseCachedBase(int flag);
 extern "C" void CPartsChange_FlushChangeList(unsigned long a, void* b);
-extern "C" void GimSpawnAll(unsigned long a, void* b);
-extern "C" void GimUpdateGlobal(unsigned long a, void* b);
 extern "C" void mineUpdateAll(unsigned long a, void* b);
 extern "C" void CPartsChange_InitChangeRecord(unsigned long a, void* b);
 extern "C" void CPartsChange_LoadBdatTables(unsigned long a, void* b);
@@ -199,7 +197,7 @@ extern "C" void __ct__reslist_cf_CfObject(void* self) {
 #pragma push
 #pragma auto_inline off
 extern "C" DECOMP_DONT_INLINE void ensureFactoryPool(UnkClass_805764CC* self) {
-    if (factoryPoolCount(&self->field_0xC80) == 0) {
+    if (get_u32_18__17UnkClass_805764CCFv(&self->field_0xC80) == 0) {
         allocEventPool(&self->field_0xC80, CfRes_getAllocHandle(), 4);
     }
 }
@@ -310,7 +308,6 @@ void spawnObjFromRes(cf::CfObject* obj) {
 // optional sub-object (each null-guarded) with its own teardown entry point.
 extern "C" void CPartsChange_DispatchChangeList(u32 obj);
 extern "C" void clearMapItems(u32 obj);
-extern "C" void GimTeardownAll(u32 obj);
 extern "C" void hikariResetManagerRecords(u32 obj);
 extern "C" void mineReleasePoints(u32 obj);
 extern "C" int reslistIsBusy(void* self);
@@ -595,7 +592,7 @@ extern "C" void setMgrFixStrName(const char* name) {
         }
     } else {
         clearFixStrBuf(&obj->field_0xCB0);
-        gflagOrMask(2);
+        gflag_setBits__FUl(2);
     }
 }
 void init_1EB8(){}
@@ -990,13 +987,13 @@ extern "C" void findListNode(void** out, void** headPtr, void** valA, void** val
 
 // Null-guarded triple dispatch: fetch a handle, reset, then pass the reset
 // result + handle to the forwarder (retail: handle in r4).
-extern "C" void* getPtrAt720();
+extern "C" void* getPtr_720__17UnkClass_805764CCFv();
 extern "C" void* getReslistC48();
 extern "C" void allocTboxEntry(void* a, void* b);
 
 extern "C" void copyTboxFromObj(void* arg) {
     if (arg != 0) {
-        void* v = getPtrAt720();
+        void* v = getPtr_720__17UnkClass_805764CCFv();
         allocTboxEntry(getReslistC48(), v);
     }
 }
@@ -1501,7 +1498,7 @@ extern "C" void* tboxIterItem(void* a);
 extern "C" void tboxIterStep(void* a, void* b, int c);
 extern "C" void copyWordAt4(void* a, void* b);
 extern "C" int iterWordsDiffer(void* a, void* b);
-extern "C" void clearWorkCounters(void* a);
+extern "C" void clearCounters__17UnkClass_800B0AD8Fv(void* a);
 extern "C" void walkReslistByMask(void* object, u32 mask);
 extern float lbl_eu_80663EDC;
 extern u32 lbl_eu_80663EE4;
@@ -1524,7 +1521,7 @@ extern "C" void clearAllReslists(UnkClass_805764CC* self) {
     clearReslistLinks(&self->field_0xB28);
     clearReslistLinks(&self->field_0xBA8);
     clearReslistLinks(self);
-    clearWorkCounters(&self->field_0x20);
+    clearCounters__17UnkClass_800B0AD8Fv(&self->field_0x20);
     self->field_0xD0E = 0;
     self->field_0xD10 = 0;
     self->field_0xD04 = 0;
@@ -1548,8 +1545,8 @@ check:
 #pragma pop
 // us-800b6fb8 - tickSpeedPass (guard-chain + event queue dispatch)
 extern "C" void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list);
-extern "C" void* getPtrAt1A8();
-extern "C" void clearField700(void* buf);
+extern "C" void* getPtr_1A8__17UnkClass_805764CCFv();
+extern "C" void clear_700__17UnkClass_805764CCFv(void* buf);
 extern "C" void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor,
                               void* list, const F8C0ListSource* buf, float f);
 extern "C" void processSortedBuffer(void* self, void* buf);
@@ -1575,12 +1572,12 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     }
     int result = 0;
     if (CfRes_getE24Bit22() == 0 && getInstance__Q22cf14CBattleManagerFv() != 0) {
-        void* tmp = getPtrAt1A8();
+        void* tmp = getPtr_1A8__17UnkClass_805764CCFv();
         result = isTypeId1to24(tmp);
     }
     if (result == 0) {
         char buf[0x700];
-        clearField700(buf);
+        clear_700__17UnkClass_805764CCFv(buf);
         gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb48),
                       (const F8C0ListSource*)buf, lbl_eu_80663EC8);
         gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb68),
@@ -1592,7 +1589,7 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
 extern "C" void setTrackedTarget(UnkClass_805764CC* self, void* arg, int flag, float value) {
     extern const float lbl_eu_806669D8;
     if (flag) {
-        self->field_0xCF4 = (u32)getObjIdAt74(arg);
+        self->field_0xCF4 = (u32)get_u32_74__17UnkClass_805764CCFv(arg);
         self->field_0xCF8 = value;
     } else {
         self->field_0xCF8 = lbl_eu_806669D8;
@@ -1915,7 +1912,7 @@ extern "C" void __ct__reslist_cf_TboxInfo(void* self) {
     obj->mStartNodePtr->mNext = obj->mStartNodePtr;
     obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
 }
-
+void factoryCtorNop() {} // empty pool-slot ctor (allocTboxPool)
 // Base reslist ctor is unused (the specialized ctors above are flattened
 // free functions); kept as an empty template so member-ctor instantiations
 // (e.g. generic reslist<T>) never emit stray code.
@@ -2616,14 +2613,14 @@ extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
 }
 #pragma pop
 
-// Ring-buffer accessors over the AD8 block (sorted by the getObjIdAt74 key).
-extern "C" unsigned long workBufCount(void* ctx);
+// Ring-buffer accessors over the AD8 block (sorted by the get_u32_74__17UnkClass_805764CCFv key).
+extern "C" unsigned long getCount__17UnkClass_800B0AD8Fv(void* ctx);
 extern "C" unsigned long workBufSize(void* ctx);
-extern "C" void** workBufElem(void* ctx, int index);
+extern "C" void** getRingElem__17UnkClass_800B0AD8FUl(void* ctx, int index);
 
 // us-800b77e0 - findWorkById
 // Binary search over the sorted ring buffer at singleton+0x20 by the key
-// returned from getObjIdAt74; boundary elements are checked before the
+// returned from get_u32_74__17UnkClass_805764CCFv; boundary elements are checked before the
 // (unsigned) range rejection, then the classic lo/hi bisection runs.
 extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
     if (id == 0) {
@@ -2632,30 +2629,30 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
     UnkClass_805764CC* inst = getInstance();
     AD8Wrapper* ctx = &inst->field_0x20;
     int lo = 0;
-    unsigned long count = workBufCount(ctx);
+    unsigned long count = getCount__17UnkClass_800B0AD8Fv(ctx);
     workBufSize(ctx);
     if (count == 0) {
         return 0;
     }
-    void* entry = *workBufElem(ctx, 0);
-    if ((u32)getObjIdAt74(entry) == (u32)id) {
+    void* entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, 0);
+    if ((u32)get_u32_74__17UnkClass_805764CCFv(entry) == (u32)id) {
         return entry;
     }
-    if ((u32)id < (u32)getObjIdAt74(entry)) {
+    if ((u32)id < (u32)get_u32_74__17UnkClass_805764CCFv(entry)) {
         return 0;
     }
-    entry = *workBufElem(ctx, (int)count - 1);
-    if ((u32)getObjIdAt74(entry) == (u32)id) {
+    entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, (int)count - 1);
+    if ((u32)get_u32_74__17UnkClass_805764CCFv(entry) == (u32)id) {
         return entry;
     }
-    if ((u32)id > (u32)getObjIdAt74(entry)) {
+    if ((u32)id > (u32)get_u32_74__17UnkClass_805764CCFv(entry)) {
         return 0;
     }
     int hi = (int)count;
     while (lo <= hi) {
         int mid = (lo + hi) >> 1;
-        entry = *workBufElem(ctx, mid);
-        int delta = (int)((u32)id - (u32)getObjIdAt74(entry));
+        entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, mid);
+        int delta = (int)((u32)id - (u32)get_u32_74__17UnkClass_805764CCFv(entry));
         if (delta == 0) {
             return entry;
         }
@@ -2700,7 +2697,6 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
 // (-O4,s) negotiation per walls #6/#13.
 extern "C" void* __construct_new_array(void* block, void* dtor, unsigned long flag,
                                        unsigned long elemSize, unsigned long count);
-extern "C" void factoryCtorNop();
 
 #pragma push
 #pragma auto_inline off
@@ -2718,10 +2714,10 @@ extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long co
 
 // Imports for spawnVoiceActor (voice/actor spawn path).
 extern "C" void* CfRes_packFourFields(unsigned long a, unsigned long b, unsigned long c, void* d);
-extern "C" void setObjXY_73A(void* obj, unsigned long a, unsigned long b);
+extern "C" void set_u8_73A__17UnkClass_805764CCFUcUc(void* obj, unsigned long a, unsigned long b);
 extern "C" void setObjField720(u8* self, u32 val);
 extern "C" void copyObjVec724(void* obj, void* arg);
-extern "C" void setObjFloat730(void* obj, float val);
+extern "C" void set_float_730__17UnkClass_805764CCFf(void* obj, float val);
 extern "C" void* CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long handle);
 
@@ -2755,11 +2751,11 @@ extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, float val) {
         u16 w, v;
         w = getGlobalU16_3E44();
         v = getGlobalU16_3E42();
-        setObjXY_73A(obj, v, w);
-        setObjField720((u8*)obj, (u32)getObjIdAt74(obj));
+        set_u8_73A__17UnkClass_805764CCFUcUc(obj, v, w);
+        setObjField720((u8*)obj, (u32)get_u32_74__17UnkClass_805764CCFv(obj));
         setObjField738(obj, argB);
         copyObjVec724(obj, argC);
-        setObjFloat730(obj, val);
+        set_float_730__17UnkClass_805764CCFf(obj, val);
         void* src = CfRes_getHeapHandle();
         void* child = allocate__Q23mtl10MemManagerFUlUl(0x7c, (unsigned long)src);
         if (child != 0) {
@@ -2771,7 +2767,7 @@ extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, float val) {
 }
 // us-800b7c40 - removeTboxById
 // Iterate the TboxInfo reslist at singleton->field_0xC48; for each node whose
-// data's first word equals getObjIdAt74(self), remove that node (via
+// data's first word equals get_u32_74__17UnkClass_805764CCFv(self), remove that node (via
 // unlinkListNode with a saved cursor) and return. The 4-byte list cursors are
 // local u32s; the goto/check loop shape reproduces retail's layout (body
 // first, head-check at the end, init jumps to the head). copyIterFrom is
@@ -2790,7 +2786,7 @@ extern "C" void removeTboxById(void* self) {
     tboxIterBegin(&cursor, &singleton->field_0xC48);
     goto check;
 loop:
-    void* item = getObjIdAt74(self);
+    void* item = get_u32_74__17UnkClass_805764CCFv(self);
     void* data = tboxIterItem(&cursor);
     if (*(u32*)data == (u32)item) {
         void* cur = copyIterFrom(&saved, &cursor);
@@ -2830,6 +2826,7 @@ extern "C" void triggerObjsByType(s32 arg) {
     }
 }
 extern "C" void factoryEventNopA() {}
+void factoryEventNopB() {}
 // Target us-800b9120: registerFactoryEvent(self, event)
 // Ensure the reslist pool @ field_0xC80 is set up, then look for an existing
 // node whose data pointer equals `event`; if none, claim the first empty
@@ -3134,9 +3131,9 @@ loop:
         obj->unk39((u8*)tboxIterItem(&cursor) + 4);
         obj->unk49(((B7410Node*)tboxIterItem(&cursor))->field_10);
         obj->unk55(lbl_eu_80666A10);
-        setObj6Cmask(obj, 0x20000000, 1);
+        maskField_6C__17UnkClass_805764CCFUli(obj, 0x20000000, 1);
         CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
-        *(void**)tboxIterItem(&cursor) = getObjIdAt74(obj);
+        *(void**)tboxIterItem(&cursor) = get_u32_74__17UnkClass_805764CCFv(obj);
     }
 advance:
     tboxIterStep(&nextCur, &cursor, 0);
@@ -3180,7 +3177,7 @@ void processSortedBuffer(UnkClass_805764CC* self, void* buf) {
     u32 v;
     u8 itBuf[0x384];
     u32 count = 0;
-    clearField380(itBuf);
+    clear_380__17UnkClass_805764CCFv(itBuf);
     KyoshinHeap_Reset38();
     void** cur = sortBufIdentity(buf);
     while (cur != sortBufEnd(buf)) {
@@ -3201,7 +3198,7 @@ void processSortedBuffer(UnkClass_805764CC* self, void* buf) {
             v = getObjField70(obj);
             if (v != 0) {
                 u32 found = 0;
-                for (u32 i = 0; i < sortBufCount(itBuf); i++) {
+                for (u32 i = 0; i < get_u32_380__17UnkClass_805764CCFv(itBuf); i++) {
                     if (*(u32*)sortBufAt(itBuf, i) == v) {
                         found = 1;
                         break;
@@ -3216,7 +3213,10 @@ void processSortedBuffer(UnkClass_805764CC* self, void* buf) {
         cur++;
     }
 }
-
+#pragma push
+#pragma auto_inline off
+void** sortBufIdentity(void* buf) { return (void**)buf; }
+#pragma pop
 // Inlined by probeReadyLists once per list (retail emits four copies).
 static bool listReady45A0(void* list) {
     CfReslistNode* cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
@@ -3271,7 +3271,7 @@ void buildSingleton(UnkClass_805764CC* self) {
     allocFactoryPool((UnkClass_805764CC*)&self->field_0xC08, 0x14);
     allocFactoryPool((UnkClass_805764CC*)&self->field_0xC28, 0x80);
     allocTboxPool(&self->field_0xC48, CfRes_getAllocHandle(), 0x14);
-    clearWorkCounters(&self->field_0x20);
+    clearCounters__17UnkClass_800B0AD8Fv(&self->field_0x20);
 
     // Retail relies on each ctor returning its argument (r3) so the store
     // sits on the join path without a saved temp.
@@ -3286,7 +3286,7 @@ void buildSingleton(UnkClass_805764CC* self) {
         (u32)(p != 0 ? __ct__cf_CfValueItemManager(p) : p);
     p = allocate__Q23mtl10MemManagerFUlUl(0x220, CfRes_getAllocHandle());
     self->field_0xCFC =
-        (u32)(p != 0 ? __ct__801F3BE8(p) : p);
+        p != 0 ? __ct__801F3BE8((CGimmickGlobal*)p) : (CGimmickGlobal*)p;
     p = allocate__Q23mtl10MemManagerFUlUl(0x11a4, CfRes_getAllocHandle());
     self->field_0xD00 =
         (u32)(p != 0 ? __ct__cf_CfHikariItemManager(p) : p);
@@ -3301,7 +3301,7 @@ void buildSingleton(UnkClass_805764CC* self) {
     setFieldD08Hi(self);
     CfRes_initResEntries(-1);
     CfRes_initTblEntries(-1);
-    gflagOrMask(1);
+    gflag_setBits__FUl(1);
     ensureFactoryPool(self);
 
     // Drain the IFactoryEvent queue, invoking slot 5 on each entry.
@@ -3351,7 +3351,7 @@ void teardownGameMgr(UnkClass_805764CC* self) {
         self->field_0xCA0 = 0;
     }
     if (self->field_0xCFC != 0) {
-        __dt__801F3C08((void*)self->field_0xCFC, 1);
+        __dt__801F3C08(self->field_0xCFC, 1);
         self->field_0xCFC = 0;
     }
     // Retail loads field_0xD00 once and keeps a redundant second null
@@ -3403,7 +3403,7 @@ check:
     factoryListDtor(&self->field_0xB28);
     factoryListDtor(&self->field_0xBA8);
     factoryListDtor(self);
-    clearWorkCounters(&self->field_0x20);
+    clearCounters__17UnkClass_800B0AD8Fv(&self->field_0x20);
     __dt__800B183C(&self->field_0xC48);
     gflagClearAll();
 
@@ -3851,11 +3851,11 @@ extern "C" void removeManagedObject(UnkClass_805764CC* self, void* objv) {
             CPartsChange_TeardownContainer(container, 1);
         } else {
             if (CfObjectMove_relaySubB0Slot60((u8*)obj) >= 0) {
-                u32 key = (u32)getObjIdAt74((u8*)obj);
+                u32 key = (u32)get_u32_74__17UnkClass_805764CCFv((u8*)obj);
                 CfSoundMan_StopSoundSlots(key, (u32)CfObjectMove_relaySubB0Slot60((u8*)obj), 0xa);
             }
             void* voice = lookupCA0By45C0(container);
-            if (voice != 0 && CPartsChange_FindVoiceIndex(voice, (u32)getObjIdAt74((u8*)obj)) >= 0) {
+            if (voice != 0 && CPartsChange_FindVoiceIndex(voice, (u32)get_u32_74__17UnkClass_805764CCFv((u8*)obj)) >= 0) {
                 CPartsChange_ResetBattleEntry(container, 0, 0);
             }
         }
@@ -3910,8 +3910,8 @@ extern "C" u32 fileObjectIntoPools(UnkClass_805764CC* self, cf::CfObject* obj) {
         // Scan the game-manager list once, collecting insertion anchors for
         // both type families as they appear. A node of neither family ends
         // the scan immediately (without the advance/compare tail).
-        storeIterWord(&itMain, 0);
-        storeIterWord(&itOther, 0);
+        set_u32_00__17UnkClass_805764CCFUl(&itMain, 0);
+        set_u32_00__17UnkClass_805764CCFUl(&itOther, 0);
         copyItemSourceNode__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&outer, (const F8C0ListSource*)self);
         // Rotated while loop: advance+compare runs before each body pass
         // (comma expression keeps both calls in the loop condition).
@@ -3932,12 +3932,12 @@ extern "C" u32 fileObjectIntoPools(UnkClass_805764CC* self, cf::CfObject* obj) {
         }
         // Insert after the last same-family anchor found by the scan (or
         // append straight into the flat list when no anchor matched).
-        u32* endOtherEnd = storeIterWord(&endOther, 0);
+        u32* endOtherEnd = set_u32_00__17UnkClass_805764CCFUl(&endOther, 0);
         if (compareFlagValues__Q22cf13CfGameManagerFv(&itOther, endOtherEnd)) {
             void* tpl = copyIterWord(&tplOther, &itOther);
             poolInsertNode((void**)&outOther, self, tpl, &obj);
         } else {
-            u32* endMainEnd = storeIterWord(&endMain, 0);
+            u32* endMainEnd = set_u32_00__17UnkClass_805764CCFUl(&endMain, 0);
             if (compareFlagValues__Q22cf13CfGameManagerFv(&itMain, endMainEnd)) {
                 void* tpl2 = copyIterWord(&tplMain, &itMain);
                 poolInsertNode((void**)&outMain, self, tpl2, &obj);
@@ -5160,7 +5160,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 if (slotBusy != 0) {
                     goto loop_end;
                 }
-                if ((u16)getObjU16_45C0(ctrlView) != 0) {
+                if ((u16)get_u16_45C0__17UnkClass_805764CCFv(ctrlView) != 0) {
                     u8* obj2 = ctrlView + 0x3e9c;
                     if (testObj64bit26(obj2) != 0) {
                         removeManagedObject(self, obj2);

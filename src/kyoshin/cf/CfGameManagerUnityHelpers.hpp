@@ -4,6 +4,7 @@
 #include <types.h>
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_801F3BE0.hpp"
 namespace cf {
 class UnkClass_80082D90;
 }
@@ -248,7 +249,6 @@ stateUpdated:
     BattleWork_TickDriver(manager->unkA8);
 }
 
-extern "C" void MapFx_ReleaseHandle(u32 object);
 extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
 extern "C" void MenuSnd_StopAllSlots_8774(u32 object);
 extern "C" void CfResPcFileHost_clear(UnkClass_80085334* object);
@@ -2159,8 +2159,6 @@ extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
 extern "C" void gmDispatchPair(cf::CfObjectMove* player, u32 value);
 extern "C" void CfRes_callFunc_68110(u32 value);
 extern "C" float lbl_eu_8066656C;
-extern "C" UnkGimmickGlobalView* getUnk80664658();
-extern "C" void GimDeactivateLocks();
 extern "C" u32 CfRes_pushRec(u32 object, u32 mode, u32 value,
                                 u32 fourth, u32 fifth, u32 sixth);
 extern "C" void processFieldLoad__Q22cf13CfGameManagerFv() {
@@ -2189,8 +2187,7 @@ extern "C" void processFieldLoad__Q22cf13CfGameManagerFv() {
         CfRes_pushRec(reinterpret_cast<u32>(manager->unkAC), 0x13, 2, 0, 0, 0);
     }
     if (getUnk80664658() != 0) {
-        getUnk80664658();
-        GimDeactivateLocks();
+        GimDeactivateLocks(getUnk80664658());
     }
 }
 

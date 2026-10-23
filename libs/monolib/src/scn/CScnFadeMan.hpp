@@ -5,14 +5,7 @@
 #include "monolib/math/CCol4.hpp"
 #include "monolib/core/CViewFrame.hpp" // ml::CRect / ml::CRect16 + forward-declared CView
 
-// Minimal CScn surface used by CScnFadeMan (inherits CTTask + IWorkEvent).
-// Not the full include/monolib/scn/CScn.hpp (that header re-declares the
-// isFadeSettled/C72C/C794 primitives of THIS TU, which would conflict).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
 // Static CView helpers needed by cbRenderBefore. getCurrentView is declared in
 // monotlib/include/monolib/core/CView.hpp; fitRectToView is not, so both are

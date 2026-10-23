@@ -63,5 +63,3 @@ struct CChainCombo_ArtsCategory {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void UIWin_CreateAA2A0Win();
-extern "C" void chainResolveMemberPtr(int, void*);

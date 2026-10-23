@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
@@ -125,7 +126,6 @@ void ApplyFontToTxtPanes(void*, u32);
 void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void*);
 char* MakeTplNameSysFile(u32);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-u16 BdatGetU16Direct(const void*, const void*, int);
 void setPaneVisible(nw4r::lyt::Pane*, u32);
 void writePanePos(nw4r::lyt::Pane*, float*);
 u32 CtrlRemote_TouchBitByArg(u32);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/work/CEventFile.hpp"
 
 struct CFileHandle;
 
@@ -37,18 +38,6 @@ namespace cf {
 
 // Forward declarations
 class CfScriptManager;
-
-// Minimal CEventFile layout - only the fields CfScript::OnFileEvent consumes.
-// CDeviceFile hands a filled CEventFile to the async IWorkEvent callback.
-class CEventFile {
-public:
-    s32 field_00;          // 0x00 event type
-    CFileHandle* field_04; // 0x04 owning file handle
-    u8 _08[0x0C - 0x08];
-    const char* field_0C;  // 0x0C path string
-    u8 _10[0x14 - 0x10];
-    u32 field_14;          // 0x14 flag
-};
 
 // FixStr<64>-compatible extension buffer WITHOUT a constructor.  Retail does
 // not zero it before getNoPathExtName fills it (a FixStr ctor would emit extra
@@ -138,7 +127,7 @@ public:
 // OnFileEvent__8CfScriptFP10CEventFile); our CfScript sits in namespace cf,
 // so emit it under the pre-mangled retail name with an explicit self
 // (same convention as CUICfManager/CSortMenu).
-extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEventFile* event);
+extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, ::CEventFile* event);
 
 typedef void (cf::CfScript::*CfScriptPMF)();
 extern CfScriptPMF lbl_eu_80526DD0[2];

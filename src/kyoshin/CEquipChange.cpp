@@ -17,6 +17,7 @@
 #define lbl_eu_806640F8 lbl_eu_806640F8_citem_dup
 #define CItem_slotCnt CItem_slotCnt_citem_dup
 #include "kyoshin/cf/CItem.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #undef lbl_eu_806640D8
 #undef lbl_eu_806640EC
 #undef lbl_eu_806640F4
@@ -1473,7 +1474,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         CFileHandle* handle = (CFileHandle*)field_24;
         data = handle->getData();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        field_2C = createArcResourceAccessor__10CLibLayoutFv();
+        field_2C = CLibLayout::createArcResourceAccessor();
         field_2C->Attach(data, &base[0x1FA]);
         buildLayout((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
         bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_38, field_2C, &base[0x20E]);
@@ -1563,7 +1564,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         CFileHandle* handle = (CFileHandle*)field_28;
         scratch = handle->getData();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         field_30 = (u32)acc;
         acc->Attach(scratch, &base[0x1FA]);
         // Cache the second accessor in the global equip-page flag slot.

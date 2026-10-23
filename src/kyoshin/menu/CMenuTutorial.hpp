@@ -6,20 +6,11 @@
 #include "kyoshin/CTutorial.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Local IScnRender declaration with NO destructor and no inline bodies. The
-// real monolib IScnRender (libs/monolib/include/monolib/scn/IScnRender.hpp)
-// defines `virtual ~IScnRender(){}` inline; odr-using that inline dtor from
-// this TU makes MWCC emit a standalone __dt__10IScnRenderFv strong copy
-// (0x40) here and blows the split budget (retail keeps that copy only in
-// CTaskGame.o, and its own dtor treats the subobject as trivial -- the
-// generated ~CMenuTutorial destroys only mTitleAHelp/mTutorial then chains
-// to the base destructor). Omitting the dtor gives IScnRender an implicitly
-// trivial one while keeping the vtable layout identical (slot order:
-// dtor slot, handleEmptyRender).
-class IScnRender {
-public:
-    virtual void handleEmptyRender();
-};
+// IScnRender without a virtual destructor (CMenuTutorial.cpp defines
+// ISCN_RENDER_NO_DTOR): odr-using the inline `virtual ~IScnRender(){}` from this
+// TU makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
+// and blows the split budget (retail keeps that copy only in CTaskGame.o).
+#include "monolib/scn/IScnRender.hpp"
 
 /*
  * Tutorial menu screen process (CProcess + IScnRender MI).
@@ -90,7 +81,6 @@ extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void beginClose(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CTutorial widget callees (retail-unmangled func_ names).
 extern "C" void Tutorial_DrawLayoutGated(CTutorial* self, nw4r::lyt::DrawInfo* drawInfo);
@@ -139,8 +129,6 @@ CMenuTutorial* MenuTutorialCreate(CProcess* self, CProcess* parent, u32 arg2);
 // CTaskGame statics (retail-mangled names). Imported flat because including
 // CTaskGame.hpp would pull monolib/scn.hpp and clash with the body-less
 // local IScnRender declaration above.
-extern "C" void getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];

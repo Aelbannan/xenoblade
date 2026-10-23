@@ -2381,7 +2381,7 @@ void FloorMap_PlacePlayerMarker(void* self) {
 
     // Wrapper pane that owns the picture and carries the projected position.
     nw4r::lyt::Pane* holder =
-        new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
     holder->SetName(&tbl[0x2D6]);
 
     CFloorMapPaneFlag* pf = (CFloorMapPaneFlag*)holder;
@@ -2651,7 +2651,7 @@ CFloorMap::CFloorMap() {
     cursor_idx_5C = 0;
     field_5D = 0;
     __ct__CScrollBar(&mScrollBar[0], 0);
-    __ct__CCur18(&mCursorA0[0], 0);
+    __ct__CCur18(&mCursorA0, 0);
     __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
     __ct__CSysWin(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
     layout_130 = 0;
@@ -2788,7 +2788,7 @@ CFloorMap::CFloorMap() {
 CFloorMap::~CFloorMap() {
     __dt__7CSysWinFv(mSysWinF4, -1);
     __dt__7CSysWinFv(mSysWinB8, -1);
-    __dt__6CCur18Fv(mCursorA0, -1);
+    __dt__6CCur18Fv(&mCursorA0, -1);
     __dt__10CScrollBarFv(mScrollBar, -1);
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion14), -1);
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion04), -1);
@@ -3101,7 +3101,7 @@ void FloorMap_Draw(void* self, void* drawInfo) {
 // releases every layout/resource/widget created for the screen and clears
 // each owning pointer.
 void FloorMap_Teardown(CFloorMapFull* p) {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_24));
     closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_28));
     closeFileHandle(reinterpret_cast<CFileHandle**>(&p->field_2C));
@@ -4218,7 +4218,7 @@ extern "C" u32 FloorMap_ClassifyByte41(u8* self) {
 
 extern "C" u16 FloorMap_GetU16Field5A(u8* self) { return ((CFloorMapFull*)self)->field_5A; }
 
-u8 CFloorMapFull::GetActiveFlag58() { return this->field_58; }
+u8 CFloorMap::GetActiveFlag58() { return cursor_active_58; }
 
 void FloorMap_ConfirmSelect(void* self) {
     extern int CSysWin_isActive(void*);
@@ -4551,7 +4551,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         // Row-marker panes: a base pane appended to the map layout's zoom
         // pane (0x136), then eleven more panes appended to the base pane.
-        nw4r::lyt::Pane* pane = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        nw4r::lyt::Pane* pane = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         pane->SetName(&lbl_eu_8050BEA8[0x263]);
         pane->SetVisible(true);
         this->field_148 = (u32)pane;
@@ -4559,57 +4559,57 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
             ->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1)
             ->AppendChild((nw4r::lyt::Pane*)this->field_148);
 
-        nw4r::lyt::Pane* child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        nw4r::lyt::Pane* child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x26c]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x275]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x281]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x28a]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x293]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2a0]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2ab]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2b4]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2bd]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2c7]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
 
-        child = new (getAllocHandle__10CLibLayoutFv()) nw4r::lyt::Pane();
+        child = new (CLibLayout::getAllocHandle()) nw4r::lyt::Pane();
         child->SetName(&lbl_eu_8050BEA8[0x2cf]);
         child->SetVisible(true);
         ((nw4r::lyt::Pane*)this->field_148)->AppendChild(child);
@@ -4640,18 +4640,11 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         this->field_333C = 0;
         FloorMap_BuildLayoutBaseArc((CFloorMapLayoutData0*)&this->layout_3334);
 
-        u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
-        CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&this->mCursorA0[0]);
-        CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
-        curDst->field_4 = curSrc->field_4;
-        curDst->field_8 = curSrc->field_8;
-        curDst->field_C = curSrc->field_C;
-        curDst->field_10 = curSrc->field_10;
-        curDst->field_14 = curSrc->field_14;
-        curDst->field_15 = curSrc->field_15;
-        __dt__6CCur18Fv(tmpCur, -1);
-        reinterpret_cast<CBaseCur*>(&this->mCursorA0[0])->initLayout();
+        CCur18 tmpCur;
+        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+        this->mCursorA0 = tmpCur;
+        __dt__6CCur18Fv(&tmpCur, -1);
+        this->mCursorA0.initLayout();
 
         // Reposition every map layout under the current map cursor.
         if (this->field_34 != 0 && this->field_38 != 0 && this->field_30 == 0) {

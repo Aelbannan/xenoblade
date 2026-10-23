@@ -245,17 +245,17 @@ void CMenuLandTelop::Move() {
             switch (kind) {
             case 0:
                 CTaskGame_openStream(0, &lbl_eu_80501720[0x29],
-                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
+                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 1:
                 CTaskGame_openStream(0, &lbl_eu_80501720[0x39],
-                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0x5a,
+                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0x5a,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 2:
                 CTaskGame_openStream(0, &lbl_eu_80501720[0x49],
-                              Scn_CallUnk8C_V9(lbl_eu_80663E14), 2, 1, 0,
+                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0,
                               lbl_eu_806673EC * MenuSnd_GetMasterVol_95EC());
                 break;
             }

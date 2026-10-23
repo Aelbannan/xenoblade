@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -54,15 +55,14 @@ extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void renderItemBox(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void updateItemBoxAnims(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void Cur_Update(CMCItemBoxSubObj*);
-extern "C" void Cur_DrawLayout(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
+extern "C" void Cur_Update(CBaseCur*);
+extern "C" void Cur_DrawLayout(CBaseCur*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDrawLayout(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void sysWinDispatchPhase(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
 // Use the header's extern "C" __dt__12CItemBoxInfoFv / __dt__7CSysWinFv
 // so call-site relocs stay the retail unmangled names (C++ redecls here
 // were emitting __dt__...Fv__FP... extra-signature names).
 // Retail reloc names for the cursor dtors are unmanged C symbols.
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur16Fv(void*, int);
 extern "C" void __dt__6CCur09Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
@@ -526,8 +526,8 @@ void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
 void teardownMCGetItemBox(CMCGetItemBox* self) {
-    getEntry__5CBdatFUl(2);
-    getEntry__5CBdatFUl(5);
+    CBdat::getEntry(2);
+    CBdat::getEntry(5);
     closeFileHandle__FPP11CFileHandle(&self->fileHandle1);
     closeFileHandle__FPP11CFileHandle(&self->fileHandle2);
     closeFileHandle__FPP11CFileHandle(&self->fileHandle3);
@@ -556,10 +556,10 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
     }
     self->memRegion1.deleteRegion();
     self->memRegion2.deleteRegion();
-    (*(void(**)(void*))((void**)&self->subObj_58)[3])(&self->subObj_58);
-    (*(void(**)(void*))((void**)&self->subObj_70)[3])(&self->subObj_70);
-    (*(void(**)(void*))((void**)&self->subObj_88)[3])(&self->subObj_88);
-    (*(void(**)(void*))((void**)&self->subObj_A0)[3])(&self->subObj_A0);
+    self->subObj_58.cleanup();
+    self->subObj_70.cleanup();
+    self->subObj_88.cleanup();
+    self->subObj_A0.cleanup();
     closeItemBox1((void*)self->itemBox);
     sysWinTermLayout((void*)&self->sysWin_B8);
 }
@@ -637,7 +637,7 @@ extern "C" void moveMCGetItemBoxLeft(CMCGetItemBox* self) {
         u8 tmp[12];
         CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
+        self->subObj_A0.setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         u8 v = (u8)(self->field_301 - 1);
         self->field_301 = v;
@@ -668,7 +668,7 @@ void moveMCGetItemBoxRight(CMCGetItemBox* self) {
         u8 tmp[12];
         CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
+        self->subObj_A0.setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         u8 v = self->field_301 + 1;
         self->field_301 = v;
@@ -699,7 +699,7 @@ void moveMCGetItemBoxUp(CMCGetItemBox* self) {
         u8 tmp[12];
         CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
+        self->subObj_A0.setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
@@ -738,7 +738,7 @@ void moveMCGetItemBoxDown(CMCGetItemBox* self) {
         u8 tmp[12];
         CopyTabSlotVec((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
+        self->subObj_A0.setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
@@ -1312,7 +1312,7 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1dc], true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         ScalePaneWorldPos(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
-        ((CBaseCur*)&self->subObj_88)->setRootPaneTranslate(&posIf);
+        self->subObj_88.setRootPaneTranslate(&posIf);
         Cur_SetVisible(&self->subObj_88, 1);
         Cur_SetVisible(&self->subObj_58, 0);
     } else {
@@ -1321,7 +1321,7 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(nameBuf, true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         ScalePaneWorldPos(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
-        ((CBaseCur*)&self->subObj_58)->setRootPaneTranslate(&posElse);
+        self->subObj_58.setRootPaneTranslate(&posElse);
         Cur_SetVisible(&self->subObj_88, 0);
         Cur_SetVisible(&self->subObj_58, 1);
     }
@@ -1346,7 +1346,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         h1->mData = 0;
         mtl::MemManager::setMemInitFlag(false);
 
-        void* tagMem = mtl::MemManager::allocate(0x858, (mtl::ALLOC_HANDLE)getAllocHandle__10CLibLayoutFv());
+        void* tagMem = mtl::MemManager::allocate(0x858, (mtl::ALLOC_HANDLE)CLibLayout::getAllocHandle());
         if (tagMem != 0) tagMem = __ct__CTagProcessor(tagMem);
         this->objAt50 = (u8*)tagMem;
 
@@ -1405,13 +1405,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur07(cur07Buf, this->arcAcc1);
         MenuShopSellCopyCursor(&this->subObj_58, cur07Buf);
         __dt__6CCur07Fv(cur07Buf, -1);
-        ((CBaseCur*)&this->subObj_58)->initLayout();
+        this->subObj_58.initLayout();
 
         u8 cur09Buf[0x18];
         __ct__CCur09(cur09Buf, this->arcAcc1);
         MenuShopSellCopyCursor(&this->subObj_70, cur09Buf);
         __dt__6CCur09Fv(cur09Buf, -1);
-        ((CBaseCur*)&this->subObj_70)->initLayout();
+        this->subObj_70.initLayout();
 
         // Two anchor vectors on cursor 09: the second pair swaps the x base.
         nw4r::math::VEC3 s1;
@@ -1428,13 +1428,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur16(cur16Buf, this->arcAcc1);
         MenuShopSellCopyCursor(&this->subObj_88, cur16Buf);
         __dt__6CCur16Fv(cur16Buf, -1);
-        ((CBaseCur*)&this->subObj_88)->initLayout();
+        this->subObj_88.initLayout();
 
-        u8 cur18Buf[0x18];
-        __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->subObj_A0, cur18Buf);
-        __dt__6CCur18Fv(cur18Buf, -1);
-        ((CBaseCur*)&this->subObj_A0)->initLayout();
+        CCur18 cur18Buf;
+        __ct__CCur18(&cur18Buf, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(&this->subObj_A0, &cur18Buf);
+        __dt__6CCur18Fv(&cur18Buf, -1);
+        this->subObj_A0.initLayout();
 
         activateMCGetItemBox(this);
         this->fileHandle1 = 0;
@@ -1466,7 +1466,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // Retail folds the first lookup's offset directly into lis/addi, then
         // caches the table base for the remaining lookups.
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x29f]) == 0) {
-            setBdatEntry__5CBdatFUlPv(2, fileData);
+            CBdat::setBdatEntry(2, fileData);
         }
         Bdat_GetTable_AA34();
         lbl_eu_80664A18 = getFP__FPCc(&lbl_eu_8050FF8C[0x29f]);
@@ -1483,7 +1483,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         this->memManagerPtr = (u8*)fileData;
         Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x119]) == 0) {
-            setBdatEntry__5CBdatFUlPv(5, this->memManagerPtr);
+            CBdat::setBdatEntry(5, this->memManagerPtr);
         }
         Bdat_GetTable_AA34();
         lbl_eu_80664A20 = getFP__FPCc(&lbl_eu_8050FF8C[0x119]);

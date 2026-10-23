@@ -86,32 +86,8 @@ public:
     /* 0x26 */ u8 field_0x26[0x06]; // padding
     /* 0x2C */ CTitleLogo mLogo;
     /* 0x48 */ CTitleMenu mMenu;
-    /* 0x70 */ u8 mCur[0x18]; // CCur18 cursor (opaque)
-}; // sizeof 0x88 -- mCurBody below is a cast view, not a real member
-
-// Body view of the embedded CCur18 (past its vptr), used by OnFileEvent
-// to copy a freshly-constructed stack cursor into mCur. Kept outside the
-// class so it does not inflate CTitle past retail 0x88 (and shift
-// CMenuTitle::field_e8 from 0xE8 to 0xFC).
-struct CTitleCurBody {
-    nw4r::lyt::ArcResourceAccessor* mArcResAcc; // +0x04
-    nw4r::lyt::Layout* mpLayout;                // +0x08
-    nw4r::lyt::AnimTransform* mpAnimTrans0;     // +0x0C
-    nw4r::lyt::AnimTransform* mpAnimTrans1;     // +0x10
-    u8 mActive;                                 // +0x14
-    u8 mVisible;                                // +0x15
-};
-
-// Abstract view into the embedded CCur18 cursor vtable. MWCC inserts an
-// offset-to-top + RTTI prefix (2 entries), so vtable offset = (index + 2) * 4;
-// index 2 -> +0x10 is the "Move" virtual that repositions the cursor (takes
-// a VEC3*). All-pure so MWCC emits no vtable for the view itself.
-class CCur18View {
-public:
-    virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03() = 0;                        // index 1 -> +0x0C (retail passes no arg - r4 carries a stale flag)
-    virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
-};
+    /* 0x70 */ CCur18 mCur;
+}; // sizeof 0x88
 
 // State-dispatch tables (.data): 12-byte pointer-to-member-function records
 // indexed by the state fields. MWCC lowers (self->*table[idx])() to
@@ -130,8 +106,6 @@ extern CTitleMenuStateFn lbl_eu_8053B220[];
 extern "C" __declspec(noinline) CTitleLogo* __ct__CTitleLogo(CTitleLogo* self);
 extern "C" __declspec(noinline) CTitleMenu* __ct__CTitleMenu(CTitleMenu* self);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-extern "C" CBaseCur* __ct__CCur18(CBaseCur* self, nw4r::lyt::ArcResourceAccessor* arcResAcc);
-extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void Cur_SetVisible(void* pCur, u8 val);
 extern "C" void Cur_Update(CBaseCur* pCur);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);

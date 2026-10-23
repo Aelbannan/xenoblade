@@ -687,7 +687,6 @@ extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name)
 // imports (defined in CScnItemModel.cpp / CScn.cpp / CScnItemPool.cpp).
 extern "C" void simNotifyVfunc9C(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
-extern "C" u32 Scn_CallUnk8C_V9(CScnItemModelNw4r* self);
 extern "C" u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
 extern "C" u32 CScnItemPool_registerOtherList(u8* pool, CScnItemModelNw4r* model, u32 flag);
 

@@ -67,7 +67,8 @@ public:
 
 // Singleton factory (retail unmangled symbol).
 extern "C" CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg);
-// hasOptionMenu (live-instance check) is declared by kyoshin/CTaskGame.hpp.
+// Live-instance check (flat retail name; defined in this TU).
+extern "C" u32 hasOptionMenu();
 // Complete-object destructor in its retail D2 form (defined in CMenuOption.cpp).
 extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
 // Retail constructor symbol (unmangled flat form; defined in CMenuOption.cpp).
@@ -129,8 +130,6 @@ extern "C" void COptionPageUp(COption* self);
 extern "C" void COptionPageDown(COption* self);
 extern "C" void COptionOpenConfigDialog(COption* self);
 extern "C" int COptionGetNavCode(COption* self);
-extern "C" int COptionGetConfirmGate(COption* self);
-extern "C" int COptionGetSecondConfirm(COption* self);
 extern "C" void COptionConfirmSelection(COption* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void beginClose(CTitleAHelp* self);
@@ -141,8 +140,6 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
-extern "C" int COptionGetLiveFlag(COption* self);
 extern "C" void COptionTeardown(COption* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).

@@ -737,7 +737,6 @@ extern "C" void cfCam_copyU32(unsigned* dst, const unsigned* src) {
 extern "C" void cfCam_copyU16(u16* dest, const u16* src) {
     *dest = *src;
 }
-extern unsigned int lbl_eu_80663E28;
 
 extern "C" int cfCam_getBit24_GlobalE28() {
     return (lbl_eu_80663E28 >> 24) & 1;

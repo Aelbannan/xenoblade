@@ -2,6 +2,8 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/CCol6CheckBat.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/CTaskGame.hpp"
 // Forward-declare cf::CfGameManager before the include chain pulls in
 // CfGameManager.hpp (its UnkClass_8007DAE0::init declaration references the
 // type before the namespace block that declares it).
@@ -356,7 +358,7 @@ extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
     self->mField11C = 0;
     self->mField120 = 0;
     self->mField121 = 0;
-    __ct__CCur18(self->mCur18, 0);
+    __ct__CCur18(&self->mCur18, 0);
     __ct__CScrollBar(&self->mScrollBar, 0);
     memset(self->mUnk9C, 0, 0x80);
     return self;
@@ -370,7 +372,7 @@ extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
 extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
     if (self != 0) {
         __dt__10CScrollBarFv(&self->mScrollBar, -1);
-        __dt__6CCur18Fv(self->mCur18, -1);
+        __dt__6CCur18Fv(&self->mCur18, -1);
         __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
         if (self != 0) {
             if (self != 0) {
@@ -448,7 +450,7 @@ void CCol6Hint::Term() {
 
     mFlag98 = 0;
     CScrollBar_Teardown(&mScrollBar);
-    reinterpret_cast<CCol6CursorView*>(&mCur18)->vf3();
+    mCur18.cleanup();
 
     // D2-inlined double null-check artifact around the anim-host release:
     // retail re-tests mField54 before the +0x08 virtual call.
@@ -518,7 +520,7 @@ void CCol6Hint::Move() {
                         ->setText(&lbl_eu_80502050[0x17], 1);
                 nw4r::math::VEC3 vec;
                 ScalePaneWorldPos(&vec, pane1, pane2, mAnimHost->mPane10);
-                reinterpret_cast<CCol6Cur18View*>(&mCur18)->vf04(&vec);
+                mCur18.setRootPaneTranslate(&vec);
             }
             break;
 
@@ -621,7 +623,7 @@ void CCol6Hint::cbRenderBefore() {
     // First two gates use the if-&&-goto-body / goto-end chain (bne end +
     // beq body/b end); the running/loaded checks are early returns; the
     // visibility check positively wraps the draw block.
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0 &&
+    if (CTaskGame::getInstance()->isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -719,18 +721,11 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
     reinterpret_cast<CCol6AnimHostView*>(self->mAnimHost)->update(0);
 
     // Rebuild the embedded cursor from a stack temp (data fields only).
-    u8 tempC[0x18];
-    __ct__CCur18(tempC, CUICfManager_getArcResourceAccessor());
-    CCol6Cur18Data* mc = reinterpret_cast<CCol6Cur18Data*>(self->mCur18);
-    CCol6Cur18Data* tc = reinterpret_cast<CCol6Cur18Data*>(tempC);
-    mc->f_04 = tc->f_04;
-    mc->f_08 = tc->f_08;
-    mc->f_0c = tc->f_0c;
-    mc->f_10 = tc->f_10;
-    mc->f_14 = tc->f_14;
-    mc->f_15 = tc->f_15;
-    __dt__6CCur18Fv(tempC, -1);
-    reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf02();
+    CCur18 tempC;
+    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
+    self->mCur18 = tempC;
+    __dt__6CCur18Fv(&tempC, -1);
+    self->mCur18.initLayout();
 
     // Label the two count panes.
     char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c);
@@ -905,7 +900,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
-        reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
+        self->mCur18.setRootPaneTranslate(&vec);
         CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (down2) {
@@ -957,7 +952,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
-        reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
+        self->mCur18.setRootPaneTranslate(&vec);
         CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (confirm) {
@@ -1005,7 +1000,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
-        reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
+        self->mCur18.setRootPaneTranslate(&vec);
         CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     } else if (up2) {
@@ -1057,7 +1052,7 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       reinterpret_cast<CCol6LayoutView*>(self->mAnimHost)
                           ->mpRootPane);
-        reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
+        self->mCur18.setRootPaneTranslate(&vec);
         CScrollBar_PlaceThumb(&self->mScrollBar, (u16)(s8)self->mField121);
         playUISound(1);
     }
@@ -1151,8 +1146,8 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     self->mFieldA4 = 0;
     self->mPadA5[0] = 0;
     self->mPadA5[1] = 0;
-    __ct__CCur18(self->mCur1, 0);
-    __ct__CCur18(self->mCur2, 0);
+    __ct__CCur18(&self->mCur1, 0);
+    __ct__CCur18(&self->mCur2, 0);
     __ct__CSysWin(self->mSysWin1, 0);
     __ct__CSysWin(self->mSysWin2, 0);
 
@@ -1193,8 +1188,8 @@ extern "C" void* __dt__11CCol6SystemFv(CCol6System* self, int flags) {
     if (self != 0) {
         __dt__7CSysWinFv(&self->mSysWin2, -1);
         __dt__7CSysWinFv(&self->mSysWin1, -1);
-        __dt__6CCur18Fv(self->mCur2, -1);
-        __dt__6CCur18Fv(self->mCur1, -1);
+        __dt__6CCur18Fv(&self->mCur2, -1);
+        __dt__6CCur18Fv(&self->mCur1, -1);
         __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
         if (self != 0) {
             if (self != 0) {
@@ -1292,8 +1287,8 @@ void CCol6System::Term() {
     mScn->removeRenderCB(render);
 
     mFlagA0 = 0;
-    reinterpret_cast<CCol6CursorView*>(&mCur1)->vf3();
-    reinterpret_cast<CCol6CursorView*>(&mCur2)->vf3();
+    mCur1.cleanup();
+    mCur2.cleanup();
     sysWinTermLayout(&mSysWin1);
     sysWinTermLayout(&mSysWin2);
 
@@ -1317,7 +1312,7 @@ inline void CCol6System::updateCursorPos() {
     if (CSysWin_getUnk34(&mSysWin1) != 0) {
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(reinterpret_cast<u8*>(&pos), &mSysWin1, mPadA5[1]);
-        reinterpret_cast<CCol6Cur18View*>(mCur2)->vf04(&pos);
+        mCur2.setRootPaneTranslate(&pos);
     } else {
         char buf[0x20];
         if (mFieldA4 >= 6) {
@@ -1333,7 +1328,7 @@ inline void CCol6System::updateCursorPos() {
             ->setText(&lbl_eu_80502050[0x17], 1);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2, rootPane);
-        reinterpret_cast<CCol6Cur18View*>(mCur1)->vf04(&vec);
+        mCur1.setRootPaneTranslate(&vec);
     }
 }
 
@@ -1593,8 +1588,7 @@ body:
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             sysWinSetKindContent(&mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&mSysWin2);
-            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                1, 0x134, 0, 0, lbl_eu_80667558);
+            cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         }
         break;
 
@@ -1954,32 +1948,18 @@ extern "C" void col6SysLayout(CCol6System* self) {
     reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)->update(0);
 
     // Rebuild cursor 1 (mCur1 at +0xA8) from a stack temp (data fields only).
-    u8 tempC[0x18];
-    __ct__CCur18(tempC, CUICfManager_getArcResourceAccessor());
-    CCol6Cur18Data* mc1 = reinterpret_cast<CCol6Cur18Data*>(self->mCur1);
-    CCol6Cur18Data* tc1 = reinterpret_cast<CCol6Cur18Data*>(tempC);
-    mc1->f_04 = tc1->f_04;
-    mc1->f_08 = tc1->f_08;
-    mc1->f_0c = tc1->f_0c;
-    mc1->f_10 = tc1->f_10;
-    mc1->f_14 = tc1->f_14;
-    mc1->f_15 = tc1->f_15;
-    __dt__6CCur18Fv(tempC, -1);
-    reinterpret_cast<CCol6Cur18View*>(self->mCur1)->vf02();
+    CCur18 tempC;
+    __ct__CCur18(&tempC, CUICfManager_getArcResourceAccessor());
+    self->mCur1 = tempC;
+    __dt__6CCur18Fv(&tempC, -1);
+    self->mCur1.initLayout();
 
     // Rebuild cursor 2 (mCur2 at +0xC0) from a stack temp (data fields only).
-    u8 tempC2[0x18];
-    __ct__CCur18(tempC2, CUICfManager_getArcResourceAccessor());
-    CCol6Cur18Data* mc2 = reinterpret_cast<CCol6Cur18Data*>(self->mCur2);
-    CCol6Cur18Data* tc2 = reinterpret_cast<CCol6Cur18Data*>(tempC2);
-    mc2->f_04 = tc2->f_04;
-    mc2->f_08 = tc2->f_08;
-    mc2->f_0c = tc2->f_0c;
-    mc2->f_10 = tc2->f_10;
-    mc2->f_14 = tc2->f_14;
-    mc2->f_15 = tc2->f_15;
-    __dt__6CCur18Fv(tempC2, -1);
-    reinterpret_cast<CCol6Cur18View*>(self->mCur2)->vf02();
+    CCur18 tempC2;
+    __ct__CCur18(&tempC2, CUICfManager_getArcResourceAccessor());
+    self->mCur2 = tempC2;
+    __dt__6CCur18Fv(&tempC2, -1);
+    self->mCur2.initLayout();
 
     // Label the two count panes.
     LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x81],
@@ -2341,7 +2321,7 @@ void col6PadHandle(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2363,7 +2343,7 @@ void col6PadHandle(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     } else if (confirm != 0) {
@@ -2373,7 +2353,7 @@ void col6PadHandle(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2395,7 +2375,7 @@ void col6PadHandle(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     }
@@ -2484,7 +2464,7 @@ void col6SwitchBox(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2506,7 +2486,7 @@ void col6SwitchBox(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     } else if (confirm != 0) {
@@ -2517,7 +2497,7 @@ void col6SwitchBox(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2539,7 +2519,7 @@ void col6SwitchBox(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     }
@@ -2570,7 +2550,7 @@ void col6WinScroll(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2592,7 +2572,7 @@ void col6WinScroll(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     } else if (confirm != 0) {
@@ -2602,7 +2582,7 @@ void col6WinScroll(CCol6System* self) {
         if (CSysWin_getUnk34(&self->mSysWin1) != 0) {
             u8 tmp[0x18];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin1, self->mPadA5[1]);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur2)->vf04(
+            self->mCur2.setRootPaneTranslate(
                 reinterpret_cast<nw4r::math::VEC3*>(tmp));
         } else {
             char buf[0x20];
@@ -2624,7 +2604,7 @@ void col6WinScroll(CCol6System* self) {
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
-            reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
+            self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
     } else if (up) {
@@ -2845,8 +2825,7 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     u16 d = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
     if (d != 0) CtrlRemote_SetSharedBit(d + 0x220, 0xc8);
     u16 e = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
-    self->mFieldA2 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-        1, e, 0, 0, lbl_eu_80667558);
+    self->mFieldA2 = cf::CfSoundMan::playActorSound(1, e, 0, 0, lbl_eu_80667558);
 
     // Camera/vector block: every value is the s16 lookup result cast to float
     // (MWCC emits the 2^52 int->double conversion for (f32)(s16)); two slots
@@ -2953,8 +2932,7 @@ void Col6Win2_2C40(CCol6System* self) {
     sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
     sysWinApplyKind(&self->mSysWin2, 1);
     sysWinOpenPhase1(&self->mSysWin2);
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-        1, 0x134, 0, 0, lbl_eu_80667558);
+    cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
 }
 
 // Col6_OpenBox_2DB4 - "open item box" transition: when the fade is idle, set the
@@ -3113,8 +3091,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&self->mSysWin2);
-            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                1, 0x134, 0, 0, lbl_eu_80667558);
+            cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         } else {
             // Per-slot threshold scan (same shape as CCol6Invite::Move).
             union {
@@ -3228,8 +3205,7 @@ void Col6_Win2CountLadder_3614(CCol6System* self) {
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
             sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
             sysWinOpenPhase1(&self->mSysWin2);
-            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                1, 0x134, 0, 0, lbl_eu_80667558);
+            cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         }
     }
 }
@@ -3301,8 +3277,7 @@ void col6Win2PerPl(CCol6System* self) {
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
         sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
         sysWinOpenPhase1(&self->mSysWin2);
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-            1, 0x134, 0, 0, lbl_eu_80667558);
+        cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }
 
@@ -3388,8 +3363,7 @@ void col6JoinCheck(CCol6System* self) {
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
         sysWinSetKindContent(&self->mSysWin2, buf.mString, 0);
         sysWinOpenPhase1(&self->mSysWin2);
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-            1, 0x134, 0, 0, lbl_eu_80667558);
+        cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }
 

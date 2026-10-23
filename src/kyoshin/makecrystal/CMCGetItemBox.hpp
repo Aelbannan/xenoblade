@@ -1,6 +1,11 @@
 #pragma once
 
 #include <types.h>
+// KEEP (blockers-A 2026-10-23): 32-bit view of BdatGetU16Direct (canonical u16 in
+// kyoshin/code_80135FDC_Bdat.hpp); the u16 form adds clrlwi and moves the
+// callers here further from retail.
+extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
+#include "kyoshin/CBaseCur.hpp"
 #include <cstring>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -23,16 +28,6 @@ struct CMCItemBoxEntry {
     u32 field_00;                   // 0x00
     u8 bytes[0x34 - 0x04];          // 0x04-0x33
 };
-
-/* Small sub-object passed to the C-linkage menu helpers
-   (Cur_SetVisible). 0x18 bytes; stores a vtable pointer at +0x00. */
-struct CMCItemBoxSubObj {
-    u8 bytes[0x18];
-};
-
-/* Typed view of the embedded cursor widgets (CCur07/CCur09/CCur16/CCur18).
-   Dispatch goes through CBaseCur (vtable offsets 0x08 initLayout /
-   0x10 setRootPaneTranslate); see kyoshin/CBaseCur.hpp. */
 
 /* Echo/placeholder for the CSysWin sub-object range. */
 struct CMCGetItemBoxSysWin {
@@ -211,10 +206,10 @@ public:
     u8 field_54;                     // 0x54
     u8 mField55;                     // 0x55
     u8 _pad_56[0x58 - 0x56];         // 0x56-0x57
-    CMCItemBoxSubObj subObj_58;      // 0x58-0x6F (CCur07)
-    CMCItemBoxSubObj subObj_70;      // 0x70-0x87 (CCur09)
-    CMCItemBoxSubObj subObj_88;      // 0x88-0x9F (CCur16)
-    CMCItemBoxSubObj subObj_A0;      // 0xA0-0xB7 (CCur18)
+    CCur07 subObj_58;                // 0x58-0x6F
+    CCur09 subObj_70;                // 0x70-0x87
+    CCur16 subObj_88;                // 0x88-0x9F
+    CCur18 subObj_A0;                // 0xA0-0xB7
     CMCGetItemBoxSysWin sysWin_B8;   // 0xB8-0xF3
     u8 itemBox[0x1A4 - 0xF4];        // 0xF4-0x1A3 (a CItemBoxInfo, 0xB0 bytes)
     CMCItemBoxCursor arr_1A4;        // 0x1A4-0x2FF (cursor index table)
@@ -244,7 +239,6 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self);
 extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" int   IsSkillItem(void*);
-extern "C" u32   BdatGetU16Direct(void*, const char*, u32);
 extern "C" void CItemData_lookupOrAlloc(CMCItemBoxEntry*, int);
 extern "C" u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
 extern "C" u32 CItemBlock_countEmpty(u8);
@@ -268,7 +262,6 @@ extern "C" void sysWinTermLayout(void*);
 extern "C" void* formatItemBoxName(void*, u32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_8050FF8C[];
@@ -314,7 +307,6 @@ extern "C" void MenuShopSellCopyCursor(void*, void*);
 extern "C" void* __ct__CCur07(void*, void*);
 extern "C" void* __ct__CCur09(void*, void*);
 extern "C" void* __ct__CCur16(void*, void*);
-extern "C" void* __ct__CCur18(void*, void*);
 extern "C" void copyVEC3(void*, void*);
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" u8   BdatGetU8Direct(u32, const char*, u32);
@@ -326,9 +318,7 @@ extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13Anim
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void Bdat_GetTable_AA34();
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* __ct__CTagProcessor(void*);
-extern "C" void* getAllocHandle__10CLibLayoutFv(void);
 extern "C" u32  CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void* getFP__FPCc(const char*);

@@ -477,12 +477,11 @@ extern "C" CTitle* __ct__CTitle(CTitle* self) {
     self->field_0x25 = -1;
     __ct__CTitleLogo(&self->mLogo);
     __ct__CTitleMenu(&self->mMenu);
-    __ct__CCur18(reinterpret_cast<CBaseCur*>(&self->mCur[0]), 0);
+    __ct__CCur18(&self->mCur, 0);
     return self;
 }
 
 // Member dtors and operator delete (retail names).
-extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 extern "C" void __dl__FPv(void* p);
 
@@ -492,7 +491,7 @@ extern "C" void __dl__FPv(void* p);
 #pragma optimize_for_size on
 extern "C" void* __dt__6CTitleFv(void* self, int flags) {
     if (self != 0) {
-        __dt__6CCur18Fv((u8*)self + 0x70, -1);
+        __dt__6CCur18Fv(&static_cast<CTitle*>(self)->mCur, -1);
         __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>((u8*)self + 0x04), -1);
         if (flags > 0)
             __dl__FPv(self);
@@ -520,7 +519,7 @@ extern "C" void CTitle_update(CTitle* self) {
     (self->*lbl_eu_8053B274[self->field_0x24])();
     CTitleLogo_update(&self->mLogo);
     CTitleMenu_update(&self->mMenu);
-    Cur_Update(reinterpret_cast<CBaseCur*>(&self->mCur[0]));
+    Cur_Update(&self->mCur);
 }
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
@@ -528,7 +527,7 @@ extern "C" void CTitle_update(CTitle* self) {
 extern "C" void CTitle_draw(CTitle* self, void* drawInfo) {
     CTitleLogo_draw(&self->mLogo, drawInfo);
     CTitleMenu_draw(&self->mMenu, drawInfo);
-    Cur_DrawLayout(&self->mCur[0], drawInfo);
+    Cur_DrawLayout(&self->mCur, drawInfo);
 }
 #pragma optimize_for_size off
 
@@ -542,7 +541,7 @@ extern "C" void CTitle_teardown(CTitle* self) {
     closeFileHandle(&self->mFileHandle);
     CTitleLogo_release(&self->mLogo);
     CTitleMenu_release(&self->mMenu);
-    reinterpret_cast<CCur18View*>(&self->mCur[0])->vf03();
+    self->mCur.cleanup();
     releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
     self->mMemRegion.deleteRegion();
@@ -582,7 +581,7 @@ extern "C" void CTitle_beginLogoOutro(CTitle* self) {
         self->field_0x24 = 6;
         CTitleLogo_beginOutro(&self->mLogo);
         CTitleMenu_beginFinal(&self->mMenu);
-        Cur_SetVisible(&self->mCur[0], 0);
+        Cur_SetVisible(&self->mCur, 0);
     }
 }
 
@@ -603,7 +602,7 @@ extern "C" void CTitle_moveCursorUp(CTitle* self) {
         }
         nw4r::math::VEC3 pos;
         CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
-        reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
+        self->mCur.setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
@@ -618,7 +617,7 @@ extern "C" void CTitle_moveCursorDown(CTitle* self) {
         }
         nw4r::math::VEC3 pos;
         CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
-        reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
+        self->mCur.setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
@@ -674,10 +673,10 @@ extern "C" void CTitle_showTitle(CTitle* self) {
 extern "C" void CTitle_enterSelection(CTitle* self) {
     if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
         self->field_0x24 = 5;
-        Cur_SetVisible(&self->mCur[0], 1);
+        Cur_SetVisible(&self->mCur, 1);
         nw4r::math::VEC3 pos;
         CTitleMenu_calcCursorPos(&pos, &self->mMenu, self->field_0x25);
-        reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
+        self->mCur.setRootPaneTranslate(&pos);
     }
 }
 
@@ -712,20 +711,11 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
         mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
         CTitleLogo_build(&mLogo, mAccessor);
         CTitleMenu_build(&mMenu, mAccessor);
-        u8 cur18Temp[0x18];
-        __ct__CCur18(reinterpret_cast<CBaseCur*>(cur18Temp), mAccessor);
-        // Copy the constructed cursor body (everything past the vptr) into
-        // the embedded member.
-        CBaseCur* curDst = reinterpret_cast<CBaseCur*>(&mCur[0]);
-        CBaseCur* curSrc = reinterpret_cast<CBaseCur*>(cur18Temp);
-        curDst->mArcResAcc = curSrc->mArcResAcc;
-        curDst->mpLayout = curSrc->mpLayout;
-        curDst->mpAnimTrans0 = curSrc->mpAnimTrans0;
-        curDst->mpAnimTrans1 = curSrc->mpAnimTrans1;
-        curDst->mActive = curSrc->mActive;
-        curDst->mVisible = curSrc->mVisible;
-        __dt__6CCur18Fv(curSrc, -1);
-        reinterpret_cast<CCur18View*>(&mCur[0])->vf02();
+        CCur18 cur18Temp;
+        __ct__CCur18(&cur18Temp, mAccessor);
+        mCur = cur18Temp;
+        __dt__6CCur18Fv(&cur18Temp, -1);
+        mCur.initLayout();
         field_0x1C = 1;
         mFileHandle = 0;
         mMemRegion.validateHeap();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
 // Forward declarations
@@ -110,6 +111,11 @@ public:
     IUIWindow();
 };
 
+// KEEP (header-consolidation round 2, 2026-10-23): this TU models the
+// IWorkEvent/IScnRender subobjects as raw vptr words with the retail
+// out-of-line ctors __ct__IWorkEvent/__ct__IScnRender (defined in
+// CMenuUpdate.cpp) and calls the base dtors by hand, so it cannot use the
+// polymorphic monolib IWorkEvent.hpp / IScnRender.hpp definitions.
 class IWorkEvent {
 public:
     u32 mVtable; // 0x00
@@ -199,7 +205,6 @@ extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" void PaneSetVtxColorByName(void*, const char*, int);
 extern "C" void LayoutSetTextBoxFmtValue(void*, const char*, void*, int);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
-extern "C" u16 BdatGetU16Direct(void*, const char*, int);
 extern "C" u16 BdatGetU16ByTableKey(const char*, const char*, int);
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" void playUISound__FUl(u32);

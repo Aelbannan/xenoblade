@@ -76,25 +76,9 @@ struct CTalkWindow {
     void Move();
 };
 
-// Render-callback and scene helper used by Term/cbRenderBefore (retail CScn
-// member; defined in monolib/src/scn/CScn). Guarded so the kyoshin task
-// headers can be included together in one TU.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void removeRenderCB(IScnRender* cb);
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Talk-window views of the talk-source objects (func_800BBC0C result). The
 // character voice sub-object at +0x98 carries play at vtable 0x58 (same
@@ -296,7 +280,6 @@ void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
 void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
-u32 getAllocHandle__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(

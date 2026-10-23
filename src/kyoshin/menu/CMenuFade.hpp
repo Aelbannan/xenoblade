@@ -6,17 +6,10 @@
 
 #include <nw4r/lyt.h>
 
-// Local IScnRender declaration WITHOUT an explicit destructor.
-// The real IScnRender (in IScnRender.hpp) has `virtual ~IScnRender(){}`
-// which causes MWCC to emit a null-check branch in derived-class dtors.
-// Omitting the dtor here gives IScnRender an implicitly-declared trivial
-// destructor, which suppresses the branch while keeping the vtable layout
-// identical (cbRenderBefore is the only other virtual; slot order is the
-// same modulo the dtor slot which the linker fills from retail data).
-class IScnRender {
-public:
-    virtual void cbRenderBefore();
-};
+// IScnRender without a virtual destructor (CMenuFade.cpp defines
+// ISCN_RENDER_NO_DTOR): the inline `virtual ~IScnRender(){}` makes MWCC emit a
+// null-check branch in derived-class dtors that retail does not have.
+#include "monolib/scn/IScnRender.hpp"
 
 // MWCC_CASES §190: Do not inherit from IWorkEvent (out-of-line dtor
 // pulls weak stubs). Intermediate base holds the 0x54-0x5b fields so that

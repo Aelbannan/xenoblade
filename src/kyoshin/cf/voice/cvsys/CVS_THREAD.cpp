@@ -73,17 +73,6 @@ struct CVoiceSndCamView {
     f32 field_C;
 };
 
-namespace cf {
-// TU-local phantom view of cf::CfObject: emits the retail-mangled reloc
-// requestVoice__Q22cf8CfObjectFiUlff. object/CfObject.hpp declares a
-// void-returning form shared with other TUs; the mangling encodes neither
-// the return type, and this call site passes the callee's r3 straight out.
-class CfObject {
-public:
-    int requestVoice(int a, unsigned long b, float c, float d);
-};
-} // namespace cf
-
 // ── Extern symbols ────────────────────────────────────────────────────────
 extern "C" void CfObjectMove_releaseVoiceHandle(void* voice);
 

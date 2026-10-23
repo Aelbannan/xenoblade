@@ -9,7 +9,7 @@ struct VTarget {
     virtual void v6() = 0;
     virtual void v7() = 0;
     virtual void v8() = 0;
-    virtual void v9() = 0;
+    virtual unsigned long v9() = 0; // mtl::ALLOC_HANDLE (scene heap handle)
     virtual void v10() = 0;
     virtual void v11() = 0;
     virtual ~VTarget() {}
@@ -289,9 +289,9 @@ extern "C" void Scn_CallUnk8C_V7(u8* self) {
     VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v7();
 }
-extern "C" void Scn_CallUnk8C_V9(u8* self) {
-    VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
-    obj->v9();
+u32 CScn::getAllocHandle() {
+    VTarget* obj = (VTarget*)mUnk8C;
+    return obj->v9();
 }
 extern "C" void Scn_CallUnk8C_V10(u8* self) {
     VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;

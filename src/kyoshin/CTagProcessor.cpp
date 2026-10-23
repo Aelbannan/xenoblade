@@ -246,7 +246,7 @@ void* __dt__8012596C(void* self, int deleting) {
     return self;
 }
 
-// Tag-processor base constructor (retail __ct__CTagProcessorBase): the member
+// Tag-processor base constructor (retail __ct__17CTagProcessorBaseFv): the member
 // ctor provides the compiler-generated nw4r base-ctor call -- placement new
 // would add a null beq the retail does not have. novtable: the retail vtable
 // data lives in .data (lbl_eu_8052DA68), so the vptr is stored explicitly.
@@ -549,7 +549,7 @@ __declspec(noinline) void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t
 // CTagProcessor-specific fields. The 0x838 block is zeroed via memset.
 void* __ct__CTagProcessor(void* self) {
     CTagProcessor* p = (CTagProcessor*)self;
-    __ct__CTagProcessorBase(p);
+    __ct__17CTagProcessorBaseFv(p);
     *(void**)p = (void*)lbl_eu_8052DA38;
     p->field_820 = 0;
     p->field_824 = lbl_eu_806671F0;
@@ -1693,7 +1693,7 @@ void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
 // base-construct, then the SE-specific fields (byte at +0x834, u32 at +0x838).
 void* __ct__CTagProcessorSE(void* self) {
     CTagProcessorSE* p = (CTagProcessorSE*)self;
-    __ct__CTagProcessorBase(p);
+    __ct__17CTagProcessorBaseFv(p);
     p->field_820 = 0;
     *(void**)p = (void*)lbl_eu_8052DA08;
     p->field_824 = lbl_eu_806671F0;

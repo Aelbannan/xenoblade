@@ -208,7 +208,6 @@ public:
 // isIdle/BgTex_IsLoaded_3E34/isInitialized/ItemBoxLine_IsReadyFlag/ItemBoxLine_GetSelectReady are declared
 // int (not u8) so callers compare with cmpwi directly (no byte mask), matching
 // retail.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
@@ -304,8 +303,6 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 // Task-game gate helpers. Declared with C linkage because CTaskGame.hpp pulls
 // broken monolib umbrella headers that redefine CScn (same scheme as
 // CMenuUpdate). isFlag01Set takes the task-game instance in r3.
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern "C" int IsMenuState621F0();

@@ -791,15 +791,11 @@ config.libs = [
                 Matching,
                 "kyoshin/help/CHelp.cpp",
                 link_transform={
+                    # The ctor, CHelpSwitch and dispatchHelp annotations now use
+                    # the compiled mangled names (symbols.txt, 2026-10-23); only
+                    # refreshPartyMenu still needs the historical name.
                     "renames": [
-                        ("__ct__Q22cf5CHelpFUlUl", "__ct__Q22cf5CHelpFv"),
                         ("refreshPartyMenu__Q22cf5CHelpFv", "CHelp_refreshPartyMenu"),
-                        ("func_802B7CBC__Q22cf11CHelpSwitchFUl",
-                         "trySetHelpFlag__Q22cf11CHelpSwitchFv"),
-                        ("func_802B7CE4__Q22cf11CHelpSwitchFUc",
-                         "updateHelpFlag__Q22cf11CHelpSwitchFv"),
-                        ("dispatchHelp__Q22cf5CHelpFv",
-                         "CHelp_UnkVirtualFunc2__Q22cf5CHelpFv"),
                     ],
                 },
             ),

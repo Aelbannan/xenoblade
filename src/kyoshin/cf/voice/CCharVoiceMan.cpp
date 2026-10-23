@@ -170,7 +170,7 @@ void CCharVoiceMan_CreateSingleton() {
     cf::CCharVoiceMan* man =
         (cf::CCharVoiceMan*)mtl::MemManager::allocate(0x234, handle);
     if (man != 0)
-        man = __ct__CCharVoiceMan(man);
+        man = __ct__Q22cf13CCharVoiceManFv(man);
     lbl_eu_80664A58 = man;
     lbl_eu_80664A5C = 0;
 }

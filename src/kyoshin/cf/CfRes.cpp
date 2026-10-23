@@ -22,7 +22,6 @@ extern "C" int CfRes_vcall14(void* self);
 extern "C" int CfRes_vcall17(void* self, u32 val);
 extern "C" void CfRes_vcall34(void* self);
 extern "C" void CfRes_vcall38(void* self);
-extern "C" void* Scn_CallUnk8C_V9(void* scene);
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 
@@ -243,9 +242,9 @@ int CfRes_getD80Flag() { return lbl_eu_80663D80; }
 extern u32 lbl_eu_80663D80;
 u32 CfRes_setD80Flag(u32 val) { lbl_eu_80663D80 = val; return val; }
 
-// retail: lwz r3,lbl; cmpwi; beq; b Scn_CallUnk8C_V9 / b getHandleMEM1 (tail calls)
+// retail: lwz r3,lbl; cmpwi; beq; b CScn::getAllocHandle / b getHandleMEM1 (tail calls)
 extern "C" void* CfRes_getHeapHandle() {
-    if (lbl_eu_80663D80 != 0) { return Scn_CallUnk8C_V9((void*)lbl_eu_80663D80); }
+    if (lbl_eu_80663D80 != 0) { return (void*)((CScn*)lbl_eu_80663D80)->getAllocHandle(); }
     return (void*)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
@@ -1796,7 +1795,7 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
                     } else if (h == 1) {
                         handle = (u32)getHandleMEM1__Q23mtl10MemManagerFv();
                     } else {
-                        handle = (u32)Scn_CallUnk8C_V9((void*)CfRes_getE14());
+                        handle = ((CScn*)CfRes_getE14())->getAllocHandle();
                     }
                     if (rounded <= getMaxAllocSize__Q23mtl10MemManagerFUl(handle)) {
                         buf = h == 0 ? allocate_tail__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20)

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 extern "C" {
     void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
@@ -160,7 +161,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
         return;
     }
     if (self->mSortDescending != 0) {
-        Cur_SetVisible(&self->mCur18[0], 1);
+        Cur_SetVisible(&self->mCur18, 1);
         sortMenuToState4Page(&self->mSortMenuData);
         self->mSortDescending = 0;
         QstLogList_RefreshHeader(self);
@@ -179,7 +180,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
                       root->FindPaneByName(&s[0x33], true), root);
         sortMenuSetLayoutPos(&self->mSortMenuData, &pos);
         QstLogList_FillSortMenu(self);
-        Cur_SetVisible(&self->mCur18[0], 1);
+        Cur_SetVisible(&self->mCur18, 1);
         sortMenuOpenInit(&self->mSortMenuData);
         self->mSortDescending = 1;
         QstLogList_MoveCursor(self);
@@ -196,7 +197,7 @@ void QstLogList_ToggleSort(CQstLogList* self) {
 #pragma optimize_for_size on
 __declspec(noinline) void QstLogList_ConfirmSort(CQstLogList* self, int flag) {
     if (sortMenuGetFlag2B(&self->mSortMenuData) != 0) {
-        Cur_SetVisible(&self->mCur18[0], 1);
+        Cur_SetVisible(&self->mCur18, 1);
         sortMenuToState4Page(&self->mSortMenuData);
         self->mSortDescending = 0;
         QstLogList_RefreshHeader(self);
@@ -225,7 +226,7 @@ extern "C" __declspec(noinline) void QstLogList_StepSortAnim(CQstLogList* self) 
     nw4r::lyt::AnimTransform* anim = self->mpAnim1;
     if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x174 = 3;
-        Cur_SetVisible(&self->mCur18[0], 1);
+        Cur_SetVisible(&self->mCur18, 1);
         QstLogList_MoveCursor(self);
         self->mSortEnabled = 1;
     }
@@ -421,7 +422,7 @@ extern "C" __declspec(noinline) void QstLogList_MoveCursor(CQstLogList* self) {
     if (self->mSortDescending != 0) {
         sortMenuFormatPaneText(&tmp,
                       reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&tmp);
+        self->mCur18.setRootPaneTranslate(&tmp);
     } else {
         char* const s = lbl_eu_80509AB4;
         sprintf(buf, &s[0xBA], self->field_0x17D + 1);
@@ -430,7 +431,7 @@ extern "C" __declspec(noinline) void QstLogList_MoveCursor(CQstLogList* self) {
         nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()
                                       ->FindPaneByName(&s[0x33], true);
         ScalePaneWorldPos(&pos, pane1, pane2, self->mpLayout->GetRootPane());
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&pos);
+        self->mCur18.setRootPaneTranslate(&pos);
     }
 }
 #pragma pop
@@ -501,7 +502,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // 0x0C, cursor temp 0x18, five 0x24-stride entry buffers 0x30..0xE2 and
     // the quest-type index array at 0xE8.
     u8 regionBuf[8];           // 0x0C - RAII scratch-region guard storage
-    u8 tmpCur[0x18];           // 0x18 - stack-constructed cursor
+    CCur18 tmpCur;             // 0x18 - stack-constructed cursor
     CQstLogListEntry rowSort;  // 0x30 - entry buffer reused for sorted rows
     CQstLogListEntry row3;     // 0x54
     CQstLogListEntry row2;     // 0x78
@@ -522,7 +523,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // site so it never gets a stack slot.
     setMemInitFlag__Q23mtl10MemManagerFb(false);
     mArcResAcc =
-        (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
+        (nw4r::lyt::ArcResourceAccessor*)CLibLayout::createArcResourceAccessor();
     mArcResAcc->Attach(mFileHandle->getData(), &s[0x11e]);
 
     buildLayout(&mpLayout, mArcResAcc, &s[0x122]);
@@ -541,17 +542,10 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 
     // Build the cursor on the stack, copy its body into the member region
     // (skipping the +0x00 vtable pointer) and destroy the temp.
-    __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
-    CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCur18[0]);
-    CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
-    curDst->field_4 = curSrc->field_4;
-    curDst->field_8 = curSrc->field_8;
-    curDst->field_C = curSrc->field_C;
-    curDst->field_10 = curSrc->field_10;
-    curDst->field_14 = curSrc->field_14;
-    curDst->field_15 = curSrc->field_15;
-    __dt__6CCur18Fv(tmpCur, -1);
-    reinterpret_cast<CCur18View*>(&mCur18[0])->vf02();
+    __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+    mCur18 = tmpCur;
+    __dt__6CCur18Fv(&tmpCur, -1);
+    mCur18.initLayout();
 
     // Prime the four fixed quest-log rows (0xFF/0x00 head bytes + formatted
     // text), appending each entry to the shared quest-text table. The
@@ -711,7 +705,7 @@ extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo
         drawLayout(self->mpLayout, drawInfo, 0, 1);
         CScrollBar_draw(&self->mScrollBar, drawInfo);
         sortMenuDraw(&self->mSortMenuData, drawInfo);
-        Cur_DrawLayout(&self->mCur18[0], drawInfo);
+        Cur_DrawLayout(&self->mCur18, drawInfo);
     }
 }
 #pragma pop
@@ -726,7 +720,7 @@ extern "C" void QstLogList_Teardown(CQstLogList* self) {
         self->mpLayout = 0;
     }
     releaseArcResourceAccessor(self->mArcResAcc);
-    reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf03();
+    self->mCur18.cleanup();
     CScrollBar_Teardown(&self->mScrollBar);
     sortMenuTermCleanup(&self->mSortMenuData);
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk04[0]);
@@ -791,7 +785,7 @@ extern "C" void QstLogList_FrameUpdate(CQstLogList* self) {
             break;
         }
         self->mpLayout->Animate(0);
-        Cur_Update(&self->mCur18[0]);
+        Cur_Update(&self->mCur18);
         CScrollBar_UpdateDispatch(&self->mScrollBar);
         sortMenuDispatchState(&self->mSortMenuData);
     }
@@ -807,7 +801,7 @@ void QstLogList_EndSortMode(CQstLogList* self, int flag) {
         self->field_0x174 = 4;
         self->mSortEnabled = 0;
         QstLogList_ShowSortAnim(self);
-        Cur_SetVisible(&self->mCur18[0], 0);
+        Cur_SetVisible(&self->mCur18, 0);
         CScrollBar_requestScrollOut(&self->mScrollBar);
         if (flag != 0) {
             playUISound(6);
@@ -865,7 +859,7 @@ CQstLogList::~CQstLogList() {
     // UnkClass ctor stub, so the real classes cannot be embedded).
     __dt__9CSortMenuFv(&mSortMenuData, -1);
     __dt__10CScrollBarFv(&mScrollBar, -1);
-    __dt__6CCur18Fv(&mCur18[0], -1);
+    __dt__6CCur18Fv(&mCur18, -1);
     __dt__17UnkClass_8045F564Fv(&mUnk04[0], -1);
 }
 #pragma pop
@@ -895,7 +889,7 @@ CQstLogList::CQstLogList(u16 arg2) {
     mpLayout = 0;
     mpAnim0 = 0;
     mpAnim1 = 0;
-    __ct__CCur18(&mCur18[0], 0);
+    __ct__CCur18(&mCur18, 0);
     __ct__CScrollBar(&mScrollBar, 0);
     __ct__CSortMenu(&mSortMenuData);
     field_0x170 = 0;

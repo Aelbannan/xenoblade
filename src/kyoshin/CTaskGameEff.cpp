@@ -1,7 +1,8 @@
 // CTaskGameEff: battle effect task (kyoshin/CTaskGameEff)
-// Replace stubs with high-level C/C++ during decomp.
+#define ISCN_RENDER_NO_DTOR // retail keeps ~IScnRender only as the forced-name __dt__80044BB0 copy
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTaskGameEffApi.hpp"
 extern "C" void __dl__FPv(void*);
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -405,7 +406,7 @@ extern "C" void unregisterEffectScene(CScn* scene) {
     node->mNext = nullptr;
 }
 
-
+void CTaskGameEff::Draw() {}
 
 // IWorkEvent/IScnRender vtable this-adjusting thunks (retail fwdEffScnCb54..
 // 80045558): subi the subobject pointer, tail-branch to the real impl.

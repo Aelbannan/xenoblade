@@ -67,8 +67,6 @@ extern "C" void gmFileObject(void* obj);
 extern "C" void* ArtsSelect_GetEntry(int id);
 extern "C" void ObjObj_SetMoveId_FBF4(u16 id, int mode);
 extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
-                                                          u32 d, f32 e);
 extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void CItemData_enableFamFlag(void* item);
 extern "C" void CItemData_callVf0C(void* item, u16 v);

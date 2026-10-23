@@ -10,6 +10,7 @@
 #include <nw4r/ut/ut_TextWriterBase.h>
 #undef private
 #undef protected
+#include "monolib/lib/CLibLayout.hpp"
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
 
@@ -1486,14 +1487,14 @@ void TextState_Init(u8* arg) {
     lbl_eu_80664874 = 0;
     lbl_eu_80664860 = arg;
 
-    u32 handle = getAllocHandle__10CLibLayoutFv();
+    u32 handle = CLibLayout::getAllocHandle();
     u8* tagMem = (u8*)mtl::MemManager::allocate(0x858, handle);
     if (tagMem != NULL) {
         tagMem = (u8*)__ct__CTagProcessor(tagMem);
     }
     lbl_eu_8066486C = (nw4r::ut::TagProcessorBase<wchar_t>*)tagMem;
 
-    u32 handle2 = getAllocHandle__10CLibLayoutFv();
+    u32 handle2 = CLibLayout::getAllocHandle();
     lbl_eu_80664870 = (u8*)mtl::MemManager::allocate_head(handle2, 0x400, 0x20);
 }
 

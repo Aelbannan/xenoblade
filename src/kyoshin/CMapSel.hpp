@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 
 // Forward decls for nw4r layout types used in the layout below.
 namespace nw4r { namespace math { struct VEC3; } }
@@ -49,145 +50,12 @@ public:
     u8 field_0x32;                            // +0x32
     u8 mFlag33;                               // +0x33
     u8 getMapSelInitFlag() { return mFlag33; }
+    u8 getMapGridCell();
     bool OnFileEvent(CEventFile* event);
     u8 mScrollBar[0x40];                      // +0x34 - CScrollBar
-    u8 mCursor[0x18];                         // +0x74 - CCur18
+    CCur18 mCursor;                           // +0x74
     s8 mSelY;                                 // +0x8C - selection Y coordinate
     s8 mSelX;                                 // +0x8D - selection X coordinate
     u8 mGridData[0x22];                       // +0x8E - grid lookup data
     float mTimer;                             // +0xB0 - transition countdown
 };
-
-// Extended layout for free-function accessors
-struct CMapSelFull {
-    u8 _00[0x8C];
-    s8 field_8C;  // y coordinate
-    s8 field_8D;  // x coordinate
-    u8 mGridData[128]; // grid lookup data starting at +0x8E
-    u8 getMapGridCell();
-};
-
-// Abstract view into the embedded CCur18 cursor vtable. MWCC inserts an
-// offset-to-top + RTTI prefix (2 entries), so vtable offset = (index + 2) * 4;
-// index 2 -> +0x10 is the "Move" virtual that repositions the cursor (takes a
-// VEC3*). All-pure so MWCC emits no vtable for the view itself.
-class CCur18View {
-public:
-    virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03(const u8*) = 0;               // index 1 -> +0x0C
-    virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
-};
-
-// Field view of the opaque CCur18 sub-object (CBaseCur layout + padding).
-// Used to copy a stack-constructed CCur18 into the embedded mCursor region
-// without touching the +0x00 vtable pointer (retail copies +0x04..+0x15).
-struct CCur18Data {
-    void* mVtbl;    // +0x00 - not copied
-    void* field_4;  // +0x04
-    void* field_8;  // +0x08
-    void* field_C;  // +0x0C
-    void* field_10; // +0x10
-    u8 field_14;    // +0x14
-    u8 field_15;    // +0x15
-};
-
-// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (index 7, no args) yields the u32 passed to ApplyFontToTxtPanes. All-pure so no
-// vtable is emitted.
-class CDeviceFontView {
-public:
-    virtual void vf0() = 0; // index 0 -> +0x08
-    virtual void vf1() = 0; // index 1 -> +0x0C
-    virtual void vf2() = 0; // index 2 -> +0x10
-    virtual void vf3() = 0; // index 3 -> +0x14
-    virtual void vf4() = 0; // index 4 -> +0x18
-    virtual void vf5() = 0; // index 5 -> +0x1C
-    virtual void vf6() = 0; // index 6 -> +0x20
-    virtual u32 vf7() = 0;  // index 7 -> +0x24
-};
-
-// Opaque object whose first user virtual (vtable offset 0x08 after the RTTI
-// prefix slots) acts like a deleting destructor taking an int flag. Abstract
-// (all-pure) so MWCC emits no vtable for the view.
-class CMapSelLayoutObj {
-public:
-    virtual void vfRelease(int) = 0;
-};
-
-// View of the embedded CCur18 cursor vtable: slot 3 (offset 0x0C), no args.
-// Abstract so no vtable is emitted.
-class CMapSelCurObj {
-public:
-    virtual void vf0(int) = 0;   // slot 2 (0x08)
-    virtual void vfUpdate() = 0; // slot 3 (0x0C)
-};
-
-// Scrollbar destroy / layout-read helpers (unmangled retail symbols).
-extern "C" void CScrollBar_Teardown(void* scrollbar);
-extern "C" void CScrollBar_loadLayoutArc(void* scrollbar);
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dt__6CCur18Fv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
-extern "C" void __dl__FPv(void*);
-void closeFileHandle(CFileHandle**);
-extern "C" void __ct__CScrollBar(void*, int);
-extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
-extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
-extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void CScrollBar_draw(void*, nw4r::lyt::DrawInfo*);
-extern "C" void Cur_DrawLayout(void*, void*);
-extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void CScrollBar_UpdateDispatch(u8*);                    // scrollbar per-frame update
-// Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
-extern "C" void Cur_Update(u8*);                    // cursor per-frame update
-extern "C" void CScrollBar_InitRootPane(u8*, const float*);      // scrollbar init (3-float vec)
-extern "C" void CScrollBar_UpdateThumb(u8*, int, int);          // scrollbar range setup
-extern "C" void CScrollBar_PlaceThumb(u8*, u16);                // scrollbar thumb position
-extern "C" void CScrollBar_requestScrollIn(u8*);                    // scrollbar show
-// Layout/text C-ABI helpers normally declared by code_80135FDC.hpp. CMapSel.cpp
-// defines CODE_80135FDC_CPP before including that header, so those exports are
-// skipped there and the declarations below apply (retail CMapSel callers pass
-// the texture resource as PaneSetTexPaletteByName's third argument). Same guard as the legacy
-// AnimRewindFrame pseudo-import so code_802405F4.cpp's define stays a no-op.
-#ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
-extern "C" void ApplyFontToTxtPanes(void*, u32);
-extern "C" void PaneSetTexPaletteByName(void*, const char*, const void*);
-extern "C" char* MakeTplNameSysFile(u32);
-#endif
-// Cursor position helper: fill output with the point derived from two panes.
-extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
-                               nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void playUISound__FUl(u32);               // UI sound effect
-// Grid-text helpers / cursor construction (C-ABI retail symbols).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
-extern "C" void setPaneVisible(void*, u32);
-extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
-extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" int sprintf(char*, const char*, ...);
-// Map-select string pool (split1 .rodata): pane-name format at +0x1F, fixed
-// pane name at +0x88.
-extern "C" char lbl_eu_8050B4A8[];
-// BDAT map-table pointers (.sbss, sda21-relative).
-extern void* lbl_eu_806640A0;
-extern void* lbl_eu_806640A8;
-// Current map id (.sbss) - initial grid selection target.
-extern u32 lbl_eu_80664184;
-// IWorkEvent vtable for CMapSel (.data) - set by the constructor. Declared as
-// an array so MWCC uses full 32-bit (lis/addi) addressing like the retail
-// (a scalar extern would fall back to sda21 and produce a different reloc).
-extern "C" void* lbl_eu_80536E10[];
-extern "C" float lbl_eu_80668738;
-extern "C" float lbl_eu_80668740;
-extern "C" float lbl_eu_80668744;
-// Canonical AnimRewindFrame (nw4r::lyt::AnimTransform*, float) is declared in
-// code_80135FDC.hpp. CMapSel.cpp includes that header and passes proper
-// AnimTransform* pointers; the guard below stays for TUs that include both
-// headers (identical redeclarations are harmless, but keep the old macro
-// contract so code_802405F4.cpp's define stays a no-op).
-#ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-#endif
-extern "C" const float lbl_eu_8066873C;

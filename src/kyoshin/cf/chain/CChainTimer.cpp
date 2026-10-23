@@ -21,8 +21,9 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::isSceneLoading
 #include "kyoshin/cf/chain/CChainActorList.hpp" // lbl_eu_80538338
-#include "kyoshin/cf/chain/CChain.hpp" // extern-C checkSlotUsable (retail-unmangled)
 #include <math.h>
+#include "kyoshin/cf/chain/CChainImports.hpp"
+#include "kyoshin/cf/CVisionImports.hpp"
 
 // Offset-typed view of cf::CBattleManager for the chain-start gates (the full
 // class header drags in a conflicting playActorSound declaration chain).

@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
+#include "kyoshin/cf/CVisionImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 
 // Event/presentation flag bitfields (.sbss)
 extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)

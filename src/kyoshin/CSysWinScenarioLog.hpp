@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -883,7 +884,6 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 extern "C" u8   DecMenuCounter64080();
 extern "C" u8   code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();
-extern "C" void getEntry__5CBdatFUl(u32);
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor).
@@ -903,7 +903,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);         // message-coun
 extern "C" u32 BdatGetU16ByTableKey(const void*, const void*, u32);   // msg-id lookup
 // BdatGetU16Direct / BdatGetPtrDirect return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see SysWinLog_OpenContent).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 // BdatGetPtrDirect's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // row name lookup
@@ -913,12 +912,9 @@ extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, void* r
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* __ct__CTagProcessor(void* self);
-extern "C" u32 getAllocHandle__10CLibLayoutFv();
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(

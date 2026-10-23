@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,6 @@ struct SndVec3 {
 extern "C" {
     extern void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void BattleWork_ApplyVolumeStore(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
-    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 channel, u32 soundId, u32 volume, u32 flag, float f1); // play SE
     extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
     extern void BattleWork_CopyPairToWork(SndVec3* pos, SndVec3* target);              // set map camera position
 }
@@ -319,8 +319,7 @@ int playSeCommon(VMThread* pThread) {
     if ((lbl_eu_80663E24 & 0x100) == 0) {
         float fadeF = (float)fadeInt / lbl_eu_80667D90;
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
-        u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-            0, id, volScaled, 1, fadeF);
+        u16 handle = cf::CfSoundMan::playActorSound(0, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
             entry->field_0x2A |= 0x20;
@@ -360,8 +359,7 @@ int playSeMap(VMThread* pThread) {
         // vol -> 0x10/0x14), matching the retail schedule.
         float fadeF = (float)fadeInt / lbl_eu_80667D90;
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
-        u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-            1, id, volScaled, 1, fadeF);
+        u16 handle = cf::CfSoundMan::playActorSound(1, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
             entry->field_0x2A |= 0x20;

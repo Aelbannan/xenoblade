@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
 
 #include <nw4r/db/db_assert.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
@@ -674,7 +675,7 @@ struct TagPadDataView {
  * data lives in the retail .data (annotated lbl_eu_8052DA68 / lbl_eu_8052DA38
  * / lbl_eu_8052DA08), so MWCC must not emit its own __vt__* table or
  * auto-store it -- the ctor stores the retail vtable pointer explicitly. The
- * ctor entry points are the short C-ABI names (__ct__CTagProcessorBase /
+ * ctor entry points are the short C-ABI names (__ct__17CTagProcessorBaseFv /
  * __ct__CTagProcessor / __ct__CTagProcessorSE); the base ctor is referenced
  * by its C-ABI name from the derived ctor functions, while the dtors are
  * genuine C++ virtual dtors (full mangled names) so the base-dtor chain is
@@ -822,12 +823,12 @@ void TagProcResetPage(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 
 // Tag-proc ctors: retail symbols are the short C-ABI names (no class-length
-// mangling). __ct__CTagProcessorBase is referenced (not defined) here -- its
+// mangling). __ct__17CTagProcessorBaseFv is referenced (not defined) here -- its
 // bytes come from the member ctor CTagProcessorBase::CTagProcessorBase() in
 // the .cpp, which needs the compiler-generated base-ctor call (placement new
 // would add a null beq the retail does not have). The derived ctors store the
 // retail vtable symbols by hand (see the class comment above).
-void* __ct__CTagProcessorBase(void* self);
+void* __ct__17CTagProcessorBaseFv(void* self);
 void* __ct__CTagProcessor(void* self);
 void* __ct__CTagProcessorSE(void* self);
 
@@ -950,7 +951,6 @@ extern "C" void* func_800BBC0C(void* obj);  // talk-source getter (retail r3 = p
 extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 u32 CtrlRemote_TouchBitByArg(u32 id);
 void CtrlRemote_SetSharedBit(u32 owner, u32 value);
-void* bindIndexedEffect(u32 cls, void* param);
 void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
 void MenuStateClear6405A();
 u8 code80135FDC_getByte_6405A();

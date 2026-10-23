@@ -4,6 +4,7 @@
 // retail symbol names.
 
 #include <types.h>
+#include "kyoshin/CTaskGame.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -105,7 +106,7 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
 
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     __ct__CSelShopWin(&self->mSelShop);
-    __ct__CCur18(&self->mCursor[0], 0);
+    __ct__CCur18(&self->mCursor, 0);
 
     self->mState = 0;
     self->mSelIndex = 0;
@@ -126,7 +127,7 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
 #pragma optimize_for_size on
 extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int flags) {
     if (self != 0) {
-        __dt__6CCur18Fv(&self->mCursor[0], -1);
+        __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__11CSelShopWinFv(&self->mSelShop, -1);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);
@@ -174,21 +175,12 @@ void CMenuSelectShop::Init() {
     loadShopWinArc(&mSelShop);
 
     // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
-    u8 rawCur[0x18];
-    __ct__CCur18(rawCur, CUICfManager_getArcResourceAccessor());
-    // CCur18Data models the payload tail (+0x4..+0x15), so the pointers start
-    // 4 bytes into each cursor image (vtable skipped).
-    CCur18Data* dst = reinterpret_cast<CCur18Data*>(&mCursor[4]);
-    CCur18Data* src = reinterpret_cast<CCur18Data*>(&rawCur[4]);
-    dst->m04 = src->m04;
-    dst->m08 = src->m08;
-    dst->m0C = src->m0C;
-    dst->m10 = src->m10;
-    dst->m14 = src->m14;
-    dst->m15 = src->m15;
-    __dt__6CCur18Fv(rawCur, -1);
+    CCur18 rawCur;
+    __ct__CCur18(&rawCur, CUICfManager_getArcResourceAccessor());
+    mCursor = rawCur;
+    __dt__6CCur18Fv(&rawCur, -1);
 
-    reinterpret_cast<CCursor18*>(&mCursor[0])->vf2();
+    mCursor.initLayout();
 
     playUISound__FUl(0x29);
 
@@ -214,7 +206,7 @@ void CMenuSelectShop::Term() {
     removeRenderCB__4CScnFP10IScnRender(mScene, render);
 
     teardownShopWin(&mSelShop);
-    reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
+    mCursor.cleanup();
     mMemRegion.deleteRegion();
     lbl_eu_806642E8 = 0;
 }
@@ -228,7 +220,7 @@ void CMenuSelectShop::Move() {
     // Single short-circuit OR per gate pair so MWCC emits the retail branch
     // shapes: first test -> bne exit, bit test -> beq continue / b exit
     // (CMenuShopBuy::Move / CSystemWindow::Move shape).
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
@@ -252,7 +244,7 @@ void CMenuSelectShop::Move() {
     }
 
     driveShopWinAnim(&mSelShop);
-    Cur_Update(&mCursor[0]);
+    Cur_Update(&mCursor);
 }
 
 // ---------------------------------------------------------------------------
@@ -280,10 +272,10 @@ extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
 #pragma auto_inline off
 extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
     if (isShopWinAnimActive(&self->mSelShop) != 0) {
-        Cur_SetVisible(&self->mCursor[0], 1);
+        Cur_SetVisible(&self->mCursor, 1);
         nw4r::math::VEC3 out;
         getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
-        reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         self->mState = 2;
     }
 }
@@ -336,7 +328,7 @@ extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) 
         if (v < 0) self->mSelIndex = 2;
         playUISound(1);
         getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
-        reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
+        self->mCursor.setRootPaneTranslate(&out);
     } else if (cancelButton != 0) {
         // DPAD right: increase the selection, wrapping 2 -> 0.
         nw4r::math::VEC3 out;
@@ -345,7 +337,7 @@ extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) 
         if (v > 2) self->mSelIndex = 0;
         playUISound(1);
         getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
-        reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
+        self->mCursor.setRootPaneTranslate(&out);
     } else if (okButton != 0) {
         // Confirm: act on the selected shop entry (signed compare like retail).
         switch ((s32)self->mSelIndex) {
@@ -360,14 +352,14 @@ extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) 
         case 2:
             self->mState = 3;
             hideShopWin(&self->mSelShop);
-            Cur_SetVisible(&self->mCursor[0], 0);
+            Cur_SetVisible(&self->mCursor, 0);
             break;
         }
     } else if (closeButton != 0) {
         // Other dpad direction: close the shop window and leave this state.
         self->mState = 3;
         hideShopWin(&self->mSelShop);
-        Cur_SetVisible(&self->mCursor[0], 0);
+        Cur_SetVisible(&self->mCursor, 0);
     }
 }
 #pragma pop
@@ -396,7 +388,7 @@ extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
 extern "C" void cbRenderBefore__15CMenuSelectShopFv(void*);
 void CMenuSelectShop::cbRenderBefore() {
     // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
@@ -408,7 +400,7 @@ void CMenuSelectShop::cbRenderBefore() {
     SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
     drawShopWin(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     if ((s32)mSelIndex >= 0)
-        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 

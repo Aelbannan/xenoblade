@@ -406,12 +406,11 @@ void stub_us_80265db4() {}
 
 // isIdle declared int (not u8) so the caller compares with cmpi directly
 // (no byte-mask rlwinm) - CMenuCollepedia pattern.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // Per-frame update (us-80265e54): once both the title/help widget and the
 // passive-skill sub-object report ready, mark the screen state as 2.
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->field_2AC = 2;
     }
 }
@@ -538,7 +537,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
 
 // Same shape as updatePassiveSkillMenu but writes the +0x54 state flag instead.
 void setPassiveSkillReady(CMenuPassiveSkill* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->field_54 = 1;
     }
 }

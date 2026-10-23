@@ -4,10 +4,11 @@
 #include "kyoshin/cf/chain/CChainTemp.hpp"
 #include "kyoshin/cf/chain/CChainTime.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
-#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/util/Flusher.hpp"
 
 namespace cf {
+    class CfObjectActor;
+
     //size: 0xA4
     class UnkClass_800D8DBC {
     public:

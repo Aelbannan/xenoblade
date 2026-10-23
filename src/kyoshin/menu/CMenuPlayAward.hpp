@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 #include <nw4r/lyt.h>
 
@@ -15,13 +17,7 @@
 
 class CScn;
 
-// Minimal CTaskGame decl (retail global-namespace class; symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // 8-byte award list entry (array element; zeroed by PlayAward_InitEntry and freed by
 // __dt__802706D4).
@@ -111,31 +107,6 @@ struct CPlayAwardPaneUser {
     u32 field_F8;   // +0xF8
 };
 
-// Field view of the opaque CCur18 cursor sub-object (CBaseCur layout +
-// padding, same as CQstLogList.hpp). Used to copy a stack-constructed CCur18
-// into the embedded mCursor region without touching the +0x00 vtable pointer
-// (retail copies +0x04..+0x15).
-struct CCur18Data {
-    void* mVtbl;    // +0x00 - not copied
-    void* field_4;  // +0x04
-    void* field_8;  // +0x08
-    void* field_C;  // +0x0C
-    void* field_10; // +0x10
-    u8 field_14;    // +0x14
-    u8 field_15;    // +0x15
-};
-
-// Abstract view into the embedded CCur18 cursor vtable (same scheme as
-// CMenuGameClear/CSysWinSave): MWCC prepends 2 entries (offset-to-top + RTTI),
-// so vf3 lands at vtable +0x0C (teardown virtual) and vf4 at +0x10 (cursor
-// Move virtual taking a VEC3*). Pure virtual so MWCC emits no vtable.
-class CCursor18 {
-public:
-    virtual void vf2() = 0;                     // slot 2 (+0x08)
-    virtual void vf3() = 0;                     // slot 3 (+0x0C)
-    virtual void vf4(const nw4r::math::VEC3*) = 0; // slot 4 (+0x10): Move
-};
-
 // View into the object returned by CDeviceFont::getFontInfo (cf.
 // CMenuBattleCommu.hpp): with MWCC's 2-entry vtable prefix the 8th virtual
 // lands at +0x24 and returns the font handle passed to ApplyFontToTxtPanes.
@@ -186,7 +157,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans24; // 0x24
     nw4r::lyt::AnimTransform* mAnimTrans28; // 0x28
     u32 field_0x2C;                         // 0x2C: second award text color/attr (PlayAward_RefreshEntryPanes)
-    u8 mCursor[0x18];                       // 0x30-0x47: cursor region (Cur_DrawLayout)
+    CCur18 mCursor;                         // 0x30-0x47
     u8 mScrollBar[0x40];                    // 0x48-0x87 (CScrollBar region)
     u8 field_0x88;                          // 0x88: render gate checked by PlayAward_DrawList
     u8 field_0x89;                          // 0x89: state byte (5/0/2 on transitions)
@@ -362,7 +333,6 @@ extern "C" __declspec(noinline) CPlayAwardList* __ct__CPlayAwardList(CPlayAwardL
 // Title/help bar idle query -- free-function form of CTitleAHelp::isIdle()
 // (retail reloc is the mangled member name; declared with int return so the
 // caller's `!= 0` test compiles to a direct cmpwi, cf. CMenuTutorialList.hpp).
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CBgTex/CTitleAHelp widget helpers (retail-unmangled callee names; US retail
 // strips the mangling for these widget helpers, cf. CMenuTutorialList.hpp).
@@ -408,15 +378,14 @@ extern "C" void CScrollBar_InitRootPane(u8* scrollBar, const float* vec);
 
 // CScrollBar / CCur18 embedded-widget ctors (retail-unmangled names).
 extern "C" void __ct__CScrollBar(u8* scrollBar, int arg);
-extern "C" void __ct__CCur18(u8* cursor, void* arg);
 
 // CScrollBar draw + cursor draw imports (retail-unmangled names; same reason
 // as CScrollBar_requestScrollIn -- the CScrollBar.hpp member decl would mangle them).
 extern "C" void CScrollBar_draw(u8* scrollBar, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void Cur_DrawLayout(u8* cursor, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void Cur_DrawLayout(CBaseCur* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
 // Cursor/scrollbar helpers used by the close sequence (PlayAward_RequestClose).
-extern "C" void Cur_SetVisible(u8* cursor, u8 val);
+extern "C" void Cur_SetVisible(CBaseCur* cursor, u8 val);
 extern "C" void CScrollBar_requestScrollOut(u8* scrollBar);
 
 // Layout text-binding helper (retail-unmangled; 3rd arg is the raw text word).
@@ -433,12 +402,11 @@ extern "C" void CScrollBar_Teardown(u8* scrollBar);
 extern "C" void CScrollBar_UpdateDispatch(u8* scrollBar);
 extern "C" void CScrollBar_UpdateThumb(u8* scrollBar, int, int);
 extern "C" void CScrollBar_PlaceThumb(u8* scrollBar, u16 val);
-extern "C" void Cur_Update(u8* cursor);
+extern "C" void Cur_Update(CBaseCur* cursor);
 
 // Embedded-widget destructors (retail mangled __dt__ names; the widget
 // storages are opaque u8 arrays so the dtor calls are C-ABI imports).
 extern "C" void __dt__10CScrollBarFv(u8* scrollBar, int dealloc);
-extern "C" void __dt__6CCur18Fv(u8* cursor, int dealloc);
 
 // Class_8045F858 scratch-region RAII guard used by OnFileEvent around the
 // layout build (retail C-linkage names; the class itself is declared in
@@ -451,15 +419,12 @@ extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 
 // OnFileEvent / Init layout-build imports (retail-unmangled C symbols).
-extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 CUICfManager_getPackedFont9C();
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 code80135FDC_getByte_6407F();
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);

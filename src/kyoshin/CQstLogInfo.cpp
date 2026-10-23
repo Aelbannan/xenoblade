@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CTagProcessor.hpp"
@@ -763,12 +764,12 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* fileData = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         void* tagMem = mtl::MemManager::allocate(
-            0x858, getAllocHandle__10CLibLayoutFv());
+            0x858, CLibLayout::getAllocHandle());
         if (tagMem != 0) {
             tagMem = __ct__CTagProcessor(tagMem);
         }
         field_0x2C = (u32)tagMem;
-        field_0x1C = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        field_0x1C = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(
             fileData, &lbl_eu_8050A0B4[0x36a]);
         buildLayout(&mUnk20, (nw4r::lyt::ArcResourceAccessor*)field_0x1C,

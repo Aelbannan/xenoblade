@@ -1,5 +1,5 @@
 // CVS_THREAD_TENSION_UP: Voice thread for tension-up audio events.
-// FULL_MATCH: TensUp_GetBufferSizeValue -- buffer-size getter (virtual method override).
+// FULL_MATCH: blank1__21CVS_THREAD_TENSION_UPFv -- buffer-size getter (virtual method override).
 // 5 matched functions: completion callback, voice removal, constructor,
 // update function, and voice-select + play function.
 

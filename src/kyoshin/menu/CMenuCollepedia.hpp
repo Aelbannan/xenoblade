@@ -73,7 +73,6 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly (no byte mask).
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // CCollepedia callees (retail-unmangled func_ names).
 extern "C" int clpGetInputOk(CCollepedia* self);

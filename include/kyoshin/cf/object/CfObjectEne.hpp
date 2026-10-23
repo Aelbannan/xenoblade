@@ -719,8 +719,7 @@ extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 extern "C" void func_804B0AD4(void* obj, int param, float a, float b);
 extern "C" void func_801F4DDC(void* obj, void* actor);
 extern "C" void func_801F4D50(void* obj, void* actor);
-// getUnk80664658: single typed view lives on CSuddenCommu.hpp (extern "C"
-// block); this tail must not redeclare it with a divergent return type.
+// getUnk80664658: declared once in kyoshin/code_801F3BE0.hpp (owner).
 
 // C-ABI imports used by initEnemyBdatParams / updateEnemyBattleState / applyEnemyReward
 // (retail symbols are unmangled).

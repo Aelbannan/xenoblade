@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -253,7 +254,6 @@ extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13Anim
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
     nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void ApplyFontToTxtPanes(void*, u32);
@@ -265,7 +265,6 @@ extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self
 extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
 
 // BDAT / random / pane-text helpers with unmangled retail names.
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 // u32-return view: retail masks the column byte at the call sites (clrlwi 24),

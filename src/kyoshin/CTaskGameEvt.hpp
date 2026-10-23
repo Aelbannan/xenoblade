@@ -7,21 +7,7 @@
 
 class CEventFile;
 
-// Minimal CScn declaration local to this TU set: only the two OOL render-callback
-// members are needed. Declared with the real class tag (CScn) and parameter
-// list so member calls emit the retail mangled symbols
-// removeRenderCB__4CScnFP10IScnRender / addRenderCB__4CScnFP10IScnRenderUlUl.
-// (A full #include of monolib/scn/CScn.hpp is safe now that the CTTask template
-// lives only in monolib/work/CTTask.hpp, but this minimal form keeps the TU
-// lean.) Guarded so the kyoshin task headers can be included together.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // CProcess base constructor imported from another TU (C-ABI, retail C-linkage
 // symbol name - do not let C++ mangle its parameter list).

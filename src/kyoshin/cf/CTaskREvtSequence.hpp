@@ -49,9 +49,8 @@ extern "C" void* evtModelDataPtr(void* self);
 // CProcess base destructor (retail __dt__8CProcessFv).
 class CProcess;
 extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
-// Realtime-event arena allocator (CREvtMem.cpp): returns the chunk size.
-extern "C" u32 initEvtMemArena(u32 a, u32 b);
-extern "C" void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
+// Realtime-event arena allocator (initEvtMemArena / allocEvtMemAligned).
+#include "kyoshin/realtimeevt/CREvtMem.hpp"
 
 // .sbss presentation/mode flag (co-op secondary mode bitfield)
 extern u32 lbl_eu_80663E28;
@@ -106,9 +105,6 @@ extern "C" void seedReloadTmr(u32 type);
 // (CREvtCamera.cpp / CTaskREvent.cpp).
 extern "C" u32 evtGetManagerAddr();
 extern "C" void evtTeardownActive();
-// getEvtMemSlot: realtime-event arena slot lookup (CREvtMem.cpp) - returns an
-// arena address used as a plain integer by EvtSeqAdvanceSequence.
-extern "C" u32 getEvtMemSlot(u32 idx);
 // CCharVoiceMan_FlushAll: voice-event manager reset (CCharVoiceMan.cpp).
 extern "C" void CCharVoiceMan_FlushAll();
 // CfGameManager helpers with the caller shape (same scheme as CTaskREvent.hpp).
@@ -919,7 +915,6 @@ extern "C" void REvtCam_ActivateLodTasks();
 // as a u32).
 extern "C" const char* evtGetBaseNameAddr();
 // Scene alloc-handle getter (CTaskGame.cpp).
-extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
 // BGM stream starter (CTaskGame.cpp): volume arrives in f1.
 extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 handle, u32 a4,
                               u32 a5, u32 a6, float volume);
@@ -1161,7 +1156,6 @@ extern "C" void activateLOD__8CTaskLODFv(s16 taskId);
 extern "C" void CTaskGame_resetStream();
 // Static shutdown for the shared menu-text state (code_8025FB10.cpp).
 extern "C" void __dt__80261B1C();
-extern "C" void freeEvtMemAll();
 extern "C" void finalizeGameState__Q22cf13CfGameManagerFv();
 extern "C" void CUICfManager_createQueuedMenus();
 extern "C" void CUICfManager_queueEventMenu();

@@ -88,14 +88,16 @@ void mkCrystalTeardown(CMakeCrystalWin* self) {
         unregisterEffectScene(scene2);
         // Retail re-reads mScene for every byte store (no CSE across the
         // pointer writes).
-        reinterpret_cast<CScnFlagView*>(self->mScene)->field_3E4 = 1;
-        reinterpret_cast<CScnFlagView*>(self->mScene)->field_39 = 1;
+        self->mScene->unk_3E4 = 1;
+        self->mScene->SetRemove();
         self->mScene = 0;
     }
 
     CWorkThread* thread = self->mThread;
     if (thread != 0) {
-        CTaskGame::getInstance()->unk6C->pssDetachView(thread->mWorkID);
+        // CTaskGame+0x6C holds the parent process passed to the ctor (typed
+        // CWorkThread* by __ct__9CTaskGameFP5CViewP11CWorkThreadi).
+        static_cast<CProc*>(CTaskGame::getInstance()->unk6C)->pssDetachView(thread->mWorkID);
         self->mThread->wkSetEvent(CWorkThread::EVT_NONE);
         self->mThread = 0;
     }
@@ -143,7 +145,7 @@ void mkCrystalDismissToState1(CMakeCrystalWin* self) {
 // Retail 0x80214AB8: once the title-help banner is idle and the crystal box
 // is active, mark the window state as 2.
 void mkCrystalToState2Idle(CMakeCrystalWin* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
             self->field_4360 = 2;
         }
@@ -155,7 +157,7 @@ void mkCrystalToState3Box(){}
 // Retail 0x80214D2C: same gate as mkCrystalToState2Idle but flags the secondary
 // state byte (field_4361) instead.
 void mkCrystalSetFlag4361(CMakeCrystalWin* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
             self->field_4361 = 1;
         }
@@ -186,7 +188,7 @@ void mkCrystalToState2Banner(CMakeCrystalWin* self) {
 // is active, sync the crystal cursor, update the display selection, and show
 // the load overlay when either selection index reaches 3.
 void mkCrystalToState8Box(CMakeCrystalWin* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (getCrystalBoxActive(&self->mCrystalBox) != 0) {
             teardownCrystalBox(&self->mCrystalBox);
             u32 cursor = rebuildCrystalBoxSelTable(&self->mCrystalBox);
@@ -216,7 +218,7 @@ void mkCrystalToState9Ready(CMakeCrystalWin* self) {
 // Retail 0x802150A8: once the title-help banner is idle and the model
 // display is ready, mark the window state as 0xa.
 void mkCrystalToStateAReady(CMakeCrystalWin* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (getCrystalStateA(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)) != 0) {
             self->field_4360 = 0xa;
         }
@@ -240,7 +242,7 @@ void mkCrystalToStateBCharge(CMakeCrystalWin* self) {
 // display from stack temps and start the banner; otherwise flag the window
 // as not ready.
 void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (getCrystalStateC(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])) != 0) {
             self->field_4360 = 0;
             MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(self->mModelDispArea));

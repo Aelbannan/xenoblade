@@ -110,7 +110,7 @@ int CVS_THREAD_SUDDEN::SuddenVx_GetBufferSizeValue() { return 1; }
 // ({name, trailing}). Global-scope data symbols: MWCC does not mangle them.
 //
 // NOTE: retail spells the bufsize vtable slot
-// SuddenVx_GetBufferSizeValue__18CVS_THREAD_SUDDENFv (18-char class name);
+// SuddenVx_GetBufferSizeValue__17CVS_THREAD_SUDDENFv (18-char class name);
 // decomp's class is 17 chars, so the slot references decomp's own __17
 // spelling (same .text offset 0x1DC, same linked bytes). The literal-name
 // extern "C" decl below addresses that in-TU definition.

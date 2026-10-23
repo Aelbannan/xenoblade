@@ -122,7 +122,6 @@ extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const 
 
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);

@@ -5,6 +5,7 @@
 // NOTE: kyoshin/harness_catalog.hpp deliberately omitted - its CScn clashes
 // with monolib/scn.hpp (pulled in by CTaskGame.hpp below).
 #include "kyoshin/CTaskGame.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -307,7 +308,7 @@ void advanceOptionPhase1(CMenuOption* self) {
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
 void advanceOptionPhase2(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && COptionGetLiveFlag(&self->mOption) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && self->mOption.getLiveFlag() != 0) {
         self->mState = 2;
     }
 }
@@ -379,8 +380,8 @@ void handleOptionInput(CMenuOption* self) {
 
     func_801C41E8(&self->mTitleAHelp, (u8)COptionGetNavCode(&self->mOption));
 
-    if (COptionGetConfirmGate(&self->mOption) != 0) {
-        if (COptionGetSecondConfirm(&self->mOption) != 0) {
+    if (self->mOption.getConfirmGate() != 0) {
+        if (self->mOption.getSecondConfirm() != 0) {
             if (CMainMenu_GetInstancePtr() != 0) {
                 ArtsInfo_SetReadyFlag();
             }
@@ -397,7 +398,7 @@ void handleOptionInput(CMenuOption* self) {
 /* Same idle+advance check as advanceOptionPhase2, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
 void flagOptionPhase1(CMenuOption* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 && COptionGetLiveFlag(&self->mOption) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0 && self->mOption.getLiveFlag() != 0) {
         self->mField54 = 1;
     }
 }

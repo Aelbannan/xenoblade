@@ -14,3 +14,6 @@ extern "C" CScn* lbl_eu_80663E14;
 // Reads that must stay separate loads use explicit volatile casts
 // (e.g. *(volatile u32*)&lbl_eu_80663E24).
 extern "C" u32 lbl_eu_80663E24;
+
+// CfGameManager mode-flag word (.sbss; sda21 access).
+extern u32 lbl_eu_80663E28;

@@ -26,11 +26,3 @@ namespace cf {
         void resetChainTime();
     };
 }
-
-extern "C" void startChainTimer(cf::CChainTime*, u8);
-extern "C" void tickChainTimer(cf::CChainTime*);
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-namespace cf { class CBattleManager; }
-extern "C" void refreshBattleActors(cf::CBattleManager*, f32, int);
-extern "C" void chainUnbindMatchingObjects(int, int);

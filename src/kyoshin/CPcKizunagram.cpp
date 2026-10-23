@@ -2,6 +2,7 @@
 // KizunagramIsHidden / KizunagramIsOpen: FULL_MATCH (byte-identical).
 
 #include "kyoshin/CPcKizunagram.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -632,7 +633,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         Class_8045F858 regionGuard(&mMemRegion);
         fileData = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
-        mArcRes = createArcResourceAccessor__10CLibLayoutFv();
+        mArcRes = CLibLayout::createArcResourceAccessor();
         mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);

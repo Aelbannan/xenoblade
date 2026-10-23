@@ -26,22 +26,15 @@
  */
 
 #include <types.h>
+#include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CBaseCur.hpp"
 class CBaseCur;
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
 // IWorkEvent-compatible vtable for CKizunaTalkList (split1 .data).
 extern "C" void* lbl_eu_80537D28[];
-
-// Abstract view into the embedded CCur18 cursor vtable. MWCC prepends
-// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
-// index 2 -> +0x10 is the "Move" virtual taking a VEC3*.
-class CCur18View {
-public:
-    virtual void v00() = 0;      // 0x08
-    virtual void v01() = 0;      // 0x0C
-    virtual void v02(void*) = 0; // 0x10 - Move
-};
 
 /* Sets mVtbl before anything else (retail ctor stores lbl_eu_80537D28 first).
    Same idiom as CScrollBarVtblBase: deriving directly would emit the TU-local
@@ -78,7 +71,7 @@ public:
     /* 0x20 */ nw4r::lyt::Layout* mpLayout20; // layout used for BindAnim-style anim control
     /* 0x24 */ nw4r::lyt::AnimTransform* mpAnim24;
     /* 0x28 */ nw4r::lyt::AnimTransform* mpAnim28;
-    /* 0x2C */ u8 mCursor[0x18];     // CCur18 cursor (stub, 0x18 bytes)
+    /* 0x2C */ CCur18 mCursor;
     /* 0x44 */ u8 mScrollBar[0x40];  // CScrollBar widget; constructed/copied
                                      // explicitly in the ctor (retail calls
                                      // __ct__CScrollBar in the body, so the
@@ -138,9 +131,7 @@ extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int n);
 extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void getEntry__5CBdatFUl(u32);
 void closeFileHandle(CFileHandle**);
 extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void CScrollBar_Teardown(void*);
@@ -149,14 +140,12 @@ extern "C" void deleteRegion(UnkClass_8045F564* self);
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
 // symbol names so the reloc targets line up).
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__CScrollBar(void* self, u8 direction);
-extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
+extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* paneC);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
@@ -166,7 +155,6 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 // Data/build helpers used by buildTalkList.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u16 BdatGetU16Direct(const void* fp, const void* name, int id);
 extern "C" u16 LookupRelateValue(u8 a, u8 b);
 u32 findTalkIcon(TalkListEntryArray* self, u8 v);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer

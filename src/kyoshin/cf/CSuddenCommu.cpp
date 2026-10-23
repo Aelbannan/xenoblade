@@ -2,11 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/CTaskGameEffApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
-#include "kyoshin/cf/CSuddenCommu.hpp"
+#include "kyoshin/cf/CSuddenCommuImports.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
 #include "kyoshin/cf/CfGameManager.hpp"
 // ml::math::mtRand(int) - mangles to the retail mtRand__Q22ml4mathFi.
@@ -122,8 +124,8 @@ __declspec(noinline) int SuddenCommuCanStart(CSuddenCommu* self) {
     if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) return 0;
     if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) return 0;
     if ((self->field_24 & 1) == 0) return 0;
-    CSuddenCommuGlobal* global = getUnk80664658();
-    if (global->field_214 & 2) return 0;
+    CGimmickGlobal* global = getUnk80664658();
+    if (global->mFlags & 2) return 0;
     if (GetZealObjPtr() != 0) return 0;
     CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(0);
     if (player != 0) player = (CSuddenCommuActor*)((CSuddenCommuActorHead*)player - 1);
@@ -502,7 +504,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) goto commu_end;
                 cf::CfGameManager::getInstance();
                 if (isGlobalCamFlagSet__Fi(0x04000000) != 0) goto commu_end;
-                if (getUnk80664658()->field_214 & 2) goto commu_end;
+                if (getUnk80664658()->mFlags & 2) goto commu_end;
                 void* spotG = cf::CfGameManager::getPlayer(0);
                 CSuddenCommuActor* pG = (CSuddenCommuActor*)spotG;
                 if (spotG != 0) pG = (CSuddenCommuActor*)((CSuddenCommuActorHead*)spotG - 1);
@@ -662,7 +664,7 @@ void SuddenCommuEnterBattle(CSuddenCommu* self) {
     if (player != 0) {
         if (player != 0)
             player = (char*)player + 0x3E9C;
-        cue = (CSuddenCommuVoiceCue*)bindIndexedEffect(0xC0, (int)player);
+        cue = (CSuddenCommuVoiceCue*)bindIndexedEffect(0xC0, player);
         self->field_20p = cue;
         if (cue != 0) {
             ((cf::CfObject*)cue)->CfObject_pushRefreshValue(lbl_eu_80667E58);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -41,7 +42,6 @@ extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);
 extern "C" void setPaneVisible(nw4r::lyt::Pane*, u32);
 
 // BDAT text / name helpers (retail unmangled).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 BdatGetItemId(u32);
 extern "C" void* GetBdatNameByNumId(const char*);
@@ -51,7 +51,6 @@ extern "C" char* CUICfManager_getPackedFont9C();
 // Font-info lookup (retail pre-mangled name).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Layout-build helpers (retail unmangled).
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);
 // BDAT manager (C-linkage free function; the CBdat:: form would mangle).
 extern "C" void* Bdat_GetTable_AA34();

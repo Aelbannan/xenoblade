@@ -10,6 +10,7 @@
 #include "kyoshin/CCol6Invite.hpp"
 #undef Col6FormatBufferString
 #include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -20,19 +21,7 @@
 #include <nw4r/lyt.h>
 #include <revolution/GX.h>
 
-// Minimal CScn declaration (same guarded form as CTaskGameEff.hpp/CTaskGameEvt
-// /CTaskGamePic): only the render-callback members used by CCol6System's
-// Init/Term are needed. Declared with the real class tag so member calls emit
-// the retail mangled symbols addRenderCB__4CScnFP10IScnRenderUlUl /
-// removeRenderCB__4CScnFP10IScnRender.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 class CCol6AnimHostView;  // layout anim host view (defined below)
 
@@ -71,26 +60,8 @@ public:
     /* 0x120 */ u8 mField120;              // init 0
     /* 0x121 */ u8 mField121;              // init 0
     /* 0x122 */ u8 mPad122[2];             // retail pads to 0x124
-    /* 0x124 */ u8 mCur18[0x18];           // CCur18
+    /* 0x124 */ CCur18 mCur18;
     /* 0x13C */ CScrollBar mScrollBar;
-};
-
-// Abstract view into the CCur18 cursor vtable embedded in CCol6System
-// (MWCC reserves slots 0/1, so the first user virtuals land at vtable +0x08
-// and +0x0C; slot 3 is the per-frame update invoked by Term).
-class CCol6CursorView {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (vtable + 0x08)
-    virtual void vf3() = 0;     // slot 3 (vtable + 0x0C)
-};
-
-// CCur18 vtable view for CCol6Hint::Move: the +0x10 slot (virtual index 2)
-// is the position-set virtual invoked with the ScalePaneWorldPos result.
-class CCol6Cur18View {
-public:
-    virtual void vf02() = 0;                      // +0x08
-    virtual void vf03(void*) = 0;                 // +0x0C
-    virtual void vf04(nw4r::math::VEC3*) = 0;     // +0x10 - Move state 2
 };
 
 // Layout-animation host (the object behind CCol6Hint::mField54): its vtable
@@ -159,21 +130,6 @@ struct CCol6LayoutView {
     void* vtable;                 // 0x00
     u8 _04[0x0C];                 // 0x04..0x0F
     nw4r::lyt::Pane* mpRootPane;  // 0x10
-};
-
-// Data body of the embedded CCur18 cursor (0x18 bytes). col6HintBuild copies
-// the non-vtable fields (f_04..f_15) from a stack temp into the embedded
-// cursor at +0x124 (same shape as CSysWinSave::Init).
-struct CCol6Cur18Data {
-    void* vtable;  // 0x00 (retained, not copied)
-    u32   f_04;    // 0x04
-    u32   f_08;    // 0x08
-    u32   f_0c;    // 0x0c
-    u32   f_10;    // 0x10
-    u8    f_14;    // 0x14
-    u8    f_15;    // 0x15
-    u8    f_16;    // 0x16
-    u8    f_17;    // 0x17
 };
 
 // View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
@@ -245,8 +201,8 @@ public:
     /* 0xA2 */ u16 mFieldA2;                    // halfword (retail ctor: sth 0)
     /* 0xA4 */ u8 mFieldA4;                      // byte flag, set 0x22 by Col6_Win2Interact_378C
     /* 0xA5 */ u8 mPadA5[3];                     // retail pads to 0xA8
-    /* 0xA8 */ u8 mCur1[0x18];                  // CCur18 cursor 1
-    /* 0xC0 */ u8 mCur2[0x18];                  // CCur18 cursor 2
+    /* 0xA8 */ CCur18 mCur1;
+    /* 0xC0 */ CCur18 mCur2;
     /* 0xD8 */ u8 mSysWin1[0x3C];               // CSysWin window 1
     /* 0x114 */ u8 mSysWin2[0x3C];              // CSysWin window 2
     /* 0x150 */ ml::CVec3 mCamPos;              // camera position (CfGameManager camera API)
@@ -339,12 +295,6 @@ struct UnkClass_80083298View {
     u8 field_0xF0[0x14];
 };
 
-// Minimal CTaskGame import (retail symbols getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv; chained-call form per CUICfManager.cpp).
-class CTaskGame;
-extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
-
 // CMenuFade object (opaque here; getFadeMenu/isFadeActive gate on it).
 class CCol6Fade;
 
@@ -393,7 +343,6 @@ void lookupEffectForResource__Q22cf13CfGameManagerFv(u32, u32, u32);           /
 void* CfSoundMan_TouchSlotById(u16 handle);                                      // CfSoundMan.cpp
 void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
 UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
 extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
 void sysWinSetKindContent(void* syswin, const char* msg, int flag);          // CSysWin.cpp
 void sysWinApplyKind(void* syswin, int flag);                           // CSysWin.cpp
@@ -412,7 +361,7 @@ extern "C" void CScrollBar_requestScrollOut(void* scrollbar);                   
 extern "C" void CScrollBar_PlaceThumb(void* scrollbar, u16 value);                     // CScrollBar.cpp (thumb position)
 void Cur_SetVisible(void* cursor, int arg);                            // CCur.cpp
 void Cur_Update(void* cursor);                                     // CCur.cpp
-void* CUICfManager_getArcResourceAccessor();                                                // CCur.cpp (vtable source for __ct__CCur18)
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();                                              // CCur.cpp (vtable source for __ct__CCur18)
 void* getCfPadData__Q22cf13CfGameManagerFv();                        // cf::CfGameManager
 u8 BdatGetU8Direct(const void*, const char*, u8);                      // code_80135FDC.cpp
 void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32); // code_80135FDC.cpp
@@ -441,7 +390,6 @@ void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
 extern "C" void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
-void __ct__CCur18(void* self, void* arg);                            // CCur18 ctor (retail short name)
 extern "C" void CScrollBar_loadLayoutArc(CScrollBar* self);                                // CScrollBar arc read (retail short name)
 int sprintf(char*, const char*, ...);                                // stdio (CRT)
 }
@@ -510,7 +458,6 @@ extern "C" const u16 lbl_eu_80667574;
 extern "C" const u8 lbl_eu_80667576;
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);

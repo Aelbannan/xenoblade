@@ -292,3 +292,15 @@ hand-off. No source files touched. No `targets sync-attempts`. No `ninja`/`confi
 clobbering last-good objects). `registry_check.py` passes; `targets validate` shows only
 the 46 pre-existing certificate errors noted in §2. Accordingly no `attempts.jsonl`
 lines were appended (logging rule is per registry change).
+
+## 2026-10-23 — registry pass (registry agent)
+
+Method: every row re-measured with `batch-cycle.py` (fresh build under the lock, register-renaming witness, no SMT). Demotions use the locked registry writer and log a reason to `attempts.jsonl` plus the row's `notes`. Scratch in `.scratch/registry/`.
+
+**Counts.** Before: ACCEPTED 14487 · ACTIVE 4203 · BACKLOG 421 · REVALIDATION_REQUIRED 189. After: ACCEPTED 14551 · ACTIVE 4323 · BACKLOG 421 · REVALIDATION_REQUIRED 5. Other agents were cycling at the same time, so the ACCEPTED delta includes their promotions.
+
+1. **REVALIDATION_REQUIRED (189):** 57 promoted to ACCEPTED (54 FULL_MATCH, 3 EQUIVALENT_MATCH). 127 demoted to ACTIVE with their measured status (48 CODE_MATCH, 42 HIGH_MATCH, 24 COMPILES, 13 STRUCTURAL). In all 127 the witness did not certify and the bytes were not identical; 125 were `inconclusive_smt_disabled`. 5 are **HOLD** because their TU doesn't compile: padmgr-get-instance (CfGameManager), us-80388b64 and us-80388b7c (adx_xpnd), us-8038a328 and us-8038a870 (adx_bsc).
+2. **Stale FULL_MATCH:** the sweep dry-run listed 47 rows (49 by run time), and each was re-cycled. 27 re-passed and 22 were demoted to ACTIVE by cycle: pluginCfs ×2, CtrlNpc, CfObjectImplWalker, CActorParam ×4, pluginBtl, CTitleAHelp, CScrollBar ×2, CMCEffStart ×4, CMenuKizunaTalkList, CMdlAnmUV (all COMPILES 0.0%, likely unpaired or diverged bodies), plus CfObjectTbox 99.48, CMenuSkipTimer 99.83, snd_FxDelayDpl2 99.80, CWorkRoot 99.85 (CODE_MATCH). CMCEffStart is in an active cleanup-kyoshin claim, so re-cycle it once that work lands.
+3. **Accepted symbol missing from the decomp object:** checked with the pipeline resolver (`extract_function_pair`). The earlier 75 rows are resolved. A strict-name scan shows about 2100 C++-mangled-suffix names, which the resolver pairs correctly, so they are not drift. Only 2 rows were really missing, and both were demoted: us-801a1bb0 and us-801a1bb8 (CMenuBattleMode `*Adj5C`). MWCC now emits weak `@92@...` thunks for them, and symbols.txt needs a rename.
+4. **Malformed rows:** `targets sync-symbols` applied 21 symbol renames that followed the memberization symbols.txt edits. One row has no address: `game-wk-render` (curated, ACCEPTED). About 124 rows have junk display names such as `constructor(C, 0, 4, 0)` (from `_display_name` on `__ct__<addr>` pseudo-symbols). No tool rewrites `function` for an unchanged symbol, so they are left listed, not hand-edited.
+5. README status block and `assets/progress-map.svg` were regenerated, and `registry_check.py` passes.

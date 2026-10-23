@@ -42,7 +42,6 @@ class CTagProcessor;
 extern "C" void* __ct__CTagProcessor(void*);
 
 // CLibLayout helpers referenced by their literal retail (pre-mangled) names.
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,

@@ -1,3 +1,5 @@
+// Embedded CCur18 members are destroyed implicitly by CPassiveSkillLine's dtor.
+#define CCUR18_MEMBER_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CPassiveSkill
 // Replace stubs with high-level C/C++ during decomp.
 
@@ -9,6 +11,7 @@
 // symbol) so it cannot collide with CSysWin.hpp's pointer-form decl - same
 // pattern as CMenuArtsSet.cpp's artsFAD0View.
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
 // Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
@@ -1069,7 +1072,6 @@ __declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 
 extern "C" void BuildSlotItemLists(u32 arg);
 extern "C" void __dt__Q22UI17CPassiveSkillInfoFv(UI_CPassiveSkillInfo* self, int flag);
-extern "C" void __dt__6CCur18Fv(CCur18* self, int flag);
 
 // Line-subobject rebuild (retail CPassiveSkillLine_rebuildLayouts): called from OnFileEvent after
 // the skill-data read. Creates the main layout (+0x8) and three anim
@@ -1286,7 +1288,7 @@ __declspec(noinline) void CPassiveSkillLine_teardown(UI::CPassiveSkillLine* self
     }
     CPassiveSkillCur_releaseBoth(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo));
     CPassiveSkillCur_releaseLayout(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo.field_3C));
-    reinterpret_cast<CCur18TearView*>(&self->mCur)->vf03();
+    self->mCur.cleanup();
 }
 #pragma optimize_for_size off
 
@@ -1487,7 +1489,7 @@ void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self) {
             }
             nw4r::math::VEC3 pos;
             sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, self->field_11D);
-            reinterpret_cast<CCur18View*>(&self->mCur)->vf04(&pos);
+            self->mCur.setRootPaneTranslate(&pos);
             playUISound(1);
         }
         return;
@@ -1531,7 +1533,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_cursorUp(u8* self) {
             }
             nw4r::math::VEC3 pos;
             sysWinGetPaneScreenPos(&pos, line->mInfo.field_54, line->field_11D);
-            reinterpret_cast<CCur18View*>(&line->mCur)->vf04(&pos);
+            line->mCur.setRootPaneTranslate(&pos);
             playUISound(1);
         }
         return;
@@ -2371,7 +2373,7 @@ extern "C" __declspec(noinline) void CPassiveSkillLine_closeMoveCur(UI::CPassive
         self->field_11D = 1;
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(&pos, self->mInfo.field_54, 1);
-        reinterpret_cast<CCur18View*>(&self->mCur)->vf04(&pos);
+        self->mCur.setRootPaneTranslate(&pos);
         Cur_SetVisible(&self->mCur, 1);
     }
 }
@@ -3772,7 +3774,6 @@ extern "C" void CPassiveSkill_draw(UI_CPassiveSkill* self, u8* arg2) {
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -3784,7 +3785,7 @@ extern "C" void sysWinTermLayout(void*);
 // down the embedded line sub-object and syswin, release the mem-region
 // object, then clear each character's skill-blob pointer (rows 1..8).
 extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle__FPP11CFileHandle(&self->field_18);
     closeFileHandle__FPP11CFileHandle(&self->field_1C);
     self->field_24 = 0;
@@ -4133,10 +4134,8 @@ extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 class CEventFile;
 
 // UI::CPassiveSkill file-event handler (retail
@@ -4161,7 +4160,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         void* buf = *(void**)((u8*)fh + 4);
         *(void**)((u8*)fh + 4) = 0;
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        self->field_20 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        self->field_20 = (u32)CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
             (nw4r::lyt::ArcResourceAccessor*)self->field_20, buf,
             &lbl_eu_8050DC20[0xa20]);
@@ -4242,7 +4241,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
     {
         void* fh2 = (void*)self->field_1C;
         *(void**)((u8*)fh2 + 4) = 0;
-        setBdatEntry__5CBdatFUlPv(2, 0);
+        CBdat::setBdatEntry(2, 0);
         Bdat_GetTable_AA34();
         lbl_eu_80664880 = getFP__FPCc(&lbl_eu_8050DC20[0xa24]);
         Bdat_GetTable_AA34();

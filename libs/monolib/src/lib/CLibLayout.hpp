@@ -33,11 +33,11 @@ public:
 
     bool isInitialized();
     CLibLayout* getInstance();
-    nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+    static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
     nw4r::lyt::Layout* createLayout();
     nw4r::lyt::TextBox* createTextbox();
     nw4r::lyt::Picture* createPicture();
-    mtl::ALLOC_HANDLE getAllocHandle();
+    static mtl::ALLOC_HANDLE getAllocHandle();
     void deleteTextboxOrPicture();
 
     virtual void wkUpdate() override;  //0x88

@@ -90,23 +90,23 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         self->mState = 3;
         sysWinAdvancePhase3(&self->mSysWin[0]);
         self->field_60 = (s8)self->mCursorSel + 1;
-        Cur_SetVisible(&self->mCur18[0], 0);
+        Cur_SetVisible(&self->mCur18, 0);
         playUISound__FUl(3);
     } else if (up != 0) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
         if ((s8)self->mCursorSel < 0) self->mCursorSel = 1;
-        u8 tmp[0xC];
-        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mCursorSel);
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
+        nw4r::math::VEC3 tmp;
+        sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
+        self->mCur18.setRootPaneTranslate(&tmp);
         playUISound__FUl(1);
     } else if (down != 0) {
         // Down: move the cursor down one row, wrapping over 1 to 0.
         self->mCursorSel = (u8)(self->mCursorSel + 1);
         if ((s8)self->mCursorSel > 1) self->mCursorSel = 0;
-        u8 tmp[0xC];
-        sysWinGetPaneScreenPos(tmp, &self->mSysWin[0], self->mCursorSel);
-        reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
+        nw4r::math::VEC3 tmp;
+        sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
+        self->mCur18.setRootPaneTranslate(&tmp);
         playUISound__FUl(1);
     }
 }

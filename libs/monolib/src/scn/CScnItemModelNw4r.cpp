@@ -3,6 +3,7 @@
 
 #include <harness_catalog.h>
 #include "monolib/scn/CScnTimeApi.hpp"
+#include <monolib/scn/CScn.hpp>
 
 #include <string.h>
 #include <revolution/GX.h>
@@ -1426,7 +1427,9 @@ CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     if (enable != 0) {
         flags |= 1;
     }
-    handle = Scn_CallUnk8C_V9(self);
+    // The factory's first argument is the scene (callers pass lbl_eu_80663E14);
+    // `self` is still typed as the model here, so view it as the CScn.
+    handle = reinterpret_cast<CScn*>(self)->getAllocHandle();
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         model = (CScnItemModelNw4r*)mtl::MemManager::allocate_ex(
             0x181C, mtl::MemManager::getHandleMEM2(), -0x20);
@@ -1490,7 +1493,7 @@ CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
     if (resFile.GetResMdl(0).ptr() == 0) {
         return 0;
     }
-    mtl::ALLOC_HANDLE handle = Scn_CallUnk8C_V9(self);
+    mtl::ALLOC_HANDLE handle = reinterpret_cast<CScn*>(self)->getAllocHandle();
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         return 0;
     }

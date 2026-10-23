@@ -4,14 +4,7 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "monolib/math/Random.hpp"
 
-// cf::CfGameManager / cf::CBattleManager have no shared standalone header;
-// declare just the statics this TU uses.
-namespace cf {
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-};
-}
+#include "kyoshin/cf/CBattleManager.hpp"
 
 // Local minimal layout for the gimmick list consumed by getReslistB48.
 struct OrderGimmickNode {

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
+#include "kyoshin/CBaseCur.hpp"
 
 #include "kyoshin/CSortMenu.hpp"  // CScrollBarData (0x40-byte scrollbar), CSortMenu, CScrollBar_isVisible
 
@@ -75,19 +77,6 @@ struct CQstLogListSortMenuData {
      +0x80: CSortMenu (0xF0 bytes)
      +0x170: layout-loaded flag
      +0x182: quest-info buffer (8x0x400 array + 6-byte tail, 0x2006 bytes) */
-// Field view of the opaque CCur18 sub-object (CBaseCur layout + padding).
-// Used to copy a stack-constructed CCur18 into the embedded mCur18 region
-// without touching the +0x00 vtable pointer (retail copies +0x04..+0x15).
-struct CCur18Data {
-    void* mVtbl;    // +0x00 - not copied
-    void* field_4;  // +0x04
-    void* field_8;  // +0x08
-    void* field_C;  // +0x0C
-    void* field_10; // +0x10
-    u8 field_14;    // +0x14
-    u8 field_15;    // +0x15
-};
-
 // Overlay structs for the 'timg' message resource consumed by OnFileEvent:
 // the resource object holds a chain whose first field points at the u16
 // row/column pair used to size the quest-log panes.
@@ -117,7 +106,7 @@ struct CQstLogList {
     nw4r::lyt::Layout* mpLayout;     // 0x1C - layout (LayoutSetTextBoxText target)
     nw4r::lyt::AnimTransform* mpAnim0;  // 0x20 - animation transform 0
     nw4r::lyt::AnimTransform* mpAnim1;  // 0x24 - animation transform 1
-    u8 mCur18[0x18];                 // 0x28..0x3F CCur18 cursor sub-object
+    CCur18 mCur18;                   // 0x28..0x3F
     CScrollBarData mScrollBar;       // 0x40..0x7F - quest list scroll bar
     CQstLogListSortMenuData mSortMenuData;  // 0x80..0x16F CSortMenu (mirror storage)
     u8 field_0x170;                  // 0x170 - layout loaded flag
@@ -146,16 +135,6 @@ extern "C" void QstLogList_ClearRows(CQstLogList* self);
 extern "C" void QstLogList_FillSortMenu(CQstLogList* self);
 extern "C" void QstLogList_RefreshHeader(CQstLogList* self);
 extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
-
-// Abstract view into the embedded CCur18 cursor vtable (sibling copies live
-// in CMapSel.hpp / CTitle.hpp). MWCC prefixes the vtable with offset-to-top +
-// RTTI, so vtable +0x10 = index 2 = the "Move" virtual (takes a VEC3*).
-class CCur18View {
-public:
-    virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03() = 0;                        // index 1 -> +0x0C (retail passes no arg - r4 carries stale flag 1)
-    virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
-};
 
 // Sort-menu scroll/page handlers (defined in CSortMenu.cpp). Retail names are
 // unmangled C linkage - keep extern "C" so the bl relocs bind to them.
@@ -187,13 +166,11 @@ extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sortMenuToState4Page(void*);
 extern "C" int sortMenuGetFlag2B(void*);
 extern "C" void __dt__9CSortMenuFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" void* __dt__80227030(void*, int);      // 0x400-byte QstInfo element dtor
 
 // Sub-object constructor imports (retail C-linkage names).
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__CCur18(u8*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSortMenu(CQstLogListSortMenuData*);
 extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src);   // 4-word mem-region copy
@@ -218,7 +195,6 @@ extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the
 // code_80135FDC.hpp set is co-included for BdatGetPtrDirect/LayoutSetTextBoxFmtValue).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" void PaneSetVtxColorByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void PaneSetTexPalette(nw4r::lyt::Pane*, const char*);

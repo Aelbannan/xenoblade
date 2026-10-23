@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 
 // CSysWin.hpp declares typed __ct__/__dt__17UnkClass_8045F564Fv forms that
 // clash with the void* forms in CItemBoxInfo.hpp (via CtrlObjectParam.hpp
@@ -18,13 +19,7 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 class CProcess;
-// Minimal CScn view (render-callback registry; retail symbols
-// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender).
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flags);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 class IScnRender;
 class UnkClass_8045F564;
 
@@ -74,23 +69,13 @@ public:
     s8 mField71;                    // 0x71: cursor row (wraps 0..1)
     u8 _72[0x74 - 0x72];            // 0x72..0x73
     u8 mSysWin[0x3C];               // 0x74: CSysWin storage (0x3C bytes)
-    u8 mCursor[0x18];               // 0xB0: CCur18 cursor storage (0x18 bytes)
+    CCur18 mCursor;                 // 0xB0
     u8 _C8[0x12338 - 0xC8];         // 0xC8..0x12337: uninitialized region
     cf::CtrlObjectParamInit mParams[14];  // 0x12338, 14 x 0xCC = 0xB28
     // size 0x12E60
 };
 
-// Embedded CCur18 cursor is driven through the real CBaseCur interface
-// (kyoshin/CBaseCur.hpp): cleanup() is vtable slot +0x0C (called by Term),
-// setRootPaneTranslate() is slot +0x10 (called by the input handlers).
-
-// Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv; same scheme as CSysWinSave.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Minimal cf::CfGameManager view for this TU (full header conflicts with
 // CtrlObjectParam.hpp data declarations).
@@ -102,9 +87,6 @@ public:
     static void enablePadFlags(u32 flags, bool enable); // enablePadFlags__..FUlb
 };
 } // namespace cf
-
-// (Pad view deleted: input handlers call
-// ((CBaseCur*)&mCursor[0])->setRootPaneTranslate(&pos) instead.)
 
 // cf pad data view used by the input handlers (fields at +0x04/+0x104).
 struct CfPadDataView {
@@ -125,8 +107,6 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                    bool insertTop);
 void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void __ct__CCur18(void* cursor, void* accessor);
-void __dt__6CCur18Fv(void* cursor, int flags);
 void deleteRegion__17UnkClass_8045F564Fv(void* region);
 void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
 void sysWinTermLayout(void* syswin);

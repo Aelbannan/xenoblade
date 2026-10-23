@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "monolib/lib/CLibLayout.hpp"
 #include <string.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/IUICf.hpp"
@@ -22,7 +23,7 @@
 // Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
 // CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
 // pulling the full CfGimmick header which conflicts on several extern "C" globals
-// (CtrlRemote_TouchBitByArg/SysWinGetSingleton/getUnk80664658) already declared with different
+// (CtrlRemote_TouchBitByArg/SysWinGetSingleton) already declared with different
 // view structs in the menu headers.
 class CfPlayerSpotReal {
 public:
@@ -377,7 +378,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
         void* fileData = self->field_0x74->getData();
         mtl::MemManager::setMemInitFlag(false);
 
-    self->field_0x78 = createArcResourceAccessor__10CLibLayoutFv();
+    self->field_0x78 = CLibLayout::createArcResourceAccessor();
             self->field_0x78->Attach(fileData, &base[0x94]);
             buildLayout(&self->field_0x7C, self->field_0x78, &base[0x98]);
             bindLayoutAnimTransform(self->field_0x7C, &self->field_0x80, self->field_0x78,
@@ -932,7 +933,7 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
         // All-states cursor: while any presentation/player condition holds the
         // cursor index is forced to 0x16 (no free roam).
         int cond;
-        if (getUnk80664658() != 0 && (getUnk80664658()->field_214 & 0x8)) {
+        if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
             cond = 1;
         } else if (lbl_eu_80663E28 & 0x40000000) {
             cond = 1;
@@ -1171,7 +1172,7 @@ tail:
         idx = self->field_0xC4 + 0x13;
         if (idx == 0x13) {
             int cond;
-            if (getUnk80664658() != 0 && (getUnk80664658()->field_214 & 0x8)) {
+            if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
                 cond = 1;
             } else if (lbl_eu_80663E28 & 0x40000000) {
                 cond = 1;
@@ -1296,7 +1297,7 @@ battle:
     if (count != 0) return 1;
     if (hasQuestWindow()) return 1;
     if (SysWinGetSingleton()) return 1;
-    if (getUnk80664658()->field_214 & 0x80000) return 1;
+    if (getUnk80664658()->mFlags & 0x80000) return 1;
     // Presentation-flag / close gates share one return-1 tail (L1BC); the
     // volatile reads defeat MWCC's load CSE and keep both loads hoisted
     // before the masks (retail lwz r0 + lwz r3).
@@ -1349,7 +1350,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
 
     // Free-roam gate (same expression shape as CMainMenu_AdvanceIdle).
     int cond;
-    if (getUnk80664658() != 0 && (getUnk80664658()->field_214 & 0x8)) {
+    if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
         cond = 1;
     } else if (lbl_eu_80663E28 & 0x40000000) {
         cond = 1;

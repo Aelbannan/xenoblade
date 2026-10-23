@@ -21,18 +21,18 @@ namespace LOD {
 class UnkClass_8046A530 {
 public:
     /* 8046AADC */ void updateLodPositions();
-    /* 8046CFB4 */ void checkLodFlagState();
+    // (8046CFB4: no member here; checkLodFlagState lives at 80470F84)
     /* 8046E500 */ UnkClass_8046A530* initLod();
     /* 8046E594 */ void initLodState();
-    /* 8046EAA8 */ void updateSimple();
+    /* 8046EAA8 */ void isLodActive();
     /* 8046EAAC */ void setVariation();
     /* 8046EB24 */ void advanceLodAnim();
     /* 8046ECFC */ void updateLodWalk();
     /* 8046F07C */ void updateLodBatch0();
     /* 8046FAB0 */ void updateLodBatch1();
     /* 80470550 */ void updateLodBatch2();
-    /* 80470F84 */ void setStateFlag();
-    /* 80470FA8 */ void forwardToMem();
+    /* 80470F84 */ void checkLodFlagState();
+    /* 80470FA8 */ void getLodVisState();
 
     /** Access the LODMemMan sub-object embedded at offset 0xa44. */
     LODMemMan& GetMemMan();

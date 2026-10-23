@@ -407,7 +407,7 @@ extern "C" void EvtSeqLoadSeqFile(cf::CTaskREvtSequence* self) {
         mtl::MemManager::deallocate(reinterpret_cast<void*>(self->field_0xC0));
         self->field_0xC0 = 0;
     }
-    self->field_0xC4 = (u32)allocEvtMemAligned(reinterpret_cast<void*>(size), 0x20, 0);
+    self->field_0xC4 = (u32)allocEvtMemAligned(size, 0x20, 0);
     IWorkEvent* evt = reinterpret_cast<EvtSeqWithEvt*>(self);
     self->field_0xBC = (u32)CDeviceFile::readCommonArchiveFile(
         self->field_0xC4, self->mPath, evt, 0, (int)size);
@@ -1017,7 +1017,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
         u32 l3 = strlen(tail);
         strcat(buf, tail);
         len = len + l3;
-        u32 handle = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+        u32 handle = lbl_eu_80663E14->getAllocHandle();
         if ((reinterpret_cast<UnkStateC4*>(self->field_0xC4)->field_0x4C &
              1) != 0) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM1());
@@ -1540,7 +1540,7 @@ void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx) {
         self->field_0x120 = (UnkSeq120*)((u8*)adv + adv->field_0x28);
         self->field_0x5C = flags | 0x4;
     } else {
-        u32 alloc = getEvtMemSlot(self->field_0x130 == 0);
+        u32 alloc = (u32)getEvtMemSlot(self->field_0x130 == 0);
         self->field_0x11C = alloc;
         s32 size = entry->field_0x10;
         s32 rem = size % 0x800;
@@ -2159,7 +2159,7 @@ void EvtSeqStopSequence(void* selfv) {
     }
 }
 
-
+void cf::CTaskREvtSequence::Draw() {}
 
 bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
     // Async file-event handler for the three CDeviceFile handles (0xB8 direct

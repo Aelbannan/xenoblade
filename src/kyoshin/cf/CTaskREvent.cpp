@@ -620,7 +620,7 @@ void cf::CTaskREvent::Init() {
 
 // Loads an SFD movie through the CRI player when the manager is idle
 // (mCri == (CLibCri*)-1). `handle` selects the buffer source: a fresh MEM2
-// handle vs the scene alloc handle (Scn_CallUnk8C_V9(lbl_eu_80663E14)). The
+// handle vs the scene alloc handle (lbl_eu_80663E14->getAllocHandle()). The
 // finished player is stored back through the global, re-read after the call
 // because it may have been replaced.
 void evtStartMoviePlayback(const char* path, int flag, u8* handle) {
@@ -630,7 +630,7 @@ void evtStartMoviePlayback(const char* path, int flag, u8* handle) {
         if (handle != 0) {
             buffer = mtl::MemManager::getHandleMEM2();
         } else {
-            buffer = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+            buffer = lbl_eu_80663E14->getAllocHandle();
         }
         CLibCri* cri = startMovie__7CLibCriFv(
             path, mtl::MemManager::getHandleMEM2(), buffer, flag, 0);

@@ -79,7 +79,7 @@ public:
     CMenuGetItemMultiEntry mFirstEntry;      // +0xA0 (ctor inlined by MWCC)
     CMenuGetItemMultiEntry mRestEntries[3];  // +0xD4 (array-init bdnz loop)
     u32 mEntryCount;                         // +0x170
-    CBaseCur mCursor;                        // +0x174
+    CCur18 mCursor;                          // +0x174
     u8 mSystemWindow[0x3C];                  // +0x18C CSysWin storage (raw;
                                              // ctor/dtor driven via C-ABI
                                              // __ct__CSysWin/__dt__7CSysWinFv)
@@ -224,24 +224,7 @@ extern u32 lbl_eu_806640F8;
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 
-// Minimal CTaskGame decl (same shape as CSystemWindow.hpp) - only the
-// statics cbRenderBefore consumes.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
-
-// Vtable-dispatch view of the embedded cursor (same scheme as CPartyStateCur):
-// MWCC puts two implicit dtor slots at the start of every polymorphic vtable,
-// so checkDeactivate (retail cursor slot 3) is declared as the SECOND virtual
-// to land at vtable offset 0xC. All-pure, never constructed directly.
-class CMenuGetItemMultiCur {
-public:
-    virtual void vfn0() = 0;                             // MWCC vtable slot 2
-    virtual void checkDeactivate() = 0;                    // MWCC vtable slot 3 (retail slot 3)
-    virtual void vfn4(const nw4r::math::VEC3*) = 0;      // MWCC vtable slot 4 (+0x10) cursor move
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Minimal view of the CfGameManager fields Term's action-source teardown
 // touches (the full class exposes these offsets as byte arrays).
@@ -256,8 +239,6 @@ struct CfGameManagerTermFields {
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
 extern "C" void Bdat_GetTable_AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
-extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, u8* data);
-extern "C" void getEntry__5CBdatFUl(u32 value);
 extern "C" u8 DecMenuCounter64080();                      // flag reset alongside code80135FDC_getByte_64080
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void sysWinTermLayout(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)

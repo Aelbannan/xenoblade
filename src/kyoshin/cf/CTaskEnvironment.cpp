@@ -47,9 +47,9 @@ char lbl_eu_804FB0AC[] = "CTTask<CTaskEnvironment>";
 
 // Foreign slots/labels referenced by the tables below. Reset/Tail and the
 // monolib RTTI pairs live in other TUs (CTaskManager.cpp precedent); the
-// Draw slot is declared-but-undefined (Draw is not written yet), so its
-// extern "C" name cannot collide with a compiler-generated object (the
-// MWCC 10322 trigger) and stays a link-time UNDEF until Draw is defined.
+// Draw slot names the empty CTaskEnvironment::Draw (defined below) through
+// this C-linkage declaration of its mangled symbol, so the .data word gets
+// a real reloc without an inject_relocs entry.
 extern "C" {
 extern void Reset__14CChildListNodeFv();
 extern void Tail__8CProcessFv();
@@ -840,7 +840,7 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src) {
     dst[3] = src[2];
     dst[4] = src[3];
 }
-
+void CTaskEnvironment::Draw() {}
 
 // Set clock time. Hour >= 24 and minute >= 60 reset to 0; seconds arrive as
 // an int, get converted to float via the double trick, then clamp to FA0

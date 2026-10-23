@@ -174,6 +174,9 @@ enum CBM {
     CBM_5
 };
 
+// KEEP: owner-side copy of ::CEventFile (canonical layout in
+// monolib/work/CEventFile.hpp). This TU keeps private CBM/CFileHandle copies
+// that conflict with the monolib headers, and it needs the CBM ctor.
 class CEventFile {
 public:
     CEventFile(CBM cbm, CFileHandle* pHandle);

@@ -153,7 +153,7 @@ struct CScnItemBig {
 // __dt__19reslist<P8CScnItem>Fv body plus both weak vtables (the link-time
 // UNIT_RULES renames them to lbl_eu_8056E540/558). The standalone
 // default-ctor is deliberately NOT instantiated -- retail carries it under
-// the flat __ct__reslist_CScnItem label, spelled out by hand below (a
+// the flat __ct__16reslist_CScnItemFv label, spelled out by hand below (a
 // template instantiation under Wii/1.1 can only emit the symbolic
 // __ct__19reslist<P8CScnItem>Fv mangling, which never pairs with the flat
 // registry symbol; cf. CScnEnvLgtCtrl's __ct__reslist_IScnEnvCtl).
@@ -242,7 +242,7 @@ extern "C" void simSetLeafAnimTag(CScnItem* item, u32 arg);
 extern "C" void simClearNodeRefs(CScnItem* item, u32 arg);
 extern "C" void simSetFlag2OnTree(CScnItem* item, u32 arg);
 
-// reslist<CScnItem*> constructor (retail __ct__reslist_CScnItem). The flat
+// reslist<CScnItem*> constructor (retail __ct__16reslist_CScnItemFv). The flat
 // retail name cannot be produced by a template instantiation under Wii/1.1
 // (symbolic mangling), so it is spelled out (cf. CScnEnvLgtCtrl's
 // __ct__reslist_IScnEnvCtl): MWCC mangles this C++-linkage definition into
@@ -555,7 +555,7 @@ struct CScnItemPoolNodeArray {
 // CScnItemPool_initNodeArray: (re)initializes sub-pool #0's node array: allocates `count`
 // nodes from MemManager, clears every node's mNext (the free marker used by
 // CScnItemPool_pushItemToList), and records the capacity.
-// noinline: retail CALLS this from __ct__CScnItemPool (x5); without it -ipa
+// noinline: retail CALLS this from __ct__12CScnItemPoolFP4CScnUlUlUlUlUl (x5); without it -ipa
 // flattens the allocation loop into the constructor. extern "C" matches the
 // retail address-named symbol CScnItemPool_initNodeArray.
 extern "C" __declspec(noinline) void CScnItemPool_initNodeArray(CScnItemPoolNodeArray* self, u32 handle, int count) {
@@ -731,7 +731,7 @@ void CScnItemPool::vicbDtorThunk() {
 // reslist sub-pool ctors, and finally the per-pool node/flag/slot allocations.
 extern "C" void __ct__IWorkEvent(void* self);
 extern "C" void __ct__11CDeviceVICbFv(void* self);
-extern "C" void __ct__reslist_CScnItem(void* self);
+extern "C" void __ct__16reslist_CScnItemFv(void* self);
 extern "C" u32 lbl_eu_8056E488[];
 extern "C" u32 Scn_CallUnk8C_V8(void* scene); // scene -> mtl::ALLOC_HANDLE
 CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
@@ -742,12 +742,12 @@ CScnItemPool::CScnItemPool(CScn* scene, u32 cnt0C, u32 cnt2C, u32 cnt4C,
     u32 vt = (u32)&lbl_eu_8056E488;
     ((u32*)this)[0] = vt;
     ((u32*)this)[1] = vt + 0x88;
-    __ct__reslist_CScnItem(&mList0C);
-    __ct__reslist_CScnItem(&mList2C);
-    __ct__reslist_CScnItem(&mList4C);
-    __ct__reslist_CScnItem(&mList6C);
-    __ct__reslist_CScnItem(&mList8C);
-    __ct__reslist_CScnItem(&mListAC);
+    __ct__16reslist_CScnItemFv(&mList0C);
+    __ct__16reslist_CScnItemFv(&mList2C);
+    __ct__16reslist_CScnItemFv(&mList4C);
+    __ct__16reslist_CScnItemFv(&mList6C);
+    __ct__16reslist_CScnItemFv(&mList8C);
+    __ct__16reslist_CScnItemFv(&mListAC);
     mSubCountDC = 0;
     // Node-array init order matches retail: 0xC, 0x4C, 0x6C, 0x2C, 0x8C.
     CScnItemPool_initNodeArray((CScnItemPoolNodeArray*)&mList0C, Scn_CallUnk8C_V8(scene), cnt0C);

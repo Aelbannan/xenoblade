@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CCollepedia.hpp"
 #include <revolution/tpl/TPL.h>
 #include "nw4r/lyt.h"
@@ -619,7 +620,7 @@ extern "C" __declspec(noinline) u32 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3)
     ptr += arg3 * 0x0A;
     u16 val = *(u16*)(ptr + 0x0E);
     if (val == 0) return 0;
-    return BdatGetU16Direct((char*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x185], val);
+    return BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x185], val);
 }
 
 // Load a float from offset 8 of the current sub-array entry
@@ -799,7 +800,7 @@ extern "C" __declspec(noinline) void clpUpdateProg(u8* self) {
 extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
     if (self) {
         __dt__7CSysWinFv((u8*)self + 0x9C, -1);
-        __dt__6CCur18Fv((u8*)self + 0x84, -1);
+        __dt__6CCur18Fv((CCur18*)((u8*)self + 0x84), -1);
         __dt__6CCur07Fv((u8*)self + 0x54, -1);
         __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x14), -1);
         __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x04), -1);
@@ -836,7 +837,7 @@ CCollepedia::CCollepedia() {
 
     __ct__CCur07((u8*)this + 0x54, nullptr);
     __ct__CCLPCur((CCLPCur*)((u8*)this + 0x6C), nullptr);
-    __ct__CCur18((u8*)this + 0x84, nullptr);
+    __ct__CCur18((CCur18*)((u8*)this + 0x84), nullptr);
     __ct__CSysWin((CSysWin*)((u8*)this + 0x9C), 0);
 
     field_D8 = 0;
@@ -978,7 +979,7 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 // us-80256e40
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void clpFreeAllRes(CCollepedia* this_) {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle__FPP11CFileHandle(&this_->field_24);
     closeFileHandle__FPP11CFileHandle(&this_->field_28);
     closeFileHandle__FPP11CFileHandle(&this_->field_2C);
@@ -1743,13 +1744,13 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
 
         void* tagMem = allocate__Q23mtl10MemManagerFUlUl(
-            getAllocHandle__10CLibLayoutFv(), 0x858);
+            CLibLayout::getAllocHandle(), 0x858);
         if (tagMem != NULL) {
             tagMem = __ct__CTagProcessor(tagMem);
         }
         field_4C = (u32)tagMem;
 
-        field_30 = createArcResourceAccessor__10CLibLayoutFv();
+        field_30 = CLibLayout::createArcResourceAccessor();
         field_30->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
 
         buildLayout(&field_38, field_30, &lbl_eu_8050C6E8[0x31f]);
@@ -1813,10 +1814,10 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         clpSetupDetPg(reinterpret_cast<CLPPageSetup*>(&field_28EC[0]));
 
         // +0x84 cursor (CCur18): stack-build, copy, refresh.
-        u8 tmpCur18[0x18];
-        __ct__CCur18(tmpCur18, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
-        __dt__6CCur18Fv(tmpCur18, -1);
+        CCur18 tmpCur18;
+        __ct__CCur18(&tmpCur18, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(reinterpret_cast<u8*>(this) + 0x84, &tmpCur18);
+        __dt__6CCur18Fv(&tmpCur18, -1);
         ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x84))->initLayout();
 
         // +0x54 cursor (CCur07): same pattern.
@@ -1844,7 +1845,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         void* fileData = reinterpret_cast<CFileHandle*>(field_28)->getData();
         mtl::MemManager::setMemInitFlag(false);
 
-        field_34 = createArcResourceAccessor__10CLibLayoutFv();
+        field_34 = CLibLayout::createArcResourceAccessor();
         field_34->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
 
         clpTryShow(this);
@@ -1855,7 +1856,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
     if (field_2C == pEventFile->mFileHandle) {
         void* data = reinterpret_cast<CFileHandle*>(field_2C)->getData();
-        setBdatEntry__5CBdatFUlPv(2, data);
+        CBdat::setBdatEntry(2, data);
 
         // Resolve the two message files used by the item/quest name lookups.
         Bdat_GetTable_AA34();

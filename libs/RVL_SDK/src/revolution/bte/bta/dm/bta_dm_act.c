@@ -240,6 +240,7 @@ extern void *GKI_getpoolbuf(int);
 extern void btsnd_hcic_write_scan_enable(void *, int);
 extern void BTM_SendHciReset(void *);
 extern int BTM_GetNumAclLinks(void);
+extern unsigned char BTM_CancelRemoteDeviceName(void);
 extern void btm_remove_acl(unsigned char *);
 extern int btm_get_acl_disc_reason_code(void);
 extern unsigned char bta_dm_co_get_compress_memory(unsigned char, unsigned char **, unsigned int *);
@@ -1011,7 +1012,7 @@ void bta_dm_service_search_remname_cback(unsigned char *a, unsigned char *b, uns
 void bta_dm_remname_cback(unsigned char *a, unsigned char *b, unsigned char *c) {
     (void)a; (void)b; (void)c;
 }
-void bta_dm_cancel_rmt_name(void) {}
+void bta_dm_cancel_rmt_name(struct bta_dm_msg *p_data) { BTM_CancelRemoteDeviceName(); }
 void bta_dm_bond(void) {}
 void bta_dm_pin_reply(void) {}
 void bta_dm_immediate_disable(void) {}

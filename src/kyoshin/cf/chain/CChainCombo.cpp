@@ -1,6 +1,7 @@
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <monolib/math/Random.hpp>
+#include "kyoshin/cf/chain/CChainComboImports.hpp"
 
 namespace cf{
     CChainCombo::CChainCombo(){

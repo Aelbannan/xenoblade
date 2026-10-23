@@ -19,7 +19,6 @@ extern "C" void setChildF50G_(u8* self);
 // are unmangled C; getGimmickList is called as a static __Fv even though the
 // shared CfGameManager header declares it as a member - same pattern as
 // CTaskGameEff.hpp's createNpcActor__Q22cf13CfGameManagerFv).
-extern "C" void* Scn_CallUnk8C_V9(void* scene);
 extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 extern "C" void setTargetObj_(void* obj, void* target);
 extern "C" void setChildB59__(void* obj, s8 val);

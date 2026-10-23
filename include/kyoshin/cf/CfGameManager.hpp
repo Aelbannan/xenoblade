@@ -20,6 +20,7 @@ class Unk80EE4Data;
 
 namespace cf {
 class CHelpManager;
+class CfMapEffectManager;
 // Party-slot list object returned by CtrlObjectParam_GetSlotTableBase (arr1[3] + arr2[6] @ +4);
 // layout defined in src/kyoshin/cf/CtrlObjectParam.hpp - only pointers are
 // passed around here.
@@ -195,7 +196,7 @@ namespace cf{
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
-        u32 unkA0;
+        CfMapEffectManager* unkA0; // built by __ct__cf_CfMapEffectManager, freed by MapFx_ReleaseHandle
         // opaque widget-list block torn down by func_80186664 (u8* ABI; the
         // func_80186D20 helper also takes void*), so keep the member as u8*.
         u8* field_0xA4;
@@ -265,7 +266,7 @@ public:
     void** getObjectNodePtr();
     void linkItemNode();
     void checkFlagEquality();
-    bool isTimerActive();
+    static bool isTimerActive();
     void togglePauseFlag();
     void getEventCounterA();
     void setEventCounterA();
@@ -371,7 +372,7 @@ public:
     void pushEventQueue();
     void flushEventQueue();
     void drainEventQueue();
-    u32 getMapEffectManager();
+    CfMapEffectManager* getMapEffectManager();
     u32 getEffectFlagState();
     void linkEffectObjects();
     void setPresentationFlag();
@@ -454,19 +455,19 @@ public:
     void spawnGimmickEntity();
     void clearGimmickFlags();
     void isGimmickActive();
-    void getGlobalWord64184Dup();
+    static u32 getGlobalWord64184Dup();
     void getGlobalPtr6409C();
-    void getGlobalPtr640A8();
+    static u32 getGlobalPtr640A8();
     void getGlobalWord640A4();
     void getGlobalWord640F4();
     void initPadSubSystem();
-    void updatePadState();
+    static float updatePadState();
     void loadControllerConfigA();
     void loadControllerConfigB();
     void getControllerValues();
     bool isControllerReady();
     static u32 getControllerWordA33C();
-    void getControllerWordA37C();
+    static u32 getControllerWordA37C();
     void getControllerWordA3BC();
     void resetControllerState();
     void clearControllerState();
@@ -507,7 +508,7 @@ public:
 // ---------------------------------------------------------------------------
 
 extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
-extern "C" void MapFx_ReleaseHandle(u32 object);
+extern "C" void MapFx_ReleaseHandle(cf::CfMapEffectManager* pSelf);
 extern "C" void CamEvtReleaseAllSlots(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);
@@ -636,7 +637,6 @@ extern "C" void CfTFile_CancelResetFull(cf::CfObjectMove* self);
 extern "C" u32 stopSoundMan__Fv();
 extern "C" void KyoshinHeap_Shutdown();
 extern "C" void Remove__8CProcessFv(CProcess* process);
-extern "C" void getEntry__5CBdatFUl(u32 value);
 
 // --- UnkClass_8007DAE0::init / func_8008566C imports (retail C-linkage names)
 extern "C" void __ct__8009D604();

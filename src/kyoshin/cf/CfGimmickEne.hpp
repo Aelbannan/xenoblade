@@ -157,8 +157,6 @@ extern void ScnData_FwdB7DD4(void* snd, u8 id);
 extern "C" extern void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value);
 // Single shared flat-name form (unmangled retail symbol; see
 // CfObjectImplMove.hpp).
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-    u32 a, u32 b, u32 c, u32 d, f32 vol);
 
 // Scene / frame helpers (monolib scn).
 extern cf::CfGimmickEneScene* Scn_GetCurrentScene();            // current-scene global
@@ -171,8 +169,6 @@ extern "C" extern void CfGimmick_ClearManagerBinding(cf::CfGimmick* self);
 // (C linkage), takes the shared scene pointer and a child index.
 extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* scene, unsigned int index);
 
-// Gimmick-state setter on the CfGimmickGlobal (sound/event dispatcher).
-extern void GimDispatch18ByRow(int value, int id);
 
 // CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_getArtsSet()).
 extern "C" extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);

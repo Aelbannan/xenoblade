@@ -5,6 +5,8 @@
 // pointer tables registered with the VM plugin system.
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/vm/yvm2.h"
 
 // Flag context block passed to some plugin callbacks; flags at offset 8.
@@ -105,7 +107,6 @@ CfEnumList* CTaskGame_enumListGet(CfEnumListHolder* holder);
 void __dt__80043E88(CfEnumListHolder* holder, int tags);
 void startEnumObjects(void* list, int type, int value);
 void* getEntryAt(void* list, int index);
-void* bindIndexedEffect(u32 cls, void* param);
 u8 code80135FDC_getByte_64059();
 void playUISound__FUl(u32 op);
 void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
@@ -188,7 +189,6 @@ void UIWin_CreateCol6Invite(int a, int b, int c);
 void CtrlObjectParam_SetWorkTailValue(int id);
 // Character-table row count / keyed lookup helpers (setLastTalkNpc).
 int Bdat_GetMaxRow_B1EC(char* tbl);
-u32 BdatGetU16Direct(char* tbl, const char* key, int idx);
 // Character-table object used by setLastTalkNpc (.sbss pointer).
 extern char* lbl_eu_80664098;
 

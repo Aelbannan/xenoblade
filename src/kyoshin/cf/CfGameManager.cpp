@@ -58,10 +58,6 @@
 // Full battle-manager class for resetBattlePresentation's real slot-0x1C call
 // (setPartyMaskFlag) and +0x94/+0x194 member access. Include-only: the class
 // and its TU are owned elsewhere; nothing here is redeclared.
-// (CSuddenCommu.hpp's import block declares getUnk80664658 with a different
-// extern "C" return type than the TU-local decl; rename its copy away -
-// same MWCC-10505 pattern as the CfObjectMove/CfObjectMap renames above.)
-#define getUnk80664658 cbattleGetUnk80664658
 #define CItem_getNameIdFromFam cbattleFunc_80158018
 #define isGlobalCamFlagSet__Fi cbattleIsGlobalCamFlagSet
 #define CtrlObjectParam_FindSlotTypeIndex cbattleFunc_8009E344
@@ -89,7 +85,6 @@
 #undef addTableValueWithClamp__Q22cf13CfGameManagerFv
 #undef isGlobalCamFlagSet__Fi
 #undef CItem_getNameIdFromFam
-#undef getUnk80664658
 
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
@@ -147,7 +142,6 @@ extern "C" void CfScript_ClearReq2();
 void CfScript_InitMgr();
 void CfScript_InitPath(int);
 extern "C" void CfSoundMan_UpdateAllRecords();
-extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void CmText_DispatchCallbacks();
 extern "C" void clrAnimGate();
 extern "C" void CamEvtCheckAimAngles(CfCamEventManager* manager);
@@ -812,7 +806,7 @@ void cf::CfGameManager::teardownGameManager() {
         Remove__8CProcessFv(lbl_eu_80663E18);
         lbl_eu_80663E18 = nullptr;
     }
-    getEntry__5CBdatFUl(1);
+    CBdat::getEntry(1);
     if (lbl_eu_80663E20 != nullptr) {
         Remove__8CProcessFv(lbl_eu_80663E20);
         lbl_eu_80663E20 = nullptr;
@@ -1284,7 +1278,7 @@ u16 cf::CfGameManager::popEventQueue() {
     return field_0x40[oldIndex];
 }
 
-u32 cf::CfGameManager::getMapEffectManager() {
+cf::CfMapEffectManager* cf::CfGameManager::getMapEffectManager() {
     return getInstance()->unkA0;
 }
 
@@ -1526,7 +1520,7 @@ void cf::CfGameManager::isGimmickActive() { lookupWorkAtAddr(); }
 
 void cf::CfGameManager::initPadSubSystem() { bdatTotalRows(); }
 
-void cf::CfGameManager::updatePadState() { CfT_PlayRateGet(); }
+float cf::CfGameManager::updatePadState() { return CfT_PlayRateGet(); }
 
 void cf::CfGameManager::loadControllerConfigA() { CfT_PlayClockAdvanceFrame(); }
 
@@ -1541,7 +1535,7 @@ bool cf::CfGameManager::isControllerReady() { return CfT_FrameInWindow(); }
 extern "C" u32 CfT_FrameCountA();
 u32 cf::CfGameManager::getControllerWordA33C() { return CfT_FrameCountA(); }
 
-void cf::CfGameManager::getControllerWordA37C() { CfT_FrameCountB(); }
+u32 cf::CfGameManager::getControllerWordA37C() { return CfT_FrameCountB(); }
 
 void cf::CfGameManager::getControllerWordA3BC() { CfT_FrameCountC(); }
 
@@ -1937,7 +1931,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     if (memory != nullptr) {
         object = __ct__cf_CfMapEffectManager(memory);
     }
-    self->unkA0 = reinterpret_cast<u32>(object);
+    self->unkA0 = static_cast<cf::CfMapEffectManager*>(object);
 
     heap = CfRes_getAllocHandle();
     memory = allocate__Q23mtl10MemManagerFUlUl(0x180, heap);

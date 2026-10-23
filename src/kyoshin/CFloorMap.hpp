@@ -4,10 +4,10 @@
 #include <nw4r/lyt.h>
 
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 // Forward declarations for types used in CFloorMap
 class CScrollBar;
-class CBaseCur;
 class CSysWin;
 class CFileHandle;
 class CEventFile;
@@ -120,7 +120,6 @@ struct CFloorMapFull {
     u8 field_333C;           // 0x333C
     u8* field_3340;          // 0x3340 - allocated buffer pointer
     f32 field_3344;          // 0x3344 - buffer free countdown timer
-    u8 GetActiveFlag58();
 };
 
 // Full CFloorMap layout based on retail analysis.
@@ -133,6 +132,7 @@ public:
     CFloorMap();
     ~CFloorMap();
     u32 OnFileEvent(CEventFile* event);
+    u8 GetActiveFlag58();
 
     // Fields from CFloorMapFull (adjusted for vtable ptr at +0x00)
     // CFloorMapFull has _00[0x24] at 0x00 which includes the vtable ptr.
@@ -162,7 +162,7 @@ public:
     u8 field_5D;                             // 0x5D
     u8 _5E[0x60 - 0x5E];                     // 0x5E-0x5F
     u8 mScrollBar[0x40];                     // 0x60-0x9F - CScrollBar
-    u8 mCursorA0[0x18];                      // 0xA0-0xB7 - CCur18
+    CCur18 mCursorA0;                        // 0xA0-0xB7
     u8 mSysWinB8[0x3C];                      // 0xB8-0xF3 - CSysWin
     u8 mSysWinF4[0x3C];                      // 0xF4-0x12F - CSysWin
     u32 layout_130;                          // 0x130
@@ -288,11 +288,9 @@ extern const char lbl_eu_80537104[];
 // C-linkage sub-object destructor imports used by ~CFloorMap (retail emits the
 // unmangled names at the call sites).
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
-// CCur18 construction (retail unmangled) + shared UI accessor import.
-extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
+// Shared UI accessor import.
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // Same-TU helper definitions used by CFloorMap::OnFileEvent (retail flat
@@ -306,7 +304,6 @@ extern "C" void FloorMap_ResolveMapPos(void*, void*);
 extern "C" void FloorMap_ReloadMarkerPanes(void*, u8, u32, f32);
 void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx);
 extern "C" void FloorMap_SetRowTexPalette(CFloorMapRowList*, void*, u32, u32, u32);
-extern "C" u32 getAllocHandle__10CLibLayoutFv();
 
 // Per-map layout-name table copied by OnFileEvent branch 2 (28 u32 names,
 // .rodata).
@@ -596,19 +593,6 @@ extern f32 lbl_eu_8066877C;   // marker x scale factor
 // (CCur18 cursors dispatch through CBaseCur::initLayout/cleanup/
 // setRootPaneTranslate at +0x08/+0x0C/+0x10; see kyoshin/CBaseCur.hpp.)
 
-// Field view of the opaque CCur18 sub-object (CBaseCur layout + padding).
-// Used to copy a stack-constructed CCur18 into the embedded mCursorA0 region
-// without touching the +0x00 vtable pointer (retail copies +0x04..+0x15).
-struct CCur18Data {
-    void* mVtbl;    // +0x00 - not copied
-    void* field_4;  // +0x04
-    void* field_8;  // +0x08
-    void* field_C;  // +0x0C
-    void* field_10; // +0x10
-    u8 field_14;    // +0x14
-    u8 field_15;    // +0x15
-};
-
 // Object used by FloorMap_SetRowTexPalette (row-visibility update); only +0x00 is used.
 struct CFloorMapRowList {
     nw4r::lyt::Layout* mData; // +0x00
@@ -616,7 +600,6 @@ struct CFloorMapRowList {
 
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
-extern "C" void getEntry__5CBdatFUl(u32);     // CBdat::func(u32) - release shared BDAT handle
 extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
 extern "C" void CScrollBar_Teardown(void* scrollBar);    // CScrollBar teardown
 extern "C" void sysWinTermLayout(void* sysWin);       // CSysWin teardown

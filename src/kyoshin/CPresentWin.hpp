@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 
 class CPresentWin {
@@ -106,7 +107,6 @@ void writePanePos(nw4r::lyt::Pane*, float*);
 u32 BdatGetItemId(u32);
 int BdatGetS8Direct(const char*, const char*, const char*);
 char* BdatGetPtrDirect(const void*, const void*, int);
-u32 BdatGetU16Direct(const void*, const void*, int);
 void AdjustRelateValue(u16, u16, s8);
 void repaintPresentItemA(CPresentWin* self);
 void repaintPresentItemB(CPresentWin* self);

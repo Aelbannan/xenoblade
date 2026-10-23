@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/CKizunaTalkList.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
@@ -20,7 +21,7 @@ CKizunaTalkList::CKizunaTalkList() {
     mpLayout20 = NULL;
     mpAnim24 = NULL;
     mpAnim28 = NULL;
-    __ct__CCur18(mCursor, NULL);
+    __ct__CCur18(&mCursor, NULL);
     __ct__CScrollBar(mScrollBar, 0);
     mState84 = 0;
     mState85 = 0;
@@ -81,7 +82,7 @@ extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int
             __destroy_arr((u8*)self + 0x8C, (void*)__dt__80272774, 0x14, 0x100);
         }
         __dt__10CScrollBarFv((u8*)self + 0x44, -1);
-        __dt__6CCur18Fv((u8*)self + 0x2C, -1);
+        __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
             __dl__FPv(self);
@@ -181,7 +182,7 @@ void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
 // Teardown (retail teardownTalkList): release the BDAT query state, file handles,
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
 void CKizunaTalkList::teardownTalkList() {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle((CFileHandle**)&this->mEntryCount);
     closeFileHandle((CFileHandle**)&this->mUnknown18);
     this->mState84 = 0;
@@ -193,8 +194,7 @@ void CKizunaTalkList::teardownTalkList() {
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C);
     this->mUnknown1C = 0;
 
-    // Cursor virtual slot 0x0c/4 on the embedded cursor.
-    ((void (*)(void*))((void**)*(void**)&this->mCursor[0])[0x0c / 4])(&this->mCursor[0]);
+    this->mCursor.cleanup();
     CScrollBar_Teardown(&this->mScrollBar);
     deleteRegion((UnkClass_8045F564*)((u8*)this + 4));
     lbl_eu_806648B8 = NULL;
@@ -771,7 +771,7 @@ extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
 
     ScalePaneWorldPos(&pos, paneA, paneB, self->mpLayout20->GetRootPane());
 
-    ((CCur18View*)&self->mCursor[0])->v02(&pos);
+    self->mCursor.setRootPaneTranslate(&pos);
 }
 
 // Rebuild the visible talk list (retail rebuildTalkList): requires both the
@@ -828,7 +828,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         // Attach the layout archive to a fresh ArcResource accessor.
-        this->mUnknown1C = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        this->mUnknown1C = (u32)CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, fileData, &strBase[0x1c9]);
 
         // Create the layout and its two animation transforms.
@@ -849,19 +849,11 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
         // Create the CCur18 cursor on the stack and copy its body into the
         // embedded cursor (+0x2c), skipping the vtable at +0.
-        void* ccur18Accessor = (void*)CUICfManager_getArcResourceAccessor();
-        u8 cur18Temp[0x18];
-        __ct__CCur18(cur18Temp, ccur18Accessor);
-        *(u32*)((u8*)this + 0x30) = *(u32*)(cur18Temp + 4);
-        *(u32*)((u8*)this + 0x34) = *(u32*)(cur18Temp + 8);
-        *(u32*)((u8*)this + 0x38) = *(u32*)(cur18Temp + 0xc);
-        *(u32*)((u8*)this + 0x3c) = *(u32*)(cur18Temp + 0x10);
-        *(u8*)((u8*)this + 0x40) = *(u8*)(cur18Temp + 0x14);
-        *(u8*)((u8*)this + 0x41) = *(u8*)(cur18Temp + 0x15);
-        __dt__6CCur18Fv(cur18Temp, -1);
-
-        // Cursor virtual slot 2 (offset 0x08) on the embedded cursor.
-        ((void (*)(void*))(((void**)(*(u32*)((u8*)this + 0x2c)))[0x08 / 4]))((u8*)this + 0x2c);
+        CCur18 cur18Temp;
+        __ct__CCur18(&cur18Temp, CUICfManager_getArcResourceAccessor());
+        mCursor = cur18Temp;
+        __dt__6CCur18Fv(&cur18Temp, -1);
+        mCursor.initLayout();
 
         rebuildTalkList(this);
 
@@ -875,7 +867,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         // Shared-archive hit: release the previously buffered shared file data.
         CFileHandle* fh2 = (CFileHandle*)this->mUnknown18;
         void* data2 = fh2->getData();
-        setBdatEntry__5CBdatFUlPv(2, data2);
+        CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
         lbl_eu_806648B8 = (void*)getFP__FPCc(&lbl_eu_8050E990[0x217]);
         rebuildTalkList(this);

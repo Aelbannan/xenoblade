@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction from retail PPC.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxLine.hpp"
 // Real CSysWin owner for the +0x88 loadSystemArc dispatch: rename the two
@@ -688,8 +689,8 @@ void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     }
     reinterpret_cast<UnkClass_8045F564*>(&self->field04)->deleteRegion();
     reinterpret_cast<UnkClass_8045F564*>(&self->pad_14[0])->deleteRegion();
-    ((CBaseCur*)&self->mCur70)->cleanup();
-    ((CBaseCur*)&self->mCur88)->cleanup();
+    self->mCur70.cleanup();
+    self->mCur88.cleanup();
     ((CBaseCur*)&self->mCurA0)->cleanup();
     ((CBaseCur*)&self->mCurB8)->cleanup();
     closeItemBox2(reinterpret_cast<CItemBoxInfo2*>(&self->mInfo2D0[0]));
@@ -824,7 +825,7 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
             }
             u8 tmp[12];
             sysWinGetPaneScreenPos(tmp, &self->mSysWin, self->field3A3);
-            ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+            self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         }
         playUISound__FUl(1);
         return;
@@ -842,7 +843,7 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)((s8)self->field3A1 * 4 + self->field3A2));
-        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
     } else if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
@@ -904,7 +905,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
                 }
                 u8 tmp[12];
                 sysWinGetPaneScreenPos(tmp, &self->mSysWin, self->field3A3);
-                ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+                self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
                 playUISound__FUl(1);
             }
         }
@@ -923,7 +924,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)((s8)self->field3A1 * 4 + self->field3A2));
-        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
     } else if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) {
         if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
@@ -990,7 +991,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
-        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(1);
         return;
     }
@@ -1051,7 +1052,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
-        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(1);
         return;
     }
@@ -1417,7 +1418,7 @@ void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
         Cur_SetVisible(&self->mCur88, 1);
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page2->pageWords180, sel);
-        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
+        self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(2);
     } else {
         playUISound__FUl(5);
@@ -1515,7 +1516,7 @@ void ItemBoxLine_PushSyswinCursor(CItemBoxLine* self) {
         Cur_SetVisible(&self->mCur70, 1);
         u8 tmp[0x10];
         sysWinGetPaneScreenPos(tmp, &self->mSysWin, self->field3A3);
-        ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
+        self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     }
 }
 
@@ -1904,7 +1905,7 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
         nw4r::lyt::Pane* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= refPane->GetScale().x;
-        ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
+        self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         Cur_SetVisible(&self->mCur70, 1);
         Cur_SetVisible(&self->mCurA0, 0);
     }
@@ -2447,7 +2448,6 @@ int ItemBoxLine_ProbeAvailability(u32 unused, u32 key) {
 // transforms, font bind, pane text/colour seeding, the four embedded cursors);
 // the common-arc branch re-attaches its accessor and refreshes the tab list;
 // the bdat/scratch branches register their buffers with the CBdat system.
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
     if (this->field24 == (u32)evt->mFileHandle) {
         reinterpret_cast<UnkClass_8045F564*>(&this->field04)->createRegion(
@@ -2456,12 +2456,12 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         u8* data = (u8*)((CFileHandle*)this->field24)->getData();
         mtl::MemManager::setMemInitFlag(false);
         void* tpMem = mtl::MemManager::allocate(0x858,
-                                                getAllocHandle__10CLibLayoutFv());
+                                                CLibLayout::getAllocHandle());
         // The ctor returns self in r3, so the store can reuse r3 after the call
         // (retail: cmpwi/beq/bl __ct__CTagProcessor; stw r3).
         this->field54 = (CItemBoxLineDtorView*)(tpMem != 0 ? __ct__CTagProcessor(tpMem) : tpMem);
         nw4r::lyt::ArcResourceAccessor* acc =
-            createArcResourceAccessor__10CLibLayoutFv();
+            CLibLayout::createArcResourceAccessor();
         this->field38 = (CItemBoxLineResView*)acc;
         acc->Attach(data, &lbl_eu_805071B0[0x70d]);
         buildLayout(&this->field40, (nw4r::lyt::ArcResourceAccessor*)this->field38,
@@ -2591,17 +2591,17 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         *(s16*)&lbl_eu_80664640[6] = *(s16*)&lbl_eu_80664620[6];
 
         // Build the four embedded cursors from stack temps (copy + teardown).
-        u8 cur70[0x18];
-        __ct__CCur18((CBaseCur*)cur70, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->mCur70, cur70);
-        __dt__6CCur18Fv((CBaseCur*)cur70, -1);
-        ((CBaseCur*)&this->mCur70)->initLayout();
+        CCur18 cur70;
+        __ct__CCur18(&cur70, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(&this->mCur70, &cur70);
+        __dt__6CCur18Fv(&cur70, -1);
+        this->mCur70.initLayout();
 
-        u8 cur88[0x18];
-        __ct__CCur18((CBaseCur*)cur88, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(&this->mCur88, cur88);
-        __dt__6CCur18Fv((CBaseCur*)cur88, -1);
-        ((CBaseCur*)&this->mCur88)->initLayout();
+        CCur18 cur88;
+        __ct__CCur18(&cur88, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(&this->mCur88, &cur88);
+        __dt__6CCur18Fv(&cur88, -1);
+        this->mCur88.initLayout();
 
         u8 curA0[0x18];
         __ct__CIBLTabCur((CBaseCur*)curA0, this->field38);
@@ -2629,7 +2629,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         u8* data28 = (u8*)fh28->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 =
-            createArcResourceAccessor__10CLibLayoutFv();
+            CLibLayout::createArcResourceAccessor();
         this->field3C = (CItemBoxLineResView*)acc2;
         acc2->Attach(data28, &lbl_eu_805071B0[0x70d]);
         ItemBoxLine_CompactTabList(this);
@@ -2643,7 +2643,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         Bdat_GetTable_AA34();
         void* fpA = getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
         if (fpA == 0) {
-            setBdatEntry__5CBdatFUlPv(2, data2C);
+            CBdat::setBdatEntry(2, data2C);
         }
         Bdat_GetTable_AA34();
         lbl_eu_80664648 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
@@ -2660,7 +2660,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         Bdat_GetTable_AA34();
         void* fpB = getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
         if (fpB == 0) {
-            setBdatEntry__5CBdatFUlPv(5, this->field34);
+            CBdat::setBdatEntry(5, this->field34);
         }
         lbl_eu_80664650 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
         ItemBoxLine_CompactTabList(this);

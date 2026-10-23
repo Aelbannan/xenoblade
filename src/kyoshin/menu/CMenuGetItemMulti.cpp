@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 // code_80135FDC.hpp declares ml::epsilon as u32, conflicting with the
 // const-float ml::math epsilon copy in monolib FloatUtils.hpp (pulled in via
@@ -160,11 +161,8 @@ u32 CItem_sumFamilyByte6(u32);
 u32 BdatGetItemType(u32);
 char* getErrMesText15();
 char* getErrMesText16();
-u16 BdatGetU16Direct(const void*, const char*, u16);
 void PaneSetVtxColorByName(nw4r::lyt::Layout*, char*, u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-CBaseCur* __ct__CCur18(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
-void* __dt__6CCur18Fv(CBaseCur*, int);
 CSysWin* __ct__CSysWin(CSysWin*, int);
 CSysWin* __dt__7CSysWinFv(CSysWin*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858*, UnkClass_8045F564*);
@@ -943,14 +941,9 @@ void CMenuGetItemMulti::Init() {
 
     GetItemMulti_ShowDetail(this, 0, 0);
 
-    CBaseCur cursorTemp;
+    CCur18 cursorTemp;
     __ct__CCur18(&cursorTemp, CUICfManager_getArcResourceAccessor());
-    mCursor.mArcResAcc = cursorTemp.mArcResAcc;
-    mCursor.mpLayout = cursorTemp.mpLayout;
-    mCursor.mpAnimTrans0 = cursorTemp.mpAnimTrans0;
-    mCursor.mpAnimTrans1 = cursorTemp.mpAnimTrans1;
-    mCursor.mActive = cursorTemp.mActive;
-    mCursor.mVisible = cursorTemp.mVisible;
+    mCursor = cursorTemp;
     __dt__6CCur18Fv(&cursorTemp, -1);
     mCursor.initLayout();
 
@@ -1017,13 +1010,13 @@ void CMenuGetItemMulti::Term() {
         render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
     }
     mScn->removeRenderCB(render);
-    getEntry__5CBdatFUl(5);
+    CBdat::getEntry(5);
     closeFileHandle(&mFileHandle);
     if (field_208 != 0) {
         mtl::MemManager::deallocate(reinterpret_cast<void*>(field_208));
         field_208 = 0;
     }
-    reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->checkDeactivate();
+    mCursor.cleanup();
     sysWinTermLayout(&mSystemWindow[0]);
     if (mLayout != 0) {
         delete mLayout;
@@ -1096,7 +1089,7 @@ body:
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
+            mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 2;
         break;
@@ -1116,7 +1109,7 @@ body:
         {
             nw4r::math::VEC3 pos;
             sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
-            reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
+            mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 6;
         break;
@@ -1146,7 +1139,7 @@ body:
         {
             nw4r::math::VEC3 pos;
             sysWinGetPaneScreenPos(&pos, &mSystemWindow[0], field_1F4);
-            reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
+            mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 9;
         break;
@@ -1182,7 +1175,7 @@ body:
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->vfn4(&pos);
+            mCursor.setRootPaneTranslate(&pos);
         }
         field_1F8 = 2;
         break;
@@ -1251,7 +1244,7 @@ int GetItemMulti_OnFileEvent(CMenuGetItemMulti* self, CEventFile* event) {
         self->field_208 = reinterpret_cast<u32>(data);
         Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_80504A3C[0x3e5]) == 0) {
-            setBdatEntry__5CBdatFUlPv(5, reinterpret_cast<u8*>(self->field_208));
+            CBdat::setBdatEntry(5, reinterpret_cast<u8*>(self->field_208));
         }
         lbl_eu_80664418 = reinterpret_cast<u32>(getFP__FPCc(&lbl_eu_80504A3C[0x3e5]));
         self->mFileHandle = 0;
@@ -1675,7 +1668,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x3d6], true);
         nw4r::math::VEC3 pos;
         ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     }
 
     if (self->mEntryCount != 0) {
@@ -2774,7 +2767,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
         playUISound__FUl(6);
         return;
@@ -2807,7 +2800,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             if (posIdx < 0xc) {
                 pos = self->mRankSlotPos[posIdx];
             }
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
             return;
         }
 
@@ -2849,7 +2842,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
         playUISound__FUl(1);
         return;
@@ -2881,7 +2874,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             if (posIdx < 0xc) {
                 pos = self->mRankSlotPos[posIdx];
             }
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
             return;
         }
 
@@ -2924,7 +2917,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
         playUISound__FUl(1);
         return;
@@ -3000,7 +2993,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             if (sel2 < 0xc) {
                 pos = self->mRankSlotPos[sel2];
             }
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
             playUISound__FUl(2);
             return;
         }
@@ -3111,7 +3104,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
         if (self->mVisibleItemCount == 0) {
             Cur_SetVisible(&self->mCursor, 0);
@@ -3151,7 +3144,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x3d6], true);
                 nw4r::math::VEC3 pos;
                 ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-                reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+                self->mCursor.setRootPaneTranslate(&pos);
             }
             if (self->mVisibleItemCount == 0) {
                 Cur_SetVisible(&self->mCursor, 0);
@@ -3237,7 +3230,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
                 &lbl_eu_80504A3C[0x3d6], true);
             nw4r::math::VEC3 pos;
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
-            reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
+            self->mCursor.setRootPaneTranslate(&pos);
         }
         if (self->mVisibleItemCount == 0) {
             Cur_SetVisible(&self->mCursor, 0);
@@ -3333,7 +3326,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x3d6], true);
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0xa;
@@ -3353,7 +3346,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x3d6], true);
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         self->field_1F4 = 1;
         playUISound__FUl(6);
     } else if (maskHeld) {
@@ -3363,7 +3356,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         }
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
@@ -3372,7 +3365,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         }
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(1);
     }
 }
@@ -3419,7 +3412,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x3d6], true);
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0x7;
@@ -3439,7 +3432,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
             &lbl_eu_80504A3C[0x3d6], true);
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(6);
     } else if (maskHeld) {
         self->field_1F4 = self->field_1F4 - 1;
@@ -3448,7 +3441,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         }
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
@@ -3457,7 +3450,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         }
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
-        reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
+        self->mCursor.setRootPaneTranslate(&out);
         playUISound__FUl(1);
     }
 }

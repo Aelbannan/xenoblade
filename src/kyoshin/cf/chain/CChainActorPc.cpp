@@ -5,8 +5,7 @@
 
 namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
 
-// Forward decl: cf::CfGameManager::getPlayer(int)
-namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // retail: chainBindEffectLink(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
 extern "C" void bindChainEffect(void* self, void* a, void* b, int c, int d) {

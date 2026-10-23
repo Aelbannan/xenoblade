@@ -2220,14 +2220,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     }
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
-    // POD stand-in for ml::FixStr<32>: cast at format() sites so no FixStr
-    // reference web occupies a callee-saved across the prologue/party ping.
-    struct FixStrPod {
-        char mString[0x20];
-        u32 mLength;
-    };
-    FixStrPod textBuffer;
-    FixStrPod textBufferB;
+    ml::FixStr<32> textBuffer(false);
+    ml::FixStr<32> textBufferB(false);
 
     // ---- HP values (clamped to 9999) ----
     // String-pool base before HP so it takes r14 (retail) and HP lands in r18/r19.
@@ -2282,7 +2276,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     effect = getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL);
     s16 bar6 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + effect)));
     effect = getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL);
-    volatile s16 hpStat = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
+    s16 hpStat = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
         0.01f * stB->f10 * (f32)(stC->s06 + effect)));
     if (hpStat > 9999) hpStat = 9999;
 
@@ -2312,7 +2306,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 if (atk1 > atk2) atk1 = atk2;
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
+                textBuffer.format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
                 SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
             }
 
@@ -2326,8 +2320,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             LayoutSetTextBoxInt(info->state.slotPanes[2], hpStat);
             char* percentSuffix = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
-            ((ml::FixStr<32>*)&textBufferB)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
+            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
+            textBufferB.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
             SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
             SetLayoutSelfText(info->state.slotPanes[18], textBufferB.mString, 0);
 
@@ -2552,17 +2546,17 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             s16 disp3 = v614;
             char* rangeSeparator = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
+            textBuffer.format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
             SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
             LayoutSetTextBoxInt(info->state.slotPanes[12], (s16)disp1);
             LayoutSetTextBoxInt(info->state.slotPanes[14], (s16)disp2);
             char* percentSuffix2 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
+            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
             SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
             char* percentSuffix3 = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E],
+            textBuffer.format(&lbl_eu_805063BC[0x13E],
                            (s32)stA->b55 + (s32)d3, percentSuffix3);
             SetLayoutSelfText(info->state.slotPanes[18], textBuffer.mString, 0);
             // delta colors (5 rows)
@@ -2674,12 +2668,12 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             e_new = *(const D8EArmorEntry*)&e_newFlags;
             comparisonStorage.armor[3] = e_new;
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
-            volatile s16 v484 = (s16)sumItemBoxTypeCounts(
+            s16 v484 = (s16)sumItemBoxTypeCounts(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            volatile s16 v468 = (s16)sumItemBoxTypeCounts(info, member, arg3);
+            s16 v468 = (s16)sumItemBoxTypeCounts(info, member, arg3);
             s32 eq1 = 0;
             if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
@@ -2811,7 +2805,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 percentDelta = (s16)(newPercent - oldPercent);
                 char* percentSuffix = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newPercent,
+                textBuffer.format(&lbl_eu_805063BC[0x13E], newPercent,
                                    percentSuffix);
                 SetLayoutSelfText(info->state.slotPanes[16],
                               textBuffer.mString, 0);
@@ -2847,7 +2841,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 attackDelta = (s16)(wd - wa);
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
                 SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
 
             }
@@ -3143,7 +3137,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = BdatTouchStringCell(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-        ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
+        textBuffer.format(&lbl_eu_805063BC[0x13E], newResistance,
                               percentSuffix);
         SetLayoutSelfText(info->state.slotPanes[16], textBuffer.mString, 0);
         s16 resistanceDelta = (s16)(newResistance - oldResistance);
@@ -3209,7 +3203,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 
             char* rangeSeparator = BdatTouchStringCell(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], displayLow,
+            textBuffer.format(&lbl_eu_805063BC[0x254], displayLow,
                               rangeSeparator, newAttackHigh);
             SetLayoutSelfText(info->state.slotPanes[10],
                           textBuffer.mString, 0);
@@ -3260,12 +3254,12 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             const CItemBoxSlotFlags& e_newFlags = buildItemBoxSlotFlags((void*)(u32)member, (u32)arg3);
             e_new = *(const D8EArmorEntry*)&e_newFlags;
             D8EArmorEntry c_new = e_new;
-            volatile s16 v44C = (s16)sumItemBoxTypeCounts(
+            s16 v44C = (s16)sumItemBoxTypeCounts(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            volatile s16 v430 = (s16)sumItemBoxTypeCounts(info, member, arg3);
+            s16 v430 = (s16)sumItemBoxTypeCounts(info, member, arg3);
             s32 eq1 = 0;
             if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
@@ -3410,7 +3404,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 s32 wmin = wc < wd ? wc : wd;
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
                 SetLayoutSelfText(info->state.slotPanes[10], textBuffer.mString, 0);
             }
             // numbers
@@ -3933,14 +3927,14 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                                        &lbl_eu_805063BC[0x3], id);
             if (rvs != 0) {
                 if (rvs == 0xFF || rvs == 0xFE) {
-                    ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s32)val,
+                    textBuffer.format(&lbl_eu_805063BC[0x13E], (s32)val,
                         BdatTouchStringCell(&lbl_eu_805063BC[0x130],
                                       &lbl_eu_805063BC[0x139], 0x21));
                 } else {
-                    ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x422], (s32)val);
+                    textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
                 }
             } else {
-                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x422], (s32)val);
+                textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
             }
             LayoutSetTextBoxFmtValue(info->state.layout,
                           buf2, textBuffer.mString, 0);

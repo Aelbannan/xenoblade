@@ -40,15 +40,15 @@ public:
     virtual void v40();
     virtual void v44();
     virtual void v48();
-    virtual void setDirection(void* dir);  // 0x4C
-    virtual void setRotationX(f32 rotX);  // 0x50
-    virtual void setRotationY(f32 rotY);  // 0x54
+    virtual void setDirection(void* dir) {}  // 0x4C
+    virtual void setRotationX(f32 rotX) {}  // 0x50
+    virtual void setRotationY(f32 rotY) {}  // 0x54
     virtual f32 getFov();  // 0x58
     virtual void setTarget(u32 targetId);  // 0x5C
     virtual void v60();
-    virtual void setLookAt(void* lookat);  // 0x64
-    virtual void setPositionOfs(void* obj, void* pos, int flags);  // 0x68
-    virtual void setLookAtOfs(void* obj, void* lookat, int flags);  // 0x6C
+    virtual void setLookAt(void* lookat) {}  // 0x64
+    virtual void setPositionOfs(void* obj, void* pos, int flags) {}  // 0x68
+    virtual void setLookAtOfs(void* obj, void* lookat, int flags) {}  // 0x6C
     u8 field_0x04[0x0C - 0x04];
     CamStateObj* objPtr;
 };
@@ -170,9 +170,8 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
     ml::CVec3 dir;
-    volatile f32 deg = ml::deg2rad;
-    dir.x = (f32)fixedAngle / lbl_eu_80666168 * deg;
-    dir.y = (f32)fixedDist / lbl_eu_80666168 * deg;
+    dir.x = (f32)fixedAngle / lbl_eu_80666168 * ml::deg2rad;
+    dir.y = (f32)fixedDist / lbl_eu_80666168 * ml::deg2rad;
     dir.z = lbl_eu_80666178;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();

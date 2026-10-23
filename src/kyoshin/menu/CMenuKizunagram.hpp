@@ -106,7 +106,6 @@ class CTaskGame;
 // declared extern "C" so call sites emit the literal retail reloc names.
 // Return types are int (not u8) so callers compare with cmpwi directly
 // (no byte mask), matching retail.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
 extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
 extern "C" int CFade_IsReady(CFade* self);
@@ -157,8 +156,6 @@ void playUISound(unsigned long op);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
-extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // code_80135FDC helpers (retail-unmangled).

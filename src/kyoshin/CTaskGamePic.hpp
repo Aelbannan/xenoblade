@@ -9,19 +9,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
-// Minimal CScn declaration local to this TU set: only the render-callback
-// members used by Init/Term are needed. Declared with the real class tag
-// (CScn) and parameter list so member calls emit the retail mangled symbols
-// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
-// Guarded so the kyoshin task headers can be included together.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // CProcess base constructor imported from another TU (retail C-linkage symbol
 // name - do not let C++ mangle its parameter list).

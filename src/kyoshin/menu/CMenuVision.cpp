@@ -1,4 +1,5 @@
 #include "kyoshin/menu/CMenuVision.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -25,13 +26,7 @@ extern char lbl_eu_80504268[];    // string table base
 extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 extern CMenuVision* lbl_eu_80664388;
 
-namespace cf {
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-    void* CBattleMan_FetchVisionObj();
-};
-}
+#include "kyoshin/cf/CBattleManager.hpp"
 
 extern u32 getPackedFont();
 
@@ -55,7 +50,6 @@ void playUISound__FUl(u32);
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void PaneSetTexPalette(void*, void*);
-u16 BdatGetU16Direct(void*, const char*, u32);
 char* MakeTplNameSysFile(u32);
 
 extern u32 lbl_eu_80662580;

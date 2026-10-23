@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index);
@@ -140,7 +141,6 @@ class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
 // matches the CtrlPc.hpp declaration.
 extern "C" Fd44State* GetZealObjPtr();
-extern "C" void* bindIndexedEffect(u32 cls, void* param);
 
 // Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
 
@@ -235,11 +235,7 @@ struct CtrlVoiceOwnerC4View {
     CtrlVoiceSubC4* mFieldC4;   // 0xC4
 };
 
-// getUnk80664658 result view for func_80098EF8: flag word at +0x214.
-struct CtrlUnk64658View {
-    u8 _00[0x214];
-    u32 mField214;              // 0x214
-};
+#include "kyoshin/code_801F3BE0.hpp"
 
 // Result of the game-manager sub-object's vf05() (vtable slot 0x1C): float
 // at +0x04.
@@ -323,7 +319,6 @@ public:
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" CtrlUnk64658View* getUnk80664658();
 extern "C" int CChain_HasMemberEntry(void* a, void* b);
 extern "C" u32 SkipTimer_IsActiveFlag();
 

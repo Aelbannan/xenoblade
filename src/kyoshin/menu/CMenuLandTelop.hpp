@@ -95,27 +95,9 @@ struct CLandTelopGlobal {
     u8 field_0xE0;           // 0xE0 bool
 };
 
-// Minimal CScn declaration (guarded so the kyoshin menu/task headers can be
-// included together; same declaration appears in CTaskGameEff/Evt/Pic.hpp).
-// Member calls emit the retail mangled addRenderCB__4CScnFP10IScnRenderUlUl.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The real
-// CTaskGame.hpp pulls broken monolib work.hpp-umbrella headers, so the static
-// members are declared here (same scheme as CSystemWindow.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // cf::CBattleManager battle-list view (only the +0x8 list head is touched by
 // createLandTelop's non-empty check).
@@ -199,7 +181,6 @@ void* BpsStateSingletonToInt();                    // system menu open gate
 unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();
 f32 MenuSnd_GetMasterVol_95EC();                      // scene BGM volume
-u32 Scn_CallUnk8C_V9(CScn* scene);           // scene audio handle
 void CTaskGame_openStream(u32, const char*, u32, u32, u32, u32, f32);
 u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,

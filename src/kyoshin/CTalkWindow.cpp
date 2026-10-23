@@ -4,6 +4,7 @@
 // sinit_8012DE98 (static float-table initializer).
 
 #include "kyoshin/CTalkWindow.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -578,7 +579,7 @@ void CTalkWindow::Init() {
     lbl_eu_80664044++;
 
     void* tagMem = mtl::MemManager::allocate(
-        0x858, getAllocHandle__10CLibLayoutFv());
+        0x858, CLibLayout::getAllocHandle());
     if (tagMem != 0) {
         tagMem = __ct__CTagProcessor(tagMem);
     }

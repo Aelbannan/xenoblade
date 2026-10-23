@@ -1000,8 +1000,6 @@ extern "C" void aiRingPrepend(void* buf, void* req); // canonical void* form (CV
 // do not redeclare it here.
 // Single shared flat-name form (CfGimmickEne/CfGimmickObject/CVision/
 // CfMapMineManager/CPartsChange convention).
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-    u32 soundMan, u32 a, u32 b, u32 c, f32 e);
 // Same form as CfResPcImpl/CfResReloadImpl/CfResObjImpl (single shared
 // signature; retail function returns the sound id).
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);

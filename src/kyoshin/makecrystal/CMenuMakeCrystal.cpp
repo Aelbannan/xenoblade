@@ -1,4 +1,5 @@
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "revolution/gx/GXPixel.h"
 #include "monolib/util/MemManager.hpp"
@@ -6,16 +7,7 @@
 #include "monolib/core/CPadManager.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-// ---------------------------------------------------------------------------
-// Minimal CTaskGame view: getInstance is static, but isFlag01Set is a MEMBER
-// call in retail (the instance returned by getInstance flows straight into the
-// second call without a register reload), so it must be declared as a member.
-// ---------------------------------------------------------------------------
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Render-gate mode bitfield (.sbss); bit 21 set means rendering is blocked.
 extern u32 lbl_eu_80663E28;
@@ -77,13 +69,6 @@ void __dt__6CBgTexFv(void*, int);
 void __dt__800FED0C(void*, int);
 void __ct__CMakeCrystalWin(void* self, u32 arg4, u32 arg5);
 }
-
-namespace cf {
-class CfGameManager {
-public:
-    static CPad* getCurrentPad();
-};
-} // namespace cf
 
 // UI sound effect (playUISound__FUl).
 void playUISound(u32 op);
@@ -297,17 +282,11 @@ MCStateRecord* MakeCrystalCopyStateRecord(MCStateRecord* dst, volatile MCStateRe
     return dst;
 }
 
-// CScn view exposing the render-callback removal. The param type must be
-// IScnRender so MWCC mangles the call as removeRenderCB__4CScnFP10IScnRender
-// (retail name); a void* param mangles FPv and drifts the reloc name.
-class IScnRender;  // callback interface (sub-object at this+0x58)
-class CScn {
-public:
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
 // Declaration-only view of the +0x80 sub-object's class (full definition in
-// makecrystal/CMakeCrystalWin.hpp, whose task views conflict with this TU's).
+// makecrystal/CMakeCrystalWin.hpp, which pulls CMCCrystalBox.hpp whose
+// __ct__UnkClass_8011C974 extern "C" import conflicts with this TU's).
 class CMakeCrystalWin {
 public:
     int mkCrystalIsBusyState();
@@ -318,7 +297,7 @@ public:
 struct MCSubObjView {
     u8 _pad58[0x58];
     u8 render58[0x4];   // 0x58-0x5B IScnRender sub-object (address taken)
-    u8* scene5C;        // 0x5C owning scene (loaded)
+    CScn* scene5C;      // 0x5C owning scene (loaded)
     u8 bg60[0x20];      // 0x60-0x7F CBgTex sub-object (address taken)
     u8 win80;           // 0x80 CMakeCrystalWin sub-object (address taken)
 };
@@ -329,7 +308,7 @@ void CMenuMakeCrystal::Term() {
     Scn_SetPauseFlag(reinterpret_cast<MCSubObjView*>(this)->scene5C, 1);
     void* render = this;
     if (this) render = reinterpret_cast<MCSubObjView*>(this)->render58;
-    ((CScn*)reinterpret_cast<MCSubObjView*>(this)->scene5C)->removeRenderCB((IScnRender*)render);
+    reinterpret_cast<MCSubObjView*>(this)->scene5C->removeRenderCB((IScnRender*)render);
     BgTex_Release_3D9C(reinterpret_cast<MCSubObjView*>(this)->bg60);
     mkCrystalTeardown(&reinterpret_cast<MCSubObjView*>(this)->win80);
     lbl_eu_806646C8 = 0;

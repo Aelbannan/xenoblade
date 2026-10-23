@@ -2,6 +2,7 @@
 // kyoshin/CSysWinBuff - system window "buff" process (singleton).
 
 #include "kyoshin/CSysWinBuff.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 // Forward decls for retail data labels (defs at file end). Char blobs carry
 // immediates; D28/DB0/E0/E8 are pointer tables anchored by clean refs (see below).
 extern char lbl_eu_80537E84[];
@@ -36,20 +37,9 @@ u8 buff_sbss_padF9c = 0;
 u32 lbl_eu_806648FC = 0;
 // CBdat / CfGameManager callees: mangled names as extern "C" (declared in
 // CSysWinBuff.hpp). MWCC-1.1 rejects true member-call spelling (10322).
-// DECOUPLED (IWorkEvent-free TU): CTaskGame/CScn/CDeviceVI/etc. pull
-// monolib/work.hpp -> class IWorkEvent, whose members collide with the
-// composite-vtable handler globals below (MWCC-1.1 10322). Only CProcess
-// (base, via hpp) stays complete; the rest are fwds + namespace externs
-// (mangled names match retail; classes stay undefined so the globals are
-// flat and collision-free).
-// (minimal CScn: only removeRenderCB is used; full CScn.hpp pulls IWorkEvent.)
-class CScn { public: void removeRenderCB(IScnRender* render); };
+#include "monolib/scn/CScn.hpp"
 class CEventFile;
-class CTaskGame {
-public:
-    static void* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -114,7 +104,7 @@ extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
 bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
     if (self->mFileHandle == pEventFile->mFileHandle) {
         void* data = self->mFileHandle->getData();
-        setBdatEntry__5CBdatFUlPv(2, data);
+        CBdat::setBdatEntry(2, data);
         Bdat_GetTable_AA34();
         lbl_eu_806648E4 = (u32)getFP__FPCc(&lbl_eu_8050EBC4[0x22]);
         self->mFileHandle = 0;
@@ -134,7 +124,7 @@ void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
     closeFileHandle(&mFileHandle);
     sysWinTermLayout(&mSysWin[0]);
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
     IScnRender* render = reinterpret_cast<IScnRender*>(this);

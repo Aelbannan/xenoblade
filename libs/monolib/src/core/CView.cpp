@@ -36,7 +36,6 @@ public:
     virtual ~CSplitFrame();
 };
 
-extern "C" CViewRoot* getInstance__9CViewRootFv();
 CView* getCurrent__9CViewRootFv();
 void invalidCurrent__9CViewRootFP5CView(CView* view);
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
@@ -525,7 +524,7 @@ void CView::setRect(const ml::CRect16& rect) {
         splitSize.y = -splitPos.y;
         *(u32*)&mFrame.mContentX = *(u32*)&splitSize;
 
-        if (getInstance__9CViewRootFv() == parentSnap) {
+        if (CViewRoot::getInstance() == parentSnap) {
             sourceParent = nullptr;
         } else {
             sourceParent = mParent;
@@ -996,7 +995,7 @@ updateMsg_loop:
             }
 
             parentSnap = mParent;
-            if (getInstance__9CViewRootFv() == parentSnap) {
+            if (CViewRoot::getInstance() == parentSnap) {
                 parentView = nullptr;
             } else {
                 parentView = mParent;
@@ -1202,7 +1201,7 @@ updateMsg_loop:
             }
 
             parentSnap = mParent;
-            if (getInstance__9CViewRootFv() == parentSnap) {
+            if (CViewRoot::getInstance() == parentSnap) {
                 parentView = nullptr;
             } else {
                 parentView = mParent;
@@ -1625,7 +1624,7 @@ renderView_after_cache_color:
     yAccum = mFrame.mContentY;
     parentThread = mParent;
 
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_y_accum_check;
     }
@@ -1637,7 +1636,7 @@ renderView_y_accum_body:
                                                               &parentView->mFrame);
     yAccum = (s16)(yAccum + (s16)(parentView->mFrame.mContentY + home30.mPos.y));
     parentThread = parentView->mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_y_accum_check;
     }
@@ -1785,7 +1784,7 @@ renderView_scissor_setup:
     accumY = mFrame.mContentY;
 
     parentThread = mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_xy_accum_check;
     }
@@ -1798,7 +1797,7 @@ renderView_xy_accum_body:
     accumX += (s16)(parentView->mFrame.mContentX + home14.mPos.x);
     accumY += (s16)(parentView->mFrame.mContentY + home14.mPos.y);
     parentThread = parentView->mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_xy_accum_check;
     }
@@ -1822,7 +1821,7 @@ renderView_xy_accum_check:
     parentAccumRect.mSize.y = mRectData.mViewSize.y;
 
     parentThread = mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_parent_accum_check;
     }
@@ -1835,7 +1834,7 @@ renderView_parent_accum_body:
     parentAccumX += (s16)(parentView->mFrame.mContentX + home14.mPos.x);
     parentAccumY += (s16)(parentView->mFrame.mContentY + home14.mPos.y);
     parentThread = parentView->mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         parentView = nullptr;
         goto renderView_parent_accum_check;
     }
@@ -1851,7 +1850,7 @@ renderView_parent_accum_check:
     parentAccumRect.mPos.y = (s16)(parentAccumY + home08.mPos.y);
 
     parentThread = mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         frameParent = nullptr;
         goto renderView_frame_parent_ready;
     }
@@ -2318,7 +2317,7 @@ renderView_tail:
     }
 
     parentThread = mParent;
-    if (getInstance__9CViewRootFv() == parentThread) {
+    if (CViewRoot::getInstance() == parentThread) {
         frameParent = nullptr;
         goto renderView_frame_call;
     }
@@ -2825,7 +2824,7 @@ extern "C" void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
     // Walk init: root parent terminates the chain; otherwise cast via
     // convertToView (null + thread-type range check).
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
@@ -2838,7 +2837,7 @@ extern "C" void accumRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
         rect.mPos.x += dx;
         rect.mPos.y += dy;
 
-        if (getInstance__9CViewRootFv() == parentSnap) {
+        if (CViewRoot::getInstance() == parentSnap) {
             cur = nullptr;
         } else {
             cur = CView_toView(parentSnap);
@@ -2854,7 +2853,7 @@ extern "C" CView* updateViewState__5CViewFv(CView* self) {
     CWorkThread* parentSnap;
     CView* cur;
     parentSnap = self->mParent;
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(self->mParent);
@@ -2963,7 +2962,7 @@ static CView* CView_toView(CWorkThread* thread) {
 }
 
 #define CVIEW_WALK_NEXT(cur, parentSnap)                                       \
-    if (getInstance__9CViewRootFv() == (parentSnap)) {                         \
+    if (CViewRoot::getInstance() == (parentSnap)) {                         \
         (cur) = nullptr;                                                       \
     } else {                                                                   \
         (cur) = CView_toView((cur)->mParent);                                  \
@@ -2987,7 +2986,7 @@ extern "C" void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
     ml::CRect16 off;
     parentSnap = other->mParent;
 
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
@@ -3022,7 +3021,7 @@ extern "C" void adjustRectForView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
     ml::CRect16 off;
     parentSnap = other->mParent;
 
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
@@ -3067,7 +3066,7 @@ extern "C" void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
     parentSnap = other->mParent;
 
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
@@ -3102,7 +3101,7 @@ extern "C" void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
     ml::CPnt16 walkBuf[2];
     parentSnap = other->mParent;
 
-    if (getInstance__9CViewRootFv() == parentSnap) {
+    if (CViewRoot::getInstance() == parentSnap) {
         cur = nullptr;
     } else {
         cur = CView_toView(other->mParent);
@@ -3170,7 +3169,7 @@ extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
         *(u32*)&self->mFrame.mContentX = *(u32*)&ifOff;
 
         CView* parentView;
-        if (getInstance__9CViewRootFv() == parentSnap) {
+        if (CViewRoot::getInstance() == parentSnap) {
             parentView = nullptr;
         } else {
             parentView = CView::convertToView(self->mParent);

@@ -15,6 +15,7 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 
 #include <cstring>
+#include "kyoshin/cf/chain/CChainActorListImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 
 // Retail float pools live in CMenuGetItem's sdata2; reference them as
 // externs so this TU emits no local sdata2 (raw .data MATCH needs empty

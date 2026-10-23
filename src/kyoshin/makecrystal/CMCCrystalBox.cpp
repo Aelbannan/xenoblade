@@ -581,7 +581,7 @@ void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
 // handles for the first three resource sub-objects, frees the layout/arc
 // resources, then destroys every placed member sub-object.
 void teardownCrystalBox(CMCCrystalBox* self) {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
     closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[0]);
     closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[1]);
     closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[2]);
@@ -3270,7 +3270,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         void* data3 = fh3->getData();
         Bdat_GetTable_AA34();
         if (getFP__FPCc(lbl_eu_8050888C + 0x541) == 0) {
-            setBdatEntry__5CBdatFUlPv(2, data3);
+            CBdat::setBdatEntry(2, data3);
         }
         Bdat_GetTable_AA34();
         lbl_eu_806646D0 = (unsigned long)getFP__FPCc(lbl_eu_8050888C + 0x550);

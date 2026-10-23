@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include <revolution/gx/GXTypes.h>
@@ -119,7 +120,6 @@ public:
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail names unmangled).
 // ---------------------------------------------------------------------------
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // Retail-unmangled constructor/destructor symbols (see CMenuKizunagram.hpp /
 // CPcKizunagram.cpp conventions).
@@ -1055,7 +1055,6 @@ extern "C" void tickKizLine(void* self);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);              // BDAT row count
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 idx);               // game-progress getter
 extern "C" u32 CtrlObjectParam_GetWorkTailValue();                      // current kizuna id
-extern "C" char* BdatGetU16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetS16Direct(const void* mgr, const void* name, int id);
 extern "C" int BdatGetSexFlag(int id);
 extern "C" void PaneSetVtxColorAll(void* obj, u32 color);

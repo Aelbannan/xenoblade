@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 extern "C" {
     void closeFileHandle__FPP11CFileHandle(void*);
     void func_80139124(void*);
@@ -470,7 +472,6 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     // Block-scope externs inherit the retail C-linkage symbols.
     extern void __ct__17UnkClass_8045F564Fv(void*);
     extern void __ct__CSLCur(CSLCur*, int);
-    extern void __ct__CCur18(void*, int);
     extern void __ct__CScrollBar(void*, int);
     extern void __ct__CSysWin(void*, int);
     extern void CSLSub_init(void*, int);
@@ -499,7 +500,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
 
     __ct__CSLCur((CSLCur*)((u8*)self + 0x28), 0);
 
-    __ct__CCur18(self->mCur40, 0);
+    __ct__CCur18(&self->mCur40, 0);
 
     __ct__CScrollBar(self->mScrollbar, 0);
 
@@ -576,7 +577,7 @@ CSaveLoad::~CSaveLoad() {
         __dt__7CSysWinFv((u8*)self + 0xD4, -1);
         __dt__7CSysWinFv((u8*)self + 0x98, -1);
         __dt__10CScrollBarFv((u8*)self + 0x58, -1);
-        __dt__6CCur18Fv((u8*)self + 0x40, -1);
+        __dt__6CCur18Fv(&self->mCur40, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
             __dl__FPv((u8*)self);
@@ -621,7 +622,7 @@ extern "C" void CSaveLoad_draw(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
 
     sysWinDrawLayout(&self->mSysWin98, drawInfo);
-    Cur_DrawLayout(self->mCur40, drawInfo);
+    Cur_DrawLayout(&self->mCur40, drawInfo);
     sysWinDrawLayout(&self->mSysWinD4, drawInfo);
 
     // Sub-layout pointer stored inside the second CSysWin block (+0x114)
@@ -669,8 +670,7 @@ void CSaveLoad_reset(CSaveLoad* self) {
     CSLCur_destroy((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
     CScrollBar_Teardown(self->mScrollbar);
     sysWinTermLayout(&self->mSysWin98);
-    // Virtual call at self+0x40 (CCur18), vtable slot 3 (offset 0x0C), no null check
-    ((CCur18Obj*)self->mCur40)->vf3();
+    self->mCur40.cleanup();
     sysWinTermLayout(&self->mSysWinD4);
     CSLSub_destroy((UnkSlot4Ptr*)&((SaveSub110View*)self)->sub110);
     (&((SaveHead04View*)self)->unk04)->deleteRegion();
@@ -937,7 +937,7 @@ void CSaveLoad_confirm(CSaveLoad* self) {
                 self->mField12C = 0;
             }
             sysWinAdvancePhase3(&self->mSysWin98);
-            Cur_SetVisible(self->mCur40, 0);
+            Cur_SetVisible(&self->mCur40, 0);
             self->mField121 = 7;
         }
         return;
@@ -996,7 +996,7 @@ void CSaveLoad_cancel(CSaveLoad* p) {
     if (CSysWin_isActive((void*)&p->mSysWin98) == 0) return;
 
     sysWinAdvancePhase3((void*)&p->mSysWin98);
-    Cur_SetVisible(p->mCur40, 0);
+    Cur_SetVisible(&p->mCur40, 0);
 
     p->mField121 = 7;
     p->mField128 = 1;
@@ -1089,7 +1089,7 @@ extern "C" __declspec(noinline) void CSaveLoad_tickCloseA(CSaveLoad* self) {
 extern "C" __declspec(noinline) void CSaveLoad_tickConf(CSaveLoad* self) {
     if (CSysWin_isActive((void*)&self->mSysWin98) != 0) {
         self->mField121 = 3;
-        Cur_SetVisible(self->mCur40, 1);
+        Cur_SetVisible(&self->mCur40, 1);
         {
             void (*fn)(CSaveLoad*) = CSaveLoad_refresh;
             fn(self);
@@ -1180,7 +1180,7 @@ extern "C" __declspec(noinline) void CSaveLoad_finish(CSaveLoad* p) {
     {
         u32 flags = lbl_eu_80663E28;
         if ((flags & 0x01000000u) != 0) {
-            getInstance__9CTaskGameFv();
+            CTaskGame::getInstance();
             CTaskGame_offerLoadCap();
         } else {
             resetBattlePresentation__Q22cf13CfGameManagerFv();
@@ -1358,7 +1358,7 @@ void CSaveLoad_update(CSaveLoad* self) {
     CSLCur_update((UnkPtrHolder*)&((SaveCur28View*)self)->cur28);
     CScrollBar_UpdateDispatch(self->mScrollbar);
     sysWinDispatchPhase(&self->mSysWin98);
-    Cur_Update(self->mCur40);
+    Cur_Update(&self->mCur40);
     sysWinDispatchPhase(&self->mSysWinD4);
     CSLSub_update(&((SaveSub110View*)self)->sub110);
 }
@@ -1414,7 +1414,7 @@ extern "C" void CSaveLoad_refresh(CSaveLoad* self) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
         sysWinGetPaneScreenPos(btnBuf, &self->mSysWin98, self->mField128);
-        ((CCur18Obj*)self->mCur40)->vf4((int)btnBuf);
+        self->mCur40.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(btnBuf));
     } else {
         char* strBase = (char*)&lbl_eu_8050F7CC;
         char numBuf[0x18];
@@ -1776,7 +1776,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&self->_pad_04[0]));
     u8 subCurBuf[0x10];
     u8 curResetBuf[0x18];
-    u8 cur18Tmp[0x18];
+    CCur18 cur18Tmp;
     u8 slCurBuf[0x18];
 
     // Detach the payload pointer from the file handle (cleared to null)
@@ -1787,7 +1787,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
 
     // Fresh arc resource accessor bound to the detached arc payload
     // (local keeps the value in r3 for the Attach call, matching retail)
-    nw4r::lyt::ArcResourceAccessor* accessor = createArcResourceAccessor__10CLibLayoutFv();
+    nw4r::lyt::ArcResourceAccessor* accessor = CLibLayout::createArcResourceAccessor();
     self->mArcAccessor = accessor;
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
         accessor, fileData, (const char*)&strBase[0x22e]);
@@ -1876,17 +1876,10 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     ((VtSlot8Call*)((u8*)self + 0x28))->vf2();
 
     // Same pattern for the CCur18 sub-object at self+0x40
-    __ct__CCur18(cur18Tmp, CUICfManager_getArcResourceAccessor());
-    CurMirror40* src40 = reinterpret_cast<CurMirror40*>(cur18Tmp);
-    CurMirror40* dst40 = reinterpret_cast<CurMirror40*>((u8*)self + 0x40);
-    dst40->w4 = src40->w4;
-    dst40->w8 = src40->w8;
-    dst40->wC = src40->wC;
-    dst40->w10 = src40->w10;
-    dst40->b14 = src40->b14;
-    dst40->b15 = src40->b15;
-    __dt__6CCur18Fv(cur18Tmp, -1);
-    ((VtSlot8Call*)((u8*)self + 0x40))->vf2();
+    __ct__CCur18(&cur18Tmp, CUICfManager_getArcResourceAccessor());
+    self->mCur40 = cur18Tmp;
+    __dt__6CCur18Fv(&cur18Tmp, -1);
+    self->mCur40.initLayout();
 
     // Sub-layout cursor built on the stack, then spilled to self+0x110
     ((void (*)(CSLCur*, int))CSLSub_init)(

@@ -7,6 +7,7 @@
 // workaround as CEquipChange.cpp).
 #define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
@@ -105,7 +106,6 @@ void SetInfoMsgId(CItemBoxGrid*, u32);
 }
 void CopyTabSlotVec(u32*, void*, u32);
 void GridMoveCursorRight(void*);
-void getEntry__5CBdatFUl(u32);
 void closeFileHandle__FPP11CFileHandle(void**);
 void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
@@ -246,7 +246,7 @@ struct CibgOuterSlots {
     u8 m18[0x58];   // +0x18
     u8 m70[0x18];   // +0x70
     u8 m88[0x18];   // +0x88
-    u8 mA0[0x18];   // +0xA0
+    CCur18 mA0;     // +0xA0
     u8 mB8[0x18];   // +0xB8
     u8 mD0[0x18];   // +0xD0
     u8 mE8[0xF0];   // +0xE8
@@ -2568,7 +2568,7 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
 
     __ct__CCur07(p + 0x70, 0);
     __ct__CCur09(p + 0x88, 0);
-    __ct__CCur18(p + 0xa0, 0);
+    __ct__CCur18((CCur18*)(p + 0xa0), 0);
     __ct__CCur16(p + 0xb8, 0);
     __ct__CCur11(p + 0xd0, 0);
     __ct__CSortMenu(p + 0xe8);
@@ -2699,7 +2699,7 @@ __dt__12CItemBoxInfoFv(((CibgOuterSlots*)self)->m1D8, -1);
 __dt__9CSortMenuFv(((CibgOuterSlots*)self)->mE8, -1);
 __dt__6CCur11Fv(((CibgOuterSlots*)self)->mD0, -1);
 __dt__6CCur16Fv(((CibgOuterSlots*)self)->mB8, -1);
-__dt__6CCur18Fv(((CibgOuterSlots*)self)->mA0, -1);
+__dt__6CCur18Fv(&((CibgOuterSlots*)self)->mA0, -1);
 __dt__6CCur09Fv(((CibgOuterSlots*)self)->m88, -1);
 __dt__6CCur07Fv(((CibgOuterSlots*)self)->m70, -1);
 __dt__17UnkClass_8045F564Fv(((CibgOuterSlots*)self)->m18, -1);
@@ -2896,8 +2896,8 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
     u8* p = (u8*)self;
 
     if (((CItemBoxGridHeadView*)p)->field_543) {
-        getEntry__5CBdatFUl(2);
-        getEntry__5CBdatFUl(5);
+        CBdat::getEntry(2);
+        CBdat::getEntry(5);
     }
 
     closeFileHandle__FPP11CFileHandle(&((CItemBoxGridHeadView*)p)->field_28);
@@ -5715,11 +5715,11 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     void* fileBuf = (void*)fileData[1];
     fileData[1] = 0;
     setMemInitFlag__Q23mtl10MemManagerFb(0);
-    void* allocHandle = getAllocHandle__10CLibLayoutFv();
-    void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, (u32)allocHandle);
+    mtl::ALLOC_HANDLE allocHandle = CLibLayout::getAllocHandle();
+    void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, allocHandle);
     if (tpMem != NULL) __ct__CTagProcessor(tpMem);
     *(void**)(p + 0x5c) = tpMem;
-    nw4r::lyt::ArcResourceAccessor* arcRes = createArcResourceAccessor__10CLibLayoutFv();
+    nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();
     *(nw4r::lyt::ArcResourceAccessor**)(p + 0x3c) = arcRes;
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
     buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -5826,10 +5826,10 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     CibgVec3 vecMax;
     code80135FDC_setVec3((float*)&vecMax, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
     Cur_SetTwoPanes09(p + 0x88, vecMax, vecMin);
-    u8 cur18Buf[0x18];
-    __ct__CCur18(cur18Buf, CUICfManager_getArcResourceAccessor());
-    MenuShopSellCopyCursor(p + 0xa0, cur18Buf);
-    __dt__6CCur18Fv(cur18Buf, -1);
+    CCur18 cur18Buf;
+    __ct__CCur18(&cur18Buf, CUICfManager_getArcResourceAccessor());
+    MenuShopSellCopyCursor(p + 0xa0, &cur18Buf);
+    __dt__6CCur18Fv(&cur18Buf, -1);
     ((CBaseCur*)(p + 0xa0))->initLayout();
     u8 cur16Buf[0x18];
     __ct__CCur16(cur16Buf, *(void**)(p + 0x3c));
@@ -5910,7 +5910,7 @@ SetGridReady((CItemBoxGrid*)self);
         void* fileBuf = (void*)fileData[1];
         fileData[1] = 0;
         setMemInitFlag__Q23mtl10MemManagerFb(0);
-        nw4r::lyt::ArcResourceAccessor* arcRes = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();
         *(nw4r::lyt::ArcResourceAccessor**)(p + 0x40) = arcRes;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
 SetGridReady((CItemBoxGrid*)self);
@@ -5927,7 +5927,7 @@ SetGridReady((CItemBoxGrid*)self);
         fileData[1] = 0;
         Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050566C[0x2d0]) == NULL)
-            setBdatEntry__5CBdatFUlPv(2, data);
+            CBdat::setBdatEntry(2, data);
         lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
         lbl_eu_8066450C = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2df]);
 SetGridReady((CItemBoxGrid*)self);
@@ -5941,7 +5941,7 @@ SetGridReady((CItemBoxGrid*)self);
         *(void**)(p + 0x38) = data;
         Bdat_GetTable_AA34();
         if (getFP__FPCc(&lbl_eu_8050566C[0x2ee]) == NULL)
-            setBdatEntry__5CBdatFUlPv(5, *(void**)(p + 0x38));
+            CBdat::setBdatEntry(5, *(void**)(p + 0x38));
         lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
 SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x34) = 0;

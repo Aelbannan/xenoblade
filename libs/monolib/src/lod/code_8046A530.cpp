@@ -107,7 +107,7 @@ LOD::LODMemMan& LOD::UnkClass_8046A530::GetMemMan() {
  *   addi r3, r3, 0xa44
  *   b initElementBuffers__Q23LOD9LODMemManFv
  */
-void LOD::UnkClass_8046A530::forwardToMem() {
+void LOD::UnkClass_8046A530::getLodVisState() {
     GetMemMan().initElementBuffers();
 }
 
@@ -116,7 +116,7 @@ void LOD::UnkClass_8046A530::forwardToMem() {
 // 0x40 was set in the result, stop; otherwise clear bit 0x40 and set bit
 // 0x100.
 // ---------------------------------------------------------------------------
-void LOD::UnkClass_8046A530::setStateFlag() {
+void LOD::UnkClass_8046A530::checkLodFlagState() {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(this);
     u32 v = l->field_0x00 | 0x20000;
     l->field_0x00 = v;
@@ -268,7 +268,7 @@ extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530
 // These compile but do not yet produce matching code.
 // ---------------------------------------------------------------------------
 
-void LOD::UnkClass_8046A530::updateSimple() { advanceLodAnim(); }
+void LOD::UnkClass_8046A530::isLodActive() { advanceLodAnim(); }
 
 // ---------------------------------------------------------------------------
 // updateLodPositions: record the type at 0x121c and set the 0x1200/0x1204/0x1208

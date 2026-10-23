@@ -1,7 +1,7 @@
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "kyoshin/cf/chain/CChain.hpp"
+#include "kyoshin/cf/chain/CChainImports.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"

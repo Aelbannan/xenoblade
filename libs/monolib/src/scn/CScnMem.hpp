@@ -44,6 +44,10 @@ public:
     u32 field_0xc;   // +0x0c - init 0
 };
 
+// KEEP (header-consolidation pilot 2026-10-23): TU-local layout view of CScn,
+// not the canonical monolib/scn/CScn.hpp. ~CScnNw4r below must compile against
+// a single-vptr CScn whose +0x8C slot is typed CScnRootNw4rLayout*; the real
+// class (CTTask + IWorkEvent bases) changes the emitted dtor/vptr stores.
 // Scene object. Base of CScnNw4r. The +0x8c root pointer (mUnk8C) is used by
 // the accessor functions below; +0x10 and +0x54 are written by the Nw4r ctor.
 class CScn {

@@ -23,9 +23,8 @@ struct CfGimmickTableSet {
     u8* lbl_eu_80664128;   // object-gimmick bdat table
 };
 
-// NOTE: CtrlMovePC.hpp deliberately NOT included here -- its extern "C"
-// getUnk80664658() declaration conflicts with CfGimmick.hpp's. Only
-// cf::CCtrlMovePC / movePcCondFullReset were needed, declared below.
+// NOTE: CtrlMovePC.hpp is not included here; only cf::CCtrlMovePC /
+// movePcCondFullReset are needed, declared below.
 #include "types.h"
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
@@ -288,8 +287,6 @@ extern "C" void setChildV40__(void* obj, void* src);  // matches CfObjectImplMov
 int CfSoundMan_IsRecordActive(int a);
 // Single shared flat-name form (extern "C" keeps MWCC from re-mangling;
 // see CfObjectImplMove.hpp).
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
-                                                         u32 d, f32 f);
 extern "C" u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
 void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 CfGimmickSoundSlot* CfSoundMan_TouchSlotById(u16 handle);

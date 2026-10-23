@@ -519,9 +519,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CCtrlMoveEne* self) {
                     }
                 }
             }
-            if (((cf::CFunc8008A2C8Global*)getUnk80664658())
-                    ->field_214 &
-                0x10000u) {
+            if (getUnk80664658()->mFlags & 0x10000u) {
                 commitMove = 0;
             }
             if (commitMove != 0) {

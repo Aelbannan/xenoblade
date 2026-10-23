@@ -4,6 +4,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658, Gim* (owner)
 
 // Unmangled retail symbols called by code_800B06A4.cpp.
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
@@ -886,7 +887,7 @@ public:
     u8 field_0xCB0[0x44];
     u32 field_0xCF4;
     float field_0xCF8;
-    u32 field_0xCFC;
+    CGimmickGlobal* field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;
     u8 _pad_D08[6];     // 0xD08..0xD0E (unknown fields)
@@ -1429,7 +1430,6 @@ public:
 extern "C" void func_8004B0B0(void* dst);
 extern "C" void func_8004B3F0(void* dst, const B47Vec3* src);
 extern "C" int testResInfoFlag(unsigned long mask);
-extern "C" void* getUnk80664658();
 extern "C" void* scaleAboveZero();
 extern "C" int CfRes_getE24Bit22();
 extern float lbl_eu_80661CD4;
@@ -1561,7 +1561,7 @@ extern "C" void* getReslistB88();
 extern "C" void* resetMgrReslist();
 extern "C" void* insertReslistB88(void* obj);
 extern "C" void gflagNandMask(int mask);
-extern "C" void factoryEventNopB();
+void factoryEventNopB();
 extern "C" void gmCallInit1120();
 extern "C" void gmCallNopA();
 extern "C" void gmCallNopB();
@@ -1580,7 +1580,7 @@ extern "C" void setMgrFixStrName(const char* name);
 extern "C" void gflagClearMask(int mask);
 extern "C" void CfScript_CopyName(void* dst, const char* src);
 extern "C" void clearFixStrBuf(void* dst);
-extern "C" void gflagOrMask(int mask);
+extern "C" void gflag_setBits__FUl(int mask);
 // Split1 .rodata string table; the compared name sits at +0x35.
 extern char lbl_eu_804FC4D8[];
 extern "C" void teardownGameMgr(UnkClass_805764CC* self);
@@ -1592,7 +1592,7 @@ extern "C" void gmNotifyCA0(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* findWorkById(UnkClass_805764CC* self, int arg);
 extern "C" void gflagSetOrClear(int arg, void* ptr);
-extern "C" void* getObjIdAt74(void* arg);
+extern "C" void* get_u32_74__17UnkClass_805764CCFv(void* arg);
 extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
@@ -1617,7 +1617,7 @@ extern "C" void __dt__8047BDA8(void*);
 extern "C" void allocNodePool(UnkClass_805764CC* self, unsigned long handle, s32 count);
 extern "C" void walkReslistByMask(void* object, u32 arg);
 extern "C" void walkReslistByType(void* object, u32 arg);
-extern "C" unsigned long factoryPoolCount(void* self);
+extern "C" unsigned long get_u32_18__17UnkClass_805764CCFv(void* self);
 extern "C" void allocEventPool(void* self, unsigned long handle, unsigned long count);
 extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 arg1,
                                 const B20B4Payload* arg2, u32 arg3);
@@ -1672,7 +1672,7 @@ extern "C" void Scn_GetFrameDelta();
 extern "C" void CActorParam_updateTick(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
-extern "C" void setObj6Cmask(void* obj, unsigned long mask, int flag);
+extern "C" void maskField_6C__17UnkClass_805764CCFUli(void* obj, unsigned long mask, int flag);
 extern float lbl_eu_80666A10;
 extern float lbl_eu_80666A08;
 extern float lbl_eu_80663EC8;
@@ -1858,14 +1858,13 @@ struct B83ACCharObj {
 
 // Scratch entry-array accessors over the temp buffer built by func_800B5994
 // (retail names; begin/end/iterator primitives used by func_800B4D84).
-extern "C" void** sortBufIdentity(void* buf);
+void** sortBufIdentity(void* buf);
 extern "C" void** sortBufEnd(void* buf);
-extern "C" void clearField380(void* it);
+extern "C" void clear_380__17UnkClass_805764CCFv(void* it);
 extern "C" u32* sortBufAt(void* it, u32 index);
-extern "C" u32 sortBufCount(void* it);
+extern "C" u32 get_u32_380__17UnkClass_805764CCFv(void* it);
 extern "C" int cmpFloatAt4(const void* a, const void* b);
 extern "C" void qsortEntries(void** first, void** last, int (*cmp)(const void*, const void*));
-extern "C" void* getUnk80664658();
 extern "C" void* testCamBit15(void* p);
 extern "C" unsigned short getGlobalU16_4314();
 extern "C" u32 getObjField70(void* obj);
@@ -1907,9 +1906,7 @@ extern "C" void __dt__800B183C(void* self);
 extern "C" void __dt__80206170(void* self, int flags);
 extern "C" void __dt__801732F8(void* self, int flags);
 extern "C" void __dt__80193538(void* self, int flags);
-extern "C" void __dt__801F3C08(void* self, int flags);
 extern "C" void* __ct__80193270(void* self);
-extern "C" void* __ct__801F3BE8(void* self);
 extern "C" void* __ct__80205A7C(void* self);
 extern "C" void* __ct__cf_CfHikariItemManager(void* self);
 extern "C" void* func_800AD860__FPv(void* data);
@@ -2438,7 +2435,7 @@ extern "C" s32 func_80198400(void* voice, u32 key);
 extern "C" void func_80197B4C(void* container, int flag);
 extern "C" void func_80197BA4(void* container, int a, int b);
 
-extern "C" u32* storeIterWord(void* iter, int arg);
+extern "C" u32* set_u32_00__17UnkClass_805764CCFUl(void* iter, int arg);
 extern "C" void* copyIterWord(void* dst, void* src);
 extern "C" void copyIterWord2(void* dst, void* src);
 extern "C" void removeManagedObject(UnkClass_805764CC* self, void* obj);
@@ -2621,6 +2618,6 @@ public:
 extern "C" void emitSpeedEvent(const F8C0ListSource* src, void* rec);
 extern "C" float cfCam_absFloat();
 extern "C" B5994Obj* getObjField98(void* obj);
-extern "C" u32 getObjU16_45C0(void* ctrl);
+extern "C" u32 get_u16_45C0__17UnkClass_805764CCFv(void* ctrl);
 extern "C" int testObj64bit26(void* obj);
 #endif

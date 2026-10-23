@@ -1,3 +1,4 @@
+#define ISCN_RENDER_NO_DTOR // see CMenuFade.hpp
 #include "kyoshin/menu/CMenuFade.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceVI.hpp"

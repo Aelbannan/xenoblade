@@ -18,7 +18,7 @@ public:
     void teardown();
     u8 isInitialized();
     u8 isActive();
-    u8 isIdle();
+    int isIdle();  // retail callers test r3 with cmpwi (no u8 mask)
     void func_801C412C();
     void beginClose();
     void reopenFromClose();

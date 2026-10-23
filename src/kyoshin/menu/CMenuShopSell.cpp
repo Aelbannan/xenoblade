@@ -3,14 +3,7 @@
 
 #include "kyoshin/menu/CMenuShopSell.hpp"
 
-// CTaskGame.hpp conflicts with CItemBoxGrid.hpp (via CMenuShopSell.hpp) on
-// getLanguage__9CDeviceSCFv (int vs u8). Only the two statics below are
-// used in this TU (same workaround as CMenuGCItem.cpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -19,7 +12,6 @@ public:
 #include <revolution/GX.h>
 
 // isIdle returns raw int so callers use cmpwi (CMenuCollepedia pattern).
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 extern "C" void cbRenderBefore__13CMenuShopSellFv(void*);
 
@@ -246,7 +238,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* sel
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase1(CMenuShopSell* self) {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->mState = 2;
     }
@@ -350,7 +342,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase2(CMenuShopSell* sel
 extern "C" __declspec(noinline) void MenuShopSellHandlePhase3(CMenuShopSell* self) {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         GetField61(&self->mItemBoxGrid) != 0) {
         self->mField54 = 1;
     }

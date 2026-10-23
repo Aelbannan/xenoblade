@@ -2,6 +2,7 @@
 // Shop buy menu screen process (CProcess-header + IScnRender MI layout).
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTaskGame.hpp"
 
 #include "kyoshin/menu/CMenuShopBuy.hpp"
 
@@ -305,7 +306,7 @@ void CMenuShopBuy::Term() {
 void CMenuShopBuy::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
 
@@ -333,7 +334,7 @@ void CMenuShopBuy::Move() {
 
 void CMenuShopBuy::cbRenderBefore() {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
-    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
@@ -411,7 +412,7 @@ extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
 // Phase 1 -> 2 (advance): once the title bar is idle and the item box line
 // is ready, move to the next phase.
 extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mState = 2;
         }
@@ -511,7 +512,7 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
 // Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (ItemBoxLine_IsReadyFlag(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
             self->mField54 = 1;
         }

@@ -2,7 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/CTaskGameEffApi.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
+#include "kyoshin/cf/chain/CChainEffectImports.hpp"
 
 namespace cf {}
 
@@ -20,7 +23,7 @@ void* chainResolveMemberPtr(u32 cls, int mem) {
     if (mem != 0) {
         mem += 0x3E9C;
     }
-    return bindIndexedEffect(cls, mem);
+    return bindIndexedEffect(cls, (void*)mem);
 }
 
 // Same as chainResolveMemberPtr, but the member pointer is loaded from src->field_00
@@ -30,7 +33,7 @@ void* chainResolveMemberFromSrc(u32 cls, u32* src) {
     if (mem != 0) {
         mem += 0x3E9C;
     }
-    return bindIndexedEffect(cls, mem);
+    return bindIndexedEffect(cls, (void*)mem);
 }
 
 // Bind a chain effect (target 8). When `a` is non-zero, unlink the previous
@@ -49,7 +52,7 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
         if (member != 0) {
             member += 0x3E9C;
         }
-        CChainObj* obj = (CChainObj*)bindIndexedEffect((u32)b, (int)member);
+        CChainObj* obj = (CChainObj*)bindIndexedEffect(b, (void*)member);
         self->unk4 = (u32)obj;
         if (obj != 0) {
             obj->field_b0 = self;
@@ -63,7 +66,7 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
         }
         self->unk8 = (u32)d;
         if (e != 0) {
-            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, (u32)e, 0, 0, lbl_eu_80668C50);
+            cf::CfSoundMan::playActorSound(0, (u32)e, 0, 0, lbl_eu_80668C50);
         }
         return;
     }

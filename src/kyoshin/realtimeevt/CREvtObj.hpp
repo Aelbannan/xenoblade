@@ -1,10 +1,9 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/realtimeevt/CREvtMem.hpp" // allocEvtMemAligned / freeEvtMemPtr
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
-extern "C" void freeEvtMemPtr(void* ptr);
 extern "C" long __ptmf_test(void* ptmf);
 extern "C" u32 lbl_eu_80532320[]; // vtable for cf::CREvtObj
 

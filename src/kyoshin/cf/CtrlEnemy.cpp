@@ -274,7 +274,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     cf::CtrlEnemyActor* actor;
 
     if (*self->field_0x80->v258() == 0 ||
-        ((cf::CtrlEnemyGimmickGlobal*)getUnk80664658())->field_214 & 0x20000) {
+        getUnk80664658()->mFlags & 0x20000) {
         return 0;
     }
     if (((cf::CtrlEnemyBM*)getInstance__Q22cf14CBattleManagerFv())->m028(

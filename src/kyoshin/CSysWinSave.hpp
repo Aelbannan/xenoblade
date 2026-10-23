@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -54,46 +55,15 @@ public:
     CScn* mScene;                 // 0x74 owning scene
     UnkClass_8045F564 mMemRegion; // 0x78 embedded scratch region
     u8  mSysWin[0x3C];            // 0x88 CSysWin storage
-    u8  mCur18[0x18];             // 0xC4 CCur18 cursor storage
+    CCur18 mCur18;  // 0xC4
     u8  mFlagDC;                  // 0xDC
     s8  mFlagDD;                  // 0xDD signed flag (cf load/release toggle)
     void HandleInput();
 };
 
-// Render-callback and scene helper used by Term/cbRenderBefore (retail CScn
-// member; defined in monolib/src/scn/CScn).
-class CScn {
-public:
-    void removeRenderCB(IScnRender* cb);
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-};
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
-
-// Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the
-// cursor update virtual invoked by Term). Matches CSysWinSelect::CCursor18.
-class CCursor18 {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (0x08)
-    virtual void vf3() = 0;     // slot 3 (0x0C)
-};
-
-// Full CCur18 vtable view invoked by Init/Move so MWCC emits a genuine
-// `lwz r12, slot(r12)` virtual dispatch (virtual index 2 -> vtable +0x10).
-// MWCC inserts an offset-to-top + RTTI prefix (2 entries), so vtable offset =
-// (virtual index + 2) * 4. Matches CSysWinSelect::CCur18View.
-class CCur18View {
-public:
-    virtual void vf02() = 0;       // index 0 -> +0x08
-    virtual void vf03(void*) = 0;  // index 1 -> +0x0C (unused here)
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, SysWinSaveHandleInput
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
 // invoked by Init. Leading pure virtuals occupy inherited slots so the target
@@ -171,20 +141,6 @@ struct CSysWinData {
     u8    f_39;    // 0x39
 };
 
-// Data body of the embedded CCur18 cursor (0x18 bytes). Init copies the
-// non-vtable fields (0x14/0x15 are bytes; 0x16/0x17 are not copied).
-struct CCur18Data {
-    void* vtable;  // 0x00 (retained, not copied)
-    u32   f_04;    // 0x04
-    u32   f_08;    // 0x08
-    u32   f_0c;    // 0x0c
-    u32   f_10;    // 0x10
-    u8    f_14;    // 0x14
-    u8    f_15;    // 0x15
-    u8    f_16;    // 0x16
-    u8    f_17;    // 0x17
-};
-
 // Byte-range shim over the CProcess vtable slot (+0x10) so __ct__802944D8 can
 // write it without pointer arithmetic (same shape as CCol6Invite's ctor shim).
 // The rest of the 0x00-0x78 region is written through the named CSysWinSave
@@ -209,17 +165,15 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);
-void __ct__CCur18(void* cursor, void* accessor);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void __dt__6CCur18Fv(void* cursor, int flags);
 void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 
 // Additional C-ABI imports used by Init/Move/SysWinSaveHandleInput (retail symbols
 // are unmangled / non-namespace, so C linkage is required).
-void* CUICfManager_getArcResourceAccessor();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void playUISound__FUl(u32 op);

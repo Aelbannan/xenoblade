@@ -1,6 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
 
@@ -12,6 +14,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/CTaskGame.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -1538,12 +1541,12 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
         Class_8045F858 memHost(&self->mMemRegion);
         void* fileData = self->mFileHandle74->getData();
         mtl::MemManager::setMemInitFlag(false);
-        void* tag = mtl::MemManager::allocate(0x858, getAllocHandle__10CLibLayoutFv());
+        void* tag = mtl::MemManager::allocate(0x858, CLibLayout::getAllocHandle());
         if (tag != 0) {
             tag = __ct__CTagProcessor(tag);
         }
         self->mField94 = (nw4r::lyt::Layout*)tag;
-        self->mpAccessor = createArcResourceAccessor__10CLibLayoutFv();
+        self->mpAccessor = CLibLayout::createArcResourceAccessor();
         self->mpAccessor->Attach(fileData, &lbl_eu_8050EE24[0xb1]);
         buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &self->mpLayout, self->mpAccessor, &lbl_eu_8050EE24[0xb5]);
@@ -1564,7 +1567,7 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
     }
     if (self->mFileHandle78 == data) {
         void* fileData78 = self->mFileHandle78->getData();
-        setBdatEntry__5CBdatFUlPv(2, fileData78);
+        CBdat::setBdatEntry(2, fileData78);
         Bdat_GetTable_AA34();
         lbl_eu_8066490C = (u32)getFP__FPCc(&lbl_eu_8050EE24[0xea]);
         self->mFileHandle78 = 0;
@@ -1618,7 +1621,7 @@ void CSysWinScenarioLog::Term() {
     CDeviceVI::waitForDrawDone();
     closeFileHandle(&mFileHandle74);
     closeFileHandle(&mFileHandle78);
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
 
     if (mpLayout != 0) {
         nw4r::lyt::Layout* p = mpLayout;

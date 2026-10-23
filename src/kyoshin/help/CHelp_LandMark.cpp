@@ -8,7 +8,7 @@ extern cf::CHelpVtbl lbl_eu_8053B5F8;
 // C-linkage constructor to match retail symbol __ct__cf_CHelp_LandMark
 extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self, void* owner, u32 param, u32 field_10_val) {
     // Call CHelp base constructor; r4/r5 (owner/param) passed through from caller
-    __ct__Q22cf5CHelpFv(self, owner, param);
+    __ct__Q22cf5CHelpFUlUl(self, owner, param);
 
     // Load vtable pointer and zero value early (matching MWCC scheduling)
     cf::CHelpVtbl* vtbl = &lbl_eu_8053B5F8;

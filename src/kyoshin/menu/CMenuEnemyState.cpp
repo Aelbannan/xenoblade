@@ -1,4 +1,5 @@
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "monolib/scn.hpp"
@@ -446,14 +447,14 @@ CMenuEnemyState::CMenuEnemyState(void* scn) {
     field7DC = zero;
     field7E0 = zero;
 
-    __ct__CPcSelectCursor(&selectCursor);
+    __ct__15CPcSelectCursorFv(&selectCursor);
 
     field82C = zero;
     unk830 = zero;
     unk834 = 0;
     unk838 = lbl_eu_80667004;
 
-    __ct__CPcSelectCursor(tmp);
+    __ct__15CPcSelectCursorFv(tmp);
     {
         CPcSelectCursorLayout* tmpSel = reinterpret_cast<CPcSelectCursorLayout*>(tmp);
         copy = tmpSel->field04;
@@ -554,46 +555,15 @@ extern "C" {
 extern u32 lbl_eu_80663E28;
 }
 
-// ---------------------------------------------------------------------------
-// Minimal local views replacing kyoshin/cf/CBattleManager.hpp + CfObjectPc.hpp.
-// Those headers include CfObjectActor.hpp, which currently cannot be parsed:
-// its extern "C" CfObjectMove_setAnimModeArgs 5-arg form (line 39) conflicts with the 4-arg
-// form in CfObjectMove.hpp (line 192) - same C symbol, MWCC 10197. Only the
-// members/symbols used below are declared; layouts match the retail offsets.
-// ---------------------------------------------------------------------------
+// CfObjectPc.hpp is not included (it pulls CfObjectActor.hpp, whose import
+// block conflicts with this TU's); only forward declarations are needed.
 namespace cf {
-class CfObjectActor;   // forward (reslist element type only)
 class CfObjectPc;      // forward (getCfObjectPc return type, used via cast)
 class CfObjectMove;    // forward (getCfObjectPc param type, getPlayer return)
-
-// Partial view of cf::CBattleManager (full header kyoshin/cf/CBattleManager.hpp).
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-    u8 pad00[4];                         // vtable / IFactoryEvent subobject
-    reslist<CfObjectActor*> mActorList1;  // +0x04 (retail offset)
-};
-
-// Minimal cf::CfGameManager (full header kyoshin/cf/CfGameManager.hpp, which
-// is not includable here: its extern "C" bool Scn_IsScaleAtLeastOne clashes with the
-// int form in CTaskGame.hpp under MWCC 10505). Only the statics this TU uses
-// are declared.
-class CfGameManager {
-public:
-    static CfGameManager* getInstance();
-    static CfObjectMove* getPlayer(int playerIndex);
-};
 }
+#include "kyoshin/cf/CBattleManager.hpp"
 
-// Minimal CTaskGame (full header kyoshin/CTaskGame.hpp is not includable here
-// while its extern "C" Scn_QueryUnk80State/Scn_IsScaleAtLeastOne caller-shape imports clash
-// with code_80135FDC.hpp / CfGameManager.hpp under MWCC 10197/10505). Only
-// the statics this TU uses are declared.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // findObjectById(BOOL)/getCfObjectPc(CfObjectMove*) declared (not extern "C")
 // - MWCC's own C++ mangling matches the retail linker names

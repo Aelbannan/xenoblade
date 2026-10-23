@@ -76,7 +76,6 @@ extern "C" void func_801D3518(void*, void*);
 extern "C" void sortMenuSetPage(void*, u8);
 extern "C" void sortMenuTermCleanup(void*);
 // CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
-extern "C" void getEntry__5CBdatFUl(u32);
 
 // Global term/active flag cleared by TutorialList_ReleaseResources (.sbss word, sda21).
 extern u32 lbl_eu_80664BF0;
@@ -85,7 +84,6 @@ extern u32 lbl_eu_80664BF0;
 // symbols; same pattern as CQstLogList.hpp).
 extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 // Constructor imports (retail short/mangled names; same set as
@@ -130,13 +128,10 @@ extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const 
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* fp);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 // .sdata2 int->float conversion magic double (0x4330000000000000) referenced
@@ -160,18 +155,6 @@ struct CTutorialMsgObj {
 
 // (Font dispatch goes through IDeviceFontInfo::getFont from
 // monolib/device/CDeviceFont.hpp; no local view needed.)
-
-// Field view of the embedded CCur18 cursor (+0x2C). OnFileEvent copies a
-// stack-constructed cursor into it without touching the +0x00 vtable.
-struct CTutorialCur18Data {
-    void* mVtbl;    // +0x00 - not copied
-    void* field_4;  // +0x04
-    void* field_8;  // +0x08
-    void* field_C;  // +0x0C
-    void* field_10; // +0x10
-    u8 field_14;    // +0x14
-    u8 field_15;    // +0x15
-};
 
 // Same-TU widget helpers. Retail strips the C++ mangling for these (bare
 // func_ names), so they are defined under C linkage and call sites bind the
@@ -209,7 +192,7 @@ public:
     nw4r::lyt::Layout* mLayout20;         // 0x20
     nw4r::lyt::AnimTransform* mAnim24;    // 0x24
     nw4r::lyt::AnimTransform* mAnim28;    // 0x28
-    u8 mGap2C[0x18];                      // 0x2C: CCur (0x18 bytes)
+    CCur18 mCursor;                       // 0x2C
     CScrollBarData mScrollBar;            // 0x44: CScrollBar (0x40 bytes)
     u8 mSortMenu84[0xF0];                 // 0x84: CSortMenu sub-object (opaque)
     u8 mField174;                         // 0x174: run/visible gate byte

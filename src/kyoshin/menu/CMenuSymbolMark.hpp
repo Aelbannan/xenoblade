@@ -1,6 +1,10 @@
 #pragma once
 
 #include <types.h>
+// KEEP (blockers-A 2026-10-23): 32-bit view of BdatGetU16Direct (canonical u16 in
+// kyoshin/code_80135FDC_Bdat.hpp); the u16 form adds clrlwi and moves the
+// callers here further from retail.
+extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CTTask.hpp"
@@ -13,11 +17,7 @@
 // Scene interface used by Term (retail removeRenderCB__4CScnFP10IScnRender).
 #include <nw4r/lyt.h>
 
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
+#include "monolib/scn/CScn.hpp"
 
 // Global float constant pool (SDA-relative float loads). Declared const so
 // MWCC treats the loads as constants and hoists them above the frame stores.
@@ -265,12 +265,7 @@ struct ScnObjPositions {
     f32 extZ;  // +0x140
 };
 
-namespace cf {
-class CfGameManager {
-public:
-    static void* getPlayer(int index);
-};
-} // namespace cf
+#include "kyoshin/cf/CfGameManager.hpp" // getPlayer
 
 // Static-file loader (retail CLibStaticData::getStaticFileData).
 class StaticDataHandle;
@@ -358,7 +353,6 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
 
 // Unmangled retail helper imports.
 extern "C" {
-u32 BdatGetU16Direct(const void* table, const char* str, u32 index);
 int CheckEntryConditions(const void* table, u32 index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);

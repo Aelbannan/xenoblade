@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -194,8 +195,6 @@ void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void getEntry__5CBdatFUl(u32 value);
-void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 void Bdat_GetTable_AA34();
 void* getFP__FPCc(const char* name);
 u8 DecMenuCounter64080();
@@ -223,7 +222,6 @@ u32 KyoshinHeap_GetField44();
 
 // BDAT message lookup helpers (unmangled retail C symbols): BdatGetU16Direct
 // resolves a row id, BdatGetPtrDirect resolves the message string for the id.
-u32 BdatGetU16Direct(void* obj, const char* key, u32 id);
 char* BdatGetPtrDirect(void* obj, const char* key, u16 id);
 }
 

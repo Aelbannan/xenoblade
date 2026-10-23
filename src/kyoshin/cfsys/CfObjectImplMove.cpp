@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
@@ -99,12 +100,10 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
     MoveImplDispatch204(self, id);
     if (id == 0x111) {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c8, 0, 0,
-            lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x1c8, 0, 0, lbl_eu_80666C64);
     }
     if (id == 0x112) {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c7, 0, 0,
-            lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x1c7, 0, 0, lbl_eu_80666C64);
     }
     switch (id) {
     case 0x10:
@@ -129,8 +128,7 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         }
         break;
     case 0xf:
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x194, 0, 0,
-            lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x194, 0, 0, lbl_eu_80666C64);
         // Reset driver state and re-init the move buffer (retail reloads
         // self->field_0x18 for each of these stores).
         self->field_0x18->mst.field_214 = 0;

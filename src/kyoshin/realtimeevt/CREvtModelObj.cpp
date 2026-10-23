@@ -32,22 +32,7 @@ struct CREvtModelObjResetView {
 };
 
 // External function declarations
-// Declaration-only views of the realtime-event list classes that own the
-// EvtSeq* members called below (full definitions in
-// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
-// The model object is passed as their `this`.
-class UnkEvtListEntry {
-public:
-    void SeqInsertRtEvent();
-    int SeqIsSameNameType3Busy();
-};
-struct EvtBdabModel {
-    int SeqProbeEvtSlot(u32* out);
-};
-class UnkObj80168514 {
-public:
-    void EvtSeqCheckEventRunGuard();
-};
+#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
 
 extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
@@ -68,10 +53,8 @@ extern "C" {
     extern void func_801836CC(void* self, unsigned long value);
     extern int EvtSeqGetStateBit14(void);
     extern int EvtSeqGetStateBit5(void);
-    extern void* allocEvtMemAligned(int, int, int);
     extern void* KyoshinHeap_AllocNode(int, int);
     extern void KyoshinHeap_Free78(void*, int);
-    extern void Tok_Unpack(void* packed, void* out0, void* out1, void* out2, void* out3);
     extern char* Tok_FormatRes(void* handle);
     extern void CfRes_tryResolveToken(void* packed, void* out);
     extern int CfRes_tryDelegateLoad1(void* handle, int);
@@ -81,17 +64,14 @@ extern "C" {
     extern "C" void* EffRoot_AddSchedReq(void*, u32, u32, int, int, int);
     extern void EffSched_LookupA(void*);
     extern void EffSched_LookupB(void* mgr, void* key);
-    extern void* Scn_CallUnk8C_V9(u32);
     extern void* Scn_SetupAnim(u32, void*, int, int);
     extern void simSetLeafDist7B0(void*, float);
     extern void simRefreshFlag8(void*, float);
     extern void simSetFlag2OnTree(void*, int);
     extern void simCoupleModel(void*, void*);
     extern void* getScnCounter__Fv(void);
-    extern void* isVisionPackLoaded__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
-    extern void* EvtSeqResolvePackedResId(void*);
     extern void* evtLookupEntryWord(void*, int);
     extern int Tok_FormatStr(const char*, u32, int, int);
     extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
@@ -490,8 +470,10 @@ extern "C" void EvtObj_StartLoad(void* self) {
 
     // Parse resource info
     u32 resourceId = FLD(u32, s, 0x5C);
+    // Retail compares these fields signed (cmpwi), so they are int here.
     int resKind, charIdx, subId, extKind;
-    Tok_Unpack((void*)resourceId, &resKind, &charIdx, &subId, &extKind);
+    Tok_Unpack(resourceId, reinterpret_cast<u32*>(&resKind), reinterpret_cast<u32*>(&charIdx),
+               reinterpret_cast<u32*>(&subId), reinterpret_cast<u32*>(&extKind));
 
     if (resKind == 3) {
         if (extKind == 9) {
@@ -504,7 +486,7 @@ extern "C" void EvtObj_StartLoad(void* self) {
 
     if (resKind == 5) {
         u32 resId = FLD(u32, s, 0x5C);
-        u32 newResId = (u32)EvtSeqResolvePackedResId((void*)resId);
+        u32 newResId = EvtSeqResolvePackedResId(resId);
         if (newResId != resId) {
             FLD(u32, s, 0x5C) = newResId;
         }
@@ -710,8 +692,8 @@ extern "C" void EvtObj_SetupModel(void* self) {
 
             // Parse resource info
             u32 resId = FLD(u32, s, 0x5C);
-            int resKindB, charIdxB, subIdB, variantB;
-            Tok_Unpack((void*)resId, &resKindB, &charIdxB, &subIdB, &variantB);
+            u32 resKindB, charIdxB, subIdB, variantB;
+            Tok_Unpack(resId, &resKindB, &charIdxB, &subIdB, &variantB);
 
             u32 resKindU = (u32)resKindB;
             if (resKindU == 2 || resKindU == 3) {
@@ -749,8 +731,8 @@ extern "C" void EvtObj_SetupModel(void* self) {
     } else {
         // Other path: parse resource info and handle
         u32 resId = FLD(u32, s, 0x5C);
-        int resKindC, charIdxC, subIdC, variantC;
-        Tok_Unpack((void*)resId, &resKindC, &charIdxC, &subIdC, &variantC);
+        u32 resKindC, charIdxC, subIdC, variantC;
+        Tok_Unpack(resId, &resKindC, &charIdxC, &subIdC, &variantC);
         int r0cVal = variantC;
 
         if (r0cVal == -1) {

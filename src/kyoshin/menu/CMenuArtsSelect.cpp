@@ -11,6 +11,10 @@
 // The battle-manager singleton getter has ONE canonical declaration in
 // kyoshin/cf/CBattleManagerApi.hpp; no rename guards are needed anymore.
 #include "kyoshin/CTaskGame.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
@@ -59,6 +63,7 @@
 #include "decomp.h"
 #include <revolution/GX.h>
 #include <stdio.h>
+#include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 
 // sdata2 conversion-magic doubles (2^52 family) are shared retail .sdata2 labels
 // (lbl_eu_80666F30 / lbl_eu_80666F38, owning TU or extern); declaring them here
@@ -276,7 +281,6 @@ extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
 // (lbl_eu_80666F50 is 100.0f -- declared below with the other floats)
 
 // Init-only declarations
-u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
 u8* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
@@ -545,7 +549,7 @@ void CMenuArtsSelect::Init() {
     Class_8045F858 regionGuard(&unk6C);
 
     mtl::MemManager::setMemInitFlag(0);
-    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, getAllocHandle__10CLibLayoutFv());
+    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, CLibLayout::getAllocHandle());
     if (tagProc != NULL) {
         __ct__CTagProcessor(tagProc);
     }
@@ -3147,7 +3151,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
     // (sub-state flags, chain validity, skill availability).
     // Hoisted so MWCC colors it into r31 ahead of `this` (retail prologue).
     ArtsParamInfo* p;
-    if (getUnk80664658()->field_214 & 0x10000) return 1;
+    if (getUnk80664658()->mFlags & 0x10000) return 1;
 
     if (index < 8) {
         BattleActor* actor = reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));

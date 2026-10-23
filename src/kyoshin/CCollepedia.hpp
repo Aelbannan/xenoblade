@@ -190,8 +190,9 @@ extern "C" void playUISound__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);
-// u32 (not u16): retail returns the lookup result untruncated (tail-branch b
-// in clpGetCelIcon); narrowing here would emit an extra rlwinm after the call.
+// KEEP (blockers-A 2026-10-23) u32 (not the canonical u16 in
+// kyoshin/code_80135FDC_Bdat.hpp): retail returns the lookup result untruncated
+// (tail-branch b in clpGetCelIcon); narrowing here would emit an extra rlwinm.
 extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
@@ -205,14 +206,12 @@ extern "C" u16 BdatGetItemId(u32);
 extern "C" void sysWinDispatchPhase(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void sysWinSetKindContent(void*, void*, int);
 extern "C" void sysWinApplyKind(CSysWin*, u8);
 extern "C" void sysWinOpenPhase1(void*);
 extern "C" void sysWinAdvancePhase3(void*);
 extern "C" void sysWinTermLayout(void*);
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SetStateBitFlag(u16, u32);
@@ -231,7 +230,6 @@ extern "C" void copyVEC3(void*, const void*);
 // Additional imports for the CCollepedia constructor
 extern void* lbl_eu_805373E0[]; // CCollepedia vtable (retail .data)
 extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
-extern "C" void __ct__CCur18(void* self, void* param);   // CCur18 ctor (+0x84)
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
 
 // Imports used by OnFileEvent / clpBuildPages
@@ -240,7 +238,6 @@ extern "C" u32 BdatGetItemType(u16);                       // item kind lookup
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);                       // unlock-flag lookup
 extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);  // BDAT archive release
 extern "C" void* Bdat_GetTable_AA34();                        // BDAT table unload
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
     nw4r::lyt::Layout*);                                 // CDeviceFont helper

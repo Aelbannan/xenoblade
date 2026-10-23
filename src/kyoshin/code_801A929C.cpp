@@ -8,6 +8,9 @@
 #include "kyoshin/cf/object/CfObject.hpp" // owner of the +0xAC player slot (UVF23)
 #include <math.h>
 
+// KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+
 // SDA/sdata2 float pool labels used by the direction helpers below.
 extern const f32 lbl_eu_80667D60; // 0.0f
 extern const f32 lbl_eu_80667D64; // 1.0f

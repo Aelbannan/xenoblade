@@ -1,8 +1,10 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 // Vtable for UI::CPassiveSkillCur (installed by __ct__UI_CPassiveSkillCur).
 extern "C" void* lbl_eu_80537A14[];
@@ -15,41 +17,6 @@ extern void* lbl_eu_80537968[];
 
 // Vtable for UI::CPassiveSkillLine (installed by __ct__UI_CPassiveSkillLine).
 extern "C" void* lbl_eu_805379FC[];
-
-// Minimal view of the CCur18 cursor sub-object (CBaseCur layout + padding,
-// 0x18 bytes). Only the destructor is referenced from this TU (external
-// retail symbol __dt__6CCur18Fv); the retail cursor code lives in its own TU.
-class CCur18 {
-public:
-    ~CCur18();
-    u8 _data[0x18];
-};
-
-// CCur18 constructor (retail symbol __ct__CCur18, defined in CCur.cpp).
-// extern "C" so the call reloc from __ct__UI_CPassiveSkillLine is the plain
-// retail name (CMapSel.hpp also declares it, but that header can't be
-// included here because its CCur18View clashes with the one above).
-extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
-
-// Abstract view into the embedded CCur18 cursor vtable (same scheme as
-// CTitle.hpp/CMapSel.hpp). MWCC prepends offset-to-top + RTTI (2 entries),
-// so vtable offset = (index + 2) * 4; index 2 -> +0x10 is the "Move"
-// virtual that repositions the cursor (takes a VEC3*).
-class CCur18View {
-public:
-    virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03(const u8*) = 0;               // index 1 -> +0x0C
-    virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
-};
-
-// No-arg view of the CCur18 vtable for the teardown dispatch at +0x0C in
-// CPassiveSkillLine_teardown: retail leaves r4 unset at the call site, so the virtual
-// takes no arguments.
-class CCur18TearView {
-public:
-    virtual void vf02() = 0;  // index 0 -> +0x08
-    virtual void vf03() = 0;  // index 1 -> +0x0C
-};
 
 namespace UI {
 
@@ -566,7 +533,6 @@ extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
 // Message-table lookup used by CPassiveSkillLine_setSlotNamePanes (retail symbol unmangled):
 // returns the u16 id for (table, label, category).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 
 // Character-data lookup by id (retail symbol unmangled; also declared in
 // CMapSel.hpp / CItemBoxGrid.hpp).

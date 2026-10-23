@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "monolib/core/CViewFrame.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -300,7 +301,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Scene object behind the common-archive alloc handle; its alloc-handle
 // getter (retail unmangled, same declarations as CPartyState.hpp).
-extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
 // Window-state word read by PartyStateWin_RefreshTitleHelp (.sdata, retail unmangled). const
 // lets MWCC hoist the sda21 load above the frame stores (retail shape -
@@ -327,8 +327,6 @@ extern u32 lbl_eu_80663E28;
 // CMenuKizunagram.hpp - the full CTaskGame.hpp pulls broken monolib umbrella
 // headers, so only a forward decl is used here).
 class CTaskGame;
-extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 
 // Screen-active check used by cbRenderBefore (retail unmangled).
 extern "C" int IsMenuState621F0();
@@ -396,27 +394,7 @@ struct CPartyStateWinRectSrc {
 // it is referenced under C linkage with that literal name (repo-wide pattern
 // used by CMenuOption/CMenuShopBuy/...); int return avoids the u8-normalizing
 // rlwinm at the call sites (retail cmpwi's the result directly).
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp*);
 
-// Byte flags written on the owning scene during window teardown
-// (PartyStateWin_TeardownWindow). The minimal CScn visible in this TU has no fields, so
-// access goes through this layout view (same scheme as CMakeCrystalWin.hpp).
-struct CPartyStateWinScnFlags {
-    u8 _00[0x39];
-    u8 field_39;             // +0x39
-    u8 _3A[0x3E4 - 0x3A];
-    u8 field_3E4;            // +0x3E4
-};
-
-// Byte-offset view of the task-game's +0x6C sub-process slot (pssDetachView
-// target in PartyStateWin_TeardownWindow). CTaskGame itself cannot be defined here (the full
-// kyoshin/CTaskGame.hpp pulls broken monolib umbrella headers and clashes in
-// TUs that include the real CTaskGame.hpp), so the pointer is read through
-// this view cast from the getInstance__9CTaskGameFv() result.
-struct CTaskGameProcView {
-    u8 _00[0x6C];      // 0x00..0x6C
-    CProc* unk6C;      // +0x6C (task sub-process, pssDetachView target)
-};
 
 // Sub-object teardown helpers used by PartyStateWin_TeardownWindow (retail unmangled; the
 // embedded CTitleAHelp/CModelDisp/CPartyState/CEquipChange/CSysWin headers
@@ -787,6 +765,6 @@ extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquipView*);
 
-// CTitleAHelp idle check distinct from isIdle__11CTitleAHelpFv (retail
-// unmangled; int return so the caller cntlzw/srwi-normalizes it).
+// CTitleAHelp idle check distinct from (retail
+// unmangled; int return so the caller cntlzw/srwi-normalizes it)->isIdle().
 extern "C" int isActive(CTitleAHelp*);

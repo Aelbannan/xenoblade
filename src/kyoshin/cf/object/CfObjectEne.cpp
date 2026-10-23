@@ -16,10 +16,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
 
-// Gimmick unbind helper (defined in code_801F3BE0.cpp; retail keeps the
-// bare C-linkage name, so declare extern "C" like the ctx snapshot).
-extern "C" void GimUnbindEnemyActor(void* obj, void* actor);
-extern "C" void GimBindEnemyActor(void* obj, void* actor);
+#include "kyoshin/code_801F3BE0.hpp"  // getUnk80664658, GimBind/UnbindEnemyActor (owner)
 extern "C" unsigned long SuddenCommuIsStateActive(void* self);
 extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
@@ -103,14 +100,6 @@ extern const double lbl_eu_806669D0 = 4503599627370496.0;
 #define lbl_eu_806669C0 sdata2_EneTail.d3
 
 
-// Global gimmick-settings singleton accessor (defined in code_801F3BE0.cpp);
-// this TU only null-tests it and forwards it to opaque-taking helpers. Typed
-// after the owner declaration on CSuddenCommu.hpp (the singleton behind the
-// lbl_eu_80664658 .sbss word).
-namespace cf {
-struct CSuddenCommuGlobal;
-}
-extern "C" cf::CSuddenCommuGlobal* getUnk80664658(); // getter for the lbl_eu_80664658 holder
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650

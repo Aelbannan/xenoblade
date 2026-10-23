@@ -84,7 +84,6 @@ extern char lbl_eu_8050F7B0[];
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/BgTex_IsLoaded_3E34/... are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);

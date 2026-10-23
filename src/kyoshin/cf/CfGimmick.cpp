@@ -6,7 +6,7 @@
 #define CtrlRemote_SetSharedBit CfGimmick_SetSharedBit_hidden // chain has 2-arg decls; TU uses 1-arg view
 
 #include "kyoshin/cf/CfGimmick.hpp"
-#include "kyoshin/CTaskGame.hpp"   // CTaskGameCamView
+#include "kyoshin/CTaskGameImports.hpp"   // CTaskGameCamView
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -101,9 +101,9 @@ u32 lbl_eu_806646B8;
 struct CfGimmickVec3;
 
 namespace cf {
-// Minimal view of cf::CfGameManager for this TU (CfGameManager.hpp is not
-// included - its isTimerActive is declared non-static, but retail callers
-// (CfGimmick_UpdatePartyAnchorState) invoke the Fv symbol with a dead r3, i.e. a static call).
+// KEEP: minimal cf::CfGameManager view. CfGameManager.hpp (isTimerActive is now
+// static there) still conflicts here on CtrlRemote_SetSharedBit (2-arg import vs
+// this TU's 1-arg view) and the unkB0 layout this TU writes.
 // Static members here emit the same pre-mangled retail symbols without a
 // `this` load.  getPlayer() coexists with CfObjectMove.hpp's extern "C"
 // declaration of the same symbol (different scopes - no overload).
@@ -712,50 +712,50 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
 }
 
 extern "C" void CfGimmick_SetGlobalFlagC0042() {
-    getUnk80664658()->field_214 |= 0x000C0042;
+    getUnk80664658()->mFlags |= 0x000C0042;
 }
 
 extern "C" void CfGimmick_SetGlobalFlagC0002() {
-    CfGimmickGlobal* p = getUnk80664658();
-    *(volatile u32*)&p->field_214 |= 0x000C0002;
+    CGimmickGlobal* p = getUnk80664658();
+    *(volatile u32*)&p->mFlags |= 0x000C0002;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag8008() {
-    getUnk80664658()->field_214 |= 0x8008;
+    getUnk80664658()->mFlags |= 0x8008;
 }
 
 extern "C" void CfGimmick_SetGlobalFlagD0000() {
-    getUnk80664658()->field_214 |= 0xD0000;
+    getUnk80664658()->mFlags |= 0xD0000;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag40000() {
-    getUnk80664658()->field_214 |= 0x40000;
+    getUnk80664658()->mFlags |= 0x40000;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag80000() {
-    getUnk80664658()->field_214 |= 0x80000;
+    getUnk80664658()->mFlags |= 0x80000;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag200000() {
-    getUnk80664658()->field_214 |= 0x200000;
+    getUnk80664658()->mFlags |= 0x200000;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag80AndValue(int arg0, int flag, u32 value) {
-    CfGimmickGlobal* p = getUnk80664658();
+    CGimmickGlobal* p = getUnk80664658();
     if (flag != 0) {
-        p->field_214 |= 0x80;
+        p->mFlags |= 0x80;
     } else {
-        p->field_214 &= ~0x80;
+        p->mFlags &= ~0x80;
     }
-    getUnk80664658()->field_210 = value;
+    getUnk80664658()->field_0x210 = value;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag8() {
-    getUnk80664658()->field_214 |= 0x8;
+    getUnk80664658()->mFlags |= 0x8;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag400000() {
-    getUnk80664658()->field_214 |= 0x400000;
+    getUnk80664658()->mFlags |= 0x400000;
 }
 
 extern "C" void CfGimmick_ApplyPartyMoveSpeed(float value) {

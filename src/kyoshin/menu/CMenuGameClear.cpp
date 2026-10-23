@@ -116,7 +116,7 @@ void CMenuGameClear::Term() {
     mScene->removeRenderCB(render);
 
     sysWinTermLayout(&mSysWin);
-    ((CBaseCur*)&mCursor[0])->cleanup();
+    ((CBaseCur*)&mCursor)->cleanup();
     deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
 
     lbl_eu_80664C08 = 0;
@@ -156,7 +156,7 @@ body:
         __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
         SetWideLocAdjust((nw4r::lyt::DrawInfo*)&drawInfo[0]);
         sysWinDrawLayout(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        Cur_DrawLayout(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        Cur_DrawLayout(&mCursor, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
         __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
     }
 }
@@ -190,7 +190,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
     if (dirBit != 0) {
         self->mField70 = 4;
         sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
-        Cur_SetVisible(&self->mCursor[0], 0);
+        Cur_SetVisible(&self->mCursor, 0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
@@ -198,7 +198,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
-        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
+        ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
@@ -206,7 +206,7 @@ extern "C" void ClearMenu_ConfirmInput(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
-        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
+        ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
@@ -232,7 +232,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
     if (dirBit != 0) {
         self->mField70 = 8;
         sysWinAdvancePhase3((CSysWinFull*)&self->mSysWin[0]);
-        Cur_SetVisible(&self->mCursor[0], 0);
+        Cur_SetVisible(&self->mCursor, 0);
         playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
@@ -240,7 +240,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
-        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
+        ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
@@ -248,7 +248,7 @@ extern "C" void ClearMenu_CancelInput(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         sysWinGetPaneScreenPos(&pos, &self->mSysWin[0], self->mField71);
-        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
+        ((CBaseCur*)&self->mCursor)->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }

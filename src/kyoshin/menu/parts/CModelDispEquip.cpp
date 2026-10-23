@@ -860,7 +860,7 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
     u8* d;
     for (u8 i = 0; i < 9; i++) {
         FileSlot* slot = &fileSlots[i];
-        if (slot->handle != event->field_04)
+        if (slot->handle != event->mFileHandle)
             continue;
         d = slot->handle->mData;
         slot->handle->mData = 0;
@@ -869,8 +869,8 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
         return 1;
     }
     h = modelFileHandle;
-    if (h == event->field_04) {
-        if (event->field_00 == 1) {
+    if (h == event->mFileHandle) {
+        if (event->unk0 == 1) {
             d = h->mData;
             h->mData = 0;
             modelData = d;

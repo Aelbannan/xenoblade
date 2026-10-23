@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -23,54 +25,12 @@ public:
     // TODO: add fields
 };
 
-// Minimal CScn view (retail CScn member; defined in monolib/src/scn/CScn).
-// Term calls removeRenderCB on the scene stored at +0x74. Guarded so the
-// kyoshin task headers can be included together in one TU (same minimal
-// declaration appears in CTaskGameEff.hpp / CTaskGameEvt.hpp / CTaskGamePic.hpp).
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // +0x90 object destroyed by Term through its first virtual (vtable +0x8).
 class CQuestWinRes {
 public:
     virtual ~CQuestWinRes();
-};
-
-// Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the
-// cursor update virtual invoked by Term). Matches CSysWinSelect::CCursor18.
-class CCursor18 {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (0x08)
-    virtual void vf3() = 0;     // slot 3 (0x0C)
-};
-
-// Full CCur18 vtable view (virtual index 2 -> vtable +0x10 - Move/cursor
-// positioning, invoked by placeQuestCursor with a computed VEC3).
-class CCur18View {
-public:
-    virtual void vf02() = 0;       // index 0 -> +0x08
-    virtual void vf03(void*) = 0;  // index 1 -> +0x0C
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, placeQuestCursor
-};
-
-// Data body of the embedded CCur18 cursor (0x18 bytes). onQuestFileEvent copies
-// the non-vtable fields (0x14/0x15 are bytes; 0x16/0x17 are not copied).
-struct CCur18Data {
-    void* vtable;  // 0x00 (retained, not copied)
-    u32   f_04;    // 0x04
-    u32   f_08;    // 0x08
-    u32   f_0c;    // 0x0c
-    u32   f_10;    // 0x10
-    u8    f_14;    // 0x14
-    u8    f_15;    // 0x15
-    u8    f_16;    // 0x16
-    u8    f_17;    // 0x17
 };
 
 // Abstract view of the object returned by CDeviceFont::getFontInfo; the
@@ -131,7 +91,7 @@ struct CQuestWindow {
     nw4r::lyt::ArcResourceAccessor* field_0x94; // 0x94 arc accessor (Term release)
     nw4r::lyt::AnimTransform* mAnimA;      // 0x98
     nw4r::lyt::AnimTransform* mAnimB;      // 0x9C
-    u8  mCursor[0x18];                     // 0xA0 CCur18 cursor storage
+    CCur18 mCursor;                        // 0xA0
     u32 field_B8;                          // 0xB8 quest id (Init table index)
     u8  field_0xBC;                        // 0xBC window state byte
     u8  padBD[0xC0 - 0xBD];                // 0xBD
@@ -174,7 +134,7 @@ struct QuestWinObj {
     u8 pad90[0x98 - 0x90];                   // 0x90
     nw4r::lyt::AnimTransform* mAnimA;        // 0x98
     nw4r::lyt::AnimTransform* mAnimB;        // 0x9C
-    CBaseCur mCursor;                        // 0xA0 (sizeof 0x18, aligns to 4)
+    CCur18 mCursor;                          // 0xA0
     u32 field_B8;                            // 0xB8 quest id (closeQuestWindow)
     u8 field_0xBC;                           // 0xBC window state byte
     u8 padBD[0xC0 - 0xBD];                   // 0xBD
@@ -291,13 +251,11 @@ u32 SearchThresholdIdx(u32 questId);             // quest id -> name-table index
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
 void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
-void __dt__6CCur18Fv(void* self, int flags);
 void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 
 // CProcess base ctor (retail symbol is the mangled C++ name; bind literally).
 void __ct__8CProcessFv(CProcess* self);
-void __ct__CCur18(void* cursor, void* accessor);
 void __ct__17UnkClass_8045F564Fv(void* self);
 
 // Scratch-region RAII guard C-ABI ct/dt (onQuestFileEvent uses an explicit
@@ -309,10 +267,6 @@ void __dt__14Class_8045F858Fv(void* self, int dealloc);
 // C++ class ctor would mangle to __ct__11CTagProcessorFv).
 class CTagProcessor;
 void* __ct__CTagProcessor(void*);
-
-// CLibLayout arc accessor factory (onQuestFileEvent window-arc branch).
-// getAllocHandle__10CLibLayoutFv is declared in code_80135FDC.hpp.
-nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // CfGameManager C-ABI imports (pre-mangled retail names; some retail symbols
 // are Fv-mangled but receive a vestigial register arg - keep the arg for the
@@ -332,7 +286,6 @@ void CUICfManager_setTimeout30();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
-void getEntry__5CBdatFUl(u32);
 void ScalePaneWorldPos(void*, void*, void*, void*);
 void playUISound__FUl(u32);
 void incrementEventCounter__FUl(u32);
@@ -343,7 +296,6 @@ int Col6_ScanItemSlots_D310();
 void Col6_ReserveBoxSlot_D3A0();
 void UIWin_CreateCol6Check();
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-void* bindIndexedEffect(u32 cls, void* param);
 u32 CtrlObjectParam_GetCurrentRowKey();
 int Counter_TestBit(void* data, u32 flag);
 u32 IdTable_SumValues(void* data, u32 flag);
@@ -357,12 +309,10 @@ extern "C" void* CUICfManager_getPackedFont9C(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 
 // BDAT archive attach helpers (onQuestFileEvent common-archive branch).
-void setBdatEntry__5CBdatFUlPv(u32, void*);
 
 // Quest-content helpers (refreshQuestContent). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
 // unmasked value in a callee-saved register between the call and the mask).
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 u32 BdatGetItemType(u32);
 extern "C" u16 BdatGetItemId(u32);
 u32 BdatGetRankByName(u32);
@@ -402,13 +352,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event);
 __attribute__((noinline)) void refreshQuestContent(CQuestWindow* self);
 }
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Quest-window state record behind the retail .sbss singleton
 // lbl_eu_80663FD4; only the +0xDA byte is read by isQuestWindowOpen.

@@ -19,21 +19,19 @@ public:
 };
 
 // Render-callback interface subobject at +0x58 (secondary vtable).
-// Deliberately declared WITHOUT a virtual destructor (same trick as
-// CMenuFade.hpp): the retail composite vtable (lbl_eu_80539780) fills the
-// dtor slot with the manual SkipTimer_ThunkDtor58 adjuster, and a virtual dtor here
-// would make MWCC emit an extra @88@__dt__14CMenuSkipTimerFv thunk that
-// retail does not have. cbRenderBefore stays virtual so MWCC auto-emits the
-// @88@cbRenderBefore__14CMenuSkipTimerFv this-adjusting thunk.
-class IScnRenderCB {
-public:
-    virtual void cbRenderBefore() = 0;
-};
+// IScnRender without a virtual destructor (CMenuSkipTimer.cpp defines
+// ISCN_RENDER_NO_DTOR, same as CMenuFade): the retail composite vtable
+// (lbl_eu_80539780) fills the dtor slot with the manual SkipTimer_ThunkDtor58
+// adjuster, and a virtual dtor would make MWCC emit an extra
+// @88@__dt__14CMenuSkipTimerFv thunk that retail does not have. cbRenderBefore
+// stays virtual so MWCC auto-emits the @88@cbRenderBefore__14CMenuSkipTimerFv
+// this-adjusting thunk.
+#include "monolib/scn/IScnRender.hpp"
 
 // Skip-timer widget shown during cutscene skipping.
 // Retail layout: CProcess/CTTask base (vptr @0x10), the render-callback
 // subobject at +0x58, then the embedded widgets.
-class CMenuSkipTimer : public CMenuSkipTimerBase, public IScnRenderCB {
+class CMenuSkipTimer : public CMenuSkipTimerBase, public IScnRender {
 public:
     void Init();
     void Term();
@@ -53,7 +51,7 @@ public:
 extern "C" CMenuSkipTimer* __ct__CMenuSkipTimer(CMenuSkipTimer* self, CProcess* parent);
 extern "C" CMenuSkipTimer* __dt__14CMenuSkipTimerFv(CMenuSkipTimer* self, int flags);
 extern "C" CMenuSkipTimer* SkipTimer_CreateInstance(CProcess* self, CProcess* parent);
-extern "C" void SkipTimer_ThunkDtor58(IScnRenderCB* sub);
+extern "C" void SkipTimer_ThunkDtor58(IScnRender* sub);
 extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self);
 extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self);
 extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self);
@@ -65,7 +63,6 @@ extern "C" void CSkipTimerTeardown(CSkipTimer* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // Shared singleton pointer for the active skip-timer widget.
 extern unsigned long lbl_eu_80664A48;

@@ -84,6 +84,9 @@ extern "C" void BtlDmg_SetByte777(u8);
 
 extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
+// RTTI record of cf::CfObjectActor (__dynamic_cast source/target operand).
+extern "C" void* __RTTI__Q22cf13CfObjectActor;
+
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 extern "C" float calcBattleDamage(void* obj, void* target, void* source);

@@ -108,7 +108,7 @@ void CMenuBattleMode::Init() {
 // thunks jump through these unmangled addresses; C++ linkage would re-mangle).
 // (thunk-recovery pilot: MWCC now emits the +0x5C adjustors itself as weak
 // @92@cbRenderBefore__15CMenuBattleModeFv / @92@__dt__15CMenuBattleModeFv --
-// the hand-written Adj5C thunks above are deleted; padding keeps line count.)
+// symbols.txt names them the same way; padding keeps line count.)
 extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag);
 
 // Deleting virtual destructor (D1 shape): destroys the mLayoutMem member

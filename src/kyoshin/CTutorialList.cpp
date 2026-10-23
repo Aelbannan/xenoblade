@@ -6,6 +6,7 @@
 // CTutorialList.hpp) declares them as u8[]. This TU never uses either -
 // keep the char decls unrenamed and rename every later (u8) expansion away.
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
 #define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
 #include "kyoshin/CTutorialList.hpp"
@@ -45,7 +46,7 @@ CTutorialList::CTutorialList(u16 count) {
     mLayout20 = 0;
     mAnim24 = 0;
     mAnim28 = 0;
-    __ct__CCur18(&mGap2C[0], 0);
+    __ct__CCur18(&mCursor, 0);
     __ct__CScrollBar(&mScrollBar, 0);
     __ct__CSortMenu(&mSortMenu84[0]);
     mField174 = 0;
@@ -149,7 +150,7 @@ extern "C" void TutorialList_BeginClose(CTutorialList* self) {
         self->mState175 = 4;
         self->mInitialized = 0;
         TutorialList_EnableCloseAnims(self);
-        Cur_SetVisible(&self->mGap2C[0], 0);
+        Cur_SetVisible(&self->mCursor, 0);
         CScrollBar_requestScrollOut(&self->mScrollBar);
         playUISound(6);
     }
@@ -165,7 +166,7 @@ extern "C" void TutorialList_PageUpIdle(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         sortMenuScrollUp(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
-        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-up: wrap to the previous 10-row block of the content
         u8 page = self->mField178;
@@ -206,7 +207,7 @@ extern "C" void TutorialList_PageUpWrap(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         sortMenuScrollDown(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
-        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-up: step the page byte and wrap to the previous block
         u8 count = (u8)self->mField280;
@@ -244,7 +245,7 @@ extern "C" void TutorialList_PageDownStep(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         sortMenuPageUpStep(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
-        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     } else {
         u8 count = (u8)self->mField280;
     if (count >= 10) {
@@ -279,7 +280,7 @@ extern "C" void TutorialList_PageDownBlock(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         sortMenuPageDownStep(&self->mSortMenu84[0]);
         sortMenuFormatPaneText(&pos, &self->mSortMenu84[0]);
-        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
+        self->mCursor.setRootPaneTranslate(&pos);
     } else {
         // idle page-down: advance one full 10-row block
         u8 count = (u8)self->mField280;
@@ -365,7 +366,7 @@ extern "C" void TutorialList_ConfirmOpenMenu(CTutorialList* self) {
     if (sortMenuIsVisible28(&self->mSortMenu84[0]) != 0) {
         if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0)
             return;
-        Cur_SetVisible(&self->mGap2C[0], 1);
+        Cur_SetVisible(&self->mCursor, 1);
         sortMenuToState4Page(&self->mSortMenu84[0]);
         TutorialList_UpdateTitleText(self);
         TutorialList_MoveCursorToRow(self);
@@ -382,11 +383,11 @@ extern "C" void TutorialList_ConfirmOpenMenu(CTutorialList* self) {
                   root);
     sortMenuSetLayoutPos(&self->mSortMenu84[0], &pos);
     TutorialList_RebuildSortEntries(self);
-    Cur_SetVisible(&self->mGap2C[0], 1);
+    Cur_SetVisible(&self->mCursor, 1);
     sortMenuOpenInit(&self->mSortMenu84[0]);
     nw4r::math::VEC3 curPos;
     sortMenuFormatPaneText(&curPos, &self->mSortMenu84[0]);
-    ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&curPos);
+    self->mCursor.setRootPaneTranslate(&curPos);
     playUISound(2);
 }
 
@@ -399,7 +400,7 @@ int CTutorialList::TutorialList_IsSortMenuActive() { return sortMenuIsVisible28(
 extern "C" __declspec(noinline) void TutorialList_AdvanceSelection(CTutorialList* self, int arg) {
     if (sortMenuIsVisible28(&self->mSortMenu84[0]) == 0) return;
     if (sortMenuGetFlag2B(&self->mSortMenu84[0]) == 0) return;
-    Cur_SetVisible(&self->mGap2C[0], 1);
+    Cur_SetVisible(&self->mCursor, 1);
     sortMenuToState4Page(&self->mSortMenu84[0]);
     TutorialList_UpdateTitleText(self);
     TutorialList_MoveCursorToRow(self);
@@ -487,13 +488,13 @@ extern "C" __declspec(noinline) void TutorialList_MoveCursorToRow(CTutorialList*
     char name[0x28];
     f32 pos[4];
     sprintf(name, &lbl_eu_80510B78[0x82], (int)self->mField178 + 1);
-    Cur_SetVisible(&self->mGap2C[0], 1);
+    Cur_SetVisible(&self->mCursor, 1);
     nw4r::lyt::Pane* pagePane =
         self->mLayout20->GetRootPane()->FindPaneByName(name, true);
     nw4r::lyt::Pane* barPane =
         self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
     ScalePaneWorldPos((nw4r::math::VEC3*)pos, pagePane, barPane, self->mLayout20->GetRootPane());
-    ((CBaseCur*)self->mGap2C)->setRootPaneTranslate((const nw4r::math::VEC3*)pos);
+    self->mCursor.setRootPaneTranslate((const nw4r::math::VEC3*)pos);
 }
 
 // TutorialList_RebuildSortEntries - rebuild the sort menu entries: reset the menu, push the
@@ -541,7 +542,7 @@ extern "C" CTutorialList* __dt__13CTutorialListFv(CTutorialList* _this,
     if (_this != 0) {
         __dt__9CSortMenuFv(&_this->mSortMenu84[0], -1);
         __dt__10CScrollBarFv(&_this->mScrollBar, -1);
-        __dt__6CCur18Fv(&_this->mGap2C[0], -1);
+        __dt__6CCur18Fv(&_this->mCursor, -1);
         __dt__17UnkClass_8045F564Fv(&_this->mGap04[0], -1);
         if (flags > 0) {
             __dl__FPv(_this);
@@ -570,7 +571,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         void* fileData = ((CFileHandle*)mField14)->getData();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
 
-        mField1C = createArcResourceAccessor__10CLibLayoutFv();
+        mField1C = CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
             (nw4r::lyt::ArcResourceAccessor*)mField1C, fileData,
             &lbl_eu_80510B78[0xb2]);
@@ -641,20 +642,11 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
 
         // Build the cursor on the stack, copy its body into +0x2C (skipping
         // the vtable), destroy the temp and run the cursor init virtual.
-        u8 tmpCur[0x18];
-        __ct__CCur18(tmpCur, CUICfManager_getArcResourceAccessor());
-        CTutorialCur18Data* curDst =
-            reinterpret_cast<CTutorialCur18Data*>(&mGap2C[0]);
-        CTutorialCur18Data* curSrc =
-            reinterpret_cast<CTutorialCur18Data*>(tmpCur);
-        curDst->field_4 = curSrc->field_4;
-        curDst->field_8 = curSrc->field_8;
-        curDst->field_C = curSrc->field_C;
-        curDst->field_10 = curSrc->field_10;
-        curDst->field_14 = curSrc->field_14;
-        curDst->field_15 = curSrc->field_15;
-        __dt__6CCur18Fv(tmpCur, -1);
-        ((CBaseCur*)mGap2C)->cleanup();
+        CCur18 tmpCur;
+        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+        mCursor = tmpCur;
+        __dt__6CCur18Fv(&tmpCur, -1);
+        mCursor.cleanup();
 
         TutorialList_OpenAfterFilesReady(this);
         mField14 = 0;
@@ -665,7 +657,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
     if (mField18 == event->mFileHandle) {
         // Shared archive hit: release its buffered data into the BDAT layer.
         void* data2 = ((CFileHandle*)mField18)->getData();
-        setBdatEntry__5CBdatFUlPv(4, data2);
+        CBdat::setBdatEntry(4, data2);
         Bdat_GetTable_AA34();
         lbl_eu_80664BF0 = (u32)getFP__FPCc(&lbl_eu_80510B78[0x143]);
         mField18 = 0;
@@ -727,7 +719,7 @@ extern "C" void TutorialList_UpdatePerFrame(CTutorialList* self) {
         break;
     }
     self->mLayout20->Animate(0);
-    Cur_Update(&self->mGap2C[0]);
+    Cur_Update(&self->mCursor);
     CScrollBar_UpdateDispatch(&self->mScrollBar);
     sortMenuDispatchState(&self->mSortMenu84[0]);
 }
@@ -745,7 +737,7 @@ extern "C" void TutorialList_DrawVisible(CTutorialList* self,
         drawLayout(self->mLayout20, drawInfo, 0, 1);
         CScrollBar_draw(&self->mScrollBar, drawInfo);
         sortMenuDraw(&self->mSortMenu84[0], drawInfo);
-        Cur_DrawLayout(&self->mGap2C[0], drawInfo);
+        Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -753,7 +745,7 @@ extern "C" void TutorialList_DrawVisible(CTutorialList* self,
 // two file handles, release the bound layout and resource accessor, then run
 // the cursor/scrollbar/sort-menu/region teardown helpers.
 extern "C" void TutorialList_ReleaseResources(CTutorialList* self) {
-    getEntry__5CBdatFUl(4);
+    CBdat::getEntry(4);
     closeFileHandle((CFileHandle**)&self->mField14);
     closeFileHandle((CFileHandle**)&self->mField18);
     self->mField174 = 0;
@@ -763,7 +755,7 @@ extern "C" void TutorialList_ReleaseResources(CTutorialList* self) {
     }
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mField1C);
     lbl_eu_80664BF0 = 0;
-    ((CBaseCur*)self->mGap2C)->cleanup();
+    self->mCursor.cleanup();
     CScrollBar_Teardown(&self->mScrollBar);
     sortMenuTermCleanup(&self->mSortMenu84[0]);
     deleteRegion__17UnkClass_8045F564Fv(&self->mGap04[0]);

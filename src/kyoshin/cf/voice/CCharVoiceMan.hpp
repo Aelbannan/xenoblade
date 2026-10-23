@@ -121,7 +121,7 @@ namespace cf{
         u32 unk230;
     };
 }
-extern "C" cf::CCharVoiceMan* __ct__CCharVoiceMan(cf::CCharVoiceMan* self);
+extern "C" cf::CCharVoiceMan* __ct__Q22cf13CCharVoiceManFv(cf::CCharVoiceMan* self);
 extern "C" const float lbl_eu_80668C68;
 extern "C" u8 lbl_eu_805398CC[28];
 class CScn;

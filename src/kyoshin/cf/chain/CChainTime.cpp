@@ -3,6 +3,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/chain/CChainTime.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/chain/CChainImports.hpp"
+#include "kyoshin/cf/CVisionImports.hpp"
+#include "kyoshin/cf/CSuddenCommuImports.hpp"
 
 extern const float lbl_eu_80668A88;
 extern const float lbl_eu_80668A8C;

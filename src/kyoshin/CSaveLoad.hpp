@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
+#include "kyoshin/CBaseCur.hpp"
 class CBaseCur;
 #include <nw4r/lyt.h>
 
@@ -46,7 +48,7 @@ public:
     char _pad_28[0x3C - 0x28];                          // 0x28-0x3B
     u8 mField3C;                                         // 0x3C
     char _pad_3D[0x40 - 0x3D];                          // 0x3D-0x3F
-    u8 mCur40[0x18];                                    // 0x40-0x57 - CCur18 cursor (opaque, cf. CTitle::mCur)
+    CCur18 mCur40;                                      // 0x40-0x57
     u8 mScrollbar[0x98 - 0x58];                          // 0x58-0x97 - scrollbar state (passed to CScrollBar_loadLayoutArc/CScrollBar_requestScrollOut)
     char mSysWin98[0xD4 - 0x98];                           // 0x98-0xD3 - first CSysWin-like object
     char mSysWinD4[0x11C - 0xD4];                          // 0xD4-0x11B - second CSysWin-like object
@@ -171,16 +173,6 @@ public:
     virtual void* vf15(const char* name, int flag) = 0; // 0x3C
 };
 
-// Abstract class for CCur18 cursor object (0x18 bytes, embedded sub-object).
-// vtable layout: 2 MWCC implicit entries (RTTI/dtor) then user virtuals.
-// Slot 3 (offset 0x0C) is the second user virtual, used by CSaveLoad_reset.
-class CCur18Obj {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (0x08) - destructor
-    virtual void vf3() = 0;     // slot 3 (0x0C) - cursor update function
-    virtual void vf4(int) = 0;  // slot 4 (0x10) - set button text (used by CSaveLoad_refresh)
-};
-
 // Struct with ArcResourceAccessor at +0x00, Layout at +0x04, AnimTransform at +0x08.
 // Used by CSLSub_create; compatible with UnkTwoPtr (UnkTwoPtr's _pad_00[4] absorbs the accessor).
 struct UnkED70_Struct {
@@ -225,16 +217,6 @@ struct CurMirror28 {
     void* w8;                       // +0x08
     void* wC;                       // +0x0C
     u8 _pad10[4];                   // +0x10
-    u8 b14;                         // +0x14
-    u8 b15;                         // +0x15
-};
-
-struct CurMirror40 {
-    u8 _pad00[4];                   // +0x00
-    void* w4;                       // +0x04
-    void* w8;                       // +0x08
-    void* wC;                       // +0x0C
-    void* w10;                      // +0x10
     u8 b14;                         // +0x14
     u8 b15;                         // +0x15
 };
@@ -318,7 +300,6 @@ extern "C" void requestLandTelop();
 extern "C" void MenuUpdate_SignalGlobalField64();
 extern "C" void CMenuGetItem_SetField54();
 extern "C" void invalidateQstFlag();
-extern "C" void* getInstance__9CTaskGameFv();
 extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern "C" void CScrollBar_loadLayoutArc(void*);
@@ -358,18 +339,15 @@ extern "C" void awardQuestFlags(void);
 extern "C" u32 chkAwardFlags99(void);
 extern "C" u32 chkAwardFlags9B(void);
 extern "C" void sysWinAdvancePhase3(void*);
-extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" u32 CUICfManager_getPackedFontD8();
 extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setPaneVisible(void* obj, u32 value);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 bdatLookupRes(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void sysWinSetKindContent(void*, u32, int);
 extern "C" void sysWinSetTwoTextValues(void*, u32, u32);
@@ -383,7 +361,6 @@ extern "C" void CSLCur_tickAnim(UnkPtrHolder* self);
 extern "C" void __dl__FPv(void*);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void CSLSub_bindPane(UnkTwoPtr*);
 extern "C" void DevFile_SetByteA9(int);

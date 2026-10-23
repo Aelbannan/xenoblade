@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -57,7 +58,7 @@ public:
     u32 mScnRender;    // 0x70 IScnRender vtable slot
     CScn* mScene;      // 0x74 owning scene
     u8  mSysWin[0x3C]; // 0x78 CSysWin storage
-    u8  mCur18[0x18];  // 0xB4 CCur18 cursor storage
+    CCur18 mCur18;  // 0xB4
     u8  mState;        // 0xCC selection state (0..3)
     u8  mCursorSel;    // 0xCD cursor selection index (1 = default)
     char mStrA[0x80];  // 0xCE first string (a3)
@@ -66,40 +67,9 @@ public:
     u8  field_24E;     // 0x24E
 };
 
-// Render-callback and scene helper used by Term/cbRenderBefore (retail CScn
-// member; defined in monolib/src/scn/CScn).
-class CScn {
-public:
-    void removeRenderCB(IScnRender* cb);
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-};
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
-
-// Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the
-// cursor update virtual invoked by Term). Matches CSaveLoad::CCur18Obj.
-class CCursor18 {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (0x08)
-    virtual void vf3() = 0;     // slot 3 (0x0C)
-};
-
-// Full CCur18 vtable view invoked by Init/Move/SysWinSelectHandleInput so MWCC emits a
-// genuine `lwz r12, slot(r12)` virtual dispatch (FULL_MATCH regalloc). MWCC
-// inserts an offset-to-top + RTTI prefix (2 entries), so vtable offset =
-// (virtual index + 2) * 4.
-class CCur18View {
-public:
-    virtual void vf02() = 0;       // index 0 -> +0x08 - Init
-    virtual void vf03(void*) = 0;  // index 1 -> +0x0C (unused here)
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 - Move, SysWinSelectHandleInput
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
 // invoked by Init. Leading pure virtuals occupy inherited slots so the target
@@ -156,7 +126,7 @@ void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 int IsMenuState621F0();
-void* CUICfManager_getArcResourceAccessor();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void playUISound(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -176,14 +146,12 @@ void sysWinApplyKind(void* syswin, int kind);
 void sysWinOpenPhase1(void* syswin);
 void sysWinAdvancePhase3(void* syswin);
 void sysWinDispatchPhase(void* syswin);
-void sysWinGetPaneScreenPos(u8* out, u8* syswin, u8 sel);
+void sysWinGetPaneScreenPos(void* out, u8* syswin, u8 sel);
 void Cur_SetVisible(void* cur, int val);
 void Cur_Update(void* cur);
 void __ct__CSysWin(void* syswin, int arg);
 void __ct__8CProcessFv(CProcess* self);
-void* __ct__CCur18(void* cursor, void* accessor);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void __dt__6CCur18Fv(void* cursor, int flags);
 void __dt__8CProcessFv(CProcess* self, int flags);
 }
 

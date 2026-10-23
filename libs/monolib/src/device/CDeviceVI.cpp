@@ -577,7 +577,9 @@ void CDeviceVI::beginFrame(){
 
     //Draw the frame
     CDeviceGX::drawFrame();
+}
 
+void CDeviceVICb::viBeginFrame(){
 }
 
 //Waits for drawing for the current frame to be finished? (not entirely sure)

@@ -317,13 +317,7 @@ struct CtrlEnemyEnumList {
     u32 field_620;                   // 0x620 (count)
 };
 
-// Global gimmick settings view (getUnk80664658 result): flag word at +0x214.
-struct CtrlEnemyGimmickGlobal {
-    u8 _pad00[0x210];                // 0x00-0x20F
-    u32 field_210;                   // 0x210
-    u32 field_214;                   // 0x214 (flags)
-};
-
+ 
 // Battle-actor +0x3F60 target: u16 flag word at +0x530 (bit 0 probed).
 struct CtrlEnemySubFlag {
     u8 _pad00[0x530];                // 0x00-0x52F
@@ -474,8 +468,8 @@ void CtrlMoveEne_DispatchMoveHook(void* sub);
 void CtrlMoveEne_UpdateBattleAI(void* sub);
 int CtrlMoveEne_TryLatchTargetActor(void* sub, void* obj);
 int CtrlMoveEne_ConsumeTargetResolve(void* sub);
-void* getUnk80664658(void);
 }
+#include "kyoshin/code_801F3BE0.hpp"
 
 // Enum-list helpers: C++ void* forms (match CfObjectImplMove.hpp / majority).
 // Kept outside extern "C" so they unify with the ImplMove decls pulled via

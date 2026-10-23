@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
@@ -9,6 +11,7 @@
 // suppress those declarations when included from this defining TU.
 #define CODE_80135FDC_CPP
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/math/math_types.h>
 #include <nw4r/lyt/lyt_animation.h>
 #include <nw4r/lyt/lyt_layout.h>
@@ -292,10 +295,10 @@ u8 BdatGetU8Direct(const char* a, const char* b, const char* c) {
     return *(u8*)&result;
 }
 
-extern "C" u16 BdatGetU16Direct(const char* a, const char* b, const char* c) {
-    if (a == 0) return 0;
-    Bdat_GetTable_AA34(a);
-    void* result = getBdatStringColumnValue((void*)a, b, c);
+u16 BdatGetU16Direct(const void* bdat, const void* column, int row) {
+    if (bdat == 0) return 0;
+    Bdat_GetTable_AA34((const char*)bdat);
+    void* result = getBdatStringColumnValue((void*)bdat, (const char*)column, (const void*)row);
     return *(u16*)&result;
 }
 
@@ -543,7 +546,7 @@ extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
     }
 }
 
-extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+void setLayoutTextBoxFont(
     nw4r::lyt::Layout* layout, char* name, u32 font) {
     nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(name, true);
     if (pane != NULL) {
@@ -553,7 +556,7 @@ extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
     }
 }
 
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+void setLayoutTextBoxNumber(
     nw4r::lyt::Layout* layout, char* name, u8 value) {
     char buf[512];
     extern const char lbl_eu_80500664[];
@@ -663,7 +666,7 @@ extern "C" void SetLayoutSelfText(
         reinterpret_cast<const wchar_t*>(buf), 0);
 }
 
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+void buildLayout(
     nw4r::lyt::Layout** ppLayout,
     nw4r::lyt::ArcResourceAccessor* accessor,
     const char* name) {
@@ -672,7 +675,7 @@ extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAcc
     (*ppLayout)->Build(resource, accessor);
 }
 
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+void bindLayoutAnimTransform(
     nw4r::lyt::Layout* layout,
     nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor,
@@ -693,7 +696,7 @@ extern "C" void LayoutBindAnimResource(
     // land in r30 and mem in r31 to match retail.
     void* mem;
     void* resource = accessor->GetResource(0, name, 0);
-    mem = allocate__Q23mtl10MemManagerFUlUl(0x10, getAllocHandle__10CLibLayoutFv());
+    mem = allocate__Q23mtl10MemManagerFUlUl(0x10, CLibLayout::getAllocHandle());
     if (mem != NULL) {
         Set__Q34nw4r3lyt12AnimResourceFPCv(mem, resource);
     }
@@ -702,7 +705,7 @@ extern "C" void LayoutBindAnimResource(
         *reinterpret_cast<nw4r::lyt::AnimResource*>(mem), accessor);
 }
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+void drawLayout(
     nw4r::lyt::Layout* layout,
     nw4r::lyt::DrawInfo* drawInfo,
     int useProjection,
@@ -1169,9 +1172,8 @@ extern "C" void PaneSetTexPalette(void* a, void* palette) {
 }
 
 extern "C" void playUISound__FUl(u32 arg) {
-    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 channel, u32 soundId, u32 volume, u32 flag, float f1); // play SE
     extern f32 lbl_eu_80667300;
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
+    cf::CfSoundMan::playActorSound(0, arg, 0, 0, lbl_eu_80667300);
 }
 
 void code80135FDC_thunk_BFE8C(u8* arg) {
@@ -2693,7 +2695,7 @@ extern "C" f32 GetFloatTableEntry(u32 idx) {
     return table.w[i];
 }
 
-extern "C" void func_8013B428__FUl(u32 value) {
+void incrementEventCounter(u32 value) {
     if (CtrlRemote_TouchBitByArg(0x20) <= 3) return;
     // retail divides the param as SIGNED (mulhw + srawi + sign-adjust), so
     // cast to int before the modulo even though the ABI type is unsigned.

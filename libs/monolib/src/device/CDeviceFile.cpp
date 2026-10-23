@@ -332,6 +332,9 @@ public:
     u8 field_0x1EC[0x1F0 - 0x1EC]; //0x1EC
 };
 
+// KEEP: owner-side copy of ::CEventFile (canonical layout in
+// monolib/work/CEventFile.hpp). This TU keeps private CBM/CFileHandle copies
+// that conflict with the monolib headers, and it needs the CBM ctor.
 struct CEventFile {
     CEventFile(CBM cbm, CFileHandle* handle);
     u8* getFileDataPtr();
@@ -699,7 +702,7 @@ CFileHandle* CDeviceFile::readCommonArchiveFile(unsigned long allocHandle, const
 // File-size dispatch: device-specific getters are old-MWCC-mangled imports
 // that take an extra (mangle-invisible) trailing arg forwarded from r4.
 extern "C" int getFileSize__14CDeviceFileDvdFPCc(const char* pPath, int param);
-extern "C" int getFileSize__14CDeviceFileCriFPCc(const char* pPath, int param);
+extern "C" int getFileSize__14CDeviceFileCriFPCci(const char* pPath, int param);
 
 // CDeviceFile::getFileSize(const char*). Returns -1 when the path is not a
 // plain relative path (absolute prefix, drive colon, or backslash root).
@@ -725,7 +728,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
     }
     if (!absolute) {
         if (lbl_eu_806636A8) {
-            result = getFileSize__14CDeviceFileCriFPCc(path, param);
+            result = getFileSize__14CDeviceFileCriFPCci(path, param);
         } else {
             result = getFileSize__14CDeviceFileDvdFPCc(path, param);
         }

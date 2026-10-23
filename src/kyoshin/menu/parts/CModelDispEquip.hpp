@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 
 // Owner-class definitions for the recovered virtual calls in this TU.
@@ -36,14 +37,6 @@
 #undef simGetLeafActData
 
 namespace cf { class CActParamAnimGame; class CfObjectMove; }
-
-// Async file event handed to IWorkEvent callbacks by CDeviceFile. The
-// cf::CEventFile in CfScript.hpp is a different type; this TU uses the global
-// ::CEventFile (retail OnFileEvent__15CModelDispEquipFP10CEventFile).
-struct CEventFile {
-    s32 field_00;          // 0x00 event type (cmpwi in OnFileEvent)
-    CFileHandle* field_04; // 0x04 file handle
-};
 
 // File slot: 12 bytes per entry
 struct FileSlot {

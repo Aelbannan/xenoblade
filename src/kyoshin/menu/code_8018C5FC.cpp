@@ -1,4 +1,5 @@
 #include <types.h>
+#include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
@@ -73,7 +74,6 @@ extern "C" {
     CMB_PartyList_8018C5FC* getListB28__Fv();
     s32 Counter_TestBit(s32, u32);
     void CCharVoiceMan_EnqueuePartyGageVoice(s32, s32);
-    extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
 UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {
@@ -160,7 +160,7 @@ void PartyGaugeTickDecay(UnkClass_8018C5FC* _this) {
             if ((oldVal < 0x64 && clamped >= 0x64) ||
                 (oldVal < 0xc8 && clamped >= 0xc8))
             {
-                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
+                cf::CfSoundMan::playActorSound(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
             }
         }
     }
@@ -189,7 +189,7 @@ s32 PartyGaugeAddClamped(UnkClass_8018C5FC* _this, s32 delta) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
+        cf::CfSoundMan::playActorSound(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
     }
 
     return _this->gaugeValue;
@@ -216,7 +216,7 @@ s32 PartyGaugeSetClamped(UnkClass_8018C5FC* _this, s32 val) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
+        cf::CfSoundMan::playActorSound(0, 0x64, 0, 0, lbl_eu_80667A38[0]);
     }
 
     return _this->gaugeValue;

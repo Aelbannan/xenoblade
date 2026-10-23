@@ -126,7 +126,6 @@ extern "C" {
     void beginFrame__9CDeviceVIFv();
     bool isOff__11CWorkSystemFv();
     void setAppException__8CDesktopFi(int state);
-    CLibCri* getInstance__7CLibCriFv();
     bool wkStandbyLogout__5CProcFv(CProc* self);
     bool wkStandbyLogin__5CProcFv(CProc* self);
     void __dt__5CProcFv(CProc* self, int flag);
@@ -563,8 +562,8 @@ bool CException::wkStandbyLogin() {
     mAnimState = 0;
     lbl_eu_806656C8 = unk208;
     setAppException__8CDesktopFi(1);
-    if (getInstance__7CLibCriFv() != nullptr) {
-        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(getInstance__7CLibCriFv(),
+    if (CLibCri::getInstance() != nullptr) {
+        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CLibCri::getInstance(),
                                                       CWorkThread::EVT_APPEXCEPTION_ON);
     }
     return wkStandbyLogin__5CProcFv(this);
@@ -579,8 +578,8 @@ bool CException::wkStandbyLogout() {
         (lbl_eu_8066A480 == mAlpha || isOff__11CWorkSystemFv() ||
          isHbmStopPending__7CLibHbmFv() != nullptr || mFlag210 != 0)) {
         setAppException__8CDesktopFi(0);
-        if (getInstance__7CLibCriFv() != nullptr) {
-            wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(getInstance__7CLibCriFv(),
+        if (CLibCri::getInstance() != nullptr) {
+            wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CLibCri::getInstance(),
                                                           CWorkThread::EVT_APPEXCEPTION_OFF);
         }
         if (getException__9CWorkRootFv() == this) {

@@ -83,6 +83,9 @@ void* lbl_eu_805316F8[6] = {
 #include "monolib/math.hpp"
 #include <new>
 
+// KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+
 extern u32 lbl_eu_806640C0;
 extern u32 lbl_eu_806640D0;
 // .sdata2 0x70 as one struct: MWCC reorders individually-declared floats by

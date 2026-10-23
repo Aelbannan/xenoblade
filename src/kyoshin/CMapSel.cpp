@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CMapSel.hpp"
+#include "kyoshin/CMapSelImports.hpp"
 #include "kyoshin/CScrollBar.hpp"
 // CMapSel.hpp declares the C-ABI layout helpers (PaneSetTexPaletteByName 2-arg etc.);
 // skip code_80135FDC.hpp's caller-tuned exports so the differing arity decls
@@ -61,7 +61,7 @@ CMapSel::CMapSel() {
 
     // Embedded sub-objects.
     __ct__CScrollBar(&self->mScrollBar[0], 0);
-    __ct__CCur18(&self->mCursor[0], 0);
+    __ct__CCur18(&self->mCursor, 0);
 
     float timer0 = lbl_eu_80668738;   // load early, store after the cell fields
     self->mSelY = 0;
@@ -227,7 +227,7 @@ extern "C" void __declspec(noinline) updateMapSel(CMapSel* self) {
         }
         self->mLayout->Animate(0);
         CScrollBar_UpdateDispatch(self->mScrollBar);
-        Cur_Update(self->mCursor);
+        Cur_Update(&self->mCursor);
     }
 }
 
@@ -243,7 +243,7 @@ void drawMapSel(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
         CScrollBar_draw(self->mScrollBar, drawInfo);
-        Cur_DrawLayout(self->mCursor, drawInfo);
+        Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
 #pragma pop
@@ -271,7 +271,7 @@ extern "C" void __declspec(noinline) termMapSel(CMapSel* self) {
     releaseArcResourceAccessor(self->mArcAccessor);
     reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->deleteRegion();
     CScrollBar_Teardown(self->mScrollBar);
-    reinterpret_cast<CMapSelCurObj*>(&self->mCursor[0])->vfUpdate();
+    self->mCursor.cleanup();
 }
 
 // Scrollbar-visible check: when the scrollbar at +0x34 is visible, return
@@ -444,10 +444,10 @@ extern "C" void __declspec(noinline) moveMapSelPageDown(CMapSel* self) {
     playUISound__FUl(1);
 }
 
-u8 CMapSelFull::getMapGridCell(){
-    s8 x = this->field_8D;
-    s8 y = this->field_8C;
-    return this->mGridData[x + y];
+u8 CMapSel::getMapGridCell() {
+    s8 x = mSelX;
+    s8 y = mSelY;
+    return mGridData[x + y];
 }
 
 /* finishMapSelLoad - Finish the map-data load: when animation 1 completes,
@@ -478,7 +478,7 @@ extern "C" void __declspec(noinline) updateMapSelVisible(CMapSel* self) {
     if (advanceAnimTransform(self->mAnimTransform2, lbl_eu_8066873C) != 0) {
         self->mState = 3;
         self->mFlag33 = 1;
-        Cur_SetVisible(&self->mCursor[0], 1);
+        Cur_SetVisible(&self->mCursor, 1);
         updateMapSelCursor(self);
     }
 }
@@ -599,7 +599,7 @@ extern "C" void __declspec(noinline) updateMapSelCursor(CMapSel* self) {
         base + 0x88, true);
     nw4r::math::VEC3 pos;
     ScalePaneWorldPos(&pos, pane1, pane2, self->mLayout->GetRootPane());
-    reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&pos);
+    self->mCursor.setRootPaneTranslate(&pos);
 }
 #pragma pop
 
@@ -640,17 +640,11 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         // Build a CCur18 on the stack and copy it into +0x74, skipping the
         // vtable pointer (the embedded cursor keeps its own), then poke its
         // first virtual and run the post-build hook.
-        CCur18Data temp;
+        CCur18 temp;
         __ct__CCur18(&temp, CUICfManager_getArcResourceAccessor());
-        CCur18Data* dst = reinterpret_cast<CCur18Data*>(&mCursor[0]);
-        dst->field_4 = temp.field_4;
-        dst->field_8 = temp.field_8;
-        dst->field_C = temp.field_C;
-        dst->field_10 = temp.field_10;
-        dst->field_14 = temp.field_14;
-        dst->field_15 = temp.field_15;
+        mCursor = temp;
         __dt__6CCur18Fv(&temp, -1);
-        reinterpret_cast<CCur18View*>(&mCursor[0])->vf02();
+        mCursor.initLayout();
         activateMapSel(this);
         mFileHandle = 0;
         reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->validateHeap();

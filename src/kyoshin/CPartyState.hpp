@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 
 #include "kyoshin/CBaseCur.hpp"
@@ -166,7 +167,6 @@ extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void CtrlObjectParam_SwapSlotValues(int*, u8, u8);
 extern "C" u8 GetCollectedFlagWord8(u32);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" char* MakeTplNameSysFile(u32);
 
 // Party-slot data-table pointers (.sdata).
@@ -212,7 +212,6 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char*, int);
 // Scene object behind the common-archive alloc handle (virtual at vtable
 // 0x2C of *lbl_eu_80663E14; returns an mtl alloc handle).
 class CScn;
-extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
 // Party-state layout arc path pointer (.sdata).
 extern char* lbl_eu_80662728;

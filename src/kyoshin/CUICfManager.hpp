@@ -85,8 +85,6 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base);          // slot dispat
 // TU's local flat decls for Scn_QueryUnk80State / lbl_eu_80663E14; declared with
 // the verbatim retail names per the CLibCri caller-shape scheme in CTaskGame.hpp).
 class CTaskGame;
-extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
 // Sound/battle-state gates (member-shaped C-ABI imports; CfSoundMan.hpp and
 // CMainMenu.hpp declare the same flat names but pull nw4r/snd.h / CMainMenu
 // classes into this TU).
@@ -200,11 +198,6 @@ struct CUICfCamView {
     f32 field_C;
 };
 
-// Layout view of the object returned by getUnk80664658 (flag word at 0x214).
-struct CUICfGlobalSettings {
-    u8 field_0x00[0x214];
-    u32 field_214;               // 0x214 - flag bits
-};
 
 struct CUICfUnk144 {
     u8 unk00[0x39];

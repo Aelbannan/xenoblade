@@ -306,19 +306,8 @@ class CMenuTitle;
 extern void (CUIErrMesWin::*const lbl_eu_8053AEB0[])();
 extern void (CMenuTitle::*const lbl_eu_8053B040[])();
 
-// Minimal CScn declaration (same idiom as CTaskGameEff.hpp): only the
-// render-callback members used by Init/Term. Guarded so the kyoshin headers
-// can be included together in one TU. Member calls emit the retail mangled
-// symbols addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
 class IScnRender;
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // CProcess/CTask base (0x00-0x53): CDoubleListNode, vtable at +0x10, Move/Draw
 // ptmf hooks at +0x3C/+0x48. The retail object is CTTask<CUIErrMesWin>-derived

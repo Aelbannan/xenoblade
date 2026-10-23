@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/CTaskGameApi.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
@@ -46,7 +47,6 @@
 #define sysWinApplyKind sysWinApplyKind_typed_hidden
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
-#define createArcResourceAccessor__10CLibLayoutFv createArcResourceAccessor__10CLibLayoutFv_typed_hidden
 #define Tok_FormatStr Tok_FormatStr_fixstr_hidden
 #define Scn_FindCamItem Scn_FindCamItem_s32_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
@@ -62,7 +62,6 @@
 #undef sysWinApplyKind
 #undef __ct__17UnkClass_8045F564Fv
 #undef __dt__17UnkClass_8045F564Fv
-#undef createArcResourceAccessor__10CLibLayoutFv
 #undef Tok_FormatStr
 #undef Scn_FindCamItem
 
@@ -266,17 +265,15 @@ void __ct__CMCEffCrystal(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffUpRank(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffDivide(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__CMCEffCylinder(void*, nw4r::lyt::ArcResourceAccessor*);
-void __ct__CCur18(void*, void*);
 void createRegion__17UnkClass_8045F564FiiPCci(void*, u32, int, const char*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-void* createArcResourceAccessor__10CLibLayoutFv();
 void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(void*, void*, const char*);
 void init__16CMCCylinderGaugeFv(void*);
 void CrySupBuildLayout(void*);
 void MakeCrystalCopyParamBlock(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
-void* CUICfManager_getArcResourceAccessor();
+nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void MenuShopSellCopyCursor(void*, void*);
 void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
@@ -316,7 +313,6 @@ void MakeCrystal_PlaceCrystals(void*);
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 void __destroy_arr(void*, void*, int, int);
 void __dt__13CMCGetItemBoxFv(void*, int);
-void __dt__6CCur18Fv(void*, int);
 void __dt__7CSysWinFv(void*, int);
 void __dt__10CScrollBarFv(void*, int);
 void __dt__14CMCEffCylinderFv(void*, int);
@@ -540,10 +536,10 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     __ct__CMCEffDivide(base + 0xde4, 0);
     __ct__CMCEffCylinder(base + 0xdfc, 0);
     *reinterpret_cast<u32*>(base + 0xe1c) = 0;
-    __ct__CCur18(base + 0xe20, 0);
+    __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xe20), 0);
     __ct__CScrollBar(base + 0xe38, 0);
     __ct__CSysWin(base + 0xe78, 0);
-    __ct__CCur18(base + 0xeb4, 0);
+    __ct__CCur18(reinterpret_cast<CCur18*>(base + 0xeb4), 0);
     __ct__CMCGetItemBox(base + 0xecc);
     base[0x13bf] = 0;
 
@@ -898,10 +894,10 @@ CModelDispMakeCrystal::~CModelDispMakeCrystal()
 {
     u8* base = reinterpret_cast<u8*>(this);
     __dt__13CMCGetItemBoxFv(base + 0xecc, -1);
-    __dt__6CCur18Fv(base + 0xeb4, -1);
+    __dt__6CCur18Fv(reinterpret_cast<CCur18*>(base + 0xeb4), -1);
     __dt__7CSysWinFv(base + 0xe78, -1);
     __dt__10CScrollBarFv(base + 0xe38, -1);
-    __dt__6CCur18Fv(base + 0xe20, -1);
+    __dt__6CCur18Fv(reinterpret_cast<CCur18*>(base + 0xe20), -1);
     __dt__14CMCEffCylinderFv(base + 0xdfc, -1);
     __dt__12CMCEffDivideFv(base + 0xde4, -1);
     __dt__12CMCEffUpRankFv(base + 0xdcc, -1);
@@ -3557,8 +3553,8 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         // Stack scratch, declaration order matches the retail frame
         // (cls858@0x8 .. effUpPrm@0x1b0).
         u8 cls858[8];
-        u8 cur2[0x18];
-        u8 cur1[0x18];
+        CCur18 cur2;
+        CCur18 cur1;
         u8 effCylinder[0x20];
         u8 effDivide[0x18];
         u8 effUpRank[0x18];
@@ -3584,7 +3580,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         setMemInitFlag__Q23mtl10MemManagerFb(false);
         *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) =
             reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
-                createArcResourceAccessor__10CLibLayoutFv());
+                CLibLayout::createArcResourceAccessor());
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40),
             fileData, &lbl_eu_805090FC[0x109]);
@@ -3732,13 +3728,13 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__14CMCEffCylinderFv(effCylinder, -1);
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->init();
         // Cursor objects: build on stack, install via MenuShopSellCopyCursor, destroy.
-        __ct__CCur18(cur1, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(base + 0xe20, cur1);
-        __dt__6CCur18Fv(cur1, -1);
+        __ct__CCur18(&cur1, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(base + 0xe20, &cur1);
+        __dt__6CCur18Fv(&cur1, -1);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->initLayout();
-        __ct__CCur18(cur2, CUICfManager_getArcResourceAccessor());
-        MenuShopSellCopyCursor(base + 0xeb4, cur2);
-        __dt__6CCur18Fv(cur2, -1);
+        __ct__CCur18(&cur2, CUICfManager_getArcResourceAccessor());
+        MenuShopSellCopyCursor(base + 0xeb4, &cur2);
+        __dt__6CCur18Fv(&cur2, -1);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->initLayout();
         *reinterpret_cast<void**>(base + 0x3c) = 0;
         validateHeap__17UnkClass_8045F564Fv(base + 0x2c);

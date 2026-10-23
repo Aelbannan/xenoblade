@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kyoshin/IUICf.hpp"
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -192,7 +193,6 @@ void BtlDmg_QueueDraw(CMenuBattleDamageQueue* queue);
 
 // Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
 // SetLayoutSelfText / BdatTouchStringCell / MakeTplNameSysFile come from code_80135FDC.hpp.
-extern "C" u16 BdatGetU16Direct(const void* table, const void* key, int id);
 extern "C" void LayoutSetTextBoxInt(void* pane, u32 value);
 extern "C" void PaneMatSetS16Quad(void* pane, const void* colors, int arg);
 // Unmangled retail symbol (the CUICfManager static emits the mangled name).

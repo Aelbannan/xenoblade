@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <nw4r/math/math_types.h>
+#include "kyoshin/CBaseCur.hpp"
 
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CSelShopWin.hpp"
@@ -54,7 +55,7 @@ public:
     CScn* mScene;                          // 0x74
     UnkClass_8045F564 mMemRegion;          // 0x78
     CSelShopWin mSelShop;                  // 0x88
-    u8  mCursor[0x18];                     // 0xB0 CCur18 cursor storage
+    CCur18 mCursor;                        // 0xB0
     u8  mState;                            // 0xC8
     u8  mPadC9[3];                         // 0xC9-0xCB
     u32 mSelIndex;                         // 0xCC
@@ -66,38 +67,11 @@ public:
     void cbRenderBefore();
 };
 
-// Abstract views into the embedded CCur18 vtable (the cursor is stored as raw
-// bytes at +0xB0; MWCC inserts an offset-to-top + RTTI prefix so vtable offset
-// = (virtual index + 2) * 4). Mirrors the CCur18View in CSysWinSelect.hpp.
-class CCursor18 {
-public:
-    virtual void vf2() = 0;  // index 0 -> +0x08
-    virtual void vf3() = 0;  // index 1 -> +0x0C (Term update virtual, no args)
-};
-class CCur18View {
-public:
-    virtual void vf02() = 0;       // index 0 -> +0x08
-    virtual void vf03(void*) = 0;  // index 1 -> +0x0C
-    virtual void vf04(void*) = 0;  // index 2 -> +0x10 (cursor move, VEC3 arg)
-};
-
-// Data tail of the embedded CCur18 cursor (+0x4..+0x15). Init copies it from a
-// stack-constructed temporary so MWCC emits 4x lwz/stw + 2x lbz/stb.
-struct CCur18Data {
-    u32 m04;  // +0x4
-    u32 m08;  // +0x8
-    u32 m0C;  // +0xC
-    u32 m10;  // +0x10
-    u8  m14;  // +0x14
-    u8  m15;  // +0x15
-};
-
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // These mirror the declarations used by the sibling menu TUs (CMenuQstCnt,
 // CMenuUpdate, CSysWinSelect).
 extern "C" CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
                                                   void* scene, void* a3);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__11CSelShopWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__9IUIWindowFv(void*, int);
@@ -127,8 +101,6 @@ extern "C" int MenuShopSellIsCreated();
 // defines a minimal local CLibHbm view that clashes with the full CLibHbm
 // pulled in by CSelShopWin.hpp -> monolib/lib.hpp (same scheme as
 // CMenuUpdate / CMenuShopBuy). isFlag01Set takes the task-game instance.
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 extern "C" void driveShopWinAnim(CSelShopWin*);
 extern "C" void loadShopWinArc(CSelShopWin*);
 extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
@@ -139,7 +111,6 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void playUISound__FUl(u32);
 extern "C" void __ct__8CProcessFv(void*);
-extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CSelShopWin(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, void*, u32, u32);

@@ -28,11 +28,4 @@ public:
     void func_8044E768();
 };
 
-class CEventFile {
-public:
-    CEventFile();
-    void getFileDataPtr();
-
-    // TODO: add fields
-};
 

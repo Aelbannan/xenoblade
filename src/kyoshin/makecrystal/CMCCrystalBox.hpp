@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 class CBaseCur;
 class CEventFile;
 
@@ -510,7 +511,6 @@ extern "C" void setCrystalSlotCapacity(CMCCrystalBox*, unsigned short, unsigned 
 extern "C" __declspec(noinline) int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" char* MakeTplNameSysFile(u32);
-extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void PaneSetTexPaletteByName(void*, void*, void*);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" char* getCrystalItemName(CMCCrystalData*, int);
@@ -560,7 +560,6 @@ extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13Anim
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void MenuShopSellCopyCursor(void*, void*);   // cursor copy (Cur_SetTwoPanes09 sibling)
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
@@ -592,7 +591,6 @@ extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CMCCrystalInfo(void*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSysWin(void*, int);
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);

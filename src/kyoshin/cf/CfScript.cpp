@@ -418,20 +418,20 @@ void CfScript::update() {
 // class member; our CfScript sits in namespace cf, so it is emitted under
 // the pre-mangled retail name with an explicit self (same convention as
 // CUICfManager/CSortMenu).
-extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEventFile* event) {
+extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, ::CEventFile* event) {
     bool ret = false;
 
-    if (self->mFileHandle == event->field_04) {
-        if (event->field_00 == 1 && event->field_14 != 0) {
+    if (self->mFileHandle == event->mFileHandle) {
+        if (event->unk0 == 1 && event->field_14 != 0) {
             // Loaded: remember the extension-less name.
             self->mFlags |= 0x2;
             CfScriptNameBuffer tmp;
-            ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&tmp, event->field_0C);
+            ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&tmp, event->mName);
             self->mNameLen = strlen(tmp.mString);
             strcpy(self->mName, tmp.mString);
         } else {
             // Failed/other event: look for fallback names, mark "ready".
-            const char* path = event->field_0C;
+            const char* path = event->mName;
             if (strstr(path, lbl_eu_80661AC0) != nullptr &&
                 strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
                 strstr(path, &lbl_eu_804FB3A4[0x2B]);

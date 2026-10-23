@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -572,7 +573,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
     u32 t = (u16)getControllerWordA37C__Q22cf13CfGameManagerFv() + h * 60;
     if (t >= 0x167 && t <= 0x169) return;
     if (t >= 0x437 && t <= 0x439) return;
-    if (((cf::CfWalkGimmickGlobal*)getUnk80664658())->field_214 & 0x4000000) return;
+    if (getUnk80664658()->mFlags & 0x4000000) return;
     void* actor = findObjectById((int)Selector_GetInstance()->field_90E4);
     if (actor == 0) {
         actor = findObjectById((int)self->field_18->mSub.m4C());
@@ -679,7 +680,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
             (const void*)&lbl_eu_806618F0, 0);
         if (cast->field_91 == 0xc) return;
         if (cast->field_90 != 0) {
-            ((cf::CfWalkGimmickGlobal*)getUnk80664658())->field_218 = actor;
+            getUnk80664658()->field_0x218 = actor;
             return;
         }
         if (isQuestLogMenuActive() != 0) return;

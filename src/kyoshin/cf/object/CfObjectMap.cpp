@@ -327,8 +327,8 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     }
     updateLODFrame__8CTaskLODFv(value);
     u32 v = getReloadParam2();
-    if (getUnk80664658()->field_214 & 0x80) {
-        v = getUnk80664658()->field_210 & 0xFFFF;
+    if (getUnk80664658()->mFlags & 0x80) {
+        v = getUnk80664658()->field_0x210 & 0xFFFF;
     }
     value = lbl_eu_80666A54;
     self->field_0x2F44--;

@@ -9,8 +9,6 @@
 // statics are addressed by their literal retail names instead.
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 class CTaskGame;
-extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
@@ -99,7 +97,6 @@ extern "C" int FloorMap_IsSysWinBusy(CFloorMap* self);
 extern "C" void FloorMap_UpdateRowPanePos(CFloorMap* self);
 extern "C" void FloorMap_CursorNextFloor(CFloorMap* self);
 extern "C" void FloorMap_OpenRowWindow(CFloorMap* self);
-// (memberized: FloorMap_GetActiveFlag58 -> CFloorMapFull::GetActiveFlag58; declaration moved into class CFloorMapFull)
 extern "C" void FloorMap_ConfirmSelect(CFloorMap* self);
 extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
 extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);

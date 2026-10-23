@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CKizunagram.hpp"
 #include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
 #include "monolib/device/CDeviceFile.hpp"
@@ -270,7 +271,7 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     // Fresh overlay pane appended under the shared root.
     nw4r::lyt::Pane* newPane = NULL;
     void* paneMem = allocate__Q23mtl10MemManagerFUlUl(
-        0xD8, getAllocHandle__10CLibLayoutFv());
+        0xD8, CLibLayout::getAllocHandle());
     if (paneMem != NULL) {
         newPane = new (paneMem) nw4r::lyt::Pane();
     }
@@ -318,13 +319,13 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
         char* texRowName = BdatGetPtrDirect(mgr, str + 0xca, id);
         if (strcmp(texRowName, str + 0xd3) != 0) {
             char* tplName =
-                MakeTplNameSysFile((u32)(u16)BdatGetU16Direct(mgr, str + 0xd4, id));
+                MakeTplNameSysFile(BdatGetU16Direct(mgr, str + 0xd4, id));
             TPLPalette* pal =
                 (TPLPalette*)self->texSrc->getTex(0x74696D67, (u32)tplName, 0);
             if (pal != 0) {
                 nw4r::lyt::Picture* pic = NULL;
                 void* picMem = allocate__Q23mtl10MemManagerFUlUl(
-                    0xF0, getAllocHandle__10CLibLayoutFv());
+                    0xF0, CLibLayout::getAllocHandle());
                 if (picMem != NULL) {
                     nw4r::lyt::TexMap texMap(pal, 0);
                     pic = new (picMem) nw4r::lyt::Picture(texMap);
@@ -999,8 +1000,8 @@ extern "C" __declspec(noinline) bool buildKizEntryPanes(UnkKizunaSelf59DE8* self
             if ((u32)(chk >> 32) != 0 && id == 0x30a) {
                 tinted = CtrlRemote_TouchBitByArg(0x54b) >= feConst;
             }
-            char* unlockStr = BdatGetU16Direct(mgr, str + 0xc1, id);
-            if (CtrlRemote_TouchBitByArg((u32)(u16)(u32)unlockStr + 0xa20) == 0) {
+            u16 unlockId = BdatGetU16Direct(mgr, str + 0xc1, id);
+            if (CtrlRemote_TouchBitByArg(unlockId + 0xa20) == 0) {
                 goto next;
             }
             char* nameStr = BdatGetPtrDirect(mgr, str + 0xca, id);
@@ -1008,12 +1009,12 @@ extern "C" __declspec(noinline) bool buildKizEntryPanes(UnkKizunaSelf59DE8* self
                 goto next;
             }
             u32 texName =
-                (u32)MakeTplNameSysFile((u32)(u16)(u32)BdatGetU16Direct(mgr, str + 0xd4, id));
+                (u32)MakeTplNameSysFile(BdatGetU16Direct(mgr, str + 0xd4, id));
             void* pal = self->field08->getTex(texTag, texName, 0);
             nw4r::lyt::Picture* pic = NULL;
             if (pal != 0) {
                 void* raw =
-                    allocate__Q23mtl10MemManagerFUlUl(0xf0, getAllocHandle__10CLibLayoutFv());
+                    allocate__Q23mtl10MemManagerFUlUl(0xf0, CLibLayout::getAllocHandle());
                 if (raw != 0) {
                     nw4r::lyt::TexMap texMap(reinterpret_cast<TPLPalette*>(pal), 0);
                     pic = new (raw) nw4r::lyt::Picture(texMap);
@@ -1085,7 +1086,7 @@ extern "C" __declspec(noinline) u16 findKizByName(UnkKizunaSelf5949C* self,
     for (u16 id = 1; (u32)id <= count; id++) {
         if (strcmp(BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, id),
                    name) == 0 &&
-            CtrlRemote_TouchBitByArg((u32)(u16)(u32)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
+            CtrlRemote_TouchBitByArg(BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xc1,
                                                        id) + 0xa20) != 0) {
             return id;
         }
@@ -1430,9 +1431,8 @@ extern "C" __declspec(noinline) void refreshKizLineDisplay(UnkKizunaSelf57D90* s
 
     // Progress-column color selector: look up the row value then map it to a
     // color index; the low byte picks which timg texture tag to bind.
-    char* progRow = BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0x2fb, v);
-    u8 colIdx = BdatGetU8ByTableKey(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310,
-                              (u16)(u32)progRow);
+    u16 progRow = BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0x2fb, v);
+    u8 colIdx = BdatGetU8ByTableKey(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310, progRow);
     char* texName = NULL;
     switch (MapValueToRank6(colIdx)) {
     case 1:
@@ -2055,7 +2055,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
         // Store the accessor straight into the field and re-load it from there
         // at each use - retail never keeps it live in a register across calls.
-        field30 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        field30 = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)field30)->Attach(fileData,
                                                            lbl_eu_8050CB20 + 0xd13);
 
@@ -2115,7 +2115,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 host(&mMemRegionA);
         void* fileData = ((CFileHandle*)field2C)->getData();
         mtl::MemManager::setMemInitFlag(false);
-        field34 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        field34 = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)field34)->Attach(fileData,
                                                            lbl_eu_8050CB20 + 0xd13);
         rebuildKizLine((UnkKizunaSelfCF40*)this);

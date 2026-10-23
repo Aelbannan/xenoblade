@@ -51,12 +51,7 @@ struct UnkSceneView {
     void* field_0x7C;   // 0x7C
 };
 
-// Global settings object returned by getUnk80664658.
-struct UnkGimmickGlobalView {
-    u8 field_0x0[0x210];
-    u32 field_210;      // 0x210
-    u32 field_214;      // 0x214
-};
+#include "kyoshin/code_801F3BE0.hpp"
 
 namespace cf {
     class CfObjectMap;
@@ -134,7 +129,6 @@ extern "C" {
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
     void CfSoundMan_ClearFxEffect(u32 r3, u32 r4);
     // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp.
-    UnkGimmickGlobalView* getUnk80664658();
 
     // ---- this TU's own retail symbols (Fv-annotated / unmangled) ----
     void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task);

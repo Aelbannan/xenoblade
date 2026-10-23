@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/work/CEventFile.hpp"
+#include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
 
@@ -63,16 +65,8 @@ public:
     /* 0x58 */ u16 field_0x58;
     /* 0x5A */ s8 field_0x5A;
     /* 0x5B */ u8 _5B;          // padding
-    /* 0x5C */ u8 mCursor[0x18]; // CCur18 embedded cursor
+    /* 0x5C */ CCur18 mCursor;
 };
-
-// Async file event handed to IWorkEvent callbacks by CDeviceFile (global
-// ::CEventFile, full layout in monolib/work/CEventFile.hpp).
-struct CEventFile {
-    s32 field_00;          // 0x00 event type
-    CFileHandle* field_04; // 0x04 file handle
-};
-
 
 // Overlay structs for the 'timg' message resource consumed by OnFileEvent:
 // the resource object holds a chain whose first field points at the u16
@@ -188,14 +182,11 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __ct__CCur18(void*, void*);
-extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
@@ -204,6 +195,10 @@ extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // BDAT row string lookup
 extern "C" void playUISound__FUl(u32);
+// KEEP (blockers-A 2026-10-23): retail CArtsInfo_CalcDmg52/53 use the 32-bit
+// result without the clrlwi a u16 return forces, so this TU keeps its u32 view
+// instead of the canonical u16 form in kyoshin/code_80135FDC_Bdat.hpp.
+extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 // BdatGetU16ByTableKey/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
@@ -222,7 +217,6 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" u16 BdatGetItemId(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
-extern "C" u32 BdatGetU16Direct(const void*, const void*, int);
 // (CItem_kindPtr is declared by kyoshin/cf/CItem.hpp: the real 2-arg
 // CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
 extern "C" void Cur_Update(void*);
@@ -299,7 +293,6 @@ extern void* lbl_eu_806640D8;
 // --- CArtsInfo::OnFileEvent imports (retail C-linkage names) ---
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, u32);
 extern "C" char* CUICfManager_getPackedFont9C(void);
@@ -311,7 +304,6 @@ extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void setPaneVisible(void*, u32);
-extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);

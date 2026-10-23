@@ -428,14 +428,14 @@ void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv();
 void CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv();
 void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv();
 void CActorParam_accumulateTension__Q22cf11CActorParamFv();
-void CActorParam_addAccumCurrency__Q22cf11CActorParamFv();
+void CActorParam_addAccumCurrency__Q22cf11CActorParamFUl();
 void CActorParam_addArtsGauge__Q22cf11CActorParamFv();
 void CActorParam_addGauge__Q22cf13CfObjectActorFv();
 void CActorParam_addHate__Q22cf13CfObjectActorFv();
 void CActorParam_addHp__Q22cf13CfObjectActorFv();
-void CActorParam_addSecondCurrency__Q22cf11CActorParamFv();
+void CActorParam_addSecondCurrency__Q22cf11CActorParamFUl();
 void CActorParam_addSecondGauge__Q22cf13CfObjectActorFv();
-void CActorParam_addSpentCurrency__Q22cf11CActorParamFv();
+void CActorParam_addSpentCurrency__Q22cf11CActorParamFUl();
 void CActorParam_applyDamage__Q22cf13CfObjectActorFv();
 void CActorParam_applyEventStatus__Q22cf11CActorParamFv();
 void CActorParam_applyStatusHeal__Q22cf11CActorParamFv();
@@ -483,17 +483,17 @@ void CActorParam_resetGaugeEntry__Q22cf11CActorParamFv();
 void CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv();
 void CActorParam_resetSecondGaugeBattleEntry__Q22cf11CActorParamFv();
 void CActorParam_resetTensionState__Q22cf11CActorParamFv();
-void CActorParam_setGaugeFlagA__Q22cf11CActorParamFv();
-void CActorParam_setGaugeFlagB__Q22cf11CActorParamFv();
-void CActorParam_setGaugeFloat__Q22cf11CActorParamFv();
-void CActorParam_setGaugeRateA__Q22cf11CActorParamFv();
-void CActorParam_setGaugeRateB__Q22cf11CActorParamFv();
+void CActorParam_setGaugeFlagA__Q22cf11CActorParamFUs();
+void CActorParam_setGaugeFlagB__Q22cf11CActorParamFUs();
+void CActorParam_setGaugeFloat__Q22cf11CActorParamFf();
+void CActorParam_setGaugeRateA__Q22cf11CActorParamFf();
+void CActorParam_setGaugeRateB__Q22cf11CActorParamFf();
 void CActorParam_setHp__Q22cf13CfObjectActorFv();
-void CActorParam_setMoveRate__Q22cf11CActorParamFv();
+void CActorParam_setMoveRate__Q22cf11CActorParamFf();
 void CActorParam_setScale__Q22cf13CfObjectActorFv();
-void CActorParam_setSpentCurrency__Q22cf11CActorParamFv();
-void CActorParam_setStatByte__Q22cf11CActorParamFv();
-void CActorParam_setStatScale__Q22cf11CActorParamFv();
+void CActorParam_setSpentCurrency__Q22cf11CActorParamFUl();
+void CActorParam_setStatByte__Q22cf11CActorParamFUc();
+void CActorParam_setStatScale__Q22cf11CActorParamFf();
 void CActorParam_setTensionPoints__Q22cf11CActorParamFv();
 void CActorParam_setupActorState__Q22cf11CActorParamFv();
 void CActorState_setObjStateBit3__Q22cf11CActorStateFv();
@@ -939,8 +939,8 @@ void* lbl_eu_80529DA0[] = {
     (void*)CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv, (void*)CBattleState_getStatusMask__Q22cf12CBattleStateFUl, (void*)CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv,
     (void*)CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv, (void*)CActorParam_resetArtsStatus__Q22cf10CfObjectPcFv, (void*)CActorParam_commitArtsStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv,
     (void*)CActorParam_setupActorState__Q22cf11CActorParamFv, (void*)CActorParam_resetArtsMatrix__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv, (void*)CActorParam_applyTargetEvent__Q22cf11CActorParamFv,
-    (void*)CActorParam_applyStatusHeal__Q22cf11CActorParamFv, (void*)CActorParam_applyEventStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv, (void*)CActorParam_setStatByte__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv, (void*)CActorParam_setStatScale__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv,
+    (void*)CActorParam_applyStatusHeal__Q22cf11CActorParamFv, (void*)CActorParam_applyEventStatus__Q22cf11CActorParamFv, (void*)CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv, (void*)CActorParam_setStatByte__Q22cf11CActorParamFUc,
+    (void*)CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv, (void*)CActorParam_setStatScale__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv,
     (void*)CActorParam_getActorType__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv, (void*)CActorParam_setScale__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv,
     (void*)CActorParam_getScale__Q22cf13CfObjectActorFv, (void*)CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv, (void*)CActorParam_getArtsLevel__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv, (void*)CActorParam_getActorLevel__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv,
@@ -950,22 +950,22 @@ void* lbl_eu_80529DA0[] = {
     (void*)CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv, (void*)CActorParam_applyStoredHitCharge__Q22cf11CActorParamFv,
     (void*)CActorParam_setTensionPoints__Q22cf11CActorParamFv, (void*)CActorParam_addArtsGauge__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc49__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv, (void*)CActorParam_applyStoredArtsGauge__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFv, (void*)CActorParam_addGauge__Q22cf13CfObjectActorFv,
-    (void*)CActorParam_setGaugeFlagA__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv, (void*)CActorParam_addSecondGauge__Q22cf13CfObjectActorFv, (void*)CActorParam_setGaugeFlagB__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeRateA__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv,
-    (void*)CActorParam_resetGaugeBattleEntry__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeRateB__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv, (void*)CActorParam_resetSecondGaugeBattleEntry__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv, (void*)CActorParam_setMoveRate__Q22cf11CActorParamFv,
+    (void*)CActorParam_setGaugeFlagA__Q22cf11CActorParamFUs, (void*)CActorParam_UnkVirtualFunc56__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc57__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv,
+    (void*)CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFv, (void*)CActorParam_addSecondGauge__Q22cf13CfObjectActorFv, (void*)CActorParam_setGaugeFlagB__Q22cf11CActorParamFUs, (void*)CActorParam_UnkVirtualFunc62__Q22cf11CActorParamFv,
+    (void*)CActorParam_UnkVirtualFunc63__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeRateA__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv,
+    (void*)CActorParam_resetGaugeBattleEntry__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeRateB__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv, (void*)CActorParam_resetSecondGaugeBattleEntry__Q22cf11CActorParamFv,
+    (void*)CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv, (void*)CActorParam_setMoveRate__Q22cf11CActorParamFf,
     (void*)CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFv, (void*)CActorParam_getMoveRate__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv, (void*)CActorParam_setSpentCurrency__Q22cf11CActorParamFv, (void*)CActorParam_addSpentCurrency__Q22cf11CActorParamFv,
-    (void*)CActorParam_addAccumCurrency__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv, (void*)CActorParam_getSpentCurrency__Q22cf11CActorParamFv, (void*)CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv,
-    (void*)CActorParam_UnkVirtualFunc87__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv, (void*)CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv, (void*)CActorParam_addSecondCurrency__Q22cf11CActorParamFv,
+    (void*)CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv, (void*)CActorParam_setSpentCurrency__Q22cf11CActorParamFUl, (void*)CActorParam_addSpentCurrency__Q22cf11CActorParamFUl,
+    (void*)CActorParam_addAccumCurrency__Q22cf11CActorParamFUl, (void*)CActorParam_UnkVirtualFunc84__Q22cf11CActorParamFv, (void*)CActorParam_getSpentCurrency__Q22cf11CActorParamFv, (void*)CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv,
+    (void*)CActorParam_UnkVirtualFunc87__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv, (void*)CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv, (void*)CActorParam_addSecondCurrency__Q22cf11CActorParamFUl,
     (void*)CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv, (void*)CActorParam_getArtsDataBlock__Q22cf11CActorParamFv,
     (void*)CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv, (void*)CActorParam_getArtsSyncBlock__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv, (void*)CActorParam_getBattleParams__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc101__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv,
-    (void*)CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeFloat__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv,
+    (void*)CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv, (void*)CActorParam_setGaugeFloat__Q22cf11CActorParamFf, (void*)CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc122__Q22cf11CActorParamFv,
     (void*)CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv, (void*)CActorParam_getArtsSlotIds__Q22cf11CActorParamFv, (void*)CActorParam_getCopyParam__Q22cf11CActorParamFv,
     (void*)CActorParam_getStatusTable__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv, (void*)CActorParam_getBattleStats__Q22cf11CActorParamFv, (void*)CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv,

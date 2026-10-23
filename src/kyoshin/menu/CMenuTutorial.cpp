@@ -1,7 +1,9 @@
+#define ISCN_RENDER_NO_DTOR // see CMenuTutorial.hpp
 // Decomp of kyoshin/menu/CMenuTutorial.
 // Tutorial menu screen process (CProcess + IScnRender MI).
 
 #include "kyoshin/menu/CMenuTutorial.hpp"
+#include "kyoshin/CTaskGame.hpp"
 
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -206,11 +208,11 @@ void CMenuTutorial::Term() {
 }
 
 void CMenuTutorial::Move() {
-    getInstance__9CTaskGameFv();
+    CTaskGame::getInstance();
     // Gate: skip the whole move when the task is busy or the global mode bit
     // (0x200000) is set. The &&-chain + goto body + return shape reproduces
     // retail's branch-over-branch `beq body; b exit` (MWCC_CASES §8960).
-    if (isFlag01Set__9CTaskGameFv() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -240,10 +242,10 @@ body:
 // split for this TU contains no local Draw__13CMenuTutorialFv copy.
 
 void CMenuTutorial::cbRenderBefore() {
-    getInstance__9CTaskGameFv();
+    CTaskGame::getInstance();
     // Gate: skip the render when the task is busy or the global mode bit
     // (0x200000) is set. Same branch-over-branch shape as Move().
-    if (isFlag01Set__9CTaskGameFv() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -270,7 +272,7 @@ body:
  * current animation, mark the tutorial as having reached phase 2.
  */
 void MenuTutorialHandlePhase1(CMenuTutorial* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         Tutorial_GetField47Mark(&self->mTutorial) != 0) {
         self->mIsInitialised = 2;
     }
@@ -382,7 +384,7 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
  * phase 1 (writes the state byte at offset 0x54).
  */
 void MenuTutorialHandlePhase3(CMenuTutorial* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         Tutorial_GetField47Mark(&self->mTutorial) != 0) {
         self->field_54 = 1;
     }

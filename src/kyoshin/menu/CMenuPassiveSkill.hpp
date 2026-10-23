@@ -31,14 +31,7 @@ extern "C" void confirmPassiveSkillMenu(CMenuPassiveSkill* self);
 extern "C" u32 CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). Full header
-// clashes with the harness_catalog CScn stub in this TU.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 /*
  * Passive skill menu screen process.
@@ -318,8 +311,6 @@ extern "C" void playUISound__FUl(u32 op);
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
 extern "C" int IsMenuState621F0();
-extern "C" void getInstance__9CTaskGameFv();
-extern "C" int isFlag01Set__9CTaskGameFv();
 
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.

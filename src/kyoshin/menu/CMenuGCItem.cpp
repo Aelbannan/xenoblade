@@ -2,13 +2,7 @@
 
 #include "kyoshin/menu/CMenuGCItem.hpp"
 
-// CTaskGame.hpp conflicts with CItemBoxGrid.hpp on getLanguage__9CDeviceSCFv
-// (int vs u8). Only the two statics below are used in this TU.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -143,7 +137,7 @@ void CMenuGCItem::Move() {
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid is ready.
-        if (isIdle__11CTitleAHelpFv(&mTitleAHelp) != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
             mState = 2;
         }
         break;
@@ -152,7 +146,7 @@ void CMenuGCItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (isIdle__11CTitleAHelpFv(&mTitleAHelp) != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
             mField54 = 1;
         }
         break;

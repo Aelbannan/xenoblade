@@ -1,13 +1,9 @@
 #include "kyoshin/help/CHelp_ItemCole.hpp"
 
-struct CHelpFlagBag {
-    u8 pad[0x14];
-    u8 mItemCole; // +0x14
-    u8 mKizuna; // +0x15
-};
+#include "kyoshin/cf/CHelpManager.hpp"
 
 namespace cf {
 u8 CHelp_ItemCole::getItemCole() {
-    return lbl_eu_80664A10->mItemCole;
+    return lbl_eu_80664A10->mField14;
 }
 } // namespace cf

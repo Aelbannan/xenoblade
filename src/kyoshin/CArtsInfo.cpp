@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/CArtsInfo.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -139,7 +140,7 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
     self->field_0x5A = 0;
 
     // Construct embedded CCur18 cursor
-    __ct__CCur18(self->mCursor, 0);
+    __ct__CCur18(&self->mCursor, 0);
     return self;
 }
 
@@ -154,7 +155,7 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
 #pragma optimize_for_size on
 extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
     if (self != 0) {
-        __dt__6CCur18Fv(&self->mCursor[0], -1);
+        __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         if (flags > 0) {
             __dl__FPv(self);
@@ -213,7 +214,7 @@ void CArtsInfo_UpdateAnims(CArtsInfo* self) {
     // Post-dispatch: animate both layouts and update cursor
     self->mpLayout1->Animate(0);
     self->mpLayout2->Animate(0);
-    Cur_Update(self->mCursor);
+    Cur_Update(&self->mCursor);
 }
 
 // CArtsInfo_Draw - draw
@@ -228,7 +229,7 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
 
     s8 cursorActive = self->field_0x5A;
     if (cursorActive >= 0) {
-        Cur_DrawLayout(self->mCursor, drawInfo);
+        Cur_DrawLayout(&self->mCursor, drawInfo);
     }
 }
 #pragma optimize_for_size off
@@ -236,7 +237,7 @@ void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo) {
 // CArtsInfo_Cleanup - cleanup
 // .text:0x2C4, size 0xC4
 __declspec(noinline) void CArtsInfo_Cleanup(CArtsInfo* self) {
-    getEntry__5CBdatFUl(2);
+    CBdat::getEntry(2);
 
     closeFileHandle__FPP11CFileHandle(&self->field_0x14);
     closeFileHandle__FPP11CFileHandle(&self->field_0x18);
@@ -261,7 +262,7 @@ __declspec(noinline) void CArtsInfo_Cleanup(CArtsInfo* self) {
     releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
 
     // Call virtual cleanup on cursor (+0x0C)
-    ((CBaseCur*)self->mCursor)->cleanup();
+    self->mCursor.cleanup();
 
     // Cleanup memory region
     deleteRegion__17UnkClass_8045F564Fv(&self->mMemRegion);
@@ -366,7 +367,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    Cur_SetVisible(self->mCursor, 0);
+    Cur_SetVisible(&self->mCursor, 0);
 
     // Real member calls so MWCC emits the retail r12 vtable dispatch
     // (vtable[0x2C] = SetAnimationEnable, vtable[0x38] = Animate).
@@ -390,7 +391,7 @@ void CArtsInfo_ToStateC(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Set cursor visibility
-    Cur_SetVisible(self->mCursor, 0);
+    Cur_SetVisible(&self->mCursor, 0);
 
     // Bind animations to layout 2
     self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, false);
@@ -542,7 +543,7 @@ void CArtsInfo_AnimState6(CArtsInfo* self) {
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
-    Cur_SetVisible(self->mCursor, 1);
+    Cur_SetVisible(&self->mCursor, 1);
     CArtsInfo_UpdateCursor(self);
 }
 
@@ -757,7 +758,7 @@ extern "C" __declspec(noinline) void CArtsInfo_UpdateCursor(CArtsInfo* self) {
     nw4r::lyt::Pane* pane1 = self->mpLayout1->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mpLayout1->GetRootPane()->FindPaneByName(lbl_eu_8050B00C + 0x1c5, true);
     ScalePaneWorldPos(&pos, pane1, pane2, self->mpLayout1->GetRootPane());
-    reinterpret_cast<CBaseCur*>(&self->mCursor[0])->setRootPaneTranslate(&pos);
+    self->mCursor.setRootPaneTranslate(&pos);
 }
 #pragma optimize_for_size off
 
@@ -2465,7 +2466,7 @@ void CArtsInfo::initialize() {
 // loaded data into CBdat, resolves the two FP table entries named by the
 // string table, calls the split1 reset stub, clears field_0x18, returns 1.
 int CArtsInfo::OnFileEvent(CEventFile* event) {
-    if ((u32)field_0x14 == (u32)event->field_04) {
+    if ((u32)field_0x14 == (u32)event->mFileHandle) {
         mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(),
                                 0x18000, &lbl_eu_8050B00C[0x2CC], 0);
         Class_8045F858 host(&mMemRegion);
@@ -2474,7 +2475,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         CFileHandle* fh = (CFileHandle*)field_0x14;
         void* arcData = fh->getData();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        field_0x1C = (int)createArcResourceAccessor__10CLibLayoutFv();
+        field_0x1C = (int)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
 
         buildLayout(&mpLayout1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
@@ -2601,16 +2602,11 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Build a temporary cursor against the shared accessor and copy its
         // body over the embedded one (vptr at +0 preserved; word copies).
-        u8 tmpCursor[0x18];
-        __ct__CCur18(tmpCursor, CUICfManager_getArcResourceAccessor());
-        *(u32*)&mCursor[4] = *(u32*)&tmpCursor[4];
-        *(u32*)&mCursor[8] = *(u32*)&tmpCursor[8];
-        *(u32*)&mCursor[12] = *(u32*)&tmpCursor[12];
-        *(u32*)&mCursor[16] = *(u32*)&tmpCursor[16];
-        mCursor[20] = tmpCursor[20];
-        mCursor[21] = tmpCursor[21];
-        __dt__6CCur18Fv(tmpCursor, -1);
-        ((CBaseCur*)mCursor)->initLayout();
+        CCur18 tmpCursor;
+        __ct__CCur18(&tmpCursor, CUICfManager_getArcResourceAccessor());
+        mCursor = tmpCursor;
+        __dt__6CCur18Fv(&tmpCursor, -1);
+        mCursor.initLayout();
         CArtsInfo_BindAllPanes(this);
         CArtsInfo_Refresh(this);
         field_0x14 = 0;
@@ -2618,10 +2614,10 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         return 1;
     }
 
-    if ((u32)field_0x18 == (u32)event->field_04) {
+    if ((u32)field_0x18 == (u32)event->mFileHandle) {
         CFileHandle* fh2 = (CFileHandle*)field_0x18;
         void* data = fh2->getData();
-        setBdatEntry__5CBdatFUlPv(2, data);
+        CBdat::setBdatEntry(2, data);
         Bdat_GetTable_AA34();
         field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
         Bdat_GetTable_AA34();

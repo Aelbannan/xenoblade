@@ -59,14 +59,7 @@ struct CMainMenuFontView {
 // Minimal CScn view (retail addRenderCB__4CScnFP10IScnRenderUlUl member),
 // guarded so the kyoshin headers can be included together.
 class IScnRender;
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 class CMainMenu {
 public:
     CMainMenu();
@@ -235,7 +228,6 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r:
 extern "C" void __ct__8CBaseCurFv(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 // Font binding imports (CDeviceFont / CLibLayout)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
 extern "C" void PaneMatSetS16QuadByName(nw4r::lyt::Layout* layout, const char* paneName,
@@ -271,14 +263,7 @@ extern "C" void Cur_SetActive(CBaseCur* cur);
 // Cursor draw helper (defined in CCur.cpp; retail symbol is unmangled C linkage).
 extern "C" void Cur_DrawLayout(void* cur, nw4r::lyt::DrawInfo* drawInfo);
 
-// Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv). The full CTaskGame.hpp pulls monolib headers
-// whose declarations clash with this TU's include set.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 // Cursor per-frame update helper (defined in CCur.cpp).
 extern "C" void Cur_Update(void* cur);
 // Pane-config finish gate (defined in CUICfManager.cpp).
@@ -348,12 +333,7 @@ struct CMainMenuBattleMgr {
 };
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 
-// Global settings object returned by getUnk80664658 (flag word at +0x214).
-struct CMainMenuGimmickGlobal {
-    u8 _00[0x214];
-    u32 field_214;              // 0x214 - flag bits
-};
-extern "C" CMainMenuGimmickGlobal* getUnk80664658();
+#include "kyoshin/code_801F3BE0.hpp"
 
 // CSubCur view at +0xA8 (CBaseCur layout, 0x16 bytes). Cast-only iface for
 // the vtable+0x10 dispatch (setRootPaneTranslate, takes a translate VEC3).

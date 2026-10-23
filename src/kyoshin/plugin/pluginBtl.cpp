@@ -13,20 +13,12 @@
 // reloc-name fix rather than including the heavy menu header.
 extern "C" bool CMenuArtsSelect_isCreated();
 
+#include "kyoshin/cf/CBattleManager.hpp"
+
 namespace cf {
 // Intrusive ring-list node used by CBattleManager's unit list (sentinel at +0x8).
 struct BtlRingNode {
     BtlRingNode* next; // 0x00
-};
-
-// Battle manager (real prefix: IFactoryEvent handlers at +0x08..+0x18, see
-// retail table lbl_eu_8052BCE0; setPartyMaskFlag/CBattleMan_ClearStateMask at +0x1C/+0x20).
-// Local decl (never constructed here, so no vtable is emitted).
-class CBattleManager : public IFactoryEvent {
-public:
-    static CBattleManager* getInstance();
-    virtual void setPartyMaskFlag(u32 mask, u32 value); // +0x1C
-    virtual void CBattleMan_ClearStateMask(u32 mask);          // +0x20
 };
 }
 

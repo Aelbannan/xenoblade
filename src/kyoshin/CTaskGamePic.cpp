@@ -17,7 +17,6 @@
 #include <revolution/tpl/TPL.h>
 
 // Helper import from another TU (retail C-linkage symbol, no mangling).
-extern "C" u32 Scn_CallUnk8C_V9(CScn* scene);
 
 // CTTask<CTaskGamePic> out-of-line Move/Draw/dtors (retail emits these as
 // standalone functions; the inline CTTask header copy would mark them inline).
@@ -191,7 +190,7 @@ extern "C" void GamePicShiftTexParams(CTaskGamePic* ths, u32 index, const u32* s
 extern "C" void GamePicStartFileLoad(CTaskGamePic* ths, const char* path) {
     IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(ths); // null-this -> null
     if (ths) ev = reinterpret_cast<IWorkEvent*>(&ths->field_54);
-    u32 handle = Scn_CallUnk8C_V9(ths->mScene);
+    u32 handle = ths->mScene->getAllocHandle();
     CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
     ths->mFileHandle = fh;
     CDeviceFile::tryUpdateJobPriority(fh, 0);

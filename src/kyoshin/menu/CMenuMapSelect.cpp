@@ -2,12 +2,6 @@
 
 #include "kyoshin/menu/CMenuMapSelect.hpp"
 
-// Declaration-only view of the full CMapSel class (kyoshin/CMapSel.hpp cannot
-// be included alongside CFloorMap.hpp; see CMenuMapSelect.hpp).
-struct CMapSelFull {
-    u8 getMapGridCell();
-};
-
 #include <monolib/work/CWorkThreadSystem.hpp>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/core/CPadManager.hpp>
@@ -57,7 +51,6 @@ void moveMapSelUp(CMapSel* self);
 void moveMapSelSelection(CMapSel* self);
 void moveMapSelPageUp(CMapSel* self);
 void moveMapSelPageDown(CMapSel* self);
-// (memberized: getMapGridCell -> CMapSelFull::getMapGridCell; declaration moved into class CMapSelFull)
 // (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
 void FloorMap_LoadMapFiles(CFloorMap* self);
 
@@ -69,7 +62,6 @@ u8 FloorMap_GetField208Gated(CFloorMap* self);
 int FloorMap_IsSysWinBusy(CFloorMap* self);
 void FloorMap_SetPaneFlag(CFloorMap* self, u32 arg);
 u16 FloorMap_GetU16Field5A(CFloorMap* self);
-// (memberized: FloorMap_GetActiveFlag58 -> CFloorMapFull::GetActiveFlag58; declaration moved into class CFloorMapFull)
 void FloorMap_ConfirmSelect(CFloorMap* self);
 void FloorMap_UpdateRowPanePos(CFloorMap* self);
 void FloorMap_CursorNextFloor(CFloorMap* self);
@@ -272,7 +264,7 @@ void setupFloorMapPhase(CMenuMapSelect* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         self->mFloorMap = CFloorMap();
 
-        u8 sel = reinterpret_cast<CMapSelFull*>(&self->mMapSel)->getMapGridCell();
+        u8 sel = self->mMapSel.getMapGridCell();
         (&self->mFloorMap)->SetMapTable(sel);
         FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 5;
@@ -340,7 +332,7 @@ void handleFloorMapInput(CMenuMapSelect* self) {
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
+            if (self->mFloorMap.GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 (&self->mFade)->In();
@@ -408,7 +400,7 @@ void handleFloorMapInput(CMenuMapSelect* self) {
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
-            if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
+            if (self->mFloorMap.GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 (&self->mFade)->In();

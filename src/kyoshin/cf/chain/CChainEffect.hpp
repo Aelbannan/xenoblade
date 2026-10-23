@@ -52,20 +52,3 @@ struct CChainItem {
     u8 pad_8E[0xE];               //0x8E
     u32 field_9C;                 //0x9C
 };
-
-// Cross-TU C-ABI imports. These retail symbols are emitted unmangled, so they
-// are declared with C linkage (matches the C-linkage import blocks used across
-// the codebase). getInstance is a plain global C++ function whose retail
-// symbol already carries the MWCC `__Fv` mangle, so it is left as-is.
-extern "C" {
-void* bindIndexedEffect(u32 cls, int param);
-void setTargetObj_(void* obj, void* target);
-void setChildB59__(void* obj, s8 val);
-void removeManagedObject(void* self, void* target);
-struct CChainManager* getReslistBE8(void);
-void* CollObjHasFlag64Bit5(void* param);
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern f32 lbl_eu_80668C50;
-}
-// Plain global C++ callee (retail symbol getInstance__Fv).
-void* getInstance(void);

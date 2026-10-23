@@ -17,39 +17,9 @@ extern "C" int CLoadIsLoadReady(CLoad* self);
 #include "monolib/core/CProc.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-class CScn;
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CScn view (same guarded declaration as CQuestWindow.hpp /
-// CTaskGameEff.hpp). Needed here for removeRenderCB in mkCrystalTeardown.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
-
-// Byte flags written on the owning scene during window teardown
-// (mkCrystalTeardown). The kyoshin minimal CScn (guarded decl in the task
-// headers) has no fields, so access goes through this layout view.
-struct CScnFlagView {
-    u8 _00[0x39];
-    u8 field_39;           // +0x39
-    u8 _3A[0x3E4 - 0x3A];
-    u8 field_3E4;          // +0x3E4
-};
-
-// Minimal CTaskGame view: the static gate helpers used by cbRenderBefore and
-// the +0x6C sub-process slot read by mkCrystalTeardown. The real CTaskGame.hpp
-// pulls broken monolib umbrella headers (same scheme as CSystemWindow.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-    u8 _00[0x6C];
-    CProc* unk6C;          // +0x6C: task sub-process (pssDetachView target)
-};
+#include "kyoshin/CTaskGame.hpp"
 
 // Main crystal-crafting window. Fixed sub-object layout: a title-help banner
 // (CTitleAHelp, 0x38 bytes) at +0x18, the crystal model-display object at
@@ -128,7 +98,6 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 // C-linkage imports. The retail DOL symbols are unmangled (per the retail
 // relocs), so C++-linkage declarations would re-mangle the reloc names.
 extern "C" int getCrystalBoxActive(CMCCrystalBox* self);
-extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);

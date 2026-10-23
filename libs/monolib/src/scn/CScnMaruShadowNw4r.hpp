@@ -152,8 +152,7 @@ public:
     u32 field_0x50;    // 0x50
 };
 
-// Non-polymorphic scene base whose storage is managed externally; the
-// destructor only releases the object memory when the delete flag is set.
-struct CScn {
-    u8 storage[4];
-};
+// Retail __dt__4CScnFvMaruShadowNw4r only frees the object when the delete
+// flag is set, so the TU needs CScn as an opaque pointer type only (the
+// canonical class lives in monolib/scn/CScn.hpp).
+class CScn;

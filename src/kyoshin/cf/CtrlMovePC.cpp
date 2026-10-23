@@ -551,8 +551,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         }
     }
 
-    cf::CfGlobalSettings* gs = getUnk80664658();
-    if ((gs->field_214 & 0x8000u) && !(self->mFlags4C & 0x20u)) {
+    CGimmickGlobal* gs = getUnk80664658();
+    if ((gs->mFlags & 0x8000u) && !(self->mFlags4C & 0x20u)) {
         ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         if (GimProbeLockAccept(gs, pos) != 0) {
             self->mFlags4C |= 0x20u;
@@ -607,7 +607,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- move-task allocation and commit toward the candidate spot ---
     gs = getUnk80664658();
-    if ((gs->field_214 & 0x8000u) && GimProbeLockAccept(gs, &out) != 0) {
+    if ((gs->mFlags & 0x8000u) && GimProbeLockAccept(gs, &out) != 0) {
         int okT;
         if (self->mTask == 0) {
             okT = 0;
@@ -1459,8 +1459,8 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     }
 
     if ((self->mFlags4C & 0x1000u) == 0) {
-        cf::CfGlobalSettings* gs = getUnk80664658();
-        if (gs->field_214 & 0x8000u) {
+        CGimmickGlobal* gs = getUnk80664658();
+        if (gs->mFlags & 0x8000u) {
             ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
             if (GimProbeLockAccept(getUnk80664658(), pos) == 0) {
                 self->mFlags4C |= 0x1000u;
@@ -1703,11 +1703,11 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     }
 
     if (self->mFlags4C & 0x8u) {
-        cf::CfGlobalSettings* gs = getUnk80664658();
+        CGimmickGlobal* gs = getUnk80664658();
         if (self->mShort122 == 1) {
-            gs->field_214 |= 0x10000u;
+            gs->mFlags |= 0x10000u;
         } else {
-            gs->field_214 |= 0x20000u;
+            gs->mFlags |= 0x20000u;
         }
     }
 

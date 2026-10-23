@@ -514,7 +514,7 @@ void CMenuItem::Move() {
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid ready.
-        if (isIdle__11CTitleAHelpFv(&mTitleAHelp) != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
             mState = 2;
         }
         break;
@@ -523,7 +523,7 @@ void CMenuItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (isIdle__11CTitleAHelpFv(&mTitleAHelp) != 0 && GetField61(&mItemBoxGrid) != 0) {
+        if (mTitleAHelp.isIdle() != 0 && GetField61(&mItemBoxGrid) != 0) {
             mPrefix[0x50] = 1;
         }
         break;

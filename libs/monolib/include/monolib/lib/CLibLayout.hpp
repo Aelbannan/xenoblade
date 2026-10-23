@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/work/CWorkThread.hpp"
+#include "monolib/util/MemManager.hpp"
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 
 class UnkClass_8045F564;
@@ -16,7 +17,7 @@ public:
     static bool isInitialized();
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
-    void getAllocHandle();
+    static mtl::ALLOC_HANDLE getAllocHandle();
     void createLayout();
     void createPicture();
     void createTextbox();

@@ -82,33 +82,6 @@ struct COptionMem {
     nw4r::lyt::AnimTransform* mAnim1;       // 0x24
 };
 
-// Abstract view into the embedded CCur18 cursor vtable (MWCC prepends 2
-// entries, so the second declared virtual lands at vtable +0x0C - the cursor
-// teardown virtual invoked by COptionTeardown). Same scheme as CSysWinSave.hpp.
-class CCursor18 {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (+0x08)
-    virtual void vf3() = 0;     // slot 3 (+0x0C)
-};
-
-// Vtable view for the cursor teardown virtual at +0x08 (slot 2 after the
-// 2-entry RTTI prefix) invoked by OnFileEvent after copying each cursor temp.
-// Declared as a no-arg virtual so MWCC dispatches through r12 like retail.
-class COptionCurTearView {
-public:
-    virtual void vf0() = 0;  // +0x08 - cursor teardown
-};
-
-// Full cursor vtable view for COptionRefreshCursorPanes: vf04 is declared index 2, which
-// lands at vtable +0x10 after MWCC's 2-entry RTTI prefix - the "apply window
-// data" virtual dispatched on the sub-cursors. Same scheme as CCur18View.
-class COptionCurView {
-public:
-    virtual void vf02() = 0;      // index 0 -> +0x08
-    virtual void vf03(int) = 0;   // index 1 -> +0x0C (unused here)
-    virtual void vf04(u8*) = 0;   // index 2 -> +0x10
-};
-
 // Vtable view for the +0x1C sub-object's message source (the pointer at
 // +0x10 of the sub-object): v0D is declared index 13, which lands at vtable
 // +0x3C (slot 15) - the "resolve message text to a pane" virtual used by
@@ -196,6 +169,7 @@ public:
     COption();
     ~COption();
     bool OnFileEvent(CEventFile* pEventFile);
+    int getLiveFlag(); int getConfirmGate(); int getSecondConfirm();  // retail 8029EE70/78/80
 
     // Explicit vtable pointer (CBaseCur-style convention, NOT C++ `virtual`, so
     // MWCC does not inject a vptr-reset into the destructor).
@@ -245,10 +219,8 @@ extern u8 lbl_eu_80664A40[8];
 extern u8 lbl_eu_80539338[];
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __ct__CCur18(void* self, void* accessor);
 extern "C" void MenuShopSellCopyCursor(void* dest, void* src);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern unsigned char lbl_eu_80539638[];
 extern "C" unsigned char lbl_eu_805396D0[];
@@ -278,7 +250,6 @@ extern "C" void __ct__UnkClass_8011C974(u8* dst, u8* src);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, IWorkEvent*, int, int);
 extern "C" void __ct__8CBaseCurFv(CBaseCur*);
 extern "C" void __dt__8CBaseCurFv(void*, int);
-extern "C" void* __dt__6CCur18Fv(void*, int);
 extern "C" void* __dt__7CSysWinFv(void*, int);
 extern "C" void* __dt__10CScrollBarFv(CScrollBar*, int);
 extern "C" void __dl__FPv(void*);

@@ -34,22 +34,7 @@ extern "C" {
 // ==============================
 // External function declarations
 // ==============================
-// Declaration-only views of the realtime-event list classes that own the
-// EvtSeq* members called below (full definitions in
-// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
-// The model object is passed as their `this`.
-class UnkEvtListEntry {
-public:
-    void SeqInsertRtEvent();
-    int SeqCheckRunGate();
-};
-struct EvtBdabModel {
-    int SeqProbeEvtSlot(u32* out);
-};
-class UnkObj80168514 {
-public:
-    void EvtSeqCheckEventRunGuard();
-};
+#include "kyoshin/cf/CTaskREvtSequence.hpp" // UnkEvtListEntry / EvtBdabModel / UnkObj80168514
 
 extern "C" {
     // Base class (CREvtModel: this, parent, flag)
@@ -65,7 +50,6 @@ extern "C" {
     extern void EvtModelSetEventData(void* self, int pData, int pModelData);
 
     // Memory
-    extern void* allocEvtMemAligned(void* ptr, u32 alignment, int useMEM1);
 
     // Task helpers
     extern int EvtSeqGetWalkIndex();
@@ -79,8 +63,6 @@ extern "C" {
     extern void* evtLookupCmdWord(void* parent, u32 type, int slot);
 
     // CfGameManager
-    extern void* getGimmickListHead__Q22cf13CfGameManagerFv();
-    extern void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
     extern void syncFieldData__Q22cf13CfGameManagerFv(u32 type, int flag);
 
     // Resource helpers
@@ -96,7 +78,6 @@ extern "C" {
 
     // Model helpers
     extern void* Scn_SetupAnim(void* a, void* b, int c, int d);
-    extern void* Scn_CallUnk8C_V9(void* arg);
     extern void simSetLeafDist7B0(void* model, f32 val);
     extern void simSetFlag2000Chain(void* model, int flag);
     extern void simSetLeafFlag4000(void* model, int flag);
@@ -403,9 +384,9 @@ extern "C" void EvtModelPc_LoadFiles(void* self) {
     int ok;
     const char* pathName;
     CFileHandle* reqHandle;
-    void* memHandle;
-    void* h;
-    void* h2;
+    mtl::ALLOC_HANDLE memHandle;
+    mtl::ALLOC_HANDLE h;
+    mtl::ALLOC_HANDLE h2;
     int i;
     char nameBuf[0x20];
     int nameLen;
@@ -495,7 +476,7 @@ handles_done:
                 skipLoading = 1;
             }
             for (i = 0; i < 5; i++) {
-                handle = (u32)getBdatEntryColumn__Q22cf13CfGameManagerFv(decB, i);
+                handle = getBdatEntryColumn__Q22cf13CfGameManagerFv(decB, i);
                 FLD(u32, s, 0x3C + i * 4) = handle;
             }
         } else {
@@ -547,7 +528,7 @@ handles_done:
             FLD(u32, fix1, 0x40) = 0;
             Tok_FormatStr(*(ml::FixStr<64>*)fix1, handle, 1, 1);
             fileSize = CDeviceFile::getFileSize(fix1);
-            alloc = allocEvtMemAligned((void*)fileSize, 0x20, 0);
+            alloc = allocEvtMemAligned(fileSize, 0x20, 0);
             if (alloc != 0) {
                 FLD(u32, walk, 0x84) = status1;
                 ok = (int)alloc;
@@ -570,20 +551,20 @@ handles_done:
                 FLD(u32, walk, 0x54) = (u32)reqHandle;
             } else {
                 // Streamed read into MEM2.
-                memHandle = (void*)mtl::MemManager::getHandleMEM2();
-                h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+                memHandle = mtl::MemManager::getHandleMEM2();
+                h = lbl_eu_80663E14->getAllocHandle();
                 h2 = h;
                 parent = FLD(void*, s, 0x1C);
                 if (FLD(u32, parent, 0x58) & 0x2) {
-                    h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+                    h = lbl_eu_80663E14->getAllocHandle();
                     memHandle = h;
-                    h2 = (void*)mtl::MemManager::getHandleMEM2();
+                    h2 = mtl::MemManager::getHandleMEM2();
                 }
                 reqHandle = (CFileHandle*)CDeviceFile::readFile(
-                    (mtl::ALLOC_HANDLE)memHandle, fix1,
+                    memHandle, fix1,
                     (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
                 FLD(u32, walk, 0x54) = (u32)reqHandle;
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, h2);
                 parent = FLD(void*, s, 0x1C);
                 if (FLD(u32, parent, 0x58) & 0x1) {
                     CDeviceFile::setHandleFlag1(reqHandle);
@@ -604,7 +585,7 @@ handles_done:
         FLD(u32, fix3, 0x40) = 0;
         Tok_FormatStr(*(ml::FixStr<64>*)fix3, handle, 1, 1);
         fileSize = CDeviceFile::getFileSize(fix3);
-        alloc = allocEvtMemAligned((void*)fileSize, 0x20, 0);
+        alloc = allocEvtMemAligned(fileSize, 0x20, 0);
         if (alloc != 0) {
             FLD(u32, s, 0x98) = 1;
             ok = (int)alloc;
@@ -621,20 +602,20 @@ handles_done:
                 (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
         } else {
-            memHandle = (void*)mtl::MemManager::getHandleMEM2();
-            h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+            memHandle = mtl::MemManager::getHandleMEM2();
+            h = lbl_eu_80663E14->getAllocHandle();
             h2 = h;
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x2) {
-                h = Scn_CallUnk8C_V9(lbl_eu_80663E14);
+                h = lbl_eu_80663E14->getAllocHandle();
                 memHandle = h;
-                h2 = (void*)mtl::MemManager::getHandleMEM2();
+                h2 = mtl::MemManager::getHandleMEM2();
             }
             reqHandle = (CFileHandle*)CDeviceFile::readFile(
-                (mtl::ALLOC_HANDLE)memHandle, fix3,
+                memHandle, fix3,
                 (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
-            setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, h2);
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x1) {
                 CDeviceFile::setHandleFlag1(reqHandle);

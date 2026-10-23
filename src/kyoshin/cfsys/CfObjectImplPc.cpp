@@ -165,8 +165,10 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 #define lbl_eu_80666C00 sdata2_ImplPc.f_C00
 
 
-// Minimal cf::CBattleManager view (the full header conflicts with this TU's
-// C-ABI import declarations). Only getInstance / +0x194 / +0x1A8 are needed.
+// KEEP (blockers-A 2026-10-23): minimal cf::CBattleManager view. This TU walks the
+// +0x28/+0x48 actor-list sentinels through its own CfBattleChainNode type
+// while the real class holds reslist<CfObjectActor*> members; replacing the
+// view needs those list walks retyped onto reslist first.
 namespace cf {
 struct CfBattleChainNode;  // defined in CfObjectImplPc.hpp
 class CBattleManager {

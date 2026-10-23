@@ -89,10 +89,25 @@ public:
     virtual void initLayout();
 };
 
+// CCUR18_MEMBER_DTOR: define before including this header in TUs whose owners
+// rely on MWCC's implicit member destruction of an embedded CCur18 (e.g.
+// UI::CPassiveSkillLine). Elsewhere owners call __dt__6CCur18Fv explicitly, and
+// a declared dtor would add scope-exit calls for their stack temporaries.
 class __declspec(novtable) CCur18 : public CBaseCur {
 public:
     virtual void initLayout();
+#ifdef CCUR18_MEMBER_DTOR
+    ~CCur18();
+#endif
 };
+
+// Retail ctor/dtor of the embedded-cursor leaf (stripped short ctor name
+// __ct__CCur18 plus the mangled dtor), defined in CCur.cpp as free functions
+// that store the vtable label by hand. Owners embed a CCur18 by value and
+// call these explicitly; copying a stack-constructed CCur18 into the member
+// is the implicit operator= (copies +0x04..+0x15, keeps the vptr).
+extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc);
+extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags);
 
 class __declspec(novtable) CCur22 : public CBaseCur {
 public:

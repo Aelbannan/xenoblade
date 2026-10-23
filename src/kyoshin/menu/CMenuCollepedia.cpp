@@ -265,7 +265,7 @@ void Colle_BeginOpen(){}
 // Advance the collepedia menu: once the title bar is idle and the collepedia
 // core is ready, open the menu (state 2).
 void CMenuCollepedia::Colle_OpenMenu() {
-    if (isIdle__11CTitleAHelpFv(&this->mTitleAHelp) != 0) {
+    if (this->mTitleAHelp.isIdle() != 0) {
         if (clpGetInputOk(&this->mCollepedia) != 0) {
             this->mState = 2;
         }
@@ -393,7 +393,7 @@ void CMenuCollepedia::Colle_HandleInput() {
 // Same idle+advance check as Colle_OpenMenu, but marks the menu as closing
 // (mField54 = 1) instead of opening.
 void Colle_MarkClosing(CMenuCollepedia* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isIdle() != 0) {
         if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mField54 = 1;
         }

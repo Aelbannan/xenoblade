@@ -21,28 +21,14 @@ class Pane;
 }
 }
 
-// Local render-callback interface WITHOUT a virtual destructor (CMenuFade /
-// CMenuSkipTimer idiom): retail fills the dtor slot of the +0x5C sub-vtable
+// IScnRender without a virtual destructor (CMiniMap.cpp defines
+// ISCN_RENDER_NO_DTOR): retail fills the dtor slot of the +0x5C sub-vtable
 // (composite block lbl_eu_8052C858+0xAC) with the manual adjuster
-// MiniMap2DtorThunk5C, and a virtual dtor here would make MWCC emit an extra @88@
+// MiniMap2DtorThunk5C, and a virtual dtor would make MWCC emit an extra @88@
 // thunk that retail does not have.
-class IScnRender {
-public:
-    virtual void cbRenderBefore();
-};
+#include "monolib/scn/IScnRender.hpp"
 
-// Minimal CScn declaration (same guard scheme as CTaskGameEff.hpp): only the
-// render-callback members used by Term/cbRenderBefore, so member calls emit the
-// retail mangled symbols addRenderCB__4CScnFP10IScnRenderUlUl /
-// removeRenderCB__4CScnFP10IScnRender without dragging in the full class.
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" float lbl_eu_806670A0;
@@ -89,20 +75,9 @@ extern char lbl_eu_8052C9F0[];
 extern char* lbl_eu_806640A8;
 extern char* lbl_eu_8052C7E8[];
 
-// Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// isFlag01Set__9CTaskGameFv; same scheme as CSystemWindow.hpp).
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
-// Global gimmick container returned by getUnk80664658 (flag word at +0x214).
-struct CMMGlobalGimmick {
-    u8 field_0x00[0x214];       // 0x00..0x214
-    u32 field_214;              // 0x214
-};
-extern "C" CMMGlobalGimmick* getUnk80664658();
+#include "kyoshin/code_801F3BE0.hpp"
 
 // Cross-TU layout/BDAT helpers. Plain C++ declarations so MWCC re-derives the
 // retail mangled names (buildLayout__FPP... / drawLayout__FPP... / ...).
@@ -119,8 +94,6 @@ extern "C" void* getFP__FPCc(const char* name);
 // Gimmick-row helpers used by MiniMapRebuildGimmickPanes (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
 extern "C" u32 CheckState2CC8Active(u16 id);
-struct CMMGimmickPos { f32 x; f32 y; f32 z; };
-extern "C" CMMGimmickPos* GimFindPosByRow(CMMGlobalGimmick* mgr, u16 id);
 extern "C" unsigned long CtrlObjectParam_GetWorkField50();
 extern "C" int GetSysStateFlag10();
 extern "C" int isVisionAnimating();

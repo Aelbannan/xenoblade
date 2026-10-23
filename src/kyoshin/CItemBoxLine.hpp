@@ -274,8 +274,8 @@ class CItemBoxLine {public:
     u8 unk64[9];                // 0x64..0x6C: per-slot occupancy bytes (ItemBoxLine_TabNext/DB80 scan)
     u8 field6D;                 // +0x6D
     u8 pad_6E[0x70 - 0x6E];             // 0x6E..0x6F
-    CBaseCur mCur70;                    // +0x70: embedded cursor (CBaseCur-sized)
-    CBaseCur mCur88;                    // +0x88: embedded cursor (0x18 stride)
+    CCur18 mCur70;                      // +0x70
+    CCur18 mCur88;                      // +0x88
     CBaseCur mCurA0;                    // +0xA0: embedded cursor
     CBaseCur mCurB8;                    // +0xB8: embedded cursor (vtable[2] tab-name dispatcher)
     u8 mInfo2D0[0x2DC - 0xD0];          // +0xD0..0x2DB: item-box info2 state region
@@ -347,20 +347,16 @@ extern "C" void __dt__10CScrollBarFv(CScrollBar*, int);
 extern "C" void __dt__10CNumSelectFv(CNumSelect*, int);
 extern "C" void __dt__13CItemBoxInfo2Fv(CItemBoxInfo2*, int);
 extern "C" void __dt__7CSubCurFv(CBaseCur*, int);
-extern "C" void __dt__6CCur18Fv(CBaseCur*, int);
 
 // --- external retail helpers (C-linkage or literal mangled symbols) ---
 // OnFileEvent helpers (external retail symbols, plain C-ABI names).
 extern "C" void* Bdat_GetTable_AA34();                           // bdat manager reset (no args)
-extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* CUICfManager_getPackedFont9C(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();  // cursor accessor (CCur unit)
-extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void MenuShopSellCopyCursor(void*, void*);               // copy stack cursor temp into member
 // Cur_ShowTwoSubPanes (subcur pane visibility) - 2-arg form used by OnFileEvent;
@@ -556,6 +552,10 @@ extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);   // same-TU body kept ext
 extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
+// KEEP (blockers-A 2026-10-23): this TU models every BDAT table as a u32 handle
+// (LookupItemTypeTable, lbl_eu_8066464C/806640F4/...), so it keeps the u32-table
+// view of BdatGetU16Direct instead of kyoshin/code_80135FDC_Bdat.hpp until those
+// table globals are retyped.
 extern "C" u16 BdatGetU16Direct(u32 table, const void* name, int id);
 extern "C" char* MakeTplNameSysFile(u32);
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);

@@ -783,11 +783,7 @@ struct CFunc8008A2C8BMan {
     u8 _pad[0x1AA];                                     // 0x00-0x1A9
     u8 field_1AA;                                       // 0x1AA
 };
-struct CFunc8008A2C8Global {
-    u8 _pad[0x214];                                     // 0x00-0x213
-    u32 field_214;                                      // 0x214
-};
-// Proximity threshold table (retail .data floats indexed by the +0x17C
+ // Proximity threshold table (retail .data floats indexed by the +0x17C
 // mode bits in CtrlMoveEne_UpdateBattleAI).
 extern const f32 lbl_eu_804FB9C8[];
 
@@ -893,7 +889,7 @@ extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 // used by CPartsChange.hpp / CfGimmickObject.hpp / CtrlEnemy.hpp; an
 // extern "C" duplicate here collides when those headers are visible.
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" void* getUnk80664658(void);
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" void unregisterBattleActor(void* self, void* obj);
 extern "C" void CfObjectMove_setAnimModeArgs(void* obj, int a, int b, int c, int d);

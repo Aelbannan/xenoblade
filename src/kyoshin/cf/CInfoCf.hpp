@@ -42,27 +42,9 @@ struct CInfoCf {
 
 } // namespace cf
 
-// Minimal CScn declaration (only the render-callback member Term calls).
-// Guarded so the kyoshin task headers can be included together in one TU
-// (same declaration appears in CTaskGameEff.hpp / CTaskGameEvt.hpp).
-#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
-#define KYOSHIN_MINIMAL_CSCN_DECLARED
-class CScn {
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-};
-#endif
+#include "monolib/scn/CScn.hpp"
 
-// Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The full class
-// header pulls monolib/scn.hpp whose real CScn clashes with the guarded
-// minimal CScn above - same pattern as CSystemWindow.hpp / CSysWinSelect.hpp.
-class CTaskGame {
-public:
-    static CTaskGame* getInstance();
-    static bool isFlag01Set();
-};
+#include "kyoshin/CTaskGame.hpp"
 
 /*
  * Menu-screen process shared by the in-game menu / info stack.

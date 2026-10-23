@@ -311,7 +311,7 @@ void stub_us_802908bc() {}
 /* Advance the save menu to phase 2 once the title bar is idle and the
  * save-load panel has finished its intro (writes the state byte at 0x20B). */
 extern "C" void advanceSaveMenuPhase(CMenuSave* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mState = 2;
     }
@@ -416,7 +416,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
 /* Same idle+advance check as advanceSaveMenuPhase, but advances the phase flag at
  * 0x54 instead of the state byte. */
 extern "C" void flagSaveMenuReady(CMenuSave* self) {
-    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isIdle() != 0 &&
         CSaveLoad_getIdle(reinterpret_cast<CSaveLoad*>(self->mSaveLoad)) != 0) {
         self->mField54 = 1;
     }

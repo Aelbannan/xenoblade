@@ -1,6 +1,7 @@
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
 
@@ -564,7 +565,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     if (!IsMenuState621F0()) {
         return;
     }
-    if (getUnk80664658()->field_214 & (1u << 20)) {
+    if (getUnk80664658()->mFlags & (1u << 20)) {
         return;
     }
     if (!GetSysStateFlag20()) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
@@ -173,7 +174,7 @@ public:
 // CPcSelectCursor lives at offset 0x7E4 in CMenuEnemyState and is 0x48 bytes.
 // The retail dtor __dt__15CPcSelectCursorFv stores no vtable, so the class is
 // deliberately non-polymorphic here (the +0x00 word is a plain reserved
-// field). The ctor __ct__CPcSelectCursor is defined in another TU.
+// field). The ctor __ct__15CPcSelectCursorFv is defined in another TU.
 class CPcSelectCursor {
 public:
     u32 field00;                     // +0x00 (vtable / reserved)
@@ -200,7 +201,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __ct__CPcSelectCursor(void* self);
+extern "C" void __ct__15CPcSelectCursorFv(void* self);
 extern "C" void* MapFx_ResolveOwner(void* r3);
 // Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
 extern "C" u32 CUICfManager_getPackedFontD8();
@@ -219,7 +220,6 @@ extern "C" void PaneSetTexPalette(void* a, void* palette);
 // Enemy-menu resource helpers (retail symbols unmangled). MakeTplNameSysFile is
 // declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
 // later plain redeclaration inherit it (same signature).
-extern "C" u16 BdatGetU16Direct(const void* a, const char* b, int c);
 extern "C" char* MakeTplNameSysFile(u32 id);
 // Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
 // (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)

@@ -33,6 +33,7 @@
 #include <monolib/util/FixStr.hpp>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/work/IWorkEvent.hpp>
+#include <monolib/work/CEventFile.hpp>
 #include <monolib/device/CDeviceFile.hpp>
 #include <monolib/device/CDeviceFileCri.hpp>
 #include <revolution/NAND.h>
@@ -49,14 +50,6 @@ void DevFile_SetByteA9(u8 val);
 
 // Data objects referenced by this unit (global scope -> no C++ mangling).
 extern const char lbl_eu_805248BC[];  // .rodata: path format string ("" for empty slots)
-
-// CEventFile as consumed by CNBanner::OnFileEvent: an event type word at +0x0
-// and a file-name/data string pointer at +0xC.
-struct CEventFile {
-    int field_0;          // 0x0  event type
-    u8 pad4[8];           // 0x4
-    const char* field_C;  // 0xC  file path / name string
-};
 
 // Mirror of the NANDBanner block layout as consumed by Banner_AllocData_53DC. The
 // SDK header declares iconTexture[0x1200][8]; the actual per-icon stride is
@@ -199,8 +192,8 @@ void CNBanner_destroyBlock(CNBanner* banner) {
 // one out (counter reaches 0) re-arms the count latch. Returns whether the
 // event belonged to this banner.
 bool CNBanner::OnFileEvent(CEventFile* event) {
-    const char* name = event->field_C;
-    u32 type = (u32)event->field_0;
+    const char* name = event->mName;
+    u32 type = (u32)event->unk0;
     u8 notPrimary = (type != 1);
 
     if (strcmp(name, this->mPath.c_str()) == 0) {

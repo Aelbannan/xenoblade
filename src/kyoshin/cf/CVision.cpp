@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -41,7 +43,7 @@ extern "C" void UIWin_FlagBufClear();
 // one extern "C" form per symbol (BFC38 unified on the u16-returning
 // flat-name form; BFE8C on void(u32,u32,u32)).
 
-#include "kyoshin/cf/CVision.hpp"
+#include "kyoshin/cf/CVisionImports.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
 
@@ -82,6 +84,8 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // the canonical extern "C" void* forms, so the former #undef/rename
 // epilogue after this include is gone entirely.
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+#include "kyoshin/cf/CSuddenCommuImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 // The explicit extern "C" declarations below stay: they are identical
 // duplicates of the chain-header forms (legal redeclaration) and act as
 // this TU's visible import anchors.

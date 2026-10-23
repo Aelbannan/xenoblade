@@ -367,16 +367,6 @@ struct BattleRegObjAccessor {
     u32 field_3F00;             // +0x3F00
 };
 
-// Trailing battle-manager fields at the end of the 0x283D8-byte object:
-// a u16 ai/move dispatch counter at +0x283D0 (dispatchBattleAI increments it)
-// and the accumulated flash/ticker timer at +0x283D4 drained by
-// updateBattleManager.
-struct CBattleManagerTail283D4 {
-    u8 pad_00[0x283D0];
-    u16 field_283D0;            // +0x283D0
-    u8 pad_02[2];
-    f32 field_283D4;            // +0x283D4
-};
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -398,7 +388,6 @@ extern "C" float lbl_eu_80666DD4;
 extern "C" float lbl_eu_80666DD0;   // 0.6f (attack-sound volume)
 extern "C" f64 lbl_eu_80666DE0;
 extern "C" float lbl_eu_80666DEC;   // time/frame-delta scale (updateBattleManager)
-extern "C" const float lbl_eu_8066A1FC;   // 2*pi (angle-wrap step)
 extern "C" BattleTableEntry lbl_eu_804FC828[];
 extern u32 lbl_eu_804FCA08[];       // attack sound-id table (retail .rodata)
 

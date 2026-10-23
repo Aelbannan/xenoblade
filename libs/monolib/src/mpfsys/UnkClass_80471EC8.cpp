@@ -82,7 +82,6 @@ extern u8 lbl_eu_80658410[];
 extern Mtx lbl_eu_80658458; // identity matrix (defined at the bottom of this TU)
 
 // sdata2 constants used by the five functions below.
-extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_8066A7A4;
 extern const f32 lbl_eu_8066A7B0;
 extern const f32 lbl_eu_8066A748;
@@ -1313,7 +1312,7 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     // FOV: tan of the scaled half-angle; its scaled store lands right after
     // the call, ahead of GXClearVtxDesc (retail schedule).
     f32 t = (f32)tan(lbl_eu_8066A7B8 *
-                     (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * lbl_eu_8066A210))));
+                     (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * ml::deg2rad))));
     *(f32*)&lbl_eu_80665884 = lbl_eu_8066A7C0 * t;
 
     GXClearVtxDesc();
@@ -1764,7 +1763,7 @@ void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     f32 lenSq2 = cam->axis.x * cam->axis.x + cam->axis.y * cam->axis.y +
                  cam->axis.z * cam->axis.z;
     f32 tanArg = lbl_eu_8066A7B8 *
-                 (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * lbl_eu_8066A210)));
+                 (lbl_eu_8066A7BC * (lbl_eu_8066A7B4 * (fovScale * ml::deg2rad)));
     lbl_eu_80665880 = lbl_eu_8066A7B0 / lenSq2;
     f32 t = (f32)tan(tanArg);
 

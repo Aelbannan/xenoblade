@@ -766,10 +766,9 @@ extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(UnkReset28Data* data)
     memset(data, 0, sizeof(*data));
 }
 
-extern const float lbl_eu_8066A210;
 extern "C" void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv(cf::CfObject* object,
                                                              float value) {
-    object->mField4C = value * lbl_eu_8066A210;
+    object->mField4C = value * ml::deg2rad;
 }
 
 #pragma dont_inline on
@@ -1489,11 +1488,11 @@ extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
         f32 vx;
         f32 vz;
         if (mode == 1) {
-            theta = scale + ((lbl_eu_80666540 * lbl_eu_8066A1F8) * lbl_eu_80666544);
+            theta = scale + ((lbl_eu_80666540 * ml::pi) * lbl_eu_80666544);
             vz = lbl_eu_80666548 * cosAnimFIdx(theta);
             vx = lbl_eu_80666548 * sinAnimFIdx(theta);
         } else {
-            theta = scale - ((lbl_eu_80666540 * lbl_eu_8066A1F8) * lbl_eu_80666544);
+            theta = scale - ((lbl_eu_80666540 * ml::pi) * lbl_eu_80666544);
             vx = lbl_eu_80666548 * sinAnimFIdx(theta);
             vz = lbl_eu_80666548 * cosAnimFIdx(theta);
         }

@@ -14,6 +14,8 @@ public:
 
     void destruct(int arg);
     bool releaseCache(const void* data);
+    // Retail mangling takes the parent thread as void*.
+    static void build(void* pParent, const char* name, void* path, void* data, u32 length, bool flag);
     void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
     int isSameName(const char* name) const;
 

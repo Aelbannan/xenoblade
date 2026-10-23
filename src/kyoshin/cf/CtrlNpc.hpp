@@ -247,7 +247,6 @@ extern const f32 lbl_eu_806666D4;
 extern const f32 lbl_eu_806666D8;
 extern const f32 lbl_eu_806666DC;
 extern const f32 lbl_eu_806666E4;
-extern const f32 lbl_eu_8066A208;
 extern const f32 lbl_eu_806666B0;
 extern const f32 lbl_eu_806666B4;
 extern const f32 lbl_eu_806666B8;
@@ -266,8 +265,6 @@ extern const f32 lbl_eu_80666708;
 extern const f32 lbl_eu_8066670C;
 extern const f32 lbl_eu_80666710;
 extern const f32 lbl_eu_80666714;
-extern const f32 lbl_eu_8066A1F8;
-extern const f32 lbl_eu_8066A210;
 // nw4r FSqrt warning strings (rodata).
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];

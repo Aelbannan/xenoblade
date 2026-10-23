@@ -687,7 +687,7 @@ extern "C" __declspec(noinline) void SymMark_Place(
         if (!CDeviceVI::isWideAspectRatio()) {
             scaleX *= lbl_eu_806670F4;
         }
-        f32 baseScale = lbl_eu_806670F8 / lbl_eu_8066A1F8;
+        f32 baseScale = lbl_eu_806670F8 / ml::pi;
         SYM_ROOT_PANE()->trX = worldPos.x;
         SYM_ROOT_PANE()->trY = worldPos.y;
         SYM_ROOT_PANE()->trZ = worldPos.z;
@@ -1855,12 +1855,12 @@ void CArrow3D::cbRenderBefore() {
                     nw4r::math::Atan2FIdx(dy, norm); // elevation
         float azim = lbl_eu_80667118 * nw4r::math::Atan2FIdx(dx, -dz);
         // Wrap the azimuth into (-2pi, 2pi] around the scene heading.
-        float roll = -azim - (lbl_eu_8066A1F8 + pose->proj120[1]);
-        if (roll >= lbl_eu_8066A1F8) {
-            roll -= lbl_eu_8066A1FC;
+        float roll = -azim - (ml::pi + pose->proj120[1]);
+        if (roll >= ml::pi) {
+            roll -= ml::tau;
         }
-        if (roll <= -lbl_eu_8066A1F8) {
-            roll += lbl_eu_8066A1FC;
+        if (roll <= -ml::pi) {
+            roll += ml::tau;
         }
         // Horizontal direction toward the player (normalized xz).
         nw4r::math::VEC3 hv;
@@ -1903,7 +1903,7 @@ void CArrow3D::cbRenderBefore() {
             nw4r::db::Warning((const char*)lbl_eu_805262F0, 0xef,
                               (const char*)lbl_eu_805262C8);
         }
-        float pitch = (lbl_eu_806670E0 * lbl_eu_8066A210) *
+        float pitch = (lbl_eu_806670E0 * ml::deg2rad) *
                       nw4r::math::SinFIdx((f32)acos(dot) * lbl_eu_8066711C);
         if (roll < 0.0f) {
             pitch *= lbl_eu_80667104;

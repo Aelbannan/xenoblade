@@ -164,7 +164,7 @@ extern "C" void __dt__8CScnNw4rFv(void* self, int deleteFlag);
 
 // Member ctors.
 CScnMem::CScnMem() {
-    *(void**)this = (void*)lbl_eu_8056E5B8;
+    *reinterpret_cast<u32**>(this) = lbl_eu_8056E5B8;
     field_0x4 = 0;
     mAllocId = -1;
     field_0xc = 0;
@@ -173,12 +173,11 @@ CScnMem::CScnMem() {
 // Flat-name ctor (retail __ct__CScnNw4r). Calls flat __ct__CScn rather than a
 // C++ base initializer (which would emit mangled __ct__4CScnFv).
 extern "C" CScn* __ct__CScn(CScn* self);
-extern "C" void* __ct__CScnNw4r(void* self) {
-    CScnNw4r* nw = (CScnNw4r*)self;
-    __ct__CScn((CScn*)nw);
-    nw->field_0x10 = (u32)lbl_eu_8056E5C8;
-    nw->field_0x54 = (u32)lbl_eu_8056E5C8 + 0x24;
-    return nw;
+extern "C" CScnNw4r* __ct__CScnNw4r(CScnNw4r* self) {
+    __ct__CScn(self);
+    self->field_0x10 = lbl_eu_8056E5C8;
+    self->field_0x54 = &lbl_eu_8056E5C8[9];
+    return self;
 }
 
 CScnNw4r::~CScnNw4r() {
@@ -188,14 +187,14 @@ CScnNw4r::~CScnNw4r() {
 CScnMem::~CScnMem() {
     // novtable so the dtor must re-point the vptr manually, then release the
     // MemManager-backed allocation handle.
-    *(void**)this = (void*)lbl_eu_8056E5B8;
+    *reinterpret_cast<u32**>(this) = lbl_eu_8056E5B8;
     mtl::MemManager::erase(mAllocId);
 }
 
 extern "C" u32 getScnRootPtr(CScn* self) { return (u32)self->mUnk8C; }
 
 
-extern "C" void* getScnRootSlot10(void* self) { return reinterpret_cast<CScnRootNw4rLayout*>(((CScn*)self)->mUnk8C)->mRootGroup; }
+extern "C" nw4r::g3d::ScnGroup* getScnRootSlot10(CScn* self) { return self->mUnk8C->mRootGroup; }
 
 extern "C" void* getScnRoot44C(CScn* self) { return RootNw4r_Ptr44C(self->mUnk8C); }
 
@@ -207,11 +206,12 @@ extern "C" void* getScnRootSel47C(CScn* self) { return RootNw4r_SelPtr47C(self->
 
 extern "C" void* getScnRoot49C(CScn* self) { return RootNw4r_Ptr49C(self->mUnk8C); }
 
-extern "C" void WorkEvent4__4CScnFv(void* self) { ((void(*)(void*))Scn_CallUnk60_V4)((char*)self - 0x54); }
+// IWorkEvent-slot thunks: adjust from the IWorkEvent sub-object to CScn.
+extern "C" void WorkEvent4__4CScnFv(u8* pWorkEvent) { Scn_CallUnk60_V4(pWorkEvent - SCN_WORKEVENT_OFFSET); }
 
-extern "C" void WorkEvent3__4CScnFPv(void* self, void* param) { ((void(*)(void*))Scn_CallUnk68_V3)((char*)self - 0x54); }
+extern "C" void WorkEvent3__4CScnFPv(u8* pWorkEvent, void* param) { Scn_CallUnk68_V3(pWorkEvent - SCN_WORKEVENT_OFFSET, param); }
 
-extern "C" void fwdScnMemDtor(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
+extern "C" void fwdScnMemDtor(u8* pWorkEvent, int deleteFlag) { __dt__8CScnNw4rFv(pWorkEvent - SCN_WORKEVENT_OFFSET, deleteFlag); }
 
 // Allocate a MemManager-backed block through this CScnMem. The region handle
 // (a) tags field_0x4, the size (c) is shared by field_0xc and the allocation.
@@ -229,9 +229,7 @@ extern "C" void allocScnMem(CScnMem* self, u32 a, u32 b, u32 c) {
 // object, which delays the idx saved-copy web past the group web so retail's
 // group->r31 / idx->r30 coloring is reproduced byte-for-byte.
 extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx) {
-    CScnRootNw4rLayout* root =
-        reinterpret_cast<CScnRootNw4rLayout*>(self->mUnk8C);
-    nw4r::g3d::ScnGroup* group = root->mRootGroup;
+    nw4r::g3d::ScnGroup* group = self->mUnk8C->mRootGroup;
 
     if (idx >= group->Size()) {
         nw4r::db::Panic(lbl_eu_8056E720, 0x22b, (const char*)lbl_eu_8056E6F8);

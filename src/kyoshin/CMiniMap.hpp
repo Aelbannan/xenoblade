@@ -60,7 +60,6 @@ extern f32 lbl_eu_806670A4;   // clock anim frame target (advanceAnimTransform/8
 extern f32 lbl_eu_806670B0;   // ctor grid-scale multiplier
 extern f32 lbl_eu_806670B4;   // MiniMapUpdateMapView SRT rotation constant
 extern f32 lbl_eu_806670BC;   // MiniMapUpdateMapView scale factor
-extern f32 lbl_eu_8066A1F8;   // MiniMapUpdateMapView scale divisor
 extern f32 lbl_eu_806670C0;   // MiniMapUpdateMapView battle-target node scale
 // Panic file/format strings used by MiniMapUpdateMapView (u8 pools).
 extern u8 lbl_eu_8052CBC0[];

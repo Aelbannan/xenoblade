@@ -1977,11 +1977,11 @@ int CChainActor_CheckFacing(cf::CChainActor* self) {
         delta.y = srcPos->y - minePos->y;
         delta.z = srcPos->z - minePos->z;
         f32 ang = lbl_eu_80668A58 * nw4r::math::Atan2FIdx(delta.x, delta.z);
-        f32 lim = gauge - lbl_eu_8066A1F8;
-        while (ang < lim) ang += lbl_eu_8066A1FC;
-        lim = gauge + lbl_eu_8066A1F8;
-        while (lim < ang) ang -= lbl_eu_8066A1FC;
-        if (!(lbl_eu_80668A5C * lbl_eu_8066A210 >= fabsf(gauge - ang)))
+        f32 lim = gauge - ml::pi;
+        while (ang < lim) ang += ml::tau;
+        lim = gauge + ml::pi;
+        while (lim < ang) ang -= ml::tau;
+        if (!(lbl_eu_80668A5C * ml::deg2rad >= fabsf(gauge - ang)))
             return 0;
     }
     for (int i = 0; i <= 8; i++) {

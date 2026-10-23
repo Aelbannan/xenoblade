@@ -16,13 +16,6 @@ class CMCEffStart {
 public:
     CMCEffStart(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffStart();
-    void func_80223DB0();
-    void func_80223E40();
-    void func_80223E9C(nw4r::lyt::DrawInfo*);
-    void func_80223EBC();
-    u8 func_80223F1C();
-    void func_80223F24();
-    void func_80223F44();
     virtual void init();
     void update();
     void destroy();
@@ -50,8 +43,6 @@ class CMCEffUpRed : public CMCEffStart {
 public:
     CMCEffUpRed(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpRed();
-    void func_8022400C();
-    void func_8022409C();
     virtual void init();
     void play();
     CMCEffUpRed();
@@ -65,8 +56,6 @@ class CMCEffUpBlue : public CMCEffStart {
 public:
     CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpBlue();
-    void func_80224140();
-    void func_802241D0();
     virtual void init();
     void play();
     CMCEffUpBlue();
@@ -80,8 +69,6 @@ class CMCEffUpGreen : public CMCEffStart {
 public:
     CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpGreen();
-    void func_80224274();
-    void func_80224304();
     virtual void init();
     void play();
     CMCEffUpGreen();
@@ -101,13 +88,6 @@ class CMCEffUpPrm {
 public:
     CMCEffUpPrm(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpPrm();
-    void func_802243B4();
-    void func_8022447C();
-    void func_80224514(nw4r::lyt::DrawInfo*);
-    void func_8022457C();
-    void func_802245F0(u32);
-    void func_80224690(u32, nw4r::math::VEC3);
-    void func_802246C4(u32, u8);
 
     u8 unk4;
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; //0x8
@@ -131,17 +111,6 @@ class CMCEffSuccess {
 public:
     CMCEffSuccess(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffSuccess();
-    void func_80224760();
-    void func_802247F0();
-    void func_80224860(nw4r::lyt::DrawInfo*);
-    void func_80224880();
-    u8 func_802248E0();
-    void func_802248E8();
-    void func_80224944();
-    void func_80224998();
-    void func_802249E4();
-    void func_80224A30();
-    void func_80224AB8();
 
     u8 unk4;
     u8 unk5;
@@ -171,7 +140,6 @@ class CMCEffFailure : public CMCEffStart {
 public:
     CMCEffFailure(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffFailure();
-    void func_80224BBC();
     virtual void init();
     CMCEffFailure();
 };
@@ -185,28 +153,6 @@ public:
     CMCEffCrystal(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffCrystal();
     virtual void MCCrystal_BuildLayouts();
-    void func_80224E1C();
-    void func_80224EF8(nw4r::lyt::DrawInfo*);
-    void func_80224F84();
-    u8 func_8022503C();
-    void func_80225044();
-    void func_802250BC();
-    void func_80225170();
-    void func_802251C4();
-    void func_80225228(u32);
-    void func_80225280(u16, u8);
-    void func_802254C4();
-    void func_80225514();
-    void func_80225560();
-    void func_802255CC();
-    void func_80225694();
-    void func_802256E0();
-    void func_80225768();
-    void func_802257F0();
-    void func_80225878();
-    void func_80225900();
-    void func_80225988();
-    void func_80225A10();
 
     u8 unk4;
     u8 unk5;
@@ -257,8 +203,6 @@ class CMCEffUpRank : public CMCEffStart {
 public:
     CMCEffUpRank(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpRank();
-    void func_80225B14();
-    void func_80225BA4();
     virtual void init();
     void play();
     CMCEffUpRank();
@@ -272,8 +216,6 @@ class CMCEffDivide : public CMCEffStart {
 public:
     CMCEffDivide(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffDivide();
-    void func_80225C48();
-    void func_80225CD8();
     virtual void init();
     void play();
     CMCEffDivide();
@@ -287,21 +229,6 @@ class CMCEffCylinder {
 public:
     CMCEffCylinder(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffCylinder();
-    void func_80225D78();
-    void func_80225E20();
-    void func_80225EA0(nw4r::lyt::DrawInfo*);
-    void func_80225EC0();
-    u8 func_80225F20();
-    void func_80225F28();
-    void func_80225F7C();
-    void func_80225FD0();
-    void func_80226024(u8);
-    void func_8022603C();
-    void func_80226088();
-    void func_802260D4();
-    void func_80226120();
-    void func_802261A8();
-    void func_80226230();
 
     u8 unk4;
     u8 unk5;
@@ -330,8 +257,7 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" void playUISound__FUl(u32);
+void playUISound(u32);
 // NOTE: setPaneVisible is intentionally NOT promoted to this header. Parallel
 // TU conversions declare it with conflicting signatures in their own headers
 // (CItemBoxInfo.hpp: `(void*, void*)` vs CMCGetItemBox.hpp: `(nw4r::lyt::Pane*,

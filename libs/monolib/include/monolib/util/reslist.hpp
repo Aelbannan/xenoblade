@@ -256,13 +256,10 @@ public:
         head = this->mStartNodePtr;
         curr = head->mNext;
         
-        //Walk through the list
-        while(curr != head){
-            //Save next node in case we invalidate the curr iterator
+        while(curr != head){ // walk; save next in case curr is unlinked
             next = curr->mNext;
 
-            //If we find an entry containing the item, remove the entry
-            if(curr->mItem == item){
+            if(curr->mItem == item){ // unlink every entry holding item
                 _reslist_node<T>* prev = curr->mPrev;
                 prev->mNext = next;
                 next->mPrev = prev;
@@ -273,6 +270,9 @@ public:
         }
     }
 
+    // remove() seeded from begin()/end(); used right after a find() so the walk reuses its nodes.
+    void removeAll(const T& item){ _reslist_node<T>* curr; _reslist_node<T>* next; _reslist_node<T>* head; curr = begin().mNode; head = end().mNode;
+        while(curr != head){ next = curr->mNext; if(curr->mItem == item){ _reslist_node<T>* prev = curr->mPrev; prev->mNext = next; next->mPrev = prev; curr->mNext = nullptr; } curr = next; } }
     void pop_front(){
         _reslist_node<T>* prevNode;
         _reslist_node<T>* nextNode;

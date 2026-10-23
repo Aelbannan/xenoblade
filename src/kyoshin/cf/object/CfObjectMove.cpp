@@ -19,13 +19,11 @@
 #define Scn_FindCamItem Scn_FindCamItem_hidden
 #define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_hidden
 #define simGetLeafActData simGetLeafActData_hidden
-#define lbl_eu_8066A200 lbl_eu_8066A200_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef func_8004B9D4
 #undef Scn_FindCamItem
 #undef ScnRes_VertRayForward_E398
 #undef simGetLeafActData
-#undef lbl_eu_8066A200
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>
@@ -725,8 +723,8 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFPv(cf::CfObjectMo
     // with the 0x20 flag so its next update re-aims instead of sliding.
     const ml::CVec3* vec = (const ml::CVec3*)src;
     if ((self->unk64 & 0x80) != 0) {
-        if (ml::math::abs(vec->x) > lbl_eu_8066A208 ||
-            ml::math::abs(vec->z) > lbl_eu_8066A208) {
+        if (ml::math::abs(vec->x) > ml::epsilon ||
+            ml::math::abs(vec->z) > ml::epsilon) {
             CfObjectMoveC4FlagsView* c4 = (CfObjectMoveC4FlagsView*)self->mTargetC4;
             if (c4 != 0) {
                 c4->flags |= 0x20;
@@ -1515,14 +1513,14 @@ extern "C" void CfObjectMove_relaySubB0Slot14(void* self) {
 // name. Retail symbol is Fv but the body tail-calls vtable+0xC4 with a scaled
 // float argument - forced-name form (same as the CfObjectModel sibling).
 extern "C" void CfObject_UnkVirtualFunc32__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    self->CfObject_setMoveHeadAngle(f * lbl_eu_8066A210);
+    self->CfObject_setMoveHeadAngle(f * ml::deg2rad);
 }
 
 // Retail symbol is Fv but the body tail-calls vtable+0xC8 with a scaled
 // float argument (the +0xC8 slot consumes a float in retail despite the
 // base header's no-arg decl) - forced-name form.
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    self->CfObject_setMoveYaw(f * lbl_eu_8066A210);
+    self->CfObject_setMoveYaw(f * ml::deg2rad);
 }
 
 extern "C" void CfResObj_noop24() {}
@@ -1654,7 +1652,7 @@ void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
         return;
     }
     if ((self->mFlags68 & 0x00800000) != 0) {
-        if (ml::math::abs(view->field_A8 - lbl_eu_80666AA8) <= lbl_eu_8066A208) {
+        if (ml::math::abs(view->field_A8 - lbl_eu_80666AA8) <= ml::epsilon) {
             view->field_A8 = lbl_eu_80666AA8;
         }
         if (view->field_A8 > lbl_eu_80666AA8) {
@@ -1817,7 +1815,7 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
     if (force == 0 && ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
         force = 1;
     }
-    if (ml::math::abs(rate) > lbl_eu_8066A208 || force != 0) {
+    if (ml::math::abs(rate) > ml::epsilon || force != 0) {
         // Circular sweep: scale the position X by the rate, sweep the angle
         // through Sin/Cos, then step the +0x60C region toward the swept point.
         float sx = rate * *(const float*)self->CfObject_getMoveRateScale();

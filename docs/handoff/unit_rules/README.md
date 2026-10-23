@@ -19,6 +19,18 @@ source object: `g3d_resanmscn.o`, `lyt_resourceAccessor.o#Q34nw4r3lyt`, `lyt_bou
 dropped the "Relocation name drift" exception: do **not** add `extern "C" lbl_eu_*` spellings;
 existing ones are cleanup debt.
 
+**Burn-down 2026-10-23:** table **367 → 319** — 31 bit-identical no-ops, 8 source fixes (fake
+string/array padding removed in `fs`, `btm_pm`, `hcisu_h2`, `bta_sys_main`, `rfc_ts_frames`,
+`btm_devctl`, `dsp`, `dvdDeviceError`), 9 link-neutral/dead keys. Evidence + remaining blockers:
+`docs/evidence/decomp/unit_rules_retire_2026-10-23.md`.
+
+**EDS retire 2026-10-23 (category D, Option C via A labelling, PLAN.md §17.7):** EDS keys
+247 → 141, table 319 → 308. New unit kind `Object(MatchingCodeOnly, …)` (progress/README report
+it separately) + declarations-only checker `tools/coop/code_only_check.py` (CI). Code-only:
+`CfTaskMain`, `bta_hh_utils`, `CLib`, `snd_Task`, `CTaskGamePic`. All remaining EDS keys carry
+`.sdata2` and belong to the split-fix agent. Note: a bare-string EDS value is a *substring*
+match (not inert) — live on `CDrawGX.o`. Details: decision doc §11.
+
 **Category B progress (2026-09-28):** `docs/evidence/decomp/unit_rules_category_b.md`
 records 16 retirements (7 provably bit-identical no-ops + 9 stale source-pad/
 size repairs; 7 units moved raw-gate MISMATCH→MATCH), 25 payload-field

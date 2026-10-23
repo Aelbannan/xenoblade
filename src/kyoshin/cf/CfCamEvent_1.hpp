@@ -5,7 +5,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 class UnkClass_800821F8;  // fwd decl: only pointer-position use (getCameraDataBlock__Q22cf13CfGameManagerFv result)
 
@@ -1305,7 +1305,6 @@ struct CamEventVecSrc {
     f32 f_24;       // +0x24
 };
 
-extern f32 lbl_eu_8066A20C;   // sdata2 scale constant (state-9 branch)
 extern "C" void cfCam_xformAimPairInv(ml::CVec3* v1, ml::CVec3* v2);
 
 // Defined in this TU (retail unmangled free functions; the extern "C"
@@ -1329,8 +1328,6 @@ extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void* findObjectById__Fi(int id);
 extern "C" void* func_800BBC0C(void* obj);
-extern "C" f32   lbl_eu_8066A1F8;
-extern "C" f32   lbl_eu_8066A1FC;
 extern "C" f32   lbl_eu_8066641C;
 extern "C" f32   lbl_eu_80666418;
 extern "C" f64   lbl_eu_80666420;
@@ -1342,7 +1339,6 @@ extern "C" f32   lbl_eu_80666448;
 extern "C" f32   lbl_eu_80666444;
 extern "C" f32   lbl_eu_8066644C;
 extern "C" f32   lbl_eu_80666454;
-extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
 extern "C" const char lbl_eu_804FB5D0[0x1E0];
 extern "C" u32   Bdat_GetMaxRow_B1EC(void* self);
@@ -1424,7 +1420,6 @@ extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
 extern "C" u32   CfRes_getAllocHandle(void);
 extern "C" void  func_80240878(u8* p);
 extern "C" void  MenuFx_ClearSlotFlags(u8* base);
-extern const f32 lbl_eu_8066A200;
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" void VecMath_CatmullRom(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               CfCamEventElem* c, CfCamEventElem* d, f32 t);

@@ -12,7 +12,7 @@
 #include <monolib/math/CVec3.hpp>
 #include <revolution/MTX.h>
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 
@@ -139,7 +139,6 @@ extern const f32 lbl_eu_80667C6C;
 extern const f32 lbl_eu_80667C70;
 extern const f32 lbl_eu_80667C74;
 extern const f32 lbl_eu_80667C78[2];
-extern const f32 lbl_eu_8066A210;   // pi/2
 
 // bdat column string table + row bitmap + other globals.
 extern const char lbl_eu_80503D30[];
@@ -205,7 +204,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     }
 
     float t = lbl_eu_80667C64 * sq / scale + lbl_eu_80667C60;
-    if (t > lbl_eu_8066A208) {
+    if (t > ml::epsilon) {
         float v = t / ths->mField74;
         ths->mField70 = v;
         if (v < lbl_eu_80667C58) {
@@ -366,7 +365,7 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
     ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
     if (ths->mField6C < lbl_eu_80667C78[0]) {
         CtrlMoveEne_CommitHeadAngle(ths->mBaseData,
-                      ths->mField6C * lbl_eu_8066A210);
+                      ths->mField6C * ml::deg2rad);
         ths->mStateFunc = __ptmf_null;
         moveBaseUnlink(ths);
     } else {

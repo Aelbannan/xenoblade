@@ -392,13 +392,13 @@ extern "C" void CfGimmick_LoadBdatAreaRotation(CfGimmick* self, f32* out, void* 
     const void** col = lbl_eu_805357E8;
     s32 rawA = getBdatStringColumnValue(
         *table, &((const char*)col[7])[2], self->field_64);
-    out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
+    out[0] = (f32)*(const s16*)&rawA * ml::deg2rad;
     s32 rawB = getBdatStringColumnValue(
         *table, &((const char*)col[8])[2], self->field_64);
-    out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
+    out[1] = (f32)*(const s16*)&rawB * ml::deg2rad;
     s32 rawC = getBdatStringColumnValue(
         *table, &((const char*)col[9])[2], self->field_64);
-    out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
+    out[2] = (f32)*(const s16*)&rawC * ml::deg2rad;
 }
 
 extern "C" void CfGimmick_LoadBdatAreaPosIndexed(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
@@ -448,13 +448,13 @@ extern "C" void CfGimmick_LoadBdatAreaRotationIndexed(CfGimmick* self, f32* out,
     // emits retail's stw + lha memory truncation idiom (same as CfGimmick_LoadBdatAreaRotation).
     s32 rawA = getBdatStringColumnValue(
         *holder, col[7], self->field_64);
-    out[0] = (f32)*(const s16*)&rawA * lbl_eu_8066A210;
+    out[0] = (f32)*(const s16*)&rawA * ml::deg2rad;
     s32 rawB = getBdatStringColumnValue(
         *holder, col[8], self->field_64);
-    out[1] = (f32)*(const s16*)&rawB * lbl_eu_8066A210;
+    out[1] = (f32)*(const s16*)&rawB * ml::deg2rad;
     s32 rawC = getBdatStringColumnValue(
         *holder, col[9], self->field_64);
-    out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
+    out[2] = (f32)*(const s16*)&rawC * ml::deg2rad;
 }
 
 extern "C" int CfGimmick_CheckStateFlag1D44(u8* obj) {

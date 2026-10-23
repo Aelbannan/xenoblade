@@ -73,9 +73,8 @@ extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags);
 // Deleting destructor (retail __dt__15CKizunaTalkListFv): teardown the
 // 20x0x100 TalkListEntry array at +0x8C, then the embedded sub-objects
 // (scrollbar +0x44, CCur18 cursor +0x2C, UnkClass_8045F564 +0x04), and free
-// self when the delete flag is set. optimize_for_size merges the r30/r31
+// self when the delete flag is set. -O4,s merges the r30/r31
 // saves into the retail stmw r30 prologue.
-#pragma optimize_for_size on
 extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int flags) {
     if (self != 0) {
         if ((u8*)self + 0x8C != 0) {
@@ -90,7 +89,6 @@ extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // Element destructor of TalkListEntry (used by the array teardown). Entries
 // are plain PODs so there is no member teardown; only the backing memory is
@@ -108,19 +106,16 @@ void clearTalkEntry(TalkListEntry* entry);
 // Construct the TalkListEntry array (retail __ct__802726F4). Constructs all
 // 256 entries in place via the element ctor clearTalkEntry, then initialises
 // the count to 0 and records the owning object.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 extern "C" __declspec(noinline) void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
     __construct_array(self, (void*)clearTalkEntry, (void*)__dt__80272774, 0x14, 0x100);
     self->mCount = 0;
     self->mParent = parent;
     return self;
 }
-#pragma optimize_for_size off
 
 // Destroy the TalkListEntry array (retail __dt__802727B4), freeing the
-// backing memory when the delete flag is set. optimize_for_size merges the
+// backing memory when the delete flag is set. -O4,s merges the
 // register saves into the retail stmw/lmw frame.
-#pragma optimize_for_size on
 extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flags) {
     if (self != 0) {
         __destroy_arr(self, (void*)__dt__80272774, 0x14, 0x100);
@@ -129,9 +124,7 @@ extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flag
     }
     return self;
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
 // Initialise the Kizuna talk list (retail initTalkList): load the talk-list
 // file and the shared archive, then set up the scroll bar.
 void CKizunaTalkList::initTalkList() {
@@ -141,7 +134,6 @@ void CKizunaTalkList::initTalkList() {
     CScrollBar_loadLayoutArc(&this->mScrollBar);
     this->mUnknown86 = 0;
 }
-#pragma optimize_for_size off
 
 // Per-frame update while visible (retail updateTalkList): advance the state
 // machine, then refresh the layout and the embedded widgets.
@@ -152,7 +144,6 @@ extern "C" __declspec(noinline) void advanceTalkAnim28(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void rewindTalkAnim28(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void rewindTalkAnim24(CKizunaTalkList* self);
 
-#pragma optimize_for_size on
 void CKizunaTalkList::updateTalkList() {
     if (this->mState84 != 0) {
         switch (this->mState85) {
@@ -176,9 +167,7 @@ void CKizunaTalkList::updateTalkList() {
         CScrollBar_UpdateDispatch(&this->mScrollBar);
     }
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
 // Draw the talk list (retail drawTalkList): draw the layout, scroll bar and
 // cursor when the list is visible.
 void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
@@ -188,9 +177,7 @@ void CKizunaTalkList::drawTalkList(nw4r::lyt::DrawInfo* pDrawInfo) {
         Cur_DrawLayout(&this->mCursor, (void*)pDrawInfo);
     }
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
 // Teardown (retail teardownTalkList): release the BDAT query state, file handles,
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
 void CKizunaTalkList::teardownTalkList() {
@@ -212,7 +199,6 @@ void CKizunaTalkList::teardownTalkList() {
     deleteRegion((UnkClass_8045F564*)((u8*)this + 4));
     lbl_eu_806648B8 = NULL;
 }
-#pragma optimize_for_size off
 
 // Populate a talk-list entry with the given fields (retail fillTalkEntry).
 // noinline: retail keeps these as out-of-line calls from buildTalkList.
@@ -768,7 +754,6 @@ extern "C" __declspec(noinline) void renderTalkRows(CKizunaTalkList* self) {
 // Rebuild/render the cursor row highlight (retail moveTalkCursor): resolve the
 // two layout panes named after the current row, build the cursor target
 // position from them and hand it to the cursor via its vtable slot 4.
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
     nw4r::math::VEC3 pos;
     u32 _pad;
@@ -788,7 +773,6 @@ extern "C" __declspec(noinline) void moveTalkCursor(CKizunaTalkList* self) {
 
     ((CCur18View*)&self->mCursor[0])->v02(&pos);
 }
-#pragma optimize_for_size off
 
 // Rebuild the visible talk list (retail rebuildTalkList): requires both the
 // shared BDAT data and the layout accessor. Builds a fresh local table via

@@ -25,8 +25,6 @@ void ReverseYAxis(math::MTX34* pMtx) {
 
 } // namespace
 
-extern "C" const void* __vt__Q34nw4r3lyt4Pane;
-extern "C" const void* __vt__Q44nw4r3lyt6detail8PaneBase;
 namespace nw4r {
 namespace lyt {
 
@@ -568,31 +566,11 @@ extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUs();
 extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUsUs();
 extern "C" void __dt__Q34nw4r3lyt4PaneFv();
 extern "C" void* GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv();
-extern "C" void CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
-extern "C" void Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
 extern "C" void DrawSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
-extern "C" void Animate__Q34nw4r3lyt4PaneFUl();
-extern "C" void AnimateSelf__Q34nw4r3lyt4PaneFUl();
 extern "C" void* GetVtxColor__Q34nw4r3lyt4PaneCFUl();
 extern "C" void SetVtxColor__Q34nw4r3lyt4PaneFUlQ34nw4r2ut5Color();
-extern "C" unsigned char GetColorElement__Q34nw4r3lyt4PaneCFUl();
-extern "C" void SetColorElement__Q34nw4r3lyt4PaneFUlUc();
 extern "C" unsigned char GetVtxColorElement__Q34nw4r3lyt4PaneCFUl();
 extern "C" void SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc();
-extern "C" void* FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
-extern "C" void* FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
-extern "C" void BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
-extern "C" void UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb();
-extern "C" void UnbindAllAnimation__Q34nw4r3lyt4PaneFb();
-extern "C" void UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
-extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
-extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
-extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
-extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb();
-extern "C" unsigned char GetMaterialNum__Q34nw4r3lyt4PaneCFv();
-extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFv();
-extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFUl();
-extern "C" void LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
 extern "C" {
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_805698F0[30] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt4PaneFv, (const void*)&GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv, (const void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&DrawSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt4PaneFUl, (const void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl, (const void*)&GetVtxColor__Q34nw4r3lyt4PaneCFUl, (const void*)&SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color, (const void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&GetVtxColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb, (const void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb, (const void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb, (const void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl, (const void*)&LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, nullptr };
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569968[4] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt5GroupFv, nullptr };

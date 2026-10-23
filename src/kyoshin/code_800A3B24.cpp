@@ -6,7 +6,7 @@
 #include "monolib/math/MTRand.hpp"
 #include "monolib/core/CDrawGX.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail SDA2/data constants referenced by the PS math helpers below. Declared
@@ -15,11 +15,9 @@
 extern const float lbl_eu_806667D8;  // 0.0f
 // 1.0f (lbl_eu_806667E8)
 extern const float lbl_eu_806667E8;
-// ml::epsilon (lbl_eu_8066A208)
-// pi (lbl_eu_8066A1F8)
-extern const float lbl_eu_8066A1F8;
-// 2*pi (lbl_eu_8066A1FC)
-extern const float lbl_eu_8066A1FC;
+// ml::epsilon (ml::epsilon)
+// pi (ml::pi)
+// 2*pi (ml::tau)
 // nw4r FSqrt assert source-file string + message (retail .data)
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
@@ -27,8 +25,7 @@ extern const char lbl_eu_80526300[];
 extern const float lbl_eu_806667F8;
 // 0.5f (lbl_eu_806667F4) - random-direction offset
  extern const float lbl_eu_806667F4;
-// random-angle range (lbl_eu_8066A200)
- extern const float lbl_eu_8066A200;
+// random-angle range (ml::halfpi)
 // random-angle table scale (lbl_eu_806667D0)
  extern const float lbl_eu_806667D0;
 // radians -> FIdx conversion factor (lbl_eu_806667D4)
@@ -122,14 +119,14 @@ public:
 void VecMath_RandomAngleOffset(ml::CVec3* out, int seed) {
     // Lazily fill the random-angle offset table (element 0 stays untouched).
     if (lbl_eu_80663E91 == 0) {
-        lbl_eu_80572AA0[1] = lbl_eu_8066A1F8;
-        lbl_eu_80572AA0[2] = lbl_eu_8066A200;
-        lbl_eu_80572AA0[3] = lbl_eu_806667D0 * lbl_eu_8066A200;
+        lbl_eu_80572AA0[1] = ml::pi;
+        lbl_eu_80572AA0[2] = ml::halfpi;
+        lbl_eu_80572AA0[3] = lbl_eu_806667D0 * ml::halfpi;
         lbl_eu_80663E91 = 1;
     }
     ml::MTRand* rand = ml::MTRand::getInstance();
     // Random angle in [0, 8066A200) plus one of the four table offsets.
-    float angle = lbl_eu_8066A200 * rand->randFloat() + lbl_eu_80572AA0[lbl_eu_80663E90];
+    float angle = ml::halfpi * rand->randFloat() + lbl_eu_80572AA0[lbl_eu_80663E90];
     float rnd = rand->randFloat1();
     float fseed = (float)seed;
     lbl_eu_80663E90 = (lbl_eu_80663E90 + 1) & 3;
@@ -146,10 +143,10 @@ ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v) {
     // otherwise PSVECNormalize runs in place.
     bool result = false;
     bool temp = false;
-    if (ml::math::abs(v->x) <= lbl_eu_8066A208 && ml::math::abs(v->y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(v->x) <= ml::epsilon && ml::math::abs(v->y) <= ml::epsilon) {
         temp = true;
     }
-    if (temp && ml::math::abs(v->z) <= lbl_eu_8066A208) {
+    if (temp && ml::math::abs(v->z) <= ml::epsilon) {
         result = true;
     }
     if (!result) {
@@ -167,10 +164,10 @@ float VecMath_NormalizeRetMag(ml::CVec3* v) {
     // (near-)zero). Matches ml::CVec3::isZero + PSVECMag + VEC3Scale.
     bool result = false;
     bool temp = false;
-    if (ml::math::abs(v->x) <= lbl_eu_8066A208 && ml::math::abs(v->y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(v->x) <= ml::epsilon && ml::math::abs(v->y) <= ml::epsilon) {
         temp = true;
     }
-    if (temp && ml::math::abs(v->z) <= lbl_eu_8066A208) {
+    if (temp && ml::math::abs(v->z) <= ml::epsilon) {
         result = true;
     }
     if (result) {
@@ -187,10 +184,10 @@ float VecMath_LengthXZ(const ml::CVec3& v) {
     // (negative len2) and a 0 return for (near-)zero vectors.
     bool temp = false;
     bool result = false;
-    if (ml::math::abs(v.x) <= lbl_eu_8066A208 && ml::math::abs(v.y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(v.x) <= ml::epsilon && ml::math::abs(v.y) <= ml::epsilon) {
         temp = true;
     }
-    if (temp && ml::math::abs(v.z) <= lbl_eu_8066A208) {
+    if (temp && ml::math::abs(v.z) <= ml::epsilon) {
         result = true;
     }
     if (result) return lbl_eu_806667D8;
@@ -204,7 +201,7 @@ float VecMath_LengthXZ(const ml::CVec3& v) {
 float VecMath_SafeSqrtF(float x) {
     // Sqrt for positive inputs; warns on negatives (nw4r FSqrt assert) and
     // returns 0 for non-positive or near-zero inputs.
-    if (ml::math::abs(x) > lbl_eu_8066A208) {
+    if (ml::math::abs(x) > ml::epsilon) {
         if (!(x >= lbl_eu_806667D8)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
@@ -216,16 +213,16 @@ float VecMath_SafeSqrtF(float x) {
 void VecMath_WrapAnglesPi(ml::CVec3* v) {
     // Wrap each component into (-pi, pi] using the pi / 2*pi constants.
     float x = v->x;
-    while (lbl_eu_8066A1F8 <= x) x -= lbl_eu_8066A1FC;
-    while (x < -lbl_eu_8066A1F8) x += lbl_eu_8066A1FC;
+    while (ml::pi <= x) x -= ml::tau;
+    while (x < -ml::pi) x += ml::tau;
     v->x = x;
     float y = v->y;
-    while (lbl_eu_8066A1F8 <= y) y -= lbl_eu_8066A1FC;
-    while (y < -lbl_eu_8066A1F8) y += lbl_eu_8066A1FC;
+    while (ml::pi <= y) y -= ml::tau;
+    while (y < -ml::pi) y += ml::tau;
     v->y = y;
     float z = v->z;
-    while (lbl_eu_8066A1F8 <= z) z -= lbl_eu_8066A1FC;
-    while (z < -lbl_eu_8066A1F8) z += lbl_eu_8066A1FC;
+    while (ml::pi <= z) z -= ml::tau;
+    while (z < -ml::pi) z += ml::tau;
     v->z = z;
 }
 
@@ -313,10 +310,10 @@ extern "C" void VecMath_BuildFacingMatrix(ml::CMat34* out, const ml::CVec3* src,
     norm.set(*src);
     bool result = false;
     bool temp = false;
-    if (ml::math::abs(norm.x) <= lbl_eu_8066A208 && ml::math::abs(norm.y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(norm.x) <= ml::epsilon && ml::math::abs(norm.y) <= ml::epsilon) {
         temp = true;
     }
-    if (temp && ml::math::abs(norm.z) <= lbl_eu_8066A208) {
+    if (temp && ml::math::abs(norm.z) <= ml::epsilon) {
         result = true;
     }
     if (!result) {
@@ -341,7 +338,7 @@ extern "C" void VecMath_BuildFacingMatrix(ml::CMat34* out, const ml::CVec3* src,
         lbl_eu_80663E93 = 1;
     }
 
-    if (ml::math::abs(lbl_eu_806667E8 - ml::math::abs(norm.y)) <= lbl_eu_8066A208) {
+    if (ml::math::abs(lbl_eu_806667E8 - ml::math::abs(norm.y)) <= ml::epsilon) {
         // Near-vertical direction: derive from (1, 0, 1).
         ml::CVec3::cross(copyA, norm, lbl_eu_80572ABC);
         axis = copyA;
@@ -532,10 +529,10 @@ extern "C" int VecMath_SegSphereProbe(cf::CfObject* self, const ml::CVec3& a, co
         dir.set(dirTmp);
         bool zero = false;
         bool zeroTmp = false;
-        if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+        if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
             zeroTmp = true;
         }
-        if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+        if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
             zero = true;
         }
         if (zero) {
@@ -547,10 +544,10 @@ extern "C" int VecMath_SegSphereProbe(cf::CfObject* self, const ml::CVec3& a, co
             dir = d3;
             bool zero2 = false;
             bool zero2Tmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zero2Tmp = true;
             }
-            if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zero2Tmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero2 = true;
             }
             if (zero2) return 1;
@@ -617,10 +614,10 @@ extern "C" int VecMath_PushOutCircleXZ(cf::CfObject* self, nw4r::math::VEC3* poi
         dir.y = lbl_eu_806667D8;  // XZ-plane direction
         bool zero = false;
         bool zeroTmp = false;
-        if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+        if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
             zeroTmp = true;
         }
-        if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+        if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
             zero = true;
         }
         if (zero) {
@@ -633,10 +630,10 @@ extern "C" int VecMath_PushOutCircleXZ(cf::CfObject* self, nw4r::math::VEC3* poi
             dir.y = lbl_eu_806667D8;
             bool zero2 = false;
             bool zero2Tmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zero2Tmp = true;
             }
-            if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zero2Tmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero2 = true;
             }
             if (zero2) return 1;
@@ -677,10 +674,10 @@ bool VecMath_PushApartCircles(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3*
             // isZero() inlined (reads the retail epsilon label):
             bool zero = false;
             bool zeroTmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zeroTmp = true;
             }
-            if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero = true;
             }
             if (zero) {
@@ -692,10 +689,10 @@ bool VecMath_PushApartCircles(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3*
             // Re-check after randomisation:
             zero = false;
             zeroTmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zeroTmp = true;
             }
-            if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero = true;
             }
             if (!zero) {
@@ -750,10 +747,10 @@ extern "C" int VecMath_PushOutSphere(cf::CfObject* self, ml::CVec3* point, float
         dir.set(dirTmp);
         bool zero = false;
         bool zeroTmp = false;
-        if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+        if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
             zeroTmp = true;
         }
-        if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+        if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
             zero = true;
         }
         if (zero) {
@@ -765,10 +762,10 @@ extern "C" int VecMath_PushOutSphere(cf::CfObject* self, ml::CVec3* point, float
             dir = d3;
             bool zero2 = false;
             bool zero2Tmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zero2Tmp = true;
             }
-            if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zero2Tmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero2 = true;
             }
             if (zero2) return 1;
@@ -828,10 +825,10 @@ extern "C" int VecMath_PushOutCylinder(cf::CfObject* self, const ml::CVec3& poin
             dir.z = dirTmp.z;
             bool zero = false;
             bool zeroTmp = false;
-            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                 zeroTmp = true;
             }
-            if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            if (zeroTmp && ml::math::abs(dir.z) <= ml::epsilon) {
                 zero = true;
             }
             if (zero) {
@@ -845,10 +842,10 @@ extern "C" int VecMath_PushOutCylinder(cf::CfObject* self, const ml::CVec3& poin
                 dir.y = lbl_eu_806667D8;
                 bool zero2 = false;
                 bool zero2Tmp = false;
-                if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+                if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
                     zero2Tmp = true;
                 }
-                if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+                if (zero2Tmp && ml::math::abs(dir.z) <= ml::epsilon) {
                     zero2 = true;
                 }
                 if (zero2) return 1;
@@ -996,7 +993,7 @@ extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager
     // Sphere grid: two stacked rings (i, i+1) x 9 segment vertices; every
     // angle is recomputed naively as (2*pi*n)/8 in double, then converted to
     // FIdx degrees for the trig kernels - retail does no CSE here.
-    double twoPi = lbl_eu_80666808 * lbl_eu_8066A1F8;
+    double twoPi = lbl_eu_80666808 * ml::pi;
     // Segment count as a variable: MWCC const-propagates the value (li 8)
     // but keeps the int->double conversion intrinsic runtime-expanded, which
     // is exactly what retail emits per angle.
@@ -1180,7 +1177,7 @@ extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
     // Cylinder wall drawn as two 18-vertex triangle strips. Every angle is
     // recomputed naively in double exactly like retail - no CSE between the
     // CosFIdx/SinFIdx calls.
-    double twoPi = lbl_eu_80666808 * lbl_eu_8066A1F8;
+    double twoPi = lbl_eu_80666808 * ml::pi;
     int seg = 8;
     draw.begin(6, 0x12);
     for (int i = 0; i <= seg; i++) {

@@ -236,7 +236,7 @@ int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
     // retail); shared CERotTrig stays frac-first for the cardinal builders.
     // CERotEulerXYZ/DCD94 use it too.
     f32 mag = PSVECMag(v);
-    bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= lbl_eu_8066A208;
+    bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= ml::epsilon;
     if (nearOne) {
         PSMTXIdentity(mtx);
         return 1;

@@ -296,9 +296,8 @@ extern "C" void* __dt__801EBBC0(CBaseCur* _this, int flags) {
 }
 
 // func_801EE87C / __dt__801ECBC0
-// optimize_for_size merges the r30/r31 saves into stmw/lmw + fixes the copy
+// -O4,s merges the r30/r31 saves into stmw/lmw + fixes the copy
 // order (CTagProcessor dtor family pattern).
-#pragma optimize_for_size on
 extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
     if (_this != NULL) {
         __dt__8CBaseCurFv(_this, 0);
@@ -308,7 +307,6 @@ extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
     }
     return _this;
 }
-#pragma optimize_for_size off
 
 // ============================================================================
 // ItemBoxGetTab: byte at this+0xA8, index bounded to a 12-entry table
@@ -507,8 +505,6 @@ union CIBLF32Rec {
     float f[6];
 };
 extern const CIBLF32Rec lbl_eu_8050715C;
-#pragma push
-#pragma optimize_for_size on
 extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     u32 itemId = LookupItemTypeTable(itemData);
     u32 kind = BdatGetItemType(itemData);
@@ -535,7 +531,6 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     }
     return result * 10;
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_BuildLineLayout: build the item-box line layout - load the layout arc, bind
@@ -561,8 +556,6 @@ void __ct__CItemBoxLine(){}
 // embedded-member flag. MWCC supplies the this-null check, the flags>0
 // delete guard and the stmw/lmw frame from the dtor shape itself.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 CItemBoxLine::~CItemBoxLine() {
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&mSysWin), -1);
     __dt__10CScrollBarFv(reinterpret_cast<CScrollBar*>(&mScrollBar310[0]), -1);
@@ -578,7 +571,6 @@ CItemBoxLine::~CItemBoxLine() {
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&pad_14[0]), -1);
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&field04), -1);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_LoadFiles: load the item-box line's four files (MEM2 handle via
@@ -586,8 +578,6 @@ CItemBoxLine::~CItemBoxLine() {
 // event, then initialise the info2 state, num-select and scroll-bar members,
 // and finally dispatch the syswin's last vtable slot (index 32) to finish.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_LoadFiles(CItemBoxLine* self) {
     self->field24 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x171], self, 0, 0);
@@ -602,7 +592,6 @@ void ItemBoxLine_LoadFiles(CItemBoxLine* self) {
     CScrollBar_loadLayoutArc(&self->mScrollBar310[0]);
     reinterpret_cast<CSysWin*>(&self->mSysWin)->loadSystemArc();
 }
-#pragma pop
 
 void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     if (self->field4C == 0) return;
@@ -642,8 +631,6 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     sysWinDispatchPhase(&self->mSysWin);
 }
 
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field4C == 0) return;
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(&self->mInfo2D0[0], drawInfo);
@@ -667,7 +654,6 @@ void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
         Cur_DrawLayout(&self->mCur70, drawInfo);
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_UnloadFiles: teardown of the loaded item-box line. Stop the two UI sounds,
@@ -676,8 +662,6 @@ void ItemBoxLine_DrawLayout(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
 // resource accessors and the two 16-byte mem regions at +0x04/+0x14, silence
 // the four cursors, then destroy the embedded sub-systems.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     CBdat::getEntry(2);
     CBdat::getEntry(5);
@@ -713,7 +697,6 @@ void ItemBoxLine_UnloadFiles(CItemBoxLine* self) {
     CScrollBar_Teardown(reinterpret_cast<CScrollBar*>(&self->mScrollBar310[0]));
     sysWinTermLayout(&self->mSysWin);
 }
-#pragma pop
 
 
 // ============================================================================
@@ -729,8 +712,6 @@ u8 ItemBoxLine_IsBusy(CItemBoxLine* self) {
     return self->field3A0;
 }
 
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_OpenLine(CItemBoxLine* self) {
     if (self->field50 != 0) return;
     self->field50 = 1;
@@ -752,7 +733,6 @@ void ItemBoxLine_OpenLine(CItemBoxLine* self) {
     CScrollBar_UpdateThumb(&self->mScrollBar310[0], 7, tabs->count);
     CScrollBar_requestScrollIn(&self->mScrollBar310[0]);
 }
-#pragma pop
 
 void CItemBoxLine::ItemBoxLine_PushTabByte(unsigned char val) {
     unsigned char n = reinterpret_cast<unsigned char*>(this)[0x63];
@@ -831,8 +811,6 @@ void ItemBoxLine_TabPrev(CItemBoxLine* self) {
 // the entry's capacity) and repush value*step; otherwise page the tab line up
 // by one row (wrapping through the tab count) and refresh the line.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) {
         if (self->field50 == 9) {
@@ -905,7 +883,6 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
     }
     playUISound__FUl(1);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_CursorPageDown: tab page-down / tab-cursor interaction. When the syswin
@@ -917,8 +894,6 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
 // the entry's capacity; otherwise page the tab line down by 7 (wrap at the
 // tab count) and refresh the line.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) {
         if (self->field50 >= 9) {
@@ -993,7 +968,6 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
     }
     playUISound__FUl(1);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_CursorPageUp: per-frame tab/cursor interaction. When the tab cursor is
@@ -1001,8 +975,6 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
 // to the cursor; when the num-select is busy, step its page position;
 // otherwise handle the tab page up/down wrap and refresh the line.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     if (self->field3A0 != 0) {
@@ -1056,7 +1028,6 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         playUISound__FUl(1);
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_CursorPageDownRow: page-up mirror of ItemBoxLine_CursorPageUp. When the tab cursor is
@@ -1065,8 +1036,6 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
 // is busy, step its page position up by 10 clamped to the page's capacity;
 // otherwise handle the tab page-up wrap (unk38E += 7) and refresh the line.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin) != 0) return;
     if (self->field3A0 != 0) {
@@ -1124,7 +1093,6 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
     CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     playUISound__FUl(1);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_ConfirmOverlayOrHint: item-box line update. When the syswin overlay is armed the
@@ -1170,8 +1138,6 @@ void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
 // syswin detail pane with kind-range-dependent text, armed pages either
 // dispatch likewise or raise the "unavailable" flag (state 3 beep).
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
     char* pool = lbl_eu_805071B0;
     if (CSysWin_getUnk34(&self->mSysWin)) {
@@ -1270,7 +1236,6 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
         playUISound__FUl(5);
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_RefreshTabPanes: refresh the seven tab-slot panes. Build the twelve RGBA
@@ -1404,8 +1369,6 @@ void ItemBoxLine_Info2SelectNext(void* self) {
 // slot 8), decompose it into page/column (field3A1 = slot/4, field3A2 =
 // slot%4 via a float multiply), prime the cursors and push the slot VEC3.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
     if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) return;
     if (self->field3A0 != 0) {
@@ -1460,7 +1423,6 @@ void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
         playUISound__FUl(5);
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_ResolveFocusId: item-box focus resolver. Returns a cursor/focus id based on
@@ -1561,8 +1523,6 @@ void ItemBoxLine_PushSyswinCursor(CItemBoxLine* self) {
 // ItemBoxLine_CommitOverlayState: refresh the active tab - select from num-select, set the name,
 // and advance to state 6. csvtab index = (0x38c + 0x38e) & 0xFF.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_CommitOverlayState(CItemBoxLine* self) {
     if (!CSysWin_isActive(&self->mSysWin)) return;
     self->field50 = 3;
@@ -1581,15 +1541,12 @@ void ItemBoxLine_CommitOverlayState(CItemBoxLine* self) {
     NumSel_EnterState1Close_B0D4(&self->mNumSel);
     self->field50 = 6;
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_CompactTabList: refresh the tab list - re-register each tab entry with the
 // layout, compact empty slots (bubble-shift), recount, re-register, then
 // refresh the line and its slot panes.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void ItemBoxLine_CompactTabList(CItemBoxLine* self) {
     if (self->field40 == 0) return;
     if (self->field3C == 0) return;
@@ -1633,7 +1590,6 @@ extern "C" __declspec(noinline) void ItemBoxLine_CompactTabList(CItemBoxLine* se
     ItemBoxLine_RebuildTabList((void*)self);
     self->field58 = 1;
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_DrawTabRowText: refresh a tab pane's texture. When a key id is given, resolve
@@ -1684,8 +1640,6 @@ void ItemBoxLine_DrawTabRowIcon(CItemBoxLine* self, u32 arg2, u32 arg3) {
 // name via the owner table; otherwise a signed hint byte picks one of the
 // fixed strings / name providers.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_FormatName(CItemBoxLine* self, u32 arg4, s8 arg5, u32 arg6) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805071B0[0x23c], arg6 + 1);
@@ -1715,7 +1669,6 @@ void ItemBoxLine_FormatName(CItemBoxLine* self, u32 arg4, s8 arg5, u32 arg6) {
     }
     LayoutSetTextBoxFmtValue(self->field40, buf, str.mString, 0);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_SetPaneVisible: format the pane name (skipping the leading marker char of the
@@ -1848,8 +1801,6 @@ u32 ItemBoxLine_RefreshLineState(CItemBoxLine* self) {
 // info2 state and rebuild the 12 page slots: copy the per-page word, flag and
 // position data from the page tables into the +0x180 page region.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_RefreshPageList(CItemBoxLine* self) {
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
@@ -1892,7 +1843,6 @@ void ItemBoxLine_RefreshPageList(CItemBoxLine* self) {
         } while (i < 12);
     }
 }
-#pragma pop
 // ============================================================================
 // ItemBoxLine_RefreshTabLabels: refresh the seven tab-slot panes - format each slot's two
 // pane names, then show/hide them: the slot matching the current tab position
@@ -1963,8 +1913,6 @@ extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
 // ============================================================================
 // ItemBoxLine_ResetPageTables: reset the page word/vector tables and hide every line pane.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_ResetPageTables(CItemBoxLine* self, u32 itemData) {
     for (u8 i = 0; i < 12; i++) {
         self->pageWords4E0[i] = 0;
@@ -2011,7 +1959,6 @@ void ItemBoxLine_ResetPageTables(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x577], true), 0);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x583], true), 0);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_ShowSlotCounts: show the item-slot panes, bind per-kind slot data (counts,
@@ -2121,8 +2068,6 @@ void ItemBoxLine_ShowSlotCounts(CItemBoxLine* self, u32 itemData) {
 // the three slots, then pick the slot-name format strings via the kind selector
 // (a compare ladder plus a jump-table switch) and refresh the pane colors.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_ShowSlotCounters(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x413], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x443], true), 1);
@@ -2209,15 +2154,12 @@ selDone:
     PaneMatSetTevColorsByName(self->field40, &lbl_eu_805071B0[0x485], lbl_eu_806645D8, lbl_eu_806645E0);
     ItemBoxLine_BuildPageData((void*)self, itemData);
 }
-#pragma pop
 
 
 // ============================================================================
 // ItemBoxLine_SetInfo2Item: dispatch on the active tab (tab entry type) and the item pick
 // kind to route to a tab-specific layout refresh / page-navigation helper.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_SetInfo2Item(CItemBoxLine* self, u32 itemData) {
     ItemBoxLine_ResetPageTables((void*)self, itemData);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x3e6], CItem_sumFamilyByte6(itemData));
@@ -2261,14 +2203,11 @@ void ItemBoxLine_SetInfo2Item(CItemBoxLine* self, u32 itemData) {
         break;
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_ShowPageTabs: show the page tab panes and fill the active item's name /
 // category text into the syswin layout panes.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_ShowPageTabs(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x42b], true), 1);
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x561], true), 1);
@@ -2289,7 +2228,6 @@ void ItemBoxLine_ShowPageTabs(CItemBoxLine* self, u32 itemData) {
     }
     LayoutSetTextBoxFmtValue(self->field40, &lbl_eu_805071B0[0x583], name2, 0);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_FormatGemName: kind-3 item slot. Shows the five slot panes, resolves the
@@ -2299,8 +2237,6 @@ void ItemBoxLine_ShowPageTabs(CItemBoxLine* self, u32 itemData) {
 // level name. Finally stores the category halfword + state 9 and copies the
 // pane-anchor position into the +0x558 vec.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_FormatGemName(CItemBoxLine* self, u32 itemData) {
     char* pool = lbl_eu_805071B0;
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(pool + 0x41f, true), 1);
@@ -2337,7 +2273,6 @@ void ItemBoxLine_FormatGemName(CItemBoxLine* self, u32 itemData) {
     nw4r::math::VEC3 pos2 = pos;
     copyVEC3((nw4r::math::VEC3*)((u8*)self + 0x558), &pos2);
 }
-#pragma pop
 
 
 // ============================================================================
@@ -2347,8 +2282,6 @@ void ItemBoxLine_FormatGemName(CItemBoxLine* self, u32 itemData) {
 // kinds 2/3 require bit 6 / bit 5 of byte +0xE9, each falling back to the
 // kind-agnostic default (index 44 vs 43), then binds it to the text pane.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_FormatKindDName(CItemBoxLine* self, u32 itemData) {
     setPaneVisible(self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x437], true), 1);
     u32 owner = (u32)lbl_eu_80664110;
@@ -2381,7 +2314,6 @@ void ItemBoxLine_FormatKindDName(CItemBoxLine* self, u32 itemData) {
     }
     LayoutSetTextBoxFmtValue(self->field40, &lbl_eu_805071B0[0x62f], str, 0);
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_BuildPageData: build the item-box page data.
@@ -2389,8 +2321,6 @@ void ItemBoxLine_FormatKindDName(CItemBoxLine* self, u32 itemData) {
 // a texture/name; then push the slot's kind/counters/position into the page
 // arrays at index i+8 (guarded to 12) and refresh the pane hierarchy.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 void ItemBoxLine_BuildPageData(CItemBoxLine* self, u32 itemData) {
     u32 itemId = LookupItemTypeTable(itemData);
     u16 kind = BdatGetItemId(itemData);
@@ -2472,7 +2402,6 @@ void ItemBoxLine_BuildPageData(CItemBoxLine* self, u32 itemData) {
         }
     }
 }
-#pragma pop
 
 // ============================================================================
 // ItemBoxLine_ProbeAvailability: kind/availability probe. Resolve the item's kind via the
@@ -2519,8 +2448,6 @@ int ItemBoxLine_ProbeAvailability(u32 unused, u32 key) {
 // the common-arc branch re-attaches its accessor and refreshes the tab list;
 // the bdat/scratch branches register their buffers with the CBdat system.
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
-#pragma push
-#pragma optimize_for_size on
 bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
     if (this->field24 == (u32)evt->mFileHandle) {
         reinterpret_cast<UnkClass_8045F564*>(&this->field04)->createRegion(
@@ -2742,7 +2669,6 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
     }
     return false;
 }
-#pragma pop
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // ============================================================================

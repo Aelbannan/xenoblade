@@ -53,7 +53,7 @@ extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResul
     // Integrate mouth-open angle from the owner view's delta.
     f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
-    if (ths->field_0x10 > lbl_eu_8066A1F8) {
+    if (ths->field_0x10 > ml::pi) {
         // Reset to fully closed, then re-randomize open/close speeds.
         ths->field_0x10 = lbl_eu_8066B310;
         ths->field_0x14 = lbl_eu_8066B310;
@@ -95,7 +95,7 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
     }
     f32 dt = Scn_GetFrameDelta(ths->field_0x04->field_04);
     ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
-    if (ths->field_0x10 > lbl_eu_8066A1F8) {
+    if (ths->field_0x10 > ml::pi) {
         // Reset to fully closed, then re-randomize open/close speeds.
         ths->field_0x10 = lbl_eu_8066B310;
         ths->field_0x14 = lbl_eu_8066B310;

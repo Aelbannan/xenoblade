@@ -2,65 +2,16 @@
 #include "monolib/lib.hpp"
 #include "monolib/core.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/data_vtables.hpp"
 
 extern "C" {
 CProcRoot* lbl_eu_806655A0;   // defined here (blob monolibdata1d dissolve; 4-byte sbss slot)
 // Shared string pool: "CDesktop\0CProcRoot" - create uses +9 ("CProcRoot").
 extern const char lbl_eu_80522514[];
-// Vtable/RTTI targets referenced by the CProcRoot data definitions below.
-// NOTE: __dt__11CWorkThreadFv keeps the 2-arg C-linkage form from
-// CLibVM.hpp (data_vtables.hpp's 0-arg form would raise MWCC 10197).
-extern void __dt__9CProcRootFv(CProcRoot* self, int flags);
-extern bool wkStandbyLogin__9CProcRootFv();
-extern bool wkStandbyLogout__9CProcRootFv();
-// IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).
-extern int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern int WorkEvent3__10IWorkEventFPv(void*);
-extern int WorkEvent4__10IWorkEventFv();
-extern void OnPauseTrigger__10IWorkEventFb(int);
-extern int WorkEvent6__10IWorkEventFv();
-extern int WorkEvent7__10IWorkEventFv();
-extern int WorkEvent8__10IWorkEventFv();
-extern int WorkEvent9__10IWorkEventFv();
-extern int WorkEvent10__10IWorkEventFv();
-extern int WorkEvent11__10IWorkEventFv();
-extern int WorkEvent12__10IWorkEventFv();
-extern int WorkEvent13__10IWorkEventFv();
-extern int WorkEvent14__10IWorkEventFv();
-extern int WorkEvent15__10IWorkEventFv();
-extern int WorkEvent16__10IWorkEventFv();
-extern int WorkEvent17__10IWorkEventFv();
-extern int WorkEvent18__10IWorkEventFv();
-extern int WorkEvent19__10IWorkEventFv();
-extern int WorkEvent20__10IWorkEventFv();
-extern int WorkEvent21__10IWorkEventFv();
-extern int WorkEvent22__10IWorkEventFv();
-extern int WorkEvent23__10IWorkEventFv();
-extern int WorkEvent24__10IWorkEventFv();
-extern int WorkEvent25__10IWorkEventFv();
-extern int WorkEvent26__10IWorkEventFv();
-extern int WorkEvent27__10IWorkEventFv();
-extern int WorkEvent28__10IWorkEventFv();
-extern int WorkEvent29__10IWorkEventFv();
-extern int WorkEvent30__10IWorkEventFv();
-extern void WorkEvent31__10IWorkEventFv();
-// CWorkThread work-method vtable slots.
-extern void wkUpdate__11CWorkThreadFv();
-extern void wkRender__11CWorkThreadFv();
-extern void wkRenderAfter__11CWorkThreadFv();
-extern void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-// RTTI locators (defined by kyoshin/CGame.cpp, .sdata 0x806618A0/0x806618A8).
-extern void* __RTTI__10IWorkEvent;
-extern void* __RTTI__11CWorkThread;
 
-extern "C" mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
+// Base ctor called on raw storage: create() hand-inlines CProcRoot's ctor (see below).
 extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const char* name,
                                                         CWorkThread* parent, int cap);
-extern "C" void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread* ths,
-                                                                     CWorkThread* parent,
-                                                                     bool prepend);
 }
 
 // --- Blob monolibdata1.s / monolibdata1d.s dissolve: this TU owns .data
@@ -148,35 +99,21 @@ bool CProcRoot::wkStandbyLogout() {
 }
 
 CProcRoot* CProcRoot::create(CWorkThread* pParent) {
-    const char* name;
-    CWorkThread* parent;
-    mtl::ALLOC_HANDLE handle;
-    CProcRoot* procRoot;
-    u32* rootVt;
-    u32 type;
+    const char* name = lbl_eu_80522514 + 9; // "CProcRoot"
+    CWorkThread* parent = pParent;
+    mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
+    CProcRoot* procRoot = static_cast<CProcRoot*>(mtl::MemManager::allocate(sizeof(CProcRoot), handle));
 
-    name = lbl_eu_80522514 + 9;
-    parent = pParent;
-    handle = getWorkMem__17CWorkThreadSystemFv();
-    procRoot = static_cast<CProcRoot*>(
-        allocate__Q23mtl10MemManagerFUlUl(0x1C8, handle));
-
-    if (procRoot == nullptr) {
-        goto create_entry_work;
+    if (procRoot != nullptr) {
+        // Inlined CProcRoot(name, parent): base ctor, vptr, singleton, thread type.
+        // The vtable is the hand-laid lbl_eu_8056B2A8 (class is novtable), so the
+        // vptr store has to be explicit.
+        __ct__11CWorkThreadFPCcP11CWorkThreadi(procRoot, name, parent, MAX_CHILD);
+        *reinterpret_cast<u32**>(procRoot) = lbl_eu_8056B2A8;
+        lbl_eu_806655A0 = procRoot;
+        procRoot->mType = THREAD_CPROCROOT;
     }
 
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(procRoot, name, parent, MAX_CHILD);
-
-    rootVt = lbl_eu_8056B2A8;
-    type = THREAD_CPROCROOT;
-    struct CProcRootVptrView {
-        u32* vt;
-    };
-    reinterpret_cast<CProcRootVptrView*>(procRoot)->vt = rootVt;
-    lbl_eu_806655A0 = procRoot;
-    procRoot->mType = (CWorkThread::ThreadType)type;
-
-create_entry_work:
-    entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(procRoot, parent, false);
+    CWorkUtil::entryWork(procRoot, parent, false);
     return procRoot;
 }

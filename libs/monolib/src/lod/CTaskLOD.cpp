@@ -7,6 +7,7 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 
 class CTaskLOD;
 
@@ -45,7 +46,6 @@ public:
 };
 } // namespace LOD
 
-struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
 // +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26
@@ -424,14 +424,14 @@ extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, v
 void CTaskLOD::activateLOD() {
     if (lbl_eu_80665730[0]) {
         clearElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, 1);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)1);
     }
 }
 
 void CTaskLOD::deactivateLOD() {
     if (lbl_eu_80665730[0]) {
         setElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, 0);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)0);
     }
 }
 
@@ -442,7 +442,7 @@ void CTaskLOD::deactivateLOD() {
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
     if (lbl_eu_80665730[0]) {
         toggleElementFlag__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, flag);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(self, flag);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(self, (void*)flag);
     }
 }
 // Value-delegates.  Like the void wrappers above, each forwards to the
@@ -468,7 +468,7 @@ void CTaskLOD::refreshLOD() {
 extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
     if (lbl_eu_80665730[0]) {
         configureShrinkTargets__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV27(val, self, (void*)(u32)a);
+        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV27(self, (void*)a, val);
     }
 }
 

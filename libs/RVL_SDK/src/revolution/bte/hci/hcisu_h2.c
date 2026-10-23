@@ -168,7 +168,7 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
                     cb->state[hcisu_event] = HCISU_H2_STATE_BAD;
                     LogMsg_0(0x70000,
                              "HCIS: Invalid length for incoming HCI "
-                             "message.\0\0\0\0\0");
+                             "message.");
                     break;
                 }
                 if (payload_len != 0) {

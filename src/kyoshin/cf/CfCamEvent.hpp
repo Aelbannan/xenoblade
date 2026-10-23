@@ -196,7 +196,6 @@ extern const f32 lbl_eu_80666278;
 extern const f32 lbl_eu_8066627C;
 extern const f32 lbl_eu_80666280;
 extern const f32 lbl_eu_80666284;
-extern const f32 lbl_eu_8066A20C;
 extern f32 lbl_eu_80661B58;
 extern char lbl_eu_805262F0[];
 extern char lbl_eu_805262C8[];

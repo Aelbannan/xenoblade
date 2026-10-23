@@ -207,4 +207,3 @@ extern const float lbl_eu_80667714;           // u32 column -> float scale
 extern const float lbl_eu_80667718;           // s16 column -> float scale
 extern const double lbl_eu_80667720;          // 2^52 + 2^31 (u32/s16 -> float magic)
 extern const double lbl_eu_80667728;          // 2^52 (u16 -> float magic)
-extern const float lbl_eu_8066A210;           // final position scale

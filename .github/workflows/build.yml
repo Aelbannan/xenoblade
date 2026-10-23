@@ -30,6 +30,11 @@ jobs:
         python tools/coop/run.py equivalence differential
         python tools/ppc_equivalence/run.py --help
 
+    - name: symbols.txt duplicate-global ratchet
+      # Cheap half of `run.py link-gate`; the full link gate is local-only
+      # (see tools/coop/link_gate.py docstring).
+      run: python -c "import sys; from tools.coop import link_gate; sys.exit(link_gate.symbols_only())"
+
   build:
     # This is a *private* build container.
     # See docs/github_actions.md for more information.
@@ -84,6 +89,10 @@ jobs:
         python configure.py --map --version ${{ matrix.version }} \
             --binutils /binutils --compilers /compilers
         ninja all_source progress build/${{ matrix.version }}/report.json
+
+    # PLAN.md §17.7: code-only units may only extern-declare foreign data
+    - name: Code-only declarations check
+      run: python tools/coop/code_only_check.py --region ${{ matrix.version }}
 
     # Upload map files
     - name: Upload map

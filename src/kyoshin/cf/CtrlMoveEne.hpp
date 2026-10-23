@@ -929,12 +929,10 @@ extern const f32 lbl_eu_8066661C;   // 0.5 (upper gap scale)
 extern const f32 lbl_eu_806665D0;   // 1.5 (lower gap scale)
 // CtrlMoveEne_TrackMoveTarget turn-probe constants: random-walk scale (-1), pi/2 turn bias.
 extern const f32 lbl_eu_8066663C;   // -1
-extern const f32 lbl_eu_8066A200;   // pi/2
 // CtrlMoveEne_UpdateFleeWander rand-scaled heading constants (angle scale, lerp offsets).
 extern const f32 lbl_eu_80666610;
 extern const f32 lbl_eu_80666638;
 extern const f32 lbl_eu_80666668;
-extern const f32 lbl_eu_8066A204;
 // CtrlMoveEne_ScanGimmickTargets gimmick-scan distance threshold.
 extern const f32 lbl_eu_80666678;
 // CtrlMoveEne_RunMoveStateMachine wander-scan constants: proximity radius scale and the
@@ -947,7 +945,6 @@ extern const f32 lbl_eu_8066668C;
 extern const f32 lbl_eu_80666690;
 extern const f32 lbl_eu_80666694;
 extern const f32 lbl_eu_80666648;   // CtrlMoveEne_InitMoveHook fallback for field_0x5C
-extern const f32 lbl_eu_8066A210;   // pi/2 (CtrlMoveEne_InitMoveHook rand angle scale)
 extern const f32 lbl_eu_80666628;   // CtrlMoveEne_StepMoveEntry pursuit-move scale
 extern const f32 lbl_eu_806665EC;   // CtrlMoveEne_CheckKeepMoving +0x168 reset threshold
 extern const f32 lbl_eu_80666640;   // CtrlMoveEne_CheckKeepMoving close-range threshold

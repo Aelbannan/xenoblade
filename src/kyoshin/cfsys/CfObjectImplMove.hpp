@@ -964,7 +964,6 @@ extern const f32 lbl_eu_80666CB8;
 extern const f32 lbl_eu_80666CBC;
 extern const f32 lbl_eu_80666CC0;
 extern const f32 lbl_eu_80666CC8;
-extern const f32 lbl_eu_8066A200;   // pi/2 clamp (sdata2)
 extern const char lbl_eu_8052ADB0[]; // nw4r::db::Warning source file
 extern const char lbl_eu_8052AD88[]; // nw4r::db::Warning message
 extern const char lbl_eu_80526300[]; // nw4r::db::Warning message

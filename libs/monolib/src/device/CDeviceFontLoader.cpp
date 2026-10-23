@@ -1,158 +1,94 @@
 // CDeviceFontLoader - Font file loading work thread
-//
-// Implemented as a plain struct + extern "C" functions to match the retail
-// binary's symbol names exactly:
-//   - MWCC 1.1 mangles the ctor as __ct__17CDeviceFontLoaderFPCcP11CWorkThread
-//     (retail: __ct__CDeviceFontLoader), and
-//   - inheriting from CWorkThread makes MWCC emit a local vtable plus weak
-//     stubs for inherited virtuals (wkRender/wkRenderAfter/...), which blows
-//     the .text split budget by 0x10.
-// The retail vtable (lbl_eu_8056C8A8, defined in monolibdata2.s) is used
-// directly by the ctor instead.
 
 #include <string.h>
 #include <types.h>
 
 #include "monolib/work.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceFontLoader.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
 
-// Size: 0x210
-struct CDeviceFontLoader {
-    // 0x000-0x1C3: CWorkThread member layout (public in CWorkThread.hpp)
-    u32* vtable;                     // 0x00
-    ml::FixStr<64> mName;            // 0x04
-    CWorkThread::ThreadState mState; // 0x48
-    WORK_ID mWorkID;                 // 0x4C
-    CWorkThread::ThreadType mType;   // 0x50
-    mtl::ALLOC_HANDLE mAllocHandle;  // 0x54
-    CWorkThread* mParent;            // 0x58
-    reslist<CWorkThread*> mChildren; // 0x5C
-    u32 mFlags;                      // 0x7C
-    CMsgParam<8> mMsgQueue;          // 0x80
-    u32 unk1BC;                      // 0x1BC
-    WORK_ID mExceptionWorkID;        // 0x1C0
-
-    // 0x1C4-0x20F: CDeviceFontLoader members
-    u32 mSomeData;            // 0x1C4 setFontPath arg (callers pass 1)
-    char mFileName[64];       // 0x1C8
-    u32 mFileNameLen;         // 0x208
-    CFileHandle* mFileHandle; // 0x20C
-};
-
-// extern "C" to produce retail-exact symbol names
 extern "C" u32 lbl_eu_8056C8A8[40]; // vtable (defined below)
 extern "C" u32 lbl_eu_80663748[2];  // .sdata RTTI locator (defined below)
 extern "C" u32 lbl_eu_8056C948[6];  // .data RTTI chain (defined below)
-extern "C" {
 
-// CWorkThread / runtime helpers referenced by the retail symbol names
+extern "C" {
+// Base ctor called on raw storage by the unmangled __ct__CDeviceFontLoader.
 void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* self, const char* name,
                                            CWorkThread* parent, int capacity);
-void __dt__11CWorkThreadFv(CWorkThread* self, int dealloc);
-void __dl__FPv(void* p);
-bool wkStandbyLogin__11CWorkThreadFv(CWorkThread* self);
-bool wkStandbyLogout__11CWorkThreadFv(CWorkThread* self);
-void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CWorkThread* self, int evt);
-// CDeviceFont::createFontInfo - Fv mangling, but retail caller passes a
-// second (ignored) argument in r4 (the just-claimed file data pointer)
-void createFontInfo__11CDeviceFontFv(u32 self, u8* arg2);
+// CDeviceFont::createFontInfo - Fv mangling, but the retail caller passes the
+// loader's font arg in r3 and the just-claimed file data in r4.
+void createFontInfo__11CDeviceFontFv(u32 arg, u8* pData);
 
-
-
-
-
-
-
-CDeviceFontLoader* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name,
-                                           CWorkThread* parent) {
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(reinterpret_cast<CWorkThread*>(self), name,
-                                          parent, 0);
-    self->vtable = lbl_eu_8056C8A8;
+CDeviceFontLoader* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* pName,
+                                           CWorkThread* pParent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, pName, pParent, 0);
+    *reinterpret_cast<u32**>(self) = lbl_eu_8056C8A8; // novtable: hand-laid vtable
     self->mFileName[0] = '\0';
     self->mFileNameLen = 0;
     self->mFileHandle = nullptr;
     self->mType = CWorkThread::THREAD_CDEVICEFONTLOADER;
     return self;
 }
+} // extern "C"
 
-CDeviceFontLoader* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
-    if (self != nullptr) {
-        __dt__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self), 0);
-        if (dealloc > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
-}
+CDeviceFontLoader::~CDeviceFontLoader() {}
 
-void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, u32 arg1, const char* pPath) {
-    self->mSomeData = arg1;
+void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, u32 arg, const char* pPath) {
+    self->mFontArg = arg;
     self->mFileNameLen = strlen(pPath);
     strcpy(self->mFileName, pPath);
 }
 
-bool wkStandbyLogin__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
+bool CDeviceFontLoader::wkStandbyLogin() {
     if (!CWorkSystemPack::arePacksLoaded()) {
         return false;
     }
 
-    if (CDeviceFile::getInstance() == nullptr) {
-        goto fail;
-    }
-
-    if (!CDeviceFile::isInitialized()) {
-        goto fail;
-    }
-
-    self->mFileHandle = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM1(),
-        self->mFileName, (IWorkEvent*)self, 0, 0);
-    CDeviceFile::tryUpdateJobPriority(self->mFileHandle, 0);
-    CDeviceFile::setHandleFlag1(self->mFileHandle);
-    return wkStandbyLogin__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self));
-
-fail:
-    return false;
-}
-
-bool wkStandbyLogout__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
-    if (self->mFileHandle != nullptr) {
-        CDeviceFile::cancel(self->mFileHandle);
-        self->mFileHandle = nullptr;
-    }
-
-    if (self->mChildren.empty()) {
-        return wkStandbyLogout__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self));
+    if (CDeviceFile::getInstance() != nullptr && CDeviceFile::isInitialized()) {
+        mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM1(), mFileName, this, 0, 0);
+        CDeviceFile::tryUpdateJobPriority(mFileHandle, 0);
+        CDeviceFile::setHandleFlag1(mFileHandle);
+        return CWorkThread::wkStandbyLogin();
     }
 
     return false;
 }
 
-bool OnFileEvent__17CDeviceFontLoaderFP10CEventFile(CDeviceFontLoader* self, CEventFile* pEventFile) {
-    if (pEventFile->mFileHandle != self->mFileHandle) {
-        goto skip;
+bool CDeviceFontLoader::wkStandbyLogout() {
+    if (mFileHandle != nullptr) {
+        CDeviceFile::cancel(mFileHandle);
+        mFileHandle = nullptr;
     }
 
-    if (pEventFile->unk0 == 1) {
-        u8* pData = self->mFileHandle->mData;
-        self->mFileHandle->mData = nullptr;
-        createFontInfo__11CDeviceFontFv(self->mSomeData, pData);
-        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(
-            reinterpret_cast<CWorkThread*>(self), CWorkThread::EVT_NONE);
+    if (mChildren.empty()) {
+        return CWorkThread::wkStandbyLogout();
     }
 
-    self->mFileHandle = nullptr;
+    return false;
+}
 
-skip:
+bool CDeviceFontLoader::OnFileEvent(CEventFile* pEventFile) {
+    if (pEventFile->mFileHandle == mFileHandle) {
+        if (pEventFile->unk0 == 1) {
+            u8* pData = mFileHandle->mData;
+            mFileHandle->mData = nullptr;
+            createFontInfo__11CDeviceFontFv(mFontArg, pData);
+            wkSetEvent(EVT_NONE);
+        }
+
+        mFileHandle = nullptr;
+    }
+
     return true;
 }
 
-} // extern "C"
-
-
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// Load-bearing: the slot targets are declared inside a namespace. This TU builds
+// with -RTTI on and defines a polymorphic class, so global-scope extern "C"
+// __RTTI__ declarations (e.g. via data_vtables.hpp) clash with MWCC's own RTTI
+// objects (error 10322 "illegal name overloading").
 namespace FontLoaderBlob {
 // [.data] 0x8056C8A8-0x8056C960 (184B): CDeviceFontLoader vtable (160B) +
 // RTTI chain (24B).  The ctor installs lbl_eu_8056C8A8 directly and every
@@ -160,6 +96,9 @@ namespace FontLoaderBlob {
 // never auto-emits __vt__ here.
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
 extern "C" void OnFileEvent__17CDeviceFontLoaderFP10CEventFile();
+extern "C" void __dt__17CDeviceFontLoaderFv();
+extern "C" void wkStandbyLogin__17CDeviceFontLoaderFv();
+extern "C" void wkStandbyLogout__17CDeviceFontLoaderFv();
 extern "C" u32 __RTTI__10IWorkEvent;
 extern "C" u32 __RTTI__11CWorkThread;
 extern "C" void WorkEvent3__10IWorkEventFPv();
@@ -199,9 +138,9 @@ extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
 
 extern "C" u32 lbl_eu_8056C8A8[40] = {
     (u32)&lbl_eu_80663748, 0x00000000,
-    (u32)&__dt__17CDeviceFontLoaderFv,
+    (u32)&FontLoaderBlob::__dt__17CDeviceFontLoaderFv,
     (u32)&FontLoaderBlob::WorkEvent1__10IWorkEventFPvPCc,
-    (u32)&OnFileEvent__17CDeviceFontLoaderFP10CEventFile,
+    (u32)&FontLoaderBlob::OnFileEvent__17CDeviceFontLoaderFP10CEventFile,
     (u32)&FontLoaderBlob::WorkEvent3__10IWorkEventFPv,
     (u32)&FontLoaderBlob::WorkEvent4__10IWorkEventFv,
     (u32)&FontLoaderBlob::OnPauseTrigger__10IWorkEventFb,
@@ -234,8 +173,8 @@ extern "C" u32 lbl_eu_8056C8A8[40] = {
     (u32)&FontLoaderBlob::wkUpdate__11CWorkThreadFv,
     (u32)&FontLoaderBlob::wkRender__11CWorkThreadFv,
     (u32)&FontLoaderBlob::wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__17CDeviceFontLoaderFv,
-    (u32)&wkStandbyLogout__17CDeviceFontLoaderFv,
+    (u32)&FontLoaderBlob::wkStandbyLogin__17CDeviceFontLoaderFv,
+    (u32)&FontLoaderBlob::wkStandbyLogout__17CDeviceFontLoaderFv,
     (u32)&FontLoaderBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 extern "C" u32 lbl_eu_8056C948[6] = {

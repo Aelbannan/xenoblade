@@ -16,7 +16,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CMat34.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/lyt/lyt_material.h>
 
@@ -215,7 +215,6 @@ extern f64 lbl_eu_80667358;
 extern f64 lbl_eu_80667360;
 #ifndef CODE_80135FDC_CPP
 #endif
-extern const float lbl_eu_8066A20C;
 extern u32 lbl_eu_806621F4;
 extern const char lbl_eu_80500664[];
 

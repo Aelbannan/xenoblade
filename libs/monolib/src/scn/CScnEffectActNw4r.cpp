@@ -198,13 +198,13 @@ u32 EffectActNw4rCheckRange(CScnEffectActNw4r* self) {
     ok = 1;
     if ((mgr->field_0x7a4 & 0x20000000) == 0) {
         // Upper gate fails when val < AB74 + A208.
-        if (!(mgr->field_0x304 >= lbl_eu_8066AB74 + lbl_eu_8066A208)) {
+        if (!(mgr->field_0x304 >= lbl_eu_8066AB74 + ml::epsilon)) {
             ok = 0;
         }
     }
     if (ok == 0) {
         // Below the low bound the act stays usable; only the gap band clears.
-        if (!(mgr->field_0x304 <= lbl_eu_8066AB74 - lbl_eu_8066A208)) {
+        if (!(mgr->field_0x304 <= lbl_eu_8066AB74 - ml::epsilon)) {
             result = 0;
         }
     }

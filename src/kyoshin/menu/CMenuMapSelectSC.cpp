@@ -475,7 +475,7 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
                 self->mState = 6;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
+            if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 (&self->mFade)->In();
@@ -568,7 +568,7 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
                     self->mState = 6;
                 }
             } else if ((pressed & 0x20) != 0) {
-                if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
+                if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
                     FloorMap_ConfirmSelect(&self->mFloorMap);
                 } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                     (&self->mFade)->In();

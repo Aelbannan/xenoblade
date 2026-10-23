@@ -3,7 +3,7 @@
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32, conflicting with the
+// code_80135FDC.hpp declares ml::epsilon as u32, conflicting with the
 // const-float ml::math epsilon copy in monolib FloatUtils.hpp (pulled in via
 // the CfPadData.hpp include chain). Rename it away; this TU never uses it.
 #include "kyoshin/code_80135FDC.hpp"

@@ -3,17 +3,18 @@
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 
 // CfCollSphere_DebugDrawSimple: debug draw for sphere collision shape (single call).
-extern "C" void CfCollSphere_DebugDrawSimple(void* context, cf::CfObjectColl* shape) {
+// r3 (the impl's this) is unused.
+extern "C" void CfCollSphere_DebugDrawSimple(void* /*unused*/, cf::CfObjectColl* shape) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    renderSphere__Q22cf18CfDebugDrawManagerFv(reinterpret_cast<void*>(pos), static_cast<float>(uval));
+    renderSphere__Q22cf18CfDebugDrawManagerFv(pos, static_cast<float>(uval));
 }
 
 // CfCollSphere_DebugDrawXform: debug draw for sphere with extra transform params.
-extern "C" void CfCollSphere_DebugDrawXform(void* context, cf::CfObjectColl* shape, void* a, void* b) {
+extern "C" void CfCollSphere_DebugDrawXform(void* /*unused*/, cf::CfObjectColl* shape, cf::CfObject* query, ml::CVec3* out) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    VecMath_PushOutSphere(a, pos, static_cast<float>(uval), b);
+    VecMath_PushOutSphere(query, pos, static_cast<float>(uval), out);
 }
 
 // --- absorb: retail data sections (split1) ---

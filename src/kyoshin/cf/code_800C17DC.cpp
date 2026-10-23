@@ -747,7 +747,6 @@ void CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFv();
 void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv();
 void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFv();
 void CfObject_syncEnableState__Q22cf10CfObjectPcFv();
-void __dt__800BFA14();
 void __dt__Q22cf10CfObjectPcFv();
 void __dt__Q22cf11CfObjectNpcFv();
 void __dt__Q22cf12CfObjectMoveFv();
@@ -795,6 +794,10 @@ void updatePointState__Q22cf13CfObjectPointFv();
 void update__Q22cf11CfObjectObjFv();
 void validatePointState__Q22cf13CfObjectPointFv();
 }
+
+// C++ linkage: defined in CfObjectObj.cpp (retail flat-named deleting dtor).
+namespace cf { class CfObjectObj; }
+cf::CfObjectObj* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag);
 
 void* lbl_eu_80529690[] = {
     (void*)&lbl_eu_806618D8, 0, (void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv, (void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,

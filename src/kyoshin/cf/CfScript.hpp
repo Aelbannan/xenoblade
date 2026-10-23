@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+struct CFileHandle;
+
 // Retail data labels (.data/.sdata) used by the cf script manager.  Declared
 // at global scope so MWCC keeps the retail names unmangled (no extern "C"
 // needed - global-scope data names are not mangled).
@@ -20,15 +22,15 @@ extern void* lbl_eu_80526DE8[];
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" {
-    void vmExec();
-    void vmUnlink(void* ctx);
-    void pluginRegist__Fv();
-    void* KyoshinHeap_GetFieldA0();
-    void* KyoshinHeap_GetFieldA4();
-    void* KyoshinHeap_GetFieldA8();
-    void* CfRes_readCommonArchive(void* fileHandle, const char* path, void* callback);
+    u8* KyoshinHeap_GetFieldA0();
+    u8* KyoshinHeap_GetFieldA4();
+    u8* KyoshinHeap_GetFieldA8();
+    CFileHandle* CfRes_readCommonArchive(u8* vmContext, const char* path, void* callback);
+    // CDeviceFile::getFileSize: retail callers pass a second (flags) argument
+    // the FPCc mangling does not carry, so it cannot be declared through
+    // CDeviceFile.hpp (same symbol, different signature -> name overloading).
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
-    void cancel__11CDeviceFileFP11CFileHandle(void* fileHandle);
+    void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* fileHandle);
 }
 
 namespace cf {
@@ -41,7 +43,7 @@ class CfScriptManager;
 class CEventFile {
 public:
     s32 field_00;          // 0x00 event type
-    void* field_04;        // 0x04 owning CFileHandle*
+    CFileHandle* field_04; // 0x04 owning file handle
     u8 _08[0x0C - 0x08];
     const char* field_0C;  // 0x0C path string
     u8 _10[0x14 - 0x10];
@@ -72,7 +74,7 @@ public:
     u32 mNameLen;          // 0x44
 
     // 0x48: file handle for pending load
-    void* mFileHandle;     // 0x48 (CFileHandle*)
+    CFileHandle* mFileHandle; // 0x48
 
     // 0x4C: flags
     u32 mFlags;            // 0x4C
@@ -105,7 +107,7 @@ public:
     // noinline: these are retail `bl`-thunks (forward this+name to CfScript_LoadScript);
     // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
     void __declspec(noinline) loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
-    void func_80068B20(const char* n) { loadSlotZero(n); } // compat
+    void __declspec(noinline) CfScript_PutSlot1(const char* name);  // load slot 1 (offset 0x58)
     void __declspec(noinline) CfScript_PutSlot2(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
@@ -124,8 +126,6 @@ public:
     // Main update and exec
     void __declspec(noinline) updateScript();
     void resetScripts();
-    void func_800694B0() { updateScript(); } // compat
-    void func_8006953C() { resetScripts(); } // compat
 };
 
 } // namespace cf

@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tools.coop.lib.code_only import code_only_units  # noqa: E402
 from tools.coop.lib.config import CoopConfig, load_config  # noqa: E402
 from tools.coop.lib.targets import ACCEPTED_MATCH_STATUSES, load_targets  # noqa: E402
 
@@ -41,8 +42,21 @@ def _row_bytes(target) -> int:
         return 0
 
 
-def generate_block(config: CoopConfig) -> str:
+def code_only_rows(configure_text: str) -> list[str]:
+    """PLAN.md §17.7: code-only units are reported separately, never as data matches."""
+    units = code_only_units(configure_text)
+    listed = ", ".join(f"`{Path(u).stem}`" for u in units) if units else "none"
+    return [
+        f"| Code-only units (`MatchingCodeOnly`: code linked, data owned elsewhere; "
+        f"not counted as data) | {len(units)} ({listed}) |",
+    ]
+
+
+def generate_block(config: CoopConfig, configure_text: str | None = None) -> str:
     targets = load_targets(config)
+    if configure_text is None:
+        configure_path = ROOT / "configure.py"
+        configure_text = configure_path.read_text(encoding="utf-8") if configure_path.is_file() else ""
     buildable = sum(1 for t in targets if t.buildable)
     accepted = [t for t in targets if t.status in ACCEPTED_MATCH_STATUSES]
     full = sum(1 for t in accepted if t.status == "FULL_MATCH")
@@ -77,6 +91,7 @@ def generate_block(config: CoopConfig) -> str:
         f"| — `FULL_MATCH` bytes | {full_bytes} ({pct(full_bytes, total_bytes)}) |",
         f"| — `EQUIVALENT_MATCH` bytes | {equiv_bytes} ({pct(equiv_bytes, total_bytes)}) |",
         f"| Active (in progress) | {active} |",
+        *code_only_rows(configure_text),
         "",
         END,
     ]

@@ -32,12 +32,10 @@ void CTTask<CTaskGame>::Draw() {
 }
 
 // Retail __dt__18CTTask<9CTaskGame>Fv is 0x50 (stmw r30 frame); the default
-// frame spills stw individually (0x58), so keep optimize_for_size on like
+// frame spills stw individually (0x58), so keep -O4,s like
 // CTaskGameEff's dtor.
-#pragma optimize_for_size on
 template<>
 CTTask<CTaskGame>::~CTTask() {}
-#pragma optimize_for_size off
 
 CTaskGame* lbl_eu_80663D18;
 
@@ -119,12 +117,9 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int initFlag) :
 // ONLY the CProcess base. The IWorkEvent base-dtor call is elided because
 // the strong empty copy below is in this TU (MWCC empty-function call
 // elimination); the redundant this-guard branch retail shows stays.
-#pragma push
-#pragma optimize_for_size on
 CTaskGame::~CTaskGame(){
     lbl_eu_80663D18 = nullptr;
 }
-#pragma pop
 
 // Strong empty dtor for retail symbol placement (0x80040858 lives in this
 // split). Declaration-only in the header (key function) so the IWorkEvent
@@ -159,8 +154,7 @@ struct CTaskGameScnCreateParam {
 // the subsystem tasks (LOD / collision / NAND manager), register the render
 // callback, start mission 0 through cf::CTaskGameCf, create the event/pic
 // tasks and seed the move-hook ptmf from a .data pool.
-// optimize_for_size: retail saves r28-r31 with bl _savegpr_28.
-#pragma optimize_for_size on
+// -O4,s: retail saves r28-r31 with bl _savegpr_28.
 void CTaskGame::Init(){
     // Four 0x3040-byte enum-list slots at +0x174, each with a busy byte at
     // +0x184 cleared to 0.
@@ -278,12 +272,10 @@ void CTaskGame::Init(){
         reinterpret_cast<CTaskGamePtmfWords*>(this)->field_0x44 = *pool;
     }
 }
-#pragma optimize_for_size off
 
 // Retail create saves r28-r31 with a single stmw r28 (MWCC merges the
-// callee-saved saves only under optimize_for_size, same as the CTTask / reslist
+// callee-saved saves only under -O4,s, same as the CTTask / reslist
 // dtors in this TU).
-#pragma optimize_for_size on
 CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int initFlag){
     mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
     CTaskGame* taskGame = new (handle) CTaskGame(pView, pThread, initFlag);
@@ -292,7 +284,6 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int initFlag){
     taskGame->Regist(gameProcess, false);
     return taskGame;
 }
-#pragma optimize_for_size off
 
 // __declspec(noinline): retail callers (CTaskGame_movePrepDual / CTaskGame_moveFadeOut) call
 // this vec4 setter out of line; without it MWCC inlines the 4-store body.
@@ -327,8 +318,7 @@ extern "C" void GamePicShiftTexParams(void* self, u32 index, const u32* src);
 // ptmf to pool lbl_eu_805255C8, clear the busy byte at unkCC+0x8C, push the
 // lbl_eu_80665D74 constant through the vec4 setter into the unkCC object
 // (index 0), then set the busy byte at unkD0+0x8C and repeat for unkD0.
-// optimize_for_size: retail keeps a plain mulli for fps*5.
-#pragma optimize_for_size on
+// -O4,s: retail keeps a plain mulli for fps*5.
 extern "C" void CTaskGame_movePrepDual(CTaskGame* self) {
     self->unk100++;
     if (CTaskGame_windowGate(self) == 0) {
@@ -350,7 +340,6 @@ extern "C" void CTaskGame_movePrepDual(CTaskGame* self) {
                       reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
     }
 }
-#pragma optimize_for_size off
 // Target us-80041f80: set the move-hook ptmf from a .data pool entry. Bit
 // 0x800000 of unk68 selects pool lbl_eu_8052573C, otherwise lbl_eu_80525730;
 // no-op while bit 0x100 is set.
@@ -417,12 +406,10 @@ __declspec(noinline) bool CTaskGame::isFlag01Set() {
 void CTaskGame_stub_80042710() {}
 CLoad* lbl_eu_80663D1C;
 
-// optimize_for_size: retail booleanizes with addic/subfe, not neg/or/rlwinm.
-#pragma optimize_for_size on
+// -O4,s: retail booleanizes with addic/subfe, not neg/or/rlwinm.
 extern "C" int CTaskGame_hasLoadScreen() {
     return lbl_eu_80663D1C != 0;
 }
-#pragma optimize_for_size off
 // Retail CTaskGame_checkBusy7C: flag gate over unk7C bits. Returns 1 when either the
 // {0x80,0x40} or the {0x200,!0x100} bit-pair holds, or when bit 0x400 is set;
 // only the all-clear path falls through to 0.
@@ -493,7 +480,6 @@ extern "C" __declspec(noinline) void* CTaskGame_allocObjSlot() {
 // u32 offset). Early-returns when the handle is null.
 // noinline: retail __dt__80043E88 calls this out-of-line (bl CTaskGame_freeObjSlot);
 // without it MWCC inlines the registry scan into the dtor.
-#pragma optimize_for_size on  // -O4,s keeps base+offset induction (retail add r5,r6,r4)
 extern "C" __declspec(noinline) void CTaskGame_freeObjSlot(void* obj) {
     if (obj == 0) return;
     CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18);
@@ -504,7 +490,6 @@ extern "C" __declspec(noinline) void CTaskGame_freeObjSlot(void* obj) {
         }
     }
 }
-#pragma optimize_for_size off
 extern "C" __declspec(noinline) bool CTaskGame_alwaysTrue(CTaskGame* self) { (void)self; return true; }
 extern "C" __declspec(noinline) void CTaskGame_setFlag200(CTaskGame* inst, u32 a, u32 b) {
     unsigned int flags = inst->unk68;
@@ -686,14 +671,12 @@ extern "C" int CTaskGame_isStreamPaused() {
     return isStreamPaused__7CLibCriFv(static_cast<unsigned int>(lbl_eu_80663D18->unkD8));
 }
 // noinline: retail callers (moveTitleTick / openVision / setStreamVol) bl this.
-// optimize_for_size: retail uses addic/subfe on (unkD8 + 1) != 0.
-#pragma optimize_for_size on
+// -O4,s: retail uses addic/subfe on (unkD8 + 1) != 0.
 extern "C" __declspec(noinline) int CTaskGame_playTimeGate() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) return 0;
     return (lbl_eu_80663D18->unkD8 + 1) != 0;
 }
-#pragma optimize_for_size off
 extern "C" u32 CTaskGame_enumListGet(u32* ptr) { return *ptr; }
 // IScnRender base impls (retail blr): cbRenderBefore + legacy handleEmptyRender (0x800444C0).
 void IScnRender::cbRenderBefore() {} void IScnRender::handleEmptyRender() {}
@@ -972,8 +955,7 @@ L_80043514:
 // the unkE8 CRI stream, unregister the IScnRender subobject (+0x58) from the
 // scene, virtually delete the four +0x174 slots and the loading-screen
 // object, then tear down the scn/Hbm state.
-// optimize_for_size: retail saves r27-r31 with a single stmw.
-#pragma optimize_for_size on
+// -O4,s: retail saves r27-r31 with a single stmw.
 void CTaskGame::Term() {
     unkCC = 0;
     unkD0 = 0;
@@ -1013,15 +995,13 @@ void CTaskGame::Term() {
     releasePoolMemory__17UnkClass_8047CD0CFv();
     CLibHbm::setHbmStopFlag(false);
 }
-#pragma optimize_for_size off
 // Retail setLoadingCaption: set the title/loading text pair (unk86/unk88), copy
 // the caption string (or the default lbl_eu_804FA890[0x6D] when null) into
 // the unkA4 FixStr<32> (strlen+strcpy via the inline operator=), then raise
 // the 0x2 unk68 flag, set the 0x128 request code, and when the unkD4 object
-// is live, poke its +0x60 flag word. optimize_for_size: retail saves r29-r31
+// is live, poke its +0x60 flag word. -O4,s: retail saves r29-r31
 // with a single stmw (MWCC merges the callee-saved saves only under size
 // optimization).
-#pragma optimize_for_size on
 __declspec(noinline) void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, const char* caption, s16 capMode) {
     unk86 = titleId;
     unk88 = textId;
@@ -1043,13 +1023,11 @@ __declspec(noinline) void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, 
         reinterpret_cast<CTaskGameUnkD4Obj*>(unkD4)->field_0x60 &= ~2;
     }
 }
-#pragma optimize_for_size off
 
 // ml::FixStr<32>::format (retail standalone symbol, referenced from other
 // TUs): vsnprintf into a 0x100 stack buffer, then copy into the fixed string
 // (mString at +0, mLength at +0x20). Same shape as the FixStr<128> version in
-// CfScript.cpp. optimize_for_size: retail saves r29-r31 with a single stmw.
-#pragma optimize_for_size on
+// CfScript.cpp. -O4,s: retail saves r29-r31 with a single stmw.
 template <>
 void ml::FixStr<32>::format(const char* fmt, ...) {
     char buffer[0x100];
@@ -1061,7 +1039,6 @@ void ml::FixStr<32>::format(const char* fmt, ...) {
     mLength = (int)std::strlen(buffer);
     std::strcpy(mString, buffer);
 }
-#pragma optimize_for_size off
 // Target us-80041110: per-frame tick. Decrement the unk78 frame budget and
 // bump unk100; while the budget is exhausted: mark the unkCC object busy
 // (+0x8C = 1), push the float constants through the vec4 setter into the
@@ -1096,10 +1073,9 @@ extern "C" void CTaskGame_moveFadeOut(CTaskGame* self) {
 // move-hook ptmf to pool lbl_eu_80525598, clear the busy byte at unkD0+0x8C,
 // then depending on the lbl_eu_80663D2C flag either switch the move-hook
 // ptmf to pool lbl_eu_805255A4 or set the busy byte at unkCC+0x8C.
-// optimize_for_size: retail keeps a plain mulli for fps*5 (no rlwinm+add
+// -O4,s: retail keeps a plain mulli for fps*5 (no rlwinm+add
 // strength reduction) and the stw/scheduling follow the size-optimized
 // shape.
-#pragma optimize_for_size on
 extern "C" void CTaskGame_movePrepFade(CTaskGame* self) {
     self->unk100++;
     if (CTaskGame_windowGate(self) == 0) {
@@ -1125,7 +1101,6 @@ extern "C" void CTaskGame_movePrepFade(CTaskGame* self) {
         }
     }
 }
-#pragma optimize_for_size off
 // Target us-800412b0: bump the frame counter; when the window-state gate
 // (CTaskGame_windowGate) is clear, tick the unk78 frame budget. While the budget
 // lasts (below fps*4 - fps/2) and the CTaskGame_padConfirm gate opens: halve the
@@ -1178,11 +1153,9 @@ void CTaskGame_stub_80040DE4(){}
 // lbl_eu_80525568+0x78, otherwise the move-hook switches to pool
 // lbl_eu_80525568+0x84. The pool base is held in one register (retail
 // materializes &lbl_eu_80525568 once before the gate).
-// optimize_for_size: retail saves r29-r31 with the _savegpr_29 helper (MWCC
+// -O4,s: retail saves r29-r31 with the _savegpr_29 helper (MWCC
 // -O4,s emits _savegpr already at 3 saved regs; plain -O4 would use
 // individual stw's).
-// NOTE: no optimize_for_size here - probing whether retail used plain -O4,p
-// codegen for this function (address-fold behavior differs).
 extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
     self->unk100++;
     u32* base = lbl_eu_80525568;
@@ -1335,9 +1308,8 @@ extern "C" void CTaskGame_moveNandReset(CTaskGame* self) {
 // mark save/load reset-invalid, and switch the move-hook ptmf to pool
 // lbl_eu_80525568+0xC0. Otherwise: switch the move-hook ptmf to pool
 // lbl_eu_80525568+0xCC.
-// optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
+// -O4,s: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
-#pragma optimize_for_size on
 extern "C" void CTaskGame_moveSelectErrWin(CTaskGame* self) {
     // Pool entries are whole 12-byte move-hook ptmf elements of the region
     // behind lbl_eu_80525568 (offsets 0xC0/0xCC/0xD8 = indices 16/17/18);
@@ -1394,7 +1366,6 @@ extern "C" void CTaskGame_moveSelectErrWin(CTaskGame* self) {
         }
     }
 }
-#pragma optimize_for_size off
 // Retail CTaskGame_moveClrErrWin: when no error-message window is active
 // (lbl_eu_80664C28 == 0), mark save/load reset-invalid, clear the
 // 0x2000/0x8000/0x10000 unk68 flags, switch the move-hook ptmf to pool
@@ -1747,7 +1718,7 @@ extern "C" void CTaskGame_moveClrErrWin2(CTaskGame* self) {
 // +0x60 ITitleMenu subobject via a null-checked adjusted cast), poke the
 // unkD4 event object, reset unk78, and switch the move-hook ptmf to pool
 // lbl_eu_80525784.
-// optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
+// -O4,s: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
 extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
@@ -1783,7 +1754,6 @@ extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
         words->field_0x44 = pool[2];
     }
 }
-#pragma optimize_for_size off
 // Target us-80042240: title-screen tick. Raises unk68 bit 0x400000, then
 // when the window-state gate (CTaskGame_windowGate) is clear and the title
 // captions are empty and the play-time gate (CTaskGame_playTimeGate) is closed but
@@ -1848,9 +1818,8 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
 // unkF4==1/2 clear the unkF0 object's +0xE9 byte; each case copies a
 // different move-hook ptmf pool (+0x234 / +0x240 / +0x24C), held in one
 // base register.
-// optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
+// -O4,s: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
-#pragma optimize_for_size on
 extern "C" void CTaskGame_moveLoadCaption(CTaskGame* self) {
     // Base held in one callee-saved register across all three cases (retail
     // lis/addi hoisted above the gate).
@@ -1886,7 +1855,6 @@ extern "C" void CTaskGame_moveLoadCaption(CTaskGame* self) {
         }
     }
 }
-#pragma optimize_for_size off
 void CTaskGame_stub_80041F54(){}
 // Target us-800424cc: window/save-menu gates then move-hook switch. When the
 // window-state gate (CTaskGame_windowGate) and the save-menu gate (isSaveMenuActive)
@@ -2017,8 +1985,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
 // 0x10000000, run the per-mode cf::CTaskGameCf start (startMode1New /
 // startMode2Con / startMission by unk128), and switch the move-hook ptmf to
 // pool lbl_eu_805257F0.
-// optimize_for_size: retail saves r29-r31 with a single stmw.
-#pragma optimize_for_size on
+// -O4,s: retail saves r29-r31 with a single stmw.
 extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     if (Scn_GetUnk80Handle(self->unk74) == 0) {
         return;
@@ -2085,7 +2052,6 @@ extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     self->setMoveFuncFrom(
         reinterpret_cast<const CTTask<CTaskGame>::MoveFunc*>(&lbl_eu_805257F0));
 }
-#pragma optimize_for_size off
 // Target us-80042a58: when the game instance is absent / its flag bit 0x1 is
 // set (isFlag01Set) or this task's bit 0x2 is set, raise bit 0x8, request
 // cf::CTaskGameCf exit, set its unk_54 bit 0x4 when bit 0x2 is still set, and
@@ -2113,8 +2079,7 @@ extern "C" void CTaskGame_moveReqExit(CTaskGame* self) {
 // the caption copy entirely); then copy the default caption into the
 // FixStr<32> at +0x104, clear the 0x4/0x8 unk68 bits, and switch the
 // move-hook ptmf to pool lbl_eu_80525808 (bit 0x2 set) or lbl_eu_80525814.
-// optimize_for_size: retail saves r30-r31 with a single stmw.
-#pragma optimize_for_size on
+// -O4,s: retail saves r30-r31 with a single stmw.
 extern "C" void CTaskGame_moveSetCaption(CTaskGame* self) {
     if (cf::CTaskGameCf::getInstance() != nullptr) {
         if ((cf::CTaskGameCf::getInstance()->unk_54 & 0x2) == 0) {
@@ -2145,7 +2110,6 @@ extern "C" void CTaskGame_moveSetCaption(CTaskGame* self) {
         words2->field_0x44 = pool2[2];
     }
 }
-#pragma optimize_for_size off
 // Retail CTaskGame_moveResetFx: if the effect-singleton accessor is non-null, run
 // the per-frame effect update pair; then reset the object-selector singleton
 // (fetch + dtor-style reset), free via the CfObj singleton teardown, set the
@@ -2298,9 +2262,8 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self);
 // button word; in co-op mode (classic controller) only the D-pad/A row bits
 // (3..10) plus the low nibble, otherwise mask 0x1eff; returns whether any
 // extracted bit is set.
-// optimize_for_size: retail booleanizes with the subic/subfe setnz shape
+// -O4,s: retail booleanizes with the subic/subfe setnz shape
 // (MWCC only emits it under size optimization, cf. CPartyStateWin).
-#pragma optimize_for_size on
 // __declspec(noinline): retail keeps every caller's bl out-of-line (the
 // attribute only affects call sites; the body itself is untouched).
 extern "C" __declspec(noinline) int CTaskGame_padConfirm(CTaskGame*) {
@@ -2312,7 +2275,6 @@ extern "C" __declspec(noinline) int CTaskGame_padConfirm(CTaskGame*) {
     }
     return (pad->mPressedButtonFlags & 0x1eff) != 0;
 }
-#pragma optimize_for_size off
 // Retail CTaskGame_isMoveHook: (self->mMoveFunc == lbl_eu_80525850) as 0/1. The ptmf
 // pool entry is passed by value so MWCC copies it onto the stack and compares
 // via __ptmf_cmpr(&self->mMoveFunc, &local).
@@ -2494,9 +2456,8 @@ extern "C" s32 CTaskGame_getStreamPos() {
 // bit 0x80, then reset unkDC/unk68 bits 0xC0/unkE4 and re-seed the unk130
 // caption FixStr<64> with the default caption (strlen+strcpy, retail order).
 // The global instance is re-read after each call (retail shape).
-// optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
+// -O4,s: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
-#pragma optimize_for_size on
 // __declspec(noinline): retail callers (CTaskGame_stopVision / CTaskGame_updateStream) call
 // this out of line; without it MWCC inlines the 0xC4 body into them.
 extern "C" __declspec(noinline) void CTaskGame_resetStream() {
@@ -2517,7 +2478,6 @@ extern "C" __declspec(noinline) void CTaskGame_resetStream() {
         reinterpret_cast<CTaskGameCaption130*>(lbl_eu_80663D18)->str = s;
     }
 }
-#pragma optimize_for_size off
 // Target us-80044224: after the shared reset (CTaskGame_resetStream), stop the CRI
 // stream when the unkE8 handle is still active (!= -1) and reset the handle /
 // length fields. The global instance is re-read after the call (retail shape).
@@ -2567,7 +2527,6 @@ extern "C" CfEnumListHolder* CTaskGame_enumListCtor(CfEnumListHolder* self) {
 // (handle == -1) it returns the slot via CTaskGame_freeObjSlot. Deletes the holder
 // itself when flag > 0. The redundant second pointer test mirrors MWCC's
 // `delete` expansion (retail emits two beq against one cmpwi).
-#pragma optimize_for_size on
 CfEnumListHolder* __dt__80043E88(CfEnumListHolder* self, int flag) {
     if (self != nullptr) {
         if ((u32)self->handle != 0xFFFFFFFFu) {
@@ -2587,7 +2546,6 @@ CfEnumListHolder* __dt__80043E88(CfEnumListHolder* self, int flag) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 void CTaskGame_stub_80043E08(){}
 // Target us-800443a4: enum-list holder ctor with message fill. Seeds +0x00
@@ -2595,7 +2553,6 @@ void CTaskGame_stub_80043E08(){}
 // allocates a fresh CfObjEnumList from the MEM2 region. Unlike CTaskGame_enumListCtor
 // the count fields are NOT zeroed here; the list is passed straight to
 // startEnumObjects with the caller's type/filter and the holder is returned.
-#pragma optimize_for_size on
 extern "C" CfEnumListHolder* CTaskGame_enumListFill(CfEnumListHolder* self, u32 type, u32 filter) {
     self->handle = -1;
     self->list = reinterpret_cast<cf::CfObjEnumList*>(CTaskGame_allocObjSlot());
@@ -2611,19 +2568,16 @@ extern "C" CfEnumListHolder* CTaskGame_enumListFill(CfEnumListHolder* self, u32 
     startEnumObjects(self->list, type, filter);
     return self;
 }
-#pragma optimize_for_size off
 // Target us-8004460c: append a C-string to a FixStr<32> (retail call sites
 // pass CTaskGame+0x104): strlen+strcat into mString and bump mLength; return
 // the buffer (mString at +0, so == self). Retail emits the identical body
 // twice under two symbols (CTaskGame_strAppend / CTaskGame_strAppend2). The retail frame
 // is stmw r29 - MWCC merges the 3 callee-saved saves only under
-// optimize_for_size (same pattern as the CTTask/reslist dtors in this TU).
-#pragma optimize_for_size on
+// -O4,s (same pattern as the CTTask/reslist dtors in this TU).
 extern "C" __declspec(noinline) char* CTaskGame_strAppend(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }
-#pragma optimize_for_size off
 
 // Target us-800436a4: per-frame CRI / error-message maintenance. While the
 // unkD8 stream handle is live: stop it via isStreamActive when it reports
@@ -2636,9 +2590,8 @@ extern "C" __declspec(noinline) char* CTaskGame_strAppend(ml::FixStr<32>* str, c
 // struct's +0x18 word is non-zero and the CTaskGame_openVision vision helper
 // succeeds, re-seed the unk18C struct (CTaskGame_setVisionParam with the float
 // constant); when the scene pointer is gone, disable the Hbm state.
-// optimize_for_size: retail bool conversion of the gate OR uses the
+// -O4,s: retail bool conversion of the gate OR uses the
 // subic/subfe idiom (the -O4,s form; -O4,p emits neg/or/rlwinm).
-#pragma optimize_for_size on
 extern "C" void CTaskGame_updateStream(CTaskGame* self) {
     if ((u32)(self->unkD8 + 0x10000) != 0xFFFF) {
         if (isStreamActive__7CLibCriFv(self->unkD8) == 0) {
@@ -2694,7 +2647,6 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
         CLibHbm::setHbmStopFlag(false);
     }
 }
-#pragma optimize_for_size off
 // Retail Draw__9CTaskGameFv is a 4-byte tail call to CTaskGame_updateStream.
 void CTaskGame::Draw() {
     CTaskGame_updateStream(this);
@@ -2721,19 +2673,16 @@ extern "C" __declspec(noinline) void CTaskGame_setNandFlag800(CTaskGame* inst, u
     inst->unkFC = c;
 }
 // Target us-80044660: identical body to CTaskGame_strAppend (second retail symbol).
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) char* CTaskGame_strAppend2(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }
-#pragma optimize_for_size off
 
 // Target us-80040f64: _reslist_base<cf::CfObject*> destructor (retail flat
 // name). Restores the base vtable, walks the sentinel list nulling each
 // node's mNext, then frees the backing array when the owned-flag is clear
 // and deletes self when the delete flag is positive. Direct member access
 // reproduces retail's per-iteration reload of mStartNodePtr.
-#pragma optimize_for_size on
 // __declspec(noinline): retail callers (CfObjEnumList dtor / reslist dtor)
 // call this out of line; without it MWCC inlines the 0xAC body into them.
 extern "C" __declspec(noinline) void* __dt___reslist_base_cf_CfObject(void* self, int flag) {
@@ -2760,12 +2709,10 @@ extern "C" __declspec(noinline) void* __dt___reslist_base_cf_CfObject(void* self
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // Retail __dt__Q22cf13CfObjEnumListFv (0x54) lives in this TU (weak placement).
 // The reslist base dtor is a separate retail symbol; call it explicitly.
-// optimize_for_size gives the retail stmw r30 prologue (like CTTask's dtor).
-#pragma optimize_for_size on
+// -O4,s gives the retail stmw r30 prologue (like CTTask's dtor).
 cf::CfObjEnumList::~CfObjEnumList() {
     if (this) {
         __dt___reslist_base_cf_CfObject(this, 0);
@@ -2779,7 +2726,7 @@ cf::CfObjEnumList::~CfObjEnumList() {
 // 0x50 wrapper, so provide a TU-local full class specialization: non-polymorphic
 // with a declared-only dtor, so MWCC emits no vtable store and no implicit base
 // call. The explicit extern "C" call pins the retail flat base symbol (MWCC
-// leaves __-prefixed names unmangled). optimize_for_size gives the stmw r30
+// leaves __-prefixed names unmangled). -O4,s gives the stmw r30
 // prologue (like CTTask's dtor).
 template<>
 class reslist<cf::CfObject*> {
@@ -2787,8 +2734,6 @@ public:
     ~reslist();
 };
 
-#pragma optimize_for_size on
 reslist<cf::CfObject*>::~reslist() {
     __dt___reslist_base_cf_CfObject(this, 0);
 }
-#pragma optimize_for_size off

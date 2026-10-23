@@ -56,18 +56,7 @@ extern void btsnd_hcic_write_stored_key(void *p, UINT8 num_keys, UINT8 *bd_addr,
                                         UINT8 *link_key);
 extern UINT8 btsnd_hcic_delete_stored_key(UINT8 *bd_addr, UINT8 delete_all_flag);
 
-/* "TRUE"/"FALSE" strings -- defined here (retail btm_devctl.o .sdata
-   slice 0x80663000..0x80663018: dev-class bytes, "TRUE", "FALSE").
-   Non-const so MWCC places them in .sdata (sda21-accessed), matching the
-   retail lbl_8066592C/34 relocs. */
 UINT8 lbl_80665928[DEV_CLASS_LEN] = {0x00, 0x1F, 0x00};
-char lbl_8066592C[5] = "TRUE";   /* "TRUE"  */
-/* Retail .sdata slice is 0x18 (0x80663000..0x80663018): the 3 objects with
-   "FALSE" occupying 0xC..0x18 (6-byte string + 6 pad zeros); raise the small-
-   data threshold so the 12-byte object stays in .sdata like retail. */
-#pragma sdata_threshold 12
-char lbl_80665934[12] = "FALSE";  /* "FALSE" */
-#pragma sdata_threshold 8
 
 /* BTU control block (Wii layout: hcit_acl_data_size at 0x7C) */
 typedef struct
@@ -1153,7 +1142,7 @@ tBTM_STATUS BTM_ReadStoredLinkKey(BD_ADDR bd_addr, tBTM_CMPL_CB *p_cb)
 
     if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
         LogMsg_1(0xD0003, "BTM: BTM_ReadStoredLinkKey: Read_All: %s",
-                 (read_all) ? lbl_8066592C : lbl_80665934);
+                 (read_all) ? "TRUE" : "FALSE");
 
     p_buf = GKI_getpoolbuf(2);
     if (p_buf != NULL)
@@ -1215,7 +1204,7 @@ tBTM_STATUS BTM_DeleteStoredLinkKey(BD_ADDR bd_addr, tBTM_CMPL_CB *p_cb)
 
     if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
         LogMsg_1(0xD0003, "BTM: BTM_DeleteStoredLinkKey: delete_all_flag: %s",
-                 (delete_all_flag) ? lbl_8066592C : lbl_80665934);
+                 (delete_all_flag) ? "TRUE" : "FALSE");
 
     btm_cb.p_stored_link_key_cmpl_cb = p_cb;
 

@@ -225,21 +225,21 @@ extern "C" void* lbl_eu_80536078[];
 extern "C" void* lbl_eu_80536048[];
 extern "C" void* lbl_eu_80536028[];
 
-extern "C" void __ct__CMCEffStart(CMCEffStart* self, nw4r::lyt::ArcResourceAccessor* arcResourceAccessor) {
-    *(void**)self = lbl_eu_80536114;
-    self->unk4 = 0;
-    self->unk5 = 1;
-    self->mArcResourceAccessor = arcResourceAccessor;
-    self->mLayout = nullptr;
-    self->mAnimTrans = nullptr;
-    self->unk14 = 0;
+extern "C" void __ct__CMCEffStart(CMCEffStart* ths, nw4r::lyt::ArcResourceAccessor* arcResourceAccessor) {
+    *(void**)ths = lbl_eu_80536114;
+    ths->unk4 = 0;
+    ths->unk5 = 1;
+    ths->mArcResourceAccessor = arcResourceAccessor;
+    ths->mLayout = nullptr;
+    ths->mAnimTrans = nullptr;
+    ths->unk14 = 0;
 }
 
 CMCEffStart::~CMCEffStart() {}
 
 void CMCEffStart::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x0]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x17]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x0]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x17]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -278,7 +278,7 @@ void __declspec(noinline) CMCEffStart::startInAnim() {
 }
 
 void __declspec(noinline) CMCEffStart::updateInAnim() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans, lbl_eu_80668554)) {
         unk4 = 0;
         unk5 = 1;
     }
@@ -288,8 +288,7 @@ void __declspec(noinline) CMCEffStart::updateInAnim() {
  * CMCEffUpRed
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpRed(CMCEffUpRed* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffUpRed* ths = self;
+extern "C" void* __ct__CMCEffUpRed(CMCEffUpRed* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_805360F4;
     return ths;
@@ -298,8 +297,8 @@ extern "C" void* __ct__CMCEffUpRed(CMCEffUpRed* self, nw4r::lyt::ArcResourceAcce
 CMCEffUpRed::~CMCEffUpRed() {}
 
 void CMCEffUpRed::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x31]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x48]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x31]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x48]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -307,15 +306,14 @@ void CMCEffUpRed::init() {
 
 void CMCEffUpRed::play() {
     CMCEffStart::startInAnim();
-    playUISound__FUl(0x8c); //140 Dec
+    playUISound(0x8c); //140 Dec
 }
 /******************************************************************************
  *
  * CMCEffUpBlue
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpBlue(CMCEffUpBlue* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffUpBlue* ths = self;
+extern "C" void* __ct__CMCEffUpBlue(CMCEffUpBlue* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_805360D4;
     return ths;
@@ -324,8 +322,8 @@ extern "C" void* __ct__CMCEffUpBlue(CMCEffUpBlue* self, nw4r::lyt::ArcResourceAc
 CMCEffUpBlue::~CMCEffUpBlue() {}
 
 void CMCEffUpBlue::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x62]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x79]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x62]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x79]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -333,15 +331,14 @@ void CMCEffUpBlue::init() {
 
 void CMCEffUpBlue::play() {
     CMCEffStart::startInAnim();
-    playUISound__FUl(0x8c); //140 Dec
+    playUISound(0x8c); //140 Dec
 }
 /******************************************************************************
  *
  * CMCEffUpGreen
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpGreen(CMCEffUpGreen* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffUpGreen* ths = self;
+extern "C" void* __ct__CMCEffUpGreen(CMCEffUpGreen* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_805360B4;
     return ths;
@@ -350,8 +347,8 @@ extern "C" void* __ct__CMCEffUpGreen(CMCEffUpGreen* self, nw4r::lyt::ArcResource
 CMCEffUpGreen::~CMCEffUpGreen() {}
 
 void CMCEffUpGreen::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x93]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xaa]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x93]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xaa]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -359,7 +356,7 @@ void CMCEffUpGreen::init() {
 
 void CMCEffUpGreen::play() {
     CMCEffStart::startInAnim();
-    playUISound__FUl(0x8c); //140 Dec
+    playUISound(0x8c); //140 Dec
 }
 /******************************************************************************
  *
@@ -367,13 +364,13 @@ void CMCEffUpGreen::play() {
  *
  ******************************************************************************/
 CMCEffUpPrm::CMCEffUpPrm(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) : unk4(1), mArcResourceAccessor(pArcResourceAccessor) {
-    UnkStruct* i = (UnkStruct*)((u8*)this + 0xc);
+    UnkStruct* i = unkStruct;
     do {
         i->layout = nullptr;
         i->animTrans = nullptr;
         i->unk8 = 0;
         i += 1;
-    } while(i < (UnkStruct*)((u8*)this + 0x6c));
+    } while(i < &unkStruct[8]);
     unk6c = 0;
 }
 
@@ -383,8 +380,8 @@ void CMCEffUpPrm::init() {
     for(u8 i = 0; i < 8; ++i) {
         UnkStruct* unkStructure = &unkStruct[i];
         // String pool at 0xc4 / 0xdb.
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
+        buildLayout(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
+        bindLayoutAnimTransform(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
         ApplyFontToTxtPanes(rootPane, (u32)CUICfManager_getPackedFont9C());
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
@@ -398,7 +395,7 @@ void CMCEffUpPrm::update() {
         return;
     }
     for(u8 i = 0; i < 8; ++i) {
-        if((s8)unkStruct[i].unk8 == 1 && advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unkStruct[i].animTrans, lbl_eu_80668554) != 0) {
+        if((s8)unkStruct[i].unk8 == 1 && advanceAnimTransform(unkStruct[i].animTrans, lbl_eu_80668554) != 0) {
             unkStruct[i].unk8 = 0;
         }
         unkStruct[i].layout->Animate(0);
@@ -450,7 +447,7 @@ void CMCEffUpPrm::setNumber(u32 arg1, u8 arg2) {
     if(arg1 >= 8) {
         return;
     }
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(unkStruct[arg1].layout, &lbl_eu_805095EC[0xf5], arg2);
+    setLayoutTextBoxNumber(unkStruct[arg1].layout, &lbl_eu_805095EC[0xf5], arg2);
 }
 /******************************************************************************
  *
@@ -469,9 +466,9 @@ CMCEffSuccess::CMCEffSuccess(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 CMCEffSuccess::~CMCEffSuccess() {}
 
 void CMCEffSuccess::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0xfd]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x113]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x12c]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0xfd]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x113]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x12c]);
     bindInAnim();
     mLayout->Animate(0);
     unk18 = 1;
@@ -508,8 +505,8 @@ void CMCEffSuccess::destroy() {
     }
 }
 
-u8 isFinished(void* self) {
-    return *(u8*)((u8*)self + 5);
+u8 isFinished(void* effect) {
+    return static_cast<CMCEffSuccess*>(effect)->unk5;
 }
 
 void CMCEffSuccess::startIn() {
@@ -520,7 +517,7 @@ void CMCEffSuccess::startIn() {
     bindInAnim();
     mAnimTrans10->SetFrame(lbl_eu_80668550);
     unk5 = 0;
-    playUISound__FUl(0x91);
+    playUISound(0x91);
 }
 
 void CMCEffSuccess::startOut() {
@@ -533,14 +530,14 @@ void CMCEffSuccess::startOut() {
 }
 
 void __declspec(noinline) CMCEffSuccess::updateIn() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans10, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
 void __declspec(noinline) CMCEffSuccess::updateOut() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans14, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554) != 0) {
         unk4 = 0;
         unk5 = 1;
     }
@@ -564,8 +561,7 @@ void __declspec(noinline) CMCEffSuccess::bindOutAnim() {
  * CMCEffFailure
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffFailure(CMCEffFailure* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffFailure* ths = self;
+extern "C" void* __ct__CMCEffFailure(CMCEffFailure* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_80536078;
     return ths;
@@ -574,8 +570,8 @@ extern "C" void* __ct__CMCEffFailure(CMCEffFailure* self, nw4r::lyt::ArcResource
 CMCEffFailure::~CMCEffFailure() {}
 
 void CMCEffFailure::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x146]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x15c]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x146]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x15c]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -607,14 +603,14 @@ CMCEffCrystal::~CMCEffCrystal() {}
 
 void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // String pool: trace 0x175/0x18a/0x1a2, crystal 0x1bb/0x1d1/0x1ea/0x207/0x221, list 0x23b/0x250.
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayoutC, mArcResourceAccessor, &lbl_eu_805095EC[0x175]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayoutC, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x18a]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayoutC, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x1a2]);
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout18, mArcResourceAccessor, &lbl_eu_805095EC[0x1bb]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans1c, mArcResourceAccessor, &lbl_eu_805095EC[0x1d1]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805095EC[0x1ea]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805095EC[0x207]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans28, mArcResourceAccessor, &lbl_eu_805095EC[0x221]);
+    buildLayout(&mLayoutC, mArcResourceAccessor, &lbl_eu_805095EC[0x175]);
+    bindLayoutAnimTransform(mLayoutC, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x18a]);
+    bindLayoutAnimTransform(mLayoutC, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x1a2]);
+    buildLayout(&mLayout18, mArcResourceAccessor, &lbl_eu_805095EC[0x1bb]);
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans1c, mArcResourceAccessor, &lbl_eu_805095EC[0x1d1]);
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805095EC[0x1ea]);
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805095EC[0x207]);
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans28, mArcResourceAccessor, &lbl_eu_805095EC[0x221]);
 
     nw4r::lyt::Pane* rootPane = mLayout18->GetRootPane();
     CFontPanel* fontObj =
@@ -623,8 +619,8 @@ void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // crystal's font pane is set from.
     u32 result = fontObj->sf9();
     ApplyFontToTxtPanes(rootPane, result);
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);
+    buildLayout(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
+    bindLayoutAnimTransform(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);
     bindInAnimTrace();
     bindInAnimCrystal();
     bindLoopAnim();
@@ -652,7 +648,7 @@ void CMCEffCrystal::update() {
         default:
             break;
     }
-    advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans30, lbl_eu_80668554);
+    advanceAnimTransform(mAnimTrans30, lbl_eu_80668554);
     mLayoutC->Animate(0);
     mLayout18->Animate(0);
     mLayout2c->Animate(0);
@@ -779,22 +775,22 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
 }
 
 void __declspec(noinline) CMCEffCrystal::updateIn() {
-    advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans1c, lbl_eu_80668554);
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans10, lbl_eu_80668554) != 0) {
+    advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554);
+    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
         unk4 = 2;
     }
 }
 
 void __declspec(noinline) CMCEffCrystal::checkInDone() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans1c, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554) != 0) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
 void __declspec(noinline) CMCEffCrystal::updateOut() {
-    u32 unk1 = advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans14, lbl_eu_80668554);
-    u32 unk2 = advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans28, lbl_eu_80668554);
+    u32 unk1 = advanceAnimTransform(mAnimTrans14, lbl_eu_80668554);
+    u32 unk2 = advanceAnimTransform(mAnimTrans28, lbl_eu_80668554);
     if(unk1 != 0 && unk2 != 0) {
         unk4 = 0;
         unk5 = 1;
@@ -802,7 +798,7 @@ void __declspec(noinline) CMCEffCrystal::updateOut() {
 }
 
 void __declspec(noinline) CMCEffCrystal::updateChange() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans20, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans20, lbl_eu_80668554)) {
         unk4 = 3;
         unk5 = 1;
     }
@@ -816,7 +812,7 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
 }
 
 void __declspec(noinline) CMCEffCrystal::updateSpecial() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans24, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans24, lbl_eu_80668554)) {
         unk4 = 3;
         unk5 = 1;
     }
@@ -875,8 +871,7 @@ void __declspec(noinline) CMCEffCrystal::bindLoopAnim() {
  * CMCEffUpRank
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffUpRank(CMCEffUpRank* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffUpRank* ths = self;
+extern "C" void* __ct__CMCEffUpRank(CMCEffUpRank* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_80536048;
     return ths;
@@ -885,8 +880,8 @@ extern "C" void* __ct__CMCEffUpRank(CMCEffUpRank* self, nw4r::lyt::ArcResourceAc
 CMCEffUpRank::~CMCEffUpRank() {}
 
 void CMCEffUpRank::init() {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x348]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x35e]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x348]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x35e]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
     unk14 = 1;
@@ -894,15 +889,14 @@ void CMCEffUpRank::init() {
 
 void CMCEffUpRank::play() {
     CMCEffStart::startInAnim();
-    playUISound__FUl(0x8d);
+    playUISound(0x8d);
 }
 /******************************************************************************
  *
  * CMCEffDivide
  *
  ******************************************************************************/
-extern "C" void* __ct__CMCEffDivide(CMCEffDivide* self, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
-    CMCEffDivide* ths = self;
+extern "C" void* __ct__CMCEffDivide(CMCEffDivide* ths, nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) {
     __ct__CMCEffStart(ths, pArcResourceAccessor);
     *(void**)ths = lbl_eu_80536028;
     return ths;
@@ -912,8 +906,8 @@ CMCEffDivide::~CMCEffDivide() {}
 
 void CMCEffDivide::init() {
     // String pool refs at retail offsets 0x377 / 0x38c.
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x377]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x38c]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x377]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x38c]);
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
     unk14 = 1;
@@ -921,7 +915,7 @@ void CMCEffDivide::init() {
 
 void CMCEffDivide::play() {
     CMCEffStart::startInAnim();
-    playUISound__FUl(0x8d);
+    playUISound(0x8d);
 }
 /******************************************************************************
  *
@@ -942,13 +936,13 @@ CMCEffCylinder::~CMCEffCylinder() {}
 
 void CMCEffCylinder::init() {
     // String pool: 0x3a4 / 0x3b9 / 0x3d1 / 0x3ed / 0x406.
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x3a4]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x3b9]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x3d1]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout, &mAnimTrans18, mArcResourceAccessor, &lbl_eu_805095EC[0x3ed]);
+    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x3a4]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x3b9]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x3d1]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, &lbl_eu_805095EC[0x3ed]);
     u32 ul = getPackedFont__Fv();
     if(ul) {
-        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_805095EC[0x406], ul);
+        setLayoutTextBoxFont(mLayout, &lbl_eu_805095EC[0x406], ul);
     }
     bindInAnim();
     unk1c = 1;
@@ -1017,25 +1011,25 @@ void CMCEffCylinder::startChange() {
 }
 
 void CMCEffCylinder::setNumber(u8 arg) {
-    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mLayout, &lbl_eu_805095EC[0x406], arg);
+    setLayoutTextBoxNumber(mLayout, &lbl_eu_805095EC[0x406], arg);
 }
 
 void __declspec(noinline) CMCEffCylinder::updateIn() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans10, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
 void __declspec(noinline) CMCEffCylinder::updateOut() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans18, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans18, lbl_eu_80668554)) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
 void __declspec(noinline) CMCEffCylinder::updateChange() {
-    if(advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mAnimTrans14, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554)) {
         unk4 = 2;
         unk5 = 1;
     }

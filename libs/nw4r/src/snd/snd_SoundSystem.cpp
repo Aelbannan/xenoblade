@@ -150,9 +150,9 @@ void SoundSystem::ShutdownSoundSystem() {
     lbl_eu_80665508 = false;
 }
 
-} // namespace snd
-} // namespace nw4r
-
-bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv() {
+bool SoundSystem::IsInitializedSoundSystem() {
     return lbl_eu_80665508;
 }
+
+} // namespace snd
+} // namespace nw4r

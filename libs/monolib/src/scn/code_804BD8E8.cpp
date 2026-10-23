@@ -59,6 +59,12 @@ void operator delete(void* ptr) throw();
 
 extern char lbl_eu_8065F32C[];
 
+// lbl_eu_8065F32C is a CColiMoverState (full layout in coli/code_804B59C8.cpp);
+// this TU only needs its reset member.
+struct CColiMoverState {
+    void initColiMover();
+};
+
 // .sdata2 constants (retail .sdata2 pool; see owning absorb/typed defs in the defining TU).
 extern const f32 lbl_eu_8066AF44;
 extern const f32 lbl_eu_8066AF4C;
@@ -118,7 +124,7 @@ struct ScnRmObj {
 void* __dt__804BD8E8(ScnRmObj* obj, s32 flags) {
     if (obj != NULL) {
         obj->field_0x00 = 0;
-        lbl_eu_8065F32C->initColiMover();
+        reinterpret_cast<CColiMoverState*>(lbl_eu_8065F32C)->initColiMover();
         if (flags > 0) {
             ::operator delete(obj);
         }

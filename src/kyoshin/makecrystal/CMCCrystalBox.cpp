@@ -68,9 +68,8 @@ __declspec(noinline) void copyCrystalBoxParam(CMCCrystalBoxParam*, const CMCCrys
 __declspec(noinline) void initCrystalBoxScratch(CMCCrystalBox* self);
 
 // Retail 0x80219E70: refresh the crystal box display / name.
-// optimize_for_size: retail uses the stmw r30/lmw r30 frame; plain -O4,p
+// -O4,s: retail uses the stmw r30/lmw r30 frame; plain -O4,p
 // splits the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
-#pragma optimize_for_size on
 void refreshCrystalBoxName(CMCCrystalBox* self) {
     CMCCrystalData* d = &self->data;
     if (self->field_14A0 == 0) {
@@ -83,11 +82,9 @@ void refreshCrystalBoxName(CMCCrystalBox* self) {
     rebuildCrystalSortMenu(self);
     func_8021A8EC(&self->crystalInfo);
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021A2B8: set the current crystal's name label and mirrored info.
-// stmw r28 frame + raw-byte idx multiply are the -O4,s shapes (pragma).
-#pragma optimize_for_size on
+// stmw r28 frame + raw-byte idx multiply are the -O4,s shapes (unit flag).
 void setCrystalNameLabel(CMCCrystalBox* self) {
     // Declared first so MWCC claims r31 for q (first-declared -> highest
     // saved register), matching retail's {d:r29, idx:r30, q:r31}.
@@ -111,13 +108,11 @@ void setCrystalNameLabel(CMCCrystalBox* self) {
         }
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80215710: resolve a crystal item by adjusted index, get its name
 // from a freshly-created item instance, and format it into the name buffer.
 // Single trailing `return 0` (nested ifs) so MWCC merges all failure paths
 // into one epilogue `li r3, 0` like retail.
-#pragma optimize_for_size on
 char* getCrystalItemName(CMCCrystalData* d, int v) {
     int cur = d->current;
     u16 adj = (u16)(v + cur * 30);          // row-scaled index
@@ -132,7 +127,6 @@ char* getCrystalItemName(CMCCrystalData* d, int v) {
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // Swap the 4-byte payload (s16 + u8) of two crystal-data entries.
 // noinline: retail calls this out-of-line (bl) from the bubble sort; without
@@ -158,7 +152,6 @@ __declspec(noinline) void swapCrystalDataEntry(int unused, void* a, void* b) {
 struct CrystalItemHead { u32 word00; u16 key04; u8 _pad06; u8 flag07; };
 
 // Retail 0x802157E8: bubble-sort the crystal-state entries.
-#pragma optimize_for_size on
 void sortCrystalIdOrder(CMCCrystalData* d) {
     // Declaration order steers MWCC's saved-register homes toward the retail
     // map {i:r31, swapped:r30, j:r29, pa:r28, d:r27, tmp:r26, a:r25,
@@ -211,7 +204,6 @@ void sortCrystalIdOrder(CMCCrystalData* d) {
         if (swapped == 0) break;
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80215974: bubble-sort the crystal-state entries by their %+4
 // key using CItem_kindPtr until no swap occurs in a pass.
@@ -245,8 +237,7 @@ void sortCrystalKeyOrder(CMCCrystalData* d) {
 // suppresses the auto store so it is written explicitly), zeroes the
 // sub-object pointer table, constructs every embedded sub-object, then
 // clears the selection/page state and memsets the 5-byte enable table.
-// stmw r28 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r28 frame is the -O4,s shape (unit flag).
 CMCCrystalBox* __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType) {
     reinterpret_cast<VtblSlot*>(self)->vtbl = &lbl_eu_80535C60;
     __ct__17UnkClass_8045F564Fv(&self->pad_00[0]);
@@ -305,7 +296,6 @@ CMCCrystalBox* __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType) {
     memset(&self->field_14EC[0], 0, 5);
     return self;
 }
-#pragma optimize_for_size off
 
 // Retail 0x80215C5C: set all fields of a crystal-box param (selected id,
 // quantity, spare, two flags) and return the param pointer.
@@ -338,7 +328,6 @@ void copyCrystalBoxParam(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src)
 // it MWCC inlines the two-loop body into the caller.
 // stmw r29 frame (end:r31, p:r30, base:r29, i reused in r30, tmp at r1+8)
 // is the -O4,s shape.
-#pragma optimize_for_size on
 __declspec(noinline) u8* initCrystalBoxParamTbl(u8* base) {
     // end declared first (r31) but initialized after p, matching retail's
     // addi r30 / addi r31 emission order.
@@ -365,7 +354,6 @@ __declspec(noinline) u8* initCrystalBoxParamTbl(u8* base) {
 
     return base;
 }
-#pragma optimize_for_size off
 
 void* __dt__80213E4C(void* self, int flags) {
     if (self != 0 && flags > 0) {
@@ -376,12 +364,11 @@ void* __dt__80213E4C(void* self, int flags) {
 
 // Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
 // up-counter (clrlslwi/clrlwi masks) -- the -O4,s shape; -O4,p unrolls the
-// constant-trip loop. optimize_for_size forces the rolled form.
+// constant-trip loop. -O4,s forces the rolled form.
 // Retail zeroes a 32-byte word array at +0, the +0x20 byte, an 8-byte
 // array at +0x21 (filled with 0xFF), +0x29 and +0x6A -- with a rolled
 // mtctr/bdnz loop (the -O4,s shape; -O4,p unrolls). The header's +4-shifted
 // pad_00/subObjPtrs view doesn't match this region, so raw offsets are used.
-#pragma optimize_for_size on
 __declspec(noinline) void initCrystalBoxScratch(CMCCrystalBox* self) {
     reinterpret_cast<CrystalBoxScratch*>(self)->count = 0;
     reinterpret_cast<CrystalBoxScratch*>(self)->flag29 = 0;
@@ -391,7 +378,6 @@ __declspec(noinline) void initCrystalBoxScratch(CMCCrystalBox* self) {
         reinterpret_cast<CrystalBoxScratch*>(self)->fill[i] = -1;
     }
 }
-#pragma optimize_for_size off
 
 void* __dt__80213ECC(void* self, int flags) {
     if (self != 0 && flags > 0) {
@@ -401,8 +387,7 @@ void* __dt__80213ECC(void* self, int flags) {
 }
 
 // Retail 0x80215D64: destroy all placed member subobjects in reverse order.
-// stmw r30 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r30 frame is the -O4,s shape (unit flag).
 CMCCrystalBox::~CMCCrystalBox() {
     __dt__7CSysWinFv(this->sysWin, -1);
     __dt__10CScrollBarFv(this->pad_250, -1);
@@ -417,7 +402,6 @@ CMCCrystalBox::~CMCCrystalBox() {
     __dt__17UnkClass_8045F564Fv(&this->pad_00[0x10], -1);
     __dt__17UnkClass_8045F564Fv(&this->pad_00[0], -1);
 }
-#pragma optimize_for_size off
 
 // Retail 0x80215E3C: crystal-box constructor-style init. Reads the three
 // resource archives (sort menu, crystal info, common) through the device file
@@ -425,7 +409,6 @@ CMCCrystalBox::~CMCCrystalBox() {
 // the temp is constructed, its body copied member-wise (skipping the vtable),
 // and the temp destroyed. Finishes by reading the sub-object layout archives
 // and clearing the shared BDAT cursor. stmw r30 frame is the -O4,s shape.
-#pragma optimize_for_size on
 void initCrystalBoxResources(CMCCrystalBox* self) {
     // Resource archives: sort menu (+0x24), crystal info (+0x28), common
     // (+0x2C). The first two use the heap handle, the third the common-archive
@@ -528,7 +511,6 @@ void initCrystalBoxResources(CMCCrystalBox* self) {
     lbl_eu_806646D0 = 0;
     CItemBlock_setFlag120EC(9, 0);
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021611c: per-frame crystal-box state machine. When visible and
 // in a non-zero state, dispatch on the state through the jump table, then
@@ -574,8 +556,7 @@ extern "C" void updateCrystalBoxState(CMCCrystalBox* self) {
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Retail 0x80216260: draw the crystal box sub-views.
-// stmw r30 frame + r30-before-r31 copy order are the -O4,s shapes (pragma).
-#pragma optimize_for_size on
+// stmw r30 frame + r30-before-r31 copy order are the -O4,s shapes (unit flag).
 void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->unk60 == 0) return;
     if (self->unk64 == 0) return;
@@ -595,7 +576,6 @@ void drawCrystalBox(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
     CScrollBar_draw(self->pad_250, di);      // scrollbar
     sysWinDrawLayout(self->sysWin, di);      // syswin
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021634c: teardown of the whole crystal box. Closes the file
 // handles for the first three resource sub-objects, frees the layout/arc
@@ -655,8 +635,7 @@ void getCrystalBoxSysWin(void* self) { CSysWin_getUnk34(static_cast<CMCCrystalBo
 
 // Retail 0x80216558: initialise the crystal box into state 1, mirror the
 // current item, and point the scrollbar at the selected vec.
-// _savegpr_28/_restgpr_28 out-of-line saves are the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// _savegpr_28/_restgpr_28 out-of-line saves are the -O4,s shape (unit flag).
 void openCrystalBox(CMCCrystalBox* self) {
     if (self->unk64 != 0) return;
     self->unk64 = 1;
@@ -685,7 +664,6 @@ void openCrystalBox(CMCCrystalBox* self) {
     CScrollBar_requestScrollIn((char (&)[0x40])self->pad_250);
     playCrystalAnim6(self);
 }
-#pragma optimize_for_size off
 
 void enterCrystalBoxState4(CMCCrystalBox* self) {
     if (self->unk64 != 3) return;
@@ -1123,8 +1101,7 @@ void confirmCrystalUnselect(CMCCrystalBox* self) {
 // (unk2CE) it is closed; otherwise the sort menu is opened: two layout panes
 // are formatted, copied into the sort menu, the countdown label refreshed, and
 // the +0x9C cursor is driven through its slot-0x10 virtual. stmw r28 frame is
-// the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// the -O4,s shape (unit flag).
 void toggleCrystalSortMenu(CMCCrystalBox* self) {
     if (CSysWin_getUnk34(&self->sysWin) != 0) return;
     if (self->unk1500 != 0) return;
@@ -1160,7 +1137,6 @@ void toggleCrystalSortMenu(CMCCrystalBox* self) {
         playUISound(3);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80217518: per-frame crystal-box update callback. While the system
 // window is open, keep its animation alive (unk1500 grid); otherwise close
@@ -1168,8 +1144,7 @@ void toggleCrystalSortMenu(CMCCrystalBox* self) {
 // the selected slot. The scan block is duplicated in source because retail
 // holds two inline copies (one for the count!=0 gate, one for the a0
 // fallback). Ends by refreshing the page-2 label and beeping 6.
-// stmw r22 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r22 frame is the -O4,s shape (unit flag).
 void advanceCrystalBoxSortMenu(CMCCrystalBox* self, int a) {
     if (sortMenuGetFlag2B(&self->sortMenu) == 0) return;
     if (CSysWin_getUnk34(&self->sysWin) != 0) {
@@ -1286,7 +1261,6 @@ void advanceCrystalBoxSortMenu(CMCCrystalBox* self, int a) {
     }
     if (a != 0) playUISound(6);
 }
-#pragma optimize_for_size off
 
 // Retail 0x80217940: return the 8-slot selection-table word selected by the
 // header (count byte at +0x20, head index at +0x29, slot index byte at
@@ -1319,8 +1293,7 @@ void releaseCrystalBoxSlot(CMCCrystalBox* self) {
     buildCrystalBoxIdList((CMCCrystalBox*)self);
 }
 
-// stmw r26 frame + rolled constant-trip loops are the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r26 frame + rolled constant-trip loops are the -O4,s shape (unit flag).
 // Retail 0x802179D0: aggregate the 8 item-list slots of the scratch head into
 // (id, quantity) pairs, bubble-sort them by descending quantity, then publish
 // the id list into the head itself (ids at +0x2A, count byte at +0x6A).
@@ -1409,7 +1382,6 @@ void buildCrystalBoxIdList(CMCCrystalBox* self) {
         }
     }
 }
-#pragma optimize_for_size off
 
 void handleCrystalBoxConfirm(){}
 
@@ -1422,8 +1394,7 @@ u8 getCrystalBoxKindB(void* self) { return static_cast<CMCCrystalBox*>(self)->un
 // selection table (+0x1480) into quantity-pair entries, bubble-sorts them by
 // quantity, and copies the result into the +0x2D8 sub-table, then refreshes
 // the current-item byte and drives the item-implementation virtuals.
-// stmw r23 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r23 frame is the -O4,s shape (unit flag).
 u8* rebuildCrystalBoxSelTable(CMCCrystalBox* self) {
     // Stack layout (retail): sel block (head+32 slots) at +0x138, sort table
     // at +0x38, then the six temps at +0x30..+0x8.
@@ -1547,7 +1518,6 @@ u8* rebuildCrystalBoxSelTable(CMCCrystalBox* self) {
 
     return &self->unk2D6;
 }
-#pragma optimize_for_size off
 
 // Table lookup used by the 8-slot selection loop (placeCrystalBoxSlots). Retail calls
 // it out-of-line; keep it non-inlined so the caller emits `bl getSelectTableWord`
@@ -1661,7 +1631,6 @@ void refreshCrystalPagePair(CMCCrystalBox* self, int dir) {
 // number into two pane-name buffers and toggles each pane's visibility
 // from whether that page is enabled / is the selected one. Ends by
 // refreshing the neighbouring-page pair (refreshCrystalPagePair).
-#pragma optimize_for_size on
 __declspec(noinline) void initCrystalPageLabels(CMCCrystalBox* self) {
     char* base = lbl_eu_8050888C;
     char bufA[0x20];
@@ -1704,15 +1673,13 @@ __declspec(noinline) void initCrystalPageLabels(CMCCrystalBox* self) {
     }
     refreshCrystalPagePair(self, 0);
 }
-#pragma optimize_for_size off
 
 // Retail 0x802186A8: crystal-box update with a system-window (CSysWin at
 // +0x290) tie-in. When the sort menu is idle and the cursor is not in the
 // -1 state, either refresh the open window (field_14A0 == 0 with a pending
 // crystal) or open/update it with the current item's name; otherwise fall
 // back to opening the window for the first time.
-// stmw r30 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r30 frame is the -O4,s shape (unit flag).
 void updateCrystalBoxSysWin(CMCCrystalBox* self) {
     if (sortMenuIsVisible28(&self->sortMenu) != 0) return;
     if ((s8)self->unk2CD == -1) return;
@@ -1770,13 +1737,11 @@ void updateCrystalBoxSysWin(CMCCrystalBox* self) {
     rebuildCrystalGridTable(self);
     playUISound(2);
 }
-#pragma optimize_for_size off
 
 // Retail 0x80218878: return the current crystal-state action id (0x33-0x36)
 // or 0x30+active depending on which sub-view / flag is pending.
 // The trailing `0x30 + (field_14A0 != 0)` is the -O4,s setnz idiom
-// (subic/subfe); the optimize_for_size pragma selects that codegen.
-#pragma optimize_for_size on
+// (subic/subfe); the unit -O4,s flag selects that codegen.
 int getCrystalBoxAction(CMCCrystalBox* self) {
     if (CSysWin_getUnk34(&self->sysWin) != 0) return 0x0;
     if (sortMenuIsVisible28(&self->sortMenu) != 0) return 0x32;
@@ -1787,7 +1752,6 @@ int getCrystalBoxAction(CMCCrystalBox* self) {
     if (MakeCrystal_GetFlag(&self->data, idx) != 0) return 0x33;
     return 0x30 + (self->field_14A0 != 0);
 }
-#pragma optimize_for_size off
 
 void deselectCrystalBoxItem(CMCCrystalBox* self) {
     if (CSysWin_getUnk34(&self->sysWin) != 0) return;
@@ -1903,7 +1867,6 @@ __declspec(noinline) void onCrystalAnimResetState3(CMCCrystalBox* self) {
 // refreshes the crystal-state row, re-inits the box-head scratch (the
 // same helper the ctor uses at +0x1480), copies the scratch into the
 // page-slot tables, and enters the visible state.
-#pragma optimize_for_size on
 void loadCrystalBoxArchive(CMCCrystalBox* self) {
     // First two gates short-circuit; the BDAT gate uses the goto-body /
     // goto-end split (CCol6System::cbRenderBefore precedent) for retail's
@@ -1944,13 +1907,11 @@ reload:;
     self->unk68 = 1;
     self->unk60 = 1;
 }
-#pragma optimize_for_size off
 
 // Retail 0x80218EF0: resolve the message texture for one crystal slot and
 // publish it into the box. When the slot holds an item, its kind picks the
 // message id; otherwise the crystal id is looked up through the BDAT table.
-// stmw r27 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r27 frame is the -O4,s shape (unit flag).
 __declspec(noinline) void setCrystalSlotTexture(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     // Retail materialises the null-checked item into a saved register via a
     // conditional move (cmpwi on the param reg + mr/li pair) before the gate.
@@ -2031,11 +1992,9 @@ __declspec(noinline) void setCrystalSlotTexture(CMCCrystalBox* self, u16 id, uns
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)msg);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021928C: mirror of setCrystalSlotTexture with the countdown pane label
-// at a different offset. stmw r27 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// at a different offset. stmw r27 frame is the -O4,s shape (unit flag).
 void setCrystalSlotTexAlt(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
@@ -2114,7 +2073,6 @@ void setCrystalSlotTexAlt(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i)
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)msg);
     }
 }
-#pragma optimize_for_size off
 
 // Item-kind check: vtable word bits 16-19 == 9 and byte at +7 has flag 1.
 __declspec(noinline) int isCrystalKindGem(void* self) {
@@ -2126,8 +2084,7 @@ __declspec(noinline) int isCrystalKindGem(void* self) {
 // publish both the message and the remaining-capacity string. The slot-0x80
 // item state picks the "in box" vs "not yet" message sets; a placed item's
 // sub-count drives the capacity label. stmw r26 frame is the -O4,s shape
-// (pragma).
-#pragma optimize_for_size on
+// (unit flag).
 __declspec(noinline) void setCrystalSlotCapacity(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
@@ -2213,11 +2170,9 @@ __declspec(noinline) void setCrystalSlotCapacity(CMCCrystalBox* self, u16 id, un
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)cap, 0);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80219A64: mirror of setCrystalSlotCapacity with the two countdown pane
-// labels at different offsets. stmw r26 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// labels at different offsets. stmw r26 frame is the -O4,s shape (unit flag).
 void setCrystalSlotCapAlt(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
@@ -2303,14 +2258,12 @@ void setCrystalSlotCapAlt(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i)
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)cap, 0);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80219F0C: rebuild the crystal-box display. Depending on the row
 // count, the per-row number panes and the countdown label are refreshed, the
 // selection table is repopulated from the current page, and every slot pane
 // is re-labelled with the message resources from setCrystalSlotTexture / setCrystalSlotCapacity.
-// _savegpr_22 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// _savegpr_22 frame is the -O4,s shape (unit flag).
 void updateCrystalBoxRows(CMCCrystalBox* self) {
     CMCCrystalData* d = &self->data;
     // Single masked materialization of the row count (retail keeps one
@@ -2411,11 +2364,9 @@ void updateCrystalBoxRows(CMCCrystalBox* self) {
                       found);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021A7F4: refresh the sort-menu label from the current crystal id.
-// stmw r28 frame + check-at-top loop are the -O4,s shapes (pragma).
-#pragma optimize_for_size on
+// stmw r28 frame + check-at-top loop are the -O4,s shapes (unit flag).
 void rebuildCrystalSortMenu(CMCCrystalBox* self) {
     int arr[3];
     const unsigned long* src = lbl_eu_80508870;
@@ -2440,11 +2391,9 @@ void rebuildCrystalSortMenu(CMCCrystalBox* self) {
         sortMenuSetPage(&self->sortMenu, self->field_1506 + self->field_1507);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021A8D8: walk the 8-slot selection table at +0x1480 and feed each
 // entry (id = high 16 bits of the first word) to the two placement handlers.
-#pragma optimize_for_size on
 __declspec(noinline) void placeCrystalBoxSlots(CMCCrystalBox* self) {
     unsigned int i;
     for (i = 0; i < 8; i++) {
@@ -2466,8 +2415,7 @@ __declspec(noinline) void placeCrystalBoxSlots(CMCCrystalBox* self) {
 // the +0xE4 cursor; otherwise the sort-menu / countdown / normal paths
 // format a pane pair and drive the +0x6C/+0xCC cursor; the window-kind
 // (unk2D1) paths scale a quad by a pane float and drive +0xB4/+0xCC.
-// _savegpr_29 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// _savegpr_29 frame is the -O4,s shape (unit flag).
 void refreshCrystalBoxCursors(CMCCrystalBox* self) {
     // Buffers declared in retail stack order (first-declared -> highest slot).
     char bufD0[0x20];   // sort-menu sprintf
@@ -2562,7 +2510,6 @@ void refreshCrystalBoxCursors(CMCCrystalBox* self) {
         }
     }
 }
-#pragma optimize_for_size off
 
 struct CMCCrystalRec5 { unsigned short m0; unsigned short m2; unsigned char m4; };
 
@@ -2594,7 +2541,6 @@ extern "C" __declspec(noinline) void copyCrystalRec5Ex(CMCCrystalRec5Ex* dst, CM
 // the currently selected crystal (when unk2CD >= 0), bubble-sorts by quantity
 // then by flag, and pushes the first 8 entries (offset by the scroll row
 // unk1502, highlighting the cursor row unk1501) into the crystal-info pane.
-#pragma optimize_for_size on
 void rebuildCrystalGridTable(CMCCrystalBox* self) {
     // Declaration order fixes the stack-slot layout (MWCC allocates locals in
     // reverse declaration order): sort2 temps C/B/A at +0x08/+0x10/+0x40,
@@ -2760,7 +2706,6 @@ void rebuildCrystalGridTable(CMCCrystalBox* self) {
     CScrollBar_PlaceThumb((u8*)self + 0x250, (u16)(s8)self->unk1502);
     self->unk1503 = count;
 }
-#pragma optimize_for_size off
 
 // CMCCrystalBox holds a nw4r::lyt::Layout* at +0x38 (== subObjPtrs[5]) with the
 // anim transform to play at +0x3C..+0x5F. These play back a bound animation.
@@ -2834,8 +2779,7 @@ __declspec(noinline) void playCrystalAnim14(CMCCrystalBox* self) {
 // when it is 1, three window rows ((value-1)*3 + 0x40..0x42) are formatted,
 // the crystal name is resolved through the BDAT table, a rank pane is chosen
 // from the id thresholds, and a scale/position pane is sprintf'd with id/30
-// and id/20. _savegpr_28 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// and id/20. _savegpr_28 frame is the -O4,s shape (unit flag).
 __declspec(noinline) void showCrystalBoxStatus(CMCCrystalBox* self) {
     if ((s8)self->unk2D3 == 0) {
         int v = GetCollectedFlagByte(self->unk2D4);
@@ -2954,14 +2898,12 @@ __declspec(noinline) void showCrystalBoxStatus(CMCCrystalBox* self) {
                       (char*)buf.b, 0);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80219AF0: aggregate the placed crystal items at +0x1480 into
 // (id, quantity) pairs, bubble-sort by descending quantity, and return
 // (first pair count - 100). Retail's epilogue extends the result to 64 bits
 // (subfc/subfze), so the prototype returns s64; call sites truncate to int.
-// stmw r26 frame is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// stmw r26 frame is the -O4,s shape (unit flag).
 // Retail keeps this out-of-line (bl from the update callbacks); noinline
 // preserves that.
 __declspec(noinline) s64 getCrystalSelTopCount(CMCCrystalBox* self) {
@@ -3053,7 +2995,6 @@ __declspec(noinline) s64 getCrystalSelTopCount(CMCCrystalBox* self) {
 
     return (s64)pairs[0].count - 100;
 }
-#pragma optimize_for_size off
 
 void copyShortPair_80219D10(void* dst, void* src){
     *(unsigned short*)dst = *(unsigned short*)src;
@@ -3064,8 +3005,7 @@ void copyShortPair_80219D10(void* dst, void* src){
 // reads (main crystal-box layout +0x24, crystal-info arc +0x28, BDAT table
 // +0x2C); when the event's handle matches one of them, the matching branch
 // builds that resource and returns 1, otherwise 0.
-// _savegpr_28 frame (retail) is the -O4,s shape (pragma).
-#pragma optimize_for_size on
+// _savegpr_28 frame (retail) is the -O4,s shape (unit flag).
 bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
     CFileHandle* evt = event->mFileHandle;
     if ((CFileHandle*)subObjPtrs[0] == evt) {
@@ -3340,7 +3280,6 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
     }
     return false;
 }
-#pragma optimize_for_size off
 
 // noinline: retail calls this out-of-line from getCrystalSelTopCount; without it
 // MWCC's IPO folds both call sites away.

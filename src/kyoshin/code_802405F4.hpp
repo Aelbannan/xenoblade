@@ -54,7 +54,6 @@ extern u32 lbl_eu_80663E28;      // .sbss global busy-flag word (bit 21)
 extern u32 lbl_eu_80664788;      // .sdata landmark request counter
 extern const float lbl_eu_8066870C;
 extern const float lbl_eu_80668710;
-extern const float lbl_eu_8066A210;  // pi/2 variant used by FX init scaling
 
 extern "C" {
 void UIWin_ControlWindowLists(u32, u32);                       // UI mode switch helper
@@ -115,7 +114,6 @@ extern const float lbl_eu_80668718;  // 1.0f
 extern const float lbl_eu_8066871C;
 extern const float lbl_eu_80668720;
 extern const float lbl_eu_80668724;
-extern const float lbl_eu_8066A200;  // pi/2 (sdata2)
 
 // One easing/pulse channel driven by MapFxStepPulseChannel (0x3C bytes).
 struct MapFxChannel {

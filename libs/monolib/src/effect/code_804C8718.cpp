@@ -8,7 +8,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/effect/CERand.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 extern "C" void SchedList_StepBoth(f32);
 #include "monolib/effect/code_804CC2B8.hpp"
 #include <revolution/MTX.h>
@@ -527,18 +527,18 @@ s32 EffObj_GetPriority(EffObj* obj) {
     s32 c9 = 0;
     s32 c10 = 0;
 
-    c1 = lbl_eu_8066A208 >= __fabs(obj->mtx.m[0][0] - ml::CMat34::identity.m[0][0]) &&
-         lbl_eu_8066A208 >= __fabs(obj->mtx.m[0][1] - ml::CMat34::identity.m[0][1]);
-    if (c1 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[0][2] - ml::CMat34::identity.m[0][2])) c2 = 1;
-    if (c2 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[0][3] - ml::CMat34::identity.m[0][3])) c3 = 1;
-    if (c3 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[1][0] - ml::CMat34::identity.m[1][0])) c4 = 1;
-    if (c4 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[1][1] - ml::CMat34::identity.m[1][1])) c5 = 1;
-    if (c5 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[1][2] - ml::CMat34::identity.m[1][2])) c6 = 1;
-    if (c6 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[1][3] - ml::CMat34::identity.m[1][3])) c7 = 1;
-    if (c7 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[2][0] - ml::CMat34::identity.m[2][0])) c8 = 1;
-    if (c8 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[2][1] - ml::CMat34::identity.m[2][1])) c9 = 1;
-    if (c9 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[2][2] - ml::CMat34::identity.m[2][2])) c10 = 1;
-    if (c10 && lbl_eu_8066A208 >= __fabs(obj->mtx.m[2][3] - ml::CMat34::identity.m[2][3])) c11 = 1;
+    c1 = ml::epsilon >= __fabs(obj->mtx.m[0][0] - ml::CMat34::identity.m[0][0]) &&
+         ml::epsilon >= __fabs(obj->mtx.m[0][1] - ml::CMat34::identity.m[0][1]);
+    if (c1 && ml::epsilon >= __fabs(obj->mtx.m[0][2] - ml::CMat34::identity.m[0][2])) c2 = 1;
+    if (c2 && ml::epsilon >= __fabs(obj->mtx.m[0][3] - ml::CMat34::identity.m[0][3])) c3 = 1;
+    if (c3 && ml::epsilon >= __fabs(obj->mtx.m[1][0] - ml::CMat34::identity.m[1][0])) c4 = 1;
+    if (c4 && ml::epsilon >= __fabs(obj->mtx.m[1][1] - ml::CMat34::identity.m[1][1])) c5 = 1;
+    if (c5 && ml::epsilon >= __fabs(obj->mtx.m[1][2] - ml::CMat34::identity.m[1][2])) c6 = 1;
+    if (c6 && ml::epsilon >= __fabs(obj->mtx.m[1][3] - ml::CMat34::identity.m[1][3])) c7 = 1;
+    if (c7 && ml::epsilon >= __fabs(obj->mtx.m[2][0] - ml::CMat34::identity.m[2][0])) c8 = 1;
+    if (c8 && ml::epsilon >= __fabs(obj->mtx.m[2][1] - ml::CMat34::identity.m[2][1])) c9 = 1;
+    if (c9 && ml::epsilon >= __fabs(obj->mtx.m[2][2] - ml::CMat34::identity.m[2][2])) c10 = 1;
+    if (c10 && ml::epsilon >= __fabs(obj->mtx.m[2][3] - ml::CMat34::identity.m[2][3])) c11 = 1;
 
     if (c11 == 0) {
         // Non-identity rotation: transform the world position by the object matrix.
@@ -1052,18 +1052,18 @@ static inline s32 EffMtxNearIdentity(EffObj* eo) {
     s32 c9 = 0;
     s32 c10 = 0;
 
-    c1 = lbl_eu_8066A208 >= __fabs(eo->mtx.m[0][0] - ml::CMat34::identity.m[0][0]) &&
-         lbl_eu_8066A208 >= __fabs(eo->mtx.m[0][1] - ml::CMat34::identity.m[0][1]);
-    if (c1 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[0][2] - ml::CMat34::identity.m[0][2])) c2 = 1;
-    if (c2 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[0][3] - ml::CMat34::identity.m[0][3])) c3 = 1;
-    if (c3 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[1][0] - ml::CMat34::identity.m[1][0])) c4 = 1;
-    if (c4 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[1][1] - ml::CMat34::identity.m[1][1])) c5 = 1;
-    if (c5 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[1][2] - ml::CMat34::identity.m[1][2])) c6 = 1;
-    if (c6 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[1][3] - ml::CMat34::identity.m[1][3])) c7 = 1;
-    if (c7 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[2][0] - ml::CMat34::identity.m[2][0])) c8 = 1;
-    if (c8 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[2][1] - ml::CMat34::identity.m[2][1])) c9 = 1;
-    if (c9 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[2][2] - ml::CMat34::identity.m[2][2])) c10 = 1;
-    if (c10 && lbl_eu_8066A208 >= __fabs(eo->mtx.m[2][3] - ml::CMat34::identity.m[2][3])) c11 = 1;
+    c1 = ml::epsilon >= __fabs(eo->mtx.m[0][0] - ml::CMat34::identity.m[0][0]) &&
+         ml::epsilon >= __fabs(eo->mtx.m[0][1] - ml::CMat34::identity.m[0][1]);
+    if (c1 && ml::epsilon >= __fabs(eo->mtx.m[0][2] - ml::CMat34::identity.m[0][2])) c2 = 1;
+    if (c2 && ml::epsilon >= __fabs(eo->mtx.m[0][3] - ml::CMat34::identity.m[0][3])) c3 = 1;
+    if (c3 && ml::epsilon >= __fabs(eo->mtx.m[1][0] - ml::CMat34::identity.m[1][0])) c4 = 1;
+    if (c4 && ml::epsilon >= __fabs(eo->mtx.m[1][1] - ml::CMat34::identity.m[1][1])) c5 = 1;
+    if (c5 && ml::epsilon >= __fabs(eo->mtx.m[1][2] - ml::CMat34::identity.m[1][2])) c6 = 1;
+    if (c6 && ml::epsilon >= __fabs(eo->mtx.m[1][3] - ml::CMat34::identity.m[1][3])) c7 = 1;
+    if (c7 && ml::epsilon >= __fabs(eo->mtx.m[2][0] - ml::CMat34::identity.m[2][0])) c8 = 1;
+    if (c8 && ml::epsilon >= __fabs(eo->mtx.m[2][1] - ml::CMat34::identity.m[2][1])) c9 = 1;
+    if (c9 && ml::epsilon >= __fabs(eo->mtx.m[2][2] - ml::CMat34::identity.m[2][2])) c10 = 1;
+    if (c10 && ml::epsilon >= __fabs(eo->mtx.m[2][3] - ml::CMat34::identity.m[2][3])) c11 = 1;
     return c11;
 }
 
@@ -1582,8 +1582,8 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     } else {
         data.d = data.vb - data.va;
     }
-    u32 bxy = (__fabs(data.d.x) <= lbl_eu_8066A208) && (__fabs(data.d.y) <= lbl_eu_8066A208);
-    if (bxy && (__fabs(data.d.z) <= lbl_eu_8066A208)) {
+    u32 bxy = (__fabs(data.d.x) <= ml::epsilon) && (__fabs(data.d.y) <= ml::epsilon);
+    if (bxy && (__fabs(data.d.z) <= ml::epsilon)) {
     } else if (data.d.x * data.d.x + data.d.y * data.d.y + data.d.z * data.d.z == lbl_eu_8066B0A0) {
         data.d = ml::CVec3::zero;
     } else {

@@ -7,7 +7,7 @@
 // extern "C" declarations don't clash (10197). Must be defined before any
 // header that pulls in CMapSel.hpp (code_802405F4.hpp includes it).
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32; we need the float
+// code_80135FDC.hpp declares ml::epsilon as u32; we need the float
 // (.sdata2 epsilon) view, so rename that declaration away.
 // (BdatGetU16ByTableKey: CFloorMap.hpp's legacy u32-returning copy moved TU-local
 // into CFloorMap.cpp; the canonical u16 decl on code_80135FDC.hpp is now the
@@ -28,7 +28,7 @@
 #include "kyoshin/CMapSel.hpp"
 #include "kyoshin/CFade.hpp"
 #include <monolib/math/MTRand.hpp>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 
 // Copy helpers for member sub-object initialization
@@ -86,8 +86,8 @@ struct MapPointEntry {
    the vertical offset (field_10) from a damped sine wobble with lead-in /
    tail-out fading. Returns whether the channel is still alive. */
 extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
-    if (fx->field_2c <= lbl_eu_8066A208) return false;
-    if (delta <= lbl_eu_8066A208) return true;
+    if (fx->field_2c <= ml::epsilon) return false;
+    if (delta <= ml::epsilon) return true;
 
     float t = fx->field_00 + delta;
     if (fx->field_18 == 0 || t < fx->field_2c - fx->field_34) {
@@ -130,13 +130,13 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
     }
 
     float ph;
-    if (fx->field_1c > lbl_eu_8066A208) {
+    if (fx->field_1c > ml::epsilon) {
         ph = fx->field_04 / fx->field_1c;
     } else {
         ph = lbl_eu_80668718;
     }
     float s = nw4r::math::SinFIdx(lbl_eu_80668724 *
-                                  ((ph + fx->field_14) * lbl_eu_8066A200));
+                                  ((ph + fx->field_14) * ml::halfpi));
     float y = (fx->field_08 - fx->field_0c) * s + fx->field_0c;
     fx->field_10 = y;
 
@@ -146,7 +146,7 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
         fx->field_10 = lbl_eu_80668708;
         return true;
     }
-    if (fx->field_30 > lbl_eu_8066A208) {
+    if (fx->field_30 > ml::epsilon) {
         float lim = fx->field_28 + fx->field_30;
         if (fx->field_00 < lim) {
             fx->field_10 = y * (lbl_eu_80668718 -
@@ -154,7 +154,7 @@ extern "C" bool MapFxStepPulseChannel(MapFxChannel* fx, float delta) {
             return true;
         }
     }
-    if (fx->field_34 > lbl_eu_8066A208) {
+    if (fx->field_34 > ml::epsilon) {
         float lim = fx->field_2c - fx->field_34;
         if (fx->field_00 > lim) {
             fx->field_10 = y * (lbl_eu_80668718 -
@@ -193,7 +193,7 @@ extern "C" void MapFxStepMenuChannels(MenuFxObj* obj) {
         MapFxChannel* fx = &obj->fx[i];
         // Materializing the le-test (CfGimmick.cpp pattern) yields retail's
         // fcmpo + cror eq,lt,eq + mfcr/extrwi sequence.
-        done = fx->field_2c <= lbl_eu_8066A208;
+        done = fx->field_2c <= ml::epsilon;
         if (!done) {
             MapFxStepPulseChannel(fx, delta);
             posOut[0x5C + i] = fx->field_10;
@@ -204,7 +204,7 @@ extern "C" void MapFxStepMenuChannels(MenuFxObj* obj) {
     bool subHit = false;
     for (int j = 3; j <= 5; j++) {
         MapFxChannel* fx = &obj->fx[j];
-        done = fx->field_2c <= lbl_eu_8066A208;
+        done = fx->field_2c <= ml::epsilon;
         if (!done) {
             MapFxStepPulseChannel(fx, delta);
             posOut[0x5C + j] = fx->field_10;
@@ -363,7 +363,7 @@ s32 MapFxAllocEntry(MenuFxObj* entries, FxParams* params, u8 flagVal) {
         // Channels 3-5 take pi/2-scaled widths from the reserved param block.
         // volatile pins the pi/2-scaled widths to stack slots across the
         // intervening randFloat1 calls (retail keeps no f14+ live ranges).
-        float pi2 = lbl_eu_8066A210;
+        float pi2 = ml::deg2rad;
         volatile float w3 = params->field_10 * pi2;
         volatile float w4 = params->field_14 * pi2;
         volatile float w5 = params->field_18 * pi2;
@@ -373,7 +373,7 @@ s32 MapFxAllocEntry(MenuFxObj* entries, FxParams* params, u8 flagVal) {
 
         obj->field_00 = 1;
 
-        const float eps = lbl_eu_8066A208;
+        const float eps = ml::epsilon;
         if (obj->fx[0].field_2c > eps) obj->fx[0].field_18 = flagVal;
         if (obj->fx[1].field_2c > eps) obj->fx[1].field_18 = flagVal;
         if (obj->fx[2].field_2c > eps) obj->fx[2].field_18 = flagVal;
@@ -403,7 +403,7 @@ void MapFxClearSlotFlags(MapPointEntry* entries, u32 id) {
         if (!(id == e->id || id == 0)) continue;
         MapPointSlot* s = e->slots;
         for (int j = 6; j != 0; j--) {
-            u8 stop = s->value <= lbl_eu_8066A208;
+            u8 stop = s->value <= ml::epsilon;
             if (!stop) s->flag = 0;
             s++;
         }
@@ -419,7 +419,7 @@ void MapFxResetEntries(MapPointEntry* entries, u32 id) {
         if (!(id == e->id || id == 0)) continue;
         MapPointSlot* s = e->slots;
         for (int j = 0; j < 6; j++, s++) {
-            u8 stop = s->value <= lbl_eu_8066A208;
+            u8 stop = s->value <= ml::epsilon;
             if (!stop) s->flag = 0;
         }
         e->pos = ml::CVec3::zero;

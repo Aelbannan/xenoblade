@@ -980,11 +980,6 @@ extern const f32 lbl_eu_80666DA4;
 extern const f32 lbl_eu_80666DA8;
 extern const f32 lbl_eu_80666DAC;
 extern const f32 lbl_eu_80666DB0;
-extern const f32 lbl_eu_8066A1F8;   // pi
-extern const f32 lbl_eu_8066A1FC;   // 2*pi
-extern const f32 lbl_eu_8066A20C;
-extern const f32 lbl_eu_8066A204;   // 0.7853982 (pi/4)
-extern const f32 lbl_eu_8066A210;
 
 // 2-float blocks (base + f2 offset pairs for the facing-state table).
 // Non-const: sinit_800D79B4 writes these at static-init time.

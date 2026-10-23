@@ -13,8 +13,6 @@ extern const float lbl_eu_80666A78;   // UnkVirtualFunc25 lift-offset Y element
 extern const float lbl_eu_80666A7C;   // UnkVirtualFunc25 lifted re-probe FP arg
 extern const float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
 extern const float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
-extern const float lbl_eu_8066A210;   // CfObject_setScaledHeadAngle scale factor
-extern const float lbl_eu_8066A20C;   // CfObject_UnkVirtualFunc34 scale factor
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_getModelName null placeholder (rodata, 8 bytes)
 extern u8 lbl_eu_80529318[];   // cf::CfObject vtable (retail .data, stored by the model dtor)
 extern u8 lbl_eu_805294E0[];   // cf::CfObjectModel vtable (retail .data)

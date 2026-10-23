@@ -196,7 +196,6 @@ extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value)
 extern "C" const float lbl_eu_80668364;
 // Alternative scale factor used by the +0x1C-family column readers.  Const
 // declaration matches CfObjectModel.hpp (which also references it).
-extern const float lbl_eu_8066A210;
 // 2^52 magic constant subtracted in the u16->f32 double-trick conversions
 // (lfd + fsubs per bdat-column reader block).
 extern "C" const double lbl_eu_80668370;

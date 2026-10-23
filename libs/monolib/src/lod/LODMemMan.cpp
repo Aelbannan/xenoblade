@@ -259,7 +259,6 @@ extern f64 lbl_eu_8066A6D0;   // double scale (random offset factor)
 extern f32 lbl_eu_8066A6D8;   // scale divisor
 extern f32 lbl_eu_8066A6C0;   // 0.0f LOD distance constant
 extern f32 lbl_eu_8066A6C4;   // random-value scale (rebuildFromSharedBuffer)
-extern f32 lbl_eu_8066A210;   // angle scale (updateElementsByDesc)
 extern f32 lbl_eu_8066A6F8;   // FIdx angle scale (updateElementsByDesc)
 // Shared LOD distance globals published by the per-element update
 // (updateElementLod writes the float value and its integer truncation).
@@ -1512,11 +1511,11 @@ extern "C" void updateLodLayersForView__Q23LOD9LODMemManFv(
               + pv->qPos[2] * pv->qPos[2];
     pv->field_0x38 = lbl_eu_8066A6D8 / lenSq;
 
-    f32 ang = ((scale * lbl_eu_8066A210) * lbl_eu_8066A6F4) * lbl_eu_8066A6F8;
+    f32 ang = ((scale * ml::deg2rad) * lbl_eu_8066A6F4) * lbl_eu_8066A6F8;
     f32 s = nw4r::math::SinFIdx(ang);
     pv->field_0x74 = lbl_eu_8066A6FC * s;
     if (s - scale > 0.0f) {
-        f32 tv = tan((((s - scale) * lbl_eu_8066A210) * lbl_eu_8066A6F8)
+        f32 tv = tan((((s - scale) * ml::deg2rad) * lbl_eu_8066A6F8)
                      * lbl_eu_8066A704);
         f32 t = lbl_eu_8066A6D8 / tv;
         f32 q1 = t * t + lbl_eu_8066A6D8;
@@ -2367,7 +2366,7 @@ extern "C" void updateElementsByDesc__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
     }
     LODMgrPosView* mp = (LODMgrPosView*)self;
     const f32 cZero = lbl_eu_8066A6C0;
-    const f32 cAng = lbl_eu_8066A210;
+    const f32 cAng = ml::deg2rad;
     const f32 cFIdx = lbl_eu_8066A6F8;
     const f32 cOne = lbl_eu_8066A6D8;
     LODOutRec* out = (LODOutRec*)l->field_0xC;

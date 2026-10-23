@@ -899,7 +899,7 @@ void CfMapMineManager::ScanPoints() {
 
         if (found != 0) {
             mineFillPointFromRow(this, row, &found->mItem, 0);
-            if (found->mItem.mTimer14 < lbl_eu_8066A208) {
+            if (found->mItem.mTimer14 < ml::epsilon) {
                 mineRespawnPoint(this, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
                     u32 g = lbl_eu_80663E24;

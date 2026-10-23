@@ -32,7 +32,6 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
 // .rodata [0x48..0x80]: category string tables (7-word pointer tables, one
 // 8-aligned struct). Contents are UNDEF extern reads: the percent strings
 // (except the base) have no 8-aligned address for real symbols.
-extern const u8 lbl_eu_80668008[];
 extern const char lbl_eu_805062F4[];
 extern const char lbl_eu_80506300[];
 extern const char lbl_eu_8050630C[];
@@ -40,8 +39,8 @@ extern const char lbl_eu_80506318[];
 extern const char lbl_eu_80506324[];
 struct Rodata_ItemBoxTbls { const void* t1[7]; const void* t2[7]; };
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTbls lbl_eu_80506330 = {
-    { lbl_eu_80668008, lbl_eu_805062E8, lbl_eu_805062F4, lbl_eu_80506300, lbl_eu_8050630C, lbl_eu_80506318, lbl_eu_80506324 },
-    { lbl_eu_80668008, lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 }
+    { "", lbl_eu_805062E8, lbl_eu_805062F4, lbl_eu_80506300, lbl_eu_8050630C, lbl_eu_80506318, lbl_eu_80506324 },
+    { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 }
 };
 #define lbl_eu_8050634C (lbl_eu_80506330.t2)
 
@@ -57,7 +56,7 @@ struct Rodata_ItemBoxTail {
 };
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTail rodata_ItemBoxTail = {
     { 2, 4, 5, 6, 7, 8 },
-    { lbl_eu_80668008, lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
+    { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
     "CItemBoxInfo2",
     "CItemBoxInfo",
     "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000"
@@ -81,68 +80,6 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
     lbl_eu_805063AC, lbl_eu_80534BB0
 };
 
-// .sdata2 0x80: item-box float pool + rank tag words + owned 2^52 doubles in
-// retail order (Elv-style struct; MWCC cannot reorder). Only float/double
-// slots get member macros: known int constants would fold into immediates
-// and regress .text (MES u3C precedent), so tags keep UNDEF extern reads.
-// MWCC pools literal/magic duplicates after this struct -> drop_data_tail.
-struct Sdata2_ItemBox {
-    u32 i8008;
-    float f800C, f8010, f8014, f8018, f801C;
-    double d8020, d8028;
-    u8 t8030[4];
-    u16 t8034; u16 pad8036;
-    u8 t8038[4];
-    u8 b803C; u8 pad803D[3];
-    float f8040, f8044, f8048;
-    u8 t804C[4];
-    u16 t8050; u16 pad8052;
-    u8 t8054[4];
-    u16 t8058; u16 pad805A;
-    u8 t805C[4];
-    u16 t8060; u16 pad8062;
-    u8 t8064[4];
-    u16 t8068; u16 pad806A;
-    u32 t806C;
-    u8 b8070; u8 pad8071[3];
-    u8 t8074[4];
-    u16 t8078; u16 pad807A;
-    u8 t807C[4];
-    u16 t8080; u16 pad8082[3];
-};
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const struct Sdata2_ItemBox sdata2_ItemBox = {
-    0,
-    0.0f, 1.0f, 10.0f, 1.4f, 1.5f,
-    4503599627370496.0, 4503601774854144.0,
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    { 4, 5, 6, 7 },
-    8, { 0, 0, 0 },
-    0.01f, 100.0f, 0.5f,
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    0x04050607,
-    8, { 0, 0, 0 },
-    { 2, 4, 5, 6 },
-    0x0708, 0,
-    { 2, 4, 5, 6 },
-    0x0708, { 0, 0, 0 }
-};
-#define lbl_eu_80668010 sdata2_ItemBox.f8010
-#define lbl_eu_80668014 sdata2_ItemBox.f8014
-#define lbl_eu_80668018 sdata2_ItemBox.f8018
-#define lbl_eu_8066801C sdata2_ItemBox.f801C
-#define lbl_eu_80668020 sdata2_ItemBox.d8020
-#define lbl_eu_80668028 sdata2_ItemBox.d8028
-#define lbl_eu_80668040 sdata2_ItemBox.f8040
-#define lbl_eu_80668044 sdata2_ItemBox.f8044
-#define lbl_eu_80668048 sdata2_ItemBox.f8048
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries E43Quad; first carries aligned(8)
@@ -234,7 +171,6 @@ extern "C" void renderItemBoxTripleRows(CItemBoxInfo*, u32, void*);
 void clearItemBoxQuadTexts(CItemBoxInfo*);
 extern "C" void setupItemBoxDetail(CItemBoxInfo*, u32, void*, u32);
 extern "C" void buildItemBox2CmpRecord(void*, void*, void*);
-void buildItemBox2SlotFlags(CItemBoxSlotFlags*, void*, void*);
 extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* findObjB28ById(u32);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
@@ -246,8 +182,8 @@ extern "C" void PaneMatSetTevColors(void*, void*, void*);
 extern "C" u32 sumItemBox2TypeCounts(void*, u16, void*);
 extern "C" u32 getItemBoxCondStatById(void*, u32, u32);
 extern "C" u32 getItemBox2Effect(void*, void*, u32, void*);
-extern "C" s32 calcItemBox2Bonus1(void*, void*, s32, void*);
-extern "C" s32 calcItemBox2Bonus2(void*, void*, s32, void*);
+extern "C" s32 calcItemBox2Bonus1(void*, u16, s32, void*);
+extern "C" s32 calcItemBox2Bonus2(void*, u16, s32, void*);
 extern "C" u32 testItemBox2BdatFlag(CItemBoxInfo2*, u32, u32);
 char* BuildItemNameStr(u32);
 u32 sumItemBox2TypeCounts(void*, u16, void*);
@@ -257,8 +193,8 @@ extern "C" u32 testItemBoxBdatFlag(CItemBoxInfo*, u32, void*);
 extern "C" u32 getItemBoxEffect(void*, void*, u32, void*);
 extern "C" u32 sumItemBoxTypeCounts(CItemBoxInfo*, u16, void*);
 extern "C" u32 checkItemBoxGemChain(CItemBoxInfo*, u16, void*, void*);
-extern "C" s32 calcItemBoxBonus1(void*, void*, s32, void*);
-extern "C" s32 calcItemBoxBonus2(void*, void*, s32, void*);
+extern "C" s32 calcItemBoxBonus1(void*, u16, s32, void*);
+extern "C" s32 calcItemBoxBonus2(void*, u16, s32, void*);
 u32 getItemBoxCondStat2D(void*, void*);
 u32 getItemBox2Effect(void*, void*, u32, void*);
 void hideItemBoxPanes(CItemBoxInfo*, u16, void*, u16);
@@ -269,18 +205,7 @@ extern void* lbl_eu_806640EC;
 extern void* CItemBlock_getPtr20E8();
 extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
-extern float lbl_eu_8066800C;
 // 6-byte item-box slot tables (pair of u32+u16 .sdata2 constants).
-extern const u32 lbl_eu_8066804C;
-extern const u16 lbl_eu_80668050;
-extern const u32 lbl_eu_80668054;
-extern const u16 lbl_eu_80668058;
-extern const u32 lbl_eu_8066805C;
-extern const u16 lbl_eu_80668060;
-extern const u32 lbl_eu_80668074;
-extern const u16 lbl_eu_80668078;
-extern const u32 lbl_eu_8066807C;
-extern const u16 lbl_eu_80668080;
 // getLanguage__9CDeviceSCFv: real int-returning declaration comes from
 // kyoshin/cf/CItem.hpp (stale local u8 prototype deleted).
 extern void* lbl_eu_80664110;
@@ -306,13 +231,14 @@ void advanceItemBoxState(CItemBoxInfo* info) {
 }
 
 void tryActivateItemBox(CItemBoxInfo* info) {
-    if (info->state.layout == 0) return;
-    if (info->state.resource != 0) {
-        info->state.current = 1;
-        info->state.active = 1;
-    } else {
-        return;
+    // Goto-gate (PLAN 17.6), same shape as activateItemBox2.
+    if (info->state.layout != 0 && info->state.resource != 0) {
+        goto body;
     }
+    return;
+body:
+    info->state.current = 1;
+    info->state.active = 1;
 }
 
 u32 isItemBoxType9Flagged(void* arg) {
@@ -389,7 +315,7 @@ struct CItemBoxCharEntryView {
 #pragma optimize_for_size on
 #pragma dont_inline on
 void initItemBoxVecTable(void* sub) {
-    float f = lbl_eu_8066800C;
+    float f = 0.0f;
     for (u8 i = 0; i < 12; i++) {
         ((CItemBoxVecTable*)sub)->ids[i] = 0;
         float temp[3] = {f, f, f};
@@ -476,10 +402,8 @@ void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
 
 #pragma push
 #pragma auto_inline off
-#undef lbl_eu_80668010
-extern "C" const f32 lbl_eu_80668010;
 extern "C" void openItemBoxPhase1(CItemBoxInfo* info) {
-    float arg = lbl_eu_80668010;
+    float arg = 1.0f;
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, true);
@@ -488,23 +412,22 @@ extern "C" void openItemBoxPhase1(CItemBoxInfo* info) {
 }
 
 extern "C" void openItemBoxPhase2(CItemBoxInfo* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
 }
 
 extern "C" void closeItemBoxPhase1(CItemBoxInfo* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
     }
 }
-#define lbl_eu_80668010 sdata2_ItemBox.f8010
 
 extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;
     }
@@ -519,12 +442,6 @@ extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
 // the candidate item's.
 #pragma push
 #pragma optimize_for_size on
-#undef lbl_eu_80668014
-#undef lbl_eu_80668018
-#undef lbl_eu_8066801C
-extern "C" const f32 lbl_eu_80668014;
-extern "C" const f32 lbl_eu_80668018;
-extern "C" const f32 lbl_eu_8066801C;
 extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
     // Scratch doubles for MWCC's int->float magic (2^52 unsigned repair,
     // 2^63 sign-repair); retail materializes both high words up front.
@@ -541,14 +458,14 @@ extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
     rec.s30 = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, v2);
     rec.s32 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, v2);
     rec.s34 = (u8)BdatGetU8Direct((u32)global, base + 0x1bb, v2);
-    rec.f38 = (f32)((u8)BdatGetU8Direct((u32)global, base + 0x1c3, v2) / lbl_eu_80668014);
+    rec.f38 = (f32)((u8)BdatGetU8Direct((u32)global, base + 0x1c3, v2) / 10.0f);
     rec.s3C = (u8)BdatGetU8Direct((u32)global, base + 0x1c9, v2);
     if (BdatGetU8Direct((u32)global, base + 0x1d2, v2) & 4) {
         void* lookup = CtrlObjectParam_GetCharEntry(1);
         u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
-        rec.s2C = (s16)(lbl_eu_80668018 * (f32)(rec.s2C * (u16)r));
+        rec.s2C = (s16)(1.4f * (f32)(rec.s2C * (u16)r));
         u32 r2 = CtrlObjectParam_GetArtsDataWord(lookup);
-        rec.s2E = (s16)(lbl_eu_8066801C * (f32)(rec.s2E * (u16)r2));
+        rec.s2E = (s16)(1.5f * (f32)(rec.s2E * (u16)r2));
         if (rec.s2C >= 999) rec.s2C = 999;
         if (rec.s2E >= 999) rec.s2E = 999;
     }
@@ -571,7 +488,7 @@ extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
         u16 cat = BdatGetItemId(*(u32*)item >> 20);
         u16 a = (u16)BdatGetU16Direct((const void*)global, (const void*)(base + 0x19c), cat);
         u16 b = (u16)BdatGetU16Direct((const void*)global, (const void*)(base + 0x1a4), cat);
-        f32 ratio = (f32)((u8)BdatGetU8Direct((u32)global, base + 0x1c3, cat) / lbl_eu_80668014);
+        f32 ratio = (f32)((u8)BdatGetU8Direct((u32)global, base + 0x1c3, cat) / 10.0f);
         rec.f28 = BlendFloatAvgScale((u32)a, (u32)b, 0, ratio);
         u8 v1ab = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, cat);
         u8 v1b3 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, cat);
@@ -599,9 +516,6 @@ extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
         d[1] = s[1];
     }
 }
-#define lbl_eu_80668014 sdata2_ItemBox.f8014
-#define lbl_eu_80668018 sdata2_ItemBox.f8018
-#define lbl_eu_8066801C sdata2_ItemBox.f801C
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
@@ -610,83 +524,58 @@ extern "C" void buildItemBoxCmpRecord(void* out, void* member, void* arg3) {
 // null path memsets the record, copies, and returns early; the filled path
 // falls through to its own copy of the same loop. Per-slot flag banks are
 // addressed through one walked pointer (&flags[i], +0/+7/+14).
-extern "C" void buildItemBoxSlotFlags(void* out, void* arg2, void* arg3) {
+extern "C" CItemBoxSlotFlags buildItemBoxSlotFlags(void* owner, u32 item) {
     CItemBoxSlotFlags rec;
-    if (arg3 == NULL) {
+    if (item == 0) {
         memset(&rec, 0, 0x1C);
-        // Pair-copy: reproduces the retail inlined mtctr lwzu/stwu
-        // 8-byte-pair loop (li r0,3 + 4-byte tail).
-        {
-            u32* d = (u32*)out - 1;
-            u32* s = (u32*)&rec - 1;
-            for (u32 k = 0; k < 3; k++) {
-                d[1] = s[1];
-                d[2] = s[2];
-                s += 2;
-                d += 2;
-            }
-            d[1] = s[1];
-        }
-        return;
+        return rec;
     }
     void* global = lbl_eu_806640F8;
-    u32 v1 = BdatGetItemType((u32)arg3);
-    u32 v2 = BdatGetItemId((u32)arg3);
+    u32 type = BdatGetItemType(item);
+    u16 id = BdatGetItemId(item);
     char* base = (char*)&lbl_eu_805063BC;
-    rec.v[0] = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, (u16)v2);
-    rec.v[1] = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, (u16)v2);
-    rec.v[2] = (u8)BdatGetU8Direct((u32)global, base + 0x1e2, (u16)v2);
-    u8 v3 = (u8)BdatGetU8Direct((u32)global, base + 0x1eb, v2);
+    rec.v[0] = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, id);
+    rec.v[1] = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, id);
+    rec.v[2] = (u8)BdatGetU8Direct((u32)global, base + 0x1e2, id);
+    u32 reqKind = BdatGetU8Direct((u32)lbl_eu_806640F8, base + 0x1eb, id);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 slot = (u8)GetCollectedFlagByte((u8)i);
+        u32 slot = GetCollectedFlagByte((u8)i);
         char buf[0x20];
         sprintf(buf, base + 0x1f4, (u8)slot);
-        u8 flag = (u8)(BdatGetU8Direct((u32)global, buf, (u16)v2) != 0);
-        u8* banks = &rec.flags[(u8)i];
-        banks[0] = flag;
-        if (flag == 0) continue;
-        void* lookup = CtrlObjectParam_GetCharEntry(slot);
-        if (v3 == 3) {
-            if (Counter_TestBit((u8*)lookup + 0x3534, 0x85) == 0) banks[0] = 0;
-        } else if (v3 == 2) {
-            if (Counter_TestBit((u8*)lookup + 0x3534, 0x84) == 0) banks[0] = 0;
+        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, buf, id) != 0;
+        if (rec.equipable[(u8)i] == 0) continue;
+        CItemBoxCharEntryView* member = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry((u8)slot);
+        void* counters = member->counterArea;
+        if ((u8)reqKind == 3) {
+            if (Counter_TestBit(counters, 0x85) == 0) rec.equipable[(u8)i] = 0;
+        } else if ((u8)reqKind == 2) {
+            if (Counter_TestBit(counters, 0x84) == 0) rec.equipable[(u8)i] = 0;
         } else {
             s16 value = -1;
-            switch ((u16)v1) {
-                case 4: value = *(s16*)((u8*)lookup + 0x1C); break;
-                case 5: value = *(s16*)((u8*)lookup + 0x1E); break;
-                case 6: value = *(s16*)((u8*)lookup + 0x20); break;
-                case 7: value = *(s16*)((u8*)lookup + 0x22); break;
-                case 8: value = *(s16*)((u8*)lookup + 0x24); break;
+            switch ((u16)type) {
+                case 4: value = member->slotIds[0]; break;
+                case 5: value = member->slotIds[1]; break;
+                case 6: value = member->slotIds[2]; break;
+                case 7: value = member->slotIds[3]; break;
+                case 8: value = member->slotIds[4]; break;
             }
             if (value >= 0) {
-                void* item = CItem_kindPtr((u16)v1, value);
-                if (item != NULL && *(u32*)item != 0) {
-                    u16 cat = (u16)BdatGetItemId(*(u32*)item >> 20);
+                void* equipped = CItem_kindPtr((u16)type, value);
+                if (equipped != NULL && *(u32*)equipped != 0) {
+                    u16 cat = BdatGetItemId(*(u32*)equipped >> 20);
                     u8 n1 = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, cat);
                     u8 n2 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, cat);
-                    if (rec.v[0] > n1) banks[7] = 1;
-                    else if (rec.v[0] < n1) banks[7] = 2;
-                    else banks[7] = 0;
-                    if (rec.v[1] > n2) banks[14] = 1;
-                    else if (rec.v[1] < n2) banks[14] = 2;
-                    else banks[14] = 0;
+                    if (rec.v[0] > n1) rec.cmp0[(u8)i] = 1;
+                    else if (rec.v[0] < n1) rec.cmp0[(u8)i] = 2;
+                    else rec.cmp0[(u8)i] = 0;
+                    if (rec.v[1] > n2) rec.cmp1[(u8)i] = 1;
+                    else if (rec.v[1] < n2) rec.cmp1[(u8)i] = 2;
+                    else rec.cmp1[(u8)i] = 0;
                 }
             }
         }
     }
-    // Same pair-copy at the end of the filled path.
-    {
-        u32* d = (u32*)out - 1;
-        u32* s = (u32*)&rec - 1;
-        for (u32 k = 0; k < 3; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    return rec;
 }
 #pragma pop
 // Retail buildItemBoxNameRec uses the stmw/lmw frame (MWCC optimize_for_size
@@ -850,13 +739,13 @@ void __declspec(noinline) buildItemBoxNameRec(void* out, void* unused, void* dat
 // spills the four results to stack slots, reloading them for the final four
 // output-word stores. dont_inline keeps IPA from folding this body into
 // renderItemBoxLabels/renderItemBox2Labels, which lets them keep both stack arrays.
-void getItemBoxLabelRec(u32* out, void* unused, void* arg2) {
+CItemBoxLabelRec getItemBoxLabelRec(CItemBoxInfo* info, u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
-    BdatGetItemType((u32)arg2);
+    BdatGetItemType(item);
     // cat stays a raw u16 in a register; each call site re-applies the
     // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
-    u16 cat = BdatGetItemId((u32)arg2);
+    u16 cat = BdatGetItemId(item);
     // base is anchored at the first lookup so its definition schedules after
     // the cat move (retail order: or r30,r3 then lis/addi).
     r.a = (u8)BdatGetU8Direct((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
@@ -871,65 +760,59 @@ void getItemBoxLabelRec(u32* out, void* unused, void* arg2) {
     } else {
         r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139);
     }
-    // Word-wise copy: retail expands the record copy as four lwz/stw pairs.
-    u32* src = (u32*)&r;
-    out[0] = src[0];
-    out[1] = src[1];
-    out[2] = src[2];
-    out[3] = src[3];
+    // Returned by value: the caller's hidden result pointer receives the
+    // record as four lwz/stw pairs.
+    return r;
 }
 #pragma pop
 
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void buildItemBoxSelRec(CItemBoxInfo* out, void* unused, void* data) {
+CItemBoxSelRec buildItemBoxSelRec(CItemBoxInfo* info, u32 item) {
     void* global = lbl_eu_80664110;
-    u16 v1 = BdatGetItemType((u32)data);
-    u16 v2 = BdatGetItemId((u32)data);
-    u8 arr[8];
-    arr[0] = (u8)BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    u16 v1 = BdatGetItemType(item);
+    u16 v2 = BdatGetItemId(item);
+    CItemBoxSelRec rec;
+    rec.category = (u8)BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
     // count stays u32: retail keeps the raw call result (r28) and masks at
     // each (u8)count use (loop mask hoisted to r29).
     u32 count = BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
-    for (u32 i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
+    for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 a = (u8)GetCollectedFlagByte((u8)i);
-        arr[(u8)i + 1] = (a == (u8)count) ? 1 : 0;
+        rec.selected[(u8)i] = a == (u8)count;
     }
     u32 key = BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
-    u32 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
+    u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
     u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey();
-    u8* entry = (u8*)lookup + cat * 0x49 + (u8)val * 2;
-    u8 flag2 = 0;
-    switch (arr[0]) {
-        case 1: if (entry[0xE8] != 0) flag2 = 1; break;
-        case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
-        case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
+    rec.flag2 = 0;
+    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    switch (rec.category) {
+        case 1: if (entry[0xE8] != 0) rec.flag2 = 1; break;
+        case 2: if ((entry[0xE9] >> 7) & 1) rec.flag2 = 1; break;
+        case 3: if ((entry[0xE9] >> 6) & 1) rec.flag2 = 1; break;
     }
-    *(u32*)((u8*)out + 0) = *(u32*)arr;
-    *(u32*)((u8*)out + 4) = *(u32*)(arr + 4);
-    ((u8*)out)[8] = flag2;
+    return rec;
 }
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void buildItemBoxSlotRec(void* out, void* unused, void* data, void* arg3) {
+CItemBoxSlotRecord1 buildItemBoxSlotRec(CItemBoxInfo* info, u32 item, void* arg3) {
     void* p;
     if (arg3 != NULL)
         p = arg3;
     else
         p = NULL;
-    BdatGetItemType((u32)data);
-    BdatGetItemId((u32)data);
+    BdatGetItemType(item);
+    BdatGetItemId(item);
     CItemBoxSlotRecord1 rec;
     // Chained call + virtual dispatch: no named intermediate keeps the result
     // web dead after each use, matching retail's direct r3 consumption.
     u32 v08 = CItem_initItemImplInstances((CItemData*)p)->vf08((CItemData*)p);
-    char* base = lbl_eu_805063BC;
     rec.count = (u8)v08;
-    rec.str = (u32)BdatTouchStringCell(&base[0x130], &base[0x139], 0x1e - ((u8)v08 - 1));
+    rec.str = (u32)BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x1e - ((u8)v08 - 1));
     rec.counter = 0;
     for (u32 i = 0; i < 4; i++) {
         u32 n = (u16)CItem_initItemImplInstances((CItemData*)p)->vf4C((CItemData*)p, (u8)i);
@@ -937,24 +820,15 @@ void buildItemBoxSlotRec(void* out, void* unused, void* data, void* arg3) {
         if ((s32)n > 0) {
             // Retail passes the pair count n as a third arg to BdatGetPtrDirect.
             rec.text[rec.counter] =
-                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, &base[0x139], n);
+                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], n);
             rec.vals[rec.counter] = CItem_initItemImplInstances((CItemData*)p)->vf64((CItemData*)p, (u8)i);
             rec.counts[rec.counter] = n;
             rec.counter++;
         }
     }
-    // 0x2C-byte copy: retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
-    {
-        u32* d = (u32*)out - 1;
-        u32* s = (u32*)&rec - 1;
-        for (u32 k = 0; k < 5; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    // Returned by value: the 0x2C-byte copy to the hidden result pointer is
+    // the retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
+    return rec;
 }
 #pragma pop
 // Retail renderItemBoxKind2: item-box renderer for selection kind 2. Builds the
@@ -1166,32 +1040,19 @@ void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4)
     CItemBoxColorPOD cA;
     CItemBoxColorPOD cB;
     CItemBoxColorPOD quadCol[2];
-    CItemBoxSlotFlags rec;
     char buf2[0x20];
     char buf[0x20];
-    CItemBoxSlotFlagsAny recAny;
     // per-slot comparison record for the candidate item, built by
     // buildItemBoxSlotFlags and block-copied to a second local.
     resetItemBoxRowPanes(info);
-    buildItemBoxSlotFlags(&rec, info, (void*)itemId);
-    {
-        u32* s = (u32*)&rec - 1;
-        u32* d = (u32*)&recAny.rec - 1;
-        for (u32 k = 0; k < 3; k++) {
-            d[1] = s[1];
-            d[2] = s[2];
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    CItemBoxSlotFlags flags = buildItemBoxSlotFlags(info, itemId);
     char* base = lbl_eu_805063BC;
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x25b, base + 0x2aa, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x286, base + 0x2aa, 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x292, base + 0x2aa, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, (u8)recAny.rec.v[0]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, (u8)recAny.rec.v[1]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, (u8)recAny.rec.v[2]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, (u8)flags.v[0]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, (u8)flags.v[1]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, (u8)flags.v[2]);
     u32 v1 = BdatGetU8Direct((u32)lbl_eu_806640F8, base + 0x1eb, (u16)BdatGetItemId(itemId));
     char* s1;
     switch ((u8)v1) {
@@ -1227,7 +1088,7 @@ void renderItemBoxDetail(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4)
     u32 cur = (arg4 >> 16) & 0xFF;
     u32 tag = 0x74696D67;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 flag = recAny.rec.flags[(u8)i];
+        u8 flag = flags.equipable[(u8)i];
         u32 color = 0x777777FF;
         if (flag != 0) color = 0xFFFFFFFF;
         u32 idx = (u8)i + 1;
@@ -1544,24 +1405,18 @@ void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
     u32 stage2Lo;
     u32 stage2Hi;
     char buf[0x20];
-    CItemBoxSlotFlagRecord local;
     u32 out[4];
-    CItemBoxSlotFlagRecord record;
-    // 9-byte per-slot flag record: bytes [1..8] are per-slot flags, byte [8]
-    // also selects the row-height label size. Only the three live members are
-    // copied (retail copies u32+u32+u8).
-    buildItemBoxSelRec(reinterpret_cast<CItemBoxInfo*>(&record), info, (void*)arg2);
-    local.a = record.a;
-    local.b = record.b;
-    local.c = record.c;
+    // 9-byte per-slot selection record: sel[1..8] are per-slot flags, flag2
+    // also selects the row-height label size.
+    CItemBoxSelRec local = buildItemBoxSelRec(info, arg2);
     char* base = (char*)&lbl_eu_805063BC;
     u32 rowHeight = 0x2c;
-    if (local.c != 0) rowHeight = 0x2b;
+    if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell(base + 0x130, base + 0x139, rowHeight);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x44f, label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 color = 0x777777ff;
-        if (((u8*)&local)[(u8)i + 1] != 0) color = 0xFFFFFFFF;
+        if (local.selected[(u8)i]) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, color);
         s16 vA2 = info->state.quadA.s[3];
@@ -1574,7 +1429,7 @@ void refreshItemBoxSlotRows(CItemBoxInfo* info, u16 arg2) {
         s16 c0lo[2] = {zero, zero};
         s16 c1hi[2] = {zero, vAA};
         s16 c1lo[2] = {zero, zero};
-        u8 flag = ((u8*)&local)[(u8)i + 1];
+        u8 flag = local.selected[(u8)i];
         out[0] = 0;
         out[1] = 0;
         out[2] = 0;
@@ -1629,9 +1484,6 @@ void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     CItemBoxSlotVals vals;
     nw4r::math::_VEC3 tmp;
     CItemBoxTagStage cur;
-    // volatile: retail retains these never-read default-handle stores (the
-    // table handles come straight off .sdata2); a plain local gets them DCE'd.
-    volatile CItemBoxTagStage stage;
 
     clearItemBoxQuadTexts(info);
     resetItemBoxRowPanes(info);
@@ -1706,8 +1558,9 @@ void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x484,
                   BdatTouchStringCell(base + 0x130, base + 0x139, rows + 0x15), 0);
 
-    stage.tbl = lbl_eu_80668030;
-    stage.h = lbl_eu_80668034;
+    // volatile: retail retains this never-read slot-kind table copy; a plain
+    // local gets it DCE'd.
+    volatile CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
     u8 playerByte = (u8)(arg4 >> 16);
 
     for (u32 i = 0; (u32)(u8)i < (u32)(u8)code80135FDC_getByte_64077(); i++) {
@@ -1772,34 +1625,15 @@ void renderItemBoxKind3(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-// Four-word label-argument record copied by renderItemBoxLabels/renderItemBox2Labels.
-struct CItemBoxLabelArgs { u32 v[4]; };
 
 void renderItemBoxLabels(CItemBoxInfo* info, u32 arg2) {
     clearItemBoxPairTexts(info);
     resetItemBoxRowPanes(info);
-    // vals first -> higher frame slot (sp+24); out second -> sp+8.
-    // A struct `vals = out` lowers to `__as__` (0x84). Retail reloads all
-    // four words then stores them (0x94); first label call uses live w1,
-    // second reloads staged vals[3].
-    // volatile: size-opt DSE was dropping unused vals[0]/[2] (0x94->0x7c).
-    volatile CItemBoxLabelArgs vals;
-    CItemBoxLabelArgs out;
-    getItemBoxLabelRec(out.v, info, (void*)arg2);
-    // Load w1 first so the copy interleaves like retail (lwz r5,12(sp) then w0).
-    u32 w1 = out.v[1];
-    u32 w0 = out.v[0];
-    u32 w2 = out.v[2];
-    u32 w3 = out.v[3];
-    vals.v[0] = w0;
-    vals.v[1] = w1;
-    vals.v[2] = w2;
-    vals.v[3] = w3;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, (char*)w1, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, (char*)vals.v[3], 0);
+    CItemBoxLabelRec rec = getItemBoxLabelRec(info, arg2);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
 #pragma pop
-void buildItemBoxSlotRec(void*, void*, void*, void*);
 void __declspec(noinline) clearItemBoxSlotTexts(CItemBoxInfo*);
 // Retail renderItemBoxSlotList: item-box slot-list renderer. Rebuilds the per-slot
 // record (buildItemBoxSlotRec), stamps the header pane with the formatted item
@@ -1811,23 +1645,19 @@ void renderItemBoxSlotList(CItemBoxInfo* info, u16 arg2, void* arg3) {
     // Frame-slot order matters: state > cur > text > out > buf > pos > tmp
     // (descending). The 9 constant claims r31 first (Rule A).
     u8 slotState = 9;
-    CItemBoxSlotRecAny1 cur;
     ml::FixStr<32> text(false);
-    CItemBoxSlotRecAny1 out;
     char buf[0x20];
     nw4r::math::_VEC3 pos;
     nw4r::math::_VEC3 tmp;
     clearItemBoxSlotTexts(info);
     resetItemBoxRowPanes(info);
-    buildItemBoxSlotRec(&out.rec, info, (void*)(u32)arg2, arg3);
-    // 0x2C-byte copy: retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
-    cur = out;
+    CItemBoxSlotRecord1 cur = buildItemBoxSlotRec(info, arg2, arg3);
     char* base = lbl_eu_805063BC;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x4a7, (char*)cur.rec.str, 0);
-    u8 count = cur.rec.counter;
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x4a7, (char*)cur.str, 0);
+    u8 count = cur.counter;
     for (u8 i = 0; (u8)i < count; i++) {
         sprintf(buf, base + 0x4b3, (u32)((u8)i * 2) + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)cur.rec.text[(u8)i], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, (char*)cur.text[(u8)i], 0);
         if (((u8*)info)[0x9A] != 4) {
             nw4r::lyt::Pane* pane =
                 ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
@@ -1837,13 +1667,13 @@ void renderItemBoxSlotList(CItemBoxInfo* info, u16 arg2, void* arg3) {
                           (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
             // POD copy: retail expands this as three lwz/stw pairs.
             tmp = *(nw4r::math::_VEC3*)&pos;
-            if ((u8)i < 12) *(s16*)((u8*)info + 0xB0 + (u8)i * 2) = (s16)cur.rec.counts[(u8)i];
+            if ((u8)i < 12) *(s16*)((u8*)info + 0xB0 + (u8)i * 2) = (s16)cur.counts[(u8)i];
             if ((u8)i < 12) ((u8*)info)[0x158 + (u8)i] = slotState;
             if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
         }
         text.clear();
         sprintf(buf, base + 0x4c0, (u32)(u8)i + 0x1f);
-        text.format(base + 0x13e, cur.rec.vals[(u8)i],
+        text.format(base + 0x13e, cur.vals[(u8)i],
                     BdatTouchStringCell(base + 0x130, base + 0x139, 0x21));
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, text.c_str(), 0);
     }
@@ -1897,7 +1727,7 @@ void setupItemBoxSlotPanes(CItemBoxInfo* info) {
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+        sprintf(buf, &lbl_eu_805063BC[0x161], idx);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -1956,7 +1786,7 @@ void resetItemBoxRowPanes(CItemBoxInfo* info) {
         args[0] = *(u32*)c0lo;
         args[3] = *(u32*)c1hi;
         args[2] = *(u32*)c1lo;
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -1998,18 +1828,19 @@ void clearItemBoxTripleRows(CItemBoxInfo* info) {
 }
 #pragma pop
 // Retail applyItemBoxSelColors: label every slot pane, then build two 8-byte
-// selection colours (from the s16s at +0xA2/+0xAA) read as four u32 varargs
-// for the pane-name sprintf, look the pane up, and push both colours into its
+// selection colours (from the s16s at +0xA2/+0xAA), format the pane name,
+// look the pane up, and push both colours into its
 // vertex buffer via setItemBoxVtxColor. layout is reloaded per use (lwz 0x34).
 #pragma push
 #pragma optimize_for_size on
 void applyItemBoxSelColors(CItemBoxInfo* info) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
+    u32 idx;
     // Retail re-evaluates the slot count on every iteration (bl in the
     // loop condition), so do not hoist the call.
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u32 idx = (u32)((u8)i + 1);
+        idx = (u32)((u8)i + 1);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
         // Selection colours: two 8-byte pairs built from the s16s at +0xA2
@@ -2029,7 +1860,7 @@ void applyItemBoxSelColors(CItemBoxInfo* info) {
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
@@ -2141,7 +1972,7 @@ extern "C" void stampItemBoxSlotTex(CItemBoxInfo* info) {
                 args[1] = *(u32*)c0hi;
                 args[2] = *(u32*)c1lo;
                 args[3] = *(u32*)c1hi;
-                sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+                sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
                 nw4r::lyt::Pane* pane3 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
                 void* vertexObj = pane3->GetMaterial();
                 for (u32 j = 0; j < 2; j++) {
@@ -2194,7 +2025,7 @@ struct D8EHighFrame {
 };
 
 static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
-    f32 scale = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect);
+    f32 scale = 0.01f * (100.0f + (f32)effect);
     entry.physicalDefense = (s16)(s32)((f32)entry.physicalDefense * scale);
     entry.etherDefense = (s16)(s32)((f32)entry.etherDefense * scale);
 }
@@ -2322,8 +2153,6 @@ static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstL
 
 void copyItemBoxEntry(CItemBoxInfoEntry*, const CItemBoxInfoEntry*);
 void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
-extern const u32 lbl_eu_8066806C;
-extern const u8 lbl_eu_80668070;
 extern const u32 lbl_eu_80506368[6];
 extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 
@@ -2337,11 +2166,7 @@ extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 #pragma push
 #pragma optimize_for_size on
 // Prefer labeled SDA symbols over float literals / parent+offset member decays
-// so bar formulas emit retail lfs relocs (lbl_eu_80668040/44).
-#undef lbl_eu_80668040
-#undef lbl_eu_80668044
-extern "C" const f32 lbl_eu_80668040;
-extern "C" const f32 lbl_eu_80668044;
+// so bar formulas emit retail lfs relocs (0.01f/100.0f).
 extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
     // Packed selection: retail emits slot (rlwinm.->r26/CR0), then member
     // (r18), then type (r27). Declaring member before type matches that
@@ -2465,11 +2290,11 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
     if (checkItemBoxGemChain(info, member, NULL, NULL)) {
         s32 eq = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
         if (eq != 0) {
-            s16 barA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 barB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 barC = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
+            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
+            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
+            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
             hpStat = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
-                lbl_eu_80668040 * stB->f10 *
+                0.01f * stB->f10 *
                 (f32)(stC->s06 + eq + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
 
             // ---- current weapon block ----
@@ -2478,9 +2303,9 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 D8EEntry e1;
                 buildItemBoxCmpRecord(&e1, (void*)(u32)member, (void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
                 D8EEntry e2 = e1;
-                s32 s1 = calcItemBoxBonus1(info, (void*)(u32)member,
+                s32 s1 = calcItemBoxBonus1(info, member,
                                        (u16)e2.w04, NULL);
-                s32 s2 = calcItemBoxBonus2(info, (void*)(u32)member,
+                s32 s2 = calcItemBoxBonus2(info, member,
                                        (u16)(e2.w04 >> 16), NULL);
                 s32 atk1 = (s32)barB + s1;
                 s32 atk2 = (s32)barB + s2;
@@ -2544,8 +2369,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
         {
-            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
-            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             LayoutSetTextBoxInt(info->state.slotPanes[8], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2569,8 +2394,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 
         // row B: 0x1 -> panes 0x50/0x54
         {
-            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             LayoutSetTextBoxInt(info->state.slotPanes[4], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2603,10 +2428,10 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         {
             s16 oldAgilityBase = (s16)(stA->s1E - (s16)comparisonArtsSum);
             if (oldAgilityBase <= 0) oldAgilityBase = 1;
-            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)e1) *
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) *
                 (f32)(oldAgilityBase + getItemBoxEffect(
                     info, (void*)(u32)member, 0x41, NULL))));
-            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)e2) *
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) *
                 (f32)(oldAgilityBase + getItemBoxEffect(
                     info, (void*)(u32)member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
@@ -2632,8 +2457,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 
         // row D: 0x11 + RoundHalfAway0 -> panes 0x40/0x48
         {
-            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + e1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + e2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3))));
+            s16 pb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + e2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3))));
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
@@ -2689,33 +2514,33 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
             if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
-            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
-            s32 atkA = (s32)pb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
-            s32 atkC = (s32)pb + calcItemBoxBonus2(info, (void*)(u32)member, (u16)(c_cur.w04 >> 16), NULL);
-            s32 atkB = (s32)nb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)c_new.w04, arg3);
-            s32 atkD = (s32)nb + calcItemBoxBonus2(info, (void*)(u32)member,
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
+            s32 atkA = (s32)pb + calcItemBoxBonus1(info, member, (u16)c_cur.w04, NULL);
+            s32 atkC = (s32)pb + calcItemBoxBonus2(info, member, (u16)(c_cur.w04 >> 16), NULL);
+            s32 atkB = (s32)nb + calcItemBoxBonus1(info, member, (u16)c_new.w04, arg3);
+            s32 atkD = (s32)nb + calcItemBoxBonus2(info, member,
                 (u16)(c_new.w04 >> 16), arg3);
             if (atkB < atkD) atkB = atkD;
             s16 dW = (s16)(atkC - atkA);
             s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
             s16 v612 = (s16)c_new._0C;
             s16 v646 = (s16)c_cur._0C;
-            v612 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
+            v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
-            v646 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
+            v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
             s16 v610 = (s16)c_new._10;
             s16 v644 = (s16)c_cur._10;
-            v610 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
+            v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
-            v644 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x54, arg3);
             s16 v614 = c_new.w14;
             s16 v648 = c_cur.w14;
-            v614 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
+            v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL);
-            v648 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) * (f32)(stA->s38 + c1)));
+            v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
             s16 snap644 = v644;
             s16 snap646 = v646;
             s16 d1 = (s16)(v610 - snap644);
@@ -2840,11 +2665,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             // ---- armor block (0x801E7DA0) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry& e_cur = comparisonStorage.armor[0];
-            buildItemBoxSlotFlags(&e_cur, (void*)(u32)member, (void*)(u32)w0);
+            const CItemBoxSlotFlags& e_curFlags = buildItemBoxSlotFlags((void*)(u32)member, w0);
+            e_cur = *(const D8EArmorEntry*)&e_curFlags;
             comparisonStorage.armor[1] = e_cur;
             D8EArmorEntry& c_cur = comparisonStorage.armor[1];
             D8EArmorEntry& e_new = comparisonStorage.armor[2];
-            buildItemBoxSlotFlags(&e_new, (void*)(u32)member, arg3);
+            const CItemBoxSlotFlags& e_newFlags = buildItemBoxSlotFlags((void*)(u32)member, (u32)arg3);
+            e_new = *(const D8EArmorEntry*)&e_newFlags;
             comparisonStorage.armor[3] = e_new;
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
             volatile s16 v484 = (s16)sumItemBoxTypeCounts(
@@ -2868,7 +2695,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 3: {
                             s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
+                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
@@ -2881,7 +2708,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 2: {
                             s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
+                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_2);
                             }
@@ -2890,7 +2717,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 1: {
                             s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
+                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_1);
                             }
@@ -2904,7 +2731,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 3: {
                             s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
+                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
@@ -2917,7 +2744,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 2: {
                             s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
+                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_2);
                             }
@@ -2926,7 +2753,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 1: {
                             s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
+                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_1);
                             }
@@ -2951,17 +2778,17 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             // each result adjacent to its query mirrors the original UI pipeline
             // and makes the current-value subtraction explicit.
             s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
-            c_new.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
+            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
-            c_cur.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
+            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
-            c_new.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
+            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
-            c_cur.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
+            c_cur.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)(stA->s2E + c1)));
             s16 d1;
             s16 d2;
@@ -2975,10 +2802,10 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 D8EEntry previewWeapon;
                 buildItemBoxCmpRecord(&previewWeapon, (void*)(u32)member,
                     (void*)(u32)(u16)(*(u32*)item2 >> 20));
-                s16 newPercent = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) *
+                s16 newPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
                     (f32)(stA->s38 + getItemBoxEffect(
                         info, (void*)(u32)member, 0x54, arg3))));
-                s16 oldPercent = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) *
+                s16 oldPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
                     (f32)(stA->s38 + getItemBoxEffect(
                         info, (void*)(u32)member, 0x54, NULL))));
                 percentDelta = (s16)(newPercent - oldPercent);
@@ -2992,12 +2819,12 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 d1 = (s16)(c_new.etherDefense - c_cur.etherDefense);
                 d2 = (s16)(c_new.physicalDefense - c_cur.physicalDefense);
 
-                s16 oldAgility = (s16)(s32)(lbl_eu_80668040 *
-                    ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq1) *
+                s16 oldAgility = (s16)(s32)(0.01f *
+                    ((100.0f + (f32)stC->s0E + (f32)eq1) *
                      (f32)((stA->s1E - (s16)v484) + getItemBoxEffect(
                          info, (void*)(u32)member, 0x41, NULL))));
-                s16 newAgility = (s16)(s32)(lbl_eu_80668040 *
-                    ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq2) *
+                s16 newAgility = (s16)(s32)(0.01f *
+                    ((100.0f + (f32)stC->s0E + (f32)eq2) *
                      (f32)((stA->s1E - (s16)v468) + getItemBoxEffect(
                          info, (void*)(u32)member, 0x41, arg3))));
                 if (oldAgility <= 0) oldAgility = 1;
@@ -3009,13 +2836,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 buildItemBoxCmpRecord(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
                 s32 c3 = getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
-                s16 wpb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
                 c3 = getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3);
-                s16 wnb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
-                s32 wa = (s32)wpb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wnb + calcItemBoxBonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wnb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wnb + calcItemBoxBonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
+                s32 wa = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + calcItemBoxBonus1(info, member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 attackDelta = (s16)(wd - wa);
                 char* rangeSeparator = BdatTouchStringCell(
@@ -3135,8 +2962,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         if (checkItemBoxGemChain(info, member, NULL, NULL)) {
             currentEquipBonus = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
         }
-        s16 oldStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL)))));
-        s16 newStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x21, arg3, slot)))));
+        s16 oldStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL)))));
+        s16 newStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x21, arg3, slot)))));
         s16 strengthDelta = (s16)(newStrength - oldStrength);
         LayoutSetTextBoxInt(info->state.slotPanes[8], newStrength);
         {
@@ -3160,8 +2987,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         PaneMatSetTevColors(panes[(9)], &labelTop, &labelBottom);
 }
 
-        s16 oldPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (getItemBoxEffect(info, (void*)(u32)member, 0x01, NULL)))));
-        s16 newPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x01, arg3, slot)))));
+        s16 oldPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (getItemBoxEffect(info, (void*)(u32)member, 0x01, NULL)))));
+        s16 newPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x01, arg3, slot)))));
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
         LayoutSetTextBoxInt(info->state.slotPanes[4], newPhysical);
         {
@@ -3186,10 +3013,10 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 }
 
         s16 oldHp = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
-            lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
                 getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL))));
         s16 newHp = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
-            lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
                 sumItemBoxGemBonus(info, (void*)(u32)member, 0x11, arg3, slot))));
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
@@ -3224,8 +3051,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                           &labelTop, &labelBottom);
         }
 
-        s16 oldEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL)))));
-        s16 newEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x31, arg3, slot)))));
+        s16 oldEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL)))));
+        s16 newEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x31, arg3, slot)))));
         s16 etherDelta = (s16)(newEther - oldEther);
         LayoutSetTextBoxInt(info->state.slotPanes[12], newEther);
         {
@@ -3259,11 +3086,11 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         if (oldAgilityBase <= 0) oldAgilityBase = 1;
         s16 oldAgilityEffect = (s16)getItemBoxEffect(
             info, (void*)(u32)member, 0x41, NULL);
-        s16 oldAgility = (s16)(s32)(lbl_eu_80668040 *
-            ((lbl_eu_80668044 + (f32)stC->s0E + (f32)currentEquipBonus) *
+        s16 oldAgility = (s16)(s32)(0.01f *
+            ((100.0f + (f32)stC->s0E + (f32)currentEquipBonus) *
              (f32)(oldAgilityBase + oldAgilityEffect)));
 
-        s16 newAgility = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x41, arg3, slot)))));
+        s16 newAgility = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x41, arg3, slot)))));
         s16 agilityDelta = (s16)(newAgility - oldAgility);
         LayoutSetTextBoxInt(info->state.slotPanes[6], newAgility);
         {
@@ -3287,8 +3114,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         PaneMatSetTevColors(panes[(7)], &labelTop, &labelBottom);
 }
 
-        s16 oldDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL)))));
-        s16 newDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x51, arg3, slot)))));
+        s16 oldDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL)))));
+        s16 newDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x51, arg3, slot)))));
         s16 defenseDelta = (s16)(newDefense - oldDefense);
         LayoutSetTextBoxInt(info->state.slotPanes[14], newDefense);
         {
@@ -3312,8 +3139,8 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         PaneMatSetTevColors(panes[(15)], &labelTop, &labelBottom);
 }
 
-        s16 oldResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL)))));
-        s16 newResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x54, arg3, slot)))));
+        s16 oldResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (getItemBoxEffect(info, (void*)(u32)member, 0x54, NULL)))));
+        s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = BdatTouchStringCell(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
         ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
@@ -3350,31 +3177,31 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             D8EEntry weaponStats = currentWeapon;
             s32 oldBaseEffect = getItemBoxEffect(
                 info, (void*)(u32)member, 0x01, NULL);
-            s16 oldAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
+            s16 oldAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
             s32 newBaseEffect = sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x01, arg3, slot);
-            s16 newAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
+            s16 newAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
 
             // The low-bound lookup is retained for its item-effect traversal;
             // the comparison display uses the high bound as its old endpoint.
-            calcItemBoxBonus1(info, (void*)(u32)member,
+            calcItemBoxBonus1(info, member,
                           (u16)weaponStats.w04, NULL);
             s32 oldAttackHigh = oldAttackBase + calcItemBoxBonus2(
-                info, (void*)(u32)member,
+                info, member,
                 (u16)(weaponStats.w04 >> 16), NULL);
 
             s32 lowScale = (s32)getItemBoxCondStat(
                 info, (void*)(u32)member, 0x2D);
             lowScale += (s32)sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x52, arg3, slot);
-            s32 newAttackLow = newAttackBase + (s32)(lbl_eu_80668040 *
+            s32 newAttackLow = newAttackBase + (s32)(0.01f *
                 (f32)((u16)weaponStats.w04 * (100 + lowScale)));
 
             s32 highScale = (s32)getItemBoxCondStat(
                 info, (void*)(u32)member, 0x2D);
             highScale += (s32)sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x53, arg3, slot);
-            s32 newAttackHigh = newAttackBase + (s32)(lbl_eu_80668040 *
+            s32 newAttackHigh = newAttackBase + (s32)(0.01f *
                 (f32)((u16)(weaponStats.w04 >> 16) * (100 + highScale)));
             s32 displayLow = newAttackLow < newAttackHigh
                 ? newAttackLow : newAttackHigh;
@@ -3426,10 +3253,12 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry e_cur;
-            buildItemBoxSlotFlags(&e_cur, (void*)(u32)member, (void*)(u32)w0);
+            const CItemBoxSlotFlags& e_curFlags = buildItemBoxSlotFlags((void*)(u32)member, w0);
+            e_cur = *(const D8EArmorEntry*)&e_curFlags;
             D8EArmorEntry c_cur = e_cur;
             D8EArmorEntry e_new;
-            buildItemBoxSlotFlags(&e_new, (void*)(u32)member, arg3);
+            const CItemBoxSlotFlags& e_newFlags = buildItemBoxSlotFlags((void*)(u32)member, (u32)arg3);
+            e_new = *(const D8EArmorEntry*)&e_newFlags;
             D8EArmorEntry c_new = e_new;
             volatile s16 v44C = (s16)sumItemBoxTypeCounts(
                 info, member,
@@ -3442,13 +3271,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             s32 eq2 = 0;
             if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             getItemBoxEffect(info, (void*)(u32)member, 0x21, NULL);
-            s16 bA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
+            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + getItemBoxEffect(info, (void*)(u32)member, 0x21, arg3))));
             LayoutSetTextBoxInt(info->state.slotPanes[8], (s16)bA);
             getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
-            s16 bB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
+            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBoxEffect(info, (void*)(u32)member, 0x1, arg3))));
             LayoutSetTextBoxInt(info->state.slotPanes[4], (s16)bB);
-            RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL)));
-            s32 statValue = RoundHalfAway0(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
+            RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + getItemBoxEffect(info, (void*)(u32)member, 0x11, NULL)));
+            s32 statValue = RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + getItemBoxEffect(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)statValue);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
@@ -3466,7 +3295,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 3: {
                             s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
+                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
@@ -3479,7 +3308,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 2: {
                             s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
+                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_2);
                             }
@@ -3488,7 +3317,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 1: {
                             s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
+                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_1);
                             }
@@ -3502,7 +3331,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 3: {
                             s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
+                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
@@ -3515,7 +3344,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 2: {
                             s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
+                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_2);
                             }
@@ -3524,7 +3353,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                         case 1: {
                             s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
+                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_1);
                             }
@@ -3547,21 +3376,21 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
             }
             // Recalculate candidate and current armor values in matched pairs.
             s32 c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, arg3);
-            c_new.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
+            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x31, NULL);
-            c_cur.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
+            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, arg3);
-            c_new.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
+            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
             c1 = getItemBoxEffect(info, (void*)(u32)member, 0x51, NULL);
-            volatile s16 currentPhysicalDefense = (s16)(s32)(lbl_eu_80668040 *
-                ((lbl_eu_80668044 + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            volatile s16 currentPhysicalDefense = (s16)(s32)(0.01f *
+                ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             getItemBoxEffect(info, (void*)(u32)member, 0x41, NULL);
             s32 c2 = getItemBoxEffect(info, (void*)(u32)member, 0x41, arg3);
-            s16 b14 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)eq2) *
+            s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)eq2) *
                 (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
             // embedded weapon block
@@ -3571,13 +3400,13 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
                 buildItemBoxCmpRecord(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
                 getItemBoxEffect(info, (void*)(u32)member, 0x1, NULL);
-                s16 wpb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C) *
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) *
                     (f32)(stA->s1C + getItemBoxEffect(
                         info, (void*)(u32)member, 0x1, arg3))));
-                s32 wa = (s32)wpb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wpb + calcItemBoxBonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wpb + calcItemBoxBonus1(info, (void*)(u32)member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wpb + calcItemBoxBonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wa = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + calcItemBoxBonus1(info, member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + calcItemBoxBonus2(info, member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 char* rangeSeparator = BdatTouchStringCell(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
@@ -3788,9 +3617,7 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
         }
         // armor slots
         {
-            u8 slotTypes[5];
-            *(u32*)&slotTypes[0] = lbl_eu_8066806C;
-            slotTypes[4] = lbl_eu_80668070;
+            u8 slotTypes[5] = { 4, 5, 6, 7, 8 };
             for (u8 i = 0; i < 5; i++) {
                 CItemBoxInfoEntry tmp;
                 tmp.itemId = 0;
@@ -4157,8 +3984,6 @@ extern "C" void setupItemBoxDetail(CItemBoxInfo* info, u32 arg2, void* arg3, u32
 }
 #pragma pop
 
-#define lbl_eu_80668040 sdata2_ItemBox.f8040
-#define lbl_eu_80668044 sdata2_ItemBox.f8044
 
 #undef w04
 #undef _0C
@@ -4179,23 +4004,23 @@ void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
     self->state = c;
 }
 
-s32 calcItemBoxBonus1(void* a, void* b, s32 arg2, void* d) {
+s32 calcItemBoxBonus1(void* a, u16 b, s32 arg2, void* d) {
     // MWCC emits the 0x4330/xoris int->float trick natively for the plain
     // (f32) cast on Broadway (no fcfid); keep it as a simple cast.
     // Same shape as calcItemBoxBonus2: statement-ordered calls, builtin
     // s32->f32 cast emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = getItemBoxCondStat(a, b, 0x2d);
-    u32 t2 = getItemBoxEffect(a, b, 0x52, d);
-    return (s32)(lbl_eu_80668040 * (f32)(arg2 * (s32)(t2 + t1 + 0x64)));
+    u32 t1 = getItemBoxCondStat(a, (void*)(u32)b, 0x2d);
+    u32 t2 = getItemBoxEffect(a, (void*)(u32)b, 0x52, d);
+    return (s32)(0.01f * (f32)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 
-s32 calcItemBoxBonus2(void* a, void* b, s32 arg2, void* d) {
+s32 calcItemBoxBonus2(void* a, u16 b, s32 arg2, void* d) {
     // Statement-ordered calls keep the retail bl order; single-expression sum
     // keeps the values in registers like retail. The builtin s32->f32 cast
     // emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = getItemBoxCondStat(a, b, 0x2d);
-    u32 t2 = getItemBoxEffect(a, b, 0x53, d);
-    return (s32)(lbl_eu_80668040 * (float)(arg2 * (s32)(t2 + t1 + 0x64)));
+    u32 t1 = getItemBoxCondStat(a, (void*)(u32)b, 0x2d);
+    u32 t2 = getItemBoxEffect(a, (void*)(u32)b, 0x53, d);
+    return (s32)(0.01f * (float)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 // Retail getItemBoxEffect: sum the equipped-effect values for one stat category.
 // Six slots are scanned via the lookup table (s16 ids at +0x26/+0x1C..0x24
@@ -4213,18 +4038,16 @@ u32 getItemBoxEffect(void* unused, u16 lookup_key, u32 category, void* arg3) {
     slotIds[3] = *(s16*)((u8*)lookup + 0x20);
     slotIds[4] = *(s16*)((u8*)lookup + 0x22);
     slotIds[5] = *(s16*)((u8*)lookup + 0x24);
-    CItemBoxSlotBytes bytes;
-    bytes.ab.a = lbl_eu_8066804C;
-    bytes.ab.b = lbl_eu_80668050;
+    u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     u32 result = 0;
     for (u32 slot = 0; slot < 6; slot++) {
         s16 id = slotIds[(u8)slot];
         u8 j;
         s16 v;
         if (id != -1) {
-            void* item = CItem_kindPtr(bytes.bytes[(u8)slot], id);
+            void* item = CItem_kindPtr(bytes[(u8)slot], id);
             if (arg3 != NULL &&
-                (s32)bytes.bytes[(u8)slot] == (s32)((*(u32*)arg3 >> 16) & 0xF))
+                (s32)bytes[(u8)slot] == (s32)((*(u32*)arg3 >> 16) & 0xF))
                 item = arg3;
             if (item != NULL && *(u32*)item != 0) {
                 CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
@@ -4258,7 +4081,7 @@ u32 getItemBoxEffect(void* unused, u16 lookup_key, u32 category, void* arg3) {
         } else {
             if (arg3 != NULL) {
                 void* itemB = NULL;
-                if ((s32)bytes.bytes[(u8)slot] ==
+                if ((s32)bytes[(u8)slot] ==
                     (s32)((*(u32*)arg3 >> 16) & 0xF))
                     itemB = arg3;
                 if (itemB != NULL && *(u32*)itemB != 0) {
@@ -4339,9 +4162,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
     ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
     ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
-    CItemBoxSlotBytes bytes;
-    bytes.ab.a = lbl_eu_80668054;
-    bytes.ab.b = lbl_eu_80668058;
+    u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     s32 sum = 0;
     // First pass: if the candidate item's gem chain contains the candidate
     // pointer itself, null the candidate out (treated as unequipped below).
@@ -4349,7 +4170,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
     for (u32 i = 0; i < 6; i++) {
         s16 id = ids[(u8)i];
         if (id == -1) continue;
-        void* item = CItem_kindPtr(bytes.bytes[(u8)i], id);
+        void* item = CItem_kindPtr(bytes[(u8)i], id);
         if (item == NULL || ((CItemData*)item)->field_00 == 0) continue;
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         u8 count = inst->vf30((CItemData*)item);
@@ -4372,7 +4193,7 @@ u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, 
     for (u32 i = 0; i < 6; i++) {
         s16 id = ids[(u8)i];
         if (id == -1) continue;
-        u8 slotB = bytes.bytes[(u8)i];
+        u8 slotB = bytes[(u8)i];
         void* item = CItem_kindPtr(slotB, id);
         if (item == NULL || ((CItemData*)item)->field_00 == 0) continue;
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
@@ -4497,7 +4318,6 @@ u32 sumItemBoxTypeCounts(CItemBoxInfo* global, u16 arg2, void* arg3) {
 }
 u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void* unused2) {
     void* lookup = CtrlObjectParam_GetCharEntry(lookup_key);
-    CItemBoxSlotBytes bytes;
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
     // block at 0x1C..0x24 (retail load order).
@@ -4508,12 +4328,11 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
     ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
     ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
-    bytes.ab.a = lbl_eu_8066805C;
-    bytes.ab.b = lbl_eu_80668060;
+    u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     for (u8 i = 0; i < 6; i++) {
         s16 id = ids[i];
         if (id != -1) {
-            u8 slot = bytes.bytes[i];
+            u8 slot = bytes[i];
             // Retail passes (slot, id): id already sits in r4 from the lhax,
             // so MWCC reuses it as the second argument (2-arg form).
             void* item = CItem_kindPtr(slot, id);
@@ -4539,7 +4358,7 @@ u32 checkItemBoxGemChain(CItemBoxInfo* unused, u16 lookup_key, void* arg3, void*
                 // item defaults to NULL; retail places the init after the
                 // arg3 guard and only overwrites it on a category match.
                 void* item = NULL;
-                if (bytes.bytes[i] == (s32)((((CItemData*)arg3)->field_00 >> 16) & 0xF)) item = arg3;
+                if (bytes[i] == (s32)((((CItemData*)arg3)->field_00 >> 16) & 0xF)) item = arg3;
                 if (item != NULL && ((CItemData*)item)->field_00 != 0) {
                     CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
                     u8 count = inst->vf30((CItemData*)item);
@@ -4980,7 +4799,7 @@ void drawItemBox2Layout(CItemBoxInfo2* info, nw4r::lyt::DrawInfo* drawInfo) {
 // frame (only r31 = `this` survives the calls; zeros are re-loaded per store),
 // so unlike closeItemBox1 it must NOT use optimize_for_size, and it does not
 // clear the 0x2C/0x30 accessor/resource pointers after releasing them.
-void closeItemBox2(CItemBoxInfo2* info) {
+extern "C" void closeItemBox2(CItemBoxInfo2* info) {
     closeFileHandle(&info->state.fileHandle1);
     closeFileHandle(&info->state.fileHandle2);
     void* layout = info->state.layout;
@@ -5091,7 +4910,7 @@ void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
 #pragma push
 #pragma auto_inline off
 extern "C" void openItemBox2Phase1(CItemBoxInfo2* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), lbl_eu_80668010) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), 1.0f) != 0) {
         (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
         (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
         info->state.state = 2;
@@ -5099,22 +4918,21 @@ extern "C" void openItemBox2Phase1(CItemBoxInfo2* info) {
 }
 
 extern "C" void openItemBox2Phase2(CItemBoxInfo2* info) {
-    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
 }
 
 extern "C" void closeItemBox2Phase1(CItemBoxInfo2* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
     }
 }
-
 extern "C" void closeItemBox2Phase2(CItemBoxInfo2* info) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;
     }
@@ -5166,16 +4984,16 @@ void buildItemBox2CmpRecord(void* out, void* arg2, void* arg3) {
         rec.s32 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, (u16)v2);
         rec.s34 = (u8)BdatGetU8Direct((u32)global, base + 0x1bb, (u16)v2);
         u1.w[1] = (u8)BdatGetU8Direct((u32)global, base + 0x1c3, (u16)v2);
-        rec.f38 = (f32)(u1.d - lbl_eu_80668020) / lbl_eu_80668014;
+        rec.f38 = (f32)(u1.d - 4503599627370496.0) / 10.0f;
         rec.s3C = (u8)BdatGetU8Direct((u32)global, base + 0x1c9, (u16)v2);
         if (BdatGetU8Direct((u32)global, base + 0x1d2, (u16)v2) & 4) {
             void* lookup = CtrlObjectParam_GetCharEntry(1);
             u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
             u2.w[1] = (u32)((s32)rec.s2C * (s32)r) ^ 0x80000000;
-            rec.s2C = (s16)(s32)(lbl_eu_80668018 * (f32)(u2.d - lbl_eu_80668028));
+            rec.s2C = (s16)(s32)(1.4f * (f32)(u2.d - 4503601774854144.0));
             u32 r2 = CtrlObjectParam_GetArtsDataWord(lookup);
             u1.w[1] = (u32)((s32)rec.s2E * (s32)r2) ^ 0x80000000;
-            rec.s2E = (s16)(s32)(lbl_eu_8066801C * (f32)(u1.d - lbl_eu_80668028));
+            rec.s2E = (s16)(s32)(1.5f * (f32)(u1.d - 4503601774854144.0));
             if (rec.s2C > 999) rec.s2C = 999;
             if (rec.s2E > 999) rec.s2E = 999;
         }
@@ -5199,7 +5017,7 @@ void buildItemBox2CmpRecord(void* out, void* arg2, void* arg3) {
             s16 n2 = (u16)BdatGetU16Direct((const void*)global, (const void*)(base + 0x1a4), (int)cat);
             u2.w[1] = (u8)BdatGetU8Direct((u32)global, base + 0x1c3, cat);
             f32 slotRatio =
-                BlendFloatAvgScale(n1, n2, 0, (f32)((u2.d - lbl_eu_80668020) / lbl_eu_80668014));
+                BlendFloatAvgScale(n1, n2, 0, (f32)(u2.d - 4503599627370496.0) / 10.0f);
             u8 v1ab = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, cat);
             u8 v1b3 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, cat);
             f32 curRatio = rec.f28;
@@ -5245,86 +5063,58 @@ void buildItemBox2CmpRecord(void* out, void* arg2, void* arg3) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void buildItemBox2SlotFlags(CItemBoxSlotFlags* out, void* arg2, void* arg3) {
-    CItemBoxSlotFlags local;
-    if (arg3 == NULL) {
-        memset(&local, 0, 0x1C);
-        // 0x1C-byte copy: 2-word-per-iteration loop under optimize_for_size
-        // reproduces the retail mtctr 8-byte-pair loop (li r0,3 + 4-byte
-        // tail). The memset+copy is NOT folded here (retail keeps both).
-        {
-            u32* d = (u32*)out;
-            u32* s = (u32*)&local;
-            for (u32 k = 0; k < 3; k++) {
-                *d++ = *s++;
-            }
-            *d = *s;
-        }
-        return;
+extern "C" CItemBoxSlotFlags buildItemBox2SlotFlags(void* owner, u32 item) {
+    CItemBoxSlotFlags rec;
+    if (item == 0) {
+        memset(&rec, 0, 0x1C);
+        return rec;
     }
-    u32 v1 = BdatGetItemType((u32)arg3);
-    u32 v2 = BdatGetItemId((u32)arg3);
-    local.v[0] = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], (u16)v2);
-    local.v[1] = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], (u16)v2);
-    local.v[2] = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], (u16)v2);
-    u32 v3 = BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], (u16)v2);
-    for (u8 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u32 v = GetCollectedFlagByte((u8)i);
-        char buf[0x10];
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], (u8)v);
-        u8 f = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, buf, (u16)v2);
-        local.flags[i] = (u8)(f != 0);
-        if (f != 0) {
-            void* lookup = CtrlObjectParam_GetCharEntry((u8)v);
-            if ((u8)v3 == 3) {
-                if (Counter_TestBit((u8*)lookup + 0x3534, 0x85) == 0) {
-                    local.flags[i] = 0;
-                } else {
-                    goto valuePath;
-                }
-            } else if ((u8)v3 == 2) {
-                if (Counter_TestBit((u8*)lookup + 0x3534, 0x84) == 0) {
-                    local.flags[i] = 0;
-                } else {
-                    goto valuePath;
-                }
-            } else {
-            valuePath:
-                s16 value = -1;
-                switch (v1 & 0xFFFF) {
-                    case 4: value = *(s16*)((u8*)lookup + 0x1C); break;
-                    case 5: value = *(s16*)((u8*)lookup + 0x1E); break;
-                    case 6: value = *(s16*)((u8*)lookup + 0x20); break;
-                    case 7: value = *(s16*)((u8*)lookup + 0x22); break;
-                    case 8: value = *(s16*)((u8*)lookup + 0x24); break;
-                }
-                if (value >= 0) {
-                    void* r = CItem_kindPtr((u16)v1, value);
-                    if (r != NULL && *(u32*)r != 0) {
-                        u16 cat = (u16)BdatGetItemId(*(u32*)r >> 20);
-                        u32 n1 = BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], cat);
-                        u32 n2 = BdatGetU8Direct((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], cat);
-                        if (local.v[0] > (u8)n1) local.flags[i + 7] = 1;
-                        else if (local.v[0] < (u8)n1) local.flags[i + 7] = 2;
-                        else local.flags[i + 7] = 0;
-                        if (local.v[1] > (u8)n2) local.flags[i + 14] = 1;
-                        else if (local.v[1] < (u8)n2) local.flags[i + 14] = 2;
-                        else local.flags[i + 14] = 0;
-                    }
+    void* global = lbl_eu_806640F8;
+    u32 type = BdatGetItemType(item);
+    u16 id = BdatGetItemId(item);
+    char* base = (char*)&lbl_eu_805063BC;
+    rec.v[0] = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, id);
+    rec.v[1] = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, id);
+    rec.v[2] = (u8)BdatGetU8Direct((u32)global, base + 0x1e2, id);
+    u32 reqKind = BdatGetU8Direct((u32)lbl_eu_806640F8, base + 0x1eb, id);
+    for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
+        u32 slot = GetCollectedFlagByte((u8)i);
+        char buf[0x20];
+        sprintf(buf, base + 0x1f4, (u8)slot);
+        rec.equipable[(u8)i] = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, buf, id) != 0;
+        if (rec.equipable[(u8)i] == 0) continue;
+        CItemBoxCharEntryView* member = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry((u8)slot);
+        void* counters = member->counterArea;
+        if ((u8)reqKind == 3) {
+            if (Counter_TestBit(counters, 0x85) == 0) rec.equipable[(u8)i] = 0;
+        } else if ((u8)reqKind == 2) {
+            if (Counter_TestBit(counters, 0x84) == 0) rec.equipable[(u8)i] = 0;
+        } else {
+            s16 value = -1;
+            switch ((u16)type) {
+                case 4: value = member->slotIds[0]; break;
+                case 5: value = member->slotIds[1]; break;
+                case 6: value = member->slotIds[2]; break;
+                case 7: value = member->slotIds[3]; break;
+                case 8: value = member->slotIds[4]; break;
+            }
+            if (value >= 0) {
+                void* equipped = CItem_kindPtr((u16)type, value);
+                if (equipped != NULL && *(u32*)equipped != 0) {
+                    u16 cat = BdatGetItemId(*(u32*)equipped >> 20);
+                    u8 n1 = (u8)BdatGetU8Direct((u32)global, base + 0x1ab, cat);
+                    u8 n2 = (u8)BdatGetU8Direct((u32)global, base + 0x1b3, cat);
+                    if (rec.v[0] > n1) rec.cmp0[(u8)i] = 1;
+                    else if (rec.v[0] < n1) rec.cmp0[(u8)i] = 2;
+                    else rec.cmp0[(u8)i] = 0;
+                    if (rec.v[1] > n2) rec.cmp1[(u8)i] = 1;
+                    else if (rec.v[1] < n2) rec.cmp1[(u8)i] = 2;
+                    else rec.cmp1[(u8)i] = 0;
                 }
             }
         }
     }
-    // 0x1C-byte copy: 2-word-per-iteration loop under optimize_for_size
-    // reproduces the retail mtctr 8-byte-pair loop (li r0,3 + 4-byte tail).
-    {
-        u32* d = (u32*)out;
-        u32* s = (u32*)&local;
-        for (u32 k = 0; k < 3; k++) {
-            *d++ = *s++;
-        }
-        *d = *s;
-    }
+    return rec;
 }
 #pragma pop
 // Retail buildItemBox2NameRec (ItemBox2 twin of buildItemBoxNameRec): builds the 0xA4-byte
@@ -5493,13 +5283,13 @@ void buildItemBox2NameRec(void* out, void* unused, void* data, void* arg3) {
 #pragma dont_inline on
 // Twin of getItemBoxLabelRec (see comment there). dont_inline keeps IPA from
 // folding this body into renderItemBox2Labels.
-void getItemBox2LabelRec(u32* out, void* info, void* arg2) {
+CItemBoxLabelRec getItemBox2LabelRec(CItemBoxInfo2* info, u32 item) {
     CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
-    BdatGetItemType((u32)arg2);
+    BdatGetItemType(item);
     // cat stays a raw u16 in a register; each call site re-applies the
     // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
-    u16 cat = BdatGetItemId((u32)arg2);
+    u16 cat = BdatGetItemId(item);
     // base is anchored at the first lookup so its definition schedules after
     // the cat move (retail order: or r30,r3 then lis/addi).
     r.a = (u8)BdatGetU8Direct((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
@@ -5514,12 +5304,9 @@ void getItemBox2LabelRec(u32* out, void* info, void* arg2) {
     } else {
         r.d = BdatGetPtrDirect(lbl_eu_806640A8, base + 0x139);
     }
-    // Word-wise copy: retail expands the record copy as four lwz/stw pairs.
-    u32* src = (u32*)&r;
-    out[0] = src[0];
-    out[1] = src[1];
-    out[2] = src[2];
-    out[3] = src[3];
+    // Returned by value: the caller's hidden result pointer receives the
+    // record as four lwz/stw pairs.
+    return r;
 }
 #pragma pop
 
@@ -5530,43 +5317,31 @@ void getItemBox2LabelRec(u32* out, void* info, void* arg2) {
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void buildItemBox2SelTable(CItemBoxSlotSelTable* out, CItemBoxInfo2* unused, void* data) {
-    // Table handle is anchored before the first call so its sdata2 load
-    // schedules above the BdatGetItemType call (retail lwz r26 first).
+CItemBoxSelRec buildItemBox2SelTable(CItemBoxInfo2* info, u32 item) {
     void* global = lbl_eu_80664110;
-    u8 arr[8];
-    u8 flag2;
-    BdatGetItemType((u32)data);
-    u16 cat = BdatGetItemId((u32)data);
-    // base is anchored after the cat move (retail: mr r27,r3 then lis/addi).
-    char* base = (char*)&lbl_eu_805063BC;
-    arr[0] = (u8)BdatGetU8Direct((u32)global, base + 0x22b, cat);
-    u32 count = BdatGetU8Direct((u32)global, base + 0x237, cat);
-    u8 count8 = (u8)count;
-    for (u8 i = 0; i < code80135FDC_getByte_64077(); i++) {
-        u8 a = (u8)GetCollectedFlagByte(i);
-        // plain bool store: MWCC lowers == to subf/cntlzw/srwi here
-        arr[i + 1] = a == count8;
+    u16 v1 = BdatGetItemType(item);
+    u16 v2 = BdatGetItemId(item);
+    CItemBoxSelRec rec;
+    rec.category = (u8)BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    // count stays u32: retail keeps the raw call result (r28) and masks at
+    // each (u8)count use (loop mask hoisted to r29).
+    u32 count = BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
+    for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
+        u8 a = (u8)GetCollectedFlagByte((u8)i);
+        rec.selected[(u8)i] = a == (u8)count;
     }
-    // Retail materializes a second string-pool base web here (fresh lis/addi
-    // after the slot loop) rather than reusing the first.
-    char* base2 = (char*)&lbl_eu_805063BC;
-    u32 key = BdatGetU8Direct((u32)global, base2 + 0x23f, cat);
-    u32 val = BdatGetU8ByTableKey(base2 + 0x248, base2 + 0x250, (u8)key);
+    u32 key = BdatGetU8Direct((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
-    u8 category = (u8)CtrlObjectParam_GetCurrentRowKey();
-    // Per-category item row: stride 0x49, pairs of bytes per entry.
-    u8* entry = (u8*)lookup + category * 0x49 + (u8)val * 2;
-    flag2 = 0;
-    switch (arr[0]) {
-        case 1: if (entry[0xE8] != 0) flag2 = 1; break;
-        case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
-        case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
+    u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey();
+    rec.flag2 = 0;
+    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    switch (rec.category) {
+        case 1: if (entry[0xE8] != 0) rec.flag2 = 1; break;
+        case 2: if ((entry[0xE9] >> 7) & 1) rec.flag2 = 1; break;
+        case 3: if ((entry[0xE9] >> 6) & 1) rec.flag2 = 1; break;
     }
-    // Word-wise copy of the 8-byte slot table plus the trailing flag byte.
-    out->selWords[0] = *(u32*)arr;
-    out->selWords[1] = *(u32*)(arr + 4);
-    out->flag2 = flag2;
+    return rec;
 }
 #pragma pop
 // Retail buildItemBox2SlotRec fills a 0x24-byte slot record (count byte, string ptr,
@@ -5576,42 +5351,27 @@ void buildItemBox2SelTable(CItemBoxSlotSelTable* out, CItemBoxInfo2* unused, voi
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void buildItemBox2SlotRec(u8* out, void* unused, void* item, void* arg4) {
-    u8* dst = out;
+CItemBoxSlotRecord buildItemBox2SlotRec(CItemBoxInfo2* info, u32 item, void* arg4) {
     CItemBoxSlotRecord rec;
     void* p = arg4 != 0 ? arg4 : 0;
-    BdatGetItemType((u32)item);
-    BdatGetItemId((u32)item);
-    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)p);
-    u8 r = inst->vf08((CItemData*)p);
-    char* base = (char*)&lbl_eu_805063BC;
-    rec.count = r;
-    rec.str = (u32)BdatTouchStringCell(&base[0x130], &base[0x139], 0x1e - (r - 1));
+    BdatGetItemType(item);
+    BdatGetItemId(item);
+    u32 v08 = CItem_initItemImplInstances((CItemData*)p)->vf08((CItemData*)p);
+    rec.count = (u8)v08;
+    rec.str = (u32)BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x1e - ((u8)v08 - 1));
     rec.tail[1] = 0;
     for (u32 i = 0; i < 4; i++) {
-        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)p);
-        int n = (u16)inst2->vf4C((CItemData*)p, (u8)i);
-        if (n > 0) {
-            rec.text[rec.tail[1]] = (u32)BdatGetPtrDirect(lbl_eu_806640D8, &base[0x139]);
-            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)p);
-            u8 val = inst3->vf64((CItemData*)p, (u8)i);
-            rec.vals[rec.tail[1]] = val;
+        u32 n = (u16)CItem_initItemImplInstances((CItemData*)p)->vf4C((CItemData*)p, (u8)i);
+        if ((s32)n > 0) {
+            rec.text[rec.tail[1]] =
+                (u32)((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], n);
+            rec.vals[rec.tail[1]] = CItem_initItemImplInstances((CItemData*)p)->vf64((CItemData*)p, (u8)i);
             rec.tail[1]++;
         }
     }
-    // 4x 8-byte pair loop + 4-byte tail == retail mtctr copy shape; the inner
-    // constant-trip loop is what keeps -O4,p from unrolling the outer loop.
-    u32* d = (u32*)dst - 1;
-    u32* s = (u32*)&rec - 1;
-    for (u32 k = 0; k < 4; k++) {
-        u32 t1 = s[1];
-        u32 t2 = s[2];
-        d[1] = t1;
-        d[2] = t2;
-        s += 2;
-        d += 2;
-    }
-    d[1] = s[1];
+    // Returned by value: the 0x24-byte copy to the hidden result pointer is
+    // the retail mtctr 8-byte-pair loop (li r0,4 + 4-byte tail).
+    return rec;
 }
 
 // Render the item-box slot info (equip-category 2 items): for each slot
@@ -5744,37 +5504,20 @@ void renderItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     // Frame-slot order: record > buf > bufName > local > args > cols >
     // selB/selA (the staged colour temps; retail keeps its copies above the
     // record, ours sit lowest - offsets inside the staging block differ).
-    CItemBoxSlotFlagsAny record;
     char buf[0x20];
     char bufName[0x20];
-    CItemBoxSlotFlagsAny local;
     u32 args[4];
     CItemBoxColorRaw cols[2];
     CItemBoxColorBlock selB;
     CItemBoxColorBlock selA;
-    buildItemBox2SlotFlags(&local.rec, info, (void*)(u32)arg2);
-    // 0x1C-byte record copy: load both words of each pair before storing so
-    // MWCC keeps the retail lwz/lwzu + stw/stwu pair-loop shape.
-    {
-        u32* s = (u32*)&local.rec - 1;
-        u32* d = (u32*)&record.rec - 1;
-        for (u32 k = 0; k < 3; k++) {
-            u32 a = s[1];
-            u32 b = s[2];
-            d[1] = a;
-            d[2] = b;
-            s += 2;
-            d += 2;
-        }
-        d[1] = s[1];
-    }
+    CItemBoxSlotFlags record = buildItemBox2SlotFlags(info, arg2);
     char* base = (char*)&lbl_eu_805063BC;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
     u32 darkBase = 0x77770000;
     u32 tagHi = 0x74690000;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 flag = record.rec.flags[(u8)i];
+        u8 flag = record.equipable[(u8)i];
         u32 color = darkBase + 0x77ff;  // 0x777777ff
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
@@ -5867,23 +5610,18 @@ void refreshItemBox2SlotRows(CItemBoxInfo2* info, u16 arg2) {
     // materialize each selected 8-byte colour into a stack temp (retail
     // sp+0x68..0x74) before copying it into out[].
     char buf[0x20];
-    CItemBoxSlotSelTable local;
     CItemBoxColorBlock out[2];
-    CItemBoxSlotSelTable record;
     CItemBoxColorRaw cols[2];
     // 9-byte per-slot selection record: bytes [1..8] are the per-slot flags,
     // byte [8] also selects the row-height label size.
-    buildItemBox2SelTable(&record, info, (void*)(u32)arg2);
-    local.selWords[0] = record.selWords[0];
-    local.selWords[1] = record.selWords[1];
-    local.flag2 = record.flag2;
+    CItemBoxSelRec local = buildItemBox2SelTable(info, arg2);
     char* base = (char*)&lbl_eu_805063BC;
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell(base + 0x130, base + 0x139, rowHeight);
     LayoutSetTextBoxFmtValue(info->state.layout, base + 0x44f, label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
-        u8 flag = ((u8*)&local)[(u8)i + 1];
+        u8 flag = local.selected[(u8)i];
         u32 color = 0x777777ff;
         if (flag != 0) color = 0xFFFFFFFF;
         sprintf(buf, base + 0x303, (u8)i + 1);
@@ -5933,7 +5671,6 @@ void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     char buf2[0x20];
     CItemBoxVertexColors cols;
     CItemBoxSlotEntry entry;
-    CItemBoxTagStage stage;
 
     clearItemBox2QuadTexts(info);
     resetItemBox2RowPanes(info);
@@ -5997,8 +5734,7 @@ void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, base + 0x484, label, 0);
 
     // Table handle pair is loop-invariant: staged once before the loop.
-    stage.tbl = lbl_eu_80668064;
-    stage.h = lbl_eu_80668068;
+    CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
         sprintf(textBuf, base + 0x303, idx);
@@ -6064,19 +5800,9 @@ void renderItemBox2Kind3(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
 void renderItemBox2Labels(CItemBoxInfo2* info, u32 arg2) {
     clearItemBox2PairTexts(info);
     resetItemBox2RowPanes(info);
-    volatile CItemBoxLabelArgs vals;
-    CItemBoxLabelArgs out;
-    getItemBox2LabelRec(out.v, info, (void*)arg2);
-    u32 w1 = out.v[1];
-    u32 w0 = out.v[0];
-    u32 w2 = out.v[2];
-    u32 w3 = out.v[3];
-    vals.v[0] = w0;
-    vals.v[1] = w1;
-    vals.v[2] = w2;
-    vals.v[3] = w3;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, (char*)w1, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, (char*)vals.v[3], 0);
+    CItemBoxLabelRec rec = getItemBox2LabelRec(info, arg2);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, rec.b, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, rec.d, 0);
 }
 #pragma pop
 // Retail renderItemBox2SlotList: run the two layout preps, build a 0x24-byte slot
@@ -6096,22 +5822,19 @@ union CItemBoxSlotRecAny {
 };
 void renderItemBox2SlotList(CItemBoxInfo2* info, void* arg1, void* arg2) {
     // Retail runs the two layout preps before the FixStr ctor bl.
-    CItemBoxSlotRecAny cur;
-    CItemBoxSlotRecAny out;
     char paneName[0x20];
     clearItemBox2SlotTexts(info);
     resetItemBox2RowPanes(info);
-    buildItemBox2SlotRec((u8*)&out.rec, info, arg1, arg2);
-    cur = out;
+    CItemBoxSlotRecord cur = buildItemBox2SlotRec(info, (u32)arg1, arg2);
     ml::FixStr<32> text(false);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.rec.str, 0);
-    u8 count = cur.rec.tail[1];
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.str, 0);
+    u8 count = cur.tail[1];
     for (u8 i = 0; i < count; i++) {
         sprintf(paneName, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, paneName, (char*)cur.rec.text[i], 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, paneName, (char*)cur.text[i], 0);
         text.clear();
         sprintf(paneName, &lbl_eu_805063BC[0x4c0], (u8)i + 0x1f);
-        text.format(&lbl_eu_805063BC[0x13e], cur.rec.vals[i],
+        text.format(&lbl_eu_805063BC[0x13e], cur.vals[i],
                     BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, paneName, text.c_str(), 0);
     }
@@ -6164,7 +5887,7 @@ void setupItemBox2SlotPanes(CItemBoxInfo2* info) {
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+        sprintf(buf, &lbl_eu_805063BC[0x161], idx);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -6225,7 +5948,7 @@ void resetItemBox2RowPanes(CItemBoxInfo2* info) {
         args[1] = *(u32*)hiA;
         args[2] = *(u32*)loB;
         args[3] = *(u32*)hiB;
-        sprintf(text, &lbl_eu_805063BC[0x161], slot, args[0], args[1], args[2], args[3]);
+        sprintf(text, &lbl_eu_805063BC[0x161], slot);
         nw4r::lyt::Pane* pPane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(text, true);
         if (pPane != NULL) {
             nw4r::lyt::Material* pMaterial = pPane->GetMaterial();
@@ -6266,30 +5989,33 @@ void clearItemBox2TripleRows(CItemBoxInfo2* info) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 void applyItemBox2SelColors(CItemBoxInfo2* info) {
-    // Retail uses the stmw/lmw frame (optimize_for_size prologue merge).
-    // dont_inline keeps IPA from restructuring this leaf renderer.
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
-    u32 i;
     u32 idx;
-    s16 zero = 0;
-    for (i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
-        idx = (u8)i + 1;
-        sprintf(buf, &lbl_eu_805063BC[0x303], idx);
+    // Retail re-evaluates the slot count on every iteration (bl in the
+    // loop condition), so do not hoist the call.
+    for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
+        idx = (u32)((u8)i + 1);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        // Selection colours: two 8-byte pairs built from the s16s at +0xA2
+        // and +0xAA; retail stages the four arrays at sp+0x08..0x17 and the
+        // u32 varargs copy at sp+0x18..0x27.
+        s16 zero = 0;
+        s16 c0hi[2] = {zero, info->state.quadA.s[3]};
+        s16 c0lo[2];
+        c0lo[1] = zero;
+        c0lo[0] = zero;
+        s16 c1hi[2] = {zero, info->state.quadB.s[3]};
+        s16 c1lo[2];
+        c1lo[1] = zero;
+        c1lo[0] = zero;
         u32 args[4];
-        // zero via a variable: MWCC materializes it in a register and cannot
-        // fold the {zero, zero} s16-pair arrays to a constant,
-        // keeping the retail stack build of the four u32 colour args.
-        s16 c0hi[2] = {0, info->state.quadA.s[3]};
-        s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, info->state.quadB.s[3]};
-        s16 c1lo[2] = {0, 0};
         args[0] = *(u32*)c0lo;
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
@@ -6405,7 +6131,7 @@ extern "C" void stampItemBox2SlotTex(CItemBoxInfo2* info) {
                 args[1] = *(u32*)c0hi;
                 args[2] = *(u32*)c1lo;
                 args[3] = *(u32*)c1hi;
-                sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+                sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
                 nw4r::lyt::Pane* pane3 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
                 void* vertexObj = pane3->GetMaterial();
                 for (u32 j = 0; j < 2; j++) {
@@ -6498,8 +6224,6 @@ void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, uns
     self->value = b;
     self->state = c;
 }
-extern const u32 lbl_eu_8066806C;
-extern const u8 lbl_eu_80668070;
 
 extern "C" void setupItemBox2Detail(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     // ---- type (main switch key) ----
@@ -6580,8 +6304,8 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 ItemBoxInfoCopy e1;
                 buildItemBox2CmpRecord(&e1, info, (void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
                 ItemBoxInfoCopy e2 = e1;  // 7-word copy
-                s32 s1 = calcItemBox2Bonus1(info, (void*)(u32)member, e2.value & 0xFFFF, NULL);
-                s32 s2 = calcItemBox2Bonus2(info, (void*)(u32)member, *(u16*)((u8*)&e2 + 6), NULL);
+                s32 s1 = calcItemBox2Bonus1(info, member, e2.value & 0xFFFF, NULL);
+                s32 s2 = calcItemBox2Bonus2(info, member, *(u16*)((u8*)&e2 + 6), NULL);
                 s32 atk1 = (s32)barB + s1;
                 s32 atk2 = (s32)barB + s2;
                 if (atk1 > atk2) atk1 = atk2;
@@ -6771,9 +6495,9 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             if (testItemBox2Equip(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL))));
-            s32 atkA = (s32)pb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
-            s32 atkB = (s32)nb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)c_new.w04, arg3);
-            s32 atkC = (s32)atkA + calcItemBox2Bonus2(info, (void*)(u32)member, (u16)(c_cur.w04 >> 16), NULL);
+            s32 atkA = (s32)pb + calcItemBox2Bonus1(info, member, (u16)c_cur.w04, NULL);
+            s32 atkB = (s32)nb + calcItemBox2Bonus1(info, member, (u16)c_new.w04, arg3);
+            s32 atkC = (s32)atkA + calcItemBox2Bonus2(info, member, (u16)(c_cur.w04 >> 16), NULL);
             s32 atkD = atkB < atkC ? atkB : atkC;
             s16 dW = (s16)(atkC - atkA);
             s16 v610, v612, v614, v644, v646, v648;
@@ -6921,10 +6645,12 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             // ---- armor block (0x801E7DA0) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             E43Entry e_cur;
-            buildItemBox2SlotFlags((CItemBoxSlotFlags*)&e_cur, info, (void*)(u32)w0);
+            const CItemBoxSlotFlags& e_curFlags = buildItemBox2SlotFlags(info, w0);
+            e_cur = *(const E43Entry*)&e_curFlags;
             E43Entry c_cur = e_cur;
             E43Entry e_new;
-            buildItemBox2SlotFlags((CItemBoxSlotFlags*)&e_new, info, arg3);
+            const CItemBoxSlotFlags& e_newFlags = buildItemBox2SlotFlags(info, (u32)arg3);
+            e_new = *(const E43Entry*)&e_newFlags;
             E43Entry c_new = e_new;
             s32 eq1 = 0;
             if (testItemBox2Equip(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
@@ -7022,10 +6748,10 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
                 c3 = getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
                 s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
-                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wnb + calcItemBox2Bonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wnb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wnb + calcItemBox2Bonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + calcItemBox2Bonus1(info, member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 dW = (s16)(wd - wa);
                 ml::FixStr<32> fmtBuf;
@@ -7132,10 +6858,12 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             E43Entry e_cur;
-            buildItemBox2SlotFlags((CItemBoxSlotFlags*)&e_cur, info, (void*)(u32)w0);
+            const CItemBoxSlotFlags& e_curFlags = buildItemBox2SlotFlags(info, w0);
+            e_cur = *(const E43Entry*)&e_curFlags;
             E43Entry c_cur = e_cur;
             E43Entry e_new;
-            buildItemBox2SlotFlags((CItemBoxSlotFlags*)&e_new, info, arg3);
+            const CItemBoxSlotFlags& e_newFlags = buildItemBox2SlotFlags(info, (u32)arg3);
+            e_new = *(const E43Entry*)&e_newFlags;
             E43Entry c_new = e_new;
             u16 v44C = (u16)sumItemBox2TypeCounts(info, member, (void*)(u32)w0);
             u16 v430 = (u16)sumItemBox2TypeCounts(info, member, arg3);
@@ -7241,10 +6969,10 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
                 E43Entry cw = ew;
                 getItemBox2Effect(info, (void*)(u32)member, 0x1, NULL);
                 s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + getItemBox2Effect(info, (void*)(u32)member, 0x1, arg3))));
-                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)cw.w04, NULL);
-                s32 wb = (s32)wpb + calcItemBox2Bonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
-                s32 wc = (s32)wpb + calcItemBox2Bonus1(info, (void*)(u32)member, (u16)cw.w04, arg3);
-                s32 wd = (s32)wpb + calcItemBox2Bonus2(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wa = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + calcItemBox2Bonus1(info, member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + calcItemBox2Bonus2(info, member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 ml::FixStr<32> fmtBuf;
                 fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
@@ -7407,9 +7135,7 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
         }
         // armor slots
         {
-            u8 slotTypes[5];
-            *(u32*)&slotTypes[0] = lbl_eu_8066806C;
-            slotTypes[4] = lbl_eu_80668070;
+            u8 slotTypes[5] = { 4, 5, 6, 7, 8 };
             for (u8 i = 0; i < 5; i++) {
                 ItemBoxInfoCopy tmp;
                 tmp.itemId = 0;
@@ -7685,28 +7411,23 @@ setLayoutTextBoxNumber(info->state.layout, &lbl_eu_805063BC[0x4F0], (u8)stats->C
 
 #pragma push
 #pragma auto_inline off
-s32 calcItemBox2Bonus1(void* a, void* b, s32 arg2, void* d) {
+s32 calcItemBox2Bonus1(void* a, u16 b, s32 arg2, void* d) {
     // Single-expression sum; builtin s32->f32 cast emits MWCC's
     // 0x4330/xoris double-trick.
-    // NOTE: param-save copy pair order residual (see attempts.jsonl).
-    s32 prod = arg2 * (s32)(getItemBox2Effect(a, b, 0x52, d) + getItemBoxCondStat2D(a, b) + 0x64);
-    return (s32)(lbl_eu_80668040 * (f32)prod);
+    // b is the u16 character id: the u16 param fixes the param-save order.
+    s32 prod = arg2 * (s32)(getItemBox2Effect(a, (void*)(u32)b, 0x52, d) + getItemBoxCondStat2D(a, (void*)(u32)b) + 0x64);
+    return (s32)(0.01f * (f32)prod);
 }
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
-#undef lbl_eu_80668028
-#undef lbl_eu_80668040
-extern "C" const f32 lbl_eu_80668040;
-s32 calcItemBox2Bonus2(void* a, void* b, s32 arg2, void* d) {
+s32 calcItemBox2Bonus2(void* a, u16 b, s32 arg2, void* d) {
     // Standalone SDA (not sdata2_ItemBox members) so lfd/lfs use r0@sda21
-    // instead of li r3,0 / lfs 56(r3). Residual: or r28,r4 / or r27,r3 order.
-    s32 prod = (s32)(getItemBox2Effect(a, b, 0x53, d) + getItemBoxCondStat2D(a, b) + 0x64) * arg2;
-    return (s32)(lbl_eu_80668040 * (f32)prod);
+    // instead of li r3,0 / lfs 56(r3); u16 b gives retail or r28,r4 first.
+    s32 prod = (s32)(getItemBox2Effect(a, (void*)(u32)b, 0x53, d) + getItemBoxCondStat2D(a, (void*)(u32)b) + 0x64) * arg2;
+    return (s32)(0.01f * (f32)prod);
 }
-#define lbl_eu_80668028 sdata2_ItemBox.d8028
-#define lbl_eu_80668040 sdata2_ItemBox.f8040
 #pragma pop
 #pragma push
 #pragma auto_inline off
@@ -7733,15 +7454,13 @@ u32 getItemBox2Effect(void* a, void* b, u32 c, void* d) {
     slotIds[3] = *(s16*)((u8*)lookup + 0x20);
     slotIds[4] = *(s16*)((u8*)lookup + 0x22);
     slotIds[5] = *(s16*)((u8*)lookup + 0x24);
-    CItemBoxSlotBytes bytes;
-    bytes.ab.a = lbl_eu_80668074;
-    bytes.ab.b = lbl_eu_80668078;
+    u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     char buf[0x20];
     u32 result = 0;
     for (u32 slot = 0; slot < 6; slot++) {
         s16 id = slotIds[(u8)slot];
         if (id != -1) {
-            u8 slotByte = bytes.bytes[(u8)slot];
+            u8 slotByte = bytes[(u8)slot];
             void* item = CItem_kindPtr(slotByte, id);
             if (d != NULL && slotByte == equipSlot) {
                 // candidate slot: name-based lookup over the item names
@@ -7787,7 +7506,7 @@ u32 getItemBox2Effect(void* a, void* b, u32 c, void* d) {
                 }
             }
         } else {
-            if (d != NULL && bytes.bytes[(u8)slot] == equipSlot) {
+            if (d != NULL && bytes[(u8)slot] == equipSlot) {
                 // candidate slot: name-based lookup
                 u8 count = (u8)BdatGetU8Direct(nameObj, base + 0x432, (u16)nameId);
                 for (u8 j = 0; (u8)j < count; j++) {
@@ -7860,7 +7579,7 @@ bool testItemBox2Equip(void*, u16 b, void* c) {
     // for each of the six slots either the indexed item names must still
     // resolve (when the slot holds the equipped item) or no indexed entry may
     // be occupied/in-use.
-    void* lookup = CtrlObjectParam_GetCharEntry(b);
+    CItemBoxCharEntryView* lookup = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry(b);
     u32 nameObj = (u32)((char* (*)(void*))LookupItemTypeTable)(c);
     // u16 local: MWCC saves the raw callee return (or-copy) and re-extracts
     // (u16) per argument site, matching retail's def-then-per-site rlwinm.
@@ -7868,28 +7587,26 @@ bool testItemBox2Equip(void*, u16 b, void* c) {
     u8 slotId = (u8)BdatGetItemType((u32)c);
     // 6-byte slot table from two .sdata2 constants (different pair from
     // checkItemBoxGemChain).
-    CItemBoxSlotBytes tbl;
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the
     // packed block at 0x1C..0x24 (retail load order).
-    ids[0] = *(s16*)((u8*)lookup + 0x26);
-    ids[1] = *(s16*)((u8*)lookup + 0x1C);
-    ids[2] = *(s16*)((u8*)lookup + 0x1E);
-    ids[3] = *(s16*)((u8*)lookup + 0x20);
-    ids[4] = *(s16*)((u8*)lookup + 0x22);
-    ids[5] = *(s16*)((u8*)lookup + 0x24);
-    tbl.ab.a = lbl_eu_8066807C;
-    tbl.ab.b = lbl_eu_80668080;
+    ids[0] = lookup->slotIds[5];
+    ids[1] = lookup->slotIds[0];
+    ids[2] = lookup->slotIds[1];
+    ids[3] = lookup->slotIds[2];
+    ids[4] = lookup->slotIds[3];
+    ids[5] = lookup->slotIds[4];
+    u8 tbl[6] = { 2, 4, 5, 6, 7, 8 };
     char buf[0x20];
     for (u8 i = 0; i < 6; i++) {
         if (ids[i] != -1) {
-            u8 slot = tbl.bytes[i];
+            u8 slot = tbl[i];
             void* item = CItem_kindPtr(slot, ids[i]);
             if (c != NULL && slot == slotId) {
                 // candidate matches the equipped slot: verify every indexed
                 // item name still resolves.
-                u8 count = (u8)BdatGetU8Direct(nameObj, &lbl_eu_805063BC[0x432], nameId);
-                for (u8 j = 0; j < count; j++) {
+                u8 j; u8 count = (u8)BdatGetU8Direct(nameObj, &lbl_eu_805063BC[0x432], nameId);
+                for (j = 0; j < count; j++) {
                     sprintf(buf, &lbl_eu_805063BC[0x43b], j + 1);
                     if ((u16)BdatGetU16Direct((void*)nameObj, buf, nameId) != 0) return false;
                 }
@@ -7910,9 +7627,9 @@ bool testItemBox2Equip(void*, u16 b, void* c) {
                 }
             }
         } else {
-            if (c != NULL && tbl.bytes[i] == slotId) {
-                u8 count = (u8)BdatGetU8Direct(nameObj, &lbl_eu_805063BC[0x432], nameId);
-                for (u8 j = 0; j < count; j++) {
+            if (c != NULL && tbl[i] == slotId) {
+                u8 j; u8 count = (u8)BdatGetU8Direct(nameObj, &lbl_eu_805063BC[0x432], nameId);
+                for (j = 0; j < count; j++) {
                     sprintf(buf, &lbl_eu_805063BC[0x43b], j + 1);
                     if ((u16)BdatGetU16Direct((void*)nameObj, buf, nameId) != 0) return false;
                 }

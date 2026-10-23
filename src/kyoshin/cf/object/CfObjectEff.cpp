@@ -374,11 +374,11 @@ extern "C" void scaleVirt29____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float
     // Scale the value by the global factor, then dispatch through vtable
     // slot 0xC4 (CfObject_setMoveHeadAngle - float scale, matches the
     // retail occupant ACDFC(float) at that slot).
-    self->CfObject_setMoveHeadAngle(value * lbl_eu_8066A210);
+    self->CfObject_setMoveHeadAngle(value * ml::deg2rad);
 }
 float CfObjectEff::getScaledVal_() {
     float result = CfObject_getMoveHeadAngle();
-    return result * lbl_eu_8066A20C;
+    return result * ml::rad2deg;
 }
 } // namespace cf
 

@@ -521,9 +521,8 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             retail, decomp = _data_object_paths(project, unit)
             if retail is None or decomp is None or not decomp.is_file():
                 continue
-            if not has_data_sections(decomp):
-                # extern-only TU: data still ships from the retail side; nothing
-                # to verify yet (the migration target is to define it in source).
+            if not has_data_sections(decomp) and not has_data_sections(retail):
+                # Neither side defines data: nothing to verify.
                 continue
             result, _note = _compare(retail, decomp)
             print(f"unit: {unit.name}  [{result.per_section_status()}]")
@@ -551,10 +550,10 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             file=sys.stderr,
         )
         return 2
-    # Extern-only TUs have no data sections to verify (data ships from another TU);
-    # skip the gate so `data diff` for those units reports no failure, matching
-    # the `data diff --all` has_data_sections gate.
-    if not has_data_sections(decomp):
+    # Extern-only TUs have nothing to verify only when retail also carries no
+    # data; if retail defines data the decomp object omits, that is a mismatch
+    # (the unit cannot be promoted), so fall through to the comparison.
+    if not has_data_sections(decomp) and not has_data_sections(retail):
         print(f"unit: {unit.name}  [bypass:ok]")
         return 0
     result, note = _compare(retail, decomp)
@@ -2749,6 +2748,14 @@ def main() -> int:
         help="optional DOL path and flags (e.g. --sort count, --names-only, --json)",
     )
 
+    p_link_gate = sub.add_parser(
+        "link-gate",
+        help="Shrink-only main.elf link ratchet (docs/evidence/link_undefs_baseline.json)",
+    )
+    p_link_gate.add_argument("--ratchet", action="store_true", help="lower the baseline (shrink-only)")
+    p_link_gate.add_argument("--init", action="store_true", help="write the initial baseline from a real run")
+    p_link_gate.add_argument("--symbols-only", action="store_true", help="only run the symbols.txt duplicate check")
+
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -2950,6 +2957,15 @@ def main() -> int:
         return cmd_equivalence(project, config, args.equivalence_args)
     if args.command == "opcodes":
         return cmd_opcodes(args.opcodes_args, config)
+    if args.command == "link-gate":
+        from tools.coop import link_gate
+
+        if args.symbols_only:
+            return link_gate.symbols_only()
+        region = config.region
+        return link_gate.gate(
+            region, args.ratchet, args.init, lambda fn: _with_build_lock(region, fn)
+        )
 
     parser.error(f"unknown command: {args.command}")
     return 2

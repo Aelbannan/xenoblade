@@ -30,7 +30,6 @@ extern const f32 lbl_eu_8066B338; // final-angle -> fctiwz scale
 // SRT offset table (.rodata, 3 entries), indexed by the mouth-open stage.
 extern const f32 lbl_eu_805247B4[];
 
-extern const f32 lbl_eu_8066A1F8; // pi
 
 // .sdata pointers to the node/material-name strings (loaded via r13, SDA21).
 extern const char* lbl_eu_80663C58; // node name passed to ResMdl::GetResNode

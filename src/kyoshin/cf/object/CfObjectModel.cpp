@@ -577,13 +577,13 @@ extern "C" void CfObject_setScaledHeadAngle__Q22cf13CfObjectModelFv(cf::CfObject
     // CfObject_setMoveHeadAngle (vtable+0xC4) with the scaled value. The
     // upcast to CfObject resolves the base (float) overload that CfObjectModel
     // hides with its no-arg override.
-    ((cf::CfObject*)self)->CfObject_setMoveHeadAngle(f * lbl_eu_8066A210);
+    ((cf::CfObject*)self)->CfObject_setMoveHeadAngle(f * ml::deg2rad);
 }
 
 // Scale the CfObject_getMoveHeadAngle result by the global scale factor.
 float cf::CfObjectModel::CfObject_UnkVirtualFunc34() {
     float value = CfObject_getMoveHeadAngle();
-    return value * lbl_eu_8066A20C;
+    return value * ml::rad2deg;
 }
 
 void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv(void* self, float f) {

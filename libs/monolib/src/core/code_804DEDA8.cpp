@@ -819,7 +819,12 @@ extern CEffectNodePool lbl_eu_80661738;
 extern "C" void EffRoot_InitDefaults(CEffectObj* obj);
 
 // Effect-object constructor (monolib/src/effect/code_804C8718.cpp).
-// (memberized: EffObj_Construct -> EffObject::Obj_Construct; declaration moved into class EffObject)
+// EffObject is the full view of the 0x22C-byte pool element defined in that
+// TU; this TU declares only the member it calls.
+struct EffInitBlob;
+struct EffObject {
+    s32 Obj_Construct(const u8* base, const EffInitBlob* data, void* arg6, s32 arg7, u8 arg8);
+};
 //
 
 // Re-initialize the schedule resource tables: clear both element arrays and
@@ -1065,7 +1070,8 @@ s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
     if (node == NULL) {
         return -1;
     }
-    if (node->Obj_Construct(base, data, arg3, arg4, arg5) != 0) {
+    if (reinterpret_cast<EffObject*>(node)->Obj_Construct(
+            base, reinterpret_cast<const EffInitBlob*>(data), arg3, arg4, arg5) != 0) {
         return *(s16*)((u8*)node + 0x1e);
     }
     // Constructor failed: rewind the handle cursor and release the object.

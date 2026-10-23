@@ -97,7 +97,7 @@
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 extern "C" u32 getEffectFlagFromMgr(void* mgr);
 extern "C" void setGimmick(void* obj, bool enable);
@@ -244,7 +244,6 @@ extern u16 lbl_eu_80663E36;
 extern u16 lbl_eu_80663E38;
 extern void* lbl_eu_806640A0;
 extern const double lbl_eu_80666528;
-extern const float lbl_eu_8066A210;
 
 cf::CfGameManager::~CfGameManager() {
     gmFileObject(unk90);
@@ -490,13 +489,13 @@ extern "C" void clampValueToRange__Q22cf13CfGameManagerFv(s32 minimum, s32* valu
 
 // .sdata2 float constants used by func_8008064C in the unity-helpers header.
 extern const float lbl_eu_80666540;
-extern const float lbl_eu_8066A1F8;
 extern const float lbl_eu_80666544;
 
 #define queueSceneEventA__Q22cf13CfGameManagerFv unityHelpersWrapFunc_80083D50
 #define flushEventQueue__Q22cf13CfGameManagerFv unityHelpersWrapFunc_800827E4
 #define syncBdatDataCache__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8007DECC
 #define setPresentationFlag__Q22cf13CfGameManagerFv unityHelpersWrapFunc_8008294C
+#include "kyoshin/CPcKizunagram.hpp"
 #include "kyoshin/cf/CfGameManagerUnityHelpers.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp"
 extern "C" void Scn_ReleaseUnk80(void*, u32, const void*);
@@ -1012,7 +1011,7 @@ bool cf::CfGameManager::isSceneLoading() {
     }
 
     getInstance();
-    return Scn_GetFrameDelta(lbl_eu_80663E14) <= lbl_eu_8066A208;
+    return Scn_GetFrameDelta(lbl_eu_80663E14) <= ml::epsilon;
 }
 #pragma dont_inline reset
 
@@ -1835,7 +1834,7 @@ extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
     if (mode != 0 && Scn_GetUnk80Handle(lbl_eu_80663E14) != false && first != 0) {
         CTaskGameCamView* res =
             (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14); // cast: CfObjectMove.hpp's void* form is also in scope
-        if (res->field_C <= lbl_eu_8066A208) {
+        if (res->field_C <= ml::epsilon) {
             float temp[4];
             temp[0] = vec->field_0x0;
             temp[1] = vec->field_0x4;
@@ -2284,7 +2283,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
             if (x == 8) {
                 UnkClass_8009EC9C* obj3 =
                     reinterpret_cast<UnkClass_8009EC9C*>(CtrlObjectParam_GetCharEntry(3));
-                (&obj->itemCounts_0x3534)->SetActiveSlot(*reinterpret_cast<u32*>( reinterpret_cast<u8*>(obj3) + 0x3DD0));
+                reinterpret_cast<CPcKizunagramBig*>(&obj->itemCounts_0x3534)->SetActiveSlot(*reinterpret_cast<u32*>( reinterpret_cast<u8*>(obj3) + 0x3DD0));
                 // Slot owner: CActorParam is embedded at +0x17C (vtable) -
                 // CtrlObjectParam.hpp; 0x200 is getSecondCurrency (() -> u32),
                 // 0x1F8 is setSecondCurrency (u32). Both called via the
@@ -2781,8 +2780,8 @@ void cf::CfGameManager::func_80086778() {
     cvtB.w[0] = 0x43300000;
     const double s16magic = *reinterpret_cast<const double*>(&lbl_eu_80666530);
     const double u16magic = lbl_eu_80666528;
-    const float threshold = lbl_eu_8066A208;
-    const float scale = lbl_eu_8066A210;
+    const float threshold = ml::epsilon;
+    const float scale = ml::deg2rad;
 
     for (int i = 0; i < rowCount; ++i) {
         int row = rowStart + i;

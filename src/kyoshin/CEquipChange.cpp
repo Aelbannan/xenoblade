@@ -54,10 +54,9 @@ extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
 // with the null-check cmpwi hoisted above the frame stores; the extern "C"
 // free-function form avoids MWCC's implicit member destruction (which would
 // emit a duplicate __dt__13CEquipItemBoxFv after the body - MWCC_CASES
-// kyoshin-dtors) and the optimize_for_size pragma forces the stmw merge.
+// kyoshin-dtors) and the unit -O4,s flag forces the stmw merge.
 // Sub-object dtors run in retail order (reverse layout order), then
 // conditional operator delete when the delete flag is set.
-#pragma optimize_for_size on
 extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
     if (self != 0) {
         __dt__13CEquipItemBoxFv(&self->mEquipItemBox, -1);
@@ -72,7 +71,6 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // Target us-8020377c: constructor. Seeds the manual vtable, constructs the
 // two UnkClass_8045F564 mem regions, zeroes the scalar head, builds the three
@@ -81,7 +79,6 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
 // config regions are copied field-by-field through the same helpers as
 // PartyStateWin_CopyEquipChange (UnkClass_8011C974 mem regions, scalars load-store
 // interleaved, counted 8-byte pair loops).
-#pragma optimize_for_size on
 /* Retail's symbol is the unmangled free function __ct__CEquipChange (not a
    mangled member ctor), so it is written with C linkage - no implicit
    member construction is injected and __ct__CEquipItemBox is called
@@ -272,13 +269,11 @@ extern "C" CEquipChange* __ct__CEquipChange(CEquipChange* self) {
     __dt__13CEquipItemBoxFv(reinterpret_cast<CEquipItemBox*>(&eqTmp), -1);
     return self;
 }
-#pragma optimize_for_size off
 
 // Target us-80203d88: load both bind files (two string records at
 // lbl_eu_80508168) into file handles 0x24/0x28, then init the item-box info
 // layout (0xA4) and the equip item box (0x2B0).
-// Retail frame is the optimize_for_size stmw/lmw pair.
-#pragma optimize_for_size on
+// Retail frame is the -O4,s stmw/lmw pair.
 void EquipChange_LoadBindFiles(CEquipChange* self) {
     const char* path = lbl_eu_80508168;
     self->field_24 = (u32)CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
@@ -290,7 +285,6 @@ void EquipChange_LoadBindFiles(CEquipChange* self) {
     loadItemBoxFiles((CItemBoxInfo*)self->_padA4);
     loadEIBFiles(&self->mEquipItemBox);
 }
-#pragma optimize_for_size off
 
 // Forward declarations for functions whose definitions live at the end of this
 // TU. Declaring (not defining) them here prevents MWCC from inlining their
@@ -305,11 +299,9 @@ void CEquipChange::EquipChange_CheckBoxOpen() { getEIBOpenFlag(&mEquipItemBox); 
 void CEquipChange::EquipChange_IsMenuBusy() { eibMenuBusy(&mEquipItemBox); }
 
 // Target us-802040c8: is either the sort menu or the sub-page current.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 int EquipChange_IsSortOrSubPage(CEquipChange* self) {
     return (eibMenuBusy(&self->mEquipItemBox) != 0) || (getEIBNamePane(&self->mEquipItemBox) != 0);
 }
-#pragma optimize_for_size off
 
 // Target us-8020405c: read selection at 0xA4 unless the item box confirm op is busy.
 int EquipChange_GetSelWhenReady(CEquipChange* self) {
@@ -338,7 +330,6 @@ int EquipChange_IsSubcurBusy(CEquipChange* self) {
 // set state 1, init the item-info window, repack the selection word and play
 // the 0x6D sound. Retail recomputes self+0xA4 per call site (no CSE) and
 // packs the nibbles low-to-high starting from the EquipChange_MapCursorToSlot result.
-#pragma optimize_for_size on
 void EquipChange_InitScreen(CEquipChange* self) {
     if (self->field_48 == 0) {
         self->field_48 = 1;
@@ -377,7 +368,6 @@ void EquipChange_CloseScreen(CEquipChange* self) {
 // closed, roll the cursor-run flag 0x98 backwards past non-equipped slots,
 // then refresh the equip info window; otherwise (both gates open) hand the
 // input to the item box. Retail frame saves 4 regs via stmw.
-#pragma optimize_for_size on
 void EquipChange_CursorPrev(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
@@ -419,13 +409,11 @@ void EquipChange_CursorPrev(CEquipChange* self) {
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
-#pragma optimize_for_size off
 
 // Target us-80204488: when both item-box gates are closed, roll the cursor
 // flag 0x98 forward past non-equipped slots, then refresh the equip info
 // window; otherwise (both gates open) hand the input to the item box. Retail
 // frame saves 4 regs via stmw (opt-space prologue).
-#pragma optimize_for_size on
 void EquipChange_CursorNext(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
@@ -464,13 +452,11 @@ void EquipChange_CursorNext(CEquipChange* self) {
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
-#pragma optimize_for_size off
 
 // Target us-802045dc: when both item-box gates are closed, remap the
 // cursor-run flag 0x98 (see EquipChange_MapCursorToCat's 0/2/4/6/8/10/12->... mapping) and
 // refresh the equip info window with the compressed selection word. Retail
 // emits one li/stb block per case (14 separate blocks in the jump table).
-#pragma optimize_for_size on
 void EquipChange_CursorUp(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
@@ -508,11 +494,9 @@ void EquipChange_CursorUp(CEquipChange* self) {
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
-#pragma optimize_for_size off
 
 // Target us-80204768: sibling of EquipChange_CursorUp - same guard/refresh shape
 // but a different remap table for field_98 (also one li/stb block per case).
-#pragma optimize_for_size on
 void EquipChange_CursorRight(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
@@ -549,7 +533,6 @@ void EquipChange_CursorRight(CEquipChange* self) {
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
     playUISound__FUl(1);
 }
-#pragma optimize_for_size off
 
 void EquipChange_ConfirmSort(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0 && getEIBActiveMark(&self->mEquipItemBox) != 0)
@@ -578,7 +561,6 @@ void EquipChange_OpenSubPage(CEquipChange* self) {
 // hand off to EquipChange_RefreshCategory. The gate-closed branch refuses when the
 // character is busy or the selection points at an empty / locked slot. Retail
 // frame saves 4 regs via stmw (opt-space prologue).
-#pragma optimize_for_size on
 void EquipChange_ConfirmSelect(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) == 0)
@@ -630,7 +612,6 @@ void EquipChange_ConfirmSelect(CEquipChange* self) {
     Cur_SetVisible(self->_pad68, 0);
     playUISound__FUl(3);
 }
-#pragma optimize_for_size off
 
 // (EquipChange_MapCursorToCat and EquipChange_MapCursorToSlot are defined at the END of this TU. Retail
 // calls them externally at every site; the global address-takes at the end of
@@ -642,7 +623,6 @@ void EquipChange_ConfirmSelect(CEquipChange* self) {
 // reject, when the selected slot is empty/locked, or when a category-restricted
 // item cannot be equipped; 1 after the generic refresh; 2/3 from the weapon-row
 // paths. Retail frame saves 4 regs via stmw (opt-space prologue).
-#pragma optimize_for_size on
 int EquipChange_RunMainFlow(CEquipChange* self) {
     CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(self->field_99));
     if (obj->field_176C == 1) {
@@ -844,17 +824,14 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     playUISound__FUl(0x77);
     return 3;
 }
-#pragma optimize_for_size off
 
 // Target us-80205624: raw box count, cleared when the current selection is 3.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw/lmw frame
 int EquipChange_GetBoxCount(CEquipChange* self) {
     int result = takeEIBAction(&self->mEquipItemBox);
     if ((u8)EquipChange_MapCursorToCat(self) == 3)
         result = 0;
     return result;
 }
-#pragma optimize_for_size off
 
 void Cur_ShowTwoSubPanes(void* self);
 void CEquipChange::EquipChange_ShowSubPanes() { Cur_ShowTwoSubPanes(field_80); }
@@ -880,7 +857,6 @@ int EquipChange_GetLockedState(CEquipChange* self) {
 // byte (>=2 => sub-page open flag) and the item-box gate: gate open routes
 // to eibHudPrompt, gate closed picks a menu id from the cursor state.
 // Retail saves 2 regs via stmw/lmw (opt-space prologue).
-#pragma optimize_for_size on
 extern "C" int EquipChange_GetMenuId(CEquipChange* self) {
     if (Cur_BothSubPanesOn((CBaseCur*)self->field_80) != 0)
         return 0x2E;
@@ -897,14 +873,12 @@ extern "C" int EquipChange_GetMenuId(CEquipChange* self) {
         return 0x14;
     return 0x16;
 }
-#pragma optimize_for_size off
 
 // Target us-80205790: resolve the currently-equipped item's resource id from
 // the active category (box gate open: getEIBSelCat category; gate closed:
 // field_98) and the per-category item id read from the bdat row (obj+off).
 // Opt-space merges the callee-saved saves into stmw r30 and copies r3->r30
 // before r4->r31 (retail prologue shape; MWCC_CASES kyoshin leaf patterns).
-#pragma optimize_for_size on
 int EquipChange_GetEquippedResId(CEquipChange* self, u32 param) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (param == 0 && isEIBCatMatch(&self->mEquipItemBox) == 0)
@@ -945,7 +919,6 @@ int EquipChange_GetEquippedResId(CEquipChange* self, u32 param) {
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // Target us-80205994: lift the last box byte if the box gate is open.
 u8 EquipChange_GetBoxTailByte(CEquipChange* self) {
@@ -1004,7 +977,6 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim38ToIdle(CEquipChange* se
 // (setEIBBoxInfo/80287DB4 with the packed (field_99<<8 | cur38<<4 | cur3a)
 // word) and re-init the box, entering state 7. Retail saves 4 regs via
 // _savegpr_28 (opt-space prologue).
-#pragma optimize_for_size on
 extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt7(CEquipChange* self) {
     if (advanceAnimTransform(self->field_40, lbl_eu_806682A8) == 0)
         return;
@@ -1019,7 +991,6 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt7(CEquipChange* sel
     openEIBBox(&self->mEquipItemBox);
     self->field_48 = 7;
 }
-#pragma optimize_for_size off
 
 // Target us-80205c7c: when the box sub-page closes, enter state 8.
 extern "C" void __declspec(noinline) EquipChange_OnSubPageClose(CEquipChange* self) {
@@ -1033,7 +1004,6 @@ extern "C" void __declspec(noinline) EquipChange_OnSubPageClose(CEquipChange* se
 // info window with the packed selection word and enter state 0xA.
 // -O4,s keeps the retail stmw r28 frame; the packed word is built low-to-high
 // ((sub&0xF) | (main&0xF)<<4 | f99<<8) so MWCC merges the ORs into rlwimi.
-#pragma optimize_for_size on
 extern "C" void __declspec(noinline) EquipChange_OnApplyToStA(CEquipChange* self) {
     if (getEIBActiveMark(&self->mEquipItemBox) == 0)
         return;
@@ -1046,7 +1016,6 @@ extern "C" void __declspec(noinline) EquipChange_OnApplyToStA(CEquipChange* self
     renderItemBoxByKind((CItemBoxInfo*)((u8*)self + 0xA4),
                   (u16)(packed | ((u32)f99 << 8)),
                   (void*)m, 1);}
-#pragma optimize_for_size off
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
 extern "C" void __declspec(noinline) EquipChange_OnAnim40ToSt3(CEquipChange* self) {
@@ -1084,7 +1053,6 @@ end:
 // positions either the 0x50 or the 0x68 cursor depending on field_98.
 // Opt-space keeps the palette copy as a retail mtctr/bdnz loop (unrolled
 // under -O4,p); the block-copy form gives the lwzu/stwu update addressing.
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* self) {
     nw4r::math::VEC3 pos;
     // Word view of the 7-pair block: the cursor byte selects one of the 14
@@ -1126,7 +1094,6 @@ extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* 
         Cur_SetVisible(self->_pad50, 0);
     }
 }
-#pragma optimize_for_size off
 
 
 // Target us-80205fb8: full refresh of the equip-change screen. Reads the
@@ -1138,7 +1105,6 @@ extern "C" __declspec(noinline) void EquipChange_RefreshCursorPos(CEquipChange* 
 // the same three-way split using the category items cached up front. Every
 // processed entry is appended to the cursor record array handed to
 // EquipChange_CopyCursorRec so the cursors land on real entries only.
-#pragma optimize_for_size on
 void EquipChange_CopyCursorRec(CEqChCursorRec* dst, CEqChCursorRec* src);
 extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
     CEqChCursorRec recs[8];
@@ -1475,7 +1441,6 @@ extern "C" void EquipChange_RebuildCursorList(CEquipChange* self) {
             PaneSetTexPaletteByName(layout, imageName2, (u32)texRes);
     }
 }
-#pragma optimize_for_size off
 
 void EquipChange_CopyCursorRec(CEqChCursorRec* dst, CEqChCursorRec* src) {
     u16 a = *(u16*)src;
@@ -1491,7 +1456,6 @@ void EquipChange_CopyCursorRec(CEqChCursorRec* dst, CEqChCursorRec* src) {
 // colours copied into the sdata2 tables, and the three cursors built from
 // stack temporaries. Handle-2 branch only attaches the second accessor and
 // caches it in the global page flag.
-#pragma optimize_for_size on
 bool CEquipChange::OnFileEvent(CEventFile* file) {
     // Declared up-front; `scratch` holds the colour-source pane in branch 1
     // and the second file's data pointer in branch 2 (retail shares one
@@ -1612,7 +1576,6 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
     }
     return false;
 }
-#pragma optimize_for_size off
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Target us-802077c8: static init - build the six equip-change colour/state
@@ -1636,7 +1599,6 @@ void sinit_802059E8() {
 // otherwise it re-equips the sub-cursor row via the 0x806682A0 category table
 // and the obj u16 id fields. When the cursor cannot be placed (flag 0) the
 // refresh block re-runs. Frame saves 7 regs via stmw r25 (opt-space).
-#pragma optimize_for_size on
 void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat) {
     self->field_99 = cat;
     // Local block mirrors the retail frame: {word,byte} pair at 0x8/0xC,
@@ -1710,7 +1672,6 @@ void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         eibOpenPages(&self->mEquipItemBox, packed, 0, 1);
 }
-#pragma optimize_for_size off
 
 // Target us-80207088: resolve the item record under the current equip-change
 // selection. Non-weapon categories look the per-category equipped id up in
@@ -1719,7 +1680,6 @@ void __declspec(noinline) EquipChange_RefreshCategory(CEquipChange* self, u8 cat
 // equips it through the item-impl vtable hooks or rebuilds the scratch item
 // lbl_eu_80576568 from bdat (guarded by lbl_eu_8066469C) and returns it.
 // bdat-rebuild fallback shape needs the opt-space stmw r28 frame.
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void* EquipChange_ResolveEquipItem(CEquipChange* self) {
     // cat declared first - its home web (shared with mapped) gets priority.
     int cat;
@@ -1813,7 +1773,6 @@ extern "C" __declspec(noinline) void* EquipChange_ResolveEquipItem(CEquipChange*
     return &lbl_eu_80576568;
     }
 }
-#pragma optimize_for_size off
 
 // Target us-80204e30: field_98 (s8) maps 0/4/6/8/10/12 -> 2/4/5/6/7/8,
 // anything else -> 3. Free function (retail symbol is unmangled, hence C
@@ -1891,7 +1850,6 @@ tail:
 // (field_34) when visible (0x44), then the two cursors (0x50/0x68) only when
 // the sub-cursor (0x80) is idle, flags the item box (0x62B), and finally the
 // item info window + sub-cursor + item box. Retail frame uses stmw/lmw.
-#pragma optimize_for_size on
 extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_44 == 0)
         return;
@@ -1907,7 +1865,6 @@ extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo*
     Cur_DrawLayout((CBaseCur*)self->field_80, drawInfo);
     drawEIBBox(&self->mEquipItemBox, drawInfo);
 }
-#pragma optimize_for_size off
 // Target us-80203f84: teardown of the equip-change screen. Release the two
 // file handles, clear the visible flag, delete the layout object at 0x34
 // (guarded double-check), clear the global page flag, release both arc

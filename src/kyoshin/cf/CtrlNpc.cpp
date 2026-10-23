@@ -945,7 +945,7 @@ void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
         // rand call, and the rand int promotes straight to double like
         // retail's __cvt_s2d sequence.
         f32 ang = lbl_eu_806666AC * nw4r::math::Atan2FIdx(v.x, v.z);
-        f32 jitA = lbl_eu_8066A1F8 * ml::math::mtRand(-30, 30);
+        f32 jitA = ml::pi * ml::math::mtRand(-30, 30);
         self->field_BA = 0x10;
         f32 jitB = lbl_eu_806666B8 * jitA;
         jitB += ang;
@@ -957,9 +957,9 @@ void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
             // _vD8() virtual call (the value lives in f31 across the call).
             double rnd = ml::math::mtRand(60);
             f32 base = lbl_eu_806666BC + reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getScaledAngle();
-            f1 = (base + rnd) * lbl_eu_8066A210;
+            f1 = (base + rnd) * ml::deg2rad;
         } else {
-            f1 = ml::math::mtRand(360) * lbl_eu_8066A210;
+            f1 = ml::math::mtRand(360) * ml::deg2rad;
         }
         self->field_BA = 0;
     }
@@ -1133,7 +1133,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     f32 adj = lbl_eu_806666C8 *
               (f32)((f64)(int)self->field_16A * (prog * scale)) /
               lbl_eu_806666CC;
-    if (adj > lbl_eu_8066A208)
+    if (adj > ml::epsilon)
         adj = adj / total;
     else
         adj = lbl_eu_80666698;
@@ -1157,7 +1157,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
             f32 frac = lens[j] / total;
             if (ratio <= frac) {
                 f32 f;
-                if (frac > lbl_eu_8066A208)
+                if (frac > ml::epsilon)
                     f = ratio / frac;
                 else
                     f = lbl_eu_806666A4;
@@ -1244,7 +1244,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
 
         f32 f158 = self->field_158;
         if ((int)f158 != 0x168) {
-            self->field_0C = f158 * lbl_eu_8066A210;
+            self->field_0C = f158 * ml::deg2rad;
             reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveYaw(self->field_0C);
         }
         self->field_BE += 1;
@@ -1356,7 +1356,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
             reinterpret_cast<cf::CfObject*>(obj2)->CfObject_getScaledAngle();
             f32 f158 = self->field_158;
             if ((int)f158 != 0x168) {
-                self->field_0C = f158 * lbl_eu_8066A210;
+                self->field_0C = f158 * ml::deg2rad;
                 if (obj2 != 0) {
                     reinterpret_cast<cf::CfObject*>(obj2)->CfObject_setMoveHeadAngle(self->field_0C);
                     if (reinterpret_cast<cf::CfObject*>(obj2)->CfObject_isMoveActiveNow() != 0)
@@ -1451,7 +1451,7 @@ int CtrlNpcApproachTarget(cf::CtrlNpc* self) {
     self->field_14 = lbl_eu_80666698;
     self->field_D4 = lbl_eu_80666698;
     if (self->field_158 < lbl_eu_80666714) {
-        self->field_0C = self->field_158 * lbl_eu_8066A210;
+        self->field_0C = self->field_158 * ml::deg2rad;
         if (self->field_28 != 0) {
             reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
             if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)

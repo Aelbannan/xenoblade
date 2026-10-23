@@ -31,7 +31,7 @@
 // (findBattleStatusEntry: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
 // declare the identical void*(void*, u32) form - no guard needed.)
 #include "kyoshin/cf/code_800F42AC.hpp"
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
+// code_80135FDC.hpp declares ml::epsilon as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
 // getReloadParam0: CAIAction.hpp's int form is already in; rename

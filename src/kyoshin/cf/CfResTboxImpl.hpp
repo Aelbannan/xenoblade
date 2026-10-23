@@ -5,37 +5,16 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 
-class CScnItemModel; // fwd; real owner of parent+0x98 model (hot header)
-
-struct ResInfoEntry;
-class CScn;
+#include "kyoshin/cf/CfResObjImpl.hpp"
 
 namespace cf {
 
-class CfObjectMove;
-
-struct CfResTboxImpl;
-struct CfResTboxParent;
-
-// Local overlay: ctor writes retail lbl_eu_80535204 at +0x10 (novtable).
-struct CfResTboxImplVtbl {
-    u32 slots[27];
-};
-
-class CfObject; // real owner of +0x38 sub-object (CfObject_getPosTriple)
-
-// Prefix pushing vptr to +0x10 (same as CfResPcImpl / CfResReloadImpl)
-struct CfResTboxImplPrefix {
-    /* 0x00 */ CfResTboxParent* field_00;
-    /* 0x04 */ f32 field_04;
-    /* 0x08 */ u16 field_08;
-    /* 0x0A */ s16 field_0A;
-    /* 0x0C */ u16 field_0C;
-    /* 0x0E */ s16 field_0E;
-};
-
-// Real class tree for cf::CfResTboxImpl
-class __declspec(novtable) CfResTboxImpl : public CfResTboxImplPrefix {
+// Real class tree for cf::CfResTboxImpl (retail vtable lbl_eu_80535204).
+// Same 0x1C layout as cf::CfResObjImpl (shared prefix: parent at +0x00, vptr
+// at +0x10), and its ctor runs __ct__cf_CfResObjImpl first, but it is NOT
+// declared as a C++ subclass: retail ~CfResTboxImpl does not chain to
+// ~CfResObjImpl (deriving adds the base-dtor call and breaks the match).
+class __declspec(novtable) CfResTboxImpl : public CfResObjImplPrefix {
 public:
     virtual ~CfResTboxImpl();                // 0x08
     virtual void ResTbox_CacheNullPtmfOnce();            // 0x0C
@@ -63,53 +42,23 @@ public:
     virtual int ResObj_ZeroStubA_CD54();             // 0x64
     virtual int CfResObj_true68();             // 0x68
 
-    CfResTboxImplVtbl*& vtbl() {
-        return *reinterpret_cast<CfResTboxImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
+    CfResObjImplVtbl*& vtbl() {
+        return *reinterpret_cast<CfResObjImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
     }
 
     /* 0x14 */ u32 field_14[2];
 };
 
-// Parent object referenced at +0x00 of CfResTboxImpl (a CfObject-derived
-// instance whose vptr sits at +0x00). Only the fields this unit touches are
-// declared.
-struct CfResTboxParent {
-    u8 field_00[0x38];
-    /* 0x38 */ cf::CfObject* field_38;       // sub-object (vtable slot 0xB0 -> CfObject_getPosTriple)
-    u8 field_3C[0x6C - 0x3C];
-    /* 0x6C */ u32 field_6C;
-    u8 field_70[0x90 - 0x70];
-    /* 0x90 */ u8* field_90;
-    /* 0x94 */ u8* field_94;
-    /* 0x98 */ ::CScnItemModel* field_98;  // model object (vtable slots 0x78(void*)/0x88(int) -> CScnItemModel::vfunc78/88)
-    /* 0x9C */ u8* field_9C;
-};
-
-// Foreign 0x88 iface deleted: real CScnItemModel::vfunc88(int) now owned by
-// CScnItemModel header (hot header, widened to retail arity).
-
 } // namespace cf
-
-struct CfPmf3 {
-    u32 w0;
-    u32 w1;
-    u32 w2;
-};
 
 typedef void (cf::CfResTboxImpl::*CfResTboxImplPMF)();
 extern CfPmf3 lbl_eu_805351E0[3];
 extern char lbl_eu_80664660[8];
-extern u32 __ptmf_null[3];
-extern cf::CfResTboxImplVtbl lbl_eu_80535204;
+extern cf::CfResObjImplVtbl lbl_eu_80535204;
 extern float lbl_eu_806681D0;
 extern float lbl_eu_806681D4;
 extern "C" void ResTbox_SetCellBit40(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* CfRes_getInstPtr29C();
-extern "C" u8* CfRes_findEntryById(ResInfoEntry* entry, u32 id);
 extern "C" u8* CfRes_lookupStrTable(char* key, int index, u32** out);
-extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int a, int b, int c, int d);
-extern "C" void CfModel_InstallSub(cf::CfResTboxParent* parent, u8* handle);
-extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
-extern "C" int CfRes_getD80Flag();
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);

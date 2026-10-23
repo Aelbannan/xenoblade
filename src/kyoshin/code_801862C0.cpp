@@ -277,9 +277,9 @@ void ArtsSelect_SpawnRow(MapProxy** objects, int row) {
     f32 scale = lbl_eu_806679C8 * (f32)((f64)*(u16*)&scaleCol - lbl_eu_806679D8);
 
     Vec3f rot;
-    rot.x = rotX * lbl_eu_8066A210;
-    rot.y = rotY * lbl_eu_8066A210;
-    rot.z = rotZ * lbl_eu_8066A210;
+    rot.x = rotX * ml::deg2rad;
+    rot.y = rotY * ml::deg2rad;
+    rot.z = rotZ * ml::deg2rad;
     if (*(u8*)&airCol == 0) {
         objects[row]->placeOnGround(reinterpret_cast<ml::CVec3*>(&pos), lbl_eu_806679CC);
     } else {

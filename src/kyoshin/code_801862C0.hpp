@@ -139,7 +139,6 @@ extern const f32 lbl_eu_806679C8;  // 0.1 scale-column scale
 extern const f32 lbl_eu_806679CC;  // 1000.0 place-helper arg
 extern const f64 lbl_eu_806679D0;  // signed int-to-double magic
 extern const f64 lbl_eu_806679D8;  // unsigned int-to-double magic
-extern const f32 lbl_eu_8066A210;  // degrees-to-radians
 
 // Notifier at widget+0x98 is a CScnItemModel (retail vfunc88(int) at
 // vtable+0x88). See libs/monolib/src/scn/CScnItemModel.hpp.

@@ -71,7 +71,7 @@ void bta_sys_event(BT_HDR *p_msg) {
     if (id < BTA_ID_MAX && bta_sys_cb.reg[id] != NULL) {
         freebuf = (*bta_sys_cb.reg[id]->evt_hdlr)(p_msg);
     } else if (appl_trace_level >= 2) {
-        LogMsg_1(0x501, "BTA got unregistered event id %d\0\0\0", id);
+        LogMsg_1(0x501, "BTA got unregistered event id %d", id);
     }
 
     if (freebuf) {

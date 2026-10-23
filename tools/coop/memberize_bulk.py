@@ -1061,6 +1061,87 @@ def restore_files(backup_dir: Path, project_root: Path, files: list[Path]) -> No
                 raise
 
 
+
+# --- caller-TU compile guard -------------------------------------------------
+# The byte-identity gate only rebuilds the DEFINING unit.  A rename also
+# rewrites call sites in other TUs (``Foo_Bar(&x, ...)`` -> ``(&x)->Bar(...)``)
+# and those were never compiled: when ``x``'s type in the caller TU is a
+# placeholder / TU-local view without the new member (or ``void*``), the
+# caller silently stops compiling (2026-10-23: 12 broken TUs).  This guard
+# rebuilds every object whose recorded deps include a touched file and
+# rejects the rename on any compile failure.
+GUARD_BUILD_REGION = "us"
+
+
+def _ninja_bin(project_root: Path) -> str:
+    local = project_root / "build" / "tools" / "ninja"
+    return str(local) if local.is_file() else (shutil.which("ninja") or "ninja")
+
+
+def dependent_objects(project_root: Path, files: list[Path],
+                      region: str = GUARD_BUILD_REGION) -> list[str]:
+    """Objects under build/<region>/ whose ninja deps include any of *files*.
+
+    Uses ``ninja -t deps`` (the depfile log), so both rewritten sources and
+    rewritten headers map to every TU that actually includes them.
+    """
+    want: set[str] = set()
+    for f in files:
+        if f.suffix in (".c", ".cpp", ".h", ".hpp", ".inc"):
+            p = f if f.is_absolute() else project_root / f
+            want.add(str(p.resolve()))
+    if not want:
+        return []
+    proc = subprocess.run([_ninja_bin(project_root), "-t", "deps"],
+                          cwd=str(project_root), capture_output=True, text=True)
+    prefix = f"build/{region}/"
+    objs: set[str] = set()
+    cur: Optional[str] = None
+    for line in proc.stdout.splitlines():
+        if line and not line[0].isspace():
+            tgt = line.split(":", 1)[0]
+            cur = tgt if tgt.startswith(prefix) and tgt.endswith(".o") else None
+            continue
+        dep = line.strip()
+        if cur is None or not dep:
+            continue
+        dp = Path(dep)
+        if not dp.is_absolute():
+            dp = project_root / dp
+        if str(dp.resolve()) in want:
+            objs.add(cur)
+    return sorted(objs)
+
+
+def compile_dependents(project_root: Path, files: list[Path]) -> list[str]:
+    """Rebuild every object depending on *files*; return failing objects.
+
+    Holds the repo-wide hexdiff build lock like hexdiff itself.  Returns
+    ``[]`` when everything compiles (or nothing depends on *files*).
+    """
+    objs = dependent_objects(project_root, files)
+    if not objs:
+        return []
+    lock_path = project_root / "build" / GUARD_BUILD_REGION / ".hexdiff.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    import fcntl
+    fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError:
+            pass
+        proc = subprocess.run([_ninja_bin(project_root), "-k", "0", *objs],
+                              cwd=str(project_root), capture_output=True,
+                              text=True)
+    finally:
+        os.close(fd)
+    if proc.returncode == 0:
+        return []
+    failed = re.findall(r"^FAILED: (?:\[code=\d+\] )?(\S+)", proc.stdout, re.M)
+    return failed or [f"ninja exit {proc.returncode}"]
+
+
 def sync_targets(project_root: Path) -> int:
     """Sanctioned registry sync: ``run.py targets sync-symbols``."""
     cmd = [sys.executable, str(ROOT / "tools" / "coop" / "run.py"),
@@ -1179,6 +1260,11 @@ def cmd_apply(args: argparse.Namespace, project_root: Path) -> int:
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     all_ctx: list[str] = []
     use_test_seam = getattr(args, "_snapshotter", None) is not None
+    # Caller compile guard (real path only; tests inject ``_compile_guard``).
+    guard: Optional[Callable[[Path, list[Path]], list[str]]] = getattr(
+        args, "_compile_guard", None)
+    if guard is None and not use_test_seam:
+        guard = compile_dependents
     if execute:
         print(f"memberize-bulk apply regions: {', '.join(regions)} "
               f"(a rename never rewrites an unlisted region)")
@@ -1441,6 +1527,12 @@ def cmd_apply(args: argparse.Namespace, project_root: Path) -> int:
                 # pairs the wrong overload).
                 ok_s, diffs_s = compare_snapshots(
                     cur_before, single_after, s_gate)
+                if ok_s and guard is not None:
+                    broken = guard(project_root, single_touched)
+                    if broken:
+                        ok_s = False
+                        diffs_s = ["caller compile guard: rename broke "
+                                   + ", ".join(broken[:10])]
                 if ok_s:
                     passed_rows.append(row)
                     passed_renames.update(s_gate)
@@ -1487,6 +1579,19 @@ def cmd_apply(args: argparse.Namespace, project_root: Path) -> int:
                 }
                 n_fail += 1
             continue
+        # Caller-TU compile guard: the gate above only rebuilt *unit*.
+        if guard is not None:
+            broken = guard(project_root, sorted(touched))
+            if broken:
+                restore_files(backup_dir, project_root, sorted(touched))
+                report["units"][unit] = {
+                    "status": "FAIL",
+                    "reason": ("caller compile guard: rename broke "
+                               + ", ".join(broken[:10])),
+                    "functions": [],
+                }
+                n_fail += 1
+                continue
         # PASS: collect ctx files named by the plans.
         for _row, plan in plans:
             all_ctx.extend(plan.ctx_files)

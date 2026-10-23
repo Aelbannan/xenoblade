@@ -47,7 +47,6 @@ extern "C" __declspec(noinline) u8 getEIBOpenFlag(CEquipItemBox* self) { return 
 
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
 // Initialise a full item grid: clear every cell and reset the header fields.
 extern "C" CEquipItemGrid* initEIBGrid(CEquipItemGrid* grid) {
     // Reset each 8-byte cell to { unk0 = -1, rest = 0 }.
@@ -132,8 +131,6 @@ extern "C" u32 getEIBItemKind(CEquipItemGrid* grid, u16 idx) {
 }
 #pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 // Return the stored item short for a valid grid cell, or -1.
 // noinline: retail callers emit a `bl` (cross-TU in the original build).
 extern "C" __declspec(noinline) s16 getEIBItemId(CEquipItemGrid* grid, u16 idx) {
@@ -147,7 +144,6 @@ extern "C" __declspec(noinline) s16 getEIBItemId(CEquipItemGrid* grid, u16 idx) 
     }
     return -1;
 }
-#pragma pop
 
 // Advance grid cursor index; wrap to 0 when it reaches the count (field_2003).
 #pragma push
@@ -177,7 +173,6 @@ extern "C" __declspec(noinline) void eibGridPrev(CEquipItemBox* self) {
 // (-1 when the cell holds any count, else 0).
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) s8 chkEIBEquip(CEquipItemGrid* grid, u16 param) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + param);
     if ((u32)offset < (u32)grid->count) {
@@ -300,7 +295,6 @@ extern "C" u8 getEIBByte2(CEquipItemGrid* grid, u16 idx) {
 // the cat-3 path appends a per-slot count string via a second sprintf.
 // Returns the buffer, or 0 when the cell is out of range / empty.
 #pragma push
-#pragma optimize_for_size on
 #pragma auto_inline off
 extern "C" __declspec(noinline) char* fmtEIBItemName(CEquipItemGrid* grid, u32 param) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + param);
@@ -328,9 +322,8 @@ extern "C" __declspec(noinline) char* fmtEIBItemName(CEquipItemGrid* grid, u32 p
 // Dispatch the equip-box grid sort/refresh by category and page: categories
 // 4..8 use the page-indexed sort chain, category 2 the flag-scan chain, and
 // category 3 the name-byte chain (page 3..0xB special-cases re-sort after a
-// category rebuild). optimize_for_size selects retail's stmw r30 prologue.
+// category rebuild). -O4,s selects retail's stmw r30 prologue.
 #pragma push
-#pragma optimize_for_size on
 #pragma auto_inline off
 extern "C" void sortEIBGridByPage(CEquipItemGrid* grid) {
     u8 cat = grid->cat;
@@ -540,8 +533,6 @@ extern "C" __declspec(noinline) u32 calcEIBCountKey(CEquipItemGrid* grid, CItemI
 // Category-dispatching bubble sort over the grid entries (the shared first
 // pass of the page sort chain): cat 3 sorts descending by the vf54 name key,
 // cat 9 by slot occupancy / byte-7 clamp, everything else by the raw kind.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void sortEIBGridByCat(CEquipItemGrid* grid, u32 cat) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
@@ -621,12 +612,9 @@ extern "C" __declspec(noinline) void sortEIBGridByCat(CEquipItemGrid* grid, u32 
         if (swapped == 0) break;
     }
 }
-#pragma pop
 
 // Bubble-sort the grid entries ascending by the item record's +4 flag
 // halfword (sort key). Sibling of sortEIBByNm82's name-byte sort.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void sortEIBByFlags(CEquipItemGrid* grid) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
@@ -648,12 +636,9 @@ extern "C" __declspec(noinline) void sortEIBByFlags(CEquipItemGrid* grid) {
         if (swapped == 0) break;
     }
 }
-#pragma pop
 
 // Bubble-sort the grid entries ascending by calcEIBCountKey's per-item key
 // (unsigned compare). Same 5-copy chained swap as sortEIBByFlags.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void sortEIBByCount(CEquipItemGrid* grid) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
@@ -675,7 +660,6 @@ extern "C" __declspec(noinline) void sortEIBByCount(CEquipItemGrid* grid) {
         if (swapped == 0) break;
     }
 }
-#pragma pop
 
 // Bubble-sort the grid entries ascending by the item impl's slot-0x08 key
 // (u16 compare). Same 3-temp chained copy swap as sortEIBByFlags.
@@ -907,8 +891,6 @@ extern "C" __declspec(noinline) void sortEIBFlagDesc(CEquipItemGrid* grid) {
 // name-table key. mode 0: ascending u8-key sort; other: move entries whose
 // key equals the grid's _pad2005 byte toward the front (one swap per pass).
 extern "C" u8 getEIBNameKey(CEquipItemBox* self, CItemInstance* item);
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void sortEIBByNameMode(CEquipItemGrid* grid, u32 mode) {
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
@@ -949,7 +931,6 @@ extern "C" __declspec(noinline) void sortEIBByNameMode(CEquipItemGrid* grid, u32
         if (swapped == 0) break;
     }
 }
-#pragma pop
 
 // Bubble-sort the grid entries ascending by the item name-byte key from
 // BdatGetU8Direct's bdat lookup (u8 compare). Same 3-temp chained copy swap.
@@ -1179,8 +1160,6 @@ extern "C" __declspec(noinline) void sortEIBByVf90(CEquipItemGrid* grid) {
 // flag word; when bit 4 is set, rescale the count by the drop-rate table and
 // clamp the result at 999. Returns the value as a float (double-precision
 // container, MWCC's fsubs magic-trick conversion).
-#pragma push
-#pragma optimize_for_size on
 // Scaled item-progress reader: look up the item's stored count and the row's
 // flag word; when bit 4 is set, rescale the count by the drop-rate table and
 // clamp the result at 999. All FP math is single precision: the (f32) casts
@@ -1202,13 +1181,10 @@ extern "C" double getEIBProgress(CEquipItemBox* self, CItemInstance* item) {
     }
     return (f32)(u16)result;
 }
-#pragma pop
 
 // Scan the item instance list: return 1 when any entry's flag word bit 0 is
 // set, else 0. The instance accessor is re-fetched per iteration (retail
 // shape); vtable slots [12]/[11] are the count and get-item methods.
-#pragma push
-#pragma optimize_for_size on
 extern "C" u32 hasEIBSlotFlag(CEquipItemBox* self, CItemInstance* item) {
     u16 count = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf30(item);
     for (u8 i = 0; i < count; i++) {
@@ -1220,12 +1196,9 @@ extern "C" u32 hasEIBSlotFlag(CEquipItemBox* self, CItemInstance* item) {
     }
     return 0;
 }
-#pragma pop
 
 // Name-table scan: build a 1..10 name key, look it up; the hit index is the
 // result. A miss falls back to 0xB when the kind is at most 0x4C, else 0.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) u8 getEIBNameKey(CEquipItemBox* self, CItemInstance* item) {
     u32 word = item->word;
     u32 v = lbl_eu_806640F4;
@@ -1241,7 +1214,6 @@ extern "C" __declspec(noinline) u8 getEIBNameKey(CEquipItemBox* self, CItemInsta
     // carry chain masked with 0xB.
     return (kind == 0x4C) ? 0xB : 0;
 }
-#pragma pop
 
 #pragma push
 #pragma auto_inline off
@@ -1274,8 +1246,6 @@ void* __dt__80285954(void* self, int mode) {
 //   4. virtual slot 36 (vtable+0x24) on mpLayout
 //   5. idleEIBCur(cur)
 // The name strings are pooled at lbl_eu_8050EFDC+0x97/0xAF/0xCC.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void setupEIBCur(CEIBCur* cur) {
     buildLayout((nw4r::lyt::Layout**)&cur->mpLayout,
                   (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
@@ -1291,7 +1261,6 @@ extern "C" void setupEIBCur(CEIBCur* cur) {
     ((nw4r::lyt::Layout*)cur->mpLayout)->UnbindAllAnimation();
     idleEIBCur(cur);
 }
-#pragma pop
 
 // Per-frame cursor update: play the entry animation (mpAnimTrans0) when idle,
 // advance the page-cursor state when active, then animate the layout.
@@ -1407,8 +1376,6 @@ extern "C" void setupEIBPageCur(CEIBCur* self) {
 // system windows (via InfoCfCopySysWin). The grid is initialized in place and
 // then overwritten with a fresh stack grid via a whole-struct assignment;
 // finally seven CItemBlock_setFlag120EC preload calls run.
-#pragma push
-#pragma optimize_for_size on
 CEquipItemBox::CEquipItemBox() {
     mVtbl = (void*)lbl_eu_80538658;
     __ct__17UnkClass_8045F564Fv(&_pad04[0]);
@@ -1497,7 +1464,6 @@ CEquipItemBox::CEquipItemBox() {
     CItemBlock_setFlag120EC(8, 0);
     CItemBlock_setFlag120EC(3, 0);
 }
-#pragma pop
 
 // Destroy the embedded sub-objects in reverse construction order (retail
 // __dt__13CEquipItemBoxFv): syswins, sort menu, cursors, then the two memory
@@ -1505,7 +1471,6 @@ CEquipItemBox::CEquipItemBox() {
 // the flags>0 operator-delete tail from the dtor shape itself.
 CEquipItemBox::~CEquipItemBox() {
 #pragma push
-#pragma optimize_for_size on
     __dt__7CSysWinFv(&_padSysWin2[0], -1);
     __dt__7CSysWinFv(&_padSysWin1[0], -1);
     __dt__9CSortMenuFv(&_padSortMenu[0], -1);
@@ -1568,8 +1533,6 @@ extern "C" void updateEIBBox(CEquipItemBox* self) {
 // Draw the equip box: layout + sort menu first, then the page cursor (when
 // the grid spans more than one page), both system windows, and the selection
 // cursor when every window is idle.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->unk_40 == 0) return;
     if (self->unk_41 == 0) return;
@@ -1593,7 +1556,6 @@ extern "C" void drawEIBBox(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
     sysWinDrawLayout(&self->_padSysWin2[0], drawInfo);
 }
-#pragma pop
 
 
 // Close/release the equip-item box: unload bdat, free the three file handles,
@@ -1676,8 +1638,6 @@ extern "C" __declspec(noinline) void openEIBBox(CEquipItemBox* self) {
 
 // Close the box when the entry animation (unk_41 == 2) has finished: reset
 // the state bytes, hide the name pane and stop the sort-menu sound effects.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void finishEIBEntry(CEquipItemBox* self) {
     if (self->unk_41 != 2) return;
     if (sortMenuIsVisible28(self->_padSortMenu) != 0) return;
@@ -1693,7 +1653,6 @@ extern "C" __declspec(noinline) void finishEIBEntry(CEquipItemBox* self) {
         self->unk_378 = 0;
     }
 }
-#pragma pop
 
 extern "C" void eibNavLeft(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
@@ -1873,8 +1832,6 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
 // the menu state and play the confirm sound), page forward through the item
 // list when the name pane is up, step the sort-menu page when unk_1f5 is -1,
 // or advance the row/column selection and refresh the list.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void eibNavRight(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
@@ -1926,13 +1883,10 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
     }
     playUISound__FUl(1);
 }
-#pragma pop
 
 // Advance the equip-grid page cursor when the box is idle; wrap the page
 // index at the grid extent and play the page-change sound for multi-page
 // lists.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CEquipItemBox::eibPageNext() {
     if (CSysWin_getUnk34(_padSysWin1) != 0) return;
     if (sortMenuIsVisible28(_padSortMenu) != 0) return;
@@ -1949,7 +1903,6 @@ __declspec(noinline) void CEquipItemBox::eibPageNext() {
         playUISound__FUl(0xa);
     }
 }
-#pragma pop
 
 // Step the equip-grid page cursor backward when the box is idle; wrap the
 // page index at the grid extent and play the page-change sound for multi-page
@@ -1974,8 +1927,6 @@ extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
 // Equip-box confirm: while the sort menu is busy, close the page state and
 // re-open; otherwise move the sort menu to the cursor position and start its
 // scroll (page 2 sound when the call came from the sub-page).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void eibConfirmSort(CEquipItemBox* self) {
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
     if (self->unk_375 != 0) return;
@@ -2008,14 +1959,11 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
     self->unk_1f6 = 0;
     playUISound__FUl(2);
 }
-#pragma pop
 
 // Equip-box sub-page handler: while the first system window is active switch
 // to page 2 of the sort menu; otherwise with the second window active step it;
 // with both idle either re-open the busy sort menu or hide the name pane, and
 // play the confirm sound when the call had no explicit sound flag.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
     if (self->unk_41 != 2) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
@@ -2054,7 +2002,6 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
         playUISound__FUl(6);
     }
 }
-#pragma pop
 
 extern "C" int useEIBSelectedItem(CEquipItemBox* self);
 // Main confirm-button handler (state 2, name pane down). Three top-level
@@ -2077,7 +2024,6 @@ extern "C" __declspec(noinline) void stepEIBSysWin2(CEquipItemBox* self) {
 // reset the page list, then repopulate it (page 3 alone, otherwise pages
 // 2 + 4..8) and restore the page cursor for the 4..8 band.
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" void eibOpenPages(CEquipItemBox* self, u32 v, u32 w, int flag) {
     self->unk_1fc = (u16)v;
@@ -2149,8 +2095,6 @@ extern "C" void eibApplySelect(CEquipItemBox* self, u32 param) {
 // either page the second system window or jump the item-box selection to the
 // column chosen by unk_376/unk_377; otherwise reveal the pane and pick the
 // first non-empty list column (column 8 preferred when populated).
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
     if (self->unk_41 != 2 && self->unk_41 != 4) return;
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
@@ -2228,7 +2172,6 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
     setPaneVisible(pane, 1);
     playUISound__FUl(2);
 }
-#pragma pop
 
 // Arm-check for the "register/equip item" action: clear the armed flag
 // (unk_37c), then run the gate chain - sort menu closed, current cell has an
@@ -2238,7 +2181,6 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
 // check its name-table kind is not 1 and that sound 0x3508 is not playing;
 // only then set unk_37c = 1. Returns 1 = action blocked, 0 = ok/armed.
 #pragma push
-#pragma optimize_for_size on
 #pragma auto_inline off
 extern "C" __declspec(noinline) int isEIBSelectBlocked(CEquipItemBox* self) {
     self->unk_37c = 0;
@@ -2284,8 +2226,6 @@ extern "C" __declspec(noinline) int isEIBSelectBlocked(CEquipItemBox* self) {
 
 // Test the equip-grid cursor row: return 1 when the selected cell holds the
 // expected item category (kind >= 3) at the current page, else 0.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) int eibRowMatches(CEquipItemBox* self) {
     u8 idx;
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
@@ -2299,7 +2239,6 @@ extern "C" __declspec(noinline) int eibRowMatches(CEquipItemBox* self) {
     u8 v = (u8)BdatGetItemType(kind);
     return (v - 2) != 0;
 }
-#pragma pop
 
 extern "C" unsigned char getEIBSelCat(CEquipItemBox* self) {
     s8 idx = (s8)self->unk_373;
@@ -2311,8 +2250,6 @@ extern "C" unsigned char getEIBSelCat(CEquipItemBox* self) {
 // object, then walk its instance list for a slot whose id matches the grid
 // row's item; the result is the global slot number (per-category base byte +
 // instance index), or 0 when no slot matches.
-#pragma push
-#pragma optimize_for_size on
 extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
     s16 target;  // declared before items so MWCC colors it r31 (retail order)
     CEquipItemBoxItemView* items;
@@ -2342,7 +2279,6 @@ extern "C" u32 findEIBEquipSlot(CEquipItemBox* self) {
     }
     return 0;
 }
-#pragma pop
 
 // us-8028ab5c: guarded teardown -- skips while the sort/syswin sub-objects are
 // busy; on success flags unk_1f5 = -1 and runs the close sequence
@@ -2423,8 +2359,6 @@ extern "C" __declspec(noinline) int eibHudPrompt(CEquipItemBox* self) {
     }
 }
 
-#pragma push
-#pragma optimize_for_size on
 // Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
 // GetCollectedFlagByte's category byte; an unk_1f5 of -1 always returns 0.
 extern "C" int isEIBCatMatch(CEquipItemBox* self) {
@@ -2435,7 +2369,6 @@ extern "C" int isEIBCatMatch(CEquipItemBox* self) {
     u32 b = GetCollectedFlagByte(cat);
     return b == a;
 }
-#pragma pop
 
 // Play the entry animation at 0x3C; when it completes mark the cursors active.
 extern "C" __declspec(noinline) void eibPlayEntry(CEquipItemBox* self) {
@@ -2692,8 +2625,6 @@ extern "C" __declspec(noinline) void bindEIBCellMark(CEquipItemBox* self, u32 mo
 // asks (a != 0) and a target item is pending (field_27A4), scan the 5x6 grid
 // for that item (advancing the page cursor and rescanning when absent), then
 // refresh the list, layout text and item-box selection.
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail callers (eibSortPageNext, refreshEIBSortTabs etc.) emit a `bl`.
 extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) {
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
@@ -2757,7 +2688,6 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
         hideItemBoxPanes((CItemBoxInfo*)self->unk_20c, page);
     }
 }
-#pragma pop
 
 // Refresh the equip-box page display: for multi-page grids bind the page
 // cursor name panes (10 per page) with the first `pages` visible, move the
@@ -2878,8 +2808,6 @@ __declspec(noinline) void CEquipItemBox::refreshEIBItemList() {
 // page-/item-name string is formatted, its pane position is read and scaled
 // by the anchor pane's scale, and the result is written into the anim target
 // hanging off self+0x4C (sub-view +0x2C slot). The tail is duplicated per
-#pragma push
-#pragma optimize_for_size on
 // branch in retail (no shared helper), so keep both copies textual.
 extern "C" __declspec(noinline) void updateEIBCursorPos(CEquipItemBox* self) {
     u8 winName[0x18];
@@ -2921,15 +2849,12 @@ extern "C" __declspec(noinline) void updateEIBCursorPos(CEquipItemBox* self) {
         }
     }
 }
-#pragma pop
 
 // Rebuild the sort-menu page-list contents for the current page (unk_36c
 // entry selected by unk_373): feed the page value to the sort menu, fill a
 // per-page sound-key table (7/12/10 entries for pages 2/3/4..8), bind the
 // page sound name into the layout, then re-add every entry whose key is
 // positive and refresh the page-list cursor position.
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail callers (rebuildEIBPage etc.) emit a `bl`.
 extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
     u8 page = self->unk_36c[(s8)self->unk_373];
@@ -2973,7 +2898,6 @@ extern "C" __declspec(noinline) void fillEIBSortMenu(CEquipItemBox* self) {
         sortMenuSetPage(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     }
 }
-#pragma pop
 
 extern "C" void clearEIBCatList(CEquipItemBox* self) {
     memset(self->unk_36c, 0, 6);
@@ -3183,7 +3107,6 @@ extern "C" void refreshEIBSortPages(CEquipItemBox* self, int a) {
 // the 4..8 band go to their dedicated handlers, anything else is ignored.
 // noinline: retail callers emit a `bl` (same-TU dispatch stays out of line).
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 #pragma function_align 4
 extern "C" __declspec(noinline) void dispatchEIBKind(CEquipItemBox* self, int a, int b) {
@@ -3210,10 +3133,8 @@ extern "C" __declspec(noinline) void dispatchEIBKind(CEquipItemBox* self, int a,
 // Reset the per-page item state: clear the 12 item-id shorts at +0x210 and
 // zero the 12 page-position VEC3 records at +0x228, then hide every one of
 // the 30 equip-item panes in the layout (string base hoisted into a saved
-// register like retail's r31). optimize_for_size selects retail's
+// register like retail's r31). -O4,s selects retail's
 // _savegpr_29 prologue for this 3-saved-reg frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void resetEIBPageView(CEquipItemBox* self) {
     CEquipItemBoxPageStateView* view = (CEquipItemBoxPageStateView*)self;
     for (u8 i = 0; i < 0xc; i++) {
@@ -3254,16 +3175,13 @@ extern "C" __declspec(noinline) void resetEIBPageView(CEquipItemBox* self) {
     setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5f2, true), 0);
     setPaneVisible(self->field_38->GetRootPane()->FindPaneByName(base + 0x5fe, true), 0);
 }
-#pragma pop
 
 // Kind-2 (equipment) rebuild handler: show the 24 item panes, read the item's
 // stat/name tables (bdat lookups keyed by the kind word), scale the two
 // drop-rate counters by the RNG when the flag word says so, then bind the
 // computed texts (0x522/0x546/0x552/0x52e/0x53a), re-tint the stat panes and
-// hand the box to the per-cell grid rebuild (rebuildEIBKind2Cells). optimize_for_size
+// hand the box to the per-cell grid rebuild (rebuildEIBKind2Cells). -O4,s
 // selects retail's _savegpr prologue for this 13-saved-reg frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
     // Declaration order follows retail's saved-register allocation
     // (self=r19, a=r20, b=r21, rateB=r22, rateA=r23, g=r24, base=r25,
@@ -3369,15 +3287,12 @@ extern "C" void rebuildEIBEquipPage(CEquipItemBox* self, int a, int b) {
     PaneMatSetTevColorsByName(self->field_38, base + 0x501, lbl_eu_80664980, lbl_eu_80664988);
     rebuildEIBKind2Cells(self, a, b);
 }
-#pragma pop
 
 // Rebuild the equip-box panes for a window kind in the 4..8 band: show the 22
 // item cells, bind the 3 name texts (0x72/0x7a/0x82 bdat lookups), pick the
 // sort-menu sound by the name byte, recolour the 7 stat panes, then hand the
-// box to the kind-specific helper. optimize_for_size selects retail's stmw
+// box to the kind-specific helper. -O4,s selects retail's stmw
 // r24 prologue for this 8-saved-reg frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void rebuildEIBKind48Page(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     u16 kind2;
@@ -3457,14 +3372,11 @@ extern "C" void rebuildEIBKind48Page(CEquipItemBox* self, int kind, int item) {
     PaneMatSetTevColorsByName(self->field_38, base + 0x501, lbl_eu_80664970, lbl_eu_80664978);
     rebuildEIBKind2Cells(self, kind, item);
 }
-#pragma pop
 
 // Kind-3 rebuild handler: reveal the five detail panes, bind the item's
 // count/name/detail texts, position the cursor anchor between the detail and
 // anchor panes, then store the selection into the page tables (+0x220 kind,
 // +0x2c0 state byte 3, +0x2cc count byte) and the embedded item-box index.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     // All pane lookups in this handler go through the layout's pane-finder
@@ -3536,7 +3448,6 @@ extern "C" void rebuildEIBKind3Page(CEquipItemBox* self, int kind, int item) {
                     (short)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
     copyVEC3(view->field_288, pos);
 }
-#pragma pop
 
 
 // Per-cell equip-box rebuild for the kind-2 page: for each of the three
@@ -3712,8 +3623,6 @@ extern "C" void rebuildEIBKind2Cells(CEquipItemBox* self, int a, int b) {
 // owning category, then clear the item from the owner's slots (for window
 // kind 3, from the matched CfObjectMove's move list). Returns 0 when the
 // cell is empty or the kind is rejected (BdatGetItemType == 2), else 1.
-#pragma push
-#pragma optimize_for_size on
 extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
     CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
     u8 idx = (u8)((u8)self->unk_1f4 + self->unk_1f5 * 5);
@@ -3799,7 +3708,6 @@ extern "C" int useEIBSelectedItem(CEquipItemBox* self) {
     }
     return 1;
 }
-#pragma pop
 
 // Map the current sort-menu page (unk_36c[unk_373]) to a sound-effect id and
 // return its name string, or 0 when the page has no sound.
@@ -3835,8 +3743,6 @@ extern "C" __declspec(noinline) char* getEIBPageHint(CEquipItemBox* self) {
 // branch tears down the completed file's region and rebuilds the affected
 // subsystem (layout/accessors for file 1, the second accessor for file 2, the
 // bdat table for file 3); returns 1 when the handle matched, else 0.
-#pragma push
-#pragma optimize_for_size on
 int CEquipItemBox::OnFileEvent(CEventFile* ev) {
     void* h = ((CEquipItemBoxEventFileView*)ev)->handle;
     if (field_24 == h) {
@@ -4029,7 +3935,6 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
     }
     return 0;
 }
-#pragma pop
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Static initialiser: reset/set the 24 .sbss colour-table entries used by the
@@ -4069,7 +3974,6 @@ extern "C" void sinit_8028DAB0() {
 // page count and dispatching sortEIBGridByPage.
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void rebuildEIBGridPage(CEquipItemGrid* grid, u8 v, u8 b, u8 hi) {
     grid->count = 0;
     for (u16 i = 0; i < 0x400; i++) {

@@ -1656,9 +1656,9 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3* dp = &d;
     nw4r::math::VEC3* deltap = &delta;
-    const float pi = lbl_eu_8066A1F8;
+    const float pi = ml::pi;
     const float negPi = -pi;
-    const float twoPi = lbl_eu_8066A1FC;
+    const float twoPi = ml::tau;
     const float angScale = lbl_eu_80666ED0;
     const float halfScale = lbl_eu_80666ED4;
     RebuildCtx ctx;
@@ -1752,8 +1752,8 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     ctx.b = &lbl_eu_8052BDA0[8];
     ctx.field = self->field_062C;
     self->mPtrCount = 0;
-    const float pi = lbl_eu_8066A1F8;         // f22
-    const float twoPi = lbl_eu_8066A1FC;      // f21
+    const float pi = ml::pi;         // f22
+    const float twoPi = ml::tau;      // f21
     const float angScale = lbl_eu_80666ED0;   // f29
     const float halfScale = lbl_eu_80666ED4;  // f31
     u32 invert = flags & 2;

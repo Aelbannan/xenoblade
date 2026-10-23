@@ -444,7 +444,7 @@ void CTaskEnvironment::Move() {
     conv.w[1] = (u32)(int)this->field_0x60 ^ 0x80000000;
     float fm = (float)(conv.d - lbl_eu_80665FB8);
     float t1 = fm / c3 + fd / c1 / c2 / c3 + fh / c1 / c2 / c3;
-    f32 sunAngle = lbl_eu_8066A1FC * t1;
+    f32 sunAngle = ml::tau * t1;
     nopFunc();
 
     // Time-of-day factor: second/minute/hour progress through the day.
@@ -727,8 +727,7 @@ extern "C" CTaskEnvRotMtx* Env_BuildRotY(CTaskEnvRotMtx* mtx, float angle) {
     return mtx;
 }
 
-extern const float lbl_eu_8066A210;
-extern "C" float scaleByGlobal(float val) { return val * lbl_eu_8066A210; }
+extern "C" float scaleByGlobal(float val) { return val * ml::deg2rad; }
 
 // Rotate the row vectors of 'mtx' about the X axis. The rotation matrix is
 // built by an inlined helper that takes the matrix by pointer: the escaped

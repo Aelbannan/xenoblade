@@ -2367,7 +2367,7 @@ extern "C" int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC
     f32 lenC = (len2C <= 0.0f) ? 0.0f : len2C * FrSqrt__Q24nw4r4mathFf(len2C);
 
     f32 prod = lenA * lenC;
-    if (fabsf(prod) < lbl_eu_8066A208) return 0;
+    if (fabsf(prod) < ml::epsilon) return 0;
 
     f32 t = dot / prod;
     if (t < lbl_eu_80667308) t = lbl_eu_80667308;
@@ -2376,7 +2376,7 @@ extern "C" int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
                                     (const char*)lbl_eu_805262C8);
     }
-    return ((f32)acos(t) * lbl_eu_8066A20C) <= lbl_eu_8066730C;
+    return ((f32)acos(t) * ml::rad2deg) <= lbl_eu_8066730C;
 }
 
 extern "C" u16 LookupRelateValue(u16 arg1, u16 arg2) {

@@ -6,10 +6,6 @@
 
 #define FS_HEAP_SIZE 0x1500
 
-// .data in retail is 0x28 bytes: the message string (0x21) followed by 7 zero
-// pad bytes so the next unit's .data starts 8-aligned (0x80547F60).
-static char lbl_80547F38[0x28] = "APP ERROR: Not enough IPC arena\n";
-
 // Longest name obtainable from ReadDir ioctl
 #define FS_DIR_NAME_MAX (12 + 1)
 
@@ -167,7 +163,7 @@ s32 ISFS_OpenLib(void) {
     __devfs = (char*)ROUND_UP_PTR(lo, 32);
 
     if (!__fsInitialized && __devfs + FS_MAX_PATH > (char*)hi) {
-        OSReport(lbl_80547F38);
+        OSReport("APP ERROR: Not enough IPC arena\n");
         ret = IPC_RESULT_ALLOC_FAILED;
         goto end;
     }
@@ -183,7 +179,7 @@ s32 ISFS_OpenLib(void) {
     base = (u8*)__devfs;
 
     if (!__fsInitialized && base + FS_MAX_PATH + FS_HEAP_SIZE > (u8*)hi) {
-        OSReport(lbl_80547F38);
+        OSReport("APP ERROR: Not enough IPC arena\n");
         ret = IPC_RESULT_ALLOC_FAILED;
         goto end;
     }

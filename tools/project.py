@@ -49,10 +49,34 @@ Library = Dict[str, Any]
 PrecompiledHeader = Dict[str, Any]
 
 
+class _MatchingCodeOnly:
+    """Unit kind for ``Object(MatchingCodeOnly, ...)`` (PLAN.md §17.7).
+
+    The unit's code matches and is linked exactly like ``Matching``, but its
+    data is still owned by another TU / shared data range.  Progress reports
+    the unit in the separate ``code_only`` category and the headline data
+    figure excludes it; ``tools/coop/code_only_check.py`` enforces that the
+    source only *declares* that foreign data.  Intermediate state, not the
+    end state: every data byte must eventually come from an owning TU.
+    """
+
+    def __bool__(self) -> bool:
+        return True
+
+    def __repr__(self) -> str:
+        return "MatchingCodeOnly"
+
+
+MatchingCodeOnly = _MatchingCodeOnly()
+CODE_ONLY_CATEGORY = "code_only"
+
+
 class Object:
-    def __init__(self, completed: bool, name: str, **options: Any) -> None:
+    def __init__(self, completed: Any, name: str, **options: Any) -> None:
         self.name = name
-        self.completed = completed
+        # MatchingCodeOnly links like Matching; keep ``completed`` a plain bool.
+        self.code_only = isinstance(completed, _MatchingCodeOnly)
+        self.completed = bool(completed)
         self.options: Dict[str, Any] = {
             "add_to_all": None,
             "asflags": None,
@@ -83,6 +107,7 @@ class Object:
     def resolve(self, config: "ProjectConfig", lib: Library) -> "Object":
         # Use object options, then library options
         obj = Object(self.completed, self.name, **lib)
+        obj.code_only = self.code_only
         for key, value in self.options.items():
             if value is not None or key not in obj.options:
                 obj.options[key] = value
@@ -1836,6 +1861,8 @@ def generate_objdiff_config(
             progress_categories.extend(category_opt)
         elif category_opt is not None:
             progress_categories.append(category_opt)
+        if obj.code_only:
+            progress_categories.append(CODE_ONLY_CATEGORY)
         unit_config["metadata"].update(
             {
                 "complete": obj.completed if src_exists else None,
@@ -1882,6 +1909,7 @@ def generate_objdiff_config(
                 add_category(module["name"], module["name"])
     for category in config.progress_categories:
         add_category(category.id, category.name)
+    add_category(CODE_ONLY_CATEGORY, "Code-only units (data owned elsewhere)")
 
     def cleandict(d):
         if isinstance(d, dict):
@@ -2175,8 +2203,30 @@ def calculate_progress(config: ProjectConfig) -> None:
             f"    Data: {matched_data} / {total_data} bytes ({matched_data_percent:.2f}%)"
         )
 
+    categories = report_data.get("categories", [])
+    code_only = next(
+        (c["measures"] for c in categories if c.get("id") == CODE_ONLY_CATEGORY), {}
+    )
+    # PLAN.md §17.7: code-only units link their code, but their data is owned
+    # elsewhere, so the headline "complete data" figure must not absorb them.
+    code_only_data = code_only.get("complete_data", 0)
+    honest_complete_data = report_data["measures"].get("complete_data", 0) - code_only_data
+
     print_category("All", report_data["measures"])
-    for category in report_data.get("categories", []):
+    total_data_all = report_data["measures"].get("total_data", 0)
+    progress_print(
+        f"    Data linked from owning TUs: {honest_complete_data} / {total_data_all} bytes"
+        + (f" ({100.0 * honest_complete_data / total_data_all:.2f}%)" if total_data_all else "")
+    )
+    progress_print(
+        f"  Code-only units (data owned elsewhere, not counted as data): "
+        f"{code_only.get('complete_units', 0)} files, "
+        f"{code_only.get('complete_code', 0)} code bytes, "
+        f"{code_only_data} data bytes excluded"
+    )
+    for category in categories:
+        if category.get("id") == CODE_ONLY_CATEGORY:
+            continue
         if config.print_progress_categories is True or (
             isinstance(config.print_progress_categories, list)
             and category["id"] in config.print_progress_categories
@@ -2190,7 +2240,7 @@ def calculate_progress(config: ProjectConfig) -> None:
         if total_code == 0 or total_data == 0:
             return
         code_frac = measures.get("complete_code", 0) / total_code
-        data_frac = measures.get("complete_data", 0) / total_data
+        data_frac = honest_complete_data / total_data
 
         progress_print(
             "\nYou have {} out of {} {} and {} out of {} {}.".format(

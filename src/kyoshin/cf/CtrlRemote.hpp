@@ -346,9 +346,6 @@ extern const f32 lbl_eu_80666760;
 extern const f32 lbl_eu_80666764;
 extern const f32 lbl_eu_80666768;
 extern const f32 lbl_eu_8066676C;
-extern const f32 lbl_eu_8066A1F8;   // pi
-extern const f32 lbl_eu_8066A1FC;   // 2*pi
-extern const f32 lbl_eu_8066A20C;
 extern const f32 lbl_eu_80666748;
 
 // ---------------------------------------------------------------------------

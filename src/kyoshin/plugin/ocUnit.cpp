@@ -369,7 +369,7 @@ extern "C" int setObjYaw(VMThread* pThread, int handle) {
     // (fsubs, no frsp), scaled by the degrees-to-radians constant, then
     // dispatched to vtable slot 0xC8.
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
-    float f = (float)(s32)prop->value.uintVal * lbl_eu_8066A210;
+    float f = (float)(s32)prop->value.uintVal * ml::deg2rad;
     obj->CfObject_setMoveYaw(f);
     return 0;
 }
@@ -1136,7 +1136,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
     int angle = vmArgIntGet(2, ptr);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    float f = (float)(s32)angle * lbl_eu_8066A210;
+    float f = (float)(s32)angle * ml::deg2rad;
     obj->CfObject_setMoveHeadAngle(f);
     // CfObjectMove_setAnimModeArgs is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
@@ -1543,9 +1543,9 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     // Fixed-point degrees -> radians via MWCC's direct 2^52 conversion.
     Vec3f vec;
-    vec.x = ((float)(s32)rotX / lbl_eu_80665C30) * lbl_eu_8066A210;
-    vec.y = ((float)(s32)rotY / lbl_eu_80665C30) * lbl_eu_8066A210;
-    vec.z = ((float)(s32)rotZ / lbl_eu_80665C30) * lbl_eu_8066A210;
+    vec.x = ((float)(s32)rotX / lbl_eu_80665C30) * ml::deg2rad;
+    vec.y = ((float)(s32)rotY / lbl_eu_80665C30) * ml::deg2rad;
+    vec.z = ((float)(s32)rotZ / lbl_eu_80665C30) * ml::deg2rad;
     obj->CfObject_setRotVec((const ml::CVec3*)&vec);
     return 0;
 }
@@ -1926,7 +1926,7 @@ extern "C" int moveToPos(VMThread* pThread, int handle) {
         pos.x = fx;
         pos.y = fy;
         pos.z = fz;
-        CollObjSetupRotBoxState5(obj, (void*)moveObj, &pos, fAngle * lbl_eu_8066A210);
+        CollObjSetupRotBoxState5(obj, (void*)moveObj, &pos, fAngle * ml::deg2rad);
     }
     return 0;
 }
@@ -2075,8 +2075,7 @@ void cf::CfObject::CfObject_setMoveBusyState(int flag) {
     }
 }
 
-extern const float lbl_eu_8066A20C;
-extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return ((cf::CfObject*)self)->mField4C * lbl_eu_8066A20C; }
+extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return ((cf::CfObject*)self)->mField4C * ml::rad2deg; }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(cf::CfObject* self, float value) {
     self->CfObject_setMoveHeadAngle(value);

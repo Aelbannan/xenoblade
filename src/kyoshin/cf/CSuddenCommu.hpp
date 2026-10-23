@@ -43,6 +43,12 @@ namespace cf{
         /* 0x24 */ volatile u32 field_24;
         /* 0x28 */ u32 unk28;
         /* 0x2C */ float unk2C;
+
+        // Clears the pairing timer (shared by CBattleManager reset paths).
+        void resetPairTimer(){
+            unk28 = 0;
+            unk2C = 0.0f;
+        }
     };
 }
 

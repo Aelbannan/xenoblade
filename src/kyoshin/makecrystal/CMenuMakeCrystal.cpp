@@ -306,6 +306,13 @@ public:
     void removeRenderCB(IScnRender* cb);
 };
 
+// Declaration-only view of the +0x80 sub-object's class (full definition in
+// makecrystal/CMakeCrystalWin.hpp, whose task views conflict with this TU's).
+class CMakeCrystalWin {
+public:
+    int mkCrystalIsBusyState();
+};
+
 // Typed view over the +0x58..+0x80 sub-objects (exact layout, explicit
 // pads): render anchor, owning scene, CBgTex block, CMakeCrystalWin head.
 struct MCSubObjView {
@@ -349,7 +356,7 @@ void CMenuMakeCrystal::Move() {
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
     MCDoneFlag* done = reinterpret_cast<MCDoneFlag*>(this);
 
-    if ((&reinterpret_cast<MCSubObjView*>(self)->win80)->mkCrystalIsBusyState() == 0) {
+    if (reinterpret_cast<CMakeCrystalWin*>(&reinterpret_cast<MCSubObjView*>(self)->win80)->mkCrystalIsBusyState() == 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).

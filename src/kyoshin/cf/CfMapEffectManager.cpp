@@ -337,12 +337,12 @@ void MapFx_UpdateRow(CfMapEffectManager* self, int index, u8* bdat) {
             vals[1] = lbl_eu_80667718 * (float)(convLo.d - lbl_eu_80667720);
 
             float args[3];
-            args[0] = vals[0] * lbl_eu_8066A210;
-            args[1] = vals[1] * lbl_eu_8066A210;
+            args[0] = vals[0] * ml::deg2rad;
+            args[1] = vals[1] * ml::deg2rad;
             convHi.w[1] = (u32)(s16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x9d,
                                                              index) ^ 0x80000000;
             vals[2] = lbl_eu_80667718 * (float)(convHi.d - lbl_eu_80667720);
-            args[2] = vals[2] * lbl_eu_8066A210;
+            args[2] = vals[2] * ml::deg2rad;
             newObj->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
             newObj->CfObject_setRotVec((const ml::CVec3*)args);
             if (extra != 0) {

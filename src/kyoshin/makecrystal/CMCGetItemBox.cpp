@@ -95,8 +95,6 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 }
 
 // -O4,s keeps both passes rolled (pointer-walk + mtctr/bdnz sthx) as in retail.
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail keeps this init helper out-of-line (bl from __ct__CMCGetItemBox).
 // C linkage: retail symbol is the plain name (reloc-site gate).
 extern "C" __declspec(noinline) void initMCItemSub(CMCItemBoxSub* x) {
@@ -119,17 +117,14 @@ extern "C" __declspec(noinline) void initMCItemSub(CMCItemBoxSub* x) {
     x->listBase = (CMCItemBoxEntry*)0;
     x->field_1D4 = 0;
     // Second pass over the same table: u16 index drives an mtctr/bdnz loop.
-    // optimize_for_size keeps MWCC from unrolling it (retail stays rolled).
+    // -O4,s keeps MWCC from unrolling it (retail stays rolled).
     for (u16 i = 0; i < 0x80; i++) x->table[i] = -1;
 }
-#pragma pop
 
 // Rebuild the item-box index table: store the entry base/type, reset the
 // offset table to 0xFFFF, then re-index every entry whose type word matches
 // pad_102, and finally compute the page limit as ceil(filled-count / 30).
 // -O4,s keeps the retail stmw r28 frame.
-#pragma push
-#pragma optimize_for_size on
 void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase, u8 field1D4) {
     x->listBase = listBase;
     x->field_1D4 = field1D4;
@@ -158,7 +153,6 @@ void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase
     if (x->limit == 0) x->limit = 1;
     x->counter = 0;
 }
-#pragma pop
 
 // Advance the counter; wrap to 0 when past the signed byte limit.
 extern "C" __declspec(noinline) void nextMCItemSubPage(CMCItemBoxSub* x) {
@@ -214,8 +208,6 @@ __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
 // Format the selected entry's item-name into the FixStr<64> at sub+0x108
 // (object offset 0x41C). Returns that FixStr, or null when out of range.
 // -O4,s keeps the retail stmw r28 frame.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     // Declared in this order so MWCC colors callee-saved regs like retail
     // (sub-copy -> r31, string-table base -> r30, entry ptr -> r29).
@@ -246,7 +238,6 @@ __declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     }
     return (char*)&x->shortName;
 }
-#pragma pop
 
 // Retail 0x802995F8: format the selected entry's item text into the
 // FixStr<128> buffer at sub+0x14C and return it. Entries owned by the bdat
@@ -257,8 +248,6 @@ __declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
 // stepped over. The whole formatted buffer is then copied back into the
 // FixStr (its mLength refreshed).
 // -O4,s keeps the retail stmw r18 frame.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
     CMCItemBoxEntry* base = sub->listBase;
     if (base == 0) return 0;
@@ -375,7 +364,6 @@ __declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         return (char*)&sub->name;
     }
 }
-#pragma pop
 
 // Constructor: zero the handle/pointer fields, placement-construct the cursor
 // widgets / sys-win / item-box info, then build default temporaries on the
@@ -465,8 +453,6 @@ extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
 // of __vt__13CMCGetItemBox) is not in the retail; the extern-C form skips it.
 // The retail frame is stmw r30 (pragma below) with the outer this-guard,
 // member dtors at retail offsets, and the flags>0 delete tail.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
     if (this_ != NULL) {
         __dt__12CItemBoxInfoFv((CItemBoxInfo*)this_->itemBox, -1);
@@ -483,13 +469,10 @@ extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
     }
     return this_;
 }
-#pragma pop
 
 // Load the four item-box resource files into the file-handle members, init
 // the item-box info (0xF4) and dispatch the sys-win initialiser (vtable+0x88).
 // -O4,s keeps the retail stmw r30 frame.
-#pragma push
-#pragma optimize_for_size on
 void loadMCGetItemBoxFiles(CMCGetItemBox* self) {
     self->fileHandle1 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xae], (IWorkEvent*)self, 0, 0);
@@ -502,7 +485,6 @@ void loadMCGetItemBoxFiles(CMCGetItemBox* self) {
     loadItemBoxFiles((CItemBoxInfo*)self->itemBox);
     ((CSysWin*)&self->sysWin_B8)->loadSystemArc();
 }
-#pragma pop
 
 // Per-frame update: dispatch the layout-animation state machine (states 1/2/4/5),
 // then refresh the cursor widgets, the item-box info and the sys-win window.
@@ -527,8 +509,6 @@ void updateMCGetItemBox(CMCGetItemBox* self) {
 // Draw the item box: item-box info, layout, the (limit-dependent) cursor
 // widgets and the sys-win window.
 // -O4,s keeps the retail stmw r30 frame.
-#pragma push
-#pragma optimize_for_size on
 void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->field_4C == 0) return;
     if (self->field_4D == 0) return;
@@ -541,12 +521,10 @@ void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     Cur_DrawLayout(&self->subObj_A0, di);
     sysWinDrawLayout(&self->sysWin_B8, di);
 }
-#pragma pop
 
 // Clean up every resource owned by the item-box widget.
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
-#pragma optimize_for_size on
 void teardownMCGetItemBox(CMCGetItemBox* self) {
     getEntry__5CBdatFUl(2);
     getEntry__5CBdatFUl(5);
@@ -602,8 +580,6 @@ u8 CMCGetItemBox::isMCGetItemBoxGridMode() { return mField303; }
 // Open the item box from an external caller: guard on the current state, reset
 // the item-box info and refresh both the layout text and the cursor widgets.
 // -O4,s keeps the retail stmw r28 frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     if (self->field_4D != 0) return;
     self->field_4D = 1;
@@ -626,7 +602,6 @@ extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byt
     renderItemBoxByKind((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
     setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, getMCItemSubName(sub, idx));
 }
-#pragma pop
 
 // When the item-box widget is done (state 3), advance to state 4, detach the
 // helper widgets and advance the item-box state machine.
@@ -645,8 +620,6 @@ void confirmMCGetItemBox(CMCGetItemBox* self) {
 // non-empty slot; page mode decrements the sort column and refreshes the
 // widgets. Both paths end with the UI click sound.
 // -O4,s keeps the retail stmw r29 frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" void moveMCGetItemBoxLeft(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
@@ -674,13 +647,10 @@ extern "C" void moveMCGetItemBoxLeft(CMCGetItemBox* self) {
     }
     playUISound(0x1);
 }
-#pragma pop
 
 // Advance the cursor to the next non-empty slot.
 // Cursor branch is the fall-through (retail beq jumps to the sort branch).
 // -O4,s keeps the retail stmw r29 frame.
-#pragma push
-#pragma optimize_for_size on
 void moveMCGetItemBoxRight(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
@@ -710,11 +680,8 @@ void moveMCGetItemBoxRight(CMCGetItemBox* self) {
     }
     playUISound(0x1);
 }
-#pragma pop
 
 // -O4,s keeps the retail stmw r29 frame.
-#pragma push
-#pragma optimize_for_size on
 void moveMCGetItemBoxUp(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
@@ -751,10 +718,8 @@ void moveMCGetItemBoxUp(CMCGetItemBox* self) {
     }
     playUISound(0x1);
 }
-#pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 void moveMCGetItemBoxDown(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
@@ -796,8 +761,6 @@ void moveMCGetItemBoxDown(CMCGetItemBox* self) {
 // Increment the sub counter, refresh helper widgets, and play a sound when the
 // item-box limit is anything other than 1.
 // -O4,s keeps the retail stmw r30 frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     nextMCItemSubPage(x);
@@ -811,12 +774,9 @@ extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
     u8 lim = x->limit != 0 ? x->limit : 1;
     if (lim != 1) playUISound(0xa);
 }
-#pragma pop
 
 // Decrement the sub counter, refresh helper widgets, and play a sound when the
 // item-box limit is anything other than 1.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     prevMCItemSubPage(x);
@@ -828,7 +788,6 @@ extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
     u8 lim = x->limit != 0 ? x->limit : 1;
     if (lim != 1) playUISound(0xa);
 }
-#pragma pop
 
 // Toggle the item-box help window: close it when active, otherwise detach the
 // helper widgets when the layout flag is set.
@@ -859,9 +818,7 @@ void openMCGetItemBoxSysWin(CMCGetItemBox* self) {
 // Unless the widget is busy and the sort field is -1, report the selected
 // item-box entry's place relative to its full range: 2 when the cursor index
 // is inside the entry count, 1 otherwise.
-// optimize_for_size: -O4,s lowers the >= into the retail subfc carry chain.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s: -O4,s lowers the >= into the retail subfc carry chain.
 u32 getMCGetItemBoxPageState(CMCGetItemBox* self) {
     if (self->field_4D == 0) return 0;
     if ((s8)self->field_301 == -1) {
@@ -873,17 +830,14 @@ u32 getMCGetItemBoxPageState(CMCGetItemBox* self) {
     }
     return 0;
 }
-#pragma pop
 
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw frame + head-jump loop
 void cacheMCGetItemBoxEntries(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     for (u32 i = 0; (u32)(u16)i < x->count; i++) {
         CItemData_lookupOrAlloc(getMCItemSubEntry(x, (u16)i), 0);
     }
 }
-#pragma optimize_for_size off
 
 // Look up the entry at `index` in the offset table and return its pointer.
 // noinline: retail keeps the loop's bl to this symbol.
@@ -904,8 +858,6 @@ extern "C" void forwardMCSubObj88(void* self) { ((void(*)(void*))Cur_SetVisible)
 // Advance the cursor / tab selection in the item box.
 // -O4,s keeps the retail _savegpr_29/_restgpr_29 call-form prologue (three
 // callee-saved regs live across calls: self, cursor-table base, index).
-#pragma push
-#pragma optimize_for_size on
 void advanceMCGetItemBox(CMCGetItemBox* self) {
     if (self->mField303 != 0) {
         if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
@@ -969,7 +921,6 @@ void advanceMCGetItemBox(CMCGetItemBox* self) {
         }
     }
 }
-#pragma pop
 
 // Return a UI part index: 0 when the window exists, 0x36 when the layout flag
 // is set, otherwise 0x39/0x3A based on the sign of the sort field.
@@ -1126,8 +1077,6 @@ extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 i
 
 // Retail 0x80298FB4: item icon-name resolution for the grid cells.
 // -O4,s keeps the retail stmw r27 frame.
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail keeps the bl to this symbol from refreshMCGetItemBoxSlots (its body
 // otherwise folds in, surfacing as a stray CItem_initItemImplInstances call).
 __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
@@ -1210,9 +1159,6 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItem
         PaneSetTexPaletteByName((void*)self->layout40, buf, (void*)h);
     }
 }
-#pragma pop
-#pragma push
-#pragma optimize_for_size on
 // noinline + C linkage: called out-of-line from refreshMCGetItemBoxSlots in retail
 // (unmangled reloc).
 __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind, u32 idx) {
@@ -1228,13 +1174,10 @@ __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind
     }
     LayoutSetTextBoxText(self->layout40, buf1, buf2, 0);
 }
-#pragma pop
 
 // Refresh layout text after index/sort change. Extra params are passed through
 // by openMCGetItemBox but ignored here (retail never reads r5/r6).
 // -O4,s keeps the retail stmw r29 frame (self/arg/sub live across calls).
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail keeps this out-of-line; without it MWCC inlines the whole
 // body into openMCGetItemBox (late-definition inlining defeats auto_inline off).
 extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
@@ -1269,15 +1212,12 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
         hideItemBoxPanes((void*)self->itemBox, arg);
     }
 }
-#pragma pop
 
 // Refresh the item-box grid for the current page. When more than one page
 // exists, show the page tabs, stamp each tab's enabled state from the page
 // counter, reformat the page label and slide the page-cursor pane to the slot
 // matching the counter; then restamp all 30 grid cells.
 // -O4,s keeps the retail _savegpr_27 frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Branchy select: retail defaults r0 to 1 and overwrites with the limit.
@@ -1336,13 +1276,10 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxSlots(CMCGetItemBox* sel
         setMCGetItemBoxLabelText(self, (int)(s8)getMCItemSubKind(sub, i), i);
     }
 }
-#pragma pop
 
 // Refresh the item-name texts in the layout panes and, when the item box is
 // open, re-sync the selected entry's name/icon widgets.
 // -O4,s keeps the retail stmw r28 frame.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* self) {
     CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
@@ -1356,13 +1293,10 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* sel
         setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, getMCItemSubName(sub, (u16)idx));
     }
 }
-#pragma pop
 
 // Refresh the cursor widgets / page label.
 // -O4,s keeps the retail stmw r29 frame; the page-label buffer and the two
 // branch-local positions get disjoint stack slots (no overlay across branches).
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail keeps this out-of-line; without it MWCC inlines the whole
 // body into its earlier callers (late-definition inlining defeats auto_inline off).
 extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self) {
@@ -1392,7 +1326,6 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
         Cur_SetVisible(&self->subObj_58, 1);
     }
 }
-#pragma pop
 
 // Retail 0x8029C200: async file-load callback. Four files can load
 // asynchronously: the main item-box layout archive (fileHandle1), a second
@@ -1401,8 +1334,6 @@ extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self)
 // transforms, font bind, text stamping, cursor sub-objects and activation;
 // the other branches only feed bdat tables / the second accessor.
 // -O4,s keeps the retail _savegpr_28/_restgpr_28 prologue.
-#pragma push
-#pragma optimize_for_size on
 bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
     if (this->fileHandle1 == pEventFile->mFileHandle) {
         // === main item-box layout file loaded ===
@@ -1563,5 +1494,4 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
 
     return false;
 }
-#pragma pop
 

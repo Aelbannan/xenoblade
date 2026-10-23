@@ -23,7 +23,6 @@ extern const f32 lbl_eu_8066ABF8;     // 0.5f
 extern const f32 lbl_eu_8066AC00;
 extern const f32 lbl_eu_8066AC38;
 extern const f32 lbl_eu_8066AC10;
-extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_8066AC14;
 extern const f32 lbl_eu_8066AC18;
 extern const f32 lbl_eu_8066AC1C;
@@ -262,7 +261,7 @@ void ScnCamDepthUp(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     f32 rad = lbl_eu_8066AC10 * cam->mFovY;
-    f32 scaled = rad * lbl_eu_8066A210;
+    f32 scaled = rad * ml::deg2rad;
     f32 t = (f32)tan(lbl_eu_8066AC14 * (lbl_eu_8066AC18 * scaled));
 
     f32 inv = lbl_eu_8066AC1C / t;
@@ -601,7 +600,7 @@ extern "C" void ScnCamRebuild(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     // Rebuild the depth-range parameters (same computation as ScnCamDepthUp).
-    f32 tanHalf = (f32)tan(lbl_eu_8066AC10 * cam->mFovY * lbl_eu_8066A210 *
+    f32 tanHalf = (f32)tan(lbl_eu_8066AC10 * cam->mFovY * ml::deg2rad *
                            lbl_eu_8066AC18 * lbl_eu_8066AC14);
     f32 invTan = lbl_eu_8066AC1C / tanHalf;
     cam->mUnk1E4 = invTan;
@@ -642,7 +641,7 @@ extern "C" void ScnCamRebuild(CScnItemCamera* self) {
 
     // Frustum half-extents: cot(half-fov) and the aspect-scaled half-width.
     f32 cotHalf = lbl_eu_8066AC1C /
-                  (f32)tan(lbl_eu_8066AC10 * cam->mFovY * lbl_eu_8066A210 *
+                  (f32)tan(lbl_eu_8066AC10 * cam->mFovY * ml::deg2rad *
                            lbl_eu_8066AC18 * lbl_eu_8066AC14);
     f32 wide = cam->mAspectRatio * CDeviceVI::getWidthScale();
 
@@ -890,7 +889,7 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     // written (retail forwards the register with an identity frsp).
     lay->mFovY = lbl_eu_8066ABF4;
     f32 t = (f32)tan(lbl_eu_8066AC14 * (lbl_eu_8066AC18 *
-               (lbl_eu_8066AC10 * lay->mFovY * lbl_eu_8066A210)));
+               (lbl_eu_8066AC10 * lay->mFovY * ml::deg2rad)));
     f32 inv = lbl_eu_8066AC1C / t;
     lay->mUnk1E4 = inv;
     f32 near = -lay->mNearZ / lay->mUnk1E4;

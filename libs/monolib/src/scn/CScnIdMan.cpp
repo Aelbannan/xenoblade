@@ -71,8 +71,8 @@ extern "C" u32 lbl_eu_8056EC80[0x4] = {
     (u32)&cbRenderBefore__9CScnIdManFv,
 };
 
-// [.rodata] 0x80524338-0x80524348 (16 bytes) "CScnIdMan" string (RTTI name).
-extern "C" const char lbl_eu_80524338[0x10] = {
+// [.rodata] 0x80524238-0x80524248 (16 bytes) "CScnIdMan" string (RTTI name).
+extern "C" const char lbl_eu_80524238[0x10] = {
     0x43,0x53,0x63,0x6e,0x49,0x64,0x4d,0x61,0x6e,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
 
 // (retired DECOMP_FORCEACTIVE keep-alives: the vtable is referenced by the

@@ -1934,7 +1934,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         f32 azd = q.z * dz2;
         f32 awd = q.w * dz2;
         f32 angs[3];
-        f32 lim = lbl_eu_8066A200;
+        f32 lim = ml::halfpi;
         if (pitch < lim) {
             if (pitch > -lim) {
                 f32 ayd = q.y * dy2;
@@ -2142,7 +2142,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
             if (sp > lbl_eu_80666C64)
                 sp = lbl_eu_80666C64;
             f32 pitch = asin(sp);
-            f32 lim = lbl_eu_8066A200;
+            f32 lim = ml::halfpi;
             f32 axd = q.x * dx;
             f32 axy = q.x * dy;
             f32 azdz = q.z * dz;

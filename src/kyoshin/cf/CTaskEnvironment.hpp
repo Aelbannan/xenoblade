@@ -141,7 +141,6 @@ extern const float lbl_eu_80666030;
 extern const float lbl_eu_80665FEC;
 
 // .data float constant used by Move's sun-angle computation.
-extern const float lbl_eu_8066A1FC;
 
 // Imports used only by CTaskEnvironment::Move (retail unmangled symbols).
 class CVirtualLightObj2;

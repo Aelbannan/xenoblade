@@ -34,6 +34,23 @@ extern "C" {
 // ==============================
 // External function declarations
 // ==============================
+// Declaration-only views of the realtime-event list classes that own the
+// EvtSeq* members called below (full definitions in
+// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
+// The model object is passed as their `this`.
+class UnkEvtListEntry {
+public:
+    void SeqInsertRtEvent();
+    int SeqCheckRunGate();
+};
+struct EvtBdabModel {
+    int SeqProbeEvtSlot(u32* out);
+};
+class UnkObj80168514 {
+public:
+    void EvtSeqCheckEventRunGuard();
+};
+
 extern "C" {
     // Base class (CREvtModel: this, parent, flag)
     extern void __ct__CREvtModel(void* self, void* parent, int flag);
@@ -131,7 +148,7 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
         FLD(u32, s, 0x10) = ptmf[2];
     }
 
-    self->SeqInsertRtEvent();
+    reinterpret_cast<UnkEvtListEntry*>(self)->SeqInsertRtEvent();
 
     u32* pParent = FLD(u32*, s, 0x1C);
     u32 field30 = pParent[0x30 / 4];
@@ -340,7 +357,7 @@ extern "C" void EvtModelPc_InitCounter(void* self) {
 
     FLD(s32, s, 0xB0) = -1;
 
-    int result = self->SeqProbeEvtSlot(s + 0xB0);
+    int result = reinterpret_cast<EvtBdabModel*>(self)->SeqProbeEvtSlot(reinterpret_cast<u32*>(s + 0xB0));
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -405,7 +422,7 @@ extern "C" void EvtModelPc_LoadFiles(void* self) {
     // If the request is for character 3 or 8, check whether such a character
     // is already being loaded by another model object.
     if (decB == 3 || decB == 8) {
-        isNewFile = (self->SeqCheckRunGate() != 0) ? 1 : 0;
+        isNewFile = (reinterpret_cast<UnkEvtListEntry*>(self)->SeqCheckRunGate() != 0) ? 1 : 0;
         if (isNewFile == 0) {
             gameMgr = getGimmickListHead__Q22cf13CfGameManagerFv();
             objList = FLD(void*, gameMgr, 0x04);
@@ -702,7 +719,7 @@ extern "C" void EvtModelPc_UpdatePos(void* self) {
     }
 
     if (FLD(u32, s, 0x18) & 0x800) {
-        self->EvtSeqCheckEventRunGuard();
+        reinterpret_cast<UnkObj80168514*>(self)->EvtSeqCheckEventRunGuard();
     }
 }
 

@@ -1,5 +1,5 @@
 #include "kyoshin/COccCulling.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 using namespace ml;
 
@@ -271,10 +271,10 @@ bool COccCulling::isRayOccluded(const CVec3& rayStartPos, const CVec3& rayEndPos
     {
         bool result = false;
         bool temp = false;
-        if(ml::math::abs(rayDir.x) <= lbl_eu_8066A208 && ml::math::abs(rayDir.y) <= lbl_eu_8066A208){
+        if(ml::math::abs(rayDir.x) <= ml::epsilon && ml::math::abs(rayDir.y) <= ml::epsilon){
             temp = true;
         }
-        if(temp && ml::math::abs(rayDir.z) <= lbl_eu_8066A208) result = true;
+        if(temp && ml::math::abs(rayDir.z) <= ml::epsilon) result = true;
         if(result) return false;
     }
     rayDir.normalizeSub();

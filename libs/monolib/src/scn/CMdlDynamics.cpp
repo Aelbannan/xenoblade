@@ -66,7 +66,6 @@ extern const char lbl_eu_8052AD88[]; // asin-domain warning message
 
 // --- .sdata2 constants ---
 extern const float lbl_eu_8066B3E8;  // -1.0f (asin domain low bound)
-extern const float lbl_eu_8066A200;  // pitch singularity threshold
 extern const float lbl_eu_8066B3EC;  // radians-per-FIdx scale
 extern const float lbl_eu_8066B3F4;  // impulse scale (targets 4/5)
 extern const float lbl_eu_8066B3E4;  // contact-point scale (pos sum, kinds 1/2/3)
@@ -1702,7 +1701,7 @@ extern "C" __declspec(noinline) void MdlDyn_ConcatMatrix(nw4r::math::MTX34* out,
 }
 
 // us-804f09d0: quaternion-to-Euler conversion with a pitch singularity split
-// at +/- lbl_eu_8066A200. out->y takes the asin pitch, out->x/out->z the two
+// at +/- ml::halfpi. out->y takes the asin pitch, out->x/out->z the two
 // Atan2FIdx angles. Returns 1 on the regular branch, 0 at the singularity.
 extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     f32 x2 = q->x + q->x;
@@ -1746,13 +1745,13 @@ extern "C" __declspec(noinline) s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r
     f32 cc = q->z * z2; // 2z^2
     f32 cd = q->w * z2; // 2wz
     s32 ret;
-    if (pitch >= lbl_eu_8066A200) {
+    if (pitch >= ml::halfpi) {
         // High singularity: yaw is well-defined, roll collapses.
         f32 ang = nw4r::math::Atan2FIdx(xy - cd, 1.0f - (aa + cc));
         out->x = lbl_eu_8066B3EC * ang;
         out->z = lbl_eu_8066B3D0;
         ret = 0;
-    } else if (pitch <= -lbl_eu_8066A200) {
+    } else if (pitch <= -ml::halfpi) {
         // Low singularity: same angle, negated roll.
         f32 ang = nw4r::math::Atan2FIdx(xy - cd, 1.0f - (aa + cc));
         out->z = lbl_eu_8066B3D0;

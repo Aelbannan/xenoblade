@@ -1802,7 +1802,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     if (player != NULL) {
         pos = *(((MiniMapB05CObjView*)player)->GetPos());
         scale = lbl_eu_806670BC *
-                ((MiniMapB05CObjView*)player)->v0CC() / lbl_eu_8066A1F8;
+                ((MiniMapB05CObjView*)player)->v0CC() / ml::pi;
     } else {
         pos.set(lbl_eu_80667090, lbl_eu_80667090, lbl_eu_80667090);
     }
@@ -1877,7 +1877,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
             (MiniMapObj*)cf::CfGameManager::getInstance()->getCameraDataBlock();
         f32 ty = ((MiniMapB05CVec4*)(
             (MiniMapB05CObjView*)tgt)->v01C())->field_4;
-        f64 t = lbl_eu_806670BC * ty / lbl_eu_8066A1F8;
+        f64 t = lbl_eu_806670BC * ty / ml::pi;
         f32 zz = lbl_eu_806670BC + (scale - t);
         ((MiniMapB05CPaneView*)group)->tr =
             ml::CVec3(lbl_eu_80667090, lbl_eu_80667090, zz);
@@ -1913,7 +1913,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
                 cf::CfGameManager::getInstance()->getCameraDataBlock());
             f32 ty = ((MiniMapB05CVec4*)(
                 (MiniMapB05CObjView*)tgt)->v01C())->field_4;
-            f32 t = lbl_eu_806670BC * ty / lbl_eu_8066A1F8;
+            f32 t = lbl_eu_806670BC * ty / ml::pi;
             ((MiniMapB05CPaneView*)pic)->tr =
                 ml::CVec3(lbl_eu_80667090, lbl_eu_80667090, t);
         }

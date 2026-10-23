@@ -170,7 +170,7 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
 // layout, bind its animation, install the device font, fill the fixed text
 // panes, then resolve the sample texture and size its pane.
 // Shape mirrors the FULL_MATCHed CExchangeWin layout-init function.
-// optimize_for_size: retail uses the _savegpr_29/_restgpr_29 frame.
+// -O4,s: retail uses the _savegpr_29/_restgpr_29 frame.
 //
 // OPEN ITEM (single reloc-name drift): the u16->f32 pane-size casts pool the
 // 2^52 conversion magic as TU-local @N in .sdata2; retail references the
@@ -182,8 +182,6 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
 //       trim_sdata2_size=0,
 //   ),
 // With that rule the function is byte-identical (mismatch: 0).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     buildLayout(&pg->mpLayout, pg->mpAccessor, &lbl_eu_8050C6E8[0x4d]);
     bindLayoutAnimTransform(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, &lbl_eu_8050C6E8[0x66]);
@@ -239,7 +237,6 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
         }
     }
 }
-#pragma pop
 
 // Delete the layout at field_4 if present, then clear the pointer
 extern "C" __declspec(noinline) void clpDelPageLyt(CCollepedia* this_) {
@@ -303,7 +300,6 @@ extern "C" __declspec(noinline) void clpCloseDetPg(CCollepedia* this_) {
 
 // Set two named panes (0x82, 0x92) on the layout at field_4
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" void clpSetPageNum(CCollepedia* this_, unsigned char arg) {
     setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
@@ -312,7 +308,6 @@ extern "C" void clpSetPageNum(CCollepedia* this_, unsigned char arg) {
 #pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
     if (arg2 != NULL) {
@@ -325,7 +320,6 @@ extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
 #pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-80255bac
 // Format a pane name, find two panes by name, and call ScalePaneWorldPos to copy text
@@ -733,7 +727,6 @@ extern "C" void clpFillEntry(u8* self, int a, int b, int c, u16 itemId) {
 // us-80256ae4
 // Destructor for CCollepedia.
 // Calls sub-object destructors and frees memory if dealloc_flag > 0.
-#pragma optimize_for_size on
 
 // us-802567fc
 // Recompute collection progress for every category page.
@@ -816,14 +809,11 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // us-8025695c - CCollepedia constructor.
 // Stores vtable, constructs both memory regions, cursors and the embedded
 // CSysWin at +0x9C, initializes the entry storage, then re-initializes the
 // window from a stack temporary (copying everything after the vtable ptr).
-#pragma push
-#pragma optimize_for_size on
 CCollepedia::CCollepedia() {
     field_0 = (int)lbl_eu_805373E0;
     __ct__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)this + 0x04));
@@ -865,11 +855,8 @@ CCollepedia::CCollepedia() {
     lbl_eu_806647D8 = nullptr;
     lbl_eu_806647DC = nullptr;
 }
-#pragma pop
 
 // us-80256b68
-#pragma push
-#pragma optimize_for_size on
 // Initialize CCollepedia: load 3 files, init CSysWin, init sub-array storage.
 // The entry storage is built in a stack temp and copied member-wise to match
 // retail codegen (byte stores for the header, bulk struct copy for the data).
@@ -896,7 +883,6 @@ void clpStartLoads(CCollepedia* this_) {
 
     clpBuildPages(&this_->field_E8);
 }
-#pragma pop
 
 // us-80256c5c
 // Per-frame state machine dispatch on field_49, then update all sub-objects.
@@ -970,8 +956,6 @@ extern "C" void clpDoFrameUpd(CCollepedia* this_) {
     Cur_Update(&this_->field_54[0x30]); // +0x84
 }
 
-#pragma push
-#pragma optimize_for_size on
 // us-80256da0
 // Render the CCollepedia display: draw layout, sub-cursors, and syswin if active
 // Retail reads field_48/field_49 and field_38 from r3 (original this) before any reg copy
@@ -990,7 +974,6 @@ extern "C" void clpDrawWindow(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
     sysWinDrawLayout(&this_->field_9C, drawInfo);
     Cur_DrawLayout((CBaseCur*)&this_->field_54[0x30], drawInfo);
 }
-#pragma pop
 
 // us-80256e40
 // Cleanup CCollepedia: free files, layouts, sub-objects
@@ -1081,7 +1064,6 @@ void clpReqCloseVw(CCollepedia* this_) {
 }
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-802570a0
 // Decrement timer counters (field_DA or field_D9) with wrapping, update display, schedule event
@@ -1114,7 +1096,6 @@ void clpCursorLeft(CCollepedia* this_) {
 #pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-80257168
 // Increment timer-based navigation: increment field_DA with wrap, or advance field_D9 and update display
@@ -1195,7 +1176,6 @@ void clpCursorDown(CCollepedia* this_) {
 }
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-802573a8
 // Decrement field_D9 with wrapping, update display, and schedule next event
@@ -1220,7 +1200,6 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
 #pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-8025744c
 // Decrement field_D9 with wrapping (calls clpPrevPageIx instead of clpNextPageIx)
@@ -1283,8 +1262,6 @@ void clpOnCancel(CCollepedia* this_) {
 // us-802575e8
 // Per-frame advance for the collepedia selection flow.
 // Early-return states are tested as a signed compare chain (cmpwi/beq).
-#pragma push
-#pragma optimize_for_size on
 extern "C" void clpOnConfirm(CCollepedia* this_) {
     u32 state = this_->field_49;
     if (state == 9) return;
@@ -1369,7 +1346,6 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     this_->field_51 = 0;
     playUISound__FUl(3);
 }
-#pragma pop
 
 void clpCanClaim(CCollepediaFull* self) {
     clpIsClaimabl(&self->field_E8_start, self->field_D9, self->field_D8);
@@ -1442,7 +1418,6 @@ extern "C" __declspec(noinline) void clpEnabDetCur(CCollepedia* this_) {
 }
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-80257c18
 // Open the collepedia detail view: set state, enable sub-object, update display, load file
@@ -1471,7 +1446,6 @@ __declspec(noinline) void clpEnterDetail(CCollepedia* this_) {
 #pragma pop
 
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call UIWin_CreateItemMulti
@@ -1496,7 +1470,6 @@ extern "C" __declspec(noinline) void collepediaCreateItemMulti(CCollepedia* this
 
 // us-80257d9c
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 // Initialize collepedia display: check condition, set up CSysWin with text, play sounds, load file
 __declspec(noinline) void clpOpenComplete(CCollepedia* this_) {
@@ -1551,9 +1524,7 @@ void clpTryShow(CCollepedia* this_) {
 
 // us-80257f78
 // Load the texture resource for the detail pane selected by `mode` and show it.
-// optimize_for_size gives the retail stmw/lmw block-save frame.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s gives the retail stmw/lmw block-save frame.
 // noinline: retail callers (clpRefreshPage) invoke this out-of-line.
 __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, int mode) {
     void* res = NULL;
@@ -1578,13 +1549,10 @@ __declspec(noinline) void clpSetSlotTex(CCollepedia* this_, const char* name, in
         PaneSetTexPaletteByName(this_->field_38, buf, res);
     }
 }
-#pragma pop
 
 // us-802580cc
 // Like clpSetSlotTex but mode 3 resolves the resource name from an item id.
-// optimize_for_size gives the retail stmw/lmw block-save frame (three call sites total).
-#pragma push
-#pragma optimize_for_size on
+// -O4,s gives the retail stmw/lmw block-save frame (three call sites total).
 // noinline: retail caller clpRefreshPage invokes this out-of-line.
 __declspec(noinline) void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
     void* tex;
@@ -1604,10 +1572,7 @@ __declspec(noinline) void clpSetSlotIcn(CCollepedia* this_, const char* name, u3
         PaneSetTexPaletteByName(this_->field_38, buf, tex);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 // us-80258658
 // Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
 void clpSetPageVis(CCollepedia* this_) {
@@ -1627,7 +1592,6 @@ void clpSetPageVis(CCollepedia* this_) {
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x306], count);
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], 1);
 }
-#pragma pop
 
 // Stubs for functions called by targets
 extern "C" __declspec(noinline) u8 clpGetPageCat(u8* self) {
@@ -1718,7 +1682,6 @@ extern "C" __declspec(noinline) void clpRefreshPage(CCollepedia* this_) {
 }
 // Set two pane names on the layout using the current sub-array entry
 #pragma push
-#pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" __declspec(noinline) void clpSetSelTxt(CCollepedia* this_) {
     char* str1 = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
@@ -1730,8 +1693,6 @@ extern "C" __declspec(noinline) void clpSetSelTxt(CCollepedia* this_) {
 // us-80258550
 // Refresh the collepedia display: detail view routes through the shared
 // formatter, list view formats the current entry name and moves the cursor.
-#pragma push
-#pragma optimize_for_size on
 // noinline: retail keeps this out-of-line; without it MWCC inlines the whole
 // body into its earlier callers (late-definition inlining defeats auto_inline off).
 extern "C" __declspec(noinline) void clpRefreshCur(CCollepedia* this_) {
@@ -1758,7 +1719,6 @@ extern "C" __declspec(noinline) void clpRefreshCur(CCollepedia* this_) {
             reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C));
     }
 }
-#pragma pop
 
 // us-80258748
 // File-load completion callback for the three collepedia archives:

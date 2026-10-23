@@ -24,8 +24,8 @@ extern "C" bool lbl_eu_806656FC;
 #define spHbmstopTplData lbl_eu_80665700
 #define lbl_80667FDC lbl_eu_80665704
 #define lbl_80667FDD lbl_eu_80665705
-#define sTplTexObj (*(GXTexObj*)&lbl_eu_80657F90)
-extern "C" char lbl_eu_80657F90[0x20];
+#define sTplTexObj lbl_eu_80657F90
+extern "C" GXTexObj lbl_eu_80657F90; // storage defined in CException.cpp's .bss slice
 
 // [.sbss] 0x80665700-0x80665710 zero-fill owned by this TU (size/align are
 // compared, not bytes): lbl_eu_80665700 = spHbmstopTplData,
@@ -59,7 +59,7 @@ extern "C" u32 lbl_eu_8056D1A8[];
 CLibHbm::CLibHbm(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
     u32 zeroBits = 0;
     const u32 invalidHandle = (u32)mtl::INVALID_HANDLE;
-    *(u32 volatile*)this = (u32)&lbl_eu_8056D1A8[0];
+    *reinterpret_cast<u32* volatile*>(this) = lbl_eu_8056D1A8; // volatile: load-bearing (keeps the vptr store ahead of the member stores)
     mHandle = invalidHandle;
     unk1C8 = zeroBits;
     mpLayoutBuf = nullptr;
@@ -189,85 +189,59 @@ bool CLibHbm::checkFlag6(){
 }
 
 void CLibHbm::loadHbmArcFile(){
-    // Reference the retail-named instance global (same storage as spInstance)
-    // so the SDA21 relocs name-match.
-    extern CLibHbm* lbl_eu_806656F8;
     // Filename globals owned by CLibG3d.cpp (.sdata pointers to "hbm.arc" strings).
-    extern u32 lbl_eu_806637B8;
-    extern u32 lbl_eu_806637BC;
+    extern const char* lbl_eu_806637B8;
+    extern const char* lbl_eu_806637BC;
 
-    lbl_eu_806656F8->mFlags &= ~0x40;
+    spInstance->mFlags &= ~0x40;
 
     CDeviceVI::waitForDrawDone();
     updateScnCounter(1);
-    lbl_eu_806656F8->mFlags |= 0x20;
-    lbl_eu_806656F8->mHandle = getScnCounter();
+    spInstance->mFlags |= 0x20;
+    spInstance->mHandle = getScnCounter();
 
-    if(lbl_eu_806656F8->mHandle == mtl::INVALID_HANDLE){
-        lbl_eu_806656F8->mHandle = mtl::MemManager::getHandleMEM2();
+    if(spInstance->mHandle == mtl::INVALID_HANDLE){
+        spInstance->mHandle = mtl::MemManager::getHandleMEM2();
     }
 
     // Pick the archive path by console language (6 = Japanese).
-    const char* pArcFile = (const char*)lbl_eu_806637B8;
+    const char* pArcFile = lbl_eu_806637B8;
     if(CDeviceSC::getLanguage() == 6){
-        pArcFile = (const char*)lbl_eu_806637BC;
+        pArcFile = lbl_eu_806637BC;
     }
 
     // Retail passes an extra ignored int arg (r4=1) to the 1-param
     // CDeviceFile::getFileSize; route through a cast function-pointer type.
     typedef int (*GetFileSizeFn)(const char*, int);
     if(((GetFileSizeFn)&CDeviceFile::getFileSize)(pArcFile, 1) > 0){
-        CFileHandle* handle = CDeviceFile::readFile(lbl_eu_806656F8->mHandle, pArcFile,
-        lbl_eu_806656F8, 0, 0);
-        lbl_eu_806656F8->mpHbmArcFileHandle = handle;
-        CDeviceFile::tryUpdateJobPriority(lbl_eu_806656F8->mpHbmArcFileHandle, 0);
+        CFileHandle* handle = CDeviceFile::readFile(spInstance->mHandle, pArcFile,
+        spInstance, 0, 0);
+        spInstance->mpHbmArcFileHandle = handle;
+        CDeviceFile::tryUpdateJobPriority(spInstance->mpHbmArcFileHandle, 0);
     }
 }
 
-// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
-// as CLibVM.cpp / CDeviceGX.cpp). Retail also inlines CWorkThread's
-// CMsgParam<8>::find(EVT_EXCEPTION) scan here (divwu modulo loop, leaf body),
-// so the queue scan is hand-inlined over a layout mirror instead of calling
-// the member (a member call adds a frame + bl). CWorkRoot.cpp keeps the
-// strong out-of-line definition.
-struct CLibHbmMsgQueueData {
-    u8 pad[0x1A4];               // CWorkThread prefix + vtable + mEntries[8]
-    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArray)
-    u32 mFront;                  // 0x1A8
-    u32 mCount;                  // 0x1AC
-    u32 mCapacity;               // 0x1B0
-};
-
+// Retail inlines CMsgParam<8>::find (and through it CWorkThread::isException /
+// isRunning) into this TU, while CWorkRoot.cpp keeps the strong out-of-line
+// find. A TU-local inline specialization reproduces that without changing
+// the shared header for every other TU (same trick as CLibVM.cpp / CDeviceGX.cpp
+// for isRunning).
+template <>
+inline int CMsgParam<8>::find(u32 msg) const {
+    for (int i = 0; i < mSize; i++) {
+        if (mArrayPtr[(mFront + i) % mCapacity].command == msg) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 inline bool CWorkThread::isRunning() const {
-    bool busy;
-    if (mFlags & THREAD_FLAG_EXCEPTION) {
-        busy = true;
-    } else {
-        const CLibHbmMsgQueueData* q = reinterpret_cast<const CLibHbmMsgQueueData*>(this);
-        int i;
-        int foundIndex;
-        for (i = 0; i < q->mCount; i++) {
-            if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
-                == EVT_EXCEPTION) {
-                foundIndex = i;
-                goto done;
-            }
-        }
-        foundIndex = -1;
-    done:
-        busy = foundIndex >= 0;
-    }
-
-    return !busy
-        && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
+    return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
 }
 
 bool CLibHbm::isInitialized(){
-    // Reference the retail-named instance global (same storage as the spInstance
-    // static member) so the SDA21 reloc name matches.
-    extern CLibHbm* lbl_eu_806656F8;
-    return lbl_eu_806656F8->isRunning();
+    return spInstance->isRunning();
 }
 
 void CLibHbm::wkUpdate(){
@@ -281,24 +255,7 @@ void CLibHbm::wkUpdate(){
             // EVT scan straight into wkUpdate (CMsgParam::find lives
             // out-of-line in another TU, so walk the queue via the mirror).
             CDeviceFileCri* fileCri = CDeviceFileCri::getInstance();
-            bool criException;
-            if(fileCri->mFlags & THREAD_FLAG_EXCEPTION){
-                criException = true;
-            }else{
-                const CLibHbmMsgQueueData* q = reinterpret_cast<const CLibHbmMsgQueueData*>(fileCri);
-                int i;
-                int foundIndex;
-                for(i = 0; i < q->mCount; i++){
-                    if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
-                        == EVT_EXCEPTION){
-                        foundIndex = i;
-                        goto doneA;
-                    }
-                }
-                foundIndex = -1;
-            doneA:
-                criException = foundIndex >= 0;
-            }
+            bool criException = fileCri->isException();
 
             if(criException){
                 if(!CLibHbmControl::getInstance()->isNoEvent() && mState < STATE_0 && !unk264){
@@ -342,24 +299,7 @@ void CLibHbm::wkUpdate(){
                     }
 
                     CDeviceFileCri* fileCri2 = CDeviceFileCri::getInstance();
-                    bool criException2;
-                    if(fileCri2->mFlags & THREAD_FLAG_EXCEPTION){
-                        criException2 = true;
-                    }else{
-                        const CLibHbmMsgQueueData* q = reinterpret_cast<const CLibHbmMsgQueueData*>(fileCri2);
-                        int i;
-                        int foundIndex;
-                        for(i = 0; i < q->mCount; i++){
-                            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
-                                == EVT_EXCEPTION){
-                                foundIndex = i;
-                                goto doneB;
-                            }
-                        }
-                        foundIndex = -1;
-                    doneB:
-                        criException2 = foundIndex >= 0;
-                    }
+                    bool criException2 = fileCri2->isException();
 
                     if(criException2 || lbl_80667FDD){
                         if(mState == STATE_NEG1){

@@ -5,74 +5,10 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/math/CMat34.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/data_vtables.hpp"
 
-// ---------------------------------------------------------------------------
-// CCacheItem: one entry stored in CWorkSystemCache's resource list. The list
-// is a _reslist_base<CCacheItem*> so each node holds a *pointer* to one of
-// these objects (node->mItem at +0x8). The lookup helper SysCacheFetchIndexedEntry reads
-// fields at 0x3c / 0x40 and exposes the buffer pointer at +0x4.
-// ---------------------------------------------------------------------------
-class CCacheItem {
-public:
-    virtual void func_0x8(int flag);      // vtable+8
-    u8 field_0x4;                          // 0x4
-    u8 pad_5[0x3c - 0x5];                  // 0x5..0x3c
-    u32 field_0x3c;                        // 0x3c
-    u32 field_0x40;                        // 0x40
-    s32 field_0x44;                        // 0x44
-    u8 field_0x48;                         // 0x48
-    u8 pad_49[0x4c - 0x49];                // 0x49..0x4c
-    u32 field_0x4c;                        // 0x4c
-};
+#include "monolib/work/CWorkSystemCache.hpp"
 
-// ---------------------------------------------------------------------------
-// POD mirror of _reslist_node<CCacheItem*>: three pointers, 0xc bytes total.
-// ---------------------------------------------------------------------------
-struct CacheListNode {
-    CacheListNode* mNext;     // 0x0
-    CacheListNode* mPrev;     // 0x4
-    CCacheItem* mItem;        // 0x8
-};
-
-// POD mirror of _reslist_base<CCacheItem*> (size 0x20).
-struct CacheList {
-    u32 m_vtable;                 // 0x0
-    CacheListNode* mStartNodePtr; // 0x4
-    CacheListNode mStartNode;     // 0x8
-    CacheListNode* mList;         // 0x14
-    int mCapacity;                // 0x18
-    bool unk1C;                   // 0x1c
-};
-
-// Compact layout of the reslist header that CWorkSystemCache embeds at 0x1c4.
-// It is literally a _reslist_base<CCacheItem*> (CacheList); the sentinel's
-// mItem slot (0x1d4) is unused by the cache. mList/mCapacity/unk1C are the
-// cache's array/count/flag.
-struct CacheListHeader {
-    u32 m_vtable;                  // 0x1c4 (reslist vtable slot)
-    CacheListNode* mStartNodePtr;  // 0x1c8
-    CacheListNode mStartNode;      // 0x1cc (sentinel: mNext, mPrev, mItem)
-    CacheListNode* mList;          // 0x1d8
-    int mCapacity;                 // 0x1dc
-    bool unk1C;                    // 0x1e0
-};
-
-
-class __declspec(novtable) CWorkSystemCache : public CWorkThread {
-public:
-    CWorkSystemCache(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkSystemCache();
-    virtual void wkUpdate();       // 0x88
-    virtual bool wkStandbyLogin(); // 0x94
-    virtual bool wkStandbyLogout();// 0x98
-
-    // 0x0: vtable
-    // 0x0-0x1c4: CWorkThread
-    CacheListHeader mCache;        // 0x1c4
-};
-
-// Global singleton pointer to the cache instance (.sbss).
-extern CWorkSystemCache* lbl_eu_806659C8;
 // Retail CWorkSystemCache vtable (.data) - the class is novtable, so the ctor
 // stores this retail vtable manually (same pattern as CDeviceFileDvd).
 extern "C" u32 lbl_eu_8056FC70[];
@@ -81,9 +17,6 @@ extern "C" u32 lbl_eu_8056FD3C[];
 extern "C" u32 lbl_eu_8056FD24[];
 
 extern "C" {
-
-// Decrement a login-state refcount if it isn't flagged.
-__attribute__((never_inline)) void SysCacheDecLoginRef(CCacheItem* ths);
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
 __attribute__((never_inline)) void SysCacheClearListLinks(CacheList* list) {
@@ -129,16 +62,15 @@ bool SysCacheFetchIndexedEntry(int index, u32* outField3C, u8** outField4Addr, u
     return false;
 }
 
-// Unlink the front node of the list (sentinel) and write the new front to out.
-void SysCacheUnlinkFront(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
-    (void)unk;
-    CacheListNode* front = sentinel->mNext;
-    CacheListNode* frontNext = front->mNext;
-    CacheListNode* frontPrev = front->mPrev;
-    frontPrev->mNext = frontNext;
-    frontNext->mPrev = frontPrev;
-    sentinel->mNext->mNext = 0;
-    *outFront = frontNext;
+// _reslist_base<CCacheItem*>::erase(iterator): unlink the node and return an
+// iterator to its successor.
+CacheListIter SysCacheUnlinkFront(CacheList* list, CacheListIter it) {
+    CacheListNode* next = it.mNode->mNext;
+    CacheListNode* prev = it.mNode->mPrev;
+    prev->mNext = next;
+    next->mPrev = prev;
+    it.mNode->mNext = 0;
+    return CacheListIter(next);
 }
 
 // Login-wait helper.
@@ -196,7 +128,7 @@ bool CWorkSystemCache::wkStandbyLogin() {
 #pragma optimize_for_size on
 CWorkSystemCache::~CWorkSystemCache() {
     lbl_eu_806659C8 = NULL;
-    CacheList* cache = (CacheList*)&mCache;
+    CacheList* cache = &mCache;
     if (cache != NULL) {
         __dt___reslist_base_CCacheItem(cache, 0);
     }
@@ -206,24 +138,16 @@ void CWorkSystemCache::wkUpdate() {
     // Walk the singleton's resource list; logged-in items get released and
     // unlinked. The unlink helper takes &node and advances past the removed
     // entry, so the caller just resumes from the saved 'next' pointer.
-    // NOTE: keep non-const: const materializes a dead WEAK @LOCAL@..@zero
-    // word in .sdata2 (retail has none); the use already folds to li.
-    int zero = 0;
     CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
         SysCacheDecLoginRef(node->mItem);
         if (SysCacheItemWaitReady(node->mItem)) {
-            CCacheItem* p = node->mItem;
-            if (p != NULL) {
-                if (p != NULL) {
-                    p->func_0x8(1);
-                }
-                node->mItem = (CCacheItem*)zero;
+            if (node->mItem != NULL) {
+                delete node->mItem;
+                node->mItem = NULL;
             }
-            CacheListNode* out;
-            CacheListNode* unlink = node;
-            SysCacheUnlinkFront(&out, (u32)&lbl_eu_806659C8->mCache, (CacheListNode*)&unlink);
+            SysCacheUnlinkFront(&lbl_eu_806659C8->mCache, CacheListIter(node));
         }
         node = next;
     }
@@ -233,16 +157,13 @@ void CWorkSystemCache::wkUpdate() {
 bool CWorkSystemCache::wkStandbyLogout() {
     CacheListNode* node = mCache.mStartNodePtr->mNext;
     while (node != mCache.mStartNodePtr) {
-        CCacheItem* p = node->mItem;
-        if (p) {
-            if (p) {
-                p->func_0x8(1);
-            }
-            node->mItem = 0;
+        if (node->mItem != NULL) {
+            delete node->mItem;
+            node->mItem = NULL;
         }
         node = node->mNext;
     }
-    SysCacheClearListLinks((CacheList*)&mCache);
+    SysCacheClearListLinks(&mCache);
     if (mCache.unk1C == 0 && mCache.mList != NULL) {
         delete[] mCache.mList;
         mCache.mList = NULL;
@@ -329,47 +250,6 @@ extern "C" u32 lbl_eu_80663B70[2] = { (u32)lbl_eu_805245C8, 0 };
 
 // [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
 // RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.
-extern "C" void* __RTTI__10IWorkEvent;
-extern "C" void* __RTTI__11CWorkThread;
-extern "C" void __dt__16CWorkSystemCacheFv();
-extern "C" void wkUpdate__16CWorkSystemCacheFv();
-extern "C" void wkStandbyLogin__16CWorkSystemCacheFv();
-extern "C" void wkStandbyLogout__16CWorkSystemCacheFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-
 extern "C" u32 lbl_eu_8056FC70[40] = {
     (u32)&lbl_eu_80663B40, 0x00000000, (u32)&__dt__16CWorkSystemCacheFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,

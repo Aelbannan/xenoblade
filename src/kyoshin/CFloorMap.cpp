@@ -2395,7 +2395,7 @@ void FloorMap_PlacePlayerMarker(void* self) {
         // into the wrapper pane's rotate vector.
         f32 scale =
             lbl_eu_8066879C * ((CFloorMapMgr*)mgr)->getScaleSrc()->scale04 /
-            lbl_eu_8066A1F8;
+            ml::pi;
         CFloorMapPaneRotate* rot = (CFloorMapPaneRotate*)holder;
         rot->rotX = lbl_eu_80668764;
         rot->rotY = lbl_eu_80668764;
@@ -2488,7 +2488,7 @@ void FloorMap_PlacePlayerMarkerScaled(CFloorMapFull* self) {
     *(f32*)((u8*)pic + 0x38) = lbl_eu_80668764;
     *(f32*)((u8*)pic + 0x3C) = lbl_eu_80668764;
     *(f32*)((u8*)pic + 0x40) =
-        lbl_eu_8066879C + lbl_eu_8066879C * zoom / lbl_eu_8066A1F8;
+        lbl_eu_8066879C + lbl_eu_8066879C * zoom / ml::pi;
 }
 
 // Accumulate the parent-chain translate of `node` up to (excluding) the

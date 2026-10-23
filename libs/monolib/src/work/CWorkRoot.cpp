@@ -416,7 +416,7 @@ template reslist<CWorkThread*>::reslist();
 // an anonymous-namespace class in a manual vtable initializer; the coordinator
 // renames the three member symbols below back to their @unnamed@ retail names
 // (same mechanism as the existing CWorkRoot.o exact_renames).
-// optimize_for_size on the class region: the generated ~CWorkRootThread()
+// -O4,s the class region: the generated ~CWorkRootThread()
 // needs the retail stmw/lmw r30 save/restore prologue style.
 namespace CWorkRootThreadNS {
     // Empty helper base: runs right after the CWorkThread base ctor but
@@ -468,12 +468,9 @@ namespace CWorkRootThreadNS {
     };
 }  // namespace CWorkRootThreadNS
 
-// Out-of-line definition inside optimize_for_size: gives the generated
+// Out-of-line definition inside -O4,s: gives the generated
 // dtor the retail stmw/lmw save/restore style.
-#pragma push
-#pragma optimize_for_size on
 CWorkRootThreadNS::CWorkRootThread::~CWorkRootThread(){}
-#pragma pop
 
 // spInstance static (retail 0x80665608): the CWorkRoot .sbss split range now
 // includes 0x80665608-0x80665618 (16B) so the singleton storage is emitted;
@@ -547,7 +544,7 @@ CException* lbl_eu_80665610[2];
 //Unused in release
 CErrorWii CWorkRoot::sErrorWii;
 
-// optimize_for_size: gives initialize the retail stmw/lmw r30 save/restore
+// -O4,s: gives initialize the retail stmw/lmw r30 save/restore
 // prologue-epilogue style.
 //
 // OPEN ITEM (mirrors CWorkControl::create, same fixed-codegen shape): the
@@ -559,8 +556,6 @@ CErrorWii CWorkRoot::sErrorWii;
 // pointer placement-new (extra EH null-path branch). Per the CWorkControl
 // investigation, MWCC rematerializes the constant name web so its callee-
 // saved color cannot be forced from source; needs witness-era EQUIVALENT_MATCH.
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CWorkRoot::initialize(){
     lbl_eu_8066560C = EXIT_PROG_END;
     //Initialize the math library
@@ -574,7 +569,6 @@ __declspec(noinline) void CWorkRoot::initialize(){
     CWorkUtil::entryWork(thread, nullptr, false);
     CWorkRootThread::spInstance = thread;
 }
-#pragma pop
 
 __declspec(noinline) void CWorkRoot::destroy(){
     VISetPreRetraceCallback(nullptr);
@@ -599,8 +593,6 @@ bool CWorkRoot::dummy1(CWorkThread* pThread){
     return pThread->isRunning();
 }
 
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     reslist<CWorkThread*>* children = &pThread->mChildren;
     
@@ -643,13 +635,10 @@ __declspec(noinline) void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1
         }
     } while (foundShutdownThread);
 }
-#pragma pop
 
 // Uses the out-of-line extern forms of isEvent3/isRunning (like standbyWork):
 // the header/TU bodies would fold under -ipa instead of emitting retail's bl.
-// optimize_for_size: reproduces the retail stmw/lmw r29 save/restore style.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s: reproduces the retail stmw/lmw r29 save/restore style.
 __declspec(noinline) void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     // Early-return form: makes MWCC emit retail's xor./bne exit test.
     if(arg1 ^ isEvent3__11CWorkThreadCFv(pThread)){
@@ -670,10 +659,7 @@ __declspec(noinline) void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1)
         updateWork(childThread, arg1);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void CWorkRoot::standbyWork(){
     CWorkRootThread* thread = CWorkRootThread::getInstance();
     _reslist_node<CWorkThread*>* iter;
@@ -717,7 +703,6 @@ check:
     thread->mThreadList2.clearList();
     standbyWork(CWorkRootThread::getInstance(), false);
 }
-#pragma pop
 
 __declspec(noinline) void CWorkRoot::renderWork(){
     if(getInstance__9CDeviceGXFv() != nullptr){

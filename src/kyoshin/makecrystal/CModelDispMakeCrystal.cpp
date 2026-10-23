@@ -11,7 +11,7 @@
 #include "kyoshin/makecrystal/CMCCylinderGauge.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
 #include "kyoshin/code_80135FDC.hpp"
-// code_80135FDC.hpp:254 declares lbl_eu_8066A208 as extern u32 while
+// code_80135FDC.hpp:254 declares ml::epsilon as extern u32 while
 // monolib/math/FloatUtils.hpp (via CDeviceVI.hpp) declares it const float -
 // MWCC 10563. This TU never references the symbol; rename the later copies.
 #include "monolib/device/CDeviceVI.hpp"
@@ -42,7 +42,6 @@
 #define func_8004B9D4 func_8004B9D4_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
-#define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
 #define sysWinSwitchKindPane sysWinSwitchKindPane_typed_hidden
 #define sysWinApplyKind sysWinApplyKind_typed_hidden
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
@@ -59,7 +58,6 @@
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
-#undef lbl_eu_8066A200
 #undef sysWinSwitchKindPane
 #undef sysWinApplyKind
 #undef __ct__17UnkClass_8045F564Fv
@@ -578,8 +576,8 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 
     // --- crystal-position groups (two VEC3 pairs) ---
     writeVec3f(&group1[0], lbl_eu_806684A8, lbl_eu_806684AC, lbl_eu_806684B0);
-    f32 g1y = lbl_eu_806684BC * lbl_eu_8066A210;
-    f32 g2y = lbl_eu_806684C0 * lbl_eu_8066A210;
+    f32 g1y = lbl_eu_806684BC * ml::deg2rad;
+    f32 g2y = lbl_eu_806684C0 * ml::deg2rad;
     group1[1].x = lbl_eu_806684B4;
     group1[1].y = lbl_eu_806684AC;
     group1[1].z = lbl_eu_806684B8;
@@ -867,7 +865,6 @@ void CModelDispMakeCrystal::initCrystalSubStruct() {
 // +0x8, then zeroes the six 0xC-byte crystal sub-buffers at +0x564..+0x5ac.
 // NOTE: -O4,p static cap - retail's `stmw r29` (3-reg save) needs -O4,s
 // (MWCC_CASES §16); body/loop otherwise byte-identical.
-#pragma optimize_for_size on  // -O4,s stmw frame
 CModelDispMakeCrystal* MakeCrystal_InitSlotArray(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -879,13 +876,11 @@ CModelDispMakeCrystal* MakeCrystal_InitSlotArray(CModelDispMakeCrystal* self)
     } while (p < base + 0x5ac);
     return self;
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021E398: sub-object destructor (array-element dtor for the
 // 0x5cc-stride crystal display sub-structs) - destroys the inline
 // CActParamAnimGame at +0x8 and frees the object when the flag is positive.
 // Returns the object. Retail frame is stmw/lmw r30+r31 (-O4,s shape).
-#pragma optimize_for_size on
 void* __dt__8021C540(void* obj, int flag)
 {
     if (obj != nullptr) {
@@ -897,10 +892,8 @@ void* __dt__8021C540(void* obj, int flag)
     }
     return obj;
 }
-#pragma optimize_for_size off
 
 // Retail frame is stmw r30 (-O4,s shape); body otherwise identical.
-#pragma optimize_for_size on
 CModelDispMakeCrystal::~CModelDispMakeCrystal()
 {
     u8* base = reinterpret_cast<u8*>(this);
@@ -926,7 +919,6 @@ CModelDispMakeCrystal::~CModelDispMakeCrystal()
     __destroy_arr(base + 0x44, (void*)__dt__8021C540, 0x5cc, 2);
     __dt__17UnkClass_8045F564Fv(base + 0x2c, -1);
 }
-#pragma optimize_for_size off
 
 void MakeCrystal_InitFiles(CModelDispMakeCrystal* self)
 {
@@ -1006,7 +998,6 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
 
 // Retail 0x8021E780: draw every makecrystal UI sub-object.
 // [stmw] r30 frame (see MakeCrystal_StateCrystalChk note).
-#pragma optimize_for_size on
 void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1030,14 +1021,12 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     sysWinDrawLayout(base + 0xe78, drawInfo);
     Cur_DrawLayout(base + 0xeb4, drawInfo);
 }
-#pragma optimize_for_size off
 
 u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
 
 // Retail 0x8021E894: "ready to advance" gate - every crystal display slot
 // must be built, plus the crystal-list / scrollbar / syswin gates, then the
 // crystal-box file state machine answers.
-#pragma optimize_for_size on
 int MakeCrystal_CheckReady(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1052,13 +1041,11 @@ int MakeCrystal_CheckReady(CModelDispMakeCrystal* self)
     if (CSysWin_isReady(base + 0xe78) == 0) return 0;
     return isMCGetItemBoxActive(base + 0xecc);
 }
-#pragma optimize_for_size off
 
 u8 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DC3; }
 
 u8 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DD2; }
 
-#pragma optimize_for_size on
 void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
 {
     // Single live pointer (base) so MWCC keeps the small -O4,s frame with
@@ -1101,7 +1088,6 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     lbl_eu_80664718[5] = 1;
     MakeCrystal_RefreshSlotEntries(reinterpret_cast<CModelDispMakeCrystal*>(base));
 }
-#pragma optimize_for_size off
 
 void MakeCrystal_TickCharge(CModelDispMakeCrystal* self)
 {
@@ -1166,7 +1152,6 @@ void MakeCrystal_StateChargeWait(CModelDispMakeCrystal* self)
 }
 
 // -O4,s frame: retail saves r30/r31 with stmw/lmw.
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_StateSlotCheck(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1185,7 +1170,6 @@ void __declspec(noinline) MakeCrystal_StateSlotCheck(CModelDispMakeCrystal* self
     base[0xbdd] = 0x1;
     MakeCrystal_SpawnCrystalItem(self, 0, GetCollectedFlagByte(base[0xbbc]));
 }
-#pragma optimize_for_size off
 
 void __declspec(noinline) MakeCrystal_StateStartFx(CModelDispMakeCrystal* self)
 {
@@ -1367,7 +1351,6 @@ void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
 }
 
 // -O4,s frame: retail keeps the plain divw for the %10 (no magic-multiply).
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1418,9 +1401,7 @@ void __declspec(noinline) MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
         }
     }
 }
-#pragma optimize_for_size off
 
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1459,7 +1440,6 @@ void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* sel
     }
     playUISound__FUl(0x3f);
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021F50C: slot-trial state driver - once the random success
 // window opens, pick the slot whose stored value beats the random threshold
@@ -1557,7 +1537,6 @@ extern "C" void __declspec(noinline) setCrystalPosEntry(
     entry->flag = 1;
 }
 
-#pragma optimize_for_size on
 // View of the crystal-list head pointer at +0xE1C: active byte at +0,
 // u16 live count at +4 (read by the State* gating checks).
 struct MCCountHead {
@@ -1612,7 +1591,6 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
         playUISound__FUl(0xb2);
     }
 }
-#pragma optimize_for_size off
 
 void __declspec(noinline) MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* self)
 {
@@ -1660,7 +1638,6 @@ void __declspec(noinline) MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self
 // finishes, either start the change-in anim (count >= 200) or trace-out.
 // NOTE: retail saves r30/r31 as one [stmw] block; -O4,p emits separate stw
 // (MWCC_CASES S16), so force the size-optimal frame like MakeCrystal_InitSlotArray.
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1689,7 +1666,6 @@ void __declspec(noinline) MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* sel
         }
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x8021FB64: crystal-list state driver - when the start effect
 // finishes, either run the success/special path (crystal count >= 300) or
@@ -2121,7 +2097,6 @@ void MakeCrystal_ClearSlotParam(CModelDispMakeCrystal* self, u16 idx)
 // entry whose param u16 (at +2) is zero and record its index in byte 0.
 // NOTE: -O4,s keeps this as an mtctr/bdnz countdown loop; plain -O4,p
 // unrolls it (MWCC_CASES Sec.856).
-#pragma optimize_for_size on
 void func_8021E888(CModelDispMakeCrystal* self)
 {
     CMCrySlotEntry* entries = reinterpret_cast<CMCrySlotEntry*>(self);
@@ -2134,7 +2109,6 @@ void func_8021E888(CModelDispMakeCrystal* self)
         }
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x8022073C: two-pass bubble-sort of the crystal-slot entries,
 // then clear their +9 flag bytes.
@@ -2370,7 +2344,6 @@ void __declspec(noinline) MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* s
 
 
 // [stmw] r30 frame (see MakeCrystal_StateCrystalChk note): -O4,s.
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -2429,7 +2402,6 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         playUISound__FUl(1);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80221104
 // step: zero runs the confirm-side cleanup, non-zero moves the cursor forward.
@@ -2551,7 +2523,6 @@ void __declspec(noinline) MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* 
 }
 
 
-#pragma optimize_for_size on
 void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -2604,7 +2575,6 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         playUISound__FUl(1);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80221654
 // the crystal-success menu (confirm path 3 / cursor-forward path 0x20).
@@ -3800,7 +3770,6 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
     return 0;
 }
 
-#pragma optimize_for_size on
 void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -3829,7 +3798,6 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
     CtrlRemote_SetSharedBit(0xbd, 0);
     CtrlRemote_SetSharedBit(0xbf, 0);
 }
-#pragma optimize_for_size off
 
 // Byte view of the cursor slot at +0xE1C (u32 store into the entries slot).
 struct MCCursorView {

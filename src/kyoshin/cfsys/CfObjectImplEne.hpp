@@ -7,7 +7,7 @@
 // single winning decl from CfGameManagerApi.hpp - no pre-include rename;
 // this TU only needs cf::CfSoundMan::playActorSound from it.)
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 namespace cf {
 

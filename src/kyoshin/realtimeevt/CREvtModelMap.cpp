@@ -74,6 +74,22 @@ struct ActionEntry {
 #include "monolib/work/CEventFile.hpp"
 
 // Forward decls for labels and helpers
+// Declaration-only views of the realtime-event list classes that own the
+// EvtSeq* members called below (full definitions in
+// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
+// The model object is passed as their `this`.
+class UnkEvtListEntry {
+public:
+    void SeqInsertRtEvent();
+};
+struct EvtBdabModel {
+    int SeqProbeEvtSlot(u32* out);
+};
+class UnkObj80168514 {
+public:
+    void EvtSeqCheckEventRunGuard();
+};
+
 extern "C" {
 extern ActionEntry lbl_eu_80531D20[];
 extern ActionEntry lbl_eu_80531D2C[];
@@ -224,7 +240,7 @@ CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
         self->mCallback[0] = w0;
         w2 = *src++;
         self->mCallback[2] = w2;
-        self->SeqInsertRtEvent();
+        reinterpret_cast<UnkEvtListEntry*>(self)->SeqInsertRtEvent();
         if (*(s32*)((char*)self->mPtr1C + 0x30) != 0) {
             self->mFlags |= 0x30;
         }
@@ -356,7 +372,7 @@ void MapModel_ProbeSlot(CREvtModelMap* self)
 {
     s32* pId = &self->mCreatureId;
     *pId = -1;
-    if (self->SeqProbeEvtSlot(pId)) {
+    if (reinterpret_cast<EvtBdabModel*>(self)->SeqProbeEvtSlot(reinterpret_cast<u32*>(pId))) {
         u32 w1, w2, w0;
         u32* src = (u32*)lbl_eu_80531D38;
         w0 = *src++;
@@ -526,7 +542,7 @@ void MapModel_Update(CREvtModelMap* self)
         simRefreshFlag8(self->mEmoteModel, fTime);
     }
     reinterpret_cast<CREvtModel*>(self)->setVisible(REvtCam_IsField98Set());
-    self->EvtSeqCheckEventRunGuard();
+    reinterpret_cast<UnkObj80168514*>(self)->EvtSeqCheckEventRunGuard();
 }
 
 void MapModel_SetVisible(CREvtModelMap* self, unsigned int visible)

@@ -4,9 +4,8 @@
 #include <types.h>
 
 // Concurrent-edit shield: CfCam.hpp now carries tentative definitions of
-// lbl_eu_8066A1FC while several headers declare it extern "C"; rename the
+// ml::tau while several headers declare it extern "C"; rename the
 // identifier out of the way per include group (this TU never uses it).
-#define lbl_eu_8066A1FC cf_ptstate_2pi_a
 
 // PartyStateWin_OpenWindow's shared header declares it with (self, u32, u32), but the
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
@@ -32,13 +31,12 @@
 // (dispatchItemLoad / testActorStatus now have single unified decls on the
 // CfMapItemManager owner header; no pre-include renames needed for them.)
 // NOTE: CBattleManager.hpp temporarily dropped - its include subtree currently
-// mixes a CfCam.hpp tentative definition of lbl_eu_8066A1FC with extern "C"
+// mixes a CfCam.hpp tentative definition of ml::tau with extern "C"
 // declarations of the same symbol (concurrent-edit conflict).
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/CVec3.hpp"
-#undef lbl_eu_8066A1FC
 
 // Imports used only by CfCmd_PickChain.
 extern float lbl_eu_80667A94;

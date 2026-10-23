@@ -2,7 +2,10 @@
 #
 # Enforces freshness of the committed code-smell report (docs/CODE_SMELLS.md)
 # and a hard no-regression rule: per-TU smell metrics must not increase
-# relative to the base branch's committed baseline. Runs without any build
+# relative to the base branch's committed baseline, plus the checked-in
+# shrink-only per-TU ratchet (tools/coop/smell_baseline.json; lower it with
+# `smell_report.py --ratchet`). The report also carries the derived clean tier
+# (accepted + smell-free body, tools/coop/clean_tier.py). Runs without any build
 # artifacts — pure stdlib Python over the game-code C++ TUs.
 
 name: Code Smells
@@ -15,6 +18,10 @@ on:
       - "libs/nw4r/**"
       - "tools/coop/smell_scan.py"
       - "tools/coop/smell_report.py"
+      - "tools/coop/smell_baseline.json"
+      - "tools/coop/clean_tier.py"
+      - "tools/coop/ptr_sites.py"
+      - "tools/coop/targets.json"
       - "docs/CODE_SMELLS.md"
       - ".github/workflows/code-smells.yml"
   pull_request:
@@ -24,6 +31,10 @@ on:
       - "libs/nw4r/**"
       - "tools/coop/smell_scan.py"
       - "tools/coop/smell_report.py"
+      - "tools/coop/smell_baseline.json"
+      - "tools/coop/clean_tier.py"
+      - "tools/coop/ptr_sites.py"
+      - "tools/coop/targets.json"
       - "docs/CODE_SMELLS.md"
       - ".github/workflows/code-smells.yml"
   workflow_dispatch:
@@ -42,7 +53,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Verify committed code-smell report is fresh and not regressing
+      - name: Smell ratchet + clean-tier tests
+        run: python -m unittest tools.coop.tests.test_smell_ratchet tools.coop.tests.test_ptr_sites
+
+      - name: Verify committed code-smell report is fresh and not regressing (ratchet + base)
         run: python tools/coop/smell_report.py --check
 
       - name: Show live TU status (informational)

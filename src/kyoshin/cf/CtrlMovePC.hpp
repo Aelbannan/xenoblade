@@ -221,13 +221,11 @@ extern const f32 lbl_eu_80667BAC;   // goal-proximity squared threshold
 extern const f32 lbl_eu_80667BD4;   // probe height offset
 extern const f32 lbl_eu_80667BCC;   // arrival radius squared (nudge path)
 extern const f32 lbl_eu_80667BE0;   // slope gate
-extern const f32 lbl_eu_8066A1F8;   // pi
 extern const f64 lbl_eu_80667BE8;   // probe angle bias (double)
 extern const f32 lbl_eu_80667C44;   // arrival radius squared
 extern const f32 lbl_eu_80667C48;   // raycast param
 extern const f32 lbl_eu_80667C4C;   // raycast param
 extern const f32 lbl_eu_80667C50;   // max follow distance
-extern const f32 lbl_eu_8066A200;   // 1.5707964f (pi/2)
 
 // lbl_eu_80663E28 is declared by kyoshin/cf/object/CfObjectMove.hpp (canonical
 // non-const form); do not redeclare here.

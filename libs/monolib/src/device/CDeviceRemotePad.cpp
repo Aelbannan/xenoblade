@@ -17,64 +17,17 @@
 // RTTI symbols stay off.
 // ============================================================================
 
-// RTTI data labels (.sdata 0x806635E8-0x806635F8, defined below) and the
-// base-class RTTI objects (defined in the TUs owning their key functions).
-extern "C" void* __RTTI__10IWorkEvent;
-extern "C" void* __RTTI__11CWorkThread;
+// Vtable-slot targets, RTTI objects and the retail RTTI/vtable labels.
+#include "monolib/data_vtables.hpp"
 
 // .data RTTI base lists (defined below; forward decls for the .sdata refs).
 extern "C" u32 lbl_eu_8056BC60[8];
 extern "C" u32 lbl_eu_8056BD20[6];
 
-// Destructors (retail C-linkage names; the class members coexist).
-extern "C" void __dt__16CDeviceRemotePadFv();
-extern "C" void __dt__11CDeviceBaseFv();
-
-// IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).
-extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern "C" int WorkEvent3__10IWorkEventFPv(void*);
-extern "C" int WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb(int);
-extern "C" int WorkEvent6__10IWorkEventFv();
-extern "C" int WorkEvent7__10IWorkEventFv();
-extern "C" int WorkEvent8__10IWorkEventFv();
-extern "C" int WorkEvent9__10IWorkEventFv();
-extern "C" int WorkEvent10__10IWorkEventFv();
-extern "C" int WorkEvent11__10IWorkEventFv();
-extern "C" int WorkEvent12__10IWorkEventFv();
-extern "C" int WorkEvent13__10IWorkEventFv();
-extern "C" int WorkEvent14__10IWorkEventFv();
-extern "C" int WorkEvent15__10IWorkEventFv();
-extern "C" int WorkEvent16__10IWorkEventFv();
-extern "C" int WorkEvent17__10IWorkEventFv();
-extern "C" int WorkEvent18__10IWorkEventFv();
-extern "C" int WorkEvent19__10IWorkEventFv();
-extern "C" int WorkEvent20__10IWorkEventFv();
-extern "C" int WorkEvent21__10IWorkEventFv();
-extern "C" int WorkEvent22__10IWorkEventFv();
-extern "C" int WorkEvent23__10IWorkEventFv();
-extern "C" int WorkEvent24__10IWorkEventFv();
-extern "C" int WorkEvent25__10IWorkEventFv();
-extern "C" int WorkEvent26__10IWorkEventFv();
-extern "C" int WorkEvent27__10IWorkEventFv();
-extern "C" int WorkEvent28__10IWorkEventFv();
-extern "C" int WorkEvent29__10IWorkEventFv();
-extern "C" int WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-
-// CWorkThread work-method vtable slots.
-extern "C" void wkUpdate__11CWorkThreadFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
+// CDeviceBase inherits these CWorkThread slots. Kept local: other TUs declare
+// these C-linkage names with incompatible parameter lists.
 extern "C" void wkStandbyLogin__11CWorkThreadFv();
 extern "C" void wkStandbyLogout__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-
-// CDeviceRemotePad work-method overrides (defined below).
-extern "C" void wkUpdate__16CDeviceRemotePadFv();
-extern "C" void wkStandbyLogin__16CDeviceRemotePadFv();
-extern "C" void wkStandbyLogout__16CDeviceRemotePadFv();
 
 // .rodata 0x80522960-0x80522980: RTTI name strings.
 extern "C" const char lbl_eu_80522960[0x11] = "CDeviceRemotePad";
@@ -158,7 +111,7 @@ CDeviceRemotePad* lbl_eu_80665638[2];
 CDeviceRemotePad::CDeviceRemotePad(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD){
     // Retail stores the manual vtable label (novtable class, no auto store).
-    *(void**)this = (void*)&lbl_eu_8056BBC0[0];
+    *reinterpret_cast<u32**>(this) = lbl_eu_8056BBC0;
     mPadUpdateFunc = nullptr;
     lbl_eu_80665638[0] = this;
 

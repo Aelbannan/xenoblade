@@ -7,13 +7,13 @@ extern void (*lbl_eu_80665724)();
 extern void (*lbl_eu_80665728)();
 
 CLibVM::CLibVM(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
-    lbl_eu_80665720 = this;
+    spInstance = this;
     mType = THREAD_CLIBVM;
 }
 
 extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
     if (self != 0) {
-        lbl_eu_80665720 = 0;
+        CLibVM::spInstance = 0;
         __dt__11CWorkThreadFv(self, 0);
         if (deleting > 0) {
             __dl__FPv(self);
@@ -45,7 +45,7 @@ public:
 // message ring. The member isRunning() is inlined with 'this' bound to the
 // singleton global.
 bool CLibVM::isInitialized(){
-    const CLibVM* inst = lbl_eu_80665720;
+    const CLibVM* inst = spInstance;
 
     bool exception;
     if (inst->mFlags & THREAD_FLAG_EXCEPTION) {

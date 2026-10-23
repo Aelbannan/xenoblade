@@ -7,7 +7,7 @@
 #include <revolution/mtx/vec.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"  // real owner of the +0x4C/+0xAC/+0xC4 link slots
 #include "kyoshin/cf/object/CBattleState.hpp"
 // CBattleState +0x10 (lbl_eu_8052E9B0 / JP __vt__Q22cf12CBattleState word 3):
@@ -260,7 +260,6 @@ s8 lbl_eu_80663D74;
 f32 lbl_eu_80663D60;
 f32 lbl_eu_80663D68;
 f32 lbl_eu_80663D70;
-f32 lbl_eu_8066A1F8;
 const char lbl_eu_80526324[];
 const char lbl_eu_80526300[];
 ml::CVec3 zero__Q22ml5CVec3;
@@ -965,11 +964,11 @@ next:
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) goto ground;
         {
             f32 f2v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(accel.z * dirM.x - accel.x * dirM.z, accel.y);
-            if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = lbl_eu_8066A1F8 * 0.25f; lbl_eu_80663D74 = 1; }
+            if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = ml::pi * 0.25f; lbl_eu_80663D74 = 1; }
             f32 p4 = lbl_eu_80663D70;
             if (p4 >= f2v && f2v >= -p4) {
                 self->state52C = 1;
-            } else if (lbl_eu_8066A1F8 - p4 <= f2v || f2v <= -(lbl_eu_8066A1F8 - p4)) {
+            } else if (ml::pi - p4 <= f2v || f2v <= -(ml::pi - p4)) {
                 self->state52C = 2;
             } else if (p4 < f2v && f2v < 3.0f * p4) {
                 self->state52C = 4;
@@ -2310,10 +2309,10 @@ void cf::CActParamAnimGame::aimAtActorPos() {
     f32 dx = d.x;
     f32 dy = d.y;
     f32 dz = d.z;
-    bool b1 = nw4r::math::FAbs(dx) <= lbl_eu_8066A208;
-    bool b2 = nw4r::math::FAbs(dy) <= lbl_eu_8066A208;
+    bool b1 = nw4r::math::FAbs(dx) <= ml::epsilon;
+    bool b2 = nw4r::math::FAbs(dy) <= ml::epsilon;
     bool nearXY = b1 && b2;
-    bool b3 = nw4r::math::FAbs(dz) <= lbl_eu_8066A208;
+    bool b3 = nw4r::math::FAbs(dz) <= ml::epsilon;
     bool nearAll = nearXY && b3;
     if (nearAll) return;
     v->flags0C |= 0x1000000;

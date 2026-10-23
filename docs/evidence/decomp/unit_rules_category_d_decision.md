@@ -327,3 +327,55 @@ FUSED-LAYOUT-latent 43, CONTENT-FUSED 6, STRING-BUG 7.
   `split1.s`, `nw4r_data.s`; totals in §1.3).
 - Untouched: `UNIT_RULES`, `postprocess_reloc_names.frozen.json`, `configure.py`,
   `symbols.txt`, `splits.txt`, `attempts.jsonl`; final `--check` OK.
+
+## 11. Status 2026-10-23 (eds-retire) — §10 actions executed
+
+Owner adopted Option C via A labelling (PLAN.md §17.7). Scope change mid-run (coordinator): the
+`.sdata2` EDS keys belong to the split-fix agent (pool-ownership research,
+`docs/evidence/pool_ownership_2026-10-23.md`: the "shared pools" are wrong `splits.txt`
+boundaries); eds-retire keeps tooling, batch 0, non-`.sdata2` latent keys and live
+`.data`/`.rodata`/`.sdata`/`.bss` keys.
+
+**§10.1 live re-derivation (configured `build.ninja`, `.scratch/eds/census.py`):** at start the
+table had already shrunk (2026-10-23 burn-down): 319 rules, **247 EDS keys, 39 live / 36 bases,
+208 latent, 6 STRING-BUG** (`g3d_restev.o` already retired). The 43/40 proxy count is stale:
+`CChainActorList`, `CCur`, `CVision`, `CWorkSystemCache`, `code_800A75FC`, `CTaskGameEffAfter`,
+`CMenuQuestLog`, … were retired; `CfTaskMain`, `CDrawGX`, `CScnFrame`, `snd_SoundSystem`,
+`lyt_arcResourceAccessor`, `g3d_resanmclr`, `ut_TextWriterBase#Q34nw4r2ut`, `snd_TaskManager`
+are live and missing from the proxy list.
+
+**Correction to §1.2/§5 (STRING-BUG is NOT inert):** `extern_data_sections()` tests
+`name in sections`; with a bare string that is a *substring* test, so `(".sdata2")` strips
+`.data`, `.sdata` and `.sdata2`, and `(".rodata")` strips `.rodata` and `.data`. Harmless for the
+5 latent keys; **live for `CDrawGX.o`** (`".sdata2"` string). It cannot be "fixed to a tuple"
+(value change breaks the freeze); it is a `.sdata2` key → handed to split-fix.
+
+**§10.3 tooling:** `Object(MatchingCodeOnly, …)` (tools/project.py marker, links like
+`Matching`, objdiff category `code_only`); `configure.py progress` prints headline data from
+owning TUs only + a separate code-only line; `readme_status.py` adds a code-only row;
+`tools/coop/code_only_check.py` = declarations-only checker (CI: build.yml after the build);
+`tools/coop/lib/code_only.py` parser; tests `tools/coop/tests/test_code_only.py`.
+
+**Batches (each: `run.py link-gate` OK → `link-gate --ratchet` → `check_unit_rules_frozen --ratchet`; build.ninja unchanged for latent chunks):**
+
+| batch | keys | result |
+|---|---|---|
+| 0 | `CPartsChange`, `CMenuGetItemMulti`, `g3d_anmchr`, `g3d_anmtexsrt`, `g3d_scnmdl` (latent) | EDS field deleted |
+| 1a | 60 latent (55 carry `.sdata2` — ran **before** the scope change; link-neutral, ratcheted, cannot be re-added under the freeze) | 58 fields + 2 whole entries deleted |
+| 1b | 38 latent non-`.sdata2` | 29 fields + 9 whole entries deleted |
+| live | `lyt_group.o#Q34nw4r3lyt`, `lyt_arcResourceAccessor.o` | `.reloc.o` byte-identical, deleted |
+| live | `snd_SoundSystem.o` (`.bss`/`.sbss`, raw data MATCH) | link improved: `lbl_eu_80665508/0C` no longer missing |
+| live → code-only | `CfTaskMain`, `bta_hh_utils`, `CLib`, `snd_Task`, `CTaskGamePic` | raw data MISMATCH (source defines data the split doesn't own); EDS kept, relabelled `MatchingCodeOnly`; hexdiff --all unchanged (11/11, 5/5, 6/6, 1/1, 19/19) |
+
+Counts: EDS 247 → **141** (105 latent + 31 live, all `.sdata2`-bearing → split-fix; `CDrawGX`
+string; 5 code-only). UNIT_RULES 319 → **308**. link-gate before missing=93 sda_reloc=8 →
+after missing=87 (2 from snd_SoundSystem; the rest from parallel agents) sda_reloc=8, 0
+multiply-defined/internal.
+
+**§7 ruling proposal (not implemented):** option (a)-prime — keep `CErrorWii.cpp`'s
+declarations (it owns no data; retail split is `.text`-only, which is exactly the §17.7
+declarations-only invariant), but rename the spelling once `ScheduleList.cpp` is matched: the
+`.sbss` bytes 0x80665A60–66 belong to ScheduleList's slice, so ScheduleList should define them
+under real (static member / file-scope) names and CErrorWii should reach them through
+ScheduleList's header. Until then grandfather both `lbl_eu_*` spellings as listed cleanup debt
+(no new ones); no §17.6 exception needed.

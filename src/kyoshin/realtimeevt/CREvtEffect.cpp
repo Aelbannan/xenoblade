@@ -328,7 +328,7 @@ extern "C" void EvtFx_UpdateEffects(CREvtEffect* self) {
             nameObj = EvtSeqFindEventByNameData(nameData);
         }
 
-        f32 fpsDiv = lbl_eu_8066A1F8 / lbl_eu_8066795C;
+        f32 fpsDiv = ml::pi / lbl_eu_8066795C;
         f32 half = lbl_eu_80667960;
 
         // Push the current anim state into every running effect.

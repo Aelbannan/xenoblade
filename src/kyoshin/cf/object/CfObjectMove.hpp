@@ -98,7 +98,6 @@ extern const float lbl_eu_80666AB4;   // CfObject_UnkVirtualFunc5 movement-rate 
 // threshold, lbl_eu_80666AD8 the sum-vector Y offset.
 extern const float lbl_eu_80666AD4;
 extern const float lbl_eu_80666AD8[2];
-extern const float lbl_eu_8066A208;   // ml::epsilon (sdata2)
 // Movement constants for CfObjectMove_testMoveProximity: lbl_eu_80666A98 is the squared-
 // distance threshold, lbl_eu_80666A9C the fallback distance, lbl_eu_80666AA0
 // the addend applied when the camera/player distance check fails.

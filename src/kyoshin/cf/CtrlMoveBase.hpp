@@ -89,5 +89,4 @@ extern f32 lbl_eu_806665B0;
 extern f32 lbl_eu_806665B4;
 extern f32 lbl_eu_806665B8;
 extern f32 lbl_eu_806665BC;
-extern const f32 lbl_eu_8066A210;   // degrees-to-radians (declared const in other TUs)
 extern f32 lbl_eu_8066AF20;

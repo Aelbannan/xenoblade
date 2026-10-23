@@ -47,9 +47,6 @@ extern "C" void  __dt__80185754(void* ptr);
 extern "C" const f32 lbl_eu_80667F08;  // angle conversion factor
 extern "C" const f32 lbl_eu_80667F0C;  // pi
 extern "C" const f32 lbl_eu_80667F10;  // pi/2 threshold base
-extern "C" const f32 lbl_eu_8066A1F8;  // -pi
-extern "C" const f32 lbl_eu_8066A1FC;  // 2pi
-extern "C" const f32 lbl_eu_8066A210;  // pi/2
 
 // ============================================================================
 // Constructor: __ct__CREvtLight
@@ -213,15 +210,15 @@ extern "C" int CREvtLight_AngleState(CREvtLight* self, cf::CfObject* target) {
 
     // Normalize result into the expected wrap range. The first condition is
     // written constant-first to match retail's fcmpo(pi, result) + cror lt.
-    while (lbl_eu_8066A1F8 <= result) {
-        result -= lbl_eu_8066A1FC;
+    while (ml::pi <= result) {
+        result -= ml::tau;
     }
-    while (result < -lbl_eu_8066A1F8) {
-        result += lbl_eu_8066A1FC;
+    while (result < -ml::pi) {
+        result += ml::tau;
     }
 
     // Check thresholds
-    f32 threshold = lbl_eu_80667F0C * lbl_eu_8066A210;
+    f32 threshold = lbl_eu_80667F0C * ml::deg2rad;
     f32 halfThreshold = lbl_eu_80667F10 * threshold;
 
     if (result > halfThreshold) {

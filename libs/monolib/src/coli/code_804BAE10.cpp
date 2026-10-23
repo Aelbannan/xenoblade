@@ -525,7 +525,7 @@ extern "C" void ColiQuerySphere(ColiObj* self, const Vec3* src, int idx, f32 rad
 // the per-index scale factor, record the shrunken endpoints as the shared
 // query min/max corners, expand the box extents by |max| + the per-index
 // base, then descend into the segment-vs-tree walker.
-void ColiQuerySegment(ColiObj* self, const Vec3* a, const Vec3* b, int idx) {
+void ColiQuerySegmentSweep(ColiObj* self, const Vec3* a, const Vec3* b, int idx) {
     // paired-single vector kernels (VEC3Add/Sub/Scale) reproduce retail PS ops
     QueryState& qs = *reinterpret_cast<QueryState*>(&lbl_eu_8065F3F0);
     const nw4r::math::VEC3& va = *reinterpret_cast<const nw4r::math::VEC3*>(a);

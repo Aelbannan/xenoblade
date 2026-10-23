@@ -8,7 +8,7 @@
 #include <revolution/KPAD.h>
 #include <revolution/PAD.h>
 #include <cstring>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 extern "C" {
     extern u32 lbl_eu_80663E28;
@@ -107,18 +107,18 @@ void CfPadTask::copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag){
 
 //Set the input disable timer (all inputs ignored until timer expires)
 void CfPadTask::setInputDisableTime(float f1){
-    if(f1 < lbl_eu_8066A208) sInputDisableTimer = 0;
+    if(f1 < ml::epsilon) sInputDisableTimer = 0;
     else if(f1 > sInputDisableTimer) sInputDisableTimer = f1;
 }
 
 //Check if input is currently disabled
 bool CfPadTask::isInputDisabled(){
-        return sInputDisableTimer > lbl_eu_8066A208;
+        return sInputDisableTimer > ml::epsilon;
     }
 
 //Set the button disable timer (A/B/+- buttons ignored until timer expires)
 void CfPadTask::setButtonDisableTime(float f1) {
-    if (f1 < lbl_eu_8066A208) {
+    if (f1 < ml::epsilon) {
         sButtonDisableTimer = lbl_eu_80667EA8;
     } else if (f1 > sButtonDisableTimer) {
         sButtonDisableTimer = f1;

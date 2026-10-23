@@ -1,5 +1,6 @@
 // monolib/src/scn/CMdlAnmUV - UV-animation helper object.
 #include <harness_catalog.h>
+#include "monolib/math/MathConstants.hpp"
 #include <nw4r/g3d/g3d_scnmdl.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
@@ -9,7 +10,7 @@
 #include <string.h>
 #include <monolib/util/FixStr.hpp>
 #include "libs/monolib/src/scn/CMdlAnmUV.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // Foreign Panic/file/format strings (other TUs' data).
 extern const char lbl_eu_8056E068[];
@@ -98,13 +99,13 @@ extern "C" bool UVAnm_PushPairSRT(CMdlAnmUV* self, u32 nodeId,
         if (i < 2) {
             s32 xySmall = 0;
             s32 allSmall = 0;
-            if ((f32)__fabs(t.x) <= lbl_eu_8066A208) {
-                if ((f32)__fabs(t.y) <= lbl_eu_8066A208) {
+            if ((f32)__fabs(t.x) <= ml::epsilon) {
+                if ((f32)__fabs(t.y) <= ml::epsilon) {
                     xySmall = 1;
                 }
             }
             if (xySmall != 0) {
-                if ((f32)__fabs(t.z) <= lbl_eu_8066A208) {
+                if ((f32)__fabs(t.z) <= ml::epsilon) {
                     allSmall = 1;
                 }
             }

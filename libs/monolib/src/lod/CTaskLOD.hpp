@@ -4,7 +4,7 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/lod/LODMemMan.hpp"
 
-struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
+class CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
 // +0x7C slot holds the scene-light control list head handed to scnLgtCallLightV26

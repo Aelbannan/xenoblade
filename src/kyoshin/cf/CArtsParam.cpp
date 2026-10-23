@@ -48,9 +48,6 @@ extern const float lbl_eu_80667480;
 extern const float lbl_eu_80667484;
 extern const float lbl_eu_80667488;
 extern const float lbl_eu_8066748C;
-extern const float lbl_eu_8066A1F8;
-extern const float lbl_eu_8066A1FC;
-extern const float lbl_eu_8066A210;
 
 namespace cf {
     // Retail record tables installed at +0x84 by the ctors (CAttackParam:
@@ -229,7 +226,7 @@ extern f64 lbl_eu_80667490;               // 2^52 (u32 -> float magic)
 extern f64 lbl_eu_80667498;               // 2^31 magic (s32 -> float)
 extern u16 lbl_eu_80663E42;               // current area id
 // lbl_eu_8066746C / 80667470 / 80667474 / 80667478 / 8066747C / 80667480 /
-// 80667484 / 80667488 / 8066748C and lbl_eu_8066A1F8 / 8066A1FC / 8066A210
+// 80667484 / 80667488 / 8066748C and ml::pi / 8066A1FC / 8066A210
 // are declared by headers already in the include chain (CfObjectModel.hpp /
 // CfCamEvent_1.hpp etc.).
 
@@ -332,7 +329,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                         f32 f27 = 0.0f;
                         u8 holder[8];
                         CTaskGame_enumListCtor(holder);
-                        f30 = (f32)p->unk64 * lbl_eu_8066A210;
+                        f30 = (f32)p->unk64 * ml::deg2rad;
                         int idx = (obj->field_3F00 & 2) ? 0 : 4;
                         int tblWord = *(u32*)((u8*)table + 4 + p->unk5C * 8 + idx);
                         if (obj->v163() != 0) {
@@ -350,7 +347,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             void* entry = lookupBattleStatusEntry((u8*)obj + 8, 0x95);
                             if (entry != 0) {
                                 splashKind = 1;
-                                f30 = (f32)*(u32*)((u8*)entry + 0x10) * lbl_eu_8066A210;
+                                f30 = (f32)*(u32*)((u8*)entry + 0x10) * ml::deg2rad;
                             }
                         }
                         u32 sv2;
@@ -420,7 +417,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             startEnumObjects(list, tblWord, 0x1000);
                             list = CTaskGame_enumListGet(holder);
                             __ct__800FB044(list, f31, vec70, 0);
-                            f32 f28 = obj->v364() + lbl_eu_8066A1F8;
+                            f32 f28 = obj->v364() + ml::pi;
                             list = CTaskGame_enumListGet(holder);
                             rebuildByDistanceCone(list, vec70, f31, f30, f28, dmgKind);
                             break;
@@ -429,8 +426,8 @@ int checkArtsFull(void* param, void* actor, int flags) {
                             void* list = CTaskGame_enumListGet(holder);
                             startEnumObjects(list, tblWord, 0x1000);
                             f32 v1 = obj->v364();
-                            f32 f28 = v1 + lbl_eu_8066A1F8 * lbl_eu_8066746C;
-                            f32 f29 = v1 - lbl_eu_8066A1F8 * lbl_eu_8066746C;
+                            f32 f28 = v1 + ml::pi * lbl_eu_8066746C;
+                            f32 f29 = v1 - ml::pi * lbl_eu_8066746C;
                             list = CTaskGame_enumListGet(holder);
                             rebuildByDualCone(list, vec70, f31, f30, f28, f30, f29, dmgKind);
                             list = CTaskGame_enumListGet(holder);
@@ -514,8 +511,8 @@ int checkArtsFull(void* param, void* actor, int flags) {
                                         *(f32*)((u8*)target + 0x3e9c + 0x28 + 0x4) - ((f32*)obj->mSub.s41())[4],
                                         *(f32*)((u8*)target + 0x3e9c + 0x28) - ((f32*)obj->mSub.s41())[0]) * lbl_eu_80667484;
                                     f27b -= obj->v363();
-                                    while (lbl_eu_8066A1F8 <= f27b) f27b -= lbl_eu_8066A1FC;
-                                    while (f27b < -lbl_eu_8066A1F8) f27b += lbl_eu_8066A1FC;
+                                    while (ml::pi <= f27b) f27b -= ml::tau;
+                                    while (f27b < -ml::pi) f27b += ml::tau;
                                     f32* tpos = (f32*)obj->mSub.s41();
                                     if (ColiQuerySpecDispatch((u8*)target + 0x44a8, tpos, 0, 1) == 0) {
                                         f32 lim = obj->v111()[0];

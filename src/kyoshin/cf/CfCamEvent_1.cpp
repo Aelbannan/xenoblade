@@ -12,7 +12,7 @@
 #include "kyoshin/cf/CfCamEvent_1.hpp"
 
 
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 struct Sdata2_CfCamEvent1 {
     float f_00;
@@ -561,27 +561,27 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
     case 1:
         t = lbl_eu_80666428 +
             SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 *
-                (lbl_eu_8066A200 * t - lbl_eu_8066A200));
+                (ml::halfpi * t - ml::halfpi));
         break;
     case 2:
         t = lbl_eu_80666418 *
             (lbl_eu_80666428 +
              SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 *
-                 (lbl_eu_8066A1F8 * t - lbl_eu_8066A200)));
+                 (ml::pi * t - ml::halfpi)));
         break;
     case 4:
         t = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 *
-            (lbl_eu_8066A200 * t));
+            (ml::halfpi * t));
         break;
     case 3:
         if (t > lbl_eu_80666418)
             t = lbl_eu_80666428 - lbl_eu_80666418 *
                 SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 *
-                    (lbl_eu_8066A1F8 * t));
+                    (ml::pi * t));
         else
             t = lbl_eu_80666418 *
                 SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 *
-                    (lbl_eu_8066A1F8 * t));
+                    (ml::pi * t));
         break;
     default:
         break;
@@ -1180,9 +1180,9 @@ static inline void camEventAnglePair(ml::CVec3* o1, ml::CVec3* o2,
         dm.y = d.y;
         dm.z = d.z;
         f32 mag;
-        if ((f32)__fabs((f64)dm.x) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)dm.y) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)dm.z) <= lbl_eu_8066A208)
+        if ((f32)__fabs((f64)dm.x) <= ml::epsilon &&
+            (f32)__fabs((f64)dm.y) <= ml::epsilon &&
+            (f32)__fabs((f64)dm.z) <= ml::epsilon)
             mag = lbl_eu_8066641C;
         else
             mag = PSVECMag(dm);
@@ -1274,11 +1274,11 @@ int CamEvtAdvanceEvent(CfCamEventManager* self) {
             f32 cur = e->x4;
             f32 prev = (e - 1)->x4;
             f32 d = cur - prev;
-            if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+            if ((f32)__fabs((f64)d) >= ml::pi) {
                 if (d > lbl_eu_8066641C)
-                    e->x4 = cur - lbl_eu_8066A1FC;
+                    e->x4 = cur - ml::tau;
                 else
-                    e->x4 = cur + lbl_eu_8066A1FC;
+                    e->x4 = cur + ml::tau;
             }
         }
     }
@@ -1666,11 +1666,11 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
-                if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+                if ((f32)__fabs((f64)d) >= ml::pi) {
                     if (d > lbl_eu_8066641C)
-                        e->x4 = cur - lbl_eu_8066A1FC;
+                        e->x4 = cur - ml::tau;
                     else
-                        e->x4 = cur + lbl_eu_8066A1FC;
+                        e->x4 = cur + ml::tau;
                 }
             }
         }
@@ -1687,11 +1687,11 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                 f32 cur = e->x4;
                 f32 prev = (e - 1)->x4;
                 f32 d = cur - prev;
-                if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+                if ((f32)__fabs((f64)d) >= ml::pi) {
                     if (d > lbl_eu_8066641C)
-                        e->x4 = cur - lbl_eu_8066A1FC;
+                        e->x4 = cur - ml::tau;
                     else
-                        e->x4 = cur + lbl_eu_8066A1FC;
+                        e->x4 = cur + ml::tau;
                 }
             }
         }
@@ -1976,9 +1976,9 @@ void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* 
         tmp.x = c->v2.x;
         tmp.y = c->v2.y;
         tmp.z = c->v2.z;
-        tmp.x *= lbl_eu_8066A20C;
-        tmp.y *= lbl_eu_8066A20C;
-        tmp.z *= lbl_eu_8066A20C;
+        tmp.x *= ml::rad2deg;
+        tmp.y *= ml::rad2deg;
+        tmp.z *= ml::rad2deg;
         CamEvtPushCamEntry(self, a, (ml::CVec3*)c, (ml::CVec3*)&tmp, b, 0, c->f_24);
     } else if (st == 8) {
         // Copy both aim vectors, then (when the follow cam exists) subtract
@@ -2031,7 +2031,7 @@ void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* 
 // Insert a scaled aim vector into the manager's three shake tables (0x7C,
 // 0x1F4, 0x36C), each capped at 16 entries. The cam-state word (0x3E)
 // selects the fill pattern:
-//   state 9      - r6 scaled by lbl_eu_8066A210 and normalized, stored into
+//   state 9      - r6 scaled by ml::deg2rad and normalized, stored into
 //                  all three tables (table2 receives the (p1,1,1) constant
 //                  triplet instead);
 //   state 8 + 47 - raw pair: table0 <- r6, table1 <- p5, d word cleared;
@@ -2056,14 +2056,14 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
     CamConvTmp convA;
     convB.w[0] = 0x43300000;
     convA.w[0] = 0x43300000;
-    if (p1 <= lbl_eu_8066A208)
+    if (p1 <= ml::epsilon)
         self->field_0x50 |= 0x10000;
 
     s16 state = self->field_0x3E;
     if (state == 9) {
         // Scale the r6 aim vector and normalize it; all three tables get it.
         CamTripletLocals sv;
-        f32 k = lbl_eu_8066A210;
+        f32 k = ml::deg2rad;
         f32 sx = aimVec->x * k;
         f32 sy = aimVec->y * k;
         f32 sz = aimVec->z * k;
@@ -2211,9 +2211,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
             out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
             out.z = lbl_eu_8066641C;
             VecMath_WrapAnglesPi((ml::CVec3*)&out);
-            if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
-                (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
-                (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+            if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
+                (f32)__fabs((f64)d.y) <= ml::epsilon &&
+                (f32)__fabs((f64)d.z) <= ml::epsilon)
                 out.z = lbl_eu_8066641C;
             else
                 out.z = PSVECMag((const Vec*)&d);
@@ -2289,9 +2289,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
         out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
         out.z = lbl_eu_8066641C;
         VecMath_WrapAnglesPi((ml::CVec3*)&out);
-        if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+        if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
+            (f32)__fabs((f64)d.y) <= ml::epsilon &&
+            (f32)__fabs((f64)d.z) <= ml::epsilon)
             out.z = lbl_eu_8066641C;
         else
             out.z = PSVECMag((const Vec*)&d);
@@ -2377,9 +2377,9 @@ void CamEvtPushCamEntry(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVe
                 t1.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                 t1.z = lbl_eu_8066641C;
                 VecMath_WrapAnglesPi((ml::CVec3*)&t1);
-                if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
-                    (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
-                    (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+                if ((f32)__fabs((f64)d.x) <= ml::epsilon &&
+                    (f32)__fabs((f64)d.y) <= ml::epsilon &&
+                    (f32)__fabs((f64)d.z) <= ml::epsilon)
                     t1.z = lbl_eu_8066641C;
                 else
                     t1.z = PSVECMag((const Vec*)&d);
@@ -2467,7 +2467,7 @@ void CamEvtStepShk(CfCamEventManager* self) {
     // at runtime - retail still emits the body.
     {
         CfCamEventElem* e = (CfCamEventElem*)self;
-        f32 step = lbl_eu_8066A1FC;
+        f32 step = ml::tau;
         while ((s32)e < (s32)self->tab0.count) {
             f32 cur = e->x4;
             f32 d = cur - (e - 1)->x4;
@@ -2500,11 +2500,11 @@ void CamEvtStepShk(CfCamEventManager* self) {
             for (; i < self->shake[0].field_0x166; i++, e++) {
                 f32 cur = e->x4;
                 f32 d = cur - (e - 1)->x4;
-                if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+                if ((f32)__fabs((f64)d) >= ml::pi) {
                     if (d > lbl_eu_8066641C)
-                        e->x4 = cur - lbl_eu_8066A1FC;
+                        e->x4 = cur - ml::tau;
                     else
-                        e->x4 = cur + lbl_eu_8066A1FC;
+                        e->x4 = cur + ml::tau;
                 }
             }
         }
@@ -2523,11 +2523,11 @@ void CamEvtStepShk(CfCamEventManager* self) {
         for (; iNB < self->shake[0].field_0x166; iNB++, eNB) {
             f32 cur = eNB->x4;
             f32 d = cur - (eNB - 1)->x4;
-            if ((f32)__fabs((f64)d) >= lbl_eu_8066A1F8) {
+            if ((f32)__fabs((f64)d) >= ml::pi) {
                 if (d > lbl_eu_8066641C)
-                    eNB->x4 = cur - lbl_eu_8066A1FC;
+                    eNB->x4 = cur - ml::tau;
                 else
-                    eNB->x4 = cur + lbl_eu_8066A1FC;
+                    eNB->x4 = cur + ml::tau;
             }
         }
     }
@@ -3232,7 +3232,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
             // angle EXCEEDS the threshold; r30 clears only when both angles
             // are above it.
             f32 a1 = acos(f31);
-            if (a1 > lbl_eu_8066646C * lbl_eu_8066A210) {
+            if (a1 > lbl_eu_8066646C * ml::deg2rad) {
                 if (f30 < lbl_eu_80666468) {
                     f30 = lbl_eu_80666468;
                 } else if (f30 > lbl_eu_80666428) {
@@ -3245,7 +3245,7 @@ void CamEvtCheckAimAngles(CfCamEventManager* self) {
                 }
 
                 f32 a2 = acos(f30);
-                if (a2 <= lbl_eu_8066646C * lbl_eu_8066A210) {
+                if (a2 <= lbl_eu_8066646C * ml::deg2rad) {
                     updateResult = 0;
                 }
             }

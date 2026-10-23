@@ -4,7 +4,6 @@
 
 using namespace ml;
 
-extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_8066AFA8;
 extern const f32 lbl_eu_8066AFB0;
 extern const f32 lbl_eu_8066AFB8;
@@ -119,15 +118,15 @@ extern "C" void LightCtlSetDir(CLight* self, const ml::CVec3* dir) {
 }
 // Computes a light direction by building the XYZ Euler rotation matrix for
 // (X = angleY, Y = angleX, Z fixed at 0) and applying it to the +Z unit
-// vector. Input angles are in degrees (radians via lbl_eu_8066A210); the
+// vector. Input angles are in degrees (radians via ml::deg2rad); the
 // matrix math looks up nw4r trig from the radian values (index via
 // lbl_eu_8066AFBC).
 void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY) {
     // Euler angles in radians; angle.x gets the angleY contribution (X-axis
     // rotation) computed first so it spills to the frame like retail.
     ml::CVec3 angle(
-        angleY * lbl_eu_8066A210,
-        angleX * lbl_eu_8066A210,
+        angleY * ml::deg2rad,
+        angleX * ml::deg2rad,
         0.0f
     );
 

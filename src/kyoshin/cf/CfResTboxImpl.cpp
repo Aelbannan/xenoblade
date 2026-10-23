@@ -166,8 +166,8 @@ using namespace cf;
 
 // us-801faaf0 - constructor: base CfResObjImpl ctor (parent passed through in
 // r4), then store the retail vtable label at +0x10 (manual-vtable scheme).
-extern "C" cf::CfResTboxImpl* __ct__cf_CfResTboxImpl(CfResTboxImpl* ths, CfResTboxParent* parent) {
-    __ct__cf_CfResObjImpl((cf::CfResObjImpl*)ths, (void*)parent);
+extern "C" cf::CfResTboxImpl* __ct__cf_CfResTboxImpl(CfResTboxImpl* ths, CfResObjParent* parent) {
+    __ct__cf_CfResObjImpl((cf::CfResObjImpl*)ths, parent);
     ths->vtbl() = &lbl_eu_80535204;
     return ths;
 }
@@ -193,9 +193,9 @@ void ResTbox_OpenResource(CfResTboxImpl* ths) {
     u8 buf64[0x44];
 
     ((cf::CfObjectModel*)ths->field_00)->CfObjectModel_releaseModelList();
-((cf::CfObjectModel*)ths->field_00)->CfObjectModel_releaseModelSub();
+    ((cf::CfObjectModel*)ths->field_00)->CfObjectModel_releaseModelSub();
     ths->field_00->field_90 = 0;
-    CfResTboxParent* parent = ths->field_00;
+    CfResObjParent* parent = ths->field_00;
     parent->field_94 = 0;
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     if (lbl_eu_80663E24 & 0x100000) return;
@@ -211,10 +211,10 @@ void ResTbox_OpenResource(CfResTboxImpl* ths) {
         ths->field_00->field_90 = CfRes_findEntryById(entry, handle1);
         ths->field_00->field_90 =
             CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (u32**)&outC);
-float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
+        float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
         CfModel_InstallSub(ths->field_00, obj);
-((cf::CfObject*)ths->field_00)->CfObject_setObjScale(anim);
+        ((cf::CfObject*)ths->field_00)->CfObject_setObjScale(anim);
     }
     if (ths->field_00->field_6C & 0x10) {
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;
@@ -235,12 +235,12 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         f32 anim = lbl_eu_806681D0;
         ths->field_00->field_6C =
             *(volatile u32*)&ths->field_00->field_6C & ~0x20000000;
-((cf::CfObject*)ths->field_00)->CfObject_syncModelRate(anim);
+        ((cf::CfObject*)ths->field_00)->CfObject_syncModelRate(anim);
         CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)ths->field_00, lbl_eu_806681D4);
     }
     CfObjectMove_initAnimTarget((cf::CfObjectMove*)ths->field_00);
     if (ths->field_00->field_38 != 0) {
-((cf::CfObject*)ths->field_00->field_38)->CfObject_getPosTriple();
+        ths->field_00->field_38->CfObject_getPosTriple();
     }
     if (ths->field_00->field_98 != 0) {
         ths->field_00->field_98->vfunc88(1);

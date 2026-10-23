@@ -163,13 +163,6 @@ extern void *GKI_getpoolbuf(u8 pool_id);
 extern void GKI_freebuf(void *p_buf);
 extern u16 L2CA_DataWrite(u16 cid, BT_HDR *p_buf);
 
-/* Short SDA trace strings: fixed-size externs keep MWCC on sda21 addressing
-** and give the retail reloc names (lbl_80665958/lbl_80665960), same fix as
-** btm_devctl.c's lbl_8066592C/34 (MWCC_CASES §1a SDA globals). */
-// Defined here (retail .sdata 0x0/0x8, 8 bytes each); non-const so they land
-// in .sdata rather than .sdata2.
-char lbl_80665958[8] = "Bad UA";
-char lbl_80665960[8] = "Bad DM";
 
 extern void LogMsg_0(u32 level, const char *msg);
 extern void LogMsg_1(u32 level, const char *msg, u32 p1);
@@ -512,7 +505,7 @@ u8 rfc_parse_data(tRFC_MCB *p_mcb, MX_FRAME *p_frame, BT_HDR *p_buf)
          || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
          || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
         {
-            RFCOMM_TRACE_ERROR0(lbl_80665958);
+            RFCOMM_TRACE_ERROR0("Bad UA");
             return (RFC_EVENT_BAD_FRAME);
         }
         else
@@ -523,7 +516,7 @@ u8 rfc_parse_data(tRFC_MCB *p_mcb, MX_FRAME *p_frame, BT_HDR *p_buf)
          || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
          || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
         {
-            RFCOMM_TRACE_ERROR0(lbl_80665960);
+            RFCOMM_TRACE_ERROR0("Bad DM");
             return (RFC_EVENT_BAD_FRAME);
         }
         else

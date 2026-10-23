@@ -779,7 +779,6 @@ extern "C" void sysWinOpenPhase1(void* sysWin);
 // .sdata2 floats / .sbss globals for the floor-map update functions.
 extern f32 lbl_eu_80668760;   // 1.0f (per-frame countdown step / anim advance)
 extern f32 lbl_eu_8066879C;
-extern f32 lbl_eu_8066A1F8;
 extern f32 lbl_eu_80668790;
 extern f32 lbl_eu_80668768;
 extern f32 lbl_eu_8066876C;

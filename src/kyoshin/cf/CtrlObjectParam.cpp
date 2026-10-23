@@ -3,6 +3,7 @@
 
 #define lbl_eu_805280D8 lbl_eu_805280D8_hack
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "monolib/math/MathConstants.hpp"
 #undef lbl_eu_805280D8
 extern const void* lbl_eu_805280D8[];
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -1006,7 +1007,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             self->mParam.CActorParam_setGaugeRateA(lbl_eu_80666794);
             self->mParam.CActorParam_setGaugeRateB(lbl_eu_80666794);
             self->mParam.CActorParam_setMoveRate(
-                lbl_eu_80666798 * (lbl_eu_8066A1F8 / lbl_eu_8066679C));
+                lbl_eu_80666798 * (ml::pi / lbl_eu_8066679C));
             u32 v98 = getBdatStringColumnValue(bdat, &strBase[0x98], self->field_00);
             self->mParam.CActorParam_setStatByte((u8)v98);
             *reinterpret_cast<u16*>(self->mParam.CActorParam_getBattleHitFlags()) |= 7;
@@ -1050,7 +1051,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             self->mParam.CActorParam_setGaugeRateA(lbl_eu_80666794);
             self->mParam.CActorParam_setGaugeRateB(lbl_eu_80666794);
             self->mParam.CActorParam_setMoveRate(
-                lbl_eu_80666798 * (lbl_eu_8066A1F8 / lbl_eu_8066679C));
+                lbl_eu_80666798 * (ml::pi / lbl_eu_8066679C));
             volatile u32 v98 = getBdatStringColumnValue(bdat, &strBase[0x98], self->field_00);
             self->mParam.CActorParam_setStatByte((u8)v98);
             cf::CtrlObjectParamStats* record =
@@ -1265,7 +1266,7 @@ extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView*
         const char* strBase = lbl_eu_804FBCB0;
         void* fp = getFP__FPCc(&strBase[0x237]);
         f32 f30 = lbl_eu_806667A0;
-        f32 f31 = lbl_eu_8066A20C;
+        f32 f31 = ml::rad2deg;
         for (int i = 0; i < 6; i++) {
             cf::CtrlObjectParamArtsDataV* data1 = reinterpret_cast<cf::CtrlObjectParamArtsDataV*>(
                 self->mParam.CActorParam_getArtsSlotIds());

@@ -5,7 +5,7 @@
 #include "kyoshin/action/CActParamData.hpp"
 #include "kyoshin/action/CActParamAnimForeign.hpp"
 #include "monolib/math/CVec3.hpp"  // ml::CVec3 for alignAnimQuat (same-TU helper)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // Full object layout for C-linkage accessors
 struct CActParamAnimFull {
@@ -501,7 +501,6 @@ extern const float lbl_eu_80665EAC; // (initAnimState init)
 extern const float lbl_eu_80665EB0; // (initAnimState init / func_800504DC clamp)
 extern const float lbl_eu_80665EB4; // (initAnimState init / func_800504DC)
 extern const float lbl_eu_80665EBC; // (initAnimState init: pre-multiplied with 8066A210)
-extern const float lbl_eu_8066A210; // (initAnimState init: pre-multiplied with 80665EBC)
 extern const float lbl_eu_80665EC0; // (func_8004B9D4 angle normalization divisor)
 extern const float lbl_eu_80665F04; // (func_800504DC rand scale)
 extern const float lbl_eu_80665F1C; // (func_800504DC angle threshold)
@@ -535,9 +534,6 @@ extern const float lbl_eu_80665F14; // (alignAnimQuat acos-angle epsilon)
 extern const float lbl_eu_80665F5C; // (alignAnimQuat dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
-extern float lbl_eu_8066A1F8; // pi (angle wrap, wrapAnglePi)
-extern float lbl_eu_8066A1FC; // two*pi (angle wrap, wrapAnglePi)
-extern const float lbl_eu_8066A20C; // angle gate scale (fireAngleLoGt / fireAngleHiGt) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
 
 // Same-TU helpers called from stepAnimFrame.
 void func_800504DC(CActParamAnim* self);
@@ -589,7 +585,6 @@ extern const float lbl_eu_80665F58;
 extern const float lbl_eu_80665F60;
 extern const float lbl_eu_80665F64;
 extern const float lbl_eu_80665F68;
-extern float lbl_eu_8066A200;
 extern float lbl_eu_8066AF20;
 
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).

@@ -224,5 +224,4 @@ extern const f32 lbl_eu_806684B4[1];
 extern const f32 lbl_eu_806684B8[1];
 extern const f32 lbl_eu_806684BC[1];
 extern const f32 lbl_eu_806684C0[1];
-extern const f32 lbl_eu_8066A210;
 

@@ -2,6 +2,12 @@
 
 #include "kyoshin/menu/CMenuMapSelect.hpp"
 
+// Declaration-only view of the full CMapSel class (kyoshin/CMapSel.hpp cannot
+// be included alongside CFloorMap.hpp; see CMenuMapSelect.hpp).
+struct CMapSelFull {
+    u8 getMapGridCell();
+};
+
 #include <monolib/work/CWorkThreadSystem.hpp>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/core/CPadManager.hpp>
@@ -266,7 +272,7 @@ void setupFloorMapPhase(CMenuMapSelect* self) {
     if (CFade_IsVisible(&self->mFade) != 0) {
         self->mFloorMap = CFloorMap();
 
-        u8 sel = (&self->mMapSel)->getMapGridCell();
+        u8 sel = reinterpret_cast<CMapSelFull*>(&self->mMapSel)->getMapGridCell();
         (&self->mFloorMap)->SetMapTable(sel);
         FloorMap_LoadMapFiles(&self->mFloorMap);
         self->mState = 5;
@@ -334,7 +340,7 @@ void handleFloorMapInput(CMenuMapSelect* self) {
                 self->mState = 10;
             }
         } else if ((pressed & 0x00400000) != 0) {
-            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
+            if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 (&self->mFade)->In();
@@ -402,7 +408,7 @@ void handleFloorMapInput(CMenuMapSelect* self) {
                 self->mState = 10;
             }
         } else if ((pressed & 0x20) != 0) {
-            if ((&self->mFloorMap)->GetActiveFlag58() != 0) {
+            if (reinterpret_cast<CFloorMapFull*>(&self->mFloorMap)->GetActiveFlag58() != 0) {
                 FloorMap_ConfirmSelect(&self->mFloorMap);
             } else if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 (&self->mFade)->In();

@@ -1412,10 +1412,7 @@ struct SpawnPose {
 // scale, 2^52+2^31 signed int->double magic).
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-extern const f32 lbl_eu_8066A200;   // pi/2
-extern const f32 lbl_eu_8066A204;   // pi/4
 extern const f32 lbl_eu_80667B50;
-extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_80667B4C;
 extern const f64 lbl_eu_80667B58;
 
@@ -1438,7 +1435,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseModulo(SpawnPose* src, SpawnPose* d
     s32 v = src->field_14;
     s32 rem360 = v % 360;
     s32 rem100 = v % 100;
-    f32 off = (f32)rem360 * lbl_eu_8066A210;
+    f32 off = (f32)rem360 * ml::deg2rad;
     f32 angle = src->field_18 + off;
     f32 rad = lbl_eu_80667B4C * (f32)rem100 * src->field_1C + src->field_20;
     d[0] = s[0];
@@ -1461,7 +1458,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseA(SpawnPose* src, SpawnPose* dst) {
     d[2] = s[2];
     s32 n = src->field_14;
     f32 radius = (f32)((n - 1) >> 1) * src->field_1C + src->field_1C;
-    f32 angle = src->field_18 + lbl_eu_8066A200;
+    f32 angle = src->field_18 + ml::halfpi;
     if ((n & 1) != 0) {
         dst->x += radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
         dst->z += radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
@@ -1502,7 +1499,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseB(SpawnPose* src, SpawnPose* dst) {
     d[0] = w0;
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
-    f32 angle = src->field_18 + lbl_eu_8066A204;
+    f32 angle = src->field_18 + ml::quarterpi;
     dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
@@ -1518,7 +1515,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseC(SpawnPose* src, SpawnPose* dst) {
     d[0] = w0;
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
-    f32 angle = src->field_18 - lbl_eu_8066A204;
+    f32 angle = src->field_18 - ml::quarterpi;
     dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
@@ -1537,11 +1534,11 @@ extern "C" void CPartsChange_ComputeSpawnPoseD(SpawnPose* src, SpawnPose* dst) {
     s32 m = src->field_14 - 1;
     f32 radius = (f32)(m >> 1) * src->field_1C + src->field_1C;
     if ((m & 1) != 0) {
-        f32 angle = src->field_18 + lbl_eu_8066A204;
+        f32 angle = src->field_18 + ml::quarterpi;
         dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
         dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     } else {
-        f32 angle = src->field_18 - lbl_eu_8066A204;
+        f32 angle = src->field_18 - ml::quarterpi;
         dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
         dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
     }
@@ -1561,7 +1558,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose
     f32 dx = lbl_eu_80667B28;
     f32 dz = lbl_eu_80667B28;
     if ((src->field_14 & 1) != 0) {
-        f32 a = src->field_18 + lbl_eu_8066A200;
+        f32 a = src->field_18 + ml::halfpi;
         dx += src->field_1C * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * a);
         dz += src->field_1C * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * a);
     }
@@ -1595,9 +1592,9 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
     f32 rad = src->field_1C;
     f32 ang = src->field_18;
     if (m % 3 == 0) {
-        ang -= lbl_eu_8066A204;
+        ang -= ml::quarterpi;
     } else if (m % 3 == 1) {
-        ang += lbl_eu_8066A204;
+        ang += ml::quarterpi;
     } else {
         if (rad * rad + rad * rad < lbl_eu_80667B28) {
             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);

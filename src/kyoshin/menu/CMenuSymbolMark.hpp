@@ -36,7 +36,6 @@ extern const f32 lbl_eu_80667100;
 extern const f32 lbl_eu_80667104;
 extern const f32 lbl_eu_80667108;
 extern f32 lbl_eu_8066710C;
-extern f32 lbl_eu_8066A1F8;
 // Magic int-to-float conversion bias (MWCC 0x4330/xoris idiom).
 extern const f64 lbl_eu_80667110;
 
@@ -332,8 +331,6 @@ extern const f32 lbl_eu_80667124;
 extern const f32 lbl_eu_80667128;
 extern const f32 lbl_eu_8066712C;
 extern const f32 lbl_eu_80667130;
-extern const f32 lbl_eu_8066A1FC;
-extern const f32 lbl_eu_8066A210;
 
 // Real CActorParam provides CActorParam_getHp at 0x128 (replaces PlayerHpGate pad)
 

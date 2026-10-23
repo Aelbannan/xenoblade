@@ -17,8 +17,6 @@ extern const f32 lbl_eu_80667D70; // FIdx degrees multiplier for SinFIdx
 extern const f32 lbl_eu_80667D78; // bdat column float scale
 extern const f64 lbl_eu_80667D80; // 0x4330 double-conversion bias A
 extern const f64 lbl_eu_80667D88; // 0x4330 double-conversion bias B
-extern const f32 lbl_eu_8066A1F8; // pi
-extern const f32 lbl_eu_8066A1FC; // 2*pi
 
 // Global runtime-flag word (bit 0x2000 = bit 13 gates target selection).
 
@@ -118,8 +116,8 @@ extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSr
             ml::CVec3 v2 = *targetPos - t->m0C;
             delta = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v2.x, v2.z) - angSelf;
         }
-        while (lbl_eu_8066A1F8 <= delta) delta -= lbl_eu_8066A1FC;
-        while (delta < -lbl_eu_8066A1F8) delta += lbl_eu_8066A1FC;
+        while (ml::pi <= delta) delta -= ml::tau;
+        while (delta < -ml::pi) delta += ml::tau;
         outDir->x = -nw4r::math::SinFIdx(lbl_eu_80667D70 * delta);
     } else {
         // Transform the target through the source matrix and normalize; fall
@@ -225,7 +223,6 @@ struct BdatTable;
 extern BdatTable* lbl_eu_806640B8;
 extern u32 lbl_eu_8057164C[3];       // reference aim-point vector
 extern f32 lbl_eu_80667D74;          // initial best-distance sentinel
-extern f32 lbl_eu_8066A208;          // column-match threshold
 
 extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                                int entryBase) {
@@ -263,7 +260,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
             f32 best = lbl_eu_80667D74;
             f64 bias = lbl_eu_80667D80;
             f32 scale = lbl_eu_80667D78;
-            f32 thr = lbl_eu_8066A208;
+            f32 thr = ml::epsilon;
             ml::CVec3 prev = self->mVec0;
             char colStorage[sizeof(ml::FixStr<32>)];
             ml::FixStr<32>& col = *reinterpret_cast<ml::FixStr<32>*>(colStorage);

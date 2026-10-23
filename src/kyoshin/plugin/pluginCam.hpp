@@ -15,8 +15,6 @@ extern const f32 lbl_eu_80666168; // 4096.0f fixed-point scale
 // defined TU-locally in pluginCam.cpp under its retail pool name.
 extern const f32 lbl_eu_80666178; // 0.0f
 extern const f32 lbl_eu_8066617C; // 1.0f
-extern const f32 lbl_eu_8066A20C; // radians-to-degrees (57.2958...)
-extern const f32 lbl_eu_8066A210; // degrees-to-radians (0.017453...)
 
 // u32 -> float conversion: builds the 0x43300000-prefixed bit pattern in
 // memory and subtracts the shared sdata2 magic double so the pool reloc

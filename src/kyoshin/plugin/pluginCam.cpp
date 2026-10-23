@@ -78,11 +78,11 @@ static inline s32 floatToFixed(f32 val) {
 }
 
 static inline f32 degToRad(s32 fixedDeg) {
-    return fixedToFloat(fixedDeg) * lbl_eu_8066A210;
+    return fixedToFloat(fixedDeg) * ml::deg2rad;
 }
 
 static inline s32 radToDegFixed(f32 rad) {
-    return (s32)(lbl_eu_80666168 * (rad * lbl_eu_8066A20C));
+    return (s32)(lbl_eu_80666168 * (rad * ml::rad2deg));
 }
 
 // s32 -> f32 via the shared sdata2 magic double (pluginCam.hpp F64Conv
@@ -170,7 +170,7 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
     ml::CVec3 dir;
-    volatile f32 deg = lbl_eu_8066A210;
+    volatile f32 deg = ml::deg2rad;
     dir.x = (f32)fixedAngle / lbl_eu_80666168 * deg;
     dir.y = (f32)fixedDist / lbl_eu_80666168 * deg;
     dir.z = lbl_eu_80666178;
@@ -184,7 +184,7 @@ extern "C" int setDir(VMThread* pThread) {
 extern "C" int setRotX(VMThread* pThread) {
     s32 fixedAngle = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
     f32 value = fixedToFloat(fixedAngle);
-    f32 rotX = value * lbl_eu_8066A210;
+    f32 rotX = value * ml::deg2rad;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setRotationX(rotX);
@@ -194,7 +194,7 @@ extern "C" int setRotX(VMThread* pThread) {
 extern "C" int setRotY(VMThread* pThread) {
     s32 fixedAngle = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
     f32 value = fixedToFloat(fixedAngle);
-    f32 rotY = value * lbl_eu_8066A210;
+    f32 rotY = value * ml::deg2rad;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setRotationY(rotY);

@@ -124,11 +124,16 @@ def scan_file(path: Path, skip_asm_bodies: bool = False) -> Stats:
     ``asm_code`` only. The default ``False`` keeps the game-code scan
     behaviour byte-identical.
     """
-    s = Stats()
     try:
         text = path.read_text(errors="replace")
     except OSError:
-        return s
+        return Stats()
+    return scan_text(text, skip_asm_bodies)
+
+
+def scan_text(text: str, skip_asm_bodies: bool = False) -> Stats:
+    """Scan raw source text (a whole TU or one function body); see scan_file."""
+    s = Stats()
     lines = text.splitlines()
     in_extern_c = False
     in_asm = False

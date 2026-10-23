@@ -1,9 +1,6 @@
 #include "monolib/math.hpp"
 
 extern "C" {
-    extern const f64 lbl_eu_8066A1D8;
-    extern const f32 lbl_eu_8066A1D0;
-    extern const f32 lbl_eu_8066A1E0;
     s8 lbl_eu_80665580;
 }
 
@@ -72,12 +69,12 @@ namespace ml{
     //func_80435B5C -- retail is MWCC's builtin u32->f32 cast idiom
     //(lis 0x4330/stw, lfd, fsubs vs the pooled 2^52 magic) -- KB ref:bc80cd6fac.
     float MTRand::randFloat() {
-        return (f32)rand32() * lbl_eu_8066A1D0;
+        return (f32)rand32() * 2.3283064e-10f;
     }
 
     //func_80435BF8
     float MTRand::randFloat1() {
-        return (lbl_eu_8066A1E0 + (f32)rand32()) * lbl_eu_8066A1D0;
+        return (0.5f + (f32)rand32()) * 2.3283064e-10f;
     }
 
 } //namespace ml

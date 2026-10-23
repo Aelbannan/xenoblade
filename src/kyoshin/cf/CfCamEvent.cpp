@@ -307,7 +307,7 @@ void CfCamEvt_Update(CfCamEvent* self) {
                                      (const char*)lbl_eu_805262C8);
     }
     // acos result is narrowed to f32 before the scaling multiply.
-    if ((f32)acos(ang) * lbl_eu_8066A20C < lbl_eu_80666284) {
+    if ((f32)acos(ang) * ml::rad2deg < lbl_eu_80666284) {
         self->field_0x290 = 1;
     }
     if (self->field_0x290 > 0 && --self->field_0x290 == 0) {

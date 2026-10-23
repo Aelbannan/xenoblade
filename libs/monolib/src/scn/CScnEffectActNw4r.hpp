@@ -2,7 +2,7 @@
 
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 namespace nw4r {
 namespace g3d {

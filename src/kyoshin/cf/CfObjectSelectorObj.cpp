@@ -28,12 +28,10 @@ extern const f32 lbl_eu_80666EF8;
 extern f32 lbl_eu_80661DB0;
 extern const f32 lbl_eu_80666EFC;  // radians -> FIdx angle scale
 extern const f32 lbl_eu_80666F00;  // half-angle scale
-extern const f32 lbl_eu_8066A1FC;  // two*pi (angle wrap)
 
 // Retail keeps these in split1.s (.sbss 0x80663F10/0x80663F14); declare
 // extern so this TU emits no local storage.
 extern f32 lbl_eu_80663F10;
-extern const f32 lbl_eu_8066A1F8;
 extern const f32 lbl_eu_80666F0C;
 extern const f32 lbl_eu_80666F08;
 extern const f32 lbl_eu_80666F04;
@@ -538,8 +536,8 @@ bool Selector_UpdateFilter(cf::CfObjectSelectorObj* obj, unsigned int c) {
 }
 
 void sinit_800FEA14() {
-    // lbl_eu_80663F10 = lbl_eu_80666F08 * (lbl_eu_8066A1F8 / lbl_eu_80666F0C);
-    lbl_eu_80663F10 = lbl_eu_80666F08 * (lbl_eu_8066A1F8 / lbl_eu_80666F0C);
+    // lbl_eu_80663F10 = lbl_eu_80666F08 * (ml::pi / lbl_eu_80666F0C);
+    lbl_eu_80663F10 = lbl_eu_80666F08 * (ml::pi / lbl_eu_80666F0C);
 }
 
 // ---------------------------------------------------------------------
@@ -564,9 +562,9 @@ extern "C" void Selector_RunRequest(cf::CfSelectorUnit* self) {
         // Distance / facing-cone filter pass over the enumerated entries.
         nw4r::math::VEC3 delta;
         nw4r::math::VEC3 d;
-        const f32 twoPi = lbl_eu_8066A1FC;
+        const f32 twoPi = ml::tau;
         nw4r::math::VEC3* dp = &d;
-        const f32 pi = lbl_eu_8066A1F8;
+        const f32 pi = ml::pi;
         nw4r::math::VEC3* deltap = &delta;
         const f32 angScale = lbl_eu_80666EFC;
         const f32 halfScale = lbl_eu_80666F00;

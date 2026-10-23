@@ -18,7 +18,7 @@
 // dropping the remap block's lines outright perturbs pool/regalloc in
 // PTGaugeEntAct/PTGaugeClsAnm; see docs/MWCC_CASES.md IPA line-count note.)
 #include "kyoshin/cf/CBattleManager.hpp"
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
+// code_80135FDC.hpp declares ml::epsilon as u32 (line 188), conflicting
 // with the const float epsilon copies elsewhere; rename it out of the way.
 // This TU uses none of them.
 #include "kyoshin/code_80135FDC.hpp"

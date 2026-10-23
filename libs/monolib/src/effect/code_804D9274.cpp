@@ -25,7 +25,6 @@ extern f32 lbl_eu_8066B1E8; // pi/2
 extern f32 lbl_eu_8066B1F0; // 2^31
 extern f32 lbl_eu_8066B1FC; // 180/pi
 extern f32 lbl_eu_8066B210; // pi/180
-extern f32 lbl_eu_8066A210; // pi/180
 
 // Degree-indexed sin/cos tables: 360 entries of {value, slope} pairs,
 // populated at runtime by monolib/src/core/code_804EE558.cpp.
@@ -125,7 +124,7 @@ void cerandRandDir(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
     if (yawRange == 0) {
         yawRange = 360;
     }
-    f32 yaw = (f32)yawRange * randF() * lbl_eu_8066A210;
+    f32 yaw = (f32)yawRange * randF() * ml::deg2rad;
     out->x = cosTbl(yaw);
     out->y = 0.0f;
     out->z = sinTbl(yaw);
@@ -135,11 +134,11 @@ void cerandRandDir(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
     if (pitchRange == 0) {
         pitchRange = 180;
     }
-    f32 pitch = (f32)pitchRange * randF() * lbl_eu_8066A210;
+    f32 pitch = (f32)pitchRange * randF() * ml::deg2rad;
     out->x = out->x * sinTbl(pitch);
     out->y = cosTbl(pitch);
 
-    f32 roll = (f32)pitchRange * randF() * lbl_eu_8066A210;
+    f32 roll = (f32)pitchRange * randF() * ml::deg2rad;
     out->y = out->y * cosTbl(roll);
     out->z = out->z * sinTbl(roll);
     out->normalizeSub();
@@ -186,7 +185,7 @@ void cerandRandCylinder(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3*
     if (range == 0) {
         range = 360;
     }
-    f32 angle = (f32)range * randF() * lbl_eu_8066A210;
+    f32 angle = (f32)range * randF() * ml::deg2rad;
 
     f32 len = fSqrt(mx * (mx * randF()));
     if (0.0f < radius && radius < 1.0f) {

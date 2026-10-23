@@ -55,11 +55,11 @@ public:
 
     // +0x00: vptr (CScn vtable)
     char field_0x4[0x10 - 0x4];  // +0x04
-    u32 field_0x10;             // +0x10 - accessor table ptr (lbl_eu_8056E5C8)
+    u32* field_0x10;            // +0x10 - CTTask vtable ptr (lbl_eu_8056E5C8)
     char field_0x14[0x54 - 0x14];
-    u32 field_0x54;             // +0x54 - IWorkEvent vtable ptr (lbl_eu_8056E5C8+0x24)
+    u32* field_0x54;            // +0x54 - IWorkEvent vtable ptr (lbl_eu_8056E5C8 + 9 words)
     char field_0x58[0x8c - 0x58];
-    void* mUnk8C;               // +0x8c - CScnRootNw4r pointer
+    CScnRootNw4rLayout* mUnk8C; // +0x8c - CScnRootNw4r pointer
 };
 
 // Nw4r wrapper object. Base CScn ctor runs first; this ctor points the
@@ -70,6 +70,10 @@ public:
     // Ctor is free function __ct__CScnNw4r (CScnMem.cpp).
     virtual ~CScnNw4r();
 };
+
+// CScn's IWorkEvent sub-object lives at +0x54; the IWorkEvent-slot thunks in
+// the CScnNw4r table adjust `this` back to the CScn base by this amount.
+static const int SCN_WORKEVENT_OFFSET = 0x54;
 
 // Free functions in this TU (retail kept plain unmangled names).
 extern "C" void allocScnMem(CScnMem* self, u32 a, u32 b, u32 c);

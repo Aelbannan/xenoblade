@@ -9,7 +9,7 @@
 #include <revolution/MTX.h>
 #include <math.h>
 #include "monolib/math/CVec3.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // Model-look controller: keeps a set of vectors/scales synced to a model.
 class CMdlLook {
@@ -41,7 +41,6 @@ struct MdlLookWork {
 };
 
 // sdata2 float pool constants used by the look controller
-extern const float lbl_eu_8066A200; // pi/2
 extern const float lbl_eu_8066B370; // 0.0f
 extern const float lbl_eu_8066B37C; // 0.1f
 extern const float lbl_eu_8066B380; // 1.0f
@@ -125,7 +124,7 @@ extern "C" __declspec(noinline) void aimMdlLook(CMdlLook* look, u8* unkBytes,
                                                   u32 arg2, u32 arg3) {
     MdlLookWork* unk = reinterpret_cast<MdlLookWork*>(unkBytes);
     Mtx* outMtx = *reinterpret_cast<Mtx**>(arg3);
-    const f32 eps = lbl_eu_8066A208;
+    const f32 eps = ml::epsilon;
 
     nw4r::math::MTX34 workMtx;    // composed base matrix
     nw4r::math::MTX34 invMtx;
@@ -293,12 +292,12 @@ extern "C" __declspec(noinline) void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 f32 cyy = quat.y * yy;
                 f32 czz = quat.z * zz;
                 f32 cwz = quat.w * zz;
-                if (pitchAng >= lbl_eu_8066A200) {
+                if (pitchAng >= ml::halfpi) {
                     yawAng = lbl_eu_8066B3B4
                              * nw4r::math::Atan2FIdx(cxy - cwz,
                                                      lbl_eu_8066B380 - (cxx + czz));
                     rollAng = lbl_eu_8066B370;
-                } else if (pitchAng <= -lbl_eu_8066A200) {
+                } else if (pitchAng <= -ml::halfpi) {
                     rollAng = -(lbl_eu_8066B3B4
                                 * nw4r::math::Atan2FIdx(cxy - cwz,
                                                         lbl_eu_8066B380 - (cxx + czz)));

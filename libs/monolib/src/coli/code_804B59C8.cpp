@@ -434,7 +434,7 @@ extern "C" void resolveHitBwd(CColiSrc* a, CColiMover* b);
 // Sibling-unit helpers (global scope: MWCC emits C names).
 u32 Coli_CheckFlag(CColiMoverState* self);
 void ColiQuerySphere(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
-void ColiQuerySegment(CColiMoverState* self, CColiMgr* mgr, const Vec* src, u32 idx);
+void ColiQuerySegmentSweep(CColiMoverState* self, CColiMgr* mgr, const Vec* src, u32 idx);
 void ColiQueryBoxPt(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
 
 // extern "C" forward declarations so the data table below can reference
@@ -1883,7 +1883,7 @@ void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 flags, int mod
 // distance threshold (lbl_eu_8066AEE4) and per-stage config blocks, then
 // walk every registered scene-resource volume (expanding the manager AABB
 // to both transformed endpoints) and every mover-state volume, handing each
-// accepted pair to the segment registration helper ColiQuerySegment.
+// accepted pair to the segment registration helper ColiQuerySegmentSweep.
 // Cross-TU entry point (called from monolib/src/scn code_804BD8E8 with a
 // plain retail symbol name).
 extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec* pos2,
@@ -1942,7 +1942,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
     mgr->field_0xEC = 0;
     mgr->field_0x130 = 0;
     if (Coli_CheckFlag(state) == 0) return;
-    ColiQuerySegment(state, (CColiMgr*)data, pos2, state->field_0x34->field_0x04);
+    ColiQuerySegmentSweep(state, (CColiMgr*)data, pos2, state->field_0x34->field_0x04);
     if (mgr->field_0x136 == 0 && state->field_0x78 == 0) return;
     if (flag != 0) {
         state->field_0xA0 = tbl[0xE4 / 4];
@@ -1992,7 +1992,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
             state->field_0x30 = state->field_0x14 + e12->field_0x08;
             mgr->field_0xE8 = (Mtx*)&entry->m[0][0];
             mgr->field_0xEC = (u32)e12;
-            ColiQuerySegment(state, (CColiMgr*)data, pos2, e12->field_0x04);
+            ColiQuerySegmentSweep(state, (CColiMgr*)data, pos2, e12->field_0x04);
         }
     }
     if (state->field_0x78 != 0) {
@@ -2011,7 +2011,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
                 mgr->field_0xE8 = (Mtx*)&out->savedMtx;
                 mgr->field_0xEC = (u32)&out->savedInv;
                 CColiEntry12* e12 = &state->field_0x38[((const CColiQuery*)in)->field_0x00];
-                ColiQuerySegment(state, (CColiMgr*)&b, pos2, e12->field_0x04);
+                ColiQuerySegmentSweep(state, (CColiMgr*)&b, pos2, e12->field_0x04);
             }
         }
     }
@@ -2023,7 +2023,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
 // pure-Y vector, records the symmetric Y bounds (+0x64 / -+0x68), installs
 // the per-stage configuration blocks selected by mode/flag, then walks every
 // registered scene-resource volume and every mover-state volume, handing
-// each accepted pair to the segment registration helper ColiQuerySegment.
+// each accepted pair to the segment registration helper ColiQuerySegmentSweep.
 // The retail body brackets the walk with an orphaned GQR5 s16 scale-14
 // window (restored to scale 0 in the epilogue).
 extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
@@ -2147,7 +2147,7 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
             state->field_0x30 = state->field_0x14 + e12->field_0x08;
             mgr->field_0xE8 = (Mtx*)&entry->m[0][0];
             mgr->field_0xEC = (u32)&entry->field_0x34;
-            ColiQuerySegment(state, mgr, &t, e12->field_0x04);
+            ColiQuerySegmentSweep(state, mgr, &t, e12->field_0x04);
         }
     }
     if (state->field_0x78 == 0) {
@@ -2183,7 +2183,7 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&mgr->field_0x0C,
                                 (const nw4r::math::VEC3*)&a,
                                 (const nw4r::math::VEC3*)&mgr->field_0x00);
-            ColiQuerySegment(state, mgr, &a, state->field_0x38[in->field_0x00].field_0x04);
+            ColiQuerySegmentSweep(state, mgr, &a, state->field_0x38[in->field_0x00].field_0x04);
         }
     }
     state->field_0x30 = state->field_0x2C;
@@ -2303,7 +2303,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
             state->field_0x30 = state->field_0x14 + e12->field_0x08;
             mgr->field_0xE8 = (Mtx*)&entry->m[0][0];
             mgr->field_0xEC = (u32)&entry->field_0x34;
-            ColiQuerySegment(state, mgr, &t, e12->field_0x04);
+            ColiQuerySegmentSweep(state, mgr, &t, e12->field_0x04);
         }
     }
     if (state->field_0x78 == 0) {
@@ -2339,7 +2339,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&mgr->field_0x0C,
                                 (const nw4r::math::VEC3*)&a,
                                 (const nw4r::math::VEC3*)&mgr->field_0x00);
-            ColiQuerySegment(state, mgr, &a, state->field_0x38[in->field_0x00].field_0x04);
+            ColiQuerySegmentSweep(state, mgr, &a, state->field_0x38[in->field_0x00].field_0x04);
         }
     }
     state->field_0x30 = state->field_0x2C;
@@ -2699,7 +2699,7 @@ u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
                 *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
                 mgr->field_0xE8 = (Mtx*)&out->savedMtx;
                 mgr->field_0xEC = (u32)&out->savedInv;
-                ColiQuerySegment(self, mgr, (const Vec*)&tmp,
+                ColiQuerySegmentSweep(self, mgr, (const Vec*)&tmp,
                               self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04);
             }
         }

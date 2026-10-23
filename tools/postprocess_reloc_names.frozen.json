@@ -1,5 +1,5 @@
 {
- "baseline_count": 367,
+ "baseline_count": 305,
  "entries": {
   "AXFXChorusExp.o": {
    "class": "content",
@@ -108,12 +108,6 @@
   "CActParamAnim.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -131,12 +125,6 @@
   "CActParamData.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -313,12 +301,6 @@
       "@8081",
       "jumptable_eu_805369D4"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data",
-     ".rodata",
-     ".sdata"
     ],
     "pool_patterns": [
      [
@@ -531,10 +513,6 @@
    "fields": {
     "exact_renames": [
      [
-      "halfpi__2ml",
-      "lbl_eu_8066A200"
-     ],
-     [
       "@STRING@AsinRad__Q24nw4r4mathFf",
       "lbl_eu_8052ADB0"
      ],
@@ -544,30 +522,7 @@
      ]
     ],
     "extern_data_sections": [
-     ".data",
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:4222f983",
-      "lbl_eu_8066A190"
-     ],
-     [
-      "hex:bf800000",
-      "lbl_eu_8066A194"
-     ],
-     [
-      "hex:3f800000",
-      "lbl_eu_8066A198"
-     ],
-     [
-      "hex:3cc90fdb",
-      "lbl_eu_8066A19C"
-     ],
-     [
-      "hex:00000000",
-      "lbl_eu_8066A1A0"
-     ]
+     ".data"
     ]
    },
    "owner": "category-d",
@@ -587,10 +542,6 @@
       "hex:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80538200"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data"
     ],
     "pool_patterns": [
      [
@@ -653,11 +604,6 @@
       "__vt__Q22cf12CChainEffect",
       "lbl_eu_80539890"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
     ]
    },
    "owner": "category-d",
@@ -679,12 +625,6 @@
       "@9207",
       "lbl_eu_8050ED30"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data",
-     ".rodata",
-     ".sdata"
     ],
     "pool_patterns": [
      [
@@ -774,12 +714,6 @@
       "@9159",
       "jumptable_eu_805373BC"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data",
-     ".rodata",
-     ".sdata"
     ],
     "pool_patterns": [
      [
@@ -1248,9 +1182,6 @@
   "CETrail.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -1287,9 +1218,6 @@
       "@11341",
       "jumptable_eu_805355B0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -1319,10 +1247,6 @@
       "@13932",
       "jumptable_eu_8053861C"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data"
     ],
     "pool_patterns": [
      [
@@ -1363,10 +1287,6 @@
       "hex:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80536FB0"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data"
     ],
     "pool_patterns": [
      [
@@ -7283,10 +7203,6 @@
       "@5062",
       "lbl_eu_80574004"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".bss"
     ]
    },
    "owner": "category-d",
@@ -8031,12 +7947,6 @@
       "jumptable_eu_80537520"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data",
-     ".rodata",
-     ".sdata"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -8255,9 +8165,6 @@
       "InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -8323,35 +8230,6 @@
      [
       "@stringBase0",
       "lbl_eu_80509224"
-     ]
-    ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_80668518"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80668520"
-     ],
-     [
-      "hex:41f00000",
-      "lbl_eu_80668528"
-     ],
-     [
-      "hex:3c23d70a",
-      "lbl_eu_8066852C"
-     ],
-     [
-      "hex:4330000080000000",
-      "lbl_eu_80668530"
-     ],
-     [
-      "hex:3f800000",
-      "lbl_eu_80668538"
      ]
     ]
    },
@@ -8525,10 +8403,6 @@
       "jumptable_eu_80536D98"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data"
-    ],
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -8566,18 +8440,6 @@
      [
       "@STRING@FSqrt__Q24nw4r4mathFf@0",
       "lbl_eu_80526300"
-     ],
-     [
-      "pi__2ml",
-      "lbl_eu_8066A1F8"
-     ],
-     [
-      "epsilon__2ml",
-      "lbl_eu_8066A208"
-     ],
-     [
-      "halfpi__2ml",
-      "lbl_eu_8066A200"
      ]
     ],
     "extern_data_sections": [
@@ -8613,9 +8475,6 @@
   "CMat44.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -8646,9 +8505,6 @@
   "CMdlDynamics.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -8730,12 +8586,6 @@
       "@14737",
       "lbl_eu_804FD138"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
     ],
     "pool_patterns": [
      [
@@ -8855,13 +8705,6 @@
   "CMenuBattlePlayerState.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2",
-     ".bss"
-    ],
     "pool_patterns": [
      [
       "hex:42ac0000",
@@ -8957,7 +8800,6 @@
   "CMenuGetItemMulti.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9037,9 +8879,6 @@
   "CMenuItemExchange.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data"
-    ],
     "retarget_relocs": [
      [
       ".text",
@@ -9093,9 +8932,6 @@
       "hex:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80537480"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -9125,10 +8961,6 @@
       "@10881",
       "jumptable_eu_80537110"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".sbss"
     ]
    },
    "owner": "category-d",
@@ -9137,9 +8969,6 @@
   "CMenuPTChangeNotice.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9209,9 +9038,6 @@
   "CMenuPlayAward.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9661,12 +9487,6 @@
       "lbl_eu_80532ED0"
      ]
     ],
-    "extern_data_sections": [
-     ".rodata",
-     ".data",
-     ".sdata",
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -9696,7 +9516,6 @@
   "CPartsChange.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9756,9 +9575,6 @@
       "hex:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80535288"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -9772,9 +9588,6 @@
       "@11825",
       "jumptable_eu_80537920"
      ]
-    ],
-    "extern_data_sections": [
-     ".sbss2"
     ],
     "pool_patterns": [
      [
@@ -9805,9 +9618,6 @@
   "CPcKizunagram.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -9821,9 +9631,6 @@
   "CPlane.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -9855,9 +9662,6 @@
       "lbl_eu_8056B280"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "inject_relocs": [
      [
       ".data",
@@ -9874,12 +9678,6 @@
      [
       ".data",
       200
-     ]
-    ],
-    "pool_patterns": [
-     [
-      "hex:4330000080000000",
-      "lbl_eu_8066A280"
      ]
     ],
     "swap_data_blocks": [
@@ -9924,9 +9722,6 @@
       "@8683",
       "jumptable_eu_80536408"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -9935,9 +9730,6 @@
   "CQuat.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4222f983",
@@ -10036,9 +9828,6 @@
   "CScnBloom.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -10144,9 +9933,6 @@
   "CScnItemCamera.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -10198,9 +9984,6 @@
       "__ct__reslist_CScnItem"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata"
-    ],
     "pad_data_section": [
      [
       ".data",
@@ -10235,9 +10018,6 @@
   "CScnMaruShadowNw4r.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -10302,9 +10082,6 @@
       "__ct_CTask_CScn_name_carrier_3",
       "Draw__13CTTask<4CScn>Fv"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2"
     ],
     "inject_relocs": [
      [
@@ -10652,13 +10429,6 @@
       "lbl_eu_8052598C"
      ]
     ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2",
-     ".sbss"
-    ],
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -10964,13 +10734,6 @@
       "func_8009CF8C__Fi",
       "func_8009CF8C"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".bss",
-     ".sbss"
     ]
    },
    "owner": "category-d",
@@ -10988,13 +10751,6 @@
       "__vt__10IWorkEvent",
       "lbl_eu_80525A10"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".bss",
-     ".sbss"
     ],
     "retarget_relocs": [
      [
@@ -11032,12 +10788,6 @@
       "__vt__26CTTask<16CUIWindowManager>",
       "lbl_eu_8052E6B0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sbss"
     ]
    },
    "owner": "category-d",
@@ -11250,9 +11000,6 @@
   "CVirtualLightObj.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -11949,11 +11696,6 @@
       "__vt__Q22cf8CfObject",
       "lbl_eu_805294E0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
     ]
    },
    "owner": "category-d",
@@ -12056,9 +11798,6 @@
       ".sdata2",
       40
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -12080,11 +11819,6 @@
       "__ct__Q22cf11CfObjectObjFv",
       "__ct__cf_CfObjectObj"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
     ]
    },
    "owner": "category-d",
@@ -12121,9 +11855,6 @@
   "CfTFile.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -12179,12 +11910,6 @@
   "CtrlEnemy.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata",
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -12198,9 +11923,6 @@
   "CtrlMoveBase.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -12214,9 +11936,6 @@
   "CtrlMoveEne.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -12271,9 +11990,6 @@
   "CtrlRemote.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -12512,9 +12228,6 @@
   "LODMemMan.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -12550,9 +12263,6 @@
   "MPFDrawDisplayList.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -12709,9 +12419,6 @@
   "UnkClass_80471EC8.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -12741,9 +12448,6 @@
   "UnkClass_8047E110.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:3f800000",
@@ -12831,9 +12535,6 @@
       "...rodata.0",
       "lbl_eu_80517468"
      ]
-    ],
-    "extern_data_sections": [
-     ".rodata"
     ]
    },
    "owner": "category-d",
@@ -12970,9 +12671,6 @@
   "btm_sec.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".rodata"
-    ],
     "pad_sdata2_size": 8
    },
    "owner": "category-d",
@@ -13023,9 +12721,6 @@
   "code_800A3B24.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13062,9 +12757,6 @@
       "@2028",
       "jumptable_eu_805285C4"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -13133,9 +12825,6 @@
   "code_80187F14.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -13181,11 +12870,6 @@
       "__vt__Q34nw4r3snd15FxReverbStdDpl2",
       "lbl_eu_8056A7E8"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata",
-     ".sdata"
     ]
    },
    "owner": "category-d",
@@ -13225,10 +12909,6 @@
   "code_8025FB10.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2",
-     ".sbss"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13278,9 +12958,6 @@
   "code_804645CC.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13307,9 +12984,6 @@
   "code_8046A530.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13323,9 +12997,6 @@
   "code_8047D2AC.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -13362,9 +13033,6 @@
   "code_804B59C8.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -13494,9 +13162,6 @@
       "func_804BF274"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:0000000000000000",
@@ -13564,9 +13229,6 @@
   "code_804D854C.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13580,9 +13242,6 @@
   "code_804D9274.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:00000000",
@@ -13612,9 +13271,6 @@
   "code_804DB938.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -13628,9 +13284,6 @@
   "code_804DEDA8.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -13648,9 +13301,6 @@
   "code_804E36DC.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000000000000",
@@ -13689,9 +13339,6 @@
       "func_804F1B88__FfPQ22ml5CVec3PQ22ml5CVec3PQ22ml5CVec3lPUcP19CMarkerDistProviderlb",
       "func_804F1B88"
      ]
-    ],
-    "extern_data_sections": [
-     ".sdata2"
     ],
     "pool_patterns": [
      [
@@ -13900,8 +13547,7 @@
       "__vt__Q34nw4r3g3d9AnmObjChr",
       "lbl_eu_80569438"
      ]
-    ],
-    "extern_data_sections": ".rodata"
+    ]
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STRING-BUG; batch 0"
@@ -14013,7 +13659,6 @@
       "lbl_eu_805692E8"
      ]
     ],
-    "extern_data_sections": ".sdata2",
     "pool_patterns": [
      [
       "hex:00000000",
@@ -14454,18 +14099,6 @@
       8
      ],
      [
-      "lbl_eu_80669E24",
-      ".sdata2",
-      980,
-      4
-     ],
-     [
-      "lbl_eu_80669EEC",
-      ".sdata2",
-      1180,
-      4
-     ],
-     [
       "lbl_eu_80669A70",
       ".sdata2",
       32,
@@ -14475,336 +14108,6 @@
       "lbl_eu_80669A80",
       ".sdata2",
       48,
-      4
-     ],
-     [
-      "lbl_eu_80669AB0",
-      ".sdata2",
-      96,
-      4
-     ],
-     [
-      "lbl_eu_80669AB4",
-      ".sdata2",
-      100,
-      4
-     ],
-     [
-      "lbl_eu_80669AB8",
-      ".sdata2",
-      104,
-      4
-     ],
-     [
-      "lbl_eu_80669B88",
-      ".sdata2",
-      312,
-      4
-     ],
-     [
-      "lbl_eu_80669B8C",
-      ".sdata2",
-      316,
-      4
-     ],
-     [
-      "lbl_eu_80669BC8",
-      ".sdata2",
-      376,
-      4
-     ],
-     [
-      "lbl_eu_80669C98",
-      ".sdata2",
-      584,
-      4
-     ],
-     [
-      "lbl_eu_80669CA0",
-      ".sdata2",
-      592,
-      4
-     ],
-     [
-      "lbl_eu_80669CA4",
-      ".sdata2",
-      596,
-      4
-     ],
-     [
-      "lbl_eu_80669CB0",
-      ".sdata2",
-      608,
-      4
-     ],
-     [
-      "lbl_eu_80669CB4",
-      ".sdata2",
-      612,
-      4
-     ],
-     [
-      "lbl_eu_80669CB8",
-      ".sdata2",
-      616,
-      8
-     ],
-     [
-      "lbl_eu_80669CC0",
-      ".sdata2",
-      624,
-      4
-     ],
-     [
-      "lbl_eu_80669CC4",
-      ".sdata2",
-      628,
-      4
-     ],
-     [
-      "lbl_eu_80669CC8",
-      ".sdata2",
-      632,
-      4
-     ],
-     [
-      "lbl_eu_80669CCC",
-      ".sdata2",
-      636,
-      4
-     ],
-     [
-      "lbl_eu_80669CD0",
-      ".sdata2",
-      640,
-      8
-     ],
-     [
-      "lbl_eu_80669D0C",
-      ".sdata2",
-      700,
-      1
-     ],
-     [
-      "lbl_eu_80669D0D",
-      ".sdata2",
-      701,
-      1
-     ],
-     [
-      "lbl_eu_80669D0E",
-      ".sdata2",
-      702,
-      1
-     ],
-     [
-      "lbl_eu_80669D0F",
-      ".sdata2",
-      703,
-      1
-     ],
-     [
-      "lbl_eu_80669D10",
-      ".sdata2",
-      704,
-      1
-     ],
-     [
-      "lbl_eu_80669D11",
-      ".sdata2",
-      705,
-      1
-     ],
-     [
-      "lbl_eu_80669D12",
-      ".sdata2",
-      706,
-      1
-     ],
-     [
-      "lbl_eu_80669D13",
-      ".sdata2",
-      707,
-      1
-     ],
-     [
-      "lbl_eu_80669D38",
-      ".sdata2",
-      744,
-      4
-     ],
-     [
-      "lbl_eu_80669D3C",
-      ".sdata2",
-      748,
-      4
-     ],
-     [
-      "lbl_eu_80669DA0",
-      ".sdata2",
-      848,
-      4
-     ],
-     [
-      "lbl_eu_80669DD0",
-      ".sdata2",
-      896,
-      4
-     ],
-     [
-      "lbl_eu_80669DD4",
-      ".sdata2",
-      900,
-      4
-     ],
-     [
-      "lbl_eu_80669EE8",
-      ".sdata2",
-      1176,
-      4
-     ],
-     [
-      "lbl_eu_80669F30",
-      ".sdata2",
-      1248,
-      4
-     ],
-     [
-      "lbl_eu_80669F34",
-      ".sdata2",
-      1252,
-      4
-     ],
-     [
-      "lbl_eu_80669F38",
-      ".sdata2",
-      1256,
-      4
-     ],
-     [
-      "lbl_eu_80669F3C",
-      ".sdata2",
-      1260,
-      4
-     ],
-     [
-      "lbl_eu_80669F40",
-      ".sdata2",
-      1264,
-      4
-     ],
-     [
-      "lbl_eu_80669F48",
-      ".sdata2",
-      1272,
-      8
-     ],
-     [
-      "lbl_eu_80669F50",
-      ".sdata2",
-      1280,
-      4
-     ],
-     [
-      "lbl_eu_80669F54",
-      ".sdata2",
-      1284,
-      4
-     ],
-     [
-      "lbl_eu_80669F58",
-      ".sdata2",
-      1288,
-      4
-     ],
-     [
-      "lbl_eu_80669F5C",
-      ".sdata2",
-      1292,
-      4
-     ],
-     [
-      "lbl_eu_8066A058",
-      ".sdata2",
-      1544,
-      4
-     ],
-     [
-      "lbl_eu_8066A05C",
-      ".sdata2",
-      1548,
-      4
-     ],
-     [
-      "lbl_eu_8066A098",
-      ".sdata2",
-      1608,
-      4
-     ],
-     [
-      "lbl_eu_8066A09C",
-      ".sdata2",
-      1612,
-      4
-     ],
-     [
-      "lbl_eu_8066A0A8",
-      ".sdata2",
-      1624,
-      4
-     ],
-     [
-      "lbl_eu_8066A0B8",
-      ".sdata2",
-      1640,
-      4
-     ],
-     [
-      "lbl_eu_8066A0C0",
-      ".sdata2",
-      1648,
-      4
-     ],
-     [
-      "lbl_eu_8066A0C4",
-      ".sdata2",
-      1652,
-      4
-     ],
-     [
-      "lbl_eu_8066A0C8",
-      ".sdata2",
-      1656,
-      8
-     ],
-     [
-      "lbl_eu_8066A0D0",
-      ".sdata2",
-      1664,
-      4
-     ],
-     [
-      "lbl_eu_8066A0F0",
-      ".sdata2",
-      1696,
-      4
-     ],
-     [
-      "lbl_eu_8066A0F4",
-      ".sdata2",
-      1700,
-      4
-     ],
-     [
-      "lbl_eu_8066A0F8",
-      ".sdata2",
-      1704,
-      4
-     ],
-     [
-      "lbl_eu_8066A0FC",
-      ".sdata2",
-      1708,
       4
      ]
     ],
@@ -14895,8 +14198,7 @@
       "__vt__Q34nw4r3g3d6ScnMdl",
       "lbl_eu_805697A0"
      ]
-    ],
-    "extern_data_sections": ".rodata"
+    ]
    },
    "owner": "category-d",
    "reason": "EDS code-only-data: STRING-BUG; batch 0"
@@ -14909,9 +14211,6 @@
       "__vt__Q34nw4r3g3d12ScnMdlExpand",
       "lbl_eu_805697E8"
      ]
-    ],
-    "extern_data_sections": [
-     ".rodata"
     ]
    },
    "owner": "category-d",
@@ -14992,9 +14291,6 @@
     "drop_text_symbols": [
      "__dt__Q34nw4r3g3d7ScnLeafFv"
     ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pad_data_section": [
      [
       ".data",
@@ -15055,16 +14351,6 @@
       ".text",
       3082,
       "lbl_eu_80569648"
-     ],
-     [
-      ".text",
-      300,
-      "lbl_eu_80669CD8"
-     ],
-     [
-      ".text",
-      2136,
-      "lbl_eu_80669CDC"
      ],
      [
       ".text",
@@ -15132,10 +14418,6 @@
       "__vt__Q34nw4r3g3d7ScnRoot",
       "lbl_eu_805696F0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data",
-     ".rodata"
     ]
    },
    "owner": "category-d",
@@ -15340,9 +14622,6 @@
       "@1135"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata"
-    ],
     "repack_after_drop": 16
    },
    "owner": "category-d",
@@ -15422,9 +14701,6 @@
       "mspAllocator__Q34nw4r3lyt6Layout",
       "lbl_eu_80665488"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16217,9 +15493,6 @@
       "hex:0000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_80567298"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16234,9 +15507,6 @@
       "hex:0000000000000000000000000000000000000000000000000000000000000000",
       "jumptable_eu_805672B8"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16258,9 +15528,6 @@
       "@4066",
       "jumptable_eu_80567AD8"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16321,9 +15588,6 @@
       "getFlagVal",
       "getFlagVal_8003C0C0"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16338,14 +15602,10 @@
       "lbl_eu_806618D8"
      ]
     ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".sdata"
-    ],
     "pool_patterns": [
      [
       "hex:3ca08052",
-      "lbl_eu_8066A20C"
+      "rad2deg__2ml"
      ],
      [
       "hex:4330000080000000",
@@ -16384,9 +15644,6 @@
   "pluginCam.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -16400,9 +15657,6 @@
   "pluginCfs.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".sdata2"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",
@@ -16527,9 +15781,6 @@
       "hex:4330000080000000",
       "lbl_eu_8051CF40"
      ]
-    ],
-    "extern_data_sections": [
-     ".rodata"
     ]
    },
    "owner": "category-d",
@@ -16587,9 +15838,6 @@
       "hex:4330000080000000",
       "lbl_eu_8051CF40"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16706,10 +15954,6 @@
       "lbl_eu_80637F74"
      ]
     ],
-    "extern_data_sections": [
-     ".bss",
-     ".sbss"
-    ],
     "prefix_renames": [
      [
       "@GUARD@instance$",
@@ -16762,9 +16006,6 @@
       "__vt__Q44nw4r3snd6detail11BasicPlayer",
       "lbl_eu_8056A6E8"
      ]
-    ],
-    "extern_data_sections": [
-     ".data"
     ]
    },
    "owner": "category-d",
@@ -16888,10 +16129,6 @@
       "@8920",
       "lbl_eu_80637FD0"
      ]
-    ],
-    "extern_data_sections": [
-     ".bss",
-     ".sbss"
     ],
     "prefix_renames": [
      [
@@ -17065,10 +16302,6 @@
   "snd_RemoteSpeakerManager.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".bss",
-     ".sbss"
-    ],
     "prefix_renames": [
      [
       "instance$",
@@ -17301,10 +16534,6 @@
   "snd_SoundSystem.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".bss",
-     ".sbss"
-    ],
     "prefix_renames": [
      [
       "@89",
@@ -17778,9 +17007,6 @@
   "ut_PackedFont.o": {
    "class": "layout",
    "fields": {
-    "extern_data_sections": [
-     ".data"
-    ],
     "retarget_relocs": [
      [
       ".text",

@@ -7,7 +7,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 extern "C" void __dt__Q22cf15CfObjectImplEneFv();
 
@@ -323,11 +323,11 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
 
     // isZero-style guard on the horizontal offset (epsilon from sdata2).
     bool temp = false;
-    if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(dir.x) <= ml::epsilon && ml::math::abs(dir.y) <= ml::epsilon) {
         temp = true;
     }
     bool result = false;
-    if (temp && ml::math::abs(dir.z) <= lbl_eu_8066A208) result = true;
+    if (temp && ml::math::abs(dir.z) <= ml::epsilon) result = true;
     if (result) {
         dir.set(lbl_eu_80666CE4, lbl_eu_80666CE4, lbl_eu_80666CEC);
     } else {

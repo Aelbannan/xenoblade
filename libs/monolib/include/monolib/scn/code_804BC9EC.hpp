@@ -23,6 +23,13 @@ struct ScnResData {
 
 extern ScnResData lbl_eu_8065F32C;
 
+// The real class of lbl_eu_8065F32C is CColiMoverState (full 0xC4 layout in
+// coli/code_804B59C8.cpp). This scn-side view declares only the member the
+// scn TUs call; ScnResData above stays the field view used here.
+struct CColiMoverState {
+    void initColiMover();
+};
+
 extern "C" {
 ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
 void Coli_ClearOutFlag_8078(ScnResData* self, int index);

@@ -3,6 +3,7 @@
 
 #include "kyoshin/cf/CfScript.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/plugin/pluginMain.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/vm/yvm2.h"
@@ -39,7 +40,6 @@ namespace cf {
 
 // Forward declarations for functions in this TU
 extern "C" __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
-__declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name);
 
 // CfScript_InitPath - initializer for path string
 extern "C" void CfScript_InitPath() {
@@ -89,12 +89,12 @@ __declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
 // slot 1 has no member thunk).
 extern "C" void CfScript_LoadSlot1(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    CfScript_PutSlot1(mgr, name);
+    mgr->CfScript_PutSlot1(name);
 }
 
-// CfScript_PutSlot1 - load script into slot 1
-__declspec(noinline) void CfScript_PutSlot1(CfScriptManager* mgr, const char* name) {
-    CfScript* script = &mgr->mScripts[1];
+// CfScriptManager::CfScript_PutSlot1 - load script into slot 1
+__declspec(noinline) void CfScriptManager::CfScript_PutSlot1(const char* name) {
+    CfScript* script = &mScripts[1];
     CfScript_LoadScript(script, name);
 }
 
@@ -380,7 +380,7 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     script->mFlags = script->mFlags & ~0x3B;
     script->mFlags = script->mFlags & ~0x09;
 
-    void* handle = CfRes_readCommonArchive(script->mVmContext, (*(ml::FixStr<128>*)pathStorage).mString, script);
+    CFileHandle* handle = CfRes_readCommonArchive(script->mVmContext, (*(ml::FixStr<128>*)pathStorage).mString, script);
     script->mFileHandle = handle;
     // Bool survives the name-store calls in a saved register (retail:
     // neg/or/srwi. r27, then `beq` on the same bits).
@@ -488,7 +488,7 @@ CfScript::~CfScript() {
 // CfScriptManager::init
 void CfScriptManager::init() {
     vmInit();
-    pluginRegist__Fv();
+    pluginRegist();
 
     for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
@@ -496,11 +496,11 @@ void CfScriptManager::init() {
         // Per-slot VM constructor (retail: if/else-if chain, cmpwi/cmplwi).
         u8* vmCtx = nullptr;
         if (i == 0) {
-            vmCtx = (u8*)KyoshinHeap_GetFieldA0();
+            vmCtx = KyoshinHeap_GetFieldA0();
         } else if (i == 1) {
-            vmCtx = (u8*)KyoshinHeap_GetFieldA4();
+            vmCtx = KyoshinHeap_GetFieldA4();
         } else if (i == 2) {
-            vmCtx = (u8*)KyoshinHeap_GetFieldA8();
+            vmCtx = KyoshinHeap_GetFieldA8();
         }
 
         script.mVmContext = vmCtx;

@@ -177,7 +177,6 @@ extern "C" {
     extern const f32 lbl_eu_80667958;    // -1.0f
     extern const f32 lbl_eu_8066795C;    // frame rate divisor
     extern const f32 lbl_eu_80667960;    // 0.5f
-    extern const f32 lbl_eu_8066A1F8;    // 60.0f
 }
 
 // Same-TU forward declarations (functions defined in CREvtEffect.cpp; extern

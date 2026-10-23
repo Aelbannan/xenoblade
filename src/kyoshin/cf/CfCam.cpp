@@ -533,10 +533,10 @@ extern "C" bool cfCam_getTrue() { return true; }
 __declspec(noinline) int cfCam_isVecNear0(const ml::CVec3* v) {
     int result = 0;
     int temp = 0;
-    if (ml::math::abs(v->x) <= lbl_eu_8066A208 && ml::math::abs(v->y) <= lbl_eu_8066A208) {
+    if (ml::math::abs(v->x) <= ml::epsilon && ml::math::abs(v->y) <= ml::epsilon) {
         temp = 1;
     }
-    if (temp != 0 && ml::math::abs(v->z) <= lbl_eu_8066A208) {
+    if (temp != 0 && ml::math::abs(v->z) <= ml::epsilon) {
         result = 1;
     }
     return result;
@@ -678,8 +678,7 @@ extern "C" u32 cfCam_getSignBitUnk04(cf::CfCamFollow* p) {
 extern "C" u32 cfCam_getUnk04(cf::CfCamFollow* self) { return self->field_0x04; }
 extern "C" float cfCam_getField1E0(cf::CfCamFollow* self) { return self->unk1E0; }
 extern "C" float cfCam_scaleByConst(float f) {
-    extern float lbl_eu_8066A20C;
-    return f * lbl_eu_8066A20C;
+    return f * ml::rad2deg;
 }
 extern "C" void cfCam_setBit9_Unk04(unsigned* p) {
     p[1] |= 0x200;
@@ -921,7 +920,7 @@ void sinit_80074D7C() {
 
     f32 b60 = lbl_eu_80661B60;
     f32 c39C = lbl_eu_8066639C;
-    f32 radScale = lbl_eu_8066A210;
+    f32 radScale = ml::deg2rad;
     f32 prod40C = lbl_eu_8066640C * radScale;
     f32 prodBC = lbl_eu_806662BC * radScale;
     f32 prod410 = lbl_eu_80666410 * radScale;
@@ -1125,7 +1124,7 @@ extern "C" __declspec(noinline) void cfCam_initCamConsts(int arg1, int arg2) {
     lbl_eu_80663DE1 = 0;
     lbl_eu_80661B38 = lbl_eu_806662CC;
     lbl_eu_80663DD0 = lbl_eu_806662D0 / lbl_eu_806662CC;
-    const_cast<float&>(lbl_eu_80663DD8) = lbl_eu_8066A210 * lbl_eu_806662D4;
+    const_cast<float&>(lbl_eu_80663DD8) = ml::deg2rad * lbl_eu_806662D4;
     const u8* inst = reinterpret_cast<const u8*>(Class_80296898::getInstance());
     lbl_eu_80661B3C = lbl_eu_80527208[inst[3]];
     unsigned int idx2 = inst[2];
@@ -1157,7 +1156,7 @@ float cfCam_sineBlend(void* arg, float angle) {
             }
             s = v;
         }
-        v = nw4r::math::SinFIdx(s * lbl_eu_8066A200 * lbl_eu_806662E4);
+        v = nw4r::math::SinFIdx(s * ml::halfpi * lbl_eu_806662E4);
         if (arg != 0 && v > lbl_eu_806662A0) {
             f32 m = (f32)fmod((double)v, lbl_eu_806662E8);
             if (v >= lbl_eu_806662DC) {
@@ -1361,8 +1360,8 @@ extern "C" __declspec(noinline) void cfCam_refreshBA8() {
 }
 // Retail cfCam_testPad100: tail-call the pad gate with mask 0x100.
 extern "C" __declspec(noinline) int cfCam_testPad100(void* self) { return cfCam_testUnk04M(reinterpret_cast<int>(self), 0x100); }
-// Retail cfCam_mulSda2Const: multiply by the .sda2 constant at lbl_eu_8066A20C.
-__declspec(noinline) f32 cfCam_mulSda2Const(f32 x) { extern float lbl_eu_8066A20C; return x * lbl_eu_8066A20C; }
+// Retail cfCam_mulSda2Const: multiply by the .sda2 constant at ml::rad2deg.
+__declspec(noinline) f32 cfCam_mulSda2Const(f32 x) { return x * ml::rad2deg; }
 // Retail cfCam_setBit9_04: set bit 0x200 in the +4 word.
 extern "C" __declspec(noinline) void cfCam_setBit9_04(void* self) {
     *reinterpret_cast<u32*>(reinterpret_cast<char*>(self) + 4) |= 0x200;
@@ -1676,11 +1675,11 @@ cfCam_frameUpdate__FPvPviiiii(cf::CfCamFollow* self, void* arg, int a, int b,
         }
     }
     self->unk204 = lbl_eu_806662D0 / blend;
-    if (t > lbl_eu_8066A208) {
+    if (t > ml::epsilon) {
         self->unk204 = lbl_eu_80666304;
     }
     if (b != 0) {
-        if (cfCam_absFloat(&self->unk21C) > lbl_eu_8066A208) {
+        if (cfCam_absFloat(&self->unk21C) > ml::epsilon) {
             cfCam_setClear04(self, 0x1000, 1);
         }
     }
@@ -1689,7 +1688,7 @@ cfCam_frameUpdate__FPvPviiiii(cf::CfCamFollow* self, void* arg, int a, int b,
         self->unk208 = self->unk23C;
         self->unk20C = scale;
         sc[5] = self->unk23C - scale;
-        if (cfCam_absFloat(&sc[5]) > lbl_eu_8066A208) {
+        if (cfCam_absFloat(&sc[5]) > ml::epsilon) {
             cfCam_setClear04(self, 0x400, 1);
             self->unk218 = self->unk23C - scale;
         }
@@ -1799,7 +1798,7 @@ void cfCam_recomputeEyeTarget(cf::CfCamFollow* self, void* argA, void* argB, voi
     self->unk204 = lbl_eu_806662D0 / denom;
     if (modeA == 0) {
         self->unk204 = lbl_eu_806662D0;
-    } else if (t <= lbl_eu_8066A208) {
+    } else if (t <= ml::epsilon) {
         self->unk204 = lbl_eu_80666304;
     }
     self->unk200 = lbl_eu_806662DC;
@@ -1928,9 +1927,9 @@ __declspec(noinline) void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg) {
         cfCam_setClear1D4(self, 0x80000, self->unk238 < lbl_eu_806662DC);
         int f2 = 0;
         f32 c = cfCam_getFloat4FC(x);
-        if (cfCam_absFloat(&c) > lbl_eu_8066A208) {
+        if (cfCam_absFloat(&c) > ml::epsilon) {
             f32 b = cfCam_getFloat4F8(x);
-            if (cfCam_absFloat(&b) > lbl_eu_8066A208) {
+            if (cfCam_absFloat(&b) > ml::epsilon) {
                 f2 = 1;
             }
         }
@@ -2072,10 +2071,10 @@ __declspec(noinline) void cfCam_updateHead(cf::CfCamFollow* self, const ml::CVec
     subVec3f(&tmp2.x, &arg2->x, reinterpret_cast<const f32*>(self->unk10));
     *out1 = atan2AnimFIdx(lbl_eu_806662B8 * sinAnimFIdx(lbl_eu_80663DC8), dist);
     if (flag != 0) {
-        *out2 = lbl_eu_8066A1F8 + cfCam_yawFromVec(static_cast<const void*>(&tmp2));
+        *out2 = ml::pi + cfCam_yawFromVec(static_cast<const void*>(&tmp2));
     } else {
         f32 yaw1 = cfCam_yawFromVec(static_cast<const void*>(&tmp1));
-        *out2 = lbl_eu_8066A1F8 + (cfCam_yawFromVec(static_cast<const void*>(&tmp2)) - yaw1);
+        *out2 = ml::pi + (cfCam_yawFromVec(static_cast<const void*>(&tmp2)) - yaw1);
     }
     *out2 += lbl_eu_80663DCC;
     *out2 = wrapAnglePi(*out2);
@@ -2092,9 +2091,9 @@ void cfCam_updateYaw(cf::CfCamFollow* self, const ml::CVec3* arg2, float* out1,
     subVec3f(&v1.x, &arg2->x, reinterpret_cast<const f32*>(&self->unk10[0]));
     *out1 = self->unk1F8;
     if (flag != 0) {
-        *out2 = lbl_eu_8066A1F8 + cfCam_yawFromVec(static_cast<const void*>(&v1));
+        *out2 = ml::pi + cfCam_yawFromVec(static_cast<const void*>(&v1));
     } else {
-        *out2 = lbl_eu_8066A1F8 + (cfCam_yawFromVec(static_cast<const void*>(&v1)) -
+        *out2 = ml::pi + (cfCam_yawFromVec(static_cast<const void*>(&v1)) -
                                    cfCam_yawFromVec(static_cast<const void*>(&v2)));
     }
     *out2 = wrapAnglePi(*out2);
@@ -2843,20 +2842,20 @@ void cfCam_syncFollowSnapshot(cf::CfCamFollow* self, void* arg, void* srcPos) {
 // When the 0x400 flag is set and the +0x164 source object exists, the source's
 // vtable slot 0xCC facing is wrapped into [-pi, pi) (wrapAnglePi); the
 // +/-span window around it (span = lbl_eu_8066635C * pi/2 / lbl_eu_80666324)
-// is snapped by lbl_eu_8066A1FC steps and finally clamped into [lo, hi].
+// is snapped by ml::tau steps and finally clamped into [lo, hi].
 // Constants are inlined (not named locals) so MWCC picks retail's FPR set.
 // Returns whether the clamp changed *angle.
 int cfCam_clampHeading(cf::CfCamFollow* self, float* angle) {
     int result = 0;
     if (cfCam_maskUnk1D4((int)self, 0x400) != 0 && self->unk164 != 0) {
-        f32 w = wrapAnglePi(lbl_eu_8066A1F8 +
+        f32 w = wrapAnglePi(ml::pi +
                               self->unk164->CfObject_getMoveHeadAngle());
-        f32 lo = w - lbl_eu_8066635C * lbl_eu_8066A200 / lbl_eu_80666324;
-        f32 hi = w + lbl_eu_8066635C * lbl_eu_8066A200 / lbl_eu_80666324;
-        if (*angle < lo - lbl_eu_8066A200) {
-            *angle += lbl_eu_8066A1FC;
-        } else if (*angle > hi + lbl_eu_8066A200) {
-            *angle -= lbl_eu_8066A1FC;
+        f32 lo = w - lbl_eu_8066635C * ml::halfpi / lbl_eu_80666324;
+        f32 hi = w + lbl_eu_8066635C * ml::halfpi / lbl_eu_80666324;
+        if (*angle < lo - ml::halfpi) {
+            *angle += ml::tau;
+        } else if (*angle > hi + ml::halfpi) {
+            *angle -= ml::tau;
         }
         if (*angle > hi) {
             *angle = hi;
@@ -2900,12 +2899,12 @@ void cfCam_updateCamHeading(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
     } else {
         self->unk1E4 *= lbl_eu_80661B48;
         f32 mag = cfCam_absFloat(&self->unk1E4);
-        if (mag <= lbl_eu_8066A208) {
+        if (mag <= ml::epsilon) {
             self->unk1E4 = lbl_eu_806662DC;
         }
     }
-    if (cfCam_absFloat(&self->unk1F4) > lbl_eu_8066A208 ||
-        cfCam_absFloat(&self->unk1E4) > lbl_eu_8066A208) {
+    if (cfCam_absFloat(&self->unk1F4) > ml::epsilon ||
+        cfCam_absFloat(&self->unk1E4) > ml::epsilon) {
         f32 l10[3];
         subVec3f(l10, reinterpret_cast<const f32*>(&self->field_0x28),
                       reinterpret_cast<const f32*>(arg));
@@ -2913,7 +2912,7 @@ void cfCam_updateCamHeading(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
         f32 camY = self->field_0x180;
         f32 yaw = cfCam_yawFromVec(l10);
         f32 angle = yaw;
-        if (cfCam_absFloat(&self->unk1F4) > lbl_eu_8066A208) {
+        if (cfCam_absFloat(&self->unk1F4) > ml::epsilon) {
             f32 step = lbl_eu_8066634C * self->unk1F4;
             // limit is the scaled constant; step is clamped to +/-limit
             f32 limit = scaleByGlobal(lbl_eu_80661B78);
@@ -2989,7 +2988,7 @@ void cfCam_decayCamHeading(cf::CfCamFollow* self, const ml::CVec3* dir, float in
         }
         self->unk1E8 = v;
 
-        if (cfCam_absFloat(&self->unk1E8) > lbl_eu_8066A208) {
+        if (cfCam_absFloat(&self->unk1E8) > ml::epsilon) {
             f32 step = lbl_eu_806662D0;
             if (cfCam_testUnk04M(reinterpret_cast<int>(self), 0x10000) == 0 &&
                 self->unk21C < lbl_eu_806662BC) {
@@ -3039,7 +3038,7 @@ void cfCam_decayCamHeading(cf::CfCamFollow* self, const ml::CVec3* dir, float in
         snap = 1;
     }
 
-    if (cfCam_absFloat(&self->unk1E8) > lbl_eu_8066A208) {
+    if (cfCam_absFloat(&self->unk1E8) > ml::epsilon) {
         f32 wrapped = wrapAnglePi(self->field_0x180);
         f32 delta = self->unk1E8 * lbl_eu_80661B74;
         if (cfCam_maskUnk1D4(reinterpret_cast<int>(self), 0x40000000) != 0 &&
@@ -3127,7 +3126,7 @@ void cfCam_rampFollowY(cf::CfCamFollow* self, int flag) {
         if (sum > cap) {
             self->unk1DC = cap;
         }
-    } else if (cfCam_absFloat(&self->unk1DC) < lbl_eu_8066A208) {
+    } else if (cfCam_absFloat(&self->unk1DC) < ml::epsilon) {
         self->unk1DC = lbl_eu_806662DC;
     } else {
         if (self->unk1DC >= lbl_eu_806662DC) {
@@ -3414,7 +3413,7 @@ void cfCam_quatSlerp(Quaternion* out, const Quaternion* a, const Quaternion* b, 
         nw4r::db::Warning(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
     }
     float theta = (float)acos(dot);
-    if (fabsf(theta) < lbl_eu_8066A208) {
+    if (fabsf(theta) < ml::epsilon) {
         // theta ~ 0: quaternions are (anti-)parallel, just copy.
         *out = q1;
     } else {
@@ -3463,7 +3462,7 @@ void cfCam_advanceFollowCam(cf::CfCamFollow* self, ml::CVec3* arg2) {
         } else {
             self->unk21C *= lbl_eu_806662F0;
         }
-        if (cfCam_absFloat(&self->unk21C) < lbl_eu_8066A208) {
+        if (cfCam_absFloat(&self->unk21C) < ml::epsilon) {
             self->unk21C = lbl_eu_806662DC;
             cfCam_andcUnk04(self, 0x1000);
         }

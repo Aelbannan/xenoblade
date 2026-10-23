@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // .sdata2 float constants referenced by UVAnm_PushPairSRT (retail linker names).
 extern const f32 lbl_eu_8066B350; // effect-matrix diagonal value

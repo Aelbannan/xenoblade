@@ -844,7 +844,7 @@ __declspec(noinline) int CtrlMoveEne_ProbeApproachPoint(cf::CCtrlMoveEne* self,
     if (arg != 0) {
         ang = ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle();
     } else {
-        ang = (f32)ml::math::mtRand(0x168) * lbl_eu_8066A210;
+        ang = (f32)ml::math::mtRand(0x168) * ml::deg2rad;
     }
     // Candidate point around `other` at angle ang, radius dist.
     ml::CVec3 pos;
@@ -1068,7 +1068,7 @@ void CtrlMoveEne_TrackMoveTarget(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1)
         f32 f4 = lbl_eu_80666638 * ang;
         f32 f5 = (v->field_0x18A & 1) ? lbl_eu_806665E4 : lbl_eu_8066663C;
         f32 r = (f32)((v->field_0x18A >> 1) & 0x7FFF);
-        f32 f29 = lbl_eu_8066A200 * ((lbl_eu_806665E4 + r) * f5) + f4;
+        f32 f29 = ml::halfpi * ((lbl_eu_806665E4 + r) * f5) + f4;
         // Heading direction: cosine first (survives the sine call in f30),
         // then the sine; the probe offset is the scaled direction.
         f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f29);
@@ -1416,7 +1416,7 @@ void CtrlMoveEne_InitMoveHook(cf::CCtrlMoveEne* self) {
         self->field_0x50 = state;
         if (state != 0) {
             self->field_0x18C = 2;
-            f32 angle = (f32)ml::math::mtRand(0x168) * lbl_eu_8066A210;
+            f32 angle = (f32)ml::math::mtRand(0x168) * ml::deg2rad;
             reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveHeadAngle(angle);
             ((cf::CfObjectMove4CView*)self)->field_4C |= 4;
         } else {
@@ -2011,9 +2011,9 @@ void CtrlMoveEne_UpdateFleeWander(cf::CCtrlMoveEne* self) {
         f32 dz = self->field_0x34->field_0x28->CfObject_getPosVector()->z - v->mPosition.z;
         f32 ang = lbl_eu_80666638 * Atan2FIdx__Q24nw4r4mathFff(dx, dz);
         if (((cf::CfObjectMove4CView*)self)->field_4C & 2u) {
-            ang += lbl_eu_8066A204;
+            ang += ml::quarterpi;
         } else {
-            ang -= lbl_eu_8066A204;
+            ang -= ml::quarterpi;
         }
         ml::CVec3 tgt;
         tgt.x = v->field_0x60 *
@@ -2314,7 +2314,7 @@ void CtrlMoveEne_StepMoveList(cf::CCtrlMoveEne* self) {
                 view->field_0x70 |= 0x2;
                 view->field_0x72 = 0x28;
                 view->field_0x64 =
-                    (f32)((rand() % 160) - 80) * lbl_eu_8066A210;
+                    (f32)((rand() % 160) - 80) * ml::deg2rad;
             }
         }
         view->field_0x68 = lbl_eu_8066666C *
@@ -2880,7 +2880,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                 s32 rem360 = sv - sv / 360 * 360;
                 s32 rem100 = sv - sv / 100 * 100;
                 f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) *
-                          lbl_eu_8066A210;
+                          ml::deg2rad;
                 f32 dist =
                     lbl_eu_80666658 *
                         (f32)((f64)rem100 - lbl_eu_80666620) * b89->field_8C +
@@ -2909,7 +2909,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                     s32 irem360 = iv - iv / 360 * 360;
                     s32 irem100 = iv - iv / 100 * 100;
                     f32 iang = (f32)((f64)irem360 - lbl_eu_80666620) *
-                               lbl_eu_8066A210;
+                               ml::deg2rad;
                     f32 idist =
                         lbl_eu_80666658 *
                             (f32)((f64)irem100 - lbl_eu_80666620) *

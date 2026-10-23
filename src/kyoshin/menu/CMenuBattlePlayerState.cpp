@@ -10,7 +10,7 @@
 #undef GetZealObjPtr
 #undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef CTaskGame_enumListGet
-// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
+// code_80135FDC.hpp declares ml::epsilon as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
 #define CTaskGame_enumListCtor menuBpsEnumListCtor5

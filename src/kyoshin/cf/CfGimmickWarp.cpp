@@ -84,7 +84,6 @@ extern f32 lbl_eu_806683E4;
 extern f32 lbl_eu_806683E8;
 extern f64 lbl_eu_806683F0;
 extern f64 lbl_eu_806683F8;
-extern const f32 lbl_eu_8066A210;
 extern f32 lbl_eu_8066AF20;
 
 void __ct__cf_CfGimmick(WarpData*);
@@ -722,10 +721,10 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
         f32 distance;
         if (first != 0) {
             centre = self->position;
-            distance = (f32)self->unkEA * lbl_eu_8066A210;
+            distance = (f32)self->unkEA * ml::deg2rad;
         } else {
             centre = self->destination;
-            distance = (f32)self->unkEC * lbl_eu_8066A210;
+            distance = (f32)self->unkEC * ml::deg2rad;
         }
 
         WarpVec3 adjusted;

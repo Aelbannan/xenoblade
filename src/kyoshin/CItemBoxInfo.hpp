@@ -121,20 +121,15 @@ struct CItemBoxQuadPOD {
     CItemBoxColorPOD col[4];
 };
 
-// 6-byte slot table: a u32 (bytes 0..3) + u16 (bytes 4..5), read from two
-// consecutive .sdata2 constants (lbl_eu_8066805C + 80668060, etc.).
-union CItemBoxSlotBytes {
-    struct { u32 a; u16 b; } ab;
-    u8 bytes[6];
-};
-
-// 0x1C-byte per-slot comparison record built by buildItemBoxSlotFlags: three s16
-// labels (read sign-extended by lha) plus a flat 22-byte flag region written
-// at i+0 / i+7 / i+14 (the three per-slot flag banks overlap at their
-// boundary bytes), copied out as one unit.
+// 0x1C-byte per-slot comparison record returned by buildItemBoxSlotFlags:
+// three s16 stat values (read sign-extended by lha) plus three 7-slot byte
+// banks (equipable flag, then the two stat-comparison results 0/1/2).
 struct CItemBoxSlotFlags {
     s16 v[3];        // 0x00
-    u8 flags[22];    // 0x06 (f1 @ +0, f2 @ +7, f3 @ +14)
+    u8 equipable[7]; // 0x06
+    u8 cmp0[7];      // 0x0D
+    u8 cmp1[7];      // 0x14
+    u8 _1B;          // 0x1B
 };
 
 // Word-array view: assigning the union copies the whole 0x1C-byte object as
@@ -213,22 +208,19 @@ struct CItemBoxNameRecord2 {
     u8 _40[0x64];    // 0x40..0xA3
 };
 
-// 9-byte per-slot flag record written by buildItemBoxSelRec (u32 + u32 + u8);
-// bytes [1..8] are per-slot flags for slots 0..7 and byte [8] also selects
-// the item-box row-height label in refreshItemBoxSlotRows / refreshItemBox2SlotRows. The type is
-// padded to 16 bytes (retail stack slots step by 16); only 9 bytes are ever
-// copied/read.
-struct CItemBoxSlotFlagRecord {
-    u32 a;       // 0x00
-    u32 b;       // 0x04
-    u8 c;        // 0x08
-    u8 pad[7];   // 0x09
+// 9-byte selection record returned by buildItemBoxSelRec: sel[0] is the
+// category flag, sel[1..7] the per-slot "selected" flags; flag2 also selects
+// the item-box row-height label in refreshItemBoxSlotRows.
+struct CItemBoxSelRec {
+    u8 category;       // 0x00
+    bool selected[7];  // 0x01 per-slot "selected" flags
+    u8 flag2;          // 0x08
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Out-record built by getItemBoxLabelRec / getItemBox2LabelRec: {u8, ptr, u8, ptr}.
-// The mixed-width field stores (stb/stw) plus one whole-struct copy reproduce
-// the retail four-word block copy into the caller's u32 out-buffer.
+// Returned by value (hidden result pointer in r3); the struct copy is the
+// retail four-word lwz/stw block.
 struct CItemBoxLabelRec {
     u8 a;
     u8 pad0[3];
@@ -251,7 +243,7 @@ extern "C" u32 BdatGetItemType(u32);
 extern "C" u32 LookupItemTypeTable(void*);
 extern "C" void clearItemBoxPairTexts(CItemBoxInfo*);
 extern "C" void resetItemBoxRowPanes(CItemBoxInfo*);
-extern "C" void getItemBoxLabelRec(u32*, void*, void*);
+extern "C" CItemBoxLabelRec getItemBoxLabelRec(CItemBoxInfo*, u32);
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
@@ -263,11 +255,10 @@ extern "C" void closeItemBoxPhase1(CItemBoxInfo*);
 extern "C" void openItemBox2Phase1(CItemBoxInfo2*);
 extern "C" void clearItemBox2PairTexts(CItemBoxInfo2*);
 extern "C" void resetItemBox2RowPanes(CItemBoxInfo2*);
-extern "C" void getItemBox2LabelRec(u32*, void*, void*);
+extern "C" CItemBoxLabelRec getItemBox2LabelRec(CItemBoxInfo2*, u32);
 extern "C" u32 getItemBoxCondStat2D(void*, void*);
 extern "C" u32 getItemBoxCondStat(void*, void*, u32);
 extern "C" u32 getItemBoxEffect(void*, void*, u32, void*);
-extern "C" double lbl_eu_80668028;
 extern "C" void openItemBox2Phase2(CItemBoxInfo2*);
 extern "C" void closeItemBox2Phase1(CItemBoxInfo2*);
 extern "C" void closeItemBox2Phase2(CItemBoxInfo2*);
@@ -290,7 +281,6 @@ extern "C" int GetCollectedFlagByte(u8);
 extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d);
 extern "C" void clearItemBox2SlotTexts(CItemBoxInfo2*);
 extern "C" void setupItemBox2Detail(CItemBoxInfo2*, u16, void*, u16, u32);
-extern "C" void buildItemBox2SlotRec(u8*, void*, void*, void*);
 // cf/CfGameManager.hpp (pulled in via harness_catalog) already declares the
 // singleton no-arg form of this import at global scope; MWCC rejects a second,
 // differently-prototyped extern "C" declaration as an illegal overload. Keep
@@ -304,7 +294,7 @@ extern "C" void setItemBoxVtxColor(void*, u32, const void*);
 extern "C" void applyItemBoxSelColors(CItemBoxInfo*);
 // 9-byte flag-record builder: (out, unused, data) - param2 is never read in
 // retail (callers pass the item-box pointer through it).
-extern "C" void buildItemBoxSelRec(CItemBoxInfo* out, void* unused, void* data);
+extern "C" CItemBoxSelRec buildItemBoxSelRec(CItemBoxInfo*, u32);
 extern "C" void renderItemBox2SlotList(CItemBoxInfo2*, void*, void*);
 extern "C" u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey();
@@ -345,14 +335,11 @@ union CItemBoxSlotVals {
     s16 s[6];
 };
 
-// .sdata2 table-handle pair staged once before the renderItemBoxKind3 slot loop.
-extern const u32 lbl_eu_80668030;
-extern const u16 lbl_eu_80668034;
 extern "C" void renderItemBoxLabels(CItemBoxInfo*, u32);
 extern "C" void refreshItemBoxSlotRows(CItemBoxInfo*, u16);
 extern "C" void setupItemBoxSlotPanes(CItemBoxInfo*);
 extern "C" void clearItemBoxTripleRows(CItemBoxInfo*);
-extern "C" void buildItemBox2SlotFlags(CItemBoxSlotFlags*, void*, void*);
+extern "C" CItemBoxSlotFlags buildItemBox2SlotFlags(void*, u32);
 extern "C" void clearItemBoxQuadTexts(CItemBoxInfo*);
 extern "C" void renderItemBox2Kind2(CItemBoxInfo2*, u16, void*, u16);
 extern "C" void renderItemBox2Kind3(CItemBoxInfo2*, u16, void*, u16);
@@ -363,19 +350,11 @@ extern "C" void setupItemBox2SlotPanes(CItemBoxInfo2*);
 extern "C" void clearItemBox2TripleRows(CItemBoxInfo2*);
 extern "C" void applyItemBox2SelColors(CItemBoxInfo2*);
 extern "C" void clearItemBox2QuadTexts(CItemBoxInfo2*);
-extern "C" void buildItemBoxSlotRec(void*, void*, void*, void*);
 extern "C" void clearItemBoxSlotTexts(CItemBoxInfo*);
 extern "C" void stampItemBoxSlotTex(CItemBoxInfo*);
 extern "C" void stampItemBox2SlotTex(CItemBoxInfo2*);
 extern "C" void renderItemBox2ByKind(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void renderItemBoxSlotList(CItemBoxInfo*, u16, void*);
-// Slot-selection table filled by buildItemBox2SelTable: arr[0] is the selected-count
-// category flag, arr[1+i] the per-slot "selected" flag consumed by
-// refreshItemBox2SlotRows; flag2 is the extra category-gate byte.
-struct CItemBoxSlotSelTable {
-    u32 selWords[2];   // byte [0] = category flag, bytes [1..7] = per-slot flags
-    u8 flag2;          // also selects the row-height label size (0x2c vs 0x2b)
-};
 
 // 0xA0-byte label record written by buildItemBox2NameRec and consumed by
 // renderItemBox2Kind3 (CItemBoxNameRecord2 minus its unused 4-byte tail).
@@ -401,12 +380,19 @@ struct CItemBoxSlotEntry {
     s16 vals[6];   // 0x08..0x13 ([0] = +0x26 field, [1..5] = +0x1c..+0x24)
 };
 
-// Hoisted table-handle pair (lbl_eu_80668064 / lbl_eu_80668068) staged once
-// before the per-slot loop in renderItemBox2Kind3.
-struct CItemBoxTagStage {
-    u32 tbl;
-    u16 h;
+// Six-byte equip-slot kind table {2,4,5,6,7,8} staged once before the slot
+// loops of renderItemBoxKind3/renderItemBox2Kind3 (MWCC pools the initializer
+// in .sdata2 and copies it as a word + halfword).
+// Packed to its 6 bytes so the pooled initializer keeps 4-byte alignment.
+#pragma pack(push, 2)
+union CItemBoxTagStage {
+    u8 kinds[6];
+    struct {
+        u32 tbl;
+        u16 h;
+    };
 };
+#pragma pack(pop)
 
 // POD (ctor-less) 8-byte colours used by refreshItemBox2SlotRows: the s16 view builds
 // the alpha-only defaults with individual halfword stores, the u32 view lets
@@ -424,9 +410,6 @@ union CItemBoxColorAny {
     CItemBoxColorRaw c;
     CItemBoxColorBlock w;
 };
-// .sdata2 table-handle pair staged by renderItemBox2Kind3.
-extern const u32 lbl_eu_80668064;
-extern const u16 lbl_eu_80668068;
 // 0x10-byte POD vertex-colour quad built per-slot in renderItemBoxKind3 from
 // info+0x9C..0xA8 and consumed pairwise by setItemBoxVtxColor.
 struct CItemBoxVertexColors {
@@ -437,7 +420,7 @@ struct CItemBoxVertexColors {
 extern "C" void buildItemBox2NameRec(void*, void*, void*, void*);
 extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" char* BuildItemNameStr(u32);
-extern "C" void buildItemBox2SelTable(CItemBoxSlotSelTable*, CItemBoxInfo2*, void*);
+extern "C" CItemBoxSelRec buildItemBox2SelTable(CItemBoxInfo2*, u32);
 extern "C" void* CItemBlock_getPtr20E8();
 extern "C" void PaneSetTexPalette(void*, u32);
 extern "C" void PaneSetVtxColorAll(void*, u32);
@@ -480,6 +463,7 @@ struct CItemBoxSlotRecord {
     u8 vals[4];    // 0x1C
     u8 tail[4];    // 0x20 (tail[1] = counter at 0x21)
 };
+extern "C" CItemBoxSlotRecord buildItemBox2SlotRec(CItemBoxInfo2*, u32, void*);
 
 // 0x2C-byte item-box slot record with per-slot pair counts (built by
 // buildItemBoxSlotRec, copied out as one unit): count byte, string pointer,
@@ -497,6 +481,7 @@ struct CItemBoxSlotRecord1 {
     u16 counts[4]; // 0x22 (indexed up to counter-1)
     u8 _26[2];     // 0x2A - pad to 0x2C
 };
+extern "C" CItemBoxSlotRecord1 buildItemBoxSlotRec(CItemBoxInfo*, u32, void*);
 
 // Word-array view: assigning the union copies the whole object as one block
 // (reproduces the retail mtctr lwzu/stwu pair loop) instead of expanding

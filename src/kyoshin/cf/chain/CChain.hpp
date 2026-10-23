@@ -254,9 +254,6 @@ extern const f32 lbl_eu_80668A60;
 // the two factors of the facing tolerance product.
 extern const f32 lbl_eu_80668A58;
 extern const f32 lbl_eu_80668A5C;
-extern const f32 lbl_eu_8066A1F8;
-extern const f32 lbl_eu_8066A1FC;
-extern const f32 lbl_eu_8066A210;
 
 // Chain-voice global state (retail .sdata lbl_eu_80662A20): -1 is the
 // "not loaded" sentinel. The func_80276C*/func_8027715* helpers probe it with

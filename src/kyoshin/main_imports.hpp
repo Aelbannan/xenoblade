@@ -9,7 +9,6 @@ extern "C" {
 // without C linkage there, but the retail TU exports the plain linker name;
 // this C linkage in the importing TU preserves the plain-symbol reloc).
 void loadErrMesTable();
-void NandData_SetupBanner_11C0();
 const char* getErrMesLangTable0();
 const char* getErrMesLangTable1();
 const char* getErrMesLangTable2();

@@ -49,6 +49,7 @@ public:
                                 u32 workSize);
 
     static void ShutdownSoundSystem();
+    static bool IsInitializedSoundSystem();
     static void WaitForResetReady();
 
     static void PrepareReset() {

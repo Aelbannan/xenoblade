@@ -65,9 +65,6 @@ extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
 extern char lbl_eu_80664138[];
-extern const float lbl_eu_8066A1F8;
-extern const float lbl_eu_8066A1FC;
-extern const float lbl_eu_8066A210;
 
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
@@ -180,11 +177,11 @@ static inline f32 jumpPlayerAngle(cf::CfObjectActor* actor) {
 
 static inline f32 normalizeJumpAngle(f32 angle) {
     // Operand order matters: retail compares (PI, angle).
-    while (*(const float*)&lbl_eu_8066A1F8 <= angle) {
-        angle -= *(const float*)&lbl_eu_8066A1FC;
+    while (*(const float*)&ml::pi <= angle) {
+        angle -= *(const float*)&ml::tau;
     }
-    while (angle < -lbl_eu_8066A1F8) {
-        angle += lbl_eu_8066A1FC;
+    while (angle < -ml::pi) {
+        angle += ml::tau;
     }
     return angle;
 }
@@ -211,7 +208,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x15, row);
     if (value != 0) {
-        self->targetAngle = lbl_eu_8066A210 * (f32)(s16)value;
+        self->targetAngle = ml::deg2rad * (f32)(s16)value;
         self->targetX = self->position.x;
         self->targetY = self->position.y;
         self->targetZ = self->position.z;
@@ -246,8 +243,8 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     }
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x4F, row);
-    if (self->frameScale < lbl_eu_8066A1F8) {
-        self->frameScale = lbl_eu_8066A1F8;
+    if (self->frameScale < ml::pi) {
+        self->frameScale = ml::pi;
     } else {
     }
 

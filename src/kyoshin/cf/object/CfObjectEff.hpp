@@ -5,8 +5,6 @@
 
 // Retail data symbols (linker-provided)
 // Retail data symbols (linker-provided)
-extern const float lbl_eu_8066A210;  // final position scale (pi/2)
-extern const float lbl_eu_8066A20C;  // effect position scale
 extern const float lbl_eu_80666960;  // X component baked into the move vector (moveEffOfs___)
 extern const float lbl_eu_80666964;  // scale passed to the vtable 0xB4 slot (moveEffOfs___)
 extern u8 lbl_eu_80528870[];         // CfObjectEff vtable (retail data, 0x1A8 bytes)

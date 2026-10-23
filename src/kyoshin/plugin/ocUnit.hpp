@@ -28,7 +28,6 @@ class CVec3;
 // used by the OC plugin functions. Declared here (header) per repo
 // convention - never in the .cpp.
 // .sdata2 float/double pool constants shared by the OC plugin functions.
-extern const float lbl_eu_8066A210;  // degrees-to-radians scale
 extern const float lbl_eu_80665C30;  // fixed-point scale (2048.0)
 extern const double lbl_eu_80665C38; // sdata2: int->double magic (2^52 + 2^31)
 

@@ -247,6 +247,26 @@ The Metrowerks runtime and the MetroTRK debugger shipped as assembly in the orig
 
 Rules: do not run clang-format on these files (it mangles MWCC `asm` text and changes generated code); keep the `asm void` bodies byte-stable; do not "fix" their style. Any **new** assembly added for matching remains subject to the exceptions table above.
 
+### 17.7 Data ownership — code-only units (owner decision 2026-10-23)
+
+Adopted **Option C, transitioned through Option A labelling**
+(`docs/evidence/decomp/unit_rules_category_d_decision.md`):
+
+- A unit whose code matches but whose data is still owned elsewhere is promoted under an explicit
+  **code-only** label, never silently as `Matching`. Progress/README report code-only units
+  separately; the headline percentage does not count their data.
+- `extern_data_sections` UNIT_RULES entries are retired in link-verified batches
+  (`run.py link-gate` + `--ratchet` per batch); `.text` relocs resolve to shared/blob labels via
+  source-level `extern` declarations, not object rewrites. Shared ranges ship from explicitly owned
+  data TUs.
+- **Code-only is an intermediate state, not the end state.** The project goal is a fully
+  source-built, byte-identical DOL, so every data byte must eventually come from an owning TU.
+  The claim that shared float pools "can never be TU-owned" was **disproven for `.sdata2`**
+  (`docs/evidence/pool_ownership_2026-10-23.md`): retail `.sdata2` is per-TU MWCC pools in link
+  order (no linker merging); "shared pools" are wrong `splits.txt` boundaries, plus real named
+  constants (e.g. `ml::pi` in `MathConstants.cpp`, defined with an `extern const` in scope).
+  Fix boundaries rather than labelling units code-only for `.sdata2`.
+
 ### 17.3 Common mismatch categories
 
 - signed versus unsigned comparisons;

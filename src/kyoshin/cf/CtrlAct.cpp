@@ -1335,7 +1335,7 @@ extern "C" void setupActTimer(CtrlActView* self) {
         f32 t2 = (f32)(conv2.d - lbl_eu_80666D50);
         // Retail order: subtract, multiply by D64, divide by D4C, add D64.
         f32 f31 =
-            (lbl_eu_80666D64 + lbl_eu_80666D64 * t2 / lbl_eu_80666D4C) * lbl_eu_8066A210;
+            (lbl_eu_80666D64 + lbl_eu_80666D64 * t2 / lbl_eu_80666D4C) * ml::deg2rad;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         s->mPos30 = *(ml::CVec3*)pos;
         s->mField48 = src->table->method5B4(src);
@@ -1516,7 +1516,7 @@ extern "C" void rotateActPose(CtrlActView* self) {
         conv2.w[1] = ((int)ml::math::mtRand(0xc9) - 0x64) ^ 0x80000000;
         f32 rnd = (f32)(conv2.d - lbl_eu_80666D50);
         f32 ang =
-            lbl_eu_80666D3C * rnd / lbl_eu_80666D4C * lbl_eu_8066A210;
+            lbl_eu_80666D3C * rnd / lbl_eu_80666D4C * ml::deg2rad;
         f32 fs = nw4r::math::SinFIdx(lbl_eu_80666D80 * ang);
         f32 fc = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);
         CtrlActRotFrame frame;
@@ -1771,8 +1771,8 @@ extern "C" void testAimWobble(CtrlActView* self) {
         // First heading band: wrap the source-facing reference (base facing +
         // wobble D88) and the heading delta into (-pi, pi], then check the
         // delta is inside the [-f31, f31] band - if so the action ends.
-        f32 f31 = lbl_eu_80666D60 * lbl_eu_8066A210;
-        f32 f30 = lbl_eu_80666D88 * lbl_eu_8066A210;
+        f32 f31 = lbl_eu_80666D60 * ml::deg2rad;
+        f32 f30 = lbl_eu_80666D88 * ml::deg2rad;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -1782,11 +1782,11 @@ extern "C" void testAimWobble(CtrlActView* self) {
         f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
         f32 f3 = lbl_eu_80666D40 * ang;
         f32 f2 = self->mField48 + f30;
-        while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-        while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+        while (ml::pi <= f2) f2 -= ml::tau;
+        while (f2 < -ml::pi) f2 += ml::tau;
         f2 = f3 - f2;
-        while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-        while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+        while (ml::pi <= f2) f2 -= ml::tau;
+        while (f2 < -ml::pi) f2 += ml::tau;
         int inRange;
         if ((-f31 <= f2 && f2 <= lbl_eu_80666CF8)
             || (lbl_eu_80666CF8 <= f2 && f2 <= f31)) {
@@ -1803,8 +1803,8 @@ extern "C" void testAimWobble(CtrlActView* self) {
         // Second heading band: same test with the wider D8C wobble. Fresh
         // locals so MWCC keeps a distinct stack slot pair (retail frame 0x80).
         {
-            f32 f31b = lbl_eu_80666D60 * lbl_eu_8066A210;
-            f32 f30b = lbl_eu_80666D8C * lbl_eu_8066A210;
+            f32 f31b = lbl_eu_80666D60 * ml::deg2rad;
+            f32 f30b = lbl_eu_80666D8C * ml::deg2rad;
             CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
             ml::CVec3 diff2;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff2,
@@ -1814,11 +1814,11 @@ extern "C" void testAimWobble(CtrlActView* self) {
             f32 ang2 = nw4r::math::Atan2FIdx(d2.x, d2.z);
             f32 f3b = lbl_eu_80666D40 * ang2;
             f32 f2b = self->mField48 + f30b;
-            while (lbl_eu_8066A1F8 <= f2b) f2b -= lbl_eu_8066A1FC;
-            while (f2b < -lbl_eu_8066A1F8) f2b += lbl_eu_8066A1FC;
+            while (ml::pi <= f2b) f2b -= ml::tau;
+            while (f2b < -ml::pi) f2b += ml::tau;
             f2b = f3b - f2b;
-            while (lbl_eu_8066A1F8 <= f2b) f2b -= lbl_eu_8066A1FC;
-            while (f2b < -lbl_eu_8066A1F8) f2b += lbl_eu_8066A1FC;
+            while (ml::pi <= f2b) f2b -= ml::tau;
+            while (f2b < -ml::pi) f2b += ml::tau;
             int inRange2;
             if ((-f31b <= f2b && f2b <= lbl_eu_80666CF8)
                 || (lbl_eu_80666CF8 <= f2b && f2b <= f31b)) {
@@ -1906,8 +1906,8 @@ extern "C" void stepActMotion(CtrlActView* self) {
             requestItemLoad(self->mPlayer, 0x40);
             break;
         }
-        f32 f31 = lbl_eu_80666D44 * lbl_eu_8066A210;
-        f32 f30 = lbl_eu_80666D90 * lbl_eu_8066A210;
+        f32 f31 = lbl_eu_80666D44 * ml::deg2rad;
+        f32 f30 = lbl_eu_80666D90 * ml::deg2rad;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -1919,11 +1919,11 @@ extern "C" void stepActMotion(CtrlActView* self) {
         // Wrap the facing reference (base + wobble) and the heading delta
         // into (-pi, pi], then check the delta is within the wobble band.
         f32 f2 = self->mField48 + f30;
-        while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-        while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+        while (ml::pi <= f2) f2 -= ml::tau;
+        while (f2 < -ml::pi) f2 += ml::tau;
         f2 = f3 - f2;
-        while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-        while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+        while (ml::pi <= f2) f2 -= ml::tau;
+        while (f2 < -ml::pi) f2 += ml::tau;
         int inRange;
         if ((-f31 <= f2 && f2 <= lbl_eu_80666CF8)
             || (lbl_eu_80666CF8 <= f2 && f2 <= f31)) {
@@ -2221,8 +2221,8 @@ extern "C" void aimNearestFoe(CtrlActView* self) {
         f32 a2 = nw4r::math::Atan2FIdx(vecs[sel].x, vecs[sel].z);
         f32 f1 = lbl_eu_80666D40 * a2;
         f32 delta = f31 - f1;
-        while (delta >= lbl_eu_8066A1F8) delta -= lbl_eu_8066A1FC;
-        while (delta < -lbl_eu_8066A1F8) delta += lbl_eu_8066A1FC;
+        while (delta >= ml::pi) delta -= ml::tau;
+        while (delta < -ml::pi) delta += ml::tau;
         if (delta >= lbl_eu_80666CF8) {
             self->mFlags58.mAngleState = 0;
         } else {
@@ -2259,16 +2259,16 @@ void snapFacingAng(CtrlActView* self) {
         f4 = self->mField48 + lbl_eu_80573A20[0];
         f2 = self->mField48 + lbl_eu_80573A20[1];
     }
-    while (lbl_eu_8066A1F8 <= f4) f4 -= lbl_eu_8066A1FC;
-    while (f4 < -lbl_eu_8066A1F8) f4 += lbl_eu_8066A1FC;
-    while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-    while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+    while (ml::pi <= f4) f4 -= ml::tau;
+    while (f4 < -ml::pi) f4 += ml::tau;
+    while (ml::pi <= f2) f2 -= ml::tau;
+    while (f2 < -ml::pi) f2 += ml::tau;
     f4 = f3 - f4;
     f2 = f3 - f2;
-    while (lbl_eu_8066A1F8 <= f4) f4 -= lbl_eu_8066A1FC;
-    while (f4 < -lbl_eu_8066A1F8) f4 += lbl_eu_8066A1FC;
-    while (lbl_eu_8066A1F8 <= f2) f2 -= lbl_eu_8066A1FC;
-    while (f2 < -lbl_eu_8066A1F8) f2 += lbl_eu_8066A1FC;
+    while (ml::pi <= f4) f4 -= ml::tau;
+    while (f4 < -ml::pi) f4 += ml::tau;
+    while (ml::pi <= f2) f2 -= ml::tau;
+    while (f2 < -ml::pi) f2 += ml::tau;
     f32 s1 = f4;
     if (f4 < lbl_eu_80666CF8) {
         s1 = f4 * lbl_eu_80666D68;
@@ -2311,13 +2311,13 @@ extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src) {
     f32 ang2 = nw4r::math::Atan2FIdx(diff2.x, diff2.z);
     f32 f1 = lbl_eu_80666D40 * ang2;
     f32 f3 = f1 + f31;
-    while (lbl_eu_8066A1F8 <= f3) f3 -= lbl_eu_8066A1FC;
-    while (f3 < -lbl_eu_8066A1F8) f3 += lbl_eu_8066A1FC;
+    while (ml::pi <= f3) f3 -= ml::tau;
+    while (f3 < -ml::pi) f3 += ml::tau;
     int band800 = 0;
     int band400 = 0;
     int band2000 = 0;
     int band1000 = 0;
-    f32 f1b = f31 * lbl_eu_8066A20C;
+    f32 f1b = f31 * ml::rad2deg;
     self->mFieldC = f3;
     if (f1b > lbl_eu_80666D94 && f1b < lbl_eu_80666D98) band800 = 1;
     if (f1b < lbl_eu_80666D9C && f1b > lbl_eu_80666DA0) band400 = 1;
@@ -2566,8 +2566,8 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
             // target block into mPos60 and the 0x100 latch.
             u16 save455A = src->mField455A;
             src->mField455A = 1;
-            f32 f30 = lbl_eu_80666D0C * lbl_eu_8066A204;
-            f32 f29 = lbl_eu_8066A204;
+            f32 f30 = lbl_eu_80666D0C * ml::quarterpi;
+            f32 f29 = ml::quarterpi;
             f32 f24 = lbl_eu_80666D80;
             f32 f26 = lbl_eu_80666CF8;
             f32 f27 = lbl_eu_80666CFC;
@@ -2668,7 +2668,7 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
                 self->mField7B = 0;
                 f32 facing2 = self->mPlayer->table->method5B4(self->mPlayer);
                 self->mField6C = facing2;
-                f32 ang = facing2 + lbl_eu_8066A1F8;
+                f32 ang = facing2 + ml::pi;
                 f32 cosv2 = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);
                 f32 sinv2 = nw4r::math::SinFIdx(lbl_eu_80666D80 * ang);
                 ml::CVec3 dir3(sinv2, lbl_eu_80666CF8, cosv2);
@@ -2872,11 +2872,11 @@ finish:
 // Static init: fill the facing tables with scaled defaults -
 // lbl_eu_80573A20[0..3] (index 2 untouched) and lbl_eu_80663EF8[0..1].
 void sinit_800D79B4() {
-    f32 a = lbl_eu_80666D88 * lbl_eu_8066A210;
-    f32 b = lbl_eu_80666D8C * lbl_eu_8066A210;
-    f32 c = lbl_eu_80666D90 * lbl_eu_8066A210;
-    f32 d = lbl_eu_80666DC8 * lbl_eu_8066A210;
-    f32 e = lbl_eu_80666DCC * lbl_eu_8066A210;
+    f32 a = lbl_eu_80666D88 * ml::deg2rad;
+    f32 b = lbl_eu_80666D8C * ml::deg2rad;
+    f32 c = lbl_eu_80666D90 * ml::deg2rad;
+    f32 d = lbl_eu_80666DC8 * ml::deg2rad;
+    f32 e = lbl_eu_80666DCC * ml::deg2rad;
     lbl_eu_80573A20[0] = a;
     lbl_eu_80573A20[1] = b;
     lbl_eu_80573A20[3] = c;

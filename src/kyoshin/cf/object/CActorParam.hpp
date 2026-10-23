@@ -27,7 +27,7 @@ extern const float lbl_eu_80667868; // sdata2: SP/exp gain scale (CActorParam_ap
 extern const float lbl_eu_8066786C; // sdata2: arts-gauge threshold (CActorParam_applyEventStatus)
 extern const float lbl_eu_80667800; // sdata2: 2.0f arts-slot default (Func140; const so the load is scheduled before the unk0 store)
 extern const float lbl_eu_80667804; // sdata2: 3.0f arts-slot default (Func140; const so MWCC loads it once for the two stores)
-// lbl_eu_8066A1F8 (pi) is declared in CfObjectEnumList.hpp
+// ml::pi (pi) is declared in CfObjectEnumList.hpp
 // CActorParam_updateStatusEntries constants (const so MWCC hoists each into a
 // callee-saved FPR above the main battle-entry loop, matching retail).
 extern const float lbl_eu_80667814; // 0.05f crit-scale
@@ -668,7 +668,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void* CActorParam_UnkVirtualFunc130(int arg); //0x29C
         virtual void* CActorParam_UnkVirtualFunc131(); //0x2A0
         virtual void* CActorParam_getMoveRecord(); //0x2A4
-        virtual u8 CActorParam_getStatsSlot(); //0x2A8
+        virtual int CActorParam_getStatsSlot(); //0x2A8
         virtual void CActorParam_resetStatsSlot(); //0x2AC (was UnkVirtualFunc134)
         virtual void CActorParam_reinitBattleStats(); //0x2B0
         virtual void CActorParam_initBattleStats(); //0x2B4

@@ -948,7 +948,7 @@ extern "C" void __attribute__((never_inline)) EffFxUpdateSceneAim(EffectScene* s
             dir2c.z = dir2.z;
             f32 m1 = PSVECMag((Vec*)&dir1c);
             f32 m2 = PSVECMag((Vec*)&dir2c);
-            const f32 eps = lbl_eu_8066A208;
+            const f32 eps = ml::epsilon;
             if (blend * (m1 + m2) < m1) {
                 // Aim toward the vecA-side direction, scaled by the far magnitude.
                 if (!((f32)__fabs(dir1c.x) <= eps && (f32)__fabs(dir1c.y) <= eps &&
@@ -1355,38 +1355,38 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
         (*a)[1][3] += scale.y;
         (*a)[2][3] += scale.z;
     }
-    // Each term reloads lbl_eu_8066A208 and identity fresh (no cached epsilon
+    // Each term reloads ml::epsilon and identity fresh (no cached epsilon
     // local: retail emits a per-term lfs pair and never spills an FPR here).
-    bool spAisId = __fabs((*spA)[0][0] - ml::CMat34::identity.m[0][0]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
-                   __fabs((*spA)[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208;
+    bool spAisId = __fabs((*spA)[0][0] - ml::CMat34::identity.m[0][0]) <= ml::epsilon &&
+                   __fabs((*spA)[0][1] - ml::CMat34::identity.m[0][1]) <= ml::epsilon &&
+                   __fabs((*spA)[0][2] - ml::CMat34::identity.m[0][2]) <= ml::epsilon &&
+                   __fabs((*spA)[0][3] - ml::CMat34::identity.m[0][3]) <= ml::epsilon &&
+                   __fabs((*spA)[1][0] - ml::CMat34::identity.m[1][0]) <= ml::epsilon &&
+                   __fabs((*spA)[1][1] - ml::CMat34::identity.m[1][1]) <= ml::epsilon &&
+                   __fabs((*spA)[1][2] - ml::CMat34::identity.m[1][2]) <= ml::epsilon &&
+                   __fabs((*spA)[1][3] - ml::CMat34::identity.m[1][3]) <= ml::epsilon &&
+                   __fabs((*spA)[2][0] - ml::CMat34::identity.m[2][0]) <= ml::epsilon &&
+                   __fabs((*spA)[2][1] - ml::CMat34::identity.m[2][1]) <= ml::epsilon &&
+                   __fabs((*spA)[2][2] - ml::CMat34::identity.m[2][2]) <= ml::epsilon &&
+                   __fabs((*spA)[2][3] - ml::CMat34::identity.m[2][3]) <= ml::epsilon;
     if (!spAisId) {
         Mtx m170;
         PSMTXConcat(*spA, *a, m170);
         *(MtxCopy*)a = *(MtxCopy*)&m170;
     }
     if (ok) {
-        bool mId = __fabs(mtx1d0[0][0] - ml::CMat34::identity.m[0][0]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
-                   __fabs(mtx1d0[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208;
+        bool mId = __fabs(mtx1d0[0][0] - ml::CMat34::identity.m[0][0]) <= ml::epsilon &&
+                   __fabs(mtx1d0[0][1] - ml::CMat34::identity.m[0][1]) <= ml::epsilon &&
+                   __fabs(mtx1d0[0][2] - ml::CMat34::identity.m[0][2]) <= ml::epsilon &&
+                   __fabs(mtx1d0[0][3] - ml::CMat34::identity.m[0][3]) <= ml::epsilon &&
+                   __fabs(mtx1d0[1][0] - ml::CMat34::identity.m[1][0]) <= ml::epsilon &&
+                   __fabs(mtx1d0[1][1] - ml::CMat34::identity.m[1][1]) <= ml::epsilon &&
+                   __fabs(mtx1d0[1][2] - ml::CMat34::identity.m[1][2]) <= ml::epsilon &&
+                   __fabs(mtx1d0[1][3] - ml::CMat34::identity.m[1][3]) <= ml::epsilon &&
+                   __fabs(mtx1d0[2][0] - ml::CMat34::identity.m[2][0]) <= ml::epsilon &&
+                   __fabs(mtx1d0[2][1] - ml::CMat34::identity.m[2][1]) <= ml::epsilon &&
+                   __fabs(mtx1d0[2][2] - ml::CMat34::identity.m[2][2]) <= ml::epsilon &&
+                   __fabs(mtx1d0[2][3] - ml::CMat34::identity.m[2][3]) <= ml::epsilon;
         if (!mId) {
             Mtx m140;
             PSMTXConcat(mtx1d0, *a, m140);
@@ -1594,7 +1594,7 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
     // Only normalize when every element matches the identity matrix within
     // eps. Each conjunct gets its own named bool so MWCC keeps a dedicated
     // flag register per step (matches retail's pre-zeroed flag-register chain).
-    const f32 eps = lbl_eu_8066A208;
+    const f32 eps = ml::epsilon;
     bool eq00 = (f32)__fabs(m.m[0][0] - ml::CMat34::identity.m[0][0]) <= eps;
     bool eq01 = eq00 && (f32)__fabs(m.m[0][1] - ml::CMat34::identity.m[0][1]) <= eps;
     bool eq02 = eq01 && (f32)__fabs(m.m[0][2] - ml::CMat34::identity.m[0][2]) <= eps;
@@ -1642,7 +1642,7 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
         } conv;
         conv.w[0] = 0x43300000u;
         conv.w[1] = (u32)(s32)m.m[2][3] ^ 0x80000000u;
-        m.m[2][3] = (lbl_eu_8066B0D8 - lbl_eu_8066A208) * (f32)(conv.d - lbl_eu_8066B0F0);
+        m.m[2][3] = (lbl_eu_8066B0D8 - ml::epsilon) * (f32)(conv.d - lbl_eu_8066B0F0);
     }
     ml::CVec3 rot;
     m.getRotXYZ(rot);

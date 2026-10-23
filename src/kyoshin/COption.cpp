@@ -216,7 +216,7 @@ void CMenuOption::Term() {
     teardown(&mTitleAHelp);
     COptionTeardown(&mOption);
 
-    lbl_eu_80664A38 = 0;
+    lbl_eu_80664A38[0] = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
@@ -259,7 +259,7 @@ void CMenuOption::cbRenderBefore() {
  * already live; otherwise allocates the 0x1C0-byte screen, constructs it,
  * stores it in the shared flag and registers it under `registParent`. */
 CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg) {
-    if (lbl_eu_80664A38 != 0) {
+    if (lbl_eu_80664A38[0] != 0) {
         return NULL;
     }
     CMenuOption* obj = (CMenuOption*)mtl::MemManager::allocate(
@@ -267,9 +267,9 @@ CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg)
     if (obj != NULL) {
         obj = __ct__CMenuOption(obj, parent, arg);
     }
-    lbl_eu_80664A38 = (u32)obj;
+    lbl_eu_80664A38[0] = (u32)obj;
     Regist__8CProcessFP8CProcessb((CProcess*)obj, registParent, false);
-    return (CMenuOption*)lbl_eu_80664A38;
+    return (CMenuOption*)lbl_eu_80664A38[0];
 }
 
 /* Advance the option menu to phase 1 once the background texture, title bar
@@ -408,7 +408,7 @@ void CMenuOption_dtorAdj58(void* self) {
     ((void(*)(void*))__dt__11CMenuOptionFv)((char*)self - 0x58);
 }
 
-unsigned long hasOptionMenu(void) { return lbl_eu_80664A38 != 0; }
+unsigned long hasOptionMenu(void) { return lbl_eu_80664A38[0] != 0; }
 
 // --- restored from git history (base:gone); do not expand beyond these functions ---
 // from commit 365650b84230 needle=sinit_8029E7D8

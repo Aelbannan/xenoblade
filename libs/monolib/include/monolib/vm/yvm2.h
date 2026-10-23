@@ -10,6 +10,8 @@ extern "C" {
 
 void vmInit();
 BOOL vmLink(u8* pData);
+BOOL vmUnlink(u8* pData);
+void vmExec();
 BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
 void vmStart(u8* pData);
 

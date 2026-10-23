@@ -3,7 +3,6 @@
 #include "monolib/util.hpp"
 #include "monolib/data_vtables.hpp"
 // FloatUtils-owned constants used by pssCreateView's rect scaling:
-extern float lbl_eu_8066A278; // 0.6f
 
 
 extern "C" {
@@ -247,8 +246,8 @@ static inline ml::CRect16& pssMakeClientRectInline(
 
     s16 sizeX = parentView->mRectData.mViewSize.x;
     s16 sizeY = parentView->mRectData.mViewSize.y;
-    s16 scaledX = (s16)((float)sizeX * lbl_eu_8066A278);
-    s16 scaledY = (s16)((float)sizeY * lbl_eu_8066A278);
+    s16 scaledX = (s16)((float)sizeX * 0.6f);
+    s16 scaledY = (s16)((float)sizeY * 0.6f);
     s16 anotherX = (scaledX - sizeX) / 2;
     s16 anotherY = (scaledY - sizeY) / 2;
     s16 childOff = (s16)(numChildren * 20);

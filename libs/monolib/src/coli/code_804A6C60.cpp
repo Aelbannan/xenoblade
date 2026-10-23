@@ -132,8 +132,6 @@ extern const float lbl_eu_8066AE90;
 extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
 extern const float lbl_eu_8066AE38;  // radius/angle gate scale (ColiInitAngleSpec)
 extern const float lbl_eu_8066AE60;  // FIdx->angle scale (ColiTestSphereCone)
-extern const float lbl_eu_8066A1F8;  // pi in FIdx units (ColiTestSphereCone wrap bound)
-extern const float lbl_eu_8066A1FC;  // 2*pi in FIdx units (ColiTestSphereCone wrap step)
 extern const float lbl_eu_8066AE78;  // large radius bound (sweep tests)
 extern const float lbl_eu_8066AE98;  // move-scale factor (ColiResolveNodeMove)
 extern const float lbl_eu_8066AE9C;  // same-priority push weight (ColiResolveNodeMove)
@@ -2701,8 +2699,8 @@ extern "C" bool ColiTestSphereCone(CColiObject* self) {
         f32 scaled = lbl_eu_8066AE60 *
                      nw4r::math::Atan2FIdx(diff.x, diff.z);
         f32 ang = scaled - self->field_0x64;
-        while (lbl_eu_8066A1F8 <= ang) ang -= lbl_eu_8066A1FC;
-        while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+        while (ml::pi <= ang) ang -= ml::tau;
+        while (ang < -ml::pi) ang += ml::tau;
         if (-self->field_0x60 <= ang && ang <= self->field_0x60) {
             return true;
         }
@@ -2745,8 +2743,8 @@ extern "C" bool ColiTestCappedCone(CColiObject* self) {
     f32 scaled = lbl_eu_8066AE60 *
                  nw4r::math::Atan2FIdx(diff.x, diff.z);
     f32 ang = scaled - self->field_0x64;
-    while (lbl_eu_8066A1F8 <= ang) ang -= lbl_eu_8066A1FC;
-    while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+    while (ml::pi <= ang) ang -= ml::tau;
+    while (ang < -ml::pi) ang += ml::tau;
     if (-self->field_0x60 <= ang && ang <= self->field_0x60) return true;
     return false;
 }
@@ -2757,8 +2755,8 @@ extern "C" bool ColiTestCappedCone(CColiObject* self) {
 static inline bool angleOK804AC198(CColiObject* self, const VEC3* d) {
     f32 ang = lbl_eu_8066AE60 * nw4r::math::Atan2FIdx(d->x, d->z) -
               self->field_0x64;
-    while (ang >= lbl_eu_8066A1F8) ang -= lbl_eu_8066A1FC;
-    while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+    while (ang >= ml::pi) ang -= ml::tau;
+    while (ang < -ml::pi) ang += ml::tau;
     return -self->field_0x60 <= ang && ang <= self->field_0x60;
 }
 
@@ -2838,8 +2836,8 @@ extern "C" bool ColiTestPartnerCone(CColiObject* self) {
         f32 scaled =
             nw4r::math::Atan2FIdx(diff.x, diff.z) * lbl_eu_8066AE60;
         f32 ang = scaled - self->field_0x64;
-        while (lbl_eu_8066A1F8 <= ang) ang -= lbl_eu_8066A1FC;
-        while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+        while (ml::pi <= ang) ang -= ml::tau;
+        while (ang < -ml::pi) ang += ml::tau;
         if (-self->field_0x60 <= ang && ang <= self->field_0x60) return true;
     }
     return false;

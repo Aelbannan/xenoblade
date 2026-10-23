@@ -42,7 +42,7 @@ void DSPInit(void) {
     BOOL enabled;
 
     __DSP_debug_printf("DSPInit(): Build Date: %s %s\n", "Feb 27 2009",
-                       "10:01:57\0\0\0");
+                       "10:01:57");
 
     if (__DSP_init_flag == TRUE) {
         return;

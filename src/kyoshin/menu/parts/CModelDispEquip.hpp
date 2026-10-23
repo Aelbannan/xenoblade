@@ -19,7 +19,6 @@
 #define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
 #define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_u32_hidden
 #define simGetLeafActData simGetLeafActData_void_hidden
-#define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -35,7 +34,6 @@
 #undef zero__Q22ml5CVec3
 #undef ScnRes_VertRayForward_E398
 #undef simGetLeafActData
-#undef lbl_eu_8066A200
 
 namespace cf { class CActParamAnimGame; class CfObjectMove; }
 

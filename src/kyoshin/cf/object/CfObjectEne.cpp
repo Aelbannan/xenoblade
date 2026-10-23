@@ -418,12 +418,12 @@ void cf::CfObjectEne::loadEnemyParams() {
     c46.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x46], v->field_0x3F28);
     this->CActorParam_setGaugeFloat((f32)(u32)c46.h);
     c53.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x53], v->field_0x3F28);
-    this->CActorParam_setGauge1624((f32)(u32)c53.h * lbl_eu_8066A210);
+    this->CActorParam_setGauge1624((f32)(u32)c53.h * ml::deg2rad);
     this->CActorParam_setGaugeFlagA(1);
     this->CActorParam_setGaugeFlagB(1);
     this->CActorParam_setGaugeRateA(lbl_eu_80666984);
     this->CActorParam_setGaugeRateB(lbl_eu_80666984);
-    this->CActorParam_setMoveRate(lbl_eu_80666988 * (lbl_eu_8066A1F8 / lbl_eu_8066698C));
+    this->CActorParam_setMoveRate(lbl_eu_80666988 * (ml::pi / lbl_eu_8066698C));
     c60.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x60], v->field_0x3F28);
     p->field_0x1648 |= c60.b;
     c6A.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x6A], v->field_0x3F28);
@@ -438,7 +438,7 @@ void cf::CfObjectEne::loadEnemyParams() {
     c96t.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
     if (c96t.b != 0) {
         c96b.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
-        this->CActorParam_setHitRange((lbl_eu_8066A1F8 / lbl_eu_80666990) * (f32)(u32)c96b.b);
+        this->CActorParam_setHitRange((ml::pi / lbl_eu_80666990) * (f32)(u32)c96b.b);
     }
     cf::CfEneRatesView* g = (cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock();
     cA2.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA2], v->field_0x3F28);
@@ -645,7 +645,7 @@ void cf::CfObjectEne::initEnemyBdatParams() {
 // CAttackParam record (getAtkParam), copies the name, fills the typed
 // fields from the bdat columns, picks the +0x60 gauge from the +0x20C rate
 // (+0x48, or +0x44 when the +0x48 is 0.0f) and scales the +0x64 attack
-// count by the +0x1C4 rate * lbl_eu_8066A20C.
+// count by the +0x1C4 rate * ml::rad2deg.
 void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     Bdat_GetTable_AA34();
     void* bdat = getFP(((cf::CfEneLookupView*)this)->field_0x3F14);
@@ -665,7 +665,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     Bdat_GetTable_AA34();
     u8* bdat2 = (u8*)getFP(&cols[0x2B6]);
     f32 zero = lbl_eu_80666968;
-    f32 scale = lbl_eu_8066A20C;
+    f32 scale = ml::rad2deg;
     for (int i = 0; i < 6; i++) {
         // name column addresses the raw symbol; the rest go through the
         // offset copy (retail keeps both r29/r30 base forms)
@@ -961,8 +961,8 @@ extern "C" u32 CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(cf::CActorPar
 extern "C" float CActorParam_UnkVirtualFunc171__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }
 
 extern "C" float CActorParam_UnkVirtualFunc170__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    // lbl_eu_8066A1F8 declared (const form) in CfObjectEne.hpp / CChain.hpp
-    return lbl_eu_8066A1F8 - *(float*)((char*)self + 0x1630);
+    // ml::pi declared (const form) in CfObjectEne.hpp / CChain.hpp
+    return ml::pi - *(float*)((char*)self + 0x1630);
 }
 
 extern "C" float CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(float*)((u8*)self + 0x1630); }

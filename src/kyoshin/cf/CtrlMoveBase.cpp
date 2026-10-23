@@ -575,10 +575,10 @@ int moveBaseSway(CCtrlMoveBase* self, ml::CVec3* out) {
     f32 angle = lbl_eu_806665AC * nw4r::math::Atan2FIdx(self->mVelocity.x, self->mVelocity.z);
     f32 wobble;
     if ((self->mFlagsU16_1 & 0x8) != 0) {
-        f32 off = lbl_eu_806665B0 * lbl_eu_8066A210;
+        f32 off = lbl_eu_806665B0 * ml::deg2rad;
         wobble = angle + off;
     } else {
-        f32 off = lbl_eu_806665B0 * lbl_eu_8066A210;
+        f32 off = lbl_eu_806665B0 * ml::deg2rad;
         wobble = angle - off;
     }
     ml::CVec3 tmp;

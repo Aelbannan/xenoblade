@@ -798,9 +798,8 @@ extern float lbl_eu_80666990;   // loadEnemyParams vf334 ratio divisor
 extern float lbl_eu_80666994;   // 166 and loadEnemyParams f32 divisor
 extern float lbl_eu_80666998;   // loadEnemyParams scaled-vfE8 multiplier
 extern float lbl_eu_806669B4;   // 166 0xFF arts-gauge fallback
-extern const float lbl_eu_8066A1F8;   // max gauge value (166 / loadEnemyParams); const form aligned with CChain.hpp / CBattleManager TU decls
 
-// lbl_eu_8066A20C / lbl_eu_8066A210 are already declared `const float` in
+// ml::rad2deg / ml::deg2rad are already declared `const float` in
 // CfObjectModel.hpp (in the CfObjectActor.hpp chain) - reuse those.
 
 // .sbss/.sdata bdat table pointers and the two level-name letter buffers

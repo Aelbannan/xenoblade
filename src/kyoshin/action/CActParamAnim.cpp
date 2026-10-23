@@ -15,7 +15,7 @@
 
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #undef lookupParamByKey
 #undef getAnimTick
 
@@ -142,7 +142,7 @@ void CActParamAnim::initAnimState() {
     view->field494 = lbl_eu_80665EB8;
     view->field498 = 0;
     view->field49C = lbl_eu_80665EA0;
-    f32 kScale = lbl_eu_80665EBC * lbl_eu_8066A210;
+    f32 kScale = lbl_eu_80665EBC * ml::deg2rad;
     view->field4A0 = kScale;
     view->field4A4 = kScale;
     view->field4A8 = 0x00040000;
@@ -506,8 +506,8 @@ void func_8004B9D4(){}
 
 extern "C" f32 wrapAnglePi(f32 value) {
     // Wrap an angle into [-pi, pi) by adding/subtracting 2*pi.
-    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
-    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
+    while (ml::pi <= value) value -= ml::tau;
+    while (value < -ml::pi) value += ml::tau;
     return value;
 }
 
@@ -638,8 +638,8 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         // tail (retail layout).
         f32 angle = startAngle + view->field444;
         blendFrames = lbl_eu_80665EA0;
-        const f32 pi = lbl_eu_8066A1F8;
-        const f32 twoPi = lbl_eu_8066A1FC;
+        const f32 pi = ml::pi;
+        const f32 twoPi = ml::tau;
         if (angle > pi) {
             angle -= twoPi;
             int ownerGate = 0;
@@ -765,8 +765,8 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         // Wrap the anim ratio difference into [-pi, pi] and derive the
         // normalized progress from the object's own scale virtual.
         f32 diff = view->field440 - view->field444;
-        while (!(lbl_eu_8066A1F8 > diff)) diff -= lbl_eu_8066A1FC;
-        while (diff < -lbl_eu_8066A1F8) diff += lbl_eu_8066A1FC;
+        while (!(ml::pi > diff)) diff -= ml::tau;
+        while (diff < -ml::pi) diff += ml::tau;
         f32 absDiff = __fabs(diff);
         f32 len = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
         view->field4A0 = absDiff / len;
@@ -909,9 +909,9 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
                      reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->y;
             diff.z = reinterpret_cast<CActParamAnimDeltaSrcB*>(objB)->z -
                      reinterpret_cast<CActParamAnimDeltaSrcA*>(objA)->z;
-            bool xySmall = (f32)__fabs((f64)diff.x) <= lbl_eu_8066A208 &&
-                           (f32)__fabs((f64)diff.y) <= lbl_eu_8066A208;
-            if (!(xySmall && (f32)__fabs((f64)diff.z) <= lbl_eu_8066A208)) {
+            bool xySmall = (f32)__fabs((f64)diff.x) <= ml::epsilon &&
+                           (f32)__fabs((f64)diff.y) <= ml::epsilon;
+            if (!(xySmall && (f32)__fabs((f64)diff.z) <= ml::epsilon)) {
                 // Horizontal direction only: y is forced to zero and the
                 // delta's y feeds dir.z.
                 nw4r::math::VEC3 dir;
@@ -951,13 +951,13 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
         view->field0C &= ~0x400;
     }
     // Wrap the blended heading into [-pi, pi].
-    if (view->field440 > lbl_eu_8066A1F8) view->field440 -= lbl_eu_8066A1FC;
-    if (view->field440 < -lbl_eu_8066A1F8) view->field440 += lbl_eu_8066A1FC;
+    if (view->field440 > ml::pi) view->field440 -= ml::tau;
+    if (view->field440 < -ml::pi) view->field440 += ml::tau;
     // Distance from the stored target angle, wrapped to [-pi, pi].
     f32 d = view->field440 - view->field444;
-    while (lbl_eu_8066A1F8 <= d) d -= lbl_eu_8066A1FC;
-    while (d < -lbl_eu_8066A1F8) d += lbl_eu_8066A1FC;
-    f32 m = (f32)__fabs((f64)(d * lbl_eu_8066A20C));
+    while (ml::pi <= d) d -= ml::tau;
+    while (d < -ml::pi) d += ml::tau;
+    f32 m = (f32)__fabs((f64)(d * ml::rad2deg));
     if (m > lbl_eu_80665ED4) m -= lbl_eu_80665ED4;
     if (m <= lbl_eu_80665E9C) {
         // Close enough to the target: count the guard down.
@@ -2955,9 +2955,9 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     u32 localBig;
 
     f32 value = view->field440 - view->field444;
-    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
-    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
-    f32 scaled = value * lbl_eu_8066A20C;
+    while (ml::pi <= value) value -= ml::tau;
+    while (value < -ml::pi) value += ml::tau;
+    f32 scaled = value * ml::rad2deg;
     if (!(scaled <= lbl_eu_80665F4C)) return 0;
     if (!(scaled > lbl_eu_80665F50)) return 0;
 
@@ -3034,14 +3034,14 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     u32 localBig;
     // Wrap the anim angle delta into [-pi, pi) (same wrap as wrapAnglePi),
     // then gate: fail when the scaled wrapped angle exceeds the upper bound.
-    // Residual known diff: retail hoists the loop1 lbl_eu_8066A1FC load to
+    // Residual known diff: retail hoists the loop1 ml::tau load to
     // +0x08 (before the spills); every source shape tried keeps it after the
     // field reads.
     f32 v444 = view->field444;
     f32 value = view->field440 - v444;
-    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
-    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
-    if (value * lbl_eu_8066A20C <= lbl_eu_80665F50) {
+    while (ml::pi <= value) value -= ml::tau;
+    while (value < -ml::pi) value += ml::tau;
+    if (value * ml::rad2deg <= lbl_eu_80665F50) {
         if (param != 0) {
             if (param < 0x68) {
                 // The 0x40000 guard flag skips the anim start while the
@@ -3091,9 +3091,9 @@ int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     u32 localBig;
 
     f32 value = view->field440 - view->field444;
-    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
-    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
-    f32 scaled = value * lbl_eu_8066A20C;
+    while (ml::pi <= value) value -= ml::tau;
+    while (value < -ml::pi) value += ml::tau;
+    f32 scaled = value * ml::rad2deg;
     if (!(scaled >= lbl_eu_80665EC0)) return 0;
     if (!(scaled < lbl_eu_80665F54)) return 0;
 
@@ -3141,9 +3141,9 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     // scaled wrapped angle falls below the lower bound.
     f32 v444 = view->field444;
     f32 value = view->field440 - v444;
-    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
-    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
-    if (value * lbl_eu_8066A20C >= lbl_eu_80665F54) {
+    while (ml::pi <= value) value -= ml::tau;
+    while (value < -ml::pi) value += ml::tau;
+    if (value * ml::rad2deg >= lbl_eu_80665F54) {
         if (param != 0) {
             if (param < 0x68) {
                 // The 0x40000 guard flag skips the anim start while the
@@ -3725,7 +3725,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
             // Remove the component along n so the radial stays on the plane.
             radial.y -= dotVec3f(&radial.x, &n.x) / mag;
             normVec3(reinterpret_cast<ml::CVec3*>(&radial));
-            f32 ang2 = lbl_eu_8066A200 + atan2AnimFIdx(radial.x, radial.z);
+            f32 ang2 = ml::halfpi + atan2AnimFIdx(radial.x, radial.z);
             nw4r::math::VEC3 dir;
             writeVec3f(&dir.x, cosAnimFIdx(ang2), lbl_eu_80665EA0,
                           sinAnimFIdx(ang2));
@@ -4307,7 +4307,7 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
         nw4r::db::Warning((const char*)lbl_eu_805262F0, 0xef,
                           (const char*)lbl_eu_805262C8);
     }
-    f32 ang = ml::math::abs((f32)acos(dot) * lbl_eu_8066A20C);
+    f32 ang = ml::math::abs((f32)acos(dot) * ml::rad2deg);
     if (ang > lbl_eu_80665F14) return 0;
     if (dirParam != 0 && ang < lbl_eu_80665F00) return 0;
 

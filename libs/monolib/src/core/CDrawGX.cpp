@@ -10,7 +10,6 @@ extern "C" const float lbl_eu_8066A468;   // 1.0f
 extern "C" const float lbl_eu_8066A46C;   // 0.0f
 extern "C" const float lbl_eu_8066A470;   // 255.0f
 extern "C" const float lbl_eu_8066A474;   // 128/pi (nw4r RAD_TO_FIDX)
-extern "C" const float lbl_eu_8066A1FC;   // 2*pi (tau)
 
 // nw4r trig entry points used by renderCircle (retail calls these directly,
 // passing rad * 128/pi from the shared pool constant).
@@ -444,7 +443,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474)));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474)));
         }
 
         end();
@@ -456,7 +455,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (lbl_eu_8066A1FC / (float)sides) * lbl_eu_8066A474), lbl_eu_8066A46C));
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), pos.y + r * CosFIdx__Q24nw4r4mathFf((float)i * (ml::tau / (float)sides) * lbl_eu_8066A474), lbl_eu_8066A46C));
         }
 
         end();

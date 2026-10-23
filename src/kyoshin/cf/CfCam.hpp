@@ -6,7 +6,7 @@
 #include <monolib/math/CQuat.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"  // owner of the 0x74/0xAC/0xCC/0x120/0x128/0x12C slots (unk164 / 73DDC / 74090 / 74230)
 
 namespace cf {
@@ -71,7 +71,6 @@ extern "C" float lbl_eu_80527208[5];
 extern "C" float lbl_eu_8052721C[5];
 // .sdata floats (retail 0x80661B3C, 0x80661B40, 0x80661B44, 0x80661B48,
 // 0x80661B74). Scalar stores - only the .data tables below are indexed.
-extern "C" float lbl_eu_8066A200;     // .sdata2 pi/2 (retail 0x8066A200)
 extern "C" u8 lbl_eu_80663DE0;        // .sdata byte gate (retail 0x80663DE0)
 extern "C" void Env_BuildRotY(void*, float);        // retail 0x80059C78
 extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag); // CfCam sibling flag set (retail 0x8006BBF4)
@@ -100,7 +99,6 @@ extern "C" void subVec3f(f32* out, const f32* a, const f32* b); // vec3 subtract
 extern "C" float VecMath_SafeSqrtF(float x);   // FSqrt-style sqrt with nw4r assert (retail 0x800A3EF4)
 extern "C" f32 atan2AnimFIdx(f32 a, f32 b); // sin wrapper; CfCam call sites pass 2 args (retail 0x8004D2D8)
 extern "C" f32 wrapAnglePi(f32 value);   // wrap angle into [-pi, pi) (retail 0x8004C300)
-extern "C" float lbl_eu_8066A1F8;          // .sdata2 pi (retail 0x8066A1F8)
 extern char lbl_eu_80526324[];              // nw4r FSqrt assert source-file string (retail .data)
 extern char lbl_eu_80526300[];              // nw4r FSqrt assert message string (retail .data)
 extern char lbl_eu_805262F0[];              // nw4r assert source-file string (retail .data)
@@ -371,8 +369,6 @@ extern "C" __declspec(noinline) void cfCam_psAddVec3(nw4r::math::VEC3* out,
 // In-TU definition (CfCam.cpp) whose nw4r VEC3LenSq body MWCC would inline;
 // noinline keeps the retail `bl cfCam_vecLenSq` at call sites.
 extern "C" __declspec(noinline) f32 cfCam_vecLenSq(const nw4r::math::VEC3* vector);
-extern float lbl_eu_8066A1FC;                               // owned elsewhere (not this split)
-extern const float lbl_eu_8066A210;                               // .sdata2 constant (degrees-to-radians scale)
 // .bss camera-defaults block (retail 0x80570A20): nine vec3 slots followed by
 // trailing state words zeroed by the sinit.
 struct CamDefaultsBlock {

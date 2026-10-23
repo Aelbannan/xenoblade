@@ -635,7 +635,6 @@ extern const f32 lbl_eu_8066700C; // pulse step
 extern const f32 lbl_eu_80667010; // pulse frequency
 extern const f32 lbl_eu_80667014; // distance^2 threshold
 extern const f32 lbl_eu_80666FEC; // anim-state marker value
-extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 extern const f32 lbl_eu_8066702C; // indicator pane y reset value
 extern const f64 lbl_eu_80667030; // damage-text double bias
 
@@ -927,7 +926,7 @@ void CMenuEnemyState::Move() {
                         }
 
                         {
-                            f32 t = lbl_eu_8066A1F8 * unk838;
+                            f32 t = ml::pi * unk838;
                             t = lbl_eu_80667010 * t;
                             f32 s = nw4r::math::SinFIdx(t);
                             lbl_eu_80573A60[0] = s;
@@ -2365,7 +2364,7 @@ void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB)
         if (!CDeviceVI::isWideAspectRatio()) {
             scaleX *= lbl_eu_80667018;
         }
-        f32 s = lbl_eu_8066701C / lbl_eu_8066A1F8;
+        f32 s = lbl_eu_8066701C / ml::pi;
         PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
         pane->v2C = pa->x;
         pane->v30 = pa->y;

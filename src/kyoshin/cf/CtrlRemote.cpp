@@ -324,17 +324,17 @@ void func_80098EF8(CtrlPcVf38* self)
             ml::CVec3 d = diff;
             if ((self->mField4 & 0x200) != 0) {
                 f32 f31v =
-                    lbl_eu_8066A1F8 +
+                    ml::pi +
                     ((CtrlGm8Vf1C*)gm8)->vf05()->mField4 - self->mFieldC;
                 f32 f1 = lbl_eu_8066674C * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                 f32 f3 = f31v - f1;
-                while (f3 >= lbl_eu_8066A1F8) {
-                    f3 -= lbl_eu_8066A1FC;
+                while (f3 >= ml::pi) {
+                    f3 -= ml::tau;
                 }
-                while (f3 < -lbl_eu_8066A1F8) {
-                    f3 += lbl_eu_8066A1FC;
+                while (f3 < -ml::pi) {
+                    f3 += ml::tau;
                 }
-                f32 ang = f3 * lbl_eu_8066A20C;
+                f32 ang = f3 * ml::rad2deg;
                 if (ang > lbl_eu_80666758 && ang < lbl_eu_8066675C) {
                     self->mField4 |= 0x800;
                 } else {

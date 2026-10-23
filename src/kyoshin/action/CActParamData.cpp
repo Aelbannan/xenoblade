@@ -2645,7 +2645,7 @@ extern "C" u32 copyS16ToFlt(u32 flag, void* a2, void* dst, const void* src) {
     return 0;
 convert:
     ((CopyS16DstView*)dst)->field_40 =
-        (f32)((const CopyS16SrcView*)src)->field_8 * lbl_eu_8066A210;
+        (f32)((const CopyS16SrcView*)src)->field_8 * ml::deg2rad;
     return 0;
 }
 

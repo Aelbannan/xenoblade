@@ -3,7 +3,7 @@
 #include "types.h"
 #include "monolib/util.hpp"
 #include "monolib/math.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).

@@ -15,6 +15,7 @@ Usage:
     python3 tools/coop/smell_report.py --write          # regenerate docs/CODE_SMELLS.md
     python3 tools/coop/smell_report.py --check          # CI gate: stale OR per-TU regression -> exit 1
     python3 tools/coop/smell_report.py --check --no-strict  # freshness only (no regression gate)
+    python3 tools/coop/smell_report.py --ratchet        # lower per-TU ceilings (shrink-only)
     python3 tools/coop/smell_report.py --completeness   # live TU status from targets.json (stdout only)
 
 --check (CI):
@@ -27,6 +28,14 @@ Usage:
      base baseline (new files) are exempt; cleanup that reduces counts is
      always allowed. This cannot be defeated by regenerating the report in
      the same PR, because the comparison source is the base branch's copy.
+
+  3. ratchet: per-TU METRICS must not exceed the checked-in ceilings in
+     tools/coop/smell_baseline.json (works without git history). New TUs
+     with smells must be registered with --ratchet; --ratchet only lowers
+     existing ceilings and refuses to run while any TU regresses.
+
+The report also carries a derived "clean" tier (tools/coop/clean_tier.py):
+accepted functions whose body has zero gated smells.
 
 --completeness: prints the TU status table derived from the target registry
 (tools/coop/targets.json) — the replacement for the retired ALL_TUS.md.
@@ -59,6 +68,8 @@ from tools.coop.ptr_sites import scan_roots as scan_ptr_sites  # noqa: E402
 from tools.coop.view_audit import scan_roots as scan_views  # noqa: E402
 
 REPORT = ROOT / "docs" / "CODE_SMELLS.md"
+# Checked-in per-TU ratchet (shrink-only; see cmd_ratchet / _check_ratchet).
+RATCHET = ROOT / "tools" / "coop" / "smell_baseline.json"
 RVL_REPORT = ROOT / "docs" / "CODE_SMELLS_RVL.md"
 BEGIN_BASELINE = "<!-- BEGIN BASELINE -->"
 END_BASELINE = "<!-- END BASELINE -->"
@@ -192,6 +203,55 @@ def baseline_json(rows: dict[str, Stats]) -> str:
     return json.dumps(bl, sort_keys=True, indent=1)
 
 
+def _render_clean_section(lines: list[str], clean) -> None:
+    """Derived clean tier: accepted AND zero smells in the function body."""
+    from tools.coop.clean_tier import CLEAN_METRICS  # noqa: F401  (pinned == METRICS keys)
+
+    _, cs = clean
+    disp = dict(METRICS)
+    lines.append("## Clean tier (accepted + smell-free body)")
+    lines.append("")
+    lines.append(
+        "Derived faithfulness tier on top of acceptance (`tools/coop/clean_tier.py`): a "
+        "function is **clean** when its `targets.json` status is FULL_MATCH/EQUIVALENT_MATCH "
+        "*and* its source body has zero hits in every gated metric above. A TU is clean when "
+        "every registered target in it is clean. Bodies are located with the `ptr_sites` "
+        "column-0 definition-span heuristic; `unlocated` accepted targets (one-line or "
+        "indented definitions, renamed/ctor entries) are never counted clean. "
+        "**Target: dirty -> 0.** Informational (not a registry status, not gated)."
+    )
+    lines.append("")
+    lines.append("| tier | functions | bytes |")
+    lines.append("|---|---|---|")
+    lines.append(f"| accepted | {cs.accepted} | {cs.accepted_bytes} |")
+    lines.append(f"| **clean** | {cs.clean} | {cs.clean_bytes} |")
+    lines.append(f"| accepted but dirty | {cs.dirty} | {cs.dirty_bytes} |")
+    lines.append(f"| accepted, body unlocated | {cs.unlocated} | {cs.unlocated_bytes} |")
+    lines.append("")
+    lines.append(f"- Clean TUs (every target clean): **{cs.clean_tus}** / {cs.tus}")
+    lines.append("")
+    if cs.dirty_by_metric:
+        lines.append("Dirty accepted functions by smell family (a function can hit several):")
+        lines.append("")
+        lines.append("| metric | dirty functions |")
+        lines.append("|---|---|")
+        for k, v in sorted(cs.dirty_by_metric.items(), key=lambda kv: (-kv[1], kv[0])):
+            lines.append(f"| {disp.get(k, k)} | {v} |")
+        lines.append("")
+    top = sorted(
+        ((p, d) for p, d in cs.per_tu.items() if d["dirty"]),
+        key=lambda kv: (-kv[1]["dirty_bytes"], kv[0]),
+    )[:15]
+    if top:
+        lines.append("Top TUs by accepted-but-dirty bytes:")
+        lines.append("")
+        lines.append("| TU | dirty fns | dirty bytes | clean fns | clean bytes |")
+        lines.append("|---|---|---|---|---|")
+        for p, d in top:
+            lines.append(f"| {p} | {d['dirty']} | {d['dirty_bytes']} | {d['clean']} | {d['clean_bytes']} |")
+        lines.append("")
+
+
 def _render_site_section(lines: list[str], rows: dict[str, Stats], tot: Stats) -> None:
     """Curated per-expression pointer-arithmetic section (informational)."""
     tot_sites = tot.ptr_sites
@@ -289,7 +349,15 @@ def _render_view_section(lines: list[str], rows: dict[str, Stats], tot: Stats) -
     lines.append("")
 
 
-def render_report(rows: dict[str, Stats]) -> str:
+def compute_clean():
+    from tools.coop.clean_tier import compute
+
+    return compute(ROOTS)
+
+
+def render_report(rows: dict[str, Stats], clean=None) -> str:
+    if clean is None:
+        clean = compute_clean()
     tot = totals(rows)
     lines: list[str] = []
     lines.append("# Code Smell Report")
@@ -347,6 +415,7 @@ def render_report(rows: dict[str, Stats]) -> str:
     for path, s in top:
         lines.append(f"| {path} | {severity(s)} |")
     lines.append("")
+    _render_clean_section(lines, clean)
     _render_site_section(lines, rows, tot)
     _render_view_section(lines, rows, tot)
     lines.append("## Per-TU metrics")
@@ -467,6 +536,113 @@ def base_report_ref(args) -> str | None:
     return None
 
 
+def ratchet_snapshot(rows: dict[str, Stats]) -> dict[str, dict[str, int]]:
+    """Per-TU gated METRICS (zeros omitted; TUs with no smells map to {})."""
+    return {
+        path: {k: getattr(s, k) for k, _ in METRICS if getattr(s, k) > 0}
+        for path, s in sorted(rows.items())
+    }
+
+
+def load_ratchet(path: Path | None = None) -> dict[str, dict[str, int]] | None:
+    path = path or RATCHET
+    if not path.exists():
+        return None
+    return json.loads(path.read_text()).get("tus", {})
+
+
+def save_ratchet(tus: dict[str, dict[str, int]], path: Path | None = None) -> None:
+    path = path or RATCHET
+    doc = {
+        "_comment": "Per-TU smell ceilings (shrink-only). Generated by "
+        "`tools/coop/smell_report.py --ratchet`; never raise a value by hand.",
+        "metrics": [k for k, _ in METRICS],
+        "tus": {p: dict(sorted(m.items())) for p, m in sorted(tus.items())},
+    }
+    path.write_text(json.dumps(doc, indent=1, sort_keys=False) + "\n")
+
+
+def ratchet_compare(base: dict[str, dict[str, int]], cur: dict[str, dict[str, int]]):
+    """Return (regressions, new_tus, loosened) between a baseline and current snapshot.
+
+    regressions: "path: metric before -> after" for any increase.
+    new_tus:     TUs absent from the baseline that carry smells (must be registered).
+    loosened:    count of (TU, metric) ceilings above the current count.
+    """
+    regressions: list[str] = []
+    new_tus: list[str] = []
+    loosened = 0
+    disp = dict(METRICS)
+    for path, metrics in sorted(cur.items()):
+        if path not in base:
+            if metrics:
+                new_tus.append(path)
+            continue
+        ceil = base[path]
+        for k, v in sorted(metrics.items()):
+            before = int(ceil.get(k, 0))
+            if v > before:
+                regressions.append(f"{path}: {disp.get(k, k)} {before} → {v}")
+    for path, ceil in base.items():
+        m = cur.get(path, {})
+        loosened += sum(1 for k, v in ceil.items() if int(v) > m.get(k, 0))
+    return regressions, new_tus, loosened
+
+
+def cmd_ratchet(rows: dict[str, Stats], init: bool = False) -> int:
+    """Lower per-TU ceilings to current counts; never raise an existing one.
+
+    New TUs are registered at their current counts (visible in the diff).
+    Removed TUs are dropped. ``init`` creates the file from scratch.
+    """
+    cur = ratchet_snapshot(rows)
+    base = load_ratchet()
+    if base is None or init:
+        save_ratchet(cur)
+        print(f"wrote {RATCHET.relative_to(ROOT)} ({len(cur)} TUs)")
+        return 0
+    regressions, new_tus, _ = ratchet_compare(base, cur)
+    if regressions:
+        print("ERROR: refusing to raise ceilings (fix the regressions first):\n  "
+              + "\n  ".join(regressions[:20]), file=sys.stderr)
+        return 1
+    out: dict[str, dict[str, int]] = {}
+    lowered = 0
+    for path, metrics in cur.items():
+        if path in base:
+            lowered += sum(1 for k, v in base[path].items() if int(v) > metrics.get(k, 0))
+        out[path] = metrics
+    save_ratchet(out)
+    print(f"ratchet: lowered {lowered} ceiling(s), registered {len(new_tus)} new TU(s)"
+          + (": " + ", ".join(new_tus) if new_tus else ""))
+    return 0
+
+
+def _check_ratchet(rows: dict[str, Stats]) -> list[str]:
+    base = load_ratchet()
+    if base is None:
+        return [f"{RATCHET.relative_to(ROOT)} is missing — run "
+                "`python3 tools/coop/smell_report.py --ratchet` and commit it"]
+    regressions, new_tus, loosened = ratchet_compare(base, ratchet_snapshot(rows))
+    problems: list[str] = []
+    if regressions:
+        problems.append(
+            "per-TU smell ratchet regression (tools/coop/smell_baseline.json is shrink-only):\n  "
+            + "\n  ".join(regressions[:20])
+            + (f"\n  … and {len(regressions) - 20} more" if len(regressions) > 20 else "")
+        )
+    if new_tus:
+        problems.append(
+            "new TU(s) with smells not in the ratchet baseline — run "
+            "`python3 tools/coop/smell_report.py --ratchet` to register them:\n  "
+            + "\n  ".join(new_tus[:20])
+        )
+    if loosened:
+        print(f"note: {loosened} ratchet ceiling(s) above current counts — run "
+              "`python3 tools/coop/smell_report.py --ratchet` to lock in the cleanup.")
+    return problems
+
+
 def cmd_write(rows: dict[str, Stats]) -> int:
     REPORT.write_text(render_report(rows))
     print(f"wrote {REPORT.relative_to(ROOT)}")
@@ -507,7 +683,11 @@ def cmd_check(args, rows: dict[str, Stats]) -> int:
             f"`python3 tools/coop/smell_report.py --write` and commit it"
         )
 
-    # 2. strict regression vs base-branch baseline
+    # 2. checked-in per-TU ratchet (shrink-only; works without git history)
+    if not args.no_strict:
+        problems.extend(_check_ratchet(rows))
+
+    # 3. strict regression vs base-branch baseline
     if not args.no_strict:
         base_text = base_report_ref(args)
         if base_text:
@@ -878,6 +1058,9 @@ def main() -> int:
     ap.add_argument("--no-strict", action="store_true", help="with --check: freshness only")
     ap.add_argument("--rvl", action="store_true", help="scan libs/RVL_SDK instead (informational)")
     ap.add_argument("--base", default=None, help="base ref for the regression comparison")
+    ap.add_argument("--ratchet", action="store_true",
+                    help="lower tools/coop/smell_baseline.json ceilings to current counts (never raises)")
+    ap.add_argument("--init-ratchet", action="store_true", help="(re)create the ratchet baseline from scratch")
     ap.add_argument("--completeness", action="store_true", help="print TU status table (stdout)")
     args = ap.parse_args()
 
@@ -893,6 +1076,8 @@ def main() -> int:
         ap.error("--rvl needs one of --write, --check")
 
     rows = scan_all()
+    if args.ratchet or args.init_ratchet:
+        return cmd_ratchet(rows, init=args.init_ratchet)
     if args.write:
         return cmd_write(rows)
     if args.check:

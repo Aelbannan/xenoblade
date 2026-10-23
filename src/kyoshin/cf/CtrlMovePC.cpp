@@ -78,8 +78,6 @@ extern const f32 lbl_eu_80667C34;
 extern const f32 lbl_eu_80667C38;
 extern const f32 lbl_eu_80667C3C;
 extern f32 lbl_eu_8066AF20;  // canonical non-const form per CfObjectMove.hpp
-extern const f32 lbl_eu_8066A204;
-extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_80667B6C;
 extern const f32 lbl_eu_80667C28;
 extern const f32 lbl_eu_80667C2C;
@@ -711,7 +709,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                     self->mArr124[3] = 0;
                     f32 ang = Atan2FIdx__Q24nw4r4mathFff(self->mVec90.x, self->mVec90.z);
                     self->mFloat100 = lbl_eu_80667BD8 * ang;
-                    f32 a = lbl_eu_80667BD8 * ang + lbl_eu_8066A1F8;
+                    f32 a = lbl_eu_80667BD8 * ang + ml::pi;
                     f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
                     f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
                     ml::CVec3 facing(s, lbl_eu_80667B60, c);
@@ -771,7 +769,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
             u16 anim = plW->mField455A;
             plW->mField455A = anim - 3;
             const f32 f28 = lbl_eu_80667BC8;
-            const f32 f29 = lbl_eu_8066A204;
+            const f32 f29 = ml::quarterpi;
             const f32 f30 = f28 * f29;
             const f64 bias = (f64)lbl_eu_80667BE8;
             const f32 sideScale = lbl_eu_80667BD4;
@@ -1668,7 +1666,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     }
 
     if (other == 0 || other <= mine) {
-        f32 ang = self->mFloat100 + lbl_eu_8066A200;   // + pi/2
+        f32 ang = self->mFloat100 + ml::halfpi;   // + pi/2
         f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
         f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
         f32 dir = self->mVec78.x * s + self->mVec78.z * c;
@@ -2130,13 +2128,13 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
         if (!(f4C & 0x4000)) {
             self->mFlags4C |= 0x20000;
             if (self->mShort120 == 1) {
-                angle = lbl_eu_8066A204;
+                angle = ml::quarterpi;
             } else {
-                angle = -lbl_eu_8066A204;
+                angle = -ml::quarterpi;
             }
             radius = lbl_eu_80667C28;
         } else {
-            angle = (f32)(u32)ml::math::mtRand(0x168) * lbl_eu_8066A210;
+            angle = (f32)(u32)ml::math::mtRand(0x168) * ml::deg2rad;
             radius = lbl_eu_80667BDC * (lbl_eu_80667B6C * (f32)(u32)ml::math::mtRand(0xa))
                      + lbl_eu_80667C2C;
         }
@@ -2513,7 +2511,7 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
                 }
                 return lbl_eu_80667BD8 * Atan2FIdx__Q24nw4r4mathFff(n.x, n.z);
             }
-            ang = ang + lbl_eu_8066A200;
+            ang = ang + ml::halfpi;
         }
         goal.y = goal.y - lbl_eu_80667BDC;
     }
@@ -2609,7 +2607,7 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     ml::CVec3 probe;               // candidate spot
     const f32 heightStep = lbl_eu_80667BD4;
     const f64 angBias = lbl_eu_80667BE8;
-    const f32 ampScale = lbl_eu_8066A204;
+    const f32 ampScale = ml::quarterpi;
     const f32 baseRadius = lbl_eu_80667B68;
     const f32 degScale = lbl_eu_80667B9C;
     const f32 maxReach = lbl_eu_80667C50;

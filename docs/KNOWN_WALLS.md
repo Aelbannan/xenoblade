@@ -44,10 +44,12 @@ MWCC_CASES sections before re-litigating a ruled-out shape.
    → `@l` fallback is byte-identical; catalogue.
 4. `addi rD,base,0` peepholed to `mr` — ruled out across versions/shapes .
    → pass two distinct objects (OSRestart) or §17.6 `opword 0x387E0000` ; catalogue.
-5. `b .+4` sinit barrier — unfolded vtable-store shape unreachable; 17+ forms, pragmas,
-   6 MWCC versions ruled out . → leave at COMPILES; needs a policy exception.
-6. mtctr/bdnz loops under unit-locked `-O4` — shape needs `-O4,s`, not per-function .
-   → record the -O4 static cap; negotiate a unit flag split.
+5. ~~`b .+4` sinit barrier~~ — **STALE / RESOLVED**: a merged-symbol tail call, not codegen;
+   splitting the symbol in symbols.txt gives FULL_MATCH ×5 (MWCC_CASES §4; docs/evidence/per_unit_flags_2026-10-23.md §Walls).
+   → split the merged symbol in symbols.txt; not a wall.
+6. ~~mtctr/bdnz loops under unit-locked `-O4`~~ — **DISSOLVED**: hcicmds (GC/3.0a5.2 `-O4`) is
+   57/59, `write_cur_iac_lap` FULL via the nested-loop source form; flag/version sweeps don't move the
+   remaining header-store hoist residuals (docs/evidence/per_unit_flags_2026-10-23.md §Walls). → fix source shape.
 7. WGPIPE MMIO stores — GX TEV setters 95–97% + reg rotation; symbolic 0xCC008000 rejected,
    rho non-injective . → **FULL_MATCH-only**: declaration-order regalloc toward byte-identity.
 8. Solver-scale limits — big multi-branch functions with indirect/cross-object callees:
@@ -60,8 +62,12 @@ MWCC_CASES sections before re-litigating a ruled-out shape.
     → **FULL_MATCH-only**: record; byte-identity still accepts.
 12. `li`-float family — return-constant li floats above an r0-store; ~18 shapes ruled out
     ,2151). → keep best shape; catalogue.
-13. Per-function opt-level conflict — one function needs `-O4,s`, unit needs `-O4` ,943).
-    → unit-level flag negotiation; catalogue.
+13. ~~Per-function opt-level conflict~~ — **DISSOLVED**: `#pragma optimize_for_size on` (+ `dont_inline on`)
+    reproduces -O4,s per function inside a -O4,p unit; where -O4,s dominates a unit, flip the unit
+    flag instead (applied 2026-10-23 to CEquipItemBox, CItemBoxLine, CModelDispMakeCrystal, CTaskGame,
+    CMCCrystalBox, CItemBoxGrid, CMCGetItemBox, CKizunaTalkList, CWorkRoot, CEquipChange, CCollepedia).
+    Mixed TUs (CSaveLoad, CTitle, CPartyStateWin, CArtsInfo, CTagProcessor, CPassiveSkill, CMenuArtsSet,
+    CQstLogList) stay -O4,p + pragmas (docs/evidence/per_unit_flags_2026-10-23.md).
 14. Section padding — linker artifact; never fabricate in source .
 
 ## NOT walls

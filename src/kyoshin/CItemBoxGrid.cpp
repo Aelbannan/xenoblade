@@ -268,7 +268,6 @@ u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)
 // Constructor for sub-item grid: blank every cell, set metadata and the
 // vtable at +0x2CA8, then stamp the pre-cleared 0x400-cell template over the
 // grid via CopyGridEntry9 (retail keeps both helper calls as `bl`).
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void* __ct__801C5514(void* self) {
     u8* end = (u8*)self + 0x2800;
     u8* cur = (u8*)self;
@@ -295,7 +294,6 @@ extern "C" __declspec(noinline) void* __ct__801C5514(void* self) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 __declspec(noinline) unsigned char* SetEntry9Bytes(unsigned char* p, short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
     unsigned char* buf = (unsigned char*)p;
@@ -334,9 +332,7 @@ extern "C" __declspec(noinline) void CopyGridEntry9(void* dst, void* src) {
 }
 
 // Destructor for the main grid container.
-// optimize_for_size: retail uses stmw r30/lmw r30 block save (not individual stw).
-#pragma push
-#pragma optimize_for_size on
+// -O4,s: retail uses stmw r30/lmw r30 block save (not individual stw).
 __declspec(noinline) void* __dt__801C5670(void* self, int mode) {
     u8* p = (u8*)self;
     if (!self) goto exit;
@@ -347,7 +343,6 @@ __declspec(noinline) void* __dt__801C5670(void* self, int mode) {
 exit:
     return self;
 }
-#pragma pop
 
 
 // C linkage: retail exports this helper under its plain address-name symbol.
@@ -605,8 +600,6 @@ extern "C" __declspec(noinline) void DecGridPageIndex(CItemBoxGridFull* self) {
 
 // Lookup the item id stored in a grid cell; -1 when the cell is out of
 // range or the referenced item object is invalid.
-#pragma push
-#pragma optimize_for_size on
 extern "C" s16 GetCellItemId(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
@@ -618,7 +611,6 @@ extern "C" s16 GetCellItemId(CItemBoxGridFull* self, u16 idx) {
     }
     return -1;
 }
-#pragma pop
 
 // Item sell price for the cell at page*0x1e+idx: 0 when the cell is out of
 // range or the referenced item object is invalid. Otherwise the item's base
@@ -733,10 +725,8 @@ extern "C" __declspec(noinline) void* GetCellItemPtr(CItemBoxGridFull* self, u16
 // Check item entry validity based on category. Categories 4-8 and 2 share
 // the equipment-slot scan (slot count via vt+0x30, free-slot probe via
 // vt+0x40, equipped-state fetch via vt+0x2C); category 3 collapses the cell's
-// state byte to a boolean. optimize_for_size merges the r29-r31 saves into
+// state byte to a boolean. -O4,s merges the r29-r31 saves into
 // retail's stmw prologue; all failure paths share one return-0 block at end.
-#pragma push
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) s32 CheckCellState(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
@@ -790,7 +780,6 @@ extern "C" __declspec(noinline) s32 CheckCellState(CItemBoxGridFull* self, u16 i
 fail:
     return 0;
 }
-#pragma pop
 
 // Lookup entry, check category; return flag byte 2 (equip kind) or 0.
 extern "C" __declspec(noinline) u8 GetCellFlag0(CItemBoxGridFull* self, u16 idx) {
@@ -870,7 +859,6 @@ extern "C" __declspec(noinline) u8 GetCellByte8(CItemBoxGridFull* self, u16 idx)
 
 
 // Toggle an entry's flag based on category cap.
-#pragma optimize_for_size on
 extern "C" void ToggleCellMark(CItemBoxGridFull* self, u16 idx) {
     u16 offset = (u16)((s8)self->field_2804 * 0x1e + idx);
     if (offset >= 0x400) return;
@@ -882,7 +870,6 @@ extern "C" void ToggleCellMark(CItemBoxGridFull* self, u16 idx) {
     }
     entry->flags[6] = (u8)((entry->flags[6] ^ 1) != 0);
 }
-#pragma optimize_for_size off
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
 extern "C" __declspec(noinline) u8 CountMarkedCells(CItemBoxGridFull* self) {
@@ -923,7 +910,6 @@ __declspec(noinline) int LookupIndexedByte(char* obj) {
 }
 
 // Iterate entries and init item instances.
-#pragma optimize_for_size on
 extern "C" void InitGridItems(CItemBoxGridFull* self) {
     u16 i;
     for (i = 0; i < self->field_2800; i++) {
@@ -935,13 +921,11 @@ extern "C" void InitGridItems(CItemBoxGridFull* self) {
         inst->vf10((CItemData*)obj);
     }
 }
-#pragma optimize_for_size off
 
 // Format the item name of the cell at page*0x1e+idx into the buffer at
-// +0x2805 and return it (0 when the cell is empty/invalid). optimize_for_size
+// +0x2805 and return it (0 when the cell is empty/invalid). -O4,s
 // merges the r29-r31 saves into retail's stmw prologue; the shared fail
 // block reproduces retail's single return-0 fall-through into the epilogue.
-#pragma optimize_for_size on
 extern "C" u32 FormatCellName(void* self, u32 idx) {
     u8* p = (u8*)self;
     s8 base = (s8)((CItemBoxGridFull*)p)->field_2804;
@@ -970,14 +954,12 @@ extern "C" u32 FormatCellName(void* self, u32 idx) {
 fail:
     return 0;
 }
-#pragma optimize_for_size off
 
 // Format the name of the item at page*0x1e+idx into the buffer at +0x2825
 // and return it (0 when the cell is empty/invalid). The category-3 path
 // post-processes the name string in place: `$1`/`$2` tags are replaced with
 // per-language slot text (a 7-word table from lbl_eu_805055F0 is copied to
 // the stack and indexed by the item's vtable+0x08 byte).
-#pragma optimize_for_size on
 char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
     // Stack slots follow retail: word table @0x08, tag buffers @0x28/0x48/0x68.
     u32 wordTbl[7];
@@ -1106,7 +1088,6 @@ char* FormatCellItemName(CItemBoxGridFull* self, u16 idx) {
 fail:
     return NULL;
 }
-#pragma optimize_for_size off
 
 // Check if an object has type 9 (extracted from vtable bits) and subtype 2.
 // noinline: retail callers emit `bl` (the unit builds with -inline and would
@@ -1154,7 +1135,7 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target);
 // Re-sort the grid after its contents changed: dispatch on the current
 // category (sorting first with SortGridEntries and masking the per-category
 // CItemBlock_getFlag120EC result into an 8-bit value v), then apply the category's
-// inner sort sequence. Categories 8-13 do nothing (default). optimize_for_size
+// inner sort sequence. Categories 8-13 do nothing (default). -O4,s
 // merges the r30/r31 saves into retail's stmw prologue. The empty cases
 // 8-13 must be written with an explicit `return;` body: grouped `break;`
 // empties (with or without default) collapse and MWCC emits only an 8-slot
@@ -1165,7 +1146,6 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target);
 // worse); (b) ~40-byte block-order divergence starting at the case-2 jump
 // table (decomp places case-1 subcase-8/9 body where retail puts the
 // jumptable_eu_80534598 setup).
-#pragma optimize_for_size on
 void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
     SortGridEntries(self, self->field_2802);
     u8 v = (u8)CItemBlock_getFlag120EC(self->field_2802);
@@ -1471,7 +1451,6 @@ void ResortGridEntries(CItemBoxGridFull* self, u16 idx) {
         return;
     }
 }
-#pragma optimize_for_size off
 
 // Clear inactive entries (flag byte 8 set) and compact the grid: bubble
 // passes swap every still-empty (-1 id) cell toward the front. Afterwards,
@@ -1598,7 +1577,6 @@ __declspec(noinline) u32 GetItemBasePrice(void* self, void* item) {
 // name-table lookups); type 9 values at 0; types 2-8 price off the row
 // scaled by 0x67F78 + 0x67F7C per slot; everything else is the plain row.
 // Result is always x10.
-#pragma optimize_for_size on
 __declspec(noinline) s32 GetShopItemValue(void* self, u32 id, void* item) {
     void* obj;
     u32 type;
@@ -1643,7 +1621,6 @@ __declspec(noinline) s32 GetShopItemValue(void* self, u32 id, void* item) {
     }
     return result * 10;
 }
-#pragma optimize_for_size off
 
 // Bubble-sort grid entries ascending under the selected comparison mode.
 // A pass that performs no swap ends the sort early (i only advances on swap).
@@ -1923,9 +1900,7 @@ void CItemBoxGridFull::SortByCellFlags() {
 
 // Bubble sort entries descending by byte at offset 6. Three 12-byte-strided
 // stack scratch buffers reproduce retail's sp+8/0x14/0x20 copy shuffle.
-// optimize_for_size merges the r26-r31 saves into retail's stmw prologue.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s merges the r26-r31 saves into retail's stmw prologue.
 void CItemBoxGridFull::SortByFlag6Desc() {
     /* grid base viewed as entries/field_2800 (see CItemBoxGridFull). */
     char tmp[36];
@@ -1947,12 +1922,9 @@ void CItemBoxGridFull::SortByFlag6Desc() {
         if (!swapped) break;
     }
 }
-#pragma pop
 
 // Bubble sort entries ascending by byte at offset 6 (mirror of
 // SortByFlag6Desc with the comparison inverted).
-#pragma push
-#pragma optimize_for_size on
 void CItemBoxGridFull::SortByFlag6Asc() {
     /* grid base viewed as entries/field_2800 (see CItemBoxGridFull). */
     char tmp[36];
@@ -1974,7 +1946,6 @@ void CItemBoxGridFull::SortByFlag6Asc() {
         if (!swapped) break;
     }
 }
-#pragma pop
 
 // Bubble-sort grid entries ascending by the item instance's vtable+0x08
 // slot value (u16). v2 (item j+1) is evaluated before v1 to match retail's
@@ -2503,10 +2474,8 @@ void GroupByKindName(CItemBoxGridFull* self, u32 target) {
 // (lbl_eu_806640F4); when the kind's flag entry has bit 2 set, scale the
 // index by party member 1's CtrlObjectParam_GetArtsDataWord value, then scale by the 0x67F80
 // factor, clamp to 999 and return as a float.
-// optimize_for_size: retail uses the bl _savegpr_28/_restgpr_28 helper-call
+// -O4,s: retail uses the bl _savegpr_28/_restgpr_28 helper-call
 // prologue, which only size-opt emits on this unit.
-#pragma push
-#pragma optimize_for_size on
 float GetItemValueFloat(void* self, void* entry) {
     u32 word = *(u32*)entry;
     u32 tbl = (u32)(size_t)lbl_eu_806640F4;
@@ -2529,9 +2498,7 @@ float GetItemValueFloat(void* self, void* entry) {
     // Truncated result converted back through the 2^52 magic (lbl_eu_80667F40).
     return (float)((double)(u16)idx - lbl_eu_80667F40);
 }
-#pragma pop
 
-#pragma optimize_for_size on
 __declspec(noinline) u32 HasEquippedSlot(void* self, void* item) {
     CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
     u16 count = (u16)inst->vf30((CItemData*)item);
@@ -2543,10 +2510,8 @@ __declspec(noinline) u32 HasEquippedSlot(void* self, void* item) {
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // Check if entry kind exists in pool.
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) u32 FindKindPoolIdx(void* self, void* entry) {
     u32 val = *(u32*)entry;
     u32 obj = (u32)lbl_eu_806640F4;
@@ -2559,7 +2524,6 @@ extern "C" __declspec(noinline) u32 FindKindPoolIdx(void* self, void* entry) {
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // CItemBoxGrid constructor: stamp the vtable, save the mode/unk params into
 // the header fields, build every sub-object in place, then copy the default
@@ -2720,9 +2684,8 @@ void* __ct__CItemBoxGrid(void* self, u8 mode, u16 unk5, u32 unk6, u8 unk7) {
 
 // CItemBoxGrid destructor: destroy each sub-object in reverse construction
 // order, then free the block when the deleting-dtor flag is set. The
-// optimize_for_size pair merges the r30/r31 saves into the retail stmw
+// -O4,s pair merges the r30/r31 saves into the retail stmw
 // prologue (same pattern as the CArtsInfo/CKizunaTalkList dtors).
-#pragma optimize_for_size on
 extern "C" void* __dt__12CItemBoxGridFv(void* self, int mode) {
     if (self != 0) {
 __dt__801C5670(((CibgOuterSlots*)self)->m54C, -1);
@@ -2747,14 +2710,11 @@ __dt__17UnkClass_8045F564Fv(((CibgOuterSlots*)self)->m08, -1);
     }
     return self;
 }
-#pragma optimize_for_size off
 
 // Load the item-box resource files. When MEM1 can hold the biggest archive,
 // the first file is read into MEM1 instead of MEM2. The string-table base is
 // cached in a local (retail keeps it in r31 across every call).
-// optimize_for_size: retail uses stmw r29/lmw r29 block saves.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s: retail uses stmw r29/lmw r29 block saves.
 extern "C" void LoadItemBoxFiles(void* self, int reserved) {
     u8* p = (u8*)self;
     const char* strs;
@@ -2797,7 +2757,6 @@ extern "C" void LoadItemBoxFiles(void* self, int reserved) {
     ((CSysWin*)(p + 0x4ac))->loadSystemArc();
     ((CSysWin*)(p + 0x4e8))->loadSystemArc();
 }
-#pragma pop
 
 // Per-frame state machine update for the item-box grid: gate on the ready
 // byte at +0x54 and the state word at +0x58, dispatch through MWCC's
@@ -2900,9 +2859,8 @@ FinishSysWin((CItemBoxGrid*)self);
 }
 
 // Draw callback: update the exchange/num-select widgets, then draw the
-// layout and all sub-panels. optimize_for_size merges the r30/r31 saves
+// layout and all sub-panels. -O4,s merges the r30/r31 saves
 // into retail's stmw prologue.
-#pragma optimize_for_size on
 extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
     u8* p = (u8*)self;
     if (!p[0x54]) return;
@@ -2929,13 +2887,11 @@ extern "C" void DrawItemBoxGrid(void* self, int drawInfo) {
     Cur_DrawLayout(p + 0xb8, (void*)drawInfo);
     NumSel_DrawLayout_AF7C(p + 0x3e4, (void*)drawInfo);
 }
-#pragma optimize_for_size off
 
 // Teardown: release the CBdat banners, file handles, heap block, layout
-// sub-objects and all UI panes, in retail's exact order. optimize_for_size
+// sub-objects and all UI panes, in retail's exact order. -O4,s
 // merges the r30/r31 saves into retail's stmw prologue, and the delete-style
 // releases reproduce the double null test (if + delete's own guard).
-#pragma optimize_for_size on
 extern "C" void UnloadItemBox(void* self, int reserved) {
     u8* p = (u8*)self;
 
@@ -2994,7 +2950,6 @@ extern "C" void UnloadItemBox(void* self, int reserved) {
     sysWinTermLayout(p + 0x4ac);
     sysWinTermLayout(p + 0x4e8);
 }
-#pragma optimize_for_size off
 
 // Check if item grid is fully ready.
 extern "C" u32 IsItemBoxReady(void* self) {
@@ -3133,11 +3088,9 @@ extern "C" __declspec(noinline) void DecListIndex(void* self) {
     playUISound__FUl(0x70);
 }
 
-// Item box advance handler. optimize_for_size reproduces retail's stmw r29
+// Item box advance handler. -O4,s reproduces retail's stmw r29
 // prologue and 0x50 frame; the vt+0x10 dispatches use CBaseCur::setRootPaneTranslate
 // cast class so MWCC emits lwz r12,0x10(r12); mtctr; bctrl.
-#pragma push
-#pragma optimize_for_size on
 void GridMoveCursorLeft(void* self) {
     u8* p = (u8*)self;
     if (p[0x542]) return;
@@ -3249,7 +3202,6 @@ void GridMoveCursorLeft(void* self) {
 sound_and_return:
     playUISound__FUl(1);
 }
-#pragma pop
 
 __declspec(noinline) unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
@@ -3278,14 +3230,12 @@ __declspec(noinline) void CopyTabSlotVec(u32* dst, void* src, u32 idx) {
     dst[2] = e[8];
 }
 
-// Right navigation. optimize_for_size: retail saves r29-r31 as one stmw
+// Right navigation. -O4,s: retail saves r29-r31 as one stmw
 // block (-0x50 frame); sub/entry stay live across calls so MWCC colors them
 // into the saved regs. Stack buffers mirror retail slots: 0x08/0x14/0x20 are
 // 12-byte payloads, 0x2c is a 24-byte buffer filled by GridSubMenu_GetCursorPos. The
 // do/while(0) gives every sound path one shared tail (retail branches to a
 // single li r3,1/bl site) without goto-forced spills.
-#pragma push
-#pragma optimize_for_size on
 void GridMoveCursorRight(void* self) {
     u8* sub;
     u32 entry;
@@ -3395,12 +3345,10 @@ void GridMoveCursorRight(void* self) {
 sound_and_return2:
     playUISound__FUl(1);
 }
-#pragma pop
 
-// Down navigation. optimize_for_size: retail saves r29-r31 as one stmw block
+// Down navigation. -O4,s: retail saves r29-r31 as one stmw block
 // (-0x30 frame); sub (r29) and entry (r30) are declared at function scope so
 // their live ranges span the calls and MWCC colors them to the saved regs.
-#pragma optimize_for_size on
 void GridMoveCursorDown(void* self) {
     // sub-array pointer and grid index stay live across calls -> MWCC colors
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
@@ -3486,10 +3434,8 @@ PrevGridPage((CItemBoxGrid*)self);
     }
     playUISound__FUl(1);
 }
-#pragma optimize_for_size off
 
 // Up navigation. Same shape as GridMoveCursorDown (see notes there).
-#pragma optimize_for_size on
 void GridMoveCursorUp(void* self) {
     // sub-array pointer and grid index stay live across calls -> MWCC colors
     // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
@@ -3575,9 +3521,8 @@ NextGridPage((CItemBoxGrid*)self);
 
 // Grid state update with conditions.
 // Grid state update.
-// optimize_for_size: retail uses stmw r30/lmw r30; sub (r31) is declared
+// -O4,s: retail uses stmw r30/lmw r30; sub (r31) is declared
 // before p (r30) so MWCC colors it to the higher saved register.
-#pragma optimize_for_size on
 __declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
@@ -3600,10 +3545,8 @@ __declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
     u8 f = rows == 0 ? 1 : rows;
     if (f != 1) playUISound__FUl(0xa);
 }
-#pragma optimize_for_size off
 
 // Grid state update (decrement variant).
-#pragma optimize_for_size on
 __declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
     u8* sub;
     u8* p = (u8*)self;
@@ -3624,11 +3567,9 @@ __declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
     u8 f = rows == 0 ? 1 : rows;
     if (f != 1) playUISound__FUl(0xa);
 }
-#pragma optimize_for_size off
 
 // Guard chain shares a single exit label in retail (every check branches to
 // the epilogue), so express the checks as one && chain.
-#pragma optimize_for_size on
 void OpenSortMenu(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     // one shared stack buffer: the merge result lands in words [3] and is
@@ -3670,14 +3611,11 @@ void OpenSortMenu(CItemBoxGrid* self) {
         playUISound__FUl(2);
     }
 }
-#pragma optimize_for_size off
 
-// optimize_for_size: retail keeps the stmw r30 / lmw r30 block save.
-#pragma optimize_for_size on
+// -O4,s: retail keeps the stmw r30 / lmw r30 block save.
 // Mirrors retail's label structure: guard failures branch to the bare exit,
 // handled arms fall into the single shared r4-check tail (keeps MWCC from
 // duplicating the tail per return path).
-#pragma optimize_for_size on
 void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
@@ -3768,13 +3706,11 @@ check_tail:
     if (!confirmed) playUISound__FUl(6);
 exit:;
 }
-#pragma optimize_for_size off
 
 
 
-// A-confirm / window-result handler. optimize_for_size reproduces retail's
+// A-confirm / window-result handler. -O4,s reproduces retail's
 // stmw r25 / 96-byte frame; entry index is the usual col + row*10 cell.
-#pragma optimize_for_size on
 void func_801CCAF0(void* self) {
     void* item;
     CItemBoxGridFull* sub;
@@ -4179,7 +4115,6 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
         playUISound__FUl(3);
     }
 }
-#pragma optimize_for_size off
 
 // Store value and call helpers.
 void SetInfoMsgId(CItemBoxGrid* self, u32 val) {
@@ -4202,9 +4137,8 @@ u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this
 // Periodic grid tick: when the page-detail window (0x544) is active, either
 // drive it (if the +0x4e8 win is up) or populate it from the current list
 // selection; otherwise, when in state 3, scan for the first non-empty cell
-// and page to it. optimize_for_size merges the r29-r31 saves into retail's
+// and page to it. -O4,s merges the r29-r31 saves into retail's
 // _savegpr_29 prologue.
-#pragma optimize_for_size on
 void TickItemBoxGrid(void* self) {
     u8* p = (u8*)self;
     if (p[0x528]) return;
@@ -4270,7 +4204,6 @@ void TickItemBoxGrid(void* self) {
         playUISound__FUl(5);
     }
 }
-#pragma optimize_for_size off
 
 // Check conditions and update state.
 extern "C" void SelectCatRow(void* self) {
@@ -4385,7 +4318,6 @@ __declspec(noinline) void FinishCloseAnim(void* self) { // noinline: dispatch ta
         Cur_SetVisible(p + 0x70, 0);
     }
 }
-#pragma optimize_for_size on
 extern "C" __declspec(noinline) void FinishNumSelect(CItemBoxGrid* self) {
     u8* p = (u8*)self;
     if (NumSel_GetField2E_B028((void*)(p + 0x3e4))) {
@@ -4407,7 +4339,6 @@ extern "C" __declspec(noinline) void FinishNumSelect(CItemBoxGrid* self) {
         }
     }
 }
-#pragma optimize_for_size off
 // Handle sub-object activation.
 __declspec(noinline) void ShowSubMenuCur(CItemBoxGrid* self) {
     u8* p = (u8*)self;
@@ -4889,9 +4820,7 @@ done_item:
 // - category -2/-3: language-specific strings returned by
 //   getErrMesText16/getErrMesText15 are used AS the format string, and the
 //   matching pane-colour tag pair goes through PaneMatSetTevColorsByName.
-// optimize_for_size: retail keeps a stmw r29 block save.
-#pragma push
-#pragma optimize_for_size on
+// -O4,s: retail keeps a stmw r29 block save.
 extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx) {
     void* it = (item != 0) ? item : 0;
     u8* p = (u8*)self;
@@ -4930,7 +4859,6 @@ extern "C" void SetCellCaption(void* self, s8 kind, void* item, u16 idx) {
     }
     LayoutSetTextBoxText(((CItemBoxGridHeadView*)p)->field_44, nameBuf, msgBuf, 0);
 }
-#pragma pop
 
 // Show the cell-count label on the item box: format "x N" into a stack
 // buffer, resolve the image pane through the +0x3C accessor's default label
@@ -4971,12 +4899,11 @@ extern "C" void ShowCellCount(void* self, u32 kind, void* flag2, void* flag3, u3
 // Format the current tab's header text: build the category label via the
 // switch-driven sprintf (jump table), resolve the pane through the +0x40
 // accessor (falling back to +0x3C's default label), then write the
-// "<label> <idx+1>" string into the layout. optimize_for_size gives the
+// "<label> <idx+1>" string into the layout. -O4,s gives the
 // retail stmw r28 prologue (4 saved regs).
 // Case layout per retail jump table jumptable_eu_80534694: slots 0/1 share
 // the exit (cases 0 and 1 skip the label lookup buffer), slots 2..13 map to
 // the twelve label formats 0x40b..0x4f2.
-#pragma optimize_for_size on
 extern "C" void SetTabHeader(void* self, int cat, int idx) {
     u8* p = (u8*)self;
     char buf[32];
@@ -5010,10 +4937,8 @@ extern "C" void SetTabHeader(void* self, int cat, int idx) {
         PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, tmp, (void*)result);
     }
 }
-#pragma optimize_for_size off
 
 // Format text and set on layout pane.
-#pragma optimize_for_size on
 extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx) {
     u8* p = (u8*)self;
     char buf[32];
@@ -5023,7 +4948,6 @@ extern "C" void SetCellMarkVis(void* self, u32 val, u32 idx) {
     void* ret = sub->FindPaneByName(buf, 1);
     setPaneVisible(ret, val);
 }
-#pragma optimize_for_size off
 
 // Refresh the 12 category tabs: format each tab label, tint it per the
 // current page (cat-4/2/0xB use the "active" palette, others the plain one),
@@ -5081,8 +5005,6 @@ extern "C" void RefreshCategoryTabs(void* self) {
     RebuildGridCat(self);
 }
 
-#pragma push
-#pragma optimize_for_size on
 void RebuildGridCat(void* self) {
     u8* p = (u8*)self;
     u8* sub = p + 0x54c;
@@ -5101,7 +5023,6 @@ void RebuildGridCat(void* self) {
         hideItemBoxPanes(p + 0x1d8, ((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F]);
     }
 }
-#pragma pop
 
 // Rebuilds the item-box grid UI: shows/hides the row panes for the current
 // row count/page, then pushes all 30 entries' state back into the widgets.
@@ -5392,7 +5313,6 @@ extern "C" __declspec(noinline) void func_801D0BD8(void* self) { }
 // pass that finds the on-screen move object for that player and detaches it;
 // category 3 without a match just continues to the next pass.
 #pragma push
-#pragma optimize_for_size on  // stmw r20..r31 block-save prologue
 void UnequipPartyItem(void* self, int kind, int id) {
     u8 cats[6];
     // Aggregate seed: MWCC stores both halves to the stack in the prologue
@@ -5703,8 +5623,6 @@ void RegisterTeachableItems(void* self) {
 // noinline: RegisterLearnedSkills (and the other callers in this TU) must emit `bl`
 // to the retail symbol - the unit builds with -inline and would otherwise
 // fold this body into every call site (tripling RegisterLearnedSkills).
-#pragma push
-#pragma optimize_for_size on
 __declspec(noinline) void PushUniqueItemId(void* self, u32 id) {
     if (HasSlotIdMatch(self, id)) return;
     if ((BdatGetItemType(id) & 0xFFFF) == 12) return;
@@ -5713,7 +5631,6 @@ __declspec(noinline) void PushUniqueItemId(void* self, u32 id) {
     *(u16*)(p + count * 2 + 4) = (u16)id;
     *(u16*)(p + 0x804) = count + 1;
 }
-#pragma pop
 void PushGatedTypeIds(void* self) {
     void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
     if (!bdat) return;

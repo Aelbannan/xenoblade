@@ -32,6 +32,23 @@ struct CREvtModelObjResetView {
 };
 
 // External function declarations
+// Declaration-only views of the realtime-event list classes that own the
+// EvtSeq* members called below (full definitions in
+// kyoshin/cf/CTaskREvtSequence.hpp, which conflicts with this TU's includes).
+// The model object is passed as their `this`.
+class UnkEvtListEntry {
+public:
+    void SeqInsertRtEvent();
+    int SeqIsSameNameType3Busy();
+};
+struct EvtBdabModel {
+    int SeqProbeEvtSlot(u32* out);
+};
+class UnkObj80168514 {
+public:
+    void EvtSeqCheckEventRunGuard();
+};
+
 extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
     extern void __ct__80172668(void* self, int);
@@ -155,7 +172,7 @@ extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
     self->mCallback[1] = *p++;
     self->mCallback[2] = *p;
 
-    self->SeqInsertRtEvent();
+    reinterpret_cast<UnkEvtListEntry*>(self)->SeqInsertRtEvent();
 
     // Pick the update callback based on the parent task's mode field:
     // -1 -> standalone mode (0x50 flags + alternate ptmf), other nonzero -> 0x30
@@ -421,7 +438,7 @@ extern "C" void EvtObj_ResetStateB(void* self) {
 
     FLD(s32, s, 0x74) = -1;
 
-    int result = self->SeqProbeEvtSlot(s + 0x74);
+    int result = reinterpret_cast<EvtBdabModel*>(self)->SeqProbeEvtSlot(reinterpret_cast<u32*>(s + 0x74));
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
             *(volatile u32*)(s + 0x18) &= ~0x100;
@@ -557,7 +574,7 @@ extern "C" void EvtObj_SetupModel(void* self) {
 
     if (flags & 0x2) {
         if (flags & 0x200) {
-            if (self->SeqIsSameNameType3Busy() == 0) {
+            if (reinterpret_cast<UnkEvtListEntry*>(self)->SeqIsSameNameType3Busy() == 0) {
                 FLD(u32, s, 0x18) &= ~0x100;
                 u32* base = (u32*)((char*)lbl_eu_80531EF8 + 0x78);
                 FLD(u32, s, 0x0C) = base[1];
@@ -773,7 +790,7 @@ extern "C" void EvtObj_TickUpdate(void* self) {
         simRefreshFlag8(FLD(void*, s, 0x20), ft);
     }
 
-    self->EvtSeqCheckEventRunGuard();
+    reinterpret_cast<UnkObj80168514*>(self)->EvtSeqCheckEventRunGuard();
     EvtObj_ScanPlayers(self);
 }
 

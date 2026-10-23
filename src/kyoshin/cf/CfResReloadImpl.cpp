@@ -16,7 +16,7 @@ extern "C" int Tok_FormatStr(u8* buf, u8* packed, int prefixFlag, int suffixFlag
 
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 void* memset(void*, int, unsigned long);
 
@@ -899,7 +899,7 @@ extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
         cr = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x4b, row);
         radius = (f32)(u16)cr;
     }
-    if (radius <= lbl_eu_8066A208) {
+    if (radius <= ml::epsilon) {
         return 1;
     }
     if (arg3 != 0) {

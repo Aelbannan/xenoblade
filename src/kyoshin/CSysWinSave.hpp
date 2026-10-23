@@ -176,7 +176,6 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void playUISound__FUl(u32 op);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void sysWinSetKindContent(void* syswin, void* str1, void* str2);

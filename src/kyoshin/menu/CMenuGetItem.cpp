@@ -19,6 +19,8 @@
 #include <revolution/GX.h>
 
 #include <stdio.h>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 extern "C" void __dt__12CMenuGetItemFv(void*, int);
 extern "C" void cbRenderBefore__12CMenuGetItemFv(void*);
@@ -216,10 +218,8 @@ void CMenuGetItem::Init() {
         char* base = lbl_eu_805018D0;
 
         // Build the layout and its first anim transform from the arc resource.
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mLayout, CUICfManager_getArcResourceAccessor(), &base[0xd]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mField_78, CUICfManager_getArcResourceAccessor(), &base[0x26]);
+        buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &base[0xd]);
+        bindLayoutAnimTransform(mLayout, &mField_78, CUICfManager_getArcResourceAccessor(), &base[0x26]);
 
         // Bind the font: push the font object's pane back onto the root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();

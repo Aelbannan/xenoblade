@@ -105,7 +105,7 @@ extern "C" CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj,
             }
         }
         if (flags > 0) {
-            __dl__FPv(obj);
+            operator delete(obj);
         }
     }
     return obj;

@@ -14,6 +14,7 @@
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/scn/code_804BC9EC.hpp"
 #undef CItemBlock_getKindSlot
 #undef CItemBlock_getSlotU16
 extern "C" void* CItemBlock_getKindSlot(int mappedIndex, int dataId, int slot);
@@ -127,7 +128,6 @@ extern "C" {
     void CBattleMan_MarkList48Flag40(void*);
     void activateLOD__8CTaskLODFv(int);
     void deactivateLOD__8CTaskLODFv(int);
-    void* getScnHandle__Fv();
     void ScnData_FwdB7D9C(void*, int);
     void ScnData_FwdB7DD4(void*, int);
     void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, int);
@@ -986,11 +986,11 @@ int setMapDispID(VMThread* pThread) {
     if (gm) {
         if (v27) {
             if (v28) activateLOD__8CTaskLODFv(v26);
-            if (v29) { ScnData_FwdB7D9C(getScnHandle__Fv(), v26); }
+            if (v29) { ScnData_FwdB7D9C(getScnHandle(), v26); }
             if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         } else {
             if (v28) deactivateLOD__8CTaskLODFv(v26);
-            if (v29) { ScnData_FwdB7DD4(getScnHandle__Fv(), v26); }
+            if (v29) { ScnData_FwdB7DD4(getScnHandle(), v26); }
             if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v26);
         }
     }

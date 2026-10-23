@@ -34,6 +34,13 @@ from tools.coop.lib.reloc_canon import LinkerLayout, type_class
 
 DATA_SECTIONS = (".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss", ".sbss2")
 NOBITS = frozenset({".bss", ".sbss", ".sbss2"})
+#: MWCC C++ exception tables.  ``extab`` holds the per-function unwind/action
+#: records (with ADDR32 relocs to dtors / ``operator delete``); ``extabindex``
+#: is a (function, size, extab entry) triple per function, almost entirely
+#: relocations.  Parsed alongside the data sections; compared by
+#: :func:`check_extab_sections`.
+EXTAB_SECTIONS = ("extab", "extabindex")
+_PARSED_SECTIONS = DATA_SECTIONS + EXTAB_SECTIONS
 
 
 @dataclass
@@ -44,6 +51,13 @@ class Reloc:
     type: int
     symbol: str
     addend: int
+    #: Defining section index / section-relative value of the target symbol
+    #: (0/0 for UNDEF targets).  Lets section-symbol and TU-local targets be
+    #: compared by location instead of by spelling.
+    shndx: int = 0
+    value: int = 0
+    #: ELF symbol binding of the target (0 local, 1 global, 2 weak).
+    bind: int = 1
 
 
 @dataclass
@@ -102,7 +116,7 @@ def _parse(path: Path) -> ParsedObject:
     for i in range(shnum):
         nm = secname(i)
         parsed.section_names[i] = nm
-        if nm not in DATA_SECTIONS:
+        if nm not in _PARSED_SECTIONS:
             continue
         sh = shdr(i)
         parsed.sections[nm] = {"off": sh[4], "size": sh[5], "addr": sh[3], "align": sh[8]}
@@ -140,7 +154,7 @@ def _parse(path: Path) -> ParsedObject:
 
     for i in range(shnum):
         nm = secname(i)
-        if not nm.startswith(".rela") or nm[5:] not in DATA_SECTIONS:
+        if not nm.startswith(".rela") or nm[5:] not in _PARSED_SECTIONS:
             continue
         try:
             sh = shdr(i)
@@ -151,8 +165,10 @@ def _parse(path: Path) -> ParsedObject:
                 symidx = r_info >> 8
                 rtype = r_info & 0xFF
                 so = symidx * 16
-                st_name = struct.unpack_from(">I", data, symtab_off + so)[0]
-                out.append(Reloc(r_offset, rtype, sym_name(st_name), r_addend))
+                st_name, st_value, _sz, st_info, _oth, st_shndx = struct.unpack_from(
+                    ">IIIBBH", data, symtab_off + so)
+                out.append(Reloc(r_offset, rtype, sym_name(st_name), r_addend,
+                                 st_shndx, st_value, st_info >> 4))
             parsed.relocs[nm[5:]] = out
         except (struct.error, ValueError, IndexError):
             parsed.relocs[nm[5:]] = None
@@ -337,6 +353,212 @@ def check_data_sections(
             result.sections.append(SectionResult(sec, False, rsz, dsz, drift))
             result.ok = False
     return result
+
+
+def _section_bases(parsed: ParsedObject, layout: LinkerLayout | None,
+                   sections: tuple[str, ...]) -> dict[str, int]:
+    """Linked base per section from the object's globally-named symbols
+    (like :func:`derive_section_bases`, for arbitrary sections)."""
+    bases: dict[str, int] = {}
+    if layout is None:
+        return bases
+    for name, (shndx, value) in parsed.symbols.items():
+        if _is_tu_local(name):
+            continue
+        section = parsed.section_names.get(shndx)
+        if section not in sections or section in bases:
+            continue
+        sec, addr = layout.resolve_name(name)
+        if addr is None or sec != section or addr - value < 0x80000000:
+            continue
+        bases[section] = addr - value
+    return bases
+
+
+def _extab_reloc_key(reloc: Reloc, parsed: ParsedObject,
+                     layout: LinkerLayout | None,
+                     bases: dict[str, int] | None = None) -> tuple:
+    """Spelling-independent key for one exception-table relocation.
+
+    Targets defined in the object (functions in ``.text``, ``@N`` action
+    records in ``extab``, section symbols) resolve to a linked address when
+    the section's base is derivable from a named symbol of either object
+    (``bases``), else compare by ``(section, st_value + addend)``: the retail
+    splitter and MWCC name local labels differently, but a matching unit
+    places them identically.  UNDEF targets (out-of-unit dtors,
+    ``__dl__FPv``) compare by canonical linked address when ``symbols.txt``
+    knows the name, else by name (fail-closed).
+    """
+    if reloc.shndx not in (0, 0xFFF1, 0xFFF2):
+        section = parsed.section_names.get(reloc.shndx, f"#{reloc.shndx}")
+        # Only global names: local names (``end``, ``@N``) collide across units.
+        if (layout is not None and reloc.symbol and reloc.bind != 0
+                and not _is_tu_local(reloc.symbol)):
+            sec, addr = layout.resolve_name(reloc.symbol)
+            if addr is not None and sec == section:
+                return (reloc.type, "abs", addr + reloc.addend)
+        base = (bases or {}).get(section)
+        if base is not None:
+            return (reloc.type, "abs", base + reloc.value + reloc.addend)
+        return (reloc.type, "sec", section, reloc.value + reloc.addend)
+    if layout is not None and reloc.symbol:
+        target = layout.canon_reloc(reloc.symbol, reloc.addend)
+        if target.addr is not None:
+            return (reloc.type, "abs", target.addr)
+    return (reloc.type, "name", reloc.symbol, reloc.addend)
+
+
+def check_extab_sections(
+    retail_object: Path,
+    decomp_object: Path,
+    *,
+    layout: LinkerLayout | None = None,
+) -> DataMatchResult:
+    """Compare ``extab`` / ``extabindex`` of retail vs decomp, reloc-aware.
+
+    Per section: sizes must agree, file bytes must agree (the words under
+    ADDR32 relocs are zero placeholders on both sides), and the offset-keyed
+    relocation lists must agree on ``(offset, type, resolved target)`` (see
+    :func:`_extab_reloc_key`).  A unit without exception tables on both
+    sides passes trivially.
+    """
+    r_parsed = _parse(retail_object)
+    d_parsed = _parse(decomp_object)
+    r_bytes = retail_object.read_bytes()
+    d_bytes = decomp_object.read_bytes()
+    result = DataMatchResult(ok=True)
+    rbases = _section_bases(r_parsed, layout, (".text",))
+    dbases = _section_bases(d_parsed, layout, (".text",))
+    for k, v in rbases.items():
+        dbases.setdefault(k, v)
+    for k, v in dbases.items():
+        rbases.setdefault(k, v)
+    for sec in EXTAB_SECTIONS:
+        r = r_parsed.sections.get(sec)
+        d = d_parsed.sections.get(sec)
+        rsz = r["size"] if r else 0
+        dsz = d["size"] if d else 0
+        if rsz != dsz:
+            result.sections.append(SectionResult(
+                sec, False, rsz, dsz, f"retail size 0x{rsz:X} != decomp 0x{dsz:X}"))
+            result.ok = False
+            continue
+        if rsz == 0:
+            result.sections.append(SectionResult(sec, True, 0, 0, "empty both"))
+            continue
+        rb = r_bytes[r["off"]: r["off"] + rsz]
+        db = d_bytes[d["off"]: d["off"] + dsz]
+        if rb != db:
+            diffs = sum(1 for a, b in zip(rb, db) if a != b)
+            first = next(i for i, (a, b) in enumerate(zip(rb, db)) if a != b)
+            result.sections.append(SectionResult(
+                sec, False, rsz, dsz,
+                f"{diffs} byte diffs, first at +0x{first:X} "
+                f"(retail {rb[first]:02X} vs decomp {db[first]:02X})"))
+            result.ok = False
+            continue
+        rk = {x.offset: _extab_reloc_key(x, r_parsed, layout, rbases)
+              for x in (r_parsed.relocs.get(sec) or []) if x.type != 0}
+        dk = {x.offset: _extab_reloc_key(x, d_parsed, layout, dbases)
+              for x in (d_parsed.relocs.get(sec) or []) if x.type != 0}
+        drift = None
+        for off in sorted(set(rk) | set(dk)):
+            if rk.get(off) != dk.get(off):
+                drift = (f"reloc drift at +0x{off:X}: retail {rk.get(off)} "
+                         f"!= decomp {dk.get(off)}")
+                break
+        if drift is not None:
+            result.sections.append(SectionResult(sec, False, rsz, dsz, drift))
+            result.ok = False
+        else:
+            result.sections.append(SectionResult(
+                sec, True, rsz, dsz, f"{rsz} bytes + {len(rk)} relocs identical"))
+    return result
+
+
+def _extab_records(path: Path, parsed: ParsedObject, layout: LinkerLayout | None,
+                   bases: dict[str, int]) -> dict:
+    """Per-function exception records: function key -> (size, record, relocs).
+
+    ``extabindex`` is a list of ``(function, function size, extab record)``
+    triples; a record spans from its offset to the next record (or the end of
+    ``extab``).  Relocs inside the record are keyed relative to its start.
+    """
+    data = path.read_bytes()
+    idx = parsed.sections.get("extabindex")
+    tab = parsed.sections.get("extab")
+    if not idx or not tab:
+        return {}
+    ib = data[idx["off"]: idx["off"] + idx["size"]]
+    tb = data[tab["off"]: tab["off"] + tab["size"]]
+    irel = {r.offset: r for r in (parsed.relocs.get("extabindex") or [])}
+    trel = parsed.relocs.get("extab") or []
+    entries = []
+    for off in range(0, len(ib) - 11, 12):
+        fn, rec = irel.get(off), irel.get(off + 8)
+        if fn is None or rec is None:
+            continue
+        size = struct.unpack_from(">I", ib, off + 4)[0]
+        entries.append((_extab_reloc_key(fn, parsed, layout, bases), size,
+                        rec.value + rec.addend))
+    starts = sorted({e[2] for e in entries} | {len(tb)})
+    out = {}
+    for fkey, size, start in entries:
+        end = next(x for x in starts if x > start) if start < len(tb) else start
+        rel = tuple(sorted(
+            (r.offset - start, _extab_reloc_key(r, parsed, layout, bases))
+            for r in trel if start <= r.offset < end))
+        out[fkey] = (size, tb[start:end], rel)
+    return out
+
+
+def extab_function_diffs(
+    retail_object: Path,
+    decomp_object: Path,
+    *,
+    layout: LinkerLayout | None = None,
+) -> list[str]:
+    """Order-insensitive per-function view of an extab mismatch (diagnostic).
+
+    Lists functions whose exception record (flags word, cleanup actions, dtor
+    relocs) or recorded size differs, plus functions with a record on one side
+    only.  Empty when the only difference is function / record order.
+    """
+    r_parsed = _parse(retail_object)
+    d_parsed = _parse(decomp_object)
+    rbases = _section_bases(r_parsed, layout, (".text",))
+    dbases = _section_bases(d_parsed, layout, (".text",))
+    for k, v in rbases.items():
+        dbases.setdefault(k, v)
+    for k, v in dbases.items():
+        rbases.setdefault(k, v)
+    rr = _extab_records(retail_object, r_parsed, layout, rbases)
+    dr = _extab_records(decomp_object, d_parsed, layout, dbases)
+    names = {}
+    if layout is not None:
+        for nm, (_sec, addr) in layout.symbols.items():
+            names.setdefault(addr, nm)
+
+    def label(key: tuple) -> str:
+        if key[1] == "abs":
+            return names.get(key[2], f"0x{key[2]:08X}")
+        return str(key[2:])
+
+    out = []
+    for key in sorted(set(rr) | set(dr), key=str):
+        a, b = rr.get(key), dr.get(key)
+        if a == b:
+            continue
+        if a is None:
+            out.append(f"{label(key)}: decomp-only record {b[1].hex()}")
+        elif b is None:
+            out.append(f"{label(key)}: retail-only record {a[1].hex()}")
+        elif a[0] != b[0]:
+            out.append(f"{label(key)}: function size 0x{a[0]:X} != 0x{b[0]:X}")
+        else:
+            out.append(f"{label(key)}: record retail {a[1].hex()} {list(a[2])} "
+                       f"!= decomp {b[1].hex()} {list(b[2])}")
+    return out
 
 
 def format_data_result(result: DataMatchResult) -> str:

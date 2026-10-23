@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
 {
@@ -414,7 +415,7 @@ void func_80098EF8(CtrlPcVf38* self)
         f32 d2 = f31 * f31 + f30 * f30;
         f32 dist;
         if (d2 > lbl_eu_80666730) {
-            dist = d2 * FrSqrt__Q24nw4r4mathFf(d2);
+            dist = d2 * nw4r::math::FrSqrt(d2);
         } else {
             dist = lbl_eu_80666730;
         }

@@ -80,8 +80,6 @@ extern s32 lbl_eu_80663B38;
 extern "C" s32 lbl_eu_806659BC;
 extern u8 lbl_eu_80663B3C[4];
 
-void __dl__FPv(void*);
-void __dla__FPv(void*);
 void* __construct_new_array(void* block, void (*ctor)(void*), void (*dtor)(void*), u32 size, u32 count);
 }
 
@@ -337,20 +335,20 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     // Nested identical null-tests survive in retail codegen.
     if (t->m_verts != nullptr) {
         if (t->m_verts != nullptr) {
-            __dla__FPv((char*)t->m_verts - 16);
+            operator delete[]((char*)t->m_verts - 16);
         }
         t->m_verts = nullptr;
     }
 
     if (t->m_buffer != nullptr) {
-        __dla__FPv(t->m_buffer);
+        operator delete[](t->m_buffer);
         t->m_buffer = nullptr;
     }
 
     t->m_segCount = segCount;
 
     if (t->m_buffer != nullptr) {
-        __dla__FPv(t->m_buffer);
+        operator delete[](t->m_buffer);
         t->m_buffer = nullptr;
     }
 
@@ -370,7 +368,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     }
     t->m_verts = verts;
 
-    void* payloadA;
+    u8* payloadA;
     if (dataA != nullptr) {
         payloadA = dataA - 8;
     } else {
@@ -434,7 +432,7 @@ extern "C" CETrail* __dt___reslist_base_CETrail_POINT(CETrail* t, int deleting) 
             t->m_list = nullptr;
         }
         if (deleting > 0) {
-            __dl__FPv(t);
+            operator delete(t);
         }
     }
     return t;
@@ -468,7 +466,7 @@ extern "C" CETrail* __dt__reslist_CETrail_POINT(CETrail* t, int deleting) {
     if (t != nullptr) {
         reslistBaseCleanup(t);
         if (deleting > 0) {
-            __dl__FPv(t);
+            operator delete(t);
         }
     }
     return t;
@@ -491,7 +489,7 @@ static inline void reslistDerivedCleanup(CETrail* t) {
         t->m_head->m_prev = t->m_head;
         if (t->m_ownsList == 0 && t->m_list != nullptr) {
             if (t->m_list != nullptr) {
-                __dla__FPv((char*)t->m_list - 16);
+                operator delete[]((char*)t->m_list - 16);
             }
             t->m_list = nullptr;
         }
@@ -508,19 +506,19 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
         if (t->m_verts != nullptr) {
             // retail re-tests the pointer before the array-deleter call
             if (t->m_verts != nullptr) {
-                __dla__FPv((char*)t->m_verts - 16);
+                operator delete[]((char*)t->m_verts - 16);
             }
             t->m_verts = nullptr;
         }
         if (t->m_buffer != nullptr) {
-            __dla__FPv(t->m_buffer);
+            operator delete[](t->m_buffer);
             t->m_buffer = nullptr;
         }
 
         trailClearList(t);
         if (t->m_ownsList == 0 && t->m_list != nullptr) {
             if (t->m_list != nullptr) {
-                __dla__FPv((char*)t->m_list - 16);
+                operator delete[]((char*)t->m_list - 16);
             }
             t->m_list = nullptr;
         }
@@ -529,7 +527,7 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
         reslistDerivedCleanup(t);
 
         if (deleting > 0) {
-            __dl__FPv(t);
+            operator delete(t);
         }
     }
     return t;
@@ -918,7 +916,7 @@ extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting
             self->m_light = nullptr;
         }
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -200,7 +200,6 @@ public:
 };
 
 // MWCC runtime operator delete (freeing dtor helper).
-extern "C" void* __dl__FPv(void*);
 
 // .sdata2 float pool: 1.0f -- animation frame step for the award list
 // open/close transitions (PlayAward_FinishCloseAnimA / PlayAward_FinishCloseAnimB / PlayAward_FinishOpenAnimA).

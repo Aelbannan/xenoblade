@@ -11,6 +11,7 @@
 #include "monolib/util/MemManager.hpp"
 
 #include <revolution/GX.h>
+void playUISound(u32);
 
 // Retail constructor symbol (unmangled global in US). Kept as a free function
 // so the factory (createSaveMenu) emits a real bl to it, and returns `this` in
@@ -368,7 +369,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                 }
-                playUISound__FUl(6);
+                playUISound(6);
                 self->mState = 4;
                 self->mField54 = 1;
             }
@@ -403,7 +404,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
                 }
-                playUISound__FUl(6);
+                playUISound(6);
                 self->mState = 4;
                 self->mField54 = 1;
             }
@@ -460,6 +461,6 @@ extern "C" void openSaveMenu(CMenuSave* self) {
         func_801C412C(&self->mTitleAHelp);
         CSaveLoad_open(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         self->mState = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }

@@ -32,7 +32,6 @@ struct CMdlAnmEyeModel {
 
 // Retail fragments (see the data block at the bottom): the class ctor/dtor
 // are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
-extern "C" void __dl__FPv(void*);
 extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag);
 extern "C" u32 lbl_eu_805701D0[];
 
@@ -193,7 +192,7 @@ extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
 
 extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag) {
     if (self != 0 && flag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

@@ -50,7 +50,7 @@ extern "C" CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotic
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

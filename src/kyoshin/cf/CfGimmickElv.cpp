@@ -4,6 +4,7 @@
 #include "kyoshin/cf/CfGimmickElv.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/scn/code_804BC9EC.hpp"
 
 // retail data -- typed source shape (replaces absorb blobs)
 extern "C" {
@@ -176,7 +177,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
         int mode = 0;
         if (self->flag1B1 & 0x10) {
             mode = 1;
-            void* snd = getScnHandle__Fv();
+            void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, self->lod1);
             activateLOD__8CTaskLODFv(self->lod1);
         }
@@ -189,7 +190,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
         int mode = 0;
         if (self->flag1B2 & 0x10) {
             mode = 1;
-            void* snd = getScnHandle__Fv();
+            void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, self->lod2);
             activateLOD__8CTaskLODFv(self->lod2);
         }
@@ -244,7 +245,7 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
         CfGimmick_UnregisterSpawnedObject((void*)&self->unk1AC);
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -510,7 +511,7 @@ extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
         if (flag & 0x10) {
                 // Complete
                 deactivateLOD__8CTaskLODFv(lod);
-                void* snd = getScnHandle__Fv();
+                void* snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, lod);
                 u32 d = self->direction;
                 u32 lb = 8 << d;
@@ -579,7 +580,7 @@ extern "C" void GimmickElv_FadeBothAxes(CfGimmickElvData* self) {
             // Fade already running
             if (flag & 0x10) {
                 if (self->val1C8 >= lbl_eu_80668384) {
-                    void* snd = getScnHandle__Fv();
+                    void* snd = getScnHandle();
                     ScnData_FwdB7D9C(snd, lod);
                     self->flags = self->flags & ~lodBit & ~dirBit;
                 } else {

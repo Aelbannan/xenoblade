@@ -14,6 +14,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/core/CPadManager.hpp"
+void playUISound(u32);
 
 
 // ---------- CMenuSkipTimer ctor/dtor ----------
@@ -237,7 +238,7 @@ void CMenuSkipTimer::Move() {
         if (CSkipTimerIsEngaged(&mTimerData) == 0) {
             if (CMainMenu_GetInstancePtr() != 0) {
                 ArtsInfo_SetReadyFlag();
-                playUISound__FUl(6);
+                playUISound(6);
             }
             mFlag3 = 4;
             mFlag1 = 1;
@@ -320,7 +321,7 @@ extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
         func_801C412C(&self->mTitleAHelp);
         CSkipTimerFlagButton(&self->mTimerData);
         self->mFlag3 = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 

@@ -34,11 +34,10 @@ CMdlAnmUV::CMdlAnmUV() {
 }
 
 // Retail delete-flag dtor fragment (same recipe as CMdlAnmEye.cpp):
-// cmpi r3,0 / beq end; cmpi r4,0 / ble end; bl __dl__FPv(this); end: return self.
-extern "C" void __dl__FPv(void*);
+// cmpi r3,0 / beq end; cmpi r4,0 / ble end; bl operator delete(this); end: return self.
 extern "C" void* __dt__9CMdlAnmUVFv(CMdlAnmUV* self, int flag) {
     if (self != 0 && flag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

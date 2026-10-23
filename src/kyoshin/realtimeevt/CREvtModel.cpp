@@ -7,6 +7,7 @@
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/g3d/res/g3d_resdict.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 // External declarations (C++ linkage for non-mangled symbols)
 extern "C" {
@@ -33,7 +34,6 @@ extern void simMarkTree80000(void* model, int flag);
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);
 extern void* __vc__Q34nw4r3g3d6ResDicCFPCc(void* self, const char* key);
-extern void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 extern void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* src2dst);
 extern void __ct__CREvtModelMap(void* self, void* parent);
 extern void __ct__CREvtModelObj(void* self, void* parent);
@@ -286,11 +286,11 @@ void EvtModelApplyHideParts(void* self, void* animData, void* model, int flag) {
         void* userData = GetResUserData__Q34nw4r3g3d9ResAnmChrFv(&anmChr);
         if (userData == 0) continue;
         void* dic = (char*)userData + 4;
-        if ((u32)dic & 3) { Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0); }
+        if ((u32)dic & 3) { nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0); }
         void* result = __vc__Q34nw4r3g3d6ResDicCFPCc(dic, &lbl_eu_80503344[0x3D]);
-        if ((u32)result & 3) { Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C); }
+        if ((u32)result & 3) { nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C); }
         if (result == 0) continue;
-        if (FLD(u32, result, 0xC) != 2) { Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88); }
+        if (FLD(u32, result, 0xC) != 2) { nw4r::db::Panic(lbl_eu_80530ECC, 0x44, lbl_eu_80530E88); }
         void* dataPtr = 0;
         if (FLD(u32, result, 4) != 0) { dataPtr = (char*)result + FLD(u32, result, 4); }
         if (dataPtr != 0) {

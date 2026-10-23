@@ -24,8 +24,6 @@ extern "C" void __ct__CSchedule(CSchedule* self);
 extern "C" void __dt__9CScheduleFv(void* self, int flag);
 
 // MWCC runtime delete helpers (retail `delete` / `delete[]` lowering).
-extern "C" void __dla__FPv(void* mem);
-extern "C" void __dl__FPv(void* mem);
 
 // ---------------------------------------------------------------------------
 // Plain layout mirror of the ScheduleList object (non-polymorphic; the C++
@@ -550,12 +548,12 @@ SLResBase* __dt___reslist_base_CSchedule(SLResBase* base, int flag) {
         base->mStartNodePtr->mPrev = base->mStartNodePtr;
         if (base->unk1C == 0) {
             if (base->mList != 0) {
-                __dla__FPv(base->mList);
+                operator delete[](base->mList);
                 base->mList = 0;
             }
         }
         if (flag > 0) {
-            __dl__FPv(base);
+            operator delete(base);
         }
     }
     return base;
@@ -580,13 +578,13 @@ SLResBase* __dt__reslist_CSchedule(SLResBase* self, int flag) {
             self->mStartNodePtr->mPrev = self->mStartNodePtr;
             if (self->unk1C == 0) {
                 if (self->mList != 0) {
-                    __dla__FPv(self->mList);
+                    operator delete[](self->mList);
                     self->mList = 0;
                 }
             }
         }
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -643,14 +641,14 @@ SLList* __dt__12ScheduleListFv(SLList* self, int flag) {
                 res->mStartNodePtr->mPrev = res->mStartNodePtr;
                 if (res->unk1C == 0) {
                     if (res->mList != 0) {
-                        __dla__FPv(res->mList);
+                        operator delete[](res->mList);
                         res->mList = 0;
                     }
                 }
             }
         }
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -165,7 +165,6 @@ extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInf
 extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int IsMenuState621F0();
-extern "C" void playUISound__FUl(u32 op);
 
 // Subobject dtors (retail keeps the C++ mangled names) and the game-side
 // CProcess dtor wrapper (defined in CMainMenu.cpp).

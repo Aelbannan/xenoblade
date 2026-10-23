@@ -10,7 +10,6 @@
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signature verbatim).
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void __dl__FPv(void*);
 
 // NAND request-queue layout (mirrors libs/monolib/src/nand/CNand.cpp).
 struct CNandQueue {

@@ -13,6 +13,8 @@
 #include "monolib/work/CEventFile.hpp"
 
 #include <revolution/os/OSError.h>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 // Local imports. code_80135FDC.hpp is deliberately NOT included here: this TU
 // calls the 2-argument form of BdatGetPtrDirect, which that header declares with
@@ -26,8 +28,6 @@ void closeFileHandle(CFileHandle**);
 extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void closeFileHandle(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
@@ -79,7 +79,6 @@ extern "C" CMCCrystalList* __ct__CMCCrystalList(CMCCrystalList* self)
 
 // UnkClass_8045F564 member dtor and operator delete (retail names).
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 // Retail dtor is a plain free function: destroys the two embedded region
 // members and frees the object when the delete flag is positive.
@@ -89,7 +88,7 @@ extern "C" void* __dt__14CMCCrystalListFv(void* self, int flags) {
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x14, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }
@@ -641,17 +640,12 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         mArcResAccessor = CLibLayout::createArcResourceAccessor();
         mArcResAccessor->Attach(fileData, &lbl_eu_805092C0[0x19e]);
 
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mLayout, mArcResAccessor, &lbl_eu_805092C0[0x1a2]);
+        buildLayout(&mLayout, mArcResAccessor, &lbl_eu_805092C0[0x1a2]);
 
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTrans1, mArcResAccessor, &lbl_eu_805092C0[0x1b9]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTrans2, mArcResAccessor, &lbl_eu_805092C0[0x1d3]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAccessor, &lbl_eu_805092C0[0x1b9]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans2, mArcResAccessor, &lbl_eu_805092C0[0x1d3]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
         LayoutBindAnimResource(mLayout, &mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
 
         // Bind the loaded font's pane into the layout root.

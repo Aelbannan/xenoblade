@@ -46,7 +46,6 @@ void detachLODObject__8CTaskLODFv(u8 lod, int mode);
 void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 void getLODOrSelf__8CTaskLODFv(u8 lod);
 u16 getLODObject__8CTaskLODFv(u8 lod);
-void* getScnHandle__Fv();
 void ScnData_FwdB7D9C(void* ptr, u8 id);
 void ScnData_FwdB7DD4(void* ptr, u8 id);
 void* ScnData_FwdB80A4(void* ptr, u16 id);
@@ -56,7 +55,6 @@ void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 int CfSoundMan_IsRecordActive(int a);
 void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 void CfSoundMan_WriteSlotParam(u16 id, void* pos);
-void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);
 void GimmickElv_InitSubObjects(CfGimmickElvData* self);
 }

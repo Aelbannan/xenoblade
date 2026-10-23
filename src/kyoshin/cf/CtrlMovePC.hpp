@@ -164,7 +164,6 @@ void ctrlActUpdateData70(void* a);
 void maskMoveChildFlags(cf::CCtrlMovePC* self);
 int  moveBaseRoute(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
-f32  FrSqrt__Q24nw4r4mathFf(f32 x);
 }
 
 // C-linkage imports for the move-state helpers (retail names).

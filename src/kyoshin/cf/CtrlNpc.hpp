@@ -173,7 +173,6 @@ union CtrlNpcCvtDbl {
 // Talk/page controller update helpers (CtrlNpcUpdateTalk).
 extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void UIWin_CreateTalkWin(void* self, char* text, int flag);
 extern "C" void UIWin_ShowTalkWindow(void* self);

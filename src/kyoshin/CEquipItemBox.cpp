@@ -13,6 +13,8 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
 // KEEP (blockers-A 2026-10-23): BdatGetU16Direct is declared int here
@@ -853,7 +855,7 @@ extern "C" __declspec(noinline) void sortEIBFlagAsc(CEquipItemGrid* grid) {
 // Destructor clone: free object memory when this is non-null and delete flag set.
 void* __dt__802825D0(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -1234,7 +1236,7 @@ extern "C" CEIBCur* __ct__CEIBCur(CEIBCur* self, void* arcResAcc) {
 // Destructor clone: free object memory when this is non-null and delete flag set.
 void* __dt__80285954(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -1342,7 +1344,7 @@ extern "C" __declspec(noinline) CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self
 // sites (mode -1) and would be elided entirely -- the retail keeps the `bl`.
 extern "C" __declspec(noinline) void* __dt__80285C44(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -1634,7 +1636,7 @@ extern "C" __declspec(noinline) void openEIBBox(CEquipItemBox* self) {
     self->unk_1fe = 0;
     fillEIBSortMenu(self);
     self->unk_40 = 1;
-    playUISound__FUl(0x6d);
+    playUISound(0x6d);
 }
 
 // Close the box when the entry animation (unk_41 == 2) has finished: reset
@@ -1646,7 +1648,7 @@ extern "C" __declspec(noinline) void finishEIBEntry(CEquipItemBox* self) {
     self->unk_43 = 0;
     self->unk_58 = 0;
     self->pagecur[0x14] = 0;
-    playUISound__FUl(0x6);
+    playUISound(0x6);
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (pane != 0) {
@@ -1665,7 +1667,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
         self->unk_374 = val;
         if ((s8)(u8)val < 0) self->unk_374 = 1;
         updateEIBCursorPos(self);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
 
@@ -1710,7 +1712,7 @@ extern "C" void eibNavLeft(CEquipItemBox* self) {
             refreshEIBItemList(self);
         }
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Down/confirm handler: page the syswin sub-window forward, finish the sort
@@ -1724,7 +1726,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
             self->unk_374 = v;
             if ((s8)v > 1) self->unk_374 = 0;
             updateEIBCursorPos(self);
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -1734,7 +1736,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
-            playUISound__FUl(1);
+            playUISound(1);
             return;
         }
         // Scroll finished: retail falls through to the name-pane dispatch.
@@ -1757,7 +1759,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
         CopyTabSlotVec(&tmp2, arr,
                       (u8)((s8)self->unk_377 + (s8)self->unk_376 * 4));
         self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     u8 v = self->unk_1f5 + 1;
@@ -1767,7 +1769,7 @@ extern "C" __declspec(noinline) void eibNavDown(CEquipItemBox* self) {
     }
     updateEIBCursorPos(self);
     refreshEIBItemList(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Up/back handler: mirror of eibNavDown - pages backward through the
@@ -1781,7 +1783,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
             self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -1803,7 +1805,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
         CopyTabSlotVec(&tmp2, arr,
                       (u8)(self->unk_377 + (s8)self->unk_376 * 4));
         self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if ((s8)self->unk_1f5 == -1) {
@@ -1825,7 +1827,7 @@ extern "C" __declspec(noinline) void eibNavUp(CEquipItemBox* self) {
         updateEIBCursorPos(self);
         refreshEIBItemList(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Equip-box button dispatch (down/confirm handler): while both system windows
@@ -1842,7 +1844,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp;
         sortMenuFormatPaneText(&tmp, &self->_padSortMenu[0]);
         self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (self->unk_375 != 0) {
@@ -1861,7 +1863,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         CopyTabSlotVec(&tmp2, arr, (u8)(self->unk_377 + (s8)self->unk_376 * 4));
         self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if ((s8)self->unk_1f5 == -1) {
@@ -1882,7 +1884,7 @@ extern "C" void eibNavRight(CEquipItemBox* self) {
         updateEIBCursorPos(self);
         refreshEIBItemList(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Advance the equip-grid page cursor when the box is idle; wrap the page
@@ -1901,7 +1903,7 @@ __declspec(noinline) void CEquipItemBox::eibPageNext() {
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
-        playUISound__FUl(0xa);
+        playUISound(0xa);
     }
 }
 
@@ -1921,7 +1923,7 @@ extern "C" __declspec(noinline) void eibPagePrev(CEquipItemBox* self) {
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
-        playUISound__FUl(0xa);
+        playUISound(0xa);
     }
 }
 
@@ -1937,7 +1939,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
         self->unk_58 = 1;
         Cur_SetVisible(&self->ccur18, 0);
         sortMenuToState4Page(&self->_padSortMenu[0]);
-        playUISound__FUl(6);
+        playUISound(6);
         return;
     }
     if (sortMenuGetFlag2B(&self->_padSortMenu[0]) == 0) return;
@@ -1958,7 +1960,7 @@ extern "C" void eibConfirmSort(CEquipItemBox* self) {
     Cur_SetVisible(&self->ccur18, 1);
     sortMenuOpenInit(&self->_padSortMenu[0]);
     self->unk_1f6 = 0;
-    playUISound__FUl(2);
+    playUISound(2);
 }
 
 // Equip-box sub-page handler: while the first system window is active switch
@@ -2000,7 +2002,7 @@ extern "C" void eibHandleSubPage(CEquipItemBox* self, int param) {
         self->unk_378 = 0;
     }
     if (param == 0) {
-        playUISound__FUl(6);
+        playUISound(6);
     }
 }
 
@@ -2151,7 +2153,7 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
             }
         }
         if (found == 0) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         u8 sel = list->field_D8;
@@ -2165,13 +2167,13 @@ extern "C" __declspec(noinline) void handleEIBNamePane(CEquipItemBox* self) {
         CopyTabSlotVec(&tmp, &list->field_00[0], sel);
         self->ccur18.setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         self->unk_378 = 1;
-        playUISound__FUl(2);
+        playUISound(2);
         return;
     }
     // Invisible pane: show it (unless syswin2 is busy), then sound state 2.
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     setPaneVisible(pane, 1);
-    playUISound__FUl(2);
+    playUISound(2);
 }
 
 // Arm-check for the "register/equip item" action: clear the armed flag
@@ -2293,7 +2295,7 @@ extern "C" void eibTryCloseRow(CEquipItemBox* self) {
     self->unk_1f5 = -1;
     updateEIBCursorPos(self);
     refreshEIBItemList(self);
-    playUISound__FUl(2);
+    playUISound(2);
 }
 
 // State probe used by the HUD/button layer: returns a code describing what
@@ -2926,7 +2928,7 @@ extern "C" __declspec(noinline) void eibSortPageNext(CEquipItemBox* self) {
     }
     refreshEIBSortPages(self, 0);
     rebuildEIBPage(self, 0);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
 }
 #pragma pop
 
@@ -2941,7 +2943,7 @@ extern "C" __declspec(noinline) void eibSortPagePrev(CEquipItemBox* self) {
     }
     refreshEIBSortPages(self, 1);
     rebuildEIBPage(self, 0);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
 }
 
 // Rebuild the sort-menu page list after a page change: for each of the 6 page
@@ -3919,10 +3921,10 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         void* buf3 = fh3->field_4;
         fh3->field_4 = 0;
         Bdat_GetTable_AA34();  // retail passes no args (r3 stale from the field_2C load)
-        if (getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]) == 0) {
+        if (getFP(&lbl_eu_8050EFDC[0x7b9]) == 0) {
             CBdat::setBdatEntry(5, buf3);
         }
-        lbl_eu_806649E0 = getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]);
+        lbl_eu_806649E0 = getFP(&lbl_eu_8050EFDC[0x7b9]);
         closeEIBSortMenu(this);
         field_2C = 0;
         return 1;

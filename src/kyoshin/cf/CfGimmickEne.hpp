@@ -148,7 +148,6 @@ extern void clearLODEntry__8CTaskLODFv(u8 lod);
 extern void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 extern void detachLODObject__8CTaskLODFv(u8 lod, int mode);
 extern void addLODEntry__8CTaskLODFv(u8 lod, int mode);
-extern void* getScnHandle__Fv();
 extern void ScnData_FwdB7D9C(void* snd, u8 id);
 extern void ScnData_FwdB7DD4(void* snd, u8 id);
 

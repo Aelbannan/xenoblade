@@ -24,7 +24,6 @@ void bindLodVertexArrays(s32 count);
 // Scene-resource current-data getter (monolib/src/scn/code_804BC9EC.cpp).
 // C linkage so the 0-arg call emits the retail name unmangled (a C++ 0-arg
 // declaration would mangle to getScnHandle__Fv__Fv).
-extern "C" void* getScnHandle__Fv(void);
 
 // Fv-named entry points of sibling LOD classes (retail Fv names carry extra
 // ABI values in r3, per the "Fv ABI note" - model them as explicit args).

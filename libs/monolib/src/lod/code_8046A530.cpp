@@ -6,7 +6,7 @@
 #include <revolution/MTX.h>
 #include <revolution/mtx/vec.h>
 #include "monolib/lod/LODMemMan.hpp"   // provides full LOD::LODMemMan definition
-#include "monolib/core/code_804E36DC.hpp"  // declares __dl__FPv (C ABI)
+#include "monolib/core/code_804E36DC.hpp"  // declares operator delete(C ABI)
 #include "monolib/math/CVec3.hpp"      // ml::CVec3 + nw4r math inlines (VEC3*, FrSqrt, Warning)
 
 // .sdata2 constants referenced by this TU (retail labels).  Declared at
@@ -133,7 +133,7 @@ void LOD::UnkClass_8046A530::checkLodFlagState() {
 // ---------------------------------------------------------------------------
 void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
     if (obj != nullptr && dealloc > 0) {
-        __dl__FPv(obj);
+        operator delete(obj);
     }
     return obj;
 }

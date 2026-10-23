@@ -4,8 +4,8 @@
 
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
+void playUISound(u32);
 
-extern "C" void playUISound__FUl(u32 op);
 
 extern char lbl_eu_804FEF98[];
 extern char lbl_eu_8052D338[];
@@ -91,7 +91,7 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         sysWinAdvancePhase3(&self->mSysWin[0]);
         self->field_60 = (s8)self->mCursorSel + 1;
         Cur_SetVisible(&self->mCur18, 0);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (up != 0) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
@@ -99,7 +99,7 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         nw4r::math::VEC3 tmp;
         sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
         self->mCur18.setRootPaneTranslate(&tmp);
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (down != 0) {
         // Down: move the cursor down one row, wrapping over 1 to 0.
         self->mCursorSel = (u8)(self->mCursorSel + 1);
@@ -107,7 +107,7 @@ extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
         nw4r::math::VEC3 tmp;
         sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], self->mCursorSel);
         self->mCur18.setRootPaneTranslate(&tmp);
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 

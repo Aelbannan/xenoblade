@@ -15,6 +15,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include <nw4r/lyt.h>
+void playUISound(u32);
 
 // Intra-TU state-machine / selection helpers (defined below in address order).
 // extern "C" keeps the call relocs unmangled (retail symbols are unmangled
@@ -320,7 +321,7 @@ extern "C" void beginMapSelClose(CMapSel* self) {
         *(u8*)((u8*)self + 0x31) = 4;
         *(u8*)((u8*)self + 0x33) = 0;
         Cur_SetVisible((u8*)self + 0x74, 0);
-        playUISound__FUl(6);
+        playUISound(6);
     }
 }
 
@@ -356,7 +357,7 @@ extern "C" void __declspec(noinline) moveMapSelUp(CMapSel* self) {
     s8 cur = self->mSelX;
     CScrollBar_PlaceThumb(self->mScrollBar, (u16)cur);
     noopMapSelPostMove(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 /* moveMapSelSelection - Move the selection right one column. Wraps from the bottom
@@ -388,7 +389,7 @@ extern "C" void __declspec(noinline) moveMapSelSelection(CMapSel* self) {
     updateMapSelCursor(self);
     CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     noopMapSelPostMove(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 /* moveMapSelPageUp - Move the selection left/up by one column of 10 (mirror of
@@ -412,7 +413,7 @@ extern "C" void __declspec(noinline) moveMapSelPageUp(CMapSel* self) {
     updateMapSelCursor(self);
     CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     noopMapSelPostMove(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 /* moveMapSelPageDown - Move the selection down one row (grid has 10 columns;
@@ -441,7 +442,7 @@ extern "C" void __declspec(noinline) moveMapSelPageDown(CMapSel* self) {
     updateMapSelCursor(self);
     CScrollBar_PlaceThumb(self->mScrollBar, self->mSelX);
     noopMapSelPostMove(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 u8 CMapSel::getMapGridCell() {

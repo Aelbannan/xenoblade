@@ -110,7 +110,6 @@ void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void __ct__17UnkClass_8045F564Fv(void*);
 void __dt__17UnkClass_8045F564Fv(void*, int);
 void __dt__8CProcessFv(void*, int);
-void __dl__FPv(void*);
 void waitForDrawDone__9CDeviceVIFv();
 void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 void __ct__Q34nw4r3lyt8DrawInfoFv(void*);

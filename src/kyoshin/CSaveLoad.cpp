@@ -45,6 +45,8 @@ extern "C" {
 #include <string.h>
 #include <revolution/os/OSCache.h>
 #include "monolib/device/CDeviceSC.hpp"
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 // External function declarations
 extern "C" void CScrollBar_requestScrollOut(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
@@ -175,37 +177,17 @@ struct UnkPtrHolder {
 // it extern "C" so the call reloc inside CSLCur_tickAnim resolves unmangled.
 
 // Declarations for functions called by initLayout
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** ppLayout,
-    nw4r::lyt::ArcResourceAccessor* accessor,
-    const char* name);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* layout,
-    nw4r::lyt::AnimTransform** ppAnimTrans,
-    nw4r::lyt::ArcResourceAccessor* accessor,
-    char* name);
 
 // optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair
 #pragma push
 #pragma optimize_for_size on
 void CSLCur::createLayout() {
     // Create layout, then bind two anim transforms and finish via layout vtable
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &mField8,
-        (nw4r::lyt::ArcResourceAccessor*)mField4,
-        (const char*)&lbl_eu_8050F7CC);
+    buildLayout(&mField8, (nw4r::lyt::ArcResourceAccessor*)mField4, (const char*)&lbl_eu_8050F7CC);
 
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mField8,
-        (nw4r::lyt::AnimTransform**)&mFieldC,
-        (nw4r::lyt::ArcResourceAccessor*)mField4,
-        (char*)&lbl_eu_8050F7CC[0x18]);
+    bindLayoutAnimTransform(mField8, (nw4r::lyt::AnimTransform**)&mFieldC, (nw4r::lyt::ArcResourceAccessor*)mField4, (char*)&lbl_eu_8050F7CC[0x18]);
 
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mField8,
-        (nw4r::lyt::AnimTransform**)&mField10,
-        (nw4r::lyt::ArcResourceAccessor*)mField4,
-        (char*)&lbl_eu_8050F7CC[0x35]);
+    bindLayoutAnimTransform(mField8, (nw4r::lyt::AnimTransform**)&mField10, (nw4r::lyt::ArcResourceAccessor*)mField4, (char*)&lbl_eu_8050F7CC[0x35]);
 
     // Virtual call at vtable offset 0x24 (slot 9) on the layout
     ((LayoutProxy24*)mField8)->vf9();
@@ -322,21 +304,21 @@ void CSLSub_init(CSLCur* data, int initVal) {
 
 extern "C" void* __dt__8028E7F8(void* self, int dealloc_flag) {
     if (self != nullptr && dealloc_flag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
 
 extern "C" void* __dt__8028EA34(void* self, int dealloc_flag) {
     if (self != nullptr && dealloc_flag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
 
 extern "C" void* __dt__8028ED30(void* self, int dealloc_flag) {
     if (self != nullptr && dealloc_flag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -364,11 +346,9 @@ public:
 #pragma push
 #pragma optimize_for_size on
 extern "C" void CSLSub_create(UnkED70_Struct* s) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &s->mLayout, s->mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
+    buildLayout(&s->mLayout, s->mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
     
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
+    bindLayoutAnimTransform(s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
     
     // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
     void* rootPane = ((Layout10View*)s->mLayout)->root;
@@ -580,7 +560,7 @@ CSaveLoad::~CSaveLoad() {
         __dt__6CCur18Fv(&self->mCur40, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
-            __dl__FPv((u8*)self);
+            operator delete((u8*)self);
         }
     }
 }
@@ -1793,12 +1773,9 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
         accessor, fileData, (const char*)&strBase[0x22e]);
 
     // Create layout and both animation transforms
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
+    buildLayout(&self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
 
     // Font setup: root pane -> font object -> apply font to pane
     void* rootPane = *(void**)((char*)self->mLayout + 0x10);

@@ -9,6 +9,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
+void playUISound(u32);
 
 // Global: UI state flag read by InfoCfGetUiFlags.
 
@@ -494,7 +495,7 @@ void CMenuItem::Move() {
             if (CMainMenu_GetInstancePtr() != 0) {
                 ArtsInfo_SetReadyFlag();
             }
-            playUISound__FUl(6);
+            playUISound(6);
             mState = 4;
             mPrefix[0x50] = 1;
         }
@@ -509,7 +510,7 @@ void CMenuItem::Move() {
             func_801C412C(&mTitleAHelp);
             InitItemDisplay(&mItemBoxGrid);
             mState = 1;
-            playUISound__FUl(0x6d);
+            playUISound(0x6d);
         }
         break;
     case 1:

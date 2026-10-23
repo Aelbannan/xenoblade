@@ -93,10 +93,8 @@ extern void CfSoundMan_WriteSlotParam(u16 handle, void* position);
 extern void CfSoundMan_ApplySlotStop(int kind, u16 handle, int mode);
 extern u16 CfGimmick_PlaySoundAtPosScaled(u16 effectId, void* position, f32 distance);
 extern void setAnimHeight(void* target, f32 amount);
-extern f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
                                           const char* format, ...);
-extern void __dl__FPv(void* value);
 }
 
 /*

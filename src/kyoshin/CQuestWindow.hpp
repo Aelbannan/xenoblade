@@ -287,7 +287,6 @@ u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
 void ScalePaneWorldPos(void*, void*, void*, void*);
-void playUISound__FUl(u32);
 void incrementEventCounter__FUl(u32);
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);

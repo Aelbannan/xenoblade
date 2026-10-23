@@ -15,6 +15,8 @@
 
 #include <nw4r/lyt.h>
 #include <cstdio>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).
@@ -89,7 +91,7 @@ extern "C" void prevMCGetItemBoxPage(CMCGetItemBox*);
 // counters and index fields, then reset the whole table again.
 void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
     if (_this != NULL && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -464,7 +466,7 @@ extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
         __dt__17UnkClass_8045F564Fv(&this_->memRegion2, -1);
         __dt__17UnkClass_8045F564Fv(&this_->memRegion1, -1);
         if (flags > 0) {
-            __dl__FPv(this_);
+            operator delete(this_);
         }
     }
     return this_;
@@ -1353,12 +1355,9 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         this->arcAcc1 = CLibLayout::createArcResourceAccessor();
         this->arcAcc1->Attach(fileData, &lbl_eu_8050FF8C[0x206]);
 
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &this->layout40, this->arcAcc1, &lbl_eu_8050FF8C[0x20a]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            this->layout40, &this->animTrans1, this->arcAcc1, &lbl_eu_8050FF8C[0x221]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            this->layout40, &this->animTrans2, this->arcAcc1, &lbl_eu_8050FF8C[0x23b]);
+        buildLayout(&this->layout40, this->arcAcc1, &lbl_eu_8050FF8C[0x20a]);
+        bindLayoutAnimTransform(this->layout40, &this->animTrans1, this->arcAcc1, &lbl_eu_8050FF8C[0x221]);
+        bindLayoutAnimTransform(this->layout40, &this->animTrans2, this->arcAcc1, &lbl_eu_8050FF8C[0x23b]);
 
         // Bind the loaded font's pane into the layout root. Retail keeps the
         // root pane in a callee-saved register only across these calls.
@@ -1465,13 +1464,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         Bdat_GetTable_AA34();
         // Retail folds the first lookup's offset directly into lis/addi, then
         // caches the table base for the remaining lookups.
-        if (getFP__FPCc(&lbl_eu_8050FF8C[0x29f]) == 0) {
+        if (getFP(&lbl_eu_8050FF8C[0x29f]) == 0) {
             CBdat::setBdatEntry(2, fileData);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664A18 = getFP__FPCc(&lbl_eu_8050FF8C[0x29f]);
+        lbl_eu_80664A18 = getFP(&lbl_eu_8050FF8C[0x29f]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664A1C = getFP__FPCc(&lbl_eu_8050FF8C[0x2ae]);
+        lbl_eu_80664A1C = getFP(&lbl_eu_8050FF8C[0x2ae]);
         activateMCGetItemBox(this);
         this->fileHandle3 = 0;
         return true;
@@ -1482,11 +1481,11 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         h4->mData = 0;
         this->memManagerPtr = (u8*)fileData;
         Bdat_GetTable_AA34();
-        if (getFP__FPCc(&lbl_eu_8050FF8C[0x119]) == 0) {
+        if (getFP(&lbl_eu_8050FF8C[0x119]) == 0) {
             CBdat::setBdatEntry(5, this->memManagerPtr);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664A20 = getFP__FPCc(&lbl_eu_8050FF8C[0x119]);
+        lbl_eu_80664A20 = getFP(&lbl_eu_8050FF8C[0x119]);
         activateMCGetItemBox(this);
         this->fileHandle4 = 0;
         return true;

@@ -13,6 +13,8 @@
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // From CtrlNpc.cpp (do not include CtrlNpc.hpp here - its C-ABI decls
 // clash with CCtrlMoveEne.hpp on ColiSetAxisBlockInverse / scnImN4DynStart).
@@ -1784,7 +1786,7 @@ void CtrlMoveEne_InitBattleMove(cf::CCtrlMoveEne* self) {
     }
     if (mode == 5) self->field_0x180 |= 0x200;
     if ((obj->field_3374 & 0x10000u) != 0) self->field_0x180 |= 0x40;
-    void* fp = getFP__FPCc(obj->field_3F14);
+    void* fp = getFP(obj->field_3F14);
     u32 bval = getBdatStringColumnValue(fp, lbl_eu_804FB9E8 + 0x68,
                                         obj->field_3F28);
     union {
@@ -3196,7 +3198,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                                                      lbl_eu_80526300);
                     }
                     if (distSq > lbl_eu_806665C0) {
-                        len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                        len = distSq * nw4r::math::FrSqrt(distSq);
                     }
                 }
                 speed = self->field_0x60;
@@ -3211,7 +3213,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CCtrlMoveEne* selfRaw) {
                                                      lbl_eu_80526300);
                     }
                     if (distSq > lbl_eu_806665C0) {
-                        len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                        len = distSq * nw4r::math::FrSqrt(distSq);
                     }
                 }
                 speed = self->field_0x60;

@@ -15,6 +15,8 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Named .sdata2 conversion magics: defining them lets MWCC's constant pool
 // reuse the retail symbols for the (f32) casts on s16/u8 map coordinates
@@ -435,7 +437,7 @@ void FloorMap_RebuildMarkers(void* self) {
 
     Bdat_GetTable_AA34();
 
-    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u32 fp = (u32)getFP(&lbl_eu_8050BEA8[0x17F]);
     u16 count = (u16)Bdat_GetMaxRow_B1EC((void*)fp);
 
     u16 n = 0;
@@ -539,26 +541,25 @@ void FloorMap_RebuildMarkers(void* self) {
 
 // operator delete(void*) (retail unmangled C symbol); declared at file scope
 // because MWCC rejects function-local extern "C" declarations.
-extern "C" void* __dl__FPv(void*);
 
 // Deleting dtors (retail names): free self when mode > 0, return self.
 extern "C" void* __dt__80244724(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
 
 extern "C" void* __dt__8024503C(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
 
 void* __dt__802462F0(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -610,7 +611,7 @@ void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock* self) {
     }
 
     Bdat_GetTable_AA34();
-    u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
+    u32 fp = (u32)getFP(&tbl[0x17F]);
     u32 count = Bdat_GetMaxRow_B1EC((void*)fp);
 
     self->count = 0;
@@ -724,7 +725,7 @@ void FloorMap_RefreshLayoutBlock(CFloorMapLayoutBlock* self) {
 
 void* __dt__802468C8(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -748,8 +749,8 @@ void* __dt__802468C8(void* self, int mode) {
         CFloorMapChildNode* end = (CFloorMapChildNode*)&kids->first;           \
         while (node != end) {                                                  \
             if (node == NULL)                                                  \
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,       \
-                                           0x23D,                              \
+                nw4r::db::Panic((const char*)lbl_eu_8052CB40, \
+                                           0x23D, \
                                            (const char*)lbl_eu_8052CB1C);      \
             CFloorMapChildNode* next = node->mpNext;                           \
             nw4r::lyt::Pane* marker =                                          \
@@ -887,8 +888,7 @@ void FloorMap_ReleaseMarkers(void* self) {
             (CFloorMapChildNode*)((u8*)slots->pane + 0x14);
         while (node != end) {
             if (node == NULL)
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
-                                           (const char*)lbl_eu_8052CB1C);
+                nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
             CFloorMapChildNode* next = node->mpNext;
             nw4r::lyt::Pane* marker =
                 ((nw4r::lyt::Layout*)slots->layout)
@@ -940,8 +940,8 @@ void FloorMap_ReleaseMarkers(void* self) {
         CFloorMapChildNode* end = (CFloorMapChildNode*)&anchor->kids;                   \
         while (node != end) {                                                  \
             if (node == NULL)                                                  \
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,       \
-                                           0x23D,                              \
+                nw4r::db::Panic((const char*)lbl_eu_8052CB40, \
+                                           0x23D, \
                                            (const char*)lbl_eu_8052CB1C);      \
             CFloorMapChildNode* next = node->mpNext;                           \
             nw4r::lyt::Pane* marker =                                          \
@@ -1035,7 +1035,7 @@ void FloorMap_PlaceFloorMarker(CFloorMapFull* self, u32 idx) {
     convB.w[0] = 0x43300000;
 
     Bdat_GetTable_AA34();
-    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u32 fp = (u32)getFP(&lbl_eu_8050BEA8[0x17F]);
     if (lbl_eu_80664798 != (u8)BdatGetU8Direct(fp, &lbl_eu_8050BEA8[0x18C], idx)) return;
     if (CtrlRemote_TouchBitByArg(idx + 0x20C8) == 0) return;
 
@@ -1179,7 +1179,7 @@ u32 FloorMap_PickMarkerRow(void* self) {
 
     while (node != end) {
         if (node == NULL)
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+            nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
 
         nw4r::lyt::Pane* pane2 = slots->pane->FindPaneByName(node->name, 1);
 
@@ -1244,7 +1244,7 @@ u32 FloorMap_PickMarkerRow(void* self) {
         f32 dist2 = dy * dy + dx * dx;
         if (dist2 <= threshold) {
             if (node == NULL)
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+                nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
 
             sprintf(buf2, &lbl_eu_8050BEA8[0x223], node->name);
 
@@ -1315,7 +1315,7 @@ void FloorMap_PlaceMarkersB(CFloorMapLayoutSlots* slots) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    u32 fp = (u32)getFP(&tbl[0x315]);
     int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
@@ -1423,7 +1423,7 @@ void FloorMap_PlaceMarkersC(CFloorMapLayoutSlots* slots) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    u32 fp = (u32)getFP(&tbl[0x315]);
     int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31.
@@ -1529,7 +1529,7 @@ void FloorMap_PlaceMarkersD(CFloorMapLayoutSlots* slots) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    u32 fp = (u32)getFP__FPCc(&tbl[0x315]);
+    u32 fp = (u32)getFP(&tbl[0x315]);
     int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
@@ -1659,7 +1659,7 @@ void FloorMap_PlaceMarkers(void* self) {
     convA.w[0] = 0x43300000;
     convB.w[0] = 0x43300000;
 
-    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x315]);
+    u32 fp = (u32)getFP(&lbl_eu_8050BEA8[0x315]);
     int count = (int)Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants hoisted before the walk so MWCC keeps them in f26-f31
@@ -1781,7 +1781,7 @@ void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
     // the whole marker walk.
     const u8 world = lbl_eu_80664184;
     Bdat_GetTable_AA34();
-    u32 fp = (u32)getFP__FPCc(&tbl[0x17F]);
+    u32 fp = (u32)getFP(&tbl[0x17F]);
     u32 count = Bdat_GetMaxRow_B1EC((void*)fp);
 
     // Constants kept live across the whole walk (retail f27-f31).
@@ -1822,7 +1822,7 @@ void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
 
             // No live object: fall back to the save-point table. The marker
             // shows only when the save point's own visibility checks pass.
-            u32 fp2 = (u32)getFP__FPCc(&tbl[0x17F]);
+            u32 fp2 = (u32)getFP(&tbl[0x17F]);
             u16 id2 = BdatGetU16ByTableKey(&tbl[0x3C6], &tbl[0x3D2], rowId);
             if ((u8)BdatGetU8Direct(fp2, &tbl[0x18C], id2) != world) break;
             if (CtrlRemote_TouchBitByArg(id2 + 0x20C8) == 0) break;
@@ -1894,7 +1894,7 @@ void FloorMap_PlaceTypedMarkers(CFloorMapLayoutSlots* slots) {
         case 5: {
             // Map-table coordinates: three s16 columns converted via the
             // shared double-magic idiom into a scratch vector.
-            u32 fp2 = (u32)getFP__FPCc(&tbl[0x403]);
+            u32 fp2 = (u32)getFP(&tbl[0x403]);
             BdatGetU16Direct((const void*)fp2, &tbl[0x412], rowId);
             if (CtrlRemote_TouchBitByArg(rowId + 0x2B9C) != 0) break;
             s16 a = BdatGetS16Direct(fp2, &tbl[0x19B], rowId);
@@ -2178,7 +2178,7 @@ void FloorMap_PlaceWorldMarker(void* self) {
             if (!found) {
                 // Fallback: resolve the landmark file entry and check whether
                 // it is flagged for display on the current world.
-                u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
+                u32 fp = (u32)getFP(tbl + 0x17F);
                 u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
                 u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
@@ -2226,7 +2226,7 @@ void FloorMap_PlaceWorldMarker(void* self) {
                 }
             }
             if (!found) {
-                u32 fp = (u32)getFP__FPCc(tbl + 0x17F);
+                u32 fp = (u32)getFP(tbl + 0x17F);
                 u32 id2 = BdatGetU16ByTableKey(tbl + 0x3C6, tbl + 0x3D2, (u16)type);
                 u32 w = BdatGetU8Direct(fp, tbl + 0x18C, (u16)id2);
                 if (w != lbl_eu_80664184) break;
@@ -2546,7 +2546,7 @@ void FloorMap_AccumPaneTranslate(nw4r::math::VEC3* output, void* data, nw4r::lyt
 
 void* __dt__8024B6B8(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -2589,7 +2589,7 @@ void FloorMap_SetRowTexPalette(CFloorMapRowList* self, void* arg2, u32 arg3, u32
 
 void* __dt__8024B894(void* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -4171,37 +4171,37 @@ void CFloorMap::SetMapTable(u8 id) {
     (void)this;
     lbl_eu_80664798 = id;
     switch (id) {
-    case 0:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x524]); break;
-    case 1:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x534]); break;
-    case 2:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x544]); break;
-    case 3:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x554]); break;
-    case 4:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x564]); break;
-    case 5:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x574]); break;
-    case 6:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x584]); break;
-    case 7:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x594]); break;
-    case 8:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5A4]); break;
-    case 9:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5B4]); break;
-    case 10: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5C4]); break;
-    case 11: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5D4]); break;
-    case 12: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5E4]); break;
-    case 13: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x5F4]); break;
-    case 14: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x604]); break;
-    case 15: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x614]); break;
-    case 16: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x624]); break;
+    case 0:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x524]); break;
+    case 1:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x534]); break;
+    case 2:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x544]); break;
+    case 3:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x554]); break;
+    case 4:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x564]); break;
+    case 5:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x574]); break;
+    case 6:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x584]); break;
+    case 7:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x594]); break;
+    case 8:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5A4]); break;
+    case 9:  Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5B4]); break;
+    case 10: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5C4]); break;
+    case 11: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5D4]); break;
+    case 12: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5E4]); break;
+    case 13: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x5F4]); break;
+    case 14: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x604]); break;
+    case 15: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x614]); break;
+    case 16: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x624]); break;
     // Maps 17 and 18 are written as two clauses sharing one string, so MWCC
     // emits the body twice instead of merging the jump-table entries.
-    case 17: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
-    case 18: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
-    case 19: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x644]); break;
-    case 20: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x654]); break;
-    case 21: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x664]); break;
-    case 22: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x674]); break;
-    case 23: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x684]); break;
-    case 24: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x694]); break;
-    case 25: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6A4]); break;
+    case 17: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x634]); break;
+    case 18: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x634]); break;
+    case 19: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x644]); break;
+    case 20: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x654]); break;
+    case 21: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x664]); break;
+    case 22: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x674]); break;
+    case 23: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x684]); break;
+    case 24: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x694]); break;
+    case 25: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x6A4]); break;
     case 26:
     case 27:
-    case 28: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6B4]); break;
+    case 28: Bdat_GetTable_AA34(); lbl_eu_8066479C = (u32)getFP(&lbl_eu_8050BEA8[0x6B4]); break;
     default:
         lbl_eu_8066479C = 0;
         break;

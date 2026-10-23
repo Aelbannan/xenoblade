@@ -338,7 +338,6 @@ extern "C" {
     void __dt__Q22cf7CInfoCfFv(cf::CInfoCf* self, int flag);
     void __dt__11CDeviceVICbFv(CDeviceVICb* self, int flag);
     void __dt__8CProcessFv(CProcess* self, int flag);
-    void __dl__FPv(void* p);
     // Base/subobject ctors driven by the free-function ctor (retail C-ABI
     // names: CProcess/CDeviceVICb ctors are out-of-line members, CInfoCf/
     // CREvtMem have no member ctor).

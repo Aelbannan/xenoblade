@@ -7,6 +7,7 @@
 #include <string.h>
 #include <math.h>
 #include <new>
+void* findObjectById(int id);
 
 void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
@@ -247,7 +248,7 @@ void __dt__800B151C(FactoryPoolList* self) {
     self->mStartNodePtr->mPrev = self->mStartNodePtr;
     if (self->field_0x1C == 0) {
         if (self->mList != 0) {
-            __dla__FPv(self->mList);
+            operator delete[](self->mList);
             self->mList = 0;
         }
     }
@@ -284,7 +285,7 @@ void __dt__800B18CC(FactoryPoolList* self) {
     sentinel->mPrev = sentinel;
     if (self->field_0x1C == 0) {
         if (self->mList != 0) {
-            __dla__FPv(self->mList);
+            operator delete[](self->mList);
             self->mList = 0;
         }
     }
@@ -388,7 +389,7 @@ void evictTboxOverflow() {
     // Retail calls tboxIterItem once per test.
     if (*(u32*)tboxIterItem(&iter) != 0) {
         // Retail forwards the lookup result in r3 straight into gmFileObject.
-        void* hit = findObjectById__Fi(*(s32*)tboxIterItem(&iter));
+        void* hit = findObjectById(*(s32*)tboxIterItem(&iter));
         if (hit != 0) {
             gmFileObject(hit);
         }
@@ -696,7 +697,7 @@ void* __dt__800B2D30(void* self, int flags) {
     if (self != NULL) {
         __dt__8047BDA8(self);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return ret;
@@ -1136,7 +1137,7 @@ UnkClass_800B0AD8* __dt__800B0AF4(void* selfv, int flags) {
         self->unkB00 = 0;
         self->unkAFC = 0;
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -1606,7 +1607,7 @@ extern "C" void setTrackedTarget(UnkClass_805764CC* self, void* arg, int flag, f
 // auto_inline off: retail calls this out-of-line from evictTboxOverflow.
 #pragma push
 #pragma auto_inline off
-extern "C" void* findObjectById__Fi(int id) {
+void* findObjectById(int id) {
     UnkClass_805764CC* obj = getInstance();
     void* result = findWorkById(obj, id);
     bool valid = false;
@@ -1987,7 +1988,7 @@ _reslist_base<cf::TboxInfo>::~_reslist_base() {
         // Retail emits two identical null tests around the free.
         if (pool != 0) {
             if (pool != 0) {
-                __dla__FPv(pool - 0x10);
+                operator delete[](pool - 0x10);
             }
             obj.field_0x2c = 0;
         }
@@ -2162,7 +2163,7 @@ reslist<cf::TboxInfo>::~reslist() {
         // emits two identical null tests around the free.
         if (pool != 0) {
             if (pool != 0) {
-                __dla__FPv(pool - 0x10);
+                operator delete[](pool - 0x10);
             }
             obj.field_0x2c = 0;
         }
@@ -2196,7 +2197,7 @@ _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {
     obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
     if (!obj->field_0x1C) {
         if (obj->mList != 0) {
-            __dla__FPv(obj->mList);
+            operator delete[](obj->mList);
             obj->mList = 0;
         }
     }
@@ -2229,7 +2230,7 @@ check:
     obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
     if (!obj->field_0x1C) {
         if (obj->mList != 0) {
-            __dla__FPv(obj->mList);
+            operator delete[](obj->mList);
             obj->mList = 0;
         }
     }

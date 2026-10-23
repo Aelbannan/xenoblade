@@ -13,7 +13,6 @@
 
 extern "C" {
 extern char lbl_eu_80526338[];
-extern void __dl__FPv(void*);
 }
 
 // Retail (unmangled) stream-reset entry; distinct from the TU-local

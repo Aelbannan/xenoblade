@@ -11,6 +11,7 @@
 #include <decomp.h>
 #include <string.h>
 #include <math.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Mine* + CfMapMineManager full layouts live in CfMapMineManager.hpp (single source).
 
@@ -169,12 +170,12 @@ __dt___reslist_base_cf_CfMapMineManager_MinePoint(MineListBase* self,
             // Doubled null check mirrors retail: MWCC keeps the dead second
             // beq (same shape as the derived-list dtor below).
             if (self->mList != 0) {
-                __dla__FPv((u8*)self->mList - 0x10);
+                operator delete[]((u8*)self->mList - 0x10);
             }
             self->mList = 0;
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -204,13 +205,13 @@ __dt__reslist_cf_CfMapMineManager_MinePoint(MineListBase* self, s32 flags) {
                 // Doubled null check mirrors retail: MWCC keeps the dead
                 // second beq before the array-free call.
                 if (self->mList != 0) {
-                    __dla__FPv((u8*)self->mList - 0x10);
+                    operator delete[]((u8*)self->mList - 0x10);
                 }
                 self->mList = 0;
             }
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -224,7 +225,7 @@ extern "C" MineMsgRing* __dt__80206124(MineMsgRing* self, s32 flags) {
         self->mCount = 0;
         self->mReadIdx = 0;
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -253,7 +254,7 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
                 // Doubled null check mirrors retail: MWCC keeps the dead
                 // second beq before the array-free call.
                 if (self->mPoints.mList != 0) {
-                    __dla__FPv((u8*)self->mPoints.mList - 0x10);
+                    operator delete[]((u8*)self->mPoints.mList - 0x10);
                 }
                 self->mPoints.mList = 0;
             }
@@ -283,7 +284,7 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
                 if (pts->mUnk03C == false) {
                     if (pts->mList != 0) {
                         if (pts->mList != 0) {
-                            __dla__FPv((u8*)pts->mList - 0x10);
+                            operator delete[]((u8*)pts->mList - 0x10);
                         }
                         pts->mList = 0;
                     }
@@ -291,7 +292,7 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
             }
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -580,7 +581,7 @@ extern "C" int mineRespawnPoint(CfMapMineManager* self, MinePoint* pt) {
         pt->mObj4 = obj;
 
         const char* cols = lbl_eu_80508424;
-        void* fp = getFP__FPCc(cols + 0x37);
+        void* fp = getFP(cols + 0x37);
         u32 id = pt->mFlags >> 22;
         u32 resId = getBdatStringColumnValue(
             lbl_eu_806640C8, cols + 0x45, id);
@@ -1185,7 +1186,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     if (CItemData_lookupOrAlloc(&drop, 0) == 0) {
         const char* cols = lbl_eu_80508424;
         u32 msg = getBdatStringColumnValue(
-            (BdatFilePointer*)getFP__FPCc(cols + 0x77), cols + 0x4E, 0x1B);
+            (BdatFilePointer*)getFP(cols + 0x77), cols + 0x4E, 0x1B);
         UIWin_CreateSysWin0((void*)msg, 0, 0);
         return;
     }

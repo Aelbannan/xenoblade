@@ -127,7 +127,6 @@ void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 int IsMenuState621F0();
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-void playUISound(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the

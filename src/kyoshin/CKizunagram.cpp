@@ -11,6 +11,9 @@
 #include "monolib/util/MemManager.hpp"
 #include <revolution/TPL.h>
 #include <new>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // mtl::MemManagerF::allocate is a member (this, size, kind); the shared header
 // declares the two-arg caller form used elsewhere, so route this call through
@@ -190,10 +193,8 @@ extern "C" __declspec(noinline) void releaseCurChild(UnkKizunaSelf57D90* self) {
 // attach its anim transform at +0x0C, then publish both via the layout's
 // vtable slots 11 / 14.
 extern "C" __declspec(noinline) void buildCurLayout(UnkKizunaSelf57E58* self) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        (nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0x3f);
+    buildLayout((nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0x3f);
     self->field8->slot11((u32)self->field0C, 1);
     self->field8->slot14(0);
 }
@@ -206,12 +207,8 @@ extern "C" __declspec(noinline) void buildKizLineLayout(UnkKizunaLineBuild* self
     char nameBuf[0x20];
     char* str = lbl_eu_8050CB20;
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        (nw4r::lyt::Layout**)&self->layout,
-        (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x5c);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)self->layout, &self->anim,
-        (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x70);
+    buildLayout((nw4r::lyt::Layout**)&self->layout, (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x5c);
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->layout, &self->anim, (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x70);
 
     // Bind the device font to the layout's root pane.
     nw4r::lyt::Pane* rootPane =
@@ -825,7 +822,7 @@ __declspec(noinline) void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
     char nameCur[4];
     copyKizName3(nameCur, curName);
 
-    void* fp = getFP__FPCc(lbl_eu_8050CB20 + 0x402);
+    void* fp = getFP(lbl_eu_8050CB20 + 0x402);
     u16 count = Bdat_GetMaxRow_B1EC(fp);
 
     // single base pointer for the shared arc string table (CSE of the above)
@@ -959,8 +956,7 @@ extern "C" __declspec(noinline) void placeKizMarker(UnkKizunaSelf59394* self,
 // extern "C" + noinline keeps same-TU callers (CKizunagram::OnFileEvent)
 // emitting retail's unmangled `bl` without inlining.
 extern "C" __declspec(noinline) void buildRadarLayout(UnkKizunaSelfAFC* self) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &self->field8, self->field4, lbl_eu_8050CB20);
+    buildLayout(&self->field8, self->field4, lbl_eu_8050CB20);
     UnkKizunaLCBRes57AFC* res =
         ((UnkKizunaLayoutSub57AFC*)self->field8)->field10->slot15(lbl_eu_8050CB20 + 0x13, 1);
     copyVEC2(&self->field14[0], res->vec);
@@ -1161,7 +1157,7 @@ __declspec(noinline) void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
     char nameCur[4];
     copyKizTag3(nameCur, curName);
 
-    void* fp = getFP__FPCc(&lbl_eu_8050CB20[0x402]);
+    void* fp = getFP(&lbl_eu_8050CB20[0x402]);
     u16 count = (u16)Bdat_GetMaxRow_B1EC(fp);
 
     // shared arc string table base (CSE'd into a register across the loop)
@@ -1308,12 +1304,9 @@ CKizunaInfo::~CKizunaInfo() {}
 // values and 6 localized labels, then reset the +0x18 counter.
 // extern "C" + noinline for OnFileEvent's unmangled call shape (see buildRadarLayout).
 extern "C" __declspec(noinline) void buildInfoLayout(UnkKizunaSelfB670* self) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
+    buildLayout(&self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
+    bindLayoutAnimTransform(self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
+    bindLayoutAnimTransform(self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
     nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
@@ -2206,7 +2199,7 @@ extern "C" __declspec(noinline) bool revealKizEntries(UnkKizunaSelfA11C* self) {
 
     Bdat_GetTable_AA34();
     const char* str = lbl_eu_8050CB20;
-    void* fp = getFP__FPCc(str + 0x402);
+    void* fp = getFP(str + 0x402);
     u32 count = Bdat_GetMaxRow_B1EC(fp) & 0xffff;
 
     for (u32 i = 0; i < 0x10; i++) {

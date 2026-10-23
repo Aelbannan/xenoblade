@@ -60,8 +60,6 @@ extern void wkStandbyLogin__9CViewRootFv();
 extern void wkStandbyLogout__9CViewRootFv();
 extern void __dt__11CWorkThreadFv(void*, int);
 extern void* __dt__9CViewRootFv(void*, int);
-extern void __dl__FPv(void*);
-extern void __dla__FPv(void*);
 }
 
 // === Blob monolibdata1/1d dissolve: CViewRoot.cpp owns .rodata 0x80522660-

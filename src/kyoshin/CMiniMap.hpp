@@ -90,7 +90,6 @@ void closeFileHandle(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (Bdat_GetTable_AA34 / getFP__FPCc).
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" void* getFP__FPCc(const char* name);
 // Gimmick-row helpers used by MiniMapRebuildGimmickPanes (unmangled retail symbols;
 // same declaration scheme as CFloorMap.hpp).
 extern "C" u32 CheckState2CC8Active(u16 id);

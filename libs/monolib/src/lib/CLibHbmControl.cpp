@@ -12,7 +12,6 @@ extern void* __dt__5CProcFv(void* self, int flag);
 extern bool wkStandbyLogin__5CProcFv(void* self);
 extern bool wkStandbyLogout__5CProcFv(void* self);
 extern void callExitFunc__11CWorkSystemFv();
-extern void __dl__FPv(void*);
 namespace HBMBlob {
 extern "C" void* __dt__14CLibHbmControlFv();
 extern "C" void wkUpdate__14CLibHbmControlFv();
@@ -109,7 +108,7 @@ void* __dt__14CLibHbmControlFv(CLibHbmControl* self, int flag) {
         spInstance = nullptr;
         __dt__5CProcFv(self, 0);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

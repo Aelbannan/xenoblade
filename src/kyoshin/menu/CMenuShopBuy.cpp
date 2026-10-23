@@ -10,6 +10,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
+void playUISound(u32);
 
 extern "C" void cbRenderBefore__12CMenuShopBuyFv(void*);
 
@@ -403,7 +404,7 @@ extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
                 func_801C412C(&self->mTitleAHelp);
                 ItemBoxLine_OpenLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 1;
-                playUISound__FUl(0x6d);
+                playUISound(0x6d);
             }
         }
     }
@@ -473,7 +474,7 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
         if ((pad->mHeldFlags & 0x1000) &&
             ItemBoxLine_IsBusy(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
             code80135FDC_getByte_64077() > 1) {
-            if (self->mFloat6FC > lbl_eu_80667A24) playUISound__FUl(2);
+            if (self->mFloat6FC > lbl_eu_80667A24) playUISound(2);
             self->mFloat6FC = lbl_eu_80667A20;
             ItemBoxLine_ResetCursorB8(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 1);
             if (pad->mTurboFlags & 0x2001) {

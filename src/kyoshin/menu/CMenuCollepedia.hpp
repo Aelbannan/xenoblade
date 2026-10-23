@@ -68,7 +68,6 @@ extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u3
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
-extern "C" void playUISound__FUl(u32 op);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);

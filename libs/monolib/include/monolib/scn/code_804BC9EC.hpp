@@ -2,6 +2,9 @@
 
 #include <harness_catalog.h>
 
+// Scene-handle accessor (getScnHandle__Fv), defined in code_804BC9EC.cpp.
+void* getScnHandle();
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Forward-declared instead of including NMWException.h (which conflicts with
 // __ppc_eabi_init.h's _stack_addr declaration).

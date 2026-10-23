@@ -106,7 +106,7 @@ bool SysWinBuff_OnFileEventMatch(CSysWinBuff* self, CEventFile* pEventFile) {
         void* data = self->mFileHandle->getData();
         CBdat::setBdatEntry(2, data);
         Bdat_GetTable_AA34();
-        lbl_eu_806648E4 = (u32)getFP__FPCc(&lbl_eu_8050EBC4[0x22]);
+        lbl_eu_806648E4 = (u32)getFP(&lbl_eu_8050EBC4[0x22]);
         self->mFileHandle = 0;
         return true;
     }

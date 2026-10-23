@@ -187,14 +187,11 @@ extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(v
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void LayoutSetTextBoxText(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* BdatTouchStringCell(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int); // BDAT row string lookup
-extern "C" void playUISound__FUl(u32);
 // KEEP (blockers-A 2026-10-23): retail CArtsInfo_CalcDmg52/53 use the 32-bit
 // result without the clrlwi a u16 return forces, so this TU keeps its u32 view
 // instead of the canonical u16 form in kyoshin/code_80135FDC_Bdat.hpp.
@@ -305,7 +302,6 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void setPaneVisible(void*, u32);
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
 extern "C" CArtsColorPair PaneMatGetS16Quad(void* pane, int idx);
 extern "C" void CopyVec4s(CArtsQuadColor* dst, const CArtsColorPair* src);

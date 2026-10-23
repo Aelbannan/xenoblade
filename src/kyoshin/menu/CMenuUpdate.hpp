@@ -174,7 +174,6 @@ extern "C" void __dt__10IWorkEventFv(void*, int);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
-extern "C" void __dl__FPv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
@@ -195,19 +194,15 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* CUICfManager_getArcResourceAccessor();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
 extern "C" void ApplyFontToTxtPanes(void*, void*);
 extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
-extern "C" bool advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
 extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" void PaneSetVtxColorByName(void*, const char*, int);
 extern "C" void LayoutSetTextBoxFmtValue(void*, const char*, void*, int);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
 extern "C" u16 BdatGetU16ByTableKey(const char*, const char*, int);
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
-extern "C" void playUISound__FUl(u32);
 extern "C" bool CUICfManager_hasInUseSlot();
 extern "C" void CUICfManager_queueQuestLogMenu(u32);
 extern "C" void CUICfManager_queueKizunagramMenu(u32);

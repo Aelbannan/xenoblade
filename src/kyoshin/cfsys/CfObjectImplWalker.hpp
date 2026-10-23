@@ -990,7 +990,6 @@ int isBattleStatusActive(void* obj, int id); // canonical (void*,int) form
 
 // Bdat table helpers.
 void* Bdat_GetTable_AA34(void);
-void* getFP__FPCc(const char* path);
 u32 Bdat_GetMaxRow_B1EC(void* bdat);
 void UIWin_CreateTalkWin(u32 obj, const char* str, int flag);
 int UIWin_PackHiLo(u32 a, int b);

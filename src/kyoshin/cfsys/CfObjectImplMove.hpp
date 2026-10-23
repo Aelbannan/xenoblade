@@ -974,7 +974,6 @@ extern const f32 lbl_eu_80666CC4;    // dot-product threshold
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 
 namespace nw4r {
 namespace db {

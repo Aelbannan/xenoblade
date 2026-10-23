@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include "revolution/gx/GXPixel.h"
 #include "decomp.h"
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
 // pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
@@ -382,10 +386,8 @@ void CMenuGetItemMulti::Init() {
     }
     mFileHandle = CDeviceFile::readFile(memHandle, &lbl_eu_80504A3C[0x12], workEvent, 0, 0);
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x2e]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x47]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x2e]);
+    bindLayoutAnimTransform(mLayout, &mAnim, CUICfManager_getArcResourceAccessor(), &lbl_eu_80504A3C[0x47]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuGetItemFontObject* fontObject = reinterpret_cast<CMenuGetItemFontObject*>(
@@ -489,7 +491,7 @@ void CMenuGetItemMulti::Init() {
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1b8],
                    BdatTouchStringCell(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 16), 0);
 
-    void* itemFP = getFP__FPCc(&lbl_eu_80504A3C[0x1c1]);
+    void* itemFP = getFP(&lbl_eu_80504A3C[0x1c1]);
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1ca],
                    BdatGetPtrDirect(itemFP, &lbl_eu_80504A3C[0x182], 10), 0);
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x1d5],
@@ -1069,7 +1071,7 @@ body:
         if (CSysWin_isReady(&mSystemWindow[0]) == 0) break;
         if (lbl_eu_80664418 == 0) break;
         field_1F8 = 1;
-        playUISound__FUl(0x2d);
+        playUISound(0x2d);
         break;
     case 1:  // opening animation: position the cursor on the active item
         if (advanceAnimTransform(mAnim, lbl_eu_80667E10) == 0) break;
@@ -1150,7 +1152,7 @@ body:
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
         if ((s8)field_1F4 == 0) {
             field_1F8 = 3;
-            playUISound__FUl(0x89);
+            playUISound(0x89);
         } else {
             Cur_SetVisible(&mCursor, 1);
             field_1F8 = 2;
@@ -1243,10 +1245,10 @@ int GetItemMulti_OnFileEvent(CMenuGetItemMulti* self, CEventFile* event) {
         self->mFileHandle->mData = 0;
         self->field_208 = reinterpret_cast<u32>(data);
         Bdat_GetTable_AA34();
-        if (getFP__FPCc(&lbl_eu_80504A3C[0x3e5]) == 0) {
+        if (getFP(&lbl_eu_80504A3C[0x3e5]) == 0) {
             CBdat::setBdatEntry(5, reinterpret_cast<u8*>(self->field_208));
         }
-        lbl_eu_80664418 = reinterpret_cast<u32>(getFP__FPCc(&lbl_eu_80504A3C[0x3e5]));
+        lbl_eu_80664418 = reinterpret_cast<u32>(getFP(&lbl_eu_80504A3C[0x3e5]));
         self->mFileHandle = 0;
         return 1;
     }
@@ -2712,7 +2714,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         }
         if ((s8)self->mMaxVisibleItems == 5) {
             if (self->mHasSpecialItem != 0) {
-                playUISound__FUl(5);
+                playUISound(5);
                 return;
             }
             // Retail materializes the string-pool base once (r30) and offsets
@@ -2732,7 +2734,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             return;
         }
         self->field_1F8 = 4;
-        playUISound__FUl(3);
+        playUISound(3);
         return;
     }
 
@@ -2769,7 +2771,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
         }
-        playUISound__FUl(6);
+        playUISound(6);
         return;
     }
 
@@ -2844,7 +2846,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
         }
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
 
@@ -2919,7 +2921,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
             ScalePaneWorldPos(&pos, pane, refPane, self->mLayout->GetRootPane());
             self->mCursor.setRootPaneTranslate(&pos);
         }
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
 
@@ -2979,7 +2981,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 }
             }
             if (found == 0) {
-                playUISound__FUl(5);
+                playUISound(5);
                 return;
             }
             self->field_20C = 1;
@@ -2994,11 +2996,11 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
                 pos = self->mRankSlotPos[sel2];
             }
             self->mCursor.setRootPaneTranslate(&pos);
-            playUISound__FUl(2);
+            playUISound(2);
             return;
         }
         if (CSysWin_getUnk34(&self->mSystemWindow[0]) == 0) {
-            playUISound__FUl(5);
+            playUISound(5);
         }
     }
 }
@@ -3109,7 +3111,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
         if (self->mVisibleItemCount == 0) {
             Cur_SetVisible(&self->mCursor, 0);
             self->field_1F8 = 3;
-            playUISound__FUl(0x89);
+            playUISound(0x89);
         } else {
             self->field_1F8 = 2;
         }
@@ -3149,7 +3151,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
             if (self->mVisibleItemCount == 0) {
                 Cur_SetVisible(&self->mCursor, 0);
                 self->field_1F8 = 3;
-                playUISound__FUl(0x89);
+                playUISound(0x89);
             } else {
                 self->field_1F8 = 2;
             }
@@ -3235,7 +3237,7 @@ __declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
         if (self->mVisibleItemCount == 0) {
             Cur_SetVisible(&self->mCursor, 0);
             self->field_1F8 = 3;
-            playUISound__FUl(0x89);
+            playUISound(0x89);
         } else {
             self->field_1F8 = 2;
         }
@@ -3327,7 +3329,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (down) {
         self->field_1F8 = 0xa;
         sysWinAdvancePhase3(&self->mSystemWindow[0]);
@@ -3348,7 +3350,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
         self->mCursor.setRootPaneTranslate(&out);
         self->field_1F4 = 1;
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (maskHeld) {
         self->field_1F4 = self->field_1F4 - 1;
         if ((s8)self->field_1F4 < 0) {
@@ -3357,7 +3359,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
         if ((s8)self->field_1F4 > 1) {
@@ -3366,7 +3368,7 @@ void GetItemMulti_HandleWindowPadAuto(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 
@@ -3413,7 +3415,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (down) {
         self->field_1F8 = 0x7;
         sysWinAdvancePhase3(&self->mSystemWindow[0]);
@@ -3433,7 +3435,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         ScalePaneWorldPos(&out, pane, refPane, self->mLayout->GetRootPane());
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (maskHeld) {
         self->field_1F4 = self->field_1F4 - 1;
         if ((s8)self->field_1F4 < 0) {
@@ -3442,7 +3444,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
         if ((s8)self->field_1F4 > 1) {
@@ -3451,7 +3453,7 @@ void GetItemMulti_HandleWindowPadOnce(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         sysWinGetPaneScreenPos(&out, &self->mSystemWindow[0], self->field_1F4);
         self->mCursor.setRootPaneTranslate(&out);
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 

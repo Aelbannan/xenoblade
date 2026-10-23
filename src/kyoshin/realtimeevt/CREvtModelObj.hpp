@@ -79,6 +79,11 @@ struct CREvtModelObj {
     u32 mCount80;
     // 0x84: u32 - state
     u32 mState84;
+
+    int EvtObj_CheckWalkEvt();
+    int EvtObj_CheckFlags140();
+    void func_801835C4();
+    bool EvtObj_AlwaysTrue();
 };
 
 // Parent task object (referenced at offset 0x1C in CREvtModel)

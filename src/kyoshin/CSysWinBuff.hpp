@@ -196,7 +196,6 @@ void __dt__7CSysWinFv(void* syswin, int flags);
 void sysWinTermLayout(void* syswin);
 void sysWinDrawLayout(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void Bdat_GetTable_AA34();
-void* getFP__FPCc(const char* name);
 u8 DecMenuCounter64080();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();

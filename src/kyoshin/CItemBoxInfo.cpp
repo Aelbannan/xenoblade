@@ -402,7 +402,7 @@ void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
 
 #pragma push
 #pragma auto_inline off
-extern "C" void openItemBoxPhase1(CItemBoxInfo* info) {
+void openItemBoxPhase1(CItemBoxInfo* info) {
     float arg = 1.0f;
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
@@ -411,14 +411,14 @@ extern "C" void openItemBoxPhase1(CItemBoxInfo* info) {
     }
 }
 
-extern "C" void openItemBoxPhase2(CItemBoxInfo* info) {
+void openItemBoxPhase2(CItemBoxInfo* info) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
 }
 
-extern "C" void closeItemBoxPhase1(CItemBoxInfo* info) {
+void closeItemBoxPhase1(CItemBoxInfo* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
@@ -426,7 +426,7 @@ extern "C" void closeItemBoxPhase1(CItemBoxInfo* info) {
     }
 }
 
-extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
+void closeItemBoxPhase2(CItemBoxInfo* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;
@@ -4903,7 +4903,7 @@ void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
-extern "C" void openItemBox2Phase1(CItemBoxInfo2* info) {
+void openItemBox2Phase1(CItemBoxInfo2* info) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), 1.0f) != 0) {
         (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
         (info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
@@ -4911,21 +4911,21 @@ extern "C" void openItemBox2Phase1(CItemBoxInfo2* info) {
     }
 }
 
-extern "C" void openItemBox2Phase2(CItemBoxInfo2* info) {
+void openItemBox2Phase2(CItemBoxInfo2* info) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
 }
 
-extern "C" void closeItemBox2Phase1(CItemBoxInfo2* info) {
+void closeItemBox2Phase1(CItemBoxInfo2* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform2, 1.0f) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
     }
 }
-extern "C" void closeItemBox2Phase2(CItemBoxInfo2* info) {
+void closeItemBox2Phase2(CItemBoxInfo2* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, 1.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;

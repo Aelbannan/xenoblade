@@ -3099,7 +3099,7 @@ extern "C" void* __dt__801A36D0(UnkClass_801A36D0* self, int deleting) {
             *(u32*)((char*)self + 0x3f90) = 0;
         }
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -3114,7 +3114,7 @@ extern "C" void* __dt__801A3728(UnkClass_801A3728* self, int deleting) {
         self->field_68 = 0;
         self->field_64 = 0;
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

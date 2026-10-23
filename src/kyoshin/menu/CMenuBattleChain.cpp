@@ -12,6 +12,8 @@
 #include <monolib/work/CProcess.hpp>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 class IWorkEvent;
 class IScnRender;
@@ -93,7 +95,6 @@ extern "C" CMenuBattleChain* __ct__CMenuBattleChain(CMenuBattleChain* obj,
 // `if (self != 0)` re-check reproduces the retail's dead double-beq.
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 /*
  * Complete-object destructor (retail __dt__16CMenuBattleChainFv). Written as
@@ -113,7 +114,7 @@ extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags) {
         }
     }
     if (flags > 0)
-        __dl__FPv(self);
+        operator delete(self);
 end:
     return self;
 }
@@ -131,18 +132,12 @@ void CMenuBattleChain::Init() {
     mRegion.createRegion(mem2, 0x4000, base, 0);
     Class_8045F858 regionGuard(&mRegion);
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &mLayout, CUICfManager_getArcResourceAccessor(), &base[0x11]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim0, CUICfManager_getArcResourceAccessor(), &base[0x2a]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim1, CUICfManager_getArcResourceAccessor(), &base[0x46]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim2, CUICfManager_getArcResourceAccessor(), &base[0x64]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim3, CUICfManager_getArcResourceAccessor(), &base[0x87]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
+    buildLayout(&mLayout, CUICfManager_getArcResourceAccessor(), &base[0x11]);
+    bindLayoutAnimTransform(mLayout, &mAnim0, CUICfManager_getArcResourceAccessor(), &base[0x2a]);
+    bindLayoutAnimTransform(mLayout, &mAnim1, CUICfManager_getArcResourceAccessor(), &base[0x46]);
+    bindLayoutAnimTransform(mLayout, &mAnim2, CUICfManager_getArcResourceAccessor(), &base[0x64]);
+    bindLayoutAnimTransform(mLayout, &mAnim3, CUICfManager_getArcResourceAccessor(), &base[0x87]);
+    bindLayoutAnimTransform(mLayout, &mAnim4, CUICfManager_getArcResourceAccessor(), &base[0xaa]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     ApplyFontToTxtPanes(rootPane, getPackedFont());

@@ -118,7 +118,6 @@ void* func_80081A40__Q22cf13CfGameManagerFv(const char* name, u16 index, int fla
 void* createMapObjectInstance__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
 void* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
 void* Bdat_GetTable_AA34(void);
-const char* getFP__FPCc(const char* name);
 unsigned int UIWin_GetTimer();
 void* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
 bool isPlayerInEventRange__Q22cf13CfGameManagerFv(int arg);

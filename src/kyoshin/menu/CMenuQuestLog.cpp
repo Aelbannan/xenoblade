@@ -628,7 +628,7 @@ extern "C" void fwdQuestLogDtor(IScnRender* self) {
 // __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.
 extern "C" CMenuQuestLog* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
     if (self != 0 && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

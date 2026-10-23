@@ -35,7 +35,6 @@ struct CNand {
 
 // --- runtime / external symbols -------------------------------------------
 extern "C" {
-void __dl__FPv(void*);
 
 // Foreign data labels referenced by the CNand/CNRequest vtables.
 extern u32 lbl_eu_80663B58;    // RTTI base-list (CNand)
@@ -93,7 +92,7 @@ extern "C" u32 lbl_eu_8056FD58[4] = {
 extern "C" void* __dt__9CNRequestFv(CNRequest* self, int deleting) {
     if (self != nullptr) {
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -105,7 +104,7 @@ extern "C" void* __dt__5CNandFv(CNand* self, int deleting) {
     if (self != nullptr) {
         __destroy_arr(self, reinterpret_cast<ConstructorDestructor*>(&__dt__9CNRequestFv), 0x24, 8);
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

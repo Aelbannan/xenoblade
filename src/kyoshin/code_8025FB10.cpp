@@ -19,6 +19,7 @@
 #include "kyoshin/code_80296898.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "monolib/util/MemManager.hpp"
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 namespace {
 
@@ -70,7 +71,7 @@ struct GXCacheTextProjection {
             validRegs2 = false;                                                \
         }                                                                      \
         if (!validRegs2) {                                                     \
-            Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
+            nw4r::db::Panic(file, line, message, pointer);          \
         }                                                                      \
     }
 
@@ -81,7 +82,6 @@ struct GXCacheTextProjection {
     }
 
 extern "C" {
-void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 extern void* cacheInstance__9CDeviceGX;
 int getAdjustFlag__8CGXCacheFv(void*);
@@ -155,7 +155,7 @@ static const f64 lbl_eu_806688C8 = 4503601774854144.0;
         valid = true;                                                          \
         NW4R_CONCAT(nw4r_compact_check_, __LINE__):                            \
         if (!valid) {                                                          \
-            Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
+            nw4r::db::Panic(file, line, message, pointer);          \
         }                                                                      \
     }
 
@@ -1711,8 +1711,7 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
                  ((u32)&writer & 0xF8000000) == 0xD0000000 ||
                  ((u32)&writer & 0xFFFFC000) == 0xE0000000);
         if (!valid) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
-                                      &writer);
+            nw4r::db::Panic(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8, &writer);
         }
         writer.mTextColor.start.r = colorKeep->r;
         writer.mTextColor.start.g = colorKeep->g;
@@ -1749,8 +1748,7 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
                  ((u32)&writer & 0xF8000000) == 0xD0000000 ||
                  ((u32)&writer & 0xFFFFC000) == 0xE0000000);
         if (!valid) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
-                                      &writer);
+            nw4r::db::Panic(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8, &writer);
         }
         writer.mTextColor.start.r = colorKeep->r;
         writer.mTextColor.start.g = colorKeep->g;

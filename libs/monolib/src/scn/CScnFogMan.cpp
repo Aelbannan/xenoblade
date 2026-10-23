@@ -55,7 +55,6 @@ extern "C" u32 lbl_eu_8056EBD0[4];
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 extern "C" u32 lbl_eu_80663A68[2];  // RTTI locator (owned by CScnItemCamera.cpp)
 extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag);
-extern "C" void __dl__FPv(void*);
 
 // [.rodata] 0x80524218-0x80524228 (0x10 = 16B): RTTI name "CScnFogMan".
 extern "C" __declspec(align(8)) const char lbl_eu_80524218[0x10] = {
@@ -142,7 +141,7 @@ extern "C" void FogManSetNearFar(u8* self, float a, float b) {
 extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
     if (self != nullptr) {
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

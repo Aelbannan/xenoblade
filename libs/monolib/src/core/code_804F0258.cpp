@@ -10,6 +10,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // === .sbss size=0x28 align=8 (zero-fill globals owned by this TU) ===
 // A68-A74: last emitted marker screen position (written by recordMarkerPos).
@@ -1036,7 +1037,6 @@ void attachAnim(CAnimPlayerRef* self, CAnim* anim) {
 
 // nw4r math/db helpers (retail plain symbols).
 extern "C" {
-float FrSqrt__Q24nw4r4mathFf(float);
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 }
 extern const char lbl_eu_80526324[];
@@ -1079,7 +1079,7 @@ bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
                 }
                 f32 len;
                 if (mag > lbl_eu_8066B4E0) {
-                    len = mag * FrSqrt__Q24nw4r4mathFf(mag);
+                    len = mag * nw4r::math::FrSqrt(mag);
                 } else {
                     len = lbl_eu_8066B4E0;
                 }

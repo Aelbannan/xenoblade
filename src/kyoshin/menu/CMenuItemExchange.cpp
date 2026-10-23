@@ -8,6 +8,7 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include <monolib/util/FixStr.hpp>
+void playUISound(u32);
 
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
 extern "C" void __dt__9IUIWindowFv(void* self, int flags);
@@ -428,7 +429,7 @@ __declspec(noinline) void ItemEx_Phase0Load(CMenuItemExchange* self) {
         ItemBoxLine_OpenLine(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         LoadItemBoxFiles(&self->mItemBoxGrid);
         self->field_5118 = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -469,7 +470,7 @@ __declspec(noinline) void ItemEx_Phase4Fade(CMenuItemExchange* self) {
             reopenFromClose(&self->mTitleAHelp);
             InitItemDisplay(&self->mItemBoxGrid);
             self->field_5118 = 5;
-            playUISound__FUl(0x6d);
+            playUISound(0x6d);
         }
     }
 }

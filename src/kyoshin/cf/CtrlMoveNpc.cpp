@@ -15,6 +15,8 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+#include "monolib/scn/code_804BC9EC.hpp"
 
 // ---------------------------------------------------------------------------
 // Types (unit-private)
@@ -91,11 +93,9 @@ u32 Bdat_GetRowBase_B41C(void* bdat);
 u32 Bdat_GetMaxRow_B1EC(void* bdat);
 void activateLOD__8CTaskLODFv(s8 v);
 void deactivateLOD__8CTaskLODFv(u8 v);
-void* getScnHandle__Fv(void);
 void ScnData_FwdB7D9C(void*, s8 v);
 void ScnData_FwdB7DD4(void*, u8 v);
 void maskMoveChildFlags(cf::CCtrlMoveBase* ths);
-f32 FrSqrt__Q24nw4r4mathFf(f32 x);
 int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
 
@@ -198,7 +198,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     // Normalise the horizontal distance, guarding the epsilon case.
     float sq;
     if (len2 > lbl_eu_80667C5C) {
-        sq = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+        sq = len2 * nw4r::math::FrSqrt(len2);
     } else {
         sq = lbl_eu_80667C5C;
     }
@@ -299,7 +299,7 @@ extern "C" void refreshNpcRowFlags() {
             if (w & bit) {
                 bitmap[word] = w & ~bit;
                 activateLOD__8CTaskLODFv(v);
-                ScnData_FwdB7D9C(getScnHandle__Fv(), v);
+                ScnData_FwdB7D9C(getScnHandle(), v);
             }
         } else {
             s32 word = idx >> 5;
@@ -308,7 +308,7 @@ extern "C" void refreshNpcRowFlags() {
             if (!(w & bit)) {
                 bitmap[word] = w | bit;
                 deactivateLOD__8CTaskLODFv(v);
-                ScnData_FwdB7DD4(getScnHandle__Fv(), v);
+                ScnData_FwdB7DD4(getScnHandle(), v);
             }
         }
     }
@@ -344,7 +344,7 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
             // Norm the horizontal distance, guarding the epsilon case.
             f32 len;
             if (len2 > lbl_eu_80667C5C) {
-                len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                len = len2 * nw4r::math::FrSqrt(len2);
             } else {
                 len = lbl_eu_80667C5C;
             }

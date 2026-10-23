@@ -21,6 +21,9 @@
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // Tab entry accessors (retail symbols are plain func_XXXX names).
 u8 ItemBoxGetTab(const CIBLTabCur* self, unsigned int index);
@@ -67,7 +70,7 @@ void ItemBoxLine_LeaveState3(void* self) {
     Cur_SetVisible(&p->mCurA0, 0);
     advanceItemBox2State__FP13CItemBoxInfo2(p->mInfo2D0);
     CScrollBar_requestScrollOut(p->mScrollBar310);
-    if (!p->unk39E) playUISound__FUl(6);
+    if (!p->unk39E) playUISound(6);
 }
 
 // ============================================================================
@@ -85,7 +88,7 @@ void ItemBoxLine_RefreshTabSelect(void* self) {
     ItemBoxLine_RefreshTabPanes(self);
     ItemBoxLine_RefreshPageList(self);
     CScrollBar_PlaceThumb(p->mScrollBar310, (u16)p->unk38E);
-    playUISound__FUl(2);
+    playUISound(2);
 }
 
 u8 ItemBoxLine_IsReadyFlag(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
@@ -173,7 +176,7 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
         TabNameTable names = *(const TabNameTable*)&lbl_eu_80506D90[0x240];
         u8 n = (u8)lbl_eu_80664184;
         Bdat_GetTable_AA34();
-        void* fp = getFP__FPCc(names.v[n - 1]);
+        void* fp = getFP(names.v[n - 1]);
         u8 v = (u8)MapValueToRank6(n);
         u16 id = CtrlRemote_TouchBitByArg(v + 0x21);
         u8 rowIdx;
@@ -291,7 +294,7 @@ extern "C" __declspec(noinline) CBaseCur* __ct__CIBLTabCur(CBaseCur* _this, void
 // func_801ED7BC / __dt__801EBBC0 (delete-only dtor)
 extern "C" void* __dt__801EBBC0(CBaseCur* _this, int flags) {
     if (_this != NULL && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -303,7 +306,7 @@ extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
     if (_this != NULL) {
         __dt__8CBaseCurFv(_this, 0);
         if (flags > 0) {
-            __dl__FPv(_this);
+            operator delete(_this);
         }
     }
     return _this;
@@ -767,7 +770,7 @@ void ItemBoxLine_TabNext(CItemBoxLine* self) {
     ItemBoxLine_RefreshTabLabels((void*)self, 0);
     ItemBoxLine_RefreshLineState((void*)self);
     ItemBoxLine_RefreshLineRows((void*)self);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
     CScrollBar_UpdateThumb(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
@@ -798,7 +801,7 @@ void ItemBoxLine_TabPrev(CItemBoxLine* self) {
     ItemBoxLine_RefreshTabLabels((void*)self, 1);
     ItemBoxLine_RefreshLineState((void*)self);
     ItemBoxLine_RefreshLineRows((void*)self);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
     CScrollBar_UpdateThumb(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
@@ -827,7 +830,7 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
             sysWinGetPaneScreenPos(tmp, &self->mSysWin, self->field3A3);
             self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         }
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (self->field3A0 != 0) {
@@ -882,7 +885,7 @@ void ItemBoxLine_CursorPageBack(CItemBoxLine* self) {
         ItemBoxLine_RefreshPageList(self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // ============================================================================
@@ -906,7 +909,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
                 u8 tmp[12];
                 sysWinGetPaneScreenPos(tmp, &self->mSysWin, self->field3A3);
                 self->mCur70.setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
-                playUISound__FUl(1);
+                playUISound(1);
             }
         }
         return;
@@ -967,7 +970,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
         ItemBoxLine_RefreshPageList(self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // ============================================================================
@@ -992,7 +995,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
         self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) {
@@ -1005,7 +1008,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         }
         NumSel_SetCaptionNum_B04C(&self->mNumSel, (u8)self->field392);
         NumSel_FormatPicName_B064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
-        playUISound__FUl(1);
+        playUISound(1);
     } else {
         if (self->unk38C == -1) {
             ItemBoxLine_TabPrev((void*)self);
@@ -1026,7 +1029,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
         ItemBoxLine_RefreshTabPanes((void*)self);
         ItemBoxLine_RefreshPageList((void*)self);
         CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 
@@ -1053,7 +1056,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
         self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (NumSel_GetActiveFlag_B020(&self->mNumSel) != 0) {
@@ -1067,7 +1070,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         }
         NumSel_SetCaptionNum_B04C(&self->mNumSel, (u8)self->field392);
         NumSel_FormatPicName_B064(&self->mNumSel, self->field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (self->unk38C == -1) {
@@ -1092,7 +1095,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
     ItemBoxLine_RefreshTabPanes((void*)self);
     ItemBoxLine_RefreshPageList((void*)self);
     CScrollBar_PlaceThumb(&self->mScrollBar310[0], (u16)self->unk38E);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // ============================================================================
@@ -1118,13 +1121,13 @@ void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
                 Cur_SetVisible(&self->mCur70, 1);
             }
             Cur_SetVisible(&self->mCur88, 0);
-            playUISound__FUl(6);
+            playUISound(6);
         } else {
             if (NumSel_GetActiveFlag_B020(&self->mNumSel) == 0) return;
             if (NumSel_GetField2E_B028(&self->mNumSel) == 0) return;
             NumSel_EnterState3Open_B178(&self->mNumSel);
             self->field50 = 8;
-            playUISound__FUl(6);
+            playUISound(6);
         }
     }
 }
@@ -1167,12 +1170,12 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
         ItemBoxLine_RefreshPageList(self);
         NumSel_EnterState3Open_B178(&self->mNumSel);
         self->field50 = 8;
-        playUISound__FUl(0x2f);
+        playUISound(0x2f);
         return;
     }
     if (ItemBoxLine_GetTabEntryItem(tabs, key) == 0) return;
     if (ItemBoxLine_GetTabEntryLock(tabs, key) != 0) {
-        playUISound__FUl(5);
+        playUISound(5);
         return;
     }
     if (ItemBoxLine_ProbePageSlot(reinterpret_cast<CIBLTabFull*>(tabs), key) == 0) {
@@ -1192,7 +1195,7 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
         sysWinSetKindContent(&self->mSysWin, (u32)text, 0);
         sysWinApplyKind(&self->mSysWin, 1);
         sysWinOpenPhase1(&self->mSysWin);
-        playUISound__FUl(5);
+        playUISound(5);
         return;
     }
     // Armed page: name-format tabs probe availability through ItemBoxLine_ProbeAvailability,
@@ -1228,13 +1231,13 @@ void ItemBoxLine_ResolveEntry(CItemBoxLine* self) {
     }
     if (unavailable) {
         self->unk39E = 1;
-        playUISound__FUl(3);
+        playUISound(3);
     } else {
         sysWinSwitchKindPane(&self->mSysWin, 0);
         sysWinSetKindContent(&self->mSysWin, (u32)text, 0);
         sysWinApplyKind(&self->mSysWin, 1);
         sysWinOpenPhase1(&self->mSysWin);
-        playUISound__FUl(5);
+        playUISound(5);
     }
 }
 
@@ -1338,7 +1341,7 @@ void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self) {
     calcItemBox2PaneVec(tmp, self->mInfo2D0, self->field39F);
     ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     ItemBoxLine_RefreshLineState(static_cast<void*>(self));
-    playUISound__FUl(0xa);
+    playUISound(0xa);
 }
 
 // ============================================================================
@@ -1358,7 +1361,7 @@ void ItemBoxLine_Info2SelectNext(void* self) {
     calcItemBox2PaneVec(tmp, p->mInfo2D0, p->field39F);
     ((CBaseCur*)&p->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     ItemBoxLine_RefreshLineState(self);
-    playUISound__FUl(0xa);
+    playUISound(0xa);
 }
 
 // ============================================================================
@@ -1419,9 +1422,9 @@ void ItemBoxLine_ShowDetailWin(CItemBoxLine* self) {
         CIBLVec3 vec;
         CopyTabSlotVec(&vec, page2->pageWords180, sel);
         self->mCur88.setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
-        playUISound__FUl(2);
+        playUISound(2);
     } else {
-        playUISound__FUl(5);
+        playUISound(5);
     }
 }
 
@@ -1454,7 +1457,7 @@ u8 ItemBoxLine_ResolveFocusId(CItemBoxLine* self) {
 // animation on it and enable it on +0x48 (intro -> loop), entering state 2.
 // ============================================================================
 void ItemBoxLine_EnterState0(CItemBoxLine* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field44, lbl_eu_80668114) != 0) {
+    if (advanceAnimTransform(self->field44, lbl_eu_80668114) != 0) {
         self->field40->SetAnimationEnable(self->field44, false);
         self->field40->SetAnimationEnable(self->field48, true);
         self->field50 = 2;
@@ -1466,7 +1469,7 @@ void ItemBoxLine_EnterState0(CItemBoxLine* self) {
 // and re-format/push the tab name overlay.
 // ============================================================================
 void ItemBoxLine_EnterState1(CItemBoxLine* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field48, lbl_eu_80668114) == 0) return;
+    if (advanceAnimTransform(self->field48, lbl_eu_80668114) == 0) return;
     self->field50 = 3;
     self->unk59 = 1;
     ItemBoxLine_RefreshPageList(self);
@@ -2641,14 +2644,14 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         CFileHandle* fh2C = (CFileHandle*)this->field2C;
         u8* data2C = (u8*)fh2C->getData();
         Bdat_GetTable_AA34();
-        void* fpA = getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
+        void* fpA = getFP(&lbl_eu_805071B0[0x7ca]);
         if (fpA == 0) {
             CBdat::setBdatEntry(2, data2C);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664648 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
+        lbl_eu_80664648 = (u32)getFP(&lbl_eu_805071B0[0x7ca]);
         Bdat_GetTable_AA34();
-        lbl_eu_8066464C = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7d9]);
+        lbl_eu_8066464C = (u32)getFP(&lbl_eu_805071B0[0x7d9]);
         ItemBoxLine_CompactTabList(this);
         this->field2C = 0;
         return true;
@@ -2658,11 +2661,11 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         u8* data30 = (u8*)fh30->getData();
         this->field34 = data30;
         Bdat_GetTable_AA34();
-        void* fpB = getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
+        void* fpB = getFP(&lbl_eu_805071B0[0x1f0]);
         if (fpB == 0) {
             CBdat::setBdatEntry(5, this->field34);
         }
-        lbl_eu_80664650 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
+        lbl_eu_80664650 = (u32)getFP(&lbl_eu_805071B0[0x1f0]);
         ItemBoxLine_CompactTabList(this);
         this->field30 = 0;
         return true;

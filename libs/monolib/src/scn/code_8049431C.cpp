@@ -5,7 +5,6 @@
 #include <monolib/core/CViewFrame.hpp>
 
 extern "C" {
-    extern void __dl__FPv(void* ptr);
     extern void* getCurrentView__5CViewFv();
     extern void insetRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
     extern void setZWriteMode__8CGXCacheFii(void* self, int, int);
@@ -34,7 +33,7 @@ extern "C" ExtendedTexObj* TexObj_InitExt(ExtendedTexObj* self, void* image, u16
 
 extern "C" void* __dt__804943A0(void* self, int deleteFlag) {
     if (self != 0 && deleteFlag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

@@ -4,7 +4,6 @@
 #include <monolib/scn/CScnFilter.hpp>
 
 extern "C" {
-    extern void __dl__FPv(void* ptr);
     extern u32 lbl_eu_8056EB60[];   // CScnFilter vtable
     extern const float lbl_eu_8066ABA0;   // 0.0f
     extern const double lbl_eu_8066ABA8;  // 0x4330000000000000 (int-to-float magic)

@@ -12,6 +12,7 @@
 #include <monolib/device/CDeviceVI.hpp>
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // MWCC runtime helper (float -> unsigned conversion) used by retail call sites.
 extern "C" u32 __cvt_fp2unsigned(double);
@@ -920,7 +921,7 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
         self->field_384 = battleId;
     }
     Bdat_GetTable_AA34();
-    void* fp = getFP__FPCc((const char*)tbl[self->field_388]);
+    void* fp = getFP((const char*)tbl[self->field_388]);
     if (fp == 0) goto reset;
     if (probe == 0) goto reset;
     int rowCount = Bdat_GetMaxRow_B1EC(fp);

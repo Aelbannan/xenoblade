@@ -33,6 +33,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+#include "monolib/scn/code_804BC9EC.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 
@@ -181,7 +185,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 // CtrlObjectParam_GetSlotTableBase stays inline: include/functions.hpp and CChainActorPc.hpp
 // declare it as int* - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull those headers transitively.
-extern "C" void* CtrlObjectParam_GetSlotTableBase(void);
+extern "C" u8* CtrlObjectParam_GetSlotTableBase(void);
 // CtrlRemote_SetSharedBit stays inline: include/functions.hpp declares it as
 // void CtrlRemote_SetSharedBit(int, int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
@@ -250,7 +254,7 @@ u8 GetCollectedFlagByte(u32 idx) {
 // requested width/sign: u8 / u16 / s16 / s8.
 u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
-    void* fp = getFP__FPCc((const char*)tableName);
+    void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
     return *(u8*)&result;
@@ -258,7 +262,7 @@ u8 BdatGetU8ByTableKey(const void* tableName, const void* column, u32 key) {
 
 u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
-    void* fp = getFP__FPCc((const char*)tableName);
+    void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
     return *(u16*)&result;
@@ -266,7 +270,7 @@ u16 BdatGetU16ByTableKey(const void* tableName, const void* column, u32 key) {
 
 s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
-    void* fp = getFP__FPCc((const char*)tableName);
+    void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
     return *(s16*)&result;
@@ -274,7 +278,7 @@ s16 BdatGetS16ByTableKey(const void* tableName, const void* column, u32 key) {
 
 s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
     Bdat_GetTable_AA34((const char*)tableName);
-    void* fp = getFP__FPCc((const char*)tableName);
+    void* fp = getFP((const char*)tableName);
     void* result = getBdatStringColumnValue(fp, (const char*)column,
                                             (const void*)(uintptr_t)key);
     // Retail spills the cell value to the stack and re-reads it sign-extended.
@@ -284,7 +288,7 @@ s8 BdatGetS8ByTableKey(const void* tableName, const void* column, u32 key) {
 
 void BdatTouchStringCell(const char* a, const char* b, const char* c) {
     Bdat_GetTable_AA34(a);
-    void* fp = getFP__FPCc(a);
+    void* fp = getFP(a);
     getBdatStringColumnValue(fp, b, c);
 }
 
@@ -509,7 +513,6 @@ extern "C" void WcsToUpperInPlace(u16* str) {
 }
 
 extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
-    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
     extern const char lbl_eu_80500664[];
     if (node == NULL) return;
     void* child = *(void**)((u8*)node + 0x14);
@@ -520,11 +523,11 @@ extern "C" void ApplyFontToTxtPanes(void* node, nw4r::ut::Font* font) {
     char* tokens[18];
     while (child != head) {
         if (child == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+            nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
         u32 type = (u32)child - 4;
         if (type == 0) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
         sprintf(buf, lbl_eu_80500664, type + 0xBC);
         SplitStringTrim(buf, '_', tokens);
@@ -809,7 +812,7 @@ extern "C" int BdatGetRankByName(const char* name) {
 
     // retail validates the raw base name here, then opens base+0x15
     Bdat_GetTable_AA34(lbl_eu_80500664);
-    void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
+    void* fp = getFP(&lbl_eu_80500664[0x15]);
     void* result2 = getBdatStringColumnValue(
         fp, &lbl_eu_80500664[0x0F],
         reinterpret_cast<const void*>(static_cast<u32>(rowIdx)));
@@ -850,7 +853,7 @@ extern float lbl_eu_806672EC;
 extern const float lbl_eu_806672F0;
 extern float lbl_eu_806672E8;
 extern double lbl_eu_806672F8;
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(
+u32 advanceAnimTransform(
     nw4r::lyt::AnimTransform* anim, float delta) {
     float newFrame = delta + anim->GetFrame();
     u32 result = 0;
@@ -1150,8 +1153,7 @@ extern "C" void PaneSetTexPaletteByName(void* a, u32 b, void* palette) {
 
     nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
     if (mat->GetTextureNum() == 0) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E524, 0x88,
-                                   (const char*)lbl_eu_8052E4F0);
+        nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
     }
     mat->GetTexMapAry()[0] = texMap;
 }
@@ -1163,15 +1165,14 @@ extern "C" void PaneSetTexPalette(void* a, void* palette) {
 
             nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
             if (mat->GetTextureNum() == 0) {
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E524, 0x88,
-                                           (const char*)lbl_eu_8052E4F0);
+                nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
             }
             mat->GetTexMapAry()[0] = texMap;
         }
     }
 }
 
-extern "C" void playUISound__FUl(u32 arg) {
+void playUISound(u32 arg) {
     extern f32 lbl_eu_80667300;
     cf::CfSoundMan::playActorSound(0, arg, 0, 0, lbl_eu_80667300);
 }
@@ -1364,7 +1365,7 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
         v4 = *(u8*)&result;
     }
     if (v4 == 5) {
-        void* fp = getFP__FPCc(&lbl_eu_80500664[0xAA]);
+        void* fp = getFP(&lbl_eu_80500664[0xAA]);
         u16 key = 0;
         if (name != NULL) {
             Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
@@ -1580,7 +1581,7 @@ extern "C" void* GetBdatNameByNumId(const char* str) {
     const char* col = base + 0x17C;
     const char* file = base + 0x181;
     Bdat_GetTable_AA34(base);
-    void* fp = getFP__FPCc(file);
+    void* fp = getFP(file);
     return (void*)(getBdatStringColumnValue)(fp, col, v);
 }
 
@@ -1636,7 +1637,7 @@ extern "C" u32 MapSexFlagGroup(const char* key) {
 extern "C" char* MakeTplNameSysFile(const char* key) {
     if (lbl_eu_80664068 == 0) {
         Bdat_GetTable_AA34(key);
-        lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
+        lbl_eu_80664068 = (u32)getFP(&lbl_eu_80500664[0x192]);
     }
     const char* col = &lbl_eu_80500664[0x19F];
     void* fp = (void*)lbl_eu_80664068;
@@ -1658,7 +1659,7 @@ extern "C" char* MakeIconTplName(const char* key) {
     // pointer -> r31; the column pointer is hoisted above the fp check.
     if (lbl_eu_8066406C == 0) {
         Bdat_GetTable_AA34(key);
-        lbl_eu_8066406C = (u32)getFP__FPCc(&lbl_eu_80500664[0x1AF]);
+        lbl_eu_8066406C = (u32)getFP(&lbl_eu_80500664[0x1AF]);
     }
     char* result = NULL;
     const char* col = &lbl_eu_80500664[0x1C7];
@@ -1672,7 +1673,7 @@ extern "C" char* MakeIconTplName(const char* key) {
 }
 
 extern "C" void cancel__11CDeviceFileFP11CFileHandle(void*);
-void closeFileHandle__FPP11CFileHandle(CFileHandle** handlePtr) {
+void closeFileHandle(CFileHandle** handlePtr) {
     if (*handlePtr) {
         cancel__11CDeviceFileFP11CFileHandle(*handlePtr);
         *handlePtr = 0;
@@ -1715,7 +1716,7 @@ struct ListData {
 void BuildSlotItemLists(void* arg) {
     lbl_eu_80664077 = 0;
     lbl_eu_8066407E = 0;
-    ListData* list = (ListData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
+    ListData* list = (ListData*)(CtrlObjectParam_GetSlotTableBase() + 4);
     for (u8 i = 0; i < 7; i++) {
         u32 v;
         if (i < 3) {
@@ -1863,7 +1864,7 @@ extern "C" char* BuildItemNameStr(const char* name) {
             d = *(u8*)&rv;
         }
         Bdat_GetTable_AA34((const char*)rv);
-        void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
+        void* fp = getFP(&lbl_eu_80500664[0x1EB]);
         void* r2 = getBdatStringColumnValue(fp, col17C,
                                            (const char*)(0x1E - (d - 1)));
         sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0x1F4], &lbl_eu_80573C30[0], r2);
@@ -1886,8 +1887,7 @@ extern "C" FourShorts PaneMatGetS16QuadByName(void* obj, void* arg2, u32 idx) {
         return r;
     }
     if (idx >= 3) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
-                                   (const char*)lbl_eu_8052E530);
+        nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
     }
     u8* p = data + ((u8)idx << 3) + 0x10;
     FourShorts src = *(FourShorts*)p;
@@ -1901,8 +1901,7 @@ extern "C" FourShorts PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
     u8* data = (u8*)owner->GetMaterial();
     if (data != NULL) {
         if (idx >= 3) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
-                                       (const char*)lbl_eu_8052E530);
+            nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
         }
         u8* p = data + idx * 8 + 0x10;
         r.a = *(s16*)(p + 0);
@@ -1921,8 +1920,7 @@ extern "C" void PaneMatSetS16QuadByName(void* obj, void* arg2, void* src, u32 id
     u8* data = (u8*)res->GetMaterial();
     if (data == NULL) return;
     if (idx >= 3) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
-                                   (const char*)lbl_eu_8052E568);
+        nw4r::db::Panic((const char*)lbl_eu_8052E590, 0x8F, (const char*)lbl_eu_8052E568);
     }
     // clrlslwi r0, idx, 24, 3 => the multiply runs on an 8-bit-masked index
     // ((idx & 0xFF) * 8), same as PaneMatSetS16Quad.
@@ -1944,8 +1942,7 @@ extern "C" void PaneMatSetS16Quad(nw4r::lyt::Pane* owner, void* src, u32 idx) {
     u8* data = (u8*)owner->GetMaterial();
     if (data == NULL) return;
     if (idx >= 3) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
-                                   (const char*)lbl_eu_8052E568);
+        nw4r::db::Panic((const char*)lbl_eu_8052E590, 0x8F, (const char*)lbl_eu_8052E568);
     }
     // clrlslwi r0, idx, 24, 3 => the multiply runs on an 8-bit-masked index
     // ((idx & 0xFF) * 8).
@@ -2059,13 +2056,13 @@ extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
 
 extern "C" void InitCol6LodTables(const char* arg) {
     Bdat_GetTable_AA34(arg);
-    getFP__FPCc(&lbl_eu_80500664[0x1F9]);
+    getFP(&lbl_eu_80500664[0x1F9]);
     void* gm = cf::CfGameManager::getGameSubManager();
     if (gm == NULL) return;
 
     for (u8 i = 0; i <= 0x63; i++) {
         deactivateLOD__8CTaskLODFv(i);
-        void* snd = getScnHandle__Fv();
+        void* snd = getScnHandle();
         ScnData_FwdB7DD4(snd, i);
         forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
     }
@@ -2087,7 +2084,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
         s8 ch = (s8)chars[j];
         if (ch < 0) break;
         activateLOD__8CTaskLODFv(ch);
-        void* snd = getScnHandle__Fv();
+        void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, ch);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
         j++;
@@ -2095,15 +2092,15 @@ extern "C" void InitCol6LodTables(const char* arg) {
 
     if (CtrlRemote_TouchBitByArg(0x7D0) == 1) {
         activateLOD__8CTaskLODFv(0x50);
-        void* snd = getScnHandle__Fv();
+        void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x50);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
         activateLOD__8CTaskLODFv(0x63);
-        snd = getScnHandle__Fv();
+        snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x63);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
         activateLOD__8CTaskLODFv(0x09);
-        snd = getScnHandle__Fv();
+        snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x09);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
     }
@@ -2114,206 +2111,206 @@ extern "C" void InitCol6LodTables(const char* arg) {
         for (u8 k = 1; k <= n; k++) {
             u8 v1 = (u8)(base + k);
             activateLOD__8CTaskLODFv(v1);
-            void* snd = getScnHandle__Fv();
+            void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v1);
             forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
 
             u8 v2 = (u8)(k + 0x3C);
             activateLOD__8CTaskLODFv(v2);
-            snd = getScnHandle__Fv();
+            snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v2);
             forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
 
             u8 v3 = (u8)(k + 0x46);
             deactivateLOD__8CTaskLODFv(v3);
-            snd = getScnHandle__Fv();
+            snd = getScnHandle();
             ScnData_FwdB7DD4(snd, v3);
             forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
 
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x55);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x55);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x56);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x56);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x57);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x57);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x58);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x58);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
             if (CtrlRemote_TouchBitByArg(0x20) >= 0x16E) {
                 activateLOD__8CTaskLODFv(0x59);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x59);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
                 if (v1 == 0x0E) {
                     activateLOD__8CTaskLODFv(0x5A);
-                    snd = getScnHandle__Fv();
+                    snd = getScnHandle();
                     ScnData_FwdB7D9C(snd, 0x5A);
                     forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
                 }
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5B);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5B);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5C);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5C);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x5D);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5D);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
             if (v2 == 0x3F) {
                 activateLOD__8CTaskLODFv(0x5E);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5E);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x5F);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5F);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x60);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x60);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x61);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x61);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x62);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x62);
                 forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
 
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x50);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x50);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x51);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x51);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
             }
             if (getLODData__8CTaskLODFv(0x2A)) {
                 deactivateLOD__8CTaskLODFv(0x52);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x52);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
             }
             if (getLODData__8CTaskLODFv(0x22)) {
                 deactivateLOD__8CTaskLODFv(0x53);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x53);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
             }
             if (getLODData__8CTaskLODFv(0x23)) {
                 deactivateLOD__8CTaskLODFv(0x54);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x54);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
             }
             if (getLODData__8CTaskLODFv(0x3E)) {
                 deactivateLOD__8CTaskLODFv(0x55);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x55);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x57);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x57);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x58);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x58);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x59);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x59);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
             }
             if (getLODData__8CTaskLODFv(0x0B)) {
                 deactivateLOD__8CTaskLODFv(0x5B);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5B);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
             if (getLODData__8CTaskLODFv(0x15)) {
                 deactivateLOD__8CTaskLODFv(0x5C);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5C);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
             if (getLODData__8CTaskLODFv(0x0C)) {
                 deactivateLOD__8CTaskLODFv(0x5D);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5D);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
             if (getLODData__8CTaskLODFv(0x0D)) {
                 deactivateLOD__8CTaskLODFv(0x5E);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5E);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x5F);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5F);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
             if (getLODData__8CTaskLODFv(0x2C)) {
                 deactivateLOD__8CTaskLODFv(0x60);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x60);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
             if (getLODData__8CTaskLODFv(0x0F)) {
                 deactivateLOD__8CTaskLODFv(0x61);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x61);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
             if (getLODData__8CTaskLODFv(0x19)) {
                 deactivateLOD__8CTaskLODFv(0x62);
-                snd = getScnHandle__Fv();
+                snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x62);
                 forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
@@ -2324,7 +2321,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
     for (u8 k = 1; k <= n2; k++) {
         u8 v = (u8)(k + 0x32);
         activateLOD__8CTaskLODFv(v);
-        void* snd = getScnHandle__Fv();
+        void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, v);
         forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
     }
@@ -2361,12 +2358,12 @@ extern "C" int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_80526324, 0x273,
                                     (const char*)lbl_eu_80526300);
     }
-    f32 lenA = (len2A <= 0.0f) ? 0.0f : len2A * FrSqrt__Q24nw4r4mathFf(len2A);
+    f32 lenA = (len2A <= 0.0f) ? 0.0f : len2A * nw4r::math::FrSqrt(len2A);
     if (len2C < 0.0f) {
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_80526324, 0x273,
                                     (const char*)lbl_eu_80526300);
     }
-    f32 lenC = (len2C <= 0.0f) ? 0.0f : len2C * FrSqrt__Q24nw4r4mathFf(len2C);
+    f32 lenC = (len2C <= 0.0f) ? 0.0f : len2C * nw4r::math::FrSqrt(len2C);
 
     f32 prod = lenA * lenC;
     if (fabsf(prod) < ml::epsilon) return 0;
@@ -2386,14 +2383,14 @@ extern "C" u16 LookupRelateValue(u16 arg1, u16 arg2) {
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
     Bdat_GetTable_AA34((const char*)arg1);
-    void* fp = getFP__FPCc(fpName);
+    void* fp = getFP(fpName);
     void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
     u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
     u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
-    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
+    void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
     s16 result = -1;
@@ -2426,14 +2423,14 @@ extern "C" void AdjustRelateValue(u16 arg1, u16 arg2, s8 delta) {
     int flag = 0;
     const char* fpName = &lbl_eu_80500664[0x20B];
     Bdat_GetTable_AA34((const char*)arg1);
-    void* fp = getFP__FPCc(fpName);
+    void* fp = getFP(fpName);
     void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
     u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
     u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
-    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
+    void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
     for (u8 i = 1; i <= 0x15; i++) {
@@ -2471,7 +2468,7 @@ extern "C" void FetchRelatePair(u8* out1, u8* out2, int idx) {
     int flag = 0;
     u32 row = idx - 0x28;
     Bdat_GetTable_AA34((const char*)out1);
-    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
+    void* fp = getFP(&lbl_eu_80500664[0x20B]);
     void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
                                        (const char*)5);
     u16 row0 = *(u16*)&r;
@@ -2484,7 +2481,7 @@ extern "C" void FetchRelatePair(u8* out1, u8* out2, int idx) {
     arrB[0] = *(u32*)&lbl_eu_80667338;
     arrB[1] = *(u32*)&lbl_eu_8066733C;
 
-    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
+    void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u16 v1 = 0;
     if (fp2 != 0) {
@@ -2519,7 +2516,7 @@ extern "C" int GetMapItemBitFlag(u8 max, u8 count, u32 off) {
     for (u8 i = 2; i < max; i++) {
         u32 p = table.w[i - 1];
         if (p != 0) {
-            void* fp = getFP__FPCc((const char*)p);
+            void* fp = getFP((const char*)p);
             sum += Bdat_GetMaxRow_B1EC((void*)fp) * 0x240;
         }
     }
@@ -2575,7 +2572,7 @@ extern "C" void RevealMinimapArea() {
     Bdat_GetTable_AA34((const char*)pos);
     u32 name = t1.w[flag];
     if (name == 0) return;
-    void* fp = getFP__FPCc((const char*)name);
+    void* fp = getFP((const char*)name);
     u8 n = (u8)Bdat_GetMaxRow_B1EC((void*)fp);
 
     const char* colName = (const char*)(tbl + 0x247);
@@ -2617,7 +2614,7 @@ extern "C" void RevealMinimapArea() {
             for (u8 j = 2; j < flag; j++) {
                 u32 p = t2.w[j];
                 if (p != 0) {
-                    void* fp2 = getFP__FPCc((const char*)p);
+                    void* fp2 = getFP((const char*)p);
                     sum += Bdat_GetMaxRow_B1EC((void*)fp2) * 0x240;
                 }
             }
@@ -2630,7 +2627,7 @@ extern "C" void RevealMinimapArea() {
                 for (u8 j = 2; j < flag; j++) {
                     u32 p = t3.w[j];
                     if (p != 0) {
-                        void* fp2 = getFP__FPCc((const char*)p);
+                        void* fp2 = getFP((const char*)p);
                         sum2 += Bdat_GetMaxRow_B1EC((void*)fp2) * 0x240;
                     }
                 }
@@ -2656,12 +2653,12 @@ extern "C" void SetMapAllBits(u32 v) {
     for (u8 i = 2; i < v; i++) {
         u32 p = table.w[i - 1];
         if (p != 0) {
-            void* fp = getFP__FPCc((const char*)p);
+            void* fp = getFP((const char*)p);
             sum += Bdat_GetMaxRow_B1EC((void*)fp) * 0x240;
         }
     }
     u32 last = v - 1;
-    void* fp = getFP__FPCc((const char*)table.w[last]);
+    void* fp = getFP((const char*)table.w[last]);
     int n = Bdat_GetMaxRow_B1EC((void*)fp);
     for (int j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
@@ -2773,7 +2770,7 @@ extern "C" void TryRevealMapArea(u8 v) {
     if (v == 0) {
         return;
     } else if (v <= 0x1D) {
-        void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
+        void* fp = getFP(&lbl_eu_80500664[0x15]);
         int n = Bdat_GetMaxRow_B1EC((void*)fp);
         u8 count = 0;
         u8 good = 0;
@@ -2835,13 +2832,11 @@ extern "C" void* FindAnimLink(void* self, void* arg) {
     current = *(void**)anchor;
     while (current != anchor) {
         if (current == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
-                                       (const char*)lbl_eu_8052CB1C);
+            nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
         void* child = (u8*)current - 4;
         if (child == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
-                                       (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
         void* r2 = FindAnimLink(child, arg);
         if (r2 != 0) return r2;
@@ -2867,13 +2862,11 @@ extern "C" void SetAnimLinkFrame(void* self, void* arg, f32 val) {
     void* current = *(void**)listAnchor;
     while (current != listAnchor) {
         if (current == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
-                                       (const char*)lbl_eu_8052CB1C);
+            nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
         void* child = (char*)current - 4;
         if (child == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
-                                       (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
         }
         SetAnimLinkFrame(child, arg, val);
         current = *(void**)current;

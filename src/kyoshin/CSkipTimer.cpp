@@ -11,6 +11,7 @@ extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(v
 #include "monolib/device/CDeviceFile.hpp"
 
 #include <cstdio>
+void playUISound(u32);
 
 // .sdata2 float constant used as the "animation reached frame" bound.
 extern const float lbl_eu_80668C30;
@@ -269,7 +270,6 @@ extern "C" CSkipTimer* __ct__CSkipTimer(CSkipTimer* self) {
 // through the class to keep the __dt__17UnkClass_8045F564Fv reloc.
 extern "C" void __dt__11CSkipTimer2Fv(void* self, int flags);
 extern "C" void __dt__7CSysWinFv(void* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 // Retail dtor is a plain free function: destroys mSkipTimer2 (0x70), CSysWin
 // (0x34) and mMemRegion (0x04), then frees the object when the delete flag
@@ -281,7 +281,7 @@ extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
         __dt__7CSysWinFv((u8*)self + 0x34, -1);
         ((UnkClass_8045F564*)((u8*)self + 0x04))->~UnkClass_8045F564();
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }
@@ -588,7 +588,7 @@ void CSkipTimerNextKey(CSkipTimer* self) {
     self->mField2C = t;
     if (t > 0x17) self->mField2C = 0;
     CSkipTimer_UpdateSlotFrame(self);
-    playUISound__FUl(0x22);
+    playUISound(0x22);
 }
 
 // CSkipTimerPrevKey (CSkipTimer): retreat the switch key (wrap down) + cue sound.
@@ -599,7 +599,7 @@ void CSkipTimerPrevKey(CSkipTimer* self) {
     self->mField2C = t;
     if (t < 0) self->mField2C = 0x17;
     CSkipTimer_UpdateSlotFrame(self);
-    playUISound__FUl(0x22);
+    playUISound(0x22);
 }
 
 void CSkipTimerFlagButton(u8* obj) {
@@ -617,7 +617,7 @@ void CSkipTimerLeaveSkip(CSkipTimer* self) {
     self->mField2B = 0;
     sub->mField21 = 3;
     sub->mField23 = 0;
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 // CSkipTimerConfirmSkip (CSkipTimer): confirm/cancel handler while in state 3.
@@ -637,7 +637,7 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
         }
-        playUISound__FUl(3);
+        playUISound(3);
     } else {
         self->mField29 = 6;
         self->mField2B = 0;
@@ -645,7 +645,7 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self) {
         sysWinSetKindContent(&self->mSysWinData[0], msg, 0);
         sysWinApplyKind(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
         sysWinOpenPhase1(&self->mSysWinData[0]);
-        playUISound__FUl(3);
+        playUISound(3);
     }
 }
 
@@ -664,10 +664,10 @@ void CSkipTimerEngageSkip(CSkipTimer* self) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
         }
-        playUISound__FUl(3);
+        playUISound(3);
     } else {
         self->mActive = 1;
-        playUISound__FUl(6);
+        playUISound(6);
     }
 }
 

@@ -61,7 +61,6 @@ s16 lbl_eu_8066408C;
 
 // C-ABI helpers used by the retail dtor/free-function shapes below.
 extern void __dt__8CProcessFv(void* self, s32 flags);
-extern void* __dl__FPv(void* p);
 extern void* __dynamic_cast(void* obj, long offset, const void* srcType,
                             const void* dstType, void* src2dst);
 extern const void* lbl_eu_80662170; // __dynamic_cast src typeinfo
@@ -480,7 +479,7 @@ extern "C" void* __dt__CTTask_CUIWindowManager(void* self, s32 flags) {
     if (self != NULL) {
         __dt__8CProcessFv(self, 0);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -819,11 +818,11 @@ extern "C" void* __dt___reslist_base_IUIWindow(void* self, s32 flags) {
         list->mStart->mNext = list->mStart;
         list->mStart->mPrev = list->mStart;
         if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
-            __dla__FPv(list->field_0x14);
+            operator delete[](list->field_0x14);
             list->field_0x14 = NULL;
         }
         if (flags > 0) {
-            __dl__FPv(list);
+            operator delete(list);
         }
     }
     return self;
@@ -852,13 +851,13 @@ extern "C" void* __dt__reslist_IUIWindow(void* self, s32 flags) {
     list->mStart->mNext = list->mStart;
     list->mStart->mPrev = list->mStart;
     if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
-        __dla__FPv(list->field_0x14);
+        operator delete[](list->field_0x14);
         list->field_0x14 = NULL;
     }
 cleanup:
     // Retail's inlined-base-guard path still reaches the delete guard.
     if (flags > 0) {
-        __dl__FPv(list);
+        operator delete(list);
     }
 end:
     return self;
@@ -2401,7 +2400,7 @@ extern "C" void* __dt__Q216CUIWindowManager5CTestFv(void* self, s32 flags) {
             __dt__8CProcessFv(self, 0);
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

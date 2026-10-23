@@ -42,7 +42,6 @@ struct CItemBoxGridSubMenu {
 void GridSubMenu_InitLayout(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void playUISound__FUl(u32);
 extern "C" char lbl_eu_805084BC[];
 extern "C" const float lbl_eu_80668300; // 80.0f
 extern "C" const float lbl_eu_80668304; // 0.0f

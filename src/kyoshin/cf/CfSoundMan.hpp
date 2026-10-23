@@ -364,7 +364,6 @@ extern "C" void CamMan_ComputeViewFalloff(f32* outPan, f32* outVol, CfSndPoseBlo
                               CfSoundPos3* pos, f32 nearDist, f32 farDist);
 
 // nw4r math/db helpers and assert strings (retail symbols).
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];

@@ -190,7 +190,7 @@ extern "C" CMenuQstCnt* __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion[0], -1);
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -539,7 +539,7 @@ void initQstInfo(QstInfo* ptr) {
 
 void* __dt__80227030(void* self, int mode) {
     if (self != 0 && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -550,7 +550,7 @@ void* __dt__80227070(QstData* self, int flags) {
     if (self == 0) goto end;
     __destroy_arr(self, (void*)&__dt__80227030, 8, 0x400);
     if (flags > 0)
-        __dl__FPv(self);
+        operator delete(self);
 end:
     return self;
 }

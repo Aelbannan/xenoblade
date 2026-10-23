@@ -514,6 +514,20 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             shutil.rmtree(tmp.parent, ignore_errors=True)
         return result, "DIAGNOSTIC: §17.6 rules applied to a temp copy (not source-derived)"
 
+    extab_layout = []
+
+    def _extab_status(unit, retail: Path, decomp: Path) -> tuple[bool, str]:
+        from tools.coop import extab_gate
+        from tools.coop.lib.data_match import check_extab_sections
+
+        if not extab_layout:
+            extab_layout.append(_extab_layout(project, config))
+        if check_extab_sections(retail, decomp, layout=extab_layout[0]).ok:
+            return True, ""
+        if extab_gate.baseline_has(unit.name):
+            return True, ", extab:FAIL(baseline)"
+        return False, ", extab:FAIL"
+
     failures = 0
     units = project.load_objdiff_units()
     if check_all:
@@ -525,10 +539,11 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
                 # Neither side defines data: nothing to verify.
                 continue
             result, _note = _compare(retail, decomp)
-            print(f"unit: {unit.name}  [{result.per_section_status()}]")
-            if not result.ok:
+            extab_ok, extab_note = _extab_status(unit, retail, decomp)
+            print(f"unit: {unit.name}  [{result.per_section_status()}{extab_note}]")
+            if not result.ok or not extab_ok:
                 failures += 1
-        print(f"\n{len(units)} units scanned; {failures} data-mismatch failure(s)")
+        print(f"\n{len(units)} units scanned; {failures} data/extab-mismatch failure(s)")
         return 1 if failures else 0
 
     if hint is None:
@@ -561,7 +576,43 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
     if note:
         print(f"  (postprocess: {note})")
     print(format_data_result(result))
-    return 0 if result.ok else 1
+    extab_ok = _print_extab_check(project, config, unit, retail, decomp)
+    return 0 if result.ok and extab_ok else 1
+
+
+def _extab_layout(project: Project, config: CoopConfig):
+    from tools.coop.lib.reloc_canon import LinkerLayout, LinkerLayoutError
+
+    try:
+        return LinkerLayout.load(project.root, config.region)
+    except LinkerLayoutError:
+        return None
+
+
+def _print_extab_check(project: Project, config: CoopConfig, unit, retail: Path, decomp: Path) -> bool:
+    """Reloc-aware extab/extabindex comparison for ``data diff``.
+
+    Returns False on a mismatch, unless the unit is a recorded pre-existing
+    mismatch in docs/evidence/extab_baseline.json (see tools/coop/extab_gate.py).
+    """
+    from tools.coop import extab_gate
+    from tools.coop.lib.data_match import check_extab_sections, extab_function_diffs
+
+    layout = _extab_layout(project, config)
+    res = check_extab_sections(retail, decomp, layout=layout)
+    print("exception tables:")
+    for s in res.sections:
+        print(f"  [{'ok' if s.ok else 'FAIL':>4}] {s.name}: {s.detail}")
+    if res.ok:
+        print("  VERDICT: MATCH")
+        return True
+    for line in extab_function_diffs(retail, decomp, layout=layout)[:20]:
+        print(f"    {line[:200]}")
+    if extab_gate.baseline_has(unit.name):
+        print("  VERDICT: MISMATCH (pre-existing, in docs/evidence/extab_baseline.json)")
+        return True
+    print("  VERDICT: MISMATCH")
+    return False
 
 
 def _print_object_size(project: Project, config: CoopConfig, unit_hint: str, unit) -> ObjectSizeCheck:
@@ -2756,6 +2807,14 @@ def main() -> int:
     p_link_gate.add_argument("--init", action="store_true", help="write the initial baseline from a real run")
     p_link_gate.add_argument("--symbols-only", action="store_true", help="only run the symbols.txt duplicate check")
 
+    p_extab_gate = sub.add_parser(
+        "extab-gate",
+        help="Shrink-only extab/extabindex gate for completed units (docs/evidence/extab_baseline.json)",
+    )
+    p_extab_gate.add_argument("--ratchet", action="store_true", help="lower the baseline (shrink-only)")
+    p_extab_gate.add_argument("--init", action="store_true", help="write the baseline from the current objects")
+    p_extab_gate.add_argument("--verbose", action="store_true", help="print per-function diffs for failing units")
+
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -2966,6 +3025,11 @@ def main() -> int:
         return link_gate.gate(
             region, args.ratchet, args.init, lambda fn: _with_build_lock(region, fn)
         )
+
+    if args.command == "extab-gate":
+        from tools.coop import extab_gate
+
+        return extab_gate.gate(config.region, args.ratchet, args.init, args.verbose)
 
     parser.error(f"unknown command: {args.command}")
     return 2

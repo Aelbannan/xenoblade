@@ -68,7 +68,6 @@ extern "C" void FileCriCheckDriveStatusThunk(void* self, u32 arg) {
     ((CDeviceFileCri*)((char*)self - 0x1C4))->teardownAdxf(arg);
 }
 
-extern "C" void* __dl__FPv(void* self);
 
 // The deleting-destructor body (retail __dt__FP10IExceptionFv: free self
 // when mode > 0, return self) is NOT hand-written here: the compiler already

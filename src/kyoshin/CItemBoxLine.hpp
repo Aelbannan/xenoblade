@@ -338,7 +338,6 @@ extern "C" void* lbl_eu_80534D80[];
 // CBaseCur ctor/dtor + operator delete (defined in CCur unit).
 extern "C" void __ct__8CBaseCurFv(CBaseCur* _this);
 extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags);
-extern "C" void __dl__FPv(void*);
 
 // Sub-object destructors invoked by ~CItemBoxLine (retail C-ABI names; the
 // member-class dtors live in their own TUs as extern "C" free functions).
@@ -374,10 +373,8 @@ extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, u8);
 extern "C" void sysWinGetPaneScreenPos(void*, void*, u8);
 extern "C" void CScrollBar_requestScrollOut(void*);
-extern "C" void playUISound__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 LookupItemTypeTable(u32);
 extern "C" u32 BdatGetItemType(u32);
@@ -481,7 +478,6 @@ extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u16);
 
-extern "C" void* getFP__FPCc(const char*);
 extern "C" u32 MapValueToRank6(unsigned int);
 extern "C" u16 CtrlRemote_TouchBitByArg(u32);
 extern "C" int Counter_TestBit(u32, u32);

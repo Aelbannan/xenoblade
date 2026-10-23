@@ -84,7 +84,7 @@ extern "C" CTimeLightGrp_BaseLayout* __ct__CTimeLightGrp(CTimeLightGrp_BaseLayou
 // ================== __dt__8005A03C ==================
 extern "C" void* __dt__8005A03C(void* obj, int mode) {
     if (obj != 0 && mode > 0) {
-        __dl__FPv(obj);
+        operator delete(obj);
     }
     return obj;
 }
@@ -114,13 +114,13 @@ extern "C" void* __dt___reslist_base_CVirtualLightObj(void* self, int mode) {
 
         // Free backing array if the ownership flag is clear and pointer is non-null
         if (base->unk1C == false && base->mList != nullptr) {
-            __dla__FPv(base->mList);
+            operator delete[](base->mList);
             base->mList = nullptr;
         }
 
         // Deleting-dtor tail: free self if mode > 0
         if (mode > 0) {
-            __dl__FPv(base);
+            operator delete(base);
         }
     }
     return self;
@@ -154,13 +154,13 @@ extern "C" void* __dt__reslist_CVirtualLightObj(void* self, int mode) {
 
             // Free the backing array when this list owns it.
             if (base->unk1C == false && base->mList != nullptr) {
-                __dla__FPv(base->mList);
+                operator delete[](base->mList);
                 base->mList = nullptr;
             }
         }
 
         // Deleting-dtor tail.
-        if (mode > 0) __dl__FPv(base);
+        if (mode > 0) operator delete(base);
     }
     return self;
 }

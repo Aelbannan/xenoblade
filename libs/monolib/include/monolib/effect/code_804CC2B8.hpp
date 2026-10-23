@@ -65,7 +65,6 @@ extern "C" s32 lbl_eu_806659B4;
 extern "C" u32 lbl_eu_8066B124;
 extern "C" void Scn_HasWorkItem(void* p);
 extern "C" void __dt__804D80F0(void* p, int flag);
-extern "C" void __dl__FPv(void* p);
 extern "C" EffectNode* SchedNode_FetchByIndex(s32 index);
 extern "C" void SchedNode_ReleaseHandle(s16 index);
 extern "C" s32 SchedNode_ClaimActivate(s32 index);

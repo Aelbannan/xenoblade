@@ -4414,11 +4414,11 @@ extern "C" void* __dt___reslist_base_IUICf(CfResListBase* self, s32 flags) {
         self->mHead->mNext = self->mHead;
         self->mHead->mPrev = self->mHead;
         if (self->field_0x1C == 0 && self->field_0x14 != NULL) {
-            __dla__FPv(self->field_0x14);
+            operator delete[](self->field_0x14);
             self->field_0x14 = NULL;
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -187,7 +187,7 @@ extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt:
 // ============================================================================
 extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -206,7 +206,7 @@ extern "C" CCur07* __ct__CCur07(CCur07* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur07Fv(CCur07* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -236,7 +236,7 @@ extern "C" CCur09* __ct__CCur09(CCur09* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur09Fv(CCur09* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -276,7 +276,7 @@ extern "C" CCur11* __ct__CCur11(CCur11* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur11Fv(CCur11* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -316,7 +316,7 @@ extern "C" CCur14* __ct__CCur14(CCur14* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur14Fv(CCur14* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -346,7 +346,7 @@ extern "C" CCur15* __ct__CCur15(CCur15* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur15Fv(CCur15* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -376,7 +376,7 @@ extern "C" CCur16* __ct__CCur16(CCur16* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur16Fv(CCur16* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -406,7 +406,7 @@ extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -436,7 +436,7 @@ extern "C" CCur22* __ct__CCur22(CCur22* _this, nw4r::lyt::ArcResourceAccessor* a
 // ============================================================================
 extern "C" void* __dt__6CCur22Fv(CCur22* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }
@@ -504,7 +504,7 @@ extern "C" CSubCur* __ct__CSubCur(CSubCur* _this, nw4r::lyt::ArcResourceAccessor
 // ============================================================================
 extern "C" void* __dt__7CSubCurFv(CSubCur* _this, int flags) {
     if (_this != nullptr && flags > 0) {
-        __dl__FPv(_this);
+        operator delete(_this);
     }
     return _this;
 }

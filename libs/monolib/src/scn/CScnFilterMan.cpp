@@ -347,7 +347,6 @@ extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self);
 void CScnFilterIteratorReslist::IterList_destroy() { __dt__8049D18C(this); }
 #pragma pop
 
-extern "C" void __dla__FPv(void* p);
 
 // reslist-base dtor: clear the node array and ownership flag. The mList
 // backing block (allocated 16 bytes before the array) is freed when the
@@ -361,7 +360,7 @@ extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self) {
     if (self->mList == 0)
         goto done;
     if (self->mList != 0)
-        __dla__FPv((char*)self->mList - 16);
+        operator delete[]((char*)self->mList - 16);
     self->mList = 0;
 done:
     self->mCapacity = 0;

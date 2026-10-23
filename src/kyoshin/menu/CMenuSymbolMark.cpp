@@ -127,7 +127,6 @@ extern "C" CMenuSymbolMark* __ct__CMenuSymbolMark(CMenuSymbolMark* self, CProces
 
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 // ---------- CMenuSymbolMark constructor ----------
 // Base CProcess construction and the member initializer list build the manual
@@ -211,7 +210,7 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn, u32 idx)
 // ---------- CMenuSymbolMark destructor ----------
 // Retail: if (self == 0) goto end; __dt__17UnkClass_8045F564Fv(&self->mUnkClass, -1);
 // if (self != 0) { if (self != 0) { __dt__8CProcessFv(self, 0); } }
-// if (flags > 0) __dl__FPv(self); end: return self; - the redundant
+// if (flags > 0) operator delete(self); end: return self; - the redundant
 // `if (self != 0)` re-check reproduces the retail's dead double-beq
 // (CMenuBattleChain/CMenuArtsSelect idiom).
 #pragma push
@@ -224,7 +223,7 @@ extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags) {
             __dt__8CProcessFv(self, 0);
         }
     }
-    if (flags > 0) __dl__FPv(self);
+    if (flags > 0) operator delete(self);
 end:
     return self;
 }
@@ -1680,7 +1679,7 @@ void CMenuSymbolMark::SymMark_AddKindMarks() {
 
 // ---------- CArrow3D destructor ----------
 // Retail: if (self == 0) goto end; if (self != 0) { if (self != 0) {
-// __dt__8CProcessFv(self, 0); } } if (flags > 0) __dl__FPv(self);
+// __dt__8CProcessFv(self, 0); } } if (flags > 0) operator delete(self);
 // end: return self; - the redundant `if (self != 0)` re-check reproduces the
 // retail's dead double-beq (CMenuBattleChain/CMenuArtsSelect idiom).
 #pragma push
@@ -1690,7 +1689,7 @@ extern "C" void* __dt__8CArrow3DFv(CArrow3D* self, int flags) {
     if (self != 0) {
         __dt__8CProcessFv(self, 0);
     }
-    if (flags > 0) __dl__FPv(self);
+    if (flags > 0) operator delete(self);
 end:
     return self;
 }

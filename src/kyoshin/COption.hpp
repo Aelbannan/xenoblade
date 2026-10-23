@@ -252,7 +252,6 @@ extern "C" void __ct__8CBaseCurFv(CBaseCur*);
 extern "C" void __dt__8CBaseCurFv(void*, int);
 extern "C" void* __dt__7CSysWinFv(void*, int);
 extern "C" void* __dt__10CScrollBarFv(CScrollBar*, int);
-extern "C" void __dl__FPv(void*);
 extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" int CSysWin_isActive(u8*);

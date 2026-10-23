@@ -5,7 +5,6 @@
 
 extern "C" void* __dt__10CMenuPauseFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
 extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 
 #include "monolib/device/CDeviceVI.hpp"
@@ -19,6 +18,7 @@ extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+void playUISound(u32);
 
 extern u32 lbl_eu_80663E28;
 
@@ -128,7 +128,7 @@ void CMenuPause::Init() {
     }
 
     mState = 1;
-    playUISound__FUl(0xd);
+    playUISound(0xd);
 
     *(u32*)mField74 = 0; // field 0x74 (single word store)
 
@@ -342,7 +342,7 @@ extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
             }
         }
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -375,8 +375,8 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
         CfSoundMan_PlayRequest(lbl_eu_806687DC, 0, 0xe, 0);
         p->mState = 3;
     } else if (second) {
-        playUISound__FUl(6);
-        playUISound__FUl(0xe);
+        playUISound(6);
+        playUISound(0xe);
         p->mState = 3;
     }
 }

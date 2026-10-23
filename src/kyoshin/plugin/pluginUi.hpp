@@ -108,7 +108,6 @@ void __dt__80043E88(CfEnumListHolder* holder, int tags);
 void startEnumObjects(void* list, int type, int value);
 void* getEntryAt(void* list, int index);
 u8 code80135FDC_getByte_64059();
-void playUISound__FUl(u32 op);
 void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
 int CtrlRemote_TouchBitByArg(int index);
 void CtrlRemote_SetSharedBit(int index, int value);

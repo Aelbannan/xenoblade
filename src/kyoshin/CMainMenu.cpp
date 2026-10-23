@@ -20,6 +20,8 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void playUISound(u32);
 // Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
 // CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
 // pulling the full CfGimmick header which conflicts on several extern "C" globals
@@ -181,13 +183,13 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
     switch ((u32)self->field_0xE0) {
     case 0:
         // Enter: open sound + cursor-select state.
-        playUISound__FUl(8);
+        playUISound(8);
         self->field_0xE0 = 1;
         break;
     case 1:
         // Cursor-select: once the intro animation finishes, set the current
         // cursor number (or its placeholder) and activate the cursor.
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x80, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x80, lbl_eu_80666F18) == 0) {
             break;
         }
         // Strings hoisted above the branch like retail; MWCC colors the
@@ -217,7 +219,7 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
         break;
     case 3:
         // Exit: once the close animation finishes, mark the menu idle.
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x84, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x84, lbl_eu_80666F18) == 0) {
             break;
         }
         self->field_0x54 = 1;
@@ -245,7 +247,7 @@ extern "C" void CMainMenu_Update(CMainMenu* self) {
         break;
     case 7:
         // Cursor-exit: like case 1 but driven by the exit animation.
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x8C, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform(self->field_0x8C, lbl_eu_80666F18) == 0) {
             break;
         }
         // Strings hoisted above the branch like case 1.
@@ -633,7 +635,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         Cur_SetVisible(&self->_90[0], 0);
-        playUISound__FUl(9);
+        playUISound(9);
         self->field_0xE0 = 3;
         return;
     }
@@ -707,7 +709,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
             LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
-        playUISound__FUl(0x6a);
+        playUISound(0x6a);
         return;
     }
     if (up != 0) {
@@ -736,7 +738,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
             LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
-        playUISound__FUl(0x6a);
+        playUISound(0x6a);
         return;
     }
     // Retail: beq aPressed==0 → cancel/B tail; fallthrough = select path.
@@ -744,7 +746,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         // Confirm: reject unavailable entries, otherwise open the selected menu.
         s32 sel = self->field_0xC0;
         if (self->field_0xC8[sel] != 0) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         // Sub-menu open: reveal the four entries of the selected page (14 panes
@@ -757,7 +759,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             // Header entries: activate the main cursor and enter screen-open state.
             Cur_SetActive((CBaseCur*)&self->_90[0]);
             self->field_0xE0 = 4;
-            playUISound__FUl(0x6b);
+            playUISound(0x6b);
             return;
         case 1: {
             char* base = lbl_eu_804FCEBC;
@@ -782,7 +784,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
             self->field_0x88->SetFrame(lbl_eu_80666F1C);
             self->field_0xE0 = 5;
-            playUISound__FUl(0x6c);
+            playUISound(0x6c);
             return;
         }
         case 2: {
@@ -808,7 +810,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
             self->field_0x88->SetFrame(lbl_eu_80666F1C);
             self->field_0xE0 = 5;
-            playUISound__FUl(0x6c);
+            playUISound(0x6c);
             return;
         }
         case 4: {
@@ -834,7 +836,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
             self->field_0x88->SetFrame(lbl_eu_80666F1C);
             self->field_0xE0 = 5;
-            playUISound__FUl(0x6c);
+            playUISound(0x6c);
             return;
         }
         case 5: {
@@ -860,7 +862,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
             self->field_0x88->SetFrame(lbl_eu_80666F1C);
             self->field_0xE0 = 5;
-            playUISound__FUl(0x6c);
+            playUISound(0x6c);
             return;
         }
         case 6: {
@@ -886,7 +888,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
             self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
             self->field_0x88->SetFrame(lbl_eu_80666F1C);
             self->field_0xE0 = 5;
-            playUISound__FUl(0x6c);
+            playUISound(0x6c);
             return;
         }
         default:
@@ -903,7 +905,7 @@ void CMainMenu_DispatchState(CMainMenu* self) {
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x71, base + 0x89, 0);
         LayoutSetTextBoxFmtValue(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         Cur_SetVisible(&self->_90[0], 0);
-        playUISound__FUl(9);
+        playUISound(9);
         self->field_0xE0 = 3;
         return;
     }
@@ -917,7 +919,7 @@ done:
 extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
     // the current (state, sub-state) pair, then park the state at 6 (idle).
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x88, lbl_eu_80666F18) == 0) {
+    if (advanceAnimTransform(self->field_0x88, lbl_eu_80666F18) == 0) {
         return;
     }
     self->field_0xC4 = 0;
@@ -997,7 +999,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
         Cur_SetVisible(&self->_90[0], 1);
         Cur_SetVisible(&self->subCur, 0);
-        playUISound__FUl(6);
+        playUISound(6);
         self->field_0xE0 = 7;
         return;
     }
@@ -1071,7 +1073,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
-        playUISound__FUl(0x6a);
+        playUISound(0x6a);
         goto tail;
     }
     if (up != 0) {
@@ -1105,7 +1107,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         ScalePaneWorldPos(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
-        playUISound__FUl(0x6a);
+        playUISound(0x6a);
         goto tail;
     }
     if (aPressed != 0) {
@@ -1121,7 +1123,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         default: idx = 0; break;
         }
         if (self->field_0xC8[(u8)idx + 7] != 0) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         if (self->field_0xC0 == 6 && self->field_0xC4 == 0) {
@@ -1139,7 +1141,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
                 ((CfPlayerSpotReal*)&player->spot)->partyOpen(&player->spot.field_0xC4->field_0x3B4[0]);
             }
         }
-        playUISound__FUl(0x6b);
+        playUISound(0x6b);
         self->field_0xE0 = 8;
         Cur_SetActive((CBaseCur*)&self->subCur);
         goto tail;
@@ -1153,7 +1155,7 @@ extern "C" void CMainMenu_HandleSubInput(CMainMenu* self) {
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
         Cur_SetVisible(&self->_90[0], 1);
         Cur_SetVisible(&self->subCur, 0);
-        playUISound__FUl(6);
+        playUISound(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {
         UIWin_CreateExtraWin();

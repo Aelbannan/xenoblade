@@ -550,4 +550,4 @@ extern u32 lbl_eu_80663E28;
 // carries a conflicting __ct__CSysWin declaration, so they are declared here).
 extern u32 CMainMenu_GetInstancePtr();
 extern void ArtsInfo_SetReadyFlag();
-extern void playUISound__FUl(u32);
+extern void playUISound(u32);

@@ -62,13 +62,12 @@ extern nw4r::g3d::ResNode GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl m
 extern nw4r::g3d::ResNode GetResNode__Q34nw4r3g3d6ResMdlCFPCc(nw4r::g3d::ResMdl mdl, const char* name);
 extern void* GetResUserData__Q34nw4r3g3d7ResNodeFv(nw4r::g3d::ResNode node);
 extern void* __vc__Q34nw4r3g3d6ResDicCFPCc(nw4r::g3d::ResDic dic, const char* key);
-extern void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
 // monolib helpers called from the maru-shadow draw path.
 extern void* Scn_GetCamItemCC(u32 unk, int id);
 extern void* Scn_GetCamItem9C(u32 unk, int id);
-extern void getScnHandle();
+extern void* getScnHandle();
 extern int ScnData_FwdBC9A0();
 extern bool ScnRes_VertRayForward_E398(mlCVec3* out, float x, float y, int a, int b);
 extern void ScnRes_Notify4Word_E3E0(const void* cb, void* mtx, u32 unk, int flag);

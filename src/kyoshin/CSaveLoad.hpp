@@ -358,7 +358,6 @@ extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));
 extern "C" void CSLCur_setFlag(int, int, u8);
 extern "C" void CSLCur_bindPane(UnkPtrHolder* self);
 extern "C" void CSLCur_tickAnim(UnkPtrHolder* self);
-extern "C" void __dl__FPv(void*);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);

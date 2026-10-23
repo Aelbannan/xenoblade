@@ -150,7 +150,6 @@ extern s16 lbl_eu_80664708[4];
 extern s16 lbl_eu_80664710[4];
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).

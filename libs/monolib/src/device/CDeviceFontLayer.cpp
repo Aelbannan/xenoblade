@@ -1028,13 +1028,12 @@ void CDeviceFontLayer::allocFontHeap() {
 }
 
 // Font-layer global state: an allocated object pointer plus an adjacent word.
-extern "C" void __dla__FPv(void* p);
 
 void CDeviceFontLayer::freeFontHeap() {
     if (lbl_eu_80665690 == 0)
         return;
     if (lbl_eu_80665690 != 0) {
-        __dla__FPv(lbl_eu_80665690);
+        operator delete[](lbl_eu_80665690);
         lbl_eu_80665690 = 0;
     }
     lbl_eu_80665694 = 0;

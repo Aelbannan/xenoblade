@@ -169,7 +169,6 @@ struct CCollepedia {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
-extern "C" void __dl__FPv(void*);
 extern "C" u32 CSysWin_isReady(u8*);
 extern "C" u32 CSysWin_getUnk34(u8*);
 extern "C" int CSysWin_isActive(u8*);
@@ -186,7 +185,6 @@ extern "C" const float lbl_eu_806687FC;
 extern "C" const float lbl_eu_80668810;
 extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
-extern "C" void playUISound__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void sysWinDrawLayout(void*, nw4r::lyt::DrawInfo*);

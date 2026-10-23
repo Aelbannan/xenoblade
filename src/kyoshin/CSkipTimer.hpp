@@ -156,7 +156,6 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 
-extern "C" void playUISound__FUl(u32);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" u32 CSysWin_isReady(void*);
 

@@ -895,7 +895,6 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
     return ok;
 }
 
-extern "C" void __dl__FPv(void*);
 
 // Retail US 0x8024058C: apply the +0x5C save image (NandApplySave), then
 // operator-delete it. The in-progress flag at lbl_eu_80664772 is armed
@@ -915,7 +914,7 @@ extern "C" int __dt__8023E448() {
     lbl_eu_80664772 = clear;
     u8* still = *(u8**)(lbl_eu_80664768 + 0x5C);
     if (still != 0) {
-        __dl__FPv(still);
+        operator delete(still);
         *(u8**)(lbl_eu_80664768 + 0x5C) = (u8*)(u32)clear;
     }
     return result;

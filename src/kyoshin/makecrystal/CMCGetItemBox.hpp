@@ -288,7 +288,6 @@ extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox*);
 extern "C" void initMCGetItemBoxList(CMCGetItemBox*, u16, void*, u8);
 extern "C" void setMCSlotIconTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-extern "C" void __dl__FPv(void*);
 extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub*, u32);
 
 // ---------------------------------------------------------------------------
@@ -313,15 +312,12 @@ extern "C" u8   BdatGetU8Direct(u32, const char*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PaneSetTexPaletteByName(void*, const char*, void*);
 extern "C" void ApplyFontToTxtPanes(void*, u32);
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 // code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void Bdat_GetTable_AA34();
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" u32  CUICfManager_getPackedFont9C();
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
-extern "C" void* getFP__FPCc(const char*);
 // C++-linkage (Itanium-mangled retail symbol getPackedFont__Fv).
 u32 getPackedFont();
 

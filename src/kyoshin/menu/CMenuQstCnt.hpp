@@ -108,7 +108,6 @@ extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();

@@ -1609,8 +1609,6 @@ extern const void* lbl_eu_806618E8;
 extern const void* lbl_eu_806618F0;
 extern "C" void* CPartsChange_FindActorByObj(void* a, void* b);
 extern "C" unsigned long CfRes_getAllocHandle();
-extern "C" void __dl__FPv(void*);
-extern "C" void __dla__FPv(void*);
 extern "C" void* copyIterFrom(void* a, void* b);
 extern "C" void unlinkListNode(void* a, void* b, void* c);
 extern "C" void __dt__8047BDA8(void*);

@@ -54,6 +54,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <nw4r/lyt.h>
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // Forward declarations for external functions
 void* __dt__13CArtsBookItemFv(void* self, int mode);
@@ -339,7 +344,7 @@ __declspec(noinline) void* __dt__801C5670(void* self, int mode) {
     lbl_eu_80664514 = 0;
     __dt__13CArtsBookItemFv(p + 0x3cb8, 0xFFFFFFFF);
     __dt__11CVisionItemFv(p + 0x34b0, 0xFFFFFFFF);
-    if (mode > 0) __dl__FPv(self);
+    if (mode > 0) operator delete(self);
 exit:
     return self;
 }
@@ -2705,7 +2710,7 @@ __dt__6CCur07Fv(((CibgOuterSlots*)self)->m70, -1);
 __dt__17UnkClass_8045F564Fv(((CibgOuterSlots*)self)->m18, -1);
 __dt__17UnkClass_8045F564Fv(((CibgOuterSlots*)self)->m08, -1);
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -2741,9 +2746,9 @@ extern "C" void LoadItemBoxFiles(void* self, int reserved) {
         allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
         ((CItemBoxGridHeadView*)p)->field_34 = readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x2b4, self, 0, 0);
     } else {
-        lbl_eu_80664508 = (u32)getFP__FPCc(strs + 0x2d0);
-        lbl_eu_8066450C = (u32)getFP__FPCc(strs + 0x2df);
-        lbl_eu_80664510 = (u32)getFP__FPCc(strs + 0x2ee);
+        lbl_eu_80664508 = (u32)getFP(strs + 0x2d0);
+        lbl_eu_8066450C = (u32)getFP(strs + 0x2df);
+        lbl_eu_80664510 = (u32)getFP(strs + 0x2ee);
     }
 
     sortMenuInitFileRead(p + 0xe8);
@@ -3036,7 +3041,7 @@ extern "C" void AdvanceBoxState(void* self) {
     Cur_SetVisible(p + 0xd0, 0);
     Cur_SetVisible(p + 0xb8, 0);
     advanceItemBoxState__FP12CItemBoxInfo(p + 0x1d8);
-    if (!((CItemBoxGridHeadView*)p)->field_52C) playUISound__FUl(6);
+    if (!((CItemBoxGridHeadView*)p)->field_52C) playUISound(6);
 }
 
 // Clear a 14-byte region (list/array init). Retail uses memset for the
@@ -3070,7 +3075,7 @@ extern "C" __declspec(noinline) void IncListIndex(void* self) {
     }
     MoveTabPage(self, 0);
     RebuildGridCat(self);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
 }
 
 // Decrement a list counter with wrap.
@@ -3085,7 +3090,7 @@ extern "C" __declspec(noinline) void DecListIndex(void* self) {
     }
     MoveTabPage(self, 1);
     RebuildGridCat(self);
-    playUISound__FUl(0x70);
+    playUISound(0x70);
 }
 
 // Item box advance handler. -O4,s reproduces retail's stmw r29
@@ -3099,7 +3104,7 @@ void GridMoveCursorLeft(void* self) {
             p[0x540] -= 1;
             if ((s8)p[0x540] < 0) p[0x540] = 1;
             UpdateCursors(self);
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -3110,7 +3115,7 @@ void GridMoveCursorLeft(void* self) {
             u8 temp[12];
             GridSubMenu_GetCursorPos(temp, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -3200,7 +3205,7 @@ void GridMoveCursorLeft(void* self) {
         return;
     }
 sound_and_return:
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 __declspec(noinline) unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
@@ -3248,7 +3253,7 @@ void GridMoveCursorRight(void* self) {
         p[0x540] = val;
         if ((s8)val > 1) p[0x540] = 0;
         UpdateCursors(self);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) return;
@@ -3258,7 +3263,7 @@ void GridMoveCursorRight(void* self) {
             u32 buf2c[3];
             GridSubMenu_GetCursorPos(buf2c, p + 0x418);
             ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf2c));
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -3343,7 +3348,7 @@ void GridMoveCursorRight(void* self) {
             RefreshSelectedCellText(self);
         }
 sound_and_return2:
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Down navigation. -O4,s: retail saves r29-r31 as one stmw block
@@ -3366,7 +3371,7 @@ void GridMoveCursorDown(void* self) {
         if (!isPresentSettled(p + 0x468)) return;
         if (isPresentBusy(p + 0x468)) return;
         dispatchCounterStepBack(p + 0x468);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (p[0x528]) {
@@ -3387,7 +3392,7 @@ void GridMoveCursorDown(void* self) {
         u32 v = GetCellSellPrice((CItemBoxGridFull*)sub, entry);
         s32 total = (s8)p[0x529] * v;
         NumSel_FormatPicName_B064(p + 0x3e4, total);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (sortMenuIsVisible28(p + 0xe8)) {
@@ -3395,7 +3400,7 @@ void GridMoveCursorDown(void* self) {
         sortMenuPageUpStep(p + 0xe8);
         sortMenuFormatPaneText(sbuf + 3, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf + 3));
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (p[0x544]) {
@@ -3411,7 +3416,7 @@ void GridMoveCursorDown(void* self) {
         }
         CopyTabSlotVec(sbuf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf));
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     s8 row = (s8)p[0x525];
@@ -3432,7 +3437,7 @@ PrevGridPage((CItemBoxGrid*)self);
         UpdateCursors(self);
         RefreshSelectedCellText(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Up navigation. Same shape as GridMoveCursorDown (see notes there).
@@ -3452,7 +3457,7 @@ void GridMoveCursorUp(void* self) {
         if (!isPresentSettled(p + 0x468)) return;
         if (isPresentBusy(p + 0x468)) return;
         stepPresentCounter(p + 0x468);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (p[0x528]) {
@@ -3472,7 +3477,7 @@ void GridMoveCursorUp(void* self) {
         NumSel_SetCaptionNum_B04C(p + 0x3e4, p[0x529]);
         s32 total = (s8)p[0x529] * GetCellSellPrice((CItemBoxGridFull*)sub, entry);
         NumSel_FormatPicName_B064(p + 0x3e4, total);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (sortMenuIsVisible28(p + 0xe8)) {
@@ -3480,7 +3485,7 @@ void GridMoveCursorUp(void* self) {
         sortMenuPageDownStep(p + 0xe8);
         sortMenuFormatPaneText(tmp, p + 0xe8);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)tmp);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (p[0x544]) {
@@ -3496,7 +3501,7 @@ void GridMoveCursorUp(void* self) {
         }
         CopyTabSlotVec(buf, sub, (u8)(p[0x546] + (u8)p[0x545] * 4));
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     s8 row = (s8)p[0x525];
@@ -3516,7 +3521,7 @@ NextGridPage((CItemBoxGrid*)self);
         UpdateCursors(self);
         RefreshSelectedCellText(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Grid state update with conditions.
@@ -3543,7 +3548,7 @@ __declspec(noinline) void NextGridPage(CItemBoxGrid* self) {
     RefreshSelectedCellText(self);
     u8 rows = sub[0x2803];
     u8 f = rows == 0 ? 1 : rows;
-    if (f != 1) playUISound__FUl(0xa);
+    if (f != 1) playUISound(0xa);
 }
 
 // Grid state update (decrement variant).
@@ -3565,7 +3570,7 @@ __declspec(noinline) void PrevGridPage(CItemBoxGrid* self) {
     RefreshSelectedCellText(self);
     u8 rows = sub[0x2803];
     u8 f = rows == 0 ? 1 : rows;
-    if (f != 1) playUISound__FUl(0xa);
+    if (f != 1) playUISound(0xa);
 }
 
 // Guard chain shares a single exit label in retail (every check branches to
@@ -3584,7 +3589,7 @@ void OpenSortMenu(CItemBoxGrid* self) {
             UpdateCursors(self);
             Cur_SetVisible(p + 0xa0, 0);
             sortMenuToState4Page(p + 0xe8);
-            playUISound__FUl(6);
+            playUISound(6);
             return;
         }
         // state word is compared signed (retail cmpwi)
@@ -3608,7 +3613,7 @@ void OpenSortMenu(CItemBoxGrid* self) {
         Cur_SetVisible(p + 0xb8, 0);
         sortMenuOpenInit(p + 0xe8);
         ((CItemBoxGridHeadView*)p)->field_526 = 0;
-        playUISound__FUl(2);
+        playUISound(2);
     }
 }
 
@@ -3643,7 +3648,7 @@ void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
         ((CItemBoxGridHeadView*)p)->field_58 = 8;
         ((CItemBoxGridHeadView*)p)->field_528 = 0;
         // retail inlines the r4-check tail here (copy 1 of 3)
-        if (!confirmed) playUISound__FUl(6);
+        if (!confirmed) playUISound(6);
         goto exit;
     }
     if (isPresentActive(p + 0x468)) {
@@ -3667,7 +3672,7 @@ void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
             Cur_SetVisible(p + 0xd0, 0);
         }
         // tail copy 2
-        if (!confirmed) playUISound__FUl(6);
+        if (!confirmed) playUISound(6);
         goto exit;
     }
     if (((CItemBoxGridHeadView*)p)->field_528) {
@@ -3703,7 +3708,7 @@ void HandleCancelBtn(CItemBoxGrid* self, int confirmed) {
     }
 check_tail:
     // tail copy 3 (shared by the p[0x528]/p[0x544]/final arms)
-    if (!confirmed) playUISound__FUl(6);
+    if (!confirmed) playUISound(6);
 exit:;
 }
 
@@ -3752,7 +3757,7 @@ void func_801CCAF0(void* self) {
                 CItem_initItemImplInstances((CItemData*)item)->vf10((CItemData*)item);
             }
             RebuildGridCat(p);
-            playUISound__FUl(0x7a);
+            playUISound(0x7a);
             UpdateCursors(p);
         } else {
             u8* listRow = p + (s8)p[0x6f];
@@ -3773,11 +3778,11 @@ void func_801CCAF0(void* self) {
                     }
                 }
                 if (count2 <= 1) {
-                    playUISound__FUl(5);
+                    playUISound(5);
                     return;
                 }
             }
-            playUISound__FUl(3);
+            playUISound(3);
         }
         Cur_SetVisible(p + 0xa0, 0);
         GridSubMenu_AdvanceState2To3(p + 0x418);
@@ -3841,7 +3846,7 @@ void func_801CCAF0(void* self) {
             getPresentPaneWorldPos(temp, p + 0x468);
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)temp);
         }
-        playUISound__FUl(3);
+        playUISound(3);
         return;
     }
     if (sortMenuIsVisible28(p + 0xe8)) {
@@ -3856,7 +3861,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             UpdateCursors(p);
             p[0x2d50] = 0;
             RebuildGridCat(p);
-            playUISound__FUl(3);
+            playUISound(3);
         }
         return;
     }
@@ -3868,7 +3873,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
         if (cursor == -2) {
             p[0x549] = 1;
             InitGridItems((CItemBoxGridFull*)(p + 0x54c));
-            playUISound__FUl(4);
+            playUISound(4);
             return;
         }
         sub = (CItemBoxGridFull*)(p + 0x54c);
@@ -3880,7 +3885,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                 RebuildGridUI(p);
                 RefreshSelectedCellText(p);
                 func_801D0BD8(p);
-                playUISound__FUl(6);
+                playUISound(6);
                 return;
             }
             if (!(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF)) return;
@@ -3891,7 +3896,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             sysWinApplyKind(p + 0x4e8, 1);
             sysWinOpenPhase1(p + 0x4e8);
             Cur_SetVisible(p + 0x70, 0);
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         if ((u8)GetCellFlag0(sub, entry)) return;
@@ -3901,9 +3906,9 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
         RefreshSelectedCellText(p);
         func_801D0BD8(p);
         if (((int (*)(CItemBoxGridFull*, u16))GetCellByte8)(sub, entry)) {
-            playUISound__FUl(3);
+            playUISound(3);
         } else {
-            playUISound__FUl(6);
+            playUISound(6);
         }
         return;
     }
@@ -3936,7 +3941,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             RebuildGridCat(p);
             NumSel_EnterState3Open_B178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
-            playUISound__FUl(0x2f);
+            playUISound(0x2f);
             return;
         }
         if (!NumSel_GetField2E_B028(p + 0x3e4)) return;
@@ -4010,7 +4015,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
                     *(u32*)(p + 0x58) = 0x18;
                     p[0x528] = 1;
                     Cur_SetVisible(p + 0x70, 0);
-                    playUISound__FUl(3);
+                    playUISound(3);
                     return;
                 }
             }
@@ -4060,8 +4065,8 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             Cur_SetVisible(p + 0x70, 1);
             Cur_SetVisible(p + 0xa0, 0);
             UpdateCursors(p);
-            if ((s8)p[0x529] == 0) playUISound__FUl(0x31);
-            else playUISound__FUl(3);
+            if ((s8)p[0x529] == 0) playUISound(0x31);
+            else playUISound(3);
             return;
         }
         if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
@@ -4078,7 +4083,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
             *(u32*)(p + 0x58) = 0xc;
             p[0x529] = 1;
             Cur_SetVisible(p + 0x70, 0);
-            playUISound__FUl(3);
+            playUISound(3);
             return;
         }
     }
@@ -4089,20 +4094,20 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
         sub = (CItemBoxGridFull*)(p + 0x54c);
         entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
         if ((u8)GetCellFlag1(sub, entry)) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         if (!(GetCellKind((CItemBoxGridFull*)sub, (u16)entry) & 0xFFFF)) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         if ((u8)GetCellFlag0(sub, entry)) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         u8 listVal3 = p[0x62 + (s8)p[0x6f]];
         if (listVal3 == 0xc) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         u32 sendVal = 0xFF;
@@ -4112,7 +4117,7 @@ HandleCancelBtn((CItemBoxGrid*)p, 1);
         GridSubMenu_BeginOpenAnim(p + 0x418);
         *(u32*)(p + 0x58) = 6;
         p[0x528] = 1;
-        playUISound__FUl(3);
+        playUISound(3);
     }
 }
 
@@ -4199,9 +4204,9 @@ void TickItemBoxGrid(void* self) {
         u32 buf[3];
         CopyTabSlotVec(buf, list, (u32)v);
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
-        playUISound__FUl(2);
+        playUISound(2);
     } else {
-        playUISound__FUl(5);
+        playUISound(5);
     }
 }
 
@@ -4220,7 +4225,7 @@ extern "C" void SelectCatRow(void* self) {
     ((CItemBoxGridHeadView*)p)->field_525 = -1;
     UpdateCursors(self);
     RefreshSelectedCellText(self);
-    playUISound__FUl(2);
+    playUISound(2);
 }
 
 // Check prerequisites and return a state code: each sub-window must be
@@ -4253,7 +4258,7 @@ extern "C" u32 GetPromptState(void* self) {
 // Animate grid panels (alt variant).
 __declspec(noinline) void AdvanceOpenAnim(CItemBoxGrid* self) {
     u8* p = (u8*)self;
-    if (!advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CItemBoxGridHeadView*)p)->field_48, lbl_eu_80667F78)) return;
+    if (!advanceAnimTransform(((CItemBoxGridHeadView*)p)->field_48, lbl_eu_80667F78)) return;
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 0);
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
     ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 1);
@@ -4262,7 +4267,7 @@ __declspec(noinline) void AdvanceOpenAnim(CItemBoxGrid* self) {
 
 extern "C" __declspec(noinline) void FinishOpenAnim(CItemBoxGrid* self) {
     u8* p = (u8*)self;
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CItemBoxGridHeadView*)p)->field_4C, lbl_eu_80667F78)) {
+    if (advanceAnimTransform(((CItemBoxGridHeadView*)p)->field_4C, lbl_eu_80667F78)) {
         ((CItemBoxGridHeadView*)p)->field_58 = 3;
         ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
         ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 0);
@@ -4288,7 +4293,6 @@ extern "C" __declspec(noinline) void FinishOpenAnim(CItemBoxGrid* self) {
 
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
-void advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 __declspec(noinline) void CheckState4_Animate(char* self) { // noinline: dispatch table calls keep `bl`
     if (((CItemBoxGridHeadView*)self)->field_527 != 4) {
@@ -5521,15 +5525,15 @@ __declspec(noinline) void __ct__CArtsBookItem(void* self) {
 }
 // Standard MWCC virtual destructor
 __declspec(noinline) void* __dt__10CQuestItemFv(void* self, int mode) {
-    if (self && mode > 0) __dl__FPv(self);
+    if (self && mode > 0) operator delete(self);
     return self;
 }
 __declspec(noinline) void* __dt__11CVisionItemFv(void* self, int mode) {
-    if (self && mode > 0) __dl__FPv(self);
+    if (self && mode > 0) operator delete(self);
     return self;
 }
 __declspec(noinline) void* __dt__13CArtsBookItemFv(void* self, int mode) {
-    if (self && mode > 0) __dl__FPv(self);
+    if (self && mode > 0) operator delete(self);
     return self;
 }
 
@@ -5632,7 +5636,7 @@ __declspec(noinline) void PushUniqueItemId(void* self, u32 id) {
     *(u16*)(p + 0x804) = count + 1;
 }
 void PushGatedTypeIds(void* self) {
-    void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
+    void* bdat = getFP(&lbl_eu_8050566C[0xd5]);
     if (!bdat) return;
 
     u16 count = (u16)Bdat_GetMaxRow_B1EC(bdat);
@@ -5722,15 +5726,11 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();
     *(nw4r::lyt::ArcResourceAccessor**)(p + 0x3c) = arcRes;
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        (nw4r::lyt::Layout**)(p + 0x44), arcRes, &lbl_eu_8050566C[0x65e]);
+    buildLayout((nw4r::lyt::Layout**)(p + 0x44), arcRes, &lbl_eu_8050566C[0x65e]);
     nw4r::lyt::Layout* layout = *(nw4r::lyt::Layout**)(p + 0x44);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        layout, (nw4r::lyt::AnimTransform**)(p + 0x48), arcRes, (char*)&lbl_eu_8050566C[0x673]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        layout, (nw4r::lyt::AnimTransform**)(p + 0x4c), arcRes, (char*)&lbl_eu_8050566C[0x68b]);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        layout, (nw4r::lyt::AnimTransform**)(p + 0x50), arcRes, (char*)&lbl_eu_8050566C[0x6a8]);
+    bindLayoutAnimTransform(layout, (nw4r::lyt::AnimTransform**)(p + 0x48), arcRes, (char*)&lbl_eu_8050566C[0x673]);
+    bindLayoutAnimTransform(layout, (nw4r::lyt::AnimTransform**)(p + 0x4c), arcRes, (char*)&lbl_eu_8050566C[0x68b]);
+    bindLayoutAnimTransform(layout, (nw4r::lyt::AnimTransform**)(p + 0x50), arcRes, (char*)&lbl_eu_8050566C[0x6a8]);
     // Pane lookups go through the layout's root pane.
     nw4r::lyt::Pane* paneHost = layout->GetRootPane();
     void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
@@ -5926,10 +5926,10 @@ SetGridReady((CItemBoxGrid*)self);
         void* data = (void*)fileData[1];
         fileData[1] = 0;
         Bdat_GetTable_AA34();
-        if (getFP__FPCc(&lbl_eu_8050566C[0x2d0]) == NULL)
+        if (getFP(&lbl_eu_8050566C[0x2d0]) == NULL)
             CBdat::setBdatEntry(2, data);
-        lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
-        lbl_eu_8066450C = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2df]);
+        lbl_eu_80664508 = (u32)getFP(&lbl_eu_8050566C[0x2d0]);
+        lbl_eu_8066450C = (u32)getFP(&lbl_eu_8050566C[0x2df]);
 SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x30) = 0;
         return 1;
@@ -5940,9 +5940,9 @@ SetGridReady((CItemBoxGrid*)self);
         fileData[1] = 0;
         *(void**)(p + 0x38) = data;
         Bdat_GetTable_AA34();
-        if (getFP__FPCc(&lbl_eu_8050566C[0x2ee]) == NULL)
+        if (getFP(&lbl_eu_8050566C[0x2ee]) == NULL)
             CBdat::setBdatEntry(5, *(void**)(p + 0x38));
-        lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
+        lbl_eu_80664510 = (u32)getFP(&lbl_eu_8050566C[0x2ee]);
 SetGridReady((CItemBoxGrid*)self);
         *(u32*)(p + 0x34) = 0;
         return 1;

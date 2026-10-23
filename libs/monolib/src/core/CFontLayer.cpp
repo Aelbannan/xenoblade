@@ -27,7 +27,6 @@ void dispatchLayer438C__11CDeviceFontFv(CDeviceFont* self);
 void dispatchLayer4508__11CDeviceFontFv(CDeviceFont* self);
 void getLayerData__11CDeviceFontFv(CDeviceFont* self);
 void dispatchLayer4B70__11CDeviceFontFv(CDeviceFont* self);
-void __dl__FPv(void*);
 }
 
 // Retail vtable (monolibdata2.s-owned .data 0x8056BF80): the class's ctor/dt
@@ -52,7 +51,7 @@ extern "C" void* __dt__10CFontLayerFv(CFontLayer* self, int flag) {
         *(void**)self = (void*)lbl_eu_8056BF80;
         notifyLayerDestroy__11CDeviceFontFv((CDeviceFont*)self);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

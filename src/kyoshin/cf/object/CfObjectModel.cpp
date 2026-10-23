@@ -199,7 +199,7 @@ finish:
 // delete self only when a delete flag is passed, then return self.
 u8* __dt__800BAA24(u8* object, s32 deleteFlag) {
     if (object != 0 && deleteFlag > 0) {
-        __dl__FPv(object);
+        operator delete(object);
     }
     return object;
 }

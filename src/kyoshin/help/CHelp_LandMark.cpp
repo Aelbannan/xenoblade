@@ -48,7 +48,7 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
         CtrlRemote_ResetSlotArrayByIndex(subobj);
 
         if (deleteFlag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
 

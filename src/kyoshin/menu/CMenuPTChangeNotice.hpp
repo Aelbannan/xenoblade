@@ -115,7 +115,6 @@ void setInputDisableTime__Q22cf9CfPadTaskFf(float f1);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
-void __dl__FPv(void* p);
 // Unmangled in retail (unlike advanceAnimTransform's mangled form).
 u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float f1);
 // Layout/message/input helpers used by the file-load completion handler.

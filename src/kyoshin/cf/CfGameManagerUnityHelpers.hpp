@@ -5,6 +5,7 @@
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/code_801F3BE0.hpp"
+void* getFP(const char* pName);
 namespace cf {
 class UnkClass_80082D90;
 }
@@ -1119,7 +1120,6 @@ extern "C" Unk80EE4Data* createMapObjectInstance__Q22cf13CfGameManagerFv(
 extern "C" void clearTempTextBuffer__Q22cf13CfGameManagerFv(Unk87588Data* data);
 extern "C" Unk80EE4Data* loadMapObjectByName__Q22cf13CfGameManagerFv(
     const char* name, u32 index);
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 extern "C" u32 CfRes_getAllocHandle();
@@ -1155,7 +1155,7 @@ extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
             reinterpret_cast<Unk81CA0Data*>(result), third, fourth);
         textPointer =
             reinterpret_cast<cf::CfGameManager*>(&text)->getSelf();
-        void* file = getFP__FPCc(static_cast<const char*>(textPointer));
+        void* file = getFP(static_cast<const char*>(textPointer));
         s32 first = Bdat_GetRowBase_B41C(file);
         s32 count = Bdat_GetMaxRow_B1EC(file);
         s32 end = first + count;
@@ -1361,11 +1361,10 @@ extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId) {
     return CtrlRemote_TouchBitByArg(resourceId + 0x220);
 }
 
-extern "C" void __dl__FPv(void* object);
 #define DEFINE_POD_DTOR(name) \
 extern "C" UnkDestructible* name(UnkDestructible* object, s32 deleteFlag) { \
     UnkDestructible* result = object; \
-    if (object != nullptr && deleteFlag > 0) __dl__FPv(object); \
+    if (object != nullptr && deleteFlag > 0) operator delete(object); \
     return result; \
 }
 DEFINE_POD_DTOR(__dt__80080400)
@@ -1388,7 +1387,7 @@ extern "C" Unk87588TypedData* __dt__8008753C(Unk87588TypedData* object, s32 dele
     if (object != nullptr) {
         object->field_0x48.bits = 0;
         object->field_0x44 = 0;
-        if (deleteFlag > 0) __dl__FPv(object);
+        if (deleteFlag > 0) operator delete(object);
     }
     return result;
 }
@@ -1541,7 +1540,6 @@ extern "C" Unk80EE4Data* isObjectFlagSet__Q22cf13CfGameManagerFv(
 class BdatFilePointer;
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 #pragma dont_inline on
@@ -1549,7 +1547,7 @@ extern "C" Unk80EE4Data* loadMapObjectByName__Q22cf13CfGameManagerFv(
     const char* name, u32 index) {
     Bdat_GetTable_AA34();
     const char* value;
-    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(name);
+    BdatFilePointer* file = (BdatFilePointer*)getFP(name);
     value = (const char*)getBdatStringColumnValue(file, &lbl_eu_804FB824[0x84], index);
     Bdat_GetMaxRow_B1EC(file);
     Bdat_GetRowBase_B41C(file);
@@ -2699,7 +2697,7 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
         }
         return;
     }
-    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(lbl_eu_804FB824);
+    BdatFilePointer* file = (BdatFilePointer*)getFP(lbl_eu_804FB824);
     const char* val_a = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
     const char* val_b = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
     if (mode == 0) {
@@ -2758,7 +2756,7 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
         }
         return;
     }
-    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(lbl_eu_804FB824);
+    BdatFilePointer* file = (BdatFilePointer*)getFP(lbl_eu_804FB824);
     const char* val_a = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
     const char* val_b = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
     if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {

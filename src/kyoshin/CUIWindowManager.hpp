@@ -183,7 +183,6 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                    bool insertTop);
 
 // array delete (C-ABI import).
-void __dla__FPv(void* p);
 }
 
 // reslist_base vtable (retail data, other split). Sized >= 8 bytes so MWCC

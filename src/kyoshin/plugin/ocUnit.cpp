@@ -6,6 +6,7 @@
 #include "kyoshin/plugin/ocUnit.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // .sdata2 pool plant: MWCC's implicit int->double conversion magic
 // (2^52 + 2^31). With this planted under its retail name AND the other
@@ -149,7 +150,7 @@ extern "C" int getUnitObject(VMThread* pThread, int handle, u16 unk) {
         found = (cf::CfObject*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
         if (found != NULL) {
             Bdat_GetTable_AA34();
-            getFP__FPCc(lbl_eu_804FA74C); // init side effect only; result unused
+            getFP(lbl_eu_804FA74C); // init side effect only; result unused
             u32 col = getBdatStringColumnValue((void*)lbl_eu_804FA74C, lbl_eu_804FA74C + 0x10, idx);
             if (*(u8*)&col == 0) {
                 found->unk64 |= 0x1000;
@@ -2075,7 +2076,7 @@ void cf::CfObject::CfObject_setMoveBusyState(int flag) {
     }
 }
 
-extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return ((cf::CfObject*)self)->mField4C * ml::rad2deg; }
+float cf::CfObject::CfObject_UnkVirtualFunc34() { return mField4C * ml::rad2deg; }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(cf::CfObject* self, float value) {
     self->CfObject_setMoveHeadAngle(value);

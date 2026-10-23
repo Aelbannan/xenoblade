@@ -17,6 +17,7 @@
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/g3d/res/g3d_restex.h>
 #include "monolib/math/CVec3.hpp"
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // mpfsys render-state globals (SDA-relative linker symbols). Plain
 // global-scope externs - MWCC does not mangle global-scope variable names,
@@ -140,7 +141,6 @@ extern "C" void* Scn_GetCurrentScene();
 extern "C" void scnLgtEnterMode20(void* ctrl);
 // nw4r diagnostics / math helpers used by simulateLayer (retail-named).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 extern "C" void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* inst, u8* ptr, u8 byte, u32 count);
 // Layer-draw push (defined below): Fv-annotated but actually receives
@@ -902,7 +902,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             // Degenerate case falls back to m itself (not zero).
             f32 s4 = m;
             if (m > lbl_eu_8066A744) {
-                s4 = m * FrSqrt__Q24nw4r4mathFf(m);
+                s4 = m * nw4r::math::FrSqrt(m);
             }
             f32 scale = lbl_eu_8066A750 / s4;
             quat.x = axis.x * scale;
@@ -944,7 +944,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             // Degenerate case falls back to m itself (not zero).
             f32 s4 = m;
             if (m > lbl_eu_8066A744) {
-                s4 = m * FrSqrt__Q24nw4r4mathFf(m);
+                s4 = m * nw4r::math::FrSqrt(m);
             }
             f32 scale = lbl_eu_8066A750 / s4;
             quat.x = axis.x * scale;

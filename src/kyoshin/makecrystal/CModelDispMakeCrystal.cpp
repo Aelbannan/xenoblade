@@ -54,6 +54,7 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
+void playUISound(u32);
 #undef writeVec3f
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
@@ -197,7 +198,6 @@ void CCharVoiceMan_FlushAll(void);
 void MenuSnd_StopAllSlots_89C88(void);
 void CTaskGame_stopVision(void);
 void CUICfManager_queuePauseItemMenu(u32, u32, u32);
-void playUISound__FUl(u32);
 void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void schedDetachChildSlot(void*, void*);
@@ -330,7 +330,6 @@ void __dt__17CMCCrystalSupportFv(void*, int);
 void __dt__14CMCCrystalListFv(void*, int);
 void __dt__16CMCCylinderGaugeFv(void*, int);
 void __dt__17UnkClass_8045F564Fv(void*, int);
-void __dl__FPv(void*);
 }
 extern void* lbl_eu_806640EC;   // sdata: character/enum table pointer (MakeCrystal_AppendItemSteps)
 extern void* lbl_eu_806640D8;   // sdata: item-source pointer (MakeCrystal_AppendItemSteps)
@@ -883,7 +882,7 @@ void* __dt__8021C540(void* obj, int flag)
         u8* sub = reinterpret_cast<u8*>(obj);
         __dt__Q22cf17CActParamAnimGameFv(sub + 8, -1);
         if (flag > 0) {
-            __dl__FPv(obj);
+            operator delete(obj);
         }
     }
     return obj;
@@ -1103,7 +1102,7 @@ void MakeCrystal_TickCharge(CModelDispMakeCrystal* self)
                 crystalListAlignSlot(&v, base + 0xc18, i);
                 reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)->setTranslate(i, v);
             }
-            playUISound__FUl(0x3d);
+            playUISound(0x3d);
         }
         void* p20 = *reinterpret_cast<void**>(base + 0x20);
         if (p20) {
@@ -1311,7 +1310,7 @@ void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
     int q = rv / 128;
     if ((s8)(rv - q * 128) > (int)(phase + base[0x2dd3])) return;
         base[0xbdd] = 5;
-        playUISound__FUl(0x96);
+        playUISound(0x96);
         void* arc = &lbl_eu_8065FC18[0];
         if (arc != nullptr) {
             if (*reinterpret_cast<u32*>(base + 0x14) != 0) {
@@ -1434,7 +1433,7 @@ void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* sel
     if (*reinterpret_cast<u32*>(base + 0x10)) {
         reinterpret_cast<u8*>(*reinterpret_cast<u32*>(base + 0x10))[0x59] = 7;
     }
-    playUISound__FUl(0x3f);
+    playUISound(0x3f);
 }
 
 // Retail 0x8021F50C: slot-trial state driver - once the random success
@@ -1506,7 +1505,7 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
             CrySupStartState(base + 0xc70);
             incrementEventCounter__FUl(0x7e);
             incrementEventCounter__FUl(0x7f);
-            playUISound__FUl(0x8e);
+            playUISound(0x8e);
             MakeCrystal_SpawnCrystalItem(selfp, 4, base[0x13b8 + i]);
             base[0x13b8 + i] = 0;
             break;
@@ -1565,7 +1564,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
                 }
             }
         }
-        playUISound__FUl(0x91);
+        playUISound(0x91);
         // Then-block laid out first: >= 0xc8 falls through into rank 6.
         if (crystalCount >= 0xc8) {
             MakeCrystal_SpawnCrystalItem(self, 6, 0);
@@ -1584,7 +1583,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
                 }
             }
         }
-        playUISound__FUl(0xb2);
+        playUISound(0xb2);
     }
 }
 
@@ -1625,7 +1624,7 @@ void __declspec(noinline) MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->setCrystalInfo(
                 *reinterpret_cast<u16*>(entries + 2), entries[1]);
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startIn();
-            playUISound__FUl(0x8c);
+            playUISound(0x8c);
         }
     }
 }
@@ -1652,13 +1651,13 @@ void __declspec(noinline) MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* sel
                     }
                 }
             }
-            playUISound__FUl(0x8d);
+            playUISound(0x8d);
             MakeCrystal_SpawnCrystalItem(self, 7, 0);
         } else {
             base[0xbdd] = 0xf;
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->setTraceVisible(0);
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startOut();
-            playUISound__FUl(0x8c);
+            playUISound(0x8c);
         }
     }
 }
@@ -1689,7 +1688,7 @@ void __declspec(noinline) MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
                 }
             }
         }
-        playUISound__FUl(0x8d);
+        playUISound(0x8d);
         MakeCrystal_SpawnCrystalItem(self, 7, 0);
     } else {
         base[0xbdd] = 0xf;
@@ -1818,7 +1817,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
         } else {
             base[0xbdd] = 0x13;
             reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->startChange();
-            playUISound__FUl(3);
+            playUISound(3);
         }
     } else if (trigger2) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
@@ -1855,7 +1854,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
             CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
-            playUISound__FUl(1);
+            playUISound(1);
         }
     } else if (bDir) {
         // Cursor forward: increment the row cursor with page wrap-around.
@@ -1887,7 +1886,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
             CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
-            playUISound__FUl(1);
+            playUISound(1);
         }
     } else if (bConfirm) {
         // Page back by 8 rows.
@@ -1912,7 +1911,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
             CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
-            playUISound__FUl(1);
+            playUISound(1);
         }
     } else if (bMenu) {
         // Page forward by 8 rows.
@@ -1939,7 +1938,7 @@ void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* s
             reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             MakeCrystal_ResetSlotList(self, 1);
             CScrollBar_PlaceThumb(base + 0xe38, (u16)(s8)base[0x2dc2]);
-            playUISound__FUl(1);
+            playUISound(1);
         }
     } else if (trigger3) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
@@ -2065,7 +2064,7 @@ void __declspec(noinline) MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* se
     MakeCrystal_ResetSlotList(self, 1);
     CScrollBar_UpdateThumb((u8*)self + 0xe38, 8, entries[0]);
     CScrollBar_PlaceThumb((u8*)self + 0xe38, (u16)(s8)((u8*)self)[0x2dc2]);
-    playUISound__FUl(0xb1);
+    playUISound(0xb1);
     if (entries[0] != 0 &&
         reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel() != 0) {
         ((u8*)self)[0xbdd] = 0x12;
@@ -2269,7 +2268,7 @@ void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self
                 base[0xbdd] = 0x19;
                 cacheMCGetItemBoxEntries(base + 0xecc);
                 confirmMCGetItemBox(base + 0xecc);
-                playUISound__FUl(3);
+                playUISound(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x1a;
@@ -2283,7 +2282,7 @@ void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self
                 sysWinApplyKind(base + 0xe78, 0);
                 sysWinOpenPhase1(base + 0xe78);
                 forwardMCSubObj88(base + 0xecc, 0);
-                playUISound__FUl(5);
+                playUISound(5);
             }
         } else {
             openMCGetItemBoxSysWin(base + 0xecc);
@@ -2368,14 +2367,14 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         base[0xbdd] = 0x1c;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (trigger2) {
         // Forward cursor button: reset step and play forward sound.
         base[0xbdd] = 0x1c;
         base[0x2dd1] = 1;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (cancel) {
         // Cursor back: decrement step (wrapping to 1).
         u8 v = base[0x2dd1] - 1;
@@ -2385,7 +2384,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         u8 buf[12];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (dir) {
         // Cursor forward: increment step (resetting to 0).
         u8 v = base[0x2dd1] + 1;
@@ -2395,7 +2394,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
         u8 buf[12];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 
@@ -2475,7 +2474,7 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 ((u8*)self)[0xbdd] = 0x20;
                 cacheMCGetItemBoxEntries((u8*)self + 0xecc);
                 confirmMCGetItemBox((u8*)self + 0xecc);
-                playUISound__FUl(3);
+                playUISound(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 ((u8*)self)[0xbdd] = 0x21;
@@ -2489,7 +2488,7 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 sysWinApplyKind((u8*)self + 0xe78, 0);
                 sysWinOpenPhase1((u8*)self + 0xe78);
                 forwardMCSubObj88((u8*)self + 0xecc, 0);
-                playUISound__FUl(5);
+                playUISound(5);
             }
         }
     } else if (trigger2) {
@@ -2544,13 +2543,13 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         base[0xbdd] = 0x23;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (trigger2) {
         base[0xbdd] = 0x23;
         base[0x2dd1] = 1;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
         base[0x2dd1] = v;
@@ -2559,7 +2558,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         u8 buf[12];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
         base[0x2dd1] = v;
@@ -2568,7 +2567,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
         u8 buf[12];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 
@@ -2653,13 +2652,13 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
         base[0xbdd] = 0x28;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (trigger2) {
         base[0xbdd] = 0x28;
         base[0x2dd1] = 1;
         Cur_SetVisible(base + 0xeb4, 0);
         sysWinAdvancePhase3(base + 0xe78);
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
         base[0x2dd1] = v;
@@ -2668,7 +2667,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
         u8 buf[16];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
         base[0x2dd1] = v;
@@ -2677,7 +2676,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
         u8 buf[16];
         sysWinGetPaneScreenPos(buf, base + 0xe78, param);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 
@@ -2887,7 +2886,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCEffStart*>((u8*)self + 0xca4)->startInAnim();
         MakeCrystal_AdvanceSlotEntries(self);
         MakeCrystal_ResetSlotList(self, 0);
-        playUISound__FUl(0x8d);
+        playUISound(0x8d);
         break;
     }
     case 1: {
@@ -2918,7 +2917,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCEffStart*>((u8*)self + 0xcbc)->startInAnim();
         MakeCrystal_AdvanceSlotEntries(self);
         MakeCrystal_ResetSlotList(self, 0);
-        playUISound__FUl(0x8c);
+        playUISound(0x8c);
         break;
     }
     case 2: {
@@ -2933,7 +2932,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
                 lbl_eu_806684A4);
         }
         reinterpret_cast<CMCEffStart*>((u8*)self + 0xcd4)->startInAnim();
-        playUISound__FUl(0xb0);
+        playUISound(0xb0);
         break;
     }
     }

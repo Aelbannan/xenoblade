@@ -17,7 +17,10 @@
 // (it brings the canonical IWorkEvent, which clashes with this TU's KEEP copy).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
-extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
+#include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+void playUISound(u32);
 
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
@@ -236,7 +239,7 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
         if (self->mLayout == 0) {
             return;
         }
-        playUISound__FUl(0xd);
+        playUISound(0xd);
         break;
     case 2:
         if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
@@ -319,25 +322,25 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
     case 0:
         if (left != 0) {
             self->mField60 = 2;
-            playUISound__FUl(3);
+            playUISound(3);
             self->mFieldA0 = 4;
             sysWinAdvancePhase3(&self->mSysWin[0]);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            playUISound__FUl(6);
+            playUISound(6);
             sysWinAdvancePhase3(&self->mSysWin[0]);
         }
         break;
     case 1:
         if (left != 0) {
             self->mField60 = 2;
-            playUISound__FUl(3);
+            playUISound(3);
             self->mFieldA0 = 4;
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            playUISound__FUl(6);
+            playUISound(6);
         }
         break;
     case 2:
@@ -345,7 +348,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             // Cancel: move the cursor page up (wrap below 0 to 1).
             self->mField9C = (s8)(self->mField9C - 1);
             if (self->mField9C < 0) self->mField9C = 1;
-            playUISound__FUl(1);
+            playUISound(1);
             nw4r::math::VEC3 tmp;
             sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
             self->mCur.setRootPaneTranslate(&tmp);
@@ -353,7 +356,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             // Confirm: move the cursor page down (wrap over 1 to 0).
             self->mField9C = (s8)(self->mField9C + 1);
             if (self->mField9C > 1) self->mField9C = 0;
-            playUISound__FUl(1);
+            playUISound(1);
             nw4r::math::VEC3 tmp;
             sysWinGetPaneScreenPos(&tmp, &self->mSysWin[0], (u8)self->mField9C);
             self->mCur.setRootPaneTranslate(&tmp);
@@ -362,9 +365,9 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
             s8 page = self->mField9C;
             self->mField60 = page + 1;
             if (page == 0) {
-                playUISound__FUl(0x37);
+                playUISound(0x37);
             } else {
-                playUISound__FUl(3);
+                playUISound(3);
             }
             self->mFieldA0 = 4;
             sysWinAdvancePhase3(&self->mSysWin[0]);
@@ -372,7 +375,7 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            playUISound__FUl(6);
+            playUISound(6);
             sysWinAdvancePhase3(&self->mSysWin[0]);
             Cur_SetVisible(&self->mCur, 0);
         }
@@ -467,10 +470,8 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         self->mArcAccessor = acc;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(acc, data, &lbl_eu_80505118[0x7e]);
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &self->mLayout, acc, &lbl_eu_80505118[0x82]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            self->mLayout, &self->mAnim, acc, &lbl_eu_80505118[0x9b]);
+        buildLayout(&self->mLayout, acc, &lbl_eu_80505118[0x82]);
+        bindLayoutAnimTransform(self->mLayout, &self->mAnim, acc, &lbl_eu_80505118[0x9b]);
 
         nw4r::lyt::Layout* layout = self->mLayout;
         nw4r::lyt::Pane* rootPane = layout->GetRootPane();
@@ -578,7 +579,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         void* data2 = self->mFile2->getData();
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_80664424 = (u8*)getFP__FPCc(&lbl_eu_80505118[0x1e5]);
+        lbl_eu_80664424 = (u8*)getFP(&lbl_eu_80505118[0x1e5]);
         self->mFile2 = 0;
         return 1;
     }

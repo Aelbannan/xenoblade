@@ -64,8 +64,6 @@ extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName
 // C-library delete operators (flat retail symbols; shared runtime helpers).
 // Canonical void-return form - MUST match the ~100 other __dl__FPv decls
 // (mixed void*/void spellings trip MWCC 10505 when headers co-occur).
-extern "C" void __dl__FPv(void* p);
-extern "C" void __dla__FPv(void* p);
 // C-library vararg formatter (flat retail symbol; used by the slot sprintf
 // fills). Matches the per-TU declaration used by CMapSel.hpp etc.
 extern "C" int sprintf(char* str, const char* fmt, ...);

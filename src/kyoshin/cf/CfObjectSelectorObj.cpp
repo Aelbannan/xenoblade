@@ -19,6 +19,8 @@ class CfObject;
 extern "C" void __ct__cf_CfObjEnumList(u8* self);
 extern "C" u8* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" u8* allocate__Q23mtl10MemManagerFUlUl(u32 size, u8* heap);
+// KEEP (extern-C cleanup 2026-10-23): calling these through operator delete/delete[]
+// changes the extab cleanup actions (retail keeps the may-throw call shape).
 extern "C" void __dl__FPv(void* p);
 extern "C" void __dla__FPv(void* p);
 

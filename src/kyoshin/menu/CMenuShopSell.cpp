@@ -10,6 +10,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+void playUISound(u32);
 
 // isIdle returns raw int so callers use cmpwi (CMenuCollepedia pattern).
 
@@ -228,7 +229,7 @@ extern "C" __declspec(noinline) void MenuShopSellHandlePhase0(CMenuShopSell* sel
         func_801C412C(&self->mTitleAHelp);
         InitItemDisplay(&self->mItemBoxGrid);
         self->mState = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 

@@ -185,7 +185,7 @@ extern "C" __declspec(noinline) cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::
         }
 
         if (deleteFlag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

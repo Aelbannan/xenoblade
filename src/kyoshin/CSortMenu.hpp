@@ -111,7 +111,6 @@ public:
 extern "C" void* lbl_eu_805349D0[];  // CSortMenu vtable
 extern "C" void* lbl_eu_805349B8[];  // String table for sort menu pane names
 
-extern "C" void __dl__FPv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);

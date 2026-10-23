@@ -9,6 +9,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+void playUISound(u32);
 
 /* Retail constructor symbol (unmangled member form). Mirrors the matched
  * CMenuKizunaTalkList / CCol6Invite ctor pattern: base CProcess ctor, temp
@@ -301,7 +302,7 @@ void advanceOptionPhase1(CMenuOption* self) {
         func_801C412C(&self->mTitleAHelp);
         COptionBeginScrollSetup(&self->mOption);
         self->mState = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 

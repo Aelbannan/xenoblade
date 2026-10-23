@@ -505,7 +505,6 @@ s32 SchedRes_FindOrClaim(u32 key) {
     return 0;
 }
 
-extern "C" void __dla__FPv(void*);
 #pragma push
 #pragma auto_inline off
 // Working view of the entry header used while walking the chain.
@@ -588,11 +587,11 @@ extern "C" int __dt__804DEDCC(CResEntry* entry, void* res, u32 flagBit) {
     e->b1 |= (u8)((flagBit << 7) & 0x80);
     if (!done && e->p10 == NULL && e->b3 == 0) {
         if (e->p8 != NULL) {
-            __dla__FPv(e->p8);
+            operator delete[](e->p8);
             e->p8 = NULL;
         }
         if (e->pc != NULL) {
-            __dla__FPv(e->pc);
+            operator delete[](e->pc);
             e->pc = NULL;
         }
         u32 memActive =
@@ -770,19 +769,18 @@ extern "C" void SchedRes_AllocElemTables(u32 count) {
     lbl_eu_80665A3C = count;
 }
 
-void __dla__FPv(void*);
 
 // Release the schedule-resource arrays (element dtor).
 void __dt__804DF744() {
     CSchedElem14* p1 = lbl_eu_80665A34;
     lbl_eu_80665A30 = 0;
     if (p1) {
-        __dla__FPv(p1);
+        operator delete[](p1);
         lbl_eu_80665A34 = NULL;
     }
     CSchedNodeC* p2 = lbl_eu_80665A38;
     if (p2) {
-        __dla__FPv(p2);
+        operator delete[](p2);
         lbl_eu_80665A38 = NULL;
     }
     lbl_eu_80665A3C = 0;
@@ -1216,8 +1214,6 @@ CEffectNode* SchedNode_FetchByIndex(s32 index) {
     }
     return NULL;
 }
-
-extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 
 // Indexed handle lookup: returns the sbss pointer-slot value advanced by
 // arg*0x34 (retail folds the constant slot address into an sda21 load).

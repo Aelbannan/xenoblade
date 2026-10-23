@@ -53,10 +53,9 @@ struct CMenuBpsProcessShim {
 
 void BpsStateClearSlot(CMenuBattlePlayerStateSlot*);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
-extern "C" void __dl__FPv(void*);
 extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
     if (self && del > 0)
-        __dl__FPv(self);
+        operator delete(self);
     return self;
 }
 extern "C" {
@@ -1106,7 +1105,7 @@ extern "C" void* __dt__22CMenuBattlePlayerStateFv(
             __dt__8CProcessFv(self, 0);
         }
         if (deleteFlag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

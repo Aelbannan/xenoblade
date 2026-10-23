@@ -77,7 +77,6 @@ extern "C" {
     extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
     extern int setHandleParam__11CDeviceFileFP11CFileHandleUl(void*, u32);
     extern int isStandbyReady__11CDeviceFileFv(void);
-    extern void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
     extern void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
     extern void closeFileHandle__FPP11CFileHandle(void**);
     extern int labs(int);
@@ -862,18 +861,18 @@ extern "C" void EvtObj_ScanPlayers(void* self) {
 // ============================================================
 // EvtObj_CheckWalkEvt (us-80184938) - Event handler check
 // ============================================================
-extern "C" int EvtObj_CheckWalkEvt(CREvtModelObj* self) {
-    if (self->mField74 != EvtSeqGetWalkIndex() + 1) {
+int CREvtModelObj::EvtObj_CheckWalkEvt() {
+    if (mField74 != EvtSeqGetWalkIndex() + 1) {
         return 0;
     }
 
     int result;
     // Only active while multiple players are running
-    if ((u32)self->mParent->mField30 <= 1) {
+    if ((u32)mParent->mField30 <= 1) {
         result = 0;
     } else {
-        result = __ptmf_cmpr((void*)self->mCallback, lbl_eu_80531F88) == 0 ||
-                 __ptmf_cmpr((void*)self->mCallback, lbl_eu_80531F94) == 0;
+        result = __ptmf_cmpr((void*)mCallback, lbl_eu_80531F88) == 0 ||
+                 __ptmf_cmpr((void*)mCallback, lbl_eu_80531F94) == 0;
     }
     return result;
 }
@@ -924,9 +923,8 @@ extern "C" int EvtObj_OnFileEvent(void* self, CEventFile* ev) {
 // ============================================================
 // EvtObj_CheckFlags140 (us-80184b00) - Check function
 // ============================================================
-extern "C" int EvtObj_CheckFlags140(void* self) {
-    CREvtModelObj* obj = (CREvtModelObj*)self;
-    u32 flags = obj->mFlags;
+int CREvtModelObj::EvtObj_CheckFlags140() {
+    u32 flags = mFlags;
     int result = 0;
     if (flags & 1) {
         if (flags & 0x40) {
@@ -945,8 +943,8 @@ extern "C" void func_80183264() {}
 // func_801835C4 (us-801849e0) - clear bit 0x20 of mFlags (+0x18).
 // Retail: lwz / rlwinm (strip bit 26) / stw.
 // ============================================================
-extern "C" void func_801835C4(CREvtModelObj* self) {
-    self->mFlags &= ~0x20u;
+void CREvtModelObj::func_801835C4() {
+    mFlags &= ~0x20u;
 }
 
 // ============================================================
@@ -978,4 +976,4 @@ extern "C" void EvtObj_ThunkCtor3C(void* self) {
     ((void(*)(void*))__ct__80181B74)((char*)self - 0x3C);
 }
 // retail: li r3,1; blr -- returns true
-extern "C" bool EvtObj_AlwaysTrue(void* self) { return true; }
+bool CREvtModelObj::EvtObj_AlwaysTrue() { return true; }

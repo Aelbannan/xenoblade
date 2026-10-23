@@ -252,7 +252,6 @@ extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay
 // chain is emitted - retail's class has no CLibCri layer and destroys
 // CWorkThread directly.
 extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
-extern "C" void __dl__FPv(void* p);
 
 extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self, int flag) {
     u8* base = (u8*)self;
@@ -282,7 +281,7 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
         // Base destructor, then free when invoked as deleting dtor
         __dt__11CWorkThreadFv(self, 0);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

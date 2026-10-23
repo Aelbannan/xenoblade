@@ -15,7 +15,6 @@
 
 // Retail fragments (see the data block at the bottom): the class ctor/dtor
 // are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
-extern "C" void __dl__FPv(void*);
 extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag);
 extern "C" u32 lbl_eu_805701B0[];
 
@@ -75,7 +74,7 @@ extern "C" int MdlMouthPollAnim(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResul
 // Retail dtor fragment (deleting-dtor form: flag > 0 frees the object).
 extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag) {
     if (ths != 0 && flag > 0) {
-        __dl__FPv(ths);
+        operator delete(ths);
     }
     return ths;
 }

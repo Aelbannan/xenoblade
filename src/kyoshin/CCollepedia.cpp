@@ -10,6 +10,8 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "kyoshin/CTagProcessor.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
@@ -63,7 +65,7 @@ extern "C" __declspec(noinline) void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::Arc
 extern "C" void* __dt__802531C4(void* self, int dealloc_flag) {
     void* result = self;
     if (result != nullptr && dealloc_flag > 0) {
-        __dl__FPv(result);
+        operator delete(result);
     }
     return result;
 }
@@ -161,7 +163,7 @@ void clpInitPgInfo(CLPPageInfo* obj, int val) {
 extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
     void* result = self;
     if (result != nullptr && dealloc_flag > 0) {
-        __dl__FPv(result);
+        operator delete(result);
     }
     return result;
 }
@@ -271,7 +273,7 @@ extern "C" __declspec(noinline) void clpOpenDetail(CCollepedia* this_) {
     stateBytes[0] = 1;
     stateBytes[1] = 0;
     stateBytes[2] = 1;
-    playUISound__FUl(0xD);
+    playUISound(0xD);
 }
 
 // Return byte at +0xD from a sub-array entry (indexed by arg)
@@ -296,7 +298,7 @@ extern "C" __declspec(noinline) void clpCloseDetPg(CCollepedia* this_) {
     if (stateBytes[0] != 2) return;
     stateBytes[0] = 3;
     stateBytes[1] = 0;
-    playUISound__FUl(0xE);
+    playUISound(0xE);
 }
 
 // Set two named panes (0x82, 0x92) on the layout at field_4
@@ -369,7 +371,7 @@ extern "C" __declspec(noinline) s8* clpInitEStore(s8* this_) {
 extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
     void* result = self;
     if (result != nullptr && dealloc_flag > 0) {
-        __dl__FPv(result);
+        operator delete(result);
     }
     return result;
 }
@@ -805,7 +807,7 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
         __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x14), -1);
         __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x04), -1);
         if (flag > 0) {
-            __dl__FPv((u8*)self);
+            operator delete((u8*)self);
         }
     }
     return self;
@@ -1061,7 +1063,7 @@ void clpReqCloseVw(CCollepedia* this_) {
     this_->field_38->SetAnimationEnable(this_->field_3C, false);
     this_->field_38->SetAnimationEnable(this_->field_40, true);
 
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 #pragma push
@@ -1092,7 +1094,7 @@ void clpCursorLeft(CCollepedia* this_) {
         clpSetSelTxt(this_);
     }
 
-    playUISound__FUl(1);
+    playUISound(1);
 }
 #pragma pop
 
@@ -1122,7 +1124,7 @@ void clpCursorRght(CCollepedia* this_) {
         clpSetSelTxt(this_);
     }
 
-    playUISound__FUl(1);
+    playUISound(1);
 }
 #pragma pop
 
@@ -1148,7 +1150,7 @@ void clpCursorUp(CCollepedia* this_) {
         clpSetSelTxt(this_);
     }
 
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // us-802572f0
@@ -1173,7 +1175,7 @@ void clpCursorDown(CCollepedia* this_) {
         clpSetSelTxt(this_);
     }
 
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 #pragma push
@@ -1196,7 +1198,7 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
 
     clpRefreshPage(this_);
     clpSetSelTxt(this_);
-    playUISound__FUl(10);
+    playUISound(10);
 }
 #pragma pop
 
@@ -1218,7 +1220,7 @@ extern "C" void clpPrevCatPg(CCollepedia* this_) {
 
     clpRefreshPage(this_);
     clpSetSelTxt(this_);
-    playUISound__FUl(10);
+    playUISound(10);
 }
 #pragma pop
 
@@ -1257,7 +1259,7 @@ void clpOnCancel(CCollepedia* this_) {
     Cur_SetVisible(&this_->field_54[0x30], 0);
     this_->field_49 = 8;
     this_->field_51 = 0;
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 // us-802575e8
@@ -1300,20 +1302,20 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
             u32 cat = clpGetRowSubc(&this_->field_E8, this_->field_D9);
             // Switch range-check covers 0..8; case 8 is empty (fanfare only)
             switch (cat) {
-            case 0: playUISound__FUl(0x4B); break;
-            case 1: playUISound__FUl(0x4C); break;
-            case 2: playUISound__FUl(0x4D); break;
-            case 3: playUISound__FUl(0x4E); break;
-            case 4: playUISound__FUl(0x4F); break;
-            case 5: playUISound__FUl(0x50); break;
-            case 6: playUISound__FUl(0x51); break;
+            case 0: playUISound(0x4B); break;
+            case 1: playUISound(0x4C); break;
+            case 2: playUISound(0x4D); break;
+            case 3: playUISound(0x4E); break;
+            case 4: playUISound(0x4F); break;
+            case 5: playUISound(0x50); break;
+            case 6: playUISound(0x51); break;
             case 7:
-            case 8: playUISound__FUl(0x52); break;
+            case 8: playUISound(0x52); break;
             }
             incrementEventCounter__FUl(0x84);
         } else {
             // Detail page confirm: schedule sound 6 instead.
-            playUISound__FUl(6);
+            playUISound(6);
         }
 
         clpCloseDetPg(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
@@ -1345,7 +1347,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     Cur_SetVisible(&this_->field_54, 0);
     this_->field_49 = 6;
     this_->field_51 = 0;
-    playUISound__FUl(3);
+    playUISound(3);
 }
 
 void clpCanClaim(CCollepediaFull* self) {
@@ -1860,9 +1862,9 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         // Resolve the two message files used by the item/quest name lookups.
         Bdat_GetTable_AA34();
-        lbl_eu_806647D8 = getFP__FPCc(&lbl_eu_8050C6E8[0x3a4]);
+        lbl_eu_806647D8 = getFP(&lbl_eu_8050C6E8[0x3a4]);
         Bdat_GetTable_AA34();
-        lbl_eu_806647DC = (char*)getFP__FPCc(&lbl_eu_8050C6E8[0x3b3]);
+        lbl_eu_806647DC = (char*)getFP(&lbl_eu_8050C6E8[0x3b3]);
 
         clpTryShow(this);
         field_2C = nullptr;

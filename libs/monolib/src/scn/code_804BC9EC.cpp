@@ -5,6 +5,7 @@
 #include <monolib/scn/code_804BC9EC.hpp>
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // Entry in the top-level chunk list (8 bytes each)
 struct ScnResEntry {
@@ -108,7 +109,6 @@ extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin) // 1/3
 // extern const f32 lbl_eu_8066AF18; // 255.0f
 
 // nw4r math functions
-float FrSqrt__Q24nw4r4mathFf(float);
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 // String constants for warning
@@ -135,7 +135,7 @@ extern "C" void __dt__6CLightFv(void* self, int flag);
 extern "C" void __dt__reslist_IScnEnvCtl(void* self, int flag);
 extern "C" void __dt___reslist_base_IScnEnvCtl(void* self, int flag);
 
-int getScnHandle__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
+void* getScnHandle() { return &lbl_eu_80665968; }
 
 int Coli_ParseChunks(void* outStruct, u32 data) {
     *(u32*)outStruct = 0;
@@ -361,7 +361,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
             if (radiusSq == lbl_eu_8066AF14 || radiusSq < lbl_eu_8066AF14) {
                 radius = lbl_eu_8066AF14;
             } else {
-                radius = radiusSq * FrSqrt__Q24nw4r4mathFf(radiusSq);
+                radius = radiusSq * nw4r::math::FrSqrt(radiusSq);
             }
 
             f32 dcamX = CAMX - cen.x, dcamY = CAMY - cen.y, dcamZ = CAMZ - cen.z;
@@ -550,7 +550,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
 void sinit_804BD8A0() {
     lbl_eu_80665968[0] = 0;
     reinterpret_cast<CColiMoverState*>(&lbl_eu_8065F32C)->initColiMover();
-    void* const obj = &lbl_eu_80665968;
+    u32* const obj = lbl_eu_80665968;
     void* const dtor = (void*)&__dt__804BD8E8;
     void* const reg = &lbl_eu_8065F418;
     __register_global_object(obj, dtor, reg);

@@ -13,6 +13,9 @@
 
 #include <string.h>
 #include <nw4r/lyt.h>
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Retail symbols: advanceAnimTransform keeps the mangled C++ name, but AnimRewindFrame
 // is the unmangled C name (per retail relocs).
@@ -3021,46 +3024,16 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         subObjPtrs[3] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3])
             ->Attach(data, lbl_eu_8050888C + 0x37f);
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            (nw4r::lyt::Layout**)&subObjPtrs[5],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x383);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[6],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x39a);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[7],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x3b4);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[8],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x3d3);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[9],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x3f3);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[10],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x40e);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[11],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x42d);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[12],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x44c);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[13],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x46c);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[14],
-            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
-            lbl_eu_8050888C + 0x48b);
+        buildLayout((nw4r::lyt::Layout**)&subObjPtrs[5], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x383);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[6], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x39a);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[7], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x3b4);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[8], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x3d3);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[9], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x3f3);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[10], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x40e);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[11], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x42d);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[12], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x44c);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[13], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x46c);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[14], (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3], lbl_eu_8050888C + 0x48b);
 
         // Bind the shared font into the layout's root pane.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)subObjPtrs[5] + 0x10);
@@ -3269,11 +3242,11 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         CFileHandle* fh3 = (CFileHandle*)subObjPtrs[2];
         void* data3 = fh3->getData();
         Bdat_GetTable_AA34();
-        if (getFP__FPCc(lbl_eu_8050888C + 0x541) == 0) {
+        if (getFP(lbl_eu_8050888C + 0x541) == 0) {
             CBdat::setBdatEntry(2, data3);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_806646D0 = (unsigned long)getFP__FPCc(lbl_eu_8050888C + 0x550);
+        lbl_eu_806646D0 = (unsigned long)getFP(lbl_eu_8050888C + 0x550);
         loadCrystalBoxArchive(this);
         subObjPtrs[2] = 0;
         return true;

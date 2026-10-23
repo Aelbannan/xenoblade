@@ -372,7 +372,7 @@ extern "C" void schedDetachChildSlot(CSchedule* self, CScheduleChild* child) {
 // us-804e8790: deleting destructor (EU __dt__804E42F4).
 extern "C" void* __dt__804E42F4(void* self, s32 freeIt) {
     if (self != NULL && freeIt > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

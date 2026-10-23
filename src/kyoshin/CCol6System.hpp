@@ -372,7 +372,6 @@ void BdatGetItemType(u16);                                             // CItemB
 void BdatGetItemId(u16);                                             // CItemBoxInfo.cpp
 char* BuildItemNameStr(u16);                                            // CItemBoxInfo.cpp
 void* Bdat_GetTable_AA34();                                               // bdat manager
-void* getFP__FPCc(const char*);                                      // bdat file pointer
 u32 Bdat_GetMaxRow_B1EC(void*);                                            // bdat row count
 void sysWinGetPaneScreenPos(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
 void sysWinSetTwoTextValues(void* syswin, void* a, void* b);                  // CSysWin.cpp
@@ -382,7 +381,6 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
 void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
 void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
 int getLODData__8CTaskLODFv(u8);                                   // CTaskLOD.cpp
-void* getScnHandle__Fv(void);                                        // code_80135FDC.cpp
 void ScnData_FwdB7D9C(void*, u8);                                        // code_80135FDC.cpp
 void ScnData_FwdB7DD4(void*, u8);                                        // code_80135FDC.cpp
 void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
@@ -399,12 +397,6 @@ int sprintf(char*, const char*, ...);                                // stdio (C
 // etc.); declare with the full mangled name so the call-site relocs bind
 // verbatim (same convention as CItemBoxGrid.hpp / CTalkWindow.hpp).
 extern "C" {
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
-    const char* arcName);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnim,
-    nw4r::lyt::ArcResourceAccessor* accessor, char* animName);
 void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout* layout,
                                             char* paneName, u8 value);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(

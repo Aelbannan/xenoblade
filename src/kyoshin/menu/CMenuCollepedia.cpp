@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
+void playUISound(u32);
 
 extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
 
@@ -24,7 +25,6 @@ extern "C" void updateHelp(CTitleAHelp* self);
 // Complete-object dtor (us-8025494c). Free-function D2 form so the base
 // call reloc is retail __dt__800FED0C (game D2), not library __dt__8CProcessFv.
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
-extern "C" void __dl__FPv(void* p);
 extern "C" CMenuCollepedia* __dt__15CMenuCollepediaFv(CMenuCollepedia* self,
                                                      int flags);
 
@@ -72,7 +72,7 @@ extern "C" CMenuCollepedia* __dt__15CMenuCollepediaFv(CMenuCollepedia* self,
         __dt__6CBgTexFv(&self->mBgTex, -1);
         __dt__800FED0C(self, 0);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -347,7 +347,7 @@ void CMenuCollepedia::Colle_HandleInput() {
             clpIsBusy(&this->mCollepedia) == 0) {
             func_801C41E8(&this->mTitleAHelp, 0x52);
             if (this->mTimer > lbl_eu_806687E4) {
-                playUISound__FUl(2);
+                playUISound(2);
             }
             this->mTimer = lbl_eu_806687E0;
             if (turbo & 0x2001) {
@@ -406,7 +406,7 @@ void CMenuCollepedia::Colle_CloseMenu() {
     if (clpIsBusy(&this->mCollepedia) == 0) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
-            playUISound__FUl(6);
+            playUISound(6);
         }
         this->mState = 4;
         this->mField54 = 1;

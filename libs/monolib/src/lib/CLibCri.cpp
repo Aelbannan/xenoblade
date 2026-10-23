@@ -54,7 +54,6 @@ extern "C" void (*lbl_eu_806656DC)(void);
 extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(void* self, const char* name, void* parent, int capacity);
 extern "C" bool wkStandbyLogin__11CWorkThreadFv(void* self);
 extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
-extern "C" void __dl__FPv(void* p);
 extern "C" void __dt__11CDeviceVICbFv(void* self, int flag);
 extern "C" void __ct__11CDeviceVICbFv(void* self);
 extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
@@ -223,7 +222,7 @@ extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
         __dt__11CDeviceVICbFv(&vp->vtViCb, 0);
         __dt__11CWorkThreadFv(self, 0);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

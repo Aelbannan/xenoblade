@@ -37,7 +37,6 @@ extern "C" void CScrollBar_loadLayoutArc(void* scrollbar);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
-extern "C" void __dl__FPv(void*);
 void closeFileHandle(CFileHandle**);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
@@ -67,7 +66,6 @@ extern "C" char* MakeTplNameSysFile(u32);
 // Cursor position helper: fill output with the point derived from two panes.
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void playUISound__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
 extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" void setPaneVisible(void*, u32);

@@ -540,8 +540,7 @@ extern "C" void* __dt__80495200(CLightEnv* self, int deleting) {
 
         // When the deleting flag is positive, free the object via operator delete.
         if (deleting > 0) {
-            extern void __dl__FPv(void*);
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -13,6 +13,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 
 #include <new>
+void playUISound(u32);
 
 extern "C" u8 CSysWin_isReady(CSysWinFull* self) { return self->field_28; }
 
@@ -87,13 +88,12 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 // under the unit's -O4,p flags (see MWCC_CASES #16).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void playUISound__FUl(u32);
 // retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail playUISound(0xE) }
 extern "C" void sysWinAdvancePhase3(void* self) {
     if (((CSysWin*)self)->field_35 == 2) {
         ((CSysWin*)self)->field_35 = 3;
         ((CSysWin*)self)->field_36 = 0;
-        playUISound__FUl(0xE);
+        playUISound(0xE);
     }
 }
 

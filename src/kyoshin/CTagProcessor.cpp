@@ -5,6 +5,7 @@
 #include "kyoshin/CTagProcessor.hpp"
 
 #include <wchar.h>  // wcstol (MSL, C-linkage)
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
     if (self && deleting > 0) {
@@ -1351,12 +1352,11 @@ extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) {
 
 // Fetch the tag chain head and return the first node's list header (4 bytes
 // before the payload). Retail asserts when the chain is empty.
-extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void* TagCtxGetNodeHeader(void* self) {
     extern u8 lbl_eu_8052CB40[], lbl_eu_8052CB1C[];
     void* node = *(void**)self;
     if (!node)
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+        nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
     return (u8*)node - 4;
 }
 

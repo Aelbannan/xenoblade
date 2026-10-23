@@ -192,7 +192,7 @@ extern "C" void* __dt__801865C4(void* self, int flags) {
         }
         lbl_eu_806642D0 = 0;
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

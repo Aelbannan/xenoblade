@@ -1011,4 +1011,3 @@ void sinit_80059D60() {
     t[0x27] = lbl_eu_80665FAC;
 }
 
-extern "C" void func_800586E8() {}

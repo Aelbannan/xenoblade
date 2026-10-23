@@ -72,7 +72,7 @@ cf::CfObjectObj* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag) {
         ths->CfObject_releaseMoveTargets();
         __dt__Q22cf12CfObjectMoveFv(ths, 0);
         if (deleteFlag > 0) {
-            __dl__FPv(ths);
+            operator delete(ths);
         }
     }
     return ths;

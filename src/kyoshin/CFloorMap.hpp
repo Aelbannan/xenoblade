@@ -733,7 +733,6 @@ extern "C" u16 BdatGetU16Direct(const void*, const void*, int);
 extern "C" u8 BdatGetU8Direct(u32, const char*, u32);
 extern "C" s16 BdatGetS16Direct(u32, const char*, u32);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
-extern "C" void* getFP__FPCc(const char*);
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen);
 extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
@@ -747,7 +746,6 @@ extern "C" void CScrollBar_InitRootPane(void*, const float*);
 extern "C" void CScrollBar_UpdateThumb(void*, int, int);
 extern "C" void sysWinGetPaneScreenPos(nw4r::math::VEC3*, void*, u8);
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
-extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" int atoi(const char*);
 
 // CSysWin sub-object helpers used by the floor-map input handlers (retail

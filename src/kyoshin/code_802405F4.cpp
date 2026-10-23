@@ -29,6 +29,7 @@
 #include "kyoshin/CFade.hpp"
 #include <monolib/math/MTRand.hpp>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+void playUISound(u32);
 
 
 // Copy helpers for member sub-object initialization
@@ -455,7 +456,7 @@ extern "C" void* __dt__14CMenuMapSelectFv(CMenuMapSelect* _this, int flags) {
             }
         }
         if (flags > 0) {
-            __dl__FPv(_this);
+            operator delete(_this);
         }
     }
     return _this;
@@ -736,7 +737,7 @@ void CMenuMapSelect::Move() {
         func_801C412C(&mTitleHelp);
         initMapSel(&mMapSel);
         mState = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
         UIWin_ControlWindowLists(1, 0);
         Scn_SetPauseFlag(mScn, 0);
         break;
@@ -770,7 +771,7 @@ void CMenuMapSelect::Move() {
         }
         func_801C41E8(&mTitleHelp, 0);
         FloorMap_LoadStageLayout(&mFloorMap);
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
         CFade_FadeOut(&mFade);
         mState = 6;
         break;

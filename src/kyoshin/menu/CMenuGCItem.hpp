@@ -91,7 +91,6 @@ extern "C" void UpdateItemBox(CItemBoxGrid* self);
 extern "C" void DrawItemBoxGrid(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void UnloadItemBox(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
-extern "C" void playUISound__FUl(u32 op);
 extern "C" int IsMenuState621F0();
 
 // CW-mangled ctors/dtors referenced at the retail call sites (extern "C" stops

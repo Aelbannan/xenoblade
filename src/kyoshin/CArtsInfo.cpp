@@ -9,6 +9,9 @@
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/lyt.h>
 #include <stdlib.h>
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // Extern declarations for referenced symbols
 
@@ -158,7 +161,7 @@ extern "C" void* __dt__9CArtsInfoFv(CArtsInfo* self, int flags) {
         __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -354,7 +357,7 @@ void CArtsInfo_OpenDetail6(CArtsInfo* self) {
 
     LayoutSetTextBoxText(self->mpLayout1, base + 0x47, buf, 0);
 
-    playUISound__FUl(0x6D);
+    playUISound(0x6D);
 }
 #pragma optimize_for_size off
 
@@ -379,7 +382,7 @@ void CArtsInfo_ToStateA(CArtsInfo* self) {
 
     self->mpLayout2->Animate(0);
 
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 // CArtsInfo_ToStateC - state machine (state==9 -> 0xC)
@@ -467,7 +470,7 @@ u32 CArtsInfo_IsStateGE6(CArtsInfo* self) {
 // .text:0x864, size 0xB4
 void CArtsInfo_AnimState0(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, f) == 0) return;
+    if (advanceAnimTransform(self->mpAnimTrans1, f) == 0) return;
 
     // Real member calls so MWCC emits the retail r12 vtable dispatch.
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
@@ -482,7 +485,7 @@ void CArtsInfo_AnimState0(CArtsInfo* self) {
 // .text:0x918, size 0x4C
 void CArtsInfo_AnimState1(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f)) {
+    if (advanceAnimTransform(self->mpAnimTrans2, f)) {
         self->field_0x44 = 3;
         self->field_0x49 = 1;
     }
@@ -513,7 +516,7 @@ void CArtsInfo_AnimState3(CArtsInfo* self) {
 // CArtsInfo_AnimState4 - animation state 4
 // .text:0xA64, size 0xB4
 void CArtsInfo_AnimState4(CArtsInfo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 7;
 
@@ -526,7 +529,7 @@ void CArtsInfo_AnimState4(CArtsInfo* self) {
 // CArtsInfo_AnimState5 - animation state 5
 // .text:0xB18, size 0xB4
 void CArtsInfo_AnimState5(CArtsInfo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 8;
 
@@ -539,7 +542,7 @@ void CArtsInfo_AnimState5(CArtsInfo* self) {
 // CArtsInfo_AnimState6 - animation state 6
 // .text:0xBCC, size 0x60
 void CArtsInfo_AnimState6(CArtsInfo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
@@ -578,7 +581,7 @@ void CArtsInfo_AnimState8(CArtsInfo* self) {
 // CArtsInfo_AnimState9 - animation state 9
 // .text:0xD4C, size 0xB4
 void CArtsInfo_AnimState9(CArtsInfo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 0xB;
 
@@ -2619,9 +2622,9 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         void* data = fh2->getData();
         CBdat::setBdatEntry(2, data);
         Bdat_GetTable_AA34();
-        field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
+        field_0x4C = (int)getFP(&lbl_eu_8050B00C[1054]);
         Bdat_GetTable_AA34();
-        field_0x50 = (int)getFP__FPCc(&lbl_eu_8050B00C[1063]);
+        field_0x50 = (int)getFP(&lbl_eu_8050B00C[1063]);
         // split1 refresh notification (retail bl at +0x678c)
         CArtsInfo_Refresh(this);
         field_0x18 = 0;

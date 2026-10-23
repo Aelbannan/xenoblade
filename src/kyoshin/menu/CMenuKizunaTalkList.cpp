@@ -14,6 +14,7 @@ extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+void playUISound(u32);
 
 // CfGameManager.hpp cannot be included here: it declares lbl_eu_80664090 as
 // void* while CKizunaTalkList.hpp (via our header) declares it u8*. The pad
@@ -324,7 +325,7 @@ void CMenuKizunaTalkList::Move() {
     if (cancel != 0) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
-            playUISound__FUl(6);
+            playUISound(6);
         }
         mState = 4;
         mUnknown54 = 1;
@@ -401,7 +402,7 @@ void KizunaList_Phase0Show(CMenuKizunaTalkList* self) {
         func_801C412C(&self->mTitleAHelp);
         (&self->mKizunaTalkList)->showTalkList();
         self->mState = 1;
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 

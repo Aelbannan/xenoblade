@@ -25,6 +25,7 @@ extern char lbl_eu_8050FD50[];
 #include "monolib/device/CDeviceVI.hpp"
 #include <new>
 #include <revolution/gx/GXPixel.h>
+void playUISound(u32);
 
 // Global-view declaration so the catalog thunks can address the member render
 // callback by its retail symbol name (the definition below emits that symbol).
@@ -133,14 +134,14 @@ void CSysWinSave::HandleInput() {
         this->mFlagDC = 3;
         sysWinAdvancePhase3(&this->mSysWin[0]);
         Cur_SetVisible(&this->mCur18, 0);
-        playUISound__FUl(3);
+        playUISound(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         this->mFlagDC = 3;
         sysWinAdvancePhase3(&this->mSysWin[0]);
         Cur_SetVisible(&this->mCur18, 0);
         this->mFlagDD = 1;
-        playUISound__FUl(6);
+        playUISound(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         this->mFlagDD = this->mFlagDD - 1;
@@ -148,7 +149,7 @@ void CSysWinSave::HandleInput() {
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
         sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
-        playUISound__FUl(1);
+        playUISound(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         this->mFlagDD = this->mFlagDD + 1;
@@ -156,7 +157,7 @@ void CSysWinSave::HandleInput() {
         u8 tmp[0x18]; // retail frame keeps a 0x18-byte position buffer
         sysWinGetPaneScreenPos(tmp, &this->mSysWin[0], this->mFlagDD);
         this->mCur18.setRootPaneTranslate(reinterpret_cast<nw4r::math::VEC3*>(tmp));
-        playUISound__FUl(1);
+        playUISound(1);
     }
 }
 

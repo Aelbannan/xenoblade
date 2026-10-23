@@ -41,7 +41,10 @@ public:
     void EvtModelPc_UpdatePos();
     void EvtModelPc_CreateModel();
     void EvtModelPc_Dispatch(int r4, int r5);
-    bool EvtModelPc_IsFileLoaded();
+    int EvtModelPc_IsFileLoaded();
+    int EvtModelPc_IsReady();
+    int EvtModelPc_Cancel();
+    int EvtModelPc_IsActive();
 
     // File slots (6 slots: 0..5)
     CFileHandle* mFileHandle[6]; // 0x3C

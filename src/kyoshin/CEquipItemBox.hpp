@@ -295,7 +295,6 @@ extern "C" void PaneSetTexPalette(void*, u32);
 extern "C" char* BdatGetPtrDirect(const void*, const void*, int);
 extern "C" void PartyStateWin_CopySlotRec(u8*, const u8*);
 extern "C" void* Bdat_GetTable_AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
-extern "C" void* getFP__FPCc(const char*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
 extern void* lbl_eu_806649E0;
@@ -508,13 +507,11 @@ struct CEquipItemBoxEnumList {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dl__FPv(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void Cur_SetVisible(void*, int);
 extern "C" u32 sortMenuIsScrollbarVisible(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void BuildSlotItemLists(void*);
-extern "C" void playUISound__FUl(u32);
 extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void refreshEIBSortPages(CEquipItemBox* self, int a);
 extern "C" void closeEIBSortMenu(CEquipItemBox* self);

@@ -35,6 +35,7 @@ extern const double lbl_eu_80668670;    // int->double conversion bias (.sdata2)
 // Pad state import: cf::CfGameManager::getCfPadData() comes from the
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
 #include "kyoshin/cf/CfPadData.hpp"
+void playUISound(u32);
 
 // Struct view of the null pointer-to-member-function constant. Reading
 // through named members keeps MWCC from emitting duplicate @l references.
@@ -243,7 +244,7 @@ extern "C" void artsMenuInput(CMenuArtsSetCtorShim* self) {
             } else if (CMenuArtsSet_isWindowBusy((CMenuArtsSet*)&self->mList) == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
-                    playUISound__FUl(6);
+                    playUISound(6);
                 }
                 self->field360 = 4;
                 self->field54 = 1;
@@ -259,7 +260,7 @@ extern "C" void artsMenuInput(CMenuArtsSetCtorShim* self) {
             // First C-down press: play a cue when the timer had ramped, then
             // reset it and re-arm the list for pointer-style input.
             if (self->field364 > lbl_eu_8066863C) {
-                playUISound__FUl(2);
+                playUISound(2);
             }
             self->field364 = lbl_eu_80668638;
             CMenuArtsSet_setArmedFlag((CMenuArtsSet*)&self->mList, 1);
@@ -334,7 +335,7 @@ extern "C" void artsMenuInput(CMenuArtsSetCtorShim* self) {
             } else if (CMenuArtsSet_isWindowBusy((CMenuArtsSet*)&self->mList) == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
                     ArtsInfo_SetReadyFlag();
-                    playUISound__FUl(6);
+                    playUISound(6);
                 }
                 self->field360 = 4;
                 self->field54 = 1;
@@ -2461,7 +2462,7 @@ __declspec(noinline) void CMenuArtsSet_beginClose(CMenuArtsSet* self) {
     self->field_0x196 = 0;
     ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
     CArtsInfo_ReqState4(&self->mSubObj74);
-    playUISound__FUl(6);
+    playUISound(6);
 }
 #pragma optimize_for_size off
 
@@ -2480,7 +2481,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) {
         if (CArtsInfo_GetFlag49(&self->mSubObj74) != 0) {
             CArtsInfo_CursorPrev(&self->mSubObj74);
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -2502,7 +2503,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
             ArtsTable_scrollUp(&self->mList174);
             CMenuArtsSet_refreshArtsInfo(self);
         }
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
@@ -2520,7 +2521,7 @@ __declspec(noinline) void CMenuArtsSet_cursorUp(CMenuArtsSet* self) {
         ArtsTable_scrollUp(&self->mList174);
         CMenuArtsSet_refreshArtsInfo(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Arts-menu cursor-down handler: mirror of CMenuArtsSet_cursorUp, but the arts-info
@@ -2533,7 +2534,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) {
         if (CArtsInfo_GetFlag49(&self->mSubObj74) != 0) {
             CArtsInfo_CursorNext(&self->mSubObj74);
-            playUISound__FUl(1);
+            playUISound(1);
         }
         return;
     }
@@ -2555,7 +2556,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
             ArtsTable_scrollDown(&self->mList174);
             CMenuArtsSet_refreshArtsInfo(self);
         }
-        playUISound__FUl(1);
+        playUISound(1);
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
@@ -2573,7 +2574,7 @@ __declspec(noinline) void CMenuArtsSet_cursorDown(CMenuArtsSet* self) {
         ArtsTable_scrollDown(&self->mList174);
         CMenuArtsSet_refreshArtsInfo(self);
     }
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Cursor-up handler: when the arts info and syswin are idle and the list is
@@ -2603,7 +2604,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorUp(CMenuArtsSet* self) {
     ArtsTable_pageUp(&self->mList174);
     CMenuArtsSet_refreshArtsInfo(self);
 L_Sound:
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Cursor-down handler: mirror of CMenuArtsSet_slotCursorUp but stepping the arts cursor
@@ -2630,7 +2631,7 @@ __declspec(noinline) void CMenuArtsSet_slotCursorDown(CMenuArtsSet* self) {
     ArtsTable_pageDown(&self->mList174);
     CMenuArtsSet_refreshArtsInfo(self);
 L_Sound:
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Arts-menu idle/advance handler: dispatch on the sub-object busy states.
@@ -2660,7 +2661,7 @@ __declspec(noinline) void CMenuArtsSet_advanceIdle(CMenuArtsSet* self) {
             self->field_0x196 = 0;
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
         }
-        playUISound__FUl(6);
+        playUISound(6);
         return;
     }
     if (self->mSubObj148.field_0x27 != 0) {   // absolute 0x16F busy flag
@@ -2668,7 +2669,7 @@ __declspec(noinline) void CMenuArtsSet_advanceIdle(CMenuArtsSet* self) {
         if (self->field_0x196 != 0) {
             ArtsSubCursor_setVisible(&self->mSubObj148, 0);
         }
-        playUISound__FUl(6);
+        playUISound(6);
         return;
     }
     if (self->field_0x2A6 != 0) {
@@ -2681,7 +2682,7 @@ __declspec(noinline) void CMenuArtsSet_advanceIdle(CMenuArtsSet* self) {
             self->field_0x2A6 = 0;
             CMenuArtsSet_refreshArtsInfo(self);
     }
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 // Arts-menu per-frame advance: dispatch on the help-window / arts-info /
@@ -2698,7 +2699,7 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         if (CSysWin_isActive(&self->mSubObjE8) != 0) {
             sysWinAdvancePhase3(&self->mSubObjE8);
             self->field_0x2A6 = 0;
-            playUISound__FUl(3);
+            playUISound(3);
         }
         return;
     }
@@ -2718,10 +2719,10 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
                                   artsGetRowPct(&self->mList174, -1));
                     ArtsTable_bumpUsage(&self->mList174, -1);
                 }
-                playUISound__FUl(0x96);
+                playUISound(0x96);
                 CArtsInfo_ToStateC(&self->mSubObj74);
             } else {
-                playUISound__FUl(6);
+                playUISound(6);
                 CArtsInfo_ToStateA(&self->mSubObj74);
             }
             self->field_0x2A6 = 0;
@@ -2738,12 +2739,12 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         // u32 cursor: masked once on assignment, compared directly after.
         u32 cur = ArtsTable_getSelectedId(&self->mList174);
         if (cur == (u8)artsReadSelId(&self->mSubObj148)) {
-            playUISound__FUl(6);
+            playUISound(6);
             return;
         }
         artsClaimSlot(&self->mSubObj148, ArtsTable_getSelectedId(&self->mList174));
         CMenuArtsSet_refreshArtsInfo(self);
-        playUISound__FUl(0x15);
+        playUISound(0x15);
         return;
     }
     if (((SArts34C84*)self)->field_0x16F != 0) {   // abs 0x16F busy flag
@@ -2769,10 +2770,10 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
         if (matched == 0) {
             CMenuArtsSet_refreshArtsInfo(self);
-            playUISound__FUl(0x15);
+            playUISound(0x15);
             return;
         }
-        playUISound__FUl(6);
+        playUISound(6);
         return;
     }
     if (self->field_0x2A6 != 0) {
@@ -2783,7 +2784,7 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
         self->field_0x2A6 = 0;
         artsClaimSlot(&self->mSubObj148, ArtsTable_getSelectedId(&self->mList174));
         CMenuArtsSet_refreshArtsInfo(self);
-        playUISound__FUl(0x15);
+        playUISound(0x15);
         return;
     }
     if (((SArts34D14*)self)->field_0x16A != 0) {
@@ -2831,7 +2832,7 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
                 sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
             }
         }
-        playUISound__FUl(3);
+        playUISound(3);
         return;
     }
     // Duplicated tail for key -1 (retail does not share this chain).
@@ -2869,7 +2870,7 @@ __declspec(noinline) void artsDriveMenu(CMenuArtsSet* self) {
             sysWinOpenPhase1((CSysWin*)&self->mSubObjE8);
         }
     }
-    playUISound__FUl(3);
+    playUISound(3);
 }
 #pragma optimize_for_size off
 
@@ -2890,7 +2891,7 @@ __declspec(noinline) void artsStepAhead(CMenuArtsSet* self) {
     v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     artsFillTable((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
     CMenuArtsSet_refreshArtsInfo(self);
-    playUISound__FUl(10);
+    playUISound(10);
 }
 
 // Twin of artsStepAhead but stepping the cursor with artsGoPrevItem
@@ -2911,7 +2912,7 @@ __declspec(noinline) void CMenuArtsSet_selectPrevChar(CMenuArtsSet* self) {
     v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     artsFillTable(&self->mList174, v);
     CMenuArtsSet_refreshArtsInfo(self);
-    playUISound__FUl(10);
+    playUISound(10);
 }
 
 // Arts-list confirm: when the menu is idle and the current arts entry
@@ -2937,7 +2938,7 @@ void CMenuArtsSet_confirmLockedArt(CMenuArtsSet* self) {
     artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
     artsFillTable(&self->mList174, v);
     CMenuArtsSet_refreshArtsInfo(self);
-    playUISound__FUl(0xA);
+    playUISound(0xA);
 }
 #pragma optimize_for_size off
 
@@ -2958,9 +2959,9 @@ __declspec(noinline) void CMenuArtsSet_resetSubList(CMenuArtsSet* self) {
     // dead index register left over from the (v == 1) test.
     if (v == 1 && lbl_eu_806628A8[0] == 0) return;
     if (artsReadSelId(&self->mSubObj148) != 0) {
-        playUISound__FUl(0x77);
+        playUISound(0x77);
     } else {
-        playUISound__FUl(5);
+        playUISound(5);
     }
     artsClaimSlot(&self->mSubObj148, 0);
     CMenuArtsSet_refreshArtsInfo(self);
@@ -3023,14 +3024,14 @@ __declspec(noinline) void CMenuArtsSet_confirmSelect(CMenuArtsSet* self) {
             ArtsTableCursor_refresh((SArts327B0*)&self->mList174);
             if (matched == 0) {
                 CMenuArtsSet_refreshArtsInfo(self);
-                playUISound__FUl(0x15);
+                playUISound(0x15);
             } else {
-                playUISound__FUl(6);
+                playUISound(6);
             }
             return;
         }
         ArtsBusyPane_toggle((SArts313E0*)&self->mSubObj148);
-        playUISound__FUl(2);
+        playUISound(2);
         return;
     }
     if (self->field_0x2A1 != 0) {
@@ -3041,19 +3042,19 @@ __declspec(noinline) void CMenuArtsSet_confirmSelect(CMenuArtsSet* self) {
         cur = ArtsTable_getSelectedId(&self->mList174);
         u8 r = artsReadSelId(&self->mSubObj148);
         if (r == cur) {
-            playUISound__FUl(6);
+            playUISound(6);
             return;
         }
         artsClaimSlot(&self->mSubObj148, ArtsTable_getSelectedId(&self->mList174));
         CMenuArtsSet_refreshArtsInfo(self);
-        playUISound__FUl(0x15);
+        playUISound(0x15);
         return;
     }
     ArtsTable_toggleBusyPanes((SArts32888*)&self->mList174);
     ArtsSubCursor_setVisible(&self->mSubObj148, 1);
     ArtsSlotCursor_clampFromEmpty(&self->mSubObj148);
     CMenuArtsSet_refreshArtsInfo(self);
-    playUISound__FUl(2);
+    playUISound(2);
 }
 #pragma optimize_for_size off
 

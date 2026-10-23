@@ -317,7 +317,6 @@ public:
 
 // nw4r math helpers and battle-manager chain probe (retail C-ABI names).
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" int CChain_HasMemberEntry(void* a, void* b);
 extern "C" u32 SkipTimer_IsActiveFlag();

@@ -17,6 +17,7 @@
 #undef lbl_eu_80526300
 
 #include <stdio.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Same-TU helper (defined below): zeroes the three summary halfwords at
 // +0x100/+0x102/+0x104 of the given table base.
@@ -116,7 +117,7 @@ CTutorialList::CTutorialList(u16 count) {
 // return self.
 extern "C" void* __dt__802ACBF0(void* self, int mode) {
     if (self != 0 && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -545,7 +546,7 @@ extern "C" CTutorialList* __dt__13CTutorialListFv(CTutorialList* _this,
         __dt__6CCur18Fv(&_this->mCursor, -1);
         __dt__17UnkClass_8045F564Fv(&_this->mGap04[0], -1);
         if (flags > 0) {
-            __dl__FPv(_this);
+            operator delete(_this);
         }
     }
     return _this;
@@ -659,7 +660,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         void* data2 = ((CFileHandle*)mField18)->getData();
         CBdat::setBdatEntry(4, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_80664BF0 = (u32)getFP__FPCc(&lbl_eu_80510B78[0x143]);
+        lbl_eu_80664BF0 = (u32)getFP(&lbl_eu_80510B78[0x143]);
         mField18 = 0;
         TutorialList_OpenAfterFilesReady(this);
         return 1;

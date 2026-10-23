@@ -29,7 +29,6 @@ void cbRenderBefore__13CMenuMiniMap2Fv(void* self);
 // Library D1 imports used by the manual CMenuMiniMap2 destructor.
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 // Offset-adjusted vtable dispatch thunk: the CMenuMiniMap2 subobject sits at
 // self-0x58, so adjust and tail-jump straight to the dtor (retail:
@@ -108,6 +107,9 @@ extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self);
 #include <nw4r/lyt.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // ---- retail data symbols (small-data / absolute addressing per retail) ----
 extern "C" s32 lbl_eu_80663FBC;          // frame counter (periodic cleanup gate)
@@ -166,8 +168,6 @@ void AppendChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(void* parent, void* child);
 void PrependChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(void* parent, void* child);
 void deleteTextboxOrPicture__10CLibLayoutFv(void* pane);
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-f32 FrSqrt__Q24nw4r4mathFf(f32);
 int sprintf(char*, const char*, ...);
 // (memberized: MiniMapRequestMapImage -> CMMMapImg::MiniMapRequestMapImage; declaration moved into class CMMMapImg)
 }
@@ -217,7 +217,7 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     lbl_eu_80663FB8 = 0;
     char buf[0x20];
     sprintf(buf, strings + 0x147, lbl_eu_8052C740[lbl_eu_80664184 - 1]);
-    lbl_eu_80663FB8 = getFP__FPCc(buf);
+    lbl_eu_80663FB8 = getFP(buf);
 
     MiniMapInitTable3x5((MiniMapTable*)self->mField3C.mW);
     MiniMapResetGimmickTables((CMiniMapGimmickView*)self->mField17C.mW);
@@ -234,8 +234,8 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     conv.w[1] = BdatGetU8Direct((u32)bdat, strings + 0x1A3, row);
     conv.w[0] = 0x43300000;
     self->mField20 = (f32)(conv.d - lbl_eu_806670A8) * lbl_eu_806670B0;
-    self->mField24 = (char*)getFP__FPCc(strings + 0x1B0);
-    self->mField28 = (u32)getFP__FPCc(lbl_eu_8052C7E8[lbl_eu_80664184 - 1]);
+    self->mField24 = (char*)getFP(strings + 0x1B0);
+    self->mField28 = (u32)getFP(lbl_eu_8052C7E8[lbl_eu_80664184 - 1]);
 }
 
 // m834 then m824 destroyed in reverse construction order.
@@ -576,8 +576,7 @@ extern "C" void __declspec(noinline) MiniMapTeardownMarkerPanes(CMiniMap* self) 
             while (node != end) {
                 next = node->next;
                 if (!node) {
-                    Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
-                                               (const char*)lbl_eu_8052CB1C);
+                    nw4r::db::Panic((const char*)lbl_eu_8052CB40, 573, (const char*)lbl_eu_8052CB1C);
                 }
                 pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
@@ -622,7 +621,7 @@ extern "C" void __declspec(noinline) MiniMapTeardownMarkerPanes(CMiniMap* self) 
         while (node != end) {
             next = node->next;
             if (!node) {
-                Panic__Q24nw4r2dbFPCciPCce(pf, 573, ps);
+                nw4r::db::Panic(pf, 573, ps);
             }
             pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
             if (pane && *(void**)((u8*)pane + 0x0C)) {
@@ -718,8 +717,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
             MiniMapCleanupNode* node = clist->first;
             while (node != (MiniMapCleanupNode*)&clist->first) {
                 if (!node) {
-                    Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
-                                               (const char*)lbl_eu_8052CB1C);
+                    nw4r::db::Panic((const char*)lbl_eu_8052CB40, 573, (const char*)lbl_eu_8052CB1C);
                 }
                 MiniMapCleanupNode* next = node->next;
                 nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)self->m0C->m10->FindPaneByName(node->name, true);
@@ -811,7 +809,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 }
                                 f32 len = (len2 <= 0.0f)
                                               ? 0.0f
-                                              : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                                              : len2 * nw4r::math::FrSqrt(len2);
                                 f32 k = clamp / len;
                                 diff1.x *= k;
                                 diff1.z *= k;
@@ -1079,7 +1077,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 }
                                 f32 len = (len2 <= 0.0f)
                                               ? 0.0f
-                                              : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                                              : len2 * nw4r::math::FrSqrt(len2);
                                 f32 k = clamp / len;
                                 diff2.x *= k;
                                 diff2.z *= k;
@@ -1783,8 +1781,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     const nw4r::lyt::Material* matC = (const nw4r::lyt::Material*)mat;
 
     if (((mat->field_3C >> 24) & 0xF) == 0) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CBC0, 0x9C,
-                                   (const char*)lbl_eu_8052CB8C);
+        nw4r::db::Panic((const char*)lbl_eu_8052CBC0, 0x9C, (const char*)lbl_eu_8052CB8C);
     }
 
     // Snapshot the map material's texture SRT and TexMap into locals; the SRT
@@ -1792,8 +1789,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     nw4r::lyt::TexSRT srt = *matC->GetTexSRTAry();
 
     if ((mat->field_3C >> 28) == 0) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB80, 0x79,
-                                   (const char*)lbl_eu_8052CB4C);
+        nw4r::db::Panic((const char*)lbl_eu_8052CB80, 0x79, (const char*)lbl_eu_8052CB4C);
     }
     nw4r::lyt::TexMap tmap = *matC->GetTexMapAry();
     nw4r::lyt::Size tsize = tmap.GetSize();
@@ -1822,8 +1818,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     s32 thi = (s32)tsize.height;
 
     if (((mat->field_3C >> 4) & 0xF) == 0) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CC00, 0xA2,
-                                   (const char*)lbl_eu_8052CBCC);
+        nw4r::db::Panic((const char*)lbl_eu_8052CC00, 0xA2, (const char*)lbl_eu_8052CBCC);
     }
     srt.translate.x =
         (lbl_eu_806670A4 / tsize.width *
@@ -1866,9 +1861,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
                 ml::CVec3 tmp(lbl_eu_80667090, lbl_eu_80667090,
                               lbl_eu_80667090);
                 if (n == NULL) {
-                    Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,
-                                               0x23D,
-                                               (const char*)lbl_eu_8052CB1C);
+                    nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
                 }
                 n->ofs = tmp;
             }
@@ -1895,9 +1888,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
             for (MiniMapB05CNode* n = (MiniMapB05CNode*)pv->first;
                  n != (MiniMapB05CNode*)&pv->first; n = n->next) {
                 if (n == NULL) {
-                    Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40,
-                                               0x23D,
-                                               (const char*)lbl_eu_8052CB1C);
+                    nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
                 }
                 n->ofs.x = gv.x;
                 n->ofs.y = gv.y;
@@ -2029,7 +2020,7 @@ void CMenuMiniMap2::Init() {
         sub.mFlag0E = 0;
         lbl_eu_80663FB8 = NULL;
         sprintf(rowBuf, &lbl_eu_804FE1FC[0x147], lbl_eu_8052C740[lbl_eu_80664184 - 1]);
-        lbl_eu_80663FB8 = getFP__FPCc(rowBuf);
+        lbl_eu_80663FB8 = getFP(rowBuf);
         mMiniMap.mSub.mPtr04 = sub.mPtr04;
         mMiniMap.mSub.mPtr08 = sub.mPtr08;
         mMiniMap.mField3C.mFlag38 = sub.mFlag0C;
@@ -2508,7 +2499,7 @@ MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self) {
     self->field_0C = zero;
     self->field_13C = 0;
     Bdat_GetTable_AA34();
-    self->field_04 = (u32)getFP__FPCc(lbl_eu_804FE1FC);
+    self->field_04 = (u32)getFP(lbl_eu_804FE1FC);
     // Inner 5-wide sweep: the two flat flag columns share one running byte
     // row offset, so MWCC recomputes their address as base+index with the
     // column delta in the displacement, while the u16/pane rows get pointer
@@ -2844,7 +2835,7 @@ extern "C" void __declspec(noinline) MiniMapUpdateGimmickRows(CMiniMapGimmickVie
                 }
                 f32 len = (len2 <= lbl_eu_80667090)
                               ? lbl_eu_80667090
-                              : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                              : len2 * nw4r::math::FrSqrt(len2);
                 f32 k = radius / len;
                 diff.x *= k;
                 diff.z *= k;
@@ -3030,7 +3021,7 @@ extern "C" void __declspec(noinline) MiniMapRebuildGimmickPanes(void* self) {
         case 5: {
             // Per-row BDAT table: three coordinate columns compared against
             // the band threshold column.
-            char* tbl = (char*)getFP__FPCc(strings + 0x93);
+            char* tbl = (char*)getFP(strings + 0x93);
             if (BdatGetU16Direct(tbl, strings + 0xa2, dispId) == 0) break;
             s32 cx = BdatGetS16Direct(tbl, strings + 0xa9, dispId);
             s32 cy = BdatGetS16Direct(tbl, strings + 0xae, dispId);

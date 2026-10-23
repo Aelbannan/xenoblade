@@ -203,7 +203,6 @@ extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 extern "C" int ItemBoxLine_GetSelectReady(CItemBoxLine* self);      // line ready query
 extern "C" void ItemBoxLine_OpenLine(CItemBoxLine* self);     // finish line load
 extern "C" void LoadItemBoxFiles(CItemBoxGrid* self);     // finish grid setup
-extern "C" void playUISound__FUl(u32 op);            // global menu-op kicker
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
 extern "C" void __ct__8CProcessFv(CMenuItemExchange* _this);

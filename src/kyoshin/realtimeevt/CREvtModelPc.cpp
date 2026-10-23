@@ -172,8 +172,8 @@ extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
 // ============================================================================
 // EvtModelPc_IsReady (us-80184cf4) - Check if ready
 // ============================================================================
-extern "C" int EvtModelPc_IsReady(void* self) {
-    char* s = (char*)self;
+int CREvtModelPc::EvtModelPc_IsReady() {
+    char* s = (char*)this;
     int result;
 
     // Ready only if the task counter matches the current one.
@@ -201,15 +201,15 @@ extern "C" int EvtModelPc_IsReady(void* self) {
 // ============================================================================
 // EvtModelPc_Cancel (us-80184d94) - Cleanup / cancellation
 // ============================================================================
-extern "C" int EvtModelPc_Cancel(void* self) {
-    char* s = (char*)self;
+int CREvtModelPc::EvtModelPc_Cancel() {
+    char* s = (char*)this;
 
     // Bail out early if the "in use" flag bit is already set.
     if (FLD(u32, s, 0x18) & 0x80) {
         return 0;
     }
 
-    EvtModelReleaseAnimsOnce(self);
+    EvtModelReleaseAnimsOnce(this);
 
     u32 i;
     char* base = s;  // walks per-slot via each slot's status word
@@ -812,8 +812,8 @@ extern "C" void EvtModelPc_Dispatch(void* self, int pData, int pModelData) {
 // ============================================================================
 // EvtModelPc_IsFileLoaded (us-80185dbc) - Check if file is already loaded
 // ============================================================================
-extern "C" int EvtModelPc_IsFileLoaded(void* self) {
-    char* s = (char*)self;
+int CREvtModelPc::EvtModelPc_IsFileLoaded() {
+    char* s = (char*)this;
 
     u32 entryId, param1, param2, param3;
     Tok_Unpack(FLD(u32, FLD(void*, s, 0x1C), 0x20), &entryId, &param1, &param2, &param3);
@@ -875,8 +875,8 @@ extern "C" void EvtModelPc_CtorThunk38(void* self, int flags) {
 // bit (0x1) and the ready bit (0x40) set. Same idiom as EvtObj_CheckFlags140
 // in CREvtModelObj.cpp (retail: lwz / li / clrlwi.-beqlr / rlwinm.-beqlr / li).
 // ============================================================================
-extern "C" int EvtModelPc_IsActive(CREvtModelPc* self) {
-    u32 flags = self->mFlags;
+int CREvtModelPc::EvtModelPc_IsActive() {
+    u32 flags = mFlags;
     int result = 0;
     if (flags & 1) {
         if (flags & 0x40) {

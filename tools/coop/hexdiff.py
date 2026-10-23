@@ -1252,6 +1252,41 @@ def _cmd_list(args: argparse.Namespace, retail_path: Path, project: Project | No
     return 0
 
 
+def _extab_check(project: Project, config, unit, retail_path: Path, decomp_path: Path) -> dict:
+    """Reloc-aware extab/extabindex comparison (tools/coop/lib/data_match.py).
+
+    Informational in hexdiff (the exit code stays function-level); the
+    enforcing gates are ``run.py extab-gate`` and ``run.py data diff``.
+    """
+    try:
+        from tools.coop import extab_gate
+        from tools.coop.lib.data_match import check_extab_sections, extab_function_diffs
+        from tools.coop.lib.reloc_canon import LinkerLayout
+
+        layout = LinkerLayout.load(project.root, config.region)
+        res = check_extab_sections(retail_path, decomp_path, layout=layout)
+        out = {"ok": res.ok, "baseline": False, "detail": [], "functions": []}
+        if not res.ok:
+            out["detail"] = [f"{s.name}: {s.detail}" for s in res.sections if not s.ok]
+            out["functions"] = extab_function_diffs(retail_path, decomp_path, layout=layout)
+            out["baseline"] = extab_gate.baseline_has(unit.name)
+        return out
+    except Exception as exc:  # never let the diagnostic break hexdiff
+        return {"ok": None, "error": str(exc)}
+
+
+def _print_extab(ex: dict) -> None:
+    if ex.get("ok") is None:
+        print(f"extab: (not checked: {ex.get('error')})")
+    elif ex["ok"]:
+        print(f"extab: {_GREEN}MATCH{_RESET} (extab + extabindex, reloc-aware)")
+    else:
+        tag = "pre-existing, baselined" if ex["baseline"] else "NEW — run.py extab-gate fails"
+        print(f"extab: {_RED}MISMATCH{_RESET} ({tag}): " + "; ".join(ex["detail"]))
+        for line in ex["functions"][:8]:
+            print(f"    {line[:200]}")
+
+
 def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path, decomp_path: Path, config) -> int:
     """--all: one build, per-function table for the whole unit."""
     try:
@@ -1345,6 +1380,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
                 "retail_size": rf.size,
                 "decomp_size": dm.size,
             })
+        out["extab"] = _extab_check(project, config, unit, retail_path, decomp_path)
         print(json.dumps(out))
         return 0 if out["matched"] == out["total"] else 5
 
@@ -1372,6 +1408,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             f"{f'0x{rf.size:x}/0x{dm.size:x}':>12s}  {rf.name}"
         )
     print(f"\n{n_match}/{len(retail_fn)} functions fully matched")
+    _print_extab(_extab_check(project, config, unit, retail_path, decomp_path))
     return 0 if n_match == len(retail_fn) else 5
 
 

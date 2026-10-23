@@ -864,11 +864,9 @@ extern "C" int CPartsChange_ProcessPartyInfo(void* a, void* b);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
 extern "C" void aimMoveTarget(void* self, ml::CVec3* dst, const ml::CVec3* src,
                               int flag);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-extern "C" void* getFP__FPCc(const char* name);
 // CtrlMoveEne_CheckKeepMoving call sites:
 // refresh (retail C-ABI names; getAnimModelId is declared in CtrlNpc.hpp).
 // setAnimPosVec is declared in include/kyoshin/cf/CfGameManager.hpp

@@ -289,10 +289,9 @@ extern "C" void* __ct__cf_CfMapItemManager(CfMapItemManager* self) {
 }
 
 // __dt__801732F8: deleting destructor - free self when mode > 0, return self.
-extern "C" void __dl__FPv(void*);
 extern "C" void* __dt__801732F8(void* self, int mode) {
     if (self != 0 && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

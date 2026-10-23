@@ -4,6 +4,7 @@
 #include "monolib/lod/LODMemMan.hpp"
 #include "monolib/lod/code_804645CC.hpp"
 #include "libs/monolib/src/lod/code_80468434.hpp"
+#include "monolib/scn/code_804BC9EC.hpp"
 
 using namespace LOD;
 
@@ -321,7 +322,7 @@ void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     for (i = 0; i < o->field_0x4; i++) {
         if ((rec2[i].field_0x0 & 4) != 0) {
             PSMTXConcat(work, lbl_eu_80658048[i], work);
-            ScnData_FwdB7E0C(getScnHandle__Fv(), arg2, (u8*)work);
+            ScnData_FwdB7E0C(getScnHandle(), arg2, (u8*)work);
         }
     }
 }

@@ -282,12 +282,6 @@ void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
-    const char* name);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
-    nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 CTalkWinPose* Scn_FindCamItem(CScn* scene, int index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, CTalkWinPose* pose,
                    const nw4r::math::VEC3* in);

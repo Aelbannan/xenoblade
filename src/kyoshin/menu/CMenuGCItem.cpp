@@ -9,6 +9,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+void playUISound(u32);
 
 extern "C" void cbRenderBefore__11CMenuGCItemFv(void*);
 
@@ -132,7 +133,7 @@ void CMenuGCItem::Move() {
             func_801C412C(&mTitleAHelp);
             InitItemDisplay(&mItemBoxGrid);
             mState = 1;
-            playUISound__FUl(0x6d);
+            playUISound(0x6d);
         }
         break;
     case 1:

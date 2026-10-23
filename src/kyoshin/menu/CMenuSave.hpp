@@ -97,7 +97,6 @@ extern "C" void CSaveLoad_reset(CSaveLoad* self);
 extern "C" void CSaveLoad_open(CSaveLoad* self);
 extern "C" void NandTeardown();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" void playUISound__FUl(u32 op);
 
 // Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
 // (retail symbols are unmangled / non-namespace, so C linkage is required).

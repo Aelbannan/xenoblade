@@ -10,7 +10,6 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // C-ABI imports used by CtrlObjectParam_ClaimArtsSlotRow (bdat file lookup / bdat init hook).
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* Bdat_GetTable_AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).

@@ -4,6 +4,7 @@
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+void playUISound(u32);
 extern "C" void ScalePaneWorldPos(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
@@ -81,7 +82,7 @@ void CItemBoxGridSubMenu::GridSubMenu_BeginOpenAnim() {
     mIsOpened = 0;
     mSelectedIdx = 0;
     mIsVisible = 1;
-    playUISound__FUl(13);
+    playUISound(13);
 }
 
 void CItemBoxGridSubMenu::GridSubMenu_MoveSelectionNext() {
@@ -263,7 +264,7 @@ extern "C" void GridSubMenu_AdvanceState2To3(CItemBoxGridSubMenu* self) {
     if (self->mAnimState == 2) {
         self->mAnimState = 3;
         self->mIsOpened = 0;
-        playUISound__FUl(0xE);
+        playUISound(0xE);
     }
 }
 

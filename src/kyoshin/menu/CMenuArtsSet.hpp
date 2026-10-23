@@ -980,7 +980,6 @@ extern "C" void* CUICfManager_getPackedFont9C();
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
-extern "C" void playUISound__FUl(u32);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).

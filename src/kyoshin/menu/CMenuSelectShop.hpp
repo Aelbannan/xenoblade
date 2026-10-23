@@ -75,7 +75,6 @@ extern "C" CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
 extern "C" void __dt__11CSelShopWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__9IUIWindowFv(void*, int);
-extern "C" void __dl__FPv(void*);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 extern "C" void Cur_SetVisible(void*, int);
@@ -109,7 +108,6 @@ extern "C" void Cur_DrawLayout(void*, nw4r::lyt::DrawInfo*);
 extern "C" void SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-extern "C" void playUISound__FUl(u32);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CSelShopWin(void*);

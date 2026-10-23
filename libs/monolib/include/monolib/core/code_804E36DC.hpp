@@ -47,7 +47,6 @@ extern "C" void EffObj_StepNode(CEffectObj* obj);
 extern "C" void SchedList_DropBoth(void* arg);
 extern "C" void* SchedRes_FindValueByKey(void* table, void* key);
 
-extern "C" void __dl__FPv(void* ptr);
 extern "C" f64 lbl_eu_8066B2F0;
 extern "C" f64 lbl_eu_8066B2E8;
 

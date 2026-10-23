@@ -12,7 +12,6 @@
 // ---------------------------------------------------------------------------
 extern "C" void setChildF50G_(void* self, float v);
 // CSchedule::Update is a member now; declared in monolib/core/CSchedule.hpp.
-extern "C" void __dl__FPv(void* ptr);
 
 // Same-TU siblings (defined in CVision.cpp; C linkage keeps the call relocs
 // and definitions at the unmangled retail names - CSuddenCommu.hpp idiom).

@@ -98,7 +98,6 @@ struct CMenuPauseTexObj {
 
 extern "C" {
     void __dt__8CProcessFv(void*, int);
-    void playUISound__FUl(u32);
     void MenuSnd_SetSlotsPause_8890(u32);
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void CfSoundMan_PlayRequest(f32, int, int, int);

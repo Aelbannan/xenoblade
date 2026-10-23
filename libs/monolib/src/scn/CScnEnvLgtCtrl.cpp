@@ -1015,11 +1015,10 @@ CScnEnvLgtCtrl::~CScnEnvLgtCtrl() {
 // us-804c7324: deleting destructor for the IScnEnvCtl base subobject.
 // The base dtor is trivial, so MWCC's generated deleting dtor is just the
 // null check, flag > 0 test and operator delete (__dl__FPv).
-extern "C" void* __dl__FPv(void* p);
 extern "C" void* __dt__804C1054(CScnEnvLgtCtrlIScnResBase* self, int flag) {
     if (self != 0) {
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

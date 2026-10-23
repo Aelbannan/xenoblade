@@ -5,6 +5,7 @@
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <revolution/MTX.h>
 #include <nw4r/math/math_types.h>
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // [.bss] work areas defined at the bottom of this TU.
 extern u8 lbl_eu_8065F428[];
@@ -103,7 +104,6 @@ s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale);
 void ScnRes_DispatchCrossCb_EEEC();
 
 // nw4r math/db helpers (retail plain symbols; C linkage keeps them unmangled).
-extern "C" float FrSqrt__Q24nw4r4mathFf(float);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
@@ -221,7 +221,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
             if (distSq <= zero) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 inv = (distSq <= zero) ? zero : distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+            f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
             if (a10 != 0) {
                 w->entries[j].field_0x0C += (t1 - scale) * dx;
@@ -258,7 +258,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
             if (distSq <= zero) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 inv = (distSq <= zero) ? zero : distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+            f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
             f32 push = scale * (t1 - scale);
             w->entries[i].field_0x0C += push * dx;
@@ -276,7 +276,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
             if (distSq <= zero) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 inv = (distSq <= zero) ? zero : distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+            f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
             w->entries[i].field_0x10 += scale * dyy;
             lbl_eu_8066597D = 1;
@@ -829,7 +829,7 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 inv = (mag2 > lbl_eu_8066AF44)
-                      ? mag2 * FrSqrt__Q24nw4r4mathFf(mag2)
+                      ? mag2 * nw4r::math::FrSqrt(mag2)
                       : lbl_eu_8066AF44;
         f32 scale = lbl_eu_8066AF4C / inv;
         slot->x *= scale;

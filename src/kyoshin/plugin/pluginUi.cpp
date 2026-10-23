@@ -2,6 +2,7 @@
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "monolib/util.hpp"
 #include "monolib/vm/yvm2.h"
+void playUISound(u32);
 
 using namespace ml;
 
@@ -335,10 +336,10 @@ int setTrust(VMThread* pThread) {
     int state = 0;
     if (arg4 > 0) {
         state = 0xac;
-        playUISound__FUl(0x34);
+        playUISound(0x34);
     } else if (arg4 < 0) {
         state = 0xae;
-        playUISound__FUl(0x36);
+        playUISound(0x36);
     }
 
     // Clamp both slot indices into [0, 2].

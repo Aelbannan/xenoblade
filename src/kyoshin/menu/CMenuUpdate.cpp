@@ -24,6 +24,10 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+void playUISound(u32);
 
 extern u32 lbl_eu_80525A10[];
 extern u32 lbl_eu_80525A00[];
@@ -152,7 +156,7 @@ extern "C" void* __dt__11CMenuUpdateFv(void* self, int flags) {
         __dt__10IScnRenderFv((u8*)self + 0x70, 0);
         __dt__10IWorkEventFv((u8*)self + 0x6C, 0);
         __dt__9IUIWindowFv(self, 0);
-        if (flags > 0) __dl__FPv(self);
+        if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -165,14 +169,15 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
 
     Class_8045F858 stackObj(&obj->mMemRegion);
 
-    void* accessor = CUICfManager_getArcResourceAccessor();
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void*)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
+    nw4r::lyt::ArcResourceAccessor* accessor =
+        static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+    buildLayout(&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
 
-    accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
+    accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+    bindLayoutAnimTransform(obj->mLayout, &obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
 
-    accessor = CUICfManager_getArcResourceAccessor();
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
+    accessor = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor());
+    bindLayoutAnimTransform(obj->mLayout, &obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // bindLayoutAnimTransform argument setup instead of recomputing it here.
@@ -805,7 +810,7 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
 // MenuUpdate_EnterMode1Chime
 extern "C" __declspec(noinline) void MenuUpdate_EnterMode1Chime(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    playUISound__FUl(0x1F);
+    playUISound(0x1F);
     obj->mMode = 1;
 }
 
@@ -878,7 +883,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
         if (pad->mPressedButtonFlags & 0x200) {
             if (code80135FDC_getByte_64059() || CUICfManager_hasInUseSlot() || hasQuestWindow() ||
                 QstCnt_HasInstance_6B94()) {
-                playUISound__FUl(5);
+                playUISound(5);
             } else {
                 CfRes_getE14();
                 f32 v = MenuUpdate_QueryUnk80Float();
@@ -896,7 +901,7 @@ extern "C" __declspec(noinline) void MenuUpdate_MaintainActive(void* self) {
                 }
             }
         }
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(obj->mActiveAnim, lbl_eu_806673C4))
+        if (advanceAnimTransform(obj->mActiveAnim, lbl_eu_806673C4))
             obj->mMode = 2;
     }
 }

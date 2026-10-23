@@ -71,8 +71,6 @@ extern "C" {
     void waitForDrawDone__9CDeviceVIFv(void);
     void* allocate_array__Q23mtl10MemManagerFUlUl(u32, u32);
     void deallocate__Q23mtl10MemManagerFPv(void*);
-    void __dla__FPv(void*);
-    void __dl__FPv(void*);
     void CfRes_orBits_649B4(void*, int);
     void KyoshinHeap_GetField40(void);
     void* CfRes_findEntryById(ResInfoEntry*, u32);
@@ -1223,11 +1221,11 @@ void* __dt___reslist_base_unsigned_short(ResListUS* self, int mode) {
         self->mHead->next = self->mHead;
         self->mHead->prev = self->mHead;
         if (self->mOwnsList == 0 && self->mList != NULL) {
-            __dla__FPv(self->mList);
+            operator delete[](self->mList);
             self->mList = NULL;
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -1251,12 +1249,12 @@ void* __dt__reslist_unsigned_short(ResListUS* self, int mode) {
             self->mHead->next = self->mHead;
             self->mHead->prev = self->mHead;
             if (self->mOwnsList == 0 && self->mList != NULL) {
-                __dla__FPv(self->mList);
+                operator delete[](self->mList);
                 self->mList = NULL;
             }
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -1281,7 +1279,7 @@ static void ResStorage_ClearFirstList(ResInfoStorage* obj) {
     obj->mStartNodePtr->next = obj->mStartNodePtr;
     obj->mStartNodePtr->prev = obj->mStartNodePtr;
     if (obj->mOwnsList == 0 && obj->mList != 0) {
-        __dla__FPv(obj->mList);
+        operator delete[](obj->mList);
         obj->mList = 0;
     }
 }
@@ -1305,13 +1303,13 @@ void* __dt__8006754C(u8* self, int mode) {
                 rl->mHead->next = rl->mHead;
                 rl->mHead->prev = rl->mHead;
                 if (rl->mOwnsList == 0 && rl->mList != 0) {
-                    __dla__FPv(rl->mList);
+                    operator delete[](rl->mList);
                     rl->mList = 0;
                 }
             }
         }
         if (mode > 0) {
-            __dl__FPv(obj);
+            operator delete(obj);
         }
     }
     return obj;
@@ -1334,7 +1332,7 @@ extern "C" void __dt__80067670(u8* self) {
 
     // destroyList tail: free the slot array unless ownership was transferred.
     if (obj->mOwnsList == 0 && obj->mList != 0) {
-        __dla__FPv(obj->mList);
+        operator delete[](obj->mList);
         obj->mList = 0;
     }
     obj->mCapacity = 0;

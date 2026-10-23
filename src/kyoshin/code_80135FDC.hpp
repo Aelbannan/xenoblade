@@ -51,8 +51,6 @@ void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 // mangled-identifier form is what the definitions in code_80135FDC.cpp use).
 void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 }
 
 // Retail symbols that ARE the mangled C++ names stay C++-linkage. Declare the
@@ -144,7 +142,6 @@ extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, 
 extern void CfT_PlayClockSnapshot(u16*, u16*);
 extern int CfT_DispatchFrameCounts();
 extern u16 getReloadParam0();
-extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern u8 lbl_eu_8052E524[];
 extern u8 lbl_eu_8052E4F0[];
 extern u32 lbl_eu_805001C0[28];
@@ -258,16 +255,13 @@ extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void activateLOD__8CTaskLODFv(s8);
 extern "C" void deactivateLOD__8CTaskLODFv(u8);
 extern "C" int getLODData__8CTaskLODFv(u8);
-extern "C" void* getScnHandle__Fv(void);
 extern "C" void ScnData_FwdB7D9C(void*, s8);
 extern "C" void ScnData_FwdB7DD4(void*, u8);
 extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, s8);
 extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 
 // standalone BDAT helpers
-extern "C" void* getFP__FPCc(const char*);
 // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp (included above).
 
 // misc single decls

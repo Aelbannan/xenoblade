@@ -460,7 +460,6 @@ private:
 extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dl__FPv(void* object);
 extern "C" void* simGetLeafActData(void* object);
 extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
@@ -541,7 +540,6 @@ void func_80053198(CActParamAnim* self, ml::CVec3* v);
 
 // Imports for func_80053198 (frame time + nw4r debug/math helpers).
 extern "C" f32 getSecPerFrame__9CDeviceVIFv();
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,
                                               const char* msg, ...);
 extern const float lbl_eu_80665F74; // (func_80053198 min-move scale)
@@ -577,7 +575,7 @@ extern "C" Quaternion* mulQuatSelf(Quaternion* self, const Quaternion* param);
 extern "C" void storeAnimQuat(void* self, void* src);
 extern "C" f32 simGetLeafDist7B0(u8* obj);
 // Global-scope C++ declaration: mangles to the retail symbol getScnHandle__Fv.
-int getScnHandle();
+void* getScnHandle();
 extern "C" int ScnData_FwdBC9A0();
 
 // Extra sdata2/sdata float constants.

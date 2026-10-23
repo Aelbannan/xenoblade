@@ -4,6 +4,7 @@
 #include "libs/monolib/src/scn/CScnItemId.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/util/CPathUtil.hpp"
+#include "monolib/scn/code_804BC9EC.hpp"
 
 // Foreign data labels referenced by the CScnItemId vtable/param block.
 extern "C" u32 lbl_eu_806638B8;
@@ -42,7 +43,7 @@ extern "C" u32 lbl_eu_8056DCF8[4] = {
 // ===========================================================================
 CScnItemId::~CScnItemId() {
     *(void**)this = (void*)lbl_eu_8056DCD8;
-    resetScnData(getScnHandle__Fv());
+    resetScnData(getScnHandle());
 }
 
 // ===========================================================================
@@ -91,7 +92,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
             newItem->mNameLen = std::strlen(str);
             std::strcpy(newItem->mName, str);
             newItem->mValue = value;
-            Coli_ParseChunks(getScnHandle__Fv(), value);
+            Coli_ParseChunks(getScnHandle(), value);
         }
         item = newItem;
     } else {
@@ -103,7 +104,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
             item->mNameLen = std::strlen(NULL);
             std::strcpy(item->mName, NULL);
             item->mValue = value;
-            Coli_ParseChunks(getScnHandle__Fv(), value);
+            Coli_ParseChunks(getScnHandle(), value);
         }
     }
 

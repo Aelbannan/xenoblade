@@ -22,6 +22,10 @@
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+void playUISound(u32);
 
 // True when the pause flag is clear (game not frozen by a subwindow).
 static inline bool isSceneActive() {
@@ -384,7 +388,7 @@ void CSysWinScenarioLog::Move() {
             SysWinLog_OpenContent(this);
             break;
         case 1:
-            if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mpAnim, lbl_eu_80668AD0) != 0) {
+            if (advanceAnimTransform(mpAnim, lbl_eu_80668AD0) != 0) {
                 mState = 2;
             }
             break;
@@ -398,8 +402,8 @@ void CSysWinScenarioLog::Move() {
             }
             if (pressed) {
                 mState = 3;
-                playUISound__FUl(6);
-                playUISound__FUl(0xE);
+                playUISound(6);
+                playUISound(0xE);
             }
             break;
         }
@@ -431,7 +435,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
         return;
     }
     self->mState = 1;
-    playUISound__FUl(0xd);
+    playUISound(0xd);
     // (u32) cast pins the extern "C" decl (pluginUi.hpp's C++ int overload
     // would otherwise mangle the reloc to CtrlRemote_TouchBitByArg__Fi).
     u16 maxId = (u16)CtrlRemote_TouchBitByArg((u32)0x20);
@@ -1548,10 +1552,8 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
         self->mField94 = (nw4r::lyt::Layout*)tag;
         self->mpAccessor = CLibLayout::createArcResourceAccessor();
         self->mpAccessor->Attach(fileData, &lbl_eu_8050EE24[0xb1]);
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &self->mpLayout, self->mpAccessor, &lbl_eu_8050EE24[0xb5]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            self->mpLayout, &self->mpAnim, self->mpAccessor, &lbl_eu_8050EE24[0xce]);
+        buildLayout(&self->mpLayout, self->mpAccessor, &lbl_eu_8050EE24[0xb5]);
+        bindLayoutAnimTransform(self->mpLayout, &self->mpAnim, self->mpAccessor, &lbl_eu_8050EE24[0xce]);
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
@@ -1569,7 +1571,7 @@ extern "C" int SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh) 
         void* fileData78 = self->mFileHandle78->getData();
         CBdat::setBdatEntry(2, fileData78);
         Bdat_GetTable_AA34();
-        lbl_eu_8066490C = (u32)getFP__FPCc(&lbl_eu_8050EE24[0xea]);
+        lbl_eu_8066490C = (u32)getFP(&lbl_eu_8050EE24[0xea]);
         self->mFileHandle78 = 0;
         return 1;
     }

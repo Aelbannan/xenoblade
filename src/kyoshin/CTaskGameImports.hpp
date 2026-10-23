@@ -305,8 +305,6 @@ struct CTaskGamePtmfPool {
 
 // C++ runtime delete / array-delete (flat retail names; used by the reslist
 // base dtor).
-extern "C" void __dl__FPv(void*);
-extern "C" void __dla__FPv(void*);
 
 // _reslist_base<cf::CfObject*> vtable (restored by its dtor
 // __dt___reslist_base_cf_CfObject).

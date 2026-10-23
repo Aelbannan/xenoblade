@@ -38,6 +38,7 @@ extern const void* lbl_eu_80527AB8[];
 extern const void* lbl_eu_80527AE0[];
 extern const void* lbl_eu_80527B10[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/plugin/ocBdat.hpp"
 // CfT_PlayRateGet is declared in CfGameManager.hpp as extern "C" float.
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
@@ -508,14 +509,14 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
 
         Bdat_GetTable_AA34();
         Bdat_GetTable_AA34();
-        void* fp1 = getFP__FPCc(lbl_eu_804FBB0C + 0x7);
+        void* fp1 = getFP(lbl_eu_804FBB0C + 0x7);
         // Zeroed here (not at function top) so the 8-word inline clear lands
         // between the getFP call and sprintf, like retail.
         char sbuf[0x20] = {0};
         sprintf(sbuf, lbl_eu_804FBB0C + 0x13, lbl_eu_80663E42,
                 lbl_eu_80663E44);
         Bdat_GetTable_AA34();
-        void* fp2 = getFP__FPCc(sbuf);
+        void* fp2 = getFP(sbuf);
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 1) != 0) {
             self->field_17C = 0;

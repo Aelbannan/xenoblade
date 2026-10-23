@@ -3,7 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameEffApi.hpp"
-extern "C" void __dl__FPv(void*);
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceGX.hpp"
@@ -65,7 +64,7 @@ __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn*
 
 void* __dt__80044BB0(void* obj, int mode) {
     if (obj != 0 && mode > 0) {
-        __dl__FPv(obj);
+        operator delete(obj);
     }
     return obj;
 }
@@ -103,7 +102,7 @@ __declspec(noinline) void* __dt___reslist_base_CScn(ResListCScn* self, int mode)
             self->mList = NULL;
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -115,7 +114,7 @@ void* __dt__reslist_CScn(void* _this, int flags) {
         // (no vtable dispatch), then conditionally deletes the object.
         __dt___reslist_base_CScn((ResListCScn*)_this, 0);
         if (flags > 0) {
-            __dl__FPv(_this);
+            operator delete(_this);
         }
     }
     return _this;
@@ -141,7 +140,7 @@ extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int fla
             __dt__8CProcessFv(self, 0);
         }
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

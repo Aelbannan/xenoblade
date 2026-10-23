@@ -278,7 +278,6 @@ extern "C" void removeTboxById(u32 obj);             // action-source teardown (
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                                nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
 // UI sound effect (retail pre-mangled name).
-extern "C" void playUISound__FUl(u32 sound);
 // Rank-item pane text setter (retail symbol is the C++-mangled name).
 void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* paneName, u8 value);
 // Retail ctor symbol is the unmangled `__ct__CMenuGetItemMulti` (constructs

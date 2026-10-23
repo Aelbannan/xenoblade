@@ -219,8 +219,6 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* _this);
 
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
-extern "C" int advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" void playUISound__FUl(u32);
 extern "C" void Cur_SetVisible(void* cur, u8 flag);
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 

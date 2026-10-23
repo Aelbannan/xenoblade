@@ -240,7 +240,6 @@ extern "C" void simSetFlag2OnTree(cf::CfObjectModelSub98* model, int flag);
 
 // operator delete (retail symbol __dl__FPv is the unmangled C name; declare
 // extern "C" so the bl reloc references exactly __dl__FPv).
-extern "C" void __dl__FPv(void* object);
 
 // Imports for CfObjectModel_UnkVirtualFunc13 (sets sub-object +0x7A8 flag
 // bits; defined in libs/monolib CScnItemModel.cpp) and CfModel_InstallSub

@@ -82,14 +82,14 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);
 extern "C" u32 CfRes_getAllocHandle();
 // Concrete gimmick constructors (cf/ units). The stored object is a
 // CGimmickEntry (shared CfGimmick base); the ctor fills the derived fields.
-extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
-extern "C" void* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
-extern "C" void* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickSaveOff(CGimmickEntry* self, s32 row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
-extern void* lbl_eu_8066412C;
-extern void* lbl_eu_80664130;
-extern void* lbl_eu_80664134;
+extern u8* lbl_eu_8066412C;
+extern u8* lbl_eu_80664130;
+extern u8* lbl_eu_80664134;
 // Bdat table pointers for the object / jump / item / enemy tables (sda21
 // globals). u8* opaque buffers (no void* in this TU's imports).
 extern u8* lbl_eu_80664128;
@@ -272,7 +272,7 @@ bool GimSpawnObjects(CGimmickGlobal* self) {
 // GimSpawnLocks: spawn the lock gimmicks from the lock bdat table. Returns
 // false if the 0x80-slot container fills up mid-spawn.
 bool GimSpawnLocks(CGimmickGlobal* self) {
-    void* bdat = lbl_eu_8066412C;
+    u8* bdat = lbl_eu_8066412C;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x200;
@@ -280,10 +280,10 @@ bool GimSpawnLocks(CGimmickGlobal* self) {
     u32 row = Bdat_GetRowBase_B41C(bdat);
     s32 n = (s32)Bdat_GetMaxRow_B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x1fc, CfRes_getAllocHandle());
+        CGimmickEntry* obj = (CGimmickEntry*)mtl::MemManager::allocate(0x1fc, CfRes_getAllocHandle());
         if (obj)
-            obj = __ct__cf_CfGimmickLock((CGimmickEntry*)obj, row);
-        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+            obj = __ct__cf_CfGimmickLock(obj, row);
+        self->mGimmicks[self->mGimmickCount] = obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
             return false;
@@ -295,7 +295,7 @@ bool GimSpawnLocks(CGimmickGlobal* self) {
 // GimSpawnElevators: spawn the elevator gimmicks from the elevator bdat table;
 // same shape as GimSpawnLocks with the 0x400 flag and 0x1d8-byte objects.
 bool GimSpawnElevators(CGimmickGlobal* self) {
-    void* bdat = lbl_eu_80664130;
+    u8* bdat = lbl_eu_80664130;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x400;
@@ -303,10 +303,10 @@ bool GimSpawnElevators(CGimmickGlobal* self) {
     u32 row = Bdat_GetRowBase_B41C(bdat);
     s32 n = (s32)Bdat_GetMaxRow_B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x1d8, CfRes_getAllocHandle());
+        CGimmickEntry* obj = (CGimmickEntry*)mtl::MemManager::allocate(0x1d8, CfRes_getAllocHandle());
         if (obj)
-            obj = __ct__cf_CfGimmickElv((CGimmickEntry*)obj, row);
-        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+            obj = __ct__cf_CfGimmickElv(obj, row);
+        self->mGimmicks[self->mGimmickCount] = obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
             return false;
@@ -318,7 +318,7 @@ bool GimSpawnElevators(CGimmickGlobal* self) {
 // GimSpawnWarps: spawn the warp gimmicks from the warp bdat table; same shape
 // as GimSpawnLocks with the 0x800 flag and 0x10c-byte objects.
 bool GimSpawnWarps(CGimmickGlobal* self) {
-    void* bdat = lbl_eu_80664134;
+    u8* bdat = lbl_eu_80664134;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x800;
@@ -326,10 +326,10 @@ bool GimSpawnWarps(CGimmickGlobal* self) {
     u32 row = Bdat_GetRowBase_B41C(bdat);
     s32 n = (s32)Bdat_GetMaxRow_B1EC(bdat);
     for (s32 i = 0; i < n; i++) {
-        void* obj = mtl::MemManager::allocate(0x10c, CfRes_getAllocHandle());
+        CGimmickEntry* obj = (CGimmickEntry*)mtl::MemManager::allocate(0x10c, CfRes_getAllocHandle());
         if (obj)
-            obj = __ct__cf_CfGimmickWarp((CGimmickEntry*)obj, row);
-        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+            obj = __ct__cf_CfGimmickWarp(obj, row);
+        self->mGimmicks[self->mGimmickCount] = obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
             return false;

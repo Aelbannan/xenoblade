@@ -11,6 +11,7 @@
 #include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, isGlobalCamFlagSet
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <string.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // sdata2 float pool -- single table to avoid leading 0.0 sbss migration (see task recipe a)
 __declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdata2_tbl_CfObjectNpc[8] = {0.0f, 0.6f, 1.8f, 0.1f, 30.0f, 25.0f, 12.5f, 100.0f};
@@ -146,7 +147,7 @@ void CfObjectNpc::updateNpcDialog() {
 // 0x4330 integer-to-double bias constant.
 void CfObjectNpc::loadNpcParams() {
     Bdat_GetTable_AA34();
-    void* fp = getFP__FPCc((const char*)this + 0x78);
+    void* fp = getFP((const char*)this + 0x78);
 
     // Length-probe the name column: if it exceeds 0x1F chars, fall back to
     // the fixed string baked into the column-name table at +0xC.
@@ -186,7 +187,7 @@ void CfObjectNpc::loadNpcParams() {
 // 0x800C0314
 void CfObjectNpc::loadIconType() {
     Bdat_GetTable_AA34();
-    void* fp = getFP__FPCc((const char*)this + 0x78);
+    void* fp = getFP((const char*)this + 0x78);
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
     const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x22], row);
@@ -197,7 +198,7 @@ void CfObjectNpc::loadIconType() {
 s16 CfObjectNpc::getRltMeet() {
     if (mRltMeet == -1) {
         Bdat_GetTable_AA34();
-        void* fp = getFP__FPCc((const char*)this + 0x78);
+        void* fp = getFP((const char*)this + 0x78);
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.
         const char* v = (const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x2C], row);

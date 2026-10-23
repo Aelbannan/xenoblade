@@ -13,6 +13,7 @@
 #include "monolib/device/CFileHandle.hpp"
 
 #include <stdio.h>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 
@@ -815,7 +816,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         void* fileData = field_0x18->getData();
         CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
-        field_0x3C = (u32)getFP__FPCc(lbl_eu_80536398[SearchThresholdIdx(mField3A)]);
+        field_0x3C = (u32)getFP(lbl_eu_80536398[SearchThresholdIdx(mField3A)]);
         QstLogInfo_RefreshQuestDisplay(this);
         mField38 = 1;
         field_0x18 = 0;

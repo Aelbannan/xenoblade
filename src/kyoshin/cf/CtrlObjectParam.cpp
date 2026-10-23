@@ -79,6 +79,7 @@ extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state statu
 
 #include <new>
 #include <cstring>
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Stub declared below (CtrlObjectParam_LearnArtsSlots) -- called by CtrlObjectParam_SetEquipSlot4.
 extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* self);
@@ -950,7 +951,7 @@ extern "C" void CtrlObjectParam_SetWorkField50(unsigned short value) {
 // snapshots. The dead lbl_eu_8052E9B0 address store is kept by retail.
 void __ct__8009ED08(u32 rowA, u32 rowB) {
     const char* strBase = lbl_eu_804FBCB0;   // materialized early (retail lis/addi)
-    void* fp = getFP__FPCc(&strBase[0x78]);
+    void* fp = getFP(&strBase[0x78]);
     u32 v = getBdatStringColumnValue(fp, &strBase[0x83], rowB);
     cf::CtrlObjectParamEntry* entryA = reinterpret_cast<cf::CtrlObjectParamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_80663E88) + ((u16)rowA * 0x3DD4) + 0x41F0);
@@ -1264,7 +1265,7 @@ extern "C" void CtrlObjectParam_InitArtsSlotSet(cf::CtrlObjectParamArtsInitView*
         } while (loop < 6);
         Bdat_GetTable_AA34();
         const char* strBase = lbl_eu_804FBCB0;
-        void* fp = getFP__FPCc(&strBase[0x237]);
+        void* fp = getFP(&strBase[0x237]);
         f32 f30 = lbl_eu_806667A0;
         f32 f31 = ml::rad2deg;
         for (int i = 0; i < 6; i++) {
@@ -1650,7 +1651,7 @@ extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* s
     }
     Bdat_GetTable_AA34();
     const char* strBase = lbl_eu_804FBCB0;
-    void* fp = getFP__FPCc(&strBase[0x101]);
+    void* fp = getFP(&strBase[0x101]);
     u16 rowKey = self->field_0C;
     void* itemBdat = reinterpret_cast<void*>(lbl_eu_806640F4);
     u32 colv = getBdatStringColumnValue(itemBdat, &strBase[0x58], rowKey);
@@ -1790,7 +1791,7 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
     u16 rowKey = self->field_0C;
     rows = &self->rows[0];
     Bdat_GetTable_AA34();
-    void* fp = getFP__FPCc(&strBase[0x101]);
+    void* fp = getFP(&strBase[0x101]);
     volatile union { u32 w; u8 b[4]; } v;
     v.w = getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
                                    &strBase[0x58], rowKey);

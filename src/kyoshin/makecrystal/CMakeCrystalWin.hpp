@@ -80,7 +80,6 @@ void func_801C412C(CTitleAHelp* self);
 void beginClose(CTitleAHelp* self);
 void teardown(CTitleAHelp* self);
 void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-void playUISound__FUl(u32 op);
 int IsMenuState621F0();
 void unregisterEffectScene(CScn* scene);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);

@@ -37,13 +37,12 @@ union F64Conv {
 
 
 void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*, int);
-void __dl__FPv(void*);
 void* __dt__Q34nw4r2ut10PackedFontFv(void* self, int freeFlag)
 {
     if (self != 0) {
         __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(self, 0);
         if (freeFlag > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

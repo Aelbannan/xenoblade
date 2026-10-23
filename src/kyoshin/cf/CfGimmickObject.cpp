@@ -65,6 +65,7 @@ extern char lbl_eu_80668188[];
 extern char lbl_eu_80668190[];
 extern char lbl_eu_80668198[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "monolib/scn/code_804BC9EC.hpp"
 
 // .data 0xD8: PMF dispatch tables and column-name pointer tables. They
 // come before the code so MWCC's compiler-generated GimObjDispatchStateRefresh dispatch
@@ -252,10 +253,10 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
             continue;
         if ((self->field_161 & 0x2) != 0) {
             setLODEnable__8CTaskLODFv(lod, 0);
-            ScnData_FwdB7DD4(getScnHandle__Fv(), lod);
+            ScnData_FwdB7DD4(getScnHandle(), lod);
         } else if (self->field_162 != 0 || self->field_163 != 0) {
             setLODEnable__8CTaskLODFv(lod, 1);
-            ScnData_FwdB7D9C(getScnHandle__Fv(), lod);
+            ScnData_FwdB7D9C(getScnHandle(), lod);
         }
         attachLODObject__8CTaskLODFv(lod, 0);
         *word |= bit;
@@ -613,9 +614,9 @@ void GimObjRefreshLodTasks(cf::CfGimmickObject* self, int mode) {
         if (self->field_70[i] != 0) {
             setLODEnable__8CTaskLODFv(self->field_70[i], mode);
             if (mode != 0) {
-                ScnData_FwdB7D9C(getScnHandle__Fv(), self->field_70[i]);
+                ScnData_FwdB7D9C(getScnHandle(), self->field_70[i]);
             } else {
-                ScnData_FwdB7DD4(getScnHandle__Fv(), self->field_70[i]);
+                ScnData_FwdB7DD4(getScnHandle(), self->field_70[i]);
             }
         }
     }

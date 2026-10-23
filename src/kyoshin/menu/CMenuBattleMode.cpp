@@ -120,7 +120,6 @@ extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int
 // explicit __dt__8CProcessFv(self, 0) call fixes the delete flag to 0
 // (CMenuSymbolMark/CMenuBattleChain idiom).
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
-extern "C" void __dl__FPv(void* p);
 extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
     if (self == 0) goto end;
     self->mLayoutMem.~UnkClass_8045F564();
@@ -129,7 +128,7 @@ extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int
             __dt__8CProcessFv(self, 0);
         }
     }
-    if (deleteFlag > 0) __dl__FPv(self);
+    if (deleteFlag > 0) operator delete(self);
 end:
     return self;
 }

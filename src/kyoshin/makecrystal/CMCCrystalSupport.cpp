@@ -4,6 +4,10 @@
 #include <nw4r/lyt.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+void playUISound(u32);
 
 extern "C" {
 extern void* lbl_eu_80536770[];
@@ -12,16 +16,8 @@ extern void* lbl_eu_80664090;
 extern const float lbl_eu_80668630;
 extern const float lbl_eu_80668634;
 
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*,
-    char*);
 char* MakeTplNameSysFile(u16);
 void PaneSetTexPaletteByName(void*, const char*, void*);
-u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
-                                                  float);
-void playUISound__FUl(u32);
 void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 }
@@ -62,10 +58,8 @@ CMCCrystalSupport::~CMCCrystalSupport() {}
 #pragma push
 #pragma optimize_for_size on
 extern "C" void CrySupBuildLayout(CMCCrystalSupport* self) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &self->mLayout, self->mAccessor, lbl_eu_8050AA3C);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->mLayout, &self->mAnimTransform, self->mAccessor, lbl_eu_8050AA3C + 0x15);
+    buildLayout(&self->mLayout, self->mAccessor, lbl_eu_8050AA3C);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTransform, self->mAccessor, lbl_eu_8050AA3C + 0x15);
     self->mLayout->SetAnimationEnable(self->mAnimTransform, true);
     self->mLayout->Animate(0);
     self->mLoaded = 1;
@@ -104,7 +98,7 @@ extern "C" void CrySupStartState(CMCCrystalSupport* self) {
     self->mState = 1;
     *(float*)((u8*)self->mAnimTransform + 0x10) = lbl_eu_80668630;
     self->mFinished = 0;
-    playUISound__FUl(0x8e);
+    playUISound(0x8e);
 }
 
 #pragma push
@@ -123,8 +117,7 @@ extern "C" void CrySupSetTexByIndex(CMCCrystalSupport* self, u16 index) {
 // noinline: retail calls this via a real `bl` from CrySupTickAnim (sibling in this
 // TU); without it MWCC inlines the body into the caller and the bl disappears.
 extern "C" __declspec(noinline) void CrySupAdvanceAnim(CMCCrystalSupport* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(
-            self->mAnimTransform, lbl_eu_80668634) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_80668634) != 0) {
         self->mState = 0;
         self->mFinished = 1;
     }

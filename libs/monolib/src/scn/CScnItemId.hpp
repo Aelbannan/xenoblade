@@ -11,7 +11,6 @@ extern "C" u32 lbl_eu_8056DCD8[];
 // already ends in `__Fv` as a literal identifier, so C linkage is required to
 // avoid double-mangling. Takes no arguments, returns the active scene-resource
 // container pointer.
-extern "C" void* getScnHandle__Fv(void);
 
 // Scene-resource helpers (scn/code_804BC9EC.cpp). Declared as C++ global
 // functions so MWCC mangles them to the retail forms resetScnData__FPv and

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the MoveImplGroundProbeA /
 // MoveImplGroundProbeB ground probes; TU-local no-arg view of CfCode_GetSubObject below.
@@ -1896,7 +1897,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
             }
             f32 norm = lbl_eu_80666C60;
             if (m >= lbl_eu_80666C60) {
-                norm = m * FrSqrt__Q24nw4r4mathFf(m);
+                norm = m * nw4r::math::FrSqrt(m);
             }
             f32 inv = lbl_eu_80666C64 / norm;
             q.x = cross.x * inv;
@@ -2116,7 +2117,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
                 if (m > lbl_eu_80666C60) {
                     f32 mag = lbl_eu_80666C64 + d;
                     norm = lbl_eu_80666C70 * mag *
-                           FrSqrt__Q24nw4r4mathFf(mag);
+                           nw4r::math::FrSqrt(mag);
                 }
                 f32 inv = lbl_eu_80666C64 / norm;
                 q.x = cross.x * inv;

@@ -27,6 +27,7 @@ extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 extern CMenuVision* lbl_eu_80664388;
 
 #include "kyoshin/cf/CBattleManager.hpp"
+void playUISound(u32);
 
 extern u32 getPackedFont();
 
@@ -46,7 +47,6 @@ u32 CfCode_GetOptPtr0C(void*);
 void* CfCode_GetSubObject(void*);
 int ScMain_GetSummedInt(void*);
 f32 ScMain_GetRoundedMetric(void*);
-void playUISound__FUl(u32);
 void PaneSetColorFieldSingle(void*, const char*, u32);
 void PaneSetColorFieldPair(void*, const char*, u32, u32);
 void PaneSetTexPalette(void*, void*);
@@ -176,7 +176,7 @@ static inline void menuVisionBegin(CMenuVisionEntry& entry) {
     entry.mAnim1->SetFrame(lbl_eu_80667DC0);
     entry.field_0x28 = 0;
     entry.mState = 1;
-    playUISound__FUl(0x1C3);
+    playUISound(0x1C3);
 }
 
 static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
@@ -191,7 +191,7 @@ static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
     entry.mAnim1->SetFrame(lbl_eu_80667DC0);
     entry.field_0x28 = 0;
     entry.mState = 1;
-    playUISound__FUl(0x1C3);
+    playUISound(0x1C3);
 }
 
 static inline void menuVisionBeginSilent(CMenuVisionEntry& entry) {
@@ -314,7 +314,6 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
 // virtual dtor MWCC adds the vptr store and double-destroys mLayoutMem.
 // The nested null-check reproduces retail's guard pair; the conditional
 // operator delete follows the deleting flag.
-extern "C" void __dl__FPv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
     if (self != 0) {
@@ -325,7 +324,7 @@ extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
             }
         }
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -1382,7 +1381,7 @@ void tickVisionExpiry(CMenuVision*, CMenuVisionEntry* entry) {
     // Cue-frame jingle once the timer lapses to the exact cue value.
     if (!(lbl_eu_80667DD8 == entry->mTimer)) {
     } else {
-        playUISound__FUl(0x1c4);
+        playUISound(0x1c4);
     }
     if (advanceAnimTransform(entry->mAnim7, lbl_eu_80667DC4)) {
         entry->mState = 0;

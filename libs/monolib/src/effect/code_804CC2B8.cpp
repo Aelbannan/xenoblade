@@ -276,7 +276,7 @@ extern "C" void __attribute__((never_inline)) __dt__804CC2E4(EffectStruct* self)
         self->field_0x330 = 0;
     }
     if (self->field_0x334) {
-        __dl__FPv(self->field_0x334);
+        operator delete(self->field_0x334);
         self->field_0x334 = 0;
     }
     self->field_0x00 = -1;

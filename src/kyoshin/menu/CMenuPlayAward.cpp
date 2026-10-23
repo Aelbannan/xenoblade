@@ -7,8 +7,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void playUISound__FUl(u32); // from CTutorial.hpp (C++ mangled playUISound__FUl); forward decl to avoid CTutorial/code_80135FDC extern "C" overload clash on BdatGetU8Direct/setLayoutTextBoxNumber
-inline void playUISound(u32 cue) { playUISound__FUl(cue); }
+void playUISound(u32 cue); // defined in code_80135FDC.cpp
 #include "kyoshin/code_80135FDC.hpp" // AnimRewindFrame / advanceAnimTransform (anim frame advance)
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad / getCfPadData
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
@@ -19,6 +18,7 @@ inline void playUISound(u32 cue) { playUISound__FUl(cue); }
 #include "monolib/util/MemManager.hpp"        // mtl::MemManager::allocate
 #include "monolib/work/CProcess.hpp"          // CProcess::Regist
 #include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
+#include "kyoshin/plugin/ocBdat.hpp"
 // CScn (with removeRenderCB) comes from the minimal declaration in
 // CTaskGameEff.hpp via harness_catalog.hpp -- CScn.hpp redefines it.
 
@@ -444,7 +444,7 @@ void PlayAward_InitEntry(CPlayAwardEntry* self) {
 // non-null and the deleting flag is set.
 void* __dt__802706D4(CPlayAwardEntry* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -455,7 +455,7 @@ void* __dt__80270714(CPlayAwardEntryArray* self, int mode) {
     if (self != 0) {
         __destroy_arr(self->mEntries, (void*)&__dt__802706D4, 8, 0x200);
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -471,7 +471,7 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
     }
 
     char* const s = lbl_eu_8050E7C0;
-    void* fp = getFP__FPCc(s);
+    void* fp = getFP(s);
     void* bdat = lbl_eu_806648A8;
     self->field_1001 = (u8)Bdat_GetMaxRow_B1EC(fp);
 
@@ -636,7 +636,7 @@ CPlayAwardList* __dt__14CPlayAwardListFv(CPlayAwardList* self, int dealloc) {
         __dt__6CCur18Fv(&self->mCursor, -1);
         self->mMemRegion.~UnkClass_8045F564();
         if (dealloc > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -1002,7 +1002,7 @@ void PlayAward_RefreshPageTitles(CPlayAwardList* self) {
     // Load the two page-title strings ("%s"-style templates from the pool).
     char* s1;
     char* s2;
-    void* fp = getFP__FPCc(&lbl_eu_8050E7C0[0x14]);
+    void* fp = getFP(&lbl_eu_8050E7C0[0x14]);
     s1 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
     s2 = BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
     LayoutSetTextBoxFmtValue(self->mLayout20, &lbl_eu_8050E7C0[0xba],
@@ -1125,7 +1125,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         mLayout20->Animate(0);
 
         // Bind the three page-title/help strings.
-        void* fp = getFP__FPCc(&lbl_eu_8050E7C0[0x14]);
+        void* fp = getFP(&lbl_eu_8050E7C0[0x14]);
         LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0xba],
                       BdatGetPtrDirect(fp, &lbl_eu_8050E7C0[0x1f], 0xa), 0);
         LayoutSetTextBoxFmtValue(mLayout20, &lbl_eu_8050E7C0[0x179],
@@ -1160,7 +1160,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         void* fileData2 = mFileHandle2->getData();
         CBdat::setBdatEntry(2, fileData2);
         Bdat_GetTable_AA34();
-        lbl_eu_806648A8 = getFP__FPCc(&lbl_eu_8050E7C0[0x183]);
+        lbl_eu_806648A8 = getFP(&lbl_eu_8050E7C0[0x183]);
         mFileHandle2 = 0;
         PlayAward_LoadEntries(this);
         return 1;

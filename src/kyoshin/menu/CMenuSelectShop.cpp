@@ -17,6 +17,7 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 #include "kyoshin/menu/CMenuSelectShop.hpp"
+void playUISound(u32);
 
 // ---------------------------------------------------------------------------
 // ShopSel_CreateSingleton  (us-8018bb40)
@@ -132,7 +133,7 @@ extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -182,7 +183,7 @@ void CMenuSelectShop::Init() {
 
     mCursor.initLayout();
 
-    playUISound__FUl(0x29);
+    playUISound(0x29);
 
     void* render = this;
     if (this) render = &mOcc70;

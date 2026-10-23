@@ -303,7 +303,6 @@ extern "C" int ScnData_FwdBC9A0(void);
 // C-linkage imports from libs/monolib/src/scn/code_804BC9EC.cpp (sound
 // system global state / query) and kyoshin/CUIBattleManager.cpp (link
 // resolution), used by func_8005D2C4.
-extern "C" void* getScnHandle__Fv(void);
 extern "C" void* MapFx_ResolveOwner(void* r3);
 
 // C-linkage import: the retail base-class ctor, called directly by the

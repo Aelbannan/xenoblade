@@ -208,7 +208,6 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" int isPresentSettled(void*);
-extern "C" void __dl__FPv(void*);
 extern "C" void* BuildItemNameStr(u32);
 extern "C" void setItemBoxNamedText(void*, int, void*);
 extern "C" void RebuildGridCat(void*);
@@ -244,7 +243,6 @@ extern "C" void RebuildGridUI(void*);
 extern "C" u32 GetCatLabelMsg(void*);
 extern "C" char* FormatCellItemName(void*, u16);
 extern "C" void MoveTabPage(void*, int);
-extern "C" void playUISound__FUl(u32);
 extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" u32 sortMenuGetFlag2B(void*);
@@ -351,7 +349,6 @@ extern "C" void FinishCloseAnim(void*);
 extern "C" float GetItemValueFloat(void*, void*);
 extern "C" u32 HasEquippedSlot(void*, void*);
 extern "C" u32 GetItemBasePrice(void*, void*);
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" char* CopyEntry9Bytes(char*, const char*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
@@ -388,7 +385,6 @@ extern "C" void NumSel_Teardown_AF9C(void*);
 extern "C" void GridSubMenu_TermLayout(void*);
 extern "C" void ExWin_Teardown(void*);
 extern "C" void termPresentWin(void*);
-extern "C" void* getFP__FPCc(const char*);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
 extern "C" unsigned char* SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);  // returns p (retail ctor reuses caller-preserved r3)
@@ -429,8 +425,6 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void ApplyFontToTxtPanes(void*, u32);
 extern "C" void* getPackedFont__Fv(void);
 extern "C" void* CUICfManager_getPackedFont9C(void);

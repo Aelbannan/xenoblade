@@ -125,9 +125,7 @@ extern "C" void CScrollBar_PlaceThumb(void*, u16);
 extern "C" void Cur_DrawLayout(void*, void*);
 extern "C" void Cur_Update(void*);
 extern "C" void Cur_SetVisible(void*, u8);
-extern "C" void playUISound__FUl(u32);
 extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
-extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int n);
 extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
@@ -149,7 +147,6 @@ extern "C" void ScalePaneWorldPos(void* out, void* paneA, void* paneB, void* pan
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" void* getFP__FPCc(const char* name);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // Data/build helpers used by buildTalkList.

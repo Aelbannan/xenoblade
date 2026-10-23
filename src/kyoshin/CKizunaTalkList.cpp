@@ -5,6 +5,10 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // Converted to inline member function in header
 
@@ -85,7 +89,7 @@ extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int
         __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -97,7 +101,7 @@ extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int
 // pointer itself, as the deleting-destructor ABI requires.
 extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags) {
     if (entry != 0 && flags > 0)
-        __dl__FPv(entry);
+        operator delete(entry);
     return entry;
 }
 
@@ -121,7 +125,7 @@ extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flag
     if (self != 0) {
         __destroy_arr(self, (void*)__dt__80272774, 0x14, 0x100);
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }
@@ -492,7 +496,7 @@ void CKizunaTalkList::hideTalkList() {
         bindScrollInAnims(this);
         Cur_SetVisible(&this->mCursor, 0);
         CScrollBar_requestScrollOut(&this->mScrollBar);
-        playUISound__FUl(6);
+        playUISound(6);
     }
 }
 
@@ -521,7 +525,7 @@ void CKizunaTalkList::scrollTalkListUp() {
     renderTalkRows(this);
     moveTalkCursor(this);
     CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void CKizunaTalkList::scrollTalkListDown() {
@@ -548,7 +552,7 @@ void CKizunaTalkList::scrollTalkListDown() {
     renderTalkRows(this);
     moveTalkCursor(this);
     CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void CKizunaTalkList::pageTalkListUp() {
@@ -570,7 +574,7 @@ void CKizunaTalkList::pageTalkListUp() {
     renderTalkRows(this);
     moveTalkCursor(this);
     CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void CKizunaTalkList::pageTalkListDown() {
@@ -594,7 +598,7 @@ void CKizunaTalkList::pageTalkListDown() {
     renderTalkRows(this);
     moveTalkCursor(this);
     CScrollBar_PlaceThumb(&this->mScrollBar, (u16)this->mUnknown8A);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 extern "C" __declspec(noinline) void advanceTalkAnim24(CKizunaTalkList* self) {
@@ -832,9 +836,9 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, fileData, &strBase[0x1c9]);
 
         // Create the layout and its two animation transforms.
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&this->mpLayout20, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1cd]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim24, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1e2]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim28, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1fa]);
+        buildLayout(&this->mpLayout20, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1cd]);
+        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim24, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1e2]);
+        bindLayoutAnimTransform(this->mpLayout20, &this->mpAnim28, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1fa]);
 
         // Bind the font pane onto the layout.
         void* rootPane = *(void**)((char*)this->mpLayout20 + 0x10);
@@ -869,7 +873,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         void* data2 = fh2->getData();
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_806648B8 = (void*)getFP__FPCc(&lbl_eu_8050E990[0x217]);
+        lbl_eu_806648B8 = (void*)getFP(&lbl_eu_8050E990[0x217]);
         rebuildTalkList(this);
         this->mUnknown18 = 0;
         return 1;

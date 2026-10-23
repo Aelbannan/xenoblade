@@ -57,7 +57,6 @@ extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);     // C
 extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
-extern "C" void __dl__FPv(void* object);
 extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
 extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter

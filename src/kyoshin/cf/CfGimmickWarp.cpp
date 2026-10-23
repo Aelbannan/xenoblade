@@ -120,7 +120,6 @@ void movePcResetAndSetPos(u8*, const WarpVec3*);
 // return) by the shared cf headers; the TU-local WarpObject* decl clashed
 // with it (only use casts to CObjectState* anyway).
 void __dt__Q22cf9CfGimmickFv(WarpData*, int);
-void __dl__FPv(void*);
 }
 
 static inline cf::CfObject* playerFromRaw(void* raw) {
@@ -225,7 +224,7 @@ extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
         CfGimmick_UnregisterSpawnedObject((WarpObject*)((u8*)self + 0x108));
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (deleteFlag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

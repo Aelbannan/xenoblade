@@ -197,7 +197,7 @@ extern "C" cf::CfObjectActor* __dt__Q22cf13CfObjectActorFv(cf::CfObjectActor* se
             }
         }
         if (deleteFlag > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }
@@ -211,7 +211,7 @@ u8* __dt__800ADA08(u8* object, s32 deleteFlag) {
         ((cf::CfDtor800ADA08View*)object)->field_0x208 = 0;
         ((cf::CfDtor800ADA08View*)object)->field_0x204 = 0;
         if (deleteFlag > 0)
-            __dl__FPv(object);
+            operator delete(object);
     }
     return object;
 }
@@ -250,7 +250,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
             }
         }
         if (deleteFlag > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

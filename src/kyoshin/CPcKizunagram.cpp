@@ -6,6 +6,10 @@
 
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+#include "kyoshin/plugin/ocBdat.hpp"
+void playUISound(u32);
 
 // Forward declarations of intra-TU callees.
 void KizunagramBuildRowLookup(CPcKizunagram* self);
@@ -176,7 +180,7 @@ void KizunagramOpen(CPcKizunagram* self) {
     if (self->mStateByte2 != 0) return;
     self->mStateByte2 = 1;
     self->mIsOpen = 0;
-    playUISound__FUl(0x6d);
+    playUISound(0x6d);
 }
 
 // Close the affinity-chart window: from the open state (2) go to closing (3),
@@ -188,35 +192,35 @@ void KizunagramClose(CPcKizunagram* self) {
     setPaneVisible(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
                       ->FindPaneByName(lbl_eu_8050D868 + 0x50, true),
                   0);
-    playUISound__FUl(6);
+    playUISound(6);
 }
 
 void KizunagramCursorUp(CPcKizunagram* self) {
     KizunagramStepRow(self, 1);
     KizunagramPlaceCursor(self);
     KizunagramRefreshRows(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void KizunagramCursorDown(CPcKizunagram* self) {
     KizunagramStepRow(self, 0);
     KizunagramPlaceCursor(self);
     KizunagramRefreshRows(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void KizunagramCursorPageUp(CPcKizunagram* self) {
     KizunagramStepRow(self, 1);
     KizunagramPlaceCursor(self);
     KizunagramRefreshRows(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void KizunagramCursorPageDown(CPcKizunagram* self) {
     KizunagramStepRow(self, 0);
     KizunagramPlaceCursor(self);
     KizunagramRefreshRows(self);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 extern "C" void __declspec(noinline) KizunagramFinishOpening(CPcKizunagram* self) {
@@ -263,7 +267,7 @@ extern "C" void __declspec(noinline) KizunagramFinishClosing(CPcKizunagram* self
 // extern "C" keeps the unmangled retail symbol names.
 // KizunagramRefreshRows: refresh all 6 affinity rows for the current character.
 extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) {
-    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    void* table = getFP(lbl_eu_8050D868 + 0x7f);
     u8 count = (u8)Bdat_GetMaxRow_B1EC(table);
     CtrlRemote_TouchBitByArg(0x20);
 
@@ -345,7 +349,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
     u8 i;
     u8 count;
     u32 k;
-    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    void* table = getFP(lbl_eu_8050D868 + 0x7f);
     // First pass: build the character-row lookup table (BDAT indexed by row).
     // u8 counter/count drive the retail clrlwi + cmplw (unsigned) loop.
     count = (u8)Bdat_GetMaxRow_B1EC(table);
@@ -411,12 +415,9 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
 // transforms, enable the idle anim, pin down two named panes, then reset the
 // root pane scale. noinline: retail callers (OnFileEvent) emit a real bl.
 extern "C" void __declspec(noinline) KizunaCurInitLayout(CPcKizunaCur* self) {
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        &self->mpLayout, self->mAccessor, lbl_eu_8050D868 + 0x00);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->mpLayout, &self->mpAnim0, self->mAccessor, lbl_eu_8050D868 + 0x18);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        self->mpLayout, &self->mpAnim1, self->mAccessor, lbl_eu_8050D868 + 0x35);
+    buildLayout(&self->mpLayout, self->mAccessor, lbl_eu_8050D868 + 0x00);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnim0, self->mAccessor, lbl_eu_8050D868 + 0x18);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnim1, self->mAccessor, lbl_eu_8050D868 + 0x35);
     self->mpLayout->SetAnimationEnable(self->mpAnim1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnim0, true);
     self->mpLayout->Animate(0);
@@ -435,7 +436,7 @@ extern "C" void KizunagramStepRow(CPcKizunagram* self, u32 arg) {
     order[0] = lbl_eu_80668888;
     order[1] = lbl_eu_8066888C;
     Bdat_GetTable_AA34();
-    void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    void* table = getFP(lbl_eu_8050D868 + 0x7f);
     int count = Bdat_GetMaxRow_B1EC(table);
     // Locate the current character row inside the 8-entry order list.
     // Constant-bound for-loop lets MWCC drive the trip count with mtctr/bdnz
@@ -513,7 +514,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
     int id;
     u16 val;
     const void* table;
-    table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
+    table = getFP(lbl_eu_8050D868 + 0x7f);
     count = (u8)Bdat_GetMaxRow_B1EC((void*)table);
     for (i = 0; i < count; i++) {
         BdatGetPtrDirect(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
@@ -635,10 +636,8 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         mtl::MemManager::setMemInitFlag(false);
         mArcRes = CLibLayout::createArcResourceAccessor();
         mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTransform, mArcRes, &lbl_eu_8050D868[0x293]);
+        buildLayout(&mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);
+        bindLayoutAnimTransform(mLayout, &mAnimTransform, mArcRes, &lbl_eu_8050D868[0x293]);
 
         // Bind the font handle into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();

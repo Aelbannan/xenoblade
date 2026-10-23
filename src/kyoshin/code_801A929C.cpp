@@ -29,8 +29,6 @@ extern unsigned char lbl_eu_80664330;
 // Retail C-symbol import: camera/scene gate query.
 extern "C" int CamEvtGetFl46();
 
-extern "C" void __dl__FPv(void*);
-
 // Byte view of a CtrlState entry's +0x2C match-slot word (mirrors
 // CtrlState::m2C, s16 init -1; the full struct is defined below).
 struct MarkSlotView {
@@ -504,7 +502,7 @@ void* __dt__801A9F78(void* self, int dealloc) {
         extern unsigned char lbl_eu_80664330;
         *(void**)(&lbl_eu_80664330) = 0;
         if (dealloc > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -88,7 +88,7 @@ _reslist_base<CUIBattleChild*>::~_reslist_base() {
     mStartNodePtr->mPrev = mStartNodePtr;
 
     if (!unk1C && mList != nullptr) {
-        __dla__FPv(mList);
+        operator delete[](mList);
         mList = nullptr;
     }
 }
@@ -799,11 +799,11 @@ void* __dt___reslist_base_IUIBattle(ResListIUIBattle* self, int mode) {
         self->mHead->mNext = self->mHead;
         self->mHead->mPrev = self->mHead;
         if (self->mOwnsList == 0 && self->mList != NULL) {
-            __dla__FPv(self->mList);
+            operator delete[](self->mList);
             self->mList = NULL;
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -823,12 +823,12 @@ void* __dt__reslist_IUIBattle(ResListIUIBattle* self, int mode) {
             self->mHead->mNext = self->mHead;
             self->mHead->mPrev = self->mHead;
             if (self->mOwnsList == 0 && self->mList != NULL) {
-                __dla__FPv(self->mList);
+                operator delete[](self->mList);
                 self->mList = NULL;
             }
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

@@ -119,7 +119,7 @@ cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) 
             }
         }
         if (deleteFlag > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

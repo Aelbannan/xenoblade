@@ -219,7 +219,6 @@ extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);
 
 // MWCC's operator-delete runtime symbol; C linkage keeps the unmangled name
 // (same pattern as CNBanner.cpp).
-extern "C" void __dl__FPv(void* p);
 
 extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(u8* self) {
     ((void(*)(void*))setColorMode__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
@@ -262,7 +261,7 @@ void __dt__8047BFFC() {
 void __dt__8047BFA8() {
     if (lbl_eu_806658B8) {
         if (lbl_eu_806658B8) {
-            __dl__FPv(lbl_eu_806658B8);
+            operator delete(lbl_eu_806658B8);
             lbl_eu_806658B8 = NULL;
         }
     }
@@ -530,7 +529,7 @@ extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
     } else {
         if (layout->field_0x14) {
             if (layout->field_0x14) {
-                __dl__FPv(layout->field_0x14);
+                operator delete(layout->field_0x14);
                 layout->field_0x14 = NULL;
             }
         }

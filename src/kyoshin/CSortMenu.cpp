@@ -61,7 +61,7 @@ extern "C" CSortMenu* __dt__9CSortMenuFv(CSortMenu* _this, int flags) {
         __dt__10CScrollBarFv((u8*)_this + 0x2C, -1);
         __dt__17UnkClass_8045F564Fv((u8*)_this + 0x04, -1);
         if (flags > 0) {
-            __dl__FPv(_this);
+            operator delete(_this);
         }
     }
     return _this;

@@ -16,7 +16,7 @@ extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
         CLibVM::spInstance = 0;
         __dt__11CWorkThreadFv(self, 0);
         if (deleting > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

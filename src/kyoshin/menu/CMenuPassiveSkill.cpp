@@ -9,6 +9,7 @@
 #include "monolib/util/MemManager.hpp"
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+void playUISound(u32);
 
 extern "C" void Init__17CMenuPassiveSkillFv() {}
 
@@ -395,7 +396,7 @@ extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self) {
         CPassiveSkill_open(self->mPassiveSkill);
         self->field_2AC = 1;
 
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
 
         u8 curState = CPassiveSkill_pickOpenState(self->mPassiveSkill);
         func_801C41E8(&self->mTitleAHelp, curState);
@@ -494,7 +495,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
             // Reset the idle timer (sound op 2 when it had run past the F4
             // threshold), re-arm the state byte and handle the turbo masks.
             if (self->field_2B0 > lbl_eu_806688F4) {
-                playUISound__FUl(2);
+                playUISound(2);
             }
             self->field_2B0 = lbl_eu_806688F0;
             UI_CPassiveSkill_setByte180(self->mPassiveSkill, 1);
@@ -576,7 +577,7 @@ extern "C" void confirmPassiveSkillMenu(CMenuPassiveSkill* self) {
     if (UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
         if (CMainMenu_GetInstancePtr() != 0) {
             ArtsInfo_SetReadyFlag();
-            playUISound__FUl(6);
+            playUISound(6);
         }
         self->field_2AC = 4;
         self->field_54 = 1;

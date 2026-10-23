@@ -684,10 +684,10 @@ CBattleManager* CBattleManager::getInstance() {
             startEnumObjects(CTaskGame_enumListGet(&holder), 0x20, 0);
 
             for(u32 i = 0; i < ((CVisionEnumList*)CTaskGame_enumListGet(&holder))->count; i++){
-                void* action = MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
-                ((cf::CActorParam*)action)->CActorParam_setupActorState();
-                ((cf::CActorParam*)action)->CActorParam_refreshBattleStatus();
-                ((cf::CActorParam*)action)->CActorParam_initStatusCounter();
+                cf::CActorParam* action = (cf::CActorParam*)MapFx_ResolveOwner(getObjectAt(CTaskGame_enumListGet(&holder), i));
+                action->CActorParam_setupActorState();
+                action->CActorParam_refreshBattleStatus();
+                action->CActorParam_initStatusCounter();
             }
             __dt__80043E88(&holder, -1);
         }
@@ -736,7 +736,7 @@ void* CBattleMan_FindNextActorRef(void* self, void* val) {
     notfound:
     return nullptr;
 }
-extern "C" void CBattleMan_TickVision(u8* self) { ((cf::CBattleManager*)self)->mVision.func_801A6BCC(); }
+void cf::CBattleManager::CBattleMan_TickVision() { mVision.func_801A6BCC(); }
 void* cf::CBattleManager::CBattleMan_QueryVision() {
     if (lbl_eu_80663F00 != nullptr) {
         return ((cf::CVision*)&this->mVision)->func_801A70DC();
@@ -768,7 +768,7 @@ void cf::CBattleManager::CBattleMan_ResetTimer() {
     refreshBattleActors(this, lbl_eu_80666DD4, unk8C);
 }
 #pragma schedule on
-extern "C" void CBattleMan_EmitVisionEvent(u8* self, void*) { ((cf::CBattleManager*)self)->mVision.detachVisionEffect(); }
+void cf::CBattleManager::CBattleMan_EmitVisionEvent(void*) { mVision.detachVisionEffect(); }
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
 // The callers below pass ABI-compatible args; the typed definition follows.
 // (unmangled), so they must be declared extern "C" for reloc-name matching.

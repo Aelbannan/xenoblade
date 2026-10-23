@@ -6,6 +6,7 @@
 #include "kyoshin/cf/CPartsChange.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include <string.h>
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using cf::CfPartyInfo;
 using cf::CfPartyInfoSortKey;
@@ -142,8 +143,6 @@ extern u32 lbl_eu_8066430C;
 extern unsigned char lbl_eu_80664310;
 extern s16 lbl_eu_80664312;
 extern s16 lbl_eu_80664314;
-void __dl__FPv(void*);
-void __dla__FPv(void*);
 u32 CfRes_getAllocHandle();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 
@@ -197,7 +196,7 @@ extern "C" cf::CPartsChange* __ct__cf_CPartsChange(cf::CPartsChange* self) {
 // the injected lbl_eu_80532AA8 data object).
 extern "C" void* __dt__Q22cf12CPartsChangeFv(void* self, int flags) {
     if (self != 0) {
-        if (flags > 0) __dl__FPv(self);
+        if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -344,11 +343,11 @@ extern "C" void* __dt___reslist_base_cf_CfPartyInfo(u8* self, int flags) {
     if (*(u8*)(self + 0x1C) == 0) {
         void* mem = *(void**)(self + 0x14);
         if (mem != 0) {
-            __dla__FPv(mem);
+            operator delete[](mem);
             *(u32*)(self + 0x14) = 0;
         }
     }
-    if (flags > 0) __dl__FPv(self);
+    if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -412,12 +411,12 @@ extern "C" void* __dt__reslist_cf_CfPartyInfo(u8* self, int flags) {
             if (*(u8*)(self + 0x1C) == 0) {
                 void* mem = *(void**)(self + 0x14);
                 if (mem != 0) {
-                    __dla__FPv(mem);
+                    operator delete[](mem);
                     *(u32*)(self + 0x14) = 0;
                 }
             }
         }
-        if (flags > 0) __dl__FPv(self);
+        if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -443,7 +442,7 @@ extern "C" void* __dt__80193538(u8* self, int flags) {
     if (*(u8*)(self + 0xA824) == 0) {
         void* mem = *(void**)(self + 0xA81C);
         if (mem != 0) {
-            __dla__FPv(mem);
+            operator delete[](mem);
             *(u32*)(self + 0xA81C) = 0;
         }
     }
@@ -465,13 +464,13 @@ extern "C" void* __dt__80193538(u8* self, int flags) {
         if (*(u8*)(list + 0x1C) == 0) {
             void* mem2 = *(void**)(list + 0x14);
             if (mem2 != 0) {
-                __dla__FPv(mem2);
+                operator delete[](mem2);
                 *(u32*)(list + 0x14) = 0;
             }
         }
     }
     }
-    if (flags > 0) __dl__FPv(self);
+    if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -1575,7 +1574,6 @@ extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose
 // the radius to its (rad, rad) 2-vector magnitude through the nw4r FrSqrt
 // helper. The radius is then scaled by (m / 3) + 1 and the rotated offset is
 // subtracted from the destination x/z before the party probe.
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 x);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* msg);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
@@ -1601,7 +1599,7 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
         }
         f32 d2 = rad * rad + rad * rad;
         if (d2 > lbl_eu_80667B28) {
-            rad = d2 * FrSqrt__Q24nw4r4mathFf(d2);
+            rad = d2 * nw4r::math::FrSqrt(d2);
         } else {
             rad = lbl_eu_80667B28;
         }

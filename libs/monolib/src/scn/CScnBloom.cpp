@@ -20,9 +20,8 @@ extern "C" {
 // Deleting destructor (retail __dt__804997D0): free self when mode > 0,
 // return self.
 extern "C" __declspec(noinline) void* __dt__804997D0(void* self, int mode) {
-    extern void* __dl__FPv(void*);
     if (self != 0 && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -359,12 +358,11 @@ extern "C" void CScnBloom_renderBloomAdj48_stub8() {}
 // Delete-flag dtor: tear down the base (+0xC), free when the flag is
 // positive, and return self (retail stmw r30 frame).
 extern "C" void* __dt__804997D0(void*, int);
-extern "C" void* __dl__FPv(void*);
 extern "C" void* __dt__8049A0D0(void* self, int flag) {
     if (self) {
         __dt__804997D0(self, 0);
         if (flag > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

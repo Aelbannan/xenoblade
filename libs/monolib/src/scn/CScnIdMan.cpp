@@ -2,9 +2,9 @@
 
 #include <types.h>
 #include "libs/monolib/src/scn/CScnIdMan.hpp"
+#include "monolib/scn/code_804BC9EC.hpp"
 
 extern "C" {
-    extern void __dl__FPv(void* ptr);
     extern u32 lbl_eu_8056EC80[];   // CScnIdMan vtable (defined below in this TU)
     extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* pOwner, u32 scnId, u32 renderKind, u32 renderFlags);
     extern void removeRenderCB__4CScnFP10IScnRender(void* pOwner, u32 scnId);
@@ -12,7 +12,6 @@ extern "C" {
     extern void* Scn_FindCamItem(void* pParam, u32 camIdx);
     extern void* Scn_GetCamItem9C(void* pParam, u32 camIdx);
     extern void CamMan_BuildPerspective(void* pOut, void* pCamItem);
-    extern void* getScnHandle__Fv();
     extern void Coli_RenderChunks(void* pScnHandle, void* pCamItem, void* pStack);
 }
 
@@ -54,7 +53,7 @@ void CScnIdMan::cbRenderBefore() {
         u8 stackbuf[0x38];
         CamMan_BuildPerspective(stackbuf, a);
         void* b = Scn_GetCamItem9C(mParam, -1);
-        Coli_RenderChunks(getScnHandle__Fv(), b, stackbuf);
+        Coli_RenderChunks(getScnHandle(), b, stackbuf);
     }
 }
 

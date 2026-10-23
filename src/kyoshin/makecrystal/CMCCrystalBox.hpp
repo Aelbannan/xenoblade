@@ -555,11 +555,8 @@ u32 getPackedFont();
 extern "C" u16 BdatGetU16ByTableKey(const void*, const void*, u32);
 extern "C" void ApplyFontToTxtPanes(void*, u32);   // bind font pane onto root
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* Bdat_GetTable_AA34();   // matches code_801862C0.hpp's declaration
-extern "C" void* getFP__FPCc(const char*);
 extern "C" void MenuShopSellCopyCursor(void*, void*);   // cursor copy (Cur_SetTwoPanes09 sibling)
 extern "C" void Cur_SetTwoPanes09(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)

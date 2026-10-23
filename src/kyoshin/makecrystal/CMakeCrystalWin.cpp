@@ -7,6 +7,7 @@
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
+void playUISound(u32);
 
 /*
  * Constructor (retail unmangled `__ct__CMakeCrystalWin`). Written as a
@@ -136,7 +137,7 @@ void mkCrystalDismissToState1(CMakeCrystalWin* self) {
                 func_801C412C(&self->mTitleAHelp);
                 openCrystalBox(&self->mCrystalBox);
                 self->field_4360 = 1;
-                playUISound__FUl(0x6d);
+                playUISound(0x6d);
             }
         }
     }

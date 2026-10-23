@@ -6,7 +6,6 @@
 
 // C-ABI helper imports used by CfObjectNpc (retail-unmangled symbols).
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void* getFP__FPCc(const char* path);
 extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);

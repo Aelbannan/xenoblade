@@ -16,6 +16,7 @@
 #include <nw4r/math.h>
 #include <stdio.h>
 #include "kyoshin/CSysWin.hpp" // ScalePaneWorldPos cursor-position helper
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
@@ -141,9 +142,8 @@ extern "C" void CTitleLogo_nop() {}
 
 // When the +0xC layout is visible, raise the +0x1A state to 2, run the
 // +0x6C hook, and set the +0x19 flag.
-extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans0, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668FE0)) {
         self->field_0x1A = 2;
         CTitleLogo_bindAnim1(self);
         self->field_0x19 = 1;
@@ -151,12 +151,12 @@ extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
 }
 
 
-extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleLogo*)self)->mAnimTrans1, lbl_eu_80668FE0); }
+extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform(((CTitleLogo*)self)->mAnimTrans1, lbl_eu_80668FE0); }
 
 // Logo state step: when animation 2 finishes, reset the state machine,
 // rebind the intro animation, and clear/set the phase flags.
 extern "C" void CTitleLogo_onAnim2Done(CTitleLogo* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
         self->field_0x1A = 0;
         CTitleLogo_bindIntro(self);
         self->field_0x18 = 0;
@@ -362,14 +362,14 @@ extern "C" void CTitleMenu_nop() {}
 // Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
 // second phase.
 extern "C" void CTitleMenu_onAnim0Done(CTitleMenu* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans0, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668FE0)) {
         self->field_0x26 = 2;
         self->bindAnim1();
         self->field_0x25 = 1;
     }
 }
 
-extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleMenu*)self)->mAnimTrans1, lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans1, lbl_eu_80668FE0); }
 
 // When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
 extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
@@ -382,19 +382,19 @@ extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
 // Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
 // layout and the shared anim-visibility test.
 extern "C" void CTitleMenu_onAnim3Done(CTitleMenu* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans3, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668FE0)) {
         self->field_0x26 = 5;
         CTitleMenu_bindAnim4(self);
         self->field_0x25 = 1;
     }
 }
 
-extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(((CTitleMenu*)self)->mAnimTrans4, lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans4, lbl_eu_80668FE0); }
 
 // Menu state step: when animation 5 finishes, reset the state machine,
 // run the menu intro hook, and clear/set the phase flags.
 extern "C" void CTitleMenu_onAnim5Done(CTitleMenu* self) {
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
         self->field_0x26 = 0;
         CTitleMenu_bindAnim3(self);
         self->field_0x24 = 0;
@@ -483,7 +483,6 @@ extern "C" CTitle* __ct__CTitle(CTitle* self) {
 
 // Member dtors and operator delete (retail names).
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-extern "C" void __dl__FPv(void* p);
 
 // Retail dtor is a plain free function: destroys the +0x70 CCur18 member and
 // the +0x04 UnkClass_8045F564 member, then frees the object when the delete
@@ -494,7 +493,7 @@ extern "C" void* __dt__6CTitleFv(void* self, int flags) {
         __dt__6CCur18Fv(&static_cast<CTitle*>(self)->mCur, -1);
         __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>((u8*)self + 0x04), -1);
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }

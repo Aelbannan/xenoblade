@@ -15,6 +15,7 @@
 #include "monolib/math/Random.hpp"
 #include <nw4r/math/math_types.h>
 #include <monolib/math/CVec3.hpp>
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using cf::CCtrlMovePC;
 
@@ -1093,7 +1094,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                         if (dist2 < lbl_eu_80667B60) {
                             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                         }
-                        f32 inv = (dist2 > lbl_eu_80667B60) ? dist2 * FrSqrt__Q24nw4r4mathFf(dist2) : lbl_eu_80667B60;
+                        f32 inv = (dist2 > lbl_eu_80667B60) ? dist2 * nw4r::math::FrSqrt(dist2) : lbl_eu_80667B60;
                         spd = lbl_eu_80667C08 * (inv / th) + lbl_eu_80667B6C;
                     }
                 }
@@ -1103,7 +1104,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                     if (dist2 < lbl_eu_80667B60) {
                         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                     }
-                    f32 inv = (dist2 <= lbl_eu_80667B60) ? dist2 * FrSqrt__Q24nw4r4mathFf(dist2) : lbl_eu_80667B60;
+                    f32 inv = (dist2 <= lbl_eu_80667B60) ? dist2 * nw4r::math::FrSqrt(dist2) : lbl_eu_80667B60;
                     spd = lbl_eu_80667B6C * (inv - lbl_eu_80667BB0) + lbl_eu_80667B68;
                     self->mBase3C = lbl_eu_80667B74;
                     if (spd > lbl_eu_80667C10) {
@@ -1910,7 +1911,7 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
             }
             f32 inv;
             if (dist > lbl_eu_80667B60) {
-                inv = dist * FrSqrt__Q24nw4r4mathFf(dist);
+                inv = dist * nw4r::math::FrSqrt(dist);
             } else {
                 inv = lbl_eu_80667B60;
             }
@@ -1993,7 +1994,7 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
         }
         f32 inv2;
         if (dist > lbl_eu_80667B60) {
-            inv2 = dist * FrSqrt__Q24nw4r4mathFf(dist);
+            inv2 = dist * nw4r::math::FrSqrt(dist);
         } else {
             inv2 = lbl_eu_80667B60;
         }
@@ -2051,7 +2052,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
 
                 bestLen = lbl_eu_80667B60;
                 if (e2 > lbl_eu_80667B60) {
-                    bestLen = e2 * FrSqrt__Q24nw4r4mathFf(e2);
+                    bestLen = e2 * nw4r::math::FrSqrt(e2);
                 }
                 if (bestLen != lbl_eu_80667B60) {
                     ml::CVec3 tmp;

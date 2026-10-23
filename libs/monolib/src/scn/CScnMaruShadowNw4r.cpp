@@ -15,6 +15,7 @@
 #include <cmath>
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/math/math_triangular.h>
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, float f2, u32 unk);
 
@@ -111,7 +112,7 @@ int MaruShadowSetupTexturePipe(void* self) {
             lbl_eu_80523F94, &handle, NULL) != 0) {
         resFile = handle.data;
         if ((u32)resFile & 0x1F) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052637C, 60, lbl_eu_80526354);
+            nw4r::db::Panic(lbl_eu_8052637C, 60, lbl_eu_80526354);
         }
         Init__Q34nw4r3g3d7ResFileFv(&resFile);
         resTex = GetResTex__Q34nw4r3g3d7ResFileCFPCc(&resFile, lbl_eu_80663958);
@@ -297,14 +298,14 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     if (self->field_0x2a == 2) {
         nw4r::g3d::ResNode node = GetResNode__Q34nw4r3g3d6ResMdlCFPCc(mdl, names[5]);
         if (node.ptr == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
             MaruShadowDrawQuad(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
         }
         node = GetResNode__Q34nw4r3g3d6ResMdlCFPCc(mdl, names[6]);
         if (node.ptr == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
             MaruShadowDrawQuad(self, ctx, baseScale, fscale, *(u32*)((char*)node.ptr + 0x10));
@@ -319,7 +320,7 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     for (int i = 0; i < n; i++) {
         nw4r::g3d::ResNode node = GetResNode__Q34nw4r3g3d6ResMdlCFPCc(mdl, names[i]);
         if (node.ptr == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
         }
         if (node.ptr != NULL) {
             MaruShadowDrawQuad(self, ctx, baseScale * lbl_eu_80523F78[i], fscale,
@@ -664,32 +665,30 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
         // First lookup: per-node scale entry under key A.
         const char* key = lbl_eu_8066395C;
         if (key == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce(f57File, 0x57, f57Fmt, f57Func, lbl_eu_80663968);
+            nw4r::db::Panic(f57File, 0x57, f57Fmt, f57Func, lbl_eu_80663968);
         }
         nw4r::g3d::ResDic dic;
         dic.ptr = (char*)ud + 4;
         if (((u32)dic.ptr & 3) != 0) {
-            Panic__Q24nw4r2dbFPCciPCce(alignFile, 0x54, alignFmt);
+            nw4r::db::Panic(alignFile, 0x54, alignFmt);
         }
         void* entry = __vc__Q34nw4r3g3d6ResDicCFPCc(dic, key);
         if (((u32)entry & 3) != 0) {
-            Panic__Q24nw4r2dbFPCciPCce(dicFile, 0x26, dicFmt);
+            nw4r::db::Panic(dicFile, 0x26, dicFmt);
         }
         if (entry != NULL) {
             if (node.ptr == NULL) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+                nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
             }
             cur->nodeId = node.ptr != NULL ? *(u16*)((char*)node.ptr + 0x10) : 0;
             if (entry == NULL) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt,
-                                           lbl_eu_80663970);
+                nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt, lbl_eu_80663970);
             }
             if (*(u32*)((char*)entry + 0xC) != 1) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530E74, 0x3D, lbl_eu_80530E30);
+                nw4r::db::Panic(lbl_eu_80530E74, 0x3D, lbl_eu_80530E30);
             }
             if (entry == NULL) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt,
-                                           lbl_eu_8066396C);
+                nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt, lbl_eu_8066396C);
             }
             u32 off = *(u32*)((char*)entry + 4);
             void* data = off != 0 ? (char*)entry + off : 0;
@@ -704,28 +703,26 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
 
         // Second lookup: per-node flag bits under key B (always executed).
         if (ud == NULL) {
-            Panic__Q24nw4r2dbFPCciPCce(f57File, 0x57, f57Fmt, f57Func, lbl_eu_80663968);
+            nw4r::db::Panic(f57File, 0x57, f57Fmt, f57Func, lbl_eu_80663968);
         }
         nw4r::g3d::ResDic dic2;
         dic2.ptr = (char*)ud + 4;
         if (((u32)dic2.ptr & 3) != 0) {
-            Panic__Q24nw4r2dbFPCciPCce(alignFile, 0x54, alignFmt);
+            nw4r::db::Panic(alignFile, 0x54, alignFmt);
         }
         void* entry2 = __vc__Q34nw4r3g3d6ResDicCFPCc(dic2, lbl_eu_80663960);
         if (((u32)entry2 & 3) != 0) {
-            Panic__Q24nw4r2dbFPCciPCce(dicFile, 0x26, dicFmt);
+            nw4r::db::Panic(dicFile, 0x26, dicFmt);
         }
         if (entry2 != NULL) {
             if (entry2 == NULL) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt,
-                                           lbl_eu_80663970);
+                nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt, lbl_eu_80663970);
             }
             if (*(u32*)((char*)entry2 + 0xC) != 0) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
+                nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
             }
             if (entry2 == NULL) {
-                Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt,
-                                           lbl_eu_8066396C);
+                nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt, lbl_eu_8066396C);
             }
             u32 off2 = *(u32*)((char*)entry2 + 4);
             void* data2 = off2 != 0 ? (char*)entry2 + off2 : 0;

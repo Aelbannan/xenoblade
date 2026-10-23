@@ -39,6 +39,7 @@ extern "C" nw4r::math::VEC3
                   nw4r::lyt::Pane* root);
 } // namespace passiveSkillVecView
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // Value-returning spelling of ScalePaneWorldPos (passiveSkillVecView above);
 // ABI-identical to the sret form.
@@ -4243,17 +4244,17 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         *(void**)((u8*)fh2 + 4) = 0;
         CBdat::setBdatEntry(2, 0);
         Bdat_GetTable_AA34();
-        lbl_eu_80664880 = getFP__FPCc(&lbl_eu_8050DC20[0xa24]);
+        lbl_eu_80664880 = getFP(&lbl_eu_8050DC20[0xa24]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664884 = getFP__FPCc(&lbl_eu_8050DC20[0xa2f]);
+        lbl_eu_80664884 = getFP(&lbl_eu_8050DC20[0xa2f]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664888 = getFP__FPCc(&lbl_eu_8050DC20[0xa3a]);
+        lbl_eu_80664888 = getFP(&lbl_eu_8050DC20[0xa3a]);
         Bdat_GetTable_AA34();
-        lbl_eu_8066488C = getFP__FPCc(&lbl_eu_8050DC20[0xa44]);
+        lbl_eu_8066488C = getFP(&lbl_eu_8050DC20[0xa44]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664890 = getFP__FPCc(&lbl_eu_8050DC20[0xa51]);
+        lbl_eu_80664890 = getFP(&lbl_eu_8050DC20[0xa51]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664894 = getFP__FPCc(&lbl_eu_8050DC20[0xa5d]);
+        lbl_eu_80664894 = getFP(&lbl_eu_8050DC20[0xa5d]);
         self->field_1C = 0;
         CPassiveSkill_learnAllSkills(self);
         return 1;

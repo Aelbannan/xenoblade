@@ -4,7 +4,6 @@
 #include "libs/monolib/src/scn/CScnFrame.hpp"
 
 extern "C" {
-    extern void __dl__FPv(void* ptr);
     extern u32 getRetraceCount__9CDeviceVIFv();
     extern const float lbl_eu_8066ABE0; // 1.0f
     extern const float lbl_eu_8066ABE4; // 0.5f

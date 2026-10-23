@@ -376,3 +376,60 @@ Object changes, both toward retail:
 - `addTableValueWithClamp__Q22cf13CfGameManagerFv` is a pre-mangled `Fv` C name. It collides with the `CfGameManager::addTableValueWithClamp()` member, which forces `#define` renames. Fixing it needs a memberize/rename with the real `(s32,s32,s32)` parameters.
 - `chainResolveMemberPtr` / `chainResolveMemberFromSrc`: retail names are unmangled, but the definitions emit `__FUli`/`__FUlPUl`.
 - `CBattleMan_FetchVisionObj`: CfObjectImplEne still references the member-mangled `CBattleMan_FetchVisionObj__Q22cf14CBattleManagerFv`; retail is the C name.
+
+## extern-C mangled cleanup (2026-10-23/24)
+
+Goal: retire `extern "C"` declarations and definitions that spell C++ mangled names
+(`foo__3BarFv(self)`), so the source states what the symbol already is: a member, a static
+member, or a C++ free function. The work was symbol-neutral; nothing was renamed in `symbols.txt`.
+
+Scanner: `.scratch/externc/scan.py` uses `dtk demangle` and indexes classes across all of
+`src`, `libs` and `include`. It classifies each name as:
+- (a) class defined in one header;
+- (a?) class defined 2 to 6 times (a canonical class plus views);
+- (b) free or namespace function;
+- (c) class only defined in a `.cpp`, or class undefined;
+- (x) not actually mangled (`__ct__80043E88`-style placeholder names).
+
+Scan counts, before (pre-edit sources) → after:
+
+| class | names | decl/def sites |
+|---|---|---|
+| a | 1127 → 1123 | 2384 → 2294 |
+| a? | 1326 → 1324 | 4399 → 4370 |
+| b | 64 → 59 | 451 → 215 |
+| c | 140 → 140 | 163 → 163 |
+| total mangled (excl. x) | 2657 → 2646 | 6584 → 6229 |
+
+Converted (5 batches plus 2 smell-fix rounds):
+- **Members and statics:**
+  - `CLibLayout::createArcResourceAccessor` and `getAllocHandle`: made static, because the bodies only use the singleton. The public `monolib/lib/CLibLayout.hpp` now declares `getAllocHandle` static and returns `mtl::ALLOC_HANDLE`.
+  - `CTitleAHelp::isIdle`: now returns `int`. Retail callers test it with `cmpwi`; a `u8` return makes MWCC add a `clrlwi.` mask, and a `bool` field changes the struct copies.
+  - `CTaskGame::getInstance` and `isFlag01Set`: calls become `CTaskGame::getInstance()->isFlag01Set()`.
+  - `CViewRoot::getInstance`, `CLibCri::getInstance`, `CBdat::getEntry`, `CBdat::setBdatEntry`, `cf::CfSoundMan::playActorSound`.
+  - `cf::CfObject::CfObject_UnkVirtualFunc34`: real member definition in ocUnit.cpp.
+- **Free and namespace functions:** `operator delete`/`operator delete[]` (from `__dl__FPv`/`__dla__FPv`), `playUISound`, `getFP` (through `ocBdat.hpp`), `getScnHandle` (declared in `monolib/scn/code_804BC9EC.hpp`), `buildLayout`, `bindLayoutAnimTransform`, `advanceAnimTransform`, `nw4r::math::FrSqrt`, `nw4r::db::Panic`.
+
+Real bugs fixed along the way. These are the only object changes, each one verified:
+- `CLibHbmControl` and `ut_PackedFont` declared `__dl__FPv` with C++ linkage, so they referenced a bogus `__dl__FPv__FPv`. They now reference the real `__dl__FPv`.
+- code_804BC9EC defined `int getScnHandle__Fv(u8*)`, which emitted the bogus `getScnHandle__Fv__FPUc`. It now defines `void* getScnHandle()`; `getScnHandle__Fv` is 100% and is now emitted. Its `FrSqrt` reference was also bogus (`FrSqrt__Q24nw4r4mathFf__Ff`) and is fixed.
+- code_80135FDC defined `closeFileHandle__FPP11CFileHandle__FPP11CFileHandle`. It now defines the retail `closeFileHandle__FPP11CFileHandle`, and the data-table reloc follows.
+- CSysWinSelect.hpp declared `playUISound` inside an `extern "C"` block (unmangled). That bogus declaration was removed.
+- CTaskEnvironment's dead `extern "C" func_800586E8() {}` was removed. There is no US symbol for it; it is an EU name for `copyWord4`, which is defined separately. The `.text` overrun went from 8 to 4 bytes.
+
+KEEP (each has a comment in the source):
+- CMenuKizunaTalk `createArcResourceAccessor__10CLibLayoutFv`: CLibLayout.hpp brings the canonical IWorkEvent, which clashes with the TU's KEEP copy.
+- code_801A929C and CfMapItemManager `playActorSound__...`: including CfSoundMan.hpp clashes with local copies.
+- CfObjectSelectorObj `__dl__FPv`/`__dla__FPv`: `operator delete[]` changes the extab cleanup actions. This is the only extab-sensitive case found; the snapshot gate now hashes `extab` and `extabindex`.
+- CTaskEnvironment `Draw__16CTaskEnvironmentFv`, `Reset__14CChildListNodeFv`, `Tail__8CProcessFv`: their addresses are taken as `u32` in hand-built `.data` vtables, and a PTMF cannot be cast to `u32`.
+
+Blocked (next angle):
+- `CProcess::Regist` (19 decls): callers pass view classes that don't derive from CProcess. Next: real inheritance for the CMenu*/CScn views.
+- `CLibLayout::createPicture`: uses `this` while callers pass nothing (arity conflict in retail). Next: match the body first.
+- `closeFileHandle`/`findObjectById` caller conversion: about 20 callers pass `void**`/`u32*`/`int*`, so they need field retyping. The definitions are fixed.
+- (a?) classes with 2 to 6 definitions: needs header consolidation first, using the hdrcons recipe.
+- (c) classes defined only in a `.cpp`: needs a header split.
+- Arity-conflict names (about 560 names; `Fv` names that take arguments, or dtors with a hidden `int`): the symbol is right but the source signature is wrong, so each needs the body matched before it can be declared truthfully.
+
+Gate after every batch: snapshot all objects (`.scratch/externc/snapall.py`, now including extab), then a locked `-k 0 all_source` (0 FAILED). Unexplained diffs were bisected with a pre-edit mirror compile (`.scratch/externc/odiff.sh`, `extab_audit.py` over every touched TU). Then regcheck on touched units (0 regressions in every batch) and `run.py link-gate` (OK, missing=85 throughout).
+Scripts are in `.scratch/externc/`: `scan.py`, `conv.py`, `keep.py`, `gate.sh`, `mirror_sync.sh`, `odiff.sh`, `extab_audit.py`, `smlines.py`.

@@ -6,6 +6,7 @@
 #include <nw4r/db/db_assert.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <nw4r/ut/ut_Rect.h>
+void playUISound(u32);
 
 // Forward decls only: this TU defines its own byte-wise nw4r::ut::Color, so the
 // real lyt headers (which pull ut_Color.h) cannot be included here.
@@ -972,7 +973,7 @@ void copyVEC2(float* dst, const float* src);
 
 // C++-linkage imports (retail emits the mangled forms).
 void* findObjectById(int id);  // findObjectById__Fi (talk-source index lookup)
-void playUISound(u32 op);   // playUISound__FUl (UI sound effect)
+void playUISound(u32 op);   // playUISound(UI sound effect)
 
 // Tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038, 4 bytes
 // each - just the vtable pointer). Declared with plain u32 so MWCC treats

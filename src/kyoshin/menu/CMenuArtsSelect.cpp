@@ -64,6 +64,10 @@
 #include <revolution/GX.h>
 #include <stdio.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
+void playUISound(u32);
 
 // sdata2 conversion-magic doubles (2^52 family) are shared retail .sdata2 labels
 // (lbl_eu_80666F30 / lbl_eu_80666F38, owning TU or extern); declaring them here
@@ -192,16 +196,12 @@ void* UIBattleFindSysTimg(const char* name);
 
 int UIBattleGetFlagE8();
 void setEffectEnabled__FUl(u32);
-void playUISound__FUl(u32); // retail sound callee in func_80104454 (cf code_80135FDC owns 38078)
 nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 int EneSt_CursorGetFlag(void*);
 int BtlDmg_CursorGetFlag(void*);
 // Layout/anim helpers defined in code_80135FDC.cpp with mangled C-linkage
 // names (retail reloc targets); no header declares them, so declare locally.
-void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 
 // CMenuArtsSelect_CreateArtsRef arts-ref allocator: CfGameManager creates the ref object.
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
@@ -557,9 +557,9 @@ void CMenuArtsSelect::Init() {
 
     unk68 = reinterpret_cast<u32>(CUICfManager_getArcResourceAccessor());
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk80, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x10);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk80, &unk84, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x27);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk80, &unk88, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x41);
+    buildLayout(&unk80, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x10);
+    bindLayoutAnimTransform(unk80, &unk84, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x27);
+    bindLayoutAnimTransform(unk80, &unk88, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x41);
 
     {
         nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
@@ -591,9 +591,9 @@ void CMenuArtsSelect::Init() {
     s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);  // +0x14: s16[9]
     f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28); // +0x28: f32[9]
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk8C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x74);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk8C, &unk90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x8d);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk8C, &unk94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xa9);
+    buildLayout(&unk8C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x74);
+    bindLayoutAnimTransform(unk8C, &unk90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x8d);
+    bindLayoutAnimTransform(unk8C, &unk94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xa9);
 
     {
         nw4r::lyt::Pane* pane = unk8C->GetRootPane()->FindPaneByName(arc + 0xc7, true);
@@ -610,9 +610,9 @@ void CMenuArtsSelect::Init() {
     unk8C->SetAnimationEnable(unk94, true);
     unk8C->Animate(0);
 
-    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk98, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk98, &unk9C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
-    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk98, &unkA0, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
+    buildLayout(&unk98, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
+    bindLayoutAnimTransform(unk98, &unk9C, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
+    bindLayoutAnimTransform(unk98, &unkA0, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
 
     {
         nw4r::lyt::Pane* pane = unk98->GetRootPane()->FindPaneByName(arc + 0x139, true);
@@ -632,9 +632,9 @@ void CMenuArtsSelect::Init() {
     // Per-slot layouts: retail re-finds the pane for each of
     // Get/SetTranslate and SetScale (three virtual FindPaneByName calls).
     for (s32 i = 0; i < 8; i++) {
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unkA4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkA4[i], &unkC4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkA4[i], &unkE4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
+        buildLayout(&unkA4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xd2);
+        bindLayoutAnimTransform(unkA4[i], &unkC4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0xf0);
+        bindLayoutAnimTransform(unkA4[i], &unkE4[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x113);
 
         nw4r::math::VEC3 trans =
             unkA4[i]->GetRootPane()->FindPaneByName(arc + 0x139, true)->GetTranslate();
@@ -659,9 +659,9 @@ void CMenuArtsSelect::Init() {
     unk318 = 0;
 
     for (s32 i = 0; i < 9; i++) {
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk104[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x142);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk104[i], &unk128[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x160);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk104[i], &unk14C[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x181);
+        buildLayout(&unk104[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x142);
+        bindLayoutAnimTransform(unk104[i], &unk128[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x160);
+        bindLayoutAnimTransform(unk104[i], &unk14C[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x181);
 
         nw4r::math::VEC3 trans =
             unk104[i]->GetRootPane()->FindPaneByName(arc + 0x1a3, true)->GetTranslate();
@@ -681,8 +681,8 @@ void CMenuArtsSelect::Init() {
     unk310 = 0;
 
     for (s32 i = 0; i < 9; i++) {
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk170[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1ac);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk170[i], &unk194[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1cb);
+        buildLayout(&unk170[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1ac);
+        bindLayoutAnimTransform(unk170[i], &unk194[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1cb);
 
         unk170[i]->SetAnimationEnable(unk194[i], true);
         unk194[i]->SetFrame(0.0f);
@@ -701,8 +701,8 @@ void CMenuArtsSelect::Init() {
     unk314 = 0;
 
     for (s32 i = 0; i < 9; i++) {
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unk1B8[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1f7);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unk1B8[i], &unk1DC[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x217);
+        buildLayout(&unk1B8[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x1f7);
+        bindLayoutAnimTransform(unk1B8[i], &unk1DC[i], reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(unk68), arc + 0x217);
 
         nw4r::math::VEC3 trans =
             unk1B8[i]->GetRootPane()->FindPaneByName(arc + 0x23e, true)->GetTranslate();
@@ -922,7 +922,7 @@ void CMenuArtsSelect::Move() {
         break;
     case 1:
         unk308 |= 0x10u;
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk84, lbl_eu_80666F2C) != 0) {
+        if (advanceAnimTransform(unk84, lbl_eu_80666F2C) != 0) {
             nw4r::lyt::Pane* rootPane8C = unk8C->GetRootPane();
             rootPane8C->SetVisible(true);
             char* nameStr =
@@ -940,7 +940,7 @@ void CMenuArtsSelect::Move() {
         break;
     case 3:
         unk308 |= 0x90u;
-        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk88, lbl_eu_80666F2C) != 0) {
+        if (advanceAnimTransform(unk88, lbl_eu_80666F2C) != 0) {
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
@@ -1007,7 +1007,7 @@ void CMenuArtsSelect::Move() {
                         break;
                     case 10:
                         unk308 |= 0x3u;
-                        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unkA0, lbl_eu_80666F2C) != 0) {
+                        if (advanceAnimTransform(unkA0, lbl_eu_80666F2C) != 0) {
                             unk29C = 0xb;
                         }
                         break;
@@ -1058,7 +1058,7 @@ void CMenuArtsSelect::Move() {
                                 }
                             }
                         }
-                        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unkE4[i], lbl_eu_80666F2C) != 0 ||
+                        if (advanceAnimTransform(unkE4[i], lbl_eu_80666F2C) != 0 ||
                             ready != 0) {
                             unk2A0[i] = 0xb;
                             unkA4[i]->SetAnimationEnable(unkE4[i], false);
@@ -1118,7 +1118,7 @@ void CMenuArtsSelect::Move() {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
                     if (unk200[nextIdx]->unkBB & 1) {
                         unk310 |= (one << i) | (one << (i + 9));
-                        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk128[i], lbl_eu_80666F2C) != 0) {
+                        if (advanceAnimTransform(unk128[i], lbl_eu_80666F2C) != 0) {
                             unk2C0[i] = 0xe;
                         }
                     } else {
@@ -1132,7 +1132,7 @@ void CMenuArtsSelect::Move() {
                     break;
                 case 0xf:
                     unk310 |= (one << i) | (one << (i + 9));
-                    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk14C[i], lbl_eu_80666F2C) != 0) {
+                    if (advanceAnimTransform(unk14C[i], lbl_eu_80666F2C) != 0) {
                         unk2C0[i] = 0xc;
                     }
                     break;
@@ -1149,7 +1149,7 @@ void CMenuArtsSelect::Move() {
                     break;
                 case 0x11:
                     unk314 |= (one << i) | (one << (i + 9));
-                    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk194[i], lbl_eu_80666F2C) != 0) {
+                    if (advanceAnimTransform(unk194[i], lbl_eu_80666F2C) != 0) {
                         unk2E4[i] = 0x12;
                     }
                     break;
@@ -1173,7 +1173,7 @@ void CMenuArtsSelect::Move() {
         }
 
         for (s32 i = 0; i < 9; i++) {
-            if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk1DC[i], lbl_eu_80666F2C) != 0) {
+            if (advanceAnimTransform(unk1DC[i], lbl_eu_80666F2C) != 0) {
                 unk30C = static_cast<u16>(unk30C & ~static_cast<u16>(one << i));
             } else {
                 unk30C = static_cast<u16>(unk30C | static_cast<u16>(one << i));
@@ -1460,7 +1460,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
         LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, NULL,
                       reinterpret_cast<u32>(self->unk294));
-        playUISound__FUl(67);
+        playUISound(67);
         self->unk298 = 3;
     }
 
@@ -1679,9 +1679,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
-                playUISound__FUl(85);
+                playUISound(85);
                 } else {
-                    playUISound__FUl(5);
+                    playUISound(5);
                 }
                 goto end_body;
             }
@@ -1801,9 +1801,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     LayoutSetTextBoxFmtValue(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
-                playUISound__FUl(85);
+                playUISound(85);
                 } else {
-                    playUISound__FUl(5);
+                    playUISound(5);
                 }
                 goto end_body;
             }
@@ -1881,7 +1881,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(false);
         }
-        playUISound__FUl(84);
+        playUISound(84);
         goto end_body;
     }
     if (b0) {
@@ -1956,7 +1956,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(false);
         }
-        playUISound__FUl(84);
+        playUISound(84);
         goto end_body;
     }
     if (bX) {
@@ -2012,7 +2012,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 }
             }
             self->unk8C->GetRootPane()->SetVisible(false);
-            playUISound__FUl(95);
+            playUISound(95);
             self->unk298 = 5;
             if (EneSt_GetSingleton() != NULL) {
                 EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7E4, (u8)self->unk330);
@@ -2064,7 +2064,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk7D = (s8)q4;
             self->unk7E = -1;
         }
-        playUISound__FUl(95);
+        playUISound(95);
         self->unk298 = 4;
         self->unk8C->SetAnimationEnable(self->unk94, false);
         self->unk8C->SetAnimationEnable(self->unk90, true);
@@ -2075,9 +2075,9 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     goto end_body;
 
 useFail:
-    playUISound__FUl(5);
+    playUISound(5);
 end_body:
-    advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->unk94, lbl_eu_80666F2C);
+    advanceAnimTransform(self->unk94, lbl_eu_80666F2C);
 }
 
 void CMenuArtsSelect::updatePageMode() {
@@ -2159,7 +2159,7 @@ void CMenuArtsSelect::updatePageMode() {
         }
     }
 
-    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(unk90, lbl_eu_80666F2C) != 0) {
+    if (advanceAnimTransform(unk90, lbl_eu_80666F2C) != 0) {
         unk8C->SetAnimationEnable(unk90, false);
         unk8C->SetAnimationEnable(unk94, true);
         unk94->SetFrame(lbl_eu_80666F28);

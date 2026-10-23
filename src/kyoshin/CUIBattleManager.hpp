@@ -171,8 +171,6 @@ private:
 extern CUIBattleManager::MoveFunc lbl_eu_8052E0B4;
 
 // Array-delete / delete helpers (C-ABI imports).
-extern "C" void __dla__FPv(void* p);
-extern "C" void __dl__FPv(void* p);
 
 // _reslist_base<IUIBattle> vtable (split1 .data). The reslist deleting
 // destructors store this into the object header (retail lbl_eu_8052E1B4).

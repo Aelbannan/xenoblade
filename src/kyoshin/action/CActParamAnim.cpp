@@ -48,7 +48,7 @@ extern "C" CActParamAnim* __ct__13CActParamAnimFv(CActParamAnim* self) {
 
 extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }

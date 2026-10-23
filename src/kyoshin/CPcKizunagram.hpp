@@ -229,11 +229,9 @@ extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self);
 extern "C" int KizunagramCheckMappedRowValid(CPcKizunagram* self, const void* table, int val);
 extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* table, int id);
 extern "C" int KizunagramCheckRowAvailable(CPcKizunagram* self, const void* table, int id);
-extern "C" void* getFP__FPCc(const char* path);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 
 // Sound / effect helper (C-linkage retail symbol playUISound__FUl).
-extern "C" void playUISound__FUl(u32 arg);
 
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
@@ -247,10 +245,6 @@ extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
 
 // nw4r layout/animation loaders used by the cursor init (KizunaCurInitLayout).
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** dst, nw4r::lyt::ArcResourceAccessor* acc, const char* name);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* lay, nw4r::lyt::AnimTransform** dst, nw4r::lyt::ArcResourceAccessor* acc, char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
     nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);

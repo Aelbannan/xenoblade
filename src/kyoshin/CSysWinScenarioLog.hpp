@@ -913,16 +913,9 @@ extern "C" char* MakeTplNameSysFile(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor();
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void* getFP__FPCc(const char*);
 extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
-    const char* name);
-extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
-    nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 
 // Scenario-log string pool (split .rodata) and the u16->f32 conversion magic
 // double (2^52 = 0x4330000000000000, CfTFile.cpp convention).
@@ -932,9 +925,7 @@ extern "C" double lbl_eu_80668AD8;
 // CSysWinScenarioLog::Move helpers.
 extern "C" int IsMenuState621F0();
 extern "C" s32  MenuTutorialIsCreated();
-extern "C" u32  advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
-extern "C" void playUISound__FUl(u32);
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;

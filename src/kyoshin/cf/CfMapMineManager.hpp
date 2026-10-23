@@ -58,8 +58,6 @@ extern "C" const f32 lbl_eu_806682B0;
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" void* __construct_new_array(void* block, void* ctor, void* dtor,
                                        u32 size, u32 n);
-extern "C" void __dl__FPv(void* ptr);
-extern "C" void __dla__FPv(void* ptr);
 extern "C" int mtRand__Q22ml4mathFi(int n);
 extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
 extern "C" void* lookupWorkAtAddr(void* obj);
@@ -95,7 +93,6 @@ extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 id);
-extern "C" void* getFP__FPCc(const char* name);
 
 // External data (retail linker symbols)
 extern "C" CfMapMineManager* lbl_eu_806646A0;   // sbss: singleton instance

@@ -30,7 +30,6 @@ unk38(nullptr){
 // optimize_for_size on: retail __dt__ saves r30+r31 via stmw r30, not stw
 // (same pattern as CTTask/CRsrcData dtors).
 // operator delete(void*) (retail unmangled C symbol).
-extern "C" void __dl__FPv(void*);
 // CArcItem vtable, spelled by hand in the dissolved .data blob below.
 extern "C" u32 lbl_eu_8056FFE0[];
 
@@ -52,7 +51,7 @@ extern "C" void* __dt__8CArcItemFv(CArcItem* self, int mode) {
             self->unk38 = nullptr;
         }
         if (mode > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;

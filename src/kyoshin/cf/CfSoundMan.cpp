@@ -5,6 +5,7 @@
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using namespace cf;
 
@@ -667,7 +668,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
             if (distSq <= lbl_eu_80667EA0) {
                 len = lbl_eu_80667EA0;
             } else {
-                len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                len = distSq * nw4r::math::FrSqrt(distSq);
             }
             if (len >= slot->field_0x18 ||
                 (f32)__fabs((f64)diff.y) < slot->field_0x18) {

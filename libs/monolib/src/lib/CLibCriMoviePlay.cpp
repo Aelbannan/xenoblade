@@ -65,7 +65,6 @@ extern "C" {
     bool hasFlow__12CWorkControlFv();
 
     // CRT
-    void __dl__FPv(void* ptr);
 
 }
 

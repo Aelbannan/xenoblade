@@ -2700,7 +2700,7 @@ extern "C" __declspec(noinline) void* __dt___reslist_base_cf_CfObject(void* self
             base->mStartNodePtr->mPrev = base->mStartNodePtr;
         }
         if (base->unk1C == false && base->mList != nullptr) {
-            __dla__FPv(base->mList);
+            operator delete[](base->mList);
             base->mList = nullptr;
         }
         if (flag > 0) {

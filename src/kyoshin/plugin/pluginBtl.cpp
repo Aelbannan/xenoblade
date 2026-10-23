@@ -14,6 +14,7 @@
 extern "C" bool CMenuArtsSelect_isCreated();
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 namespace cf {
 // Intrusive ring-list node used by CBattleManager's unit list (sentinel at +0x8).
@@ -88,7 +89,6 @@ extern "C" {
     u32 menuPTStateIsActive();
 
     // bdat helpers
-    void* getFP__FPCc(const char* name);
 
     // Shared int->float conversion magic double (0x43300000_80000000), .sdata2.
     extern double lbl_eu_80667978;
@@ -423,7 +423,7 @@ int getPTG(VMThread* pThread) {
 int test(VMThread* pThread) {
     Bdat_GetTable_AA34();
     Bdat_GetTable_AA34();
-    void* bdat = getFP__FPCc("ene_arts");
+    void* bdat = getFP("ene_arts");
     u32 count = Bdat_GetMaxRow_B1EC(bdat);
     for (int i = 1; i < (int)count; i++) {
         getBdatStringColumnValue(bdat, "name", i);

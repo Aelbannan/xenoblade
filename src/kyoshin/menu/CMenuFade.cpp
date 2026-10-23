@@ -23,7 +23,6 @@ CMenuFade::CMenuFade(){
 // ~CTask<IUICf> UNDEF -- then frees the block when deleteFlag > 0. The
 // redundant `if (self != 0)` re-checks reproduce the retail dead double-beq.
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
-extern "C" void __dl__FPv(void* p);
 extern "C" CMenuFade* __dt__9CMenuFadeFv(CMenuFade* self, int deleteFlag) {
     if (self == 0) goto end;
     self->mLayoutMem.~UnkClass_8045F564();
@@ -32,7 +31,7 @@ extern "C" CMenuFade* __dt__9CMenuFadeFv(CMenuFade* self, int deleteFlag) {
             __dt__8CProcessFv(self, 0);
         }
     }
-    if (deleteFlag > 0) __dl__FPv(self);
+    if (deleteFlag > 0) operator delete(self);
 end:
     return self;
 }

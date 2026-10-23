@@ -41,12 +41,12 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <stdio.h>
+void playUISound(u32);
 
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
 // lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
 extern const float lbl_eu_806682A8;
 
-extern "C" void playUISound__FUl(u32 op);
 extern "C" u8 GetCollectedFlagByte(u32);
 extern "C" void* EquipChange_ResolveEquipItem(CEquipChange* self);
 extern "C" int EquipChange_MapCursorToSlot(CEquipChange* self);
@@ -68,7 +68,7 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
         __dt__17UnkClass_8045F564Fv(self->_pad14, -1);
         __dt__17UnkClass_8045F564Fv(self->_pad04, -1);
         if (flags > 0)
-            __dl__FPv(self);
+            operator delete(self);
     }
     return self;
 }
@@ -343,7 +343,7 @@ void EquipChange_InitScreen(CEquipChange* self) {
         renderItemBoxByKind((CItemBoxInfo*)self->_padA4,
                       (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
                       EquipChange_ResolveEquipItem(self), 1);
-        playUISound__FUl(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -361,7 +361,7 @@ void EquipChange_CloseScreen(CEquipChange* self) {
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_3C, 0);
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_40, 0);
         ((nw4r::lyt::Layout*)self->field_34)->SetAnimationEnable(self->field_38, 1);
-        playUISound__FUl(6);
+        playUISound(6);
     }
 }
 
@@ -408,7 +408,7 @@ void EquipChange_CursorPrev(CEquipChange* self) {
     renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Target us-80204488: when both item-box gates are closed, roll the cursor
@@ -451,7 +451,7 @@ void EquipChange_CursorNext(CEquipChange* self) {
     renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Target us-802045dc: when both item-box gates are closed, remap the
@@ -493,7 +493,7 @@ void EquipChange_CursorUp(CEquipChange* self) {
     renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 // Target us-80204768: sibling of EquipChange_CursorUp - same guard/refresh shape
@@ -532,7 +532,7 @@ void EquipChange_CursorRight(CEquipChange* self) {
     renderItemBoxByKind((CItemBoxInfo*)self->_padA4, packed, a8, 1);
     int v38 = EquipChange_MapCursorToCat(self);
     hideItemBoxPanes((CItemBoxInfo*)self->_padA4, (u8)v38);
-    playUISound__FUl(1);
+    playUISound(1);
 }
 
 void EquipChange_ConfirmSort(CEquipChange* self) {
@@ -572,7 +572,7 @@ void EquipChange_ConfirmSelect(CEquipChange* self) {
         }
         // .L_80204A14
         if (isEIBSelectBlocked(&self->mEquipItemBox) == 0) {
-            playUISound__FUl(5);
+            playUISound(5);
             return;
         }
         // .L_80204A30
@@ -594,7 +594,7 @@ void EquipChange_ConfirmSelect(CEquipChange* self) {
     if (data->field_176C == 1) {
         if ((u8)EquipChange_MapCursorToCat(self) == 3)
             return;
-        playUISound__FUl(5);
+        playUISound(5);
         return;
     }
     if ((u8)EquipChange_MapCursorToCat(self) == 3) {
@@ -611,7 +611,7 @@ void EquipChange_ConfirmSelect(CEquipChange* self) {
     self->field_4D = 0;
     Cur_SetVisible(self->_pad50, 0);
     Cur_SetVisible(self->_pad68, 0);
-    playUISound__FUl(3);
+    playUISound(3);
 }
 
 // (EquipChange_MapCursorToCat and EquipChange_MapCursorToSlot are defined at the END of this TU. Retail
@@ -762,7 +762,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
         }
         __dt__80043E88(&holder, -1);
     }
-    playUISound__FUl(0x76);
+    playUISound(0x76);
         return 1;
     }
     // (u8)cat == 3 - weapon-row path: resolve the sub-cursor, reject
@@ -778,7 +778,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     if (slot == 1)
         return 0;
     if (slot == 2) {
-        playUISound__FUl(5);
+        playUISound(5);
         return 2;
     }
     int kind;
@@ -822,7 +822,7 @@ int EquipChange_RunMainFlow(CEquipChange* self) {
     renderItemBoxByKind((CItemBoxInfo*)((u8*)self + 0xA4), (u16)packed, EquipChange_ResolveEquipItem(self), 1);
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0)
         eibOpenPages(&self->mEquipItemBox, (u16)packed, 0, 1);
-    playUISound__FUl(0x77);
+    playUISound(0x77);
     return 3;
 }
 

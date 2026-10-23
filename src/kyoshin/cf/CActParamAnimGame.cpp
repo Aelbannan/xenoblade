@@ -10,6 +10,8 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"  // real owner of the +0x4C/+0xAC/+0xC4 link slots
 #include "kyoshin/cf/object/CBattleState.hpp"
+namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+#include "monolib/scn/code_804BC9EC.hpp"
 // CBattleState +0x10 (lbl_eu_8052E9B0 / JP __vt__Q22cf12CBattleState word 3):
 // retail symbol remains CBattleState_UnkVirtualFunc3. Owner TU is out of scope;
 // no already-real same-slot alias exists (unlike getOwner for +0x08). Call sites
@@ -96,7 +98,6 @@ void setActiveBit(void*, int);
 void clrAnimHeight(void*);
 void stopAnimMove(void*);
 f32 getSecPerFrame__9CDeviceVIFv();
-f32 FrSqrt__Q24nw4r4mathFf(f32);
 bool setAnimSubPos(void*, const ml::CVec3*);
 }
 
@@ -173,10 +174,10 @@ extern "C" void __declspec(noinline) applyFallMove(cf::CActParamAnimGame* selfV)
         }
         f32 len = lbl_eu_80666040;
         if (sp2 > lbl_eu_80666040) {
-            len = sp2 * FrSqrt__Q24nw4r4mathFf(sp2);
+            len = sp2 * nw4r::math::FrSqrt(sp2);
         }
         self->f448 = len;
-        getScnHandle__Fv();
+        getScnHandle();
         if (ScnData_FwdBC9A0() != 0) {
             // Paused: probe the +0xE8 hook (initAnimBlendVectors) with the
             // position/delta pair; land only when the vertical speed is
@@ -208,7 +209,6 @@ extern "C" {
 f32 SinFIdx__Q24nw4r4mathFf(f32);
 f32 CosFIdx__Q24nw4r4mathFf(f32);
 f32 Atan2FIdx__Q24nw4r4mathFff(f32, f32);
-f32 FrSqrt__Q24nw4r4mathFf(f32);
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void PSVECCrossProduct(const Vec*, const Vec*, Vec*);
 void PSVECNormalize(const Vec*, Vec*);
@@ -604,7 +604,7 @@ shared:
                                 if (!(len2 >= 0.0f)) {
                                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                                 }
-                                f32 len = len2 <= 0.0f ? 0.0f : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                                f32 len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
                                 f32 inv = 1.0f / len;
                                 vec19c.x *= lbl_eu_8066608C * inv;
                                 vec19c.z *= lbl_eu_8066608C * inv;
@@ -614,7 +614,7 @@ shared:
                                 if (!(len2b >= 0.0f)) {
                                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                                 }
-                                f32 lenb = len2b <= 0.0f ? 0.0f : len2b * FrSqrt__Q24nw4r4mathFf(len2b);
+                                f32 lenb = len2b <= 0.0f ? 0.0f : len2b * nw4r::math::FrSqrt(len2b);
                                 f32 invb = 1.0f / lenb;
                                 f32 nvx = vec190.x * invb;
                                 f32 nvz = vec190.z * invb;
@@ -622,7 +622,7 @@ shared:
                                 if (!(len2c >= 0.0f)) {
                                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                                 }
-                                f32 lenc = len2c <= 0.0f ? 0.0f : len2c * FrSqrt__Q24nw4r4mathFf(len2c);
+                                f32 lenc = len2c <= 0.0f ? 0.0f : len2c * nw4r::math::FrSqrt(len2c);
                                 f32 invc = 1.0f / lenc;
                                 f32 dot = nvz * (vec1a8.z * invc) + nvx * (vec1a8.x * invc);
                                 if (dot < 0.0f) dot = -dot;
@@ -932,7 +932,7 @@ next:
         if (len2 <= 0.0f) {
             len = 0.0f;
         } else {
-            len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+            len = len2 * nw4r::math::FrSqrt(len2);
         }
         if (len > 0.001f) {
             nx *= 1.0f / len;
@@ -947,7 +947,7 @@ next:
             if (len2 <= 0.0f) {
                 lenb = 0.0f;
             } else {
-                lenb = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                lenb = len2 * nw4r::math::FrSqrt(len2);
             }
             if (lenb != 0.0f) {
                 nx = nx / lenb;
@@ -1085,7 +1085,7 @@ void cf::CActParamAnimGame::dispatchState() {
     if (timerB >= lbl_eu_80666040) v->f508 = timerB;
     if (v->f50C >= lbl_eu_80666040) v->f508 = v->f50C;
 
-    getScnHandle__Fv();
+    getScnHandle();
     if (ScnData_FwdBC9A0() != 0 && (v->flags4EC & 1) == 0) {
         trackGroundAt(this);
     }
@@ -1898,14 +1898,14 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                             if (!(len2 >= 0.0f)) {
                                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                             }
-                            f32 len = len2 <= 0.0f ? 0.0f : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                            f32 len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
                             f32 inv = 1.0f / len;
                             f32 nx = v128.x * inv;
                             f32 nz = v128.z * inv;
                             if (!(len2b >= 0.0f)) {
                                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                             }
-                            f32 lenb = len2b <= 0.0f ? 0.0f : len2b * FrSqrt__Q24nw4r4mathFf(len2b);
+                            f32 lenb = len2b <= 0.0f ? 0.0f : len2b * nw4r::math::FrSqrt(len2b);
                             f32 invb = 1.0f / lenb;
                             f32 dot = nz * (move->z * invb) + nx * (move->x * invb);
                             if (dot > 0.0f) {
@@ -2003,14 +2003,14 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                 if (!(len2 >= 0.0f)) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
-                f32 len = len2 <= 0.0f ? 0.0f : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                f32 len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
                 f32 inv = 1.0f / len;
                 f32 nx = v104.x * inv;
                 f32 nz = v104.z * inv;
                 if (!(len2b >= 0.0f)) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
-                f32 lenb = len2b <= 0.0f ? 0.0f : len2b * FrSqrt__Q24nw4r4mathFf(len2b);
+                f32 lenb = len2b <= 0.0f ? 0.0f : len2b * nw4r::math::FrSqrt(len2b);
                 f32 invb = 1.0f / lenb;
                 f32 dot = nz * (moveV.z * invb) + nx * (moveV.x * invb);
                 if (dot > 0.0f) {
@@ -2123,7 +2123,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                 if (!(len2 >= 0.0f)) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
-                f32 len = len2 <= 0.0f ? 0.0f : len2 * FrSqrt__Q24nw4r4mathFf(len2);
+                f32 len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
                 f30v = -len;
                 if (field_0C & 0x200000) f30v *= lbl_eu_80666050;
             }

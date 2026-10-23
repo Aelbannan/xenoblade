@@ -108,7 +108,6 @@ extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int COptionIsWindowReady(COption* self);
 extern "C" void COptionBeginScrollSetup(COption* self);
-extern "C" void playUISound__FUl(u32 op);
 
 // Ctor/Init re-init helpers (retail-unmangled callee names - US strips
 // mangling for these __ct__/func_ helpers).

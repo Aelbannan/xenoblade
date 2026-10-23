@@ -16,6 +16,7 @@
 #include <revolution/enc/encunicode.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <cstring>
+namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 struct CExceptionMsgParamView {
     void* vtable;
@@ -50,7 +51,6 @@ struct CWorkThreadMsgQueue {
 
 extern "C" {
     // C++ delete helper for the extern "C" deleting dtor.
-    void* __dl__FPv(void* p);
 
     // CProc constructor
     void __ct__5CProcFPCcP11CWorkThreads(CProc* self, const char* pName, CWorkThread* pParent, s16 capacity);
@@ -87,7 +87,6 @@ extern "C" {
     void getFontId__11CDeviceFontFv();
     void* findFontByDevice__11CDeviceFontFv(u32 index);
     void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
-    void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
     ml::CCol4* CTaskGame_setVec4(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
     void __ct__7CDrawGXFv(CDrawGX* self);
     void __dt__7CDrawGXFv(CDrawGX* self, int shouldDelete);
@@ -179,7 +178,7 @@ extern "C" void* __dt__10CExceptionFv(CException* self, int flag) {
         }
         __dt__5CProcFv(self, 0);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
     return self;
@@ -383,7 +382,7 @@ extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {
         writerRegs2 = false;
     }
     if (!writerRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8053785C, 0x41, lbl_eu_80537828, writer);
+        nw4r::db::Panic(lbl_eu_8053785C, 0x41, lbl_eu_80537828, writer);
     }
 
     // Same range validation for the font pointer.
@@ -413,7 +412,7 @@ extern "C" void setWriterFont__10CExceptionFv(u8* writer, void* font) {
         fontRegs2 = false;
     }
     if (!fontRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80537818, 0x42, lbl_eu_805377E0, font);
+        nw4r::db::Panic(lbl_eu_80537818, 0x42, lbl_eu_805377E0, font);
     }
     *(void**)((u8*)writer + 0x48) = font;
 }
@@ -455,7 +454,7 @@ extern "C" void setWriterCursor__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z)
         validRegs2 = false;
     }
     if (!validRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
+        nw4r::db::Panic(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
     }
     *(f32*)((u8*)writer + 0x2C) = x;
     *(f32*)((u8*)writer + 0x30) = y;
@@ -490,7 +489,7 @@ extern "C" void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t*
         writerRegs2 = false;
     }
     if (!writerRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80537734, 0x100, lbl_eu_80537700, writer);
+        nw4r::db::Panic(lbl_eu_80537734, 0x100, lbl_eu_80537700, writer);
     }
     bool textRegs2 = true;
     bool textRegs = true;
@@ -518,7 +517,7 @@ extern "C" void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t*
         textRegs2 = false;
     }
     if (!textRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805376EC, 0x101, lbl_eu_805376B8, text);
+        nw4r::db::Panic(lbl_eu_805376EC, 0x101, lbl_eu_805376B8, text);
     }
     ((nw4r::ut::TextWriterBase<wchar_t>*)writer)->Print(text, (int)wcslen(text));
 }

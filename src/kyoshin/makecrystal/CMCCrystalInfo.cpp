@@ -8,6 +8,8 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
+void bindLayoutAnimTransform(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** anim, nw4r::lyt::ArcResourceAccessor* accessor, char* name);
+void buildLayout(nw4r::lyt::Layout** layout, nw4r::lyt::ArcResourceAccessor* accessor, const char* name);
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
@@ -62,7 +64,7 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
     if (self != NULL) {
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion2, -1);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion1, -1);
-        if (flags > 0) __dl__FPv(self);
+        if (flags > 0) operator delete(self);
     }
     return self;
 }
@@ -557,26 +559,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         ((nw4r::lyt::ArcResourceAccessor*)mArcResAccessor)
             ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
 
-        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            (nw4r::lyt::Layout**)&mLayout,
-            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x194]);
+        buildLayout((nw4r::lyt::Layout**)&mLayout, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x194]);
 
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)mLayout,
-            (nw4r::lyt::AnimTransform**)&mAnimTransform1,
-            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ab]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)mLayout,
-            (nw4r::lyt::AnimTransform**)&mAnimTransform2,
-            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1c5]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)mLayout,
-            (nw4r::lyt::AnimTransform**)&mAnimTransform3,
-            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1e4]);
-        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            (nw4r::lyt::Layout*)mLayout,
-            (nw4r::lyt::AnimTransform**)&mAnimTransform4,
-            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform1, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ab]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform2, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1c5]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform3, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1e4]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform4, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane =

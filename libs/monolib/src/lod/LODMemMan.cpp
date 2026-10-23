@@ -22,6 +22,7 @@
 #include <revolution/mtx.h>                 // PSMTXConcat
 #include <revolution/GX.h>                  // GXInitLightColor / GXLoadLightObjImm
 #include <nw4r/db/db_assert.h>              // nw4r::db::Panic
+#include "monolib/scn/code_804BC9EC.hpp"
 
 class CScn;  // scene wrapper (forward decl; CScnMem.hpp is not included here)
 
@@ -737,7 +738,6 @@ extern "C" void LightCtlInitGXLight(u8* outLight, u8* matrix, u8* mtx);
 // plain unmangled names (C ABI); the Fv-suffixed names carry explicit ABI
 // args (MWCC_CASES "Fv ABI note").
 extern "C" s32 ColiLodLookupRecordBin(void* rec);
-extern "C" void* getScnHandle__Fv(void);
 extern "C" u8 ScnData_FwdB80CC(void* ptr, u16 id);
 extern "C" void ScnData_FwdB7D9C(void* unused, s32 a);
 extern "C" void ScnData_FwdB7DD4(void* unused, s32 a);
@@ -1092,7 +1092,7 @@ extern "C" void rebuildFromSharedBuffer__Q23LOD9LODMemManFv(LOD::LODMemMan* self
         if (e->field_0x44 & 8) {
             u32 w = l->field_0x98[e->field_0x47].field_0x0;
             if (w & 3) {
-                void* p = getScnHandle__Fv();
+                void* p = getScnHandle();
                 rec->field_0x1D = ScnData_FwdB80CC(p, e->field_0x40);
             }
         }
@@ -1645,7 +1645,7 @@ void setLodScaleAndRefresh__Q23LOD9LODMemManFv(LOD::LODMemMan* self, f32 f1) {
     while (i < buf->mCount_34) {
         if (!(p48->field_0x44 & 8)) goto next;
         if ((l->field_0x98[p48->field_0x47].field_0x0 & 3) == 0) goto next;
-        p20->field_0x1D = ScnData_FwdB80CC(getScnHandle__Fv(), p48->field_0x40);
+        p20->field_0x1D = ScnData_FwdB80CC(getScnHandle(), p48->field_0x40);
     next:
         i++;
         p20++;
@@ -2912,10 +2912,10 @@ void updateElementLod__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem)
                 lbl_eu_80665758 = (s16)v;
                 if (rec->field_0x0 & 2) {
                     if (ColiLodLookupRecordBin(rec) != 0) {
-                        void* p = getScnHandle__Fv();
+                        void* p = getScnHandle();
                         ScnData_FwdB7D9C(p, desc->field_0x40);
                     } else {
-                        void* p = getScnHandle__Fv();
+                        void* p = getScnHandle();
                         ScnData_FwdB7DD4(p, desc->field_0x40);
                     }
                 }
@@ -2923,13 +2923,13 @@ void updateElementLod__Q23LOD9LODMemManFv(LOD::LODMemMan* self, LODElem20* elem)
                     submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(
                         rec->field_0x8, (const f32*)desc, elem->field_0x1D);
                     if (changed) {
-                        void* p = getScnHandle__Fv();
+                        void* p = getScnHandle();
                         ScnData_FwdB8078(p, elem->field_0x1D);
                     }
                 }
             } else {
                 if (rec->field_0x0 & 1) {
-                    void* p = getScnHandle__Fv();
+                    void* p = getScnHandle();
                     ScnData_FwdB8078(p, elem->field_0x1D);
                 }
             }

@@ -221,7 +221,6 @@ void CfGimmick_ClearManagerBinding(void* self);
 extern "C" void CfGimmick_UnregisterSpawnedObject(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void setLODEnable__8CTaskLODFv(u8 lod, int mode);
-void* getScnHandle__Fv(void);
 void ScnData_FwdB7D9C(void* snd, u8 id);
 void ScnData_FwdB7DD4(void* snd, u8 id);
 void* ArtsSelect_GetEntry(int id);
